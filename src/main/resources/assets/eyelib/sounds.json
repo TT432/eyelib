@@ -1,0 +1,11 @@
+{
+  "jack_music": {
+    "category": "record",
+    "sounds": [
+      {
+        "name": "eyelib:jack_music",
+        "stream": true
+      }
+    ]
+  }
+}

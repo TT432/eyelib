@@ -1,0 +1,7 @@
+{
+  "parent": "eyelib:block/default_box",
+  "textures": {
+    "1": "eyelib:block/botarium_side",
+    "particle": "eyelib:block/botarium_side"
+  }
+}

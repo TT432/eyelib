@@ -1,0 +1,12 @@
+{
+  "itemGroup.geckolib_examples": "Geckolib Examples",
+
+  "item.eyelib.geckoarmor_head": "Gecko Armor Helmet",
+  "item.eyelib.geckoarmor_chest": "Gecko Armor Chestplate",
+  "item.eyelib.geckoarmor_leggings": "Gecko Armor Leggings",
+  "item.eyelib.geckoarmor_boots": "Gecko Armor Boots",
+  "item.eyelib.jackintheboxitem": "Jack In The Box",
+  "item.eyelib.pistol": "Pistol",
+  "block.eyelib.habitatblock": "Gecko Habitat",
+  "block.eyelib.fertilizerblock": "Fertilizer"
+}
