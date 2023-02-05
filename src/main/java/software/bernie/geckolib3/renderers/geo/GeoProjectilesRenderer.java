@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
+import io.github.tt432.eyelib.api.animation.AnimatableModel;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -15,11 +16,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.ApiStatus.AvailableSince;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.IAnimatableModel;
-import software.bernie.geckolib3.core.controller.AnimationController;
+import io.github.tt432.eyelib.api.animation.Animatable;
+import software.bernie.geckolib3.core.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
-import software.bernie.geckolib3.core.util.Color;
+import io.github.tt432.eyelib.util.Color;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.model.AnimatedGeoModel;
@@ -33,11 +33,11 @@ import software.bernie.geckolib3.util.RenderUtils;
 import javax.annotation.Nonnull;
 import java.util.Collections;
 
-public class GeoProjectilesRenderer<T extends Entity & IAnimatable> extends EntityRenderer<T>
+public class GeoProjectilesRenderer<T extends Entity & Animatable> extends EntityRenderer<T>
 		implements IGeoRenderer<T> {
 	static {
 		AnimationController.addModelFetcher(animatable -> animatable instanceof Entity entity ?
-				(IAnimatableModel<IAnimatable>)AnimationUtils.getGeoModelForEntity(entity) : null);
+				(AnimatableModel<Animatable>)AnimationUtils.getGeoModelForEntity(entity) : null);
 	}
 
 	protected final AnimatedGeoModel<T> modelProvider;

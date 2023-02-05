@@ -13,14 +13,6 @@ import software.bernie.geckolib3.model.provider.GeoModelProvider;
 import software.bernie.geckolib3.renderers.geo.IGeoRenderer;
 
 public class AnimationUtils {
-	public static double convertTicksToSeconds(double ticks) {
-		return ticks / 20;
-	}
-
-	public static double convertSecondsToTicks(double seconds) {
-		return seconds * 20;
-	}
-
 	/**
 	 * Gets the renderer for an entity
 	 */

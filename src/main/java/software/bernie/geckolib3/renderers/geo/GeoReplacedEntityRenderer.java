@@ -28,10 +28,10 @@ import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.ApiStatus.AvailableSince;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.controller.AnimationController;
+import io.github.tt432.eyelib.api.animation.Animatable;
+import software.bernie.geckolib3.core.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
-import software.bernie.geckolib3.core.util.Color;
+import io.github.tt432.eyelib.util.Color;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.model.AnimatedGeoModel;
@@ -46,20 +46,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends EntityRenderer implements IGeoRenderer {
-	protected static final Map<Class<? extends IAnimatable>, GeoReplacedEntityRenderer> renderers = new ConcurrentHashMap<>();
+public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends EntityRenderer implements IGeoRenderer {
+	protected static final Map<Class<? extends Animatable>, GeoReplacedEntityRenderer> renderers = new ConcurrentHashMap<>();
 
 	static {
-		AnimationController.addModelFetcher((IAnimatable object) -> {
+		AnimationController.addModelFetcher((Animatable object) -> {
 			GeoReplacedEntityRenderer renderer = renderers.get(object.getClass());
 			return renderer == null ? null : renderer.getGeoModelProvider();
 		});
 	}
 
-	protected final AnimatedGeoModel<IAnimatable> modelProvider;
+	protected final AnimatedGeoModel<Animatable> modelProvider;
 	protected T animatable;
 	protected final List<GeoLayerRenderer> layerRenderers = new ObjectArrayList<>();
-	protected IAnimatable currentAnimatable;
+	protected Animatable currentAnimatable;
 	protected float widthScale = 1;
 	protected float heightScale = 1;
 	protected Matrix4f dispatchedMat = new Matrix4f();
@@ -68,7 +68,7 @@ public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends E
 	private IRenderCycle currentModelRenderCycle = EModelRenderCycle.INITIAL;
 
 	public GeoReplacedEntityRenderer(EntityRendererProvider.Context renderManager,
-			AnimatedGeoModel<IAnimatable> modelProvider, T animatable) {
+									 AnimatedGeoModel<Animatable> modelProvider, T animatable) {
 		super(renderManager);
 
 		this.modelProvider = modelProvider;
@@ -77,7 +77,7 @@ public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends E
 		renderers.putIfAbsent(animatable.getClass(), this);
 	}
 
-	public static GeoReplacedEntityRenderer getRenderer(Class<? extends IAnimatable> animatableClass) {
+	public static GeoReplacedEntityRenderer getRenderer(Class<? extends Animatable> animatableClass) {
 		return renderers.get(animatableClass);
 	}
 
@@ -121,8 +121,8 @@ public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends E
 		render(entity, this.animatable, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 	}
 
-	public void render(Entity entity, IAnimatable animatable, float entityYaw, float partialTick, PoseStack poseStack,
-			MultiBufferSource bufferSource, int packedLight) {
+	public void render(Entity entity, Animatable animatable, float entityYaw, float partialTick, PoseStack poseStack,
+					   MultiBufferSource bufferSource, int packedLight) {
 
 		if (!(entity instanceof LivingEntity livingEntity))
 			throw new IllegalStateException("Replaced renderer was not an instanceof LivingEntity");
@@ -359,7 +359,7 @@ public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends E
 
 	@Override
 	public ResourceLocation getTextureLocation(Object animatable) {
-		return this.modelProvider.getTextureLocation((IAnimatable)animatable);
+		return this.modelProvider.getTextureLocation((Animatable)animatable);
 	}
 
 	public final boolean addLayer(GeoLayerRenderer<? extends LivingEntity> layer) {

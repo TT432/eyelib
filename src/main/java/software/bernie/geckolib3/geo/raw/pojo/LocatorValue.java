@@ -10,7 +10,7 @@ public class LocatorValue {
 	public LocatorClass locatorClassValue;
 	public double[] doubleArrayValue;
 
-	public static class Serializer implements JsonSerializer<LocatorValue>, JsonDeserializer<LocatorValue> {
+	protected static class Serializer implements JsonSerializer<LocatorValue>, JsonDeserializer<LocatorValue> {
 		@Override
 		public LocatorValue deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 			LocatorValue result = new LocatorValue();

@@ -1,0 +1,60 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"animation.gecko_habitat.idle": {
+			"loop": true,
+			"animation_length": 22,
+			"bones": {
+				"gecko": {
+					"position": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"0.5": {
+							"post": [0, 18, 0],
+							"lerp_mode": "catmullrom"
+						},
+						"1.0": {
+							"post": [0, 18, -16],
+							"lerp_mode": "catmullrom"
+						},
+						"1.5": {
+							"post": [0, -7, -16],
+							"lerp_mode": "catmullrom"
+						},
+						"2.0": {
+							"post": [0, -7, 28],
+							"lerp_mode": "catmullrom"
+						},
+						"2.52": {
+							"post": [0, 26, 28],
+							"lerp_mode": "catmullrom"
+						},
+						"3.0": {
+							"post": [0, -12, -29],
+							"lerp_mode": "catmullrom"
+						},
+						"3.5": {
+							"post": [10, -12, 20],
+							"lerp_mode": "catmullrom"
+						},
+						"4.0": {
+							"post": [10, 33, 20],
+							"lerp_mode": "catmullrom"
+						},
+						"4.5": {
+							"post": [-6, 33, -13],
+							"lerp_mode": "catmullrom"
+						},
+						"5.0": {
+							"post": [-6, -24, -13],
+							"lerp_mode": "catmullrom"
+						},
+						"5.5": [-6, -24, -13]
+					}
+				}
+			}
+		}
+	}
+}

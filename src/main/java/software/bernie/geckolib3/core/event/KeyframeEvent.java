@@ -5,7 +5,7 @@
 
 package software.bernie.geckolib3.core.event;
 
-import software.bernie.geckolib3.core.controller.AnimationController;
+import software.bernie.geckolib3.core.AnimationController;
 
 public abstract class KeyframeEvent<T> {
 	private final T entity;

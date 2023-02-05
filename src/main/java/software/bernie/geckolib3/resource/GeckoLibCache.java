@@ -1,6 +1,8 @@
 package software.bernie.geckolib3.resource;
 
 import io.github.tt432.eyelib.Eyelib;
+import io.github.tt432.eyelib.animation.RawAnimation;
+import io.github.tt432.eyelib.util.JsonUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.resources.ResourceLocation;
@@ -8,12 +10,18 @@ import net.minecraft.server.packs.resources.PreparableReloadListener.Preparation
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraftforge.common.util.Lazy;
-import software.bernie.geckolib3.core.molang.MolangParser;
-import software.bernie.geckolib3.file.AnimationFile;
-import software.bernie.geckolib3.file.AnimationFileLoader;
-import software.bernie.geckolib3.file.GeoModelLoader;
+import org.apache.commons.io.IOUtils;
+import software.bernie.geckolib3.geo.exception.GeckoLibException;
+import software.bernie.geckolib3.geo.raw.pojo.Converter;
+import software.bernie.geckolib3.geo.raw.pojo.FormatVersion;
+import software.bernie.geckolib3.geo.raw.pojo.RawGeoModel;
+import software.bernie.geckolib3.geo.raw.tree.RawGeometryTree;
+import software.bernie.geckolib3.geo.render.GeoBuilder;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
@@ -27,21 +35,16 @@ import java.util.function.Function;
 public class GeckoLibCache {
     private static final Lazy<GeckoLibCache> INSTANCE = Lazy.of(GeckoLibCache::new);
 
-	public static GeckoLibCache getInstance() {
-		return INSTANCE.get();
-	}
+    public static GeckoLibCache getInstance() {
+        return INSTANCE.get();
+    }
 
     private static final Set<String> excludedNamespaces = ObjectOpenHashSet.of("moreplayermodels", "customnpcs", "gunsrpg");
 
-    private final AnimationFileLoader animationLoader;
-    private final GeoModelLoader modelLoader;
-
-    public final MolangParser parser = new MolangParser();
-
-    private Map<ResourceLocation, AnimationFile> animations = Collections.emptyMap();
+    private Map<ResourceLocation, RawAnimation> animations = Collections.emptyMap();
     private Map<ResourceLocation, GeoModel> geoModels = Collections.emptyMap();
 
-    public Map<ResourceLocation, AnimationFile> getAnimations() {
+    public Map<ResourceLocation, RawAnimation> getAnimations() {
         if (!Eyelib.hasInitialized)
             throw new RuntimeException("GeckoLib was never initialized! Please read the documentation!");
 
@@ -55,30 +58,62 @@ public class GeckoLibCache {
         return geoModels;
     }
 
-    protected GeckoLibCache() {
-        this.animationLoader = new AnimationFileLoader();
-        this.modelLoader = new GeoModelLoader();
-    }
-
     public CompletableFuture<Void> reload(PreparationBarrier stage, ResourceManager resourceManager,
                                           ProfilerFiller preparationsProfiler, ProfilerFiller reloadProfiler,
-										  Executor backgroundExecutor, Executor gameExecutor) {
-        Map<ResourceLocation, AnimationFile> animations = new Object2ObjectOpenHashMap<>();
+                                          Executor backgroundExecutor, Executor gameExecutor) {
+        Map<ResourceLocation, RawAnimation> animations = new Object2ObjectOpenHashMap<>();
         Map<ResourceLocation, GeoModel> geoModels = new Object2ObjectOpenHashMap<>();
 
-        return CompletableFuture.allOf(loadResources(backgroundExecutor, resourceManager, "animations",
-                                animation -> animationLoader.loadAllAnimations(parser, animation, resourceManager), animations::put),
-                        loadResources(backgroundExecutor, resourceManager, "geo",
-                                resource -> modelLoader.loadModel(resourceManager, resource), geoModels::put))
+        return CompletableFuture.allOf(
+                        loadResources(backgroundExecutor, resourceManager, "geo/animations",
+                                animation -> loadAnimation(animation, resourceManager), animations::put),
+                        loadResources(backgroundExecutor, resourceManager, "geo/models",
+                                resource -> loadModel(resourceManager, resource), geoModels::put))
                 .thenCompose(stage::wait).thenAcceptAsync(empty -> {
                     this.animations = animations;
                     this.geoModels = geoModels;
                 }, gameExecutor);
     }
 
+    public GeoModel loadModel(ResourceManager resourceManager, ResourceLocation location) {
+        try {
+            // Deserialize from json into basic json objects, bones are still stored as a
+            // flat list
+            RawGeoModel rawModel = Converter
+                    .fromJsonString(getResourceAsString(location, resourceManager));
+            if (rawModel.getFormatVersion() != FormatVersion.VERSION_1_12_0) {
+                throw new GeckoLibException(location, "Wrong geometry json version, expected 1.12.0");
+            }
+
+            // Parse the flat list of bones into a raw hierarchical tree of "BoneGroup"s
+            RawGeometryTree rawGeometryTree = RawGeometryTree.parseHierarchy(rawModel);
+
+            // Build the quads and cubes from the raw tree into a built and ready to be
+            // rendered GeoModel
+            return GeoBuilder.getGeoBuilder(location.getNamespace()).constructGeoModel(rawGeometryTree);
+        } catch (Exception e) {
+            Eyelib.LOGGER.error(String.format("Error parsing %S", location), e);
+            throw (new RuntimeException(e));
+        }
+    }
+
+    public RawAnimation loadAnimation(ResourceLocation rl, ResourceManager manager) {
+        return JsonUtils.normal.fromJson(getResourceAsString(rl, manager), RawAnimation.class);
+    }
+
+    public static String getResourceAsString(ResourceLocation location, ResourceManager manager) {
+        try (InputStream inputStream = manager.getResource(location).getInputStream()) {
+            return IOUtils.toString(inputStream, Charset.defaultCharset());
+        } catch (Exception e) {
+            String message = "Couldn't load " + location;
+            Eyelib.LOGGER.error(message, e);
+            throw new RuntimeException(new FileNotFoundException(location.toString()));
+        }
+    }
+
     private static <T> CompletableFuture<Void> loadResources(Executor executor, ResourceManager resourceManager,
                                                              String type, Function<ResourceLocation, T> loader,
-															 BiConsumer<ResourceLocation, T> map) {
+                                                             BiConsumer<ResourceLocation, T> map) {
         return CompletableFuture
                 .supplyAsync(() -> resourceManager.listResources(type, fileName -> fileName.endsWith(".json")),
                         executor)

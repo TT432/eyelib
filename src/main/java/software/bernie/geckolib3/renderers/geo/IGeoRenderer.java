@@ -9,7 +9,7 @@ import com.mojang.math.Vector4f;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
-import software.bernie.geckolib3.core.util.Color;
+import io.github.tt432.eyelib.util.Color;
 import software.bernie.geckolib3.geo.render.built.*;
 import software.bernie.geckolib3.model.provider.GeoModelProvider;
 import software.bernie.geckolib3.util.EModelRenderCycle;

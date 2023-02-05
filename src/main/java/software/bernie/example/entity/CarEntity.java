@@ -11,20 +11,20 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib3.core.IAnimatable;
+import io.github.tt432.eyelib.api.animation.Animatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
-import software.bernie.geckolib3.core.builder.ILoopType.EDefaultLoopTypes;
-import software.bernie.geckolib3.core.controller.AnimationController;
+import io.github.tt432.eyelib.api.animation.LoopType.EDefaultLoopTypes;
+import software.bernie.geckolib3.core.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
 import software.bernie.geckolib3.util.GeckoLibUtil;
 
-public class CarEntity extends Animal implements IAnimatable {
+public class CarEntity extends Animal implements Animatable {
 	public AnimationFactory factory = GeckoLibUtil.createFactory(this);
 
-	private <E extends IAnimatable> PlayState predicate(AnimationEvent<E> event) {
+	private <E extends Animatable> PlayState predicate(AnimationEvent<E> event) {
 		if (event.isMoving() && this.getFirstPassenger() != null) {
 			event.getController().setAnimation(new AnimationBuilder().addAnimation("moving", EDefaultLoopTypes.LOOP));
 		} else {

@@ -5,8 +5,9 @@
 
 package software.bernie.geckolib3.core.builder;
 
+import io.github.tt432.eyelib.api.animation.LoopType;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import software.bernie.geckolib3.core.builder.ILoopType.EDefaultLoopTypes;
+import io.github.tt432.eyelib.api.animation.LoopType.EDefaultLoopTypes;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class AnimationBuilder {
 	 * @param loopType    loop
 	 * @return An instance of the current animation builder
 	 */
-	public AnimationBuilder addAnimation(String animationName, ILoopType loopType) {
+	public AnimationBuilder addAnimation(String animationName, LoopType loopType) {
 		animationList.add(new RawAnimation(animationName, loopType));
 		return this;
 	}
@@ -52,10 +53,14 @@ public class AnimationBuilder {
 	 * @return An instance of the current animation builder
 	 */
 	public AnimationBuilder addRepeatingAnimation(String animationName, int timesToRepeat) {
-		assert timesToRepeat > 0;
+		if (timesToRepeat < 1) {
+			throw new IllegalArgumentException("timesToRepeat must be positive");
+		}
+
 		for (int i = 0; i < timesToRepeat; i++) {
 			addAnimation(animationName, EDefaultLoopTypes.PLAY_ONCE);
 		}
+
 		return this;
 	}
 	

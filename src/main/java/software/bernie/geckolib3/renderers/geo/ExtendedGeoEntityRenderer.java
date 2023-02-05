@@ -42,8 +42,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.ForgeHooksClient;
 import org.apache.commons.lang3.StringUtils;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.processor.IBone;
+import io.github.tt432.eyelib.api.animation.Animatable;
+import io.github.tt432.eyelib.api.model.Bone;
 import software.bernie.geckolib3.geo.render.built.*;
 import software.bernie.geckolib3.item.GeoArmorItem;
 import software.bernie.geckolib3.model.AnimatedGeoModel;
@@ -67,7 +67,7 @@ import java.util.Queue;
  *         model must feature a few special bones for this to work.
  */
 @OnlyIn(Dist.CLIENT)
-public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & IAnimatable> extends GeoEntityRenderer<T> {
+public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animatable> extends GeoEntityRenderer<T> {
 	protected static Map<ResourceLocation, IntIntPair> TEXTURE_DIMENSIONS_CACHE = new Object2ObjectOpenHashMap<>();
 	private static final Map<String, ResourceLocation> ARMOR_TEXTURE_RES_MAP = new Object2ObjectOpenHashMap<>();
 	protected static final HumanoidModel<LivingEntity> DEFAULT_BIPED_ARMOR_MODEL_INNER = new HumanoidModel<>(
@@ -268,14 +268,14 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & IAnimat
 
 	protected void setLimbBoneVisible(GeoArmorRenderer<? extends GeoArmorItem> armorRenderer,
 									  ModelPart limb, HumanoidModel<?> armorModel, EquipmentSlot slot) {
-		IBone gbHead = armorRenderer.getAndHideBone(armorRenderer.headBone);
-		IBone gbBody = armorRenderer.getAndHideBone(armorRenderer.bodyBone);
-		IBone gbArmL = armorRenderer.getAndHideBone(armorRenderer.leftArmBone);
-		IBone gbArmR = armorRenderer.getAndHideBone(armorRenderer.rightArmBone);
-		IBone gbLegL = armorRenderer.getAndHideBone(armorRenderer.leftLegBone);
-		IBone gbLegR = armorRenderer.getAndHideBone(armorRenderer.rightLegBone);
-		IBone gbBootL = armorRenderer.getAndHideBone(armorRenderer.leftBootBone);
-		IBone gbBootR = armorRenderer.getAndHideBone(armorRenderer.rightBootBone);
+		Bone gbHead = armorRenderer.getAndHideBone(armorRenderer.headBone);
+		Bone gbBody = armorRenderer.getAndHideBone(armorRenderer.bodyBone);
+		Bone gbArmL = armorRenderer.getAndHideBone(armorRenderer.leftArmBone);
+		Bone gbArmR = armorRenderer.getAndHideBone(armorRenderer.rightArmBone);
+		Bone gbLegL = armorRenderer.getAndHideBone(armorRenderer.leftLegBone);
+		Bone gbLegR = armorRenderer.getAndHideBone(armorRenderer.rightLegBone);
+		Bone gbBootL = armorRenderer.getAndHideBone(armorRenderer.leftBootBone);
+		Bone gbBootR = armorRenderer.getAndHideBone(armorRenderer.rightBootBone);
 		if (limb == armorModel.head || limb == armorModel.hat) {
 			gbHead.setHidden(false);
 			return;
@@ -537,12 +537,12 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & IAnimat
 	protected abstract BlockState getHeldBlockForBone(String boneName, T animatable);
 
 	protected abstract void preRenderItem(PoseStack poseStack, ItemStack stack, String boneName, T animatable,
-			IBone bone);
+			Bone bone);
 
 	protected abstract void preRenderBlock(PoseStack poseStack, BlockState state, String boneName, T animatable);
 
 	protected abstract void postRenderItem(PoseStack poseStack, ItemStack stack, String boneName, T animatable,
-			IBone bone);
+			Bone bone);
 
 	protected abstract void postRenderBlock(PoseStack poseStack, BlockState state, String boneName, T animatable);
 

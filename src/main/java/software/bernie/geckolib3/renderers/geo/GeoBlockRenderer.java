@@ -20,10 +20,10 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.ApiStatus.AvailableSince;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.IAnimatableModel;
-import software.bernie.geckolib3.core.controller.AnimationController;
-import software.bernie.geckolib3.core.util.Color;
+import io.github.tt432.eyelib.api.animation.Animatable;
+import io.github.tt432.eyelib.api.animation.AnimatableModel;
+import software.bernie.geckolib3.core.AnimationController;
+import io.github.tt432.eyelib.util.Color;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.model.AnimatedGeoModel;
@@ -33,16 +33,16 @@ import software.bernie.geckolib3.util.RenderUtils;
 
 import javax.annotation.Nonnull;
 
-public abstract class GeoBlockRenderer<T extends BlockEntity & IAnimatable>
+public abstract class GeoBlockRenderer<T extends BlockEntity & Animatable>
 		implements IGeoRenderer<T>, BlockEntityRenderer {
 	static {
-		AnimationController.addModelFetcher((IAnimatable object) -> {
+		AnimationController.addModelFetcher((Animatable object) -> {
 			if (object instanceof BlockEntity tile) {
 				BlockEntityRenderer<BlockEntity> renderer = Minecraft.getInstance().getBlockEntityRenderDispatcher()
 						.getRenderer(tile);
 
 				if (renderer instanceof GeoBlockRenderer<?> blockRenderer)
-					return (IAnimatableModel<IAnimatable>) blockRenderer.getGeoModelProvider();
+					return (AnimatableModel<Animatable>) blockRenderer.getGeoModelProvider();
 			}
 			return null;
 		});

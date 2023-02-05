@@ -11,7 +11,7 @@ public class PolysUnion {
 	public double[][][] doubleArrayArrayArrayValue;
 	public PolysEnum enumValue;
 
-	public static class Serializer implements JsonSerializer<PolysUnion>, JsonDeserializer<PolysUnion> {
+	protected static class Serializer implements JsonSerializer<PolysUnion>, JsonDeserializer<PolysUnion> {
 		@Override
 		public PolysUnion deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 			PolysUnion result = new PolysUnion();

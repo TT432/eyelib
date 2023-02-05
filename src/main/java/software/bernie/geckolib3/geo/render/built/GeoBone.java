@@ -6,12 +6,12 @@ import com.mojang.math.Vector3d;
 import com.mojang.math.Vector4f;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.ApiStatus.AvailableSince;
-import software.bernie.geckolib3.core.processor.IBone;
-import software.bernie.geckolib3.core.snapshot.BoneSnapshot;
+import io.github.tt432.eyelib.api.model.Bone;
+import io.github.tt432.eyelib.util.BoneSnapshot;
 
 import java.util.List;
 
-public class GeoBone implements IBone {
+public class GeoBone implements Bone {
 	public GeoBone parent;
 
 	public List<GeoBone> childBones = new ObjectArrayList<>();
@@ -375,12 +375,6 @@ public class GeoBone implements IBone {
 		setPosition((float) vec.x, (float) vec.y, (float) vec.z);
 	}
 
-	public void setPosition(float x, float y, float z) {
-		setPositionX(x);
-		setPositionY(y);
-		setPositionZ(z);
-	}
-
 	public Vector3d getPosition() {
 		return new Vector3d(getPositionX(), getPositionY(), getPositionZ());
 	}
@@ -412,12 +406,6 @@ public class GeoBone implements IBone {
 		setRotation((float) vec.x, (float) vec.y, (float) vec.z);
 	}
 
-	public void setRotation(float x, float y, float z) {
-		setRotationX(x);
-		setRotationY(y);
-		setRotationZ(z);
-	}
-
 	public Vector3d getRotation() {
 		return new Vector3d(getRotationX(), getRotationY(), getRotationZ());
 	}
@@ -435,12 +423,6 @@ public class GeoBone implements IBone {
 
 	public void setScale(Vector3d vec) {
 		setScale((float) vec.x, (float) vec.y, (float) vec.z);
-	}
-
-	public void setScale(float x, float y, float z) {
-		setScaleX(x);
-		setScaleY(y);
-		setScaleZ(z);
 	}
 
 	public Vector3d getScale() {

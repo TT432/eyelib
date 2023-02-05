@@ -7,10 +7,10 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import software.bernie.geckolib3.core.IAnimatable;
+import io.github.tt432.eyelib.api.animation.Animatable;
 import software.bernie.geckolib3.model.provider.GeoModelProvider;
 
-public abstract class GeoLayerRenderer<T extends Entity & IAnimatable> {
+public abstract class GeoLayerRenderer<T extends Entity & Animatable> {
 	protected final IGeoRenderer<T> entityRenderer;
 
 	public GeoLayerRenderer(IGeoRenderer<T> entityRendererIn) {

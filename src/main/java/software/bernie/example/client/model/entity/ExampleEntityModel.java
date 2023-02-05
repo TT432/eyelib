@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import software.bernie.example.client.EntityResources;
 import software.bernie.example.entity.GeoExampleEntity;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
-import software.bernie.geckolib3.core.processor.IBone;
+import io.github.tt432.eyelib.api.model.Bone;
 import software.bernie.geckolib3.model.AnimatedTickingGeoModel;
 import software.bernie.geckolib3.model.provider.data.EntityModelData;
 
@@ -29,7 +29,7 @@ public class ExampleEntityModel extends AnimatedTickingGeoModel<GeoExampleEntity
 	@Override
 	public void setCustomAnimations(GeoExampleEntity animatable, int instanceId, @Nullable AnimationEvent<GeoExampleEntity> animationEvent) {
 		super.setCustomAnimations(animatable, instanceId, animationEvent);
-		IBone head = this.getAnimationProcessor().getBone("head");
+		Bone head = this.getAnimationProcessor().getBone("head");
 
 		if (animationEvent == null)
 			return;

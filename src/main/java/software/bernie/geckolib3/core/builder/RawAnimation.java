@@ -5,6 +5,9 @@
 
 package software.bernie.geckolib3.core.builder;
 
+import io.github.tt432.eyelib.api.animation.LoopType;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Objects;
 
 public class RawAnimation {
@@ -14,7 +17,8 @@ public class RawAnimation {
 	 * If loop is null, the animation processor will use the loopByDefault boolean
 	 * to decide if the animation should loop.
 	 */
-	public ILoopType loopType;
+	@Nullable
+	public LoopType loopType;
 
 	/**
 	 * A raw animation only stores the animation name and if it should loop, nothing
@@ -23,7 +27,7 @@ public class RawAnimation {
 	 * @param animationName The name of the animation
 	 * @param loop          Whether it should loop
 	 */
-	public RawAnimation(String animationName, ILoopType loop) {
+	public RawAnimation(String animationName, @Nullable LoopType loop) {
 		this.animationName = animationName;
 		this.loopType = loop;
 	}

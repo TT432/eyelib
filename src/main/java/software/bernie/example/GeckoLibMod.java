@@ -15,8 +15,8 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import software.bernie.example.registry.*;
 import io.github.tt432.eyelib.Eyelib;
-import software.bernie.geckolib3.core.controller.AnimationController;
-import software.bernie.geckolib3.core.controller.AnimationController.ModelFetcher;
+import software.bernie.geckolib3.core.AnimationController;
+import software.bernie.geckolib3.core.AnimationController.ModelFetcher;
 import software.bernie.geckolib3.renderers.geo.GeoArmorRenderer;
 
 @EventBusSubscriber

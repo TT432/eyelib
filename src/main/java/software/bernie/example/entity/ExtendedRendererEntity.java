@@ -13,11 +13,11 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AbstractSkullBlock;
 import net.minecraftforge.network.NetworkHooks;
-import software.bernie.geckolib3.core.IAnimatable;
+import io.github.tt432.eyelib.api.animation.Animatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
-import software.bernie.geckolib3.core.builder.ILoopType.EDefaultLoopTypes;
-import software.bernie.geckolib3.core.controller.AnimationController;
+import io.github.tt432.eyelib.api.animation.LoopType.EDefaultLoopTypes;
+import software.bernie.geckolib3.core.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
@@ -25,7 +25,7 @@ import software.bernie.geckolib3.util.GeckoLibUtil;
 
 import java.util.Optional;
 
-public class ExtendedRendererEntity extends PathfinderMob implements IAnimatable {
+public class ExtendedRendererEntity extends PathfinderMob implements Animatable {
 
 	// Geckolib
 	public AnimationFactory factory = GeckoLibUtil.createFactory(this);
@@ -95,7 +95,7 @@ public class ExtendedRendererEntity extends PathfinderMob implements IAnimatable
 	private static final String ANIM_NAME_SPIN_HANDS = ANIM_NAME_PREFIX + "spin_hands";
 
 	@SuppressWarnings("unused")
-	private <E extends IAnimatable> PlayState predicateSpinHands(AnimationEvent<E> event) {
+	private <E extends Animatable> PlayState predicateSpinHands(AnimationEvent<E> event) {
 		if (event.getController().getCurrentAnimation() == null) {
 			event.getController().setAnimation(new AnimationBuilder().addAnimation(ANIM_NAME_SPIN_HANDS, EDefaultLoopTypes.LOOP));
 		}
@@ -104,7 +104,7 @@ public class ExtendedRendererEntity extends PathfinderMob implements IAnimatable
 
 	private static final String ANIM_NAME_IDLE = ANIM_NAME_PREFIX + "idle";
 
-	private <E extends IAnimatable> PlayState predicateIdle(AnimationEvent<E> event) {
+	private <E extends Animatable> PlayState predicateIdle(AnimationEvent<E> event) {
 		if (event.getController().getCurrentAnimation() == null) {
 			event.getController().setAnimation(new AnimationBuilder().addAnimation(ANIM_NAME_IDLE, EDefaultLoopTypes.LOOP));
 		}
@@ -114,7 +114,7 @@ public class ExtendedRendererEntity extends PathfinderMob implements IAnimatable
 	private static final String ANIM_NAME_SITTING = ANIM_NAME_PREFIX + "sit";
 	private static final String ANIM_NAME_SNEAKING = ANIM_NAME_PREFIX + "body.sneak";
 
-	private <E extends IAnimatable> PlayState predicateBodyPose(AnimationEvent<E> event) {
+	private <E extends Animatable> PlayState predicateBodyPose(AnimationEvent<E> event) {
 		if (this.isTwoHandedAnimationRunning()) {
 
 		} else if (this.isPassenger()) {
@@ -138,16 +138,16 @@ public class ExtendedRendererEntity extends PathfinderMob implements IAnimatable
 		return !this.isLeftHanded() ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
 	}
 
-	private <E extends IAnimatable> PlayState predicateRightArmSwing(AnimationEvent<E> event) {
+	private <E extends Animatable> PlayState predicateRightArmSwing(AnimationEvent<E> event) {
 		return this.predicateHandSwing(this.getRightHand(), false, event);
 	}
 
-	private <E extends IAnimatable> PlayState predicateLeftArmSwing(AnimationEvent<E> event) {
+	private <E extends Animatable> PlayState predicateLeftArmSwing(AnimationEvent<E> event) {
 		return this.predicateHandSwing(this.getLeftHand(), true, event);
 	}
 
-	protected <E extends IAnimatable> PlayState predicateHandSwing(InteractionHand hand, boolean leftHand,
-			AnimationEvent<E> event) {
+	protected <E extends Animatable> PlayState predicateHandSwing(InteractionHand hand, boolean leftHand,
+																  AnimationEvent<E> event) {
 		if (this.swinging && !this.isTwoHandedAnimationRunning()) {
 			ItemStack handItemStack = this.getItemInHand(hand);
 			if (!handItemStack.isEmpty()) {
@@ -163,16 +163,16 @@ public class ExtendedRendererEntity extends PathfinderMob implements IAnimatable
 		return PlayState.STOP;
 	}
 
-	private <E extends IAnimatable> PlayState predicateRightArmPose(AnimationEvent<E> event) {
+	private <E extends Animatable> PlayState predicateRightArmPose(AnimationEvent<E> event) {
 		return this.predicateHandPose(this.getRightHand(), false, event);
 	}
 
-	private <E extends IAnimatable> PlayState predicateLeftArmPose(AnimationEvent<E> event) {
+	private <E extends Animatable> PlayState predicateLeftArmPose(AnimationEvent<E> event) {
 		return this.predicateHandPose(this.getLeftHand(), true, event);
 	}
 
-	protected <E extends IAnimatable> PlayState predicateHandPose(InteractionHand hand, boolean leftHand,
-			AnimationEvent<E> event) {
+	protected <E extends Animatable> PlayState predicateHandPose(InteractionHand hand, boolean leftHand,
+																 AnimationEvent<E> event) {
 		ItemStack handItemStack = this.getItemInHand(hand);
 		if (!handItemStack.isEmpty() && !this.isTwoHandedAnimationRunning()) {
 			Item handItem = handItemStack.getItem();
@@ -190,7 +190,7 @@ public class ExtendedRendererEntity extends PathfinderMob implements IAnimatable
 
 	private static final String ANIM_NAME_SPELLCASTING = ANIM_NAME_PREFIX + "arms.cast-spell";
 
-	private <E extends IAnimatable> PlayState predicateTwoHandedPose(AnimationEvent<E> event) {
+	private <E extends Animatable> PlayState predicateTwoHandedPose(AnimationEvent<E> event) {
 		if (this.isTwoHandedAnimationRunning()) {
 			if (this.isSpellCasting()) {
 				event.getController().setAnimation(new AnimationBuilder().addAnimation(ANIM_NAME_SPELLCASTING, EDefaultLoopTypes.LOOP));
@@ -220,8 +220,8 @@ public class ExtendedRendererEntity extends PathfinderMob implements IAnimatable
 	@SuppressWarnings("unused")
 	private static final String ANIM_NAME_GREATSWORD_POSE = ANIM_NAME_PREFIX + "arms.greatsword";
 
-	private <E extends IAnimatable> Optional<PlayState> performTwoHandedLogicPerHand(ItemStack itemStack,
-			boolean leftHanded, AnimationEvent<E> event) {
+	private <E extends Animatable> Optional<PlayState> performTwoHandedLogicPerHand(ItemStack itemStack,
+																					boolean leftHanded, AnimationEvent<E> event) {
 		if (itemStack.isEmpty()) {
 			return Optional.empty();
 		}
@@ -249,7 +249,7 @@ public class ExtendedRendererEntity extends PathfinderMob implements IAnimatable
 	private static final String ANIM_NAME_GREATSWORD_SWING = ANIM_NAME_PREFIX + "arms.attack-greatsword";
 	private static final String ANIM_NAME_SPEAR_SWING = ANIM_NAME_PREFIX + "arms.attack-spear";
 
-	private <E extends IAnimatable> PlayState predicateTwoHandedSwing(AnimationEvent<E> event) {
+	private <E extends Animatable> PlayState predicateTwoHandedSwing(AnimationEvent<E> event) {
 		if (this.isTwoHandedAnimationRunning() && this.swinging) {
 			// Check for greatsword & spear and play their animations
 			if (this.getMainHandItem().getItem().getUseAnimation(this.getMainHandItem()) == UseAnim.SPEAR

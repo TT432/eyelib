@@ -17,7 +17,7 @@ import software.bernie.example.client.DefaultBipedBoneIdents;
 import software.bernie.example.client.EntityResources;
 import software.bernie.example.client.model.entity.ExampleExtendedRendererEntityModel;
 import software.bernie.example.entity.ExtendedRendererEntity;
-import software.bernie.geckolib3.core.processor.IBone;
+import io.github.tt432.eyelib.api.model.Bone;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.renderers.geo.ExtendedGeoEntityRenderer;
 
@@ -60,7 +60,7 @@ public class ExampleExtendedRendererEntityRenderer extends ExtendedGeoEntityRend
 	}
 
 	@Override
-	protected void preRenderItem(PoseStack stack, ItemStack item, String boneName, ExtendedRendererEntity currentEntity, IBone bone) {
+	protected void preRenderItem(PoseStack stack, ItemStack item, String boneName, ExtendedRendererEntity currentEntity, Bone bone) {
 		if (item == this.mainHandItem) {
 			stack.mulPose(Vector3f.XP.rotationDegrees(-90f));
 
@@ -78,7 +78,7 @@ public class ExampleExtendedRendererEntityRenderer extends ExtendedGeoEntityRend
 	}
 
 	@Override
-	protected void postRenderItem(PoseStack matrixStack, ItemStack item, String boneName, ExtendedRendererEntity currentEntity, IBone bone) {}
+	protected void postRenderItem(PoseStack matrixStack, ItemStack item, String boneName, ExtendedRendererEntity currentEntity, Bone bone) {}
 
 	@Override
 	protected ItemStack getArmorForBone(String boneName, ExtendedRendererEntity currentEntity) {

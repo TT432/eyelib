@@ -4,20 +4,20 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import software.bernie.example.registry.TileRegistry;
-import software.bernie.geckolib3.core.IAnimatable;
+import io.github.tt432.eyelib.api.animation.Animatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
-import software.bernie.geckolib3.core.builder.ILoopType.EDefaultLoopTypes;
-import software.bernie.geckolib3.core.controller.AnimationController;
+import io.github.tt432.eyelib.api.animation.LoopType.EDefaultLoopTypes;
+import software.bernie.geckolib3.core.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
 import software.bernie.geckolib3.util.GeckoLibUtil;
 
-public class FertilizerTileEntity extends BlockEntity implements IAnimatable {
+public class FertilizerTileEntity extends BlockEntity implements Animatable {
 	public AnimationFactory factory = GeckoLibUtil.createFactory(this);
 
-	private <E extends BlockEntity & IAnimatable> PlayState predicate(AnimationEvent<E> event) {
+	private <E extends BlockEntity & Animatable> PlayState predicate(AnimationEvent<E> event) {
 		AnimationController controller = event.getController();
 		controller.transitionLengthTicks = 0;
 		if (event.getAnimatable().getLevel().isRaining()) {

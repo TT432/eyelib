@@ -1,12 +1,12 @@
 package software.bernie.geckolib3.core.event.predicate;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.controller.AnimationController;
+import io.github.tt432.eyelib.api.animation.Animatable;
+import software.bernie.geckolib3.core.AnimationController;
 
 import java.util.List;
 
-public class AnimationEvent<T extends IAnimatable> {
+public class AnimationEvent<T extends Animatable> {
 	private final T animatable;
 	public double animationTick;
 	private final float limbSwing;

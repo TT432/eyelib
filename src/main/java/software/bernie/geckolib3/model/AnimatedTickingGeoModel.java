@@ -2,16 +2,16 @@ package software.bernie.geckolib3.model;
 
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.IAnimationTickable;
+import io.github.tt432.eyelib.api.animation.Animatable;
+import io.github.tt432.eyelib.api.Tickable;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
-import software.bernie.geckolib3.resource.GeckoLibCache;
+import io.github.tt432.eyelib.util.math.molang.MolangParser;
 
 import java.util.Collections;
 import java.util.Objects;
 
-public abstract class AnimatedTickingGeoModel<T extends IAnimatable & IAnimationTickable> extends AnimatedGeoModel<T> {
+public abstract class AnimatedTickingGeoModel<T extends Animatable & Tickable> extends AnimatedGeoModel<T> {
 	public AnimatedTickingGeoModel() {
 	}
 
@@ -44,7 +44,7 @@ public abstract class AnimatedTickingGeoModel<T extends IAnimatable & IAnimation
 		getAnimationProcessor().preAnimationSetup(predicate.getAnimatable(), seekTime);
 		if (!this.getAnimationProcessor().getModelRendererList().isEmpty()) {
 			getAnimationProcessor().tickAnimation(animatable, instanceId, seekTime, predicate,
-					GeckoLibCache.getInstance().parser, shouldCrashOnMissing);
+					MolangParser.getInstance(), shouldCrashOnMissing);
 		}
 
 		if (!Minecraft.getInstance().isPaused() || manager.shouldPlayWhilePaused) {

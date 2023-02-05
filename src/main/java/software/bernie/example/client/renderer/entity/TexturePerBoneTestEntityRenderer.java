@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import software.bernie.example.client.EntityResources;
 import software.bernie.example.client.model.entity.TexturePerBoneTestEntityModel;
 import software.bernie.example.entity.TexturePerBoneTestEntity;
-import software.bernie.geckolib3.core.processor.IBone;
+import io.github.tt432.eyelib.api.model.Bone;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.renderers.geo.ExtendedGeoEntityRenderer;
 
@@ -56,7 +56,7 @@ public class TexturePerBoneTestEntityRenderer extends ExtendedGeoEntityRenderer<
 	}
 
 	@Override
-	protected void preRenderItem(PoseStack matrixStack, ItemStack item, String boneName, TexturePerBoneTestEntity currentEntity, IBone bone) {
+	protected void preRenderItem(PoseStack matrixStack, ItemStack item, String boneName, TexturePerBoneTestEntity currentEntity, Bone bone) {
 		
 	}
 
@@ -66,7 +66,7 @@ public class TexturePerBoneTestEntityRenderer extends ExtendedGeoEntityRenderer<
 	}
 
 	@Override
-	protected void postRenderItem(PoseStack matrixStack, ItemStack item, String boneName, TexturePerBoneTestEntity currentEntity, IBone bone) {
+	protected void postRenderItem(PoseStack matrixStack, ItemStack item, String boneName, TexturePerBoneTestEntity currentEntity, Bone bone) {
 		
 	}
 

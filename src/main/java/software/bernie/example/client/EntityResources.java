@@ -5,95 +5,95 @@ import io.github.tt432.eyelib.Eyelib;
 
 public class EntityResources {
 	public static final ResourceLocation GECKOARMOR_MODEL = new ResourceLocation(Eyelib.MOD_ID,
-			"geo/geckoarmor.geo.json");
+			"geo/models/geckoarmor.geo.json");
 	public static final ResourceLocation GECKOARMOR_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
 			"textures/item/geckoarmor_armor.png");
 	public static final ResourceLocation GECKOARMOR_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
-			"animations/geckoarmor.animation.json");
+			"geo/animations/geckoarmor.animation.json");
 
 	public static final ResourceLocation HABITAT_MODEL = new ResourceLocation(Eyelib.MOD_ID,
-			"geo/gecko_habitat.geo.json");
+			"geo/models/gecko_habitat.geo.json");
 	public static final ResourceLocation HABITAT_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
 			"textures/block/gecko_habitat.png");
 	public static final ResourceLocation HABITAT_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
-			"animations/gecko_habitat.animation.json");
+			"geo/animations/gecko_habitat.animation.json");
 
 	public static final ResourceLocation FERTILIZER_MODEL = new ResourceLocation(Eyelib.MOD_ID,
-			"geo/fertilizer.geo.json");
+			"geo/models/fertilizer.geo.json");
 	public static final ResourceLocation FERTILIZER_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
 			"textures/block/fertilizer.png");
 	public static final ResourceLocation FERTILIZER_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
-			"animations/fertilizer.animation.json");
+			"geo/animations/fertilizer.animation.json");
 
-	public static final ResourceLocation BOTARIUM_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/botarium.geo.json");
+	public static final ResourceLocation BOTARIUM_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/models/botarium.geo.json");
 	public static final ResourceLocation BOTARIUM_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
 			"textures/block/botarium.png");
 	public static final ResourceLocation BOTARIUM_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
-			"animations/botarium.animation.json");
+			"geo/animations/botarium.animation.json");
 
-	public static final ResourceLocation JACKINTHEBOX_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/jack.geo.json");
+	public static final ResourceLocation JACKINTHEBOX_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/models/jack.geo.json");
 	public static final ResourceLocation JACKINTHEBOX_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
 			"textures/item/jack.png");
 	public static final ResourceLocation JACKINTHEBOX_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
-			"animations/jackinthebox.animation.json");
+			"geo/animations/jackinthebox.animation.json");
 
-	public static final ResourceLocation PISTOL_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/pistol.geo.json");
+	public static final ResourceLocation PISTOL_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/models/pistol.geo.json");
 	public static final ResourceLocation PISTOL_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
 			"textures/item/pistol.png");
 	public static final ResourceLocation PISTOL_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
-			"animations/pistol.animation.json");
+			"geo/animations/pistol.animation.json");
 
-	public static final ResourceLocation BIKE_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/bike.geo.json");
+	public static final ResourceLocation BIKE_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/models/bike.geo.json");
 	public static final ResourceLocation BIKE_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
 			"textures/model/entity/bike.png");
 	public static final ResourceLocation BIKE_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
-			"animations/bike.animation.json");
+			"geo/animations/bike.animation.json");
 
-	public static final ResourceLocation CAR_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/race_car.geo.json");
+	public static final ResourceLocation CAR_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/models/race_car.geo.json");
 	public static final ResourceLocation CAR_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
 			"textures/entity/race_car.png");
 	public static final ResourceLocation CAR_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
-			"animations/race_car.animation.json");
+			"geo/animations/race_car.animation.json");
 
-	public static final ResourceLocation BAT_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/bat.geo.json");
+	public static final ResourceLocation BAT_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/models/bat.geo.json");
 	public static final ResourceLocation BAT_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
 			"textures/model/entity/bat.png");
 	public static final ResourceLocation BAT_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
-			"animations/bat.animation.json");
+			"geo/animations/bat.animation.json");
 
-	public static final ResourceLocation LAYER_EXAMPLE_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/le.geo.json");
+	public static final ResourceLocation LAYER_EXAMPLE_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/models/le.geo.json");
 	public static final ResourceLocation LAYER_EXAMPLE_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
 			"textures/entity/le.png");
 	public static final ResourceLocation LAYER_EXAMPLE_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
-			"animations/le.animations.json");
+			"geo/animations/le.animations.json");
 
-	public static final ResourceLocation CREEPER_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/creeper.geo.json");
+	public static final ResourceLocation CREEPER_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/models/creeper.geo.json");
 	public static final ResourceLocation CREEPER_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
 			"textures/model/entity/creeper.png");
 	public static final ResourceLocation CREEPER_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
-			"animations/creeper.animation.json");
+			"geo/animations/creeper.animation.json");
 
-	public static final ResourceLocation ROCKET_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/rocket.geo.json");
+	public static final ResourceLocation ROCKET_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/models/rocket.geo.json");
 	public static final ResourceLocation ROCKET_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
 			"textures/entity/projectiles/rocket.png");
 	public static final ResourceLocation ROCKET_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
-			"animations/rocket.animation.json");
+			"geo/animations/rocket.animation.json");
 
 	public static final ResourceLocation EXTENDED_MODEL = new ResourceLocation(Eyelib.MOD_ID,
-			"geo/extendedrendererentity.geo.json");
+			"geo/models/extendedrendererentity.geo.json");
 	public static final ResourceLocation EXTENDED_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
 			"textures/entity/extendedrendererentity.png");
 	public static final ResourceLocation EXTENDED_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
-			"animations/extendedrendererentity.animation.json");
+			"geo/animations/extendedrendererentity.animation.json");
 	public static final ResourceLocation EXTENDED_CAPE_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
 			"textures/entity/extendedrendererentity_cape.png");
 
 	public static final ResourceLocation TEXTUREPERBONE_MODEL = new ResourceLocation(Eyelib.MOD_ID,
-			"geo/textureperbonetestentity.geo.json");
+			"geo/models/textureperbonetestentity.geo.json");
 	public static final ResourceLocation TEXTUREPERBONE_TEXTURE = new ResourceLocation("minecraft",
 			"textures/block/redstone_block.png");
 	public static final ResourceLocation TEXTUREPERBONE_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
-			"animations/textureperbonetestentity.animation.json");
+			"geo/animations/textureperbonetestentity.animation.json");
 	public static final ResourceLocation TEXTUREPERBONE_GLASS_TEXTURE = new ResourceLocation("minecraft",
 			"textures/block/white_stained_glass.png");
 }

@@ -1,16 +1,16 @@
 package software.bernie.geckolib3.core.manager;
 
-import software.bernie.geckolib3.core.IAnimatable;
+import io.github.tt432.eyelib.api.animation.Animatable;
 
 public abstract class AnimationFactory {
-	protected final IAnimatable animatable;
+	protected final Animatable animatable;
 
 	/**
 	 * use {@code GeckolibUtil#createFactory(IAnimatable)}
 	 * 
 	 * @param animatable The animatable object the factory is for
 	 */
-	protected AnimationFactory(IAnimatable animatable) {
+	protected AnimationFactory(Animatable animatable) {
 		this.animatable = animatable;
 	}
 

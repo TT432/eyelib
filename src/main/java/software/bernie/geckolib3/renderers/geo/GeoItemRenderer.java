@@ -6,6 +6,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
+import io.github.tt432.eyelib.api.animation.AnimatableModel;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -20,11 +21,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.RenderProperties;
 import org.jetbrains.annotations.ApiStatus.AvailableSince;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.IAnimatableModel;
-import software.bernie.geckolib3.core.controller.AnimationController;
+import io.github.tt432.eyelib.api.animation.Animatable;
+import software.bernie.geckolib3.core.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
-import software.bernie.geckolib3.core.util.Color;
+import io.github.tt432.eyelib.util.Color;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.model.AnimatedGeoModel;
@@ -36,14 +36,14 @@ import software.bernie.geckolib3.util.RenderUtils;
 import javax.annotation.Nonnull;
 import java.util.Collections;
 
-public abstract class GeoItemRenderer<T extends Item & IAnimatable> extends BlockEntityWithoutLevelRenderer
+public abstract class GeoItemRenderer<T extends Item & Animatable> extends BlockEntityWithoutLevelRenderer
 		implements IGeoRenderer<T> {
 	// Register a model fetcher for this renderer
 	static {
 		AnimationController.addModelFetcher(animatable -> {
 			if (animatable instanceof Item item
 					&& RenderProperties.get(item).getItemStackRenderer()instanceof GeoItemRenderer geoItemRenderer)
-				return (IAnimatableModel<IAnimatable>) geoItemRenderer.getGeoModelProvider();
+				return (AnimatableModel<Animatable>) geoItemRenderer.getGeoModelProvider();
 
 			return null;
 		});

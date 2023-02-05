@@ -8,11 +8,11 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import software.bernie.example.GeckoLibMod;
 import software.bernie.example.registry.ItemRegistry;
-import software.bernie.geckolib3.core.IAnimatable;
+import io.github.tt432.eyelib.api.animation.Animatable;
 import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
-import software.bernie.geckolib3.core.builder.ILoopType.EDefaultLoopTypes;
-import software.bernie.geckolib3.core.controller.AnimationController;
+import io.github.tt432.eyelib.api.animation.LoopType.EDefaultLoopTypes;
+import software.bernie.geckolib3.core.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class GeckoArmorItem extends GeoArmorItem implements IAnimatable {
+public class GeckoArmorItem extends GeoArmorItem implements Animatable {
 	public AnimationFactory factory = GeckoLibUtil.createFactory(this);
 
 	public GeckoArmorItem(ArmorMaterial materialIn, EquipmentSlot slot, Properties builder) {
@@ -32,7 +32,7 @@ public class GeckoArmorItem extends GeoArmorItem implements IAnimatable {
 
 	// Predicate runs every frame
 	@SuppressWarnings("unused")
-	private <P extends IAnimatable> PlayState predicate(AnimationEvent<P> event) {
+	private <P extends Animatable> PlayState predicate(AnimationEvent<P> event) {
 		// This is all the extradata this event carries. The livingentity is the entity
 		// that's wearing the armor. The itemstack and equipmentslottype are self
 		// explanatory.

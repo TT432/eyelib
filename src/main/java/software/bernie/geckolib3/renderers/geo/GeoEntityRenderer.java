@@ -7,6 +7,7 @@ import com.mojang.blaze3d.vertex.VertexMultiConsumer;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
+import io.github.tt432.eyelib.api.animation.AnimatableModel;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -29,11 +30,10 @@ import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.ApiStatus.AvailableSince;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.IAnimatableModel;
-import software.bernie.geckolib3.core.controller.AnimationController;
+import io.github.tt432.eyelib.api.animation.Animatable;
+import software.bernie.geckolib3.core.AnimationController;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
-import software.bernie.geckolib3.core.util.Color;
+import io.github.tt432.eyelib.util.Color;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.geo.render.built.GeoCube;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
@@ -49,11 +49,11 @@ import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class GeoEntityRenderer<T extends LivingEntity & IAnimatable> extends EntityRenderer<T>
+public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> extends EntityRenderer<T>
         implements IGeoRenderer<T> {
     static {
         AnimationController.addModelFetcher(animatable -> animatable instanceof Entity entity ?
-                (IAnimatableModel<IAnimatable>) AnimationUtils.getGeoModelForEntity(entity) : null);
+                (AnimatableModel<Animatable>) AnimationUtils.getGeoModelForEntity(entity) : null);
     }
 
     protected final AnimatedGeoModel<T> modelProvider;

@@ -11,7 +11,7 @@ public class UvUnion {
     public UvFaces faceUV;
     public boolean isBoxUV;
 
-    public static class Serializer implements JsonSerializer<UvUnion>, JsonDeserializer<UvUnion> {
+    protected static class Serializer implements JsonSerializer<UvUnion>, JsonDeserializer<UvUnion> {
         @Override
         public UvUnion deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             UvUnion result = new UvUnion();

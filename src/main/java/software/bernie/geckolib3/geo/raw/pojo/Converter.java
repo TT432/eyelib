@@ -1,6 +1,6 @@
 package software.bernie.geckolib3.geo.raw.pojo;
 
-import io.github.tt432.eyelib.json.JsonUtils;
+import io.github.tt432.eyelib.util.JsonUtils;
 
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;

@@ -1,0 +1,23 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"firing": {
+			"animation_length": 0.16,
+			"bones": {
+				"group": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"0.08": [-7.5, 0, 0],
+						"0.16": [0, 0, 0]
+					},
+					"position": {
+						"0.0": [0, 0, 0],
+						"0.08": [0, 0, 2],
+						"0.16": [0, 0, 0]
+					}
+				}
+			}
+		}
+	},
+	"geckolib_format_version": 2
+}

@@ -1,6 +1,8 @@
 package software.bernie.geckolib3.model;
 
 import com.mojang.blaze3d.Blaze3D;
+import io.github.tt432.eyelib.animation.AnimationEntry;
+import io.github.tt432.eyelib.animation.RawAnimation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -8,15 +10,13 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.core.IAnimatableModel;
-import software.bernie.geckolib3.core.builder.Animation;
+import io.github.tt432.eyelib.api.animation.Animatable;
+import io.github.tt432.eyelib.api.animation.AnimatableModel;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.manager.AnimationData;
-import software.bernie.geckolib3.core.molang.MolangParser;
+import io.github.tt432.eyelib.util.math.molang.MolangParser;
 import software.bernie.geckolib3.core.processor.AnimationProcessor;
-import software.bernie.geckolib3.core.processor.IBone;
-import software.bernie.geckolib3.file.AnimationFile;
+import io.github.tt432.eyelib.api.model.Bone;
 import software.bernie.geckolib3.geo.exception.GeckoLibException;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
@@ -27,8 +27,8 @@ import software.bernie.geckolib3.util.MolangUtils;
 
 import java.util.Collections;
 
-public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelProvider<T>
-		implements IAnimatableModel<T>, IAnimatableModelProvider<T> {
+public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelProvider<T>
+		implements AnimatableModel<T>, IAnimatableModelProvider<T> {
 	private final AnimationProcessor<T> animationProcessor;
 	private GeoModel currentModel;
 
@@ -78,7 +78,8 @@ public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelPr
 		getAnimationProcessor().preAnimationSetup(predicate.getAnimatable(), this.seekTime);
 
 		if (!getAnimationProcessor().getModelRendererList().isEmpty())
-			getAnimationProcessor().tickAnimation(animatable, instanceId, this.seekTime, predicate, GeckoLibCache.getInstance().parser, this.shouldCrashOnMissing);
+			getAnimationProcessor().tickAnimation(animatable, instanceId, this.seekTime, predicate,
+					MolangParser.getInstance(), this.shouldCrashOnMissing);
 	}
 
 	public void codeAnimations(T entity, Integer uniqueID, AnimationEvent<?> customPredicate) {}
@@ -88,20 +89,20 @@ public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelPr
 		return this.animationProcessor;
 	}
 
-	public void registerModelRenderer(IBone modelRenderer) {
+	public void registerModelRenderer(Bone modelRenderer) {
 		this.animationProcessor.registerModelRenderer(modelRenderer);
 	}
 
 	@Override
-	public Animation getAnimation(String name, IAnimatable animatable) {
-		AnimationFile animation = GeckoLibCache.getInstance().getAnimations().get(this.getAnimationFileLocation((T) animatable));
+	public AnimationEntry getAnimation(String name, Animatable animatable) {
+		RawAnimation animation = GeckoLibCache.getInstance().getAnimations().get(this.getAnimationFileLocation((T) animatable));
 
 		if (animation == null) {
 			throw new GeckoLibException(this.getAnimationFileLocation((T) animatable),
 					"Could not find animation file. Please double check name.");
 		}
 
-		return animation.getAnimation(name);
+		return animation.getAnimations().get(name);
 	}
 
 	@Override
@@ -126,8 +127,8 @@ public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelPr
 	}
 
 	@Override
-	public void setMolangQueries(IAnimatable animatable, double seekTime) {
-		MolangParser parser = GeckoLibCache.getInstance().parser;
+	public void setMolangQueries(Animatable animatable, double seekTime) {
+		MolangParser parser = MolangParser.getInstance();
 		Minecraft mc = Minecraft.getInstance();
 
 		parser.setValue("query.actor_count", mc.level::getEntityCount);

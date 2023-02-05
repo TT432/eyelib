@@ -3,10 +3,10 @@ package software.bernie.example.client.model.entity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import software.bernie.example.client.EntityResources;
-import software.bernie.geckolib3.core.IAnimatable;
+import io.github.tt432.eyelib.api.animation.Animatable;
 import software.bernie.geckolib3.model.AnimatedGeoModel;
 
-public class ExampleExtendedRendererEntityModel<T extends LivingEntity & IAnimatable> extends AnimatedGeoModel<T> {
+public class ExampleExtendedRendererEntityModel<T extends LivingEntity & Animatable> extends AnimatedGeoModel<T> {
 	
 	protected final ResourceLocation MODEL_RESLOC;
 	protected final ResourceLocation TEXTURE_DEFAULT;
