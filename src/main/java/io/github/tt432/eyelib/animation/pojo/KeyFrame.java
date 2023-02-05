@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import io.github.tt432.eyelib.util.math.molang.math.IValue;
 import io.github.tt432.eyelib.util.Axis;
+import net.minecraft.util.Mth;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -105,21 +106,18 @@ public class KeyFrame {
     }
 
     /**
-     * 获取对应数据点的对应轴的值
+     * 获取对应数据点的对应轴的指定索引的值
      *
      * @param axis      轴
      * @param dataPoint 索引
      * @return 值
      */
     public double get(Axis axis, int dataPoint) {
-        if (dataPoint != 0)
-            MathE.limitNumber(dataPoint, 0, dataPoints.length - 1);
-
-        if (dataPoint < dataPoints.length) {
-            return dataPoints[dataPoint].get(axis).get();
-        } else {
-            return 0;
+        if (dataPoint != 0) {
+            dataPoint = Mth.clamp(dataPoint, 0, dataPoints.length - 1);
         }
+
+        return dataPoints[dataPoint].get(axis).get();
     }
 
     protected static class Serializer implements JsonDeserializer<KeyFrame> {
