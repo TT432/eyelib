@@ -1,16 +1,16 @@
 package io.github.tt432.eyelib.util;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import io.github.tt432.eyelib.util.math.molang.math.IValue;
-import software.bernie.geckolib3.geo.raw.pojo.Converter;
+import com.google.gson.*;
+import io.github.tt432.eyelib.util.molang.math.IValue;
+import io.github.tt432.eyelib.common.bedrock.model.pojo.Converter;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -28,6 +28,13 @@ public class JsonUtils {
                 .registerTypeAdapter(OffsetDateTime.class, (JsonDeserializer<?>) (json, typeOfT, context) ->
                         Converter.parseDateTimeString(json.getAsString()))
                 .registerTypeHierarchyAdapter(IValue.class, new IValue.Serializer());
+    }
+
+    public static <T extends JsonElement> Stream<T> stream(JsonArray jsonArray, Class<T> jsonClass) {
+        return IntStream.range(0, jsonArray.size())
+                .mapToObj(jsonArray::get)
+                .filter(jsonClass::isInstance)
+                .map(jsonClass::cast);
     }
 
     public static byte[] compress(String string) {

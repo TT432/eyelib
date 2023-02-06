@@ -6,7 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import lombok.Data;
-import io.github.tt432.eyelib.util.math.molang.math.IValue;
+import io.github.tt432.eyelib.util.molang.math.IValue;
 import io.github.tt432.eyelib.util.Axis;
 
 import java.lang.reflect.Type;

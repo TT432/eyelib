@@ -3,8 +3,8 @@ package io.github.tt432.eyelib;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import software.bernie.example.GeckoLibMod;
-import software.bernie.geckolib3.network.GeckoLibNetwork;
+import io.github.tt432.eyelib.example.GeckoLibMod;
+import io.github.tt432.eyelib.network.EyelibNetworkHandler;
 
 @Mod(Eyelib.MOD_ID)
 public class Eyelib {
@@ -31,7 +31,7 @@ public class Eyelib {
 	 */
 	public static synchronized void initialize() {
 		if (!hasInitialized) {
-			GeckoLibNetwork.initialize();
+			EyelibNetworkHandler.initialize();
 		}
 		hasInitialized = true;
 	}

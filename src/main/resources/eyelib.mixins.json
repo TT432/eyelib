@@ -7,7 +7,6 @@
   "mixins": [
   ],
   "client": [
-    "MixinSoundBufferLibrary"
   ],
   "injectors": {
     "defaultRequire": 1

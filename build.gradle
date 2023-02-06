@@ -147,7 +147,7 @@ dependencies {
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
-    minecraftLibrary('com.googlecode.soundlibs:mp3spi:1.9.5.4')
+    library('com.googlecode.soundlibs:mp3spi:1.9.5.4')
 }
 
 // Example for how to get properties into the manifest for reading at runtime.

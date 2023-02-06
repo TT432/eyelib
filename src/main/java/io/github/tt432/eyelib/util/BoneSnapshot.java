@@ -5,7 +5,7 @@
 
 package io.github.tt432.eyelib.util;
 
-import io.github.tt432.eyelib.api.model.Bone;
+import io.github.tt432.eyelib.api.bedrock.model.Bone;
 
 public class BoneSnapshot {
     public BoneSnapshot(Bone modelRenderer) {
