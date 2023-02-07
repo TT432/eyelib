@@ -4,7 +4,7 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
 import lombok.Data;
-import io.github.tt432.eyelib.common.bedrock.model.pojo.FormatVersion;
+import io.github.tt432.eyelib.common.bedrock.FormatVersion;
 
 import java.lang.reflect.Type;
 import java.util.Map;

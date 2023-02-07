@@ -4,7 +4,6 @@ import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.Animation;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.Converter;
-import io.github.tt432.eyelib.common.bedrock.model.pojo.FormatVersion;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.RawGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.tree.GeoBuilder;
 import io.github.tt432.eyelib.common.bedrock.model.tree.RawGeometryTree;
