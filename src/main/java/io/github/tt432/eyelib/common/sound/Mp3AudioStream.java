@@ -15,14 +15,11 @@ import java.nio.ByteBuffer;
  */
 public class Mp3AudioStream implements AudioStream {
     AudioInputStream stream;
-
     byte[] array;
-
     int offset;
 
     public Mp3AudioStream(AudioInputStream stream) throws IOException {
         this.stream = stream;
-        // TODO 应该用一点就读一点，而不是一次读完
         this.array = IOUtils.toByteArray(stream);
         this.offset = 0;
     }

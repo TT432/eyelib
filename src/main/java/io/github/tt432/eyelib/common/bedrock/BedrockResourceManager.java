@@ -2,30 +2,27 @@ package io.github.tt432.eyelib.common.bedrock;
 
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.Animation;
+import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
+import io.github.tt432.eyelib.common.bedrock.model.pojo.Converter;
+import io.github.tt432.eyelib.common.bedrock.model.pojo.FormatVersion;
+import io.github.tt432.eyelib.common.bedrock.model.pojo.RawGeoModel;
+import io.github.tt432.eyelib.common.bedrock.model.tree.GeoBuilder;
+import io.github.tt432.eyelib.common.bedrock.model.tree.RawGeometryTree;
 import io.github.tt432.eyelib.util.JsonUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener.PreparationBarrier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraftforge.common.util.Lazy;
 import org.apache.commons.io.IOUtils;
-import io.github.tt432.eyelib.common.bedrock.model.pojo.Converter;
-import io.github.tt432.eyelib.common.bedrock.model.pojo.FormatVersion;
-import io.github.tt432.eyelib.common.bedrock.model.pojo.RawGeoModel;
-import io.github.tt432.eyelib.common.bedrock.model.tree.RawGeometryTree;
-import io.github.tt432.eyelib.common.bedrock.model.tree.GeoBuilder;
-import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Collections;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
@@ -37,8 +34,6 @@ public class BedrockResourceManager {
     public static BedrockResourceManager getInstance() {
         return INSTANCE.get();
     }
-
-    private static final Set<String> excludedNamespaces = ObjectOpenHashSet.of("moreplayermodels", "customnpcs", "gunsrpg");
 
     private Map<ResourceLocation, Animation> animations = Collections.emptyMap();
     private Map<ResourceLocation, GeoModel> geoModels = Collections.emptyMap();
@@ -131,11 +126,7 @@ public class BedrockResourceManager {
                     return tasks;
                 }, executor).thenAcceptAsync(tasks -> {
                     for (Entry<ResourceLocation, CompletableFuture<T>> entry : tasks.entrySet()) {
-                        // Shouldn't be any duplicates as they are caught above
-                        // Skips moreplayermodels and customnpc namespaces as they use an animation
-                        // folder as well
-                        if (!excludedNamespaces.contains(entry.getKey().getNamespace().toLowerCase(Locale.ROOT)))
-                            map.accept(entry.getKey(), entry.getValue().join());
+                        map.accept(entry.getKey(), entry.getValue().join());
                     }
                 }, executor);
     }
