@@ -1,11 +1,11 @@
 package io.github.tt432.eyelib.util.molang.math.functions.utility;
 
 import io.github.tt432.eyelib.util.math.MathE;
-import io.github.tt432.eyelib.util.molang.math.IValue;
+import io.github.tt432.eyelib.util.molang.MolangValue;
 import io.github.tt432.eyelib.util.molang.math.functions.Function;
 
 public class LerpRotate extends Function {
-    public LerpRotate(IValue[] values, String name) {
+    public LerpRotate(MolangValue[] values, String name) {
         super(values, name, 3);
     }
 

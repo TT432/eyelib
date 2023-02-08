@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.util.molang.expressions;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import io.github.tt432.eyelib.util.molang.LazyVariable;
+import io.github.tt432.eyelib.util.molang.math.LazyVariable;
 
 import java.util.List;
 import java.util.Map;
@@ -30,7 +30,7 @@ public class MolangMultiStatement extends MolangExpression {
 		for (MolangExpression expression : this.expressions) {
 			builder.add(expression.toString());
 
-			if (expression instanceof MolangValue value && value.returns)
+			if (expression instanceof MolangResult value && value.returns)
 				break;
 		}
 

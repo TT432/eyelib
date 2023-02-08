@@ -1,10 +1,10 @@
 package io.github.tt432.eyelib.util.molang.math.functions.rounding;
 
-import io.github.tt432.eyelib.util.molang.math.IValue;
+import io.github.tt432.eyelib.util.molang.MolangValue;
 import io.github.tt432.eyelib.util.molang.math.functions.Function;
 
 public class Trunc extends Function {
-    public Trunc(IValue[] values, String name) {
+    public Trunc(MolangValue[] values, String name) {
         super(values, name, 1);
     }
 

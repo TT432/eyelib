@@ -11,18 +11,18 @@ public interface LoopType {
 
     boolean isRepeatingAfterEnd();
 
-    enum LoopTypeImpl implements LoopType {
+    enum Impl implements LoopType {
         LOOP(true),
         PLAY_ONCE,
         HOLD_ON_LAST_FRAME;
 
         private final boolean looping;
 
-        LoopTypeImpl(boolean looping) {
+        Impl(boolean looping) {
             this.looping = looping;
         }
 
-        LoopTypeImpl() {
+        Impl() {
             this(false);
         }
 
@@ -41,32 +41,32 @@ public interface LoopType {
 
     static LoopType fromJson(JsonElement json) {
         if (json == null || !json.isJsonPrimitive()) {
-            return LoopTypeImpl.PLAY_ONCE;
+            return Impl.PLAY_ONCE;
         }
 
         JsonPrimitive primitive = json.getAsJsonPrimitive();
 
         if (primitive.isBoolean()) {
-            return primitive.getAsBoolean() ? LoopTypeImpl.LOOP : LoopTypeImpl.PLAY_ONCE;
+            return primitive.getAsBoolean() ? Impl.LOOP : Impl.PLAY_ONCE;
         }
 
         if (primitive.isString()) {
             String string = primitive.getAsString();
 
             if (string.equalsIgnoreCase("false")) {
-                return LoopTypeImpl.PLAY_ONCE;
+                return Impl.PLAY_ONCE;
             }
 
             if (string.equalsIgnoreCase("true")) {
-                return LoopTypeImpl.LOOP;
+                return Impl.LOOP;
             }
 
             try {
-                return LoopTypeImpl.valueOf(string.toUpperCase(Locale.ROOT));
+                return Impl.valueOf(string.toUpperCase(Locale.ROOT));
             } catch (Exception ex) {
             }
         }
 
-        return LoopTypeImpl.PLAY_ONCE;
+        return Impl.PLAY_ONCE;
     }
 }

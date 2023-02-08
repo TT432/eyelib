@@ -1,7 +1,9 @@
 package io.github.tt432.eyelib.util.molang.math;
 
 
-public record Negative(IValue value) implements IValue {
+import io.github.tt432.eyelib.util.molang.MolangValue;
+
+public record Negative(MolangValue value) implements MolangValue {
     public double get() {
         return -this.value.get();
     }

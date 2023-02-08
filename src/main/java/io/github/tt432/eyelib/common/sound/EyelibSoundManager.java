@@ -11,11 +11,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+import org.apache.commons.io.IOUtils;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -91,19 +93,21 @@ public class EyelibSoundManager {
             try {
                 InputStream is = manager.getResource(format.converter.idToFile(id)).getInputStream();
 
-                if (format == Format.mp3)
-                    return transform(is);
+                if (format == Format.mp3 || format == Format.wav)
+                    return transform(is, format);
                 else if (format == Format.ogg)
                     return isWrapper ? new LoopingAudioStream(OggAudioStream::new, is) : new OggAudioStream(is);
                 else return null;
             } catch (IOException | UnsupportedAudioFileException e) {
+                e.printStackTrace();
                 throw new RuntimeException(e);
             }
         }, Util.backgroundExecutor());
     }
 
-    AudioStream transform(InputStream is) throws UnsupportedAudioFileException, IOException {
-        AudioInputStream ais = new MpegAudioFileReader().getAudioInputStream(is);
+    AudioStream transform(InputStream is, Format format) throws UnsupportedAudioFileException, IOException {
+        AudioInputStream ais = format == Format.mp3 ? new MpegAudioFileReader().getAudioInputStream(is)
+                : AudioSystem.getAudioInputStream(new ByteArrayInputStream(IOUtils.toByteArray(is)));
         AudioFormat originalFormat = ais.getFormat();
 
         if (originalFormat.getEncoding() != AudioFormat.Encoding.PCM_SIGNED) {

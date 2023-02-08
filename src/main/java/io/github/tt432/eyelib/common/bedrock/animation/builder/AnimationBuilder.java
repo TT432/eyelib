@@ -7,7 +7,7 @@ package io.github.tt432.eyelib.common.bedrock.animation.builder;
 
 import io.github.tt432.eyelib.api.bedrock.animation.LoopType;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import io.github.tt432.eyelib.api.bedrock.animation.LoopType.LoopTypeImpl;
+import io.github.tt432.eyelib.api.bedrock.animation.LoopType.Impl;
 
 import java.util.List;
 
@@ -58,25 +58,25 @@ public class AnimationBuilder {
 		}
 
 		for (int i = 0; i < timesToRepeat; i++) {
-			addAnimation(animationName, LoopTypeImpl.PLAY_ONCE);
+			addAnimation(animationName, Impl.PLAY_ONCE);
 		}
 
 		return this;
 	}
 	
 	public AnimationBuilder addAnimationPlayOnce(String animationName) {
-		return this.addAnimation(animationName, LoopTypeImpl.PLAY_ONCE);
+		return this.addAnimation(animationName, Impl.PLAY_ONCE);
 	}
 	
 	public AnimationBuilder addAnimationLoop(String animationName) {
-		return this.addAnimation(animationName, LoopTypeImpl.LOOP);
+		return this.addAnimation(animationName, Impl.LOOP);
 	}
 	
 	/*
 	 * Not implemented yet!
 	 */
 	public AnimationBuilder addAnimationHold(String animationName) {
-		return this.addAnimation(animationName, LoopTypeImpl.HOLD_ON_LAST_FRAME);
+		return this.addAnimation(animationName, Impl.HOLD_ON_LAST_FRAME);
 	}
 	
 	//Below will use "Wait instructions", basically empty animations that do nothing, not sure if we really need those honestly

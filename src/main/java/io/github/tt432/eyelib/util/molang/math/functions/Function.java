@@ -1,16 +1,16 @@
 package io.github.tt432.eyelib.util.molang.math.functions;
 
-import io.github.tt432.eyelib.util.molang.math.IValue;
+import io.github.tt432.eyelib.util.molang.MolangValue;
 import lombok.Getter;
 
 
-public abstract class Function implements IValue {
+public abstract class Function implements MolangValue {
     @Getter
     protected int requiredArguments;
-    protected IValue[] args;
+    protected MolangValue[] args;
     protected String name;
 
-    protected Function(IValue[] values, String name, int requiredArguments) throws IllegalArgumentException {
+    protected Function(MolangValue[] values, String name, int requiredArguments) throws IllegalArgumentException {
         this.requiredArguments = requiredArguments;
 
         if (values.length < requiredArguments) {

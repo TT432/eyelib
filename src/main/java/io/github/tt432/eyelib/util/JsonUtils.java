@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.util;
 
 import com.google.gson.*;
-import io.github.tt432.eyelib.util.molang.math.IValue;
+import io.github.tt432.eyelib.util.molang.MolangValue;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.Converter;
 
 import java.io.ByteArrayInputStream;
@@ -27,7 +27,7 @@ public class JsonUtils {
                 .disableHtmlEscaping()
                 .registerTypeAdapter(OffsetDateTime.class, (JsonDeserializer<?>) (json, typeOfT, context) ->
                         Converter.parseDateTimeString(json.getAsString()))
-                .registerTypeHierarchyAdapter(IValue.class, new IValue.Serializer());
+                .registerTypeHierarchyAdapter(MolangValue.class, new MolangValue.Serializer());
     }
 
     public static <T extends JsonElement> Stream<T> stream(JsonArray jsonArray, Class<T> jsonClass) {

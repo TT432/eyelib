@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
-import io.github.tt432.eyelib.api.bedrock.animation.LoopType.LoopTypeImpl;
+import io.github.tt432.eyelib.api.bedrock.animation.LoopType.Impl;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
@@ -26,9 +26,9 @@ public class CarEntity extends Animal implements Animatable {
 
 	private <E extends Animatable> PlayState predicate(AnimationEvent<E> event) {
 		if (event.isMoving() && this.getFirstPassenger() != null) {
-			event.getController().setAnimation(new AnimationBuilder().addAnimation("moving", LoopTypeImpl.LOOP));
+			event.getController().setAnimation(new AnimationBuilder().addAnimation("moving", Impl.LOOP));
 		} else {
-			event.getController().setAnimation(new AnimationBuilder().addAnimation("idle", LoopTypeImpl.LOOP));
+			event.getController().setAnimation(new AnimationBuilder().addAnimation("idle", Impl.LOOP));
 		}
 		return PlayState.CONTINUE;
 	}

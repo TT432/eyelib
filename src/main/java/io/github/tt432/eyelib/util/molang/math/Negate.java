@@ -1,10 +1,12 @@
 package io.github.tt432.eyelib.util.molang.math;
 
 
-public class Negate implements IValue {
-    public IValue value;
+import io.github.tt432.eyelib.util.molang.MolangValue;
 
-    public Negate(IValue value) {
+public class Negate implements MolangValue {
+    public MolangValue value;
+
+    public Negate(MolangValue value) {
         this.value = value;
     }
 

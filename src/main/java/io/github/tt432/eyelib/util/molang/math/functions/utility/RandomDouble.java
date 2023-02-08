@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.util.molang.math.functions.utility;
 
-import io.github.tt432.eyelib.util.molang.math.IValue;
+import io.github.tt432.eyelib.util.molang.MolangValue;
 import io.github.tt432.eyelib.util.molang.math.functions.Function;
 
 import java.util.Random;
@@ -8,7 +8,7 @@ import java.util.Random;
 public class RandomDouble extends Function {
     public final Random random;
 
-    public RandomDouble(IValue[] values, String name) {
+    public RandomDouble(MolangValue[] values, String name) {
         super(values, name, 0);
 
         this.random = new Random();

@@ -1,6 +1,4 @@
-package io.github.tt432.eyelib.util.molang;
-
-import io.github.tt432.eyelib.util.molang.math.Variable;
+package io.github.tt432.eyelib.util.molang.math;
 
 import java.util.function.DoubleSupplier;
 

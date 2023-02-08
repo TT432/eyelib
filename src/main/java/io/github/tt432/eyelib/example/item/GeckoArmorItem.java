@@ -11,7 +11,7 @@ import io.github.tt432.eyelib.example.registry.ItemRegistry;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
-import io.github.tt432.eyelib.api.bedrock.animation.LoopType.LoopTypeImpl;
+import io.github.tt432.eyelib.api.bedrock.animation.LoopType.Impl;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
@@ -42,7 +42,7 @@ public class GeckoArmorItem extends GeoArmorItem implements Animatable {
 
 		// Always loop the animation but later on in this method we'll decide whether or
 		// not to actually play it
-		event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.gecko_armor.animate", LoopTypeImpl.LOOP));
+		event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.gecko_armor.animate", Impl.LOOP));
 
 		// If the living entity is an armorstand just play the animation nonstop
 		if (livingEntity instanceof ArmorStand) {

@@ -1,7 +1,9 @@
 package io.github.tt432.eyelib.util.molang.math;
 
 
-public class Constant implements IValue {
+import io.github.tt432.eyelib.util.molang.MolangValue;
+
+public class Constant implements MolangValue {
     private double value;
 
     public Constant(double value) {

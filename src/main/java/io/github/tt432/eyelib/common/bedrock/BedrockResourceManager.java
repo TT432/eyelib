@@ -7,8 +7,10 @@ import io.github.tt432.eyelib.common.bedrock.model.pojo.Converter;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.RawGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.tree.GeoBuilder;
 import io.github.tt432.eyelib.common.bedrock.model.tree.RawGeometryTree;
+import io.github.tt432.eyelib.common.bedrock.particle.pojo.Particle;
 import io.github.tt432.eyelib.util.JsonUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener.PreparationBarrier;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -34,38 +36,36 @@ public class BedrockResourceManager {
         return INSTANCE.get();
     }
 
+    @Getter
     private Map<ResourceLocation, Animation> animations = Collections.emptyMap();
+    @Getter
     private Map<ResourceLocation, GeoModel> geoModels = Collections.emptyMap();
-
-    public Map<ResourceLocation, Animation> getAnimations() {
-        if (!Eyelib.hasInitialized)
-            throw new RuntimeException("GeckoLib was never initialized! Please read the documentation!");
-
-        return animations;
-    }
-
-    public Map<ResourceLocation, GeoModel> getGeoModels() {
-        if (!Eyelib.hasInitialized)
-            throw new RuntimeException("GeckoLib was never initialized! Please read the documentation!");
-
-        return geoModels;
-    }
+    @Getter
+    private Map<ResourceLocation, Particle> particles = Collections.emptyMap();
 
     public CompletableFuture<Void> reload(PreparationBarrier stage, ResourceManager resourceManager,
                                           ProfilerFiller preparationsProfiler, ProfilerFiller reloadProfiler,
                                           Executor backgroundExecutor, Executor gameExecutor) {
         Map<ResourceLocation, Animation> animations = new Object2ObjectOpenHashMap<>();
         Map<ResourceLocation, GeoModel> geoModels = new Object2ObjectOpenHashMap<>();
+        Map<ResourceLocation, Particle> particles = Collections.emptyMap();
 
         return CompletableFuture.allOf(
                         loadResources(backgroundExecutor, resourceManager, "geo/animations",
                                 animation -> loadAnimation(animation, resourceManager), animations::put),
                         loadResources(backgroundExecutor, resourceManager, "geo/models",
-                                resource -> loadModel(resourceManager, resource), geoModels::put))
+                                resource -> loadModel(resourceManager, resource), geoModels::put),
+                        loadResources(backgroundExecutor, resourceManager, "geo/particles",
+                                resource -> loadParticles(resourceManager, resource), particles::put))
                 .thenCompose(stage::wait).thenAcceptAsync(empty -> {
                     this.animations = animations;
                     this.geoModels = geoModels;
+                    this.particles = particles;
                 }, gameExecutor);
+    }
+
+    private Particle loadParticles(ResourceManager resourceManager, ResourceLocation resource) {
+        return JsonUtils.normal.fromJson(getResourceAsString(resource, resourceManager), Particle.class);
     }
 
     public GeoModel loadModel(ResourceManager resourceManager, ResourceLocation location) {

@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.util.molang.expressions;
 
-import io.github.tt432.eyelib.util.molang.math.IValue;
+import io.github.tt432.eyelib.util.molang.MolangValue;
 
-public abstract class MolangExpression implements IValue {
+public abstract class MolangExpression implements MolangValue {
 
 }

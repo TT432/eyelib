@@ -5,7 +5,7 @@ import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.util.molang.expressions.MolangAssignment;
 import io.github.tt432.eyelib.util.molang.expressions.MolangExpression;
 import io.github.tt432.eyelib.util.molang.expressions.MolangMultiStatement;
-import io.github.tt432.eyelib.util.molang.expressions.MolangValue;
+import io.github.tt432.eyelib.util.molang.expressions.MolangResult;
 import io.github.tt432.eyelib.util.molang.math.*;
 import io.github.tt432.eyelib.util.molang.math.functions.Function;
 import io.github.tt432.eyelib.util.molang.math.functions.classic.*;
@@ -28,7 +28,7 @@ import java.util.function.DoubleSupplier;
 /**
  * MoLang parser
  * This bad boy parses Molang expressions
- * https://bedrock.dev/docs/1.19.0.0/1.19.30.23/Molang#Math%20Functions
+ * <a href="https://bedrock.dev/docs/1.19.0.0/1.19.30.23/Molang#Math%20Functions">Molang</a>
  */
 public class MolangParser {
     private static final class H {
@@ -42,8 +42,8 @@ public class MolangParser {
     private static final Map<String, LazyVariable> variables = new HashMap<>();
     private static final Map<String, Class<? extends Function>> functions = new HashMap<>();
 
-    public static final MolangExpression ZERO = new MolangValue(new Constant(0));
-    public static final MolangExpression ONE = new MolangValue(new Constant(1));
+    public static final MolangExpression ZERO = new MolangResult(new Constant(0));
+    public static final MolangExpression ONE = new MolangResult(new Constant(1));
     public static final String RETURN = "return ";
 
     private MolangParser() {
@@ -104,7 +104,7 @@ public class MolangParser {
         variables.put(variable.getName(), variable);
     }
 
-    public IValue parse(String expression) throws Exception {
+    public MolangValue parse(String expression) throws Exception {
         return parseSymbols(breakdownChars(breakdown(expression)));
     }
 
@@ -135,13 +135,13 @@ public class MolangParser {
         JsonPrimitive primitive = element.getAsJsonPrimitive();
 
         if (primitive.isNumber())
-            return new MolangValue(new Constant(primitive.getAsDouble()));
+            return new MolangResult(new Constant(primitive.getAsDouble()));
 
         if (primitive.isString()) {
             String string = primitive.getAsString();
 
             try {
-                return new MolangValue(new Constant(Double.parseDouble(string)));
+                return new MolangResult(new Constant(Double.parseDouble(string)));
             } catch (NumberFormatException ex) {
                 return parseExpression(string);
             }
@@ -179,7 +179,7 @@ public class MolangParser {
     protected MolangExpression parseOneLine(String expression, MolangMultiStatement currentStatement) throws MolangException {
         if (expression.startsWith(RETURN)) {
             try {
-                return new MolangValue(parse(expression.substring(RETURN.length()))).addReturn();
+                return new MolangResult(parse(expression.substring(RETURN.length()))).addReturn();
             } catch (Exception e) {
                 throw new MolangException("Couldn't parse return '" + expression + "' expression!");
             }
@@ -203,7 +203,7 @@ public class MolangParser {
                 return new MolangAssignment(variable, parseSymbolsMolang(symbols));
             }
 
-            return new MolangValue(parseSymbolsMolang(symbols));
+            return new MolangResult(parseSymbolsMolang(symbols));
         } catch (Exception e) {
             throw new MolangException("Couldn't parse '" + expression + "' expression!");
         }
@@ -212,7 +212,7 @@ public class MolangParser {
     /**
      * Wrapper around {@link #parseSymbols(List)} to throw {@link MolangException}
      */
-    private IValue parseSymbolsMolang(List<Object> symbols) throws MolangException {
+    private MolangValue parseSymbolsMolang(List<Object> symbols) throws MolangException {
         try {
             return this.parseSymbols(symbols);
         } catch (Exception e) {
@@ -224,12 +224,10 @@ public class MolangParser {
 
     public String[] breakdown(String expression) throws Exception {
         if (!expression.matches("^[\\w\\d\\s_+-/*%^&|<>=!?:.,()]+$")) {
-            throw new Exception("Given expression '" + expression + "' contains illegal characters!");
+            throw new IllegalArgumentException("Given expression '" + expression + "' contains illegal characters!");
         }
 
-
         expression = expression.replaceAll("\\s+", "");
-
         String[] chars = expression.split("(?!^)");
 
         int left = 0;
@@ -243,11 +241,10 @@ public class MolangParser {
             }
         }
 
-
         if (left != right) {
-            throw new Exception("Given expression '" + expression + "' has more uneven amount of parenthesis, there are " + left + " open and " + right + " closed!");
+            throw new IllegalArgumentException("Given expression '" + expression + "' has more uneven amount of parenthesis, " +
+                    "there are " + left + " open and " + right + " closed!");
         }
-
 
         return chars;
     }
@@ -255,7 +252,7 @@ public class MolangParser {
 
     public List<Object> breakdownChars(String[] chars) {
         List<Object> symbols = new ArrayList<>();
-        String buffer = "";
+        StringBuilder buffer = new StringBuilder();
         int len = chars.length;
 
         for (int i = 0; i < len; i++) {
@@ -263,18 +260,15 @@ public class MolangParser {
             boolean longOperator = (i > 0 && isOperator(chars[i - 1] + s));
 
             if (isOperator(s) || longOperator || s.equals(",")) {
-
-
                 if (s.equals("-")) {
                     int size = symbols.size();
-
-                    boolean isFirst = (size == 0 && buffer.isEmpty());
-
-
-                    boolean isOperatorBehind = (size > 0 && (isOperator(symbols.get(size - 1)) || symbols.get(size - 1).equals(",")) && buffer.isEmpty());
+                    boolean isFirst = (size == 0 && (buffer.length() == 0));
+                    boolean isOperatorBehind = (size > 0 &&
+                            (isOperator(symbols.get(size - 1)) || symbols.get(size - 1).equals(",")) &&
+                            (buffer.length() == 0));
 
                     if (isFirst || isOperatorBehind) {
-                        buffer = buffer + s;
+                        buffer.append(s);
 
                         continue;
                     }
@@ -282,13 +276,12 @@ public class MolangParser {
 
                 if (longOperator) {
                     s = chars[i - 1] + s;
-                    buffer = buffer.substring(0, buffer.length() - 1);
+                    buffer = new StringBuilder(buffer.substring(0, buffer.length() - 1));
                 }
 
-
-                if (!buffer.isEmpty()) {
-                    symbols.add(buffer);
-                    buffer = "";
+                if (buffer.length() > 0) {
+                    symbols.add(buffer.toString());
+                    buffer = new StringBuilder();
                 }
 
                 symbols.add(s);
@@ -296,9 +289,9 @@ public class MolangParser {
             }
             if (s.equals("(")) {
 
-                if (!buffer.isEmpty()) {
-                    symbols.add(buffer);
-                    buffer = "";
+                if (buffer.length() > 0) {
+                    symbols.add(buffer.toString());
+                    buffer = new StringBuilder();
                 }
 
                 int counter = 1;
@@ -313,28 +306,29 @@ public class MolangParser {
                     }
 
                     if (counter == 0) {
-                        symbols.add(breakdownChars(buffer.split("(?!^)")));
+                        symbols.add(breakdownChars(buffer.toString().split("(?!^)")));
 
                         i = j;
-                        buffer = "";
+                        buffer = new StringBuilder();
 
                         break;
                     }
-                    buffer = buffer + c;
+                    buffer.append(c);
                 }
             } else {
-                buffer = buffer + s;
+                buffer.append(s);
             }
         }
-        if (!buffer.isEmpty()) {
-            symbols.add(buffer);
+
+        if (buffer.length() > 0) {
+            symbols.add(buffer.toString());
         }
 
         return symbols;
     }
 
-    public IValue parseSymbols(List<Object> symbols) throws Exception {
-        IValue ternary = tryTernary(symbols);
+    public MolangValue parseSymbols(List<Object> symbols) throws Exception {
+        MolangValue ternary = tryTernary(symbols);
 
         if (ternary != null) {
             return ternary;
@@ -366,23 +360,24 @@ public class MolangParser {
                 Operation right = operationForOperator((String) symbols.get(op));
 
                 if (right.value > left.value) {
-                    IValue leftValue = parseSymbols(symbols.subList(0, leftOp));
-                    IValue rightValue = parseSymbols(symbols.subList(leftOp + 1, size));
+                    MolangValue leftValue = parseSymbols(symbols.subList(0, leftOp));
+                    MolangValue rightValue = parseSymbols(symbols.subList(leftOp + 1, size));
 
                     return new Operator(left, leftValue, rightValue);
                 }
+
                 if (left.value > right.value) {
                     Operation initial = operationForOperator((String) symbols.get(lastOp));
 
                     if (initial.value < left.value) {
-                        IValue iValue1 = parseSymbols(symbols.subList(0, lastOp));
-                        IValue iValue2 = parseSymbols(symbols.subList(lastOp + 1, size));
+                        MolangValue molangValue1 = parseSymbols(symbols.subList(0, lastOp));
+                        MolangValue molangValue2 = parseSymbols(symbols.subList(lastOp + 1, size));
 
-                        return new Operator(initial, iValue1, iValue2);
+                        return new Operator(initial, molangValue1, molangValue2);
                     }
 
-                    IValue leftValue = parseSymbols(symbols.subList(0, op));
-                    IValue rightValue = parseSymbols(symbols.subList(op + 1, size));
+                    MolangValue leftValue = parseSymbols(symbols.subList(0, op));
+                    MolangValue rightValue = parseSymbols(symbols.subList(op + 1, size));
 
                     return new Operator(right, leftValue, rightValue);
                 }
@@ -429,8 +424,7 @@ public class MolangParser {
         return -1;
     }
 
-
-    protected IValue tryTernary(List<Object> symbols) throws Exception {
+    protected MolangValue tryTernary(List<Object> symbols) throws Exception {
         int question = -1;
         int questions = 0;
         int colon = -1;
@@ -467,7 +461,7 @@ public class MolangParser {
     }
 
 
-    protected IValue createFunction(String first, List<Object> args) throws Exception {
+    protected MolangValue createFunction(String first, List<Object> args) throws Exception {
         if (first.equals("!")) {
             return new Negate(parseSymbols(args));
         }
@@ -475,7 +469,6 @@ public class MolangParser {
         if (first.startsWith("!") && first.length() > 1) {
             return new Negate(createFunction(first.substring(1), args));
         }
-
 
         if (first.equals("-")) {
             return new Negative(new Group(parseSymbols(args)));
@@ -485,12 +478,12 @@ public class MolangParser {
             return new Negative(createFunction(first.substring(1), args));
         }
 
-        if (!this.functions.containsKey(first)) {
+        if (!functions.containsKey(first)) {
             throw new Exception("Function '" + first + "' couldn't be found!");
         }
 
-        List<IValue> values = new ArrayList<>();
-        List<Object> buffer = new ArrayList();
+        List<MolangValue> values = new ArrayList<>();
+        List<Object> buffer = new ArrayList<>();
 
         if (!args.isEmpty() && !args.get(0).equals("+"))
             buffer.add(args.get(0));
@@ -506,17 +499,16 @@ public class MolangParser {
             buffer.add(o);
         }
 
-
         if (!buffer.isEmpty()) {
             values.add(parseSymbols(buffer));
         }
 
-        Class<? extends Function> function = this.functions.get(first);
-        Constructor<? extends Function> ctor = function.getConstructor(IValue[].class, String.class);
-        return ctor.newInstance(values.toArray(new IValue[0]), first);
+        Class<? extends Function> function = functions.get(first);
+        Constructor<? extends Function> ctor = function.getConstructor(MolangValue[].class, String.class);
+        return ctor.newInstance(values.toArray(new MolangValue[0]), first);
     }
 
-    public IValue valueFromObject(Object object) throws Exception {
+    public MolangValue valueFromObject(Object object) throws Exception {
         if (object instanceof String symbol) {
             if (symbol.startsWith("!")) {
                 return new Negate(valueFromObject(symbol.substring(1)));
@@ -533,7 +525,7 @@ public class MolangParser {
                         return new Negative(value);
                     }
                 } else {
-                    IValue value = getVariable(symbol);
+                    MolangValue value = getVariable(symbol);
 
 
                     if (value != null) {

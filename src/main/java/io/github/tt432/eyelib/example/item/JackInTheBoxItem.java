@@ -22,7 +22,7 @@ import io.github.tt432.eyelib.example.client.renderer.item.JackInTheBoxRenderer;
 import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationState;
 import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
-import io.github.tt432.eyelib.api.bedrock.animation.LoopType.LoopTypeImpl;
+import io.github.tt432.eyelib.api.bedrock.animation.LoopType.Impl;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
@@ -109,13 +109,13 @@ public class JackInTheBoxItem extends Item implements Animatable, Syncable, Soun
 				// Set the animation to open the JackInTheBoxItem which will start playing music
 				// and
 				// eventually do the actual animation. Also sets it to not loop
-				controller.setAnimation(new AnimationBuilder().addAnimation("Soaryn_chest_popup", LoopTypeImpl.PLAY_ONCE));
+				controller.setAnimation(new AnimationBuilder().addAnimation("Soaryn_chest_popup", Impl.PLAY_ONCE));
 			}
 		}
 	}
 
 	@Override
 	public SoundInstance getSound(ResourceLocation location) {
-		return SoundPlayer.forPlayer(Minecraft.getInstance().player, location);
+		return SoundPlayer.forEntity(Minecraft.getInstance().player, location);
 	}
 }

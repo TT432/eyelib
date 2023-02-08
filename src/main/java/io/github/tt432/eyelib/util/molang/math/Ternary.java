@@ -1,7 +1,9 @@
 package io.github.tt432.eyelib.util.molang.math;
 
 
-public record Ternary(IValue condition, IValue ifTrue, IValue ifFalse) implements IValue {
+import io.github.tt432.eyelib.util.molang.MolangValue;
+
+public record Ternary(MolangValue condition, MolangValue ifTrue, MolangValue ifFalse) implements MolangValue {
     public double get() {
         return (this.condition.get() != 0.0D) ? this.ifTrue.get() : this.ifFalse.get();
     }

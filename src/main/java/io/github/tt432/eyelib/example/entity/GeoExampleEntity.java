@@ -12,7 +12,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
-import io.github.tt432.eyelib.api.bedrock.animation.LoopType.LoopTypeImpl;
+import io.github.tt432.eyelib.api.bedrock.animation.LoopType.Impl;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
@@ -30,8 +30,8 @@ public class GeoExampleEntity extends PathfinderMob implements Animatable, Ticka
 	private <E extends Animatable> PlayState predicate(AnimationEvent<E> event) {
 		if (this.isAnimating) {
 			event.getController()
-					.setAnimation(new AnimationBuilder().addAnimation("animation.bat.fly", LoopTypeImpl.PLAY_ONCE)
-							.addAnimation("animation.bat.idle", LoopTypeImpl.PLAY_ONCE));
+					.setAnimation(new AnimationBuilder().addAnimation("animation.bat.fly", Impl.PLAY_ONCE)
+							.addAnimation("animation.bat.idle", Impl.PLAY_ONCE));
 		} else {
 			event.getController().clearAnimationCache();
 			return PlayState.STOP;
@@ -41,7 +41,7 @@ public class GeoExampleEntity extends PathfinderMob implements Animatable, Ticka
 
 	private <E extends Animatable> PlayState predicateSpin(AnimationEvent<E> event) {
 		event.getController()
-				.setAnimation(new AnimationBuilder().addAnimation("animation.bat.spin", LoopTypeImpl.LOOP));
+				.setAnimation(new AnimationBuilder().addAnimation("animation.bat.spin", Impl.LOOP));
 		return PlayState.CONTINUE;
 	}
 

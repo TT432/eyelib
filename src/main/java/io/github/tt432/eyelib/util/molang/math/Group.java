@@ -1,10 +1,12 @@
 package io.github.tt432.eyelib.util.molang.math;
 
 
-public class Group implements IValue {
-    private final IValue value;
+import io.github.tt432.eyelib.util.molang.MolangValue;
 
-    public Group(IValue value) {
+public class Group implements MolangValue {
+    private final MolangValue value;
+
+    public Group(MolangValue value) {
         this.value = value;
     }
 

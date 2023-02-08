@@ -7,7 +7,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
-import io.github.tt432.eyelib.api.bedrock.animation.LoopType.LoopTypeImpl;
+import io.github.tt432.eyelib.api.bedrock.animation.LoopType.Impl;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
@@ -22,7 +22,7 @@ public class HabitatTileEntity extends BlockEntity implements Animatable {
 	}
 
 	private <E extends BlockEntity & Animatable> PlayState predicate(AnimationEvent<E> event) {
-		event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.gecko_habitat.idle", LoopTypeImpl.LOOP));
+		event.getController().setAnimation(new AnimationBuilder().addAnimation("animation.gecko_habitat.idle", Impl.LOOP));
 		return PlayState.CONTINUE;
 	}
 

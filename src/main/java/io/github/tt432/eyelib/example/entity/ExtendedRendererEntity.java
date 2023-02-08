@@ -16,7 +16,7 @@ import net.minecraftforge.network.NetworkHooks;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
-import io.github.tt432.eyelib.api.bedrock.animation.LoopType.LoopTypeImpl;
+import io.github.tt432.eyelib.api.bedrock.animation.LoopType.Impl;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
@@ -97,7 +97,7 @@ public class ExtendedRendererEntity extends PathfinderMob implements Animatable 
 	@SuppressWarnings("unused")
 	private <E extends Animatable> PlayState predicateSpinHands(AnimationEvent<E> event) {
 		if (event.getController().getCurrentAnimation() == null) {
-			event.getController().setAnimation(new AnimationBuilder().addAnimation(ANIM_NAME_SPIN_HANDS, LoopTypeImpl.LOOP));
+			event.getController().setAnimation(new AnimationBuilder().addAnimation(ANIM_NAME_SPIN_HANDS, Impl.LOOP));
 		}
 		return PlayState.CONTINUE;
 	}
@@ -106,7 +106,7 @@ public class ExtendedRendererEntity extends PathfinderMob implements Animatable 
 
 	private <E extends Animatable> PlayState predicateIdle(AnimationEvent<E> event) {
 		if (event.getController().getCurrentAnimation() == null) {
-			event.getController().setAnimation(new AnimationBuilder().addAnimation(ANIM_NAME_IDLE, LoopTypeImpl.LOOP));
+			event.getController().setAnimation(new AnimationBuilder().addAnimation(ANIM_NAME_IDLE, Impl.LOOP));
 		}
 		return PlayState.CONTINUE;
 	}
@@ -118,10 +118,10 @@ public class ExtendedRendererEntity extends PathfinderMob implements Animatable 
 		if (this.isTwoHandedAnimationRunning()) {
 
 		} else if (this.isPassenger()) {
-			event.getController().setAnimation(new AnimationBuilder().addAnimation(ANIM_NAME_SITTING, LoopTypeImpl.LOOP));
+			event.getController().setAnimation(new AnimationBuilder().addAnimation(ANIM_NAME_SITTING, Impl.LOOP));
 			return PlayState.CONTINUE;
 		} else if (this.isCrouching()) {
-			event.getController().setAnimation(new AnimationBuilder().addAnimation(ANIM_NAME_SNEAKING, LoopTypeImpl.LOOP));
+			event.getController().setAnimation(new AnimationBuilder().addAnimation(ANIM_NAME_SNEAKING, Impl.LOOP));
 			return PlayState.CONTINUE;
 		}
 		return PlayState.STOP;
@@ -179,7 +179,7 @@ public class ExtendedRendererEntity extends PathfinderMob implements Animatable 
 			if (this.isBlocking()
 					&& (handItem instanceof ShieldItem || handItem.getUseAnimation(handItemStack) == UseAnim.BLOCK)) {
 				event.getController().setAnimation(new AnimationBuilder()
-						.addAnimation(leftHand ? ANIM_NAME_BLOCKING_LEFT : ANIM_NAME_BLOCKING_RIGHT, LoopTypeImpl.LOOP));
+						.addAnimation(leftHand ? ANIM_NAME_BLOCKING_LEFT : ANIM_NAME_BLOCKING_RIGHT, Impl.LOOP));
 			} else {
 				// If the item is a small gun play the correct animation
 			}
@@ -193,7 +193,7 @@ public class ExtendedRendererEntity extends PathfinderMob implements Animatable 
 	private <E extends Animatable> PlayState predicateTwoHandedPose(AnimationEvent<E> event) {
 		if (this.isTwoHandedAnimationRunning()) {
 			if (this.isSpellCasting()) {
-				event.getController().setAnimation(new AnimationBuilder().addAnimation(ANIM_NAME_SPELLCASTING, LoopTypeImpl.LOOP));
+				event.getController().setAnimation(new AnimationBuilder().addAnimation(ANIM_NAME_SPELLCASTING, Impl.LOOP));
 				return PlayState.CONTINUE;
 			} else {
 				// First: Check for firearm, spear and greatsword in either hand
@@ -232,13 +232,13 @@ public class ExtendedRendererEntity extends PathfinderMob implements Animatable 
 		if (item.getUseAnimation(itemStack) == UseAnim.BOW || item.getUseAnimation(itemStack) == UseAnim.CROSSBOW) {
 			// Firearm
 			event.getController().setAnimation(new AnimationBuilder()
-					.addAnimation(leftHanded ? ANIM_NAME_FIREARM_POSE_LEFT : ANIM_NAME_FIREARM_POSE_RIGHT, LoopTypeImpl.LOOP));
+					.addAnimation(leftHanded ? ANIM_NAME_FIREARM_POSE_LEFT : ANIM_NAME_FIREARM_POSE_RIGHT, Impl.LOOP));
 			return Optional.of(PlayState.CONTINUE);
 		} else if (item.getUseAnimation(itemStack) == UseAnim.SPEAR) {
 			// Yes this is for tridents but we can use it anyway
 			// Spear
 			event.getController().setAnimation(new AnimationBuilder()
-					.addAnimation(leftHanded ? ANIM_NAME_SPEAR_POSE_LEFT : ANIM_NAME_SPEAR_POSE_RIGHT, LoopTypeImpl.LOOP));
+					.addAnimation(leftHanded ? ANIM_NAME_SPEAR_POSE_LEFT : ANIM_NAME_SPEAR_POSE_RIGHT, Impl.LOOP));
 			return Optional.of(PlayState.CONTINUE);
 		}
 		// If item is greatsword => greatsword animation
@@ -255,7 +255,7 @@ public class ExtendedRendererEntity extends PathfinderMob implements Animatable 
 			if (this.getMainHandItem().getItem().getUseAnimation(this.getMainHandItem()) == UseAnim.SPEAR
 					|| this.getOffhandItem().getItem().getUseAnimation(this.getOffhandItem()) == UseAnim.SPEAR) {
 				// Spear use animation
-				event.getController().setAnimation(new AnimationBuilder().addAnimation(ANIM_NAME_SPEAR_SWING, LoopTypeImpl.PLAY_ONCE));
+				event.getController().setAnimation(new AnimationBuilder().addAnimation(ANIM_NAME_SPEAR_SWING, Impl.PLAY_ONCE));
 			}
 			// If either hand item is greatsword => greatsword animation
 		}

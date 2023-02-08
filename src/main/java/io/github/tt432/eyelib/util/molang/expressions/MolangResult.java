@@ -1,13 +1,13 @@
 package io.github.tt432.eyelib.util.molang.expressions;
 
 import io.github.tt432.eyelib.util.molang.MolangParser;
-import io.github.tt432.eyelib.util.molang.math.IValue;
+import io.github.tt432.eyelib.util.molang.MolangValue;
 
-public class MolangValue extends MolangExpression {
-	public final IValue value;
+public class MolangResult extends MolangExpression {
+	public final MolangValue value;
 	public boolean returns;
 
-	public MolangValue(IValue value) {
+	public MolangResult(MolangValue value) {
 		this.value = value;
 	}
 

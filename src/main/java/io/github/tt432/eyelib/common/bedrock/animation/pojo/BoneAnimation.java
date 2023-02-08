@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.mojang.math.Vector3d;
 import io.github.tt432.eyelib.util.Axis;
+import io.github.tt432.eyelib.util.EyelibLists;
 import io.github.tt432.eyelib.util.math.MathE;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -162,16 +163,7 @@ public class BoneAnimation {
                     .sorted(Comparator.comparingDouble(KeyFrame::getTick))
                     .toList();
 
-            KeyFrame prev = null;
-
-            for (KeyFrame keyFrame : resultList) {
-                if (prev != null) {
-                    keyFrame.prev = prev;
-                    prev.next = keyFrame;
-                }
-
-                prev = keyFrame;
-            }
+            EyelibLists.link(resultList);
 
             return resultList;
         }

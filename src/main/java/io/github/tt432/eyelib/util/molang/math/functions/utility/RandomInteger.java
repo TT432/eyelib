@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.util.molang.math.functions.utility;
 
-import io.github.tt432.eyelib.util.molang.math.IValue;
+import io.github.tt432.eyelib.util.molang.MolangValue;
 import io.github.tt432.eyelib.util.molang.math.functions.Function;
 
 import java.util.Random;
@@ -8,7 +8,7 @@ import java.util.Random;
 public class RandomInteger extends Function {
     public final Random random;
 
-    public RandomInteger(IValue[] values, String name) {
+    public RandomInteger(MolangValue[] values, String name) {
         super(values, name, 2);
 
         this.random = new Random();

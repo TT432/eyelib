@@ -1,7 +1,9 @@
 package io.github.tt432.eyelib.util.molang.math;
 
 
-public class Variable implements IValue {
+import io.github.tt432.eyelib.util.molang.MolangValue;
+
+public class Variable implements MolangValue {
     private final String name;
     private double value;
 

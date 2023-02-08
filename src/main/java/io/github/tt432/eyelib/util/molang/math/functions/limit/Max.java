@@ -1,10 +1,10 @@
 package io.github.tt432.eyelib.util.molang.math.functions.limit;
 
-import io.github.tt432.eyelib.util.molang.math.IValue;
+import io.github.tt432.eyelib.util.molang.MolangValue;
 import io.github.tt432.eyelib.util.molang.math.functions.Function;
 
 public class Max extends Function {
-    public Max(IValue[] values, String name) {
+    public Max(MolangValue[] values, String name) {
         super(values, name, 2);
     }
 

@@ -2,13 +2,15 @@ package io.github.tt432.eyelib.common.bedrock.animation.pojo;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
+import io.github.tt432.eyelib.util.EyelibLists;
 import io.github.tt432.eyelib.util.math.MathE;
 import io.github.tt432.eyelib.util.math.Value3;
 import io.github.tt432.eyelib.util.math.Vec2d;
 import io.github.tt432.eyelib.util.math.curve.SplineCurve;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import io.github.tt432.eyelib.util.molang.math.IValue;
+import io.github.tt432.eyelib.util.molang.MolangValue;
 import io.github.tt432.eyelib.util.Axis;
 import net.minecraft.util.Mth;
 
@@ -24,14 +26,12 @@ import static io.github.tt432.eyelib.common.bedrock.animation.pojo.KeyFrame.Lerp
  */
 @Data
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @JsonAdapter(KeyFrame.Serializer.class)
-public class KeyFrame {
+public class KeyFrame extends EyelibLists.Node<KeyFrame> {
     private Timestamp timestamp;
     private Value3[] dataPoints;
     private LerpMode lerpMode;
-
-    public KeyFrame prev;
-    public KeyFrame next;
 
     public enum LerpMode {
         LINEAR,
@@ -134,7 +134,7 @@ public class KeyFrame {
                 frame.dataPoints = new Value3[]{context.deserialize(json, Value3.class)};
             } else if (json.isJsonPrimitive()) {
                 frame.lerpMode = LINEAR;
-                IValue value = context.deserialize(json, IValue.class);
+                MolangValue value = context.deserialize(json, MolangValue.class);
                 frame.dataPoints = new Value3[]{new Value3(value, value, value)};
             } else if (json.isJsonObject()) {
                 JsonObject jo = json.getAsJsonObject();

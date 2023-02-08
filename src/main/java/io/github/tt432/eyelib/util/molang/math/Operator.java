@@ -1,12 +1,14 @@
 package io.github.tt432.eyelib.util.molang.math;
 
 
-public class Operator implements IValue {
-    public final Operation operation;
-    public final IValue a;
-    public final IValue b;
+import io.github.tt432.eyelib.util.molang.MolangValue;
 
-    public Operator(Operation op, IValue a, IValue b) {
+public class Operator implements MolangValue {
+    public final Operation operation;
+    public final MolangValue a;
+    public final MolangValue b;
+
+    public Operator(Operation op, MolangValue a, MolangValue b) {
         this.operation = op;
         this.a = a;
         this.b = b;
