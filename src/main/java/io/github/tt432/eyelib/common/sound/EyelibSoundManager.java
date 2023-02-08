@@ -105,7 +105,7 @@ public class EyelibSoundManager {
         }, Util.backgroundExecutor());
     }
 
-    AudioStream transform(InputStream is, Format format) throws UnsupportedAudioFileException, IOException {
+    static AudioStream transform(InputStream is, Format format) throws UnsupportedAudioFileException, IOException {
         AudioInputStream ais = format == Format.mp3 ? new MpegAudioFileReader().getAudioInputStream(is)
                 : AudioSystem.getAudioInputStream(new ByteArrayInputStream(IOUtils.toByteArray(is)));
         AudioFormat originalFormat = ais.getFormat();
