@@ -13,9 +13,19 @@ import net.minecraft.world.entity.Entity;
 public interface SoundPlayer {
     SoundInstance getSound(ResourceLocation location);
 
+    default SoundPlayingState stopInAnimationFinished() {
+        return SoundPlayingState.NOTHING;
+    }
+
     static SoundInstance forEntity(Entity entity, ResourceLocation location) {
         return new EyelibSoundInstance(location, entity.getSoundSource(),
                 1, 1, false, 0, SoundInstance.Attenuation.LINEAR,
                 entity.getX(), entity.getY(), entity.getZ(), false);
+    }
+
+    enum SoundPlayingState {
+        STOP_ON_FINISH,
+        STOP_ON_NEXT,
+        NOTHING
     }
 }

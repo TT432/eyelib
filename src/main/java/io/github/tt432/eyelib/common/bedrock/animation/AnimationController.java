@@ -10,6 +10,7 @@ import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.LoopType;
 import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
 import io.github.tt432.eyelib.api.bedrock.model.Bone;
+import io.github.tt432.eyelib.api.sound.SoundPlayer;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.BoneAnimation;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
@@ -25,6 +26,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -274,6 +276,8 @@ public class AnimationController<T extends Animatable> {
     public void process(final double tick, AnimationEvent<T> event, List<Bone> modelRendererList,
                         Map<String, Pair<Bone, BoneSnapshot>> boneSnapshotCollection, MolangParser parser,
                         boolean crashWhenCantFindBone) {
+        SoundPlayer player = getSoundPlayer(event);
+
         parser.setValue("query.life_time", () -> tick / 20);
 
         if (this.currentAnimation != null) {
@@ -311,7 +315,7 @@ public class AnimationController<T extends Animatable> {
             this.animationState = AnimationState.STOPPED;
             this.justStopped = true;
 
-            soundControl.stop();
+            soundControl.stop(player);
 
             return;
         }
@@ -334,7 +338,7 @@ public class AnimationController<T extends Animatable> {
             // Just started transitioning, so set the current animation to the first one
             if (adjustedTick == 0 || this.isJustStarting) {
                 this.justStartedTransition = false;
-                nextAnimation();
+                nextAnimation(player);
 
                 saveSnapshotsForAnimation(this.currentAnimation, boneSnapshotCollection);
             }
@@ -391,8 +395,14 @@ public class AnimationController<T extends Animatable> {
         }
     }
 
+    private SoundPlayer getSoundPlayer(AnimationEvent<T> event) {
+       return event.getAnimatable() instanceof SoundPlayer sp ? sp : null;
+    }
+
     private void processCurrentAnimation(double tick, double actualTick, MolangParser parser,
                                          boolean crashWhenCantFindBone, AnimationEvent<T> event) {
+        SoundPlayer player = getSoundPlayer(event);
+
         assert currentAnimation != null;
         // Animation has ended
         if (tick >= this.currentAnimation.getAnimationLength()) {
@@ -405,7 +415,7 @@ public class AnimationController<T extends Animatable> {
                 if (peek == null) {
                     // No more animations left, stop the animation controller
                     this.animationState = AnimationState.STOPPED;
-                    soundControl.stop();
+                    soundControl.stop(player);
 
                     return;
                 } else {
@@ -414,7 +424,7 @@ public class AnimationController<T extends Animatable> {
                     this.animationState = AnimationState.TRANSITIONING;
                     this.shouldResetTick = true;
 
-                    nextAnimation();
+                    nextAnimation(player);
                 }
             } else {
                 // Reset the adjusted tick so the next animation starts at tick 0
@@ -425,42 +435,47 @@ public class AnimationController<T extends Animatable> {
 
         setAnimTime(parser, tick);
 
-        // Loop through every boneanimation in the current animation and process the
-        // values
-        var boneAnimations = currentAnimation.getBones();
+        // Loop through every boneanimation in the current animation and process the values
+        processBoneAnimation(currentAnimation.getBones(), tick, crashWhenCantFindBone);
 
-        for (var entry : boneAnimations.entrySet()) {
-            var boneName = entry.getKey();
-            BoneAnimation boneAnim = entry.getValue();
-
-            BoneAnimationQueue boneAnimationQueue = boneAnimationQueues.get(boneName);
-
-            if (boneAnimationQueue == null) {
-                if (crashWhenCantFindBone)
-                    throw new RuntimeException("Could not find bone: " + boneName);
-
-                continue;
-            }
-
-            boneAnimationQueue.rotate().push(new AnimationPointQueue.LerpInfo(boneAnim.lerpRotation(tick)));
-            boneAnimationQueue.position().push(new AnimationPointQueue.LerpInfo(boneAnim.lerpPosition(tick)));
-            boneAnimationQueue.scale().push(new AnimationPointQueue.LerpInfo(boneAnim.lerpScale(tick)));
-        }
-
-        soundControl.processSoundEffect(event, tick);
+        soundControl.processSoundEffect(player, tick);
 
         if (this.transitionLengthTicks == 0 && shouldResetTick && this.animationState == AnimationState.TRANSITIONING)
-            nextAnimation();
+            nextAnimation(player);
     }
 
-    private void nextAnimation() {
+    private void processBoneAnimation(@Nullable Map<String, BoneAnimation> boneAnimations, double tick, boolean crashWhenCantFindBone) {
+        if (boneAnimations != null) {
+            for (var entry : boneAnimations.entrySet()) {
+                var boneName = entry.getKey();
+                BoneAnimation boneAnim = entry.getValue();
+
+                BoneAnimationQueue boneAnimationQueue = boneAnimationQueues.get(boneName);
+
+                if (boneAnimationQueue == null) {
+                    if (crashWhenCantFindBone)
+                        throw new RuntimeException("Could not find bone: " + boneName);
+
+                    continue;
+                }
+
+                boneAnimationQueue.rotate().push(new AnimationPointQueue.LerpInfo(boneAnim.lerpRotation(tick)));
+                boneAnimationQueue.position().push(new AnimationPointQueue.LerpInfo(boneAnim.lerpPosition(tick)));
+                boneAnimationQueue.scale().push(new AnimationPointQueue.LerpInfo(boneAnim.lerpScale(tick)));
+            }
+        }
+    }
+
+    private void nextAnimation(@Nullable SoundPlayer player) {
         if (currentAnimation != null) {
-            soundControl.stop();
+            if (player != null)
+                soundControl.stop(player);
         }
 
         currentAnimation = animationQueue.poll();
 
-        soundControl.init(currentAnimation);
+        if (player != null)
+            soundControl.init(currentAnimation, player);
     }
 
     // Helper method to populate all the initial animation point queues

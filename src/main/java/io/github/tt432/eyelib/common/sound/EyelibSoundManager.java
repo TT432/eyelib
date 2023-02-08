@@ -90,6 +90,10 @@ public class EyelibSoundManager {
         return CompletableFuture.supplyAsync(() -> {
             Format format = files.get(id);
 
+            if (format == null) {
+                throw new RuntimeException("can't found sound: " + id);
+            }
+
             try {
                 InputStream is = manager.getResource(format.converter.idToFile(id)).getInputStream();
 

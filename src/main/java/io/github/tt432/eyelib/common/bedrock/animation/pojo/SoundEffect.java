@@ -30,7 +30,12 @@ public class SoundEffect {
                 return new SoundEffect(Collections.singletonList(new ResourceLocation(json.getAsJsonObject().get("effect").getAsString())));
             } else if (json.isJsonArray()) {
                 SoundEffect soundEffect = new SoundEffect(new ArrayList<>());
-                json.getAsJsonArray().forEach(j -> soundEffect.effect.add(new ResourceLocation(j.getAsString())));
+                json.getAsJsonArray().forEach(j -> {
+                    if (j.isJsonPrimitive())
+                        soundEffect.effect.add(new ResourceLocation(j.getAsString()));
+                    else if (j.isJsonObject())
+                        soundEffect.effect.add(new ResourceLocation(j.getAsJsonObject().get("effect").getAsString()));
+                });
                 return soundEffect;
             }
 
