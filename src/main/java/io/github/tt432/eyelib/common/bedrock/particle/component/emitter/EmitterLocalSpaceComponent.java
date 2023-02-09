@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.common.bedrock.particle.component.emitter;
 
+import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponent;
 import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
 
 /**
@@ -20,7 +21,7 @@ import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
  * @author DustW
  */
 @ParticleComponentHolder("minecraft:emitter_local_space")
-public class EmitterLocalSpaceComponent {
+public class EmitterLocalSpaceComponent extends ParticleComponent {
     boolean position;
     boolean rotation;
     boolean velocity;

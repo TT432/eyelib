@@ -127,7 +127,7 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
 	}
 
 	@Override
-	public void setMolangQueries(Animatable animatable, double seekTime) {
+	public void setMolangQueries(Object animatable, double seekTime) {
 		MolangParser parser = MolangParser.getInstance();
 		Minecraft mc = Minecraft.getInstance();
 
@@ -151,8 +151,14 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
 					return Mth.sqrt((float) ((velocity.x * velocity.x) + (velocity.z * velocity.z)));
 				});
 				parser.setValue("query.yaw_speed", () -> livingEntity.getViewYRot((float)seekTime - livingEntity.getViewYRot((float)seekTime - 0.1f)));
+				setHandItem(parser, livingEntity);
 			}
 		}
+	}
+
+	private void setHandItem(MolangParser parser, LivingEntity entity) {
+		parser.setValue("query.is_item_equipped_mh", () -> entity.getMainHandItem().isEmpty() ? 0 : 1);
+		parser.setValue("query.is_item_equipped_fh", () -> entity.getOffhandItem().isEmpty() ? 0 : 1);
 	}
 
 	@Override

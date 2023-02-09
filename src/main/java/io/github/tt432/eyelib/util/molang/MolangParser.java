@@ -98,6 +98,10 @@ public class MolangParser {
         if (primitive.isString()) {
             String string = primitive.getAsString();
 
+            if (isString(string)) {
+                return new MolangResult(new StringValue(splitString(string)));
+            }
+
             try {
                 return new MolangResult(new Constant(Double.parseDouble(string)));
             } catch (NumberFormatException ex) {
@@ -181,7 +185,7 @@ public class MolangParser {
     }
 
     public String[] breakdown(String expression) throws Exception {
-        if (!expression.matches("^[\\w\\d\\s_+-/*%^&|<>=!?:.,()]+$")) {
+        if (!expression.matches("^[\\w\\d\\s_+-/*%^&|<>=!?:.,()']+$")) {
             throw new IllegalArgumentException("Given expression '" + expression + "' contains illegal characters!");
         }
 
@@ -245,8 +249,8 @@ public class MolangParser {
                 symbols.add(s);
                 continue;
             }
-            if (s.equals("(")) {
 
+            if (s.equals("(")) {
                 if (buffer.length() > 0) {
                     symbols.add(buffer.toString());
                     buffer = new StringBuilder();
@@ -382,6 +386,12 @@ public class MolangParser {
         return -1;
     }
 
+    /**
+     * 解析三元运算符
+     * @param symbols 符号
+     * @return 三元运算符
+     * @throws Exception 解析错误
+     */
     protected MolangValue tryTernary(List<Object> symbols) throws Exception {
         int question = -1;
         int questions = 0;
@@ -417,7 +427,6 @@ public class MolangParser {
 
         return null;
     }
-
 
     protected MolangValue createFunction(String first, List<Object> args) throws Exception {
         if (first.equals("!")) {
@@ -474,6 +483,10 @@ public class MolangParser {
 
             if (isDecimal(symbol))
                 return new Constant(Double.parseDouble(symbol));
+
+            if (isString(symbol))
+                return new StringValue(splitString(symbol));
+
             if (isVariable(symbol)) {
                 if (symbol.startsWith("-")) {
                     symbol = symbol.substring(1);
@@ -498,7 +511,7 @@ public class MolangParser {
         throw new Exception("Given object couldn't be converted to value! " + object);
     }
 
-    protected LazyVariable getVariable(String name) {
+    public LazyVariable getVariable(String name) {
         return variables.computeIfAbsent(name, key -> new LazyVariable(key, 0));
     }
 
@@ -512,8 +525,16 @@ public class MolangParser {
         throw new Exception("There is no such operator '" + op + "'!");
     }
 
+    protected boolean isString(String s) {
+        return s.startsWith("'") && s.endsWith("'");
+    }
+
+    protected String splitString(String s) {
+        return s.substring(1, s.length() - 1);
+    }
+
     protected boolean isVariable(Object o) {
-        return (o instanceof String s && !isDecimal(s) && !isOperator(s));
+        return (o instanceof String s && !isDecimal(s) && !isString(s) && !isOperator(s));
     }
 
     protected boolean isOperator(Object o) {

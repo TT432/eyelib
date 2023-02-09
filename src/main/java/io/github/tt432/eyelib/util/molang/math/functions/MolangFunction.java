@@ -23,6 +23,14 @@ public abstract class MolangFunction implements MolangValue {
         this.name = name;
     }
 
+    public String getArgAsString(int index) {
+        if (index < 0 || index >= this.args.length) {
+            return "0";
+        }
+
+        return this.args[index].getAsString();
+    }
+
     public double getArg(int index) {
         if (index < 0 || index >= this.args.length) {
             return 0.0D;

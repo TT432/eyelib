@@ -37,5 +37,5 @@ public interface AnimatableModel<E extends Animatable> {
 		return bone;
 	}
 
-	void setMolangQueries(Animatable animatable, double seekTime);
+	void setMolangQueries(Object animatable, double seekTime);
 }

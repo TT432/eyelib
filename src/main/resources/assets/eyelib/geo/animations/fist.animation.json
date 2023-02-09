@@ -3,6 +3,11 @@
 	"animations": {
 		"po": {
 			"animation_length": 0.5,
+			"bones": {
+				"bone": {
+					"scale": ["query.is_item_equipped('main_hand') ? 2:1", "query.is_item_equipped('main_hand') ? 2:1", "query.is_item_equipped('main_hand') ? 2:1"]
+				}
+			},
 			"sound_effects": {
 				"0.0": [
 					{

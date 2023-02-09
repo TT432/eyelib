@@ -1,11 +1,12 @@
 package io.github.tt432.eyelib.util.molang.math.functions.utility;
 
+import io.github.tt432.eyelib.processor.anno.MolangFunctionHolder;
 import io.github.tt432.eyelib.util.molang.MolangValue;
 import io.github.tt432.eyelib.util.molang.math.functions.MolangFunction;
 
 import java.util.Random;
 
-@io.github.tt432.eyelib.processor.anno.MolangFunction("math.random_integer")
+@MolangFunctionHolder("math.random_integer")
 public class RandomInteger extends MolangFunction {
     public final Random random;
 

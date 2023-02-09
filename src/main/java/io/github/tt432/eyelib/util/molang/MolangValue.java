@@ -10,6 +10,10 @@ import java.lang.reflect.Type;
 public interface MolangValue {
     double get();
 
+    default String getAsString() {
+        return String.valueOf(get());
+    }
+
     class Serializer implements JsonDeserializer<MolangValue> {
         @Override
         public MolangValue deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

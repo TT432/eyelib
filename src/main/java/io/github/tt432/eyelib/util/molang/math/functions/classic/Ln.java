@@ -1,9 +1,10 @@
 package io.github.tt432.eyelib.util.molang.math.functions.classic;
 
+import io.github.tt432.eyelib.processor.anno.MolangFunctionHolder;
 import io.github.tt432.eyelib.util.molang.MolangValue;
 import io.github.tt432.eyelib.util.molang.math.functions.MolangFunction;
 
-@io.github.tt432.eyelib.processor.anno.MolangFunction("math.ln")
+@MolangFunctionHolder("math.ln")
 public class Ln extends MolangFunction {
     public Ln(MolangValue[] values, String name) {
         super(values, name, 1);

@@ -194,6 +194,8 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
 				(limbSwingAmount <= -getSwingMotionAnimThreshold() || limbSwingAmount <= getSwingMotionAnimThreshold()), Collections.singletonList(entityModelData));
 
 		this.modelProvider.setCustomAnimations(animatable, getInstanceId(entity), predicate);
+		this.modelProvider.setMolangQueries(entity, this.modelProvider.seekTime);
+		
 		poseStack.translate(0, 0.01f, 0);
 		RenderSystem.setShaderTexture(0, getTextureLocation(entity));
 

@@ -1,10 +1,11 @@
 package io.github.tt432.eyelib.util.molang.math.functions.utility;
 
+import io.github.tt432.eyelib.processor.anno.MolangFunctionHolder;
 import io.github.tt432.eyelib.util.math.MathE;
 import io.github.tt432.eyelib.util.molang.MolangValue;
 import io.github.tt432.eyelib.util.molang.math.functions.MolangFunction;
 
-@io.github.tt432.eyelib.processor.anno.MolangFunction("math.lerp")
+@MolangFunctionHolder("math.lerp")
 public class Lerp extends MolangFunction {
     public Lerp(MolangValue[] values, String name) {
         super(values, name, 3);

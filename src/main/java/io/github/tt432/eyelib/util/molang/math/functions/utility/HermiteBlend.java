@@ -1,9 +1,10 @@
 package io.github.tt432.eyelib.util.molang.math.functions.utility;
 
+import io.github.tt432.eyelib.processor.anno.MolangFunctionHolder;
 import io.github.tt432.eyelib.util.molang.MolangValue;
 import io.github.tt432.eyelib.util.molang.math.functions.MolangFunction;
 
-@io.github.tt432.eyelib.processor.anno.MolangFunction("math.hermite_blend")
+@MolangFunctionHolder("math.hermite_blend")
 public class HermiteBlend extends MolangFunction {
     public HermiteBlend(MolangValue[] values, String name) {
         super(values, name, 1);

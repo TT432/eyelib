@@ -55,7 +55,9 @@ public class SoundControl {
 
             if (curr != null && tick >= curr.getKey().getTick()) {
                 var soundEffect = curr.getValue().getEffect();
-                ResourceLocation sound = soundEffect.get(random.nextInt(soundEffect.size() - 1));
+                ResourceLocation sound = soundEffect.size() > 1 ?
+                        soundEffect.get(random.nextInt(soundEffect.size() - 1)) :
+                        soundEffect.get(0);
                 SoundInstance instance = player.getSound(sound);
                 soundManager.play(instance);
                 playing.add(instance);
