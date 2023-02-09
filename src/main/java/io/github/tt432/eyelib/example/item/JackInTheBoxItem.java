@@ -17,7 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.client.IItemRenderProperties;
 import net.minecraftforge.network.PacketDistributor;
-import io.github.tt432.eyelib.example.GeckoLibMod;
+import io.github.tt432.eyelib.example.ExampleMod;
 import io.github.tt432.eyelib.example.client.renderer.item.JackInTheBoxRenderer;
 import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationState;
 import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
@@ -39,7 +39,7 @@ public class JackInTheBoxItem extends Item implements Animatable, Syncable, Soun
 	public AnimationFactory factory = GeckoLibUtil.createFactory(this);
 
 	public JackInTheBoxItem(Properties properties) {
-		super(properties.tab(GeckoLibMod.geckolibItemGroup));
+		super(properties.tab(ExampleMod.mainTab));
 		EyelibNetworkHandler.registerSyncable(this);
 	}
 

@@ -6,7 +6,7 @@ import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import io.github.tt432.eyelib.example.GeckoLibMod;
+import io.github.tt432.eyelib.example.ExampleMod;
 import io.github.tt432.eyelib.example.registry.ItemRegistry;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
@@ -27,7 +27,7 @@ public class GeckoArmorItem extends GeoArmorItem implements Animatable {
 	public AnimationFactory factory = GeckoLibUtil.createFactory(this);
 
 	public GeckoArmorItem(ArmorMaterial materialIn, EquipmentSlot slot, Properties builder) {
-		super(materialIn, slot, builder.tab(GeckoLibMod.geckolibItemGroup));
+		super(materialIn, slot, builder.tab(ExampleMod.mainTab));
 	}
 
 	// Predicate runs every frame

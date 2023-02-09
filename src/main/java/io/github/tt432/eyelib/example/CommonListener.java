@@ -12,7 +12,7 @@ import io.github.tt432.eyelib.Eyelib;
 public class CommonListener {
 	@SubscribeEvent
 	public static void registerEntityAttributes(EntityAttributeCreationEvent event) {
-		if (GeckoLibMod.shouldRegisterExamples()) {
+		if (ExampleMod.shouldRegisterExamples()) {
 			event.put(EntityRegistry.BIKE_ENTITY.get(), PathfinderMob.createMobAttributes()
 					.add(Attributes.FOLLOW_RANGE, 16.0D).add(Attributes.MAX_HEALTH, 1.0D).build());
 			event.put(EntityRegistry.CAR_ENTITY.get(), PathfinderMob.createMobAttributes()

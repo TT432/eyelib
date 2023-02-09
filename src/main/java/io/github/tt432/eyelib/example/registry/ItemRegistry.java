@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.example.registry;
 
-import io.github.tt432.eyelib.example.GeckoLibMod;
+import io.github.tt432.eyelib.example.ExampleMod;
 import io.github.tt432.eyelib.example.item.FistItem;
 import io.github.tt432.eyelib.example.item.GeckoArmorItem;
 import io.github.tt432.eyelib.example.item.JackInTheBoxItem;
@@ -19,10 +19,10 @@ public class ItemRegistry {
 
 	public static final RegistryObject<BlockItem> HABITAT = ITEMS.register("habitat",
 			() -> new BlockItem(BlockRegistry.HABITAT_BLOCK.get(),
-					new Item.Properties().tab(GeckoLibMod.geckolibItemGroup)));
+					new Item.Properties().tab(ExampleMod.mainTab)));
 	public static final RegistryObject<BlockItem> FERTILIZER_ITEM = ITEMS.register("fertilizer",
 			() -> new BlockItem(BlockRegistry.FERTILIZER_BLOCK.get(),
-					new Item.Properties().tab(GeckoLibMod.geckolibItemGroup)));
+					new Item.Properties().tab(ExampleMod.mainTab)));
 
 	public static final RegistryObject<JackInTheBoxItem> JACK_IN_THE_BOX = ITEMS.register("jackintheboxitem",
 			() -> new JackInTheBoxItem(new Item.Properties()));

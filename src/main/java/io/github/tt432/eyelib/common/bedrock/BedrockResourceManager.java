@@ -8,7 +8,7 @@ import io.github.tt432.eyelib.common.bedrock.model.pojo.RawGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.tree.GeoBuilder;
 import io.github.tt432.eyelib.common.bedrock.model.tree.RawGeometryTree;
 import io.github.tt432.eyelib.common.bedrock.particle.pojo.Particle;
-import io.github.tt432.eyelib.util.JsonUtils;
+import io.github.tt432.eyelib.util.json.JsonUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;

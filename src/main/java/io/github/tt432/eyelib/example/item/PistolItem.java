@@ -17,7 +17,7 @@ import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.client.IItemRenderProperties;
 import net.minecraftforge.network.PacketDistributor;
-import io.github.tt432.eyelib.example.GeckoLibMod;
+import io.github.tt432.eyelib.example.ExampleMod;
 import io.github.tt432.eyelib.example.client.renderer.item.PistolRender;
 import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationState;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
@@ -42,7 +42,7 @@ public class PistolItem extends Item implements Animatable, Syncable {
 	public static final int ANIM_OPEN = 0;
 
 	public PistolItem() {
-		super(new Properties().tab(GeckoLibMod.geckolibItemGroup).stacksTo(1).durability(201));
+		super(new Properties().tab(ExampleMod.mainTab).stacksTo(1).durability(201));
 		EyelibNetworkHandler.registerSyncable(this);
 	}
 

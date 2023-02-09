@@ -1,9 +1,10 @@
 package io.github.tt432.eyelib.util.molang.math.functions.classic;
 
-import io.github.tt432.eyelib.util.molang.math.functions.Function;
+import io.github.tt432.eyelib.util.molang.math.functions.MolangFunction;
 import io.github.tt432.eyelib.util.molang.MolangValue;
 
-public class SinDegrees extends Function {
+@io.github.tt432.eyelib.processor.anno.MolangFunction("math.sin")
+public class SinDegrees extends MolangFunction {
 	public SinDegrees(MolangValue[] values, String name) {
 		super(values, name, 1);
 	}

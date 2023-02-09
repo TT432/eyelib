@@ -29,7 +29,7 @@ public class ClientListener {
 
 	@SubscribeEvent
 	public static void registerRenderers(final EntityRenderersEvent.RegisterRenderers event) {
-		if (GeckoLibMod.shouldRegisterExamples()) {
+		if (ExampleMod.shouldRegisterExamples()) {
 			event.registerEntityRenderer(EntityRegistry.GEO_EXAMPLE_ENTITY.get(), ExampleGeoRenderer::new);
 			event.registerEntityRenderer(EntityRegistry.BIKE_ENTITY.get(), BikeGeoRenderer::new);
 			event.registerEntityRenderer(EntityRegistry.CAR_ENTITY.get(), CarGeoRenderer::new);
@@ -48,14 +48,14 @@ public class ClientListener {
 
 	@SubscribeEvent
 	public static void registerRenderers(final EntityRenderersEvent.AddLayers event) {
-		if (GeckoLibMod.shouldRegisterExamples()) {
+		if (ExampleMod.shouldRegisterExamples()) {
 			GeoArmorRenderer.registerArmorRenderer(GeckoArmorItem.class, () -> new GeckoArmorRenderer());
 		}
 	}
 
 	@SubscribeEvent
 	public static void registerRenderers(final FMLClientSetupEvent event) {
-		if (GeckoLibMod.shouldRegisterExamples()) {
+		if (ExampleMod.shouldRegisterExamples()) {
 			ItemBlockRenderTypes.setRenderLayer(BlockRegistry.HABITAT_BLOCK.get(), RenderType.cutout());
 		}
 	}

@@ -1,9 +1,10 @@
 package io.github.tt432.eyelib.util.molang.math.functions.classic;
 
 import io.github.tt432.eyelib.util.molang.MolangValue;
-import io.github.tt432.eyelib.util.molang.math.functions.Function;
+import io.github.tt432.eyelib.util.molang.math.functions.MolangFunction;
 
-public class Pow extends Function {
+@io.github.tt432.eyelib.processor.anno.MolangFunction("math.pow")
+public class Pow extends MolangFunction {
     public Pow(MolangValue[] values, String name) {
         super(values, name, 2);
     }

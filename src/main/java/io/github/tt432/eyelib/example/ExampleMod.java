@@ -5,7 +5,6 @@
 
 package io.github.tt432.eyelib.example;
 
-import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationController.ModelFetcher;
 import io.github.tt432.eyelib.common.bedrock.renderer.GeoArmorRenderer;
@@ -20,17 +19,15 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 
 @EventBusSubscriber
-public class GeckoLibMod {
-	public static CreativeModeTab geckolibItemGroup;
+public class ExampleMod {
+	public static CreativeModeTab mainTab;
 	/**
 	 * When set to true, prevents examples from being registered.
 	 */
 	public static final String DISABLE_EXAMPLES_PROPERTY_KEY = "geckolib.disable_examples";
 	private static final boolean IS_DEVELOPMENT_ENVIRONMENT = !FMLEnvironment.production;
 
-	public GeckoLibMod() {
-		Eyelib.initialize();
-
+	public ExampleMod() {
 		if (shouldRegisterExamples()) {
 			IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 			EntityRegistry.ENTITIES.register(bus);
@@ -38,7 +35,7 @@ public class GeckoLibMod {
 			TileRegistry.TILES.register(bus);
 			BlockRegistry.BLOCKS.register(bus);
 			SoundRegistry.SOUNDS.register(bus);
-			geckolibItemGroup = new CreativeModeTab(CreativeModeTab.getGroupCountSafe(), "geckolib_examples") {
+			mainTab = new CreativeModeTab(CreativeModeTab.getGroupCountSafe(), "geckolib_examples") {
 				@Override
 				public ItemStack makeIcon() {
 					return new ItemStack(ItemRegistry.JACK_IN_THE_BOX.get());
@@ -52,9 +49,11 @@ public class GeckoLibMod {
 		if (event.getEntity() == null) {
 			return;
 		}
+
 		if (event.getEntity().getUUID() == null) {
 			return;
 		}
+
 		if (event.getWorld().isClientSide)
 			GeoArmorRenderer.LIVING_ENTITY_RENDERERS.values().forEach(instances -> {
 				if (instances.containsKey(event.getEntity().getUUID())) {

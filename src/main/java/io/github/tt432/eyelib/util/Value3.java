@@ -1,13 +1,12 @@
-package io.github.tt432.eyelib.util.math;
+package io.github.tt432.eyelib.util;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
-import lombok.Data;
 import io.github.tt432.eyelib.util.molang.MolangValue;
-import io.github.tt432.eyelib.util.Axis;
+import lombok.Data;
 
 import java.lang.reflect.Type;
 

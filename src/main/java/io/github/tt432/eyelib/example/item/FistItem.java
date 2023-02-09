@@ -11,7 +11,7 @@ import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationFactory;
 import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationState;
-import io.github.tt432.eyelib.example.GeckoLibMod;
+import io.github.tt432.eyelib.example.ExampleMod;
 import io.github.tt432.eyelib.example.client.renderer.item.FistRenderer;
 import io.github.tt432.eyelib.network.EyelibNetworkHandler;
 import io.github.tt432.eyelib.util.GeckoLibUtil;
@@ -38,7 +38,7 @@ public class FistItem extends Item implements Animatable, Syncable, SoundPlayer 
     public AnimationFactory factory = GeckoLibUtil.createFactory(this);
 
     public FistItem(Properties pProperties) {
-        super(pProperties.tab(GeckoLibMod.geckolibItemGroup));
+        super(pProperties.tab(ExampleMod.mainTab));
         EyelibNetworkHandler.registerSyncable(this);
     }
 

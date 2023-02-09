@@ -1,9 +1,10 @@
 package io.github.tt432.eyelib.util.molang.math.functions.utility;
 
 import io.github.tt432.eyelib.util.molang.MolangValue;
-import io.github.tt432.eyelib.util.molang.math.functions.Function;
+import io.github.tt432.eyelib.util.molang.math.functions.MolangFunction;
 
-public class DieRoll extends Function {
+@io.github.tt432.eyelib.processor.anno.MolangFunction("math.die_roll")
+public class DieRoll extends MolangFunction {
     public DieRoll(MolangValue[] values, String name) {
         super(values, name, 3);
     }

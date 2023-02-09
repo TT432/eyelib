@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.common.bedrock.model.pojo;
 
-import io.github.tt432.eyelib.util.JsonUtils;
+import io.github.tt432.eyelib.util.json.JsonUtils;
 
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;

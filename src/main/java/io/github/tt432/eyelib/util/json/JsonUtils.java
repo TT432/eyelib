@@ -1,12 +1,15 @@
-package io.github.tt432.eyelib.util;
+package io.github.tt432.eyelib.util.json;
 
 import com.google.gson.*;
-import io.github.tt432.eyelib.util.molang.MolangValue;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.Converter;
+import io.github.tt432.eyelib.util.molang.MolangValue;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.stream.IntStream;
@@ -17,6 +20,7 @@ import java.util.zip.GZIPOutputStream;
 /**
  * @author DustW
  **/
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class JsonUtils {
     public static final Gson normal = builder().create();
     public static final Gson pretty = builder().setPrettyPrinting().create();
@@ -35,6 +39,10 @@ public class JsonUtils {
                 .mapToObj(jsonArray::get)
                 .filter(jsonClass::isInstance)
                 .map(jsonClass::cast);
+    }
+
+    public static <T> T parseOrDefault(JsonDeserializationContext context, JsonObject object, String name, Type type, T defaultValue) {
+        return object.has(name) ? context.deserialize(object.get(name), type) : defaultValue;
     }
 
     public static byte[] compress(String string) {

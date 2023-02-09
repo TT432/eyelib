@@ -4,7 +4,7 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import io.github.tt432.eyelib.util.EyelibLists;
 import io.github.tt432.eyelib.util.math.MathE;
-import io.github.tt432.eyelib.util.math.Value3;
+import io.github.tt432.eyelib.util.Value3;
 import io.github.tt432.eyelib.util.math.Vec2d;
 import io.github.tt432.eyelib.util.math.curve.SplineCurve;
 import lombok.Data;

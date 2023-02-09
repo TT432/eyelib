@@ -1,5 +1,17 @@
 package io.github.tt432.eyelib.common.bedrock.particle.pojo;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.annotations.JsonAdapter;
+import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponent;
+
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Component Concept<p>
  * 组件概念<p>
@@ -21,5 +33,47 @@ package io.github.tt432.eyelib.common.bedrock.particle.pojo;
  *
  * @author DustW
  */
+@JsonAdapter(ParticleComponents.Serializer.class)
 public class ParticleComponents {
+    List<ParticleComponent> components;
+    Map<Class<?>, ParticleComponent> bySuperClass = new HashMap<>();
+
+    protected static class Serializer implements JsonDeserializer<ParticleComponents> {
+        @Override
+        public ParticleComponents deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            ParticleComponents result = new ParticleComponents();
+
+            if (json.isJsonObject()) {
+                result.components = json.getAsJsonObject().entrySet()
+                        .stream()
+                        .map(e -> ParticleComponent.parseJson(e.getKey(), e.getValue()))
+                        .toList();
+            } else {
+                throw new JsonParseException("components must be object");
+            }
+
+            result.components.forEach(component -> {
+                Class<? extends ParticleComponent> clazz = component.getClass();
+                Class<?> superclass = clazz.getSuperclass();
+
+                ParticleComponent old;
+
+                if (!superclass.equals(ParticleComponent.class)) {
+                    while (!superclass.getSuperclass().equals(ParticleComponent.class)) {
+                        superclass = superclass.getSuperclass();
+                    }
+
+                    old = result.bySuperClass.put(superclass, component);
+                } else {
+                    old = result.bySuperClass.put(clazz, component);
+                }
+
+                if (old != null) {
+                    throw new IllegalArgumentException("component already registered: " + old.getName());
+                }
+            });
+
+            return result;
+        }
+    }
 }

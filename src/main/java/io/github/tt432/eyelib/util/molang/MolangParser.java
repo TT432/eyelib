@@ -7,16 +7,7 @@ import io.github.tt432.eyelib.util.molang.expressions.MolangExpression;
 import io.github.tt432.eyelib.util.molang.expressions.MolangMultiStatement;
 import io.github.tt432.eyelib.util.molang.expressions.MolangResult;
 import io.github.tt432.eyelib.util.molang.math.*;
-import io.github.tt432.eyelib.util.molang.math.functions.Function;
-import io.github.tt432.eyelib.util.molang.math.functions.classic.*;
-import io.github.tt432.eyelib.util.molang.math.functions.limit.Clamp;
-import io.github.tt432.eyelib.util.molang.math.functions.limit.Max;
-import io.github.tt432.eyelib.util.molang.math.functions.limit.Min;
-import io.github.tt432.eyelib.util.molang.math.functions.rounding.Ceil;
-import io.github.tt432.eyelib.util.molang.math.functions.rounding.Floor;
-import io.github.tt432.eyelib.util.molang.math.functions.rounding.Round;
-import io.github.tt432.eyelib.util.molang.math.functions.rounding.Trunc;
-import io.github.tt432.eyelib.util.molang.math.functions.utility.*;
+import io.github.tt432.eyelib.util.molang.math.functions.MolangFunction;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -40,18 +31,13 @@ public class MolangParser {
     }
 
     private static final Map<String, LazyVariable> variables = new HashMap<>();
-    private static final Map<String, Class<? extends Function>> functions = new HashMap<>();
+    private static final Map<String, Class<? extends MolangFunction>> functions = new HashMap<>();
 
     public static final MolangExpression ZERO = new MolangResult(new Constant(0));
     public static final MolangExpression ONE = new MolangResult(new Constant(1));
     public static final String RETURN = "return ";
 
     private MolangParser() {
-        registerVariables();
-        registerFunctions();
-    }
-
-    void registerVariables() {
         register(new LazyVariable("PI", Math.PI));
         register(new LazyVariable("E", Math.E));
         register(new LazyVariable("query.anim_time", 0));
@@ -68,40 +54,12 @@ public class MolangParser {
         register(new LazyVariable("query.ground_speed", 0));
     }
 
-    void registerFunctions() {
-        functions.put("math.floor", Floor.class);
-        functions.put("math.round", Round.class);
-        functions.put("math.ceil", Ceil.class);
-        functions.put("math.trunc", Trunc.class);
-
-        functions.put("math.clamp", Clamp.class);
-        functions.put("math.max", Max.class);
-        functions.put("math.min", Min.class);
-
-        functions.put("math.abs", Abs.class);
-        functions.put("math.cos", CosDegrees.class);
-        functions.put("math.sin", SinDegrees.class);
-        functions.put("math.acos", ACos.class);
-        functions.put("math.asin", ASin.class);
-        functions.put("math.atan", ATan.class);
-        functions.put("math.atan2", ATan2.class);
-        functions.put("math.exp", Exp.class);
-        functions.put("math.ln", Ln.class);
-        functions.put("math.sqrt", Sqrt.class);
-        functions.put("math.mod", Mod.class);
-        functions.put("math.pow", Pow.class);
-
-        functions.put("math.lerp", Lerp.class);
-        functions.put("math.lerprotate", LerpRotate.class);
-        functions.put("math.hermite_blend", HermiteBlend.class);
-        functions.put("math.die_roll", DieRoll.class);
-        functions.put("math.die_roll_integer", DieRollInteger.class);
-        functions.put("math.random", RandomDouble.class);
-        functions.put("math.random_integer", RandomInteger.class);
-    }
-
     public void register(LazyVariable variable) {
         variables.put(variable.getName(), variable);
+    }
+
+    public void register(String funcName, Class<? extends MolangFunction> funcClass) {
+        functions.put(funcName, funcClass);
     }
 
     public MolangValue parse(String expression) throws Exception {
@@ -503,8 +461,8 @@ public class MolangParser {
             values.add(parseSymbols(buffer));
         }
 
-        Class<? extends Function> function = functions.get(first);
-        Constructor<? extends Function> ctor = function.getConstructor(MolangValue[].class, String.class);
+        Class<? extends MolangFunction> function = functions.get(first);
+        Constructor<? extends MolangFunction> ctor = function.getConstructor(MolangValue[].class, String.class);
         return ctor.newInstance(values.toArray(new MolangValue[0]), first);
     }
 
