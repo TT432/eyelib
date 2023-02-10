@@ -69,7 +69,7 @@ public class GeoProjectilesRenderer<T extends Entity & Animatable> extends Entit
 		AnimationEvent<T> predicate = new AnimationEvent<T>(animatable, 0, 0, partialTick,
 				false, Collections.singletonList(new EntityModelData()));
 
-		modelProvider.setCustomAnimations(animatable, getInstanceId(animatable), predicate);
+		modelProvider.setCustomAnimations(animatable, null, getInstanceId(animatable), predicate);
 		RenderSystem.setShaderTexture(0, getTextureLocation(animatable));
 
 		Color renderColor = getRenderColor(animatable, partialTick, poseStack, bufferSource, null, packedLight);

@@ -1,18 +1,13 @@
 package io.github.tt432.eyelib.util.molang.math.functions;
 
 import io.github.tt432.eyelib.util.molang.MolangValue;
-import lombok.Getter;
 
 
 public abstract class MolangFunction implements MolangValue {
-    @Getter
-    protected int requiredArguments;
     protected MolangValue[] args;
     protected String name;
 
     protected MolangFunction(MolangValue[] values, String name, int requiredArguments) throws IllegalArgumentException {
-        this.requiredArguments = requiredArguments;
-
         if (values.length < requiredArguments) {
             String message = String.format("Function '%s' requires at least %s arguments. %s are given!",
                     getName(), requiredArguments, values.length);

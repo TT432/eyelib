@@ -27,8 +27,8 @@ public class ExampleEntityModel extends AnimatedTickingGeoModel<GeoExampleEntity
 	}
 
 	@Override
-	public void setCustomAnimations(GeoExampleEntity animatable, int instanceId, @Nullable AnimationEvent<GeoExampleEntity> animationEvent) {
-		super.setCustomAnimations(animatable, instanceId, animationEvent);
+	public void setCustomAnimations(GeoExampleEntity animatable, @Nullable Object replaceEntity, int instanceId, @Nullable AnimationEvent<GeoExampleEntity> animationEvent) {
+		super.setCustomAnimations(animatable, replaceEntity, instanceId, animationEvent);
 		Bone head = this.getAnimationProcessor().getBone("head");
 
 		if (animationEvent == null)

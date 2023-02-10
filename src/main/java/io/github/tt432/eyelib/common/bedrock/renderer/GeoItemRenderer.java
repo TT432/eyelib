@@ -135,7 +135,7 @@ public abstract class GeoItemRenderer<T extends Item & Animatable> extends Block
 		this.dispatchedMat = poseStack.last().pose().copy();
 
 		setCurrentModelRenderCycle(RenderCycle.RenderCycleImpl.INITIAL);
-		this.modelProvider.setCustomAnimations(animatable, getInstanceId(animatable), animationEvent);
+		this.modelProvider.setCustomAnimations(animatable, null, getInstanceId(animatable), animationEvent);
 
 		poseStack.pushPose();
 		poseStack.translate(0.5f, 0.51f, 0.5f);

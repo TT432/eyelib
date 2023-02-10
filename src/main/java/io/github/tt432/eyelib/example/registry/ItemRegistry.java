@@ -1,10 +1,7 @@
 package io.github.tt432.eyelib.example.registry;
 
 import io.github.tt432.eyelib.example.ExampleMod;
-import io.github.tt432.eyelib.example.item.FistItem;
-import io.github.tt432.eyelib.example.item.GeckoArmorItem;
-import io.github.tt432.eyelib.example.item.JackInTheBoxItem;
-import io.github.tt432.eyelib.example.item.PistolItem;
+import io.github.tt432.eyelib.example.item.*;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ArmorMaterials;
 import net.minecraft.world.item.BlockItem;
@@ -29,6 +26,9 @@ public class ItemRegistry {
 
 	public static final RegistryObject<FistItem> FIST = ITEMS.register("fist",
 			() -> new FistItem(new Item.Properties()));
+
+	public static final RegistryObject<DebugItem> DEBUG = ITEMS.register("debug",
+			() -> new DebugItem(new Item.Properties()));
 
 	public static final RegistryObject<PistolItem> PISTOL = ITEMS.register("pistol", () -> new PistolItem());
 

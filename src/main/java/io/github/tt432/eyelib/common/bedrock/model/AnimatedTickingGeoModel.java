@@ -20,7 +20,7 @@ public abstract class AnimatedTickingGeoModel<T extends Animatable & Tickable> e
 	}
 
 	@Override
-	public void setCustomAnimations(T animatable, int instanceId, @Nullable AnimationEvent<T> animationEvent) {
+	public void setCustomAnimations(T animatable, @Nullable Object replaceEntity, int instanceId, @Nullable AnimationEvent<T> animationEvent) {
 		// Each animation has its own collection of animations (called the
 		// EntityAnimationManager), which allows for multiple independent animations
 		AnimationData manager = animatable.getFactory().getOrCreateAnimationData(instanceId);
@@ -41,7 +41,7 @@ public abstract class AnimatedTickingGeoModel<T extends Animatable & Tickable> e
 						0, false, Collections.emptyList()));
 
 		predicate.animationTick = seekTime;
-		getAnimationProcessor().preAnimationSetup(predicate.getAnimatable(), seekTime);
+		getAnimationProcessor().preAnimationSetup(predicate.getAnimatable(), seekTime, instanceId);
 		if (!this.getAnimationProcessor().getModelRendererList().isEmpty()) {
 			getAnimationProcessor().tickAnimation(animatable, instanceId, seekTime, predicate,
 					MolangParser.getInstance(), shouldCrashOnMissing);

@@ -37,6 +37,8 @@ public class MolangParser {
     public static final MolangExpression ONE = new MolangResult(new Constant(1));
     public static final String RETURN = "return ";
 
+    public final MolangDataSource source = new MolangDataSource();
+
     private MolangParser() {
         register(new LazyVariable("PI", Math.PI));
         register(new LazyVariable("E", Math.E));

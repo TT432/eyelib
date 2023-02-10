@@ -7,6 +7,7 @@ package io.github.tt432.eyelib.common.bedrock.animation.manager;
 
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
 import io.github.tt432.eyelib.api.bedrock.model.Bone;
 import io.github.tt432.eyelib.util.BoneSnapshot;
@@ -15,6 +16,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AnimationData {
+	@Getter
+	private final Map<String, Object> extraData = new HashMap<>();
 	private Map<String, Pair<Bone, BoneSnapshot>> boneSnapshotCollection;
 	private Map<String, AnimationController> animationControllers = new Object2ObjectOpenHashMap<>();
 	public double tick;

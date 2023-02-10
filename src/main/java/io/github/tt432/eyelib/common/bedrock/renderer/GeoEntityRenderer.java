@@ -170,7 +170,7 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
                 (limbSwingAmount <= -getSwingMotionAnimThreshold() || limbSwingAmount > getSwingMotionAnimThreshold()), Collections.singletonList(entityModelData));
         GeoModel model = this.modelProvider.getModel(this.modelProvider.getModelLocation(animatable));
 
-        this.modelProvider.setCustomAnimations(animatable, getInstanceId(animatable), predicate);
+        this.modelProvider.setCustomAnimations(animatable, null, getInstanceId(animatable), predicate);
 
         poseStack.translate(0, 0.01f, 0);
         RenderSystem.setShaderTexture(0, getTextureLocation(animatable));

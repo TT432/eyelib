@@ -193,8 +193,8 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
 		AnimationEvent predicate = new AnimationEvent(animatable, limbSwing, limbSwingAmount, partialTick,
 				(limbSwingAmount <= -getSwingMotionAnimThreshold() || limbSwingAmount <= getSwingMotionAnimThreshold()), Collections.singletonList(entityModelData));
 
-		this.modelProvider.setCustomAnimations(animatable, getInstanceId(entity), predicate);
-		this.modelProvider.setMolangQueries(entity, this.modelProvider.seekTime);
+		this.modelProvider.setCustomAnimations(animatable, entity, getInstanceId(entity), predicate);
+		this.modelProvider.setMolangQueries(entity, this.modelProvider.seekTime, getInstanceId(entity));
 		
 		poseStack.translate(0, 0.01f, 0);
 		RenderSystem.setShaderTexture(0, getTextureLocation(entity));
@@ -250,6 +250,11 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
 
 	protected float getOverlayProgress(LivingEntity entity, float partialTicks) {
 		return 0.0F;
+	}
+
+	@Override
+	public int getInstanceId(Object animatable) {
+		return ((Entity) animatable).getId();
 	}
 
 	protected void preRenderCallback(LivingEntity entity, PoseStack poseStack, float partialTick) {

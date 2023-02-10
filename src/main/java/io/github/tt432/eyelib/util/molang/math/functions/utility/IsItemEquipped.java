@@ -5,6 +5,7 @@ import io.github.tt432.eyelib.util.molang.MolangParser;
 import io.github.tt432.eyelib.util.molang.MolangValue;
 import io.github.tt432.eyelib.util.molang.math.functions.MolangFunction;
 import lombok.extern.slf4j.Slf4j;
+import net.minecraft.world.entity.LivingEntity;
 
 /**
  * takes one optional hand slot as a parameter (0 or 'main_hand' for main hand, 1 or 'off_hand' for off hand),
@@ -27,13 +28,17 @@ public class IsItemEquipped extends MolangFunction {
     public double get() {
         String arg = getArgAsString(0);
 
-        if (arg.equals("main_hand") || arg.equals("0")) {
-            return MolangParser.getInstance().getVariable("query.is_item_equipped_mh").get();
-        } else if (arg.equals("off_hand") || arg.equals("1")) {
-            return MolangParser.getInstance().getVariable("query.is_item_equipped_fh").get();
-        } else {
-            log.error("query.is_item_equipped arg error : " + arg);
-            return 0;
+        LivingEntity living = MolangParser.getInstance().source.getLiving();
+
+        if (living != null) {
+            if (arg.equals("main_hand") || arg.equals("0")) {
+                return living.getMainHandItem().isEmpty() ? 0 : 1;
+            } else if (arg.equals("off_hand") || arg.equals("1")) {
+                return living.getOffhandItem().isEmpty() ? 0 : 1;
+            }
         }
+
+        log.error("query.is_item_equipped arg error : " + arg);
+        return 0;
     }
 }

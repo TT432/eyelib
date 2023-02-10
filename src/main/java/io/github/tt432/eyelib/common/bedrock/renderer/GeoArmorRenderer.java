@@ -187,7 +187,7 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
 
 		this.dispatchedMat = poseStack.last().pose().copy();
 
-		this.modelProvider.setCustomAnimations(this.currentArmorItem, getInstanceId(this.currentArmorItem), animationEvent);
+		this.modelProvider.setCustomAnimations(this.currentArmorItem, null, getInstanceId(this.currentArmorItem), animationEvent);
 		setCurrentModelRenderCycle(RenderCycle.RenderCycleImpl.INITIAL);
 		fitToBiped();
 		RenderSystem.setShaderTexture(0, getTextureLocation(this.currentArmorItem));

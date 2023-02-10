@@ -13,10 +13,10 @@ public interface AnimatableModel<E extends Animatable> {
 	}
 
 	default void setCustomAnimations(E animatable, int instanceId) {
-		setCustomAnimations(animatable, instanceId, null);
+		setCustomAnimations(animatable, null, instanceId, null);
 	}
 
-	void setCustomAnimations(E animatable, int instanceId, @Nullable AnimationEvent<E> animationEvent);
+	void setCustomAnimations(E animatable, @Nullable Object replacedInstance, int instanceId, @Nullable AnimationEvent<E> animationEvent);
 
 	AnimationProcessor<E> getAnimationProcessor();
 
@@ -37,5 +37,5 @@ public interface AnimatableModel<E extends Animatable> {
 		return bone;
 	}
 
-	void setMolangQueries(Object animatable, double seekTime);
+	void setMolangQueries(Object animatable, double seekTime, int instanceId);
 }
