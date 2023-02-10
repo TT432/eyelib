@@ -22,6 +22,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
@@ -46,9 +47,9 @@ public class BedrockResourceManager {
     public CompletableFuture<Void> reload(PreparationBarrier stage, ResourceManager resourceManager,
                                           ProfilerFiller preparationsProfiler, ProfilerFiller reloadProfiler,
                                           Executor backgroundExecutor, Executor gameExecutor) {
-        Map<ResourceLocation, Animation> animations = new Object2ObjectOpenHashMap<>();
-        Map<ResourceLocation, GeoModel> geoModels = new Object2ObjectOpenHashMap<>();
-        Map<ResourceLocation, Particle> particles = Collections.emptyMap();
+        Map<ResourceLocation, Animation> animations = new HashMap<>();
+        Map<ResourceLocation, GeoModel> geoModels = new HashMap<>();
+        Map<ResourceLocation, Particle> particles = new HashMap<>();
 
         return CompletableFuture.allOf(
                         loadResources(backgroundExecutor, resourceManager, "geo/animations",

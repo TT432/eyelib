@@ -13,7 +13,7 @@ import java.lang.reflect.Type;
 /**
  * @author DustW
  */
-@JsonAdapter(ELExpression.class)
+@JsonAdapter(ELLooping.class)
 @ParticleComponentHolder("minecraft:emitter_lifetime_looping")
 public class ELLooping extends EmitterLifetimeComponent implements JsonDeserializer<ELLooping> {
     /**

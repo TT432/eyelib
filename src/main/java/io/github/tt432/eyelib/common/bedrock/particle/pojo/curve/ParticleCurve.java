@@ -61,10 +61,6 @@ public class ParticleCurve {
             ParticleCurve result = new ParticleCurve();
             JsonObject object = json.getAsJsonObject();
 
-            result.name = context.deserialize(object.get("name"), String.class);
-            if (!result.nameValid())
-                throw new JsonParseException("name must start with 'variable.' : " + result.name);
-
             result.type = context.deserialize(object.get("type"), CurveType.class);
 
             List<ParticleCurveNode> nodes = new ArrayList<>();

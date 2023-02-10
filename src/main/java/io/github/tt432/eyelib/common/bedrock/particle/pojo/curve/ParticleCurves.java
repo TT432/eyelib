@@ -1,5 +1,13 @@
 package io.github.tt432.eyelib.common.bedrock.particle.pojo.curve;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.annotations.JsonAdapter;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -15,6 +23,21 @@ import java.util.List;
  *
  * @author DustW
  */
-public class ParticleCurves {
+@JsonAdapter(ParticleCurves.class)
+public class ParticleCurves implements JsonDeserializer<ParticleCurves> {
     List<ParticleCurve> curves;
+
+    @Override
+    public ParticleCurves deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        ParticleCurves result = new ParticleCurves();
+        result.curves = new ArrayList<>();
+        json.getAsJsonObject().entrySet().forEach(e -> {
+            ParticleCurve curve = context.deserialize(e.getValue(), ParticleCurve.class);
+            curve.name = e.getKey();
+
+            if (!curve.nameValid())
+                throw new JsonParseException("name must start with 'variable.' : " + curve.name);
+        });
+        return result;
+    }
 }

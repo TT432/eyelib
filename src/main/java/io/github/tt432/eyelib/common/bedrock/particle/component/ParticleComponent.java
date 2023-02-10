@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import io.github.tt432.eyelib.util.json.JsonUtils;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.Map;
 /**
  * @author DustW
  */
+@Slf4j
 public class ParticleComponent {
     @Getter
     private static final Map<String, Class<? extends ParticleComponent>> forName = new HashMap<>();
@@ -25,8 +27,13 @@ public class ParticleComponent {
             throw new JsonParseException("can't found component for name : " + name);
         }
 
-        ParticleComponent result = JsonUtils.normal.fromJson(body, componentClass);
-        result.name = name;
-        return result;
+        try {
+            ParticleComponent result = JsonUtils.normal.fromJson(body, componentClass);
+            result.name = name;
+            return result;
+        } catch (Throwable a) {
+            log.error("parse error, name: {}, body: {} ", name, body);
+            throw a;
+        }
     }
 }

@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.common.bedrock.FormatVersion;
  * @author DustW
  */
 public class Particle {
+    @SerializedName("format_version")
     FormatVersion version;
     @SerializedName("particle_effect")
     ParticleEffect effect;
