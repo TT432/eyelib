@@ -13,15 +13,15 @@ import java.lang.reflect.Type;
 /**
  * @author DustW
  */
-@JsonAdapter(ELOnceComponent.class)
+@JsonAdapter(ELOnce.class)
 @ParticleComponentHolder("minecraft:emitter_lifetime_once")
-public class ELOnceComponent extends EmitterLifetimeComponent implements JsonDeserializer<ELOnceComponent> {
+public class ELOnce extends EmitterLifetimeComponent implements JsonDeserializer<ELOnce> {
     @SerializedName("active_time")
     MolangValue activeTime;
 
     @Override
-    public ELOnceComponent deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-        ELOnceComponent result = new ELOnceComponent();
+    public ELOnce deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        ELOnce result = new ELOnce();
         JsonObject object = json.getAsJsonObject();
 
         result.activeTime = JsonUtils.parseOrDefault(context, object, "active_time",

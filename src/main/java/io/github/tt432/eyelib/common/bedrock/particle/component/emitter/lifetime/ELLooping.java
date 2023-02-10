@@ -13,9 +13,9 @@ import java.lang.reflect.Type;
 /**
  * @author DustW
  */
-@JsonAdapter(ELExpressionComponent.class)
+@JsonAdapter(ELExpression.class)
 @ParticleComponentHolder("minecraft:emitter_lifetime_looping")
-public class ELLoopingComponent extends EmitterLifetimeComponent implements JsonDeserializer<ELLoopingComponent> {
+public class ELLooping extends EmitterLifetimeComponent implements JsonDeserializer<ELLooping> {
     /**
      * emitter will emit particles for this time per loop
      * evaluated once per particle emitter loop
@@ -34,8 +34,8 @@ public class ELLoopingComponent extends EmitterLifetimeComponent implements Json
     MolangValue sleepTime;
 
     @Override
-    public ELLoopingComponent deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-        ELLoopingComponent result = new ELLoopingComponent();
+    public ELLooping deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        ELLooping result = new ELLooping();
         JsonObject object = json.getAsJsonObject();
 
         result.activeTime = JsonUtils.parseOrDefault(context, object, "active_time",

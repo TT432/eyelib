@@ -114,12 +114,10 @@ public class GeoProjectilesRenderer<T extends Entity & Animatable> extends Entit
 			bone.setWorldSpaceXform(worldState);
 		}
 
-		GeoRenderer.super.renderRecursively(bone, poseStack, buffer, packedLight, packedOverlay, red, green, blue,
-				alpha);
+		GeoRenderer.super.renderRecursively(bone, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
 	}
 
-	// TODO 1.20+ change to instance method with T argument instead of entity
-	public static int getPackedOverlay(Entity entity, float uIn) {
+	public int getPackedOverlay(Entity entity, float uIn) {
 		return OverlayTexture.pack(OverlayTexture.u(uIn), OverlayTexture.v(false));
 	}
 

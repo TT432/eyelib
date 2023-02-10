@@ -9,7 +9,7 @@ import io.github.tt432.eyelib.util.molang.MolangValue;
  * @author DustW
  */
 @ParticleComponentHolder("minecraft:emitter_initialization")
-public class EmitterInitializationComponent extends ParticleComponent {
+public class EmitterInitialization extends ParticleComponent {
     /**
      * this is run once at emitter startup
      */

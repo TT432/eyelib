@@ -32,7 +32,7 @@ public class Value2 {
         public Value2 deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             MolangValue[] deserialize = context.deserialize(json, MolangValue[].class);
             if (deserialize.length != 2)
-                throw new JsonParseException("Value3 must be IValue[3]");
+                throw new JsonParseException("Value2 must be IValue[2]");
             return new Value2(deserialize[0], deserialize[1]);
         }
     }

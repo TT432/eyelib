@@ -11,7 +11,7 @@ import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
  * @author DustW
  */
 @ParticleComponentHolder("minecraft:emitter_lifetime_events")
-public class EmitterLifetimeEventsComponent extends ParticleComponent {
+public class EmitterLifetimeEvents extends ParticleComponent {
     /**
      * fires when the emitter is created
      */

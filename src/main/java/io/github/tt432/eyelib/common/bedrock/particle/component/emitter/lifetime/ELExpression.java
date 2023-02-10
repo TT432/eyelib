@@ -13,9 +13,9 @@ import java.lang.reflect.Type;
 /**
  * @author DustW
  */
-@JsonAdapter(ELExpressionComponent.class)
+@JsonAdapter(ELExpression.class)
 @ParticleComponentHolder("minecraft:emitter_lifetime_expression")
-public class ELExpressionComponent extends EmitterLifetimeComponent implements JsonDeserializer<ELExpressionComponent> {
+public class ELExpression extends EmitterLifetimeComponent implements JsonDeserializer<ELExpression> {
     /**
      * When the expression is non-zero, the emitter will emit particles.
      * Evaluated every frame
@@ -35,8 +35,8 @@ public class ELExpressionComponent extends EmitterLifetimeComponent implements J
     MolangValue expiration;
 
     @Override
-    public ELExpressionComponent deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-        ELExpressionComponent result = new ELExpressionComponent();
+    public ELExpression deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        ELExpression result = new ELExpression();
         JsonObject object = json.getAsJsonObject();
 
         result.activation = JsonUtils.parseOrDefault(context, object, "activation_expression",

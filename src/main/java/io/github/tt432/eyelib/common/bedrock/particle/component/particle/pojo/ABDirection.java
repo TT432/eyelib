@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.common.bedrock.particle.component.particle;
+package io.github.tt432.eyelib.common.bedrock.particle.component.particle.pojo;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;

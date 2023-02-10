@@ -21,7 +21,7 @@ import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
  * @author DustW
  */
 @ParticleComponentHolder("minecraft:emitter_local_space")
-public class EmitterLocalSpaceComponent extends ParticleComponent {
+public class EmitterLocalSpace extends ParticleComponent {
     boolean position;
     boolean rotation;
     boolean velocity;

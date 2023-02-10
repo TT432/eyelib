@@ -97,13 +97,6 @@ public class KeyFrame extends EyelibLists.Node<KeyFrame> {
         }
     }
 
-    /**
-     * todo 意义不明的方法，出了问题考虑这个
-     *
-     * @param axis      轴
-     * @param dataPoint 索引
-     * @return 值
-     */
     public double calc(Axis axis, int dataPoint) {
         return get(axis, dataPoint);
     }
