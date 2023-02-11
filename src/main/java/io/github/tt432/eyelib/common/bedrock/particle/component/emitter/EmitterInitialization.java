@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.common.bedrock.particle.component.emitter;
 
 import com.google.gson.annotations.SerializedName;
 import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponent;
+import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
 import io.github.tt432.eyelib.molang.MolangValue;
 import lombok.Data;
@@ -25,4 +26,14 @@ public class EmitterInitialization extends ParticleComponent {
      */
     @SerializedName("per_update_expression")
     MolangValue perUpdate;
+
+    @Override
+    public void evaluateStart(MolangVariableScope scope) {
+        creation.evaluateWithCache("creation", scope);
+    }
+
+    @Override
+    public void evaluatePerUpdate(MolangVariableScope scope) {
+        perUpdate.evaluateWithCache("per_update", scope);
+    }
 }

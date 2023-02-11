@@ -5,6 +5,9 @@ import io.github.tt432.eyelib.molang.MolangVariableScope;
 
 
 public abstract class MolangFunction implements MolangValue {
+    public static final int TRUE = 1;
+    public static final int FALSE = 0;
+
     protected MolangValue[] args;
     protected String name;
 

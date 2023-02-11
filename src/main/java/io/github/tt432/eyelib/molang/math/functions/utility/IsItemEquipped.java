@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.molang.math.functions.utility;
 
+import io.github.tt432.eyelib.molang.MolangDataSource;
 import io.github.tt432.eyelib.molang.MolangParser;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.math.functions.MolangFunction;
@@ -29,17 +30,19 @@ public class IsItemEquipped extends MolangFunction {
     public double evaluate(MolangVariableScope scope) {
         String arg = getArgAsString(0, scope);
 
-        LivingEntity living = MolangParser.getInstance().source.getLiving();
+        MolangDataSource source = MolangParser.getInstance().source;
+        LivingEntity living = source.getLiving();
 
         if (living != null) {
             if (arg.equals("main_hand") || arg.equals("0")) {
-                return living.getMainHandItem().isEmpty() ? 0 : 1;
+                return living.getMainHandItem().isEmpty() ? FALSE : TRUE;
             } else if (arg.equals("off_hand") || arg.equals("1")) {
-                return living.getOffhandItem().isEmpty() ? 0 : 1;
+                return living.getOffhandItem().isEmpty() ? FALSE : TRUE;
             }
+
+            log.error("query.is_item_equipped arg error : " + arg);
         }
 
-        log.error("query.is_item_equipped arg error : " + arg);
-        return 0;
+        return FALSE;
     }
 }

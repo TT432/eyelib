@@ -13,12 +13,12 @@ import java.nio.ByteBuffer;
 /**
  * @author DustW
  */
-public class Mp3AudioStream implements AudioStream {
+public class FullReadAudioStream implements AudioStream {
     AudioInputStream stream;
     byte[] array;
     int offset;
 
-    public Mp3AudioStream(AudioInputStream stream) throws IOException {
+    public FullReadAudioStream(AudioInputStream stream) throws IOException {
         this.stream = stream;
         this.array = IOUtils.toByteArray(stream);
         this.offset = 0;

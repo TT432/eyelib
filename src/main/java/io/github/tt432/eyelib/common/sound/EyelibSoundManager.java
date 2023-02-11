@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.common.sound;
 
 import com.mojang.blaze3d.audio.OggAudioStream;
 import io.github.tt432.eyelib.util.FileToIdConverter;
-import javazoom.spi.mpeg.sampled.file.MpegAudioFileReader;
 import lombok.Getter;
 import net.minecraft.Util;
 import net.minecraft.client.sounds.AudioStream;
@@ -32,19 +31,17 @@ public class EyelibSoundManager {
     @Getter
     private static final EyelibSoundManager instance = new EyelibSoundManager();
 
-    private static final String dir = "geo/sounds";
-    private static final FileToIdConverter mp3 = new FileToIdConverter(dir, ".mp3");
-    private static final FileToIdConverter wav = new FileToIdConverter(dir, ".wav");
-    private static final FileToIdConverter ogg = new FileToIdConverter(dir, ".ogg");
+    private static final String DIR = "geo/sounds";
+    private static final FileToIdConverter WAV = new FileToIdConverter(DIR, ".wav");
+    private static final FileToIdConverter OGG = new FileToIdConverter(DIR, ".ogg");
 
     Map<ResourceLocation, Format> files = new HashMap<>();
 
     enum Format {
-        mp3(EyelibSoundManager.mp3),
-        wav(EyelibSoundManager.wav),
-        ogg(EyelibSoundManager.ogg);
+        WAV(EyelibSoundManager.WAV),
+        OGG(EyelibSoundManager.OGG);
 
-        FileToIdConverter converter;
+        final FileToIdConverter converter;
 
         Format(FileToIdConverter converter) {
             this.converter = converter;
@@ -62,24 +59,17 @@ public class EyelibSoundManager {
 
         return CompletableFuture.allOf(
                         CompletableFuture
-                                .supplyAsync(() -> mp3.listMatchingResources(resourceManager)
-                                        .stream().map(mp3::fileToId), backgroundExecutor)
-                                .thenApplyAsync(mp3IdList -> {
-                                    mp3IdList.forEach(rl -> result.put(rl, Format.mp3));
-                                    return null;
-                                }, backgroundExecutor),
-                        CompletableFuture
-                                .supplyAsync(() -> wav.listMatchingResources(resourceManager)
-                                        .stream().map(wav::fileToId), backgroundExecutor)
+                                .supplyAsync(() -> WAV.listMatchingResources(resourceManager)
+                                        .stream().map(WAV::fileToId), backgroundExecutor)
                                 .thenApplyAsync(wavIdList -> {
-                                    wavIdList.forEach(rl -> result.put(rl, Format.wav));
+                                    wavIdList.forEach(rl -> result.put(rl, Format.WAV));
                                     return null;
                                 }, backgroundExecutor),
                         CompletableFuture
-                                .supplyAsync(() -> ogg.listMatchingResources(resourceManager)
-                                        .stream().map(ogg::fileToId), backgroundExecutor)
+                                .supplyAsync(() -> OGG.listMatchingResources(resourceManager)
+                                        .stream().map(OGG::fileToId), backgroundExecutor)
                                 .thenApplyAsync(oggIdList -> {
-                                    oggIdList.forEach(rl -> result.put(rl, Format.ogg));
+                                    oggIdList.forEach(rl -> result.put(rl, Format.OGG));
                                     return null;
                                 }, backgroundExecutor))
                 .thenCompose(stage::wait)
@@ -97,9 +87,9 @@ public class EyelibSoundManager {
             try {
                 InputStream is = manager.getResource(format.converter.idToFile(id)).getInputStream();
 
-                if (format == Format.mp3 || format == Format.wav)
-                    return transform(is, format);
-                else if (format == Format.ogg)
+                if (format == Format.WAV)
+                    return transform(is);
+                else if (format == Format.OGG)
                     return isWrapper ? new LoopingAudioStream(OggAudioStream::new, is) : new OggAudioStream(is);
                 else return null;
             } catch (IOException | UnsupportedAudioFileException e) {
@@ -109,9 +99,8 @@ public class EyelibSoundManager {
         }, Util.backgroundExecutor());
     }
 
-    static AudioStream transform(InputStream is, Format format) throws UnsupportedAudioFileException, IOException {
-        AudioInputStream ais = format == Format.mp3 ? new MpegAudioFileReader().getAudioInputStream(is)
-                : AudioSystem.getAudioInputStream(new ByteArrayInputStream(IOUtils.toByteArray(is)));
+    static AudioStream transform(InputStream is) throws UnsupportedAudioFileException, IOException {
+        AudioInputStream ais = AudioSystem.getAudioInputStream(new ByteArrayInputStream(IOUtils.toByteArray(is)));
         AudioFormat originalFormat = ais.getFormat();
 
         if (originalFormat.getEncoding() != AudioFormat.Encoding.PCM_SIGNED) {
@@ -120,11 +109,6 @@ public class EyelibSoundManager {
             ais = AudioSystem.getAudioInputStream(targetFormat, ais);
         }
 
-        try {
-            return new Mp3AudioStream(ais);
-        } catch (Throwable t) {
-            t.printStackTrace();
-            throw t;
-        }
+        return new FullReadAudioStream(ais);
     }
 }

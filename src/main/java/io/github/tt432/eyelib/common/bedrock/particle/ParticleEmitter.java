@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.common.bedrock.particle;
 
+import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponent;
 import io.github.tt432.eyelib.common.bedrock.particle.component.emitter.EmitterInitialization;
 import io.github.tt432.eyelib.common.bedrock.particle.component.emitter.EmitterLifetimeEvents;
 import io.github.tt432.eyelib.common.bedrock.particle.component.emitter.EmitterLocalSpace;
@@ -10,10 +11,12 @@ import io.github.tt432.eyelib.common.bedrock.particle.pojo.Particle;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
 import lombok.Builder;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author DustW
  */
-@Builder
 public class ParticleEmitter {
     MolangVariableScope scope;
 
@@ -26,43 +29,74 @@ public class ParticleEmitter {
 
     ParticleConstructor constructor;
 
-    public void start() {
-        if (initialization != null) {
-            initialization.getCreation().evaluateWithCache("creation", scope);
+    List<ParticleComponent> components;
+
+    @Builder
+    public ParticleEmitter(MolangVariableScope scope, EmitterInitialization initialization,
+                           EmitterLifetimeEvents lifetimeEvents, EmitterLocalSpace localSpace,
+                           EmitterLifetimeComponent lifeTimeComponent, EmitterRateComponent rateComponent,
+                           EmitterShapeComponent shapeComponent, ParticleConstructor constructor) {
+        this.scope = scope;
+        this.initialization = initialization;
+        this.lifetimeEvents = lifetimeEvents;
+        this.localSpace = localSpace;
+        this.lifeTimeComponent = lifeTimeComponent;
+        this.rateComponent = rateComponent;
+        this.shapeComponent = shapeComponent;
+        this.constructor = constructor;
+
+        components = new ArrayList<>();
+        addComponentNotNull(initialization);
+        addComponentNotNull(lifetimeEvents);
+        addComponentNotNull(localSpace);
+        addComponentNotNull(lifeTimeComponent);
+        addComponentNotNull(rateComponent);
+        addComponentNotNull(shapeComponent);
+    }
+
+    void addComponentNotNull(ParticleComponent component) {
+        if (component != null)
+            components.add(component);
+    }
+
+    List<ParticleInstance> instances = new ArrayList<>();
+    int lifeTime;
+
+    public void tick() {
+        if (lifeTime == 0) {
+            start();
         }
 
-        if (lifeTimeComponent != null) {
-            lifeTimeComponent.evaluateStart(scope);
+        lifeTime++;
+        loopStart();
+    }
+
+    public void render() {
+        update();
+        //TODO 判断可以发射粒子调用 emit 并发射，将 ParticleInstance 放入 instances
+    }
+
+    private void start() {
+        for (ParticleComponent component : components) {
+            component.evaluateStart(scope);
         }
     }
 
-    public void loopStart() {
-        if (lifeTimeComponent != null) {
-            lifeTimeComponent.evaluateLoopStart(scope);
-        }
-
-        if (rateComponent != null) {
-            rateComponent.evaluateLoopStart(scope);
+    private void loopStart() {
+        for (ParticleComponent component : components) {
+            component.evaluateLoopStart(scope);
         }
     }
 
-    public void update() {
-        if (initialization != null) {
-            initialization.getPerUpdate().evaluateWithCache("per_update", scope);
-        }
-
-        if (lifeTimeComponent != null) {
-            lifeTimeComponent.evaluatePerUpdate(scope);
+    private void update() {
+        for (ParticleComponent component : components) {
+            component.evaluatePerUpdate(scope);
         }
     }
 
-    public void emit() {
-        if (rateComponent != null) {
-            rateComponent.evaluatePerEmit(scope);
-        }
-
-        if (shapeComponent != null) {
-            shapeComponent.evaluatePerEmit(scope);
+    private void emit() {
+        for (ParticleComponent component : components) {
+            component.evaluatePerEmit(scope);
         }
     }
 
@@ -77,6 +111,7 @@ public class ParticleEmitter {
                 .lifeTimeComponent(components.getByClass(EmitterLifetimeComponent.class))
                 .rateComponent(components.getByClass(EmitterRateComponent.class))
                 .shapeComponent(components.getByClass(EmitterShapeComponent.class))
+                .constructor(new ParticleConstructor())
                 .build();
     }
 }
