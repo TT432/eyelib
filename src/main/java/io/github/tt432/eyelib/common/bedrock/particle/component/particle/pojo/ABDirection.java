@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.common.bedrock.particle.component.particle.pojo;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import io.github.tt432.eyelib.util.Value3;
+import io.github.tt432.eyelib.molang.util.Value3;
 import io.github.tt432.eyelib.util.json.JsonUtils;
 
 import java.lang.reflect.Type;
@@ -28,8 +28,6 @@ public class ABDirection implements JsonDeserializer<ABDirection> {
      */
     @SerializedName("custom_direction")
     Value3 customDirection;
-
-    // TODO: UV 序列化
 
     @Override
     public ABDirection deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

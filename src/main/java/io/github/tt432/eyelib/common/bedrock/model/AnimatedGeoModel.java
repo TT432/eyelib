@@ -16,8 +16,8 @@ import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 import io.github.tt432.eyelib.util.MolangUtils;
-import io.github.tt432.eyelib.util.molang.MolangDataSource;
-import io.github.tt432.eyelib.util.molang.MolangParser;
+import io.github.tt432.eyelib.molang.MolangDataSource;
+import io.github.tt432.eyelib.molang.MolangParser;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -52,28 +52,28 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
         AnimationEvent<T> predicate;
         double currentTick = animatable instanceof Entity livingEntity ? livingEntity.tickCount : getCurrentTick();
 
-        if (manager.startTick == -1)
-            manager.startTick = currentTick + mc.getFrameTime();
+        if (manager.getStartTick() == -1)
+            manager.setStartTick(currentTick + mc.getFrameTime());
 
-        if (!mc.isPaused() || manager.shouldPlayWhilePaused) {
+        if (!mc.isPaused() || manager.isShouldPlayWhilePaused()) {
             if (animatable instanceof LivingEntity) {
-                manager.tick = currentTick + mc.getFrameTime();
-                double gameTick = manager.tick;
+                manager.setTick(currentTick + mc.getFrameTime());
+                double gameTick = manager.getTick();
                 double deltaTicks = gameTick - this.lastGameTickTime;
                 this.seekTime += deltaTicks;
                 this.lastGameTickTime = gameTick;
 
                 codeAnimations(animatable, instanceId, animationEvent);
             } else {
-                manager.tick = currentTick - manager.startTick;
-                double gameTick = manager.tick;
+                manager.setTick(currentTick - manager.getStartTick());
+                double gameTick = manager.getTick();
                 double deltaTicks = gameTick - this.lastGameTickTime;
                 this.seekTime += deltaTicks;
                 this.lastGameTickTime = gameTick;
             }
         }
 
-        predicate = animationEvent == null ? new AnimationEvent<>(animatable, 0, 0, (float) (manager.tick - this.lastGameTickTime), false, Collections.emptyList()) : animationEvent;
+        predicate = animationEvent == null ? new AnimationEvent<>(animatable, 0, 0, (float) (manager.getTick() - this.lastGameTickTime), false, Collections.emptyList()) : animationEvent;
         predicate.animationTick = this.seekTime;
 
         getAnimationProcessor().preAnimationSetup(predicate.getAnimatable(), this.seekTime, instanceId);
@@ -159,6 +159,7 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
         }
 
         MolangDataSource source = MolangParser.getInstance().source;
+        source.clear();
         source.addSource(animatable, instanceId);
     }
 

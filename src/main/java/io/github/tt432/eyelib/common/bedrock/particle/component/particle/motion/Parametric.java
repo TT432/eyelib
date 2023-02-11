@@ -2,8 +2,8 @@ package io.github.tt432.eyelib.common.bedrock.particle.component.particle.motion
 
 import com.google.gson.annotations.SerializedName;
 import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
-import io.github.tt432.eyelib.util.Value3;
-import io.github.tt432.eyelib.util.molang.MolangValue;
+import io.github.tt432.eyelib.molang.util.Value3;
+import io.github.tt432.eyelib.molang.MolangValue;
 
 /**
  * @author DustW

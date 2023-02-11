@@ -38,6 +38,10 @@ public class ParticleComponents {
     List<ParticleComponent> components;
     Map<Class<?>, ParticleComponent> bySuperClass = new HashMap<>();
 
+    public <T extends ParticleComponent> T getByClass(Class<T> tClass) {
+        return (T) bySuperClass.get(tClass);
+    }
+
     protected static class Serializer implements JsonDeserializer<ParticleComponents> {
         @Override
         public ParticleComponents deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

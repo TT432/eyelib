@@ -3,11 +3,8 @@ package io.github.tt432.eyelib.network;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.api.Syncable;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.simple.SimpleChannel;
 
-import java.util.Optional;
 import java.util.function.Supplier;
 
 public class SyncAnimationMsg {
@@ -21,30 +18,20 @@ public class SyncAnimationMsg {
         this.state = state;
     }
 
-    public static void register(SimpleChannel channel, int id) {
-        channel.registerMessage(
-                id,
-                SyncAnimationMsg.class,
-                SyncAnimationMsg::encode,
-                SyncAnimationMsg::decode,
-                SyncAnimationMsg::handle,
-                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
-    }
-
-    private static SyncAnimationMsg decode(FriendlyByteBuf buf) {
+    public static SyncAnimationMsg decode(FriendlyByteBuf buf) {
         final String key = buf.readUtf();
         final int id = buf.readVarInt();
         final int state = buf.readVarInt();
         return new SyncAnimationMsg(key, id, state);
     }
 
-    private void encode(FriendlyByteBuf buf) {
+    public void encode(FriendlyByteBuf buf) {
         buf.writeUtf(key);
         buf.writeVarInt(id);
         buf.writeVarInt(state);
     }
 
-    private void handle(Supplier<NetworkEvent.Context> sup) {
+    public void handle(Supplier<NetworkEvent.Context> sup) {
         final NetworkEvent.Context ctx = sup.get();
         ctx.enqueueWork(() -> {
             final Syncable syncable = EyelibNetworkHandler.getSyncable(key);

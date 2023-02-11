@@ -6,7 +6,7 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.Timestamp;
 import io.github.tt432.eyelib.util.EyelibLists;
-import io.github.tt432.eyelib.util.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangValue;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;

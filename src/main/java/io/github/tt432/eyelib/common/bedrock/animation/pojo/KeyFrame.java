@@ -4,13 +4,14 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import io.github.tt432.eyelib.util.EyelibLists;
 import io.github.tt432.eyelib.util.math.MathE;
-import io.github.tt432.eyelib.util.Value3;
+import io.github.tt432.eyelib.molang.util.Value3;
 import io.github.tt432.eyelib.util.math.Vec2d;
 import io.github.tt432.eyelib.util.math.curve.SplineCurve;
+import io.github.tt432.eyelib.molang.MolangParser;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import io.github.tt432.eyelib.util.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.util.Axis;
 import net.minecraft.util.Mth;
 
@@ -113,7 +114,7 @@ public class KeyFrame extends EyelibLists.Node<KeyFrame> {
             dataPoint = Mth.clamp(dataPoint, 0, dataPoints.length - 1);
         }
 
-        return dataPoints[dataPoint].get(axis).get();
+        return dataPoints[dataPoint].get(axis).evaluate(MolangParser.getGlobalScope());
     }
 
     protected static class Serializer implements JsonDeserializer<KeyFrame> {

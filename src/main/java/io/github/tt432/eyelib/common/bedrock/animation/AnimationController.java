@@ -20,7 +20,7 @@ import io.github.tt432.eyelib.common.bedrock.animation.util.BoneAnimationQueue;
 import io.github.tt432.eyelib.common.sound.SoundControl;
 import io.github.tt432.eyelib.util.BoneSnapshot;
 import io.github.tt432.eyelib.util.math.easing.EasingType;
-import io.github.tt432.eyelib.util.molang.MolangParser;
+import io.github.tt432.eyelib.molang.MolangParser;
 import it.unimi.dsi.fastutil.doubles.Double2DoubleFunction;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.extern.slf4j.Slf4j;

@@ -7,7 +7,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponent;
 import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
-import io.github.tt432.eyelib.util.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangValue;
 
 import java.lang.reflect.Type;
 

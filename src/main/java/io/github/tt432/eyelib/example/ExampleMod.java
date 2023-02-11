@@ -34,7 +34,6 @@ public class ExampleMod {
 			ItemRegistry.ITEMS.register(bus);
 			TileRegistry.TILES.register(bus);
 			BlockRegistry.BLOCKS.register(bus);
-			SoundRegistry.SOUNDS.register(bus);
 			mainTab = new CreativeModeTab(CreativeModeTab.getGroupCountSafe(), "geckolib_examples") {
 				@Override
 				public ItemStack makeIcon() {

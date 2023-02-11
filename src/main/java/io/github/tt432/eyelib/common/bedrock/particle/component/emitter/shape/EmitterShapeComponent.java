@@ -4,9 +4,9 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponent;
-import io.github.tt432.eyelib.util.Value3;
+import io.github.tt432.eyelib.molang.util.Value3;
 import io.github.tt432.eyelib.util.json.JsonUtils;
-import io.github.tt432.eyelib.util.molang.math.Constant;
+import io.github.tt432.eyelib.molang.math.Constant;
 
 /**
  * @author DustW

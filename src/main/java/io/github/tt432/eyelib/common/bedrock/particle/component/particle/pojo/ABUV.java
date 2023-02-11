@@ -3,9 +3,9 @@ package io.github.tt432.eyelib.common.bedrock.particle.component.particle.pojo;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import io.github.tt432.eyelib.util.Value2;
+import io.github.tt432.eyelib.molang.util.Value2;
 import io.github.tt432.eyelib.util.json.JsonUtils;
-import io.github.tt432.eyelib.util.molang.math.Constant;
+import io.github.tt432.eyelib.molang.math.Constant;
 
 import java.lang.reflect.Type;
 

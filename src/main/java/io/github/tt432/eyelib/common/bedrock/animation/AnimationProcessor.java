@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
 import io.github.tt432.eyelib.common.bedrock.animation.util.BoneAnimationQueue;
 import io.github.tt432.eyelib.util.BoneSnapshot;
 import io.github.tt432.eyelib.util.math.MathE;
-import io.github.tt432.eyelib.util.molang.MolangParser;
+import io.github.tt432.eyelib.molang.MolangParser;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -53,7 +53,7 @@ public class AnimationProcessor<T extends Animatable> {
                 controller.getBoneAnimationQueues().clear();
             }
 
-            controller.isJustStarting = manager.isFirstTick;
+            controller.isJustStarting = manager.isFirstTick();
 
             // Set current controller to animation test event
             event.setController(controller);
@@ -109,7 +109,7 @@ public class AnimationProcessor<T extends Animatable> {
         }
 
         this.reloadAnimations = false;
-        manager.isFirstTick = false;
+        manager.setFirstTick(false);
     }
 
     private void updateBoneSnapshots(Map<String, Pair<Bone, BoneSnapshot>> boneSnapshotCollection) {

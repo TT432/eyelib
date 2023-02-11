@@ -5,8 +5,9 @@ import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
 import io.github.tt432.eyelib.util.json.JsonUtils;
-import io.github.tt432.eyelib.util.molang.MolangValue;
-import io.github.tt432.eyelib.util.molang.math.Constant;
+import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangVariableScope;
+import io.github.tt432.eyelib.molang.math.Constant;
 
 import java.lang.reflect.Type;
 
@@ -24,6 +25,7 @@ public class ELLooping extends EmitterLifetimeComponent implements JsonDeseriali
      */
     @SerializedName("active_time")
     MolangValue activeTime;
+
     /**
      * emitter will pause emitting particles for this time per loop
      * evaluated once per particle emitter loop
@@ -32,6 +34,12 @@ public class ELLooping extends EmitterLifetimeComponent implements JsonDeseriali
      */
     @SerializedName("sleep_time")
     MolangValue sleepTime;
+
+    @Override
+    public void evaluateLoopStart(MolangVariableScope scope) {
+        activeTime.evaluateWithCache("active_time", scope);
+        sleepTime.evaluateWithCache("sleep_time", scope);
+    }
 
     @Override
     public ELLooping deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

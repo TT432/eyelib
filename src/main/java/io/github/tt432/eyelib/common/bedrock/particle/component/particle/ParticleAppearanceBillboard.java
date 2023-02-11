@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponen
 import io.github.tt432.eyelib.common.bedrock.particle.component.particle.pojo.ABDirection;
 import io.github.tt432.eyelib.common.bedrock.particle.component.particle.pojo.ABUV;
 import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
-import io.github.tt432.eyelib.util.Value2;
+import io.github.tt432.eyelib.molang.util.Value2;
 
 /**
  * @author DustW

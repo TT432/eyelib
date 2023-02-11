@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.util.json;
 
 import com.google.gson.*;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.Converter;
-import io.github.tt432.eyelib.util.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangValue;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 

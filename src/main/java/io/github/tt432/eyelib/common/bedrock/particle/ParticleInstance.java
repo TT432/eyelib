@@ -1,18 +1,12 @@
 package io.github.tt432.eyelib.common.bedrock.particle;
 
-import io.github.tt432.eyelib.common.bedrock.particle.pojo.Particle;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * @author DustW
  */
 public class ParticleInstance {
-    Particle particle;
-
-    void onStart() {
-        // 计算粒子启动变量
-    }
-
-    void onTick() {
-        // 计算粒子 tick 变量
-    }
+    Level level;
+    Vec3 worldPos;
 }

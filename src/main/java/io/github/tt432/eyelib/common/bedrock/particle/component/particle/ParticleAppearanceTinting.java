@@ -4,11 +4,10 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponent;
 import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
-import io.github.tt432.eyelib.util.Value4;
-import io.github.tt432.eyelib.util.molang.MolangValue;
+import io.github.tt432.eyelib.molang.util.Value4;
+import io.github.tt432.eyelib.molang.MolangValue;
 
 import java.lang.reflect.Type;
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,7 +46,7 @@ public class ParticleAppearanceTinting extends ParticleComponent implements Json
             result.gradient = new HashMap<>();
             colorJsonObject.get("gradient").getAsJsonObject().entrySet().forEach(e ->
                     result.gradient.put(Double.parseDouble(e.getKey()),
-                            new BigInteger(e.getValue().getAsString().substring(1), 16).intValue()));
+                            Integer.parseUnsignedInt(e.getValue().getAsString().substring(1), 16)));
             result.mode = Mode.GRADIENT;
         }
 

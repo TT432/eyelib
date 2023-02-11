@@ -6,7 +6,7 @@ import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.Tickable;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
-import io.github.tt432.eyelib.util.molang.MolangParser;
+import io.github.tt432.eyelib.molang.MolangParser;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -24,13 +24,13 @@ public abstract class AnimatedTickingGeoModel<T extends Animatable & Tickable> e
 		// Each animation has its own collection of animations (called the
 		// EntityAnimationManager), which allows for multiple independent animations
 		AnimationData manager = animatable.getFactory().getOrCreateAnimationData(instanceId);
-		if (manager.startTick == -1) {
-			manager.startTick = (animatable.tickTimer() + Minecraft.getInstance().getFrameTime());
+		if (manager.getStartTick() == -1) {
+			manager.setStartTick((animatable.tickTimer() + Minecraft.getInstance().getFrameTime()));
 		}
 
-		if (!Minecraft.getInstance().isPaused() || manager.shouldPlayWhilePaused) {
-			manager.tick = (animatable.tickTimer() + Minecraft.getInstance().getFrameTime());
-			double gameTick = manager.tick;
+		if (!Minecraft.getInstance().isPaused() || manager.isShouldPlayWhilePaused()) {
+			manager.setTick((animatable.tickTimer() + Minecraft.getInstance().getFrameTime()));
+			double gameTick = manager.getTick();
 			double deltaTicks = gameTick - lastGameTickTime;
 			seekTime += deltaTicks;
 			lastGameTickTime = gameTick;
@@ -47,7 +47,7 @@ public abstract class AnimatedTickingGeoModel<T extends Animatable & Tickable> e
 					MolangParser.getInstance(), shouldCrashOnMissing);
 		}
 
-		if (!Minecraft.getInstance().isPaused() || manager.shouldPlayWhilePaused) {
+		if (!Minecraft.getInstance().isPaused() || manager.isShouldPlayWhilePaused()) {
 			codeAnimations(animatable, instanceId, animationEvent);
 		}
 	}

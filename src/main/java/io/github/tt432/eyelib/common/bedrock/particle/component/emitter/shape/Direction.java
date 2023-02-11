@@ -5,7 +5,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
-import io.github.tt432.eyelib.util.Value3;
+import io.github.tt432.eyelib.molang.util.Value3;
 
 /**
  * "direction": "inwards" // particle direction towards center of disc

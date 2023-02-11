@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.common.bedrock.particle.component.particle.pojo;
 
 import com.google.gson.annotations.SerializedName;
-import io.github.tt432.eyelib.util.Value2;
-import io.github.tt432.eyelib.util.molang.MolangValue;
+import io.github.tt432.eyelib.molang.util.Value2;
+import io.github.tt432.eyelib.molang.MolangValue;
 
 /**
  * alternate way via specifying a flipbook animation

@@ -5,8 +5,9 @@ import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
 import io.github.tt432.eyelib.util.json.JsonUtils;
-import io.github.tt432.eyelib.util.molang.MolangValue;
-import io.github.tt432.eyelib.util.molang.math.Constant;
+import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangVariableScope;
+import io.github.tt432.eyelib.molang.math.Constant;
 
 import java.lang.reflect.Type;
 
@@ -35,16 +36,20 @@ public class ELExpression extends EmitterLifetimeComponent implements JsonDeseri
     MolangValue expiration;
 
     @Override
+    public void evaluatePerUpdate(MolangVariableScope scope) {
+        activation.evaluateWithCache("activation", scope);
+        expiration.evaluateWithCache("expiration", scope);
+    }
+
+    @Override
     public ELExpression deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
         ELExpression result = new ELExpression();
         JsonObject object = json.getAsJsonObject();
 
-        result.activation = JsonUtils.parseOrDefault(context, object, "activation_expression",
-                MolangValue.class, new Constant(1));
-
-        result.expiration = JsonUtils.parseOrDefault(context, object, "expiration_expression",
-                MolangValue.class, new Constant(0));
-
+        result.activation = JsonUtils.parseOrDefault(context, object,
+                "activation_expression", MolangValue.class, new Constant(1));
+        result.expiration = JsonUtils.parseOrDefault(context, object,
+                "expiration_expression", MolangValue.class, new Constant(0));
 
         return result;
     }
