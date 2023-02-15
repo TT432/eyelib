@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.molang.expressions.MolangExpression;
 import io.github.tt432.eyelib.molang.expressions.MolangMultiStatement;
 import io.github.tt432.eyelib.molang.expressions.MolangResult;
 import io.github.tt432.eyelib.molang.math.*;
-import io.github.tt432.eyelib.molang.math.functions.MolangFunction;
+import io.github.tt432.eyelib.molang.functions.MolangFunction;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,7 +45,9 @@ public class MolangParser {
     public static final MolangExpression ONE = new MolangResult(new Constant(1));
     public static final String RETURN = "return ";
 
-    public final MolangDataSource source = new MolangDataSource();
+    public static MolangDataSource getCurrentDataSource() {
+        return scopeStack.last().getDataSource();
+    }
 
     private MolangParser() {
         register(new MolangVariable("PI", Math.PI));
@@ -65,7 +67,7 @@ public class MolangParser {
     }
 
     public void register(MolangVariable variable) {
-        globalScope.put(variable.getName(), variable);
+        globalScope.setVariable(variable.getName(), variable);
     }
 
     public void register(String funcName, Class<? extends MolangFunction> funcClass) {
@@ -88,13 +90,13 @@ public class MolangParser {
 
     public void setValue(String name, DoubleSupplier value) {
         if (globalScope.containsKey(name)) {
-            globalScope.cache.put(name, value);
+            globalScope.setValue(name, value);
         }
     }
 
     public void setValue(String name, DoubleSupplier value, MolangVariableScope scope) {
         if (scope.containsKey(name)) {
-            scope.cache.put(name, value);
+            scope.setValue(name, value);
         }
     }
 

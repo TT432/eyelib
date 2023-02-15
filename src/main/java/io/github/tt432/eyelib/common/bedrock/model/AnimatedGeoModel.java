@@ -15,9 +15,9 @@ import io.github.tt432.eyelib.common.bedrock.animation.pojo.Animation;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
-import io.github.tt432.eyelib.util.MolangUtils;
 import io.github.tt432.eyelib.molang.MolangDataSource;
 import io.github.tt432.eyelib.molang.MolangParser;
+import io.github.tt432.eyelib.molang.MolangValue;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -135,19 +135,19 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
         Minecraft mc = Minecraft.getInstance();
 
         parser.setValue("query.actor_count", mc.level::getEntityCount);
-        parser.setValue("query.time_of_day", () -> MolangUtils.normalizeTime(mc.level.getDayTime()));
+        parser.setValue("query.time_of_day", () -> MolangValue.normalizeTime(mc.level.getDayTime()));
         parser.setValue("query.moon_phase", mc.level::getMoonPhase);
 
         if (animatable instanceof Entity entity) {
             parser.setValue("query.distance_from_camera", () -> mc.gameRenderer.getMainCamera().getPosition().distanceTo(entity.position()));
-            parser.setValue("query.is_on_ground", () -> MolangUtils.booleanToFloat(entity.isOnGround()));
-            parser.setValue("query.is_in_water", () -> MolangUtils.booleanToFloat(entity.isInWater()));
-            parser.setValue("query.is_in_water_or_rain", () -> MolangUtils.booleanToFloat(entity.isInWaterRainOrBubble()));
+            parser.setValue("query.is_on_ground", () -> MolangValue.booleanToFloat(entity.isOnGround()));
+            parser.setValue("query.is_in_water", () -> MolangValue.booleanToFloat(entity.isInWater()));
+            parser.setValue("query.is_in_water_or_rain", () -> MolangValue.booleanToFloat(entity.isInWaterRainOrBubble()));
 
             if (entity instanceof LivingEntity livingEntity) {
                 parser.setValue("query.health", livingEntity::getHealth);
                 parser.setValue("query.max_health", livingEntity::getMaxHealth);
-                parser.setValue("query.is_on_fire", () -> MolangUtils.booleanToFloat(livingEntity.isOnFire()));
+                parser.setValue("query.is_on_fire", () -> MolangValue.booleanToFloat(livingEntity.isOnFire()));
                 parser.setValue("query.ground_speed", () -> {
                     Vec3 velocity = livingEntity.getDeltaMovement();
 
@@ -158,7 +158,8 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
             }
         }
 
-        MolangDataSource source = MolangParser.getInstance().source;
+        MolangDataSource source = MolangParser.getCurrentDataSource();
+        // TODO 分离数据后取消 clear，转为使用每个个体自己的 scope
         source.clear();
         source.addSource(animatable, instanceId);
     }

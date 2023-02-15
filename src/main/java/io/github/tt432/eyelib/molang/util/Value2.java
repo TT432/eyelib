@@ -6,7 +6,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.util.Axis;
+import io.github.tt432.eyelib.util.math.Vec2d;
 import lombok.Data;
 
 import java.lang.reflect.Type;
@@ -26,6 +28,25 @@ public class Value2 {
             case Y -> y;
             default -> throw new IllegalArgumentException("Value2 not have z axis");
         };
+    }
+
+    public void evaluateWithCache(String name, MolangVariableScope scope) {
+        x.evaluateWithCache(name + "x", scope);
+        y.evaluateWithCache(name + "y", scope);
+    }
+
+    public Vec2d evaluate(MolangVariableScope scope) {
+        return new Vec2d(
+                x.evaluate(scope),
+                y.evaluate(scope)
+        );
+    }
+
+    public Vec2d fromCache(String name, MolangVariableScope scope) {
+        return new Vec2d(
+                scope.getValue(name + "x"),
+                scope.getValue(name + "y")
+        );
     }
 
     protected static class Serializer implements JsonDeserializer<Value2> {

@@ -4,10 +4,14 @@ import com.google.gson.annotations.SerializedName;
 import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponent;
 import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
 import io.github.tt432.eyelib.molang.MolangValue;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * @author DustW
  */
+@EqualsAndHashCode(callSuper = true)
+@Data
 @ParticleComponentHolder("minecraft:particle_initial_spin")
 public class ParticleInitialSpin extends ParticleComponent {
     /**
@@ -16,6 +20,7 @@ public class ParticleInitialSpin extends ParticleComponent {
      */
     @SerializedName("rotation")
     MolangValue start;
+
     /**
      * specifies the spin rate in degrees/second
      * evaluated once

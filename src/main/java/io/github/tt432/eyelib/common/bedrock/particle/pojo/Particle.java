@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import io.github.tt432.eyelib.common.bedrock.FormatVersion;
+import io.github.tt432.eyelib.common.bedrock.particle.ParticleVariableControl;
 import io.github.tt432.eyelib.molang.MolangParser;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
 import lombok.Data;
@@ -27,6 +28,10 @@ public class Particle implements JsonDeserializer<Particle> {
     public Particle deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
         Particle particle = new Particle();
         particle.scope = new MolangVariableScope();
+
+        ParticleVariableControl.setEmitterVariable(particle.scope);
+        ParticleVariableControl.setParticleVariable(particle.scope);
+        ParticleVariableControl.setEntityVariable(particle.scope);
 
         try (var a = MolangParser.scopeStack.push(particle.scope)) {
             JsonObject object = json.getAsJsonObject();

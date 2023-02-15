@@ -8,15 +8,22 @@ import com.google.gson.annotations.JsonAdapter;
 import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponent;
 import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
 import io.github.tt432.eyelib.molang.MolangValue;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.lang.reflect.Type;
 
 /**
  * @author DustW
  */
+@EqualsAndHashCode(callSuper = true)
+@Data
 @JsonAdapter(ParticleInitialSpeed.class)
 @ParticleComponentHolder("minecraft:particle_initial_speed")
 public class ParticleInitialSpeed extends ParticleComponent implements JsonDeserializer<ParticleInitialSpeed> {
+    /**
+     * evaluated once
+     */
     MolangValue speed;
 
     @Override

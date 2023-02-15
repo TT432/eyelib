@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.common.bedrock.model.pojo.RawGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.tree.GeoBuilder;
 import io.github.tt432.eyelib.common.bedrock.model.tree.RawGeometryTree;
 import io.github.tt432.eyelib.common.bedrock.particle.pojo.Particle;
+import io.github.tt432.eyelib.util.FileToIdConverter;
 import io.github.tt432.eyelib.util.json.JsonUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.Getter;
@@ -41,8 +42,23 @@ public class BedrockResourceManager {
     private Map<ResourceLocation, Animation> animations = Collections.emptyMap();
     @Getter
     private Map<ResourceLocation, GeoModel> geoModels = Collections.emptyMap();
-    @Getter
+
+    FileToIdConverter particleFile = new FileToIdConverter("geo/particles", ".particle.json");
     private Map<ResourceLocation, Particle> particles = Collections.emptyMap();
+
+    public Particle getParticle(ResourceLocation name) {
+        if (particles.containsKey(name)) {
+            return particles.get(name);
+        } else {
+            ResourceLocation file = particleFile.idToFile(name);
+
+            if (particles.containsKey(file)) {
+                return particles.get(file);
+            }
+        }
+
+        return null;
+    }
 
     public CompletableFuture<Void> reload(PreparationBarrier stage, ResourceManager resourceManager,
                                           ProfilerFiller preparationsProfiler, ProfilerFiller reloadProfiler,
@@ -109,8 +125,7 @@ public class BedrockResourceManager {
                                                              String type, Function<ResourceLocation, T> loader,
                                                              BiConsumer<ResourceLocation, T> map) {
         return CompletableFuture
-                .supplyAsync(() -> resourceManager.listResources(type, fileName -> fileName.endsWith(".json")),
-                        executor)
+                .supplyAsync(() -> resourceManager.listResources(type, fileName -> fileName.endsWith(".json")), executor)
                 .thenApplyAsync(resources -> {
                     Map<ResourceLocation, CompletableFuture<T>> tasks = new Object2ObjectOpenHashMap<>();
 

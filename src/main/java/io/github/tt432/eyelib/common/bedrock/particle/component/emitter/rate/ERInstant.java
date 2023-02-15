@@ -30,7 +30,18 @@ public class ERInstant extends EmitterRateComponent implements JsonDeserializer<
 
     @Override
     public void evaluateLoopStart(MolangVariableScope scope) {
+        scope.setValue("instant_shoot", false);
         particlesNum.evaluateWithCache("num_particles", scope);
+    }
+
+    @Override
+    public int shootAmount(MolangVariableScope scope) {
+        if (!scope.getAsBool("instant_shoot")) {
+            scope.setValue("instant_shoot", true);
+            return scope.getAsInt("num_particles");
+        }
+
+        return 0;
     }
 
     @Override

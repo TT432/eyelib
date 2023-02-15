@@ -6,10 +6,14 @@ import io.github.tt432.eyelib.common.bedrock.particle.component.particle.pojo.AB
 import io.github.tt432.eyelib.common.bedrock.particle.component.particle.pojo.ABUV;
 import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
 import io.github.tt432.eyelib.molang.util.Value2;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * @author DustW
  */
+@EqualsAndHashCode(callSuper = true)
+@Data
 @ParticleComponentHolder("minecraft:particle_appearance_billboard")
 public class ParticleAppearanceBillboard extends ParticleComponent {
     /**

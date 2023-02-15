@@ -5,9 +5,12 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
+import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
+import net.minecraft.world.phys.Vec3;
 
 import java.lang.reflect.Type;
+import java.util.Random;
 
 /**
  * 仅表面选项无效
@@ -22,5 +25,11 @@ public class ESCustom extends EmitterShapeComponent implements JsonDeserializer<
         ESCustom custom = new ESCustom();
         processBase(custom, json.getAsJsonObject(), context);
         return custom;
+    }
+
+    @Override
+    public Vec3 randomValue(Random random, MolangVariableScope scope) {
+        //TODO need impl
+        return offset.evaluate(scope);
     }
 }

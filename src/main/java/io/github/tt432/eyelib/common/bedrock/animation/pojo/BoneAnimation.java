@@ -77,8 +77,7 @@ public class BoneAnimation {
                 var beforePlus = ref.before.prev;
                 var afterPlus = ref.after.next;
 
-                return mapAxes(axis -> KeyFrame.catmullromLerp(beforePlus, ref.before,
-                        ref.after, afterPlus, axis, weight));
+                return mapAxes(axis -> KeyFrame.catmullromLerp(beforePlus, ref.before, ref.after, afterPlus, axis, weight));
             } else if (ref.before.getLerpMode() == KeyFrame.LerpMode.BEZIER || ref.after.getLerpMode() == KeyFrame.LerpMode.BEZIER) {
                 // todo 实现 bezier
             }

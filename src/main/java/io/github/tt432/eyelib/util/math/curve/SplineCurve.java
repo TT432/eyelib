@@ -12,6 +12,7 @@ public class SplineCurve extends Curve {
         this.points = points;
     }
 
+    @Override
     public Vec2d getPoint(double time) {
         Vec2d result = new Vec2d();
         double p = (points.length - 1) * time;

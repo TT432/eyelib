@@ -36,6 +36,8 @@ public class MolangVariable implements MolangValue {
 
     @Override
     public double evaluate(MolangVariableScope scope) {
+        if (scope.containsCache(name))
+            return scope.getValue(name);
         return this.valueFunc.apply(scope);
     }
 }

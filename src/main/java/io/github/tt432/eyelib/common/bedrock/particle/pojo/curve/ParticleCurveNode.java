@@ -1,9 +1,8 @@
 package io.github.tt432.eyelib.common.bedrock.particle.pojo.curve;
 
 import com.google.gson.annotations.SerializedName;
-import io.github.tt432.eyelib.common.bedrock.animation.pojo.Timestamp;
-import io.github.tt432.eyelib.util.EyelibLists;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.util.EyelibLists;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -13,7 +12,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class ParticleCurveNode extends EyelibLists.Node<ParticleCurveNode> {
-    Timestamp timestamp;
+    int index;
 
     /**
      * the output of the curve

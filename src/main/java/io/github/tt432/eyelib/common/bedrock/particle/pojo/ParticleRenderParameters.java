@@ -1,9 +1,12 @@
 package io.github.tt432.eyelib.common.bedrock.particle.pojo;
 
+import lombok.Data;
+
 /**
  *
  * @author DustW
  */
+@Data
 public class ParticleRenderParameters {
     /**
      * Minecraft material to use for emitter
@@ -15,8 +18,10 @@ public class ParticleRenderParameters {
      * particles_alpha	Pixels with an alpha of 0 will be fully transparent, colored pixels will always be opaque.
      * particles_blend	Enables color blending and transparency in colored pixels, uses a normal blend mode.
      * particles_add	Enables color blending and transparency in colored pixels, uses an additive blend mode.
+     * particles_opaque
      */
     String material;
+
     /**
      * Minecraft texture to use for emitter
      */

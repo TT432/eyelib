@@ -5,5 +5,5 @@ import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponen
 /**
  * @author DustW
  */
-public class EmitterLifetimeComponent extends ParticleComponent {
+public abstract class EmitterLifetimeComponent extends ParticleComponent {
 }

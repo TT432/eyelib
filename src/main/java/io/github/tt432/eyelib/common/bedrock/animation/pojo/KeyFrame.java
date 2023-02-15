@@ -64,14 +64,14 @@ public class KeyFrame extends EyelibLists.Node<KeyFrame> {
         List<Vec2d> vectors = new ArrayList<>();
 
         if (beforePlus != null && before.dataPoints.length == 1)
-            vectors.add(new Vec2d(beforePlus.getTick(), beforePlus.calc(axis, 1)));
+            vectors.add(new Vec2d(beforePlus.getTick(), beforePlus.get(axis, 1)));
 
-        vectors.add(new Vec2d(before.getTick(), before.calc(axis, 1)));
+        vectors.add(new Vec2d(before.getTick(), before.get(axis, 1)));
 
-        vectors.add(new Vec2d(after.getTick(), after.calc(axis, 0)));
+        vectors.add(new Vec2d(after.getTick(), after.get(axis, 0)));
 
         if (afterPlus != null && after.dataPoints.length == 1)
-            vectors.add(new Vec2d(afterPlus.getTick(), afterPlus.calc(axis, 0)));
+            vectors.add(new Vec2d(afterPlus.getTick(), afterPlus.get(axis, 0)));
 
         SplineCurve curve = new SplineCurve(vectors.toArray(new Vec2d[0]));
         double time = (weight + (beforePlus != null ? 1 : 0)) / (vectors.size() - 1);
@@ -94,12 +94,8 @@ public class KeyFrame extends EyelibLists.Node<KeyFrame> {
         if (this.get(axis, aDataPoint) == other.get(axis, bDataPoint)) {
             return this.get(axis, aDataPoint);
         } else {
-            return MathE.lerp(this.calc(axis, aDataPoint), other.calc(axis, bDataPoint), weight);
+            return MathE.lerp(this.get(axis, aDataPoint), other.get(axis, bDataPoint), weight);
         }
-    }
-
-    public double calc(Axis axis, int dataPoint) {
-        return get(axis, dataPoint);
     }
 
     /**

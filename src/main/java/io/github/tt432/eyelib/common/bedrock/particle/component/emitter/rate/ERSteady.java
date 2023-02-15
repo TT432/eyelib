@@ -3,11 +3,11 @@ package io.github.tt432.eyelib.common.bedrock.particle.component.emitter.rate;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
-import io.github.tt432.eyelib.util.json.JsonUtils;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.molang.math.Constant;
+import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
+import io.github.tt432.eyelib.util.json.JsonUtils;
 
 import java.lang.reflect.Type;
 
@@ -25,6 +25,7 @@ public class ERSteady extends EmitterRateComponent implements JsonDeserializer<E
      */
     @SerializedName("spawn_rate")
     MolangValue spawnRate;
+
     /**
      * maximum number of particles that can be active at once for this emitter<p>
      * evaluated once per particle emitter loop
@@ -37,11 +38,37 @@ public class ERSteady extends EmitterRateComponent implements JsonDeserializer<E
     @Override
     public void evaluateLoopStart(MolangVariableScope scope) {
         maxParticles.evaluateWithCache("max_particles", scope);
+        spawnRate.evaluateWithCache("spawn_rate", scope);
     }
 
     @Override
-    public void evaluatePerEmit(MolangVariableScope scope) {
-        spawnRate.evaluateWithCache("spawn_rate", scope);
+    public int shootAmount(MolangVariableScope scope) {
+        double willShoot = 0;
+
+        double preShootTime = scope.getValue("pre_shoot_time");
+        double age = scope.getValue("variable.emitter_age");
+        double shootParticle = scope.getValue("shoot_particle");
+        double rate = scope.getValue("spawn_rate");
+
+        if (Math.floor(age) > Math.floor(preShootTime)) {
+            willShoot += rate - shootParticle;
+            scope.setValue("shoot_particle", 0);
+        }
+
+        scope.setValue("pre_shoot_time", age);
+
+        double needShoot = Math.floor((age - Math.floor(age)) * rate);
+        double currNum = scope.getValue("variable.emitter_particles_num");
+        double max = scope.getValue("max_particles");
+
+        willShoot += needShoot - shootParticle;
+
+        if (currNum + willShoot > max) {
+            willShoot = max - currNum;
+        }
+
+        scope.setValue("shoot_particle", needShoot);
+        return (int) Math.floor(willShoot);
     }
 
     @Override

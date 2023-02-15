@@ -4,15 +4,19 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponent;
+import io.github.tt432.eyelib.molang.MolangVariableScope;
+import io.github.tt432.eyelib.molang.math.Constant;
 import io.github.tt432.eyelib.molang.util.Value3;
 import io.github.tt432.eyelib.util.json.JsonUtils;
-import io.github.tt432.eyelib.molang.math.Constant;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.Random;
 
 /**
  * @author DustW
  */
-public class EmitterShapeComponent extends ParticleComponent {
-    // TODO abstract Vector3d randomValue(Random random);
+public abstract class EmitterShapeComponent extends ParticleComponent {
+    public abstract Vec3 randomValue(Random random, MolangVariableScope scope);
 
     /**
      * emit only from the edge of the disc
@@ -29,6 +33,20 @@ public class EmitterShapeComponent extends ParticleComponent {
      * default:[0, 0, 0]
      */
     public Value3 offset;
+
+    @Override
+    public void evaluatePerEmit(MolangVariableScope scope) {
+        offset.evaluateWithCache("offset", scope);
+    }
+
+    protected static double randomRadius(Random random, double radius) {
+        return random.nextDouble() * radius * 2 - radius;
+    }
+
+    protected Vec3 moveOffset(Vec3 source, MolangVariableScope scope) {
+        Vec3 offsetValue = offset.fromCache("offset", scope);
+        return source.add(offsetValue);
+    }
 
     protected void processBase(EmitterShapeComponent instance, JsonObject object, JsonDeserializationContext context) {
         instance.surfaceOnly = JsonUtils.parseOrDefault(context, object, "surface_only", boolean.class, false);

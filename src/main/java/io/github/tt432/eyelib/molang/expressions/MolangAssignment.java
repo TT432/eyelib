@@ -17,7 +17,7 @@ public class MolangAssignment extends MolangExpression {
 	public double evaluate(MolangVariableScope scope) {
 		double value = this.expression.evaluate(scope);
 
-		this.variable.set(value);
+		scope.setValue(variable.getName(), () -> value);
 
 		return value;
 	}

@@ -8,11 +8,22 @@ import com.google.gson.JsonParseException;
 import java.lang.reflect.Type;
 
 public interface MolangValue {
+    int TRUE = 1;
+    int FALSE = 0;
+
+    static float normalizeTime(long timestamp) {
+        return ((float) timestamp / 24000);
+    }
+
+    static float booleanToFloat(boolean input) {
+        return input ? 1.0F : 0.0F;
+    }
+
     double evaluate(MolangVariableScope scope);
 
     default double evaluateWithCache(String name, MolangVariableScope scope) {
         double evaluate = evaluate(scope);
-        scope.cache.put(name, () -> evaluate);
+        scope.setValue(name, () -> evaluate);
         return evaluate;
     }
 

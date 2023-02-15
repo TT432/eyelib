@@ -34,6 +34,12 @@ public class ERManual extends EmitterRateComponent implements JsonDeserializer<E
     }
 
     @Override
+    public int shootAmount(MolangVariableScope scope) {
+        // TODO need impl
+        return 0;
+    }
+
+    @Override
     public ERManual deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
         ERManual result = new ERManual();
         JsonObject object = json.getAsJsonObject();

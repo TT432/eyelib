@@ -1,15 +1,32 @@
 package io.github.tt432.eyelib.common.bedrock.particle.component.particle.motion;
 
 import com.google.gson.annotations.SerializedName;
-import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
-import io.github.tt432.eyelib.molang.util.Value3;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangVariableScope;
+import io.github.tt432.eyelib.molang.util.Value3;
+import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * @author DustW
  */
 @ParticleComponentHolder("minecraft:particle_motion_dynamic")
 public class Dynamic extends ParticleMotionComponent {
+    // TODO 实现 rotationAcceleration 和 rotationDragCoefficient
+    public Vec3 getNewPos(MolangVariableScope scope, Vec3 pos) {
+        if (linearAcceleration != null) {
+            Vec3 linear = linearAcceleration.evaluate(scope).scale(1 / 20D);
+            pos = pos.add(linear);
+        }
+
+        if (linearDragCoefficient != null) {
+            Vec3 drag = pos.scale(-linearDragCoefficient.evaluate(scope)).scale(1 / 20D);
+            pos = pos.add(drag);
+        }
+
+        return pos;
+    }
+
     /**
      * the linear acceleration applied to the particle, defaults to [0, 0, 0].
      * Units are blocks/sec/sec

@@ -4,13 +4,15 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import io.github.tt432.eyelib.common.bedrock.animation.pojo.Timestamp;
-import io.github.tt432.eyelib.util.EyelibLists;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.math.Constant;
+import io.github.tt432.eyelib.molang.math.MolangVariable;
+import io.github.tt432.eyelib.util.EyelibLists;
+import io.github.tt432.eyelib.util.json.JsonUtils;
+import io.github.tt432.eyelib.util.math.Interpolates;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -20,6 +22,7 @@ import java.util.List;
 public class ParticleCurve {
     String name;
     CurveType type;
+
     /**
      * nodes are the control nodes for the curve.
      * These are assumed to be equally spaced,
@@ -35,12 +38,14 @@ public class ParticleCurve {
      * bezier chain的节点是bezier_chain的控制节点。节点在解析前会被排序，所以如果你声明节点0.3, 0.6, 0.5，它们会被重新排序为0.3, 0.5, 0.6。
      */
     List<ParticleCurveNode> nodes;
+
     /**
      * input <float/Molang> This is the input value to use. For example,<p>
      * variable.particle_age/variable.particle_lifetime would result in an input from 0 to 1 over the lifetime of the particle,
      * while variable.particle_age would have input of how old the particle is in seconds.
      */
     MolangValue input;
+
     /**
      * horizontal range (default: 1.0) This is the range that the input is mapped onto between 0 and this value.
      * This field is deprecated and optional.<p>
@@ -48,6 +53,86 @@ public class ParticleCurve {
      */
     @SerializedName("horizontal_range")
     MolangValue horizontalRange;
+
+    public MolangVariable asVariable() {
+        return switch (type) {
+            case LINEAR -> new MolangVariable(name, s -> {
+                double range = horizontalRange.evaluate(s);
+                double inputValue = input.evaluate(s);
+
+                int maxIndex = nodes.size() - 1;
+                int inputIndex = (int) Math.floor(inputValue / range * maxIndex);
+
+                if (inputIndex <= 0) {
+                    return nodes.get(0).value.evaluate(s);
+                } else if (inputIndex >= maxIndex) {
+                    return nodes.get(maxIndex).value.evaluate(s);
+                } else {
+                    var curr = nodes.get(inputIndex);
+                    var next = nodes.get(inputIndex + 1);
+                    double currTime = range * curr.index / maxIndex;
+                    double nextTime = range * next.index / maxIndex;
+
+                    return Interpolates.linear(
+                            new Interpolates.Node(currTime, curr.value.evaluate(s)),
+                            new Interpolates.Node(nextTime, next.value.evaluate(s)),
+                            inputValue
+                    );
+                }
+            });
+            case BEZIER -> new MolangVariable(name, s -> {
+                double range = horizontalRange.evaluate(s);
+                double inputValue = input.evaluate(s);
+
+                int maxIndex = nodes.size() - 1;
+                int inputIndex = (int) Math.floor(inputValue / range * maxIndex);
+
+                if (inputIndex <= 0) {
+                    return nodes.get(0).value.evaluate(s);
+                } else if (inputIndex >= maxIndex) {
+                    return nodes.get(maxIndex).value.evaluate(s);
+                } else {
+                    var curr = nodes.get(inputIndex);
+                    var next = nodes.get(inputIndex + 1);
+                    double currTime = range * curr.index / maxIndex;
+                    double nextTime = range * next.index / maxIndex;
+
+                    return Interpolates.bezier(
+                            new Interpolates.Node(currTime, curr.value.evaluate(s)),
+                            new Interpolates.Node(nextTime, next.value.evaluate(s)),
+                            inputValue
+                    );
+                }
+            });
+            case CATMULL_ROM -> new MolangVariable(name, s -> {
+                double range = horizontalRange.evaluate(s);
+                double inputValue = input.evaluate(s);
+
+                int maxIndex = nodes.size() - 1;
+                int inputIndex = (int) Math.floor(inputValue / range * maxIndex);
+
+                if (inputIndex <= 0) {
+                    return nodes.get(0).value.evaluate(s);
+                } else if (inputIndex >= maxIndex) {
+                    return nodes.get(maxIndex).value.evaluate(s);
+                } else {
+                    var curr = nodes.get(inputIndex);
+                    var next = nodes.get(inputIndex + 1);
+                    double currTime = range * curr.index / maxIndex;
+                    double nextTime = range * next.index / maxIndex;
+
+                    return Interpolates.catmullRom(
+                            inputIndex > 1 ? new Interpolates.Node(range * (inputIndex - 1) / maxIndex, nodes.get(inputIndex - 1).value.evaluate(s)) : null,
+                            new Interpolates.Node(currTime, curr.value.evaluate(s)),
+                            new Interpolates.Node(nextTime, next.value.evaluate(s)),
+                            inputIndex < (maxIndex - 1) ? new Interpolates.Node(range * (inputIndex + 2) / maxIndex, nodes.get(inputIndex + 2).value.evaluate(s)) : null,
+                            inputValue
+                    );
+                }
+            });
+            case BEZIER_CHAIN -> null;
+        };
+    }
 
     boolean nameValid() {
         return name != null && name.startsWith("variable.");
@@ -78,26 +163,26 @@ public class ParticleCurve {
 
                 if (size > 1) {
                     for (int i = 0; i < size; i++) {
-                        nodes.get(i).setTimestamp(new Timestamp(i / ((double) (size - 1))));
+                        nodes.get(i).setIndex(i);
                     }
                 } else {
                     throw new JsonParseException("parse " + result.name + " error : nodes count MUST more than 1");
                 }
             } else if (nodesJson.isJsonObject()) {
-                nodesJson.getAsJsonObject().entrySet().forEach(entry -> {
-                    Timestamp timestamp = Timestamp.valueOf(entry.getKey());
-                    ParticleCurveNode node = context.deserialize(entry.getValue(), ParticleCurveNode.class);
-                    node.setTimestamp(timestamp);
-                    nodes.add(node);
-                });
+                // TODO need impl
+                //nodesJson.getAsJsonObject().entrySet().forEach(entry -> {
+                //    ParticleCurveNode node = context.deserialize(entry.getValue(), ParticleCurveNode.class);
+                //    node.setTimestamp(Double.parseDouble(entry.getKey()));
+                //    nodes.add(node);
+                //});
             }
 
-            nodes.sort(Comparator.comparingDouble(node -> node.timestamp.getTick()));
             EyelibLists.link(nodes);
             result.nodes = nodes;
 
             result.input = context.deserialize(object.get("input"), MolangValue.class);
-            result.horizontalRange = context.deserialize(object.get("horizontal_range"), MolangValue.class);
+            result.horizontalRange = JsonUtils.parseOrDefault(context, object, "horizontal_range",
+                    MolangValue.class, new Constant(1));
 
             return result;
         }

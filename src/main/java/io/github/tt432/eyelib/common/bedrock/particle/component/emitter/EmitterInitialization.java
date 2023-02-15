@@ -2,9 +2,9 @@ package io.github.tt432.eyelib.common.bedrock.particle.component.emitter;
 
 import com.google.gson.annotations.SerializedName;
 import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponent;
+import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
-import io.github.tt432.eyelib.molang.MolangValue;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -34,6 +34,7 @@ public class EmitterInitialization extends ParticleComponent {
 
     @Override
     public void evaluatePerUpdate(MolangVariableScope scope) {
-        perUpdate.evaluateWithCache("per_update", scope);
+        if (perUpdate != null)
+            perUpdate.evaluateWithCache("per_update", scope);
     }
 }

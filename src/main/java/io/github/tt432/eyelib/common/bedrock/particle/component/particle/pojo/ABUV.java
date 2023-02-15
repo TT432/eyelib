@@ -3,9 +3,12 @@ package io.github.tt432.eyelib.common.bedrock.particle.component.particle.pojo;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import io.github.tt432.eyelib.molang.MolangVariableScope;
+import io.github.tt432.eyelib.molang.math.Constant;
 import io.github.tt432.eyelib.molang.util.Value2;
 import io.github.tt432.eyelib.util.json.JsonUtils;
-import io.github.tt432.eyelib.molang.math.Constant;
+import io.github.tt432.eyelib.util.math.Vec2d;
+import io.github.tt432.eyelib.util.math.Vec4d;
 
 import java.lang.reflect.Type;
 
@@ -42,6 +45,33 @@ public class ABUV implements JsonDeserializer<ABUV> {
     /* ------------------- animated ------------------------ */
 
     ABFlipbook flipbook;
+
+    /**
+     * u0 u1 v0 v1
+     *
+     * @param scope scope
+     * @return uv
+     */
+    public Vec4d getUV(MolangVariableScope scope) {
+        Vec2d startVec = start.evaluate(scope);
+        Vec2d sizeVec = size.evaluate(scope);
+
+        if (width == 1 && height == 1) {
+            return new Vec4d(
+                    startVec.getX(),
+                    startVec.getX() + sizeVec.getX(),
+                    startVec.getY(),
+                    startVec.getY() + sizeVec.getY()
+            );
+        } else {
+            return new Vec4d(
+                    startVec.getX() / width,
+                    (startVec.getX() + sizeVec.getX()) / width,
+                    startVec.getY() / height,
+                    (startVec.getY() + sizeVec.getY()) / height
+            );
+        }
+    }
 
     @Override
     public ABUV deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {

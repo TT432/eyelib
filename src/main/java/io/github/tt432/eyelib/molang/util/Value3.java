@@ -6,8 +6,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import io.github.tt432.eyelib.molang.MolangValue;
-import io.github.tt432.eyelib.util.Axis;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
+import io.github.tt432.eyelib.util.Axis;
 import lombok.Data;
 import net.minecraft.world.phys.Vec3;
 
@@ -37,11 +37,19 @@ public class Value3 {
         z.evaluateWithCache(name + "z", scope);
     }
 
+    public Vec3 evaluate(MolangVariableScope scope) {
+        return new Vec3(
+                x.evaluate(scope),
+                y.evaluate(scope),
+                z.evaluate(scope)
+        );
+    }
+
     public Vec3 fromCache(String name, MolangVariableScope scope) {
         return new Vec3(
-                scope.cache.get(name + "x").getAsDouble(),
-                scope.cache.get(name + "y").getAsDouble(),
-                scope.cache.get(name + "z").getAsDouble()
+                scope.getValue(name + "x"),
+                scope.getValue(name + "y"),
+                scope.getValue(name + "z")
         );
     }
 

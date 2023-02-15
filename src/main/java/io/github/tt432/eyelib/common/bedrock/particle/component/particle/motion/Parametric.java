@@ -1,9 +1,11 @@
 package io.github.tt432.eyelib.common.bedrock.particle.component.particle.motion;
 
 import com.google.gson.annotations.SerializedName;
-import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
-import io.github.tt432.eyelib.molang.util.Value3;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangVariableScope;
+import io.github.tt432.eyelib.molang.util.Value3;
+import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * @author DustW
@@ -33,4 +35,10 @@ public class Parametric extends ParticleMotionComponent {
      * evaluated every frame
      */
     MolangValue rotation;
+
+    // TODO 实现 direction 和 rotation
+    @Override
+    public Vec3 getNewPos(MolangVariableScope scope, Vec3 pos) {
+        return offset.evaluate(scope);
+    }
 }

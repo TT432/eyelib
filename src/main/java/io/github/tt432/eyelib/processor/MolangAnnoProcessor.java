@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.processor;
 import io.github.tt432.eyelib.processor.anno.AnnoProcessorHolder;
 import io.github.tt432.eyelib.processor.anno.MolangFunctionHolder;
 import io.github.tt432.eyelib.molang.MolangParser;
-import io.github.tt432.eyelib.molang.math.functions.MolangFunction;
+import io.github.tt432.eyelib.molang.functions.MolangFunction;
 
 /**
  * @author DustW

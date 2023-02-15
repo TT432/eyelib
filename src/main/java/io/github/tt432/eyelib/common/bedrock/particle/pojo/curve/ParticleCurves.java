@@ -5,6 +5,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
+import io.github.tt432.eyelib.molang.MolangParser;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -37,6 +38,8 @@ public class ParticleCurves implements JsonDeserializer<ParticleCurves> {
 
             if (!curve.nameValid())
                 throw new JsonParseException("name must start with 'variable.' : " + curve.name);
+
+            MolangParser.scopeStack.last().setVariable(e.getKey(), curve.asVariable());
         });
         return result;
     }
