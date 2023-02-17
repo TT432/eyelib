@@ -4,56 +4,81 @@ import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3d;
 import com.mojang.math.Vector4f;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.jetbrains.annotations.ApiStatus.AvailableSince;
 import io.github.tt432.eyelib.api.bedrock.model.Bone;
+import io.github.tt432.eyelib.common.bedrock.model.pojo.Locator;
 import io.github.tt432.eyelib.util.BoneSnapshot;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.Getter;
+import lombok.Setter;
+import org.jetbrains.annotations.ApiStatus.AvailableSince;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+@Getter
 public class GeoBone implements Bone {
 	public GeoBone parent;
 
 	public List<GeoBone> childBones = new ObjectArrayList<>();
 	public List<GeoCube> childCubes = new ObjectArrayList<>();
 
+	public Map<String, Locator> locators = new HashMap<>();
+
 	public String name;
 	private BoneSnapshot initialSnapshot;
 
-	public Boolean mirror;
-	public Double inflate;
-	public Boolean dontRender;
-	public boolean isHidden;
-	public boolean areCubesHidden = false;
-	public boolean hideChildBonesToo;
+	@Setter
+	private Boolean mirror;
+	@Setter
+	private Double inflate;
+	@Setter
+	private Boolean dontRender;
+	@Setter
+	private boolean hidden;
+	@Setter
+	private boolean cubesHidden = false;
+	@Setter
+	private boolean hideChildBonesToo;
 	// I still have no idea what this field does, but it's in the json file so
 	public Boolean reset;
 
+	@Setter
 	private float scaleX = 1;
+	@Setter
 	private float scaleY = 1;
+	@Setter
 	private float scaleZ = 1;
 
+	@Setter
 	private float positionX;
+	@Setter
 	private float positionY;
+	@Setter
 	private float positionZ;
 
-	public float rotationPointX;
-	public float rotationPointY;
-	public float rotationPointZ;
+	@Setter
+	private float pivotX;
+	@Setter
+	private float pivotY;
+	@Setter
+	private float pivotZ;
 
-	private float rotateX;
-	private float rotateY;
-	private float rotateZ;
+	@Setter
+	private float rotationX;
+	@Setter
+	private float rotationY;
+	@Setter
+	private float rotationZ;
 
-	public Object extraData;
+	private final Matrix4f modelSpaceXform;
+	private final Matrix4f localSpaceXform;
+	private final Matrix4f worldSpaceXform;
+	private final Matrix3f worldSpaceNormal;
 
-	private Matrix4f modelSpaceXform;
-	private Matrix4f localSpaceXform;
-	private Matrix4f worldSpaceXform;
-	private Matrix3f worldSpaceNormal;
-
-	private boolean trackXform;
-	public Matrix4f rotMat;
+	@Setter
+	private boolean trackingXform;
+	public final Matrix4f rotMat;
 
 	public GeoBone() {
 		modelSpaceXform = new Matrix4f();
@@ -64,7 +89,7 @@ public class GeoBone implements Bone {
 		worldSpaceXform.setIdentity();
 		worldSpaceNormal = new Matrix3f();
 		worldSpaceNormal.setIdentity();
-		trackXform = false;
+		trackingXform = false;
 		rotMat = null;
 	}
 
@@ -93,171 +118,28 @@ public class GeoBone implements Bone {
 	// Boilerplate code incoming
 
 	@Override
-	public float getRotationX() {
-		return rotateX;
-	}
-
-	@Override
-	public float getRotationY() {
-		return rotateY;
-	}
-
-	@Override
-	public float getRotationZ() {
-		return rotateZ;
-	}
-
-	@Override
-	public float getPositionX() {
-		return positionX;
-	}
-
-	@Override
-	public float getPositionY() {
-		return positionY;
-	}
-
-	@Override
-	public float getPositionZ() {
-		return positionZ;
-	}
-
-	@Override
-	public float getScaleX() {
-		return scaleX;
-	}
-
-	@Override
-	public float getScaleY() {
-		return scaleY;
-	}
-
-	@Override
-	public float getScaleZ() {
-		return scaleZ;
-	}
-
-	@Override
-	public void setRotationX(float value) {
-		this.rotateX = value;
-	}
-
-	@Override
-	public void setRotationY(float value) {
-		this.rotateY = value;
-	}
-
-	@Override
-	public void setRotationZ(float value) {
-		this.rotateZ = value;
-	}
-
-	@Override
-	public void setPositionX(float value) {
-		this.positionX = value;
-	}
-
-	@Override
-	public void setPositionY(float value) {
-		this.positionY = value;
-	}
-
-	@Override
-	public void setPositionZ(float value) {
-		this.positionZ = value;
-	}
-
-	@Override
-	public void setScaleX(float value) {
-		this.scaleX = value;
-	}
-
-	@Override
-	public void setScaleY(float value) {
-		this.scaleY = value;
-	}
-
-	@Override
-	public void setScaleZ(float value) {
-		this.scaleZ = value;
-	}
-
-	@Override
-	public boolean isHidden() {
-		return this.isHidden;
-	}
-
-	@Override
-	public void setHidden(boolean hidden) {
-		this.setHidden(hidden, hidden);
-	}
-
-	@Override
-	public void setPivotX(float value) {
-		this.rotationPointX = value;
-	}
-
-	@Override
-	public void setPivotY(float value) {
-		this.rotationPointY = value;
-	}
-
-	@Override
-	public void setPivotZ(float value) {
-		this.rotationPointZ = value;
-	}
-
-	@Override
-	public float getPivotX() {
-		return this.rotationPointX;
-	}
-
-	@Override
-	public float getPivotY() {
-		return this.rotationPointY;
-	}
-
-	@Override
-	public float getPivotZ() {
-		return this.rotationPointZ;
-	}
-
-	@Override
 	public boolean cubesAreHidden() {
-		return areCubesHidden;
+		return isCubesHidden();
 	}
 
 	@Override
 	public boolean childBonesAreHiddenToo() {
-		return hideChildBonesToo;
-	}
-
-	@Override
-	public void setCubesHidden(boolean hidden) {
-		this.areCubesHidden = hidden;
+		return isHideChildBonesToo();
 	}
 
 	@Override
 	public void setHidden(boolean selfHidden, boolean skipChildRendering) {
-		this.isHidden = selfHidden;
-		this.hideChildBonesToo = skipChildRendering;
+		this.setHidden(selfHidden);
+		this.setHideChildBonesToo(skipChildRendering);
 	}
 
 	/* Credit to BobMowzie for this section */
 	public GeoBone getParent() {
-		return (GeoBone) parent;
-	}
-
-	public boolean isTrackingXform() {
-		return trackXform;
-	}
-
-	public void setTrackXform(boolean trackXform) {
-		this.trackXform = trackXform;
+		return parent;
 	}
 
 	public Matrix4f getModelSpaceXform() {
-		setTrackXform(true);
+		setTrackingXform(true);
 		return modelSpaceXform;
 	}
 
@@ -275,22 +157,12 @@ public class GeoBone implements Bone {
 	}
 
 	public Matrix4f getLocalSpaceXform() {
-		setTrackXform(true);
+		setTrackingXform(true);
 		return localSpaceXform;
 	}
 
 	public void setLocalSpaceXform(Matrix4f localSpaceXform) {
 		this.localSpaceXform.load(localSpaceXform);
-	}
-
-	@Deprecated
-	public void setWorldSpaceNormal(Matrix3f worldSpaceNormal) {
-		this.worldSpaceNormal = worldSpaceNormal;
-	}
-
-	@Deprecated
-	public Matrix3f getWorldSpaceNormal() {
-		return worldSpaceNormal;
 	}
 
 	/* Gets the postion of a bone relative to the entity */
@@ -303,7 +175,7 @@ public class GeoBone implements Bone {
 	}
 
 	public Matrix4f getWorldSpaceXform() {
-		setTrackXform(true);
+		setTrackingXform(true);
 		return worldSpaceXform;
 	}
 
@@ -342,10 +214,6 @@ public class GeoBone implements Bone {
 		matrix.m03 = 0;
 		matrix.m13 = 0;
 		matrix.m23 = 0;
-	}
-
-	public void setModelRotationMat(Matrix4f mat) {
-		rotMat = mat;
 	}
 
 	// Position utils

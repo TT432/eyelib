@@ -23,7 +23,7 @@ public class Bone {
 	 * model space that tracks a particular bone as the bone animates (by
 	 * maintaining it's relationship to the bone through the animation).
 	 */
-	private Map<String, LocatorValue> locators;
+	private Map<String, Locator> locators;
 	/**
 	 * Mirrors the UV's of the unrotated cubes along the x axis, also causes the
 	 * east/west faces to get flipped.

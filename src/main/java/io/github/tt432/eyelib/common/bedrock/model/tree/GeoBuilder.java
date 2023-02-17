@@ -46,10 +46,10 @@ public class GeoBuilder implements IGeoBuilder {
         Vector3f pivot = new Vector3f(VectorUtils.fromArray(rawBone.getPivot()));
         rotation.mul(-1, -1, 1);
 
-        geoBone.mirror = rawBone.getMirror();
-        geoBone.dontRender = rawBone.getNeverRender();
+        geoBone.setMirror(rawBone.getMirror());
+        geoBone.setDontRender(rawBone.getNeverRender());
         geoBone.reset = rawBone.getReset();
-        geoBone.inflate = rawBone.getInflate();
+        geoBone.setInflate(rawBone.getInflate());
         geoBone.parent = parent;
         geoBone.setModelRendererName(rawBone.getName());
 
@@ -57,20 +57,23 @@ public class GeoBuilder implements IGeoBuilder {
         geoBone.setRotationY((float) Math.toRadians(rotation.y()));
         geoBone.setRotationZ((float) Math.toRadians(rotation.z()));
 
-        geoBone.rotationPointX = -pivot.x();
-        geoBone.rotationPointY = pivot.y();
-        geoBone.rotationPointZ = pivot.z();
+        geoBone.setPivotX(-pivot.x());
+        geoBone.setPivotY(pivot.y());
+        geoBone.setPivotZ(pivot.z());
 
         if (!ArrayUtils.isEmpty(rawBone.getCubes())) {
             for (Cube cube : rawBone.getCubes()) {
                 geoBone.childCubes.add(GeoCube.createFromPojoCube(cube, properties,
-                        geoBone.inflate == null ? null : geoBone.inflate / 16, geoBone.mirror));
+                        geoBone.getInflate() == null ? null : geoBone.getInflate() / 16, geoBone.getMirror()));
             }
         }
 
         for (RawBoneGroup child : bone.children.values()) {
             geoBone.childBones.add(constructBone(child, properties, geoBone));
         }
+
+        if (rawBone.getLocators() != null)
+            geoBone.locators = rawBone.getLocators();
 
         return geoBone;
     }

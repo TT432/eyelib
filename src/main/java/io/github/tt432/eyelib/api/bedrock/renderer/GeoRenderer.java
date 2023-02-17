@@ -38,8 +38,7 @@ public interface GeoRenderer<T> {
 				packedOverlay, red, green, blue, alpha);
 		// Render all top level bones
 		for (GeoBone group : model.topLevelBones) {
-			renderRecursively(group, poseStack, buffer, packedLight, packedOverlay, red, green, blue,
-					alpha);
+			renderRecursively(group, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
 		}
 		// Since we rendered at least once at this point, let's set the cycle to
 		// repeated

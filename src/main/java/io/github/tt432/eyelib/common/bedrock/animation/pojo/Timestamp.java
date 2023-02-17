@@ -20,15 +20,10 @@ public class Timestamp {
         return new Timestamp(Double.parseDouble(s) * 20);
     }
 
-    protected static class Serializer implements JsonDeserializer<Timestamp>, JsonSerializer<Timestamp> {
+    protected static class Serializer implements JsonDeserializer<Timestamp> {
         @Override
         public Timestamp deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             return Timestamp.valueOf(json.getAsString());
-        }
-
-        @Override
-        public JsonElement serialize(Timestamp src, Type typeOfSrc, JsonSerializationContext context) {
-            return new JsonPrimitive(String.valueOf(src.tick / 20D));
         }
     }
 }

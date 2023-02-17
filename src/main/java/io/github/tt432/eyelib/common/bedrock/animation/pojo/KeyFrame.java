@@ -2,17 +2,15 @@ package io.github.tt432.eyelib.common.bedrock.animation.pojo;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
-import io.github.tt432.eyelib.util.EyelibLists;
-import io.github.tt432.eyelib.util.math.MathE;
+import io.github.tt432.eyelib.molang.MolangParser;
+import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.util.Value3;
+import io.github.tt432.eyelib.util.Axis;
+import io.github.tt432.eyelib.util.math.MathE;
 import io.github.tt432.eyelib.util.math.Vec2d;
 import io.github.tt432.eyelib.util.math.curve.SplineCurve;
-import io.github.tt432.eyelib.molang.MolangParser;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import io.github.tt432.eyelib.molang.MolangValue;
-import io.github.tt432.eyelib.util.Axis;
 import net.minecraft.util.Mth;
 
 import java.lang.reflect.Type;
@@ -27,9 +25,8 @@ import static io.github.tt432.eyelib.common.bedrock.animation.pojo.KeyFrame.Lerp
  */
 @Data
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
 @JsonAdapter(KeyFrame.Serializer.class)
-public class KeyFrame extends EyelibLists.Node<KeyFrame> {
+public class KeyFrame{
     private Timestamp timestamp;
     private Value3[] dataPoints;
     private LerpMode lerpMode;

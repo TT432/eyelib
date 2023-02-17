@@ -2,6 +2,13 @@ package io.github.tt432.eyelib.common.bedrock.particle;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Vector3f;
+import io.github.tt432.eyelib.api.bedrock.model.GeoModelProvider;
+import io.github.tt432.eyelib.api.bedrock.renderer.GeoRenderer;
+import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
+import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
+import io.github.tt432.eyelib.common.bedrock.model.pojo.Locator;
 import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponent;
 import io.github.tt432.eyelib.common.bedrock.particle.component.emitter.EmitterInitialization;
 import io.github.tt432.eyelib.common.bedrock.particle.component.emitter.EmitterLifetimeEvents;
@@ -14,12 +21,14 @@ import io.github.tt432.eyelib.common.bedrock.particle.pojo.ParticleDescription;
 import io.github.tt432.eyelib.molang.MolangParser;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.molang.ScopeStack;
+import io.github.tt432.eyelib.util.RenderUtils;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Camera;
-import net.minecraft.client.particle.ParticleRenderType;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -43,6 +52,10 @@ public class ParticleEmitter {
     Vec3 worldPos;
     @NotNull
     MolangVariableScope scope;
+
+    @Nullable
+    @Setter
+    String locator;
 
     @NotNull
     ParticleDescription description;
@@ -210,7 +223,7 @@ public class ParticleEmitter {
         }
     }
 
-    public void render(ParticleRenderType renderType, BufferBuilder bufferbuilder, Camera camera, float partialTicks,
+    public void render(PoseStack poseStack, BufferBuilder bufferbuilder, Camera camera, float partialTicks,
                        @Nullable Frustum clippingHelper) {
         try (ScopeStack push = MolangParser.scopeStack.push(scope)) {
             this.partialTicks = partialTicks;
@@ -230,10 +243,43 @@ public class ParticleEmitter {
             RenderSystem.setShaderTexture(0, new ResourceLocation(texture));
 
             for (ParticleInstance particle : particles) {
-                if (clippingHelper != null && !clippingHelper.isVisible(particle.getBoundingBox(scope)))
-                    continue;
+                //if (clippingHelper != null && !clippingHelper.isVisible(particle.getBoundingBox(scope)))
+                //    continue;
+
+                poseStack.pushPose();
+
+                transformBinding(poseStack);
 
                 particle.render(scope, bufferbuilder, camera, partialTicks);
+
+                poseStack.popPose();
+            }
+        }
+    }
+
+    private void transformBinding(PoseStack poseStack) {
+        if (locator != null && bindingEntity != null) {
+            EntityRenderer<? super Entity> renderer =
+                    Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(bindingEntity);
+
+            if (renderer instanceof GeoRenderer<?> gr) {
+                GeoModelProvider modelProvider = gr.getGeoModelProvider();
+                GeoModel model = modelProvider.getModel(modelProvider.getModelLocation(bindingEntity));
+                List<GeoBone> bones = model.getLocator(locator);
+
+                if (!bones.isEmpty()) {
+                    bones.forEach(bone -> RenderUtils.prepMatrixForBone(poseStack, bone));
+
+                    Locator aLocator = bones.get(bones.size() - 1).locators.get(locator);
+
+                    double[] offset = aLocator.getOffset();
+                    poseStack.translate(offset[0], offset[1], offset[2]);
+
+                    double[] rotation = aLocator.getRotation();
+                    poseStack.mulPose(Vector3f.ZP.rotation((float) rotation[0]));
+                    poseStack.mulPose(Vector3f.YP.rotation((float) rotation[1]));
+                    poseStack.mulPose(Vector3f.XP.rotation((float) rotation[2]));
+                }
             }
         }
     }

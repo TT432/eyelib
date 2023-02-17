@@ -40,8 +40,8 @@ public class ParticleAppearanceTinting extends ParticleComponent implements Json
         } else {
             double time = interpolant.evaluate(scope);
 
-            Map.Entry<Double, Integer> before = gradient.lowerEntry(time);
-            Map.Entry<Double, Integer> after = gradient.ceilingEntry(time);
+            Map.Entry<Double, Integer> before = gradient.floorEntry(time);
+            Map.Entry<Double, Integer> after = gradient.higherEntry(time);
 
             if (before == null)
                 return after.getValue();

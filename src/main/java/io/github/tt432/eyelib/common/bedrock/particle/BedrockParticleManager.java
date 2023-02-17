@@ -70,7 +70,7 @@ public class BedrockParticleManager {
                 event.getPartialTick(), mc.levelRenderer.capturedFrustum);
     }
 
-    private static void render(PoseStack pMatrixStack, LightTexture pLightTexture, Camera pActiveRenderInfo, float pPartialTicks, @Nullable Frustum clippingHelper) {
+    private static void render(PoseStack poseStack, LightTexture pLightTexture, Camera pActiveRenderInfo, float pPartialTicks, @Nullable Frustum clippingHelper) {
         pLightTexture.turnOnLightLayer();
         RenderSystem.enableDepthTest();
         RenderSystem.activeTexture(org.lwjgl.opengl.GL13.GL_TEXTURE2);
@@ -78,7 +78,7 @@ public class BedrockParticleManager {
         RenderSystem.activeTexture(org.lwjgl.opengl.GL13.GL_TEXTURE0);
         PoseStack posestack = RenderSystem.getModelViewStack();
         posestack.pushPose();
-        posestack.mulPoseMatrix(pMatrixStack.last().pose());
+        posestack.mulPoseMatrix(poseStack.last().pose());
         RenderSystem.applyModelViewMatrix();
 
         for (ParticleRenderType renderType : emitters.keySet()) {
@@ -93,7 +93,7 @@ public class BedrockParticleManager {
             renderType.begin(bufferbuilder, Minecraft.getInstance().getTextureManager());
 
             for (ParticleEmitter emitter : emitterList) {
-                emitter.render(renderType, bufferbuilder, pActiveRenderInfo, pPartialTicks, clippingHelper);
+                emitter.render(posestack, bufferbuilder, pActiveRenderInfo, pPartialTicks, clippingHelper);
             }
 
             renderType.end(tesselator);

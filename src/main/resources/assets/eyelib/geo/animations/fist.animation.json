@@ -12,16 +12,16 @@
 			"sound_effects": {
 				"0.0": [
 					{
-						"effect": "cy1"
+						"effect": "eyelib:cy1"
 					},
 					{
-						"effect": "cy2"
+						"effect": "eyelib:cy2"
 					},
 					{
-						"effect": "cy3"
+						"effect": "eyelib:cy3"
 					},
 					{
-						"effect": "cy4"
+						"effect": "eyelib:cy4"
 					}
 				]
 			},

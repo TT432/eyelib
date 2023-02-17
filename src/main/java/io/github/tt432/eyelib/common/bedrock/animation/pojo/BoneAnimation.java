@@ -4,15 +4,14 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.mojang.math.Vector3d;
 import io.github.tt432.eyelib.util.Axis;
-import io.github.tt432.eyelib.util.EyelibLists;
 import io.github.tt432.eyelib.util.math.MathE;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Type;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.ToDoubleFunction;
 
 /**
@@ -24,9 +23,9 @@ public class BoneAnimation {
     /**
      * 注意：读取的数据为角度制
      */
-    private final List<KeyFrame> rotation;
-    private final List<KeyFrame> position;
-    private final List<KeyFrame> scale;
+    private final TreeMap<Timestamp, KeyFrame> rotation;
+    private final TreeMap<Timestamp, KeyFrame> position;
+    private final TreeMap<Timestamp, KeyFrame> scale;
 
     private static class Ref {
         KeyFrame before = null;
@@ -46,6 +45,14 @@ public class BoneAnimation {
         return lerp(scale, currentTick);
     }
 
+    public double getLastTick() {
+        return Math.max(last(scale), Math.max(last(rotation), last(position)));
+    }
+
+    double last(TreeMap<Timestamp, KeyFrame> frames) {
+        return frames != null && !frames.isEmpty() ? frames.lastKey().getTick() : 0;
+    }
+
     /**
      * 计算插值
      *
@@ -53,11 +60,23 @@ public class BoneAnimation {
      * @param currentTick 当前 tick
      * @return 值
      */
-    public static Vector3d lerp(List<KeyFrame> frames, double currentTick) {
+    public static Vector3d lerp(TreeMap<Timestamp, KeyFrame> frames, double currentTick) {
         var ref = new Ref();
         double epsilon = 1D / 1200D;
 
-        findKeyFrame(frames, currentTick, ref);
+        Timestamp currTimestamp = new Timestamp(currentTick);
+
+        Map.Entry<Timestamp, KeyFrame> floorEntry = frames.floorEntry(currTimestamp);
+
+        if (floorEntry != null) {
+            ref.before = floorEntry.getValue();
+        }
+
+        Map.Entry<Timestamp, KeyFrame> higherEntry = frames.higherEntry(currTimestamp);
+
+        if (higherEntry != null) {
+            ref.after = higherEntry.getValue();
+        }
 
         boolean isBeforeTime = ref.before != null && MathE.epsilon(ref.before.getTick(), currentTick, epsilon);
         boolean isAfterTime = ref.after != null && MathE.epsilon(ref.after.getTick(), currentTick, epsilon);
@@ -69,17 +88,26 @@ public class BoneAnimation {
         } else if (isAfterTime || onlyAfter) {
             ref.result = ref.after;
         } else if (ref.after != null) {
+            assert floorEntry != null;
+            assert higherEntry != null;
+
             double weight = MathE.getWeight(ref.before.getTick(), ref.after.getTick(), currentTick);
 
             if (ref.before.getLerpMode() == KeyFrame.LerpMode.LINEAR && ref.after.getLerpMode() == KeyFrame.LerpMode.LINEAR) {
                 return mapAxes(axis -> ref.before.linearLerp(ref.after, axis, weight));
             } else if (ref.before.getLerpMode() == KeyFrame.LerpMode.CATMULLROM || ref.after.getLerpMode() == KeyFrame.LerpMode.CATMULLROM) {
-                var beforePlus = ref.before.prev;
-                var afterPlus = ref.after.next;
+                var beforePlus = frames.lowerEntry(floorEntry.getKey());
+                var afterPlus = frames.higherEntry(higherEntry.getKey());
 
-                return mapAxes(axis -> KeyFrame.catmullromLerp(beforePlus, ref.before, ref.after, afterPlus, axis, weight));
+                return mapAxes(axis -> KeyFrame.catmullromLerp(
+                        beforePlus != null ? beforePlus.getValue() : null,
+                        ref.before, ref.after,
+                        afterPlus != null ? afterPlus.getValue() : null,
+                        axis, weight));
             } else if (ref.before.getLerpMode() == KeyFrame.LerpMode.BEZIER || ref.after.getLerpMode() == KeyFrame.LerpMode.BEZIER) {
                 // todo 实现 bezier
+            } else if (ref.after.getLerpMode() == KeyFrame.LerpMode.STEP) {
+                // TODO 实现 step
             }
         }
 
@@ -101,27 +129,6 @@ public class BoneAnimation {
         );
     }
 
-    /**
-     * 在 frames 中寻找 before 和 after
-     *
-     * @param frames      frames
-     * @param currentTick 当前 tick
-     * @param ref         引用
-     */
-    static void findKeyFrame(List<KeyFrame> frames, double currentTick, Ref ref) {
-        for (KeyFrame frame : frames) {
-            if (frame.getTick() < currentTick) {
-                if (ref.before == null || frame.getTick() > ref.before.getTick()) {
-                    ref.before = frame;
-                }
-            } else {
-                if (ref.after == null || frame.getTick() < ref.after.getTick()) {
-                    ref.after = frame;
-                }
-            }
-        }
-    }
-
     @Slf4j
     protected static class Serializer implements JsonDeserializer<BoneAnimation> {
         @Override
@@ -139,32 +146,34 @@ public class BoneAnimation {
             );
         }
 
-        List<KeyFrame> toKeyFrameList(JsonElement element, JsonDeserializationContext context) {
-            if (element == null)
-                return Collections.emptyList();
+        TreeMap<Timestamp, KeyFrame> toKeyFrameList(JsonElement element, JsonDeserializationContext context) {
+            TreeMap<Timestamp, KeyFrame> result = new TreeMap<>(Comparator.comparingDouble(Timestamp::getTick));
+
+            if (element == null) {
+                return result;
+            }
 
             if (element.isJsonObject()) {
                 return process(element.getAsJsonObject(), context);
             } else {
                 KeyFrame keyFrame = context.deserialize(element, KeyFrame.class);
                 keyFrame.setTimestamp(Timestamp.ZERO);
-                return Collections.singletonList(keyFrame);
+                result.put(Timestamp.ZERO, keyFrame);
+                return result;
             }
         }
 
-        public static List<KeyFrame> process(JsonObject jsonObject, JsonDeserializationContext context) {
-            List<KeyFrame> resultList = jsonObject.entrySet().stream()
-                    .map(e -> {
-                        KeyFrame result = context.deserialize(e.getValue(), KeyFrame.class);
-                        result.setTimestamp(Timestamp.valueOf(e.getKey()));
-                        return result;
-                    })
-                    .sorted(Comparator.comparingDouble(KeyFrame::getTick))
-                    .toList();
+        public static TreeMap<Timestamp, KeyFrame> process(JsonObject jsonObject, JsonDeserializationContext context) {
+            TreeMap<Timestamp, KeyFrame> result = new TreeMap<>(Comparator.comparingDouble(Timestamp::getTick));
 
-            EyelibLists.link(resultList);
+            jsonObject.entrySet().forEach(e -> {
+                KeyFrame keyFrame = context.deserialize(e.getValue(), KeyFrame.class);
+                Timestamp timestamp = Timestamp.valueOf(e.getKey());
+                keyFrame.setTimestamp(timestamp);
+                result.put(timestamp, keyFrame);
+            });
 
-            return resultList;
+            return result;
         }
     }
 }

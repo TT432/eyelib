@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.common.sound;
+package io.github.tt432.eyelib.common.bedrock.animation;
 
 import io.github.tt432.eyelib.api.sound.SoundPlayer;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;

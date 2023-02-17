@@ -7,7 +7,6 @@ import com.google.gson.reflect.TypeToken;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.math.Constant;
 import io.github.tt432.eyelib.molang.math.MolangVariable;
-import io.github.tt432.eyelib.util.EyelibLists;
 import io.github.tt432.eyelib.util.json.JsonUtils;
 import io.github.tt432.eyelib.util.math.Interpolates;
 
@@ -177,7 +176,6 @@ public class ParticleCurve {
                 //});
             }
 
-            EyelibLists.link(nodes);
             result.nodes = nodes;
 
             result.input = context.deserialize(object.get("input"), MolangValue.class);

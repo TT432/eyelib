@@ -17,13 +17,13 @@ import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
 import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationPointQueue;
 import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationState;
 import io.github.tt432.eyelib.common.bedrock.animation.util.BoneAnimationQueue;
-import io.github.tt432.eyelib.common.sound.SoundControl;
 import io.github.tt432.eyelib.util.BoneSnapshot;
 import io.github.tt432.eyelib.util.math.easing.EasingType;
 import io.github.tt432.eyelib.molang.MolangParser;
 import it.unimi.dsi.fastutil.doubles.Double2DoubleFunction;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.extern.slf4j.Slf4j;
+import net.minecraft.world.entity.Entity;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
@@ -50,6 +50,7 @@ public class AnimationController<T extends Animatable> {
     protected IAnimationPredicate<T> animationPredicate;
 
     SoundControl soundControl = new SoundControl();
+    ParticleControl particleControl = new ParticleControl();
 
     /**
      * The name of the animation controller
@@ -316,6 +317,7 @@ public class AnimationController<T extends Animatable> {
             this.justStopped = true;
 
             soundControl.stop(player);
+            particleControl.stop();
 
             return;
         }
@@ -416,6 +418,7 @@ public class AnimationController<T extends Animatable> {
                     // No more animations left, stop the animation controller
                     this.animationState = AnimationState.STOPPED;
                     soundControl.stop(player);
+                    particleControl.stop();
 
                     return;
                 } else {
@@ -439,6 +442,9 @@ public class AnimationController<T extends Animatable> {
         processBoneAnimation(currentAnimation.getBones(), tick, crashWhenCantFindBone);
 
         soundControl.processSoundEffect(player, tick);
+        Entity entity = MolangParser.getCurrentDataSource().get(Entity.class);
+        if (entity != null)
+            particleControl.process(entity, tick);
 
         if (this.transitionLengthTicks == 0 && shouldResetTick && this.animationState == AnimationState.TRANSITIONING)
             nextAnimation(player);
@@ -468,14 +474,20 @@ public class AnimationController<T extends Animatable> {
 
     private void nextAnimation(@Nullable SoundPlayer player) {
         if (currentAnimation != null) {
-            if (player != null)
+            if (player != null) {
                 soundControl.stop(player);
+            }
+
+            particleControl.stop();
         }
 
         currentAnimation = animationQueue.poll();
 
-        if (player != null)
+        if (player != null) {
             soundControl.init(currentAnimation, player);
+        }
+
+        particleControl.init(currentAnimation);
     }
 
     // Helper method to populate all the initial animation point queues

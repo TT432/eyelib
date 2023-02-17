@@ -16,7 +16,6 @@ import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.model.AnimatedGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
-import io.github.tt432.eyelib.common.bedrock.model.element.GeoCube;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 import io.github.tt432.eyelib.util.AnimationUtils;
 import io.github.tt432.eyelib.util.Color;
@@ -238,18 +237,10 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
 
         RenderUtils.translateAwayFromPivotPoint(poseStack, bone);
 
-        if (!bone.isHidden) {
-            if (!bone.cubesAreHidden()) {
-                for (GeoCube geoCube : bone.childCubes) {
-                    poseStack.pushPose();
-                    renderCube(geoCube, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-                    poseStack.popPose();
-                }
-            }
+        renderCubesOfBone(bone, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
 
-            for (GeoBone childBone : bone.childBones) {
-                renderRecursively(childBone, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-            }
+        if (!bone.isHidden()) {
+            renderChildBones(bone, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         }
 
         poseStack.popPose();

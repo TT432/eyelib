@@ -48,7 +48,7 @@ public class ExtendedRendererEntity extends PathfinderMob implements Animatable 
 	}
 
 	public boolean isSpellCasting() {
-		return false;
+		return true;
 	}
 
 	public boolean isWieldingTwoHandedWeapon() {

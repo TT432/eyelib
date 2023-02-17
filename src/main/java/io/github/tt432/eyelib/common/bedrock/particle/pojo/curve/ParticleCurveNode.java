@@ -2,16 +2,13 @@ package io.github.tt432.eyelib.common.bedrock.particle.pojo.curve;
 
 import com.google.gson.annotations.SerializedName;
 import io.github.tt432.eyelib.molang.MolangValue;
-import io.github.tt432.eyelib.util.EyelibLists;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
  * @author DustW
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class ParticleCurveNode extends EyelibLists.Node<ParticleCurveNode> {
+public class ParticleCurveNode {
     int index;
 
     /**

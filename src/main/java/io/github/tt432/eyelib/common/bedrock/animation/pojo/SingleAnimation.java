@@ -20,7 +20,8 @@ public class SingleAnimation {
     private Map<String, BoneAnimation> bones;
     @SerializedName("sound_effects")
     private Map<Timestamp, SoundEffect> soundEffects;
-    // private List<ParticleEventKeyFrame> particleKeyFrames = new ObjectArrayList<>();
+    @SerializedName("particle_effects")
+    private Map<Timestamp, ParticleEffect> particleEffects;
     // private List<EventKeyFrame<String>> customInstructionKeyframes = new ObjectArrayList<>();
 
     public double getAnimationLength() {
