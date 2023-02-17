@@ -6,8 +6,11 @@ import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.common.bedrock.particle.component.particle.*;
 import io.github.tt432.eyelib.common.bedrock.particle.component.particle.motion.ParticleMotionComponent;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
+import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.math.Vec4d;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
@@ -60,11 +63,15 @@ public class ParticleInstance {
 
     @Nullable
     ParticleAppearanceLighting lighting;
-    @NotNull
+    @Nullable
     ParticleAppearanceTinting tinting;
 
     @Nullable
     ParticleMotionComponent motionComponent;
+    @Getter@Setter
+    Vec3 speedVec = new Vec3(0, 0, 0);
+    @Getter@Setter
+    double lastEvaluateAge;
 
     @Nullable
     ParticleExpireIfInBlocks inBlocks;
@@ -77,7 +84,7 @@ public class ParticleInstance {
     public ParticleInstance(@NotNull Level level, @NotNull Vec3 worldPos, @NotNull ParticleLifetimeExpression lifetime,
                             @NotNull ParticleInitialSpeed speed, @Nullable ParticleInitialSpin spin,
                             @Nullable ParticleKillPlane killPlane, @NotNull ParticleAppearanceBillboard billboard,
-                            @Nullable ParticleAppearanceLighting lighting, @NotNull ParticleAppearanceTinting tinting,
+                            @Nullable ParticleAppearanceLighting lighting, @Nullable ParticleAppearanceTinting tinting,
                             @Nullable ParticleExpireIfInBlocks inBlocks, @Nullable ParticleExpireIfNotInBlocks notInBlocks,
                             @Nullable ParticleMotionComponent motionComponent, @Nullable ParticleMotionCollision collision) {
         this.level = level;
@@ -125,17 +132,11 @@ public class ParticleInstance {
 
     public boolean canContinue(MolangVariableScope scope) {
         return (lifetime.getExpirationExpression() == null || lifetime.getExpirationExpression().evaluate(scope) < 1)
-                && age / 20D < maxLifetime;
+                && age / 20D <= maxLifetime;
     }
 
     public void tick(MolangVariableScope scope) {
         age++;
-
-        prePos = worldPos;
-
-        if (motionComponent != null) {
-            worldPos = motionComponent.getNewPos(scope, worldPos);
-        }
     }
 
     public void setWorldPos(Vec3 pos) {
@@ -144,6 +145,12 @@ public class ParticleInstance {
 
     public void render(MolangVariableScope scope, BufferBuilder bufferbuilder, Camera camera, float partialTicks) {
         scope.getDataSource().addSource(this);
+
+        prePos = worldPos;
+
+        if (motionComponent != null) {
+            worldPos = motionComponent.getNewPos(scope, worldPos);
+        }
 
         Vec3 vec3 = camera.getPosition();
         float f = (float) (Mth.lerp(partialTicks, prePos.x, worldPos.x) - vec3.x());
@@ -183,7 +190,7 @@ public class ParticleInstance {
         float v0 = (float) uv.getZ();
         float v1 = (float) uv.getW();
         int j = this.getLightColor();
-        int color = tinting.getColor(scope);
+        int color = tinting != null ? tinting.getColor(scope) : Color.WHITE.getColor();
         bufferbuilder.vertex(avector3f[0].x(), avector3f[0].y(), avector3f[0].z()).uv(u1, v1).color(color).uv2(j).endVertex();
         bufferbuilder.vertex(avector3f[1].x(), avector3f[1].y(), avector3f[1].z()).uv(u1, v0).color(color).uv2(j).endVertex();
         bufferbuilder.vertex(avector3f[2].x(), avector3f[2].y(), avector3f[2].z()).uv(u0, v0).color(color).uv2(j).endVertex();

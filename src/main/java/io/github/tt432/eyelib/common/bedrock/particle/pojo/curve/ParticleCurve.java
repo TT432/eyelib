@@ -110,10 +110,10 @@ public class ParticleCurve {
                 int maxIndex = nodes.size() - 1;
                 int inputIndex = (int) Math.floor(inputValue / range * maxIndex);
 
-                if (inputIndex <= 0) {
-                    return nodes.get(0).value.evaluate(s);
-                } else if (inputIndex >= maxIndex) {
-                    return nodes.get(maxIndex).value.evaluate(s);
+                if (inputIndex <= 1) {
+                    return nodes.get(maxIndex > 0 ? 1 : 0).value.evaluate(s);
+                } else if (inputIndex >= maxIndex - 1) {
+                    return nodes.get(Math.max(maxIndex - 1, 0)).value.evaluate(s);
                 } else {
                     var curr = nodes.get(inputIndex);
                     var next = nodes.get(inputIndex + 1);
@@ -121,10 +121,10 @@ public class ParticleCurve {
                     double nextTime = range * next.index / maxIndex;
 
                     return Interpolates.catmullRom(
-                            inputIndex > 1 ? new Interpolates.Node(range * (inputIndex - 1) / maxIndex, nodes.get(inputIndex - 1).value.evaluate(s)) : null,
+                            new Interpolates.Node(range * (inputIndex - 1) / maxIndex, nodes.get(inputIndex - 1).value.evaluate(s)),
                             new Interpolates.Node(currTime, curr.value.evaluate(s)),
                             new Interpolates.Node(nextTime, next.value.evaluate(s)),
-                            inputIndex < (maxIndex - 1) ? new Interpolates.Node(range * (inputIndex + 2) / maxIndex, nodes.get(inputIndex + 2).value.evaluate(s)) : null,
+                            new Interpolates.Node(range * (inputIndex + 2) / maxIndex, nodes.get(inputIndex + 2).value.evaluate(s)),
                             inputValue
                     );
                 }

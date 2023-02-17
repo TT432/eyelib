@@ -53,6 +53,16 @@ public class ABUV implements JsonDeserializer<ABUV> {
      * @return uv
      */
     public Vec4d getUV(MolangVariableScope scope) {
+        if (mode == Mode.STATIC) {
+            return staticUv(scope);
+        } else if (mode == Mode.ANIMATED) {
+            return flipbook.getUv(scope, width, height);
+        }
+
+        return new Vec4d(0, 0, 0, 0);
+    }
+
+    Vec4d staticUv(MolangVariableScope scope) {
         Vec2d startVec = start.evaluate(scope);
         Vec2d sizeVec = size.evaluate(scope);
 
@@ -86,10 +96,10 @@ public class ABUV implements JsonDeserializer<ABUV> {
                     new Value2(new Constant(0), new Constant(0)));
             result.size = JsonUtils.parseOrDefault(context, object, "uv_size", Value2.class,
                     new Value2(new Constant(0), new Constant(0)));
-            mode = Mode.STATIC;
+            result.mode = Mode.STATIC;
         } else {
             result.flipbook = context.deserialize(object.get("flipbook"), ABFlipbook.class);
-            mode = Mode.ANIMATED;
+            result.mode = Mode.ANIMATED;
         }
 
         return result;

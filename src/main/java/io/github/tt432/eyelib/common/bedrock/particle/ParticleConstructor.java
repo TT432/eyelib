@@ -28,7 +28,7 @@ public class ParticleConstructor {
     ParticleAppearanceBillboard billboard;
     @Nullable
     ParticleAppearanceLighting lighting;
-    @NotNull
+    @Nullable
     ParticleAppearanceTinting tinting;
 
     @Nullable

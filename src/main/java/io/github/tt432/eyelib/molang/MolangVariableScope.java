@@ -19,6 +19,7 @@ public class MolangVariableScope {
     private final Map<String, DoubleSupplier> cache = new HashMap<>();
 
     public void setValue(String name, DoubleSupplier value) {
+        name = processName(name);
         cache.put(name, value);
     }
 
@@ -37,8 +38,10 @@ public class MolangVariableScope {
 
     public double getValue(String name) {
         return cache.getOrDefault(name,
-                        () -> variables.containsKey(name) ? variables.get(name).evaluate(this) : 0)
-                .getAsDouble();
+                        () -> {
+                            String newName = processName(name);
+                            return variables.containsKey(newName) ? variables.get(newName).evaluate(this) : 0;
+                        }).getAsDouble();
     }
 
     public boolean getAsBool(String name) {
@@ -50,22 +53,35 @@ public class MolangVariableScope {
     }
 
     public MolangVariable setVariable(String name, MolangVariable variable) {
+        name = processName(name);
         return variables.put(name, variable);
     }
 
     public MolangVariable setVariable(String name, Function<MolangVariableScope, Double> valueFunc) {
+        name = processName(name);
         return variables.put(name, new MolangVariable(name, valueFunc));
     }
 
     public MolangVariable get(String name) {
+        name = processName(name);
         return variables.get(name);
     }
 
     public boolean containsKey(String name) {
+        name = processName(name);
         return variables.containsKey(name);
     }
 
+    String processName(String name) {
+        if (name.startsWith("v.")) {
+            return "variable." + name.substring(2);
+        }
+
+        return name;
+    }
+
     public MolangVariable computeIfAbsent(String name, Function<String, MolangVariable> defaultValue) {
+        name = processName(name);
         return variables.computeIfAbsent(name, defaultValue);
     }
 

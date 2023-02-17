@@ -152,7 +152,7 @@ public class ParticleEmitter {
         double emitterAge = scope.getValue("variable.emitter_age");
 
         if (!isLoop()) {
-            if (scope.containsKey("active_time")) {
+            if (scope.containsCache("active_time")) {
                 if (emitterAge > activeTime) {
                     setNeedToRemove(true);
                 }

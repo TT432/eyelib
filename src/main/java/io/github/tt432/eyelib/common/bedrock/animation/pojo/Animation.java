@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.common.bedrock.animation.pojo;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
+import io.github.tt432.eyelib.api.bedrock.animation.LoopType;
 import io.github.tt432.eyelib.common.bedrock.FormatVersion;
 import lombok.Data;
 
@@ -30,6 +31,8 @@ public class Animation {
                 result.animations = context.deserialize(animationsJson,
                         TypeToken.getParameterized(Map.class, String.class, SingleAnimation.class).getType());
             result.animations.forEach((name, animation) -> {
+                if (animation.getLoop() == null)
+                    animation.setLoop(LoopType.Impl.PLAY_ONCE);
                 animation.setAnimationName(name);
 
                 if (animation.getAnimationLength() == 0) {

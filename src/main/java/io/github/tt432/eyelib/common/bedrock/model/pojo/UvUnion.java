@@ -11,7 +11,7 @@ public class UvUnion {
     public UvFaces faceUV;
     public boolean isBoxUV;
 
-    protected static class Serializer implements JsonSerializer<UvUnion>, JsonDeserializer<UvUnion> {
+    protected static class Serializer implements JsonDeserializer<UvUnion> {
         @Override
         public UvUnion deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             UvUnion result = new UvUnion();
@@ -25,11 +25,6 @@ public class UvUnion {
             }
 
             return result;
-        }
-
-        @Override
-        public JsonElement serialize(UvUnion src, Type typeOfSrc, JsonSerializationContext context) {
-            return src.isBoxUV ? context.serialize(src.boxUVCoords) : context.serialize(src.faceUV);
         }
     }
 }

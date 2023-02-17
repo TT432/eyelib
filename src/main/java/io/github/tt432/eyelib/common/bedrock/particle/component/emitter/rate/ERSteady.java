@@ -43,32 +43,13 @@ public class ERSteady extends EmitterRateComponent implements JsonDeserializer<E
 
     @Override
     public int shootAmount(MolangVariableScope scope) {
-        double willShoot = 0;
-
         double preShootTime = scope.getValue("pre_shoot_time");
         double age = scope.getValue("variable.emitter_age");
-        double shootParticle = scope.getValue("shoot_particle");
         double rate = scope.getValue("spawn_rate");
 
-        if (Math.floor(age) > Math.floor(preShootTime)) {
-            willShoot += rate - shootParticle;
-            scope.setValue("shoot_particle", 0);
-        }
-
+        int result = (int) Math.floor((age - preShootTime) * rate);
         scope.setValue("pre_shoot_time", age);
-
-        double needShoot = Math.floor((age - Math.floor(age)) * rate);
-        double currNum = scope.getValue("variable.emitter_particles_num");
-        double max = scope.getValue("max_particles");
-
-        willShoot += needShoot - shootParticle;
-
-        if (currNum + willShoot > max) {
-            willShoot = max - currNum;
-        }
-
-        scope.setValue("shoot_particle", needShoot);
-        return (int) Math.floor(willShoot);
+        return result;
     }
 
     @Override

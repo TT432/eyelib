@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.common.bedrock.particle.component.particle.motion;
 
 import com.google.gson.annotations.SerializedName;
+import io.github.tt432.eyelib.common.bedrock.particle.ParticleInstance;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.molang.util.Value3;
@@ -14,17 +15,28 @@ import net.minecraft.world.phys.Vec3;
 public class Dynamic extends ParticleMotionComponent {
     // TODO 实现 rotationAcceleration 和 rotationDragCoefficient
     public Vec3 getNewPos(MolangVariableScope scope, Vec3 pos) {
+        double age = scope.getValue("variable.particle_age");
+        ParticleInstance particleInstance = scope.getDataSource().get(ParticleInstance.class);
+        double preAge = particleInstance.getLastEvaluateAge();
+        double ageDiff = age - preAge;
+        Vec3 speed = particleInstance.getSpeedVec();
+
         if (linearAcceleration != null) {
-            Vec3 linear = linearAcceleration.evaluate(scope).scale(1 / 20D);
-            pos = pos.add(linear);
+            Vec3 acceleration = linearAcceleration.evaluate(scope).scale(ageDiff);
+
+            if (linearDragCoefficient != null) {
+                speed = speed.add(speed.scale(-linearDragCoefficient.evaluate(scope)).scale(ageDiff));
+            }
+
+            speed = speed.add(acceleration);
         }
 
-        if (linearDragCoefficient != null) {
-            Vec3 drag = pos.scale(-linearDragCoefficient.evaluate(scope)).scale(1 / 20D);
-            pos = pos.add(drag);
-        }
+        Vec3 result = pos.add(speed.scale(ageDiff));
 
-        return pos;
+        particleInstance.setSpeedVec(speed);
+        particleInstance.setLastEvaluateAge(age);
+
+        return result;
     }
 
     /**

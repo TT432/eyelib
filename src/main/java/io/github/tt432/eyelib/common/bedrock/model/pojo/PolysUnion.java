@@ -11,7 +11,7 @@ public class PolysUnion {
 	public double[][][] doubleArrayArrayArrayValue;
 	public PolysEnum enumValue;
 
-	protected static class Serializer implements JsonSerializer<PolysUnion>, JsonDeserializer<PolysUnion> {
+	protected static class Serializer implements JsonDeserializer<PolysUnion> {
 		@Override
 		public PolysUnion deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 			PolysUnion result = new PolysUnion();
@@ -27,13 +27,6 @@ public class PolysUnion {
 			}
 
 			return result;
-		}
-
-		@Override
-		public JsonElement serialize(PolysUnion src, Type typeOfSrc, JsonSerializationContext context) {
-			return src.doubleArrayArrayArrayValue != null ?
-					context.serialize(src.doubleArrayArrayArrayValue):
-					new JsonPrimitive(src.enumValue.toValue());
 		}
 	}
 }

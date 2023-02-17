@@ -6,16 +6,21 @@ import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
 import com.mojang.math.Vector4f;
+import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.model.GeoModelProvider;
 import io.github.tt432.eyelib.common.bedrock.model.element.*;
+import io.github.tt432.eyelib.molang.MolangDataSource;
+import io.github.tt432.eyelib.molang.MolangParser;
 import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.RenderUtils;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.List;
 
 public interface GeoRenderer<T> {
 	MultiBufferSource getCurrentRTB();
@@ -59,6 +64,8 @@ public interface GeoRenderer<T> {
 		if (bone.isHidden())
 			return;
 
+		packedLight = getLight(packedLight, bone);
+
 		for (GeoCube cube : bone.childCubes) {
 			if (!bone.cubesAreHidden()) {
 				poseStack.pushPose();
@@ -66,6 +73,21 @@ public interface GeoRenderer<T> {
 				poseStack.popPose();
 			}
 		}
+	}
+
+	static int getLight(int sourceLight, GeoBone bone) {
+		MolangDataSource currentDataSource = MolangParser.getCurrentDataSource();
+
+		if (currentDataSource.get(Animatable.class) != null) {
+			List<String> glowing = (List<String>) currentDataSource.getData()
+					.getExtraData().getOrDefault("glowing", List.of());
+
+			if (glowing.contains(bone.name)) {
+				return LightTexture.pack(15, 15);
+			}
+		}
+
+		return sourceLight;
 	}
 
 	default void renderChildBones(GeoBone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
