@@ -9,6 +9,8 @@ import io.github.tt432.eyelib.molang.math.Constant;
 import io.github.tt432.eyelib.molang.math.MolangVariable;
 import io.github.tt432.eyelib.util.json.JsonUtils;
 import io.github.tt432.eyelib.util.math.Interpolates;
+import io.github.tt432.eyelib.util.math.Vec2d;
+import io.github.tt432.eyelib.util.math.curve.SplineCurve;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -104,30 +106,17 @@ public class ParticleCurve {
                 }
             });
             case CATMULL_ROM -> new MolangVariable(name, s -> {
-                double range = horizontalRange.evaluate(s);
-                double inputValue = input.evaluate(s);
+                List<Vec2d> points = new ArrayList<>();
 
-                int maxIndex = nodes.size() - 1;
-                int inputIndex = (int) Math.floor(inputValue / range * maxIndex);
-
-                if (inputIndex <= 1) {
-                    return nodes.get(maxIndex > 0 ? 1 : 0).value.evaluate(s);
-                } else if (inputIndex >= maxIndex - 1) {
-                    return nodes.get(Math.max(maxIndex - 1, 0)).value.evaluate(s);
-                } else {
-                    var curr = nodes.get(inputIndex);
-                    var next = nodes.get(inputIndex + 1);
-                    double currTime = range * curr.index / maxIndex;
-                    double nextTime = range * next.index / maxIndex;
-
-                    return Interpolates.catmullRom(
-                            new Interpolates.Node(range * (inputIndex - 1) / maxIndex, nodes.get(inputIndex - 1).value.evaluate(s)),
-                            new Interpolates.Node(currTime, curr.value.evaluate(s)),
-                            new Interpolates.Node(nextTime, next.value.evaluate(s)),
-                            new Interpolates.Node(range * (inputIndex + 2) / maxIndex, nodes.get(inputIndex + 2).value.evaluate(s)),
-                            inputValue
-                    );
+                for (int i = 0; i < nodes.size(); i++) {
+                    ParticleCurveNode node = nodes.get(i);
+                    points.add(new Vec2d(i - 1D, node.value.evaluate(s)));
                 }
+
+                var trueSize = nodes.size() - 3;
+                var time = (1 + this.input.evaluate(s) * trueSize) / (trueSize + 2);
+                SplineCurve curve = new SplineCurve(points.toArray(Vec2d[]::new));
+                return curve.getPoint(time).getY();
             });
             case BEZIER_CHAIN -> null;
         };
