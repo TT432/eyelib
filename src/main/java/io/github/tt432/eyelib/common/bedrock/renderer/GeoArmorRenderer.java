@@ -434,4 +434,9 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
 	public MultiBufferSource getCurrentRTB() {
 		return this.rtb;
 	}
+
+	@Override
+	public T getAnimatable() {
+		return currentArmorItem;
+	}
 }

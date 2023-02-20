@@ -604,8 +604,8 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
 
 		for (GeoVertex vertex : quad.vertices) {
 			Vector4f vector4f = new Vector4f(vertex.position.x(), vertex.position.y(), vertex.position.z(), 1);
-			float texU = (vertex.textureU * entityTextureSize.firstInt()) / boneTextureSize.firstInt();
-			float texV = (vertex.textureV * entityTextureSize.secondInt()) / boneTextureSize.secondInt();
+			float texU = (vertex.getTextureU() * entityTextureSize.firstInt()) / boneTextureSize.firstInt();
+			float texV = (vertex.getTextureV() * entityTextureSize.secondInt()) / boneTextureSize.secondInt();
 
 			vector4f.transform(poseState);
 

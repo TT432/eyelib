@@ -18,8 +18,8 @@
 						}
 					},
 					"scale": {
-						"0.375": ["eyelib.add_glowing('bone2');1", "eyelib.add_glowing('bone2');1", "eyelib.add_glowing('bone2');1"],
-						"0.6667": ["eyelib.remove_glowing('bone2');1", "eyelib.remove_glowing('bone2');1", "eyelib.remove_glowing('bone2');1"]
+						"0.375": ["eyelib.add_glow();1", "eyelib.add_glow();1", "eyelib.add_glow();1"],
+						"0.6667": ["eyelib.remove_glow();1", "eyelib.remove_glow();1", "eyelib.remove_glow();1"]
 					}
 				}
 			},
@@ -27,6 +27,30 @@
 				"0.5": {
 					"effect": "eyelib:smoke",
 					"locator": "locator"
+				}
+			}
+		},
+		"idle": {
+			"animation_length": 2,
+			"bones": {
+				"bone2": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"0.5": [0, 90, 0],
+						"1.0": [0, 180, 0],
+						"1.5": [0, 270, 0],
+						"2.0": [0, 360, 0]
+					}
+				}
+			}
+		},
+		"fail": {
+			"loop": true,
+			"bones": {
+				"bone2": {
+					"rotation": [0, 0, 0],
+					"position": [0, 0, 0],
+					"scale": [1, 1, 1]
 				}
 			}
 		}

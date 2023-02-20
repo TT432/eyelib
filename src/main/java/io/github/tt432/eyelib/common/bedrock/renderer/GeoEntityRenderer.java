@@ -22,6 +22,7 @@ import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.RenderUtils;
 import io.github.tt432.eyelib.util.data.EntityModelData;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.Getter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -59,6 +60,7 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
     protected final List<GeoLayerRenderer<T>> layerRenderers = new ObjectArrayList<>();
     protected Matrix4f dispatchedMat = new Matrix4f();
     protected Matrix4f renderEarlyMat = new Matrix4f();
+    @Getter
     protected T animatable;
 
     public MultiBufferSource rtb;
@@ -171,17 +173,19 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
 
         this.modelProvider.setCustomAnimations(animatable, null, getInstanceId(animatable), predicate);
 
+        ResourceLocation textureLocation = tryGetTexture(animatable);
+
         poseStack.translate(0, 0.01f, 0);
-        RenderSystem.setShaderTexture(0, getTextureLocation(animatable));
+        RenderSystem.setShaderTexture(0, textureLocation);
 
         Color renderColor = getRenderColor(animatable, partialTick, poseStack, bufferSource, null, packedLight);
         RenderType renderType = getRenderType(animatable, partialTick, poseStack, bufferSource, null, packedLight,
-                getTextureLocation(animatable));
+                textureLocation);
 
         if (!animatable.isInvisibleTo(Minecraft.getInstance().player)) {
             VertexConsumer glintBuffer = bufferSource.getBuffer(RenderType.entityGlintDirect());
             VertexConsumer translucentBuffer = bufferSource
-                    .getBuffer(RenderType.entityTranslucentCull(getTextureLocation(animatable)));
+                    .getBuffer(RenderType.entityTranslucentCull(textureLocation));
 
             render(model, animatable, partialTick, renderType, poseStack, bufferSource,
                     glintBuffer != translucentBuffer ? VertexMultiConsumer.create(glintBuffer, translucentBuffer)
@@ -201,6 +205,8 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
         poseStack.popPose();
 
         super.render(animatable, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+
+        clearTexData();
     }
 
     @Override

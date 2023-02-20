@@ -1,13 +1,13 @@
 package io.github.tt432.eyelib.molang;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
  * @author DustW
  */
 public class ScopeStack implements AutoCloseable {
-    public final List<MolangVariableScope> tempScope = new LinkedList<>();
+    public final Deque<MolangVariableScope> tempScope = new ArrayDeque<>();
 
     public ScopeStack() {
         tempScope.add(MolangParser.getGlobalScope());
@@ -19,7 +19,7 @@ public class ScopeStack implements AutoCloseable {
     }
 
     public void pop() {
-        tempScope.remove(tempScope.size() - 1);
+        tempScope.removeLast();
     }
 
     @Override
@@ -28,6 +28,6 @@ public class ScopeStack implements AutoCloseable {
     }
 
     public MolangVariableScope last() {
-        return tempScope.get(tempScope.size() - 1);
+        return tempScope.getLast();
     }
 }

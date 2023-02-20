@@ -1,0 +1,49 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.ff",
+				"texture_width": 64,
+				"texture_height": 64,
+				"visible_bounds_width": 3,
+				"visible_bounds_height": 2.5,
+				"visible_bounds_offset": [0, 0.75, 0]
+			},
+			"bones": [
+				{
+					"name": "bone",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [-1, 0, -8], "size": [2, 2, 2], "uv": [6, 2]},
+						{"origin": [-6, 0, -1], "size": [2, 2, 2], "uv": [0, 4]}
+					]
+				},
+				{
+					"name": "bone2",
+					"parent": "bone",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [-8, 7, -8], "size": [9, 2, 16], "pivot": [0, 0, 0], "rotation": [0, 0, -40], "uv": [0, 0]}
+					]
+				},
+				{
+					"name": "bone3",
+					"parent": "bone2",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [-1, 0, 4], "size": [2, 2, 2], "uv": [0, 0]}
+					]
+				},
+				{
+					"name": "bone4",
+					"parent": "bone",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [6, 0, -1], "size": [2, 18, 2], "uv": [0, 18]}
+					]
+				}
+			]
+		}
+	]
+}

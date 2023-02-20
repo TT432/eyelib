@@ -12,6 +12,7 @@ import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
 import io.github.tt432.eyelib.api.bedrock.model.Bone;
 import io.github.tt432.eyelib.api.sound.SoundPlayer;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
+import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.BoneAnimation;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
 import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationPointQueue;
@@ -465,9 +466,17 @@ public class AnimationController<T extends Animatable> {
                     continue;
                 }
 
+                AnimationData data = MolangParser.getCurrentDataSource().getData();
+
+                if (data != null)
+                    data.putExtraData("anim.current_bone", boneName);
+
                 boneAnimationQueue.rotate().push(new AnimationPointQueue.LerpInfo(boneAnim.lerpRotation(tick)));
                 boneAnimationQueue.position().push(new AnimationPointQueue.LerpInfo(boneAnim.lerpPosition(tick)));
                 boneAnimationQueue.scale().push(new AnimationPointQueue.LerpInfo(boneAnim.lerpScale(tick)));
+
+                if (data != null)
+                    data.removeExtraData("anim.current_bone");
             }
         }
     }

@@ -19,6 +19,7 @@ import io.github.tt432.eyelib.util.AnimationUtils;
 import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.RenderUtils;
 import io.github.tt432.eyelib.util.data.EntityModelData;
+import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -45,6 +46,7 @@ public class GeoProjectilesRenderer<T extends Entity & Animatable> extends Entit
 	protected float heightScale = 1;
 	protected Matrix4f dispatchedMat = new Matrix4f();
 	protected Matrix4f renderEarlyMat = new Matrix4f();
+	@Getter
 	protected T animatable;
 	private RenderCycle currentModelRenderCycle = RenderCycle.RenderCycleImpl.INITIAL;
 	protected MultiBufferSource rtb = null;

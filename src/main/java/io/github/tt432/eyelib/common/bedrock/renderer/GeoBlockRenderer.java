@@ -15,6 +15,7 @@ import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.RenderUtils;
+import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -53,6 +54,7 @@ public abstract class GeoBlockRenderer<T extends BlockEntity & Animatable>
 	protected float heightScale = 1;
 	protected Matrix4f dispatchedMat = new Matrix4f();
 	protected Matrix4f renderEarlyMat = new Matrix4f();
+	@Getter
 	protected T animatable;
 	protected MultiBufferSource rtb = null;
 

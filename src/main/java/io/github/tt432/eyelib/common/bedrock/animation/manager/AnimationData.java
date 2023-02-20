@@ -15,11 +15,39 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Data
 public class AnimationData {
     @Getter
     private final Map<String, Object> extraData = new HashMap<>();
+
+    @SuppressWarnings("all")
+    public <T> Optional<T> getExtraData(String name) {
+        if (extraData.containsKey(name)) {
+            return Optional.ofNullable((T) extraData.get(name));
+        }
+
+        return Optional.empty();
+    }
+
+    @SuppressWarnings("all")
+    public <T> T getExtraData(String key, T defaultValue) {
+        return (T) extraData.getOrDefault(key, defaultValue);
+    }
+
+    @SuppressWarnings("all")
+    public <T> T getOrCreateExtraData(String key, T defaultValue) {
+        return (T) extraData.computeIfAbsent(key, s -> defaultValue);
+    }
+
+    public void putExtraData(String key, Object value) {
+        extraData.put(key, value);
+    }
+
+    public void removeExtraData(String s) {
+        extraData.remove(s);
+    }
 
     private final Map<String, Pair<Bone, BoneSnapshot>> boneSnapshotCollection;
     private final Map<String, AnimationController> animationControllers = new Object2ObjectOpenHashMap<>();

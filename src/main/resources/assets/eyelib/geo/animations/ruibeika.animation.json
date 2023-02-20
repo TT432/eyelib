@@ -1,0 +1,35 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"parallel0": {
+			"loop": true,
+			"animation_length": 1.28,
+			"bones": {
+				"right_leg_glow": {
+					"scale": ["eyelib.add_glow() ;1", "eyelib.add_glow() ;1", "eyelib.add_glow() ;1"]
+				},
+				"left_leg_glow": {
+					"scale": ["eyelib.add_glow() ;1", "eyelib.add_glow() ;1", "eyelib.add_glow() ;1"]
+				},
+				"left_chest_glow": {
+					"scale": ["eyelib.add_glow() ;1", "eyelib.add_glow() ;1", "eyelib.add_glow() ;1"]
+				},
+				"left_hand_glow": {
+					"scale": ["eyelib.add_glow() ;1", "eyelib.add_glow() ;1", "eyelib.add_glow() ;1"]
+				},
+				"left_arm_glow": {
+					"scale": ["eyelib.add_glow() ;1", "eyelib.add_glow() ;1", "eyelib.add_glow() ;1"]
+				},
+				"right_hand_glow": {
+					"scale": ["eyelib.add_glow() ;1", "eyelib.add_glow() ;1", "eyelib.add_glow() ;1"]
+				},
+				"righr_hand_glow": {
+					"scale": ["eyelib.add_glow() ;1", "eyelib.add_glow() ;1", "eyelib.add_glow() ;1"]
+				},
+				"right_chest_glow": {
+					"scale": ["eyelib.add_glow() ;1", "eyelib.add_glow() ;1", "eyelib.add_glow() ;1"]
+				}
+			}
+		}
+	}
+}
