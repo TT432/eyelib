@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.molang.functions.utility;
+package io.github.tt432.eyelib.molang.functions.utility.entity;
 
 import io.github.tt432.eyelib.molang.MolangDataSource;
 import io.github.tt432.eyelib.molang.MolangParser;

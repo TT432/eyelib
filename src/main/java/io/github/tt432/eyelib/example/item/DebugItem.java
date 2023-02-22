@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -26,6 +27,7 @@ public class DebugItem extends Item {
     @Override
     public InteractionResult interactLivingEntity(ItemStack pStack, Player pPlayer, LivingEntity pInteractionTarget, InteractionHand pUsedHand) {
         pInteractionTarget.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.STONE));
+        pInteractionTarget.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
         return InteractionResult.CONSUME;
     }
 

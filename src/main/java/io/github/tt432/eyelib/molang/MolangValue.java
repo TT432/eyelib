@@ -8,8 +8,8 @@ import com.google.gson.JsonParseException;
 import java.lang.reflect.Type;
 
 public interface MolangValue {
-    int TRUE = 1;
-    int FALSE = 0;
+    double TRUE = 1;
+    double FALSE = 0;
 
     static float normalizeTime(long timestamp) {
         return ((float) timestamp / 24000);

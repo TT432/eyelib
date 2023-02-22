@@ -28,7 +28,7 @@ public class MolangVariableScope {
     }
 
     public void setValue(String name, boolean value) {
-        int result = value ? MolangValue.TRUE : MolangValue.FALSE;
+        double result = value ? MolangValue.TRUE : MolangValue.FALSE;
         setValue(name, () -> result);
     }
 
