@@ -7,7 +7,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 /**
  * @author DustW
  */
-@MolangFunctionHolder("eyelib.leggings_is")
+@MolangFunctionHolder("query.leggings_is")
 public class LeggingsIs extends SlotGetter {
     public LeggingsIs(MolangValue[] values, String name) throws IllegalArgumentException {
         super(EquipmentSlot.LEGS, values, name);

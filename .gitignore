@@ -118,5 +118,10 @@ run/
 !gradle-wrapper.jar
 
 src/main/resources/assets/eyelib/geo/models/ruibeika.geo.json
+src/main/resources/assets/eyelib/geo/animations/ruibeika.animation.json
 src/main/resources/assets/eyelib/textures/animatable/ruibeika.png
 src/main/resources/assets/eyelib/textures/animatable/ruibeika.png.mcmeta
+
+src/main/resources/assets/eyelib/geo/models/nuoaier.geo.json
+src/main/resources/assets/eyelib/geo/animations/nuoaier.animation.json
+src/main/resources/assets/eyelib/textures/model/entity/nuoaier.png

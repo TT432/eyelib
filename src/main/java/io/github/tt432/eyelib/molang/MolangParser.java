@@ -176,6 +176,10 @@ public class MolangParser {
             }
         }
 
+        if (expression.startsWith("eyelib.add_glow")) {
+            int a = 1;
+        }
+
         try {
             List<Object> symbols = breakdownChars(this.breakdown(expression));
 
@@ -214,10 +218,6 @@ public class MolangParser {
     }
 
     public String[] breakdown(String expression) {
-        if (!expression.matches("^[\\w\\d\\s_+-/*%^&|<>=!?:.,()']+$")) {
-            throw new IllegalArgumentException("Given expression '" + expression + "' contains illegal characters!");
-        }
-
         expression = expression.replaceAll("\\s+", "");
         String[] chars = expression.split("(?!^)");
 
@@ -570,7 +570,7 @@ public class MolangParser {
     }
 
     protected boolean isString(String s) {
-        return s.startsWith("'") && s.endsWith("'");
+        return (s.startsWith("'") && s.endsWith("'")) || (s.startsWith("\"") && s.endsWith("\""));
     }
 
     protected String splitString(String s) {

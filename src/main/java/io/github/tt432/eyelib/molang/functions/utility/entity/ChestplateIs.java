@@ -7,7 +7,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 /**
  * @author DustW
  */
-@MolangFunctionHolder("eyelib.chestplate_is")
+@MolangFunctionHolder("query.chestplate_is")
 public class ChestplateIs extends SlotGetter {
     public ChestplateIs(MolangValue[] values, String name) throws IllegalArgumentException {
         super(EquipmentSlot.CHEST, values, name);

@@ -18,7 +18,7 @@
 						}
 					},
 					"scale": {
-						"0.375": ["eyelib.add_glow();1", "eyelib.add_glow();1", "eyelib.add_glow();1"],
+						"0.375": ["eyelib.add_glow(\"bone2\");1", "eyelib.add_glow();1", "eyelib.add_glow();1"],
 						"0.6667": ["eyelib.remove_glow();1", "eyelib.remove_glow();1", "eyelib.remove_glow();1"]
 					}
 				}

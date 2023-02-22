@@ -2,8 +2,8 @@ package io.github.tt432.eyelib.example.item;
 
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.common.bedrock.BedrockResourceManager;
-import io.github.tt432.eyelib.common.bedrock.particle.ParticleEmitter;
 import io.github.tt432.eyelib.common.bedrock.particle.BedrockParticleManager;
+import io.github.tt432.eyelib.common.bedrock.particle.ParticleEmitter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -27,7 +27,10 @@ public class DebugItem extends Item {
     @Override
     public InteractionResult interactLivingEntity(ItemStack pStack, Player pPlayer, LivingEntity pInteractionTarget, InteractionHand pUsedHand) {
         pInteractionTarget.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.STONE));
-        pInteractionTarget.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
+        pInteractionTarget.setItemSlot(EquipmentSlot.HEAD,
+                new ItemStack(pPlayer.getRandom().nextBoolean() ? Items.IRON_HELMET : Items.DIAMOND_HELMET));
+        pInteractionTarget.setItemSlot(EquipmentSlot.CHEST,
+                new ItemStack(pPlayer.getRandom().nextBoolean() ? Items.IRON_CHESTPLATE : Items.DIAMOND_CHESTPLATE));
         return InteractionResult.CONSUME;
     }
 

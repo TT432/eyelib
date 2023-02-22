@@ -47,7 +47,18 @@ public class ERSteady extends EmitterRateComponent implements JsonDeserializer<E
         double age = scope.getValue("variable.emitter_age");
         double rate = scope.getValue("spawn_rate");
 
-        int result = (int) Math.floor((age - preShootTime) * rate);
+        double remainder = scope.getValue("remainder");
+
+        double needShoot = (age - preShootTime) * rate;
+        int result = (int) Math.floor(needShoot);
+
+        if (remainder > 0) {
+            int floorRemainder = (int) Math.floor(remainder);
+            result += floorRemainder;
+        }
+
+        scope.setValue("remainder", remainder + needShoot - result);
+
         scope.setValue("pre_shoot_time", age);
         return result;
     }

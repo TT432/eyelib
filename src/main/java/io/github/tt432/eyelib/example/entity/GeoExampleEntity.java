@@ -20,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
 
 public class GeoExampleEntity extends PathfinderMob implements Animatable, Tickable {
 	public AnimationFactory factory = GeckoLibUtil.createFactory(this);
-	private boolean isAnimating = false;
+	private boolean isAnimating = true;
 
 	public GeoExampleEntity(EntityType<? extends PathfinderMob> type, Level worldIn) {
 		super(type, worldIn);
@@ -39,9 +39,10 @@ public class GeoExampleEntity extends PathfinderMob implements Animatable, Ticka
 
 	@Override
 	public InteractionResult interactAt(Player player, Vec3 hitPos, InteractionHand hand) {
-		if (hand == InteractionHand.MAIN_HAND) {
+		if (hand == InteractionHand.MAIN_HAND && player.getMainHandItem().isEmpty()) {
 			this.isAnimating = !this.isAnimating;
 		}
+
 		return super.interactAt(player, hitPos, hand);
 	}
 

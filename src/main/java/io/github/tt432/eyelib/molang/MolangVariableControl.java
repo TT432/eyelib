@@ -14,10 +14,10 @@ import java.util.function.ToDoubleFunction;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MolangVariableControl {
     public static void living(MolangVariableScope scope) {
-        scope.setVariable("eyelib.has_helmet", s -> livingBool(s, living -> !living.getItemBySlot(EquipmentSlot.HEAD).isEmpty()));
-        scope.setVariable("eyelib.has_chestplate", s -> livingBool(s, living -> !living.getItemBySlot(EquipmentSlot.CHEST).isEmpty()));
-        scope.setVariable("eyelib.has_leggings", s -> livingBool(s, living -> !living.getItemBySlot(EquipmentSlot.LEGS).isEmpty()));
-        scope.setVariable("eyelib.has_boots", s -> livingBool(s, living -> !living.getItemBySlot(EquipmentSlot.FEET).isEmpty()));
+        scope.setVariable("query.has_helmet", s -> livingBool(s, living -> !living.getItemBySlot(EquipmentSlot.HEAD).isEmpty()));
+        scope.setVariable("query.has_chestplate", s -> livingBool(s, living -> !living.getItemBySlot(EquipmentSlot.CHEST).isEmpty()));
+        scope.setVariable("query.has_leggings", s -> livingBool(s, living -> !living.getItemBySlot(EquipmentSlot.LEGS).isEmpty()));
+        scope.setVariable("query.has_boots", s -> livingBool(s, living -> !living.getItemBySlot(EquipmentSlot.FEET).isEmpty()));
     }
 
     static Double livingDouble(MolangVariableScope scope, ToDoubleFunction<LivingEntity> func) {

@@ -7,8 +7,8 @@
       "bones": {
         "head": {
           "scale": [
-            "eyelib.helmet_is('iron_helmet') ? 2:1",
-            "eyelib.has_helmet ? 2:1",
+            "query.helmet_is('iron_helmet') ? 2:1",
+            "query.has_helmet ? 2:1",
             "query.is_item_equipped('main_hand') ? 2:1"
           ],
           "rotation": [
