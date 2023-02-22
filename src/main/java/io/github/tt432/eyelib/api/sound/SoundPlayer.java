@@ -1,7 +1,5 @@
 package io.github.tt432.eyelib.api.sound;
 
-import io.github.tt432.eyelib.common.sound.EyelibSoundInstance;
-import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 
@@ -11,21 +9,16 @@ import net.minecraft.world.entity.Entity;
  * @author DustW
  */
 public interface SoundPlayer {
-    SoundInstance getSound(ResourceLocation location);
-
-    default SoundPlayingState stopInAnimationFinished() {
-        return SoundPlayingState.NOTHING;
+    default SoundPlayInfo getSound(ResourceLocation location) {
+        if (this instanceof Entity e) {
+            return SoundPlayInfo.forEntity(e, location, stopInAnimationFinished());
+        } else {
+            return SoundPlayInfo.forClientPlayer(location, stopInAnimationFinished());
+        }
+        // TODO 添加 forBlock
     }
 
-    static SoundInstance forEntity(Entity entity, ResourceLocation location) {
-        return new EyelibSoundInstance(location, entity.getSoundSource(),
-                1, 1, false, 0, SoundInstance.Attenuation.LINEAR,
-                entity.getX(), entity.getY(), entity.getZ(), false);
-    }
-
-    enum SoundPlayingState {
-        STOP_ON_FINISH,
-        STOP_ON_NEXT,
-        NOTHING
+    default SoundPlayInfo.SoundPlayingState stopInAnimationFinished() {
+        return SoundPlayInfo.SoundPlayingState.NOTHING;
     }
 }

@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.common.bedrock.animation;
 
+import io.github.tt432.eyelib.api.sound.SoundPlayInfo;
 import io.github.tt432.eyelib.api.sound.SoundPlayer;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.SoundEffect;
@@ -20,7 +21,7 @@ public class SoundControl {
     private final List<SoundInstance> playing = new ArrayList<>();
 
     public void init(SingleAnimation animation, @Nullable SoundPlayer player) {
-        if (player != null && player.stopInAnimationFinished() == SoundPlayer.SoundPlayingState.STOP_ON_NEXT)
+        if (player != null && player.stopInAnimationFinished() == SoundPlayInfo.SoundPlayingState.STOP_ON_NEXT)
             stopPlaying();
 
         if (animation != null) {
@@ -40,7 +41,7 @@ public class SoundControl {
     }
 
     public void stop(@Nullable SoundPlayer player) {
-        if (player != null && player.stopInAnimationFinished() == SoundPlayer.SoundPlayingState.STOP_ON_FINISH)
+        if (player != null && player.stopInAnimationFinished() == SoundPlayInfo.SoundPlayingState.STOP_ON_FINISH)
             stopPlaying();
         soundQueue.clear();
     }
@@ -58,9 +59,9 @@ public class SoundControl {
                 ResourceLocation sound = soundEffect.size() > 1 ?
                         soundEffect.get(random.nextInt(soundEffect.size() - 1)) :
                         soundEffect.get(0);
-                SoundInstance instance = player.getSound(sound);
-                soundManager.play(instance);
-                playing.add(instance);
+                var instance = player.getSound(sound);
+                soundManager.play(instance.instance());
+                playing.add(instance.instance());
 
                 soundQueue.poll();
             }

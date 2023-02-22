@@ -4,6 +4,7 @@ import io.github.tt432.eyelib.api.Syncable;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.LoopType;
 import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
+import io.github.tt432.eyelib.api.sound.SoundPlayInfo;
 import io.github.tt432.eyelib.api.sound.SoundPlayer;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
@@ -15,10 +16,7 @@ import io.github.tt432.eyelib.example.ExampleMod;
 import io.github.tt432.eyelib.example.client.renderer.item.FistRenderer;
 import io.github.tt432.eyelib.network.EyelibNetworkHandler;
 import io.github.tt432.eyelib.util.GeckoLibUtil;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.client.resources.sounds.SoundInstance;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
@@ -94,11 +92,6 @@ public class FistItem extends Item implements Animatable, Syncable, SoundPlayer 
     }
 
     @Override
-    public SoundPlayingState stopInAnimationFinished() {
-        return SoundPlayingState.STOP_ON_NEXT;
-    }
-
-    @Override
     public void onAnimationSync(int id, int state) {
         if (state == ANIM_OPEN) {
             // Always use GeckoLibUtil to get AnimationControllers when you don't have
@@ -118,7 +111,7 @@ public class FistItem extends Item implements Animatable, Syncable, SoundPlayer 
     }
 
     @Override
-    public SoundInstance getSound(ResourceLocation location) {
-        return SoundPlayer.forEntity(Minecraft.getInstance().player, location);
+    public SoundPlayInfo.SoundPlayingState stopInAnimationFinished() {
+        return SoundPlayInfo.SoundPlayingState.STOP_ON_NEXT;
     }
 }

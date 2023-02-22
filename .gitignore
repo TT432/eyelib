@@ -116,3 +116,7 @@ run/
 
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
+
+src/main/resources/assets/eyelib/geo/models/ruibeika.geo.json
+src/main/resources/assets/eyelib/textures/animatable/ruibeika.png
+src/main/resources/assets/eyelib/textures/animatable/ruibeika.png.mcmeta

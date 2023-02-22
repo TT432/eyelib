@@ -1,13 +1,24 @@
 package io.github.tt432.eyelib.example.item;
 
+import io.github.tt432.eyelib.api.Syncable;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
+import io.github.tt432.eyelib.api.bedrock.animation.LoopType.Impl;
+import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
 import io.github.tt432.eyelib.api.sound.SoundPlayer;
+import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
+import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
+import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
+import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
+import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationFactory;
+import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationState;
+import io.github.tt432.eyelib.example.ExampleMod;
+import io.github.tt432.eyelib.example.client.renderer.item.JackInTheBoxRenderer;
+import io.github.tt432.eyelib.network.EyelibNetworkHandler;
+import io.github.tt432.eyelib.util.GeckoLibUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.network.chat.TextComponent;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -17,19 +28,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.client.IItemRenderProperties;
 import net.minecraftforge.network.PacketDistributor;
-import io.github.tt432.eyelib.example.ExampleMod;
-import io.github.tt432.eyelib.example.client.renderer.item.JackInTheBoxRenderer;
-import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationState;
-import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
-import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
-import io.github.tt432.eyelib.api.bedrock.animation.LoopType.Impl;
-import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
-import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
-import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
-import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationFactory;
-import io.github.tt432.eyelib.network.EyelibNetworkHandler;
-import io.github.tt432.eyelib.api.Syncable;
-import io.github.tt432.eyelib.util.GeckoLibUtil;
 
 import java.util.function.Consumer;
 
@@ -112,10 +110,5 @@ public class JackInTheBoxItem extends Item implements Animatable, Syncable, Soun
 				controller.setAnimation(new AnimationBuilder().addAnimation("Soaryn_chest_popup", Impl.PLAY_ONCE));
 			}
 		}
-	}
-
-	@Override
-	public SoundInstance getSound(ResourceLocation location) {
-		return SoundPlayer.forEntity(Minecraft.getInstance().player, location);
 	}
 }

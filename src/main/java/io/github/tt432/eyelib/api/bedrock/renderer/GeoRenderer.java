@@ -17,14 +17,18 @@ import io.github.tt432.eyelib.molang.functions.utility.AddGlow;
 import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.RenderUtils;
 import io.github.tt432.eyelib.util.math.Vec2d;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 
 public interface GeoRenderer<T> {
@@ -105,7 +109,18 @@ public interface GeoRenderer<T> {
 
         packedLight = getLight(packedLight, bone);
 
-        for (GeoCube cube : bone.childCubes) {
+        List<GeoCube> childCubes = bone.childCubes.stream().sorted(Comparator.comparingDouble(cube -> {
+            Entity cameraEntity = Minecraft.getInstance().cameraEntity;
+
+            if (cameraEntity != null) {
+                Vector3f pivot = cube.pivot;
+                return cameraEntity.distanceToSqr(pivot.x(), pivot.y(), pivot.z());
+            }
+
+            return 0;
+        })).toList();
+
+        for (GeoCube cube : childCubes) {
             if (!bone.cubesAreHidden()) {
                 poseStack.pushPose();
                 renderCube(cube, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
@@ -206,7 +221,7 @@ public interface GeoRenderer<T> {
     default RenderType getRenderType(T animatable, float partialTick, PoseStack poseStack,
                                      @Nullable MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, int packedLight,
                                      ResourceLocation texture) {
-        return RenderType.entityCutout(texture);
+        return RenderType.entityTranslucent(texture);
     }
 
     default Color getRenderColor(T animatable, float partialTick, PoseStack poseStack,
