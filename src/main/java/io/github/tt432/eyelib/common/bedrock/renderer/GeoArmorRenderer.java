@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
-import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.model.Bone;
@@ -20,6 +19,7 @@ import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.GeoUtils;
 import io.github.tt432.eyelib.util.RenderUtils;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelLayers;
@@ -45,6 +45,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+@Slf4j
 public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends HumanoidModel
 		implements GeoRenderer<T>, ModelFetcher<T> {
 	protected static Map<Class<? extends ArmorItem>, Supplier<GeoArmorRenderer>> CONSTRUCTORS = new ConcurrentHashMap<>();
@@ -113,7 +114,7 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
 				});
 			}
 			else {
-				Eyelib.LOGGER.error(
+				log.error(
 						"Registration of armor renderer for item class {} failed cause the renderer class {} does not feature a zero-args constructor!",
 						itemClass.getName(), renderer.getClass().getName());
 				throw new IllegalArgumentException(

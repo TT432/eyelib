@@ -11,6 +11,20 @@ public class GeoModel {
     public List<GeoBone> topLevelBones = new ObjectArrayList<>();
     public ModelProperties properties;
 
+    public boolean hasTopLevelBone(String name) {
+        return topLevelBones.stream().anyMatch(bone -> bone.getName().equals(name));
+    }
+
+    public Optional<GeoBone> getTopLevelBone(String name) {
+        for (GeoBone bone : topLevelBones) {
+            if (bone.getName().equals(name)) {
+                return Optional.of(bone);
+            }
+        }
+
+        return Optional.empty();
+    }
+
     public Optional<GeoBone> getBone(String name) {
         for (GeoBone bone : topLevelBones) {
             GeoBone optionalBone = getBoneRecursively(name, bone);

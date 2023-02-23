@@ -5,16 +5,6 @@ import lombok.Data;
 
 @Data
 public class ModelProperties {
-	private boolean animationArmsDown;
-	private boolean animationArmsOutFront;
-	private boolean animationDontShowArmor;
-	private boolean animationInvertedCrouch;
-	private boolean animationNoHeadBob;
-	private boolean animationSingleArmAnimation;
-	private boolean animationSingleLegAnimation;
-	private boolean animationStationaryLegs;
-	private boolean animationStatueOfLibertyArms;
-	private boolean animationUpsideDown;
 	private String identifier;
 	@SerializedName("preserve_model_pose")
 	private boolean preserveModelPose;
@@ -44,4 +34,11 @@ public class ModelProperties {
 	 */
 	@SerializedName("visible_bounds_width")
 	private double visibleBoundsWidth;
+
+	// custom start
+
+	@SerializedName("height_scale")
+	private double heightScale = 0.7;
+	@SerializedName("width_scale")
+	private double widthScale = 0.7;
 }

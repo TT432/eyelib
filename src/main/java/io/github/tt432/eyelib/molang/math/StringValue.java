@@ -20,4 +20,9 @@ public class StringValue implements MolangValue {
     public String asString(MolangVariableScope scope) {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return "\"" + value + "\"";
+    }
 }

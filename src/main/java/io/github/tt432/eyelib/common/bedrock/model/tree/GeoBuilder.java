@@ -4,8 +4,8 @@ import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoCube;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
-import io.github.tt432.eyelib.common.bedrock.model.pojo.Bone;
-import io.github.tt432.eyelib.common.bedrock.model.pojo.Cube;
+import io.github.tt432.eyelib.common.bedrock.model.pojo.BoneFile;
+import io.github.tt432.eyelib.common.bedrock.model.pojo.CubeFile;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.ModelProperties;
 import io.github.tt432.eyelib.util.VectorUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -41,17 +41,17 @@ public class GeoBuilder implements IGeoBuilder {
     public GeoBone constructBone(RawBoneGroup bone, ModelProperties properties, GeoBone parent) {
         GeoBone geoBone = new GeoBone();
 
-        Bone rawBone = bone.selfBone;
-        Vector3f rotation = new Vector3f(VectorUtils.fromArray(rawBone.getRotation()));
-        Vector3f pivot = new Vector3f(VectorUtils.fromArray(rawBone.getPivot()));
+        BoneFile rawBoneFile = bone.selfBoneFile;
+        Vector3f rotation = new Vector3f(VectorUtils.fromArray(rawBoneFile.getRotation()));
+        Vector3f pivot = new Vector3f(VectorUtils.fromArray(rawBoneFile.getPivot()));
         rotation.mul(-1, -1, 1);
 
-        geoBone.setMirror(rawBone.getMirror());
-        geoBone.setDontRender(rawBone.getNeverRender());
-        geoBone.reset = rawBone.getReset();
-        geoBone.setInflate(rawBone.getInflate());
+        geoBone.setMirror(rawBoneFile.getMirror());
+        geoBone.setDontRender(rawBoneFile.getNeverRender());
+        geoBone.reset = rawBoneFile.getReset();
+        geoBone.setInflate(rawBoneFile.getInflate());
         geoBone.parent = parent;
-        geoBone.setModelRendererName(rawBone.getName());
+        geoBone.setModelRendererName(rawBoneFile.getName());
 
         geoBone.setRotationX((float) Math.toRadians(rotation.x()));
         geoBone.setRotationY((float) Math.toRadians(rotation.y()));
@@ -61,9 +61,9 @@ public class GeoBuilder implements IGeoBuilder {
         geoBone.setPivotY(pivot.y());
         geoBone.setPivotZ(pivot.z());
 
-        if (!ArrayUtils.isEmpty(rawBone.getCubes())) {
-            for (Cube cube : rawBone.getCubes()) {
-                geoBone.childCubes.add(GeoCube.createFromPojoCube(cube, properties,
+        if (!ArrayUtils.isEmpty(rawBoneFile.getCubes())) {
+            for (CubeFile cubeFile : rawBoneFile.getCubes()) {
+                geoBone.childCubes.add(GeoCube.createFromPojoCube(cubeFile, properties,
                         geoBone.getInflate() == null ? null : geoBone.getInflate() / 16, geoBone.getMirror()));
             }
         }
@@ -72,8 +72,8 @@ public class GeoBuilder implements IGeoBuilder {
             geoBone.childBones.add(constructBone(child, properties, geoBone));
         }
 
-        if (rawBone.getLocators() != null)
-            geoBone.locators = rawBone.getLocators();
+        if (rawBoneFile.getLocators() != null)
+            geoBone.locators = rawBoneFile.getLocators();
 
         return geoBone;
     }

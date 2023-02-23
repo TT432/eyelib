@@ -1,17 +1,17 @@
 package io.github.tt432.eyelib.common.bedrock;
 
-import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.common.bedrock.animation.pojo.Animation;
+import io.github.tt432.eyelib.common.bedrock.animation.pojo.AnimationFile;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.Converter;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.RawGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.tree.GeoBuilder;
 import io.github.tt432.eyelib.common.bedrock.model.tree.RawGeometryTree;
-import io.github.tt432.eyelib.common.bedrock.particle.pojo.Particle;
+import io.github.tt432.eyelib.common.bedrock.particle.pojo.ParticleFile;
 import io.github.tt432.eyelib.util.FileToIdConverter;
 import io.github.tt432.eyelib.util.json.JsonUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener.PreparationBarrier;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -22,7 +22,6 @@ import org.apache.commons.io.IOUtils;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -31,6 +30,7 @@ import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+@Slf4j
 public class BedrockResourceManager {
     private static final Lazy<BedrockResourceManager> INSTANCE = Lazy.of(BedrockResourceManager::new);
 
@@ -39,14 +39,14 @@ public class BedrockResourceManager {
     }
 
     @Getter
-    private Map<ResourceLocation, Animation> animations = Collections.emptyMap();
+    private Map<ResourceLocation, AnimationFile> animations = new HashMap<>();
     @Getter
-    private Map<ResourceLocation, GeoModel> geoModels = Collections.emptyMap();
+    private Map<ResourceLocation, GeoModel> geoModels = new HashMap<>();
 
     FileToIdConverter particleFile = new FileToIdConverter("geo/particles", ".particle.json");
-    private Map<ResourceLocation, Particle> particles = Collections.emptyMap();
+    private Map<ResourceLocation, ParticleFile> particles = new HashMap<>();
 
-    public Particle getParticle(ResourceLocation name) {
+    public ParticleFile getParticle(ResourceLocation name) {
         if (particles.containsKey(name)) {
             return particles.get(name);
         } else {
@@ -63,9 +63,9 @@ public class BedrockResourceManager {
     public CompletableFuture<Void> reload(PreparationBarrier stage, ResourceManager resourceManager,
                                           ProfilerFiller preparationsProfiler, ProfilerFiller reloadProfiler,
                                           Executor backgroundExecutor, Executor gameExecutor) {
-        Map<ResourceLocation, Animation> animations = new HashMap<>();
+        Map<ResourceLocation, AnimationFile> animations = new HashMap<>();
         Map<ResourceLocation, GeoModel> geoModels = new HashMap<>();
-        Map<ResourceLocation, Particle> particles = new HashMap<>();
+        Map<ResourceLocation, ParticleFile> particles = new HashMap<>();
 
         return CompletableFuture.allOf(
                         loadResources(backgroundExecutor, resourceManager, "geo/animations",
@@ -81,8 +81,8 @@ public class BedrockResourceManager {
                 }, gameExecutor);
     }
 
-    private Particle loadParticles(ResourceManager resourceManager, ResourceLocation resource) {
-        return JsonUtils.normal.fromJson(getResourceAsString(resource, resourceManager), Particle.class);
+    private ParticleFile loadParticles(ResourceManager resourceManager, ResourceLocation resource) {
+        return JsonUtils.normal.fromJson(getResourceAsString(resource, resourceManager), ParticleFile.class);
     }
 
     public GeoModel loadModel(ResourceManager resourceManager, ResourceLocation location) {
@@ -102,13 +102,13 @@ public class BedrockResourceManager {
             // rendered GeoModel
             return GeoBuilder.getGeoBuilder(location.getNamespace()).constructGeoModel(rawGeometryTree);
         } catch (Exception e) {
-            Eyelib.LOGGER.error(String.format("Error parsing %S", location), e);
+            log.error(String.format("Error parsing %S", location), e);
             throw (new RuntimeException(e));
         }
     }
 
-    public Animation loadAnimation(ResourceLocation rl, ResourceManager manager) {
-        return JsonUtils.normal.fromJson(getResourceAsString(rl, manager), Animation.class);
+    public AnimationFile loadAnimation(ResourceLocation rl, ResourceManager manager) {
+        return JsonUtils.normal.fromJson(getResourceAsString(rl, manager), AnimationFile.class);
     }
 
     public static String getResourceAsString(ResourceLocation location, ResourceManager manager) {
@@ -116,7 +116,7 @@ public class BedrockResourceManager {
             return IOUtils.toString(inputStream, Charset.defaultCharset());
         } catch (Exception e) {
             String message = "Couldn't load " + location;
-            Eyelib.LOGGER.error(message, e);
+            log.error(message, e);
             throw new RuntimeException(new FileNotFoundException(location.toString()));
         }
     }
@@ -133,7 +133,7 @@ public class BedrockResourceManager {
                         CompletableFuture<T> existing = tasks.put(resource,
                                 CompletableFuture.supplyAsync(() -> loader.apply(resource), executor));
                         if (existing != null) {// Possibly if this matters, the last one will win
-                            System.err.println("Duplicate resource for " + resource);
+                            log.error("Duplicate resource for " + resource);
                             existing.cancel(false);
                         }
                     }

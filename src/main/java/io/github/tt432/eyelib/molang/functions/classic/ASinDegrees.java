@@ -6,12 +6,12 @@ import io.github.tt432.eyelib.processor.anno.MolangFunctionHolder;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
 
 @MolangFunctionHolder("math.asin")
-public class ASin extends MolangFunction {
-    public ASin(MolangValue[] values, String name) {
+public class ASinDegrees extends MolangFunction {
+    public ASinDegrees(MolangValue[] values, String name) {
         super(values, name, 1);
     }
 
     public double evaluate(MolangVariableScope scope) {
-        return Math.asin(getArg(0, scope));
+        return Math.toDegrees(Math.asin(getArg(0, scope)));
     }
 }

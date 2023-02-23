@@ -11,19 +11,15 @@ import io.github.tt432.eyelib.common.bedrock.EyelibLoadingException;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationProcessor;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
-import io.github.tt432.eyelib.common.bedrock.animation.pojo.Animation;
+import io.github.tt432.eyelib.common.bedrock.animation.pojo.AnimationFile;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
-import io.github.tt432.eyelib.molang.MolangDataSource;
 import io.github.tt432.eyelib.molang.MolangParser;
-import io.github.tt432.eyelib.molang.MolangValue;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -47,6 +43,10 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
 
     @Override
     public void setCustomAnimations(T animatable, @Nullable Object entity, int instanceId, @Nullable AnimationEvent<T> animationEvent) {
+        MolangParser.getCurrentDataSource().addSource(animatable, instanceId);
+        if (entity != null)
+            MolangParser.getCurrentDataSource().addSource(entity);
+
         Minecraft mc = Minecraft.getInstance();
         AnimationData manager = animatable.getFactory().getOrCreateAnimationData(instanceId);
         AnimationEvent<T> predicate;
@@ -76,9 +76,6 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
         predicate = animationEvent == null ? new AnimationEvent<>(animatable, 0, 0, (float) (manager.getTick() - this.lastGameTickTime), false, Collections.emptyList()) : animationEvent;
         predicate.animationTick = this.seekTime;
 
-        getAnimationProcessor().preAnimationSetup(predicate.getAnimatable(), this.seekTime, instanceId);
-        if (entity != null) setMolangQueries(entity, seekTime, instanceId);
-
         if (!getAnimationProcessor().getModelRendererList().isEmpty())
             getAnimationProcessor().tickAnimation(animatable, instanceId, this.seekTime, predicate,
                     MolangParser.getInstance(), this.shouldCrashOnMissing);
@@ -98,14 +95,14 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
 
     @Override
     public SingleAnimation getAnimation(String name, Animatable animatable) {
-        Animation animation = BedrockResourceManager.getInstance().getAnimations().get(this.getAnimationFileLocation((T) animatable));
+        AnimationFile animationFile = BedrockResourceManager.getInstance().getAnimations().get(this.getAnimationFileLocation((T) animatable));
 
-        if (animation == null) {
+        if (animationFile == null) {
             throw new EyelibLoadingException(this.getAnimationFileLocation((T) animatable),
                     "Could not find animation file. Please double check name.");
         }
 
-        return animation.getAnimations().get(name);
+        return animationFile.getAnimations().get(name);
     }
 
     @Override
@@ -127,46 +124,6 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
         }
 
         return model;
-    }
-
-    @Override
-    public void setMolangQueries(Object animatable, double seekTime, int instanceId) {
-        MolangParser parser = MolangParser.getInstance();
-        Minecraft mc = Minecraft.getInstance();
-
-        parser.setValue("query.actor_count", mc.level::getEntityCount);
-        parser.setValue("query.time_of_day", () -> MolangValue.normalizeTime(mc.level.getDayTime()));
-        parser.setValue("query.moon_phase", mc.level::getMoonPhase);
-
-        if (animatable instanceof Entity entity) {
-            parser.setValue("query.distance_from_camera", () -> mc.gameRenderer.getMainCamera().getPosition().distanceTo(entity.position()));
-            parser.setValue("query.is_on_ground", () -> MolangValue.booleanToFloat(entity.isOnGround()));
-            parser.setValue("query.is_in_water", () -> MolangValue.booleanToFloat(entity.isInWater()));
-            parser.setValue("query.is_in_water_or_rain", () -> MolangValue.booleanToFloat(entity.isInWaterRainOrBubble()));
-
-            if (entity instanceof LivingEntity livingEntity) {
-                parser.setValue("query.health", livingEntity::getHealth);
-                parser.setValue("query.max_health", livingEntity::getMaxHealth);
-                parser.setValue("query.is_on_fire", () -> MolangValue.booleanToFloat(livingEntity.isOnFire()));
-                parser.setValue("query.ground_speed", () -> {
-                    Vec3 velocity = livingEntity.getDeltaMovement();
-
-                    return Mth.sqrt((float) ((velocity.x * velocity.x) + (velocity.z * velocity.z)));
-                });
-                parser.setValue("query.yaw_speed", () -> livingEntity.getViewYRot((float) seekTime - livingEntity.getViewYRot((float) seekTime - 0.1f)));
-                setHandItem(parser, livingEntity);
-            }
-        }
-
-        MolangDataSource source = MolangParser.getCurrentDataSource();
-        // TODO 分离数据后取消 clear，转为使用每个个体自己的 scope
-        source.clear();
-        source.addSource(animatable, instanceId);
-    }
-
-    private void setHandItem(MolangParser parser, LivingEntity entity) {
-        parser.setValue("query.is_item_equipped_mh", () -> entity.getMainHandItem().isEmpty() ? 0 : 1);
-        parser.setValue("query.is_item_equipped_fh", () -> entity.getOffhandItem().isEmpty() ? 0 : 1);
     }
 
     @Override

@@ -6,12 +6,12 @@ import io.github.tt432.eyelib.processor.anno.MolangFunctionHolder;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
 
 @MolangFunctionHolder("math.acos")
-public class ACos extends MolangFunction {
-    public ACos(MolangValue[] values, String name) {
+public class ACosDegrees extends MolangFunction {
+    public ACosDegrees(MolangValue[] values, String name) {
         super(values, name, 1);
     }
 
     public double evaluate(MolangVariableScope scope) {
-        return Math.acos(getArg(0, scope));
+        return Math.toDegrees(Math.acos(getArg(0, scope)));
     }
 }

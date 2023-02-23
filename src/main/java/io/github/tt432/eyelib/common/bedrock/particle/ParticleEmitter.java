@@ -16,8 +16,8 @@ import io.github.tt432.eyelib.common.bedrock.particle.component.emitter.EmitterL
 import io.github.tt432.eyelib.common.bedrock.particle.component.emitter.lifetime.EmitterLifetimeComponent;
 import io.github.tt432.eyelib.common.bedrock.particle.component.emitter.rate.EmitterRateComponent;
 import io.github.tt432.eyelib.common.bedrock.particle.component.emitter.shape.EmitterShapeComponent;
-import io.github.tt432.eyelib.common.bedrock.particle.pojo.Particle;
 import io.github.tt432.eyelib.common.bedrock.particle.pojo.ParticleDescription;
+import io.github.tt432.eyelib.common.bedrock.particle.pojo.ParticleFile;
 import io.github.tt432.eyelib.molang.MolangParser;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.molang.ScopeStack;
@@ -27,7 +27,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -223,8 +222,7 @@ public class ParticleEmitter {
         }
     }
 
-    public void render(PoseStack poseStack, BufferBuilder bufferbuilder, Camera camera, float partialTicks,
-                       @Nullable Frustum clippingHelper) {
+    public void render(PoseStack poseStack, BufferBuilder bufferbuilder, Camera camera, float partialTicks) {
         try (ScopeStack push = MolangParser.scopeStack.push(scope)) {
             this.partialTicks = partialTicks;
             scope.getDataSource().addSource(this, emitterId);
@@ -313,21 +311,21 @@ public class ParticleEmitter {
         }
     }
 
-    public static ParticleEmitter from(Particle particle, Level level, Vec3 worldPos) {
-        var components = particle.getEffect().getComponents();
+    public static ParticleEmitter from(ParticleFile particleFile, Level level, Vec3 worldPos) {
+        var components = particleFile.getEffect().getComponents();
 
         return ParticleEmitter.builder()
                 .level(level)
                 .worldPos(worldPos)
-                .scope(particle.getScope().copy())
-                .description(particle.getEffect().getDescription())
+                .scope(particleFile.getScope().copy())
+                .description(particleFile.getEffect().getDescription())
                 .initialization(components.getByClass(EmitterInitialization.class))
                 .lifetimeEvents(components.getByClass(EmitterLifetimeEvents.class))
                 .localSpace(components.getByClass(EmitterLocalSpace.class))
                 .lifeTimeComponent(components.getByClass(EmitterLifetimeComponent.class))
                 .rateComponent(components.getByClass(EmitterRateComponent.class))
                 .shapeComponent(components.getByClass(EmitterShapeComponent.class))
-                .constructor(ParticleConstructor.from(particle))
+                .constructor(ParticleConstructor.from(particleFile))
                 .build();
     }
 }

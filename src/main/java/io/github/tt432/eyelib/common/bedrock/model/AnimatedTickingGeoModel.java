@@ -41,7 +41,7 @@ public abstract class AnimatedTickingGeoModel<T extends Animatable & Tickable> e
 						0, false, Collections.emptyList()));
 
 		predicate.animationTick = seekTime;
-		getAnimationProcessor().preAnimationSetup(predicate.getAnimatable(), seekTime, instanceId);
+
 		if (!this.getAnimationProcessor().getModelRendererList().isEmpty()) {
 			getAnimationProcessor().tickAnimation(animatable, instanceId, seekTime, predicate,
 					MolangParser.getInstance(), shouldCrashOnMissing);

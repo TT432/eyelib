@@ -8,23 +8,31 @@ import io.github.tt432.eyelib.common.bedrock.FormatVersion;
 import lombok.Data;
 
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.Map;
+
+import static io.github.tt432.eyelib.common.bedrock.FormatVersion.VERSION_1_8_0;
 
 /**
  * @author DustW
  */
 @Data
-@JsonAdapter(Animation.Serializer.class)
-public class Animation {
+@JsonAdapter(AnimationFile.Serializer.class)
+public class AnimationFile {
     private FormatVersion formatVersion;
     private Map<String, SingleAnimation> animations;
 
-    protected static class Serializer implements JsonDeserializer<Animation> {
+    public AnimationFile() {
+        formatVersion = VERSION_1_8_0;
+        animations = new HashMap<>();
+    }
+
+    protected static class Serializer implements JsonDeserializer<AnimationFile> {
         @Override
-        public Animation deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        public AnimationFile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             JsonObject object = json.getAsJsonObject();
 
-            Animation result = new Animation();
+            AnimationFile result = new AnimationFile();
             result.formatVersion = context.deserialize(object.get("format_version"), FormatVersion.class);
             JsonElement animationsJson = object.get("animations");
             if (!animationsJson.isJsonNull())

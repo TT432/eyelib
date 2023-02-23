@@ -65,7 +65,7 @@ public class MolangParser {
         register(new MolangVariable("query.is_on_fire", 0));
         register(new MolangVariable("query.ground_speed", 0));
 
-        MolangVariableControl.living(globalScope);
+        MolangVariableControl.registerAll(globalScope);
     }
 
     public void register(MolangVariable variable) {

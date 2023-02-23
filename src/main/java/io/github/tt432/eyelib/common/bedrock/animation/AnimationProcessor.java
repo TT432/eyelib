@@ -47,6 +47,12 @@ public class AnimationProcessor<T extends Animatable> {
 
         Map<String, Pair<Bone, BoneSnapshot>> boneSnapshots = manager.getBoneSnapshotCollection();
 
+        boneSnapshots.values().forEach(p -> {
+            Bone bone = p.getLeft();
+            BoneSnapshot initialSnapshot = bone.getInitialSnapshot();
+            initialSnapshot.apply(bone);
+        });
+
         for (AnimationController<T> controller : manager.getAnimationControllers().values()) {
             if (reloadAnimations) {
                 controller.markNeedsReload();
@@ -65,9 +71,6 @@ public class AnimationProcessor<T extends Animatable> {
             for (BoneAnimationQueue boneAnimation : controller.getBoneAnimationQueues().values()) {
                 Bone bone = boneAnimation.bone();
                 BoneSnapshot snapshot = boneSnapshots.get(bone.getName()).getRight();
-                BoneSnapshot initialSnapshot = bone.getInitialSnapshot();
-
-                initialSnapshot.apply(bone);
 
                 var rotatePoint = boneAnimation.rotate().poll();
 
@@ -152,9 +155,5 @@ public class AnimationProcessor<T extends Animatable> {
 
     public List<Bone> getModelRendererList() {
         return modelRendererList;
-    }
-
-    public void preAnimationSetup(Animatable animatable, double seekTime, int instanceId) {
-        this.animatedModel.setMolangQueries(animatable, seekTime, instanceId);
     }
 }

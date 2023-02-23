@@ -20,34 +20,34 @@ public class GeoCube {
 		}
 	}
 
-	public static GeoCube createFromPojoCube(Cube cubeIn, ModelProperties properties, Double boneInflate,
+	public static GeoCube createFromPojoCube(CubeFile cubeFileIn, ModelProperties properties, Double boneInflate,
                                              Boolean mirror) {
-		GeoCube cube = new GeoCube(cubeIn.getSize());
+		GeoCube cube = new GeoCube(cubeFileIn.getSize());
 
-		UvUnion uvUnion = cubeIn.getUv();
+		UvUnion uvUnion = cubeFileIn.getUv();
 		UvFaces faces = uvUnion.faceUV;
 		boolean isBoxUV = uvUnion.isBoxUV;
-		cube.mirror = cubeIn.getMirror();
-		cube.inflate = cubeIn.getInflate() == null ? (boneInflate == null ? 0 : boneInflate) : cubeIn.getInflate() / 16;
+		cube.mirror = cubeFileIn.getMirror();
+		cube.inflate = cubeFileIn.getInflate() == null ? (boneInflate == null ? 0 : boneInflate) : cubeFileIn.getInflate() / 16;
 
 		float textureHeight = properties.getTextureHeight();
 		float textureWidth = properties.getTextureWidth();
 
-		Vec3 size = VectorUtils.fromArray(cubeIn.getSize());
-		Vec3 origin = VectorUtils.fromArray(cubeIn.getOrigin());
+		Vec3 size = VectorUtils.fromArray(cubeFileIn.getSize());
+		Vec3 origin = VectorUtils.fromArray(cubeFileIn.getOrigin());
 		origin = new Vec3(-(origin.x + size.x) / 16, origin.y / 16, origin.z / 16);
 
 		size = size.multiply(0.0625f, 0.0625, 0.0625f);
 
 
-		Vector3f rotation = new Vector3f(VectorUtils.fromArray(cubeIn.getRotation()));
+		Vector3f rotation = new Vector3f(VectorUtils.fromArray(cubeFileIn.getRotation()));
 		rotation.mul(-1, -1, 1);
 
 		rotation.setX((float) Math.toRadians(rotation.x()));
 		rotation.setY((float) Math.toRadians(rotation.y()));
 		rotation.setZ((float) Math.toRadians(rotation.z()));
 
-		Vector3f pivot = new Vector3f(VectorUtils.fromArray(cubeIn.getPivot()));
+		Vector3f pivot = new Vector3f(VectorUtils.fromArray(cubeFileIn.getPivot()));
 		pivot.mul(-1, 1, 1);
 
 		cube.pivot = pivot;
@@ -118,88 +118,88 @@ public class GeoCube {
 			// counter-clockwise
 			quadWest = west == null ? null
 					: new GeoQuad(new GeoVertex[] { P4, P3, P1, P2 }, west.getUv(), west.getUvSize(), textureWidth,
-							textureHeight, cubeIn.getMirror(), Direction.WEST);
+							textureHeight, cubeFileIn.getMirror(), Direction.WEST);
 			quadEast = east == null ? null
 					: new GeoQuad(new GeoVertex[] { P7, P8, P6, P5 }, east.getUv(), east.getUvSize(), textureWidth,
-							textureHeight, cubeIn.getMirror(), Direction.EAST);
+							textureHeight, cubeFileIn.getMirror(), Direction.EAST);
 			quadNorth = north == null ? null
 					: new GeoQuad(new GeoVertex[] { P3, P7, P5, P1 }, north.getUv(), north.getUvSize(), textureWidth,
-							textureHeight, cubeIn.getMirror(), Direction.NORTH);
+							textureHeight, cubeFileIn.getMirror(), Direction.NORTH);
 			quadSouth = south == null ? null
 					: new GeoQuad(new GeoVertex[] { P8, P4, P2, P6 }, south.getUv(), south.getUvSize(), textureWidth,
-							textureHeight, cubeIn.getMirror(), Direction.SOUTH);
+							textureHeight, cubeFileIn.getMirror(), Direction.SOUTH);
 			quadUp = up == null ? null
 					: new GeoQuad(new GeoVertex[] { P4, P8, P7, P3 }, up.getUv(), up.getUvSize(), textureWidth,
-							textureHeight, cubeIn.getMirror(), Direction.UP);
+							textureHeight, cubeFileIn.getMirror(), Direction.UP);
 			quadDown = down == null ? null
 					: new GeoQuad(new GeoVertex[] { P1, P5, P6, P2 }, down.getUv(), down.getUvSize(), textureWidth,
-							textureHeight, cubeIn.getMirror(), Direction.DOWN);
+							textureHeight, cubeFileIn.getMirror(), Direction.DOWN);
 
-			if (cubeIn.getMirror() == Boolean.TRUE || mirror == Boolean.TRUE) {
+			if (cubeFileIn.getMirror() == Boolean.TRUE || mirror == Boolean.TRUE) {
 				quadWest = west == null ? null
 						: new GeoQuad(new GeoVertex[] { P7, P8, P6, P5 }, west.getUv(), west.getUvSize(), textureWidth,
-								textureHeight, cubeIn.getMirror(), Direction.WEST);
+								textureHeight, cubeFileIn.getMirror(), Direction.WEST);
 				quadEast = east == null ? null
 						: new GeoQuad(new GeoVertex[] { P4, P3, P1, P2 }, east.getUv(), east.getUvSize(), textureWidth,
-								textureHeight, cubeIn.getMirror(), Direction.EAST);
+								textureHeight, cubeFileIn.getMirror(), Direction.EAST);
 				quadNorth = north == null ? null
 						: new GeoQuad(new GeoVertex[] { P3, P7, P5, P1 }, north.getUv(), north.getUvSize(), textureWidth,
-								textureHeight, cubeIn.getMirror(), Direction.NORTH);
+								textureHeight, cubeFileIn.getMirror(), Direction.NORTH);
 				quadSouth = south == null ? null
 						: new GeoQuad(new GeoVertex[] { P8, P4, P2, P6 }, south.getUv(), south.getUvSize(), textureWidth,
-								textureHeight, cubeIn.getMirror(), Direction.SOUTH);
+								textureHeight, cubeFileIn.getMirror(), Direction.SOUTH);
 				quadUp = up == null ? null
 						: new GeoQuad(new GeoVertex[] { P1, P5, P6, P2 }, up.getUv(), up.getUvSize(), textureWidth,
-								textureHeight, cubeIn.getMirror(), Direction.UP);
+								textureHeight, cubeFileIn.getMirror(), Direction.UP);
 				quadDown = down == null ? null
 						: new GeoQuad(new GeoVertex[] { P4, P8, P7, P3 }, down.getUv(), down.getUvSize(), textureWidth,
-								textureHeight, cubeIn.getMirror(), Direction.DOWN);
+								textureHeight, cubeFileIn.getMirror(), Direction.DOWN);
 			}
 		} else {
-			double[] UV = cubeIn.getUv().boxUVCoords;
-			Vec3 UVSize = VectorUtils.fromArray(cubeIn.getSize());
+			double[] UV = cubeFileIn.getUv().boxUVCoords;
+			Vec3 UVSize = VectorUtils.fromArray(cubeFileIn.getSize());
 			UVSize = new Vec3(Math.floor(UVSize.x), Math.floor(UVSize.y), Math.floor(UVSize.z));
 
 			quadWest = new GeoQuad(new GeoVertex[] { P4, P3, P1, P2 },
 					new double[] { UV[0] + UVSize.z + UVSize.x, UV[1] + UVSize.z }, new double[] { UVSize.z, UVSize.y },
-					textureWidth, textureHeight, cubeIn.getMirror(), Direction.WEST);
+					textureWidth, textureHeight, cubeFileIn.getMirror(), Direction.WEST);
 			quadEast = new GeoQuad(new GeoVertex[] { P7, P8, P6, P5 }, new double[] { UV[0], UV[1] + UVSize.z },
-					new double[] { UVSize.z, UVSize.y }, textureWidth, textureHeight, cubeIn.getMirror(),
+					new double[] { UVSize.z, UVSize.y }, textureWidth, textureHeight, cubeFileIn.getMirror(),
 					Direction.EAST);
 			quadNorth = new GeoQuad(new GeoVertex[] { P3, P7, P5, P1 },
 					new double[] { UV[0] + UVSize.z, UV[1] + UVSize.z }, new double[] { UVSize.x, UVSize.y },
-					textureWidth, textureHeight, cubeIn.getMirror(), Direction.NORTH);
+					textureWidth, textureHeight, cubeFileIn.getMirror(), Direction.NORTH);
 			quadSouth = new GeoQuad(new GeoVertex[] { P8, P4, P2, P6 },
 					new double[] { UV[0] + UVSize.z + UVSize.x + UVSize.z, UV[1] + UVSize.z },
-					new double[] { UVSize.x, UVSize.y }, textureWidth, textureHeight, cubeIn.getMirror(),
+					new double[] { UVSize.x, UVSize.y }, textureWidth, textureHeight, cubeFileIn.getMirror(),
 					Direction.SOUTH);
 			quadUp = new GeoQuad(new GeoVertex[] { P4, P8, P7, P3 }, new double[] { UV[0] + UVSize.z, UV[1] },
-					new double[] { UVSize.x, UVSize.z }, textureWidth, textureHeight, cubeIn.getMirror(), Direction.UP);
+					new double[] { UVSize.x, UVSize.z }, textureWidth, textureHeight, cubeFileIn.getMirror(), Direction.UP);
 			quadDown = new GeoQuad(new GeoVertex[] { P1, P5, P6, P2 },
 					new double[] { UV[0] + UVSize.z + UVSize.x, UV[1] + UVSize.z },
-					new double[] { UVSize.x, -UVSize.z }, textureWidth, textureHeight, cubeIn.getMirror(),
+					new double[] { UVSize.x, -UVSize.z }, textureWidth, textureHeight, cubeFileIn.getMirror(),
 					Direction.DOWN);
 
-			if (cubeIn.getMirror() == Boolean.TRUE || mirror == Boolean.TRUE) {
+			if (cubeFileIn.getMirror() == Boolean.TRUE || mirror == Boolean.TRUE) {
 				quadWest = new GeoQuad(new GeoVertex[] { P7, P8, P6, P5 },
 						new double[] { UV[0] + UVSize.z + UVSize.x, UV[1] + UVSize.z },
-						new double[] { UVSize.z, UVSize.y }, textureWidth, textureHeight, cubeIn.getMirror(),
+						new double[] { UVSize.z, UVSize.y }, textureWidth, textureHeight, cubeFileIn.getMirror(),
 						Direction.WEST);
 				quadEast = new GeoQuad(new GeoVertex[] { P4, P3, P1, P2 }, new double[] { UV[0], UV[1] + UVSize.z },
-						new double[] { UVSize.z, UVSize.y }, textureWidth, textureHeight, cubeIn.getMirror(),
+						new double[] { UVSize.z, UVSize.y }, textureWidth, textureHeight, cubeFileIn.getMirror(),
 						Direction.EAST);
 				quadNorth = new GeoQuad(new GeoVertex[] { P3, P7, P5, P1 },
 						new double[] { UV[0] + UVSize.z, UV[1] + UVSize.z }, new double[] { UVSize.x, UVSize.y },
-						textureWidth, textureHeight, cubeIn.getMirror(), Direction.NORTH);
+						textureWidth, textureHeight, cubeFileIn.getMirror(), Direction.NORTH);
 				quadSouth = new GeoQuad(new GeoVertex[] { P8, P4, P2, P6 },
 						new double[] { UV[0] + UVSize.z + UVSize.x + UVSize.z, UV[1] + UVSize.z },
-						new double[] { UVSize.x, UVSize.y }, textureWidth, textureHeight, cubeIn.getMirror(),
+						new double[] { UVSize.x, UVSize.y }, textureWidth, textureHeight, cubeFileIn.getMirror(),
 						Direction.SOUTH);
 				quadUp = new GeoQuad(new GeoVertex[] { P4, P8, P7, P3 }, new double[] { UV[0] + UVSize.z, UV[1] },
-						new double[] { UVSize.x, UVSize.z }, textureWidth, textureHeight, cubeIn.getMirror(), Direction.UP);
+						new double[] { UVSize.x, UVSize.z }, textureWidth, textureHeight, cubeFileIn.getMirror(), Direction.UP);
 				quadDown = new GeoQuad(new GeoVertex[] { P1, P5, P6, P2 },
 						new double[] { UV[0] + UVSize.z + UVSize.x, UV[1] + UVSize.z },
-						new double[] { UVSize.x, -UVSize.z }, textureWidth, textureHeight, cubeIn.getMirror(),
+						new double[] { UVSize.x, -UVSize.z }, textureWidth, textureHeight, cubeFileIn.getMirror(),
 						Direction.DOWN);
 			}
 		}

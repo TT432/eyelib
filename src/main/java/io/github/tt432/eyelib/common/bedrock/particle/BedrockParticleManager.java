@@ -12,14 +12,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLevelLastEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -66,11 +64,10 @@ public class BedrockParticleManager {
     public static void onEvent(RenderLevelLastEvent event) {
         Minecraft mc = Minecraft.getInstance();
         GameRenderer gameRenderer = mc.gameRenderer;
-        render(event.getPoseStack(), gameRenderer.lightTexture(), gameRenderer.getMainCamera(),
-                event.getPartialTick(), mc.levelRenderer.capturedFrustum);
+        render(event.getPoseStack(), gameRenderer.lightTexture(), gameRenderer.getMainCamera(), event.getPartialTick());
     }
 
-    private static void render(PoseStack poseStack, LightTexture pLightTexture, Camera pActiveRenderInfo, float pPartialTicks, @Nullable Frustum clippingHelper) {
+    private static void render(PoseStack poseStack, LightTexture pLightTexture, Camera pActiveRenderInfo, float pPartialTicks) {
         pLightTexture.turnOnLightLayer();
         RenderSystem.enableDepthTest();
         RenderSystem.activeTexture(org.lwjgl.opengl.GL13.GL_TEXTURE2);
@@ -93,7 +90,7 @@ public class BedrockParticleManager {
             renderType.begin(bufferbuilder, Minecraft.getInstance().getTextureManager());
 
             for (ParticleEmitter emitter : emitterList) {
-                emitter.render(posestack, bufferbuilder, pActiveRenderInfo, pPartialTicks, clippingHelper);
+                emitter.render(posestack, bufferbuilder, pActiveRenderInfo, pPartialTicks);
             }
 
             renderType.end(tesselator);

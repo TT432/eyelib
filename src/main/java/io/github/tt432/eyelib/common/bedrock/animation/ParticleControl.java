@@ -6,7 +6,7 @@ import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.Timestamp;
 import io.github.tt432.eyelib.common.bedrock.particle.BedrockParticleManager;
 import io.github.tt432.eyelib.common.bedrock.particle.ParticleEmitter;
-import io.github.tt432.eyelib.common.bedrock.particle.pojo.Particle;
+import io.github.tt432.eyelib.common.bedrock.particle.pojo.ParticleFile;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
@@ -43,12 +43,12 @@ public class ParticleControl {
         if (curr != null && tick >= curr.getKey().getTick()) {
             ParticleEffect particleEffect = curr.getValue();
 
-            Particle particle = BedrockResourceManager.getInstance().getParticle(new ResourceLocation(particleEffect.getId()));
+            ParticleFile particleFile = BedrockResourceManager.getInstance().getParticle(new ResourceLocation(particleEffect.getId()));
 
-            if (particle == null) {
+            if (particleFile == null) {
                 log.error("can't found particle : " + particleEffect.getId());
             } else {
-                ParticleEmitter emitter = ParticleEmitter.from(particle, Minecraft.getInstance().level, entity.position());
+                ParticleEmitter emitter = ParticleEmitter.from(particleFile, Minecraft.getInstance().level, entity.position());
 
                 emitter.setLocator(particleEffect.getLocator());
                 emitter.setBindingEntity(entity);

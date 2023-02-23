@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.common.bedrock.particle;
 
 import io.github.tt432.eyelib.common.bedrock.particle.component.particle.*;
 import io.github.tt432.eyelib.common.bedrock.particle.component.particle.motion.ParticleMotionComponent;
-import io.github.tt432.eyelib.common.bedrock.particle.pojo.Particle;
+import io.github.tt432.eyelib.common.bedrock.particle.pojo.ParticleFile;
 import lombok.Builder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -41,8 +41,8 @@ public class ParticleConstructor {
     @Nullable
     ParticleMotionCollision collision;
 
-    public static ParticleConstructor from(Particle particle) {
-        var components = particle.getEffect().getComponents();
+    public static ParticleConstructor from(ParticleFile particleFile) {
+        var components = particleFile.getEffect().getComponents();
 
         return ParticleConstructor.builder()
                 .lifetime(components.getByClass(ParticleLifetimeExpression.class))

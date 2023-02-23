@@ -6,13 +6,13 @@ import lombok.Data;
 import java.util.Map;
 
 @Data
-public class Bone {
+public class BoneFile {
 	@SerializedName("bind_pose_rotation")
 	private double[] bindPoseRotation;
 	/**
 	 * This is the list of cubes associated with this bone.
 	 */
-	private Cube[] cubes;
+	private CubeFile[] cubes;
 	private Boolean debug;
 	/**
 	 * Grow this box by this additive amount in all directions (in model space units).
