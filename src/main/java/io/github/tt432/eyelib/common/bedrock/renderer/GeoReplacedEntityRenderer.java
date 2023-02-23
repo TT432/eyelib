@@ -195,18 +195,20 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
 				(limbSwingAmount <= -getSwingMotionAnimThreshold() || limbSwingAmount <= getSwingMotionAnimThreshold()), Collections.singletonList(entityModelData));
 
 		this.modelProvider.setCustomAnimations(animatable, entity, getInstanceId(entity), predicate);
-		
+
+		ResourceLocation textureLocation = tryGetTexture(animatable);
+
 		poseStack.translate(0, 0.01f, 0);
-		RenderSystem.setShaderTexture(0, getTextureLocation(entity));
+		RenderSystem.setShaderTexture(0, textureLocation);
 
 		Color renderColor = getRenderColor(animatable, partialTick, poseStack, bufferSource, null, packedLight);
 		RenderType renderType = getRenderType(entity, partialTick, poseStack, bufferSource, null, packedLight,
-				getTextureLocation(entity));
+				textureLocation);
 
 		if (!entity.isInvisibleTo(Minecraft.getInstance().player)) {
 			VertexConsumer glintBuffer = bufferSource.getBuffer(RenderType.entityGlintDirect());
 			VertexConsumer translucentBuffer = bufferSource
-					.getBuffer(RenderType.entityTranslucentCull(getTextureLocation(entity)));
+					.getBuffer(RenderType.entityTranslucentCull(textureLocation));
 			render(model, entity, partialTick, renderType, poseStack, bufferSource,
 					glintBuffer != translucentBuffer ? VertexMultiConsumer.create(glintBuffer, translucentBuffer)
 							: null,

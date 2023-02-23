@@ -44,16 +44,35 @@ public class AnimationTextureLoader extends TextureAtlasHolder {
     }
 
     public TextureAtlasSprite get(ResourceLocation id) {
-        TextureAtlasSprite sprite = getSprite(id);
+        ResourceLocation fixName = fixName(id);
 
-        if (!isMissing(sprite))
-            return sprite;
+        if (fixName != null)
+            return getSprite(fixName);
 
-        return getSprite(converter.idToFile(id));
+        return getSprite(id);
+    }
+
+    ResourceLocation fixName(ResourceLocation id) {
+        if (!isMissing(getSprite(id))) {
+            return id;
+
+        } else {
+            String path = id.getPath();
+            ResourceLocation sub = new ResourceLocation(id.getNamespace(),
+                    path.substring(0, path.length() - /* .png */ 4));
+
+            if (!isMissing(getSprite(sub))) {
+                return sub;
+            } else if (!isMissing(getSprite(converter.idToFile(id)))) {
+                return converter.idToFile(id);
+            }
+        }
+
+        return null;
     }
 
     public boolean has(ResourceLocation id) {
-        return !isMissing(getSprite(id)) || !isMissing(getSprite(converter.idToFile(id)));
+        return fixName(id) != null;
     }
 
     public boolean isMissing(TextureAtlasSprite sprite) {
