@@ -18,14 +18,13 @@ import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
 import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationPointQueue;
 import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationState;
 import io.github.tt432.eyelib.common.bedrock.animation.util.BoneAnimationQueue;
+import io.github.tt432.eyelib.molang.MolangParser;
 import io.github.tt432.eyelib.util.BoneSnapshot;
 import io.github.tt432.eyelib.util.math.easing.EasingType;
-import io.github.tt432.eyelib.molang.MolangParser;
 import it.unimi.dsi.fastutil.doubles.Double2DoubleFunction;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.world.entity.Entity;
-import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -273,10 +272,8 @@ public class AnimationController<T extends Animatable> {
      * @param tick                   The current tick + partial tick
      * @param event                  The animation test event
      * @param modelRendererList      The list of all AnimatedModelRender's
-     * @param boneSnapshotCollection The bone snapshot collection
      */
-    public void process(final double tick, AnimationEvent<T> event, List<Bone> modelRendererList,
-                        Map<String, Pair<Bone, BoneSnapshot>> boneSnapshotCollection, MolangParser parser,
+    public void process(final double tick, AnimationEvent<T> event, List<Bone> modelRendererList, MolangParser parser,
                         boolean crashWhenCantFindBone) {
         SoundPlayer player = getSoundPlayer(event);
 
@@ -342,8 +339,6 @@ public class AnimationController<T extends Animatable> {
             if (adjustedTick == 0 || this.isJustStarting) {
                 this.justStartedTransition = false;
                 nextAnimation(player);
-
-                saveSnapshotsForAnimation(this.currentAnimation, boneSnapshotCollection);
             }
 
             if (this.currentAnimation != null) {
@@ -377,25 +372,6 @@ public class AnimationController<T extends Animatable> {
 
     protected PlayState testAnimationPredicate(AnimationEvent<T> event) {
         return this.animationPredicate.test(event);
-    }
-
-    // At the beginning of a new transition, save a snapshot of the model's
-    // rotation, position, and scale values as the initial value to lerp from
-    private void saveSnapshotsForAnimation(SingleAnimation animation,
-                                           Map<String, Pair<Bone, BoneSnapshot>> boneSnapshotCollection) {
-        for (Pair<Bone, BoneSnapshot> snapshot : boneSnapshotCollection.values()) {
-            if (animation != null && animation.getBones() != null) {
-                for (var entry : animation.getBones().entrySet()) {
-                    String boneName = entry.getKey();
-
-                    if (boneName.equals(snapshot.getLeft().getName())) {
-                        this.boneSnapshots.put(boneName, new BoneSnapshot(snapshot.getRight()));
-
-                        break;
-                    }
-                }
-            }
-        }
     }
 
     private SoundPlayer getSoundPlayer(AnimationEvent<T> event) {

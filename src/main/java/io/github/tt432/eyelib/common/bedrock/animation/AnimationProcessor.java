@@ -1,20 +1,18 @@
 package io.github.tt432.eyelib.common.bedrock.animation;
 
-import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
+import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.model.Bone;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
 import io.github.tt432.eyelib.common.bedrock.animation.util.BoneAnimationQueue;
+import io.github.tt432.eyelib.molang.MolangParser;
 import io.github.tt432.eyelib.util.BoneSnapshot;
 import io.github.tt432.eyelib.util.math.MathE;
-import io.github.tt432.eyelib.molang.MolangParser;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
-import java.util.Map;
 
 public class AnimationProcessor<T extends Animatable> {
     public boolean reloadAnimations = false;
@@ -42,13 +40,8 @@ public class AnimationProcessor<T extends Animatable> {
         // EntityAnimationManager), which allows for multiple independent animations
         AnimationData manager = entity.getFactory().getOrCreateAnimationData(uniqueID);
 
-        // Store the current value of each bone rotation/position/scale
-        updateBoneSnapshots(manager.getBoneSnapshotCollection());
-
-        Map<String, Pair<Bone, BoneSnapshot>> boneSnapshots = manager.getBoneSnapshotCollection();
-
-        boneSnapshots.values().forEach(p -> {
-            Bone bone = p.getLeft();
+        modelRendererList.forEach(bone -> {
+            bone.saveInitialSnapshot();
             BoneSnapshot initialSnapshot = bone.getInitialSnapshot();
             initialSnapshot.apply(bone);
         });
@@ -65,13 +58,11 @@ public class AnimationProcessor<T extends Animatable> {
             event.setController(controller);
 
             // Process animations and add new values to the point queues
-            controller.process(seekTime, event, modelRendererList, boneSnapshots, parser, crashWhenCantFindBone);
+            controller.process(seekTime, event, modelRendererList, parser, crashWhenCantFindBone);
 
             // Loop through every single bone and lerp each property
             for (BoneAnimationQueue boneAnimation : controller.getBoneAnimationQueues().values()) {
                 Bone bone = boneAnimation.bone();
-                BoneSnapshot snapshot = boneSnapshots.get(bone.getName()).getRight();
-
                 var rotatePoint = boneAnimation.rotate().poll();
 
                 if (rotatePoint != null && rotatePoint.getValue() != null) {
@@ -80,9 +71,6 @@ public class AnimationProcessor<T extends Animatable> {
                             (float) (bone.getRotationY() - Math.toRadians(rotatePoint.getValue().y)),
                             (float) (bone.getRotationZ() + Math.toRadians(rotatePoint.getValue().z))
                     );
-                    snapshot.rotationValueX = bone.getRotationX();
-                    snapshot.rotationValueY = bone.getRotationY();
-                    snapshot.rotationValueZ = bone.getRotationZ();
                 }
 
                 var positionPoint = boneAnimation.position().poll();
@@ -92,9 +80,6 @@ public class AnimationProcessor<T extends Animatable> {
                             (float) (bone.getPositionY() + positionPoint.getValue().y),
                             (float) (bone.getPositionZ() + positionPoint.getValue().z)
                     );
-                    snapshot.positionOffsetX = bone.getPositionX();
-                    snapshot.positionOffsetY = bone.getPositionY();
-                    snapshot.positionOffsetZ = bone.getPositionZ();
                 }
 
                 var scalePoint = boneAnimation.scale().poll();
@@ -104,23 +89,12 @@ public class AnimationProcessor<T extends Animatable> {
                             (float) (bone.getScaleY() * MathE.notZero(scalePoint.getValue().y, 0.00001)),
                             (float) (bone.getScaleZ() * MathE.notZero(scalePoint.getValue().z, 0.00001))
                     );
-                    snapshot.scaleValueX = bone.getScaleX();
-                    snapshot.scaleValueY = bone.getScaleY();
-                    snapshot.scaleValueZ = bone.getScaleZ();
                 }
             }
         }
 
         this.reloadAnimations = false;
         manager.setFirstTick(false);
-    }
-
-    private void updateBoneSnapshots(Map<String, Pair<Bone, BoneSnapshot>> boneSnapshotCollection) {
-        for (Bone bone : modelRendererList) {
-            if (!boneSnapshotCollection.containsKey(bone.getName())) {
-                boneSnapshotCollection.put(bone.getName(), Pair.of(bone, new BoneSnapshot(bone.getInitialSnapshot())));
-            }
-        }
     }
 
     /**
@@ -145,7 +119,6 @@ public class AnimationProcessor<T extends Animatable> {
      * @param modelRenderer The model renderer
      */
     public void registerModelRenderer(Bone modelRenderer) {
-        modelRenderer.saveInitialSnapshot();
         modelRendererList.add(modelRenderer);
     }
 

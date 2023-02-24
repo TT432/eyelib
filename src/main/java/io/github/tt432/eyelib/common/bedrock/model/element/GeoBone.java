@@ -101,7 +101,7 @@ public class GeoBone implements Bone {
 	@Override
 	public void saveInitialSnapshot() {
 		if (this.initialSnapshot == null) {
-			this.initialSnapshot = new BoneSnapshot(this, true);
+			this.initialSnapshot = new BoneSnapshot(this);
 		}
 	}
 
