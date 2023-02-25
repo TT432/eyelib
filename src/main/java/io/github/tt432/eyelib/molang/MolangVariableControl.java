@@ -48,7 +48,7 @@ public class MolangVariableControl {
         scope.setVariable("query.is_on_fire", s -> livingBool(s, LivingEntity::isOnFire));
         scope.setVariable("query.ground_speed", s -> livingDouble(s, livingEntity -> {
             Vec3 velocity = livingEntity.getDeltaMovement();
-            return Mth.sqrt((float) ((velocity.x * velocity.x) + (velocity.z * velocity.z)));
+            return Mth.sqrt((float) ((velocity.x * velocity.x) + (velocity.z * velocity.z))) * 20;
         }));
     }
 

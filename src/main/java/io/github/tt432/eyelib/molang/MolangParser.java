@@ -52,18 +52,6 @@ public class MolangParser {
     private MolangParser() {
         register(new MolangVariable("PI", Math.PI));
         register(new MolangVariable("E", Math.E));
-        register(new MolangVariable("query.anim_time", 0));
-        register(new MolangVariable("query.actor_count", 0));
-        register(new MolangVariable("query.health", 0));
-        register(new MolangVariable("query.max_health", 0));
-        register(new MolangVariable("query.distance_from_camera", 0));
-        register(new MolangVariable("query.yaw_speed", 0));
-        register(new MolangVariable("query.is_in_water_or_rain", 0));
-        register(new MolangVariable("query.is_in_water", 0));
-        register(new MolangVariable("query.is_on_ground", 0));
-        register(new MolangVariable("query.time_of_day", 0));
-        register(new MolangVariable("query.is_on_fire", 0));
-        register(new MolangVariable("query.ground_speed", 0));
 
         MolangVariableControl.registerAll(globalScope);
     }
