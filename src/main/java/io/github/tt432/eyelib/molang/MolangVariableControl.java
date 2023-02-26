@@ -50,6 +50,7 @@ public class MolangVariableControl {
             Vec3 velocity = livingEntity.getDeltaMovement();
             return Mth.sqrt((float) ((velocity.x * velocity.x) + (velocity.z * velocity.z))) * 20;
         }));
+        scope.setVariable("query.vertical_speed", s -> livingDouble(s, living -> living.getDeltaMovement().y * 20));
     }
 
     static Double entityDouble(MolangVariableScope scope, ToDoubleFunction<Entity> func) {
