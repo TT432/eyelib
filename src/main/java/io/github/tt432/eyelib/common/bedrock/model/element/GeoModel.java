@@ -4,6 +4,7 @@ import io.github.tt432.eyelib.common.bedrock.model.pojo.ModelProperties;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,12 +44,14 @@ public class GeoModel {
                 List<GeoBone> result = new ArrayList<>();
                 result.add(locatorBone);
 
-                var parent =locatorBone.getParent();
+                var parent = locatorBone.getParent();
 
                 while (parent != null) {
                     result.add(parent);
                     parent = parent.getParent();
                 }
+
+                Collections.reverse(result);
 
                 return result;
             }
@@ -62,9 +65,14 @@ public class GeoModel {
             return parent;
         } else {
             for (GeoBone childBone : parent.childBones) {
-                if (childBone.locators.containsKey(name))
+                if (childBone.locators.containsKey(name)) {
                     return childBone;
-                else return getLocator(name, childBone);
+                } else {
+                    GeoBone locator = getLocator(name, childBone);
+
+                    if (locator != null)
+                        return locator;
+                }
             }
         }
 
