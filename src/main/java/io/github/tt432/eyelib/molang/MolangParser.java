@@ -129,13 +129,35 @@ public class MolangParser {
         return ZERO;
     }
 
+    String toLower(String s) {
+        boolean inSubString = false;
+
+        StringBuilder result = new StringBuilder();
+
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+
+            if (c == '\'' || c == '"') {
+                inSubString = !inSubString;
+            }
+
+            if (!inSubString) {
+                result.append(Character.toLowerCase(c));
+            } else {
+                result.append(c);
+            }
+        }
+
+        return result.toString();
+    }
+
     /**
      * Parse a molang expression
      */
     public MolangExpression parseExpression(String expression, MolangVariableScope scope) throws MolangException {
         MolangMultiStatement result = null;
 
-        for (String split : expression.toLowerCase().trim().split(";")) {
+        for (String split : toLower(expression).trim().split(";")) {
             String trimmed = split.trim();
 
             if (!trimmed.isEmpty()) {
