@@ -205,8 +205,6 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
         poseStack.popPose();
 
         super.render(animatable, entityYaw, partialTick, poseStack, bufferSource, packedLight);
-
-        clearTexData();
     }
 
     @Override

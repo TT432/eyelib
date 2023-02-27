@@ -57,6 +57,8 @@ public interface GeoRenderer<T> {
                     sprite.getU1() - sprite.getU0(),
                     sprite.getV1() - sprite.getV0()
             ));
+        } else {
+            clearTexData();
         }
 
         return textureLocation;
