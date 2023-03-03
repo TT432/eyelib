@@ -5,13 +5,10 @@
 
 package io.github.tt432.eyelib.common.bedrock.animation.manager;
 
-import io.github.tt432.eyelib.api.bedrock.model.Bone;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
-import io.github.tt432.eyelib.util.BoneSnapshot;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.Data;
 import lombok.Getter;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +46,6 @@ public class AnimationData {
         extraData.remove(s);
     }
 
-    private final Map<String, Pair<Bone, BoneSnapshot>> boneSnapshotCollection;
     private final Map<String, AnimationController> animationControllers = new Object2ObjectOpenHashMap<>();
 
     private double tick;
@@ -61,14 +57,6 @@ public class AnimationData {
     private double resetTickLength = 1;
     private double startTick = -1;
     private boolean shouldPlayWhilePaused = false;
-
-    /**
-     * Instantiates a new Animation controller collection.
-     */
-    public AnimationData() {
-        super();
-        boneSnapshotCollection = new Object2ObjectOpenHashMap<>();
-    }
 
     /**
      * This method is how you register animation controllers, without this, your
