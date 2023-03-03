@@ -51,6 +51,7 @@ public class AnimationController<T extends Animatable> {
 
     SoundControl soundControl = new SoundControl();
     ParticleControl particleControl = new ParticleControl();
+    TimelineControl timelineControl = new TimelineControl();
 
     /**
      * The name of the animation controller
@@ -314,8 +315,7 @@ public class AnimationController<T extends Animatable> {
             this.animationState = AnimationState.STOPPED;
             this.justStopped = true;
 
-            soundControl.stop(player);
-            particleControl.stop();
+            stopControls(player);
 
             return;
         }
@@ -394,8 +394,7 @@ public class AnimationController<T extends Animatable> {
                 if (peek == null) {
                     // No more animations left, stop the animation controller
                     this.animationState = AnimationState.STOPPED;
-                    soundControl.stop(player);
-                    particleControl.stop();
+                    stopControls(player);
 
                     return;
                 } else {
@@ -422,6 +421,7 @@ public class AnimationController<T extends Animatable> {
         Entity entity = MolangParser.getCurrentDataSource().get(Entity.class);
         if (entity != null)
             particleControl.process(entity, tick);
+        timelineControl.process(tick);
 
         if (this.transitionLengthTicks == 0 && shouldResetTick && this.animationState == AnimationState.TRANSITIONING)
             nextAnimation(player);
@@ -459,11 +459,7 @@ public class AnimationController<T extends Animatable> {
 
     private void nextAnimation(@Nullable SoundPlayer player) {
         if (currentAnimation != null) {
-            if (player != null) {
-                soundControl.stop(player);
-            }
-
-            particleControl.stop();
+            stopControls(player);
         }
 
         currentAnimation = animationQueue.poll();
@@ -473,6 +469,13 @@ public class AnimationController<T extends Animatable> {
         }
 
         particleControl.init(currentAnimation);
+        timelineControl.init(currentAnimation);
+    }
+
+    private void stopControls(SoundPlayer player) {
+        soundControl.stop(player);
+        particleControl.stop();
+        timelineControl.stop();
     }
 
     // Helper method to populate all the initial animation point queues
