@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.common.bedrock.particle.pojo;
 import lombok.Data;
 
 /**
- *
  * @author DustW
  */
 @Data

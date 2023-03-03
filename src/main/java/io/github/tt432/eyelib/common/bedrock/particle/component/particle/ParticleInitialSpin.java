@@ -2,8 +2,8 @@ package io.github.tt432.eyelib.common.bedrock.particle.component.particle;
 
 import com.google.gson.annotations.SerializedName;
 import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponent;
-import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

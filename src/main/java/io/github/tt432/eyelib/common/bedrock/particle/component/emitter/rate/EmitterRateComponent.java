@@ -9,6 +9,7 @@ import io.github.tt432.eyelib.molang.MolangVariableScope;
 public abstract class EmitterRateComponent extends ParticleComponent {
     /**
      * 返回当前需要生成的粒子数量
+     *
      * @param scope 变量域
      * @return 数量，<= 0 则不生成
      */

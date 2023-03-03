@@ -38,177 +38,177 @@ import javax.annotation.Nonnull;
 import java.util.Collections;
 
 public abstract class GeoItemRenderer<T extends Item & Animatable> extends BlockEntityWithoutLevelRenderer
-		implements GeoRenderer<T> {
-	// Register a model fetcher for this renderer
-	static {
-		AnimationController.addModelFetcher(animatable -> {
-			if (animatable instanceof Item item
-					&& RenderProperties.get(item).getItemStackRenderer()instanceof GeoItemRenderer geoItemRenderer)
-				return (AnimatableModel<Animatable>) geoItemRenderer.getGeoModelProvider();
+        implements GeoRenderer<T> {
+    // Register a model fetcher for this renderer
+    static {
+        AnimationController.addModelFetcher(animatable -> {
+            if (animatable instanceof Item item
+                    && RenderProperties.get(item).getItemStackRenderer() instanceof GeoItemRenderer geoItemRenderer)
+                return (AnimatableModel<Animatable>) geoItemRenderer.getGeoModelProvider();
 
-			return null;
-		});
-	}
+            return null;
+        });
+    }
 
-	protected AnimatedGeoModel<T> modelProvider;
-	protected ItemStack currentItemStack;
-	protected float widthScale = 1;
-	protected float heightScale = 1;
-	protected Matrix4f dispatchedMat = new Matrix4f();
-	protected Matrix4f renderEarlyMat = new Matrix4f();
-	@Getter
-	protected T animatable;
-	protected MultiBufferSource rtb = null;
+    protected AnimatedGeoModel<T> modelProvider;
+    protected ItemStack currentItemStack;
+    protected float widthScale = 1;
+    protected float heightScale = 1;
+    protected Matrix4f dispatchedMat = new Matrix4f();
+    protected Matrix4f renderEarlyMat = new Matrix4f();
+    @Getter
+    protected T animatable;
+    protected MultiBufferSource rtb = null;
 
-	private RenderCycle currentModelRenderCycle = RenderCycle.RenderCycleImpl.INITIAL;
+    private RenderCycle currentModelRenderCycle = RenderCycle.RenderCycleImpl.INITIAL;
 
-	public GeoItemRenderer(AnimatedGeoModel<T> modelProvider) {
-		this(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels(),
-				modelProvider);
-	}
+    public GeoItemRenderer(AnimatedGeoModel<T> modelProvider) {
+        this(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels(),
+                modelProvider);
+    }
 
-	public GeoItemRenderer(BlockEntityRenderDispatcher dispatcher, EntityModelSet modelSet,
-			AnimatedGeoModel<T> modelProvider) {
-		super(dispatcher, modelSet);
+    public GeoItemRenderer(BlockEntityRenderDispatcher dispatcher, EntityModelSet modelSet,
+                           AnimatedGeoModel<T> modelProvider) {
+        super(dispatcher, modelSet);
 
-		this.modelProvider = modelProvider;
-	}
+        this.modelProvider = modelProvider;
+    }
 
-	public void setModel(AnimatedGeoModel<T> model) {
-		this.modelProvider = model;
-	}
+    public void setModel(AnimatedGeoModel<T> model) {
+        this.modelProvider = model;
+    }
 
-	@Override
-	public AnimatedGeoModel<T> getGeoModelProvider() {
-		return modelProvider;
-	}
+    @Override
+    public AnimatedGeoModel<T> getGeoModelProvider() {
+        return modelProvider;
+    }
 
-	@AvailableSince(value = "3.1.24")
-	@Override
-	@Nonnull
-	public RenderCycle getCurrentModelRenderCycle() {
-		return this.currentModelRenderCycle;
-	}
+    @AvailableSince(value = "3.1.24")
+    @Override
+    @Nonnull
+    public RenderCycle getCurrentModelRenderCycle() {
+        return this.currentModelRenderCycle;
+    }
 
-	@AvailableSince(value = "3.1.24")
-	@Override
-	public void setCurrentModelRenderCycle(RenderCycle currentModelRenderCycle) {
-		this.currentModelRenderCycle = currentModelRenderCycle;
-	}
+    @AvailableSince(value = "3.1.24")
+    @Override
+    public void setCurrentModelRenderCycle(RenderCycle currentModelRenderCycle) {
+        this.currentModelRenderCycle = currentModelRenderCycle;
+    }
 
-	@AvailableSince(value = "3.1.24")
-	@Override
-	public float getWidthScale(T animatable) {
-		return this.widthScale;
-	}
+    @AvailableSince(value = "3.1.24")
+    @Override
+    public float getWidthScale(T animatable) {
+        return this.widthScale;
+    }
 
-	@AvailableSince(value = "3.1.24")
-	@Override
-	public float getHeightScale(T entity) {
-		return this.heightScale;
-	}
+    @AvailableSince(value = "3.1.24")
+    @Override
+    public float getHeightScale(T entity) {
+        return this.heightScale;
+    }
 
-	// fixes the item lighting
-	@Override
-	public void renderByItem(ItemStack stack, ItemTransforms.TransformType transformType, PoseStack poseStack,
-			MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
-		if (transformType == ItemTransforms.TransformType.GUI) {
-			poseStack.pushPose();
-			MultiBufferSource.BufferSource defaultBufferSource = bufferSource instanceof MultiBufferSource.BufferSource bufferSource2
-					? bufferSource2
-					: Minecraft.getInstance().renderBuffers().bufferSource();
-			Lighting.setupForFlatItems();
-			render((T) stack.getItem(), poseStack, bufferSource, packedLight, stack);
-			defaultBufferSource.endBatch();
-			RenderSystem.enableDepthTest();
-			Lighting.setupFor3DItems();
-			poseStack.popPose();
-		} else {
-			this.render((T) stack.getItem(), poseStack, bufferSource, packedLight, stack);
-		}
-	}
+    // fixes the item lighting
+    @Override
+    public void renderByItem(ItemStack stack, ItemTransforms.TransformType transformType, PoseStack poseStack,
+                             MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        if (transformType == ItemTransforms.TransformType.GUI) {
+            poseStack.pushPose();
+            MultiBufferSource.BufferSource defaultBufferSource = bufferSource instanceof MultiBufferSource.BufferSource bufferSource2
+                    ? bufferSource2
+                    : Minecraft.getInstance().renderBuffers().bufferSource();
+            Lighting.setupForFlatItems();
+            render((T) stack.getItem(), poseStack, bufferSource, packedLight, stack);
+            defaultBufferSource.endBatch();
+            RenderSystem.enableDepthTest();
+            Lighting.setupFor3DItems();
+            poseStack.popPose();
+        } else {
+            this.render((T) stack.getItem(), poseStack, bufferSource, packedLight, stack);
+        }
+    }
 
-	public void render(T animatable, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight,
-			ItemStack stack) {
-		this.currentItemStack = stack;
-		GeoModel model = this.modelProvider.getModel(this.modelProvider.getModelLocation(animatable));
-		AnimationEvent animationEvent = new AnimationEvent(animatable, 0, 0, Minecraft.getInstance().getFrameTime(),
-				false, Collections.singletonList(stack));
-		this.dispatchedMat = poseStack.last().pose().copy();
+    public void render(T animatable, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight,
+                       ItemStack stack) {
+        this.currentItemStack = stack;
+        GeoModel model = this.modelProvider.getModel(this.modelProvider.getModelLocation(animatable));
+        AnimationEvent animationEvent = new AnimationEvent(animatable, 0, 0, Minecraft.getInstance().getFrameTime(),
+                false, Collections.singletonList(stack));
+        this.dispatchedMat = poseStack.last().pose().copy();
 
-		setCurrentModelRenderCycle(RenderCycle.RenderCycleImpl.INITIAL);
-		this.modelProvider.setCustomAnimations(animatable, null, getInstanceId(animatable), animationEvent);
+        setCurrentModelRenderCycle(RenderCycle.RenderCycleImpl.INITIAL);
+        this.modelProvider.setCustomAnimations(animatable, null, getInstanceId(animatable), animationEvent);
 
-		poseStack.pushPose();
-		poseStack.translate(0.5f, 0.51f, 0.5f);
+        poseStack.pushPose();
+        poseStack.translate(0.5f, 0.51f, 0.5f);
 
-		RenderSystem.setShaderTexture(0, getTextureLocation(animatable));
-		Color renderColor = getRenderColor(animatable, 0, poseStack, bufferSource, null, packedLight);
-		RenderType renderType = getRenderType(animatable, 0, poseStack, bufferSource, null, packedLight,
-				getTextureLocation(animatable));
-		render(model, animatable, 0, renderType, poseStack, bufferSource, null, packedLight, OverlayTexture.NO_OVERLAY,
-				renderColor.getRed() / 255f, renderColor.getGreen() / 255f, renderColor.getBlue() / 255f,
-				renderColor.getAlpha() / 255f);
-		poseStack.popPose();
-	}
+        RenderSystem.setShaderTexture(0, getTextureLocation(animatable));
+        Color renderColor = getRenderColor(animatable, 0, poseStack, bufferSource, null, packedLight);
+        RenderType renderType = getRenderType(animatable, 0, poseStack, bufferSource, null, packedLight,
+                getTextureLocation(animatable));
+        render(model, animatable, 0, renderType, poseStack, bufferSource, null, packedLight, OverlayTexture.NO_OVERLAY,
+                renderColor.getRed() / 255f, renderColor.getGreen() / 255f, renderColor.getBlue() / 255f,
+                renderColor.getAlpha() / 255f);
+        poseStack.popPose();
+    }
 
-	@Override
-	public void renderEarly(T animatable, PoseStack poseStack, float partialTick, MultiBufferSource bufferSource,
-			VertexConsumer buffer, int packedLight, int packedOverlayIn, float red, float green, float blue,
-			float alpha) {
-		this.renderEarlyMat = poseStack.last().pose().copy();
-		this.animatable = animatable;
+    @Override
+    public void renderEarly(T animatable, PoseStack poseStack, float partialTick, MultiBufferSource bufferSource,
+                            VertexConsumer buffer, int packedLight, int packedOverlayIn, float red, float green, float blue,
+                            float alpha) {
+        this.renderEarlyMat = poseStack.last().pose().copy();
+        this.animatable = animatable;
 
-		GeoRenderer.super.renderEarly(animatable, poseStack, partialTick, bufferSource, buffer, packedLight,
-				packedOverlayIn, red, green, blue, alpha);
-	}
+        GeoRenderer.super.renderEarly(animatable, poseStack, partialTick, bufferSource, buffer, packedLight,
+                packedOverlayIn, red, green, blue, alpha);
+    }
 
-	@Override
-	public void renderRecursively(GeoBone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
-			int packedOverlay, float red, float green, float blue, float alpha) {
-		if (bone.isTrackingXform()) {
-			Matrix4f poseState = poseStack.last().pose().copy();
-			Matrix4f localMatrix = RenderUtils.invertAndMultiplyMatrices(poseState, this.dispatchedMat);
+    @Override
+    public void renderRecursively(GeoBone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
+                                  int packedOverlay, float red, float green, float blue, float alpha) {
+        if (bone.isTrackingXform()) {
+            Matrix4f poseState = poseStack.last().pose().copy();
+            Matrix4f localMatrix = RenderUtils.invertAndMultiplyMatrices(poseState, this.dispatchedMat);
 
-			bone.setModelSpaceXform(RenderUtils.invertAndMultiplyMatrices(poseState, this.renderEarlyMat));
-			localMatrix.translate(new Vector3f(getRenderOffset(this.animatable, 1)));
-			bone.setLocalSpaceXform(localMatrix);
-		}
+            bone.setModelSpaceXform(RenderUtils.invertAndMultiplyMatrices(poseState, this.renderEarlyMat));
+            localMatrix.translate(new Vector3f(getRenderOffset(this.animatable, 1)));
+            bone.setLocalSpaceXform(localMatrix);
+        }
 
-		GeoRenderer.super.renderRecursively(bone, poseStack, buffer, packedLight, packedOverlay, red, green, blue,
-				alpha);
-	}
+        GeoRenderer.super.renderRecursively(bone, poseStack, buffer, packedLight, packedOverlay, red, green, blue,
+                alpha);
+    }
 
-	public Vec3 getRenderOffset(T animatable, float partialTick) {
-		return Vec3.ZERO;
-	}
+    public Vec3 getRenderOffset(T animatable, float partialTick) {
+        return Vec3.ZERO;
+    }
 
-	@Override
-	public ResourceLocation getTextureLocation(T animatable) {
-		return this.modelProvider.getTextureLocation(animatable);
-	}
+    @Override
+    public ResourceLocation getTextureLocation(T animatable) {
+        return this.modelProvider.getTextureLocation(animatable);
+    }
 
-	/**
-	 * Use {@link GeoRenderer#getInstanceId(Object)}<br>
-	 * Remove in 1.20+
-	 */
-	@Deprecated(forRemoval = true)
-	public Integer getUniqueID(T animatable) {
-		return getInstanceId(animatable);
-	}
+    /**
+     * Use {@link GeoRenderer#getInstanceId(Object)}<br>
+     * Remove in 1.20+
+     */
+    @Deprecated(forRemoval = true)
+    public Integer getUniqueID(T animatable) {
+        return getInstanceId(animatable);
+    }
 
-	@Override
-	public int getInstanceId(T animatable) {
-		return GeckoLibUtil.getIDFromStack(this.currentItemStack);
-	}
+    @Override
+    public int getInstanceId(T animatable) {
+        return GeckoLibUtil.getIDFromStack(this.currentItemStack);
+    }
 
-	@Override
-	public void setCurrentRTB(MultiBufferSource bufferSource) {
-		this.rtb = bufferSource;
-	}
+    @Override
+    public void setCurrentRTB(MultiBufferSource bufferSource) {
+        this.rtb = bufferSource;
+    }
 
-	@Override
-	public MultiBufferSource getCurrentRTB() {
-		return this.rtb;
-	}
+    @Override
+    public MultiBufferSource getCurrentRTB() {
+        return this.rtb;
+    }
 }

@@ -1,14 +1,14 @@
 package io.github.tt432.eyelib.example.client.renderer.entity.layer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.tt432.eyelib.Eyelib;
+import io.github.tt432.eyelib.api.bedrock.renderer.GeoRenderer;
+import io.github.tt432.eyelib.common.bedrock.renderer.GeoLayerRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
-import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.common.bedrock.renderer.GeoLayerRenderer;
-import io.github.tt432.eyelib.api.bedrock.renderer.GeoRenderer;
 
 public class GeoExampleLayer extends GeoLayerRenderer {
     // A resource location for the texture of the layer. This will be applied onto pre-existing cubes on the model
@@ -16,13 +16,13 @@ public class GeoExampleLayer extends GeoLayerRenderer {
     // A resource location for the model of the entity. This model is put on top of the normal one, which is then given the texture
     private static final ResourceLocation MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/models/le.geo.json");
 
-	public GeoExampleLayer(GeoRenderer<?> entityRendererIn) {
+    public GeoExampleLayer(GeoRenderer<?> entityRendererIn) {
         super(entityRendererIn);
     }
-    
-	@Override
+
+    @Override
     public void render(PoseStack matrixStackIn, MultiBufferSource bufferIn, int packedLightIn, Entity entityLivingBaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        RenderType cameo =  RenderType.armorCutoutNoCull(LAYER);
+        RenderType cameo = RenderType.armorCutoutNoCull(LAYER);
         matrixStackIn.pushPose();
         //Move or scale the model as you see fit
         matrixStackIn.scale(1.0f, 1.0f, 1.0f);

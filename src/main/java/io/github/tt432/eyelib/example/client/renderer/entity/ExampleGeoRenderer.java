@@ -6,7 +6,7 @@ import io.github.tt432.eyelib.example.entity.GeoExampleEntity;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 
 public class ExampleGeoRenderer extends GeoEntityRenderer<GeoExampleEntity> {
-	public ExampleGeoRenderer(EntityRendererProvider.Context renderManager) {
-		super(renderManager, new ExampleEntityModel());
-	}
+    public ExampleGeoRenderer(EntityRendererProvider.Context renderManager) {
+        super(renderManager, new ExampleEntityModel());
+    }
 }

@@ -38,10 +38,10 @@ public class MolangVariableScope {
 
     public double getValue(String name) {
         return cache.getOrDefault(name,
-                        () -> {
-                            String newName = processName(name);
-                            return variables.containsKey(newName) ? variables.get(newName).evaluate(this) : 0;
-                        }).getAsDouble();
+                () -> {
+                    String newName = processName(name);
+                    return variables.containsKey(newName) ? variables.get(newName).evaluate(this) : 0;
+                }).getAsDouble();
     }
 
     public boolean getAsBool(String name) {

@@ -24,7 +24,7 @@ public class ParticleExpireIfNotInBlocks extends ParticleComponent implements Js
     @Override
     public ParticleExpireIfNotInBlocks deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
         ParticleExpireIfNotInBlocks result = new ParticleExpireIfNotInBlocks();
-        List<String> deserialize =  context.deserialize(json, TypeToken.getParameterized(List.class, String.class).getType());
+        List<String> deserialize = context.deserialize(json, TypeToken.getParameterized(List.class, String.class).getType());
         result.blocks = deserialize.stream().map(ResourceLocation::new).toList();
         return result;
     }

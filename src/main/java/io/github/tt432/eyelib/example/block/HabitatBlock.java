@@ -23,81 +23,81 @@ import javax.annotation.Nullable;
 
 public class HabitatBlock extends BaseEntityBlock implements EntityBlock {
 
-	public static final DirectionProperty FACING = BlockStateProperties.FACING;
+    public static final DirectionProperty FACING = BlockStateProperties.FACING;
 
-	public HabitatBlock() {
-		super(Properties.of(Material.STONE).noOcclusion());
-	}
+    public HabitatBlock() {
+        super(Properties.of(Material.STONE).noOcclusion());
+    }
 
-	/*
-	 * Hides the normal block and only shows the block entity created below
-	 */
-	@Override
-	public RenderShape getRenderShape(BlockState state) {
-		return RenderShape.ENTITYBLOCK_ANIMATED;
-	}
+    /*
+     * Hides the normal block and only shows the block entity created below
+     */
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
+    }
 
-	/*
-	 * Adds that our block is faceable
-	 */
-	@Override
-	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-		builder.add(FACING);
-	}
+    /*
+     * Adds that our block is faceable
+     */
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
+    }
 
-	/*
-	 * Sets the correct facing, needed to flip this block on the 180, should have
-	 * done in the model in BB but eh
-	 */
-	@Nullable
-	@Override
-	public BlockState getStateForPlacement(BlockPlaceContext context) {
-		return this.defaultBlockState().setValue(FACING,
-				context.getHorizontalDirection().getClockWise().getClockWise());
-	}
+    /*
+     * Sets the correct facing, needed to flip this block on the 180, should have
+     * done in the model in BB but eh
+     */
+    @Nullable
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(FACING,
+                context.getHorizontalDirection().getClockWise().getClockWise());
+    }
 
-	/*
-	 * Creates the block entity that we have playing our animations and rendering
-	 * the block
-	 */
-	@Nullable
-	@Override
-	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
-		return TileRegistry.HABITAT_TILE.get().create(blockPos, blockState);
-	}
+    /*
+     * Creates the block entity that we have playing our animations and rendering
+     * the block
+     */
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
+        return TileRegistry.HABITAT_TILE.get().create(blockPos, blockState);
+    }
 
-	/*
-	 * Sets the correct shape depending on your facing
-	 */
-	@Override
-	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
-		Direction direction = (Direction) state.getValue(FACING);
-		switch (direction) {
-		case NORTH: {
-			return Block.box(0, 0, 0, 32, 16, 16);
-		}
-		case SOUTH: {
-			return Block.box(-16, 0, 0, 16, 16, 16);
-		}
-		case WEST: {
-			return Block.box(0, 0, -16, 16, 16, 16);
-		}
-		default:
-			return Block.box(0, 0, 0, 16, 16, 32);
-		}
-	}
+    /*
+     * Sets the correct shape depending on your facing
+     */
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+        Direction direction = state.getValue(FACING);
+        switch (direction) {
+            case NORTH: {
+                return Block.box(0, 0, 0, 32, 16, 16);
+            }
+            case SOUTH: {
+                return Block.box(-16, 0, 0, 16, 16, 16);
+            }
+            case WEST: {
+                return Block.box(0, 0, -16, 16, 16, 16);
+            }
+            default:
+                return Block.box(0, 0, 0, 16, 16, 32);
+        }
+    }
 
-	/*
-	 * Tests for air 1 block out from the facing pos to ensure it's air so the block
-	 * doesn't place into another block
-	 */
-	@Override
-	public boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {
-		for (BlockPos testPos : BlockPos.betweenClosed(pos,
-				pos.relative((Direction) state.getValue(FACING).getClockWise(), 2))) {
-			if (!testPos.equals(pos) && !world.getBlockState(testPos).isAir())
-				return false;
-		}
-		return true;
-	}
+    /*
+     * Tests for air 1 block out from the facing pos to ensure it's air so the block
+     * doesn't place into another block
+     */
+    @Override
+    public boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {
+        for (BlockPos testPos : BlockPos.betweenClosed(pos,
+                pos.relative(state.getValue(FACING).getClockWise(), 2))) {
+            if (!testPos.equals(pos) && !world.getBlockState(testPos).isAir())
+                return false;
+        }
+        return true;
+    }
 }

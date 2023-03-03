@@ -6,8 +6,8 @@ import lombok.Data;
 
 @Data
 public class RawGeoModel {
-	@SerializedName("format_version")
-	private FormatVersion formatVersion;
-	@SerializedName("minecraft:geometry")
-	private MinecraftGeometry[] minecraftGeometry;
+    @SerializedName("format_version")
+    private FormatVersion formatVersion;
+    @SerializedName("minecraft:geometry")
+    private MinecraftGeometry[] minecraftGeometry;
 }

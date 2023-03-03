@@ -35,178 +35,176 @@ import org.jetbrains.annotations.ApiStatus.AvailableSince;
 import javax.annotation.Nonnull;
 
 public abstract class GeoBlockRenderer<T extends BlockEntity & Animatable>
-		implements GeoRenderer<T>, BlockEntityRenderer {
-	static {
-		AnimationController.addModelFetcher((Animatable object) -> {
-			if (object instanceof BlockEntity tile) {
-				BlockEntityRenderer<BlockEntity> renderer = Minecraft.getInstance().getBlockEntityRenderDispatcher()
-						.getRenderer(tile);
+        implements GeoRenderer<T>, BlockEntityRenderer {
+    static {
+        AnimationController.addModelFetcher((Animatable object) -> {
+            if (object instanceof BlockEntity tile) {
+                BlockEntityRenderer<BlockEntity> renderer = Minecraft.getInstance().getBlockEntityRenderDispatcher()
+                        .getRenderer(tile);
 
-				if (renderer instanceof GeoBlockRenderer<?> blockRenderer)
-					return (AnimatableModel<Animatable>) blockRenderer.getGeoModelProvider();
-			}
-			return null;
-		});
-	}
+                if (renderer instanceof GeoBlockRenderer<?> blockRenderer)
+                    return (AnimatableModel<Animatable>) blockRenderer.getGeoModelProvider();
+            }
+            return null;
+        });
+    }
 
-	protected final AnimatedGeoModel<T> modelProvider;
-	protected float widthScale = 1;
-	protected float heightScale = 1;
-	protected Matrix4f dispatchedMat = new Matrix4f();
-	protected Matrix4f renderEarlyMat = new Matrix4f();
-	@Getter
-	protected T animatable;
-	protected MultiBufferSource rtb = null;
+    protected final AnimatedGeoModel<T> modelProvider;
+    protected float widthScale = 1;
+    protected float heightScale = 1;
+    protected Matrix4f dispatchedMat = new Matrix4f();
+    protected Matrix4f renderEarlyMat = new Matrix4f();
+    @Getter
+    protected T animatable;
+    protected MultiBufferSource rtb = null;
 
-	private RenderCycle currentModelRenderCycle = RenderCycle.RenderCycleImpl.INITIAL;
+    private RenderCycle currentModelRenderCycle = RenderCycle.RenderCycleImpl.INITIAL;
 
-	protected GeoBlockRenderer(BlockEntityRendererProvider.Context rendererProvider, AnimatedGeoModel<T> modelProvider) {
-		this.modelProvider = modelProvider;
-	}
+    protected GeoBlockRenderer(BlockEntityRendererProvider.Context rendererProvider, AnimatedGeoModel<T> modelProvider) {
+        this.modelProvider = modelProvider;
+    }
 
-	@Override
-	public void renderEarly(T animatable, PoseStack poseStack, float partialTick, MultiBufferSource bufferSource,
-							VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue,
-							float alpha) {
-		this.renderEarlyMat = poseStack.last().pose().copy();
-		this.animatable = animatable;
+    @Override
+    public void renderEarly(T animatable, PoseStack poseStack, float partialTick, MultiBufferSource bufferSource,
+                            VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue,
+                            float alpha) {
+        this.renderEarlyMat = poseStack.last().pose().copy();
+        this.animatable = animatable;
 
-		GeoRenderer.super.renderEarly(animatable, poseStack, partialTick, bufferSource, buffer, packedLight, packedOverlay, red, green, blue, alpha);
-	}
+        GeoRenderer.super.renderEarly(animatable, poseStack, partialTick, bufferSource, buffer, packedLight, packedOverlay, red, green, blue, alpha);
+    }
 
-	@Override
-	public void render(BlockEntity tile, float partialTicks, PoseStack poseStack, MultiBufferSource bufferSource,
-			int packedLight, int packedOverlay) {
-		render((T)tile, partialTicks, poseStack, bufferSource, packedLight);
-	}
+    @Override
+    public void render(BlockEntity tile, float partialTicks, PoseStack poseStack, MultiBufferSource bufferSource,
+                       int packedLight, int packedOverlay) {
+        render((T) tile, partialTicks, poseStack, bufferSource, packedLight);
+    }
 
-	public void render(T tile, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
-		GeoModel model = modelProvider.getModel(modelProvider.getModelLocation(tile));
-		modelProvider.setCustomAnimations(tile, getInstanceId(tile));
-		this.dispatchedMat = poseStack.last().pose().copy();
-		this.setCurrentModelRenderCycle(RenderCycle.RenderCycleImpl.INITIAL);
-		poseStack.pushPose();
-		poseStack.translate(0, 0.01f, 0);
-		poseStack.translate(0.5, 0, 0.5);
+    public void render(T tile, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
+        GeoModel model = modelProvider.getModel(modelProvider.getModelLocation(tile));
+        modelProvider.setCustomAnimations(tile, getInstanceId(tile));
+        this.dispatchedMat = poseStack.last().pose().copy();
+        this.setCurrentModelRenderCycle(RenderCycle.RenderCycleImpl.INITIAL);
+        poseStack.pushPose();
+        poseStack.translate(0, 0.01f, 0);
+        poseStack.translate(0.5, 0, 0.5);
 
-		rotateBlock(getFacing(tile), poseStack);
+        rotateBlock(getFacing(tile), poseStack);
 
-		RenderSystem.setShaderTexture(0, getTextureLocation(tile));
-		Color renderColor = getRenderColor(tile, partialTick, poseStack, bufferSource, null, packedLight);
-		RenderType renderType = getRenderType(tile, partialTick, poseStack, bufferSource, null, packedLight,
-				getTextureLocation(tile));
-		render(model, tile, partialTick, renderType, poseStack, bufferSource, null, packedLight, OverlayTexture.NO_OVERLAY,
-				renderColor.getRed() / 255f, renderColor.getGreen() / 255f,
-				renderColor.getBlue() / 255f, renderColor.getAlpha() / 255f);
-		poseStack.popPose();
-	}
+        RenderSystem.setShaderTexture(0, getTextureLocation(tile));
+        Color renderColor = getRenderColor(tile, partialTick, poseStack, bufferSource, null, packedLight);
+        RenderType renderType = getRenderType(tile, partialTick, poseStack, bufferSource, null, packedLight,
+                getTextureLocation(tile));
+        render(model, tile, partialTick, renderType, poseStack, bufferSource, null, packedLight, OverlayTexture.NO_OVERLAY,
+                renderColor.getRed() / 255f, renderColor.getGreen() / 255f,
+                renderColor.getBlue() / 255f, renderColor.getAlpha() / 255f);
+        poseStack.popPose();
+    }
 
-	@Override
-	public void renderRecursively(GeoBone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
-								  int packedOverlay, float red, float green, float blue, float alpha) {
-		if (bone.isTrackingXform()) {
-			Matrix4f poseState = poseStack.last().pose().copy();
-			Matrix4f localMatrix = RenderUtils.invertAndMultiplyMatrices(poseState, this.dispatchedMat);
-			BlockPos pos = this.animatable.getBlockPos();
+    @Override
+    public void renderRecursively(GeoBone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
+                                  int packedOverlay, float red, float green, float blue, float alpha) {
+        if (bone.isTrackingXform()) {
+            Matrix4f poseState = poseStack.last().pose().copy();
+            Matrix4f localMatrix = RenderUtils.invertAndMultiplyMatrices(poseState, this.dispatchedMat);
+            BlockPos pos = this.animatable.getBlockPos();
 
-			bone.setModelSpaceXform(RenderUtils.invertAndMultiplyMatrices(poseState, this.renderEarlyMat));
-			localMatrix.translate(new Vector3f(getRenderOffset(this.animatable, 1)));
-			bone.setLocalSpaceXform(localMatrix);
+            bone.setModelSpaceXform(RenderUtils.invertAndMultiplyMatrices(poseState, this.renderEarlyMat));
+            localMatrix.translate(new Vector3f(getRenderOffset(this.animatable, 1)));
+            bone.setLocalSpaceXform(localMatrix);
 
-			Matrix4f worldState = localMatrix.copy();
+            Matrix4f worldState = localMatrix.copy();
 
-			worldState.translate(new Vector3f(pos.getX(), pos.getY(), pos.getZ()));
-			bone.setWorldSpaceXform(worldState);
-		}
+            worldState.translate(new Vector3f(pos.getX(), pos.getY(), pos.getZ()));
+            bone.setWorldSpaceXform(worldState);
+        }
 
-		GeoRenderer.super.renderRecursively(bone, poseStack, buffer, packedLight, packedOverlay, red, green, blue,
-				alpha);
-	}
+        GeoRenderer.super.renderRecursively(bone, poseStack, buffer, packedLight, packedOverlay, red, green, blue,
+                alpha);
+    }
 
-	public Vec3 getRenderOffset(T animatable, float partialTick) {
-		return Vec3.ZERO;
-	}
+    public Vec3 getRenderOffset(T animatable, float partialTick) {
+        return Vec3.ZERO;
+    }
 
-	/**
-	 * Use {@link GeoRenderer#getInstanceId(Object)}<br>
-	 * Remove in 1.20+
-	 */
-	@Deprecated(forRemoval = true)
-	public Integer getUniqueID(T animatable) {
-		return getInstanceId(animatable);
-	}
+    /**
+     * Use {@link GeoRenderer#getInstanceId(Object)}<br>
+     * Remove in 1.20+
+     */
+    @Deprecated(forRemoval = true)
+    public Integer getUniqueID(T animatable) {
+        return getInstanceId(animatable);
+    }
 
-	@Override
-	public int getInstanceId(T animatable) {
-		return animatable.getBlockPos().hashCode();
-	}
+    @Override
+    public int getInstanceId(T animatable) {
+        return animatable.getBlockPos().hashCode();
+    }
 
-	@Override
-	public AnimatedGeoModel<T> getGeoModelProvider() {
-		return this.modelProvider;
-	}
+    @Override
+    public AnimatedGeoModel<T> getGeoModelProvider() {
+        return this.modelProvider;
+    }
 
-	@AvailableSince(value = "3.1.24")
-	@Override
-	@Nonnull
-	public RenderCycle getCurrentModelRenderCycle() {
-		return this.currentModelRenderCycle;
-	}
+    @AvailableSince(value = "3.1.24")
+    @Override
+    @Nonnull
+    public RenderCycle getCurrentModelRenderCycle() {
+        return this.currentModelRenderCycle;
+    }
 
-	@AvailableSince(value = "3.1.24")
-	@Override
-	public void setCurrentModelRenderCycle(RenderCycle currentModelRenderCycle) {
-		this.currentModelRenderCycle = currentModelRenderCycle;
-	}
+    @AvailableSince(value = "3.1.24")
+    @Override
+    public void setCurrentModelRenderCycle(RenderCycle currentModelRenderCycle) {
+        this.currentModelRenderCycle = currentModelRenderCycle;
+    }
 
-	@AvailableSince(value = "3.1.24")
-	@Override
-	public float getWidthScale(T animatable) {
-		return this.widthScale;
-	}
+    @AvailableSince(value = "3.1.24")
+    @Override
+    public float getWidthScale(T animatable) {
+        return this.widthScale;
+    }
 
-	@AvailableSince(value = "3.1.24")
-	@Override
-	public float getHeightScale(T entity) {
-		return this.heightScale;
-	}
+    @AvailableSince(value = "3.1.24")
+    @Override
+    public float getHeightScale(T entity) {
+        return this.heightScale;
+    }
 
-	protected void rotateBlock(Direction facing, PoseStack poseStack) {
-		switch (facing) {
-			case SOUTH -> poseStack.mulPose(Vector3f.YP.rotationDegrees(180));
-			case WEST -> poseStack.mulPose(Vector3f.YP.rotationDegrees(90));
-			case NORTH -> poseStack.mulPose(Vector3f.YP.rotationDegrees(0));
-			case EAST -> poseStack.mulPose(Vector3f.YP.rotationDegrees(270));
-			case UP -> poseStack.mulPose(Vector3f.XP.rotationDegrees(90));
-			case DOWN -> poseStack.mulPose(Vector3f.XN.rotationDegrees(90));
-		}
-	}
+    protected void rotateBlock(Direction facing, PoseStack poseStack) {
+        switch (facing) {
+            case SOUTH -> poseStack.mulPose(Vector3f.YP.rotationDegrees(180));
+            case WEST -> poseStack.mulPose(Vector3f.YP.rotationDegrees(90));
+            case NORTH -> poseStack.mulPose(Vector3f.YP.rotationDegrees(0));
+            case EAST -> poseStack.mulPose(Vector3f.YP.rotationDegrees(270));
+            case UP -> poseStack.mulPose(Vector3f.XP.rotationDegrees(90));
+            case DOWN -> poseStack.mulPose(Vector3f.XN.rotationDegrees(90));
+        }
+    }
 
-	private Direction getFacing(T tile) {
-		BlockState blockState = tile.getBlockState();
-		if (blockState.hasProperty(HorizontalDirectionalBlock.FACING)) {
-			return blockState.getValue(HorizontalDirectionalBlock.FACING);
-		}
-		else if (blockState.hasProperty(DirectionalBlock.FACING)) {
-			return blockState.getValue(DirectionalBlock.FACING);
-		}
-		else {
-			return Direction.NORTH;
-		}
-	}
+    private Direction getFacing(T tile) {
+        BlockState blockState = tile.getBlockState();
+        if (blockState.hasProperty(HorizontalDirectionalBlock.FACING)) {
+            return blockState.getValue(HorizontalDirectionalBlock.FACING);
+        } else if (blockState.hasProperty(DirectionalBlock.FACING)) {
+            return blockState.getValue(DirectionalBlock.FACING);
+        } else {
+            return Direction.NORTH;
+        }
+    }
 
-	@Override
-	public ResourceLocation getTextureLocation(T animatable) {
-		return this.modelProvider.getTextureLocation(animatable);
-	}
+    @Override
+    public ResourceLocation getTextureLocation(T animatable) {
+        return this.modelProvider.getTextureLocation(animatable);
+    }
 
-	@Override
-	public void setCurrentRTB(MultiBufferSource bufferSource) {
-		this.rtb = bufferSource;
-	}
+    @Override
+    public void setCurrentRTB(MultiBufferSource bufferSource) {
+        this.rtb = bufferSource;
+    }
 
-	@Override
-	public MultiBufferSource getCurrentRTB() {
-		return this.rtb;
-	}
+    @Override
+    public MultiBufferSource getCurrentRTB() {
+        return this.rtb;
+    }
 }

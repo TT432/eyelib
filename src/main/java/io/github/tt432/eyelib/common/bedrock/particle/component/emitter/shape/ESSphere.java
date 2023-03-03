@@ -2,11 +2,11 @@ package io.github.tt432.eyelib.common.bedrock.particle.component.emitter.shape;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
+import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
+import io.github.tt432.eyelib.molang.math.Constant;
 import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
 import io.github.tt432.eyelib.util.json.JsonUtils;
-import io.github.tt432.eyelib.molang.MolangValue;
-import io.github.tt432.eyelib.molang.math.Constant;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 

@@ -31,5 +31,5 @@ public enum CurveType {
      * Each point other than first/last is shared between its pair of spline segments.
      */
     @SerializedName("bezier_chain")
-    BEZIER_CHAIN;
+    BEZIER_CHAIN
 }

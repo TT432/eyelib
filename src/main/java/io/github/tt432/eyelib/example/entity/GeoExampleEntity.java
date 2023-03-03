@@ -19,53 +19,53 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 public class GeoExampleEntity extends PathfinderMob implements Animatable, Tickable {
-	public AnimationFactory factory = GeckoLibUtil.createFactory(this);
-	private boolean isAnimating = true;
+    public AnimationFactory factory = GeckoLibUtil.createFactory(this);
+    private boolean isAnimating = true;
 
-	public GeoExampleEntity(EntityType<? extends PathfinderMob> type, Level worldIn) {
-		super(type, worldIn);
-	}
+    public GeoExampleEntity(EntityType<? extends PathfinderMob> type, Level worldIn) {
+        super(type, worldIn);
+    }
 
-	private <E extends Animatable> PlayState predicate(AnimationEvent<E> event) {
-		if (this.isAnimating) {
-			event.getController().setAnimation(new AnimationBuilder().addAnimation("parallel0"));
-		} else {
-			event.getController().clearAnimationCache();
-			return PlayState.STOP;
-		}
+    private <E extends Animatable> PlayState predicate(AnimationEvent<E> event) {
+        if (this.isAnimating) {
+            event.getController().setAnimation(new AnimationBuilder().addAnimation("parallel0"));
+        } else {
+            event.getController().clearAnimationCache();
+            return PlayState.STOP;
+        }
 
-		return PlayState.CONTINUE;
-	}
+        return PlayState.CONTINUE;
+    }
 
-	@Override
-	public InteractionResult interactAt(Player player, Vec3 hitPos, InteractionHand hand) {
-		if (hand == InteractionHand.MAIN_HAND && player.getMainHandItem().isEmpty()) {
-			this.isAnimating = !this.isAnimating;
-		}
+    @Override
+    public InteractionResult interactAt(Player player, Vec3 hitPos, InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND && player.getMainHandItem().isEmpty()) {
+            this.isAnimating = !this.isAnimating;
+        }
 
-		return super.interactAt(player, hitPos, hand);
-	}
+        return super.interactAt(player, hitPos, hand);
+    }
 
-	@Override
-	public void registerControllers(AnimationData data) {
-		AnimationController<GeoExampleEntity> controller = new AnimationController<>(this, "controller", 0,
-				this::predicate);
-		data.addAnimationController(controller);
-	}
+    @Override
+    public void registerControllers(AnimationData data) {
+        AnimationController<GeoExampleEntity> controller = new AnimationController<>(this, "controller", 0,
+                this::predicate);
+        data.addAnimationController(controller);
+    }
 
-	@Override
-	public AnimationFactory getFactory() {
-		return this.factory;
-	}
+    @Override
+    public AnimationFactory getFactory() {
+        return this.factory;
+    }
 
-	@Override
-	protected void registerGoals() {
-		this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0F));
-		super.registerGoals();
-	}
+    @Override
+    protected void registerGoals() {
+        this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0F));
+        super.registerGoals();
+    }
 
-	@Override
-	public int tickTimer() {
-		return tickCount;
-	}
+    @Override
+    public int tickTimer() {
+        return tickCount;
+    }
 }

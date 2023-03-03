@@ -1,9 +1,9 @@
 package io.github.tt432.eyelib.molang.functions.rounding;
 
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.molang.functions.MolangFunction;
 import io.github.tt432.eyelib.processor.anno.MolangFunctionHolder;
-import io.github.tt432.eyelib.molang.MolangVariableScope;
 
 @MolangFunctionHolder("math.trunc")
 public class Trunc extends MolangFunction {

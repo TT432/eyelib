@@ -270,9 +270,9 @@ public class AnimationController<T extends Animatable> {
      * This method is called every frame in order to populate the animation point
      * queues, and process animation state logic.
      *
-     * @param tick                   The current tick + partial tick
-     * @param event                  The animation test event
-     * @param modelRendererList      The list of all AnimatedModelRender's
+     * @param tick              The current tick + partial tick
+     * @param event             The animation test event
+     * @param modelRendererList The list of all AnimatedModelRender's
      */
     public void process(final double tick, AnimationEvent<T> event, List<Bone> modelRendererList, MolangParser parser,
                         boolean crashWhenCantFindBone) {
@@ -375,7 +375,7 @@ public class AnimationController<T extends Animatable> {
     }
 
     private SoundPlayer getSoundPlayer(AnimationEvent<T> event) {
-       return event.getAnimatable() instanceof SoundPlayer sp ? sp : null;
+        return event.getAnimatable() instanceof SoundPlayer sp ? sp : null;
     }
 
     private void processCurrentAnimation(double tick, double actualTick, MolangParser parser,

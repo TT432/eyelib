@@ -7,20 +7,20 @@ import java.io.IOException;
  * quads, set by making this property either "tri_list" or "quad_list"
  */
 public enum PolysEnum {
-	QUAD_LIST, TRI_LIST;
+    QUAD_LIST, TRI_LIST;
 
-	public String toValue() {
-		return switch (this) {
-			case QUAD_LIST -> "quad_list";
-			case TRI_LIST -> "tri_list";
-		};
-	}
+    public String toValue() {
+        return switch (this) {
+            case QUAD_LIST -> "quad_list";
+            case TRI_LIST -> "tri_list";
+        };
+    }
 
-	public static PolysEnum forValue(String value) throws IOException {
-		if (value.equals("quad_list"))
-			return QUAD_LIST;
-		if (value.equals("tri_list"))
-			return TRI_LIST;
-		throw new IOException("Cannot deserialize PolysEnum");
-	}
+    public static PolysEnum forValue(String value) throws IOException {
+        if (value.equals("quad_list"))
+            return QUAD_LIST;
+        if (value.equals("tri_list"))
+            return TRI_LIST;
+        throw new IOException("Cannot deserialize PolysEnum");
+    }
 }

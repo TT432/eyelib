@@ -8,7 +8,10 @@ package io.github.tt432.eyelib.example;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationController.ModelFetcher;
 import io.github.tt432.eyelib.common.bedrock.renderer.GeoArmorRenderer;
-import io.github.tt432.eyelib.example.registry.*;
+import io.github.tt432.eyelib.example.registry.BlockRegistry;
+import io.github.tt432.eyelib.example.registry.EntityRegistry;
+import io.github.tt432.eyelib.example.registry.ItemRegistry;
+import io.github.tt432.eyelib.example.registry.TileRegistry;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.EntityLeaveWorldEvent;
@@ -20,59 +23,59 @@ import net.minecraftforge.fml.loading.FMLEnvironment;
 
 @EventBusSubscriber
 public class ExampleMod {
-	public static CreativeModeTab mainTab;
-	/**
-	 * When set to true, prevents examples from being registered.
-	 */
-	public static final String DISABLE_EXAMPLES_PROPERTY_KEY = "geckolib.disable_examples";
-	private static final boolean IS_DEVELOPMENT_ENVIRONMENT = !FMLEnvironment.production;
+    public static CreativeModeTab mainTab;
+    /**
+     * When set to true, prevents examples from being registered.
+     */
+    public static final String DISABLE_EXAMPLES_PROPERTY_KEY = "geckolib.disable_examples";
+    private static final boolean IS_DEVELOPMENT_ENVIRONMENT = !FMLEnvironment.production;
 
-	public ExampleMod() {
-		if (shouldRegisterExamples()) {
-			IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
-			EntityRegistry.ENTITIES.register(bus);
-			ItemRegistry.ITEMS.register(bus);
-			TileRegistry.TILES.register(bus);
-			BlockRegistry.BLOCKS.register(bus);
-			mainTab = new CreativeModeTab(CreativeModeTab.getGroupCountSafe(), "geckolib_examples") {
-				@Override
-				public ItemStack makeIcon() {
-					return new ItemStack(ItemRegistry.JACK_IN_THE_BOX.get());
-				}
-			};
-		}
-	}
+    public ExampleMod() {
+        if (shouldRegisterExamples()) {
+            IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+            EntityRegistry.ENTITIES.register(bus);
+            ItemRegistry.ITEMS.register(bus);
+            TileRegistry.TILES.register(bus);
+            BlockRegistry.BLOCKS.register(bus);
+            mainTab = new CreativeModeTab(CreativeModeTab.getGroupCountSafe(), "geckolib_examples") {
+                @Override
+                public ItemStack makeIcon() {
+                    return new ItemStack(ItemRegistry.JACK_IN_THE_BOX.get());
+                }
+            };
+        }
+    }
 
-	@SubscribeEvent
-	public static void onEntityRemoved(EntityLeaveWorldEvent event) {
-		if (event.getEntity() == null) {
-			return;
-		}
+    @SubscribeEvent
+    public static void onEntityRemoved(EntityLeaveWorldEvent event) {
+        if (event.getEntity() == null) {
+            return;
+        }
 
-		if (event.getEntity().getUUID() == null) {
-			return;
-		}
+        if (event.getEntity().getUUID() == null) {
+            return;
+        }
 
-		if (event.getWorld().isClientSide)
-			GeoArmorRenderer.LIVING_ENTITY_RENDERERS.values().forEach(instances -> {
-				if (instances.containsKey(event.getEntity().getUUID())) {
-					ModelFetcher<?> beGone = instances.get(event.getEntity().getUUID());
-					AnimationController.removeModelFetcher(beGone);
-					instances.remove(event.getEntity().getUUID());
-				}
-			});
-	}
+        if (event.getWorld().isClientSide)
+            GeoArmorRenderer.LIVING_ENTITY_RENDERERS.values().forEach(instances -> {
+                if (instances.containsKey(event.getEntity().getUUID())) {
+                    ModelFetcher<?> beGone = instances.get(event.getEntity().getUUID());
+                    AnimationController.removeModelFetcher(beGone);
+                    instances.remove(event.getEntity().getUUID());
+                }
+            });
+    }
 
-	/**
-	 * Returns whether examples are to be registered. Examples are registered when:
-	 * <ul>
-	 *     <li>The mod is running in a development environment; <em>and</em></li>
-	 *     <li>the system property defined by {@link #DISABLE_EXAMPLES_PROPERTY_KEY} is not set to "true".</li>
-	 * </ul>
-	 *
-	 * @return whether the examples are to be registered
-	 */
-	static boolean shouldRegisterExamples() {
-		return IS_DEVELOPMENT_ENVIRONMENT && !Boolean.getBoolean(DISABLE_EXAMPLES_PROPERTY_KEY);
-	}
+    /**
+     * Returns whether examples are to be registered. Examples are registered when:
+     * <ul>
+     *     <li>The mod is running in a development environment; <em>and</em></li>
+     *     <li>the system property defined by {@link #DISABLE_EXAMPLES_PROPERTY_KEY} is not set to "true".</li>
+     * </ul>
+     *
+     * @return whether the examples are to be registered
+     */
+    static boolean shouldRegisterExamples() {
+        return IS_DEVELOPMENT_ENVIRONMENT && !Boolean.getBoolean(DISABLE_EXAMPLES_PROPERTY_KEY);
+    }
 }

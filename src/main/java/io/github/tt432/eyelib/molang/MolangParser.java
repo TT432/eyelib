@@ -6,8 +6,8 @@ import io.github.tt432.eyelib.molang.expressions.MolangAssignment;
 import io.github.tt432.eyelib.molang.expressions.MolangExpression;
 import io.github.tt432.eyelib.molang.expressions.MolangMultiStatement;
 import io.github.tt432.eyelib.molang.expressions.MolangResult;
-import io.github.tt432.eyelib.molang.math.*;
 import io.github.tt432.eyelib.molang.functions.MolangFunction;
+import io.github.tt432.eyelib.molang.math.*;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 

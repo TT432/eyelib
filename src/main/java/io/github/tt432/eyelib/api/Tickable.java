@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.api;
 
 public interface Tickable {
-	void tick();
+    void tick();
 
-	int tickTimer();
+    int tickTimer();
 }

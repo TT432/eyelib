@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
 
 public class Constant implements MolangValue {
-    private double value;
+    private final double value;
 
     public Constant(double value) {
         this.value = value;

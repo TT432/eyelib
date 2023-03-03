@@ -40,7 +40,7 @@ public class AnimationFile {
                         TypeToken.getParameterized(Map.class, String.class, SingleAnimation.class).getType());
             result.animations.forEach((name, animation) -> {
                 if (animation.getLoop() == null)
-                    animation.setLoop(LoopType.Impl.PLAY_ONCE);
+                    animation.setLoop(LoopType.PLAY_ONCE);
                 animation.setAnimationName(name);
 
                 if (animation.getAnimationLength() == 0) {

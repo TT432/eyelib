@@ -26,7 +26,7 @@ import static io.github.tt432.eyelib.common.bedrock.animation.pojo.KeyFrame.Lerp
 @Data
 @NoArgsConstructor
 @JsonAdapter(KeyFrame.Serializer.class)
-public class KeyFrame{
+public class KeyFrame {
     private Timestamp timestamp;
     private Value3[] dataPoints;
     private LerpMode lerpMode;
@@ -35,7 +35,7 @@ public class KeyFrame{
         LINEAR,
         CATMULLROM,
         BEZIER,
-        STEP;
+        STEP
     }
 
     public double getTick() {

@@ -1,6 +1,9 @@
 package io.github.tt432.eyelib.common.bedrock.model.pojo;
 
-import com.google.gson.*;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 
 import java.lang.reflect.Type;

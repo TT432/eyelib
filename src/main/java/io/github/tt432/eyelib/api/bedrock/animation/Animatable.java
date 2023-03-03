@@ -11,7 +11,7 @@ import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationFactory;
  * This interface must be applied to any object that wants to be animated
  */
 public interface Animatable {
-	void registerControllers(AnimationData data);
+    void registerControllers(AnimationData data);
 
-	AnimationFactory getFactory();
+    AnimationFactory getFactory();
 }

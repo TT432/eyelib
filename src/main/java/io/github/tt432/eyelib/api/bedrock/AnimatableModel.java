@@ -8,32 +8,32 @@ import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
 import org.jetbrains.annotations.Nullable;
 
 public interface AnimatableModel<E extends Animatable> {
-	default double getCurrentTick() {
-		return System.nanoTime() / 1000000L / 50d;
-	}
+    default double getCurrentTick() {
+        return System.nanoTime() / 1000000L / 50d;
+    }
 
-	default void setCustomAnimations(E animatable, int instanceId) {
-		setCustomAnimations(animatable, null, instanceId, null);
-	}
+    default void setCustomAnimations(E animatable, int instanceId) {
+        setCustomAnimations(animatable, null, instanceId, null);
+    }
 
-	void setCustomAnimations(E animatable, @Nullable Object replacedInstance, int instanceId, @Nullable AnimationEvent<E> animationEvent);
+    void setCustomAnimations(E animatable, @Nullable Object replacedInstance, int instanceId, @Nullable AnimationEvent<E> animationEvent);
 
-	AnimationProcessor<E> getAnimationProcessor();
+    AnimationProcessor<E> getAnimationProcessor();
 
-	SingleAnimation getAnimation(String name, Animatable animatable);
+    SingleAnimation getAnimation(String name, Animatable animatable);
 
-	/**
-	 * Gets a bone by name.
-	 *
-	 * @param boneName The bone name
-	 * @return the bone
-	 */
-	default Bone getBone(String boneName) {
-		Bone bone = getAnimationProcessor().getBone(boneName);
+    /**
+     * Gets a bone by name.
+     *
+     * @param boneName The bone name
+     * @return the bone
+     */
+    default Bone getBone(String boneName) {
+        Bone bone = getAnimationProcessor().getBone(boneName);
 
-		if (bone == null)
-			throw new IllegalArgumentException("Could not find bone: " + boneName);
+        if (bone == null)
+            throw new IllegalArgumentException("Could not find bone: " + boneName);
 
-		return bone;
-	}
+        return bone;
+    }
 }

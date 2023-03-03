@@ -48,7 +48,7 @@ public class JsonUtils {
     public static byte[] compress(String string) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        try(GZIPOutputStream gzip = new GZIPOutputStream(out)) {
+        try (GZIPOutputStream gzip = new GZIPOutputStream(out)) {
             gzip.write(string.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             e.printStackTrace();
@@ -61,7 +61,7 @@ public class JsonUtils {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayInputStream in = new ByteArrayInputStream(string);
 
-        try(GZIPInputStream gzip = new GZIPInputStream(in)) {
+        try (GZIPInputStream gzip = new GZIPInputStream(in)) {
             byte[] buffer = new byte[256];
             int index;
 

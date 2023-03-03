@@ -16,7 +16,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Mixin(EntityLookup.class)
 public class MixinEntityLookup<T extends EntityAccess> {
-    @Shadow @Final private Int2ObjectMap<T> byId;
+    @Shadow
+    @Final
+    private Int2ObjectMap<T> byId;
 
     @Inject(method = "getAllEntities", at = @At("HEAD"), cancellable = true)
     private void getAllEntitiesEL(CallbackInfoReturnable<Iterable<T>> cir) {

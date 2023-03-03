@@ -105,7 +105,7 @@ public class FistItem extends Item implements Animatable, Syncable, SoundPlayer 
                 // Set the animation to open the JackInTheBoxItem which will start playing music
                 // and
                 // eventually do the actual animation. Also sets it to not loop
-                controller.setAnimation(new AnimationBuilder().addAnimation("po", LoopType.Impl.PLAY_ONCE));
+                controller.setAnimation(new AnimationBuilder().addAnimation("po", LoopType.PLAY_ONCE));
             }
         }
     }

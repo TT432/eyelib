@@ -10,7 +10,10 @@ import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -61,7 +64,8 @@ public class EyelibProcessors {
                         Constructor<? extends T> constructor = value.getDeclaredConstructor();
                         T instance = constructor.newInstance();
                         return Map.entry(e.getKey(), instance);
-                    } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException ex) {
+                    } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                             NoSuchMethodException ex) {
                         throw new RuntimeException(ex);
                     }
                 }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

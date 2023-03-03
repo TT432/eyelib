@@ -6,20 +6,20 @@ import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
  * AnimationFactory implementation for instantiated objects such as Entities or BlockEntities. Returns a single {@link AnimationData} instance per factory.
  */
 public class InstancedAnimationFactory extends AnimationFactory {
-	private AnimationData animationData;
+    private AnimationData animationData;
 
-	public InstancedAnimationFactory(Animatable animatable) {
-		super(animatable);
-	}
+    public InstancedAnimationFactory(Animatable animatable) {
+        super(animatable);
+    }
 
-	@Override
-	public AnimationData getOrCreateAnimationData(int uniqueID) {
-		if (this.animationData == null) {
-			this.animationData = new AnimationData();
+    @Override
+    public AnimationData getOrCreateAnimationData(int uniqueID) {
+        if (this.animationData == null) {
+            this.animationData = new AnimationData();
 
-			this.animatable.registerControllers(this.animationData);
-		}
+            this.animatable.registerControllers(this.animationData);
+        }
 
-		return this.animationData;
-	}
+        return this.animationData;
+    }
 }

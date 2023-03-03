@@ -3,9 +3,9 @@ package io.github.tt432.eyelib.molang.functions.utility.entity;
 import io.github.tt432.eyelib.molang.MolangDataSource;
 import io.github.tt432.eyelib.molang.MolangParser;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.molang.functions.MolangFunction;
 import io.github.tt432.eyelib.processor.anno.MolangFunctionHolder;
-import io.github.tt432.eyelib.molang.MolangVariableScope;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.world.entity.LivingEntity;
 

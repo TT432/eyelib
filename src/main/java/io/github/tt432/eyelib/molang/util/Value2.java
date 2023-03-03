@@ -23,7 +23,7 @@ public class Value2 {
     private final MolangValue y;
 
     public MolangValue get(Axis axis) {
-        return switch (axis){
+        return switch (axis) {
             case X -> x;
             case Y -> y;
             default -> throw new IllegalArgumentException("Value2 not have z axis");

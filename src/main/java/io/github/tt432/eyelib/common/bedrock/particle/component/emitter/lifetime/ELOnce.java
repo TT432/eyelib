@@ -3,11 +3,11 @@ package io.github.tt432.eyelib.common.bedrock.particle.component.emitter.lifetim
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
-import io.github.tt432.eyelib.util.json.JsonUtils;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.molang.math.Constant;
+import io.github.tt432.eyelib.processor.anno.ParticleComponentHolder;
+import io.github.tt432.eyelib.util.json.JsonUtils;
 
 import java.lang.reflect.Type;
 

@@ -24,7 +24,7 @@ public class FileToIdConverter {
     public static ResourceLocation withPath(ResourceLocation rl, String path) {
         return new ResourceLocation(rl.getNamespace(), path);
     }
-    
+
     public ResourceLocation idToFile(ResourceLocation id) {
         return withPath(id, this.prefix + "/" + id.getPath() + this.extension);
     }

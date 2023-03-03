@@ -26,7 +26,7 @@ public class GeckoLibIdTracker extends SavedData {
     public static GeckoLibIdTracker load(CompoundTag tag) {
         GeckoLibIdTracker tracker = new GeckoLibIdTracker();
         tracker.usedIds.clear();
-        for(String key : tag.getAllKeys()) {
+        for (String key : tag.getAllKeys()) {
             if (tag.contains(key, CompoundTag.TAG_ANY_NUMERIC)) {
                 tracker.usedIds.put(key, tag.getInt(key));
             }
@@ -36,7 +36,7 @@ public class GeckoLibIdTracker extends SavedData {
 
     @Override
     public CompoundTag save(CompoundTag tag) {
-        for(Object2IntMap.Entry<String> id : this.usedIds.object2IntEntrySet()) {
+        for (Object2IntMap.Entry<String> id : this.usedIds.object2IntEntrySet()) {
             tag.putInt(id.getKey(), id.getIntValue());
         }
         return tag;

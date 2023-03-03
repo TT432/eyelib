@@ -7,32 +7,26 @@ import java.lang.reflect.Type;
 import java.util.Locale;
 
 @JsonAdapter(LoopType.Serializer.class)
-public interface LoopType {
+public enum LoopType {
+    LOOP(true),
+    PLAY_ONCE,
+    HOLD_ON_LAST_FRAME;
 
-    boolean isRepeatingAfterEnd();
+    private final boolean looping;
 
-    enum Impl implements LoopType {
-        LOOP(true),
-        PLAY_ONCE,
-        HOLD_ON_LAST_FRAME;
-
-        private final boolean looping;
-
-        Impl(boolean looping) {
-            this.looping = looping;
-        }
-
-        Impl() {
-            this(false);
-        }
-
-        @Override
-        public boolean isRepeatingAfterEnd() {
-            return this.looping;
-        }
+    LoopType(boolean looping) {
+        this.looping = looping;
     }
 
-    class Serializer implements JsonDeserializer<LoopType> {
+    LoopType() {
+        this(false);
+    }
+
+    public boolean isRepeatingAfterEnd() {
+        return this.looping;
+    }
+
+    static class Serializer implements JsonDeserializer<LoopType> {
         @Override
         public LoopType deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             return fromJson(json);
@@ -41,32 +35,33 @@ public interface LoopType {
 
     static LoopType fromJson(JsonElement json) {
         if (json == null || !json.isJsonPrimitive()) {
-            return Impl.PLAY_ONCE;
+            return PLAY_ONCE;
         }
 
         JsonPrimitive primitive = json.getAsJsonPrimitive();
 
         if (primitive.isBoolean()) {
-            return primitive.getAsBoolean() ? Impl.LOOP : Impl.PLAY_ONCE;
+            return primitive.getAsBoolean() ? LOOP : PLAY_ONCE;
         }
 
         if (primitive.isString()) {
             String string = primitive.getAsString();
 
             if (string.equalsIgnoreCase("false")) {
-                return Impl.PLAY_ONCE;
+                return PLAY_ONCE;
             }
 
             if (string.equalsIgnoreCase("true")) {
-                return Impl.LOOP;
+                return LOOP;
             }
 
             try {
-                return Impl.valueOf(string.toUpperCase(Locale.ROOT));
-            } catch (Exception ex) {
+                return valueOf(string.toUpperCase(Locale.ROOT));
+            } catch (Exception ignored) {
+                // nothing
             }
         }
 
-        return Impl.PLAY_ONCE;
+        return PLAY_ONCE;
     }
 }

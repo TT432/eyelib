@@ -5,25 +5,25 @@ import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.molang.math.MolangVariable;
 
 public class MolangAssignment extends MolangExpression {
-	public MolangVariable variable;
-	public MolangValue expression;
+    public MolangVariable variable;
+    public MolangValue expression;
 
-	public MolangAssignment(MolangVariable variable, MolangValue expression) {
-		this.variable = variable;
-		this.expression = expression;
-	}
+    public MolangAssignment(MolangVariable variable, MolangValue expression) {
+        this.variable = variable;
+        this.expression = expression;
+    }
 
-	@Override
-	public double evaluate(MolangVariableScope scope) {
-		double value = this.expression.evaluate(scope);
+    @Override
+    public double evaluate(MolangVariableScope scope) {
+        double value = this.expression.evaluate(scope);
 
-		scope.setValue(variable.getName(), () -> value);
+        scope.setValue(variable.getName(), () -> value);
 
-		return value;
-	}
+        return value;
+    }
 
-	@Override
-	public String toString() {
-		return this.variable.getName() + " = " + this.expression.toString();
-	}
+    @Override
+    public String toString() {
+        return this.variable.getName() + " = " + this.expression.toString();
+    }
 }

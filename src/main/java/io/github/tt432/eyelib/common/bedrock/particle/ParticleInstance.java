@@ -68,9 +68,11 @@ public class ParticleInstance {
 
     @Nullable
     ParticleMotionComponent motionComponent;
-    @Getter@Setter
+    @Getter
+    @Setter
     Vec3 speedVec = new Vec3(0, 0, 0);
-    @Getter@Setter
+    @Getter
+    @Setter
     double lastEvaluateAge;
 
     @Nullable

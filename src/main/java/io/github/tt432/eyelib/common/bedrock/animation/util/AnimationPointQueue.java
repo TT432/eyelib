@@ -18,12 +18,12 @@ import java.util.LinkedList;
  */
 public class AnimationPointQueue extends LinkedList<AnimationPointQueue.LerpInfo> {
 
-	@Serial
-	private static final long serialVersionUID = 5472797438476621193L;
+    @Serial
+    private static final long serialVersionUID = 5472797438476621193L;
 
-	@RequiredArgsConstructor
-	@Data
-	public static class LerpInfo {
-		final Vector3d value;
-	}
+    @RequiredArgsConstructor
+    @Data
+    public static class LerpInfo {
+        final Vector3d value;
+    }
 }
