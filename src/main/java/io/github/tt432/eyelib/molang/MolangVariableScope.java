@@ -85,6 +85,12 @@ public class MolangVariableScope {
         return variables.computeIfAbsent(name, defaultValue);
     }
 
+    public MolangVariableScope copyVariable() {
+        MolangVariableScope copy = new MolangVariableScope();
+        copy.variables.putAll(variables);
+        return copy;
+    }
+
     public MolangVariableScope copy() {
         MolangVariableScope copy = new MolangVariableScope();
         copy.variables.putAll(variables);

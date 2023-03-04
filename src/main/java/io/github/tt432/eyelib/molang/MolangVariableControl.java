@@ -8,6 +8,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.client.MinecraftForgeClient;
 
 import java.util.function.Predicate;
 import java.util.function.ToDoubleFunction;
@@ -35,6 +36,16 @@ public class MolangVariableControl {
         scope.setVariable("query.is_on_ground", s -> entityBool(s, Entity::isOnGround));
         scope.setVariable("query.is_in_water", s -> entityBool(s, Entity::isInWater));
         scope.setVariable("query.is_in_water_or_rain", s -> entityBool(s, Entity::isInWaterRainOrBubble));
+
+        scope.setVariable("query.yaw", s -> entityDouble(s, e -> e.getViewYRot(MinecraftForgeClient.getPartialTick())));
+        scope.setVariable("query.yaw_speed", s -> entityDouble(s, e ->
+                e.getViewYRot(MinecraftForgeClient.getPartialTick()) -
+                        e.getViewYRot(MinecraftForgeClient.getPartialTick() - 0.1F)));
+        scope.setVariable("query.pitch", s -> entityDouble(s, e ->
+                e.getViewXRot(MinecraftForgeClient.getPartialTick())));
+
+        scope.setVariable("query.sitting", s -> entityBool(s, e -> e.isPassenger() &&
+                (e.getVehicle() != null && e.getVehicle().shouldRiderSit())));
     }
 
     public static void living(MolangVariableScope scope) {
@@ -51,6 +62,30 @@ public class MolangVariableControl {
             return Mth.sqrt((float) ((velocity.x * velocity.x) + (velocity.z * velocity.z))) * 20;
         }));
         scope.setVariable("query.vertical_speed", s -> livingDouble(s, living -> living.getDeltaMovement().y * 20));
+
+        scope.setVariable("query.head_yaw", s -> livingDouble(s, LivingEntity::getYHeadRot));
+        scope.setVariable("query.head_yaw_speed", s -> livingDouble(s, e -> (e.getYHeadRot() - e.yHeadRotO) / 20));
+        scope.setVariable("query.body_yaw", s -> livingDouble(s, e -> e.yBodyRot));
+        scope.setVariable("query.body_yaw_speed", s -> livingDouble(s, e -> (e.yBodyRot - e.yBodyRotO) / 20));
+        scope.setVariable("query.head_yaw_offset", s -> livingDouble(s, living -> {
+            float partialTick = MinecraftForgeClient.getPartialTick();
+            float bRot = Mth.rotLerp(partialTick, living.yBodyRotO, living.yBodyRot);
+            float hRot = Mth.rotLerp(partialTick, living.yHeadRotO, living.yHeadRot);
+            float netHeadYaw = hRot - bRot;
+
+            if (s.getAsBool("query.sitting") && living.getVehicle() instanceof LivingEntity) {
+                float clampedHeadYaw = Mth.clamp(Mth.wrapDegrees(netHeadYaw), -85, 85);
+                bRot = hRot - clampedHeadYaw;
+
+                if (clampedHeadYaw * clampedHeadYaw > 2500f)
+                    bRot += clampedHeadYaw * 0.2f;
+
+                netHeadYaw = hRot - bRot;
+            }
+            return -netHeadYaw;
+        }));
+
+        scope.setVariable("query.baby", s -> livingBool(s, LivingEntity::isBaby));
     }
 
     static Double entityDouble(MolangVariableScope scope, ToDoubleFunction<Entity> func) {

@@ -1,9 +1,14 @@
 package io.github.tt432.eyelib.common.bedrock.animation.manager;
 
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
+import io.github.tt432.eyelib.molang.MolangParser;
+import io.github.tt432.eyelib.molang.MolangVariableScope;
+import lombok.Getter;
 
 public abstract class AnimationFactory {
     protected final Animatable animatable;
+    @Getter
+    protected MolangVariableScope scope;
 
     /**
      * use {@code GeckolibUtil#createFactory(IAnimatable)}
@@ -12,6 +17,7 @@ public abstract class AnimationFactory {
      */
     protected AnimationFactory(Animatable animatable) {
         this.animatable = animatable;
+        scope = MolangParser.getGlobalScope().copyVariable();
     }
 
     /**

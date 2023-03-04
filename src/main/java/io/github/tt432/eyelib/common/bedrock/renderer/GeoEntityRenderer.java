@@ -17,6 +17,8 @@ import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.model.AnimatedGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
+import io.github.tt432.eyelib.molang.MolangParser;
+import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.util.AnimationUtils;
 import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.RenderUtils;
@@ -106,6 +108,8 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
                        int packedLight) {
         setCurrentModelRenderCycle(RenderCycle.RenderCycleImpl.INITIAL);
         poseStack.pushPose();
+        MolangVariableScope scope = animatable.getFactory().getScope();
+        MolangParser.scopeStack.push(scope);
 
         if (animatable instanceof Mob mob) {
             Entity leashHolder = mob.getLeashHolder();
@@ -205,6 +209,8 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
         poseStack.popPose();
 
         super.render(animatable, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+
+        MolangParser.scopeStack.pop();
     }
 
     @Override
