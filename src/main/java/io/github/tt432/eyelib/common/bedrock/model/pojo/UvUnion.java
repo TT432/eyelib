@@ -6,10 +6,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 
+import java.io.Serializable;
 import java.lang.reflect.Type;
 
 @JsonAdapter(UvUnion.Serializer.class)
-public class UvUnion {
+public class UvUnion implements Serializable {
     public double[] boxUVCoords;
     public UvFaces faceUV;
     public boolean isBoxUV;

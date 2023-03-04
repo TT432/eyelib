@@ -57,21 +57,13 @@ public class EyelibSoundManager {
                                           Executor backgroundExecutor, Executor gameExecutor) {
         Map<ResourceLocation, Format> result = new HashMap<>();
 
-        return CompletableFuture.allOf(
-                        CompletableFuture
-                                .supplyAsync(() -> WAV.listMatchingResources(resourceManager)
-                                        .stream().map(WAV::fileToId), backgroundExecutor)
-                                .thenApplyAsync(wavIdList -> {
-                                    wavIdList.forEach(rl -> result.put(rl, Format.WAV));
-                                    return null;
-                                }, backgroundExecutor),
-                        CompletableFuture
-                                .supplyAsync(() -> OGG.listMatchingResources(resourceManager)
-                                        .stream().map(OGG::fileToId), backgroundExecutor)
-                                .thenApplyAsync(oggIdList -> {
-                                    oggIdList.forEach(rl -> result.put(rl, Format.OGG));
-                                    return null;
-                                }, backgroundExecutor))
+        return CompletableFuture.supplyAsync(() -> {
+                    WAV.listMatchingResources(resourceManager)
+                            .stream().map(WAV::fileToId).forEach(rl -> result.put(rl, Format.WAV));
+                    OGG.listMatchingResources(resourceManager)
+                            .stream().map(OGG::fileToId).forEach(rl -> result.put(rl, Format.OGG));
+                    return null;
+                }, backgroundExecutor)
                 .thenCompose(stage::wait)
                 .thenAcceptAsync(empty -> this.files = result, gameExecutor);
     }

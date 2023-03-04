@@ -3,12 +3,14 @@ package io.github.tt432.eyelib.common.bedrock.model.pojo;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * ***EXPERIMENTAL*** A triangle or quad mesh object. Can be used in conjunction
  * with cubes and texture geometry.
  */
 @Data
-public class PolyMesh {
+public class PolyMesh implements Serializable {
     /**
      * If true, UVs are assumed to be [0-1]. If false, UVs are assumed to be
      * [0-texture_width] and [0-texture_height] respectively.

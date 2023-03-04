@@ -7,9 +7,9 @@ import java.util.Map;
 
 public class RawBoneGroup {
     public Map<String, RawBoneGroup> children = new Object2ObjectOpenHashMap<>();
-    public BoneFile selfBoneFile;
+    public BoneFile selfBone;
 
     public RawBoneGroup(BoneFile boneFile) {
-        this.selfBoneFile = boneFile;
+        this.selfBone = boneFile;
     }
 }

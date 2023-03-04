@@ -35,7 +35,8 @@ public class AnimationFile {
             AnimationFile result = new AnimationFile();
             result.formatVersion = context.deserialize(object.get("format_version"), FormatVersion.class);
             JsonElement animationsJson = object.get("animations");
-            if (!animationsJson.isJsonNull())
+
+            if (animationsJson != null && !animationsJson.isJsonNull())
                 result.animations = context.deserialize(animationsJson,
                         TypeToken.getParameterized(Map.class, String.class, SingleAnimation.class).getType());
             result.animations.forEach((name, animation) -> {

@@ -3,6 +3,8 @@ package io.github.tt432.eyelib.common.bedrock.model.pojo;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * Specifies the UV's for the face that stretches along the x and z axes, and
  * faces the -y axis
@@ -23,7 +25,7 @@ import lombok.Data;
  * faces the -x axis
  */
 @Data
-public class FaceUv {
+public class FaceUv implements Serializable {
     @SerializedName("material_instance")
     private String materialInstance;
     /**

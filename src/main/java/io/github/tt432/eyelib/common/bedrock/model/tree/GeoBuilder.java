@@ -41,7 +41,7 @@ public class GeoBuilder implements IGeoBuilder {
     public GeoBone constructBone(RawBoneGroup bone, ModelProperties properties, GeoBone parent) {
         GeoBone geoBone = new GeoBone();
 
-        BoneFile rawBoneFile = bone.selfBoneFile;
+        BoneFile rawBoneFile = bone.selfBone;
         Vector3f rotation = new Vector3f(VectorUtils.fromArray(rawBoneFile.getRotation()));
         Vector3f pivot = new Vector3f(VectorUtils.fromArray(rawBoneFile.getPivot()));
         rotation.mul(-1, -1, 1);

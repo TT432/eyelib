@@ -2,7 +2,9 @@ package io.github.tt432.eyelib.common.bedrock;
 
 import com.google.gson.annotations.SerializedName;
 
-public enum FormatVersion {
+import java.io.Serializable;
+
+public enum FormatVersion implements Serializable {
     /**
      * 模型
      */

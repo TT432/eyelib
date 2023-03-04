@@ -8,13 +8,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.lang.reflect.Type;
 
 @JsonAdapter(Locator.Serializer.class)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Locator {
+public class Locator implements Serializable {
     /**
      * Discard scale inherited from parent bone.
      */

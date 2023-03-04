@@ -3,10 +3,11 @@ package io.github.tt432.eyelib.common.bedrock.model.pojo;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Map;
 
 @Data
-public class BoneFile {
+public class BoneFile implements Serializable {
     @SerializedName("bind_pose_rotation")
     private double[] bindPoseRotation;
     /**

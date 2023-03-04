@@ -1,12 +1,13 @@
 package io.github.tt432.eyelib.common.bedrock.model.pojo;
 
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * If not specifying vertex indices, arrays of data must be a list of tris or
  * quads, set by making this property either "tri_list" or "quad_list"
  */
-public enum PolysEnum {
+public enum PolysEnum implements Serializable {
     QUAD_LIST, TRI_LIST;
 
     public String toValue() {

@@ -3,8 +3,10 @@ package io.github.tt432.eyelib.common.bedrock.model.pojo;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class TextureMesh {
+public class TextureMesh implements Serializable {
     /**
      * The pivot point on the texture (in *texture space* not entity or bone space)
      * of the texture geometry

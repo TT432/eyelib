@@ -2,8 +2,10 @@ package io.github.tt432.eyelib.common.bedrock.model.pojo;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class CubeFile {
+public class CubeFile implements Serializable {
     /**
      * Grow this box by this additive amount in all directions (in model space
      * units), this field overrides the bone's inflate field for this cube only.

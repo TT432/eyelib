@@ -7,10 +7,11 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.Type;
 
 @JsonAdapter(PolysUnion.Serializer.class)
-public class PolysUnion {
+public class PolysUnion implements Serializable {
     public double[][][] doubleArrayArrayArrayValue;
     public PolysEnum enumValue;
 

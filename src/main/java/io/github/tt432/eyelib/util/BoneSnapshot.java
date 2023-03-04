@@ -21,7 +21,6 @@ public class BoneSnapshot {
         scaleValueY = modelRenderer.getScaleY();
         scaleValueZ = modelRenderer.getScaleZ();
 
-        this.modelRenderer = modelRenderer;
         this.name = modelRenderer.getName();
     }
 
@@ -37,12 +36,10 @@ public class BoneSnapshot {
         rotationValueX = snapshot.rotationValueX;
         rotationValueY = snapshot.rotationValueY;
         rotationValueZ = snapshot.rotationValueZ;
-        this.modelRenderer = snapshot.modelRenderer;
         this.name = snapshot.name;
     }
 
     public String name;
-    private final Bone modelRenderer;
 
     public float scaleValueX;
     public float scaleValueY;

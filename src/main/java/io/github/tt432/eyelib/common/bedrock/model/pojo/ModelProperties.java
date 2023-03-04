@@ -3,8 +3,10 @@ package io.github.tt432.eyelib.common.bedrock.model.pojo;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class ModelProperties {
+public class ModelProperties implements Serializable {
     private String identifier;
     @SerializedName("preserve_model_pose")
     private boolean preserveModelPose;
