@@ -50,7 +50,9 @@ public class MolangParser {
     }
 
     private MolangParser() {
+        register(new MolangVariable("math.pi", Math.PI));
         register(new MolangVariable("PI", Math.PI));
+        register(new MolangVariable("math.e", Math.E));
         register(new MolangVariable("E", Math.E));
 
         MolangVariableControl.registerAll(globalScope);
@@ -74,14 +76,12 @@ public class MolangParser {
         });
     }
 
-    public MolangValue parse(String expression, MolangVariableScope scope) throws MolangException {
-        return parseSymbols(breakdownChars(breakdown(expression)), scope);
+    public MolangValue parse(String expression) throws MolangException {
+        return parseSymbols(breakdownChars(breakdown(expression)));
     }
 
     public void setValue(String name, DoubleSupplier value) {
-        if (globalScope.containsKey(name)) {
-            globalScope.setValue(name, value);
-        }
+        scopeStack.last().setValue(name, value);
     }
 
     public void setValue(String name, DoubleSupplier value, MolangVariableScope scope) {
@@ -90,7 +90,7 @@ public class MolangParser {
         }
     }
 
-    public MolangVariable getVariable(String name, MolangMultiStatement currentStatement, MolangVariableScope scope) {
+    public MolangVariable getOrCreateVariable(String name, MolangMultiStatement currentStatement) {
         MolangVariable variable;
 
         if (currentStatement != null) {
@@ -100,10 +100,10 @@ public class MolangParser {
                 return variable;
         }
 
-        return getVariable(name, scope);
+        return getOrCreateVariable(name);
     }
 
-    public MolangExpression parseJson(JsonElement element, MolangVariableScope scope) throws MolangException {
+    public MolangExpression parseJson(JsonElement element) throws MolangException {
         if (!element.isJsonPrimitive())
             return ZERO;
 
@@ -122,49 +122,27 @@ public class MolangParser {
             try {
                 return new MolangResult(new Constant(Double.parseDouble(string)));
             } catch (NumberFormatException ex) {
-                return parseExpression(string, scope);
+                return parseExpression(string);
             }
         }
 
         return ZERO;
     }
 
-    String toLower(String s) {
-        boolean inSubString = false;
-
-        StringBuilder result = new StringBuilder();
-
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-
-            if (c == '\'' || c == '"') {
-                inSubString = !inSubString;
-            }
-
-            if (!inSubString) {
-                result.append(Character.toLowerCase(c));
-            } else {
-                result.append(c);
-            }
-        }
-
-        return result.toString();
-    }
-
     /**
      * Parse a molang expression
      */
-    public MolangExpression parseExpression(String expression, MolangVariableScope scope) throws MolangException {
+    public MolangExpression parseExpression(String expression) throws MolangException {
         MolangMultiStatement result = null;
 
-        for (String split : toLower(expression).trim().split(";")) {
+        for (String split : expression.trim().split(";")) {
             String trimmed = split.trim();
 
             if (!trimmed.isEmpty()) {
                 if (result == null)
                     result = new MolangMultiStatement();
 
-                result.expressions.add(parseOneLine(trimmed, result, scope));
+                result.expressions.add(parseOneLine(trimmed, result));
             }
         }
 
@@ -177,17 +155,13 @@ public class MolangParser {
     /**
      * Parse a single Molang statement
      */
-    protected MolangExpression parseOneLine(String expression, MolangMultiStatement currentStatement, MolangVariableScope scope) throws MolangException {
+    protected MolangExpression parseOneLine(String expression, MolangMultiStatement currentStatement) throws MolangException {
         if (expression.startsWith(RETURN)) {
             try {
-                return new MolangResult(parse(expression.substring(RETURN.length()), scope)).addReturn();
+                return new MolangResult(parse(expression.substring(RETURN.length()))).addReturn();
             } catch (Exception e) {
                 throw new MolangException("Couldn't parse return '" + expression + "' expression!");
             }
-        }
-
-        if (expression.startsWith("eyelib.add_glow")) {
-            int a = 1;
         }
 
         try {
@@ -198,28 +172,28 @@ public class MolangParser {
                 symbols = symbols.subList(2, symbols.size());
                 MolangVariable variable;
 
-                if (!globalScope.containsKey(name) && !currentStatement.locals.containsKey(name)) {
+                if (!scopeStack.last().containsKey(name) && !currentStatement.locals.containsKey(name)) {
                     variable = new MolangVariable(name, 0);
                     currentStatement.locals.put(name, variable);
                 } else {
-                    variable = getVariable(name, currentStatement, scope);
+                    variable = getOrCreateVariable(name, currentStatement);
                 }
 
-                return new MolangAssignment(variable, parseSymbolsMolang(symbols, scope));
+                return new MolangAssignment(variable, parseSymbolsMolang(symbols));
             }
 
-            return new MolangResult(parseSymbolsMolang(symbols, scope));
+            return new MolangResult(parseSymbolsMolang(symbols));
         } catch (Exception e) {
             throw new MolangException("Couldn't parse '" + expression + "' expression!");
         }
     }
 
     /**
-     * Wrapper around {@link #parseSymbols(List, MolangVariableScope)} to throw {@link MolangException}
+     * Wrapper around {@link #parseSymbols(List)} to throw {@link MolangException}
      */
-    private MolangValue parseSymbolsMolang(List<Object> symbols, MolangVariableScope scope) throws MolangException {
+    private MolangValue parseSymbolsMolang(List<Object> symbols) throws MolangException {
         try {
-            return this.parseSymbols(symbols, scope);
+            return this.parseSymbols(symbols);
         } catch (Exception e) {
             e.printStackTrace();
 
@@ -256,8 +230,52 @@ public class MolangParser {
         StringBuilder buffer = new StringBuilder();
         int len = chars.length;
 
+        boolean strStart1 = false;
+        boolean strStart2 = false;
+
         for (int i = 0; i < len; i++) {
             String s = chars[i];
+
+            if (strStart2) {
+                if (s.equals("'")) {
+                    strStart2 = false;
+                }
+
+                buffer.append(s);
+                continue;
+            }
+
+            if (s.equals("'") && !strStart1) {
+                if (buffer.length() > 0) {
+                    symbols.add(buffer.toString());
+                    buffer = new StringBuilder();
+                }
+
+                buffer.append(s);
+                strStart2 = true;
+                continue;
+            }
+
+            if (strStart1) {
+                if (s.equals("\"")) {
+                    strStart1 = false;
+                }
+
+                buffer.append(s);
+                continue;
+            }
+
+            if (s.equals("\"")) {
+                if (buffer.length() > 0) {
+                    symbols.add(buffer.toString());
+                    buffer = new StringBuilder();
+                }
+
+                buffer.append(s);
+                strStart1 = true;
+                continue;
+            }
+
             boolean longOperator = (i > 0 && isOperator(chars[i - 1] + s));
 
             if (isOperator(s) || longOperator || s.equals(",")) {
@@ -328,8 +346,8 @@ public class MolangParser {
         return symbols;
     }
 
-    public MolangValue parseSymbols(List<Object> symbols, MolangVariableScope scope) throws MolangException {
-        MolangValue ternary = tryTernary(symbols, scope);
+    public MolangValue parseSymbols(List<Object> symbols) throws MolangException {
+        MolangValue ternary = tryTernary(symbols);
 
         if (ternary != null) {
             return ternary;
@@ -338,7 +356,7 @@ public class MolangParser {
         int size = symbols.size();
 
         if (size == 1) {
-            return valueFromObject(symbols.get(0), scope);
+            return valueFromObject(symbols.get(0));
         }
 
         if (size == 2) {
@@ -346,7 +364,7 @@ public class MolangParser {
             Object second = symbols.get(1);
 
             if ((isVariable(first) || first.equals("-")) && second instanceof List list) {
-                return createFunction((String) first, list, scope);
+                return createFunction((String) first, list);
             }
         }
 
@@ -361,8 +379,8 @@ public class MolangParser {
                 Operation right = operationForOperator((String) symbols.get(op));
 
                 if (right.value > left.value) {
-                    MolangValue leftValue = parseSymbols(symbols.subList(0, leftOp), scope);
-                    MolangValue rightValue = parseSymbols(symbols.subList(leftOp + 1, size), scope);
+                    MolangValue leftValue = parseSymbols(symbols.subList(0, leftOp));
+                    MolangValue rightValue = parseSymbols(symbols.subList(leftOp + 1, size));
 
                     return new Operator(left, leftValue, rightValue);
                 }
@@ -371,14 +389,14 @@ public class MolangParser {
                     Operation initial = operationForOperator((String) symbols.get(lastOp));
 
                     if (initial.value < left.value) {
-                        MolangValue molangValue1 = parseSymbols(symbols.subList(0, lastOp), scope);
-                        MolangValue molangValue2 = parseSymbols(symbols.subList(lastOp + 1, size), scope);
+                        MolangValue molangValue1 = parseSymbols(symbols.subList(0, lastOp));
+                        MolangValue molangValue2 = parseSymbols(symbols.subList(lastOp + 1, size));
 
                         return new Operator(initial, molangValue1, molangValue2);
                     }
 
-                    MolangValue leftValue = parseSymbols(symbols.subList(0, op), scope);
-                    MolangValue rightValue = parseSymbols(symbols.subList(op + 1, size), scope);
+                    MolangValue leftValue = parseSymbols(symbols.subList(0, op));
+                    MolangValue rightValue = parseSymbols(symbols.subList(op + 1, size));
 
                     return new Operator(right, leftValue, rightValue);
                 }
@@ -389,8 +407,8 @@ public class MolangParser {
 
         Operation operation = operationForOperator((String) symbols.get(lastOp));
 
-        return new Operator(operation, parseSymbols(symbols.subList(0, lastOp), scope),
-                parseSymbols(symbols.subList(lastOp + 1, size), scope));
+        return new Operator(operation, parseSymbols(symbols.subList(0, lastOp)),
+                parseSymbols(symbols.subList(lastOp + 1, size)));
     }
 
     protected int seekLastOperator(List<Object> symbols) {
@@ -432,7 +450,7 @@ public class MolangParser {
      * @return 三元运算符
      * @throws MolangException 解析错误
      */
-    protected MolangValue tryTernary(List<Object> symbols, MolangVariableScope scope) throws MolangException {
+    protected MolangValue tryTernary(List<Object> symbols) throws MolangException {
         int question = -1;
         int questions = 0;
         int colon = -1;
@@ -460,33 +478,36 @@ public class MolangParser {
         }
 
         if (questions == colons && question > 0 && question + 1 < colon && colon < size - 1) {
-            return new Ternary(parseSymbols(symbols.subList(0, question), scope),
-                    parseSymbols(symbols.subList(question + 1, colon), scope),
-                    parseSymbols(symbols.subList(colon + 1, size), scope));
+            return new Ternary(parseSymbols(symbols.subList(0, question)),
+                    parseSymbols(symbols.subList(question + 1, colon)),
+                    parseSymbols(symbols.subList(colon + 1, size)));
         }
 
         return null;
     }
 
-    protected MolangValue createFunction(String first, List<Object> args, MolangVariableScope scope) throws MolangException {
+    protected MolangValue createFunction(String first, List<Object> args) throws MolangException {
         if (first.equals("!")) {
-            return new Negate(parseSymbols(args, scope));
+            return new Negate(parseSymbols(args));
         }
 
         if (first.startsWith("!") && first.length() > 1) {
-            return new Negate(createFunction(first.substring(1), args, scope));
+            return new Negate(createFunction(first.substring(1), args));
         }
 
         if (first.equals("-")) {
-            return new Negative(new Group(parseSymbols(args, scope)));
+            return new Negative(new Group(parseSymbols(args)));
         }
 
         if (first.startsWith("-") && first.length() > 1) {
-            return new Negative(createFunction(first.substring(1), args, scope));
+            return new Negative(createFunction(first.substring(1), args));
         }
 
         if (!functions.containsKey(first)) {
-            throw new MolangException("Function '" + first + "' couldn't be found!");
+            first = first.toLowerCase();
+
+            if (!functions.containsKey(first))
+                throw new MolangException("Function '" + first + "' couldn't be found!");
         }
 
         List<MolangValue> values = new ArrayList<>();
@@ -499,7 +520,7 @@ public class MolangParser {
             Object o = args.get(i);
 
             if (o.equals(",")) {
-                values.add(parseSymbols(buffer, scope));
+                values.add(parseSymbols(buffer));
                 buffer.clear();
                 continue;
             }
@@ -507,7 +528,7 @@ public class MolangParser {
         }
 
         if (!buffer.isEmpty()) {
-            values.add(parseSymbols(buffer, scope));
+            values.add(parseSymbols(buffer));
         }
 
         try {
@@ -518,10 +539,10 @@ public class MolangParser {
         }
     }
 
-    public MolangValue valueFromObject(Object object, MolangVariableScope scope) throws MolangException {
+    public MolangValue valueFromObject(Object object) throws MolangException {
         if (object instanceof String symbol) {
             if (symbol.startsWith("!")) {
-                return new Negate(valueFromObject(symbol.substring(1), scope));
+                return new Negate(valueFromObject(symbol.substring(1)));
             }
 
             if (isDecimal(symbol))
@@ -533,13 +554,13 @@ public class MolangParser {
             if (isVariable(symbol)) {
                 if (symbol.startsWith("-")) {
                     symbol = symbol.substring(1);
-                    MolangVariable value = getVariable(symbol, scope);
+                    MolangVariable value = getOrCreateVariable(symbol);
 
                     if (value != null) {
                         return new Negative(value);
                     }
                 } else {
-                    MolangValue value = getVariable(symbol, scope);
+                    MolangValue value = getOrCreateVariable(symbol);
 
                     if (value != null) {
                         return value;
@@ -547,26 +568,14 @@ public class MolangParser {
                 }
             }
         } else if (object instanceof List list) {
-            return new Group(parseSymbols(list, scope));
+            return new Group(parseSymbols(list));
         }
 
         throw new MolangException("Given object couldn't be converted to value! " + object);
     }
 
-    public MolangVariable getVariable(String name, MolangVariableScope scope) {
-        if (globalScope.containsKey(name))
-            return globalScope.get(name);
-
-        if (scope != null) {
-            if (scope.containsKey(name))
-                return scope.get(name);
-
-            log.error("can't found variable : {}, add default value", name);
-            return scope.computeIfAbsent(name, v -> new MolangVariable(name, 0));
-        } else {
-            log.error("can't found variable : {}, add default value", name);
-            return globalScope.computeIfAbsent(name, v -> new MolangVariable(name, 0));
-        }
+    public MolangVariable getOrCreateVariable(String name) {
+        return scopeStack.last().getOrCreateVariable(name);
     }
 
     protected Operation operationForOperator(String op) throws MolangException {

@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.common.bedrock.FormatVersion;
 import io.github.tt432.eyelib.common.bedrock.particle.ParticleVariableControl;
 import io.github.tt432.eyelib.molang.MolangParser;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
+import io.github.tt432.eyelib.molang.ScopeStack;
 import lombok.Data;
 
 import java.lang.reflect.Type;
@@ -33,13 +34,14 @@ public class ParticleFile implements JsonDeserializer<ParticleFile> {
         ParticleVariableControl.setParticleVariable(particleFile.scope);
         ParticleVariableControl.setEntityVariable(particleFile.scope);
 
-        try (var a = MolangParser.scopeStack.push(particleFile.scope)) {
-            JsonObject object = json.getAsJsonObject();
+        ScopeStack scopeStack = MolangParser.scopeStack;
+        scopeStack.push(particleFile.scope);
+        JsonObject object = json.getAsJsonObject();
 
-            particleFile.version = context.deserialize(object.get("format_version"), FormatVersion.class);
-            particleFile.effect = context.deserialize(object.get("particle_effect"), ParticleEffect.class);
+        particleFile.version = context.deserialize(object.get("format_version"), FormatVersion.class);
+        particleFile.effect = context.deserialize(object.get("particle_effect"), ParticleEffect.class);
 
-            return particleFile;
-        }
+        scopeStack.pop();
+        return particleFile;
     }
 }

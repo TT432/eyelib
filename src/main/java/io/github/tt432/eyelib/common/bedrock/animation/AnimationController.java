@@ -5,6 +5,7 @@
 
 package io.github.tt432.eyelib.common.bedrock.animation;
 
+import com.mojang.math.Vector3d;
 import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.LoopType;
@@ -12,6 +13,10 @@ import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
 import io.github.tt432.eyelib.api.bedrock.model.Bone;
 import io.github.tt432.eyelib.api.sound.SoundPlayer;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
+import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationEntry;
+import io.github.tt432.eyelib.common.bedrock.animation.control.ParticleControl;
+import io.github.tt432.eyelib.common.bedrock.animation.control.SoundControl;
+import io.github.tt432.eyelib.common.bedrock.animation.control.TimelineControl;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.BoneAnimation;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
@@ -20,11 +25,12 @@ import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationState;
 import io.github.tt432.eyelib.common.bedrock.animation.util.BoneAnimationQueue;
 import io.github.tt432.eyelib.molang.MolangParser;
 import io.github.tt432.eyelib.util.BoneSnapshot;
-import io.github.tt432.eyelib.util.math.easing.EasingType;
-import it.unimi.dsi.fastutil.doubles.Double2DoubleFunction;
+import io.github.tt432.eyelib.util.math.MathE;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import net.minecraft.world.entity.Entity;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -40,71 +46,52 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AnimationController<T extends Animatable> {
     static List<ModelFetcher<?>> modelFetchers = new ObjectArrayList<>();
-    /**
-     * The Entity.
-     */
-    protected T animatable;
-    /**
-     * The animation predicate, is tested in every process call (i.e. every frame)
-     */
-    protected IAnimationPredicate<T> animationPredicate;
-
-    SoundControl soundControl = new SoundControl();
-    ParticleControl particleControl = new ParticleControl();
-    TimelineControl timelineControl = new TimelineControl();
-
-    /**
-     * The name of the animation controller
-     */
-    private final String name;
-
-    protected AnimationState animationState = AnimationState.STOPPED;
-
-    /**
-     * How long it takes to transition between animations
-     */
-    public double transitionLengthTicks;
-
-    public boolean isJustStarting = false;
 
     public static void addModelFetcher(ModelFetcher<?> fetcher) {
         modelFetchers.add(fetcher);
     }
 
     public static void removeModelFetcher(ModelFetcher<?> fetcher) {
-        Objects.requireNonNull(fetcher);
+        if (fetcher == null)
+            return;
+
         modelFetchers.remove(fetcher);
     }
 
+    SoundControl soundControl = new SoundControl();
+    ParticleControl particleControl = new ParticleControl();
+    TimelineControl timelineControl = new TimelineControl();
+    @Getter
+    private final String name;
+    private double transitionStartTicks;
     /**
-     * An AnimationPredicate is run every render frame for ever AnimationController.
-     * The "test" method is where you should change animations, stop animations,
-     * restart, etc.
+     * How long it takes to transition between animations
      */
-    @FunctionalInterface
-    public interface IAnimationPredicate<P extends Animatable> {
-        /**
-         * An AnimationPredicate is run every render frame for ever AnimationController.
-         * The "test" method is where you should change animations, stop animations,
-         * restart, etc.
-         *
-         * @return CONTINUE if the animation should continue, STOP if it should stop.
-         */
-        PlayState test(AnimationEvent<P> event);
-    }
+    private final double transitionLengthTicks;
+    private boolean justStopped = false;
+    private double currTick;
+    private boolean needNextAnimation;
+    private boolean needStopAnimation;
+    private double tickOffset;
 
-    private final HashMap<String, BoneAnimationQueue> boneAnimationQueues = new HashMap<>();
-    public double tickOffset;
+    protected T animatable;
+    protected AnimationPredicate<T> animationPredicate;
+    @Getter
+    protected AnimationState animationState = AnimationState.STOPPED;
+    @Getter
+    private final Map<String, BoneAnimationQueue> boneAnimationQueues = new HashMap<>();
     protected Queue<SingleAnimation> animationQueue = new LinkedList<>();
+    protected SingleAnimation preAnimation;
+    @Getter
     protected SingleAnimation currentAnimation;
+    @NotNull
     protected AnimationBuilder currentAnimationBuilder = new AnimationBuilder();
     protected boolean shouldResetTick = false;
-    private final HashMap<String, BoneSnapshot> boneSnapshots = new HashMap<>();
-    private boolean justStopped = false;
     protected boolean justStartedTransition = false;
-    public Double2DoubleFunction customEasingMethod;
     protected boolean needsAnimationReload = false;
-    public double animationSpeed = 1D;
+    @Getter
+    @Setter
+    protected double animationSpeed = 1D;
 
     /**
      * This method sets the current animation with an animation builder. You can run
@@ -113,49 +100,51 @@ public class AnimationController<T extends Animatable> {
      * animation states.
      */
     public void setAnimation(AnimationBuilder builder) {
+        if (builder == null) {
+            needStopAnimation = true;
+            return;
+        }
+
         AnimatableModel<T> model = getModel(this.animatable);
-        if (model != null) {
-            if (builder == null || builder.getRawAnimationList().isEmpty()) {
-                this.animationState = AnimationState.STOPPED;
-            } else if (!builder.getRawAnimationList().equals(this.currentAnimationBuilder.getRawAnimationList())
-                    || this.needsAnimationReload) {
-                AtomicBoolean encounteredError = new AtomicBoolean(false);
-                // Convert the list of animation names to the actual list, keeping track of the
-                // loop boolean along the way
-                LinkedList<SingleAnimation> animations = builder.getRawAnimationList().stream().map(rawAnimation -> {
-                    SingleAnimation animation = model.getAnimation(rawAnimation.animationName, animatable);
 
-                    if (animation == null) {
-                        log.error("Could not load animation: {}. Is it missing?", rawAnimation.animationName);
-                        encounteredError.set(true);
-                    }
+        if (model == null) return;
 
-                    if (animation != null && rawAnimation.loopType != null)
-                        animation.setLoop(rawAnimation.loopType);
+        List<AnimationEntry> rawAnimList = builder.getRawAnimationList();
 
-                    return animation;
-                }).collect(Collectors.toCollection(LinkedList::new));
+        if (rawAnimList.isEmpty()) {
+            this.animationState = AnimationState.STOPPED;
+        }
 
-                if (encounteredError.get())
-                    return;
+        if (!rawAnimList.equals(this.currentAnimationBuilder.getRawAnimationList()) || this.needsAnimationReload) {
+            AtomicBoolean error = new AtomicBoolean(false);
+            // Convert the list of animation names to the actual list, keeping track of the
+            // loop boolean along the way
+            LinkedList<SingleAnimation> animations = rawAnimList.stream().map(rawAnimation -> {
+                SingleAnimation animation = model.getAnimation(rawAnimation.animationName, animatable);
 
-                this.animationQueue = animations;
-                this.currentAnimationBuilder = builder;
-                this.shouldResetTick = true; // Reset the adjusted tick to 0 on next animation process call
-                this.animationState = AnimationState.TRANSITIONING;
-                this.justStartedTransition = true;
-                this.needsAnimationReload = false;
-            }
+                if (animation == null) {
+                    log.error("Could not load animation: {}. Is it missing?", rawAnimation.animationName);
+                    error.set(true);
+                    return null;
+                }
+
+                if (rawAnimation.loopType != null)
+                    animation.setLoop(rawAnimation.loopType);
+
+                return animation;
+            }).collect(Collectors.toCollection(LinkedList::new));
+
+            if (error.get())
+                return;
+
+            this.animationQueue = animations;
+            this.currentAnimationBuilder = builder;
+            this.needNextAnimation = true;
+            this.needsAnimationReload = false;
         }
     }
 
     /**
-     * By default Geckolib uses the easing types of every keyframe. If you want to
-     * override that for an entire AnimationController, change this value.
-     */
-    public EasingType easingType = EasingType.NONE;
-
-    /**
      * Instantiates a new Animation controller. Each animation controller can run
      * one animation at a time. You can have several animation controllers for each
      * entity, i.e. one animation to control the entity's size, one to control
@@ -168,102 +157,11 @@ public class AnimationController<T extends Animatable> {
      * @param transitionLengthTicks How long it takes to transition between
      *                              animations (IN TICKS!!)
      */
-    public AnimationController(T animatable, String name, float transitionLengthTicks,
-                               IAnimationPredicate<T> animationPredicate) {
+    public AnimationController(T animatable, String name, float transitionLengthTicks, AnimationPredicate<T> predicate) {
         this.animatable = animatable;
         this.name = name;
         this.transitionLengthTicks = transitionLengthTicks;
-        this.animationPredicate = animationPredicate;
-        this.tickOffset = 0.0d;
-    }
-
-    /**
-     * Instantiates a new Animation controller. Each animation controller can run
-     * one animation at a time. You can have several animation controllers for each
-     * entity, i.e. one animation to control the entity's size, one to control
-     * movement, attacks, etc.
-     *
-     * @param animatable            The entity
-     * @param name                  Name of the animation controller
-     *                              (move_controller, size_controller,
-     *                              attack_controller, etc.)
-     * @param transitionLengthTicks How long it takes to transition between
-     *                              animations (IN TICKS!!)
-     * @param easingtype            The method of easing to use. The other
-     *                              constructor defaults to no easing.
-     */
-    public AnimationController(T animatable, String name, float transitionLengthTicks, EasingType easingtype,
-                               IAnimationPredicate<T> animationPredicate) {
-        this.animatable = animatable;
-        this.name = name;
-        this.transitionLengthTicks = transitionLengthTicks;
-        this.easingType = easingtype;
-        this.animationPredicate = animationPredicate;
-        this.tickOffset = 0.0d;
-    }
-
-    /**
-     * Instantiates a new Animation controller. Each animation controller can run
-     * one animation at a time. You can have several animation controllers for each
-     * entity, i.e. one animation to control the entity's size, one to control
-     * movement, attacks, etc.
-     *
-     * @param animatable            The entity
-     * @param name                  Name of the animation controller
-     *                              (move_controller, size_controller,
-     *                              attack_controller, etc.)
-     * @param transitionLengthTicks How long it takes to transition between
-     *                              animations (IN TICKS!!)
-     * @param customEasingMethod    If you want to use an easing method that's not
-     *                              included in the EasingType enum, pass your
-     *                              method into here. The parameter that's passed in
-     *                              will be a number between 0 and 1. Return a
-     *                              number also within 0 and 1. Take a look at
-     */
-    public AnimationController(T animatable, String name, float transitionLengthTicks,
-                               Double2DoubleFunction customEasingMethod, IAnimationPredicate<T> animationPredicate) {
-        this.animatable = animatable;
-        this.name = name;
-        this.transitionLengthTicks = transitionLengthTicks;
-        this.customEasingMethod = customEasingMethod;
-        this.easingType = EasingType.CUSTOM;
-        this.animationPredicate = animationPredicate;
-        this.tickOffset = 0.0d;
-    }
-
-    /**
-     * Gets the controller's name.
-     *
-     * @return the name
-     */
-    public String getName() {
-        return this.name;
-    }
-
-    /**
-     * Gets the current animation. Can be null
-     *
-     * @return the current animation
-     */
-
-    public SingleAnimation getCurrentAnimation() {
-        return this.currentAnimation;
-    }
-
-    /**
-     * Returns the current state of this animation controller.
-     */
-    public AnimationState getAnimationState() {
-        return this.animationState;
-    }
-
-    /**
-     * Gets the current animation's bone animation queues.
-     *
-     * @return the bone animation queues
-     */
-    public Map<String, BoneAnimationQueue> getBoneAnimationQueues() {
-        return this.boneAnimationQueues;
+        this.animationPredicate = predicate;
     }
 
     /**
@@ -274,11 +172,10 @@ public class AnimationController<T extends Animatable> {
      * @param event             The animation test event
      * @param modelRendererList The list of all AnimatedModelRender's
      */
-    public void process(final double tick, AnimationEvent<T> event, List<Bone> modelRendererList, MolangParser parser,
-                        boolean crashWhenCantFindBone) {
-        SoundPlayer player = getSoundPlayer(event);
+    public void process(final double tick, AnimationEvent<T> event, List<Bone> modelRendererList) {
+        SoundPlayer currPlayer = getSoundPlayer(event);
 
-        parser.setValue("query.life_time", () -> tick / 20);
+        MolangParser.getInstance().setValue("query.life_time", () -> tick / 20);
 
         if (this.currentAnimation != null) {
             AnimatableModel<T> model = getModel(this.animatable);
@@ -294,66 +191,78 @@ public class AnimationController<T extends Animatable> {
             }
         }
 
-        createInitialQueues(modelRendererList);
+        initQueues(modelRendererList);
 
-        double adjustedTick = adjustTick(tick);
+        double adjustedTick = transToRunning(adjustTick(tick), tick);
 
-        // Transition period has ended, reset the tick and set the animation to running
-        if (animationState == AnimationState.TRANSITIONING && adjustedTick >= this.transitionLengthTicks) {
-            this.shouldResetTick = true;
-            this.animationState = AnimationState.RUNNING;
+        // This tests the animation predicate
+        PlayState playState = this.animationPredicate.test(event);
+
+        if ((playState == PlayState.STOP ||
+                (this.currentAnimation == null && this.animationQueue.isEmpty()) ||
+                needStopAnimation) &&
+                animationState == AnimationState.RUNNING) {
+            stopAnimation(currPlayer, adjustedTick);
             adjustedTick = adjustTick(tick);
         }
 
-        assert adjustedTick >= 0 : "GeckoLib: Tick was less than zero";
-
-        // This tests the animation predicate
-        PlayState playState = this.testAnimationPredicate(event);
-
-        if (playState == PlayState.STOP || (this.currentAnimation == null && this.animationQueue.isEmpty())) {
-            // The animation should transition to the model's initial state
-            this.animationState = AnimationState.STOPPED;
-            this.justStopped = true;
-
-            stopControls(player);
-
-            return;
-        }
+        needStopAnimation = false;
 
         if (this.justStartedTransition && (this.shouldResetTick || this.justStopped)) {
             this.justStopped = false;
             adjustedTick = adjustTick(tick);
-        } else if (this.currentAnimation == null) {
-            this.shouldResetTick = true;
-            this.animationState = AnimationState.TRANSITIONING;
-            this.justStartedTransition = true;
-            this.needsAnimationReload = false;
-            adjustedTick = adjustTick(tick);
-        } else if (this.animationState != AnimationState.TRANSITIONING) {
-            this.animationState = AnimationState.RUNNING;
         }
 
-        // Handle transitioning to a different animation (or just starting one)
-        if (this.animationState == AnimationState.TRANSITIONING) {
-            // Just started transitioning, so set the current animation to the first one
-            if (adjustedTick == 0 || this.isJustStarting) {
-                this.justStartedTransition = false;
-                nextAnimation(player);
-            }
+        if (needNextAnimation) {
+            needNextAnimation = false;
+            nextAnimation(currPlayer, tick);
+            adjustedTick = adjustTick(tick);
+        }
 
-            if (this.currentAnimation != null) {
-                setAnimTime(parser, 0);
+        if (animationState != AnimationState.STOPPED)
+            processCurrentAnimation(adjustedTick, tick, event);
+    }
 
-                processCurrentAnimation(adjustedTick, tick, parser, crashWhenCantFindBone, event);
-            }
-        } else if (getAnimationState() == AnimationState.RUNNING) {
-            // Actually run the animation
-            processCurrentAnimation(adjustedTick, tick, parser, crashWhenCantFindBone, event);
+    private void stopAnimation(SoundPlayer currPlayer, double tick) {
+        animationQueue.clear();
+        currentAnimationBuilder = new AnimationBuilder();
+
+        stopControls(currPlayer);
+
+        if (animationState != AnimationState.TRANSITIONING) {
+            nextAnimation(currPlayer, tick);
+            setTransitioning(true, tick);
+            this.needsAnimationReload = false;
         }
     }
 
-    private void setAnimTime(MolangParser parser, final double tick) {
-        parser.setValue("query.anim_time", () -> tick / 20);
+    double transToRunning(double adjustedTick, double tick) {
+        // Transition period has ended, reset the tick and set the animation to running
+        if (animationState == AnimationState.TRANSITIONING && adjustedTick >= this.transitionLengthTicks) {
+            this.shouldResetTick = true;
+
+            if (currentAnimation != null) {
+                this.animationState = AnimationState.RUNNING;
+            } else {
+                this.animationState = AnimationState.STOPPED;
+            }
+
+            return adjustTick(tick);
+        }
+
+        return adjustedTick;
+    }
+
+    void setTransitioning(boolean justStartedTransition, double tick) {
+        this.animationState = AnimationState.TRANSITIONING;
+        if (justStartedTransition)
+            this.justStartedTransition = true;
+        this.shouldResetTick = true;
+        this.transitionStartTicks = tick;
+    }
+
+    private void setAnimTime(final double tick) {
+        MolangParser.getInstance().setValue("query.anim_time", () -> tick / 20);
     }
 
     private AnimatableModel<T> getModel(T animatable) {
@@ -370,28 +279,30 @@ public class AnimationController<T extends Animatable> {
         return null;
     }
 
-    protected PlayState testAnimationPredicate(AnimationEvent<T> event) {
-        return this.animationPredicate.test(event);
-    }
-
     private SoundPlayer getSoundPlayer(AnimationEvent<T> event) {
         return event.getAnimatable() instanceof SoundPlayer sp ? sp : null;
     }
 
-    private void processCurrentAnimation(double tick, double actualTick, MolangParser parser,
-                                         boolean crashWhenCantFindBone, AnimationEvent<T> event) {
+    private void processCurrentAnimation(double tick, double actualTick, AnimationEvent<T> event) {
         SoundPlayer player = getSoundPlayer(event);
 
-        assert currentAnimation != null;
         // Animation has ended
-        if (tick >= this.currentAnimation.getAnimationLength()) {
+        if (currentAnimation != null && tick >= this.currentAnimation.getAnimationLength()) {
             // If the current animation is set to loop, keep it as the current animation and
             // just start over
-            if (!this.currentAnimation.getLoop().isRepeatingAfterEnd()) {
+            if (this.currentAnimation.getLoop().isLooping()) {
+                // Reset the adjusted tick so the next animation starts at tick 0
+                this.shouldResetTick = true;
+                tick = adjustTick(actualTick);
+            } else {
                 // Pull the next animation from the queue
                 SingleAnimation peek = this.animationQueue.peek();
 
                 if (peek == null) {
+                    currentAnimation = null;
+                    animationQueue.clear();
+                    currentAnimationBuilder = new AnimationBuilder();
+
                     // No more animations left, stop the animation controller
                     this.animationState = AnimationState.STOPPED;
                     stopControls(player);
@@ -400,35 +311,34 @@ public class AnimationController<T extends Animatable> {
                 } else {
                     // Otherwise, set the state to transitioning and start transitioning to the next
                     // animation next frame
-                    this.animationState = AnimationState.TRANSITIONING;
-                    this.shouldResetTick = true;
+                    setTransitioning(false, tick);
 
-                    nextAnimation(player);
+                    nextAnimation(player, tick);
                 }
-            } else {
-                // Reset the adjusted tick so the next animation starts at tick 0
-                this.shouldResetTick = true;
-                tick = adjustTick(actualTick);
             }
         }
 
-        setAnimTime(parser, tick);
+        setAnimTime(tick);
+        currTick = tick;
 
         // Loop through every boneanimation in the current animation and process the values
-        processBoneAnimation(currentAnimation.getBones(), tick, crashWhenCantFindBone);
+        if (animationState == AnimationState.TRANSITIONING) {
+            processTransitioning(tick);
+        } else {
+            processBoneAnimation(currentAnimation.getBones(), tick);
+        }
 
-        soundControl.processSoundEffect(player, tick);
-        Entity entity = MolangParser.getCurrentDataSource().get(Entity.class);
-        if (entity != null)
-            particleControl.process(entity, tick);
-        timelineControl.process(tick);
+        AnimatableModel<T> model = getModel(this.animatable);
 
-        if (this.transitionLengthTicks == 0 && shouldResetTick && this.animationState == AnimationState.TRANSITIONING)
-            nextAnimation(player);
+        if (model != null) {
+            model.codeBoneAnimation(this, tick);
+        }
+
+        processControls(player, tick);
     }
 
-    private void processBoneAnimation(@Nullable Map<String, BoneAnimation> boneAnimations, double tick, boolean crashWhenCantFindBone) {
-        if (boneAnimations != null) {
+    private void processBoneAnimation(@Nullable Map<String, BoneAnimation> boneAnimations, double tick) {
+        if (boneAnimations != null && animationState == AnimationState.RUNNING) {
             for (var entry : boneAnimations.entrySet()) {
                 var boneName = entry.getKey();
                 BoneAnimation boneAnim = entry.getValue();
@@ -436,50 +346,136 @@ public class AnimationController<T extends Animatable> {
                 BoneAnimationQueue boneAnimationQueue = boneAnimationQueues.get(boneName);
 
                 if (boneAnimationQueue == null) {
-                    if (crashWhenCantFindBone)
-                        throw new RuntimeException("Could not find bone: " + boneName);
-
                     continue;
                 }
 
                 AnimationData data = MolangParser.getCurrentDataSource().getData();
 
-                if (data != null)
-                    data.putExtraData("anim.current_bone", boneName);
+                data.putExtraData("anim.current_bone", boneName);
 
                 boneAnimationQueue.rotate().push(new AnimationPointQueue.LerpInfo(boneAnim.lerpRotation(tick)));
                 boneAnimationQueue.position().push(new AnimationPointQueue.LerpInfo(boneAnim.lerpPosition(tick)));
                 boneAnimationQueue.scale().push(new AnimationPointQueue.LerpInfo(boneAnim.lerpScale(tick)));
 
-                if (data != null)
-                    data.removeExtraData("anim.current_bone");
+                data.removeExtraData("anim.current_bone");
             }
         }
     }
 
-    private void nextAnimation(@Nullable SoundPlayer player) {
-        if (currentAnimation != null) {
-            stopControls(player);
+    private void processTransitioning(double tick) {
+        AnimationData data = MolangParser.getCurrentDataSource().getData();
+        AnimatableModel<T> model = getModel(animatable);
+
+        if (model != null) {
+            for (Bone bone : model.getAnimationProcessor().getModelRendererList()) {
+                String boneName = bone.getName();
+                data.putExtraData("anim.current_bone", boneName);
+                processBoneAnimationTransitioning(boneName, tick);
+                data.removeExtraData("anim.current_bone");
+            }
+        }
+    }
+
+    void processBoneAnimationTransitioning(String boneName, double tick) {
+        double weight = MathE.getWeight(0, transitionLengthTicks, tick);
+
+        Vector3d[] lerpPoints0 = getLerpPoints(preAnimation, transitionStartTicks, boneName);
+
+        Vector3d lerpR0 = lerpPoints0[0];
+        Vector3d lerpS0 = lerpPoints0[1];
+        Vector3d lerpP0 = lerpPoints0[2];
+
+        Vector3d[] lerpPoints = getLerpPoints(currentAnimation, 0, boneName);
+
+        Vector3d lerpR = lerpPoints[0];
+        Vector3d lerpS = lerpPoints[1];
+        Vector3d lerpP = lerpPoints[2];
+
+        if (lerpR != null && lerpR0 != null) {
+            boneAnimationQueues.get(boneName).rotate().push(new AnimationPointQueue.LerpInfo(
+                    new Vector3d(
+                            MathE.lerp(lerpR0.x, lerpR.x, weight),
+                            MathE.lerp(lerpR0.y, lerpR.y, weight),
+                            MathE.lerp(lerpR0.z, lerpR.z, weight))));
         }
 
+        if (lerpS != null && lerpS0 != null) {
+            boneAnimationQueues.get(boneName).scale().push(new AnimationPointQueue.LerpInfo(
+                    new Vector3d(
+                            MathE.lerp(lerpS0.x, lerpS.x, weight),
+                            MathE.lerp(lerpS0.y, lerpS.y, weight),
+                            MathE.lerp(lerpS0.z, lerpS.z, weight))));
+        }
+
+        if (lerpP != null && lerpP0 != null) {
+            boneAnimationQueues.get(boneName).position().push(new AnimationPointQueue.LerpInfo(
+                    new Vector3d(
+                            MathE.lerp(lerpP0.x, lerpP.x, weight),
+                            MathE.lerp(lerpP0.y, lerpP.y, weight),
+                            MathE.lerp(lerpP0.z, lerpP.z, weight))));
+        }
+    }
+
+    private Vector3d[] getLerpPoints(@Nullable SingleAnimation anim, double tick, String boneName) {
+        Vector3d lerpR0 = null;
+        Vector3d lerpS0 = null;
+        Vector3d lerpP0 = null;
+
+        if (anim != null && anim.getBones() != null) {
+            BoneAnimation other = anim.getBones().get(boneName);
+
+            if (other != null) {
+                lerpR0 = other.lerpRotation(tick);
+                lerpS0 = other.lerpScale(tick);
+                lerpP0 = other.lerpPosition(tick);
+            }
+        }
+
+        AnimatableModel<T> model = getModel(animatable);
+
+        if (model != null && lerpR0 == null && lerpS0 == null && lerpP0 == null) {
+            BoneSnapshot init = model.getBone(boneName).getInitialSnapshot();
+
+            lerpR0 = init.r();
+            lerpS0 = init.s();
+            lerpP0 = init.p();
+        }
+
+        return new Vector3d[]{lerpR0, lerpS0, lerpP0};
+    }
+
+    private void nextAnimation(@Nullable SoundPlayer player, double tick) {
+        stopControls(player);
+
+        preAnimation = currentAnimation;
         currentAnimation = animationQueue.poll();
 
-        if (player != null) {
-            soundControl.init(currentAnimation, player);
+        if (currentAnimation != null) {
+            setTransitioning(true, tick);
+            initControls(player);
         }
+    }
 
+    private void initControls(SoundPlayer player) {
+        soundControl.init(currentAnimation, player);
         particleControl.init(currentAnimation);
         timelineControl.init(currentAnimation);
     }
 
+    private void processControls(SoundPlayer player, double tick) {
+        soundControl.processSoundEffect(player, tick);
+        particleControl.process(tick);
+        timelineControl.process(tick);
+    }
+
     private void stopControls(SoundPlayer player) {
-        soundControl.stop(player);
-        particleControl.stop();
-        timelineControl.stop();
+        soundControl.stop(player, currTick);
+        particleControl.stop(currTick);
+        timelineControl.stop(currTick);
     }
 
     // Helper method to populate all the initial animation point queues
-    private void createInitialQueues(List<Bone> modelRendererList) {
+    private void initQueues(List<Bone> modelRendererList) {
         this.boneAnimationQueues.clear();
 
         for (Bone modelRenderer : modelRendererList) {
@@ -487,13 +483,12 @@ public class AnimationController<T extends Animatable> {
         }
     }
 
-    // Used to reset the "tick" everytime a new animation starts, a transition
-    // starts, or something else of importance happens
+    /**
+     * Used to reset the "tick" everytime a new animation starts, a transition starts, or something else of importance happens
+     */
     protected double adjustTick(double tick) {
         if (this.shouldResetTick) {
-            if (getAnimationState() == AnimationState.TRANSITIONING) {
-                this.tickOffset = tick;
-            } else if (getAnimationState() == AnimationState.RUNNING) {
+            if (getAnimationState() != AnimationState.STOPPED) {
                 this.tickOffset = tick;
             }
 
@@ -501,7 +496,6 @@ public class AnimationController<T extends Animatable> {
 
             return 0;
         } else {
-            // assert tick - this.tickOffset >= 0;
             return this.animationSpeed * Math.max(tick - this.tickOffset, 0.0D);
         }
     }
@@ -512,14 +506,6 @@ public class AnimationController<T extends Animatable> {
 
     public void clearAnimationCache() {
         this.currentAnimationBuilder = new AnimationBuilder();
-    }
-
-    public double getAnimationSpeed() {
-        return this.animationSpeed;
-    }
-
-    public void setAnimationSpeed(double animationSpeed) {
-        this.animationSpeed = animationSpeed;
     }
 
     @FunctionalInterface

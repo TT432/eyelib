@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.common.bedrock.model.pojo;
 
 import com.google.gson.annotations.SerializedName;
+import io.github.tt432.eyelib.molang.util.Value3;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -29,7 +30,7 @@ public class BoneFile implements Serializable {
      * Mirrors the UV's of the unrotated cubes along the x axis, also causes the
      * east/west faces to get flipped.
      */
-    private Boolean mirror;
+    private boolean mirror;
     /**
      * Animation files refer to this bone via this identifier.
      */
@@ -43,7 +44,7 @@ public class BoneFile implements Serializable {
     /**
      * The bone pivots around this point (in model space units).
      */
-    private double[] pivot = new double[]{0, 0, 0};
+    private Value3 pivot;
     /**
      * ***EXPERIMENTAL*** A triangle or quad mesh object. Can be used in conjunction
      * with cubes and texture geometry.

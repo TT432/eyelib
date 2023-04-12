@@ -5,6 +5,7 @@
 
 package io.github.tt432.eyelib.util;
 
+import com.mojang.math.Vector3d;
 import io.github.tt432.eyelib.api.bedrock.model.Bone;
 
 public class BoneSnapshot {
@@ -24,21 +25,6 @@ public class BoneSnapshot {
         this.name = modelRenderer.getName();
     }
 
-    public BoneSnapshot(BoneSnapshot snapshot) {
-        scaleValueX = snapshot.scaleValueX;
-        scaleValueY = snapshot.scaleValueY;
-        scaleValueZ = snapshot.scaleValueZ;
-
-        positionOffsetX = snapshot.positionOffsetX;
-        positionOffsetY = snapshot.positionOffsetY;
-        positionOffsetZ = snapshot.positionOffsetZ;
-
-        rotationValueX = snapshot.rotationValueX;
-        rotationValueY = snapshot.rotationValueY;
-        rotationValueZ = snapshot.rotationValueZ;
-        this.name = snapshot.name;
-    }
-
     public String name;
 
     public float scaleValueX;
@@ -52,6 +38,18 @@ public class BoneSnapshot {
     public float rotationValueX;
     public float rotationValueY;
     public float rotationValueZ;
+
+    public Vector3d r() {
+        return new Vector3d(rotationValueX, rotationValueY, rotationValueZ);
+    }
+
+    public Vector3d p() {
+        return new Vector3d(positionOffsetX, positionOffsetY, positionOffsetZ);
+    }
+
+    public Vector3d s() {
+        return new Vector3d(scaleValueX, scaleValueY, scaleValueZ);
+    }
 
     public void apply(Bone bone) {
         bone.setRotationX(rotationValueX);

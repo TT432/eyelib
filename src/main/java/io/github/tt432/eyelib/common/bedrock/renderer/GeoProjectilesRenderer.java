@@ -18,7 +18,6 @@ import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 import io.github.tt432.eyelib.util.AnimationUtils;
 import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.RenderUtils;
-import io.github.tt432.eyelib.util.data.EntityModelData;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -69,7 +68,7 @@ public class GeoProjectilesRenderer<T extends Entity & Animatable> extends Entit
         poseStack.mulPose(Vector3f.ZP.rotationDegrees(Mth.lerp(partialTick, animatable.xRotO, animatable.getXRot())));
 
         AnimationEvent<T> predicate = new AnimationEvent<T>(animatable, 0, 0, partialTick,
-                false, Collections.singletonList(new EntityModelData()));
+                false, Collections.emptyList());
 
         modelProvider.setCustomAnimations(animatable, null, getInstanceId(animatable), predicate);
         RenderSystem.setShaderTexture(0, getTextureLocation(animatable));

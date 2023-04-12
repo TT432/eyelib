@@ -1,14 +1,13 @@
 package io.github.tt432.eyelib.common.bedrock.model.pojo;
 
+import com.google.gson.JsonSyntaxException;
 import io.github.tt432.eyelib.util.json.JsonUtils;
 
 import java.time.OffsetDateTime;
-import java.time.OffsetTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
-import java.time.temporal.ChronoField;
 
 /**
  * Import this package:
@@ -30,20 +29,12 @@ public class Converter {
         return ZonedDateTime.from(Converter.DATE_TIME_FORMATTER.parse(str)).toOffsetDateTime();
     }
 
-    private static final DateTimeFormatter TIME_FORMATTER = new DateTimeFormatterBuilder()
-            .appendOptional(DateTimeFormatter.ISO_TIME).appendOptional(DateTimeFormatter.ISO_OFFSET_TIME)
-            .parseDefaulting(ChronoField.YEAR, 2020).parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
-            .parseDefaulting(ChronoField.DAY_OF_MONTH, 1).toFormatter().withZone(ZoneOffset.UTC);
-
-    public static OffsetTime parseTimeString(String str) {
-        return ZonedDateTime.from(Converter.TIME_FORMATTER.parse(str)).toOffsetDateTime().toOffsetTime();
-    }
-
-    public static RawGeoModel fromJsonString(String json) {
-        return JsonUtils.normal.fromJson(json, RawGeoModel.class);
-    }
-
-    public static String toJsonString(RawGeoModel obj) {
-        return JsonUtils.pretty.toJson(obj);
+    public static RawGeoModel fromJsonString(String fileName, String json) {
+        try {
+            return JsonUtils.normal.fromJson(json, RawGeoModel.class);
+        } catch (JsonSyntaxException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Filed to load json: " + fileName);
+        }
     }
 }

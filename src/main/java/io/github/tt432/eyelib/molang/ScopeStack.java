@@ -1,30 +1,33 @@
 package io.github.tt432.eyelib.molang;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 /**
  * @author DustW
  */
-public class ScopeStack implements AutoCloseable {
+@Slf4j
+public class ScopeStack {
     public final Deque<MolangVariableScope> tempScope = new ArrayDeque<>();
 
+    int pushed;
+
     public ScopeStack() {
-        tempScope.add(MolangParser.getGlobalScope());
+        tempScope.addLast(MolangParser.getGlobalScope());
     }
 
-    public ScopeStack push(MolangVariableScope scope) {
-        tempScope.add(scope);
-        return this;
+    public void push(MolangVariableScope scope) {
+        pushed++;
+        tempScope.addLast(scope);
     }
 
     public void pop() {
-        tempScope.removeLast();
-    }
-
-    @Override
-    public void close() {
-        pop();
+        if (pushed > 0) {
+            pushed--;
+            tempScope.removeLast();
+        } else log.error("why pop on not pushed?");
     }
 
     public MolangVariableScope last() {

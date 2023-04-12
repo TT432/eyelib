@@ -15,22 +15,24 @@ import io.github.tt432.eyelib.common.bedrock.animation.pojo.AnimationFile;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
-import io.github.tt432.eyelib.molang.MolangParser;
+import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraftforge.client.MinecraftForgeClient;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
 public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelProvider<T>
         implements AnimatableModel<T>, AnimationHolder<T> {
+    @Getter
     private final AnimationProcessor<T> animationProcessor;
     private GeoModel currentModel;
 
     protected AnimatedGeoModel() {
-        this.animationProcessor = new AnimationProcessor(this);
+        this.animationProcessor = new AnimationProcessor<>();
     }
 
     public void registerBone(GeoBone bone) {
@@ -43,50 +45,44 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
 
     @Override
     public void setCustomAnimations(T animatable, @Nullable Object entity, int instanceId, @Nullable AnimationEvent<T> animationEvent) {
-        MolangParser.getCurrentDataSource().addSource(animatable, instanceId);
-        if (entity != null)
-            MolangParser.getCurrentDataSource().addSource(entity);
-
         Minecraft mc = Minecraft.getInstance();
         AnimationData manager = animatable.getFactory().getOrCreateAnimationData(instanceId);
-        AnimationEvent<T> predicate;
-        double currentTick = animatable instanceof Entity livingEntity ? livingEntity.tickCount : getCurrentTick();
+        Entity currEntity;
+
+        if (animatable instanceof Entity e) {
+            currEntity = e;
+        } else if (entity instanceof Entity e) {
+            currEntity = e;
+        } else {
+            currEntity = null;
+        }
+
+        double currentTick = currEntity != null ? currEntity.tickCount : getCurrentTick();
 
         if (manager.getStartTick() == -1)
             manager.setStartTick(currentTick + mc.getFrameTime());
 
         if (!mc.isPaused() || manager.isShouldPlayWhilePaused()) {
-            if (animatable instanceof LivingEntity) {
-                manager.setTick(currentTick + mc.getFrameTime());
-                double gameTick = manager.getTick();
-                double deltaTicks = gameTick - this.lastGameTickTime;
-                this.seekTime += deltaTicks;
-                this.lastGameTickTime = gameTick;
-
-                codeAnimations(animatable, instanceId, animationEvent);
+            if (animatable instanceof LivingEntity || entity instanceof LivingEntity) {
+                manager.setTick(currentTick + MinecraftForgeClient.getPartialTick());
             } else {
                 manager.setTick(currentTick - manager.getStartTick());
-                double gameTick = manager.getTick();
-                double deltaTicks = gameTick - this.lastGameTickTime;
-                this.seekTime += deltaTicks;
-                this.lastGameTickTime = gameTick;
             }
+
+            this.seekTime = manager.getTick();
         }
 
-        predicate = animationEvent == null ? new AnimationEvent<>(animatable, 0, 0, (float) (manager.getTick() - this.lastGameTickTime), false, Collections.emptyList()) : animationEvent;
-        predicate.animationTick = this.seekTime;
+        AnimationEvent<T> predicate = animationEvent;
+
+        if (predicate == null) {
+            predicate = new AnimationEvent<>(animatable, 0, 0,
+                    MinecraftForgeClient.getPartialTick(), false, Collections.emptyList());
+        }
+
+        predicate.setAnimationTick(this.seekTime);
 
         if (!getAnimationProcessor().getModelRendererList().isEmpty())
-            getAnimationProcessor().tickAnimation(animatable, instanceId, this.seekTime, predicate,
-                    MolangParser.getInstance(), this.shouldCrashOnMissing);
-    }
-
-    public void codeAnimations(T entity, Integer uniqueID, AnimationEvent<?> customPredicate) {
-    }
-
-    @Override
-    public AnimationProcessor<T> getAnimationProcessor() {
-        return this.animationProcessor;
+            getAnimationProcessor().tickAnimation(animatable, instanceId, this.seekTime, predicate);
     }
 
     public void registerModelRenderer(Bone modelRenderer) {

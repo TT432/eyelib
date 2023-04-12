@@ -16,7 +16,6 @@ public class RawGeometryTree {
     public ModelProperties properties;
 
     public static RawGeometryTree parseHierarchy(RawGeoModel model) {
-
         RawGeometryTree hierarchy = new RawGeometryTree();
         MinecraftGeometry geometry = model.getMinecraftGeometry()[0];
         hierarchy.properties = geometry.getDescription();
@@ -24,7 +23,6 @@ public class RawGeometryTree {
 
         int index = boneFiles.size() - 1;
         while (true) {
-
             BoneFile boneFile = boneFiles.get(index);
             if (!hasParent(boneFile)) {
                 hierarchy.topLevelBones.put(boneFile.getName(), new RawBoneGroup(boneFile));

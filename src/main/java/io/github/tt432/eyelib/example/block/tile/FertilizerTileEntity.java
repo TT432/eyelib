@@ -20,7 +20,6 @@ public class FertilizerTileEntity extends BlockEntity implements Animatable {
 
     private <E extends BlockEntity & Animatable> PlayState predicate(AnimationEvent<E> event) {
         AnimationController controller = event.getController();
-        controller.transitionLengthTicks = 0;
         if (event.getAnimatable().getLevel().isRaining()) {
             controller.setAnimation(new AnimationBuilder().addAnimation("fertilizer.animation.deploy", LOOP)
                     .addAnimation("fertilizer.animation.idle", LOOP));

@@ -5,12 +5,14 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
+import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.util.Axis;
 import lombok.Data;
 import net.minecraft.world.phys.Vec3;
 
+import java.io.Serializable;
 import java.lang.reflect.Type;
 
 /**
@@ -18,7 +20,7 @@ import java.lang.reflect.Type;
  */
 @Data
 @JsonAdapter(Value3.Serializer.class)
-public class Value3 {
+public class Value3 implements Serializable {
     private final MolangValue x;
     private final MolangValue y;
     private final MolangValue z;
@@ -51,6 +53,10 @@ public class Value3 {
                 scope.getValue(name + "y"),
                 scope.getValue(name + "z")
         );
+    }
+
+    public Vector3f toVec3f(MolangVariableScope scope) {
+        return new Vector3f((float) x.evaluate(scope), (float) y.evaluate(scope), (float) z.evaluate(scope));
     }
 
     protected static class Serializer implements JsonDeserializer<Value3> {

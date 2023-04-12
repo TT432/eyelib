@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.api.bedrock.animation;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
+import lombok.Getter;
 
 import java.lang.reflect.Type;
 import java.util.Locale;
@@ -12,6 +13,7 @@ public enum LoopType {
     PLAY_ONCE,
     HOLD_ON_LAST_FRAME;
 
+    @Getter
     private final boolean looping;
 
     LoopType(boolean looping) {
@@ -22,46 +24,38 @@ public enum LoopType {
         this(false);
     }
 
-    public boolean isRepeatingAfterEnd() {
-        return this.looping;
-    }
-
     static class Serializer implements JsonDeserializer<LoopType> {
         @Override
         public LoopType deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            return fromJson(json);
-        }
-    }
-
-    static LoopType fromJson(JsonElement json) {
-        if (json == null || !json.isJsonPrimitive()) {
-            return PLAY_ONCE;
-        }
-
-        JsonPrimitive primitive = json.getAsJsonPrimitive();
-
-        if (primitive.isBoolean()) {
-            return primitive.getAsBoolean() ? LOOP : PLAY_ONCE;
-        }
-
-        if (primitive.isString()) {
-            String string = primitive.getAsString();
-
-            if (string.equalsIgnoreCase("false")) {
+            if (json == null || !json.isJsonPrimitive()) {
                 return PLAY_ONCE;
             }
 
-            if (string.equalsIgnoreCase("true")) {
-                return LOOP;
+            JsonPrimitive primitive = json.getAsJsonPrimitive();
+
+            if (primitive.isBoolean()) {
+                return primitive.getAsBoolean() ? LOOP : PLAY_ONCE;
             }
 
-            try {
-                return valueOf(string.toUpperCase(Locale.ROOT));
-            } catch (Exception ignored) {
-                // nothing
+            if (primitive.isString()) {
+                String string = primitive.getAsString();
+
+                if (string.equalsIgnoreCase("false")) {
+                    return PLAY_ONCE;
+                }
+
+                if (string.equalsIgnoreCase("true")) {
+                    return LOOP;
+                }
+
+                try {
+                    return valueOf(string.toUpperCase(Locale.ROOT));
+                } catch (Exception ignored) {
+                    // nothing
+                }
             }
+
+            return PLAY_ONCE;
         }
-
-        return PLAY_ONCE;
     }
 }

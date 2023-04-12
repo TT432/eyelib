@@ -61,12 +61,6 @@ public class EntityResources {
     public static final ResourceLocation BAT_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
             "geo/animations/bat.animation.json");
 
-    public static final ResourceLocation LAYER_EXAMPLE_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/models/le.geo.json");
-    public static final ResourceLocation LAYER_EXAMPLE_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
-            "textures/entity/le.png");
-    public static final ResourceLocation LAYER_EXAMPLE_ANIMATIONS = new ResourceLocation(Eyelib.MOD_ID,
-            "geo/animations/le.animations.json");
-
     public static final ResourceLocation CREEPER_MODEL = new ResourceLocation(Eyelib.MOD_ID, "geo/models/creeper.geo.json");
     public static final ResourceLocation CREEPER_TEXTURE = new ResourceLocation(Eyelib.MOD_ID,
             "textures/model/entity/creeper.png");

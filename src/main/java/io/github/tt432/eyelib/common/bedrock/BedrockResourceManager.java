@@ -90,7 +90,7 @@ public class BedrockResourceManager {
             // Deserialize from json into basic json objects, bones are still stored as a
             // flat list
             RawGeoModel rawModel = Converter
-                    .fromJsonString(getResourceAsString(location, resourceManager));
+                    .fromJsonString(location.toString(), getResourceAsString(location, resourceManager));
             if (rawModel.getFormatVersion() != FormatVersion.VERSION_1_12_0) {
                 throw new EyelibLoadingException(location, "Wrong geometry json version, expected 1.12.0");
             }

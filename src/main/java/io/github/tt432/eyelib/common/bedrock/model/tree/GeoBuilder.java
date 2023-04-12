@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.BoneFile;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.CubeFile;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.ModelProperties;
+import io.github.tt432.eyelib.molang.MolangParser;
 import io.github.tt432.eyelib.util.VectorUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.commons.lang3.ArrayUtils;
@@ -43,10 +44,10 @@ public class GeoBuilder implements IGeoBuilder {
 
         BoneFile rawBoneFile = bone.selfBone;
         Vector3f rotation = new Vector3f(VectorUtils.fromArray(rawBoneFile.getRotation()));
-        Vector3f pivot = new Vector3f(VectorUtils.fromArray(rawBoneFile.getPivot()));
+        Vector3f pivot = rawBoneFile.getPivot().toVec3f(MolangParser.scopeStack.last());
         rotation.mul(-1, -1, 1);
 
-        geoBone.setMirror(rawBoneFile.getMirror());
+        geoBone.setMirror(rawBoneFile.isMirror());
         geoBone.setDontRender(rawBoneFile.getNeverRender());
         geoBone.reset = rawBoneFile.getReset();
         geoBone.setInflate(rawBoneFile.getInflate());
@@ -64,7 +65,7 @@ public class GeoBuilder implements IGeoBuilder {
         if (!ArrayUtils.isEmpty(rawBoneFile.getCubes())) {
             for (CubeFile cubeFile : rawBoneFile.getCubes()) {
                 geoBone.childCubes.add(GeoCube.createFromPojoCube(cubeFile, properties,
-                        geoBone.getInflate() == null ? null : geoBone.getInflate() / 16, geoBone.getMirror()));
+                        geoBone.getInflate() == null ? null : geoBone.getInflate() / 16, geoBone.isMirror()));
             }
         }
 

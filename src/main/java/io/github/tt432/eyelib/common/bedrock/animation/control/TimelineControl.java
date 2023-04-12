@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.common.bedrock.animation;
+package io.github.tt432.eyelib.common.bedrock.animation.control;
 
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.TimelineEffect;
@@ -24,7 +24,8 @@ public class TimelineControl {
         }
     }
 
-    public void stop() {
+    public void stop(double tick) {
+        process(tick);
         timelineQueue.clear();
     }
 

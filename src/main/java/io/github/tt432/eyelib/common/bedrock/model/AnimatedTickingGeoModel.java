@@ -4,8 +4,9 @@ import io.github.tt432.eyelib.api.Tickable;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
-import io.github.tt432.eyelib.molang.MolangParser;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraftforge.client.MinecraftForgeClient;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -29,30 +30,23 @@ public abstract class AnimatedTickingGeoModel<T extends Animatable & Tickable> e
         }
 
         if (!Minecraft.getInstance().isPaused() || manager.isShouldPlayWhilePaused()) {
-            manager.setTick((animatable.tickTimer() + Minecraft.getInstance().getFrameTime()));
-            double gameTick = manager.getTick();
-            double deltaTicks = gameTick - lastGameTickTime;
-            seekTime += deltaTicks;
-            lastGameTickTime = gameTick;
+            if (animatable instanceof LivingEntity || replaceEntity instanceof LivingEntity) {
+                manager.setTick(animatable.tickTimer() + MinecraftForgeClient.getPartialTick());
+            } else {
+                manager.setTick(animatable.tickTimer() - manager.getStartTick());
+            }
+
+            this.seekTime = manager.getTick();
         }
 
         AnimationEvent<T> predicate = Objects.requireNonNullElseGet(animationEvent,
                 () -> new AnimationEvent<T>(animatable, 0, 0,
                         0, false, Collections.emptyList()));
 
-        predicate.animationTick = seekTime;
+        predicate.setAnimationTick(seekTime);
 
         if (!this.getAnimationProcessor().getModelRendererList().isEmpty()) {
-            getAnimationProcessor().tickAnimation(animatable, instanceId, seekTime, predicate,
-                    MolangParser.getInstance(), shouldCrashOnMissing);
+            getAnimationProcessor().tickAnimation(animatable, instanceId, seekTime, predicate);
         }
-
-        if (!Minecraft.getInstance().isPaused() || manager.isShouldPlayWhilePaused()) {
-            codeAnimations(animatable, instanceId, animationEvent);
-        }
-    }
-
-    public void codeAnimations(T entity, Integer uniqueID, AnimationEvent<?> customPredicate) {
-
     }
 }

@@ -29,7 +29,7 @@ public class GeoBone implements Bone {
     private BoneSnapshot initialSnapshot;
 
     @Setter
-    private Boolean mirror;
+    private boolean mirror;
     @Setter
     private Double inflate;
     @Setter
@@ -103,16 +103,6 @@ public class GeoBone implements Bone {
         if (this.initialSnapshot == null) {
             this.initialSnapshot = new BoneSnapshot(this);
         }
-    }
-
-    @Override
-    public BoneSnapshot getInitialSnapshot() {
-        return this.initialSnapshot;
-    }
-
-    @Override
-    public String getName() {
-        return this.name;
     }
 
     // Boilerplate code incoming

@@ -1,32 +1,26 @@
 package io.github.tt432.eyelib.common.bedrock.animation;
 
-import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.model.Bone;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
 import io.github.tt432.eyelib.common.bedrock.animation.util.BoneAnimationQueue;
-import io.github.tt432.eyelib.molang.MolangParser;
 import io.github.tt432.eyelib.util.BoneSnapshot;
 import io.github.tt432.eyelib.util.math.MathE;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.Getter;
 
 import java.util.List;
 
 public class AnimationProcessor<T extends Animatable> {
     public boolean reloadAnimations = false;
+    @Getter
     private final List<Bone> modelRendererList = new ObjectArrayList<>();
     private double lastTickValue = -1;
     private final IntSet animatedEntities = new IntOpenHashSet();
-    private final AnimatableModel animatedModel;
 
-    public AnimationProcessor(AnimatableModel animatedModel) {
-        this.animatedModel = animatedModel;
-    }
-
-    public void tickAnimation(Animatable entity, int uniqueID, double seekTime, AnimationEvent<T> event,
-                              MolangParser parser, boolean crashWhenCantFindBone) {
+    public void tickAnimation(Animatable entity, int uniqueID, double seekTime, AnimationEvent<T> event) {
         if (seekTime != lastTickValue) {
             animatedEntities.clear();
         } else if (animatedEntities.contains(uniqueID)) { // Entity already animated on this tick
@@ -52,44 +46,47 @@ public class AnimationProcessor<T extends Animatable> {
                 controller.getBoneAnimationQueues().clear();
             }
 
-            controller.isJustStarting = manager.isFirstTick();
-
             // Set current controller to animation test event
             event.setController(controller);
 
             // Process animations and add new values to the point queues
-            controller.process(seekTime, event, modelRendererList, parser, crashWhenCantFindBone);
+            controller.process(seekTime, event, modelRendererList);
 
             // Loop through every single bone and lerp each property
             for (BoneAnimationQueue boneAnimation : controller.getBoneAnimationQueues().values()) {
                 Bone bone = boneAnimation.bone();
-                var rotatePoint = boneAnimation.rotate().poll();
+                boneAnimation.rotate().forEach(li -> {
+                    if (li != null && li.getValue() != null) {
+                        bone.setRotation(
+                                (float) (bone.getRotationX() - Math.toRadians(li.getValue().x)),
+                                (float) (bone.getRotationY() - Math.toRadians(li.getValue().y)),
+                                (float) (bone.getRotationZ() + Math.toRadians(li.getValue().z))
+                        );
+                    }
+                });
+                boneAnimation.rotate().clear();
 
-                if (rotatePoint != null && rotatePoint.getValue() != null) {
-                    bone.setRotation(
-                            (float) (bone.getRotationX() - Math.toRadians(rotatePoint.getValue().x)),
-                            (float) (bone.getRotationY() - Math.toRadians(rotatePoint.getValue().y)),
-                            (float) (bone.getRotationZ() + Math.toRadians(rotatePoint.getValue().z))
-                    );
-                }
+                boneAnimation.position().forEach(li -> {
+                    if (li != null && li.getValue() != null) {
+                        bone.setPosition(
+                                (float) (bone.getPositionX() + li.getValue().x),
+                                (float) (bone.getPositionY() + li.getValue().y),
+                                (float) (bone.getPositionZ() + li.getValue().z)
+                        );
+                    }
+                });
+                boneAnimation.position().clear();
 
-                var positionPoint = boneAnimation.position().poll();
-                if (positionPoint != null && positionPoint.getValue() != null) {
-                    bone.setPosition(
-                            (float) (bone.getPositionX() + positionPoint.getValue().x),
-                            (float) (bone.getPositionY() + positionPoint.getValue().y),
-                            (float) (bone.getPositionZ() + positionPoint.getValue().z)
-                    );
-                }
-
-                var scalePoint = boneAnimation.scale().poll();
-                if (scalePoint != null && scalePoint.getValue() != null) {
-                    bone.setScale(
-                            (float) (bone.getScaleX() * MathE.notZero(scalePoint.getValue().x, 0.00001)),
-                            (float) (bone.getScaleY() * MathE.notZero(scalePoint.getValue().y, 0.00001)),
-                            (float) (bone.getScaleZ() * MathE.notZero(scalePoint.getValue().z, 0.00001))
-                    );
-                }
+                boneAnimation.scale().forEach(li -> {
+                    if (li != null && li.getValue() != null) {
+                        bone.setScale(
+                                (float) (bone.getScaleX() * MathE.notZero(li.getValue().x, 0.00001)),
+                                (float) (bone.getScaleY() * MathE.notZero(li.getValue().y, 0.00001)),
+                                (float) (bone.getScaleZ() * MathE.notZero(li.getValue().z, 0.00001))
+                        );
+                    }
+                });
+                boneAnimation.scale().clear();
             }
         }
 
@@ -124,9 +121,5 @@ public class AnimationProcessor<T extends Animatable> {
 
     public void clearModelRendererList() {
         this.modelRendererList.clear();
-    }
-
-    public List<Bone> getModelRendererList() {
-        return modelRendererList;
     }
 }

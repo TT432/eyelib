@@ -18,7 +18,6 @@ import io.github.tt432.eyelib.molang.MolangParser;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.RenderUtils;
-import io.github.tt432.eyelib.util.data.EntityModelData;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.Getter;
 import net.minecraft.ChatFormatting;
@@ -71,8 +70,8 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
     protected MultiBufferSource rtb = null;
     private RenderCycle currentModelRenderCycle = RenderCycle.RenderCycleImpl.INITIAL;
 
-    public GeoReplacedEntityRenderer(EntityRendererProvider.Context renderManager,
-                                     AnimatedGeoModel<Animatable> modelProvider, T animatable) {
+    protected GeoReplacedEntityRenderer(EntityRendererProvider.Context renderManager,
+                                        AnimatedGeoModel<Animatable> modelProvider, T animatable) {
         super(renderManager);
 
         this.modelProvider = modelProvider;
@@ -132,6 +131,9 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
 
         MolangVariableScope scope = animatable.getFactory().getScope();
         MolangParser.scopeStack.push(scope);
+        MolangParser.getCurrentDataSource().addSource(animatable, getInstanceId(entity));
+        MolangParser.getCurrentDataSource().addSource(entity);
+        scope.setValue("temp_ptick", partialTick);
 
         this.currentAnimatable = animatable;
         this.dispatchedMat = poseStack.last().pose().copy();
@@ -147,26 +149,6 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
                 renderLeash(mob, partialTick, poseStack, bufferSource, leashHolder);
         }
 
-        EntityModelData entityModelData = new EntityModelData();
-        entityModelData.isSitting = shouldSit;
-        entityModelData.isChild = livingEntity.isBaby();
-
-        float lerpBodyRot = Mth.rotLerp(partialTick, livingEntity.yBodyRotO, livingEntity.yBodyRot);
-        float lerpHeadRot = Mth.rotLerp(partialTick, livingEntity.yHeadRotO, livingEntity.yHeadRot);
-        float netHeadYaw = lerpHeadRot - lerpBodyRot;
-
-        if (shouldSit && entity.getVehicle() instanceof LivingEntity vehicle) {
-            lerpBodyRot = Mth.rotLerp(partialTick, vehicle.yBodyRotO, vehicle.yBodyRot);
-            netHeadYaw = lerpHeadRot - lerpBodyRot;
-            float clampedHeadYaw = Mth.clamp(Mth.wrapDegrees(netHeadYaw), -85, 85);
-            lerpBodyRot = lerpHeadRot - clampedHeadYaw;
-
-            if (clampedHeadYaw * clampedHeadYaw > 2500f)
-                lerpBodyRot += clampedHeadYaw * 0.2f;
-
-            netHeadYaw = lerpHeadRot - lerpBodyRot;
-        }
-
         if (entity.getPose() == Pose.SLEEPING) {
             Direction direction = livingEntity.getBedOrientation();
 
@@ -180,6 +162,7 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
         float lerpedAge = livingEntity.tickCount + partialTick;
         float limbSwingAmount = 0;
         float limbSwing = 0;
+        float lerpBodyRot = Mth.rotLerp(partialTick, livingEntity.yBodyRotO, livingEntity.yBodyRot);
 
         applyRotations(livingEntity, poseStack, lerpedAge, lerpBodyRot, partialTick);
         preRenderCallback(livingEntity, poseStack, partialTick);
@@ -192,12 +175,13 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
                 limbSwing *= 3.0F;
         }
 
-        float headPitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
-        entityModelData.headPitch = -headPitch;
-        entityModelData.netHeadYaw = -netHeadYaw;
+        float netHeadYaw = (float) -scope.getValue("query.head_yaw_offset");
+        float headPitch = (float) -scope.getValue("query.head_pitch_offset");
+
         GeoModel model = this.modelProvider.getModel(this.modelProvider.getModelLocation(animatable));
         AnimationEvent predicate = new AnimationEvent(animatable, limbSwing, limbSwingAmount, partialTick,
-                (limbSwingAmount <= -getSwingMotionAnimThreshold() || limbSwingAmount <= getSwingMotionAnimThreshold()), Collections.singletonList(entityModelData));
+                (limbSwingAmount <= -getSwingMotionAnimThreshold() || limbSwingAmount <= getSwingMotionAnimThreshold()),
+                Collections.emptyList());
 
         this.modelProvider.setCustomAnimations(animatable, entity, getInstanceId(entity), predicate);
 
@@ -232,6 +216,7 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
         poseStack.popPose();
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 
+        scope.removeValue("temp_ptick");
         MolangParser.scopeStack.pop();
     }
 

@@ -22,7 +22,6 @@ import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.util.AnimationUtils;
 import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.RenderUtils;
-import io.github.tt432.eyelib.util.data.EntityModelData;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.Getter;
 import net.minecraft.ChatFormatting;
@@ -110,6 +109,8 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
         poseStack.pushPose();
         MolangVariableScope scope = animatable.getFactory().getScope();
         MolangParser.scopeStack.push(scope);
+        MolangParser.getCurrentDataSource().addSource(animatable, getInstanceId(animatable));
+        scope.setValue("temp_ptick", partialTick);
 
         if (animatable instanceof Mob mob) {
             Entity leashHolder = mob.getLeashHolder();
@@ -120,25 +121,10 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
 
         this.dispatchedMat = poseStack.last().pose().copy();
         boolean shouldSit = animatable.isPassenger() && (animatable.getVehicle() != null && animatable.getVehicle().shouldRiderSit());
-        EntityModelData entityModelData = new EntityModelData();
-        entityModelData.isSitting = shouldSit;
-        entityModelData.isChild = animatable.isBaby();
 
         float lerpBodyRot = Mth.rotLerp(partialTick, animatable.yBodyRotO, animatable.yBodyRot);
-        float lerpHeadRot = Mth.rotLerp(partialTick, animatable.yHeadRotO, animatable.yHeadRot);
-        float netHeadYaw = lerpHeadRot - lerpBodyRot;
-
-        if (shouldSit && animatable.getVehicle() instanceof LivingEntity livingentity) {
-            lerpBodyRot = Mth.rotLerp(partialTick, livingentity.yBodyRotO, livingentity.yBodyRot);
-            netHeadYaw = lerpHeadRot - lerpBodyRot;
-            float clampedHeadYaw = Mth.clamp(Mth.wrapDegrees(netHeadYaw), -85, 85);
-            lerpBodyRot = lerpHeadRot - clampedHeadYaw;
-
-            if (clampedHeadYaw * clampedHeadYaw > 2500f)
-                lerpBodyRot += clampedHeadYaw * 0.2f;
-
-            netHeadYaw = lerpHeadRot - lerpBodyRot;
-        }
+        float netHeadYaw = (float) -scope.get("query.head_yaw_offset").evaluate(scope);
+        float headPitch = (float) -scope.get("query.head_pitch_offset").evaluate(scope);
 
         if (animatable.getPose() == Pose.SLEEPING) {
             Direction bedDirection = animatable.getBedOrientation();
@@ -167,12 +153,9 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
                 limbSwingAmount = 1f;
         }
 
-        float headPitch = Mth.lerp(partialTick, animatable.xRotO, animatable.getXRot());
-        entityModelData.headPitch = -headPitch;
-        entityModelData.netHeadYaw = -netHeadYaw;
-
         AnimationEvent<T> predicate = new AnimationEvent<T>(animatable, limbSwing, limbSwingAmount, partialTick,
-                (limbSwingAmount <= -getSwingMotionAnimThreshold() || limbSwingAmount > getSwingMotionAnimThreshold()), Collections.singletonList(entityModelData));
+                (limbSwingAmount <= -getSwingMotionAnimThreshold() || limbSwingAmount > getSwingMotionAnimThreshold()),
+                Collections.emptyList());
         GeoModel model = this.modelProvider.getModel(this.modelProvider.getModelLocation(animatable));
 
         this.modelProvider.setCustomAnimations(animatable, null, getInstanceId(animatable), predicate);
@@ -210,6 +193,7 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
 
         super.render(animatable, entityYaw, partialTick, poseStack, bufferSource, packedLight);
 
+        scope.removeValue("temp_ptick");
         MolangParser.scopeStack.pop();
     }
 

@@ -9,12 +9,12 @@ import net.minecraft.world.entity.Entity;
 /**
  * @author DustW
  */
-public record SoundPlayInfo(SoundInstance instance, SoundPlayInfo.SoundPlayingState state) {
-    public static SoundPlayInfo forEntity(Entity entity, ResourceLocation location, SoundPlayInfo.SoundPlayingState state) {
+public record SoundPlayInfo(SoundInstance instance, SoundPlayingState state) {
+    public static SoundPlayInfo forEntity(Entity entity, ResourceLocation location, SoundPlayingState state) {
         return new SoundPlayInfo(forEntity(entity, location), state);
     }
 
-    public static SoundPlayInfo forClientPlayer(ResourceLocation location, SoundPlayInfo.SoundPlayingState state) {
+    public static SoundPlayInfo forClientPlayer(ResourceLocation location, SoundPlayingState state) {
         return new SoundPlayInfo(forClientPlayer(location), state);
     }
 

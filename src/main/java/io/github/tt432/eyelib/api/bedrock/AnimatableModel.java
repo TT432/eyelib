@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.api.bedrock;
 
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.model.Bone;
+import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationProcessor;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
@@ -35,5 +36,8 @@ public interface AnimatableModel<E extends Animatable> {
             throw new IllegalArgumentException("Could not find bone: " + boneName);
 
         return bone;
+    }
+
+    default void codeBoneAnimation(AnimationController<E> controller, double tick) {
     }
 }

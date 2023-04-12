@@ -25,5 +25,14 @@ public class AnimationPointQueue extends LinkedList<AnimationPointQueue.LerpInfo
     @Data
     public static class LerpInfo {
         final Vector3d value;
+
+        @Override
+        public String toString() {
+            return value != null ? "LerpInfo{" +
+                    " x: " + value.x +
+                    " y: " + value.y +
+                    " z: " + value.z +
+                    '}' : "LerpInfo{value=null}";
+        }
     }
 }

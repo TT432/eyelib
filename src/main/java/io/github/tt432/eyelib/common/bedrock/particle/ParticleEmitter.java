@@ -125,20 +125,21 @@ public class ParticleEmitter {
     float partialTicks;
 
     public void tick() {
-        try (ScopeStack push = MolangParser.scopeStack.push(scope)) {
-            scope.getDataSource().addSource(this, emitterId);
-            loopHandler();
+        ScopeStack scopeStack = MolangParser.scopeStack;
+        scopeStack.push(scope);
+        scope.getDataSource().addSource(this, emitterId);
+        loopHandler();
 
-            if (age == 0) {
-                start();
-            }
-
-            age++;
-            onLoopStart();
-
-            particles.forEach(p -> p.tick(scope));
-            particles.removeIf(p -> !p.canContinue(scope));
+        if (age == 0) {
+            start();
         }
+
+        age++;
+        onLoopStart();
+
+        particles.forEach(p -> p.tick(scope));
+        particles.removeIf(p -> !p.canContinue(scope));
+        scopeStack.pop();
     }
 
     @Getter
@@ -223,36 +224,37 @@ public class ParticleEmitter {
     }
 
     public void render(PoseStack poseStack, BufferBuilder bufferbuilder, Camera camera, float partialTicks) {
-        try (ScopeStack push = MolangParser.scopeStack.push(scope)) {
-            this.partialTicks = partialTicks;
-            scope.getDataSource().addSource(this, emitterId);
+        ScopeStack scopeStack = MolangParser.scopeStack;
+        scopeStack.push(scope);
+        this.partialTicks = partialTicks;
+        scope.getDataSource().addSource(this, emitterId);
 
-            update();
-            setupEntityVariables();
-            shootParticles();
+        update();
+        setupEntityVariables();
+        shootParticles();
 
-            String texture = description.getParameters().getTexture();
+        String texture = description.getParameters().getTexture();
 
-            if (texture.equals("textures/particle/particles")) {
-                texture = "eyelib:textures/particle/particles.png";
-                description.getParameters().setTexture(texture);
-            }
-
-            RenderSystem.setShaderTexture(0, new ResourceLocation(texture));
-
-            for (ParticleInstance particle : particles) {
-                //if (clippingHelper != null && !clippingHelper.isVisible(particle.getBoundingBox(scope)))
-                //    continue;
-
-                poseStack.pushPose();
-
-                transformBinding(poseStack);
-
-                particle.render(scope, bufferbuilder, camera, partialTicks);
-
-                poseStack.popPose();
-            }
+        if (texture.equals("textures/particle/particles")) {
+            texture = "eyelib:textures/particle/particles.png";
+            description.getParameters().setTexture(texture);
         }
+
+        RenderSystem.setShaderTexture(0, new ResourceLocation(texture));
+
+        for (ParticleInstance particle : particles) {
+            //if (clippingHelper != null && !clippingHelper.isVisible(particle.getBoundingBox(scope)))
+            //    continue;
+
+            poseStack.pushPose();
+
+            transformBinding(poseStack);
+
+            particle.render(scope, bufferbuilder, camera, partialTicks);
+
+            poseStack.popPose();
+        }
+        scopeStack.pop();
     }
 
     private void transformBinding(PoseStack poseStack) {

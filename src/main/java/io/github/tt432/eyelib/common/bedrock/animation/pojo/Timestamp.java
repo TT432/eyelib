@@ -19,6 +19,10 @@ public class Timestamp {
 
     private final double tick;
 
+    public Timestamp plus(double tick) {
+        return new Timestamp(this.tick + tick);
+    }
+
     public static Timestamp valueOf(String s) {
         return new Timestamp(Double.parseDouble(s) * 20);
     }

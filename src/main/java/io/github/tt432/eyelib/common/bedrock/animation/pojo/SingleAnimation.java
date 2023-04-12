@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.common.bedrock.animation.pojo;
 
 import com.google.gson.annotations.SerializedName;
 import io.github.tt432.eyelib.api.bedrock.animation.LoopType;
-import io.github.tt432.eyelib.molang.MolangValue;
 import lombok.Data;
 
 import java.util.Map;
@@ -25,7 +24,7 @@ public class SingleAnimation {
     private Map<Timestamp, SoundEffect> soundEffects;
     @SerializedName("particle_effects")
     private Map<Timestamp, ParticleEffect> particleEffects;
-    private Map<Timestamp, MolangValue> timeline;
+    private Map<Timestamp, TimelineEffect> timeline;
 
     public double getAnimationLength() {
         return animationLength * 20;

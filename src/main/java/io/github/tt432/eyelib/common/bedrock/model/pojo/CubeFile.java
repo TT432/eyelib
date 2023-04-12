@@ -15,7 +15,7 @@ public class CubeFile implements Serializable {
      * Mirrors this cube about the unrotated x axis (effectively flipping the east /
      * west faces), overriding the bone's 'mirror' setting for this cube.
      */
-    private Boolean mirror;
+    private boolean mirror;
     /**
      * This point declares the unrotated lower corner of cube (smallest x/y/z value
      * in model space units).

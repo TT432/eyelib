@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.molang;
 
 import io.github.tt432.eyelib.molang.math.MolangVariable;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,12 +12,35 @@ import java.util.function.Function;
 /**
  * @author DustW
  */
+@Slf4j
 public class MolangVariableScope {
+    @Getter
     private final Map<String, MolangVariable> variables = new HashMap<>();
 
     @Getter
     private MolangDataSource dataSource = new MolangDataSource();
+    @Getter
     private final Map<String, DoubleSupplier> cache = new HashMap<>();
+
+    public MolangVariable getOrCreateVariable(String name) {
+        name = processName(name);
+        String finalName = name;
+
+        if (cache.containsKey(name)) {
+            return new MolangVariable(name, s -> cache.get(finalName).getAsDouble());
+        } else if (variables.containsKey(name)) {
+            return variables.get(name);
+        } else {
+            log.error("can't found variable : {}, add default value", name);
+            return variables.computeIfAbsent(name, n -> new MolangVariable(n, s -> {
+                if (cache.containsKey(finalName)) {
+                    return cache.get(finalName).getAsDouble();
+                }
+
+                return 0D;
+            }));
+        }
+    }
 
     public void setValue(String name, DoubleSupplier value) {
         name = processName(name);
@@ -32,14 +56,21 @@ public class MolangVariableScope {
         setValue(name, () -> result);
     }
 
+    public void removeValue(String name) {
+        name = processName(name);
+        cache.remove(name);
+    }
+
     public double getValue(MolangVariable variable) {
         return getValue(variable.getName());
     }
 
     public double getValue(String name) {
+        name = processName(name);
+        String finalName = name;
         return cache.getOrDefault(name,
                 () -> {
-                    String newName = processName(name);
+                    String newName = processName(finalName);
                     return variables.containsKey(newName) ? variables.get(newName).evaluate(this) : 0;
                 }).getAsDouble();
     }
@@ -103,6 +134,7 @@ public class MolangVariableScope {
     }
 
     public boolean containsCache(String name) {
+        name = processName(name);
         return cache.containsKey(name);
     }
 }

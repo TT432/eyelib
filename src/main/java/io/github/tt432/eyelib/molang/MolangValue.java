@@ -5,9 +5,10 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 
+import java.io.Serializable;
 import java.lang.reflect.Type;
 
-public interface MolangValue {
+public interface MolangValue extends Serializable {
     double TRUE = 1;
     double FALSE = 0;
 
@@ -35,7 +36,7 @@ public interface MolangValue {
         @Override
         public MolangValue deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             try {
-                return MolangParser.getInstance().parseJson(json, MolangParser.scopeStack.last());
+                return MolangParser.getInstance().parseJson(json);
             } catch (MolangException e) {
                 throw new JsonParseException(e);
             }

@@ -2,17 +2,22 @@ package io.github.tt432.eyelib.common.bedrock.animation;
 
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
+@Getter
 public class AnimationEvent<T extends Animatable> {
     private final T animatable;
-    public double animationTick;
+    @Setter
+    private double animationTick;
     private final float limbSwing;
     private final float limbSwingAmount;
     private final float partialTick;
     private final boolean isMoving;
     private final List<Object> extraData;
+    @Setter
     protected AnimationController<T> controller;
 
     public AnimationEvent(T animatable, float limbSwing, float limbSwingAmount, float partialTick, boolean isMoving,
@@ -23,48 +28,6 @@ public class AnimationEvent<T extends Animatable> {
         this.partialTick = partialTick;
         this.isMoving = isMoving;
         this.extraData = extraData;
-    }
-
-    /**
-     * Gets the amount of ticks that have passed in either the current transition or
-     * animation, depending on the controller's AnimationState.
-     *
-     * @return the animation tick
-     */
-    public double getAnimationTick() {
-        return animationTick;
-    }
-
-    public T getAnimatable() {
-        return animatable;
-    }
-
-    public float getLimbSwing() {
-        return limbSwing;
-    }
-
-    public float getLimbSwingAmount() {
-        return limbSwingAmount;
-    }
-
-    public float getPartialTick() {
-        return partialTick;
-    }
-
-    public boolean isMoving() {
-        return isMoving;
-    }
-
-    public AnimationController<T> getController() {
-        return controller;
-    }
-
-    public void setController(AnimationController<T> controller) {
-        this.controller = controller;
-    }
-
-    public List<Object> getExtraData() {
-        return extraData;
     }
 
     public <D> List<D> getExtraDataOfType(Class<D> type) {

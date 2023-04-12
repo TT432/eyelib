@@ -17,9 +17,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.github.tt432.eyelib.common.bedrock.animation.pojo.KeyFrame.LerpMode.CATMULLROM;
-import static io.github.tt432.eyelib.common.bedrock.animation.pojo.KeyFrame.LerpMode.LINEAR;
-
 /**
  * @author DustW
  */
@@ -107,7 +104,7 @@ public class KeyFrame {
             dataPoint = Mth.clamp(dataPoint, 0, dataPoints.length - 1);
         }
 
-        return dataPoints[dataPoint].get(axis).evaluate(MolangParser.getGlobalScope());
+        return dataPoints[dataPoint].get(axis).evaluate(MolangParser.scopeStack.last());
     }
 
     protected static class Serializer implements JsonDeserializer<KeyFrame> {
@@ -116,11 +113,11 @@ public class KeyFrame {
             KeyFrame frame = new KeyFrame();
 
             if (json.isJsonArray()) {
-                frame.lerpMode = LINEAR;
+                frame.lerpMode = LerpMode.LINEAR;
 
                 frame.dataPoints = new Value3[]{context.deserialize(json, Value3.class)};
             } else if (json.isJsonPrimitive()) {
-                frame.lerpMode = LINEAR;
+                frame.lerpMode = LerpMode.LINEAR;
                 MolangValue value = context.deserialize(json, MolangValue.class);
                 frame.dataPoints = new Value3[]{new Value3(value, value, value)};
             } else if (json.isJsonObject()) {
@@ -128,15 +125,15 @@ public class KeyFrame {
 
                 if (jo.has("lerp_mode"))
                     frame.lerpMode = LerpMode.valueOf(jo.get("lerp_mode").getAsString().toUpperCase());
-                else frame.lerpMode = LINEAR;
+                else frame.lerpMode = LerpMode.LINEAR;
 
-                if (frame.lerpMode == CATMULLROM || frame.lerpMode == LINEAR) {
+                if (frame.lerpMode == LerpMode.CATMULLROM || frame.lerpMode == LerpMode.LINEAR) {
                     String pre = "pre";
                     String post = "post";
 
                     if (jo.has(pre) && !jo.has(post)) {
                         frame.dataPoints = new Value3[]{context.deserialize(jo.get(pre), Value3.class)};
-                    } else if (jo.has(post) && (!jo.has(pre) || frame.lerpMode == CATMULLROM)) {
+                    } else if (jo.has(post) && (!jo.has(pre) || frame.lerpMode == LerpMode.CATMULLROM)) {
                         frame.dataPoints = new Value3[]{context.deserialize(jo.get(post), Value3.class)};
                     } else {
                         frame.dataPoints = new Value3[]{
