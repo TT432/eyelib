@@ -16,6 +16,8 @@ import java.util.Optional;
 
 @Data
 public class AnimationData {
+    public static final AnimationData EMPTY = new AnimationData();
+
     @Getter
     private final Map<String, Object> extraData = new HashMap<>();
 

@@ -30,6 +30,7 @@ import javax.annotation.Nullable;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public interface GeoRenderer<T> {
     MultiBufferSource getCurrentRTB();
@@ -71,7 +72,7 @@ public interface GeoRenderer<T> {
     }
 
     default AnimationData getData() {
-        return MolangParser.getCurrentDataSource().getData();
+        return Objects.requireNonNullElse(MolangParser.getCurrentDataSource().getData(), AnimationData.EMPTY);
     }
 
     default void render(GeoModel model, T animatable, float partialTick, RenderType type, PoseStack poseStack,

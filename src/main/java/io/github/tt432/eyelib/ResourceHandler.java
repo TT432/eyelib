@@ -11,7 +11,7 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class ResourceListener {
+public class ResourceHandler {
     @SubscribeEvent
     public static void onEvent(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(BedrockResourceManager.getInstance()::reload);

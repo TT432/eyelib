@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.DoubleSupplier;
 import java.util.function.Function;
 
@@ -15,7 +16,7 @@ import java.util.function.Function;
 @Slf4j
 public class MolangVariableScope {
     @Getter
-    private final Map<String, MolangVariable> variables = new HashMap<>();
+    private final Map<String, MolangVariable> variables = new ConcurrentHashMap<>();
 
     @Getter
     private MolangDataSource dataSource = new MolangDataSource();

@@ -27,7 +27,9 @@ public class ScopeStack {
         if (pushed > 0) {
             pushed--;
             tempScope.removeLast();
-        } else log.error("why pop on not pushed?");
+        } else {
+            log.error("why pop on not pushed?");
+        }
     }
 
     public MolangVariableScope last() {

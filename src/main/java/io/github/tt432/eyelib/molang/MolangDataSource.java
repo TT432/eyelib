@@ -38,7 +38,7 @@ public class MolangDataSource {
         if (byClass.get(Animatable.class) != null)
             return get(Animatable.class).getFactory().getOrCreateAnimationData(id);
 
-        return null;
+        return AnimationData.EMPTY;
     }
 
     public void addSource(Object o, int id) {
