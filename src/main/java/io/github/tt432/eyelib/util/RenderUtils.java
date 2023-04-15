@@ -6,7 +6,7 @@ import com.mojang.math.Matrix4f;
 import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
+import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoCube;
 import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import it.unimi.dsi.fastutil.ints.IntIntPair;
@@ -18,11 +18,11 @@ import net.minecraft.resources.ResourceLocation;
 import javax.annotation.Nullable;
 
 public final class RenderUtils {
-    public static void translateMatrixToBone(PoseStack poseStack, GeoBone bone) {
+    public static void translateMatrixToBone(PoseStack poseStack, Bone bone) {
         poseStack.translate(-bone.getPositionX() / 16f, bone.getPositionY() / 16f, bone.getPositionZ() / 16f);
     }
 
-    public static void rotateMatrixAroundBone(PoseStack poseStack, GeoBone bone) {
+    public static void rotateMatrixAroundBone(PoseStack poseStack, Bone bone) {
         poseStack.mulPose(Vector3f.ZP.rotation(bone.getRotationZ()));
         poseStack.mulPose(Vector3f.YP.rotation(bone.getRotationY()));
         poseStack.mulPose(Vector3f.XP.rotation(bone.getRotationX()));
@@ -36,7 +36,7 @@ public final class RenderUtils {
         poseStack.mulPose(new Quaternion(rotation.x(), 0, 0, false));
     }
 
-    public static void scaleMatrixForBone(PoseStack poseStack, GeoBone bone) {
+    public static void scaleMatrixForBone(PoseStack poseStack, Bone bone) {
         poseStack.scale(bone.getScaleX(), bone.getScaleY(), bone.getScaleZ());
     }
 
@@ -45,7 +45,7 @@ public final class RenderUtils {
         poseStack.translate(pivot.x() / 16f, pivot.y() / 16f, pivot.z() / 16f);
     }
 
-    public static void translateToPivotPoint(PoseStack poseStack, GeoBone bone) {
+    public static void translateToPivotPoint(PoseStack poseStack, Bone bone) {
         poseStack.translate(bone.getPivotX() / 16f, bone.getPivotY() / 16f, bone.getPivotZ() / 16f);
     }
 
@@ -54,16 +54,16 @@ public final class RenderUtils {
         poseStack.translate(-pivot.x() / 16f, -pivot.y() / 16f, -pivot.z() / 16f);
     }
 
-    public static void translateAwayFromPivotPoint(PoseStack poseStack, GeoBone bone) {
+    public static void translateAwayFromPivotPoint(PoseStack poseStack, Bone bone) {
         poseStack.translate(-bone.getPivotX() / 16f, -bone.getPivotY() / 16f, -bone.getPivotZ() / 16f);
     }
 
-    public static void translateAndRotateMatrixForBone(PoseStack poseStack, GeoBone bone) {
+    public static void translateAndRotateMatrixForBone(PoseStack poseStack, Bone bone) {
         translateToPivotPoint(poseStack, bone);
         rotateMatrixAroundBone(poseStack, bone);
     }
 
-    public static void prepMatrixForBone(PoseStack poseStack, GeoBone bone) {
+    public static void prepMatrixForBone(PoseStack poseStack, Bone bone) {
         translateMatrixToBone(poseStack, bone);
         translateToPivotPoint(poseStack, bone);
         rotateMatrixAroundBone(poseStack, bone);

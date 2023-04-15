@@ -8,7 +8,7 @@ import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
 import com.mojang.math.Vector4f;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
-import io.github.tt432.eyelib.api.bedrock.model.Bone;
+import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.api.bedrock.renderer.RenderCycle;
 import io.github.tt432.eyelib.common.bedrock.model.AnimatedGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.element.*;
@@ -82,7 +82,7 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
     private float currentPartialTicks;
     protected ResourceLocation textureForBone = null;
 
-    protected final Queue<Tuple<GeoBone, ItemStack>> HEAD_QUEUE = new ArrayDeque<>();
+    protected final Queue<Tuple<Bone, ItemStack>> HEAD_QUEUE = new ArrayDeque<>();
 
     protected ExtendedGeoEntityRenderer(EntityRendererProvider.Context renderManager,
                                         AnimatedGeoModel<T> modelProvider) {
@@ -102,9 +102,9 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
     // mess up the texture cause the rendertypebuffer will be modified
     protected void renderHeads(PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         while (!this.HEAD_QUEUE.isEmpty()) {
-            Tuple<GeoBone, ItemStack> entry = this.HEAD_QUEUE.poll();
+            Tuple<Bone, ItemStack> entry = this.HEAD_QUEUE.poll();
 
-            GeoBone bone = entry.getA();
+            Bone bone = entry.getA();
             ItemStack itemStack = entry.getB();
             GameProfile skullOwnerProfile = null;
 
@@ -179,10 +179,10 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
         this.currentPartialTicks = partialTicks;
     }
 
-    protected abstract boolean isArmorBone(final GeoBone bone);
+    protected abstract boolean isArmorBone(final Bone bone);
 
 
-    protected void handleArmorRenderingForBone(GeoBone bone, PoseStack stack, VertexConsumer buffer,
+    protected void handleArmorRenderingForBone(Bone bone, PoseStack stack, VertexConsumer buffer,
                                                int packedLight, int packedOverlay, ResourceLocation currentTexture) {
         ItemStack armorForBone = getArmorForBone(bone.getName(), this.currentEntityBeingRendered);
         EquipmentSlot boneSlot = getEquipmentSlotForArmorBone(bone.getName(), this.currentEntityBeingRendered);
@@ -332,12 +332,12 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
         }
     }
 
-    protected void prepareArmorPositionAndScale(GeoBone bone, List<Cube> cubeList, ModelPart sourceLimb,
+    protected void prepareArmorPositionAndScale(Bone bone, List<Cube> cubeList, ModelPart sourceLimb,
                                                 PoseStack stack) {
         prepareArmorPositionAndScale(bone, cubeList, sourceLimb, stack, false, false);
     }
 
-    protected void prepareArmorPositionAndScale(GeoBone bone, List<Cube> cubeList, ModelPart sourceLimb,
+    protected void prepareArmorPositionAndScale(Bone bone, List<Cube> cubeList, ModelPart sourceLimb,
                                                 PoseStack poseStack, boolean geoArmor, boolean modMatrixRot) {
         GeoCube firstCube = bone.childCubes.get(0);
         Cube armorCube = cubeList.get(0);
@@ -371,7 +371,7 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
             float yRot = bone.getRotationY() * -2;
             float zRot = bone.getRotationZ() * 2;
 
-            for (GeoBone parentBone = bone.parent; parentBone != null; parentBone = parentBone.parent) {
+            for (Bone parentBone = bone.parent; parentBone != null; parentBone = parentBone.parent) {
                 xRot -= parentBone.getRotationX();
                 yRot -= parentBone.getRotationY();
                 zRot += parentBone.getRotationZ();
@@ -392,7 +392,7 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
     }
 
     @Override
-    public void renderRecursively(GeoBone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
+    public void renderRecursively(Bone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
                                   int packedOverlay, float red, float green, float blue, float alpha) {
         MultiBufferSource bufferSource = getCurrentRTB();
 
@@ -460,12 +460,12 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
      * Gets called after armor and item rendering but in every render cycle. This
      * serves as a hook for modders to include their own bone specific rendering
      */
-    protected void customBoneSpecificRenderingHook(GeoBone bone, PoseStack poseStack, VertexConsumer buffer,
+    protected void customBoneSpecificRenderingHook(Bone bone, PoseStack poseStack, VertexConsumer buffer,
                                                    int packedLight, int packedOverlay, float red, float green, float blue, float alpha,
                                                    boolean customTextureMarker, ResourceLocation currentTexture) {
     }
 
-    protected void handleItemAndBlockBoneRendering(PoseStack poseStack, GeoBone bone, @Nullable ItemStack boneItem,
+    protected void handleItemAndBlockBoneRendering(PoseStack poseStack, Bone bone, @Nullable ItemStack boneItem,
                                                    @Nullable BlockState boneBlock, int packedLight, int packedOverlay) {
         RenderUtils.prepMatrixForBone(poseStack, bone);
         RenderUtils.translateAndRotateMatrixForBone(poseStack, bone);
@@ -491,7 +491,7 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
                 currentEntityBeingRendered.getId());
     }
 
-    protected RenderType getRenderTypeForBone(GeoBone bone, T animatable, float partialTick,
+    protected RenderType getRenderTypeForBone(Bone bone, T animatable, float partialTick,
                                               PoseStack poseStack, VertexConsumer buffer, MultiBufferSource bufferSource, int packedLight, ResourceLocation texture) {
         return getRenderType(animatable, partialTick, poseStack, bufferSource, buffer, packedLight, texture);
     }

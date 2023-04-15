@@ -7,6 +7,7 @@ import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
 import com.mojang.math.Vector4f;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
+import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.api.bedrock.model.GeoModelProvider;
 import io.github.tt432.eyelib.common.AnimationTextureLoader;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
@@ -88,7 +89,7 @@ public interface GeoRenderer<T> {
         renderLate(animatable, poseStack, partialTick, bufferSource, buffer, packedLight,
                 packedOverlay, red, green, blue, alpha);
         // Render all top level bones
-        for (GeoBone group : model.topLevelBones) {
+        for (Bone group : model.topLevelBones) {
             renderRecursively(group, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         }
         // Since we rendered at least once at this point, let's set the cycle to
@@ -96,7 +97,7 @@ public interface GeoRenderer<T> {
         setCurrentModelRenderCycle(RenderCycle.RenderCycleImpl.REPEATED);
     }
 
-    default void renderRecursively(GeoBone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
+    default void renderRecursively(Bone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
                                    int packedOverlay, float red, float green, float blue, float alpha) {
         poseStack.pushPose();
         RenderUtils.prepMatrixForBone(poseStack, bone);
@@ -105,7 +106,7 @@ public interface GeoRenderer<T> {
         poseStack.popPose();
     }
 
-    default void renderCubesOfBone(GeoBone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
+    default void renderCubesOfBone(Bone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
                                    int packedOverlay, float red, float green, float blue, float alpha) {
         if (bone.isHidden())
             return;
@@ -132,7 +133,7 @@ public interface GeoRenderer<T> {
         }
     }
 
-    static int getLight(int sourceLight, GeoBone bone) {
+    static int getLight(int sourceLight, Bone bone) {
         MolangDataSource currentDataSource = MolangParser.getCurrentDataSource();
 
         if (currentDataSource.get(Animatable.class) != null) {
@@ -146,12 +147,12 @@ public interface GeoRenderer<T> {
         return sourceLight;
     }
 
-    default void renderChildBones(GeoBone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
+    default void renderChildBones(Bone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
                                   int packedOverlay, float red, float green, float blue, float alpha) {
         if (bone.childBonesAreHiddenToo())
             return;
 
-        for (GeoBone childBone : bone.childBones) {
+        for (Bone childBone : bone.childBones) {
             renderRecursively(childBone, poseStack, buffer, packedLight, packedOverlay, red, green, blue, alpha);
         }
     }
@@ -257,11 +258,11 @@ public interface GeoRenderer<T> {
     }
 
     /**
-     * Use {@link RenderUtils#prepMatrixForBone(PoseStack, GeoBone)}<br>
+     * Use {@link RenderUtils#prepMatrixForBone(PoseStack, Bone)}<br>
      * Remove in 1.20+
      */
     @Deprecated(forRemoval = true)
-    default void preparePositionRotationScale(GeoBone bone, PoseStack poseStack) {
+    default void preparePositionRotationScale(Bone bone, PoseStack poseStack) {
         RenderUtils.prepMatrixForBone(poseStack, bone);
     }
 }

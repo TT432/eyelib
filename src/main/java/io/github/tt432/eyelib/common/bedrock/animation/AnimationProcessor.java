@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.common.bedrock.animation;
 
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
-import io.github.tt432.eyelib.api.bedrock.model.Bone;
+import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
 import io.github.tt432.eyelib.common.bedrock.animation.util.BoneAnimationQueue;
 import io.github.tt432.eyelib.util.BoneSnapshot;

@@ -6,7 +6,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.api.bedrock.model.GeoModelProvider;
 import io.github.tt432.eyelib.api.bedrock.renderer.GeoRenderer;
-import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
+import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.Locator;
 import io.github.tt432.eyelib.common.bedrock.particle.component.ParticleComponent;
@@ -265,7 +265,7 @@ public class ParticleEmitter {
             if (renderer instanceof GeoRenderer<?> gr) {
                 GeoModelProvider modelProvider = gr.getGeoModelProvider();
                 GeoModel model = modelProvider.getModel(modelProvider.getModelLocation(bindingEntity));
-                List<GeoBone> bones = model.getLocator(locator);
+                List<Bone> bones = model.getLocator(locator);
 
                 if (!bones.isEmpty()) {
                     bones.forEach(bone -> RenderUtils.prepMatrixForBone(poseStack, bone));

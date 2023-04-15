@@ -9,15 +9,15 @@ import java.util.List;
 import java.util.Optional;
 
 public class GeoModel {
-    public List<GeoBone> topLevelBones = new ObjectArrayList<>();
+    public List<Bone> topLevelBones = new ObjectArrayList<>();
     public ModelProperties properties;
 
     public boolean hasTopLevelBone(String name) {
         return topLevelBones.stream().anyMatch(bone -> bone.getName().equals(name));
     }
 
-    public Optional<GeoBone> getTopLevelBone(String name) {
-        for (GeoBone bone : topLevelBones) {
+    public Optional<Bone> getTopLevelBone(String name) {
+        for (Bone bone : topLevelBones) {
             if (bone.getName().equals(name)) {
                 return Optional.of(bone);
             }
@@ -26,9 +26,9 @@ public class GeoModel {
         return Optional.empty();
     }
 
-    public Optional<GeoBone> getBone(String name) {
-        for (GeoBone bone : topLevelBones) {
-            GeoBone optionalBone = getBoneRecursively(name, bone);
+    public Optional<Bone> getBone(String name) {
+        for (Bone bone : topLevelBones) {
+            Bone optionalBone = getBoneRecursively(name, bone);
             if (optionalBone != null) {
                 return Optional.of(optionalBone);
             }
@@ -36,12 +36,12 @@ public class GeoModel {
         return Optional.empty();
     }
 
-    public List<GeoBone> getLocator(String name) {
-        for (GeoBone bone : topLevelBones) {
-            GeoBone locatorBone = getLocator(name, bone);
+    public List<Bone> getLocator(String name) {
+        for (Bone bone : topLevelBones) {
+            Bone locatorBone = getLocator(name, bone);
 
             if (locatorBone != null) {
-                List<GeoBone> result = new ArrayList<>();
+                List<Bone> result = new ArrayList<>();
                 result.add(locatorBone);
 
                 var parent = locatorBone.getParent();
@@ -60,15 +60,15 @@ public class GeoModel {
         return List.of();
     }
 
-    private GeoBone getLocator(String name, GeoBone parent) {
+    private Bone getLocator(String name, Bone parent) {
         if (parent.locators.containsKey(name)) {
             return parent;
         } else {
-            for (GeoBone childBone : parent.childBones) {
+            for (Bone childBone : parent.childBones) {
                 if (childBone.locators.containsKey(name)) {
                     return childBone;
                 } else {
-                    GeoBone locator = getLocator(name, childBone);
+                    Bone locator = getLocator(name, childBone);
 
                     if (locator != null)
                         return locator;
@@ -79,16 +79,16 @@ public class GeoModel {
         return null;
     }
 
-    private GeoBone getBoneRecursively(String name, GeoBone bone) {
+    private Bone getBoneRecursively(String name, Bone bone) {
         if (bone.name.equals(name)) {
             return bone;
         }
 
-        for (GeoBone childBone : bone.childBones) {
+        for (Bone childBone : bone.childBones) {
             if (childBone.name.equals(name)) {
                 return childBone;
             }
-            GeoBone optionalBone = getBoneRecursively(name, childBone);
+            Bone optionalBone = getBoneRecursively(name, childBone);
             if (optionalBone != null) {
                 return optionalBone;
             }

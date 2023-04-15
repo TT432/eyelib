@@ -6,7 +6,7 @@
 package io.github.tt432.eyelib.common.bedrock.animation.util;
 
 
-import io.github.tt432.eyelib.api.bedrock.model.Bone;
+import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 
 import java.util.LinkedList;
 

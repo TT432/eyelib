@@ -3,8 +3,7 @@ package io.github.tt432.eyelib.example.client.renderer.entity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Vector3f;
-import io.github.tt432.eyelib.api.bedrock.model.Bone;
-import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
+import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.common.bedrock.renderer.ExtendedGeoEntityRenderer;
 import io.github.tt432.eyelib.example.client.DefaultBipedBoneIdents;
 import io.github.tt432.eyelib.example.client.EntityResources;
@@ -167,7 +166,7 @@ public class ExampleExtendedRendererEntityRenderer extends ExtendedGeoEntityRend
     }
 
     @Override
-    protected boolean isArmorBone(GeoBone bone) {
+    protected boolean isArmorBone(Bone bone) {
         return bone.getName().startsWith("armor");
     }
 

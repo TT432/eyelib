@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.common.bedrock.model.tree;
 
 import com.mojang.math.Vector3f;
-import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
+import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoCube;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.BoneFile;
@@ -39,8 +39,8 @@ public class GeoBuilder implements IGeoBuilder {
     }
 
     @Override
-    public GeoBone constructBone(RawBoneGroup bone, ModelProperties properties, GeoBone parent) {
-        GeoBone geoBone = new GeoBone();
+    public Bone constructBone(RawBoneGroup bone, ModelProperties properties, Bone parent) {
+        Bone geoBone = new Bone();
 
         BoneFile rawBoneFile = bone.selfBone;
         Vector3f rotation = new Vector3f(VectorUtils.fromArray(rawBoneFile.getRotation()));

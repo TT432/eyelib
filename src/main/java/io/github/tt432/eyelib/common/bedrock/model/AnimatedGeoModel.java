@@ -3,13 +3,12 @@ package io.github.tt432.eyelib.common.bedrock.model;
 import com.mojang.blaze3d.Blaze3D;
 import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
-import io.github.tt432.eyelib.api.bedrock.model.Bone;
+import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.api.bedrock.model.GeoModelProvider;
 import io.github.tt432.eyelib.common.bedrock.EyelibLoadingException;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationProcessor;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
-import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
@@ -31,10 +30,10 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
         this.animationProcessor = new AnimationProcessor<>();
     }
 
-    public void registerBone(GeoBone bone) {
+    public void registerBone(Bone bone) {
         registerModelRenderer(bone);
 
-        for (GeoBone childBone : bone.childBones) {
+        for (Bone childBone : bone.childBones) {
             registerBone(childBone);
         }
     }
@@ -98,7 +97,7 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
             this.animationProcessor.clearModelRendererList();
             this.currentModel = model;
 
-            for (GeoBone bone : model.topLevelBones) {
+            for (Bone bone : model.topLevelBones) {
                 registerBone(bone);
             }
         }

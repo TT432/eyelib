@@ -10,7 +10,7 @@ import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.LoopType;
 import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
-import io.github.tt432.eyelib.api.bedrock.model.Bone;
+import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.api.sound.SoundPlayer;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationEntry;

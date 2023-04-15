@@ -4,7 +4,6 @@ import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3d;
 import com.mojang.math.Vector4f;
-import io.github.tt432.eyelib.api.bedrock.model.Bone;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.Locator;
 import io.github.tt432.eyelib.util.BoneSnapshot;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -17,10 +16,10 @@ import java.util.List;
 import java.util.Map;
 
 @Getter
-public class GeoBone implements Bone {
-    public GeoBone parent;
+public class Bone {
+    public Bone parent;
 
-    public List<GeoBone> childBones = new ObjectArrayList<>();
+    public List<Bone> childBones = new ObjectArrayList<>();
     public List<GeoCube> childCubes = new ObjectArrayList<>();
 
     public Map<String, Locator> locators = new HashMap<>();
@@ -80,7 +79,7 @@ public class GeoBone implements Bone {
     private boolean trackingXform;
     public final Matrix4f rotMat;
 
-    public GeoBone() {
+    public Bone() {
         modelSpaceXform = new Matrix4f();
         modelSpaceXform.setIdentity();
         localSpaceXform = new Matrix4f();
@@ -93,12 +92,10 @@ public class GeoBone implements Bone {
         rotMat = null;
     }
 
-    @Override
     public void setModelRendererName(String modelRendererName) {
         this.name = modelRendererName;
     }
 
-    @Override
     public void saveInitialSnapshot() {
         if (this.initialSnapshot == null) {
             this.initialSnapshot = new BoneSnapshot(this);
@@ -107,24 +104,21 @@ public class GeoBone implements Bone {
 
     // Boilerplate code incoming
 
-    @Override
     public boolean cubesAreHidden() {
         return isCubesHidden();
     }
 
-    @Override
     public boolean childBonesAreHiddenToo() {
         return isHideChildBonesToo();
     }
 
-    @Override
     public void setHidden(boolean selfHidden, boolean skipChildRendering) {
         this.setHidden(selfHidden);
         this.setHideChildBonesToo(skipChildRendering);
     }
 
     /* Credit to BobMowzie for this section */
-    public GeoBone getParent() {
+    public Bone getParent() {
         return parent;
     }
 
@@ -184,7 +178,7 @@ public class GeoBone implements Bone {
 
     public void setModelPosition(Vector3d pos) {
         /* Doesn't work on bones with parent transforms */
-        GeoBone parent = getParent();
+        Bone parent = getParent();
         Matrix4f identity = new Matrix4f();
         identity.setIdentity();
         Matrix4f matrix = parent == null ? identity : parent.getModelSpaceXform().copy();
@@ -287,9 +281,27 @@ public class GeoBone implements Bone {
         return new Vector3d(getScaleX(), getScaleY(), getScaleZ());
     }
 
-    public void addRotationOffsetFromBone(GeoBone source) {
+    public void addRotationOffsetFromBone(Bone source) {
         setRotationX(getRotationX() + source.getRotationX() - source.getInitialSnapshot().rotationValueX);
         setRotationY(getRotationY() + source.getRotationY() - source.getInitialSnapshot().rotationValueY);
         setRotationZ(getRotationZ() + source.getRotationZ() - source.getInitialSnapshot().rotationValueZ);
+    }
+
+    public void setRotation(float x, float y, float z) {
+        setRotationX(x);
+        setRotationY(y);
+        setRotationZ(z);
+    }
+
+    public void setPosition(float x, float y, float z) {
+        setPositionX(x);
+        setPositionY(y);
+        setPositionZ(z);
+    }
+
+    public void setScale(float x, float y, float z) {
+        setScaleX(x);
+        setScaleY(y);
+        setScaleZ(z);
     }
 }

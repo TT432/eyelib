@@ -13,7 +13,7 @@ import io.github.tt432.eyelib.api.bedrock.renderer.GeoRenderer;
 import io.github.tt432.eyelib.api.bedrock.renderer.RenderCycle;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.model.AnimatedGeoModel;
-import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
+import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 import io.github.tt432.eyelib.util.AnimationUtils;
 import io.github.tt432.eyelib.util.Color;
@@ -99,7 +99,7 @@ public class GeoProjectilesRenderer<T extends Entity & Animatable> extends Entit
     }
 
     @Override
-    public void renderRecursively(GeoBone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
+    public void renderRecursively(Bone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
                                   int packedOverlay, float red, float green, float blue, float alpha) {
         if (bone.isTrackingXform()) {
             Matrix4f poseState = poseStack.last().pose().copy();
