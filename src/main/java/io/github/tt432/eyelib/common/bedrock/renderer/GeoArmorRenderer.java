@@ -52,7 +52,7 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
 
     protected Class<? extends ArmorItem> assignedItemClass = null;
 
-    protected T currentArmorItem;
+    protected T animatable;
     protected LivingEntity entityLiving;
     protected ItemStack itemStack;
     protected EquipmentSlot armorSlot;
@@ -78,15 +78,11 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
 
     private RenderCycle currentModelRenderCycle = RenderCycle.RenderCycleImpl.INITIAL;
 
-    {
-        ModelFetcherManager.addModelFetcher(this);
-    }
-
     @Override
     @Nullable
     public AnimatableModel<T> apply(Animatable t) {
         if (t instanceof ArmorItem && t.getClass() == this.assignedItemClass)
-            return this.getGeoModelProvider();
+            return this.getModelProvider();
 
         return null;
     }
@@ -161,10 +157,11 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
         return armorRenderer;
     }
 
-    public GeoArmorRenderer(AnimatedGeoModel<T> modelProvider) {
+    protected GeoArmorRenderer(AnimatedGeoModel<T> modelProvider) {
         super(Minecraft.getInstance().getEntityModels().bakeLayer(ModelLayers.PLAYER_INNER_ARMOR));
 
         this.modelProvider = modelProvider;
+        ModelFetcherManager.addModelFetcher(this);
     }
 
     @Override
@@ -174,8 +171,8 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
     }
 
     public void render(float partialTick, PoseStack poseStack, VertexConsumer buffer, int packedLight) {
-        GeoModel model = this.modelProvider.getModel(this.modelProvider.getModelLocation(this.currentArmorItem));
-        AnimationEvent animationEvent = new AnimationEvent(this.currentArmorItem, 0, 0,
+        GeoModel model = this.modelProvider.getModel(this.modelProvider.getModelLocation(this.animatable));
+        AnimationEvent animationEvent = new AnimationEvent(this.animatable, 0, 0,
                 Minecraft.getInstance().getFrameTime(), false,
                 Arrays.asList(this.itemStack, this.entityLiving, this.armorSlot));
 
@@ -185,16 +182,16 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
 
         this.dispatchedMat = poseStack.last().pose().copy();
 
-        this.modelProvider.setCustomAnimations(this.currentArmorItem, null, getInstanceId(this.currentArmorItem), animationEvent);
+        this.modelProvider.setCustomAnimations(this.animatable, null, getInstanceId(this.animatable), animationEvent);
         setCurrentModelRenderCycle(RenderCycle.RenderCycleImpl.INITIAL);
         fitToBiped();
-        RenderSystem.setShaderTexture(0, getTextureLocation(this.currentArmorItem));
+        RenderSystem.setShaderTexture(0, getTextureLocation(this.animatable));
 
-        Color renderColor = getRenderColor(this.currentArmorItem, partialTick, poseStack, null, buffer, packedLight);
-        RenderType renderType = getRenderType(this.currentArmorItem, partialTick, poseStack, null, buffer, packedLight,
-                getTextureLocation(this.currentArmorItem));
+        Color renderColor = getRenderColor(this.animatable, partialTick, poseStack, null, buffer, packedLight);
+        RenderType renderType = getRenderType(this.animatable, partialTick, poseStack, null, buffer, packedLight,
+                getTextureLocation(this.animatable));
 
-        render(model, this.currentArmorItem, partialTick, renderType, poseStack, null, buffer, packedLight,
+        render(model, this.animatable, partialTick, renderType, poseStack, null, buffer, packedLight,
                 OverlayTexture.NO_OVERLAY, renderColor.getRed() / 255f, renderColor.getGreen() / 255f,
                 renderColor.getBlue() / 255f, renderColor.getAlpha() / 255f);
 
@@ -206,7 +203,7 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
                             VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue,
                             float alpha) {
         this.renderEarlyMat = poseStack.last().pose().copy();
-        this.currentArmorItem = animatable;
+        this.animatable = animatable;
 
         GeoRenderer.super.renderEarly(animatable, poseStack, partialTick, bufferSource, buffer,
                 packedLight, packedOverlay, red, green, blue, alpha);
@@ -217,7 +214,7 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
                                   int packedOverlay, float red, float green, float blue, float alpha) {
         if (bone.isTrackingXform()) {
             Matrix4f poseState = poseStack.last().pose();
-            Vec3 renderOffset = getRenderOffset(this.currentArmorItem, 1);
+            Vec3 renderOffset = getRenderOffset(this.animatable, 1);
             Matrix4f localMatrix = RenderUtils.invertAndMultiplyMatrices(poseState, this.dispatchedMat);
 
             bone.setModelSpaceXform(RenderUtils.invertAndMultiplyMatrices(poseState, this.renderEarlyMat));
@@ -308,7 +305,7 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
     }
 
     @Override
-    public AnimatedGeoModel<T> getGeoModelProvider() {
+    public AnimatedGeoModel<T> getModelProvider() {
         return this.modelProvider;
     }
 
@@ -349,7 +346,7 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
         this.entityLiving = entity;
         this.itemStack = itemStack;
         this.armorSlot = armorSlot;
-        this.currentArmorItem = (T) itemStack.getItem();
+        this.animatable = (T) itemStack.getItem();
 
         return this;
     }
@@ -365,7 +362,7 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
     }
 
     public GeoArmorRenderer applySlot(EquipmentSlot slot) {
-        this.modelProvider.getModel(this.modelProvider.getModelLocation(this.currentArmorItem));
+        this.modelProvider.getModel(this.modelProvider.getModelLocation(this.animatable));
 
         setBoneVisibility(this.headBone, false);
         setBoneVisibility(this.bodyBone, false);
@@ -413,7 +410,7 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
         this.modelProvider.getBone(boneName).setHidden(!isVisible);
     }
 
-    protected Bone getAndHideBone(String boneName) {
+    public Bone getAndHideBone(String boneName) {
         setBoneVisibility(boneName, false);
 
         return this.modelProvider.getBone(boneName);
@@ -437,6 +434,6 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
 
     @Override
     public T getAnimatable() {
-        return currentArmorItem;
+        return animatable;
     }
 }

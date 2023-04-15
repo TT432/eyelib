@@ -14,7 +14,7 @@ import net.minecraft.world.entity.LivingEntity;
 public abstract class GeoLayerRenderer<T extends Entity & Animatable> {
     protected final GeoRenderer<T> entityRenderer;
 
-    public GeoLayerRenderer(GeoRenderer<T> entityRendererIn) {
+    protected GeoLayerRenderer(GeoRenderer<T> entityRendererIn) {
         this.entityRenderer = entityRendererIn;
     }
 
@@ -44,7 +44,7 @@ public abstract class GeoLayerRenderer<T extends Entity & Animatable> {
     }
 
     public GeoModelProvider<T> getEntityModel() {
-        return this.entityRenderer.getGeoModelProvider();
+        return this.entityRenderer.getModelProvider();
     }
 
     public GeoRenderer<T> getRenderer() {

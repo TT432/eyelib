@@ -24,6 +24,7 @@ import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.RenderUtils;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -44,9 +45,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.ApiStatus.AvailableSince;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 
@@ -68,25 +68,14 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
     public ResourceLocation whTexture;
     protected float widthScale = 1;
     protected float heightScale = 1;
+    @Getter
+    @Setter
     private RenderCycle currentModelRenderCycle = RenderCycle.RenderCycleImpl.INITIAL;
 
-    public GeoEntityRenderer(EntityRendererProvider.Context renderManager, AnimatedGeoModel<T> modelProvider) {
+    protected GeoEntityRenderer(EntityRendererProvider.Context renderManager, AnimatedGeoModel<T> modelProvider) {
         super(renderManager);
 
         this.modelProvider = modelProvider;
-    }
-
-    @AvailableSince(value = "3.1.24")
-    @Override
-    @Nonnull
-    public RenderCycle getCurrentModelRenderCycle() {
-        return this.currentModelRenderCycle;
-    }
-
-    @AvailableSince(value = "3.1.24")
-    @Override
-    public void setCurrentModelRenderCycle(RenderCycle currentModelRenderCycle) {
-        this.currentModelRenderCycle = currentModelRenderCycle;
     }
 
     @Override
@@ -105,42 +94,21 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
     @Override
     public void render(T animatable, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource,
                        int packedLight) {
-        setCurrentModelRenderCycle(RenderCycle.RenderCycleImpl.INITIAL);
-        poseStack.pushPose();
         MolangVariableScope scope = animatable.getFactory().getScope();
-        MolangParser.scopeStack.push(scope);
-        MolangParser.getCurrentDataSource().addSource(animatable, getInstanceId(animatable));
-        scope.setValue("temp_ptick", partialTick);
 
-        if (animatable instanceof Mob mob) {
-            Entity leashHolder = mob.getLeashHolder();
+        startRender(animatable, partialTick, poseStack);
 
-            if (leashHolder != null)
-                renderLeash(animatable, partialTick, poseStack, bufferSource, leashHolder);
-        }
+        tryRenderLeash(animatable, partialTick, poseStack, bufferSource);
 
         this.dispatchedMat = poseStack.last().pose().copy();
-        boolean shouldSit = animatable.isPassenger() && (animatable.getVehicle() != null && animatable.getVehicle().shouldRiderSit());
-
         float lerpBodyRot = Mth.rotLerp(partialTick, animatable.yBodyRotO, animatable.yBodyRot);
-        float netHeadYaw = (float) -scope.get("query.head_yaw_offset").evaluate(scope);
-        float headPitch = (float) -scope.get("query.head_pitch_offset").evaluate(scope);
-
-        if (animatable.getPose() == Pose.SLEEPING) {
-            Direction bedDirection = animatable.getBedOrientation();
-
-            if (bedDirection != null) {
-                float eyePosOffset = animatable.getEyeHeight(Pose.STANDING) - 0.1F;
-
-                poseStack.translate(-bedDirection.getStepX() * eyePosOffset, 0, -bedDirection.getStepZ() * eyePosOffset);
-            }
-        }
-
         float ageInTicks = animatable.tickCount + partialTick;
+
+        applyRotations(animatable, poseStack, lerpBodyRot, partialTick);
+
         float limbSwingAmount = 0;
         float limbSwing = 0;
-
-        applyRotations(animatable, poseStack, ageInTicks, lerpBodyRot, partialTick);
+        boolean shouldSit = animatable.isPassenger() && (animatable.getVehicle() != null && animatable.getVehicle().shouldRiderSit());
 
         if (!shouldSit && animatable.isAlive()) {
             limbSwingAmount = Mth.lerp(partialTick, animatable.animationSpeedOld, animatable.animationSpeed);
@@ -153,7 +121,7 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
                 limbSwingAmount = 1f;
         }
 
-        AnimationEvent<T> predicate = new AnimationEvent<T>(animatable, limbSwing, limbSwingAmount, partialTick,
+        AnimationEvent<T> predicate = new AnimationEvent<>(animatable, limbSwing, limbSwingAmount, partialTick,
                 (limbSwingAmount <= -getSwingMotionAnimThreshold() || limbSwingAmount > getSwingMotionAnimThreshold()),
                 Collections.emptyList());
         GeoModel model = this.modelProvider.getModel(this.modelProvider.getModelLocation(animatable));
@@ -183,18 +151,57 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
         }
 
         if (!animatable.isSpectator()) {
+            float netHeadYaw = (float) -scope.get("query.head_yaw_offset").evaluate(scope);
+            float headPitch = (float) -scope.get("query.head_pitch_offset").evaluate(scope);
+
             for (GeoLayerRenderer<T> layerRenderer : this.layerRenderers) {
-                renderLayer(poseStack, bufferSource, packedLight, animatable, limbSwing, limbSwingAmount, partialTick, ageInTicks,
-                        netHeadYaw, headPitch, bufferSource, layerRenderer);
+                layerRenderer.render(poseStack, bufferSource, packedLight, animatable, limbSwing, limbSwingAmount, partialTick, ageInTicks,
+                        netHeadYaw, headPitch);
             }
         }
 
+        finishRender(animatable, entityYaw, partialTick, poseStack, bufferSource, packedLight, scope);
+    }
+
+    private void finishRender(T animatable, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, MolangVariableScope scope) {
         poseStack.popPose();
-
         super.render(animatable, entityYaw, partialTick, poseStack, bufferSource, packedLight);
-
-        scope.removeValue("temp_ptick");
+        GeoRenderers.renderPartialTick(scope);
         MolangParser.scopeStack.pop();
+    }
+
+    private static <T extends LivingEntity> void transForSleep(T animatable, PoseStack poseStack, float rotationYaw) {
+        Direction bedDirection = animatable.getBedOrientation();
+
+        if (bedDirection != null) {
+            float eyePosOffset = animatable.getEyeHeight(Pose.STANDING) - 0.1F;
+
+            poseStack.translate(-bedDirection.getStepX() * eyePosOffset, 0, -bedDirection.getStepZ() * eyePosOffset);
+        }
+
+        Direction bedOrientation = animatable.getBedOrientation();
+
+        poseStack.mulPose(Vector3f.YP.rotationDegrees(bedOrientation != null ? getFacingAngle(bedOrientation) : rotationYaw));
+        poseStack.mulPose(Vector3f.ZP.rotationDegrees(90f));
+        poseStack.mulPose(Vector3f.YP.rotationDegrees(270f));
+    }
+
+    private void tryRenderLeash(T animatable, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource) {
+        if (animatable instanceof Mob mob) {
+            Entity leashHolder = mob.getLeashHolder();
+
+            if (leashHolder != null)
+                renderLeash(animatable, partialTick, poseStack, bufferSource, leashHolder);
+        }
+    }
+
+    private void startRender(T animatable, float partialTick, PoseStack poseStack) {
+        setCurrentModelRenderCycle(RenderCycle.RenderCycleImpl.INITIAL);
+        poseStack.pushPose();
+        MolangVariableScope scope = animatable.getFactory().getScope();
+        MolangParser.scopeStack.push(scope);
+        MolangParser.getCurrentDataSource().addSource(animatable, getInstanceId(animatable));
+        GeoRenderers.setPartialTick(partialTick, scope);
     }
 
     @Override
@@ -240,87 +247,57 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
         poseStack.popPose();
     }
 
-    protected void renderLayer(PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, T animatable,
-                               float limbSwing, float limbSwingAmount, float partialTick, float rotFloat, float netHeadYaw,
-                               float headPitch, MultiBufferSource bufferSource2, GeoLayerRenderer<T> layerRenderer) {
-        layerRenderer.render(poseStack, bufferSource, packedLight, animatable, limbSwing, limbSwingAmount, partialTick, rotFloat,
-                netHeadYaw, headPitch);
-    }
-
-    /**
-     * Use {@link GeoRenderer#getInstanceId(Object)}<br>
-     * Remove in 1.20+
-     */
-    @Deprecated(forRemoval = true)
-    public Integer getUniqueID(T animatable) {
-        return getInstanceId(animatable);
-    }
-
     @Override
     public int getInstanceId(T animatable) {
         return animatable.getId();
     }
 
     @Override
-    public GeoModelProvider<T> getGeoModelProvider() {
+    public GeoModelProvider<T> getModelProvider() {
         return this.modelProvider;
     }
 
-    @AvailableSince(value = "3.1.24")
     @Override
     public float getWidthScale(T animatable) {
         return this.widthScale;
     }
 
-    @AvailableSince(value = "3.1.24")
     @Override
     public float getHeightScale(T entity) {
         return this.heightScale;
     }
 
-    @AvailableSince(value = "3.0.53")
     public int getOverlay(T entity, float u) {
         return OverlayTexture.pack(OverlayTexture.u(u),
                 OverlayTexture.v(entity.hurtTime > 0 || entity.deathTime > 0));
     }
 
-    /**
-     * Use {@link GeoEntityRenderer#getOverlay(T, float)}<br>
-     * Remove in 1.20+
-     */
-    @Deprecated(forRemoval = true)
-    public int getPackedOverlay(LivingEntity entity, float u) {
-        return this.getOverlay(animatable, u);
-    }
-
-    protected void applyRotations(T animatable, PoseStack poseStack, float ageInTicks, float rotationYaw,
-                                  float partialTick) {
+    public static <T extends LivingEntity> void applyRotations(T animatable, PoseStack poseStack, float rotationYaw, float partialTick) {
         Pose pose = animatable.getPose();
 
-        if (pose != Pose.SLEEPING)
+        if (pose != Pose.SLEEPING) {
             poseStack.mulPose(Vector3f.YP.rotationDegrees(180f - rotationYaw));
+        }
 
         if (animatable.deathTime > 0) {
             float deathRotation = (animatable.deathTime + partialTick - 1f) / 20f * 1.6f;
 
-            poseStack.mulPose(Vector3f.ZP.rotationDegrees(Math.min(Mth.sqrt(deathRotation), 1) * getDeathMaxRotation(animatable)));
+            poseStack.mulPose(Vector3f.ZP.rotationDegrees(Math.min(Mth.sqrt(deathRotation), 1) * 90f));
         } else if (animatable.isAutoSpinAttack()) {
             poseStack.mulPose(Vector3f.XP.rotationDegrees(-90f - animatable.getXRot()));
             poseStack.mulPose(Vector3f.YP.rotationDegrees((animatable.tickCount + partialTick) * -75f));
         } else if (pose == Pose.SLEEPING) {
-            Direction bedOrientation = animatable.getBedOrientation();
-
-            poseStack.mulPose(Vector3f.YP.rotationDegrees(bedOrientation != null ? getFacingAngle(bedOrientation) : rotationYaw));
-            poseStack.mulPose(Vector3f.ZP.rotationDegrees(getDeathMaxRotation(animatable)));
-            poseStack.mulPose(Vector3f.YP.rotationDegrees(270f));
-        } else if (animatable.hasCustomName() || animatable instanceof Player) {
-            String name = animatable.getName().getString();
+            transForSleep(animatable, poseStack, rotationYaw);
+        } else  {
+            String name = null;
 
             if (animatable instanceof Player player) {
                 if (!player.isModelPartShown(PlayerModelPart.CAPE))
                     return;
-            } else {
-                name = ChatFormatting.stripFormatting(name);
+
+                name = animatable.getName().getString();
+            } else if (animatable.hasCustomName()) {
+                name = ChatFormatting.stripFormatting(animatable.getName().getString());
             }
 
             if (name != null && (name.equals("Dinnerbone") || name.equalsIgnoreCase("Grumm"))) {
@@ -330,10 +307,6 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
         }
     }
 
-    protected boolean isVisible(T animatable) {
-        return !animatable.isInvisible();
-    }
-
     private static float getFacingAngle(Direction direction) {
         return switch (direction) {
             case SOUTH -> 90f;
@@ -341,10 +314,6 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
             case EAST -> 180f;
             default -> 0f;
         };
-    }
-
-    protected float getDeathMaxRotation(T animatable) {
-        return 90f;
     }
 
     @Override
@@ -357,10 +326,6 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
         return animatable == this.entityRenderDispatcher.crosshairPickEntity && animatable.hasCustomName() && Minecraft.renderNames();
     }
 
-    protected float getSwingProgress(T animatable, float partialTick) {
-        return animatable.getAttackAnim(partialTick);
-    }
-
     /**
      * Determines how far (from 0) the arm swing should be moving before counting as moving for animation purposes.
      */
@@ -369,7 +334,7 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
     }
 
     @Override
-    public ResourceLocation getTextureLocation(T animatable) {
+    public @NotNull ResourceLocation getTextureLocation(@NotNull T animatable) {
         return this.modelProvider.getTextureLocation(animatable);
     }
 
@@ -419,9 +384,10 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
         poseStack.popPose();
     }
 
-    private static void renderLeashPiece(VertexConsumer buffer, Matrix4f positionMatrix, float xDif, float yDif,
+    public static void renderLeashPiece(VertexConsumer buffer, Matrix4f positionMatrix, float xDif, float yDif,
                                          float zDif, int entityBlockLight, int holderBlockLight, int entitySkyLight,
-                                         int holderSkyLight, float width, float yOffset, float xOffset, float zOffset, int segment, boolean isLeashKnot) {
+                                         int holderSkyLight, float width, float yOffset, float xOffset, float zOffset,
+                                         int segment, boolean isLeashKnot) {
         float piecePosPercent = segment / 24f;
         int lerpBlockLight = (int) Mth.lerp(piecePosPercent, entityBlockLight, holderBlockLight);
         int lerpSkyLight = (int) Mth.lerp(piecePosPercent, entitySkyLight, holderSkyLight);
@@ -446,14 +412,5 @@ public abstract class GeoEntityRenderer<T extends LivingEntity & Animatable> ext
     @Override
     public MultiBufferSource getCurrentRTB() {
         return this.rtb;
-    }
-
-    /**
-     * Just add them yourself<br>
-     * Remove in 1.20+
-     */
-    @Deprecated(forRemoval = true)
-    protected float getLerpedAge(T animatable, float partialTick) {
-        return animatable.tickCount + partialTick;
     }
 }

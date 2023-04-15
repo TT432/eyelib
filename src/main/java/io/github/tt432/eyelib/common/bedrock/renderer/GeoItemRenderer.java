@@ -19,6 +19,7 @@ import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.GeckoLibUtil;
 import io.github.tt432.eyelib.util.RenderUtils;
 import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -32,9 +33,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.RenderProperties;
-import org.jetbrains.annotations.ApiStatus.AvailableSince;
 
-import javax.annotation.Nonnull;
 import java.util.Collections;
 
 public abstract class GeoItemRenderer<T extends Item & Animatable> extends BlockEntityWithoutLevelRenderer
@@ -44,12 +43,14 @@ public abstract class GeoItemRenderer<T extends Item & Animatable> extends Block
         ModelFetcherManager.addModelFetcher(animatable -> {
             if (animatable instanceof Item item
                     && RenderProperties.get(item).getItemStackRenderer() instanceof GeoItemRenderer geoItemRenderer)
-                return (AnimatableModel<Animatable>) geoItemRenderer.getGeoModelProvider();
+                return (AnimatableModel<Animatable>) geoItemRenderer.getModelProvider();
 
             return null;
         });
     }
 
+    @Getter
+    @Setter
     protected AnimatedGeoModel<T> modelProvider;
     protected ItemStack currentItemStack;
     protected float widthScale = 1;
@@ -60,49 +61,27 @@ public abstract class GeoItemRenderer<T extends Item & Animatable> extends Block
     protected T animatable;
     protected MultiBufferSource rtb = null;
 
+    @Setter
+    @Getter
     private RenderCycle currentModelRenderCycle = RenderCycle.RenderCycleImpl.INITIAL;
 
-    public GeoItemRenderer(AnimatedGeoModel<T> modelProvider) {
+    protected GeoItemRenderer(AnimatedGeoModel<T> modelProvider) {
         this(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels(),
                 modelProvider);
     }
 
-    public GeoItemRenderer(BlockEntityRenderDispatcher dispatcher, EntityModelSet modelSet,
+    protected GeoItemRenderer(BlockEntityRenderDispatcher dispatcher, EntityModelSet modelSet,
                            AnimatedGeoModel<T> modelProvider) {
         super(dispatcher, modelSet);
 
         this.modelProvider = modelProvider;
     }
 
-    public void setModel(AnimatedGeoModel<T> model) {
-        this.modelProvider = model;
-    }
-
-    @Override
-    public AnimatedGeoModel<T> getGeoModelProvider() {
-        return modelProvider;
-    }
-
-    @AvailableSince(value = "3.1.24")
-    @Override
-    @Nonnull
-    public RenderCycle getCurrentModelRenderCycle() {
-        return this.currentModelRenderCycle;
-    }
-
-    @AvailableSince(value = "3.1.24")
-    @Override
-    public void setCurrentModelRenderCycle(RenderCycle currentModelRenderCycle) {
-        this.currentModelRenderCycle = currentModelRenderCycle;
-    }
-
-    @AvailableSince(value = "3.1.24")
     @Override
     public float getWidthScale(T animatable) {
         return this.widthScale;
     }
 
-    @AvailableSince(value = "3.1.24")
     @Override
     public float getHeightScale(T entity) {
         return this.heightScale;
@@ -186,15 +165,6 @@ public abstract class GeoItemRenderer<T extends Item & Animatable> extends Block
     @Override
     public ResourceLocation getTextureLocation(T animatable) {
         return this.modelProvider.getTextureLocation(animatable);
-    }
-
-    /**
-     * Use {@link GeoRenderer#getInstanceId(Object)}<br>
-     * Remove in 1.20+
-     */
-    @Deprecated(forRemoval = true)
-    public Integer getUniqueID(T animatable) {
-        return getInstanceId(animatable);
     }
 
     @Override

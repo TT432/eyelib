@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.common.bedrock;
 
+import com.google.gson.JsonSyntaxException;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.AnimationFile;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
-import io.github.tt432.eyelib.common.bedrock.model.pojo.Converter;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.RawGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.tree.GeoBuilder;
 import io.github.tt432.eyelib.common.bedrock.model.tree.RawGeometryTree;
@@ -89,8 +89,10 @@ public class BedrockResourceManager {
         try {
             // Deserialize from json into basic json objects, bones are still stored as a
             // flat list
-            RawGeoModel rawModel = Converter
-                    .fromJsonString(location.toString(), getResourceAsString(location, resourceManager));
+            String fileName = location.toString();
+            String json = getResourceAsString(location, resourceManager);
+            RawGeoModel rawModel = fromJson(fileName, json);
+
             if (rawModel.getFormatVersion() != FormatVersion.VERSION_1_12_0) {
                 throw new EyelibLoadingException(location, "Wrong geometry json version, expected 1.12.0");
             }
@@ -104,6 +106,15 @@ public class BedrockResourceManager {
         } catch (Exception e) {
             log.error(String.format("Error parsing %S", location), e);
             throw (new RuntimeException(e));
+        }
+    }
+
+    private static RawGeoModel fromJson(String fileName, String json) {
+        try {
+            return JsonUtils.normal.fromJson(json, RawGeoModel.class);
+        } catch (JsonSyntaxException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Filed to load json: " + fileName);
         }
     }
 

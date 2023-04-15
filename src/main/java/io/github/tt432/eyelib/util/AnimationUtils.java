@@ -25,7 +25,7 @@ public class AnimationUtils {
         EntityRenderer<T> entityRenderer = getRenderer(entity);
 
         if (entityRenderer instanceof GeoRenderer geoRenderer) {
-            return geoRenderer.getGeoModelProvider();
+            return geoRenderer.getModelProvider();
         }
         return null;
     }

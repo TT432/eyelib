@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
+import org.jetbrains.annotations.NotNull;
 
 // This stores a small amount of NBT data with each world in order to track the last
 // free IDs for various tasks (such as animation data ids for items)
@@ -35,7 +36,7 @@ public class GeckoLibIdTracker extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
+    public @NotNull CompoundTag save(CompoundTag tag) {
         for (Object2IntMap.Entry<String> id : this.usedIds.object2IntEntrySet()) {
             tag.putInt(id.getKey(), id.getIntValue());
         }

@@ -16,6 +16,7 @@ import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.RenderUtils;
 import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -32,8 +33,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.ApiStatus.AvailableSince;
 
-import javax.annotation.Nonnull;
-
 public abstract class GeoBlockRenderer<T extends BlockEntity & Animatable>
         implements GeoRenderer<T>, BlockEntityRenderer {
     static {
@@ -43,12 +42,13 @@ public abstract class GeoBlockRenderer<T extends BlockEntity & Animatable>
                         .getRenderer(tile);
 
                 if (renderer instanceof GeoBlockRenderer<?> blockRenderer)
-                    return (AnimatableModel<Animatable>) blockRenderer.getGeoModelProvider();
+                    return (AnimatableModel<Animatable>) blockRenderer.getModelProvider();
             }
             return null;
         });
     }
 
+    @Getter
     protected final AnimatedGeoModel<T> modelProvider;
     protected float widthScale = 1;
     protected float heightScale = 1;
@@ -58,6 +58,8 @@ public abstract class GeoBlockRenderer<T extends BlockEntity & Animatable>
     protected T animatable;
     protected MultiBufferSource rtb = null;
 
+    @Getter
+    @Setter
     private RenderCycle currentModelRenderCycle = RenderCycle.RenderCycleImpl.INITIAL;
 
     protected GeoBlockRenderer(BlockEntityRendererProvider.Context rendererProvider, AnimatedGeoModel<T> modelProvider) {
@@ -127,36 +129,9 @@ public abstract class GeoBlockRenderer<T extends BlockEntity & Animatable>
         return Vec3.ZERO;
     }
 
-    /**
-     * Use {@link GeoRenderer#getInstanceId(Object)}<br>
-     * Remove in 1.20+
-     */
-    @Deprecated(forRemoval = true)
-    public Integer getUniqueID(T animatable) {
-        return getInstanceId(animatable);
-    }
-
     @Override
     public int getInstanceId(T animatable) {
         return animatable.getBlockPos().hashCode();
-    }
-
-    @Override
-    public AnimatedGeoModel<T> getGeoModelProvider() {
-        return this.modelProvider;
-    }
-
-    @AvailableSince(value = "3.1.24")
-    @Override
-    @Nonnull
-    public RenderCycle getCurrentModelRenderCycle() {
-        return this.currentModelRenderCycle;
-    }
-
-    @AvailableSince(value = "3.1.24")
-    @Override
-    public void setCurrentModelRenderCycle(RenderCycle currentModelRenderCycle) {
-        this.currentModelRenderCycle = currentModelRenderCycle;
     }
 
     @AvailableSince(value = "3.1.24")

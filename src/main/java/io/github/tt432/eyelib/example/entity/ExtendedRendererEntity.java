@@ -28,8 +28,6 @@ import static io.github.tt432.eyelib.api.bedrock.animation.LoopType.LOOP;
 import static io.github.tt432.eyelib.api.bedrock.animation.LoopType.PLAY_ONCE;
 
 public class ExtendedRendererEntity extends PathfinderMob implements Animatable {
-
-    // Geckolib
     public AnimationFactory factory = GeckoLibUtil.createFactory(this);
 
     public ExtendedRendererEntity(EntityType<? extends PathfinderMob> p_i48575_1_, Level p_i48575_2_) {

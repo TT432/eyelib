@@ -22,12 +22,9 @@ import net.minecraftforge.fml.loading.FMLEnvironment;
 
 @EventBusSubscriber
 public class ExampleMod {
-    public static CreativeModeTab mainTab;
-    /**
-     * When set to true, prevents examples from being registered.
-     */
-    public static final String DISABLE_EXAMPLES_PROPERTY_KEY = "geckolib.disable_examples";
     private static final boolean IS_DEVELOPMENT_ENVIRONMENT = !FMLEnvironment.production;
+
+    public static CreativeModeTab mainTab;
 
     public ExampleMod() {
         if (shouldRegisterExamples()) {
@@ -36,7 +33,7 @@ public class ExampleMod {
             ItemRegistry.ITEMS.register(bus);
             TileRegistry.TILES.register(bus);
             BlockRegistry.BLOCKS.register(bus);
-            mainTab = new CreativeModeTab(CreativeModeTab.getGroupCountSafe(), "geckolib_examples") {
+            mainTab = new CreativeModeTab(CreativeModeTab.getGroupCountSafe(), "examples") {
                 @Override
                 public ItemStack makeIcon() {
                     return new ItemStack(ItemRegistry.JACK_IN_THE_BOX.get());
@@ -69,12 +66,11 @@ public class ExampleMod {
      * Returns whether examples are to be registered. Examples are registered when:
      * <ul>
      *     <li>The mod is running in a development environment; <em>and</em></li>
-     *     <li>the system property defined by {@link #DISABLE_EXAMPLES_PROPERTY_KEY} is not set to "true".</li>
      * </ul>
      *
      * @return whether the examples are to be registered
      */
     static boolean shouldRegisterExamples() {
-        return IS_DEVELOPMENT_ENVIRONMENT && !Boolean.getBoolean(DISABLE_EXAMPLES_PROPERTY_KEY);
+        return IS_DEVELOPMENT_ENVIRONMENT;
     }
 }

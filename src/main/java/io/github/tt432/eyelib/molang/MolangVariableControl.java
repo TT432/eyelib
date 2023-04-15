@@ -32,7 +32,7 @@ public class MolangVariableControl {
         scope.setVariable("query.actor_count", s -> (double) Minecraft.getInstance().level.getEntityCount());
         scope.setVariable("query.time_of_day", s -> (double) MolangValue.normalizeTime(Minecraft.getInstance().level.getDayTime()));
         scope.setVariable("query.moon_phase", s -> (double) Minecraft.getInstance().level.getMoonPhase());
-        scope.setVariable("temp_ptick", s -> (double) MinecraftForgeClient.getPartialTick());
+        scope.setVariable("query.partial_tick", s -> (double) MinecraftForgeClient.getPartialTick());
     }
 
     public static void entity(MolangVariableScope scope) {
@@ -42,12 +42,12 @@ public class MolangVariableControl {
         scope.setVariable("query.is_in_water", s -> entityBool(s, Entity::isInWater));
         scope.setVariable("query.is_in_water_or_rain", s -> entityBool(s, Entity::isInWaterRainOrBubble));
 
-        scope.setVariable("query.yaw", s -> entityDouble(s, e -> e.getViewYRot((float) s.getValue("temp_ptick"))));
+        scope.setVariable("query.yaw", s -> entityDouble(s, e -> e.getViewYRot((float) s.getValue("query.partial_tick"))));
         scope.setVariable("query.yaw_speed", s -> entityDouble(s, e ->
-                e.getViewYRot((float) s.getValue("temp_ptick")) -
-                        e.getViewYRot((float) s.getValue("temp_ptick") - 0.1F)));
+                e.getViewYRot((float) s.getValue("query.partial_tick")) -
+                        e.getViewYRot((float) s.getValue("query.partial_tick") - 0.1F)));
         scope.setVariable("query.pitch", s -> entityDouble(s, e ->
-                e.getViewXRot((float) s.getValue("temp_ptick"))));
+                e.getViewXRot((float) s.getValue("query.partial_tick"))));
 
         scope.setVariable("query.sitting", s -> entityBool(s, e -> e.isPassenger() &&
                 (e.getVehicle() != null && e.getVehicle().shouldRiderSit())));
@@ -70,10 +70,10 @@ public class MolangVariableControl {
                 living.isOnGround() ? 0 : living.getDeltaMovement().y * 20));
 
         scope.setVariable("query.head_yaw", s -> livingDouble(s, e ->
-                Mth.lerp((float) s.getValue("temp_ptick"), e.yHeadRotO, e.yHeadRot)));
+                Mth.lerp((float) s.getValue("query.partial_tick"), e.yHeadRotO, e.yHeadRot)));
         scope.setVariable("query.head_yaw_speed", s -> livingDouble(s, e -> (e.getYHeadRot() - e.yHeadRotO) / 20));
         scope.setVariable("query.body_yaw", s -> livingDouble(s, e ->
-                Mth.lerp((float) s.getValue("temp_ptick"), e.yBodyRotO, e.yBodyRot)));
+                Mth.lerp((float) s.getValue("query.partial_tick"), e.yBodyRotO, e.yBodyRot)));
         scope.setVariable("query.body_yaw_speed", s -> livingDouble(s, e -> (e.yBodyRot - e.yBodyRotO) / 20));
         scope.setVariable("query.head_yaw_offset", s -> livingDouble(s, living -> {
             float hRot = (float) s.getValue("query.head_yaw");
@@ -93,7 +93,7 @@ public class MolangVariableControl {
             return Mth.wrapDegrees(-netHeadYaw);
         }));
         scope.setVariable("query.head_pitch_offset", s -> livingDouble(s, living ->
-                -Mth.lerp(s.getValue("temp_ptick"), living.xRotO, living.getXRot())));
+                -Mth.lerp(s.getValue("query.partial_tick"), living.xRotO, living.getXRot())));
 
         scope.setVariable("query.baby", s -> livingBool(s, LivingEntity::isBaby));
     }

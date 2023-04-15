@@ -263,7 +263,7 @@ public class ParticleEmitter {
                     Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(bindingEntity);
 
             if (renderer instanceof GeoRenderer<?> gr) {
-                GeoModelProvider modelProvider = gr.getGeoModelProvider();
+                GeoModelProvider modelProvider = gr.getModelProvider();
                 GeoModel model = modelProvider.getModel(modelProvider.getModelLocation(bindingEntity));
                 List<Bone> bones = model.getLocator(locator);
 

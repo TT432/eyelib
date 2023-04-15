@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.util.json;
 
 import com.google.gson.*;
-import io.github.tt432.eyelib.common.bedrock.model.pojo.Converter;
 import io.github.tt432.eyelib.molang.MolangValue;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -11,7 +10,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.time.OffsetDateTime;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
@@ -29,8 +27,6 @@ public class JsonUtils {
         return new GsonBuilder()
                 // 关闭 html 转义
                 .disableHtmlEscaping()
-                .registerTypeAdapter(OffsetDateTime.class, (JsonDeserializer<?>) (json, typeOfT, context) ->
-                        Converter.parseDateTimeString(json.getAsString()))
                 .registerTypeHierarchyAdapter(MolangValue.class, new MolangValue.Serializer());
     }
 

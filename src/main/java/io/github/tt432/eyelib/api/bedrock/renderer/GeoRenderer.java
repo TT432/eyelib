@@ -36,7 +36,7 @@ import java.util.Objects;
 public interface GeoRenderer<T> {
     MultiBufferSource getCurrentRTB();
 
-    GeoModelProvider<T> getGeoModelProvider();
+    GeoModelProvider<T> getModelProvider();
 
     ResourceLocation getTextureLocation(T animatable);
 

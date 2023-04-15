@@ -8,7 +8,6 @@ import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.ModelFetcherManager;
-import io.github.tt432.eyelib.api.bedrock.model.GeoModelProvider;
 import io.github.tt432.eyelib.api.bedrock.renderer.GeoRenderer;
 import io.github.tt432.eyelib.api.bedrock.renderer.RenderCycle;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
@@ -19,6 +18,7 @@ import io.github.tt432.eyelib.util.AnimationUtils;
 import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.RenderUtils;
 import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -28,9 +28,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import org.jetbrains.annotations.ApiStatus.AvailableSince;
 
-import javax.annotation.Nonnull;
 import java.util.Collections;
 
 public class GeoProjectilesRenderer<T extends Entity & Animatable> extends EntityRenderer<T>
@@ -40,6 +38,7 @@ public class GeoProjectilesRenderer<T extends Entity & Animatable> extends Entit
                 (AnimatableModel<Animatable>) AnimationUtils.getGeoModelForEntity(entity) : null);
     }
 
+    @Getter
     protected final AnimatedGeoModel<T> modelProvider;
     protected float widthScale = 1;
     protected float heightScale = 1;
@@ -47,6 +46,8 @@ public class GeoProjectilesRenderer<T extends Entity & Animatable> extends Entit
     protected Matrix4f renderEarlyMat = new Matrix4f();
     @Getter
     protected T animatable;
+    @Getter
+    @Setter
     private RenderCycle currentModelRenderCycle = RenderCycle.RenderCycleImpl.INITIAL;
     protected MultiBufferSource rtb = null;
 
@@ -123,30 +124,10 @@ public class GeoProjectilesRenderer<T extends Entity & Animatable> extends Entit
     }
 
     @Override
-    public GeoModelProvider<T> getGeoModelProvider() {
-        return this.modelProvider;
-    }
-
-    @AvailableSince(value = "3.1.24")
-    @Override
-    @Nonnull
-    public RenderCycle getCurrentModelRenderCycle() {
-        return this.currentModelRenderCycle;
-    }
-
-    @AvailableSince(value = "3.1.24")
-    @Override
-    public void setCurrentModelRenderCycle(RenderCycle currentModelRenderCycle) {
-        this.currentModelRenderCycle = currentModelRenderCycle;
-    }
-
-    @AvailableSince(value = "3.1.24")
-    @Override
     public float getWidthScale(T animatable) {
         return this.widthScale;
     }
 
-    @AvailableSince(value = "3.1.24")
     @Override
     public float getHeightScale(T entity) {
         return this.heightScale;
@@ -155,15 +136,6 @@ public class GeoProjectilesRenderer<T extends Entity & Animatable> extends Entit
     @Override
     public ResourceLocation getTextureLocation(T animatable) {
         return this.modelProvider.getTextureLocation(animatable);
-    }
-
-    /**
-     * Use {@link GeoRenderer#getInstanceId(Object)}<br>
-     * Remove in 1.20+
-     */
-    @Deprecated(forRemoval = true)
-    public Integer getUniqueID(T animatable) {
-        return getInstanceId(animatable);
     }
 
     @Override
@@ -180,5 +152,4 @@ public class GeoProjectilesRenderer<T extends Entity & Animatable> extends Entit
     public MultiBufferSource getCurrentRTB() {
         return this.rtb;
     }
-
 }

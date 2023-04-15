@@ -49,6 +49,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.ForgeHooksClient;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -74,9 +75,6 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
             Minecraft.getInstance().getEntityModels().bakeLayer(ModelLayers.PLAYER_INNER_ARMOR));
     protected static final HumanoidModel<LivingEntity> DEFAULT_BIPED_ARMOR_MODEL_OUTER = new HumanoidModel<>(
             Minecraft.getInstance().getEntityModels().bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR));
-
-    protected float widthScale;
-    protected float heightScale;
 
     protected T currentEntityBeingRendered;
     private float currentPartialTicks;
@@ -164,7 +162,7 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
     }
 
     @Override
-    public ResourceLocation getTextureLocation(T animatable) {
+    public @NotNull ResourceLocation getTextureLocation(@NotNull T animatable) {
         return this.modelProvider.getTextureLocation(animatable);
     }
 
@@ -307,16 +305,6 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
         }
     }
 
-    /**
-     * Use {@link ExtendedGeoEntityRenderer#setLimbBoneVisible(GeoArmorRenderer, ModelPart, HumanoidModel, EquipmentSlot)}<br>
-     * Remove in 1.20+
-     */
-    @Deprecated(forRemoval = true)
-    protected void handleGeoArmorBoneVisibility(GeoArmorRenderer<? extends GeoArmorItem> geoArmorRenderer,
-                                                ModelPart sourceLimb, HumanoidModel<?> armorModel, EquipmentSlot slot) {
-        setLimbBoneVisible(geoArmorRenderer, sourceLimb, armorModel, slot);
-    }
-
     protected void renderArmorOfItem(ArmorItem armorItem, ItemStack armorForBone, EquipmentSlot boneSlot,
                                      ResourceLocation armorResource, ModelPart sourceLimb, PoseStack poseStack, int packedLight,
                                      int packedOverlay) {
@@ -405,8 +393,7 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
             return;
         }
 
-        this.textureForBone = getCurrentModelRenderCycle() != RenderCycle.RenderCycleImpl.INITIAL ? null
-                : getTextureForBone(bone.getName(), this.currentEntityBeingRendered);
+        this.textureForBone = getTextureForBone(bone.getName(), this.currentEntityBeingRendered);
         boolean useCustomTexture = this.textureForBone != null;
         ResourceLocation currentTexture = getTextureLocation(this.currentEntityBeingRendered);
 
