@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.common.bedrock;
+package io.github.tt432.eyelib.util;
 
 import net.minecraft.resources.ResourceLocation;
 

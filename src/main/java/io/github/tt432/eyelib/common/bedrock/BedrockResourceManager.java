@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.common.bedrock.model.pojo.RawGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.tree.GeoBuilder;
 import io.github.tt432.eyelib.common.bedrock.model.tree.RawGeometryTree;
 import io.github.tt432.eyelib.common.bedrock.particle.pojo.ParticleFile;
+import io.github.tt432.eyelib.util.EyelibLoadingException;
 import io.github.tt432.eyelib.util.FileToIdConverter;
 import io.github.tt432.eyelib.util.json.JsonUtils;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;

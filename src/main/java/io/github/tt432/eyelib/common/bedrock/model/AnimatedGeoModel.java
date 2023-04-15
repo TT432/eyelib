@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.api.bedrock.model.GeoModelProvider;
-import io.github.tt432.eyelib.common.bedrock.EyelibLoadingException;
+import io.github.tt432.eyelib.util.EyelibLoadingException;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationProcessor;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
