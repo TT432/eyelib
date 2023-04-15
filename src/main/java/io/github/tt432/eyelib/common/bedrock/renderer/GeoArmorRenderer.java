@@ -7,11 +7,10 @@ import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
+import io.github.tt432.eyelib.api.bedrock.animation.ModelFetcherManager;
 import io.github.tt432.eyelib.api.bedrock.model.Bone;
 import io.github.tt432.eyelib.api.bedrock.renderer.GeoRenderer;
 import io.github.tt432.eyelib.api.bedrock.renderer.RenderCycle;
-import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
-import io.github.tt432.eyelib.common.bedrock.animation.AnimationController.ModelFetcher;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.model.AnimatedGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
@@ -47,7 +46,7 @@ import java.util.function.Supplier;
 
 @Slf4j
 public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends HumanoidModel
-        implements GeoRenderer<T>, ModelFetcher<T> {
+        implements GeoRenderer<T>, ModelFetcherManager.ModelFetcher<T> {
     protected static Map<Class<? extends ArmorItem>, Supplier<GeoArmorRenderer>> CONSTRUCTORS = new ConcurrentHashMap<>();
     public static Map<Class<? extends ArmorItem>, ConcurrentHashMap<UUID, GeoArmorRenderer<?>>> LIVING_ENTITY_RENDERERS = new ConcurrentHashMap<>();
     // Rename this in breaking change to ARMOR_ITEM_RENDERERS
@@ -81,7 +80,7 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
     private RenderCycle currentModelRenderCycle = RenderCycle.RenderCycleImpl.INITIAL;
 
     {
-        AnimationController.addModelFetcher(this);
+        ModelFetcherManager.addModelFetcher(this);
     }
 
     @Override

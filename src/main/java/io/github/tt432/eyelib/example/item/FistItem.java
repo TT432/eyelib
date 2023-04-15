@@ -11,7 +11,6 @@ import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationFactory;
-import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationState;
 import io.github.tt432.eyelib.example.ExampleMod;
 import io.github.tt432.eyelib.example.client.renderer.item.FistRenderer;
 import io.github.tt432.eyelib.network.EyelibNetworkHandler;
@@ -98,7 +97,7 @@ public class FistItem extends Item implements Animatable, Syncable, SoundPlayer 
             // access to an AnimationEvent
             final AnimationController controller = GeckoLibUtil.getControllerForID(this.factory, id, CONTROLLER_NAME);
 
-            if (controller.getAnimationState() == AnimationState.STOPPED) {
+            if (controller.getAnimationState() == AnimationController.AnimationState.STOPPED) {
                 // If you don't do this, the popup animation will only play once because the
                 // animation will be cached.
                 controller.markNeedsReload();

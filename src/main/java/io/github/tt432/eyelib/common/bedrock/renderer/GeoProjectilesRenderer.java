@@ -7,10 +7,10 @@ import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
+import io.github.tt432.eyelib.api.bedrock.animation.ModelFetcherManager;
 import io.github.tt432.eyelib.api.bedrock.model.GeoModelProvider;
 import io.github.tt432.eyelib.api.bedrock.renderer.GeoRenderer;
 import io.github.tt432.eyelib.api.bedrock.renderer.RenderCycle;
-import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.model.AnimatedGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
@@ -36,7 +36,7 @@ import java.util.Collections;
 public class GeoProjectilesRenderer<T extends Entity & Animatable> extends EntityRenderer<T>
         implements GeoRenderer<T> {
     static {
-        AnimationController.addModelFetcher(animatable -> animatable instanceof Entity entity ?
+        ModelFetcherManager.addModelFetcher(animatable -> animatable instanceof Entity entity ?
                 (AnimatableModel<Animatable>) AnimationUtils.getGeoModelForEntity(entity) : null);
     }
 

@@ -20,13 +20,11 @@ import io.github.tt432.eyelib.common.bedrock.animation.control.TimelineControl;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.BoneAnimation;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
-import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationPointQueue;
-import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationState;
 import io.github.tt432.eyelib.common.bedrock.animation.util.BoneAnimationQueue;
+import io.github.tt432.eyelib.common.bedrock.animation.util.LerpInfo;
 import io.github.tt432.eyelib.molang.MolangParser;
 import io.github.tt432.eyelib.util.BoneSnapshot;
 import io.github.tt432.eyelib.util.math.MathE;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +36,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static io.github.tt432.eyelib.api.bedrock.animation.ModelFetcherManager.getModel;
+
 /**
  * The type Animation controller.
  *
@@ -45,19 +45,6 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class AnimationController<T extends Animatable> {
-    static List<ModelFetcher<?>> modelFetchers = new ObjectArrayList<>();
-
-    public static void addModelFetcher(ModelFetcher<?> fetcher) {
-        modelFetchers.add(fetcher);
-    }
-
-    public static void removeModelFetcher(ModelFetcher<?> fetcher) {
-        if (fetcher == null)
-            return;
-
-        modelFetchers.remove(fetcher);
-    }
-
     SoundControl soundControl = new SoundControl();
     ParticleControl particleControl = new ParticleControl();
     TimelineControl timelineControl = new TimelineControl();
@@ -68,11 +55,11 @@ public class AnimationController<T extends Animatable> {
      * How long it takes to transition between animations
      */
     private final double transitionLengthTicks;
-    private boolean justStopped = false;
+    private double tickOffset;
     private double currTick;
+
     private boolean needNextAnimation;
     private boolean needStopAnimation;
-    private double tickOffset;
 
     protected T animatable;
     protected AnimationPredicate<T> animationPredicate;
@@ -81,17 +68,40 @@ public class AnimationController<T extends Animatable> {
     @Getter
     private final Map<String, BoneAnimationQueue> boneAnimationQueues = new HashMap<>();
     protected Queue<SingleAnimation> animationQueue = new LinkedList<>();
+    @Getter
     protected SingleAnimation preAnimation;
     @Getter
     protected SingleAnimation currentAnimation;
     @NotNull
     protected AnimationBuilder currentAnimationBuilder = new AnimationBuilder();
     protected boolean shouldResetTick = false;
-    protected boolean justStartedTransition = false;
     protected boolean needsAnimationReload = false;
     @Getter
     @Setter
     protected double animationSpeed = 1D;
+
+    @Getter
+    Map<String, Function<AnimationController<?>, Boolean>> nextAnimationCallbacks = new HashMap<>();
+    @Getter
+    Map<String, Function<AnimationController<?>, Boolean>> noLoopAnimationFinishCallbacks = new HashMap<>();
+
+    public enum AnimationState {
+        RUNNING,
+        TRANSITION_TO_NEXT(true),
+        TRANSITION_TO_END(true),
+        STOPPED;
+
+        @Getter
+        final boolean isTransition;
+
+        AnimationState(boolean isTransition) {
+            this.isTransition = isTransition;
+        }
+
+        AnimationState() {
+            this.isTransition = false;
+        }
+    }
 
     /**
      * This method sets the current animation with an animation builder. You can run
@@ -120,7 +130,7 @@ public class AnimationController<T extends Animatable> {
             // Convert the list of animation names to the actual list, keeping track of the
             // loop boolean along the way
             LinkedList<SingleAnimation> animations = rawAnimList.stream().map(rawAnimation -> {
-                SingleAnimation animation = model.getAnimation(rawAnimation.animationName, animatable);
+                SingleAnimation animation = model.getAnimation(rawAnimation.animationName, animatable, null);
 
                 if (animation == null) {
                     log.error("Could not load animation: {}. Is it missing?", rawAnimation.animationName);
@@ -164,54 +174,17 @@ public class AnimationController<T extends Animatable> {
         this.animationPredicate = predicate;
     }
 
-    /**
-     * This method is called every frame in order to populate the animation point
-     * queues, and process animation state logic.
-     *
-     * @param tick              The current tick + partial tick
-     * @param event             The animation test event
-     * @param modelRendererList The list of all AnimatedModelRender's
-     */
-    public void process(final double tick, AnimationEvent<T> event, List<Bone> modelRendererList) {
-        SoundPlayer currPlayer = getSoundPlayer(event);
-
+    public void process(double tick, AnimationEvent<T> event, List<Bone> modelRendererList) {
         MolangParser.getInstance().setValue("query.life_time", () -> tick / 20);
-
-        if (this.currentAnimation != null) {
-            AnimatableModel<T> model = getModel(this.animatable);
-
-            if (model != null) {
-                SingleAnimation animation = model.getAnimation(currentAnimation.getAnimationName(), this.animatable);
-
-                if (animation != null) {
-                    LoopType loop = this.currentAnimation.getLoop();
-                    this.currentAnimation = animation;
-                    this.currentAnimation.setLoop(loop);
-                }
-            }
-        }
-
+        updateCurrentAnimation();
         initQueues(modelRendererList);
 
         double adjustedTick = transToRunning(adjustTick(tick), tick);
 
-        // This tests the animation predicate
-        PlayState playState = this.animationPredicate.test(event);
+        PlayState test = this.animationPredicate.test(event);
+        SoundPlayer currPlayer = getSoundPlayer(event);
 
-        if ((playState == PlayState.STOP ||
-                (this.currentAnimation == null && this.animationQueue.isEmpty()) ||
-                needStopAnimation) &&
-                animationState == AnimationState.RUNNING) {
-            stopAnimation(currPlayer, adjustedTick);
-            adjustedTick = adjustTick(tick);
-        }
-
-        needStopAnimation = false;
-
-        if (this.justStartedTransition && (this.shouldResetTick || this.justStopped)) {
-            this.justStopped = false;
-            adjustedTick = adjustTick(tick);
-        }
+        adjustedTick = runningTransToEnd(test, currPlayer, tick, adjustedTick);
 
         if (needNextAnimation) {
             needNextAnimation = false;
@@ -220,7 +193,36 @@ public class AnimationController<T extends Animatable> {
         }
 
         if (animationState != AnimationState.STOPPED)
-            processCurrentAnimation(adjustedTick, tick, event);
+            processCurrentAnimation(adjustedTick, tick, currPlayer);
+    }
+
+    double runningTransToEnd(PlayState playState, SoundPlayer currPlayer, double tick, double adjustedTick) {
+        if (animationState == AnimationState.RUNNING &&
+                (playState == PlayState.STOP || needStopAnimation ||
+                        (this.currentAnimation == null && this.animationQueue.isEmpty()))) {
+            stopAnimation(currPlayer, adjustedTick);
+            adjustedTick = adjustTick(tick);
+        }
+
+        needStopAnimation = false;
+
+        return adjustedTick;
+    }
+
+    private void updateCurrentAnimation() {
+        if (this.currentAnimation == null) return;
+
+        AnimatableModel<T> model = getModel(this.animatable);
+
+        if (model == null) return;
+
+        SingleAnimation animation = model.getAnimation(currentAnimation.getAnimationName(), this.animatable, currentAnimation);
+
+        if (animation != null && animation != currentAnimation) {
+            LoopType loop = this.currentAnimation.getLoop();
+            this.currentAnimation = animation;
+            this.currentAnimation.setLoop(loop);
+        }
     }
 
     private void stopAnimation(SoundPlayer currPlayer, double tick) {
@@ -229,34 +231,26 @@ public class AnimationController<T extends Animatable> {
 
         stopControls(currPlayer);
 
-        if (animationState != AnimationState.TRANSITIONING) {
+        if (animationState != AnimationState.TRANSITION_TO_NEXT) {
             nextAnimation(currPlayer, tick);
-            setTransitioning(true, tick);
+            setTransitioning(tick, false);
             this.needsAnimationReload = false;
         }
     }
 
     double transToRunning(double adjustedTick, double tick) {
         // Transition period has ended, reset the tick and set the animation to running
-        if (animationState == AnimationState.TRANSITIONING && adjustedTick >= this.transitionLengthTicks) {
+        if (animationState == AnimationState.TRANSITION_TO_NEXT && adjustedTick >= this.transitionLengthTicks) {
             this.shouldResetTick = true;
-
-            if (currentAnimation != null) {
-                this.animationState = AnimationState.RUNNING;
-            } else {
-                this.animationState = AnimationState.STOPPED;
-            }
-
+            this.animationState = AnimationState.RUNNING;
             return adjustTick(tick);
         }
 
         return adjustedTick;
     }
 
-    void setTransitioning(boolean justStartedTransition, double tick) {
-        this.animationState = AnimationState.TRANSITIONING;
-        if (justStartedTransition)
-            this.justStartedTransition = true;
+    void setTransitioning(double tick, boolean next) {
+        this.animationState = next ? AnimationState.TRANSITION_TO_NEXT : AnimationState.TRANSITION_TO_END;
         this.shouldResetTick = true;
         this.transitionStartTicks = tick;
     }
@@ -265,27 +259,14 @@ public class AnimationController<T extends Animatable> {
         MolangParser.getInstance().setValue("query.anim_time", () -> tick / 20);
     }
 
-    private AnimatableModel<T> getModel(T animatable) {
-        for (ModelFetcher<?> modelFetcher : modelFetchers) {
-            AnimatableModel<T> model = (AnimatableModel<T>) modelFetcher.apply(animatable);
-
-            if (model != null)
-                return model;
-        }
-
-        log.error("Could not find suitable model for animatable of type {}. Did you register a Model Fetcher?%n",
-                animatable.getClass());
-
-        return null;
-    }
-
     private SoundPlayer getSoundPlayer(AnimationEvent<T> event) {
         return event.getAnimatable() instanceof SoundPlayer sp ? sp : null;
     }
 
-    private void processCurrentAnimation(double tick, double actualTick, AnimationEvent<T> event) {
-        SoundPlayer player = getSoundPlayer(event);
-
+    /**
+     * (tick, actualTick, player) -> tick
+     */
+    private double processFinishCurrentAnimation(double tick, double actualTick, SoundPlayer player) {
         // Animation has ended
         if (currentAnimation != null && tick >= this.currentAnimation.getAnimationLength()) {
             // If the current animation is set to loop, keep it as the current animation and
@@ -293,36 +274,37 @@ public class AnimationController<T extends Animatable> {
             if (this.currentAnimation.getLoop().isLooping()) {
                 // Reset the adjusted tick so the next animation starts at tick 0
                 this.shouldResetTick = true;
-                tick = adjustTick(actualTick);
+                return adjustTick(actualTick);
             } else {
                 // Pull the next animation from the queue
                 SingleAnimation peek = this.animationQueue.peek();
 
                 if (peek == null) {
-                    currentAnimation = null;
-                    animationQueue.clear();
-                    currentAnimationBuilder = new AnimationBuilder();
+                    stopAnimation(player, tick);
+                    processCallbacks(noLoopAnimationFinishCallbacks);
 
-                    // No more animations left, stop the animation controller
-                    this.animationState = AnimationState.STOPPED;
-                    stopControls(player);
-
-                    return;
+                    return adjustTick(tick);
                 } else {
                     // Otherwise, set the state to transitioning and start transitioning to the next
                     // animation next frame
-                    setTransitioning(false, tick);
+                    setTransitioning(tick, true);
 
                     nextAnimation(player, tick);
                 }
             }
         }
 
+        return tick;
+    }
+
+    private void processCurrentAnimation(double tick, double actualTick, SoundPlayer player) {
+        tick = processFinishCurrentAnimation(tick, actualTick, player);
+
         setAnimTime(tick);
         currTick = tick;
 
         // Loop through every boneanimation in the current animation and process the values
-        if (animationState == AnimationState.TRANSITIONING) {
+        if (animationState.isTransition) {
             processTransitioning(tick);
         } else {
             processBoneAnimation(currentAnimation.getBones(), tick);
@@ -353,9 +335,9 @@ public class AnimationController<T extends Animatable> {
 
                 data.putExtraData("anim.current_bone", boneName);
 
-                boneAnimationQueue.rotate().push(new AnimationPointQueue.LerpInfo(boneAnim.lerpRotation(tick)));
-                boneAnimationQueue.position().push(new AnimationPointQueue.LerpInfo(boneAnim.lerpPosition(tick)));
-                boneAnimationQueue.scale().push(new AnimationPointQueue.LerpInfo(boneAnim.lerpScale(tick)));
+                boneAnimationQueue.rotate().push(new LerpInfo(boneAnim.lerpRotation(tick)));
+                boneAnimationQueue.position().push(new LerpInfo(boneAnim.lerpPosition(tick)));
+                boneAnimationQueue.scale().push(new LerpInfo(boneAnim.lerpScale(tick)));
 
                 data.removeExtraData("anim.current_bone");
             }
@@ -392,7 +374,7 @@ public class AnimationController<T extends Animatable> {
         Vector3d lerpP = lerpPoints[2];
 
         if (lerpR != null && lerpR0 != null) {
-            boneAnimationQueues.get(boneName).rotate().push(new AnimationPointQueue.LerpInfo(
+            boneAnimationQueues.get(boneName).rotate().push(new LerpInfo(
                     new Vector3d(
                             MathE.lerp(lerpR0.x, lerpR.x, weight),
                             MathE.lerp(lerpR0.y, lerpR.y, weight),
@@ -400,7 +382,7 @@ public class AnimationController<T extends Animatable> {
         }
 
         if (lerpS != null && lerpS0 != null) {
-            boneAnimationQueues.get(boneName).scale().push(new AnimationPointQueue.LerpInfo(
+            boneAnimationQueues.get(boneName).scale().push(new LerpInfo(
                     new Vector3d(
                             MathE.lerp(lerpS0.x, lerpS.x, weight),
                             MathE.lerp(lerpS0.y, lerpS.y, weight),
@@ -408,7 +390,7 @@ public class AnimationController<T extends Animatable> {
         }
 
         if (lerpP != null && lerpP0 != null) {
-            boneAnimationQueues.get(boneName).position().push(new AnimationPointQueue.LerpInfo(
+            boneAnimationQueues.get(boneName).position().push(new LerpInfo(
                     new Vector3d(
                             MathE.lerp(lerpP0.x, lerpP.x, weight),
                             MathE.lerp(lerpP0.y, lerpP.y, weight),
@@ -451,9 +433,15 @@ public class AnimationController<T extends Animatable> {
         currentAnimation = animationQueue.poll();
 
         if (currentAnimation != null) {
-            setTransitioning(true, tick);
+            setTransitioning(tick, true);
             initControls(player);
         }
+
+        processCallbacks(nextAnimationCallbacks);
+    }
+
+    private void processCallbacks(Map<String, Function<AnimationController<?>, Boolean>> callbacks) {
+        callbacks.entrySet().removeIf(entry -> entry.getValue().apply(this));
     }
 
     private void initControls(SoundPlayer player) {
@@ -506,9 +494,5 @@ public class AnimationController<T extends Animatable> {
 
     public void clearAnimationCache() {
         this.currentAnimationBuilder = new AnimationBuilder();
-    }
-
-    @FunctionalInterface
-    public interface ModelFetcher<T extends Animatable> extends Function<Animatable, AnimatableModel<T>> {
     }
 }

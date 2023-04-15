@@ -7,9 +7,9 @@ import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
+import io.github.tt432.eyelib.api.bedrock.animation.ModelFetcherManager;
 import io.github.tt432.eyelib.api.bedrock.renderer.GeoRenderer;
 import io.github.tt432.eyelib.api.bedrock.renderer.RenderCycle;
-import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import io.github.tt432.eyelib.common.bedrock.model.AnimatedGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
@@ -37,7 +37,7 @@ import javax.annotation.Nonnull;
 public abstract class GeoBlockRenderer<T extends BlockEntity & Animatable>
         implements GeoRenderer<T>, BlockEntityRenderer {
     static {
-        AnimationController.addModelFetcher((Animatable object) -> {
+        ModelFetcherManager.addModelFetcher((Animatable object) -> {
             if (object instanceof BlockEntity tile) {
                 BlockEntityRenderer<BlockEntity> renderer = Minecraft.getInstance().getBlockEntityRenderDispatcher()
                         .getRenderer(tile);

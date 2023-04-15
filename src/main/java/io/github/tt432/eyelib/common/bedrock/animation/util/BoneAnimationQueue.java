@@ -5,14 +5,17 @@
 
 package io.github.tt432.eyelib.common.bedrock.animation.util;
 
+
 import io.github.tt432.eyelib.api.bedrock.model.Bone;
 
+import java.util.LinkedList;
+
 public record BoneAnimationQueue(Bone bone,
-                                 AnimationPointQueue rotate,
-                                 AnimationPointQueue position,
-                                 AnimationPointQueue scale) {
+                                 LinkedList<LerpInfo> rotate,
+                                 LinkedList<LerpInfo> position,
+                                 LinkedList<LerpInfo> scale) {
 
     public BoneAnimationQueue(Bone bone) {
-        this(bone, new AnimationPointQueue(), new AnimationPointQueue(), new AnimationPointQueue());
+        this(bone, new LinkedList<>(), new LinkedList<>(), new LinkedList<>());
     }
 }

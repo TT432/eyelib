@@ -5,8 +5,7 @@
 
 package io.github.tt432.eyelib.example;
 
-import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
-import io.github.tt432.eyelib.common.bedrock.animation.AnimationController.ModelFetcher;
+import io.github.tt432.eyelib.api.bedrock.animation.ModelFetcherManager;
 import io.github.tt432.eyelib.common.bedrock.renderer.GeoArmorRenderer;
 import io.github.tt432.eyelib.example.registry.BlockRegistry;
 import io.github.tt432.eyelib.example.registry.EntityRegistry;
@@ -59,8 +58,8 @@ public class ExampleMod {
         if (event.getWorld().isClientSide)
             GeoArmorRenderer.LIVING_ENTITY_RENDERERS.values().forEach(instances -> {
                 if (instances.containsKey(event.getEntity().getUUID())) {
-                    ModelFetcher<?> beGone = instances.get(event.getEntity().getUUID());
-                    AnimationController.removeModelFetcher(beGone);
+                    ModelFetcherManager.ModelFetcher<?> beGone = instances.get(event.getEntity().getUUID());
+                    ModelFetcherManager.removeModelFetcher(beGone);
                     instances.remove(event.getEntity().getUUID());
                 }
             });

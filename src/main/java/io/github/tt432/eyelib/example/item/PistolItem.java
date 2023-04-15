@@ -8,7 +8,6 @@ import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationFactory;
-import io.github.tt432.eyelib.common.bedrock.animation.util.AnimationState;
 import io.github.tt432.eyelib.example.ExampleMod;
 import io.github.tt432.eyelib.example.client.renderer.item.PistolRender;
 import io.github.tt432.eyelib.network.EyelibNetworkHandler;
@@ -130,7 +129,7 @@ public class PistolItem extends Item implements Animatable, Syncable {
     public void onAnimationSync(int id, int state) {
         if (state == ANIM_OPEN) {
             final AnimationController<?> controller = GeckoLibUtil.getControllerForID(this.factory, id, controllerName);
-            if (controller.getAnimationState() == AnimationState.STOPPED) {
+            if (controller.getAnimationState() == AnimationController.AnimationState.STOPPED) {
                 controller.markNeedsReload();
                 controller.setAnimation(new AnimationBuilder().addAnimation("firing", PLAY_ONCE));
             }

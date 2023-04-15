@@ -8,9 +8,9 @@ import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
+import io.github.tt432.eyelib.api.bedrock.animation.ModelFetcherManager;
 import io.github.tt432.eyelib.api.bedrock.renderer.GeoRenderer;
 import io.github.tt432.eyelib.api.bedrock.renderer.RenderCycle;
-import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.model.AnimatedGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
@@ -41,7 +41,7 @@ public abstract class GeoItemRenderer<T extends Item & Animatable> extends Block
         implements GeoRenderer<T> {
     // Register a model fetcher for this renderer
     static {
-        AnimationController.addModelFetcher(animatable -> {
+        ModelFetcherManager.addModelFetcher(animatable -> {
             if (animatable instanceof Item item
                     && RenderProperties.get(item).getItemStackRenderer() instanceof GeoItemRenderer geoItemRenderer)
                 return (AnimatableModel<Animatable>) geoItemRenderer.getGeoModelProvider();

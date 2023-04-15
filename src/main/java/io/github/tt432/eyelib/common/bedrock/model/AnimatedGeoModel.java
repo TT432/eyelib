@@ -3,16 +3,12 @@ package io.github.tt432.eyelib.common.bedrock.model;
 import com.mojang.blaze3d.Blaze3D;
 import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
-import io.github.tt432.eyelib.api.bedrock.animation.AnimationHolder;
 import io.github.tt432.eyelib.api.bedrock.model.Bone;
 import io.github.tt432.eyelib.api.bedrock.model.GeoModelProvider;
-import io.github.tt432.eyelib.common.bedrock.BedrockResourceManager;
 import io.github.tt432.eyelib.common.bedrock.EyelibLoadingException;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationProcessor;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
-import io.github.tt432.eyelib.common.bedrock.animation.pojo.AnimationFile;
-import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 import lombok.Getter;
@@ -26,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 
 public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelProvider<T>
-        implements AnimatableModel<T>, AnimationHolder<T> {
+        implements AnimatableModel<T> {
     @Getter
     private final AnimationProcessor<T> animationProcessor;
     private GeoModel currentModel;
@@ -87,18 +83,6 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
 
     public void registerModelRenderer(Bone modelRenderer) {
         this.animationProcessor.registerModelRenderer(modelRenderer);
-    }
-
-    @Override
-    public SingleAnimation getAnimation(String name, Animatable animatable) {
-        AnimationFile animationFile = BedrockResourceManager.getInstance().getAnimations().get(this.getAnimationFileLocation((T) animatable));
-
-        if (animationFile == null) {
-            throw new EyelibLoadingException(this.getAnimationFileLocation((T) animatable),
-                    "Could not find animation file. Please double check name.");
-        }
-
-        return animationFile.getAnimations().get(name);
     }
 
     @Override

@@ -7,9 +7,9 @@ import com.mojang.blaze3d.vertex.VertexMultiConsumer;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
+import io.github.tt432.eyelib.api.bedrock.animation.ModelFetcherManager;
 import io.github.tt432.eyelib.api.bedrock.renderer.GeoRenderer;
 import io.github.tt432.eyelib.api.bedrock.renderer.RenderCycle;
-import io.github.tt432.eyelib.common.bedrock.animation.AnimationController;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.model.AnimatedGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoBone;
@@ -52,8 +52,8 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
     protected static final Map<Class<? extends Animatable>, GeoReplacedEntityRenderer> renderers = new ConcurrentHashMap<>();
 
     static {
-        AnimationController.addModelFetcher((Animatable object) -> {
-            GeoReplacedEntityRenderer renderer = renderers.get(object.getClass());
+        ModelFetcherManager.addModelFetcher(a -> {
+            GeoReplacedEntityRenderer renderer = renderers.get(a.getClass());
             return renderer == null ? null : renderer.getGeoModelProvider();
         });
     }
