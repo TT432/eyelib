@@ -10,7 +10,6 @@ import io.github.tt432.eyelib.common.bedrock.particle.pojo.ParticleFile;
 import io.github.tt432.eyelib.util.EyelibLoadingException;
 import io.github.tt432.eyelib.util.FileToIdConverter;
 import io.github.tt432.eyelib.util.json.JsonUtils;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
@@ -23,9 +22,9 @@ import org.apache.commons.io.IOUtils;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
@@ -68,18 +67,18 @@ public class BedrockResourceManager {
         Map<ResourceLocation, GeoModel> geoModels = new HashMap<>();
         Map<ResourceLocation, ParticleFile> particles = new HashMap<>();
 
-        return CompletableFuture.allOf(
-                        loadResources(backgroundExecutor, resourceManager, "geo/animations",
-                                animation -> loadAnimation(animation, resourceManager), animations::put),
-                        loadResources(backgroundExecutor, resourceManager, "geo/models",
-                                resource -> loadModel(resourceManager, resource), geoModels::put),
-                        loadResources(backgroundExecutor, resourceManager, "geo/particles",
-                                resource -> loadParticles(resourceManager, resource), particles::put))
-                .thenCompose(stage::wait).thenAcceptAsync(empty -> {
-                    this.animations = animations;
-                    this.geoModels = geoModels;
-                    this.particles = particles;
-                }, gameExecutor);
+        return CompletableFuture.runAsync(() -> {
+            loadResources(backgroundExecutor, resourceManager, "geo/animations",
+                    animation -> loadAnimation(animation, resourceManager), animations::put);
+            loadResources(backgroundExecutor, resourceManager, "geo/models",
+                    resource -> loadModel(resourceManager, resource), geoModels::put);
+            loadResources(backgroundExecutor, resourceManager, "geo/particles",
+                    resource -> loadParticles(resourceManager, resource), particles::put);
+        }).thenCompose(stage::wait).thenAcceptAsync(empty -> {
+            this.animations = animations;
+            this.geoModels = geoModels;
+            this.particles = particles;
+        }, gameExecutor);
     }
 
     private ParticleFile loadParticles(ResourceManager resourceManager, ResourceLocation resource) {
@@ -133,28 +132,14 @@ public class BedrockResourceManager {
         }
     }
 
-    private static <T> CompletableFuture<Void> loadResources(Executor executor, ResourceManager resourceManager,
-                                                             String type, Function<ResourceLocation, T> loader,
-                                                             BiConsumer<ResourceLocation, T> map) {
-        return CompletableFuture
-                .supplyAsync(() -> resourceManager.listResources(type, fileName -> fileName.endsWith(".json")), executor)
-                .thenApplyAsync(resources -> {
-                    Map<ResourceLocation, CompletableFuture<T>> tasks = new Object2ObjectOpenHashMap<>();
+    private static <T> void loadResources(Executor executor, ResourceManager resourceManager,
+                                          String type, Function<ResourceLocation, T> loader,
+                                          BiConsumer<ResourceLocation, T> map) {
+        Collection<ResourceLocation> resources = resourceManager
+                .listResources(type, fileName -> fileName.endsWith(".json"));
 
-                    for (ResourceLocation resource : resources) {
-                        CompletableFuture<T> existing = tasks.put(resource,
-                                CompletableFuture.supplyAsync(() -> loader.apply(resource), executor));
-                        if (existing != null) {// Possibly if this matters, the last one will win
-                            log.error("Duplicate resource for " + resource);
-                            existing.cancel(false);
-                        }
-                    }
-
-                    return tasks;
-                }, executor).thenAcceptAsync(tasks -> {
-                    for (Entry<ResourceLocation, CompletableFuture<T>> entry : tasks.entrySet()) {
-                        map.accept(entry.getKey(), entry.getValue().join());
-                    }
-                }, executor);
+        for (ResourceLocation resource : resources) {
+            map.accept(resource, loader.apply(resource));
+        }
     }
 }
