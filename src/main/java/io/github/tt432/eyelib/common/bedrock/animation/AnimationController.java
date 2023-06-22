@@ -5,12 +5,10 @@
 
 package io.github.tt432.eyelib.common.bedrock.animation;
 
-import com.mojang.math.Vector3d;
 import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.LoopType;
 import io.github.tt432.eyelib.api.bedrock.animation.PlayState;
-import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.api.sound.SoundPlayer;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationEntry;
@@ -22,6 +20,7 @@ import io.github.tt432.eyelib.common.bedrock.animation.pojo.BoneAnimation;
 import io.github.tt432.eyelib.common.bedrock.animation.pojo.SingleAnimation;
 import io.github.tt432.eyelib.common.bedrock.animation.util.BoneAnimationQueue;
 import io.github.tt432.eyelib.common.bedrock.animation.util.LerpInfo;
+import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.molang.MolangParser;
 import io.github.tt432.eyelib.util.BoneSnapshot;
 import io.github.tt432.eyelib.util.math.MathE;
@@ -29,6 +28,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3d;
 
 import javax.annotation.Nullable;
 import java.util.*;

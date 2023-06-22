@@ -1,10 +1,10 @@
 package io.github.tt432.eyelib.common.bedrock.model.element;
 
-import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.*;
 import io.github.tt432.eyelib.util.VectorUtils;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 
 public class GeoCube {
     public GeoQuad[] quads = new GeoQuad[6];
@@ -37,14 +37,14 @@ public class GeoCube {
         size = size.multiply(0.0625f, 0.0625, 0.0625f);
 
 
-        Vector3f rotation = new Vector3f(VectorUtils.fromArray(cubeFileIn.getRotation()));
+        Vector3f rotation = new Vector3f(cubeFileIn.getRotation());
         rotation.mul(-1, -1, 1);
 
-        rotation.setX((float) Math.toRadians(rotation.x()));
-        rotation.setY((float) Math.toRadians(rotation.y()));
-        rotation.setZ((float) Math.toRadians(rotation.z()));
+        rotation.set((float) Math.toRadians(rotation.x()),
+        (float) Math.toRadians(rotation.y()),
+        (float) Math.toRadians(rotation.z()));
 
-        Vector3f pivot = new Vector3f(VectorUtils.fromArray(cubeFileIn.getPivot()));
+        Vector3f pivot = new Vector3f(cubeFileIn.getPivot());
         pivot.mul(-1, 1, 1);
 
         cube.pivot = pivot;

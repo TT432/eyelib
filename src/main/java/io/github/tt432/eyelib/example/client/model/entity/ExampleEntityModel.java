@@ -11,7 +11,7 @@ public class ExampleEntityModel extends AnimatedTickingGeoModel<GeoExampleEntity
     public static final ResourceLocation BAT_MODEL =
             new ResourceLocation(Eyelib.MOD_ID, "geo/models/" + NAME + ".geo.json");
     public static final ResourceLocation BAT_TEXTURE =
-            new ResourceLocation(Eyelib.MOD_ID, "textures/model/entity/" + NAME + ".png");
+            new ResourceLocation(Eyelib.MOD_ID, "animatable/" + NAME);
     public static final ResourceLocation BAT_ANIMATIONS =
             new ResourceLocation(Eyelib.MOD_ID, "geo/animations/" + NAME + ".animation.json");
 

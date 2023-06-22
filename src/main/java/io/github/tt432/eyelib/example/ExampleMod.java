@@ -12,8 +12,7 @@ import io.github.tt432.eyelib.example.registry.EntityRegistry;
 import io.github.tt432.eyelib.example.registry.ItemRegistry;
 import io.github.tt432.eyelib.example.registry.TileRegistry;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.entity.EntityLeaveWorldEvent;
+import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -33,17 +32,11 @@ public class ExampleMod {
             ItemRegistry.ITEMS.register(bus);
             TileRegistry.TILES.register(bus);
             BlockRegistry.BLOCKS.register(bus);
-            mainTab = new CreativeModeTab(CreativeModeTab.getGroupCountSafe(), "examples") {
-                @Override
-                public ItemStack makeIcon() {
-                    return new ItemStack(ItemRegistry.JACK_IN_THE_BOX.get());
-                }
-            };
         }
     }
 
     @SubscribeEvent
-    public static void onEntityRemoved(EntityLeaveWorldEvent event) {
+    public static void onEntityRemoved(EntityLeaveLevelEvent event) {
         if (event.getEntity() == null) {
             return;
         }
@@ -52,7 +45,7 @@ public class ExampleMod {
             return;
         }
 
-        if (event.getWorld().isClientSide)
+        if (event.getLevel().isClientSide)
             GeoArmorRenderer.LIVING_ENTITY_RENDERERS.values().forEach(instances -> {
                 if (instances.containsKey(event.getEntity().getUUID())) {
                     ModelFetcherManager.ModelFetcher<?> beGone = instances.get(event.getEntity().getUUID());

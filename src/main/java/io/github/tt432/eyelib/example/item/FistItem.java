@@ -11,7 +11,6 @@ import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationFactory;
-import io.github.tt432.eyelib.example.ExampleMod;
 import io.github.tt432.eyelib.example.client.renderer.item.FistRenderer;
 import io.github.tt432.eyelib.network.EyelibNetworkHandler;
 import io.github.tt432.eyelib.util.GeckoLibUtil;
@@ -21,7 +20,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.client.IItemRenderProperties;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import net.minecraftforge.network.PacketDistributor;
 
 import java.util.function.Consumer;
@@ -35,7 +34,7 @@ public class FistItem extends Item implements Animatable, Syncable, SoundPlayer 
     public AnimationFactory factory = GeckoLibUtil.createFactory(this);
 
     public FistItem(Properties pProperties) {
-        super(pProperties.tab(ExampleMod.mainTab));
+        super(pProperties);
         EyelibNetworkHandler.registerSyncable(this);
     }
 
@@ -45,13 +44,12 @@ public class FistItem extends Item implements Animatable, Syncable, SoundPlayer 
     }
 
     @Override
-    public void initializeClient(Consumer<IItemRenderProperties> consumer) {
-        super.initializeClient(consumer);
-        consumer.accept(new IItemRenderProperties() {
+    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
+        consumer.accept(new IClientItemExtensions() {
             private final BlockEntityWithoutLevelRenderer renderer = new FistRenderer();
 
             @Override
-            public BlockEntityWithoutLevelRenderer getItemStackRenderer() {
+            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
                 return renderer;
             }
         });

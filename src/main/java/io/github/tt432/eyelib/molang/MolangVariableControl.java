@@ -11,7 +11,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.MinecraftForgeClient;
 
 import java.util.function.Predicate;
 import java.util.function.ToDoubleFunction;
@@ -32,7 +31,7 @@ public class MolangVariableControl {
         scope.setVariable("query.actor_count", s -> (double) Minecraft.getInstance().level.getEntityCount());
         scope.setVariable("query.time_of_day", s -> (double) MolangValue.normalizeTime(Minecraft.getInstance().level.getDayTime()));
         scope.setVariable("query.moon_phase", s -> (double) Minecraft.getInstance().level.getMoonPhase());
-        scope.setVariable("query.partial_tick", s -> (double) MinecraftForgeClient.getPartialTick());
+        scope.setVariable("query.partial_tick", s -> (double) Minecraft.getInstance().getPartialTick());
     }
 
     public static void entity(MolangVariableScope scope) {

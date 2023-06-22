@@ -58,7 +58,7 @@ public class BoneFile implements Serializable {
      * This is the initial rotation of the bone around the pivot, pre-animation (in
      * degrees, x-then-y-then-z order).
      */
-    private double[] rotation = new double[]{0, 0, 0};
+    private float[] rotation = new float[]{0, 0, 0};
     /**
      * ***EXPERIMENTAL*** Adds a mesh to the bone's geometry by converting texels in
      * a texture into boxes.

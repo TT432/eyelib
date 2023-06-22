@@ -8,8 +8,6 @@ import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
-import net.minecraftforge.registries.ForgeRegistryEntry;
-import net.minecraftforge.registries.IRegistryDelegate;
 
 import java.util.Map;
 import java.util.Optional;
@@ -59,11 +57,9 @@ public class EyelibNetworkHandler {
         return delegate == null ? null : delegate.get();
     }
 
-    public static <E extends ForgeRegistryEntry<E>, T extends ForgeRegistryEntry<E> & Syncable> void registerSyncable(
-            T entry) {
-        final IRegistryDelegate<?> delegate = entry.delegate;
+    public static < T extends  Syncable> void registerSyncable(T entry) {
         final String key = entry.getSyncKey();
-        if (SYNCABLES.putIfAbsent(key, () -> (Syncable) delegate.get()) != null) {
+        if (SYNCABLES.putIfAbsent(key, () -> entry) != null) {
             throw new IllegalArgumentException("Syncable already registered for " + key);
         }
         Eyelib.LOGGER.debug("Registered syncable for " + key);

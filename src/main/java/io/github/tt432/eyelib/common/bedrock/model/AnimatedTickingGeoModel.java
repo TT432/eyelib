@@ -6,7 +6,6 @@ import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.client.MinecraftForgeClient;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -31,7 +30,7 @@ public abstract class AnimatedTickingGeoModel<T extends Animatable & Tickable> e
 
         if (!Minecraft.getInstance().isPaused() || manager.isShouldPlayWhilePaused()) {
             if (animatable instanceof LivingEntity || replaceEntity instanceof LivingEntity) {
-                manager.setTick(animatable.tickTimer() + MinecraftForgeClient.getPartialTick());
+                manager.setTick(animatable.tickTimer() + Minecraft.getInstance().getPartialTick());
             } else {
                 manager.setTick(animatable.tickTimer() - manager.getStartTick());
             }

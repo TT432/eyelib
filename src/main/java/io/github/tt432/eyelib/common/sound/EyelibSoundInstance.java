@@ -11,6 +11,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.valueproviders.ConstantFloat;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -18,27 +20,27 @@ import java.util.concurrent.CompletableFuture;
  * @author DustW
  */
 public class EyelibSoundInstance extends SimpleSoundInstance {
-    public EyelibSoundInstance(SoundEvent pSoundEvent, SoundSource pSource, float pVolume, float pPitch, BlockPos pPos) {
-        super(pSoundEvent, pSource, pVolume, pPitch, pPos);
-    }
-
-    public EyelibSoundInstance(SoundEvent pSoundEvent, SoundSource pSource, float pVolume, float pPitch, double pX, double pY, double pZ) {
-        super(pSoundEvent, pSource, pVolume, pPitch, pX, pY, pZ);
-    }
-
-    public EyelibSoundInstance(ResourceLocation pLocation, SoundSource pSource, float pVolume, float pPitch, boolean pLooping, int pDelay, Attenuation pAttenuation, double pX, double pY, double pZ, boolean pRelative) {
-        super(pLocation, pSource, pVolume, pPitch, pLooping, pDelay, pAttenuation, pX, pY, pZ, pRelative);
-    }
-
     private WeighedSoundEvents wse;
+
+    public EyelibSoundInstance(SoundEvent pSoundEvent, SoundSource pSource, float pVolume, float pPitch, RandomSource pRandom, BlockPos pEntity) {
+        super(pSoundEvent, pSource, pVolume, pPitch, pRandom, pEntity);
+    }
+
+    public EyelibSoundInstance(SoundEvent pSoundEvent, SoundSource pSource, float pVolume, float pPitch, RandomSource pRandom, double pX, double pY, double pZ) {
+        super(pSoundEvent, pSource, pVolume, pPitch, pRandom, pX, pY, pZ);
+    }
+
+    public EyelibSoundInstance(ResourceLocation pLocation, SoundSource pSource, float pVolume, float pPitch, RandomSource pRandom, boolean pLooping, int pDelay, Attenuation pAttenuation, double pX, double pY, double pZ, boolean pRelative) {
+        super(pLocation, pSource, pVolume, pPitch, pRandom, pLooping, pDelay, pAttenuation, pX, pY, pZ, pRelative);
+    }
 
     @Override
     public WeighedSoundEvents resolve(SoundManager pHandler) {
         if (wse == null) {
             sound = new Sound(
                     location.toString(),
-                    volume,
-                    pitch,
+                    ConstantFloat.of(volume),
+                   ConstantFloat.of( pitch),
                     1,
                     Sound.Type.FILE,
                     true,

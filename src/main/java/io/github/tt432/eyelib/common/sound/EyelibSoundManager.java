@@ -77,7 +77,7 @@ public class EyelibSoundManager {
             }
 
             try {
-                InputStream is = manager.getResource(format.converter.idToFile(id)).getInputStream();
+                InputStream is = manager.getResource(format.converter.idToFile(id)).get().open();
 
                 if (format == Format.WAV)
                     return transform(is);

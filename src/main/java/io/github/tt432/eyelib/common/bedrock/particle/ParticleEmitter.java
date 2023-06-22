@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.common.bedrock.particle;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.api.bedrock.model.GeoModelProvider;
 import io.github.tt432.eyelib.api.bedrock.renderer.GeoRenderer;
 import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
@@ -34,6 +33,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -276,9 +276,12 @@ public class ParticleEmitter {
                     poseStack.translate(offset[0], offset[1], offset[2]);
 
                     double[] rotation = aLocator.getRotation();
-                    poseStack.mulPose(Vector3f.ZP.rotation((float) rotation[0]));
-                    poseStack.mulPose(Vector3f.YP.rotation((float) rotation[1]));
-                    poseStack.mulPose(Vector3f.XP.rotation((float) rotation[2]));
+
+                    poseStack.mulPose(new Quaternionf().rotationZYX(
+                            (float) rotation[0],
+                            (float) rotation[1],
+                            (float) rotation[2]
+                    ));
                 }
             }
         }

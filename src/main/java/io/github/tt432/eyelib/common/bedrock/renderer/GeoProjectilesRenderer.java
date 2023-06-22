@@ -3,8 +3,6 @@ package io.github.tt432.eyelib.common.bedrock.renderer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.ModelFetcherManager;
@@ -28,6 +26,8 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 
 import java.util.Collections;
 
@@ -61,12 +61,12 @@ public class GeoProjectilesRenderer<T extends Entity & Animatable> extends Entit
     public void render(T animatable, float yaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight) {
         GeoModel model = this.modelProvider.getModel(modelProvider.getModelLocation(animatable));
-        this.dispatchedMat = poseStack.last().pose().copy();
+        this.dispatchedMat = new Matrix4f(poseStack.last().pose());
 
         setCurrentModelRenderCycle(RenderCycle.RenderCycleImpl.INITIAL);
         poseStack.pushPose();
-        poseStack.mulPose(Vector3f.YP.rotationDegrees(Mth.lerp(partialTick, animatable.yRotO, animatable.getYRot()) - 90));
-        poseStack.mulPose(Vector3f.ZP.rotationDegrees(Mth.lerp(partialTick, animatable.xRotO, animatable.getXRot())));
+        poseStack.mulPose(new Quaternionf().rotationY((float) Math.toRadians(Mth.lerp(partialTick, animatable.yRotO, animatable.getYRot()) - 90)));
+        poseStack.mulPose(new Quaternionf().rotationZ((float) Math.toRadians(Mth.lerp(partialTick, animatable.xRotO, animatable.getXRot()))));
 
         AnimationEvent<T> predicate = new AnimationEvent<T>(animatable, 0, 0, partialTick,
                 false, Collections.emptyList());
@@ -92,7 +92,7 @@ public class GeoProjectilesRenderer<T extends Entity & Animatable> extends Entit
     public void renderEarly(T animatable, PoseStack poseStack, float partialTick, MultiBufferSource bufferSource,
                             VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue,
                             float alpha) {
-        this.renderEarlyMat = poseStack.last().pose().copy();
+        this.renderEarlyMat = new Matrix4f(poseStack.last().pose());
         this.animatable = animatable;
 
         GeoRenderer.super.renderEarly(animatable, poseStack, partialTick, bufferSource, buffer,
@@ -103,16 +103,16 @@ public class GeoProjectilesRenderer<T extends Entity & Animatable> extends Entit
     public void renderRecursively(Bone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
                                   int packedOverlay, float red, float green, float blue, float alpha) {
         if (bone.isTrackingXform()) {
-            Matrix4f poseState = poseStack.last().pose().copy();
+            Matrix4f poseState = new Matrix4f(poseStack.last().pose());
             Matrix4f localMatrix = RenderUtils.invertAndMultiplyMatrices(poseState, this.dispatchedMat);
 
             bone.setModelSpaceXform(RenderUtils.invertAndMultiplyMatrices(poseState, this.renderEarlyMat));
-            localMatrix.translate(new Vector3f(getRenderOffset(this.animatable, 1)));
+            localMatrix.translate(getRenderOffset(this.animatable, 1).toVector3f());
             bone.setLocalSpaceXform(localMatrix);
 
-            Matrix4f worldState = localMatrix.copy();
+            Matrix4f worldState =new Matrix4f( localMatrix);
 
-            worldState.translate(new Vector3f(this.animatable.position()));
+            worldState.translate(this.animatable.position().toVector3f());
             bone.setWorldSpaceXform(worldState);
         }
 

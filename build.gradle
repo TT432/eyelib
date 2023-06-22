@@ -26,7 +26,7 @@ java {
 }
 
 minecraft {
-    mappings channel: 'parchment', version: project.parchment_version + "-" + project.mc_version
+    mappings channel: 'parchment', version: '1.19.3-2023.03.12-1.19.4'
 
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 

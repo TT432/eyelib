@@ -5,12 +5,12 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
-import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
 import io.github.tt432.eyelib.util.Axis;
 import lombok.Data;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 
 import java.io.Serializable;
 import java.lang.reflect.Type;

@@ -3,12 +3,7 @@ package io.github.tt432.eyelib.common.bedrock.renderer;
 import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
-import com.mojang.math.Vector4f;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
-import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.api.bedrock.renderer.RenderCycle;
 import io.github.tt432.eyelib.common.bedrock.model.AnimatedGeoModel;
 import io.github.tt432.eyelib.common.bedrock.model.element.*;
@@ -24,7 +19,6 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.ModelPart.Cube;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.ItemTransforms.TransformType;
 import net.minecraft.client.renderer.blockentity.SkullBlockRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.ItemRenderer;
@@ -50,6 +44,10 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.ForgeHooksClient;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -366,9 +364,10 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
             }
 
             if (modMatrixRot) {
-                poseStack.mulPose(new Quaternion(0, 0, (float) Math.toRadians(zRot), false));
-                poseStack.mulPose(new Quaternion(0, (float) Math.toRadians(yRot), 0, false));
-                poseStack.mulPose(new Quaternion((float) Math.toRadians(xRot), 0, 0, false));
+                poseStack.mulPose(new Quaternionf().rotationZYX(
+                        (float) Math.toRadians(zRot),
+                        (float) Math.toRadians(yRot),
+                        (float) Math.toRadians(xRot)));
             } else {
                 sourceLimb.xRot = xRot;
                 sourceLimb.yRot = yRot;
@@ -509,7 +508,7 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
     @Nullable
     protected abstract ItemStack getHeldItemForBone(String boneName, T animatable);
 
-    protected abstract TransformType getCameraTransformForItemAtBone(ItemStack stack, String boneName);
+    protected abstract ItemDisplayContext getCameraTransformForItemAtBone(ItemStack stack, String boneName);
 
     /*
      * Return null if there is no held block
@@ -588,7 +587,7 @@ public abstract class ExtendedGeoEntityRenderer<T extends LivingEntity & Animata
             float texU = (vertex.getTextureU() * entityTextureSize.firstInt()) / boneTextureSize.firstInt();
             float texV = (vertex.getTextureV() * entityTextureSize.secondInt()) / boneTextureSize.secondInt();
 
-            vector4f.transform(poseState);
+            vector4f.mul(poseState);
 
             buffer.vertex(vector4f.x(), vector4f.y(), vector4f.z(), red, green, blue, alpha, texU, texV,
                     packedOverlay, packedLight, normal.x(), normal.y(), normal.z());

@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.molang.functions.MolangFunction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraftforge.registries.ForgeRegistries;
 
 /**
  * @author DustW
@@ -29,7 +30,7 @@ public class SlotGetter extends MolangFunction {
         for (int i = 0; i < args.length; i++) {
             String item = getArgAsString(i, scope);
 
-            if (new ResourceLocation(item).equals(livingEntity.getItemBySlot(slot).getItem().getRegistryName())) {
+            if (new ResourceLocation(item).equals(ForgeRegistries.ITEMS.getKey(livingEntity.getItemBySlot(slot).getItem()))) {
                 return TRUE;
             }
         }

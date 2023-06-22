@@ -8,7 +8,6 @@ import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationFactory;
 import io.github.tt432.eyelib.common.item.GeoArmorItem;
-import io.github.tt432.eyelib.example.ExampleMod;
 import io.github.tt432.eyelib.example.registry.ItemRegistry;
 import io.github.tt432.eyelib.util.GeckoLibUtil;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -27,8 +26,8 @@ import static io.github.tt432.eyelib.api.bedrock.animation.LoopType.LOOP;
 public class GeckoArmorItem extends GeoArmorItem implements Animatable {
     public AnimationFactory factory = GeckoLibUtil.createFactory(this);
 
-    public GeckoArmorItem(ArmorMaterial materialIn, EquipmentSlot slot, Properties builder) {
-        super(materialIn, slot, builder.tab(ExampleMod.mainTab));
+    public GeckoArmorItem(ArmorMaterial materialIn, Type slot, Properties builder) {
+        super(materialIn, slot, builder);
     }
 
     // Predicate runs every frame

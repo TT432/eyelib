@@ -3,8 +3,6 @@ package io.github.tt432.eyelib.common.bedrock.renderer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.ModelFetcherManager;
@@ -32,6 +30,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.ApiStatus.AvailableSince;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 public abstract class GeoBlockRenderer<T extends BlockEntity & Animatable>
         implements GeoRenderer<T>, BlockEntityRenderer {
@@ -70,7 +71,7 @@ public abstract class GeoBlockRenderer<T extends BlockEntity & Animatable>
     public void renderEarly(T animatable, PoseStack poseStack, float partialTick, MultiBufferSource bufferSource,
                             VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue,
                             float alpha) {
-        this.renderEarlyMat = poseStack.last().pose().copy();
+        this.renderEarlyMat = new Matrix4f(poseStack.last().pose());
         this.animatable = animatable;
 
         GeoRenderer.super.renderEarly(animatable, poseStack, partialTick, bufferSource, buffer, packedLight, packedOverlay, red, green, blue, alpha);
@@ -85,7 +86,7 @@ public abstract class GeoBlockRenderer<T extends BlockEntity & Animatable>
     public void render(T tile, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
         GeoModel model = modelProvider.getModel(modelProvider.getModelLocation(tile));
         modelProvider.setCustomAnimations(tile, getInstanceId(tile));
-        this.dispatchedMat = poseStack.last().pose().copy();
+        this.dispatchedMat = new Matrix4f(poseStack.last().pose());
         this.setCurrentModelRenderCycle(RenderCycle.RenderCycleImpl.INITIAL);
         poseStack.pushPose();
         poseStack.translate(0, 0.01f, 0);
@@ -107,15 +108,15 @@ public abstract class GeoBlockRenderer<T extends BlockEntity & Animatable>
     public void renderRecursively(Bone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
                                   int packedOverlay, float red, float green, float blue, float alpha) {
         if (bone.isTrackingXform()) {
-            Matrix4f poseState = poseStack.last().pose().copy();
+            Matrix4f poseState = new Matrix4f(poseStack.last().pose());
             Matrix4f localMatrix = RenderUtils.invertAndMultiplyMatrices(poseState, this.dispatchedMat);
             BlockPos pos = this.animatable.getBlockPos();
 
             bone.setModelSpaceXform(RenderUtils.invertAndMultiplyMatrices(poseState, this.renderEarlyMat));
-            localMatrix.translate(new Vector3f(getRenderOffset(this.animatable, 1)));
+            localMatrix.translate(getRenderOffset(this.animatable, 1).toVector3f());
             bone.setLocalSpaceXform(localMatrix);
 
-            Matrix4f worldState = localMatrix.copy();
+            Matrix4f worldState = new Matrix4f(localMatrix);
 
             worldState.translate(new Vector3f(pos.getX(), pos.getY(), pos.getZ()));
             bone.setWorldSpaceXform(worldState);
@@ -148,12 +149,12 @@ public abstract class GeoBlockRenderer<T extends BlockEntity & Animatable>
 
     protected void rotateBlock(Direction facing, PoseStack poseStack) {
         switch (facing) {
-            case SOUTH -> poseStack.mulPose(Vector3f.YP.rotationDegrees(180));
-            case WEST -> poseStack.mulPose(Vector3f.YP.rotationDegrees(90));
-            case NORTH -> poseStack.mulPose(Vector3f.YP.rotationDegrees(0));
-            case EAST -> poseStack.mulPose(Vector3f.YP.rotationDegrees(270));
-            case UP -> poseStack.mulPose(Vector3f.XP.rotationDegrees(90));
-            case DOWN -> poseStack.mulPose(Vector3f.XN.rotationDegrees(90));
+            case SOUTH -> poseStack.mulPose(new Quaternionf().rotationY((float) Math.toRadians(180)));
+            case WEST -> poseStack.mulPose(new Quaternionf().rotationY((float) Math.toRadians(90)));
+            case NORTH -> poseStack.mulPose(new Quaternionf().rotationY((float) Math.toRadians(0)));
+            case EAST -> poseStack.mulPose(new Quaternionf().rotationY((float) Math.toRadians(270)));
+            case UP -> poseStack.mulPose(new Quaternionf().rotationX((float) Math.toRadians(90)));
+            case DOWN -> poseStack.mulPose(new Quaternionf().rotationX((float) Math.toRadians(270)));
         }
     }
 

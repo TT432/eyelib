@@ -11,6 +11,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Objects;
 
@@ -29,7 +30,7 @@ public class GeckoLibUtil {
         if (stackHasIDTag(stack)) {
             return stack.getTag().getInt(GECKO_LIB_ID_NBT);
         }
-        return Objects.hash(stack.getItem().getRegistryName(), stack.getTag(), stack.getCount());
+        return Objects.hash(ForgeRegistries.ITEMS.getKey(stack.getItem()), stack.getTag(), stack.getCount());
     }
 
     /**

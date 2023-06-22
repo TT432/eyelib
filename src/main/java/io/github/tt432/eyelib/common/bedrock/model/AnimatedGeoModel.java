@@ -15,7 +15,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.client.MinecraftForgeClient;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -59,7 +58,7 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
 
         if (!mc.isPaused() || manager.isShouldPlayWhilePaused()) {
             if (animatable instanceof LivingEntity || entity instanceof LivingEntity) {
-                manager.setTick(currentTick + MinecraftForgeClient.getPartialTick());
+                manager.setTick(currentTick + Minecraft.getInstance().getPartialTick());
             } else {
                 manager.setTick(currentTick - manager.getStartTick());
             }
@@ -71,7 +70,7 @@ public abstract class AnimatedGeoModel<T extends Animatable> extends GeoModelPro
 
         if (predicate == null) {
             predicate = new AnimationEvent<>(animatable, 0, 0,
-                    MinecraftForgeClient.getPartialTick(), false, Collections.emptyList());
+                    Minecraft.getInstance().getPartialTick(), false, Collections.emptyList());
         }
 
         predicate.setAnimationTick(this.seekTime);

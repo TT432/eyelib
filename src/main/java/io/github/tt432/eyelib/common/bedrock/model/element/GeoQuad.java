@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.common.bedrock.model.element;
 
-import com.mojang.math.Vector3f;
+import org.joml.Vector3f;
 import net.minecraft.core.Direction;
 
 public class GeoQuad {

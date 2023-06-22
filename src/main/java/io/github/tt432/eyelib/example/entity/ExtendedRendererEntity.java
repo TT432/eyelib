@@ -8,8 +8,9 @@ import io.github.tt432.eyelib.common.bedrock.animation.builder.AnimationBuilder;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationFactory;
 import io.github.tt432.eyelib.util.GeckoLibUtil;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -21,6 +22,7 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AbstractSkullBlock;
 import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Optional;
 
@@ -268,7 +270,7 @@ public class ExtendedRendererEntity extends PathfinderMob implements Animatable 
     }
 
     @Override
-    public Packet<?> getAddEntityPacket() {
+    public Packet<ClientGamePacketListener> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
@@ -277,7 +279,7 @@ public class ExtendedRendererEntity extends PathfinderMob implements Animatable 
         ItemStack item = pPlayer.getItemInHand(pHand);
         if (item != null && !item.isEmpty() && !this.level.isClientSide) {
             if (item.getItem() instanceof ArmorItem ai) {
-                this.setItemSlot(ai.getSlot(), item);
+                this.setItemSlot(ai.getEquipmentSlot(), item);
             } else if (item.getItem().getEquipmentSlot(item) != null) {
                 this.setItemSlot(item.getItem().getEquipmentSlot(item), item);
             } else if (item.getItem() instanceof BlockItem
@@ -286,9 +288,8 @@ public class ExtendedRendererEntity extends PathfinderMob implements Animatable 
             } else {
                 this.setItemInHand(pHand, item);
             }
-            pPlayer.sendMessage(
-                    new TextComponent("Equipped item: " + item.getItem().getRegistryName().toString() + "!"),
-                    this.getUUID());
+            pPlayer.sendSystemMessage(
+                    Component.literal("Equipped item: " + ForgeRegistries.ITEMS.getKey(item.getItem()).toString() + "!"));
             return InteractionResult.SUCCESS;
         }
         return super.mobInteract(pPlayer, pHand);

@@ -3,16 +3,14 @@ package io.github.tt432.eyelib.common.bedrock.renderer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.ModelFetcherManager;
-import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.api.bedrock.renderer.GeoRenderer;
 import io.github.tt432.eyelib.api.bedrock.renderer.RenderCycle;
 import io.github.tt432.eyelib.common.bedrock.animation.AnimationEvent;
 import io.github.tt432.eyelib.common.bedrock.model.AnimatedGeoModel;
+import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoModel;
 import io.github.tt432.eyelib.util.Color;
 import io.github.tt432.eyelib.util.GeoUtils;
@@ -32,6 +30,7 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.ApiStatus.AvailableSince;
+import org.joml.Matrix4f;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -180,7 +179,7 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
         poseStack.translate(0, 24 / 16F, 0);
         poseStack.scale(-1, -1, 1);
 
-        this.dispatchedMat = poseStack.last().pose().copy();
+        this.dispatchedMat = new Matrix4f(poseStack.last().pose());
 
         this.modelProvider.setCustomAnimations(this.animatable, null, getInstanceId(this.animatable), animationEvent);
         setCurrentModelRenderCycle(RenderCycle.RenderCycleImpl.INITIAL);
@@ -202,7 +201,7 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
     public void renderEarly(T animatable, PoseStack poseStack, float partialTick, MultiBufferSource bufferSource,
                             VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue,
                             float alpha) {
-        this.renderEarlyMat = poseStack.last().pose().copy();
+        this.renderEarlyMat = new Matrix4f(poseStack.last().pose());
         this.animatable = animatable;
 
         GeoRenderer.super.renderEarly(animatable, poseStack, partialTick, bufferSource, buffer,
@@ -218,7 +217,7 @@ public abstract class GeoArmorRenderer<T extends ArmorItem & Animatable> extends
             Matrix4f localMatrix = RenderUtils.invertAndMultiplyMatrices(poseState, this.dispatchedMat);
 
             bone.setModelSpaceXform(RenderUtils.invertAndMultiplyMatrices(poseState, this.renderEarlyMat));
-            localMatrix.translate(new Vector3f(renderOffset));
+            localMatrix.translate(renderOffset.toVector3f());
             bone.setLocalSpaceXform(localMatrix);
         }
 

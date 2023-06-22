@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.common.bedrock.model.element;
 
-import com.mojang.math.Vector3f;
+import org.joml.Vector3f;
 import lombok.Data;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.Validate;

@@ -20,7 +20,7 @@ public record SoundPlayInfo(SoundInstance instance, SoundPlayingState state) {
 
     private static SoundInstance forEntity(Entity entity, ResourceLocation location) {
         return new EyelibSoundInstance(location, entity.getSoundSource(),
-                1, 1, false, 0, SoundInstance.Attenuation.LINEAR,
+                1, 1, entity.level.random, false, 0, SoundInstance.Attenuation.LINEAR,
                 entity.getX(), entity.getY(), entity.getZ(), false);
     }
 
@@ -28,7 +28,7 @@ public record SoundPlayInfo(SoundInstance instance, SoundPlayingState state) {
         Entity player = Minecraft.getInstance().player;
 
         return new EyelibSoundInstance(location, player.getSoundSource(),
-                1, 1, false, 0, SoundInstance.Attenuation.LINEAR,
+                1, 1, player.level.random, false, 0, SoundInstance.Attenuation.LINEAR,
                 player.getX(), player.getY(), player.getZ(), false);
     }
 

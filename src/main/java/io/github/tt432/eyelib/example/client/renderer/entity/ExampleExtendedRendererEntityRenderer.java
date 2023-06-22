@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.example.client.renderer.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.common.bedrock.renderer.ExtendedGeoEntityRenderer;
 import io.github.tt432.eyelib.example.client.DefaultBipedBoneIdents;
@@ -12,13 +11,14 @@ import io.github.tt432.eyelib.example.entity.ExtendedRendererEntity;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.block.model.ItemTransforms.TransformType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.level.block.state.BlockState;
+import org.joml.Quaternionf;
 
 public class ExampleExtendedRendererEntityRenderer extends ExtendedGeoEntityRenderer<ExtendedRendererEntity> {
 
@@ -53,27 +53,27 @@ public class ExampleExtendedRendererEntityRenderer extends ExtendedGeoEntityRend
     }
 
     @Override
-    protected TransformType getCameraTransformForItemAtBone(ItemStack boneItem, String boneName) {
+    protected ItemDisplayContext getCameraTransformForItemAtBone(ItemStack boneItem, String boneName) {
         return switch (boneName) {
             case DefaultBipedBoneIdents.LEFT_HAND_BONE_IDENT, DefaultBipedBoneIdents.RIGHT_HAND_BONE_IDENT ->
-                    TransformType.THIRD_PERSON_RIGHT_HAND; // Do Defaults
-            default -> TransformType.NONE;
+                    ItemDisplayContext.THIRD_PERSON_RIGHT_HAND; // Do Defaults
+            default -> ItemDisplayContext.NONE;
         };
     }
 
     @Override
     protected void preRenderItem(PoseStack stack, ItemStack item, String boneName, ExtendedRendererEntity currentEntity, Bone bone) {
         if (item == this.mainHandItem) {
-            stack.mulPose(Vector3f.XP.rotationDegrees(-90f));
+            stack.mulPose(new Quaternionf().rotationX((float) Math.toRadians(-90f)));
 
             if (item.getItem() instanceof ShieldItem)
                 stack.translate(0, 0.125, -0.25);
         } else if (item == this.offHandItem) {
-            stack.mulPose(Vector3f.XP.rotationDegrees(-90f));
+            stack.mulPose(new Quaternionf().rotationX((float) Math.toRadians(-90f)));
 
             if (item.getItem() instanceof ShieldItem) {
                 stack.translate(0, 0.125, 0.25);
-                stack.mulPose(Vector3f.YP.rotationDegrees(180));
+                stack.mulPose(new Quaternionf().rotationY((float) Math.toRadians(180f)));
             }
         }
     }

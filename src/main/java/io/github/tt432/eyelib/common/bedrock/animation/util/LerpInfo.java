@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.common.bedrock.animation.util;
 
-import com.mojang.math.Vector3d;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.joml.Vector3d;
 
 /**
  * @author DustW

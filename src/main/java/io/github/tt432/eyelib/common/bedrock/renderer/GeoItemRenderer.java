@@ -4,8 +4,6 @@ import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.api.bedrock.AnimatableModel;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.ModelFetcherManager;
@@ -25,14 +23,15 @@ import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.RenderProperties;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import org.joml.Matrix4f;
 
 import java.util.Collections;
 
@@ -42,7 +41,7 @@ public abstract class GeoItemRenderer<T extends Item & Animatable> extends Block
     static {
         ModelFetcherManager.addModelFetcher(animatable -> {
             if (animatable instanceof Item item
-                    && RenderProperties.get(item).getItemStackRenderer() instanceof GeoItemRenderer geoItemRenderer)
+                    && IClientItemExtensions.of(item).getCustomRenderer() instanceof GeoItemRenderer geoItemRenderer)
                 return (AnimatableModel<Animatable>) geoItemRenderer.getModelProvider();
 
             return null;
@@ -89,9 +88,9 @@ public abstract class GeoItemRenderer<T extends Item & Animatable> extends Block
 
     // fixes the item lighting
     @Override
-    public void renderByItem(ItemStack stack, ItemTransforms.TransformType transformType, PoseStack poseStack,
+    public void renderByItem(ItemStack stack, ItemDisplayContext transformType, PoseStack poseStack,
                              MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
-        if (transformType == ItemTransforms.TransformType.GUI) {
+        if (transformType == ItemDisplayContext.GUI) {
             poseStack.pushPose();
             MultiBufferSource.BufferSource defaultBufferSource = bufferSource instanceof MultiBufferSource.BufferSource bufferSource2
                     ? bufferSource2
@@ -113,7 +112,7 @@ public abstract class GeoItemRenderer<T extends Item & Animatable> extends Block
         GeoModel model = this.modelProvider.getModel(this.modelProvider.getModelLocation(animatable));
         AnimationEvent animationEvent = new AnimationEvent(animatable, 0, 0, Minecraft.getInstance().getFrameTime(),
                 false, Collections.singletonList(stack));
-        this.dispatchedMat = poseStack.last().pose().copy();
+        this.dispatchedMat = new Matrix4f(poseStack.last().pose());
 
         setCurrentModelRenderCycle(RenderCycle.RenderCycleImpl.INITIAL);
         this.modelProvider.setCustomAnimations(animatable, null, getInstanceId(animatable), animationEvent);
@@ -135,7 +134,7 @@ public abstract class GeoItemRenderer<T extends Item & Animatable> extends Block
     public void renderEarly(T animatable, PoseStack poseStack, float partialTick, MultiBufferSource bufferSource,
                             VertexConsumer buffer, int packedLight, int packedOverlayIn, float red, float green, float blue,
                             float alpha) {
-        this.renderEarlyMat = poseStack.last().pose().copy();
+        this.renderEarlyMat = new Matrix4f(poseStack.last().pose());
         this.animatable = animatable;
 
         GeoRenderer.super.renderEarly(animatable, poseStack, partialTick, bufferSource, buffer, packedLight,
@@ -146,11 +145,11 @@ public abstract class GeoItemRenderer<T extends Item & Animatable> extends Block
     public void renderRecursively(Bone bone, PoseStack poseStack, VertexConsumer buffer, int packedLight,
                                   int packedOverlay, float red, float green, float blue, float alpha) {
         if (bone.isTrackingXform()) {
-            Matrix4f poseState = poseStack.last().pose().copy();
+            Matrix4f poseState = new Matrix4f(poseStack.last().pose());
             Matrix4f localMatrix = RenderUtils.invertAndMultiplyMatrices(poseState, this.dispatchedMat);
 
             bone.setModelSpaceXform(RenderUtils.invertAndMultiplyMatrices(poseState, this.renderEarlyMat));
-            localMatrix.translate(new Vector3f(getRenderOffset(this.animatable, 1)));
+            localMatrix.translate(getRenderOffset(this.animatable, 1).toVector3f());
             bone.setLocalSpaceXform(localMatrix);
         }
 

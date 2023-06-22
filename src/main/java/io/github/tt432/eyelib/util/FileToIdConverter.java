@@ -35,6 +35,6 @@ public class FileToIdConverter {
     }
 
     public Collection<ResourceLocation> listMatchingResources(ResourceManager manager) {
-        return manager.listResources(this.prefix, s -> s.endsWith(this.extension));
+        return manager.listResources(this.prefix, s -> s.getPath().endsWith(this.extension)).keySet();
     }
 }

@@ -2,9 +2,6 @@ package io.github.tt432.eyelib.util;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.common.bedrock.model.element.GeoCube;
@@ -14,6 +11,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 
@@ -23,17 +23,11 @@ public final class RenderUtils {
     }
 
     public static void rotateMatrixAroundBone(PoseStack poseStack, Bone bone) {
-        poseStack.mulPose(Vector3f.ZP.rotation(bone.getRotationZ()));
-        poseStack.mulPose(Vector3f.YP.rotation(bone.getRotationY()));
-        poseStack.mulPose(Vector3f.XP.rotation(bone.getRotationX()));
+        poseStack.mulPose(new Quaternionf().rotationZYX(bone.getRotationZ(), bone.getRotationY(), bone.getRotationX()));
     }
 
     public static void rotateMatrixAroundCube(PoseStack poseStack, GeoCube cube) {
-        Vector3f rotation = cube.rotation;
-
-        poseStack.mulPose(new Quaternion(0, 0, rotation.z(), false));
-        poseStack.mulPose(new Quaternion(0, rotation.y(), 0, false));
-        poseStack.mulPose(new Quaternion(rotation.x(), 0, 0, false));
+        poseStack.mulPose(new Quaternionf().rotationZYX(cube.rotation.z, cube.rotation.y, cube.rotation.x));
     }
 
     public static void scaleMatrixForBone(PoseStack poseStack, Bone bone) {
@@ -100,7 +94,7 @@ public final class RenderUtils {
 
         try {
             image = originalTexture instanceof DynamicTexture dynamicTexture ? dynamicTexture.getPixels()
-                    : NativeImage.read(mc.getResourceManager().getResource(texture).getInputStream());
+                    : NativeImage.read(mc.getResourceManager().getResource(texture).get().open());
         } catch (Exception e) {
             Eyelib.LOGGER.error("Failed to read image for id {}", texture);
             e.printStackTrace();
@@ -110,10 +104,10 @@ public final class RenderUtils {
     }
 
     public static Matrix4f invertAndMultiplyMatrices(Matrix4f baseMatrix, Matrix4f inputMatrix) {
-        inputMatrix = inputMatrix.copy();
+        inputMatrix = new Matrix4f(inputMatrix);
 
         inputMatrix.invert();
-        inputMatrix.multiply(baseMatrix);
+        inputMatrix.mul(baseMatrix);
 
         return inputMatrix;
     }

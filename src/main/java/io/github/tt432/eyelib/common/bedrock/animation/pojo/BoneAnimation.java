@@ -2,11 +2,11 @@ package io.github.tt432.eyelib.common.bedrock.animation.pojo;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
-import com.mojang.math.Vector3d;
 import io.github.tt432.eyelib.util.Axis;
 import io.github.tt432.eyelib.util.math.MathE;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.joml.Vector3d;
 
 import java.lang.reflect.Type;
 import java.util.Comparator;

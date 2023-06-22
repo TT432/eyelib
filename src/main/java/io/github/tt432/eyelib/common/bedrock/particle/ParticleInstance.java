@@ -1,8 +1,6 @@
 package io.github.tt432.eyelib.common.bedrock.particle;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.common.bedrock.particle.component.particle.*;
 import io.github.tt432.eyelib.common.bedrock.particle.component.particle.motion.ParticleMotionComponent;
 import io.github.tt432.eyelib.molang.MolangVariableScope;
@@ -21,6 +19,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 /**
  * @author DustW
@@ -158,18 +158,18 @@ public class ParticleInstance {
         float f = (float) (Mth.lerp(partialTicks, prePos.x, worldPos.x) - vec3.x());
         float f1 = (float) (Mth.lerp(partialTicks, prePos.y, worldPos.y) - vec3.y());
         float f2 = (float) (Mth.lerp(partialTicks, prePos.z, worldPos.z) - vec3.z());
-        Quaternion quaternion;
+        Quaternionf quaternion;
 
         if (this.roll == 0.0F) {
             quaternion = camera.rotation();
         } else {
-            quaternion = new Quaternion(camera.rotation());
+            quaternion = new Quaternionf(camera.rotation());
             float f3 = (float) Mth.lerp(partialTicks, this.oRoll, this.roll);
-            quaternion.mul(Vector3f.ZP.rotation(f3));
+            quaternion.rotationZ(f3);
         }
 
         Vector3f vector3f1 = new Vector3f(-1.0F, -1.0F, 0.0F);
-        vector3f1.transform(quaternion);
+        quaternion.transform(vector3f1);
         Vector3f[] avector3f = new Vector3f[]{
                 new Vector3f(-1.0F, -1.0F, 0.0F),
                 new Vector3f(-1.0F, 1.0F, 0.0F),
@@ -181,7 +181,7 @@ public class ParticleInstance {
 
         for (int i = 0; i < 4; ++i) {
             Vector3f vector3f = avector3f[i];
-            vector3f.transform(quaternion);
+            quaternion.transform(vector3f);
             vector3f.mul(quadSize);
             vector3f.add(f, f1, f2);
         }
@@ -204,7 +204,7 @@ public class ParticleInstance {
             return LightTexture.FULL_BRIGHT;
         }
 
-        BlockPos blockpos = new BlockPos(worldPos.x, worldPos.y, worldPos.z);
+        BlockPos blockpos = new BlockPos((int) worldPos.x, (int) worldPos.y, (int) worldPos.z);
         return this.level.hasChunkAt(blockpos) ? LevelRenderer.getLightColor(this.level, blockpos) : 0;
     }
 

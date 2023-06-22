@@ -2,12 +2,7 @@ package io.github.tt432.eyelib.api.bedrock.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix3f;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
-import com.mojang.math.Vector4f;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
-import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
 import io.github.tt432.eyelib.api.bedrock.model.GeoModelProvider;
 import io.github.tt432.eyelib.common.AnimationTextureLoader;
 import io.github.tt432.eyelib.common.bedrock.animation.manager.AnimationData;
@@ -25,6 +20,10 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -47,7 +46,7 @@ public interface GeoRenderer<T> {
 
         if (AnimationTextureLoader.INSTANCE.has(textureLocation)) {
             TextureAtlasSprite sprite = AnimationTextureLoader.INSTANCE.get(textureLocation);
-            textureLocation = sprite.atlas().location();
+            textureLocation = sprite.atlasLocation();
             AnimationData data = getData();
 
             data.putExtraData("tex_offset", new Vec2d(
@@ -169,9 +168,9 @@ public interface GeoRenderer<T> {
             if (quad == null)
                 continue;
 
-            Vector3f normal = quad.normal.copy();
+            Vector3f normal = new Vector3f(quad.normal);
 
-            normal.transform(normalisedPoseState);
+            normal.mul(normalisedPoseState);
 
             /*
              * Fix shading dark shading for flat cubes + compatibility wish Optifine shaders
@@ -198,7 +197,7 @@ public interface GeoRenderer<T> {
         for (GeoVertex vertex : quad.vertices) {
             Vector4f vector4f = new Vector4f(vertex.position.x(), vertex.position.y(), vertex.position.z(), 1);
 
-            vector4f.transform(poseState);
+            vector4f.mul(poseState);
             buffer.vertex(vector4f.x(), vector4f.y(), vector4f.z(), red, green, blue, alpha,
                     (float) (offset.getX() + range.getX() * vertex.getTextureU()),
                     (float) (offset.getY() + range.getY() * vertex.getTextureV()),

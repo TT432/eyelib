@@ -25,12 +25,12 @@ public class CubeFile implements Serializable {
      * If this field is specified, rotation of this cube occurs around this point,
      * otherwise its rotation is around the center of the box.
      */
-    private double[] pivot = new double[]{0, 0, 0};
+    private float[] pivot = new float[]{0, 0, 0};
     /**
      * The cube is rotated by this amount (in degrees, x-then-y-then-z order) around
      * the pivot.
      */
-    private double[] rotation = new double[]{0, 0, 0};
+    private float[] rotation = new float[]{0, 0, 0};
     /**
      * The cube extends this amount relative to its origin (in model space units).
      */

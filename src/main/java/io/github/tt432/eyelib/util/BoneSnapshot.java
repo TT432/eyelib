@@ -5,8 +5,8 @@
 
 package io.github.tt432.eyelib.util;
 
-import com.mojang.math.Vector3d;
 import io.github.tt432.eyelib.common.bedrock.model.element.Bone;
+import org.joml.Vector3d;
 
 public class BoneSnapshot {
     public BoneSnapshot(Bone modelRenderer) {

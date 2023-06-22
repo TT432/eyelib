@@ -10,7 +10,7 @@ import net.minecraftforge.registries.RegistryObject;
 
 public class TileRegistry {
     public static final DeferredRegister<BlockEntityType<?>> TILES = DeferredRegister
-            .create(ForgeRegistries.BLOCK_ENTITIES, Eyelib.MOD_ID);
+            .create(ForgeRegistries.BLOCK_ENTITY_TYPES, Eyelib.MOD_ID);
 
     public static final RegistryObject<BlockEntityType<HabitatTileEntity>> HABITAT_TILE = TILES.register("habitattile",
             () -> BlockEntityType.Builder.of(HabitatTileEntity::new, BlockRegistry.HABITAT_BLOCK.get()).build(null));

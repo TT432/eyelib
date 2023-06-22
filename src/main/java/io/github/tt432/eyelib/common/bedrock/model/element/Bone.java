@@ -1,15 +1,15 @@
 package io.github.tt432.eyelib.common.bedrock.model.element;
 
-import com.mojang.math.Matrix3f;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3d;
-import com.mojang.math.Vector4f;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.Locator;
 import io.github.tt432.eyelib.util.BoneSnapshot;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.ApiStatus.AvailableSince;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+import org.joml.Vector3d;
+import org.joml.Vector4f;
 
 import java.util.HashMap;
 import java.util.List;
@@ -81,13 +81,9 @@ public class Bone {
 
     public Bone() {
         modelSpaceXform = new Matrix4f();
-        modelSpaceXform.setIdentity();
         localSpaceXform = new Matrix4f();
-        localSpaceXform.setIdentity();
         worldSpaceXform = new Matrix4f();
-        worldSpaceXform.setIdentity();
         worldSpaceNormal = new Matrix3f();
-        worldSpaceNormal.setIdentity();
         trackingXform = false;
         rotMat = null;
     }
@@ -128,7 +124,7 @@ public class Bone {
     }
 
     public void setModelSpaceXform(Matrix4f modelSpaceXform) {
-        this.modelSpaceXform.load(modelSpaceXform);
+        this.modelSpaceXform.set(modelSpaceXform);
     }
 
     /* Gets the postion of a bone relative to the model */
@@ -136,7 +132,7 @@ public class Bone {
     public Vector3d getModelPosition() {
         Matrix4f matrix = getModelSpaceXform();
         Vector4f vec = new Vector4f(0, 0, 0, 1);
-        vec.transform(matrix);
+        vec.mul(matrix);
         return new Vector3d(-vec.x() * 16f, vec.y() * 16f, vec.z() * 16f);
     }
 
@@ -146,7 +142,7 @@ public class Bone {
     }
 
     public void setLocalSpaceXform(Matrix4f localSpaceXform) {
-        this.localSpaceXform.load(localSpaceXform);
+        this.localSpaceXform.set(localSpaceXform);
     }
 
     /* Gets the postion of a bone relative to the entity */
@@ -154,7 +150,7 @@ public class Bone {
     public Vector3d getLocalPosition() {
         Matrix4f matrix = getLocalSpaceXform();
         Vector4f vec = new Vector4f(0, 0, 0, 1);
-        vec.transform(matrix);
+        vec.mul(matrix);
         return new Vector3d(vec.x(), vec.y(), vec.z());
     }
 
@@ -164,7 +160,7 @@ public class Bone {
     }
 
     public void setWorldSpaceXform(Matrix4f worldSpaceXform) {
-        this.worldSpaceXform.load(worldSpaceXform);
+        this.worldSpaceXform.set(worldSpaceXform);
     }
 
     /* Gets the postion of a bone relative to the world */
@@ -172,7 +168,7 @@ public class Bone {
     public Vector3d getWorldPosition() {
         Matrix4f matrix = getWorldSpaceXform();
         Vector4f vec = new Vector4f(0, 0, 0, 1);
-        vec.transform(matrix);
+        vec.mul(matrix);
         return new Vector3d(vec.x(), vec.y(), vec.z());
     }
 
@@ -180,24 +176,11 @@ public class Bone {
         /* Doesn't work on bones with parent transforms */
         Bone parent = getParent();
         Matrix4f identity = new Matrix4f();
-        identity.setIdentity();
-        Matrix4f matrix = parent == null ? identity : parent.getModelSpaceXform().copy();
+        Matrix4f matrix = parent == null ? identity : new Matrix4f(parent.getModelSpaceXform());
         matrix.invert();
         Vector4f vec = new Vector4f(-(float) pos.x / 16f, (float) pos.y / 16f, (float) pos.z / 16f, 1);
-        vec.transform(matrix);
+        vec.mul(matrix);
         setPosition(-vec.x() * 16f, vec.y() * 16f, vec.z() * 16f);
-    }
-
-    public Matrix4f getModelRotationMat() {
-        Matrix4f matrix = getModelSpaceXform().copy();
-        removeMatrixTranslation(matrix);
-        return matrix;
-    }
-
-    public static void removeMatrixTranslation(Matrix4f matrix) {
-        matrix.m03 = 0;
-        matrix.m13 = 0;
-        matrix.m23 = 0;
     }
 
     // Position utils

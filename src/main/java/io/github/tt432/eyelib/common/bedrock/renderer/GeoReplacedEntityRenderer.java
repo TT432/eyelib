@@ -4,8 +4,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexMultiConsumer;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
 import io.github.tt432.eyelib.api.bedrock.animation.Animatable;
 import io.github.tt432.eyelib.api.bedrock.animation.ModelFetcherManager;
 import io.github.tt432.eyelib.api.bedrock.renderer.GeoRenderer;
@@ -36,6 +34,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.ApiStatus.AvailableSince;
+import org.joml.Matrix4f;
 
 import java.util.Collections;
 import java.util.List;
@@ -98,7 +97,7 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
     public void renderEarly(Object animatable, PoseStack poseStack, float partialTick,
                             MultiBufferSource bufferSource, VertexConsumer buffer, int packedLight, int packedOverlayIn,
                             float red, float green, float blue, float alpha) {
-        this.renderEarlyMat = poseStack.last().pose().copy();
+        this.renderEarlyMat = new Matrix4f(poseStack.last().pose());
         GeoRenderer.super.renderEarly(animatable, poseStack, partialTick, bufferSource, buffer, packedLight, packedOverlayIn, red, green, blue, alpha);
     }
 
@@ -119,7 +118,7 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
         scope.setValue("query.partial_tick", partialTick);
 
         this.currentAnimatable = animatable;
-        this.dispatchedMat = poseStack.last().pose().copy();
+        this.dispatchedMat = new Matrix4f(poseStack.last().pose());
         boolean shouldSit = entity.isPassenger() && (entity.getVehicle() != null && entity.getVehicle().shouldRiderSit());
 
         tryRenderLeash(entity, partialTick, poseStack, bufferSource);
@@ -134,8 +133,8 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
         float limbSwing = 0;
 
         if (!shouldSit && entity.isAlive()) {
-            limbSwingAmount = Math.min(1, Mth.lerp(partialTick, livingEntity.animationSpeedOld, livingEntity.animationSpeed));
-            limbSwing = livingEntity.animationPosition - livingEntity.animationSpeed * (1 - partialTick);
+            limbSwingAmount = livingEntity.walkAnimation.speed(partialTick);
+            limbSwing = livingEntity.walkAnimation.position(partialTick);
 
             if (livingEntity.isBaby())
                 limbSwing *= 3.0F;
@@ -213,16 +212,16 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
                                   int packedOverlay, float red, float green, float blue, float alpha) {
         if (bone.isTrackingXform()) {
             Entity entity = (Entity) this.animatable;
-            Matrix4f poseState = poseStack.last().pose().copy();
+            Matrix4f poseState = new Matrix4f(poseStack.last().pose());
             Matrix4f localMatrix = RenderUtils.invertAndMultiplyMatrices(poseState, this.dispatchedMat);
 
             bone.setModelSpaceXform(RenderUtils.invertAndMultiplyMatrices(poseState, this.renderEarlyMat));
-            localMatrix.translate(new Vector3f(getRenderOffset(entity, 1)));
+            localMatrix.translate(getRenderOffset(entity, 1).toVector3f());
             bone.setLocalSpaceXform(localMatrix);
 
-            Matrix4f worldState = localMatrix.copy();
+            Matrix4f worldState = new Matrix4f(localMatrix);
 
-            worldState.translate(new Vector3f(entity.position()));
+            worldState.translate(entity.position().toVector3f());
             bone.setWorldSpaceXform(worldState);
         }
 
@@ -309,12 +308,14 @@ public abstract class GeoReplacedEntityRenderer<T extends Animatable> extends En
         float xDif = (float) (ropeGripPosition.x - lerpOriginX);
         float yDif = (float) (ropeGripPosition.y - lerpOriginY);
         float zDif = (float) (ropeGripPosition.z - lerpOriginZ);
-        float offsetMod = Mth.fastInvSqrt(xDif * xDif + zDif * zDif) * 0.025f / 2f;
+        float offsetMod = (float) (Mth.fastInvSqrt(xDif * xDif + zDif * zDif) * 0.025f / 2f);
         float xOffset = zDif * offsetMod;
         float zOffset = xDif * offsetMod;
         VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.leash());
-        BlockPos entityEyePos = new BlockPos(entity.getEyePosition(partialTick));
-        BlockPos holderEyePos = new BlockPos(leashHolder.getEyePosition(partialTick));
+        Vec3 entityEyePosition = entity.getEyePosition(partialTick);
+        BlockPos entityEyePos = new BlockPos((int) entityEyePosition.x, (int) entityEyePosition.y, (int) entityEyePosition.z);
+        Vec3 leashHolderEyePosition = leashHolder.getEyePosition(partialTick);
+        BlockPos holderEyePos = new BlockPos((int) leashHolderEyePosition.x, (int) leashHolderEyePosition.y, (int) leashHolderEyePosition.z);
         int entityBlockLight = getBlockLightLevel(entity, entityEyePos);
         int holderBlockLight = leashHolder.isOnFire() ? 15 : leashHolder.level.getBrightness(LightLayer.BLOCK, holderEyePos);
         int entitySkyLight = entity.level.getBrightness(LightLayer.SKY, entityEyePos);

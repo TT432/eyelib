@@ -13,8 +13,6 @@ import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.stream.Stream;
-
 /**
  * @author DustW
  */
@@ -24,7 +22,8 @@ public class AnimationTextureLoader extends TextureAtlasHolder {
     FileToIdConverter converter = new FileToIdConverter("textures/animatable", ".png");
 
     private AnimationTextureLoader(TextureManager pTextureManager) {
-        super(pTextureManager, new ResourceLocation(Eyelib.MOD_ID, "textures/atlas/eyelib.png"), "animatable");
+        super(pTextureManager, new ResourceLocation(Eyelib.MOD_ID, "textures/atlas/eyelib.png"),
+                new ResourceLocation(Eyelib.MOD_ID,"animatable"));
     }
 
     @SubscribeEvent
@@ -34,13 +33,6 @@ public class AnimationTextureLoader extends TextureAtlasHolder {
         }
 
         event.registerReloadListener(INSTANCE);
-    }
-
-    @Override
-    protected Stream<ResourceLocation> getResourcesToLoad() {
-        return converter.listMatchingResources(Minecraft.getInstance().getResourceManager())
-                .stream()
-                .map(converter::fileToId);
     }
 
     public TextureAtlasSprite get(ResourceLocation id) {
@@ -76,6 +68,6 @@ public class AnimationTextureLoader extends TextureAtlasHolder {
     }
 
     public boolean isMissing(TextureAtlasSprite sprite) {
-        return sprite.getName().equals(MissingTextureAtlasSprite.getLocation());
+        return sprite.atlasLocation().equals(MissingTextureAtlasSprite.getLocation());
     }
 }
