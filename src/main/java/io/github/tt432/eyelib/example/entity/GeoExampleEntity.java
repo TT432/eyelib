@@ -29,12 +29,11 @@ public class GeoExampleEntity extends PathfinderMob implements Animatable, Ticka
     private <E extends Animatable> PlayState predicate(AnimationEvent<E> event) {
         if (this.isAnimating) {
             event.getController().setAnimation(new AnimationBuilder().addAnimation("parallel0"));
+            return PlayState.CONTINUE;
         } else {
             event.getController().clearAnimationCache();
             return PlayState.STOP;
         }
-
-        return PlayState.CONTINUE;
     }
 
     @Override
