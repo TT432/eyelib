@@ -7,24 +7,14 @@ import io.github.tt432.eyelib.common.bedrock.model.pojo.BoneFile;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.CubeFile;
 import io.github.tt432.eyelib.common.bedrock.model.pojo.ModelProperties;
 import io.github.tt432.eyelib.molang.MolangParser;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joml.Vector3f;
 
-import java.util.Map;
-
 public class GeoBuilder {
-
-    private static final Map<String, GeoBuilder> moddedGeoBuilders = new Object2ObjectOpenHashMap<>();
     private static final GeoBuilder defaultBuilder = new GeoBuilder();
 
-    public static void registerGeoBuilder(String modID, GeoBuilder builder) {
-        moddedGeoBuilders.put(modID, builder);
-    }
-
-    public static GeoBuilder getGeoBuilder(String modID) {
-        GeoBuilder builder = moddedGeoBuilders.get(modID);
-        return builder == null ? defaultBuilder : builder;
+    public static GeoBuilder getGeoBuilder() {
+        return defaultBuilder;
     }
 
     public GeoModel constructGeoModel(RawGeometryTree geometryTree) {

@@ -102,7 +102,7 @@ public class BedrockResourceManager {
 
             // Build the quads and cubes from the raw tree into a built and ready to be
             // rendered GeoModel
-            return GeoBuilder.getGeoBuilder(location.getNamespace()).constructGeoModel(rawGeometryTree);
+            return GeoBuilder.getGeoBuilder().constructGeoModel(rawGeometryTree);
         } catch (Exception e) {
             log.error(String.format("Error parsing %S", location), e);
             throw (new RuntimeException(e));
