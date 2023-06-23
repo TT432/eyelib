@@ -13,21 +13,20 @@ import org.joml.Vector3f;
 
 import java.util.Map;
 
-public class GeoBuilder implements IGeoBuilder {
+public class GeoBuilder {
 
-    private static final Map<String, IGeoBuilder> moddedGeoBuilders = new Object2ObjectOpenHashMap<>();
-    private static final IGeoBuilder defaultBuilder = new GeoBuilder();
+    private static final Map<String, GeoBuilder> moddedGeoBuilders = new Object2ObjectOpenHashMap<>();
+    private static final GeoBuilder defaultBuilder = new GeoBuilder();
 
-    public static void registerGeoBuilder(String modID, IGeoBuilder builder) {
+    public static void registerGeoBuilder(String modID, GeoBuilder builder) {
         moddedGeoBuilders.put(modID, builder);
     }
 
-    public static IGeoBuilder getGeoBuilder(String modID) {
-        IGeoBuilder builder = moddedGeoBuilders.get(modID);
+    public static GeoBuilder getGeoBuilder(String modID) {
+        GeoBuilder builder = moddedGeoBuilders.get(modID);
         return builder == null ? defaultBuilder : builder;
     }
 
-    @Override
     public GeoModel constructGeoModel(RawGeometryTree geometryTree) {
         GeoModel model = new GeoModel();
         model.properties = geometryTree.properties;
@@ -37,7 +36,6 @@ public class GeoBuilder implements IGeoBuilder {
         return model;
     }
 
-    @Override
     public Bone constructBone(RawBoneGroup bone, ModelProperties properties, Bone parent) {
         Bone geoBone = new Bone();
 
