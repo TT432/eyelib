@@ -48,7 +48,6 @@ public class GeoBuilder implements IGeoBuilder {
 
         geoBone.setMirror(rawBoneFile.isMirror());
         geoBone.setDontRender(rawBoneFile.getNeverRender());
-        geoBone.reset = rawBoneFile.getReset();
         geoBone.setInflate(rawBoneFile.getInflate());
         geoBone.parent = parent;
         geoBone.setModelRendererName(rawBoneFile.getName());

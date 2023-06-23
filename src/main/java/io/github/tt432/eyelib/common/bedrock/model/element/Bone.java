@@ -39,8 +39,6 @@ public class Bone {
     private boolean cubesHidden = false;
     @Setter
     private boolean hideChildBonesToo;
-    // I still have no idea what this field does, but it's in the json file so
-    public Boolean reset;
 
     @Setter
     private float scaleX = 1;

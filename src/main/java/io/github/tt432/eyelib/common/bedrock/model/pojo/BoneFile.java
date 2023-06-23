@@ -46,23 +46,8 @@ public class BoneFile implements Serializable {
      */
     private Value3 pivot;
     /**
-     * ***EXPERIMENTAL*** A triangle or quad mesh object. Can be used in conjunction
-     * with cubes and texture geometry.
-     */
-    @SerializedName("poly_mesh")
-    private PolyMesh polyMesh;
-    @SerializedName("render_group_id")
-    private Long renderGroupID;
-    private Boolean reset;
-    /**
      * This is the initial rotation of the bone around the pivot, pre-animation (in
      * degrees, x-then-y-then-z order).
      */
     private float[] rotation = new float[]{0, 0, 0};
-    /**
-     * ***EXPERIMENTAL*** Adds a mesh to the bone's geometry by converting texels in
-     * a texture into boxes.
-     */
-    @SerializedName("texture_meshes")
-    private TextureMesh[] textureMeshes;
 }
