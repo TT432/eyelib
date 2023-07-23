@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import io.github.tt432.eyelib.client.model.bedrock.BrModel;
+import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -22,8 +22,8 @@ import java.util.stream.Collectors;
  * @author TT432
  */
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
-public class BrModelLoader extends SimpleJsonResourceReloadListener {
-    public static final BrModelLoader INSTANCE = new BrModelLoader(new Gson(), "models/bedrock");
+public class BrAnimationLoader extends SimpleJsonResourceReloadListener {
+    public static final BrAnimationLoader INSTANCE = new BrAnimationLoader(new Gson(), "animations/bedrock");
 
     @SubscribeEvent
     public static void onEvent(RegisterClientReloadListenersEvent event) {
@@ -31,17 +31,17 @@ public class BrModelLoader extends SimpleJsonResourceReloadListener {
     }
 
     @Getter
-    Map<ResourceLocation, BrModel> models = new HashMap<>();
+    Map<ResourceLocation, BrAnimation> animations = new HashMap<>();
 
-    private BrModelLoader(Gson pGson, String pDirectory) {
+    private BrAnimationLoader(Gson pGson, String pDirectory) {
         super(pGson, pDirectory);
     }
 
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
-        models = pObject.entrySet().stream()
+        animations = pObject.entrySet().stream()
                 .map(entry -> {
-                    BrModel parse = BrModel.parse(entry.getKey().toString(), entry.getValue().getAsJsonObject());
+                    BrAnimation parse = BrAnimation.parse(entry.getKey().toString(), entry.getValue().getAsJsonObject());
 
                     if (parse == null)
                         return null;
