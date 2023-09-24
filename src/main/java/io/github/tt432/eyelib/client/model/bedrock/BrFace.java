@@ -1,9 +1,9 @@
 package io.github.tt432.eyelib.client.model.bedrock;
 
+import it.unimi.dsi.fastutil.Pair;
 import lombok.Getter;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import oshi.util.tuples.Pair;
 
 /**
  * @author TT432
@@ -21,13 +21,13 @@ public class BrFace {
         this.normal = normal;
         this.vertex = vertex;
 
-        var uv1 = uv.getB().add(uv.getA(), new Vector2f());
+        var uv1 = uv.right().add(uv.left(), new Vector2f());
 
         this.uv =  new Vector2f[]{
-                uv.getA(),
-                new Vector2f(uv1.x, uv.getA().y),
+                uv.left(),
+                new Vector2f(uv.left().x, uv1.y),
                 uv1,
-                new Vector2f(uv.getA().x, uv1.y)
+                new Vector2f(uv1.x, uv.left().y),
         };
     }
 }

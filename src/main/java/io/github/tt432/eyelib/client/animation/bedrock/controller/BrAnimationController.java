@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BrAnimationController {
     String name;
-    String initialState;
+    BrAcState initialState;
     Map<String, BrAcState> states;
 
     MolangScope scope;
@@ -29,7 +29,7 @@ public class BrAnimationController {
 
         JsonElement animationControllersJson = jsonObject.get("animation_controllers");
 
-        if (animationControllersJson instanceof JsonObject jo ) {
+        if (animationControllersJson instanceof JsonObject jo) {
             return jo.asMap().entrySet().stream().findFirst().map(entry -> {
                 BrAnimationController result = new BrAnimationController();
 
@@ -37,12 +37,12 @@ public class BrAnimationController {
                 result.scope = new MolangScope();
 
                 if (entry.getValue() instanceof JsonObject animCtrlEntryJson) {
-                    result.initialState =animCtrlEntryJson.get("initial_state") instanceof JsonPrimitive isj ? isj.getAsString() : "default";
                     result.states = animCtrlEntryJson.get("states") instanceof JsonObject stateJson
                             ? stateJson.asMap().entrySet().stream()
                                 .map(stateEntry -> Map.entry(stateEntry.getKey(), BrAcState.parse(result.scope,stateEntry.getValue())))
                                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
                             : new HashMap<>();
+                    result.initialState = result.states.get(animCtrlEntryJson.get("initial_state") instanceof JsonPrimitive isj ? isj.getAsString() : "default");
                 }
 
                 return result;

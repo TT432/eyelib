@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.renderer;
+package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -53,15 +53,30 @@ public class BrModelRenderer {
     public static void fillBrBoneVertex(PoseStack poseStack, BrBone bone, VertexConsumer consumer, BrModelRenderVisitor visitor) {
         poseStack.pushPose();
 
+        visitor.visitBone(poseStack, bone, consumer, true);
+
         Matrix4f pose = poseStack.last().pose();
-        pose.translate(bone.getPivot());
+        Vector3f renderPivot = bone.getRenderPivot();
 
-        Vector3f rotation = bone.getRotation();
-        poseStack.mulPose(new Quaternionf().rotationXYZ(rotation.x, rotation.y, rotation.z));
+        if (renderPivot == null) {
+            renderPivot = bone.getPivot();
+        }
 
-        pose.translate(bone.getPivot().negate(new Vector3f()));
+        pose.translate(renderPivot);
 
-        visitor.visitBone(poseStack, bone, consumer);
+        Vector3f rotation = bone.getRenderRotation();
+
+        if (rotation == null) {
+            rotation = bone.getRotation();
+        }
+
+        poseStack.mulPose(new Quaternionf().rotationZYX(rotation.z, rotation.y, rotation.x));
+        pose.translate(renderPivot.negate(new Vector3f()));
+
+        Vector3f scale = bone.getRenderScala();
+        poseStack.scale(scale.x, scale.y, scale.z);
+
+        visitor.visitBone(poseStack, bone, consumer, false);
 
         bone.getCubes().forEach(cube -> fillBrCubeVertex(poseStack, cube, consumer, visitor));
 

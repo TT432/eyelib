@@ -1,5 +1,7 @@
 package io.github.tt432.eyelib.client.animation.animatable;
 
+import io.github.tt432.eyelib.client.animation.component.AnimationComponent;
+import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,4 +17,7 @@ public interface Animatable<T> {
 
     @NotNull
     T instance();
+
+    AnimationComponent animationComponent();
+    ModelComponent modelComponent();
 }

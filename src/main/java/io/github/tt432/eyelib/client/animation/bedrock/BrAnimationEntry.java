@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
+import lombok.Getter;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -15,9 +16,10 @@ import java.util.stream.Collectors;
 /**
  * @author TT432
  */
+@Getter
 public class BrAnimationEntry {
     BrLoopType loop;
-    float animation_length;
+    float animationLength;
     /**
      * TODO 不确定
      */
@@ -49,7 +51,7 @@ public class BrAnimationEntry {
         BrAnimationEntry result = new BrAnimationEntry();
 
         result.loop = BrLoopType.parse(jsonObject.get("loop"));
-        result.animation_length = jsonObject.get("animation_length") instanceof JsonPrimitive jp ? jp.getAsFloat() : 0;
+        result.animationLength = jsonObject.get("animation_length") instanceof JsonPrimitive jp ? jp.getAsFloat() : 0;
         result.soundEffects = loadMap(jsonObject, "sound_effects", scope);
         result.particleEffects = loadMap(jsonObject, "particle_effects", scope);
 

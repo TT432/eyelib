@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.math.Axis;
 import io.github.tt432.eyelib.util.math.MathE;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.joml.Vector3f;
 
 import java.util.Comparator;
@@ -24,6 +25,7 @@ import java.util.function.Function;
  * @author TT432
  */
 @AllArgsConstructor
+@Getter
 public class BrBoneAnimation {
     TreeMap<Float, BrBoneKeyFrame> rotation;
     TreeMap<Float, BrBoneKeyFrame> position;

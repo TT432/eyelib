@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.animation.bedrock;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.molang.MolangScope;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class BrAnimation {
+    @Getter
     Map<String, BrAnimationEntry> animations;
     MolangScope scope;
 

@@ -24,7 +24,7 @@ public class MathE {
         return a + (b - a) * weight;
     }
 
-    public static double notZero(double value, double defaultValue) {
+    public static float notZero(float value, float defaultValue) {
         return value == 0 ? defaultValue : value;
     }
 

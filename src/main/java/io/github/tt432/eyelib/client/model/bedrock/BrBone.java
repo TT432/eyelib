@@ -3,6 +3,8 @@ package io.github.tt432.eyelib.client.model.bedrock;
 import com.google.gson.*;
 import io.github.tt432.eyelib.util.EyeMath;
 import lombok.Getter;
+import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -38,6 +40,16 @@ public class BrBone {
      */
     @Nullable
     String material;
+
+    @Setter
+    @NotNull
+    Vector3f renderScala = new Vector3f(1);
+    @Nullable
+    @Setter
+    Vector3f renderPivot;
+    @Nullable
+    @Setter
+    Vector3f renderRotation;
 
     List<BrBone> children = new ArrayList<>();
     List<BrCube> cubes;

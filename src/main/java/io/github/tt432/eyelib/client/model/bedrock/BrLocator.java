@@ -1,11 +1,13 @@
 package io.github.tt432.eyelib.client.model.bedrock;
 
 import com.google.gson.*;
+import lombok.Getter;
 import org.joml.Vector3f;
 
 /**
  * @author TT432
  */
+@Getter
 public class BrLocator {
     public static final String NULL_OBJ_PREFIX = "_null_";
 

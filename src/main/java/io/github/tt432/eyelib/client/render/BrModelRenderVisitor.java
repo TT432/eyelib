@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.renderer;
+package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -17,7 +17,7 @@ public class BrModelRenderVisitor {
 
     }
 
-    public void visitBone(PoseStack poseStack, BrBone bone, VertexConsumer consumer) {
+    public void visitBone(PoseStack poseStack, BrBone bone, VertexConsumer consumer, boolean before) {
 
     }
 
@@ -28,4 +28,5 @@ public class BrModelRenderVisitor {
     public void visitVertex(PoseStack poseStack, BrCube cube, BrFace face, int vertexId, VertexConsumer consumer) {
 
     }
+
 }

@@ -5,9 +5,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.util.EyeMath;
+import it.unimi.dsi.fastutil.Pair;
 import lombok.Getter;
 import org.joml.*;
-import oshi.util.tuples.Pair;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,11 +18,6 @@ import java.util.List;
 @Getter
 public class BrCube {
     private static final Gson gson = new Gson();
-
-    Vector3f origin;
-    Vector3f size;
-    Vector3f rotation;
-    Vector3f pivot;
 
     List<BrFace> faces;
 
@@ -50,16 +45,16 @@ public class BrCube {
             // | w | n | e | s |
             Vector2f uv = new Vector2f(gson.fromJson(ja, float[].class));
 
-            int uvSizeX = (int)size.x;
-            int uvSizeY = (int)size.y;
-            int uvSizeZ = (int)size.z;
+            int uvSizeX = (int) size.x;
+            int uvSizeY = (int) size.y;
+            int uvSizeZ = (int) size.z;
 
-            up = new Pair<>(new Vector2f(uv.x + uvSizeZ, uv.y), new Vector2f(uvSizeX, uvSizeZ));
-            down = new Pair<>(new Vector2f(uv.x + uvSizeX + uvSizeZ, uv.y), new Vector2f(uvSizeX, uvSizeZ));
-            west = new Pair<>(new Vector2f(uv.x, uv.y + uvSizeZ), new Vector2f(uvSizeZ, uvSizeY));
-            north = new Pair<>(new Vector2f(uv.x + uvSizeZ, uv.y + uvSizeZ), new Vector2f(uvSizeX, uvSizeY));
-            east = new Pair<>(new Vector2f(uv.x + uvSizeZ + uvSizeX, uv.y + uvSizeZ), new Vector2f(uvSizeZ, uvSizeY));
-            south = new Pair<>(new Vector2f(uv.x + uvSizeZ + uvSizeX + uvSizeZ, uv.y + uvSizeZ), new Vector2f(uvSizeX, uvSizeY));
+            up = Pair.of(new Vector2f(uv.x + uvSizeZ, uv.y), new Vector2f(uvSizeX, uvSizeZ));
+            down = Pair.of(new Vector2f(uv.x + uvSizeX + uvSizeZ, uv.y), new Vector2f(uvSizeX, uvSizeZ));
+            west = Pair.of(new Vector2f(uv.x, uv.y + uvSizeZ), new Vector2f(uvSizeZ, uvSizeY));
+            north = Pair.of(new Vector2f(uv.x + uvSizeZ, uv.y + uvSizeZ), new Vector2f(uvSizeX, uvSizeY));
+            east = Pair.of(new Vector2f(uv.x + uvSizeZ + uvSizeX, uv.y + uvSizeZ), new Vector2f(uvSizeZ, uvSizeY));
+            south = Pair.of(new Vector2f(uv.x + uvSizeZ + uvSizeX + uvSizeZ, uv.y + uvSizeZ), new Vector2f(uvSizeX, uvSizeY));
 
             boolean mirror = jsonObject.get("mirror") instanceof JsonPrimitive jp && jp.getAsBoolean();
 
@@ -85,19 +80,19 @@ public class BrCube {
             west = zero();
         }
 
-        up.getA().div(textureWidth);
-        down.getA().div(textureWidth);
-        north.getA().div(textureWidth);
-        east.getA().div(textureWidth);
-        south.getA().div(textureWidth);
-        west.getA().div(textureWidth);
+        up.left().div(textureWidth);
+        down.left().div(textureWidth);
+        north.left().div(textureWidth);
+        east.left().div(textureWidth);
+        south.left().div(textureWidth);
+        west.left().div(textureWidth);
 
-        up.getB().div(textureHeight);
-        down.getB().div(textureHeight);
-        north.getB().div(textureHeight);
-        east.getB().div(textureHeight);
-        south.getB().div(textureHeight);
-        west.getB().div(textureHeight);
+        up.right().div(textureHeight);
+        down.right().div(textureHeight);
+        north.right().div(textureHeight);
+        east.right().div(textureHeight);
+        south.right().div(textureHeight);
+        west.right().div(textureHeight);
 
         origin
                 .set(-(origin.x + size.x), origin.y, origin.z)
@@ -132,22 +127,22 @@ public class BrCube {
 
         corners = Arrays.stream(corners)
                 .map(v -> translate.transformAffine(new Vector4f(v, 1)))
-                .map(v4 -> new Vector3f(v4.x, v4.y, v4.z))
+                .map(v4 -> new Vector3f(v4.x, v4.y, v4.z).div(v4.w))
                 .toArray(Vector3f[]::new);
 
         Vector3f[][] faces = new Vector3f[][]{
                 // U (Up，上) 面: 顶点 3，2，6，7
-                {corners[3], corners[7], corners[6], corners[2]},
+                {corners[6], corners[2], corners[3], corners[7],},
                 // B (Bottom，下) 面: 顶点 0，1，5，4
-                {corners[0], corners[1], corners[5], corners[4]},
-                // E (East，东) 面: 顶点 1，2，6，5
-                {corners[2], corners[6], corners[5], corners[1]},
-                // N (North，北) 面: 顶点 0，1，2，3
-                {corners[3], corners[2], corners[1], corners[0]},
+                {corners[0], corners[1], corners[5], corners[4],},
                 // W (West，西) 面: 顶点 0，3，7，4
-                {corners[7], corners[3], corners[0], corners[4]},
+                { corners[3], corners[0], corners[4],corners[7],},
+                // N (North，北) 面: 顶点 0，1，2，3
+                { corners[2], corners[1], corners[0],corners[3],},
+                // E (East，东) 面: 顶点 1，2，6，5
+                { corners[6], corners[5], corners[1],corners[2],},
                 // S (South，南) 面: 顶点 4，5，6，7
-                {corners[6], corners[7], corners[4], corners[5]}
+                { corners[7], corners[4], corners[5],corners[6],}
         };
 
         result.faces = List.of(
@@ -159,21 +154,16 @@ public class BrCube {
                 new BrFace(new Vector3f(0, 0, 1), south, faces[5])
         );
 
-        result.pivot = pivot;
-        result.origin = origin;
-        result.size = size;
-        result.rotation = rotation;
-
         return result;
     }
 
     private static Pair<Vector2f, Vector2f> zero() {
-        return new Pair<>(new Vector2f(), new Vector2f());
+        return Pair.of(new Vector2f(), new Vector2f());
     }
 
     private static Pair<Vector2f, Vector2f> getUVFromFace(JsonObject uvJson, String face) {
         JsonObject faceJson = uvJson.get(face).getAsJsonObject();
-        return new Pair<>(
+        return Pair.of(
                 new Vector2f(gson.fromJson(faceJson.get("uv"), float[].class)),
                 new Vector2f(gson.fromJson(faceJson.get("uv_size"), float[].class))
         );
