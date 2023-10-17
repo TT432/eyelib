@@ -25,7 +25,7 @@ public class HandIs extends MolangFunction {
 
     @Override
     public float invoke(MolangFunctionParameters params) {
-        if (!(params.scope().getOwner().instance() instanceof LivingEntity living))
+        if (!(params.scope().getOwner().getOwner() instanceof LivingEntity living))
             return FALSE;
 
         if (hand == InteractionHand.MAIN_HAND) {

@@ -27,7 +27,7 @@ public class IsItemEquipped extends MolangFunction {
     public float invoke(MolangFunctionParameters params) {
         String arg = params.svalue(0);
 
-        if (!(params.scope().getOwner().instance() instanceof LivingEntity living))
+        if (!(params.scope().getOwner().getOwner() instanceof LivingEntity living))
             return FALSE;
 
         if (arg.equals("main_hand") || arg.equals("0")) {

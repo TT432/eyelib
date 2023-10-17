@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.client.model.bedrock.BrCube;
 import io.github.tt432.eyelib.client.model.bedrock.BrFace;
+import lombok.Setter;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -11,10 +12,12 @@ import org.joml.Vector3f;
 /**
  * @author TT432
  */
-class BaseRenderVisit extends BrModelRenderVisitor {
+public class BlankEntityModelRenderVisit extends BrModelRenderVisitor {
+    @Setter
     int light;
 
-    public BaseRenderVisit(int light) {
+    @Override
+    public void setupLight(int light) {
         this.light = light;
     }
 

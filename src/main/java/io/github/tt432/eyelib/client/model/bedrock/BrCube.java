@@ -6,24 +6,20 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.util.EyeMath;
 import it.unimi.dsi.fastutil.Pair;
-import lombok.Getter;
 import org.joml.*;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author TT432
  */
-@Getter
-public class BrCube {
+public record BrCube(
+        BrFace[] faces
+) {
+
     private static final Gson gson = new Gson();
 
-    List<BrFace> faces;
-
     public static BrCube parse(int textureHeight, int textureWidth, JsonObject jsonObject) {
-        BrCube result = new BrCube();
-
         Vector3f origin = jsonObject.get("origin") instanceof JsonArray ja ? new Vector3f(gson.fromJson(ja, float[].class)) : new Vector3f(0);
         Vector3f size = jsonObject.get("size") instanceof JsonArray ja ? new Vector3f(gson.fromJson(ja, float[].class)) : new Vector3f();
         Vector3f rotation = jsonObject.get("rotation") instanceof JsonArray ja ? new Vector3f(gson.fromJson(ja, float[].class)) : new Vector3f(0);
@@ -131,30 +127,22 @@ public class BrCube {
                 .toArray(Vector3f[]::new);
 
         Vector3f[][] faces = new Vector3f[][]{
-                // U (Up，上) 面: 顶点 3，2，6，7
                 {corners[6], corners[2], corners[3], corners[7],},
-                // B (Bottom，下) 面: 顶点 0，1，5，4
                 {corners[0], corners[1], corners[5], corners[4],},
-                // W (West，西) 面: 顶点 0，3，7，4
-                { corners[3], corners[0], corners[4],corners[7],},
-                // N (North，北) 面: 顶点 0，1，2，3
-                { corners[2], corners[1], corners[0],corners[3],},
-                // E (East，东) 面: 顶点 1，2，6，5
-                { corners[6], corners[5], corners[1],corners[2],},
-                // S (South，南) 面: 顶点 4，5，6，7
-                { corners[7], corners[4], corners[5],corners[6],}
+                {corners[3], corners[0], corners[4], corners[7],},
+                {corners[2], corners[1], corners[0], corners[3],},
+                {corners[6], corners[5], corners[1], corners[2],},
+                {corners[7], corners[4], corners[5], corners[6],}
         };
 
-        result.faces = List.of(
+        return new BrCube(new BrFace[]{
                 new BrFace(new Vector3f(0, 1, 0), up, faces[0]),
                 new BrFace(new Vector3f(0, -1, 0), down, faces[1]),
                 new BrFace(new Vector3f(1, 0, 0), east, faces[2]),
                 new BrFace(new Vector3f(0, 0, -1), north, faces[3]),
                 new BrFace(new Vector3f(-1, 0, 0), west, faces[4]),
                 new BrFace(new Vector3f(0, 0, 1), south, faces[5])
-        );
-
-        return result;
+        });
     }
 
     private static Pair<Vector2f, Vector2f> zero() {
@@ -167,5 +155,20 @@ public class BrCube {
                 new Vector2f(gson.fromJson(faceJson.get("uv"), float[].class)),
                 new Vector2f(gson.fromJson(faceJson.get("uv_size"), float[].class))
         );
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof BrCube bc && Arrays.equals(bc.faces, faces);
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(faces);
+    }
+
+    @Override
+    public String toString() {
+        return "BrCube { faces: " + Arrays.toString(faces) + " }";
     }
 }

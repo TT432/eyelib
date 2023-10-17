@@ -116,3 +116,8 @@ run/
 
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
+
+# test resources
+src/main/resources/assets/eyelib/animations/bedrock/main.animation.json
+src/main/resources/assets/eyelib/models/bedrock/main.json
+src/main/resources/assets/eyelib/textures/entity/texture.png

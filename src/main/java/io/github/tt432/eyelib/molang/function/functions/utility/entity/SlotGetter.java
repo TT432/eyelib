@@ -23,7 +23,7 @@ public class SlotGetter extends MolangFunction {
 
     @Override
     public float invoke(MolangFunctionParameters params) {
-        if (!(params.scope().getOwner().instance() instanceof LivingEntity livingEntity))
+        if (!(params.scope().getOwner().getOwner() instanceof LivingEntity livingEntity))
             return FALSE;
 
         return params.svalues().anyMatch(item -> new ResourceLocation(item)

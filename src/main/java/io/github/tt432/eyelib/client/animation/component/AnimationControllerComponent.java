@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.animation.component;
 
-import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
+import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
 import lombok.Getter;
 
 import javax.annotation.Nullable;
@@ -9,9 +9,9 @@ import javax.annotation.Nullable;
  * @author TT432
  */
 @Getter
-public class AnimationComponent {
+public class AnimationControllerComponent {
     @Nullable
-    BrAnimationEntry currentAnimation;
+    BrAnimationController animationController;
 
     float startTick = -1;
 

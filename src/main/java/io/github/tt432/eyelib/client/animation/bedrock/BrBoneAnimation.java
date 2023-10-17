@@ -6,8 +6,6 @@ import com.google.gson.JsonParseException;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.math.Axis;
 import io.github.tt432.eyelib.util.math.MathE;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.joml.Vector3f;
 
 import java.util.Comparator;
@@ -24,12 +22,22 @@ import java.util.function.Function;
  *
  * @author TT432
  */
-@AllArgsConstructor
-@Getter
-public class BrBoneAnimation {
-    TreeMap<Float, BrBoneKeyFrame> rotation;
-    TreeMap<Float, BrBoneKeyFrame> position;
-    TreeMap<Float, BrBoneKeyFrame> scale;
+public record BrBoneAnimation(
+        TreeMap<Float, BrBoneKeyFrame> rotation,
+        TreeMap<Float, BrBoneKeyFrame> position,
+        TreeMap<Float, BrBoneKeyFrame> scale
+) {
+
+    public BrBoneAnimation copy(MolangScope scope) {
+        TreeMap<Float, BrBoneKeyFrame> copiedRotation = new TreeMap<>(rotation.comparator());
+        rotation.forEach((key, value) -> copiedRotation.put(key, value.copy(scope)));
+        TreeMap<Float, BrBoneKeyFrame> copiedPosition = new TreeMap<>(position.comparator());
+        position.forEach((key, value) -> copiedPosition.put(key, value.copy(scope)));
+        TreeMap<Float, BrBoneKeyFrame> copiedScale = new TreeMap<>(scale.comparator());
+        scale.forEach((key, value) -> copiedScale.put(key, value.copy(scope)));
+
+        return new BrBoneAnimation(copiedRotation, copiedPosition, copiedScale);
+    }
 
     private static class Ref {
         BrBoneKeyFrame before = null;
@@ -95,9 +103,9 @@ public class BrBoneAnimation {
 
             var weight = MathE.getWeight(ref.before.getTick(), ref.after.getTick(), currentTick);
 
-            if (ref.before.getLerpMode() == BrBoneKeyFrame.LerpMode.LINEAR && ref.after.getLerpMode() == BrBoneKeyFrame.LerpMode.LINEAR) {
+            if (ref.before.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR && ref.after.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR) {
                 return mapAxes(axis -> ref.before.linearLerp(ref.after, axis, weight));
-            } else if (ref.before.getLerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM || ref.after.getLerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM) {
+            } else if (ref.before.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM || ref.after.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM) {
                 var beforePlus = frames.lowerEntry(floorEntry.getKey());
                 var afterPlus = frames.higherEntry(higherEntry.getKey());
 
@@ -111,7 +119,7 @@ public class BrBoneAnimation {
 
         if (ref.result != null) {
             var index = ref.result.getTick() > currentTick ||
-                    MathE.epsilon(ref.result.getTick(), currentTick, epsilon) ? 0 : ref.result.getDataPoints().length - 1;
+                    MathE.epsilon(ref.result.getTick(), currentTick, epsilon) ? 0 : ref.result.dataPoints().length - 1;
 
             return mapAxes(axis -> ref.result.get(axis, index));
         }
@@ -149,10 +157,9 @@ public class BrBoneAnimation {
         }
 
         if (element.isJsonObject()) {
-            return process(scope,element.getAsJsonObject());
+            return process(scope, element.getAsJsonObject());
         } else {
-            BrBoneKeyFrame keyFrame = BrBoneKeyFrame.parse(scope, element);
-            keyFrame.setTimestamp(0);
+            BrBoneKeyFrame keyFrame = BrBoneKeyFrame.parse(scope, 0, element);
             result.put(0F, keyFrame);
             return result;
         }
@@ -162,9 +169,8 @@ public class BrBoneAnimation {
         TreeMap<Float, BrBoneKeyFrame> result = new TreeMap<>(Comparator.comparingDouble(k -> k));
 
         jsonObject.entrySet().forEach(e -> {
-            BrBoneKeyFrame keyFrame = BrBoneKeyFrame.parse(scope, e.getValue());
             float timestamp = Float.parseFloat(e.getKey());
-            keyFrame.setTimestamp(timestamp);
+            BrBoneKeyFrame keyFrame = BrBoneKeyFrame.parse(scope, timestamp, e.getValue());
             result.put(timestamp, keyFrame);
         });
 

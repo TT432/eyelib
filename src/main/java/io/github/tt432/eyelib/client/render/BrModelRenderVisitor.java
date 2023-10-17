@@ -9,9 +9,12 @@ import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 
 /**
  * @author TT432
- * @see BrModelRenderer
  */
 public class BrModelRenderVisitor {
+
+    public void setupLight(int light) {
+
+    }
 
     public void visitModel(PoseStack poseStack, BrModel model, VertexConsumer consumer) {
 

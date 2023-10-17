@@ -1,61 +1,92 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
-import lombok.Getter;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import java.util.*;
 
 /**
+ * @param override_previous_animation TODO 不确定
+ * @param anim_time_update            TODO 不确定
+ * @param blend_weight                TODO 不确定
+ * @param start_delay                 TODO 不确定
+ * @param loop_delay                  TODO 不确定
  * @author TT432
  */
-@Getter
-public class BrAnimationEntry {
-    BrLoopType loop;
-    float animationLength;
-    /**
-     * TODO 不确定
-     */
-    boolean override_previous_animation;
-    /**
-     * TODO 不确定
-     */
-    MolangValue anim_time_update;
-    /**
-     * TODO 不确定
-     */
-    MolangValue blend_weight;
-    /**
-     * TODO 不确定
-     */
-    MolangValue start_delay;
-    /**
-     * TODO 不确定
-     */
-    MolangValue loop_delay;
+public record BrAnimationEntry(
+        BrLoopType loop,
+        float animationLength,
+        boolean override_previous_animation,
+        @Nullable
+        MolangValue anim_time_update,
+        @Nullable
+        MolangValue blend_weight,
+        @Nullable
+        MolangValue start_delay,
+        @Nullable
+        MolangValue loop_delay,
+        TreeMap<Float, BrEffectsKeyFrame[]> soundEffects,
+        TreeMap<Float, BrEffectsKeyFrame[]> particleEffects,
+        TreeMap<Float, MolangValue[]> timeline,
+        Map<String, BrBoneAnimation> bones
+) {
 
-    TreeMap<Float, BrEffectsKeyFrame[]> soundEffects;
-    TreeMap<Float, BrEffectsKeyFrame[]> particleEffects;
-    TreeMap<Float, MolangValue[]> timeline;
+    public BrAnimationEntry copy(MolangScope scope) {
+        TreeMap<Float, BrEffectsKeyFrame[]> copiedSoundEffects = new TreeMap<>(soundEffects.comparator());
+        soundEffects.forEach((key, value) -> copiedSoundEffects.put(key,
+                Arrays.stream(value).map(v -> v.copy(scope)).toArray(BrEffectsKeyFrame[]::new)));
+        TreeMap<Float, BrEffectsKeyFrame[]> copiedParticleEffects = new TreeMap<>(particleEffects.comparator());
+        particleEffects.forEach((key, value) -> copiedParticleEffects.put(key,
+                Arrays.stream(value).map(v -> v.copy(scope)).toArray(BrEffectsKeyFrame[]::new)));
+        TreeMap<Float, MolangValue[]> copiedTimeline = new TreeMap<>(timeline.comparator());
+        timeline.forEach((key, value) -> copiedTimeline.put(key, Arrays.stream(value).map(v -> v.copy(scope)).toArray(MolangValue[]::new)));
+        Map<String, BrBoneAnimation> copiedBones = new HashMap<>();
+        bones.forEach((key, value) -> copiedBones.put(key, value.copy(scope)));
 
-    Map<String, BrBoneAnimation> bones;
+        return new BrAnimationEntry(
+                loop,
+                animationLength,
+                override_previous_animation,
+                anim_time_update,
+                blend_weight,
+                start_delay,
+                loop_delay,
+                copiedSoundEffects,
+                copiedParticleEffects,
+                copiedTimeline,
+                copiedBones
+        );
+    }
 
     public static BrAnimationEntry parse(MolangScope scope, JsonObject jsonObject) {
-        BrAnimationEntry result = new BrAnimationEntry();
+        final BrLoopType loop;
+        final float animationLength;
+        final boolean override_previous_animation;
+        final MolangValue anim_time_update;
+        final MolangValue blend_weight;
+        final MolangValue start_delay;
+        final MolangValue loop_delay;
+        final TreeMap<Float, BrEffectsKeyFrame[]> soundEffects;
+        final TreeMap<Float, BrEffectsKeyFrame[]> particleEffects;
+        final TreeMap<Float, MolangValue[]> timeline;
+        final Map<String, BrBoneAnimation> bones = new HashMap<>();
 
-        result.loop = BrLoopType.parse(jsonObject.get("loop"));
-        result.animationLength = jsonObject.get("animation_length") instanceof JsonPrimitive jp ? jp.getAsFloat() : 0;
-        result.soundEffects = loadMap(jsonObject, "sound_effects", scope);
-        result.particleEffects = loadMap(jsonObject, "particle_effects", scope);
+        loop = BrLoopType.parse(jsonObject.get("loop"));
+        animationLength = jsonObject.get("animation_length") instanceof JsonPrimitive jp ? jp.getAsFloat() : 0;
+        soundEffects = loadMap(jsonObject, "sound_effects", scope);
+        particleEffects = loadMap(jsonObject, "particle_effects", scope);
+        override_previous_animation = jsonObject.get("override_previous_animation") instanceof JsonPrimitive jp && jp.getAsBoolean();
+        anim_time_update = jsonObject.get("anim_time_update") instanceof JsonPrimitive jp ? MolangValue.parse(scope, jp.getAsString()) : null;
+        blend_weight = jsonObject.get("blend_weight") instanceof JsonPrimitive jp ? MolangValue.parse(scope, jp.getAsString()) : null;
+        start_delay = jsonObject.get("start_delay") instanceof JsonPrimitive jp ? MolangValue.parse(scope, jp.getAsString()) : null;
+        loop_delay = jsonObject.get("loop_delay") instanceof JsonPrimitive jp ? MolangValue.parse(scope, jp.getAsString()) : null;
 
-        result.timeline = new TreeMap<>(Comparator.comparingDouble(k -> k));
+        timeline = new TreeMap<>(Comparator.comparingDouble(k -> k));
 
         if (jsonObject.get("timeline") instanceof JsonObject timelineJson) {
             timelineJson.asMap().forEach((key, value) -> {
@@ -68,20 +99,21 @@ public class BrAnimationEntry {
                         molangValues[i] = MolangValue.parse(scope, ja.get(i).getAsString());
                     }
 
-                    result.timeline.put(timestamp, molangValues);
+                    timeline.put(timestamp, molangValues);
                 } else {
-                    result.timeline.put(timestamp, new MolangValue[]{MolangValue.parse(scope, value.getAsString())});
+                    timeline.put(timestamp, new MolangValue[]{MolangValue.parse(scope, value.getAsString())});
                 }
             });
         }
 
-        result.bones = jsonObject.get("bones") instanceof JsonObject jo
-                ? jo.asMap().entrySet().stream()
-                    .map(entry -> Map.entry(entry.getKey(), BrBoneAnimation.parse(scope, entry.getValue())))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
-                : new HashMap<>();
+        if (jsonObject.get("bones") instanceof JsonObject jo) {
+            for (Map.Entry<String, JsonElement> entry : jo.entrySet()) {
+                bones.put(entry.getKey(), BrBoneAnimation.parse(scope, entry.getValue()));
+            }
+        }
 
-        return result;
+        return new BrAnimationEntry(loop, animationLength, override_previous_animation, anim_time_update, blend_weight,
+                start_delay, loop_delay, soundEffects, particleEffects, timeline, bones);
     }
 
     private static TreeMap<Float, BrEffectsKeyFrame[]> loadMap(JsonObject jsonObject, String effectKey, MolangScope scope) {

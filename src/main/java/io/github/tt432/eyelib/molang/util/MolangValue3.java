@@ -12,9 +12,17 @@ import org.joml.Vector3f;
  */
 @AllArgsConstructor
 public class MolangValue3 {
-    MolangValue x;
-    MolangValue y;
-    MolangValue z;
+    final MolangValue x;
+    final MolangValue y;
+    final MolangValue z;
+
+    public MolangValue3 copy(MolangScope scope) {
+        return new MolangValue3(
+                x.copy(scope),
+                y.copy(scope),
+                z.copy(scope)
+        );
+    }
 
     public float getX() {
         return x.eval();

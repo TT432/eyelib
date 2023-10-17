@@ -9,24 +9,25 @@ import io.github.tt432.eyelib.molang.util.MolangValue3;
 import io.github.tt432.eyelib.util.math.Axis;
 import io.github.tt432.eyelib.util.math.MathE;
 import io.github.tt432.eyelib.util.math.curve.SplineCurve;
-import lombok.Getter;
-import lombok.Setter;
 import net.minecraft.util.Mth;
 import org.joml.Vector2f;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author TT432
  */
-public class BrBoneKeyFrame {
-    @Setter
-    private float timestamp;
-    @Getter
-    private MolangValue3[] dataPoints;
-    @Getter
-    private LerpMode lerpMode;
+public record BrBoneKeyFrame(
+        float timestamp,
+        MolangValue3[] dataPoints,
+        BrBoneKeyFrame.LerpMode lerpMode
+) {
+
+    public BrBoneKeyFrame copy(MolangScope scope) {
+        return new BrBoneKeyFrame(timestamp, Arrays.stream(dataPoints).map(v -> v.copy(scope)).toArray(MolangValue3[]::new), lerpMode);
+    }
 
     public enum LerpMode {
         LINEAR,
@@ -49,10 +50,10 @@ public class BrBoneKeyFrame {
      * @return 值
      */
     public static float catmullromLerp(BrBoneKeyFrame beforePlus,
-                                        BrBoneKeyFrame before,
-                                        BrBoneKeyFrame after,
-                                        BrBoneKeyFrame afterPlus,
-                                        Axis axis, float weight) {
+                                       BrBoneKeyFrame before,
+                                       BrBoneKeyFrame after,
+                                       BrBoneKeyFrame afterPlus,
+                                       Axis axis, float weight) {
         List<Vector2f> vectors = new ArrayList<>();
 
         if (beforePlus != null && before.dataPoints.length == 1)
@@ -105,41 +106,59 @@ public class BrBoneKeyFrame {
         return dataPoints[dataPoint].get(axis);
     }
 
-    public static BrBoneKeyFrame parse(MolangScope scope, JsonElement json) throws JsonParseException {
-        BrBoneKeyFrame frame = new BrBoneKeyFrame();
+    public static BrBoneKeyFrame parse(MolangScope scope, float timestamp, JsonElement json) throws JsonParseException {
+        MolangValue3[] dataPoints;
+        BrBoneKeyFrame.LerpMode lerpMode;
 
         if (json.isJsonArray()) {
-            frame.lerpMode = LerpMode.LINEAR;
+            lerpMode = LerpMode.LINEAR;
 
-            frame.dataPoints = new MolangValue3[] {MolangValue3.parse(scope, json.getAsJsonArray())};
+            dataPoints = new MolangValue3[]{MolangValue3.parse(scope, json.getAsJsonArray())};
         } else if (json.isJsonPrimitive()) {
-            frame.lerpMode = LerpMode.LINEAR;
+            lerpMode = LerpMode.LINEAR;
             MolangValue value = MolangValue.parse(scope, json.getAsString());
-            frame.dataPoints = new MolangValue3[] {new MolangValue3(value, value, value)};
+            dataPoints = new MolangValue3[]{new MolangValue3(value, value, value)};
         } else if (json.isJsonObject()) {
             JsonObject jo = json.getAsJsonObject();
 
             if (jo.has("lerp_mode"))
-                frame.lerpMode = LerpMode.valueOf(jo.get("lerp_mode").getAsString().toUpperCase());
-            else frame.lerpMode = LerpMode.LINEAR;
+                lerpMode = LerpMode.valueOf(jo.get("lerp_mode").getAsString().toUpperCase());
+            else lerpMode = LerpMode.LINEAR;
 
-            if (frame.lerpMode == LerpMode.CATMULLROM || frame.lerpMode == LerpMode.LINEAR) {
-                String pre = "pre";
-                String post = "post";
+            String pre = "pre";
+            String post = "post";
 
-                if (jo.has(pre) && !jo.has(post)) {
-                    frame.dataPoints = new MolangValue3[] {MolangValue3.parse(scope,jo.get(pre).getAsJsonArray())};
-                } else if (jo.has(post) && (!jo.has(pre) || frame.lerpMode == LerpMode.CATMULLROM)) {
-                    frame.dataPoints = new MolangValue3[] {MolangValue3.parse(scope,jo.get(post).getAsJsonArray())};
-                } else {
-                    frame.dataPoints = new MolangValue3[]{
-                            MolangValue3.parse(scope,jo.get(pre).getAsJsonArray()),
-                            MolangValue3.parse(scope,jo.get(post).getAsJsonArray())
-                    };
-                }
+            if (jo.has(pre) && !jo.has(post)) {
+                dataPoints = new MolangValue3[]{MolangValue3.parse(scope, jo.get(pre).getAsJsonArray())};
+            } else if (jo.has(post) && (!jo.has(pre) || lerpMode == LerpMode.CATMULLROM)) {
+                dataPoints = new MolangValue3[]{MolangValue3.parse(scope, jo.get(post).getAsJsonArray())};
+            } else {
+                dataPoints = new MolangValue3[]{
+                        MolangValue3.parse(scope, jo.get(pre).getAsJsonArray()),
+                        MolangValue3.parse(scope, jo.get(post).getAsJsonArray())
+                };
             }
+        } else {
+            throw new JsonParseException("");
         }
 
-        return frame;
+        return new BrBoneKeyFrame(timestamp, dataPoints, lerpMode);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof BrBoneKeyFrame bbkf && bbkf.timestamp == timestamp
+                && Arrays.equals(bbkf.dataPoints, dataPoints) && bbkf.lerpMode == lerpMode;
+    }
+
+    @Override
+    public int hashCode() {
+        return Float.hashCode(timestamp) & Arrays.hashCode(dataPoints) & lerpMode.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "BrBoneKeyFrame { timestamp : %f ; dataPints : %s ; lerpMode : %s ; }"
+                .formatted(timestamp, Arrays.toString(dataPoints), lerpMode.name());
     }
 }

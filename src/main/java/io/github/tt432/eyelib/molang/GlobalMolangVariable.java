@@ -102,23 +102,23 @@ public class GlobalMolangVariable {
     }
 
     private static float entityBool(MolangScope s, Function<Entity, Boolean> mapper) {
-        return s.owner.instance() instanceof Entity e
+        return s.owner.getOwner() instanceof Entity e
                 ? mapper.apply(e) ? MolangValue.TRUE : MolangValue.FALSE
                 : MolangValue.FALSE;
     }
 
     private static float entityDouble(MolangScope s, Function<Entity, Float> mapper) {
-        return s.owner.instance() instanceof Entity e ? mapper.apply(e) : 0;
+        return s.owner.getOwner() instanceof Entity e ? mapper.apply(e) : 0;
     }
 
     private static float livingBool(MolangScope s, Function<LivingEntity, Boolean> mapper) {
-        return s.owner.instance() instanceof LivingEntity e
+        return s.owner.getOwner() instanceof LivingEntity e
                 ? mapper.apply(e) ? MolangValue.TRUE : MolangValue.FALSE
                 : MolangValue.FALSE;
     }
 
     private static Float livingDouble(MolangScope s, Function<LivingEntity, Float> mapper) {
-        return s.owner.instance() instanceof LivingEntity e ? mapper.apply(e) : 0;
+        return s.owner.getOwner() instanceof LivingEntity e ? mapper.apply(e) : 0;
     }
 
     public static MolangVariable get(String var) {

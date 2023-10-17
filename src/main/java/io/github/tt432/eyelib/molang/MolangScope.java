@@ -1,9 +1,8 @@
 package io.github.tt432.eyelib.molang;
 
-import io.github.tt432.eyelib.client.animation.animatable.Animatable;
+import io.github.tt432.eyelib.capability.AnimatableCapability;
 import lombok.Getter;
 import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -15,18 +14,15 @@ import java.util.Map;
 public class MolangScope {
     @Getter
     @Setter
-    @NotNull
-    Animatable<?> owner = Animatable.EMPTY;
-
+    AnimatableCapability<?> owner = null;
     Map<String, Float> cache = new HashMap<>();
-
     Map<String, Object> animationData = new HashMap<>();
 
     public float get(String name) {
         if (cache.containsKey(name)) {
             return cache.get(name);
         } else if (GlobalMolangVariable.contains(name)) {
-            GlobalMolangVariable.get(name).get(this);
+            return GlobalMolangVariable.get(name).get(this);
         }
 
         return 0;

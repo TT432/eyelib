@@ -1,14 +1,21 @@
 package io.github.tt432.eyelib.client.animation.component;
 
-import io.github.tt432.eyelib.client.model.bedrock.BrModel;
-import lombok.Getter;
+import io.github.tt432.eyelib.client.model.flat.FlatBrModel;
+import io.github.tt432.eyelib.client.render.BrModelRenderVisitor;
+import lombok.Data;
 import net.minecraft.resources.ResourceLocation;
+
+import javax.annotation.Nullable;
 
 /**
  * @author TT432
  */
-@Getter
+@Data
 public class ModelComponent {
-    BrModel model;
+    @Nullable
+    FlatBrModel model;
+    @Nullable
     ResourceLocation texture;
+    @Nullable
+    BrModelRenderVisitor visitor;
 }
