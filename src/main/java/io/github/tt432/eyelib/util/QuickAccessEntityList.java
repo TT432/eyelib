@@ -20,12 +20,12 @@ import java.util.Map;
  * for constant-time lookups, additions, and removals.
  * <p>
  * Usage example:
- * <pre>
+ * <pre>{@code
  *     QuickAccessEntityList<User> users = new QuickAccessEntityList<>();
  *     users.add(new User(1, "Alice"));
  *     users.add(new User(2, "Bob"));
  *     boolean exists = users.contains(new User(1, "Alice")); // true
- * </pre>
+ * }</pre>
  * <p>
  * Time Complexity:
  * - Add: O(1)
