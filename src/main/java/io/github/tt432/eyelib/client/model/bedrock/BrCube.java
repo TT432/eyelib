@@ -150,11 +150,14 @@ public record BrCube(
     }
 
     private static Pair<Vector2f, Vector2f> getUVFromFace(JsonObject uvJson, String face) {
-        JsonObject faceJson = uvJson.get(face).getAsJsonObject();
-        return Pair.of(
-                new Vector2f(gson.fromJson(faceJson.get("uv"), float[].class)),
-                new Vector2f(gson.fromJson(faceJson.get("uv_size"), float[].class))
-        );
+        if (uvJson.get(face) instanceof JsonObject faceJson) {
+            return Pair.of(
+                    new Vector2f(gson.fromJson(faceJson.get("uv"), float[].class)),
+                    new Vector2f(gson.fromJson(faceJson.get("uv_size"), float[].class))
+            );
+        } else {
+            return Pair.of(new Vector2f(), new Vector2f());
+        }
     }
 
     @Override
