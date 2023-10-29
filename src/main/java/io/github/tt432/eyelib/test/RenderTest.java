@@ -34,7 +34,7 @@ public class RenderTest {
 
             FlatBrModel main = BrModelLoader.INSTANCE.getModels().get(new ResourceLocation(Eyelib.MOD_ID, "main"));
             modelComponent.setModel(main.copy());
-            modelComponent.setTexture(new ResourceLocation(Eyelib.MOD_ID, "textures/entity/texture.png"));
+            modelComponent.setTexture(new ResourceLocation(Eyelib.MOD_ID, "textures/entity/test_block.png"));
             modelComponent.setVisitor(new BlankEntityModelRenderVisit());
         }
     }
@@ -45,7 +45,7 @@ public class RenderTest {
             PoseStack poseStack = event.getPoseStack();
             var main = BrModelLoader.INSTANCE.getModels().get(new ResourceLocation(Eyelib.MOD_ID, "main"));
 
-            RenderType renderType = RenderType.entitySolid(new ResourceLocation(Eyelib.MOD_ID, "textures/entity/texture.png"));
+            RenderType renderType = RenderType.entitySolid(new ResourceLocation(Eyelib.MOD_ID, "textures/entity/test_block.png"));
             VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderType);
 
             visitor.setupLight(LightTexture.FULL_BRIGHT);
