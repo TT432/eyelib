@@ -23,7 +23,7 @@ public class BrFace {
 
         var uv1 = uv.right().add(uv.left(), new Vector2f());
 
-        this.uv =  new Vector2f[]{
+        this.uv = new Vector2f[]{
                 uv.left(),
                 new Vector2f(uv.left().x, uv1.y),
                 uv1,

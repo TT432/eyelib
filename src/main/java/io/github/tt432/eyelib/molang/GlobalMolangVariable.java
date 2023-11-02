@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.molang;
 
-import io.github.tt432.eyelib.util.EyeMath;
+import io.github.tt432.eyelib.util.math.EyeMath;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;

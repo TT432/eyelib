@@ -111,7 +111,7 @@ public class MolangEvalVisitor extends MolangBaseVisitor<Float> {
     public Float visitFunction(MolangParser.FunctionContext ctx) {
         return GlobalMolangFunction.contains(ctx.funcname().getText())
                 ? GlobalMolangFunction.get(ctx.funcname().getText())
-                    .invoke(new MolangFunctionParameters(
+                .invoke(new MolangFunctionParameters(
                         scope,
                         ctx.funcParam()
                                 .stream()
@@ -137,7 +137,7 @@ public class MolangEvalVisitor extends MolangBaseVisitor<Float> {
         } else if (ctx.variable() != null) {
             return visit(ctx.variable());
         } else if (ctx.CONSTANT() != null) {
-            // TODO find var by constant text
+            return scope.get(ctx.CONSTANT().getText());
         } else if (ctx.scientific() != null) {
             return Float.parseFloat(ctx.scientific().getText());
         } else if (ctx.expr() != null) {

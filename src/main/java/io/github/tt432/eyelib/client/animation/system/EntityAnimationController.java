@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.capability.AnimatableCapability;
 import io.github.tt432.eyelib.client.ClientTickHandler;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
-import io.github.tt432.eyelib.client.model.flat.FlatBrModelCommand;
 import io.github.tt432.eyelib.client.render.BrModelRenderVisitor;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.util.QuickAccessEntityList;
@@ -69,9 +68,10 @@ public class EntityAnimationController {
 
                 poseStack.pushPose();
 
-                for (FlatBrModelCommand command : model.commands()) {
-                    command.doCommand(poseStack, buffer, visitor);
-                }
+                // TODO
+                // for (FlatBrModelCommand command : model.commands()) {
+                //     command.doCommand(poseStack, buffer, visitor);
+                // }
 
                 poseStack.popPose();
             }

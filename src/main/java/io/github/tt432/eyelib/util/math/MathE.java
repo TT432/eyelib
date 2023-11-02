@@ -1,15 +1,13 @@
 package io.github.tt432.eyelib.util.math;
 
-import net.minecraft.world.phys.Vec3;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /**
  * @author DustW
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MathE {
-    public static final Vec3 X = new Vec3(1, 0, 0);
-    public static final Vec3 Y = new Vec3(0, 1, 0);
-    public static final Vec3 Z = new Vec3(0, 0, 1);
-
     /**
      * 从两值之间获取 weight
      */

@@ -7,8 +7,8 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.util.MolangValue3;
 import io.github.tt432.eyelib.util.math.Axis;
+import io.github.tt432.eyelib.util.math.Curves;
 import io.github.tt432.eyelib.util.math.MathE;
-import io.github.tt432.eyelib.util.math.curve.SplineCurve;
 import net.minecraft.util.Mth;
 import org.joml.Vector2f;
 
@@ -66,10 +66,9 @@ public record BrBoneKeyFrame(
         if (afterPlus != null && after.dataPoints.length == 1)
             vectors.add(new Vector2f(afterPlus.getTick(), afterPlus.get(axis, 0)));
 
-        SplineCurve curve = new SplineCurve(vectors.toArray(new Vector2f[0]));
         float time = (weight + (beforePlus != null ? 1 : 0)) / (vectors.size() - 1);
 
-        return curve.getPoint(time).y;
+        return Curves.lerpSplineCurve(vectors, time).y;
     }
 
     /**

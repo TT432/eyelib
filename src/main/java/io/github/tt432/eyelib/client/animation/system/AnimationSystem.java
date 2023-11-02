@@ -5,7 +5,6 @@ import io.github.tt432.eyelib.client.animation.bedrock.BrBoneAnimation;
 import io.github.tt432.eyelib.client.animation.component.AnimationComponent;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import io.github.tt432.eyelib.client.model.bedrock.BrBone;
-import io.github.tt432.eyelib.client.model.flat.FlatBrModel;
 import io.github.tt432.eyelib.util.math.MathE;
 import lombok.extern.slf4j.Slf4j;
 import org.joml.Vector3f;
@@ -44,17 +43,17 @@ public class AnimationSystem {
 
             updateBoneAnimation(currentAnimation, animTick, modelComponent);
 
-            // TODO another animation data
+            // TODO other animation data
         }
     }
 
     private static void updateBoneAnimation(BrAnimationEntry currentAnimation, float animTick, ModelComponent modelComponent) {
-        FlatBrModel model = modelComponent.getModel();
+        var model = modelComponent.getModel();
 
         if (model == null)
             return;
 
-        Map<String, BrBone> allBones = model.rawModel().allBones();
+        Map<String, BrBone> allBones = model.allBones();
 
         for (var boneAnimation : currentAnimation.bones().entrySet()) {
             BrBoneAnimation value = boneAnimation.getValue();

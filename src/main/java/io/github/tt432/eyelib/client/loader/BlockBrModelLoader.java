@@ -3,8 +3,8 @@ package io.github.tt432.eyelib.client.loader;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import io.github.tt432.eyelib.client.model.UnBakedBrModel;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
+import io.github.tt432.eyelib.client.model.bedrock.UnBakedBrModel;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,7 +20,7 @@ import net.minecraftforge.fml.common.Mod;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@Mod.EventBusSubscriber(value = Dist.CLIENT,bus = Mod.EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class BlockBrModelLoader implements IGeometryLoader<UnBakedBrModel>, ResourceManagerReloadListener {
     @Getter
     private static BlockBrModelLoader instance;
@@ -40,6 +40,6 @@ public class BlockBrModelLoader implements IGeometryLoader<UnBakedBrModel>, Reso
 
     @Override
     public UnBakedBrModel read(JsonObject jsonObject, JsonDeserializationContext deserializationContext) throws JsonParseException {
-        return new UnBakedBrModel( BrModel.parse("$dummy", jsonObject));
+        return new UnBakedBrModel(BrModel.parse("$dummy", jsonObject));
     }
 }

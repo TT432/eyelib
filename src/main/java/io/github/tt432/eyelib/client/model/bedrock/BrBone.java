@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.model.bedrock;
 
 import com.google.gson.*;
-import io.github.tt432.eyelib.util.EyeMath;
+import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -102,7 +102,7 @@ public class BrBone {
 
         // TODO parse texture_meshes
 
-        if(jsonObject.get("locators") instanceof JsonObject jo) {
+        if (jsonObject.get("locators") instanceof JsonObject jo) {
             for (Map.Entry<String, JsonElement> entry : jo.entrySet()) {
                 locators.put(entry.getKey(), BrLocator.parse(entry.getKey(), entry.getValue()));
             }

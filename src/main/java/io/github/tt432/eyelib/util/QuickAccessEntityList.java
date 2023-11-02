@@ -43,10 +43,6 @@ public class QuickAccessEntityList<I extends IdentifiableObject> implements Coll
     Map<Integer, Integer> idToIdxMap = new Int2IntOpenHashMap();
     List<I> entities = new ReferenceArrayList<>();
 
-    public QuickAccessEntityList(List<I> entities) {
-        addAll(entities);
-    }
-
     @Override
     public int size() {
         return entities.size();

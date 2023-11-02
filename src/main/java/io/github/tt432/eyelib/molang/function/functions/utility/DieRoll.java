@@ -10,6 +10,6 @@ public class DieRoll extends MolangFunction {
     @Override
     public float invoke(MolangFunctionParameters params) {
         return (float) (((int) params.value(0))
-                        * (Math.random() * params.value(2) - params.value(2)));
+                * (Math.random() * params.value(2) - params.value(2)));
     }
 }

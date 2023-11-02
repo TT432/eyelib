@@ -10,6 +10,6 @@ import io.github.tt432.eyelib.util.math.MathE;
 public class Clamp extends MolangFunction {
     @Override
     public float invoke(MolangFunctionParameters params) {
-        return MathE.clamp(params.value(0), params.value(1),params.value(2));
+        return MathE.clamp(params.value(0), params.value(1), params.value(2));
     }
 }

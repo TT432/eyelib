@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import io.github.tt432.eyelib.util.EyeMath;
+import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.Pair;
 import org.joml.*;
 

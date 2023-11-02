@@ -1,9 +1,5 @@
-package io.github.tt432.eyelib.client.model;
+package io.github.tt432.eyelib.client.model.bedrock;
 
-import io.github.tt432.eyelib.client.model.bedrock.BrBone;
-import io.github.tt432.eyelib.client.model.bedrock.BrCube;
-import io.github.tt432.eyelib.client.model.bedrock.BrFace;
-import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import lombok.AllArgsConstructor;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.OverlayTexture;

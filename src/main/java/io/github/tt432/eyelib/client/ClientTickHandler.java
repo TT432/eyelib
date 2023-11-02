@@ -25,7 +25,7 @@ public class ClientTickHandler {
 
     @SubscribeEvent
     public static void onEvent(TickEvent.RenderTickEvent event) {
-        if (event.phase == TickEvent.Phase.START&& !Minecraft.getInstance().isPaused())
+        if (event.phase == TickEvent.Phase.START && !Minecraft.getInstance().isPaused())
             pTick = event.renderTickTime;
     }
 
