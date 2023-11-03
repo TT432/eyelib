@@ -6,9 +6,9 @@ import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.capability.AnimatableCapability;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import io.github.tt432.eyelib.client.loader.BrModelLoader;
-import io.github.tt432.eyelib.client.render.BrModelRenderVisitor;
+import io.github.tt432.eyelib.client.render.visitor.BrModelRenderVisitor;
 import io.github.tt432.eyelib.client.render.visitor.BlankEntityModelRenderVisit;
-import io.github.tt432.eyelib.client.render.visitor.BrModelRenderer;
+import io.github.tt432.eyelib.client.render.BrModelRenderer;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -19,7 +19,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
@@ -42,7 +41,7 @@ public class RenderTest {
         }
     }
 
-    @SubscribeEvent
+    //@SubscribeEvent
     public static void onEvent(RenderLevelStageEvent event) {
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
             PoseStack poseStack = event.getPoseStack();

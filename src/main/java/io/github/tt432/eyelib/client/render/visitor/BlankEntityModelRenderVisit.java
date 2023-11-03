@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.client.model.bedrock.BrCube;
 import io.github.tt432.eyelib.client.model.bedrock.BrFace;
-import io.github.tt432.eyelib.client.render.BrModelRenderVisitor;
 import lombok.Setter;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import org.joml.Vector2f;

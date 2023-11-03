@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.render;
+package io.github.tt432.eyelib.client.render.visitor;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;

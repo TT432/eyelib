@@ -1,0 +1,7 @@
+{
+  "target": "minecraft:zombie",
+  "animation_controllers": {
+  },
+  "model": "eyelib:main",
+  "texture": "eyelib:entity/texture"
+}

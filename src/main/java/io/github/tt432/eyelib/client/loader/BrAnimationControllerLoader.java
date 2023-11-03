@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class BrAnimationControllerLoader extends SimpleJsonResourceReloadListener {
     public static final BrAnimationControllerLoader INSTANCE =
-            new BrAnimationControllerLoader(new Gson(), "animationcontrollers/bedrock");
+            new BrAnimationControllerLoader(new Gson(), "animation_controllers/bedrock");
 
     @SubscribeEvent
     public static void onEvent(RegisterClientReloadListenersEvent event) {
