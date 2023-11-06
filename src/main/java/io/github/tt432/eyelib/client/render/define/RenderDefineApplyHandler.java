@@ -16,12 +16,16 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import java.util.Random;
+
 /**
  * @author TT432
  */
 @Mod.EventBusSubscriber(Dist.CLIENT)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RenderDefineApplyHandler {
+
+    private static final Random rnd = new Random();
 
     @SubscribeEvent
     public static void onEvent(InitComponentEvent event) {
@@ -40,9 +44,16 @@ public class RenderDefineApplyHandler {
                 return;
             }
 
+            ResourceLocation[] textures = renderDefine.getTextures();
+
+            if (textures.length == 0) {
+                return;
+            }
+
             modelComponent.setModel(model.copy());
-            modelComponent.setTexture(new ResourceLocation(renderDefine.getTexture().getNamespace(),
-                    "textures/" + renderDefine.getTexture().getPath() + ".png"));
+            ResourceLocation texture = textures[rnd.nextInt(textures.length)];
+            modelComponent.setTexture(new ResourceLocation(texture.getNamespace(),
+                    "textures/" + texture.getPath() + ".png"));
             modelComponent.setVisitor(new BlankEntityModelRenderVisit());
         }
     }

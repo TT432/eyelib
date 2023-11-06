@@ -2,6 +2,11 @@
   "target": "minecraft:zombie",
   "animation_controllers": {
   },
-  "model": "eyelib:main",
-  "texture": "eyelib:entity/texture"
+  "model": "eyelib:zombie",
+  "textures": [
+    "eyelib:entity/green_zombie",
+    "eyelib:entity/grey_zombie",
+    "eyelib:entity/grey_zombie_short",
+    "eyelib:entity/white_zombie"
+  ]
 }

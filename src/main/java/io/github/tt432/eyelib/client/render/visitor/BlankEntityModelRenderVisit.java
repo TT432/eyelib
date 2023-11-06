@@ -1,21 +1,17 @@
 package io.github.tt432.eyelib.client.render.visitor;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.client.model.bedrock.BrCube;
 import io.github.tt432.eyelib.client.model.bedrock.BrFace;
 import lombok.Setter;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import org.joml.*;
 
 /**
  * @author TT432
  */
 public class BlankEntityModelRenderVisit extends BrModelRenderVisitor {
     private static final Vector4f tPosition = new Vector4f();
-    private static final Vector4f tPositionC = new Vector4f();
     private static final Vector3f tNormal = new Vector3f();
 
     @Setter
@@ -27,14 +23,13 @@ public class BlankEntityModelRenderVisit extends BrModelRenderVisitor {
     }
 
     @Override
-    public void visitVertex(PoseStack poseStack, BrCube cube, BrFace face, int vertexId, VertexConsumer consumer) {
+    public void visitVertex(Matrix3f m3, Matrix4f m4, BrCube cube, BrFace face, int vertexId, VertexConsumer consumer) {
         Vector3f normal = face.getNormal();
         Vector3f vertex = face.getVertex()[vertexId];
         Vector2f uv = face.getUv()[vertexId];
 
-        poseStack.last().pose().transform(tPositionC.set(vertex, 1), tPosition);
-
-        poseStack.last().normal().transform(normal, tNormal);
+        m4.transform(vertex.x, vertex.y, vertex.z, 1, tPosition);
+        m3.transform(normal, tNormal);
 
         consumer.vertex(tPosition.x, tPosition.y, tPosition.z,
                 1, 1, 1, 1,

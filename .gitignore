@@ -118,9 +118,9 @@ run/
 !gradle-wrapper.jar
 
 # test resources
-src/main/resources/assets/eyelib/animations/bedrock/main.animation.json
-src/main/resources/assets/eyelib/models/bedrock/main.json
-src/main/resources/assets/eyelib/textures/entity/texture.png
+src/main/resources/assets/eyelib/animations/bedrock/
+src/main/resources/assets/eyelib/models/bedrock/
+src/main/resources/assets/eyelib/textures/entity/
 
 src/main/resources/assets/eyelib/blockstates/test_block.json
 src/main/resources/assets/eyelib/models/block/test_block.geo.json

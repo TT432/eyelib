@@ -16,8 +16,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * @author TT432
@@ -33,24 +31,21 @@ public class BrAnimationControllerLoader extends SimpleJsonResourceReloadListene
     }
 
     @Getter
-    Map<ResourceLocation, BrAnimationController> animationControllers = new HashMap<>();
+    private final Map<ResourceLocation, BrAnimationController> animationControllers = new HashMap<>();
 
     private BrAnimationControllerLoader(Gson pGson, String pDirectory) {
         super(pGson, pDirectory);
     }
 
+    public static BrAnimationController getController(ResourceLocation location) {
+        return INSTANCE.animationControllers.get(location);
+    }
+
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> pObject, @NotNull ResourceManager pResourceManager, @NotNull ProfilerFiller pProfiler) {
-        animationControllers = pObject.entrySet().stream()
-                .map(entry -> {
-                    BrAnimationController parse = BrAnimationController.parse(entry.getKey().toString(), entry.getValue().getAsJsonObject());
+        animationControllers.clear();
 
-                    if (parse == null)
-                        return null;
-                    else
-                        return Map.entry(entry.getKey(), parse);
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        pObject.forEach((key, value) ->
+                animationControllers.put(key, BrAnimationController.parse(key.toString(), value.getAsJsonObject())));
     }
 }
