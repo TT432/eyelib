@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.render.visitor;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.client.model.bedrock.BrCube;
 import io.github.tt432.eyelib.client.model.bedrock.BrFace;
@@ -23,13 +24,15 @@ public class BlankEntityModelRenderVisit extends BrModelRenderVisitor {
     }
 
     @Override
-    public void visitVertex(Matrix3f m3, Matrix4f m4, BrCube cube, BrFace face, int vertexId, VertexConsumer consumer) {
+    public void visitVertex(PoseStack poseStack, BrCube cube, BrFace face, int vertexId, VertexConsumer consumer) {
         Vector3f normal = face.getNormal();
         Vector3f vertex = face.getVertex()[vertexId];
         Vector2f uv = face.getUv()[vertexId];
 
-        m4.transform(vertex.x, vertex.y, vertex.z, 1, tPosition);
-        m3.transform(normal, tNormal);
+        PoseStack.Pose last = poseStack.last();
+
+        last.pose().transform(vertex.x, vertex.y, vertex.z, 1, tPosition);
+        last.normal().transform(normal, tNormal);
 
         consumer.vertex(tPosition.x, tPosition.y, tPosition.z,
                 1, 1, 1, 1,

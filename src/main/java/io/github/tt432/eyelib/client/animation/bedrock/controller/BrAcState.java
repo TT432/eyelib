@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.client.animation.bedrock.controller;
 import com.google.gson.*;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
-import lombok.AllArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,30 +10,40 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * @param animations           动画名称 -> 混合系数（动画变换倍数）
+ * @param transitions          stateName -> condition
+ * @param blendTransition      插值时间
+ * @param blendViaShortestPath 线性 t/f 平滑 (存疑)
  * @author TT432
  */
-@AllArgsConstructor
-public class BrAcState {
-    /**
-     * 动画名称 -> 混合系数（动画变换倍数）
-     */
-    final Map<String, MolangValue> animations;
-    final MolangValue onEntry;
-    final MolangValue onExit;
-    final List<BrAcParticleEffect> particleEffects;
-    final List<String> soundEffects;
-    /**
-     * stateName -> condition
-     */
-    final Map<String, MolangValue> transitions;
-    /**
-     * 插值时间
-     */
-    final float blendTransition;
-    /**
-     * 线性 t/f 平滑 (存疑)
-     */
-    final boolean blendViaShortestPath;
+public record BrAcState(
+        Map<String, MolangValue> animations,
+        MolangValue onEntry,
+        MolangValue onExit,
+        List<BrAcParticleEffect> particleEffects,
+        List<String> soundEffects,
+        Map<String, MolangValue> transitions,
+        float blendTransition,
+        boolean blendViaShortestPath
+) {
+
+    public BrAcState copy(MolangScope copiedScope) {
+        Map<String, MolangValue> copiedAnimations = new HashMap<>();
+        animations.forEach((k, v) -> copiedAnimations.put(k, v.copy(copiedScope)));
+        Map<String, MolangValue> copiedTransitions = new HashMap<>();
+        transitions.forEach((k, v) -> copiedTransitions.put(k, v.copy(copiedScope)));
+
+        return new BrAcState(
+                copiedAnimations,
+                onEntry.copy(copiedScope),
+                onExit.copy(copiedScope),
+                particleEffects,
+                soundEffects,
+                copiedTransitions,
+                blendTransition,
+                blendViaShortestPath
+        );
+    }
 
     public static BrAcState parse(MolangScope scope, JsonElement value) throws JsonParseException {
         final Map<String, MolangValue> animations;
@@ -59,7 +68,7 @@ public class BrAcState {
                         animations.put(entry.getKey(), MolangValue.parse(scope, entry.getValue().getAsString()));
                     }
                 } else if (jsonElement instanceof JsonPrimitive animationName) {
-                    animations.put(animationName.getAsString(), MolangValue.parse(scope, "1"));
+                    animations.put(animationName.getAsString(), MolangValue.TRUE_VALUE);
                 }
             }
         }
@@ -73,7 +82,7 @@ public class BrAcState {
 
             onEntry = MolangValue.parse(scope, molangText.toString());
         } else {
-            onEntry = null;
+            onEntry = MolangValue.TRUE_VALUE;
         }
 
         if (jo.get("on_exit") instanceof JsonArray ja) {
@@ -85,7 +94,7 @@ public class BrAcState {
 
             onExit = MolangValue.parse(scope, molangText.toString());
         } else {
-            onExit = null;
+            onExit = MolangValue.TRUE_VALUE;
         }
 
         if (jo.get("particle_effects") instanceof JsonArray ja) {

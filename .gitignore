@@ -122,6 +122,6 @@ src/main/resources/assets/eyelib/animations/bedrock/
 src/main/resources/assets/eyelib/models/bedrock/
 src/main/resources/assets/eyelib/textures/entity/
 
-src/main/resources/assets/eyelib/blockstates/test_block.json
-src/main/resources/assets/eyelib/models/block/test_block.geo.json
-src/main/resources/assets/eyelib/textures/block/test_block.png
+src/main/resources/assets/eyelib/models/block/
+src/main/resources/assets/eyelib/textures/block/
+src/main/resources/assets/eyelib/animation_controllers/

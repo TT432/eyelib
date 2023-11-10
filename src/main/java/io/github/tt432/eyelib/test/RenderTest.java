@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.capability.AnimatableCapability;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import io.github.tt432.eyelib.client.loader.BrModelLoader;
+import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.visitor.BrModelRenderVisitor;
 import io.github.tt432.eyelib.client.render.visitor.BlankEntityModelRenderVisit;
 import io.github.tt432.eyelib.client.render.BrModelRenderer;
@@ -35,7 +36,7 @@ public class RenderTest {
             ModelComponent modelComponent = capability.getModelComponent();
 
             var main = BrModelLoader.getModel(new ResourceLocation(Eyelib.MOD_ID, "main"));
-            modelComponent.setModel(main.copy());
+            modelComponent.setModel(main);
             modelComponent.setTexture(new ResourceLocation(Eyelib.MOD_ID, "textures/entity/test_block.png"));
             modelComponent.setVisitor(new BlankEntityModelRenderVisit());
         }
@@ -55,7 +56,7 @@ public class RenderTest {
             poseStack.last().pose().translate(event.getCamera().getPosition().toVector3f().negate());
 
             visitor.setupLight(LightTexture.FULL_BRIGHT);
-            BrModelRenderer.render(main, poseStack, buffer, visitor);
+            BrModelRenderer.render(main, new BoneRenderInfos(),  poseStack, buffer, visitor);
 
             poseStack.popPose();
         }

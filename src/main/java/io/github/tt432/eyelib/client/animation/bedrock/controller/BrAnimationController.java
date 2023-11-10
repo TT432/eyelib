@@ -4,8 +4,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
+import io.github.tt432.eyelib.capability.AnimatableCapability;
 import io.github.tt432.eyelib.molang.MolangScope;
-import lombok.AllArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,13 +13,25 @@ import java.util.Map;
 /**
  * @author TT432
  */
-@AllArgsConstructor
-public class BrAnimationController {
-    final String name;
-    final BrAcState initialState;
-    final Map<String, BrAcState> states;
+public record BrAnimationController(
+        String name,
+        BrAcState initialState,
+        Map<String, BrAcState> states,
+        MolangScope scope
+) {
 
-    final MolangScope scope;
+    public BrAnimationController copy(AnimatableCapability<?> owner) {
+        var copiedScope = scope.copyWithOwner(owner);
+        Map<String, BrAcState> copiedStates = new HashMap<>();
+        states.forEach((k,v) -> copiedStates.put(k, v.copy(copiedScope)));
+
+        return new BrAnimationController(
+            name,
+                initialState.copy(copiedScope),
+                copiedStates,
+                copiedScope
+        );
+    }
 
     private static final String EXCEPTION = "can't parse animation controller json file: %s .";
 

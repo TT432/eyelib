@@ -2,71 +2,34 @@ package io.github.tt432.eyelib.client.model.bedrock;
 
 import com.google.gson.*;
 import io.github.tt432.eyelib.util.math.EyeMath;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.*;
 
 /**
+ * @param parent         that bone is toplevel if parent is null
+ * @param binding        using on 1.16.0 TODO
+ * @param reset          bb has this field, but can't resolve mean TODO
+ * @param material       bb has this field, but can't resolve mean TODO
+ * @param texture_meshes TODO 效果不明  推测：类似 BlockModel
  * @author TT432
  */
-@Getter
-@RequiredArgsConstructor
-public class BrBone {
+public record BrBone(
+        String name,
+        @Nullable String parent,
+        Vector3f pivot,
+        Vector3f rotation,
+        @Nullable String binding,
+        boolean reset,
+        @Nullable String material,
+        List<BrBone> children,
+        List<BrCube> cubes,
+        List<BrTextureMesh> texture_meshes,
+        Map<String, BrLocator> locators
+) {
+
     private static final Gson gson = new Gson();
-
-    final String name;
-    /**
-     * that bone is toplevel if parent is null
-     */
-    @Nullable
-    final String parent;
-    final Vector3f pivot;
-    final Vector3f rotation;
-    /**
-     * using on 1.16.0 TODO
-     */
-    @Nullable
-    final String binding;
-    /**
-     * bb has this field, but can't resolve mean TODO
-     */
-    final boolean reset;
-    /**
-     * bb has this field, but can't resolve mean TODO
-     */
-    @Nullable
-    final String material;
-
-    final List<BrBone> children;
-    final List<BrCube> cubes;
-    // TODO 效果不明  推测：类似 BlockModel
-    final List<BrTextureMesh> texture_meshes;
-    final Map<String, BrLocator> locators;
-
-    @Setter
-    @NotNull
-    Vector3f renderScala = new Vector3f(1);
-    @Nullable
-    @Setter
-    Vector3f renderPivot;
-    @Nullable
-    @Setter
-    Vector3f renderRotation;
-
-    public BrBone copy() {
-        List<BrBone> copiedChildren = new ArrayList<>();
-
-        for (BrBone child : children) {
-            copiedChildren.add(child.copy());
-        }
-
-        return new BrBone(name, parent, pivot, rotation, binding, reset, material, copiedChildren, cubes, texture_meshes, locators);
-    }
 
     public static BrBone parse(int textureHeight, int textureWidth, JsonObject jsonObject) {
         final String name;

@@ -1,13 +1,10 @@
 package io.github.tt432.eyelib.client.animation.system;
 
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
-import io.github.tt432.eyelib.client.animation.bedrock.BrBoneAnimation;
 import io.github.tt432.eyelib.client.animation.component.AnimationComponent;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import io.github.tt432.eyelib.client.model.bedrock.BrBone;
-import io.github.tt432.eyelib.util.math.MathE;
 import lombok.extern.slf4j.Slf4j;
-import org.joml.Vector3f;
 
 import java.util.Map;
 
@@ -17,7 +14,7 @@ import java.util.Map;
 @Slf4j
 public class AnimationSystem {
     public void update(float aTick) {
-        for (var entity : EntityAnimationController.entities) {
+        for (var entity : EntityRenderHandler.entities) {
             if (entity == null) continue;
 
             AnimationComponent animationComponent = entity.getAnimationComponent();
@@ -55,41 +52,42 @@ public class AnimationSystem {
 
         Map<String, BrBone> allBones = model.allBones();
 
-        for (var boneAnimation : currentAnimation.bones().entrySet()) {
-            BrBoneAnimation value = boneAnimation.getValue();
-            BrBone bone = allBones.get(boneAnimation.getKey());
+        // TODO
+        // for (var boneAnimation : currentAnimation.bones().entrySet()) {
+        //     BrBoneAnimation value = boneAnimation.getValue();
+        //     BrBone bone = allBones.get(boneAnimation.getKey());
 
-            if (bone == null)
-                continue;
+        //     if (bone == null)
+        //         continue;
 
-            Vector3f p = value.lerpPosition(animTick);
+        //     Vector3f p = value.lerpPosition(animTick);
 
-            if (p != null) {
-                bone.setRenderPivot(new Vector3f(bone.getPivot()).add(p));
-            } else {
-                bone.setRenderPivot(null);
-            }
+        //     if (p != null) {
+        //         bone.setRenderPivot(new Vector3f(bone.pivot()).add(p));
+        //     } else {
+        //         bone.setRenderPivot(null);
+        //     }
 
-            Vector3f r = value.lerpRotation(animTick);
+        //     Vector3f r = value.lerpRotation(animTick);
 
-            if (r != null) {
-                bone.setRenderRotation(new Vector3f(bone.getRotation())
-                        .add((float) -Math.toRadians(r.x),
-                                (float) -Math.toRadians(r.y),
-                                (float) Math.toRadians(r.z)));
-            } else {
-                bone.setRenderRotation(null);
-            }
+        //     if (r != null) {
+        //         bone.setRenderRotation(new Vector3f(bone.rotation())
+        //                 .add((float) -Math.toRadians(r.x),
+        //                         (float) -Math.toRadians(r.y),
+        //                         (float) Math.toRadians(r.z)));
+        //     } else {
+        //         bone.setRenderRotation(null);
+        //     }
 
-            Vector3f s = value.lerpScale(animTick);
+        //     Vector3f s = value.lerpScale(animTick);
 
-            if (s != null) {
-                bone.setRenderScala(new Vector3f(MathE.notZero(s.x, 0.00001F),
-                        MathE.notZero(s.y, 0.00001F),
-                        MathE.notZero(s.z, 0.00001F)));
-            } else {
-                bone.setRenderScala(new Vector3f(1));
-            }
-        }
+        //     if (s != null) {
+        //         bone.setRenderScala(new Vector3f(MathE.notZero(s.x, 0.00001F),
+        //                 MathE.notZero(s.y, 0.00001F),
+        //                 MathE.notZero(s.z, 0.00001F)));
+        //     } else {
+        //         bone.setRenderScala(new Vector3f(1));
+        //     }
+        // }
     }
 }

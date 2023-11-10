@@ -23,25 +23,6 @@ public record BrModel(
 ) {
     private static final Gson gson = new Gson();
 
-    public BrModel copy() {
-        Map<String, BrBone> copiedAllBones = new HashMap<>();
-
-        for (Map.Entry<String, BrBone> boneEntry : allBones.entrySet()) {
-            copiedAllBones.put(boneEntry.getKey(), boneEntry.getValue().copy());
-        }
-
-        List<BrBone> copiedToplevelBones = new ArrayList<>();
-
-        copiedAllBones.forEach((name, bone) -> {
-            if (bone.parent == null)
-                copiedToplevelBones.add(bone);
-            else
-                copiedAllBones.get(bone.parent).children.add(bone);
-        });
-
-        return new BrModel(version, identifier, textureWidth, textureHeight, visibleBox, copiedToplevelBones, copiedAllBones);
-    }
-
     public static BrModel parse(String modelName, JsonObject object) {
         String version;
         String identifier;
@@ -99,14 +80,14 @@ public record BrModel(
             }
 
             BrBone parse = BrBone.parse(textureHeight, textureWidth, jo);
-            allBones.put(parse.name, parse);
+            allBones.put(parse.name(), parse);
         }
 
         allBones.forEach((name, bone) -> {
-            if (bone.parent == null)
+            if (bone.parent() == null)
                 toplevelBones.add(bone);
             else
-                allBones.get(bone.parent).children.add(bone);
+                allBones.get(bone.parent()).children().add(bone);
         });
 
         return new BrModel(version, identifier, textureWidth, textureHeight, visibleBox, toplevelBones, allBones);

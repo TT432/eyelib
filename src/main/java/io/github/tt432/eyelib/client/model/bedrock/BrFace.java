@@ -18,7 +18,7 @@ public class BrFace {
     Vector3f[] vertex;
 
     public BrFace(Vector3f normal, Pair<Vector2f, Vector2f> uv, Vector3f[] vertex) {
-        this.normal = normal;
+        this.normal = new Vector3f(0); // TODO 目前 normal 数值不对，原因不明
         this.vertex = vertex;
 
         var uv1 = uv.right().add(uv.left(), new Vector2f());

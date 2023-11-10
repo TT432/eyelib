@@ -30,7 +30,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
     @Override
     protected void addQuads(IGeometryBakingContext owner, IModelBuilder<?> modelBuilder, ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelTransform, ResourceLocation modelLocation) {
         for (BrBone value : model.allBones().values()) {
-            for (BrCube cube : value.getCubes()) {
+            for (BrCube cube : value.cubes()) {
                 List<BakedQuad> quads = makeQuads(cube, spriteGetter.apply(owner.getMaterial("texture")));
 
                 for (BakedQuad quad : quads) {

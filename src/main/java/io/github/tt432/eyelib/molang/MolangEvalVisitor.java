@@ -3,6 +3,9 @@ package io.github.tt432.eyelib.molang;
 import io.github.tt432.eyelib.molang.function.MolangFunctionParameters;
 import io.github.tt432.eyelib.molang.grammer.MolangBaseVisitor;
 import io.github.tt432.eyelib.molang.grammer.MolangParser;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 import java.util.Objects;
@@ -10,7 +13,10 @@ import java.util.Objects;
 /**
  * @author TT432
  */
+@NoArgsConstructor
 public class MolangEvalVisitor extends MolangBaseVisitor<Float> {
+    @Getter
+    @Setter
     MolangScope scope;
 
     public MolangEvalVisitor(MolangScope scope) {

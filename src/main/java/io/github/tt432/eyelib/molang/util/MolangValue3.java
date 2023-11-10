@@ -47,8 +47,8 @@ public class MolangValue3 {
     public static MolangValue3 parse(MolangScope scope, JsonArray array) {
         return new MolangValue3(
                 MolangValue.parse(scope, array.get(0).getAsString()),
-                MolangValue.parse(scope, array.get(0).getAsString()),
-                MolangValue.parse(scope, array.get(0).getAsString())
+                MolangValue.parse(scope, array.get(1).getAsString()),
+                MolangValue.parse(scope, array.get(2).getAsString())
         );
     }
 

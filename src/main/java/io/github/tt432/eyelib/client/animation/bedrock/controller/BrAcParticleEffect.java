@@ -4,20 +4,17 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
-import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author TT432
  */
-@AllArgsConstructor
-public class BrAcParticleEffect {
-    @Nullable
-    final String effect;
-    @Nullable
-    final String locator;
-    final boolean bindToActor;
-    final MolangValue preEffectScript;
+public record BrAcParticleEffect(
+        @Nullable String effect,
+        @Nullable String locator,
+        boolean bindToActor,
+        MolangValue preEffectScript
+) {
 
     public static BrAcParticleEffect parse(MolangScope scope, JsonObject object) {
         final String effect;

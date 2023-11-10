@@ -24,8 +24,9 @@ import net.minecraftforge.fml.common.Mod;
  * @author TT432
  */
 @Mod.EventBusSubscriber
-public class EntityAnimationController {
+public class EntityRenderHandler {
     private static final AnimationSystem system = new AnimationSystem();
+    private static final AnimationControllerSystem controllerSystem = new AnimationControllerSystem();
 
     public static final QuickAccessEntityList<AnimatableCapability<?>> entities = new QuickAccessEntityList<>();
 
@@ -45,7 +46,9 @@ public class EntityAnimationController {
     @SubscribeEvent
     public static void onEvent(TickEvent.RenderTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
-            system.update(ClientTickHandler.getTick());
+            float ticks = ClientTickHandler.getTick();
+            system.update(ticks);
+            controllerSystem.update(ticks);
         }
     }
 
@@ -69,7 +72,7 @@ public class EntityAnimationController {
 
                 poseStack.pushPose();
 
-                BrModelRenderer.render(model, poseStack, buffer, visitor);
+                BrModelRenderer.render(model, modelComponent.getInfos(), poseStack, buffer, visitor);
 
                 poseStack.popPose();
             }

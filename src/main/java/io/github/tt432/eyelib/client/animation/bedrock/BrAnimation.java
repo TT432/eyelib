@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
+import io.github.tt432.eyelib.capability.AnimatableCapability;
 import io.github.tt432.eyelib.molang.MolangScope;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,11 +20,12 @@ public record BrAnimation(
         MolangScope scope
 ) {
 
-    public BrAnimation copy(MolangScope scope) {
+    public BrAnimation copy(AnimatableCapability<?> owner) {
+        var copiedScope = scope.copyWithOwner(owner);
         Map<String, BrAnimationEntry> copiedAnimations = new HashMap<>();
-        animations.forEach((key, value) -> copiedAnimations.put(key, value.copy(scope)));
+        animations.forEach((key, value) -> copiedAnimations.put(key, value.copy(copiedScope)));
 
-        return new BrAnimation(copiedAnimations, scope);
+        return new BrAnimation(copiedAnimations, copiedScope);
     }
 
     public static BrAnimation parse(String animationName, JsonObject jsonObject) {

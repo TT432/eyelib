@@ -19,6 +19,9 @@ public class MolangScope {
     Map<String, Object> animationData = new HashMap<>();
 
     public float get(String name) {
+        if (name.startsWith("q."))
+            name = "query." + name.substring(2);
+
         if (cache.containsKey(name)) {
             return cache.get(name);
         } else if (GlobalMolangVariable.contains(name)) {
@@ -47,9 +50,9 @@ public class MolangScope {
         animationData.put(key, value);
     }
 
-    public MolangScope copy() {
+    public MolangScope copyWithOwner(AnimatableCapability<?> capability) {
         MolangScope result = new MolangScope();
-        result.owner = owner;
+        result.owner = capability;
         result.cache = new HashMap<>(cache);
         result.animationData = new HashMap<>(animationData);
         return result;

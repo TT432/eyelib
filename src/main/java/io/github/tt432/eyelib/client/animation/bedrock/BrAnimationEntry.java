@@ -13,7 +13,7 @@ import java.util.*;
 /**
  * @param override_previous_animation TODO 不确定
  * @param anim_time_update            TODO 不确定
- * @param blend_weight                TODO 不确定
+ * @param blendWeight                动画混合时的权重
  * @param start_delay                 TODO 不确定
  * @param loop_delay                  TODO 不确定
  * @author TT432
@@ -24,8 +24,7 @@ public record BrAnimationEntry(
         boolean override_previous_animation,
         @Nullable
         MolangValue anim_time_update,
-        @Nullable
-        MolangValue blend_weight,
+        MolangValue blendWeight,
         @Nullable
         MolangValue start_delay,
         @Nullable
@@ -53,7 +52,7 @@ public record BrAnimationEntry(
                 animationLength,
                 override_previous_animation,
                 anim_time_update,
-                blend_weight,
+                blendWeight,
                 start_delay,
                 loop_delay,
                 copiedSoundEffects,
@@ -82,7 +81,7 @@ public record BrAnimationEntry(
         particleEffects = loadMap(jsonObject, "particle_effects", scope);
         override_previous_animation = jsonObject.get("override_previous_animation") instanceof JsonPrimitive jp && jp.getAsBoolean();
         anim_time_update = jsonObject.get("anim_time_update") instanceof JsonPrimitive jp ? MolangValue.parse(scope, jp.getAsString()) : null;
-        blend_weight = jsonObject.get("blend_weight") instanceof JsonPrimitive jp ? MolangValue.parse(scope, jp.getAsString()) : null;
+        blend_weight = jsonObject.get("blend_weight") instanceof JsonPrimitive jp ? MolangValue.parse(scope, jp.getAsString()) : MolangValue.TRUE_VALUE;
         start_delay = jsonObject.get("start_delay") instanceof JsonPrimitive jp ? MolangValue.parse(scope, jp.getAsString()) : null;
         loop_delay = jsonObject.get("loop_delay") instanceof JsonPrimitive jp ? MolangValue.parse(scope, jp.getAsString()) : null;
 

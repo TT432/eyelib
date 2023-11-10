@@ -15,8 +15,6 @@ import net.minecraftforge.fml.common.Mod;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * @author TT432
@@ -31,24 +29,22 @@ public class BrAnimationLoader extends SimpleJsonResourceReloadListener {
     }
 
     @Getter
-    Map<ResourceLocation, BrAnimation> animations = new HashMap<>();
+    private final Map<ResourceLocation, BrAnimation> animations = new HashMap<>();
 
     private BrAnimationLoader(Gson pGson, String pDirectory) {
         super(pGson, pDirectory);
     }
 
+    public static BrAnimation getAnimation(ResourceLocation resourceLocation) {
+        return INSTANCE.animations.get(resourceLocation);
+    }
+
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
-        animations = pObject.entrySet().stream()
-                .map(entry -> {
-                    BrAnimation parse = BrAnimation.parse(entry.getKey().toString(), entry.getValue().getAsJsonObject());
+        animations.clear();
 
-                    if (parse == null)
-                        return null;
-                    else
-                        return Map.entry(entry.getKey(), parse);
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        pObject.forEach((rl, json) -> {
+            animations.put(rl, BrAnimation.parse(rl.toString(), json.getAsJsonObject()));
+        });
     }
 }

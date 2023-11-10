@@ -16,10 +16,11 @@ public class RenderDefine {
     private ResourceLocation target;
     private ResourceLocation model;
     private ResourceLocation[] textures;
-    private Object animation_controllers;// TODO
+    private RDAnimationControllerEntry animationControllerEntry;
 
     public static RenderDefine parse(JsonObject object) {
         ResourceLocation[] textures;
+        RDAnimationControllerEntry entry;
 
         if (object.get("textures") instanceof JsonArray jp) {
             textures = new ResourceLocation[jp.size()];
@@ -30,11 +31,20 @@ public class RenderDefine {
             textures = new ResourceLocation[0];
         }
 
+        if (object.get("animation_controller") instanceof JsonObject jo) {
+            entry = new RDAnimationControllerEntry(
+                    jo.get("name") instanceof JsonPrimitive jp ? jp.getAsString() : "",
+                    jo.get("animation") instanceof JsonPrimitive jp ? jp.getAsString() : ""
+            );
+        } else {
+            entry = new RDAnimationControllerEntry("", "");
+        }
+
         return new RenderDefine(
                 new ResourceLocation(object.get("target") instanceof JsonPrimitive jp ? jp.getAsString() : "__empty"),
                 new ResourceLocation(object.get("model") instanceof JsonPrimitive jp ? jp.getAsString() : "__empty"),
                 textures,
-                null
+                entry
         );
     }
 }

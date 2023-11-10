@@ -1,7 +1,10 @@
 package io.github.tt432.eyelib.client.render.define;
 
 import io.github.tt432.eyelib.capability.AnimatableCapability;
+import io.github.tt432.eyelib.client.animation.component.AnimationControllerComponent;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
+import io.github.tt432.eyelib.client.loader.BrAnimationControllerLoader;
+import io.github.tt432.eyelib.client.loader.BrAnimationLoader;
 import io.github.tt432.eyelib.client.loader.BrModelLoader;
 import io.github.tt432.eyelib.client.loader.ModelReplacerLoader;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
@@ -24,8 +27,6 @@ import java.util.Random;
 @Mod.EventBusSubscriber(Dist.CLIENT)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RenderDefineApplyHandler {
-
-    private static final Random rnd = new Random();
 
     @SubscribeEvent
     public static void onEvent(InitComponentEvent event) {
@@ -50,11 +51,20 @@ public class RenderDefineApplyHandler {
                 return;
             }
 
-            modelComponent.setModel(model.copy());
-            ResourceLocation texture = textures[rnd.nextInt(textures.length)];
+            modelComponent.setModel(model);
+            ResourceLocation texture = textures[new Random(entity.getId()).nextInt(textures.length)];
             modelComponent.setTexture(new ResourceLocation(texture.getNamespace(),
                     "textures/" + texture.getPath() + ".png"));
             modelComponent.setVisitor(new BlankEntityModelRenderVisit());
+
+            String animation = renderDefine.getAnimationControllerEntry().animation();
+            String name = renderDefine.getAnimationControllerEntry().name();
+
+            if (!animation.isBlank() && !name.isBlank()) {
+                AnimationControllerComponent animComponent = capability.getAnimationControllerComponent();
+                animComponent.setAnimationController(BrAnimationControllerLoader.getController(new ResourceLocation(name)).copy(capability));
+                animComponent.setTargetAnimation(BrAnimationLoader.getAnimation(new ResourceLocation(animation)).copy(capability));
+            }
         }
     }
 }

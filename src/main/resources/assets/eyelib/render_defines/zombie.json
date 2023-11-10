@@ -1,6 +1,8 @@
 {
   "target": "minecraft:zombie",
-  "animation_controllers": {
+  "animation_controller": {
+    "name": "eyelib:zombie.animation_controllers",
+    "animation": "eyelib:zombie.animation"
   },
   "model": "eyelib:zombie",
   "textures": [
