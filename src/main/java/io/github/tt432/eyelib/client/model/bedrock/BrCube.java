@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.Pair;
+import net.minecraft.core.Direction;
 import org.joml.*;
 
 import java.util.Arrays;
@@ -136,12 +137,12 @@ public record BrCube(
         };
 
         return new BrCube(new BrFace[]{
-                new BrFace(new Vector3f(0, 1, 0), up, faces[0]),
-                new BrFace(new Vector3f(0, -1, 0), down, faces[1]),
-                new BrFace(new Vector3f(1, 0, 0), east, faces[2]),
-                new BrFace(new Vector3f(0, 0, -1), north, faces[3]),
-                new BrFace(new Vector3f(-1, 0, 0), west, faces[4]),
-                new BrFace(new Vector3f(0, 0, 1), south, faces[5])
+                new BrFace(Direction.UP.step(), up, faces[0]),
+                new BrFace(Direction.DOWN.step(), down, faces[1]),
+                new BrFace(Direction.EAST.step(), east, faces[2]),
+                new BrFace(Direction.NORTH.step(), north, faces[3]),
+                new BrFace(Direction.WEST.step(), west, faces[4]),
+                new BrFace(Direction.SOUTH.step(), south, faces[5])
         });
     }
 
