@@ -48,6 +48,8 @@ public class GlobalMolangVariable {
         setVariable("query.yaw_speed", s -> entityDouble(s, e -> e.getViewYRot(s.get("query.partial_tick"))
                 - e.getViewYRot(s.get("query.partial_tick") - 0.1F)));
         setVariable("query.pitch", s -> entityDouble(s, e -> e.getViewXRot(s.get("query.partial_tick"))));
+        setVariable("query.eye_target_x_rotation", s -> s.get("query.pitch"));
+        setVariable("query.eye_target_y_rotation", s -> s.get("query.yaw"));
 
         setVariable("query.sitting", s -> entityBool(s, e -> e.isPassenger() &&
                 (e.getVehicle() != null && e.getVehicle().shouldRiderSit())));
