@@ -113,7 +113,7 @@ public class AnimationControllerSystem {
                 if (p != null) {
                     p.div(16).mul(multiplier);
 
-                    boneRenderInfoEntry.getRenderPosition().sub(p);
+                    boneRenderInfoEntry.getRenderPosition().add(p);
                 }
 
                 Vector3f r = boneAnim.lerpRotation(animTick);
