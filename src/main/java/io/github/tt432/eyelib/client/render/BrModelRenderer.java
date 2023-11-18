@@ -42,6 +42,8 @@ public class BrModelRenderer {
 
         Matrix4f m4 = poseStack.last().pose();
 
+        m4.translate(boneRenderInfoEntry.getRenderPosition());
+
         Vector3f renderPivot = bone.pivot();
 
         m4.translate(renderPivot);
@@ -51,13 +53,11 @@ public class BrModelRenderer {
         tQ.rotationZYX(rotation.z, rotation.y, rotation.x);
         poseStack.mulPose(tQ);
 
-        m4.translate(renderPivot.negate(nPivot));
-
-        m4.translate(boneRenderInfoEntry.getRenderPosition());
-
         Vector3f scale = boneRenderInfoEntry.getRenderScala();
 
         poseStack.scale(scale.x, scale.y, scale.z);
+
+        m4.translate(renderPivot.negate(nPivot));
 
         visitor.visitBone(poseStack, bone, boneRenderInfoEntry, consumer, false);
 
