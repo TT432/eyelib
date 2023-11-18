@@ -11,7 +11,6 @@ import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.visitor.BrModelRenderVisitor;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -43,7 +42,7 @@ public class BrModelRenderer {
 
         Matrix4f m4 = poseStack.last().pose();
 
-        Vector3f renderPivot = boneRenderInfoEntry.getRenderPivot();
+        Vector3f renderPivot = bone.pivot();
 
         m4.translate(renderPivot);
 
@@ -53,6 +52,8 @@ public class BrModelRenderer {
         poseStack.mulPose(tQ);
 
         m4.translate(renderPivot.negate(nPivot));
+
+        m4.translate(boneRenderInfoEntry.getRenderPosition());
 
         Vector3f scale = boneRenderInfoEntry.getRenderScala();
 

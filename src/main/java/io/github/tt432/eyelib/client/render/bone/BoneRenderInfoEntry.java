@@ -15,19 +15,19 @@ public class BoneRenderInfoEntry {
     @NotNull
     Vector3f renderScala = new Vector3f(1);
     @NotNull
-    Vector3f renderPivot;
+    Vector3f renderPosition;
     @NotNull
     Vector3f renderRotation;
 
     public BoneRenderInfoEntry(BrBone bindBone) {
         this.bindBone = bindBone;
-        renderPivot = new Vector3f(bindBone.pivot());
+        renderPosition = new Vector3f();
         renderRotation = new Vector3f(bindBone.rotation());
     }
 
     public void resetRenderInfo() {
         renderScala.set(1);
-        renderPivot.set(bindBone.pivot());
+        renderPosition.set(0);
         renderRotation.set(bindBone.rotation());
     }
 }

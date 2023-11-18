@@ -11,6 +11,7 @@ import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.util.math.EyeMath;
 import io.github.tt432.eyelib.util.math.MathE;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -110,20 +111,17 @@ public class AnimationControllerSystem {
                 Vector3f p = boneAnim.lerpPosition(animTick);
 
                 if (p != null) {
-                    p.mul(multiplier);
+                    p.div(16).mul(multiplier);
 
-                    boneRenderInfoEntry.getRenderPivot().add(p);
+                    boneRenderInfoEntry.getRenderPosition().sub(p);
                 }
 
                 Vector3f r = boneAnim.lerpRotation(animTick);
 
                 if (r != null) {
-                    r.mul(multiplier);
+                    r.mul(multiplier).mul(EyeMath.DEGREES_TO_RADIANS);
 
-                    boneRenderInfoEntry.getRenderRotation().add(
-                            (float) -Math.toRadians(r.x),
-                            (float) -Math.toRadians(r.y),
-                            (float) Math.toRadians(r.z));
+                    boneRenderInfoEntry.getRenderRotation().add(-r.x, -r.y, r.z);
                 }
 
                 Vector3f s = boneAnim.lerpScale(animTick);
