@@ -5,10 +5,5 @@
     "animation": "eyelib:zombie.animation"
   },
   "model": "eyelib:zombie",
-  "textures": [
-    "eyelib:entity/green_zombie",
-    "eyelib:entity/grey_zombie",
-    "eyelib:entity/grey_zombie_short",
-    "eyelib:entity/white_zombie"
-  ]
+  "material": "eyelib:zombie.material"
 }

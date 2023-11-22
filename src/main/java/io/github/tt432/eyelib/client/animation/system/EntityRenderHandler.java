@@ -67,7 +67,7 @@ public class EntityRenderHandler {
                 PoseStack poseStack = event.getPoseStack();
                 var model = modelComponent.getModel();
 
-                RenderType renderType = RenderType.entitySolid(modelComponent.getTexture());
+                RenderType renderType = modelComponent.getRenderTypeFactory().apply(modelComponent.getTexture());
                 VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderType);
 
                 poseStack.pushPose();

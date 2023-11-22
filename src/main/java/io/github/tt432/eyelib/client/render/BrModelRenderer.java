@@ -23,11 +23,16 @@ public class BrModelRenderer {
     private static final Vector3f nPivot = new Vector3f();
     private static final Quaternionf tQ = new Quaternionf();
 
+    private static final float R180 = (float) Math.toRadians(180);
+
     public static void render(BrModel model, BoneRenderInfos infos, PoseStack poseStack, VertexConsumer consumer, BrModelRenderVisitor visitor) {
         poseStack.pushPose();
 
+        tQ.rotationZYX(0, R180, 0);
+        poseStack.mulPose(tQ);
+
         for (BrBone toplevelBone : model.toplevelBones()) {
-            renderBone(poseStack,visitor, infos, toplevelBone, consumer);
+            renderBone(poseStack, visitor, infos, toplevelBone, consumer);
         }
 
         poseStack.popPose();
@@ -69,7 +74,7 @@ public class BrModelRenderer {
             renderBone(poseStack, visitor, infos, child, consumer);
         }
 
-       poseStack.popPose();
+        poseStack.popPose();
     }
 
     private static void renderCube(PoseStack poseStack, BrModelRenderVisitor visitor, BrCube cube, VertexConsumer consumer) {

@@ -8,10 +8,12 @@ import io.github.tt432.eyelib.client.loader.BrAnimationLoader;
 import io.github.tt432.eyelib.client.loader.BrModelLoader;
 import io.github.tt432.eyelib.client.loader.ModelReplacerLoader;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
+import io.github.tt432.eyelib.client.model.bedrock.material.ModelMaterial;
 import io.github.tt432.eyelib.client.render.visitor.BlankEntityModelRenderVisit;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
@@ -20,6 +22,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Random;
+import java.util.function.Function;
 
 /**
  * @author TT432
@@ -45,16 +48,22 @@ public class RenderDefineApplyHandler {
                 return;
             }
 
-            ResourceLocation[] textures = renderDefine.getTextures();
+            ModelMaterial material = BrModelLoader.getMaterial(renderDefine.getMaterial());
 
-            if (textures.length == 0) {
+            if (material == null) {
                 return;
             }
 
             modelComponent.setModel(model);
-            ResourceLocation texture = textures[new Random(entity.getId()).nextInt(textures.length)];
+            ResourceLocation texture = material.textures()[new Random(entity.getId()).nextInt(material.textures().length)];
             modelComponent.setTexture(new ResourceLocation(texture.getNamespace(),
                     "textures/" + texture.getPath() + ".png"));
+            // TODO 补充更多的 renderType，或者找到一个检索的办法
+            Function<ResourceLocation, RenderType> renderTypeFactory = switch (material.renderType().toString()) {
+                case "minecraft:cutout" -> textureIn -> RenderType.entityCutout(textureIn);
+                default -> textureIn -> RenderType.entitySolid(textureIn);// "minecraft:solid"
+            };
+            modelComponent.setRenderTypeFactory(renderTypeFactory);
             modelComponent.setVisitor(new BlankEntityModelRenderVisit());
 
             String animation = renderDefine.getAnimationControllerEntry().animation();

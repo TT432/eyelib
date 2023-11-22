@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.loader;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
+import io.github.tt432.eyelib.client.model.bedrock.material.ModelMaterial;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
@@ -28,9 +29,14 @@ public class BrModelLoader extends SimpleJsonResourceReloadListener {
     }
 
     private final Map<ResourceLocation, BrModel> models = new HashMap<>();
+    private final Map<ResourceLocation, ModelMaterial> materials = new HashMap<>();
 
     public static BrModel getModel(ResourceLocation location) {
         return INSTANCE.models.get(location);
+    }
+
+    public static ModelMaterial getMaterial(ResourceLocation location) {
+        return INSTANCE.materials.get(location);
     }
 
     private BrModelLoader(Gson pGson, String pDirectory) {
@@ -42,7 +48,13 @@ public class BrModelLoader extends SimpleJsonResourceReloadListener {
         models.clear();
 
         for (Map.Entry<ResourceLocation, JsonElement> entry : pObject.entrySet()) {
-            models.put(entry.getKey(), BrModel.parse(entry.getKey().toString(), entry.getValue().getAsJsonObject()));
+            ResourceLocation key = entry.getKey();
+
+            if (key.getPath().endsWith("material")) {
+                materials.put(key, ModelMaterial.parse(entry.getValue().getAsJsonObject()));
+            } else {
+                models.put(key, BrModel.parse(key.toString(), entry.getValue().getAsJsonObject()));
+            }
         }
     }
 }

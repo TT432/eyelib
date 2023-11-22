@@ -56,7 +56,10 @@ public class GlobalMolangVariable {
     }
 
     public static void living() {
-        setVariable("query.is_stalking", s -> livingBool(s, living -> living instanceof Mob mob && mob.isAggressive()));
+        setVariable("query.is_stalking", s -> castBool(s, Mob.class, Mob::isAggressive));
+        setVariable("query.is_attaking", s -> s.get("query.attack_time") > 0 ? MolangValue.TRUE : MolangValue.FALSE);
+        setVariable("query.attack_time", s -> livingDouble(s, living -> living.getAttackAnim(s.get("query.partial_tick"))));
+
         setVariable("query.has_helmet", s -> livingBool(s, living -> !living.getItemBySlot(EquipmentSlot.HEAD).isEmpty()));
         setVariable("query.has_chestplate", s -> livingBool(s, living -> !living.getItemBySlot(EquipmentSlot.CHEST).isEmpty()));
         setVariable("query.has_leggings", s -> livingBool(s, living -> !living.getItemBySlot(EquipmentSlot.LEGS).isEmpty()));
@@ -123,6 +126,20 @@ public class GlobalMolangVariable {
 
     private static Float livingDouble(MolangScope s, Function<LivingEntity, Float> mapper) {
         return s.owner.getOwner() instanceof LivingEntity e ? mapper.apply(e) : 0;
+    }
+
+    private static <T> float castBool(MolangScope s, Class<T> tClass, Function<T, Boolean> mapper) {
+        Object owner = s.owner.getOwner();
+
+        return tClass.isInstance(owner)
+                ? mapper.apply(tClass.cast(owner)) ? MolangValue.TRUE : MolangValue.FALSE
+                : MolangValue.FALSE;
+    }
+
+    private static <T> Float castDouble(MolangScope s, Class<T> tClass, Function<T, Float> mapper) {
+        Object owner = s.owner.getOwner();
+
+        return tClass.isInstance(owner) ? mapper.apply(tClass.cast(owner)) : 0;
     }
 
     public static MolangVariable get(String var) {
