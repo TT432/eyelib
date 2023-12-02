@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.client.model.bedrock.BrBone;
 import io.github.tt432.eyelib.client.model.bedrock.BrCube;
 import io.github.tt432.eyelib.client.model.bedrock.BrFace;
+import io.github.tt432.eyelib.client.model.bedrock.BrLocator;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 
 /**
@@ -28,4 +29,7 @@ public class BrModelRenderVisitor {
 
     }
 
+    public void visitLocator(PoseStack poseStack, BrBone bone, String name, BrLocator locator, BoneRenderInfoEntry boneRenderInfoEntry, VertexConsumer consumer) {
+
+    }
 }

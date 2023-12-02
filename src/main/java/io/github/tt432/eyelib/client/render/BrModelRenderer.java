@@ -66,6 +66,9 @@ public class BrModelRenderer {
 
         visitor.visitBone(poseStack, bone, boneRenderInfoEntry, consumer, false);
 
+        bone.locators().forEach((name, locator)->
+                visitor.visitLocator(poseStack, bone, name, locator, boneRenderInfoEntry, consumer));
+
         for (BrCube cube : bone.cubes()) {
             renderCube(poseStack, visitor, cube, consumer);
         }
