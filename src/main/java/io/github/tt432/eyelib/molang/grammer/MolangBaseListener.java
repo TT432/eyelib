@@ -1,4 +1,4 @@
-// Generated from Molang.g4 by ANTLR 4.9.1
+// Generated from Molang.g4 by ANTLR 4.13.1
  package io.github.tt432.eyelib.molang.grammer;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -10,6 +10,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
  * which can be extended to create a listener which only needs to handle a subset
  * of the available methods.
  */
+@SuppressWarnings("CheckReturnValue")
 public class MolangBaseListener implements MolangListener {
 	/**
 	 * {@inheritDoc}

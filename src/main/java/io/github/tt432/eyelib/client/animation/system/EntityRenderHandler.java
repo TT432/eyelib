@@ -12,13 +12,13 @@ import io.github.tt432.eyelib.util.QuickAccessEntityList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.client.event.RenderLivingEvent;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.RenderLivingEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.TickEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
 /**
  * @author TT432
@@ -34,7 +34,7 @@ public class EntityRenderHandler {
     public static void onEvent(EntityJoinLevelEvent event) {
         event.getEntity().getCapability(AnimatableCapability.CAPABILITY).ifPresent(cap -> {
             entities.add(cap);
-            MinecraftForge.EVENT_BUS.post(new InitComponentEvent(event.getEntity(), cap));
+            NeoForge.EVENT_BUS.post(new InitComponentEvent(event.getEntity(), cap));
         });
     }
 
@@ -53,7 +53,7 @@ public class EntityRenderHandler {
     }
 
     @SubscribeEvent
-    public static void onEvent(RenderLivingEvent event) {
+    public static void onEvent(RenderLivingEvent.Pre event) {
         LivingEntity entity = event.getEntity();
         entity.getCapability(AnimatableCapability.CAPABILITY).ifPresent(cap -> {
             ModelComponent modelComponent = cap.getModelComponent();

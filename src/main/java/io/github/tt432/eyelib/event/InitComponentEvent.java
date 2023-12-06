@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.event;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.bus.api.Event;
 
 /**
  * @author TT432

@@ -3,8 +3,8 @@ package io.github.tt432.eyelib.molang;
 import io.github.tt432.eyelib.molang.function.MolangFunction;
 import io.github.tt432.eyelib.molang.function.MolangFunctionHolder;
 import lombok.extern.slf4j.Slf4j;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.forgespi.language.ModFileScanData;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforgespi.language.ModFileScanData;
 import org.objectweb.asm.Type;
 
 import java.util.HashMap;
