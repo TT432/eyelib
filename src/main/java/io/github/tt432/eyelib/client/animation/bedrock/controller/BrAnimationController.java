@@ -74,11 +74,11 @@ public record BrAnimationController(
             }
         }
 
-        if (!(animCtrlEntryJson.get("initial_state") instanceof JsonPrimitive isj)) {
-            throw new JsonParseException((EXCEPTION + "The file don't have field 'initial_state'").formatted(jsonName));
+        if (animCtrlEntryJson.get("initial_state") instanceof JsonPrimitive isj) {
+            initialState = states.get(isj.getAsString());
+        } else {
+            initialState = states.get("default");
         }
-
-        initialState = states.get(isj.getAsString());
 
         return new BrAnimationController(name, initialState, states, scope);
     }
