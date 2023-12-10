@@ -10,6 +10,7 @@ import net.minecraft.core.Direction;
 import org.joml.*;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author TT432
@@ -56,6 +57,10 @@ public record BrCube(
             boolean mirror = jsonObject.get("mirror") instanceof JsonPrimitive jp && jp.getAsBoolean();
 
             if (mirror) {
+                for (Pair<Vector2f, Vector2f> face : List.of(up, down, west, north, east, south)) {
+                    face.left().x += face.right().x;
+                    face.right().x *= -1;
+                }
                 var t = west;
                 west = east;
                 east = t;
@@ -129,7 +134,7 @@ public record BrCube(
 
         Vector3f[][] faces = new Vector3f[][]{
                 {corners[6], corners[2], corners[3], corners[7],},
-                {corners[0], corners[1], corners[5], corners[4],},
+                {corners[5], corners[1], corners[0], corners[4],},
                 {corners[3], corners[0], corners[4], corners[7],},
                 {corners[2], corners[1], corners[0], corners[3],},
                 {corners[6], corners[5], corners[1], corners[2],},
