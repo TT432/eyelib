@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.render;
+package io.github.tt432.eyelib.client.render.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -66,7 +66,7 @@ public class BrModelRenderer {
 
         visitor.visitBone(poseStack, bone, boneRenderInfoEntry, consumer, false);
 
-        bone.locators().forEach((name, locator)->
+        bone.locators().forEach((name, locator) ->
                 visitor.visitLocator(poseStack, bone, name, locator, boneRenderInfoEntry, consumer));
 
         for (BrCube cube : bone.cubes()) {

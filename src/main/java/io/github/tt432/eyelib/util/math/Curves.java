@@ -11,8 +11,9 @@ import java.util.List;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Curves {
+    private static final Vector2f tempResult = new Vector2f();
+
     public static Vector2f lerpSplineCurve(List<Vector2f> points, float time) {
-        Vector2f result = new Vector2f();
         double p = (points.size() - 1) * time;
 
         int intPoint = (int) Math.floor(p);
@@ -23,12 +24,10 @@ public class Curves {
         Vector2f p2 = points.get(intPoint > points.size() - 2 ? points.size() - 1 : intPoint + 1);
         Vector2f p3 = points.get(intPoint > points.size() - 3 ? points.size() - 1 : intPoint + 2);
 
-        result.set(
+        return tempResult.set(
                 catmullRom(weight, p0.x(), p1.x(), p2.x(), p3.x()),
                 catmullRom(weight, p0.y(), p1.y(), p2.y(), p3.y())
         );
-
-        return result;
     }
 
     private static double catmullRom(double t, double p0, double p1, double p2, double p3) {

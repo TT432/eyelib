@@ -6,11 +6,11 @@ import com.google.gson.JsonParseException;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.util.MolangValue3;
-import io.github.tt432.eyelib.util.math.Axis;
 import io.github.tt432.eyelib.util.math.Curves;
 import io.github.tt432.eyelib.util.math.MathE;
 import net.minecraft.util.Mth;
 import org.joml.Vector2f;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,6 +38,12 @@ public record BrBoneKeyFrame(
         return timestamp;
     }
 
+    private static final List<Vector2f> catmullromArray = new ArrayList<>();
+    private static final Vector2f cTempP1 = new Vector2f();
+    private static final Vector2f cTempP2 = new Vector2f();
+    private static final Vector2f cTempP3 = new Vector2f();
+    private static final Vector2f cTempP4 = new Vector2f();
+
     /**
      * 平滑插值
      *
@@ -45,64 +51,111 @@ public record BrBoneKeyFrame(
      * @param before     p1
      * @param after      p2
      * @param afterPlus  p3
-     * @param axis       轴
      * @param weight     weight
      * @return 值
      */
-    public static float catmullromLerp(BrBoneKeyFrame beforePlus,
-                                       BrBoneKeyFrame before,
-                                       BrBoneKeyFrame after,
-                                       BrBoneKeyFrame afterPlus,
-                                       Axis axis, float weight) {
-        List<Vector2f> vectors = new ArrayList<>();
+    public static Vector3f catmullromLerp(BrBoneKeyFrame beforePlus,
+                                          BrBoneKeyFrame before,
+                                          BrBoneKeyFrame after,
+                                          BrBoneKeyFrame afterPlus,
+                                          float weight,
+                                          Vector3f result) {
+        catmullromArray.clear();
 
-        if (beforePlus != null && before.dataPoints.length == 1)
-            vectors.add(new Vector2f(beforePlus.getTick(), beforePlus.get(axis, 1)));
+        boolean firstPointPredicate = beforePlus != null && before.dataPoints.length == 1;
+        boolean lastPointPredicate = afterPlus != null && after.dataPoints.length == 1;
 
-        vectors.add(new Vector2f(before.getTick(), before.get(axis, 1)));
+        if (firstPointPredicate)
+            catmullromArray.add(cTempP1.set(beforePlus.getTick(), beforePlus.get(1).getX()));
 
-        vectors.add(new Vector2f(after.getTick(), after.get(axis, 0)));
+        catmullromArray.add(cTempP2.set(before.getTick(), before.get(1).getX()));
 
-        if (afterPlus != null && after.dataPoints.length == 1)
-            vectors.add(new Vector2f(afterPlus.getTick(), afterPlus.get(axis, 0)));
+        catmullromArray.add(cTempP3.set(after.getTick(), after.get(0).getX()));
 
-        float time = (weight + (beforePlus != null ? 1 : 0)) / (vectors.size() - 1);
+        if (lastPointPredicate)
+            catmullromArray.add(cTempP4.set(afterPlus.getTick(), afterPlus.get(0).getX()));
 
-        return Curves.lerpSplineCurve(vectors, time).y;
+        float time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
+
+        var x = Curves.lerpSplineCurve(catmullromArray, time).y;
+
+        catmullromArray.clear();
+
+        if (firstPointPredicate)
+            catmullromArray.add(cTempP1.set(beforePlus.getTick(), beforePlus.get(1).getY()));
+
+        catmullromArray.add(cTempP2.set(before.getTick(), before.get(1).getY()));
+
+        catmullromArray.add(cTempP3.set(after.getTick(), after.get(0).getY()));
+
+        if (lastPointPredicate)
+            catmullromArray.add(cTempP4.set(afterPlus.getTick(), afterPlus.get(0).getY()));
+
+        time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
+
+        var y = Curves.lerpSplineCurve(catmullromArray, time).y;
+
+        catmullromArray.clear();
+
+        if (firstPointPredicate)
+            catmullromArray.add(cTempP1.set(beforePlus.getTick(), beforePlus.get(1).getZ()));
+
+        catmullromArray.add(cTempP2.set(before.getTick(), before.get(1).getZ()));
+
+        catmullromArray.add(cTempP3.set(after.getTick(), after.get(0).getZ()));
+
+        if (lastPointPredicate)
+            catmullromArray.add(cTempP4.set(afterPlus.getTick(), afterPlus.get(0).getZ()));
+
+        time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
+
+        var z = Curves.lerpSplineCurve(catmullromArray, time).y;
+
+        return result.set(x, y, z);
     }
 
     /**
      * 线性插值
      *
      * @param other  另一个关键帧
-     * @param axis   轴
      * @param weight 权重
      * @return 值
      */
-    public float linearLerp(BrBoneKeyFrame other, Axis axis, float weight) {
+    public Vector3f linearLerp(BrBoneKeyFrame other, Vector3f result, float weight) {
         var aDataPoint = this.dataPoints.length > 1 && getTick() < other.getTick() ? 1 : 0;
         var bDataPoint = other.dataPoints.length > 1 && getTick() > other.getTick() ? 1 : 0;
 
-        if (this.get(axis, aDataPoint) == other.get(axis, bDataPoint)) {
-            return this.get(axis, aDataPoint);
-        } else {
-            return MathE.lerp(this.get(axis, aDataPoint), other.get(axis, bDataPoint), weight);
-        }
+        MolangValue3 am3 = get(aDataPoint);
+        MolangValue3 bm3 = get(bDataPoint);
+
+        float ax = am3.getX();
+        float bx = bm3.getX();
+
+        float ay = am3.getY();
+        float by = bm3.getY();
+
+        float az = am3.getZ();
+        float bz = bm3.getZ();
+
+        return result.set(
+                ax == bx ? ax : MathE.lerp(ax, bx, weight),
+                ay == by ? ay : MathE.lerp(ay, by, weight),
+                az == bz ? az : MathE.lerp(az, bz, weight)
+        );
     }
 
     /**
      * 获取对应数据点的对应轴的指定索引的值
      *
-     * @param axis      轴
      * @param dataPoint 索引
      * @return 值
      */
-    public float get(Axis axis, int dataPoint) {
+    public MolangValue3 get(int dataPoint) {
         if (dataPoint != 0) {
             dataPoint = Mth.clamp(dataPoint, 0, dataPoints.length - 1);
         }
 
-        return dataPoints[dataPoint].get(axis);
+        return dataPoints[dataPoint];
     }
 
     public static BrBoneKeyFrame parse(MolangScope scope, float timestamp, JsonElement json) throws JsonParseException {

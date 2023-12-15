@@ -5,7 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.capability.AnimatableCapability;
 import io.github.tt432.eyelib.client.ClientTickHandler;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
-import io.github.tt432.eyelib.client.render.BrModelRenderer;
+import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
 import io.github.tt432.eyelib.client.render.visitor.BrModelRenderVisitor;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.util.QuickAccessEntityList;

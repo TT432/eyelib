@@ -4,13 +4,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.util.math.Axis;
+import io.github.tt432.eyelib.molang.util.MolangValue3;
 import io.github.tt432.eyelib.util.math.MathE;
 import org.joml.Vector3f;
 
 import java.util.Comparator;
 import java.util.TreeMap;
-import java.util.function.Function;
 
 /**
  * if rotation_global
@@ -39,11 +38,10 @@ public record BrBoneAnimation(
         return new BrBoneAnimation(copiedRotation, copiedPosition, copiedScale);
     }
 
-    private static class Ref {
-        BrBoneKeyFrame before = null;
-        BrBoneKeyFrame after = null;
-        BrBoneKeyFrame result = null;
-    }
+    private static BrBoneKeyFrame before = null;
+    private static BrBoneKeyFrame after = null;
+    private static BrBoneKeyFrame result = null;
+    private static final Vector3f tempResult = new Vector3f();
 
     public Vector3f lerpRotation(float currentTick) {
         return lerp(rotation, currentTick);
@@ -73,66 +71,61 @@ public record BrBoneAnimation(
      * @return 值
      */
     public static Vector3f lerp(TreeMap<Float, BrBoneKeyFrame> frames, float currentTick) {
-        var ref = new Ref();
+        before = null;
+        after = null;
+        result = null;
+
         double epsilon = 1D / 1200D;
 
         var floorEntry = frames.floorEntry(currentTick);
 
         if (floorEntry != null) {
-            ref.before = floorEntry.getValue();
+            before = floorEntry.getValue();
         }
 
         var higherEntry = frames.higherEntry(currentTick);
 
         if (higherEntry != null) {
-            ref.after = higherEntry.getValue();
+            after = higherEntry.getValue();
         }
 
-        boolean isBeforeTime = ref.before != null && MathE.epsilon(ref.before.getTick(), currentTick, epsilon);
-        boolean isAfterTime = ref.after != null && MathE.epsilon(ref.after.getTick(), currentTick, epsilon);
-        boolean onlyBefore = ref.before != null && ref.after == null;
-        boolean onlyAfter = ref.after != null && ref.before == null;
+        boolean isBeforeTime = before != null && MathE.epsilon(before.getTick(), currentTick, epsilon);
+        boolean isAfterTime = after != null && MathE.epsilon(after.getTick(), currentTick, epsilon);
+        boolean onlyBefore = before != null && after == null;
+        boolean onlyAfter = after != null && before == null;
 
         if (isBeforeTime || (!isAfterTime && onlyBefore)) {
-            ref.result = ref.before;
+            result = before;
         } else if (isAfterTime || onlyAfter) {
-            ref.result = ref.after;
-        } else if (ref.after != null) {
+            result = after;
+        } else if (after != null) {
             assert floorEntry != null;
             assert higherEntry != null;
 
-            var weight = MathE.getWeight(ref.before.getTick(), ref.after.getTick(), currentTick);
+            var weight = MathE.getWeight(before.getTick(), after.getTick(), currentTick);
 
-            if (ref.before.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR && ref.after.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR) {
-                return mapAxes(axis -> ref.before.linearLerp(ref.after, axis, weight));
-            } else if (ref.before.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM || ref.after.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM) {
+            if (before.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR && after.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR) {
+                return before.linearLerp(after, tempResult, weight);
+            } else if (before.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM || after.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM) {
                 var beforePlus = frames.lowerEntry(floorEntry.getKey());
                 var afterPlus = frames.higherEntry(higherEntry.getKey());
 
-                return mapAxes(axis -> BrBoneKeyFrame.catmullromLerp(
+                return BrBoneKeyFrame.catmullromLerp(
                         beforePlus != null ? beforePlus.getValue() : null,
-                        ref.before, ref.after,
+                        before, after,
                         afterPlus != null ? afterPlus.getValue() : null,
-                        axis, weight));
+                        weight, tempResult);
             }
         }
 
-        if (ref.result != null) {
-            var index = ref.result.getTick() > currentTick ||
-                    MathE.epsilon(ref.result.getTick(), currentTick, epsilon) ? 0 : ref.result.dataPoints().length - 1;
+        if (result != null) {
+            MolangValue3 m3 = result.get(result.getTick() > currentTick ||
+                    MathE.epsilon(result.getTick(), currentTick, epsilon) ? 0 : result.dataPoints().length - 1);
 
-            return mapAxes(axis -> ref.result.get(axis, index));
+            return tempResult.set(m3.getX(), m3.getY(), m3.getZ());
         }
 
         return null;
-    }
-
-    public static Vector3f mapAxes(Function<Axis, Float> func) {
-        return new Vector3f(
-                func.apply(Axis.X),
-                func.apply(Axis.Y),
-                func.apply(Axis.Z)
-        );
     }
 
     public static BrBoneAnimation parse(MolangScope scope, JsonElement json) throws JsonParseException {

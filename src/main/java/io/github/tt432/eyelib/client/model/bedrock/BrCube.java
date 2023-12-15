@@ -47,12 +47,12 @@ public record BrCube(
             int uvSizeY = (int) size.y;
             int uvSizeZ = (int) size.z;
 
-            up = Pair.of(new Vector2f(uv.x + uvSizeZ, uv.y), new Vector2f(uvSizeX, uvSizeZ));
-            down = Pair.of(new Vector2f(uv.x + uvSizeX + uvSizeZ, uv.y), new Vector2f(uvSizeX, uvSizeZ));
-            west = Pair.of(new Vector2f(uv.x, uv.y + uvSizeZ), new Vector2f(uvSizeZ, uvSizeY));
-            north = Pair.of(new Vector2f(uv.x + uvSizeZ, uv.y + uvSizeZ), new Vector2f(uvSizeX, uvSizeY));
-            east = Pair.of(new Vector2f(uv.x + uvSizeZ + uvSizeX, uv.y + uvSizeZ), new Vector2f(uvSizeZ, uvSizeY));
-            south = Pair.of(new Vector2f(uv.x + uvSizeZ + uvSizeX + uvSizeZ, uv.y + uvSizeZ), new Vector2f(uvSizeX, uvSizeY));
+            up =    Pair.of(new Vector2f(uv.x + uvSizeZ, uv.y                                   ), new Vector2f(uvSizeX, uvSizeZ));
+            down =  Pair.of(new Vector2f(uv.x + uvSizeX + uvSizeZ, uv.y                         ), new Vector2f(uvSizeX, uvSizeZ));
+            west =  Pair.of(new Vector2f(uv.x, uv.y + uvSizeZ                                       ), new Vector2f(uvSizeZ, uvSizeY));
+            north = Pair.of(new Vector2f(uv.x + uvSizeZ, uv.y + uvSizeZ                     ), new Vector2f(uvSizeX, uvSizeY));
+            east =  Pair.of(new Vector2f(uv.x + uvSizeZ + uvSizeX, uv.y + uvSizeZ           ), new Vector2f(uvSizeZ, uvSizeY));
+            south = Pair.of(new Vector2f(uv.x + uvSizeZ + uvSizeX + uvSizeZ, uv.y + uvSizeZ ), new Vector2f(uvSizeX, uvSizeY));
 
             boolean mirror = jsonObject.get("mirror") instanceof JsonPrimitive jp && jp.getAsBoolean();
 
