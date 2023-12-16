@@ -29,15 +29,8 @@ public class MathE {
     /**
      * 判断 a 和 b 的差是否在某个区间
      */
-    public static boolean epsilon(double a, double b, double epsilon) {
+    public static boolean epsilon(float a, float b, float epsilon) {
         return Math.abs(b - a) < epsilon;
-    }
-
-    /**
-     * @see MathE#epsilon(double, double, double)
-     */
-    public static boolean epsilon(double a, double b) {
-        return epsilon(a, b, 0.001);
     }
 
     public static double limitNumber(double num, double min, double max) {

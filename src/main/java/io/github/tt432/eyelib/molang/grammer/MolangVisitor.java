@@ -24,13 +24,6 @@ public interface MolangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitTernaryConditionalOperator(MolangParser.TernaryConditionalOperatorContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code orOperator}
-	 * labeled alternative in {@link MolangParser#expr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitOrOperator(MolangParser.OrOperatorContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code singleSignedAtom}
 	 * labeled alternative in {@link MolangParser#expr}.
 	 * @param ctx the parse tree
@@ -73,19 +66,19 @@ public interface MolangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNeExpr(MolangParser.NeExprContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code andOperator}
-	 * labeled alternative in {@link MolangParser#expr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAndOperator(MolangParser.AndOperatorContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code returnOperator}
 	 * labeled alternative in {@link MolangParser#expr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitReturnOperator(MolangParser.ReturnOperatorContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code logicOperator}
+	 * labeled alternative in {@link MolangParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLogicOperator(MolangParser.LogicOperatorContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code binaryConditionalOperator}
 	 * labeled alternative in {@link MolangParser#expr}.
@@ -101,57 +94,37 @@ public interface MolangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitEqualsOperator(MolangParser.EqualsOperatorContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MolangParser#funcParam}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFuncParam(MolangParser.FuncParamContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MolangParser#signedAtom}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitSignedAtom(MolangParser.SignedAtomContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MolangParser#atom}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAtom(MolangParser.AtomContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MolangParser#scientific}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitScientific(MolangParser.ScientificContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MolangParser#function}.
+	 * Visit a parse tree produced by the {@code function}
+	 * labeled alternative in {@link MolangParser#atom}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitFunction(MolangParser.FunctionContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MolangParser#variable}.
+	 * Visit a parse tree produced by the {@code variable}
+	 * labeled alternative in {@link MolangParser#atom}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitVariable(MolangParser.VariableContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MolangParser#funcname}.
+	 * Visit a parse tree produced by the {@code number}
+	 * labeled alternative in {@link MolangParser#atom}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitFuncname(MolangParser.FuncnameContext ctx);
+	T visitNumber(MolangParser.NumberContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MolangParser#string}.
+	 * Visit a parse tree produced by the {@code parenthesesPrecedence}
+	 * labeled alternative in {@link MolangParser#atom}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitString(MolangParser.StringContext ctx);
+	T visitParenthesesPrecedence(MolangParser.ParenthesesPrecedenceContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MolangParser#assignment}.
+	 * Visit a parse tree produced by {@link MolangParser#funcParam}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitAssignment(MolangParser.AssignmentContext ctx);
+	T visitFuncParam(MolangParser.FuncParamContext ctx);
 }

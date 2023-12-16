@@ -31,7 +31,7 @@ public class BlankEntityModelRenderVisit extends BrModelRenderVisitor {
 
         PoseStack.Pose last = poseStack.last();
 
-        last.pose().transform(vertex.x, vertex.y, vertex.z, 1, tPosition);
+        last.pose().transformAffine(vertex.x, vertex.y, vertex.z, 1, tPosition);
         last.normal().transform(normal, tNormal);
 
         consumer.vertex(tPosition.x, tPosition.y, tPosition.z,

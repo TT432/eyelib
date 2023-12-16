@@ -77,7 +77,7 @@ public record BrBoneKeyFrame(
 
         float time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
 
-        var x = Curves.lerpSplineCurve(catmullromArray, time).y;
+        var x = Curves.lerpSplineCurve(catmullromArray, time);
 
         catmullromArray.clear();
 
@@ -93,7 +93,7 @@ public record BrBoneKeyFrame(
 
         time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
 
-        var y = Curves.lerpSplineCurve(catmullromArray, time).y;
+        var y = Curves.lerpSplineCurve(catmullromArray, time);
 
         catmullromArray.clear();
 
@@ -109,7 +109,7 @@ public record BrBoneKeyFrame(
 
         time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
 
-        var z = Curves.lerpSplineCurve(catmullromArray, time).y;
+        var z = Curves.lerpSplineCurve(catmullromArray, time);
 
         return result.set(x, y, z);
     }
