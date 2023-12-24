@@ -76,9 +76,7 @@ public class QuickAccessEntityList<I extends IdentifiableObject> implements Coll
 
             @Override
             public void remove() {
-                I item = it.next();
-                it.remove();
-                idToIdxMap.remove(item.id());
+                throw new UnsupportedOperationException("QuickAccessEntityList's iterator can't use remove()");
             }
         };
     }

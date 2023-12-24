@@ -11,6 +11,7 @@ import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.util.QuickAccessEntityList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
@@ -18,7 +19,9 @@ import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.TickEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author TT432
@@ -29,6 +32,7 @@ public class EntityRenderHandler {
     private static final AnimationControllerSystem controllerSystem = new AnimationControllerSystem();
 
     public static final QuickAccessEntityList<AnimatableCapability<?>> entities = new QuickAccessEntityList<>();
+    private static final List<AnimatableCapability<?>> readyToRemove = new ArrayList<>();
 
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
@@ -39,17 +43,28 @@ public class EntityRenderHandler {
     }
 
     @SubscribeEvent
-    public static void onEvent(LivingDeathEvent event) {
-        event.getEntity().getCapability(AnimatableCapability.CAPABILITY).ifPresent(entities::remove);
-    }
-
-    @SubscribeEvent
     public static void onEvent(TickEvent.RenderTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
+            removeRemovedEntity();
+
             float ticks = ClientTickHandler.getTick();
             system.update(ticks);
             controllerSystem.update(ticks);
         }
+    }
+
+    private static void removeRemovedEntity() {
+        for (AnimatableCapability<?> entity : entities) {
+            if (entity.getOwner() instanceof Entity le && le.isRemoved()) {
+                readyToRemove.add(entity);
+            }
+        }
+
+        for (AnimatableCapability<?> animatableCapability : readyToRemove) {
+            entities.remove(animatableCapability);
+        }
+
+        readyToRemove.clear();
     }
 
     @SubscribeEvent

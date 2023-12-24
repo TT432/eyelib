@@ -102,6 +102,7 @@ public class GlobalMolangVariable {
                 -Mth.lerp(s.get("query.partial_tick"), living.xRotO, living.getXRot())));
 
         setVariable("query.baby", s -> livingBool(s, LivingEntity::isBaby));
+        setVariable("query.is_baby", s -> livingBool(s, LivingEntity::isBaby));
     }
 
     static void setVariable(String var, Function<MolangScope, Float> mapper) {
