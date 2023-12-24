@@ -86,14 +86,18 @@ public class AnimationControllerSystem {
             BrAnimationEntry animation = targetAnimations.get(animName);
             float multiplier = animation.blendWeight().eval() * animEntry.getValue();
 
-            float animTick = switch (animation.loop()) {
-                case HOLD_ON_LAST_FRAME -> startedTime;
-                case LOOP -> startedTime % animation.animationLength();
-                case ONCE -> startedTime > animation.animationLength() ? -1 : startedTime;
-            };
+            float animTick = startedTime;
 
-            if (animTick < 0) {
-                continue;
+            if (startedTime > animation.animationLength() && animation.animationLength() > 0) {
+                switch (animation.loop()) {
+                    case LOOP -> animTick = startedTime % animation.animationLength();
+                    case ONCE -> {
+                        continue;
+                    }
+                    default -> {
+                        // no
+                    }
+                }
             }
 
             for (Map.Entry<String, BrBoneAnimation> stringBrBoneAnimationEntry : animation.bones().entrySet()) {

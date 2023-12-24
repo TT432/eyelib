@@ -126,7 +126,7 @@ public record BrBoneKeyFrame(
         var bDataPoint = other.dataPoints.length > 1 && getTick() > other.getTick() ? 1 : 0;
 
         MolangValue3 am3 = get(aDataPoint);
-        MolangValue3 bm3 = get(bDataPoint);
+        MolangValue3 bm3 = other.get(bDataPoint);
 
         float ax = am3.getX();
         float bx = bm3.getX();

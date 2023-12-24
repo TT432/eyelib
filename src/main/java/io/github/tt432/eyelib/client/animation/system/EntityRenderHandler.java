@@ -47,7 +47,7 @@ public class EntityRenderHandler {
         if (event.phase == TickEvent.Phase.END) {
             removeRemovedEntity();
 
-            float ticks = ClientTickHandler.getTick();
+            float ticks = ClientTickHandler.getTick() + event.renderTickTime;
             system.update(ticks);
             controllerSystem.update(ticks);
         }
