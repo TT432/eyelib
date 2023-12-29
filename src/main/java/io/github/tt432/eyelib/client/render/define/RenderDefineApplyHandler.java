@@ -1,6 +1,8 @@
 package io.github.tt432.eyelib.client.render.define;
 
 import io.github.tt432.eyelib.capability.AnimatableCapability;
+import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
+import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
 import io.github.tt432.eyelib.client.animation.component.AnimationControllerComponent;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import io.github.tt432.eyelib.client.loader.BrAnimationControllerLoader;
@@ -66,14 +68,29 @@ public class RenderDefineApplyHandler {
             modelComponent.setRenderTypeFactory(renderTypeFactory);
             modelComponent.setVisitor(new BlankEntityModelRenderVisit());
 
-            String animation = renderDefine.getAnimationControllerEntry().animation();
-            String name = renderDefine.getAnimationControllerEntry().name();
+            AnimationControllerComponent animComponent = capability.getAnimationControllerComponent();
+            int length = renderDefine.getAnimationControllerEntry().length;
 
-            if (!animation.isBlank() && !name.isBlank()) {
-                AnimationControllerComponent animComponent = capability.getAnimationControllerComponent();
-                animComponent.setAnimationController(BrAnimationControllerLoader.getController(new ResourceLocation(name)).copy(capability));
-                animComponent.setTargetAnimation(BrAnimationLoader.getAnimation(new ResourceLocation(animation)).copy(capability));
+            BrAnimationController[] controllers = new BrAnimationController[length];
+            BrAnimation[] targetAnimations = new BrAnimation[length];
+
+            for (int i = 0; i < length; i++) {
+                RDAnimationControllerEntry entry = renderDefine.getAnimationControllerEntry()[i];
+                String animationName = entry.animation();
+                String name = entry.name();
+
+                if (!animationName.isBlank() && !name.isBlank()) {
+                    BrAnimationController controller = BrAnimationControllerLoader.getController(new ResourceLocation(name));
+                    BrAnimation animation = BrAnimationLoader.getAnimation(new ResourceLocation(animationName));
+
+                    if (controller != null && animation != null) {
+                        controllers[i] = controller.copy(capability);
+                        targetAnimations[i] = animation.copy(capability);
+                    }
+                }
             }
+
+            animComponent.setup(controllers, targetAnimations);
         }
     }
 }

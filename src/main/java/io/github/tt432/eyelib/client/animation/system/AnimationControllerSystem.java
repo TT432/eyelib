@@ -26,57 +26,67 @@ public class AnimationControllerSystem {
     public void update(float ticks) {
         for (var entity : EntityRenderHandler.entities) {
             AnimationControllerComponent component = entity.getAnimationControllerComponent();
-            BrAnimationController animationController = component.getAnimationController();
 
-            ModelComponent modelComponent = entity.getModelComponent();
-            BrModel model = modelComponent.getModel();
-
-            if (model == null || animationController == null || component.getTargetAnimation() == null)
+            if (component.getAnimationController() == null) {
                 continue;
-
-            if (component.getCurrState() == null) {
-                switchState(ticks, component, animationController.initialState());
             }
 
-            Map<String, MolangValue> transitions = component.getCurrState().transitions();
+            for (int i = 0; i < component.getAnimationController().length; i++) {
+                BrAnimationController animationController = component.getAnimationController()[i];
 
-            for (Map.Entry<String, MolangValue> stringMolangValueEntry : transitions.entrySet()) {
-                String stateName = stringMolangValueEntry.getKey();
-                MolangValue predicate = stringMolangValueEntry.getValue();
+                ModelComponent modelComponent = entity.getModelComponent();
+                BrModel model = modelComponent.getModel();
 
-                if (predicate.evalAsBool()) {
-                    BrAcState currState = animationController.states().get(stateName);
-                    switchState(ticks, component, currState);
+                if (model == null || animationController == null || component.getTargetAnimation() == null)
+                    continue;
 
-                    break;
+                BrAcState currState = component.getCurrState()[i];
+
+                if (currState == null) {
+                    switchState(i, ticks, component, animationController.initialState());
                 }
+
+                currState = component.getCurrState()[i];
+
+                Map<String, MolangValue> transitions = currState.transitions();
+
+                for (Map.Entry<String, MolangValue> stringMolangValueEntry : transitions.entrySet()) {
+                    String stateName = stringMolangValueEntry.getKey();
+                    MolangValue predicate = stringMolangValueEntry.getValue();
+
+                    if (predicate.evalAsBool()) {
+                        switchState(i, ticks, component, animationController.states().get(stateName));
+
+                        break;
+                    }
+                }
+
+                float startedTime = (ticks - component.getStartTick()[i]) / 20;
+                currState = component.getCurrState()[i];
+                Map<String, Float> blend = blend(component.getLastState()[i], currState, startedTime);
+
+                Map<String, BrAnimationEntry> animations = component.getTargetAnimation()[i].animations();
+
+                BoneRenderInfos infos = modelComponent.getInfos();
+                infos.reset();
+
+                updateAnimations(animations, blend, startedTime, infos, model.allBones());
             }
-
-            float startedTime = (ticks - component.getStartTick()) / 20;
-            BrAcState currState = component.getCurrState();
-            Map<String, Float> blend = blend(component.getLastState(), currState, startedTime);
-
-            Map<String, BrAnimationEntry> animations = component.getTargetAnimation().animations();
-
-            BoneRenderInfos infos = modelComponent.getInfos();
-            infos.reset();
-
-            updateAnimations(animations, blend, startedTime, infos, model.allBones());
         }
     }
 
-    private static void switchState(float ticks, AnimationControllerComponent component, BrAcState currState) {
-        BrAcState lastState = component.getCurrState();
+    private static void switchState(int idx, float ticks, AnimationControllerComponent component, BrAcState currState) {
+        BrAcState lastState = component.getCurrState()[idx];
 
         if (lastState != null) {
-            component.setLastState(lastState);
+            component.setLastState(idx, lastState);
             lastState.onExit().eval();
         }
 
-        component.setCurrState(currState);
+        component.setCurrState(idx, currState);
         currState.onEntry().eval();
 
-        component.updateStartTick(ticks);
+        component.updateStartTick(idx, ticks);
     }
 
     private static void updateAnimations(Map<String, BrAnimationEntry> targetAnimations, Map<String, Float> blend,

@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.render.define;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import lombok.AllArgsConstructor;
@@ -15,18 +16,29 @@ public class RenderDefine {
     private ResourceLocation target;
     private ResourceLocation model;
     private ResourceLocation material;
-    private RDAnimationControllerEntry animationControllerEntry;
+    private RDAnimationControllerEntry[] animationControllerEntry;
 
     public static RenderDefine parse(JsonObject object) {
-        RDAnimationControllerEntry entry;
+        RDAnimationControllerEntry[] entry;
 
         if (object.get("animation_controller") instanceof JsonObject jo) {
-            entry = new RDAnimationControllerEntry(
+            entry = new RDAnimationControllerEntry[]{new RDAnimationControllerEntry(
                     jo.get("name") instanceof JsonPrimitive jp ? jp.getAsString() : "",
                     jo.get("animation") instanceof JsonPrimitive jp ? jp.getAsString() : ""
-            );
+            )};
+        } else if (object.get("animation_controller") instanceof JsonArray ja) {
+            int size = ja.size();
+            entry = new RDAnimationControllerEntry[size];
+
+            for (int i = 0; i < size; i++) {
+                JsonObject jo = ja.get(i).getAsJsonObject();
+                entry[i] = new RDAnimationControllerEntry(
+                        jo.get("name") instanceof JsonPrimitive jp ? jp.getAsString() : "",
+                        jo.get("animation") instanceof JsonPrimitive jp ? jp.getAsString() : ""
+                );
+            }
         } else {
-            entry = new RDAnimationControllerEntry("", "");
+            entry = new RDAnimationControllerEntry[]{new RDAnimationControllerEntry("", "")};
         }
 
         ResourceLocation model = new ResourceLocation(object.get("model") instanceof JsonPrimitive jp ? jp.getAsString() : "__empty");
