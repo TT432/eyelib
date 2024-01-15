@@ -27,17 +27,20 @@ public class AnimationControllerSystem {
         for (var entity : EntityRenderHandler.entities) {
             AnimationControllerComponent component = entity.getAnimationControllerComponent();
 
-            if (component.getAnimationController() == null) {
+            ModelComponent modelComponent = entity.getModelComponent();
+            BrModel model = modelComponent.getModel();
+
+            BoneRenderInfos infos = modelComponent.getInfos();
+            infos.reset();
+
+            if (model == null || component.getAnimationController() == null) {
                 continue;
             }
 
             for (int i = 0; i < component.getAnimationController().length; i++) {
                 BrAnimationController animationController = component.getAnimationController()[i];
 
-                ModelComponent modelComponent = entity.getModelComponent();
-                BrModel model = modelComponent.getModel();
-
-                if (model == null || animationController == null || component.getTargetAnimation() == null)
+                if (animationController == null || component.getTargetAnimation() == null)
                     continue;
 
                 BrAcState currState = component.getCurrState()[i];
@@ -66,9 +69,6 @@ public class AnimationControllerSystem {
                 Map<String, Float> blend = blend(component.getLastState()[i], currState, startedTime);
 
                 Map<String, BrAnimationEntry> animations = component.getTargetAnimation()[i].animations();
-
-                BoneRenderInfos infos = modelComponent.getInfos();
-                infos.reset();
 
                 updateAnimations(animations, blend, startedTime, infos, model.allBones());
             }

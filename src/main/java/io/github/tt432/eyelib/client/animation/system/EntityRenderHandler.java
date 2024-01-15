@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.animation.system;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.capability.AnimatableCapability;
+import io.github.tt432.eyelib.capability.EyelibCapabilities;
 import io.github.tt432.eyelib.client.ClientTickHandler;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
@@ -36,10 +37,15 @@ public class EntityRenderHandler {
 
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
-        event.getEntity().getCapability(AnimatableCapability.CAPABILITY).ifPresent(cap -> {
-            entities.add(cap);
-            NeoForge.EVENT_BUS.post(new InitComponentEvent(event.getEntity(), cap));
-        });
+        Entity entity = event.getEntity();
+        var cap = entity.getData(EyelibCapabilities.ANIMATABLE);
+
+        if (cap.getOwner() != entity) {
+            cap.init(entity);
+        }
+
+        entities.add(cap);
+        NeoForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
     }
 
     @SubscribeEvent
@@ -70,27 +76,26 @@ public class EntityRenderHandler {
     @SubscribeEvent
     public static void onEvent(RenderLivingEvent.Pre event) {
         LivingEntity entity = event.getEntity();
-        entity.getCapability(AnimatableCapability.CAPABILITY).ifPresent(cap -> {
-            ModelComponent modelComponent = cap.getModelComponent();
-            BrModelRenderVisitor visitor = modelComponent.getVisitor();
+        AnimatableCapability<Object> cap = entity.getData(EyelibCapabilities.ANIMATABLE);
+        ModelComponent modelComponent = cap.getModelComponent();
+        BrModelRenderVisitor visitor = modelComponent.getVisitor();
 
-            if (modelComponent.getModel() != null && modelComponent.getTexture() != null && visitor != null) {
-                event.setCanceled(true);
+        if (modelComponent.getModel() != null && modelComponent.getTexture() != null && visitor != null) {
+            event.setCanceled(true);
 
-                visitor.setupLight(event.getPackedLight());
+            visitor.setupLight(event.getPackedLight());
 
-                PoseStack poseStack = event.getPoseStack();
-                var model = modelComponent.getModel();
+            PoseStack poseStack = event.getPoseStack();
+            var model = modelComponent.getModel();
 
-                RenderType renderType = modelComponent.getRenderTypeFactory().apply(modelComponent.getTexture());
-                VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderType);
+            RenderType renderType = modelComponent.getRenderTypeFactory().apply(modelComponent.getTexture());
+            VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderType);
 
-                poseStack.pushPose();
+            poseStack.pushPose();
 
-                BrModelRenderer.render(model, modelComponent.getInfos(), poseStack, buffer, visitor);
+            BrModelRenderer.render(model, modelComponent.getInfos(), poseStack, buffer, visitor);
 
-                poseStack.popPose();
-            }
-        });
+            poseStack.popPose();
+        }
     }
 }
