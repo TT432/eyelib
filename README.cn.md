@@ -4,10 +4,6 @@
 
 [English](README.md) | [中文](README.cn.md)
 
-## 设置
-
-如果你需要在开发环境测试该 mod，则需要将 `build.gradle` 文件中的 `sourceSets.main.resources { exclude 'assets' }` 注释掉。
-
 ## 功能
 
 该 mod 的结构基于 `Capability`。

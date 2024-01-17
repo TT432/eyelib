@@ -4,10 +4,6 @@ the renderer lib for _Minecraft_.
 
 [English](README.md) | [中文](README.cn.md)
 
-## Setup
-
-If you want to test the mod in the development environment, you need to commit `sourceSets.main.resources { exclude 'assets' }` in the `build.gradle` file, because the mod needs to be built without test resources.
-
 ## Features
 
 The mod uses a `Capability`-based structure.
