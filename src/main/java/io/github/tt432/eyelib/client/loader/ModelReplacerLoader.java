@@ -53,7 +53,7 @@ public class ModelReplacerLoader extends SimpleJsonResourceReloadListener {
         for (Map.Entry<ResourceLocation, JsonElement> entry : pObject.entrySet()) {
             RenderDefine parse = RenderDefine.parse(entry.getValue().getAsJsonObject());
             renderDefines.put(entry.getKey(), parse);
-            byTarget.put(parse.getTarget(), parse);
+            byTarget.put(parse.target(), parse);
         }
     }
 }

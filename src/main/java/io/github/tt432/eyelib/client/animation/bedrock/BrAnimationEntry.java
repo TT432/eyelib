@@ -4,11 +4,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangSystemScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @param override_previous_animation TODO 不确定
@@ -34,35 +37,7 @@ public record BrAnimationEntry(
         TreeMap<Float, MolangValue[]> timeline,
         Map<String, BrBoneAnimation> bones
 ) {
-
-    public BrAnimationEntry copy(MolangScope scope) {
-        TreeMap<Float, BrEffectsKeyFrame[]> copiedSoundEffects = new TreeMap<>(soundEffects.comparator());
-        soundEffects.forEach((key, value) -> copiedSoundEffects.put(key,
-                Arrays.stream(value).map(v -> v.copy(scope)).toArray(BrEffectsKeyFrame[]::new)));
-        TreeMap<Float, BrEffectsKeyFrame[]> copiedParticleEffects = new TreeMap<>(particleEffects.comparator());
-        particleEffects.forEach((key, value) -> copiedParticleEffects.put(key,
-                Arrays.stream(value).map(v -> v.copy(scope)).toArray(BrEffectsKeyFrame[]::new)));
-        TreeMap<Float, MolangValue[]> copiedTimeline = new TreeMap<>(timeline.comparator());
-        timeline.forEach((key, value) -> copiedTimeline.put(key, Arrays.stream(value).map(v -> v.copy(scope)).toArray(MolangValue[]::new)));
-        Map<String, BrBoneAnimation> copiedBones = new HashMap<>();
-        bones.forEach((key, value) -> copiedBones.put(key, value.copy(scope)));
-
-        return new BrAnimationEntry(
-                loop,
-                animationLength,
-                override_previous_animation,
-                anim_time_update,
-                blendWeight,
-                start_delay,
-                loop_delay,
-                copiedSoundEffects,
-                copiedParticleEffects,
-                copiedTimeline,
-                copiedBones
-        );
-    }
-
-    public static BrAnimationEntry parse(MolangScope scope, JsonObject jsonObject) {
+    public static BrAnimationEntry parse(MolangSystemScope scope, JsonObject jsonObject) {
         final BrLoopType loop;
         final float animationLength;
         final boolean override_previous_animation;
@@ -115,7 +90,7 @@ public record BrAnimationEntry(
                 start_delay, loop_delay, soundEffects, particleEffects, timeline, bones);
     }
 
-    private static TreeMap<Float, BrEffectsKeyFrame[]> loadMap(JsonObject jsonObject, String effectKey, MolangScope scope) {
+    private static TreeMap<Float, BrEffectsKeyFrame[]> loadMap(JsonObject jsonObject, String effectKey, MolangSystemScope scope) {
         if (jsonObject.get(effectKey) instanceof JsonObject jo) {
             TreeMap<Float, BrEffectsKeyFrame[]> map = new TreeMap<>(Comparator.comparingDouble(k -> k));
 

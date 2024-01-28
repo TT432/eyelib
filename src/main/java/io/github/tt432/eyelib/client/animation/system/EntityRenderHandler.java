@@ -29,7 +29,6 @@ import java.util.List;
  */
 @Mod.EventBusSubscriber
 public class EntityRenderHandler {
-    private static final AnimationSystem system = new AnimationSystem();
     private static final AnimationControllerSystem controllerSystem = new AnimationControllerSystem();
 
     public static final QuickAccessEntityList<AnimatableCapability<?>> entities = new QuickAccessEntityList<>();
@@ -54,7 +53,6 @@ public class EntityRenderHandler {
             removeRemovedEntity();
 
             float ticks = ClientTickHandler.getTick() + event.renderTickTime;
-            system.update(ticks);
             controllerSystem.update(ticks);
         }
     }

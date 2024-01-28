@@ -4,8 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
-import io.github.tt432.eyelib.capability.AnimatableCapability;
-import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangSystemScope;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
@@ -16,36 +15,23 @@ import java.util.Map;
  */
 @Slf4j
 public record BrAnimation(
-        Map<String, BrAnimationEntry> animations,
-        MolangScope scope
+        Map<String, BrAnimationEntry> animations
 ) {
-
-    public BrAnimation copy(AnimatableCapability<?> owner) {
-        var copiedScope = scope.copyWithOwner(owner);
-        Map<String, BrAnimationEntry> copiedAnimations = new HashMap<>();
-        animations.forEach((key, value) -> copiedAnimations.put(key, value.copy(copiedScope)));
-
-        return new BrAnimation(copiedAnimations, copiedScope);
-    }
-
     public static BrAnimation parse(String animationName, JsonObject jsonObject) {
         if (!(jsonObject.get("format_version") instanceof JsonPrimitive jp && jp.getAsString().equals("1.8.0"))) {
             throw new JsonParseException("can't parse %s, 'format_version' must be '1.8.0'".formatted(animationName));
         }
 
         final Map<String, BrAnimationEntry> animations = new HashMap<>();
-        final MolangScope scope;
-
-        scope = new MolangScope();
 
         if (!(jsonObject.get("animations") instanceof JsonObject jo)) {
             throw new JsonParseException("can't parse animation %s. not found 'animations'.".formatted(animationName));
         }
 
         for (Map.Entry<String, JsonElement> entry : jo.entrySet()) {
-            animations.put(entry.getKey(), BrAnimationEntry.parse(scope, entry.getValue().getAsJsonObject()));
+            animations.put(entry.getKey(), BrAnimationEntry.parse(MolangSystemScope.ANIMATIONS, entry.getValue().getAsJsonObject()));
         }
 
-        return new BrAnimation(animations, scope);
+        return new BrAnimation(animations);
     }
 }

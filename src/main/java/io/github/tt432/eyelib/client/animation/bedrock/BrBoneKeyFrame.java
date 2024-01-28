@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.animation.bedrock;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangSystemScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.util.MolangValue3;
 import io.github.tt432.eyelib.util.math.Curves;
@@ -24,11 +24,6 @@ public record BrBoneKeyFrame(
         MolangValue3[] dataPoints,
         BrBoneKeyFrame.LerpMode lerpMode
 ) {
-
-    public BrBoneKeyFrame copy(MolangScope scope) {
-        return new BrBoneKeyFrame(timestamp, Arrays.stream(dataPoints).map(v -> v.copy(scope)).toArray(MolangValue3[]::new), lerpMode);
-    }
-
     public enum LerpMode {
         LINEAR,
         CATMULLROM
@@ -158,7 +153,7 @@ public record BrBoneKeyFrame(
         return dataPoints[dataPoint];
     }
 
-    public static BrBoneKeyFrame parse(MolangScope scope, float timestamp, JsonElement json) throws JsonParseException {
+    public static BrBoneKeyFrame parse(MolangSystemScope scope, float timestamp, JsonElement json) throws JsonParseException {
         MolangValue3[] dataPoints;
         BrBoneKeyFrame.LerpMode lerpMode;
 

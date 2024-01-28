@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.client.animation.bedrock.controller;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangSystemScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +16,7 @@ public record BrAcParticleEffect(
         MolangValue preEffectScript
 ) {
 
-    public static BrAcParticleEffect parse(MolangScope scope, JsonObject object) {
+    public static BrAcParticleEffect parse(MolangSystemScope scope, JsonObject object) {
         final String effect;
         final String locator;
         final boolean bindToActor;

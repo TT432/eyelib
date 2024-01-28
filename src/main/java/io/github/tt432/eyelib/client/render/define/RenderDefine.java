@@ -1,44 +1,28 @@
 package io.github.tt432.eyelib.client.render.define;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
 
 /**
  * @author TT432
  */
-@AllArgsConstructor
-@Getter
-public class RenderDefine {
-    private ResourceLocation target;
-    private ResourceLocation model;
-    private ResourceLocation material;
-    private RDAnimationControllerEntry[] animationControllerEntry;
-
+public record RenderDefine(
+        ResourceLocation target,
+        ResourceLocation model,
+        ResourceLocation material,
+        RDAnimationController animationControllerEntry
+) {
     public static RenderDefine parse(JsonObject object) {
-        RDAnimationControllerEntry[] entry;
+        RDAnimationController entry;
 
         if (object.get("animation_controller") instanceof JsonObject jo) {
-            entry = new RDAnimationControllerEntry[]{new RDAnimationControllerEntry(
+            entry = new RDAnimationController(
                     jo.get("name") instanceof JsonPrimitive jp ? jp.getAsString() : "",
                     jo.get("animation") instanceof JsonPrimitive jp ? jp.getAsString() : ""
-            )};
-        } else if (object.get("animation_controller") instanceof JsonArray ja) {
-            int size = ja.size();
-            entry = new RDAnimationControllerEntry[size];
-
-            for (int i = 0; i < size; i++) {
-                JsonObject jo = ja.get(i).getAsJsonObject();
-                entry[i] = new RDAnimationControllerEntry(
-                        jo.get("name") instanceof JsonPrimitive jp ? jp.getAsString() : "",
-                        jo.get("animation") instanceof JsonPrimitive jp ? jp.getAsString() : ""
-                );
-            }
+            );
         } else {
-            entry = new RDAnimationControllerEntry[]{new RDAnimationControllerEntry("", "")};
+            entry = new RDAnimationController("", "");
         }
 
         ResourceLocation model = new ResourceLocation(object.get("model") instanceof JsonPrimitive jp ? jp.getAsString() : "__empty");

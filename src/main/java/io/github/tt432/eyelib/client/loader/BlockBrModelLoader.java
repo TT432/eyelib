@@ -30,7 +30,7 @@ public class BlockBrModelLoader implements IGeometryLoader<UnBakedBrModel>, Reso
     @SubscribeEvent
     public static void onEvent(ModelEvent.RegisterGeometryLoaders event) {
         instance = new BlockBrModelLoader();
-        event.register(new ResourceLocation(Eyelib.MOD_ID, "bedrock"), instance);
+        event.register(new ResourceLocation(Eyelib.MOD_ID, "bedrock_model"), instance);
     }
 
     ResourceManager resourceManager;

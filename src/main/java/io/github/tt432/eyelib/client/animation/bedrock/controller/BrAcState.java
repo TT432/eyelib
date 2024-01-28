@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.animation.bedrock.controller;
 
 import com.google.gson.*;
-import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangSystemScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 
 import java.util.ArrayList;
@@ -26,26 +26,7 @@ public record BrAcState(
         float blendTransition,
         boolean blendViaShortestPath
 ) {
-
-    public BrAcState copy(MolangScope copiedScope) {
-        Map<String, MolangValue> copiedAnimations = new HashMap<>();
-        animations.forEach((k, v) -> copiedAnimations.put(k, v.copy(copiedScope)));
-        Map<String, MolangValue> copiedTransitions = new HashMap<>();
-        transitions.forEach((k, v) -> copiedTransitions.put(k, v.copy(copiedScope)));
-
-        return new BrAcState(
-                copiedAnimations,
-                onEntry.copy(copiedScope),
-                onExit.copy(copiedScope),
-                particleEffects,
-                soundEffects,
-                copiedTransitions,
-                blendTransition,
-                blendViaShortestPath
-        );
-    }
-
-    public static BrAcState parse(MolangScope scope, JsonElement value) throws JsonParseException {
+    public static BrAcState parse(MolangSystemScope scope, JsonElement value) throws JsonParseException {
         final Map<String, MolangValue> animations;
         final MolangValue onEntry;
         final MolangValue onExit;

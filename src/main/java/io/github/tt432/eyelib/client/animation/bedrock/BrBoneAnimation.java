@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.animation.bedrock;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangSystemScope;
 import io.github.tt432.eyelib.molang.util.MolangValue3;
 import io.github.tt432.eyelib.util.ImmutableFloatTreeMap;
 import io.github.tt432.eyelib.util.math.MathE;
@@ -29,27 +29,6 @@ public record BrBoneAnimation(
         ImmutableFloatTreeMap<BrBoneKeyFrame> position,
         ImmutableFloatTreeMap<BrBoneKeyFrame> scale
 ) {
-
-    public BrBoneAnimation copy(MolangScope scope) {
-        Float2ObjectOpenHashMap<BrBoneKeyFrame> rotationValueCopy = new Float2ObjectOpenHashMap<>();
-        rotation.getData().forEach((k, v) -> rotationValueCopy.put(k, v.copy(scope)));
-        Float2ObjectOpenHashMap<BrBoneKeyFrame> positionValueCopy = new Float2ObjectOpenHashMap<>();
-        position.getData().forEach((k, v) -> positionValueCopy.put(k, v.copy(scope)));
-        Float2ObjectOpenHashMap<BrBoneKeyFrame> scaleValueCopy = new Float2ObjectOpenHashMap<>();
-        scale.getData().forEach((k, v) -> scaleValueCopy.put(k, v.copy(scope)));
-
-        return new BrBoneAnimation(ImmutableFloatTreeMap.of(
-                rotation.getSortedKeys(),
-                rotationValueCopy
-        ), ImmutableFloatTreeMap.of(
-                position.getSortedKeys(),
-                positionValueCopy
-        ), ImmutableFloatTreeMap.of(
-                scale.getSortedKeys(),
-                scaleValueCopy
-        ));
-    }
-
     private static BrBoneKeyFrame before = null;
     private static BrBoneKeyFrame after = null;
     private static BrBoneKeyFrame result = null;
@@ -125,7 +104,7 @@ public record BrBoneAnimation(
         return null;
     }
 
-    public static BrBoneAnimation parse(MolangScope scope, JsonElement json) throws JsonParseException {
+    public static BrBoneAnimation parse(MolangSystemScope scope, JsonElement json) throws JsonParseException {
         JsonObject object = json.getAsJsonObject();
 
         JsonElement rotationJson = object.get("rotation");
@@ -139,7 +118,7 @@ public record BrBoneAnimation(
         );
     }
 
-    static ImmutableFloatTreeMap<BrBoneKeyFrame> toKeyFrameList(MolangScope scope, JsonElement element) {
+    static ImmutableFloatTreeMap<BrBoneKeyFrame> toKeyFrameList(MolangSystemScope scope, JsonElement element) {
         if (element == null) {
             return ImmutableFloatTreeMap.empty();
         }
@@ -156,7 +135,7 @@ public record BrBoneAnimation(
 
     private static int i = 0;
 
-    public static ImmutableFloatTreeMap<BrBoneKeyFrame> process(MolangScope scope, JsonObject jsonObject) {
+    public static ImmutableFloatTreeMap<BrBoneKeyFrame> process(MolangSystemScope scope, JsonObject jsonObject) {
         Float2ObjectOpenHashMap<BrBoneKeyFrame> data = new Float2ObjectOpenHashMap<>();
 
         Set<Map.Entry<String, JsonElement>> entries = jsonObject.entrySet();

@@ -35,6 +35,16 @@ public class GlobalMolangVariable {
         setVariable("query.time_of_day", s -> Minecraft.getInstance().level.getDayTime() / 24000F);
         setVariable("query.moon_phase", s -> (float) Minecraft.getInstance().level.getMoonPhase());
         setVariable("query.partial_tick", s -> Minecraft.getInstance().getPartialTick());
+
+        setVariable("query.any_animation_finished",
+                s -> s.owner.getAnimationControllerComponent().anyAnimationFinished(s.get("query.partial_tick"))
+                        ? MolangValue.TRUE
+                        : MolangValue.FALSE);
+
+        setVariable("query.all_animation_finished",
+                s -> s.owner.getAnimationControllerComponent().allAnimationFinished(s.get("query.partial_tick"))
+                        ? MolangValue.TRUE
+                        : MolangValue.FALSE);
     }
 
     public static void entity() {

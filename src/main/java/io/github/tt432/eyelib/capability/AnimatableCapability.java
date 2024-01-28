@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.capability;
 
-import io.github.tt432.eyelib.client.animation.component.AnimationComponent;
 import io.github.tt432.eyelib.client.animation.component.AnimationControllerComponent;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
+import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.IdentifiableObject;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -16,8 +16,7 @@ public class AnimatableCapability<T> implements IdentifiableObject {
     @Nullable
     T owner;
 
-    @NotNull
-    AnimationComponent animationComponent = new AnimationComponent();
+    MolangScope scope;
 
     @NotNull
     ModelComponent modelComponent = new ModelComponent();
@@ -32,5 +31,7 @@ public class AnimatableCapability<T> implements IdentifiableObject {
 
     public void init(T owner) {
         this.owner = owner;
+        scope = new MolangScope();
+        scope.setOwner(this);
     }
 }

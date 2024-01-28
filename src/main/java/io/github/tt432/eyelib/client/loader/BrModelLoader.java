@@ -21,7 +21,7 @@ import java.util.Map;
  */
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class BrModelLoader extends SimpleJsonResourceReloadListener {
-    private static final BrModelLoader INSTANCE = new BrModelLoader(new Gson(), "models/bedrock");
+    private static final BrModelLoader INSTANCE = new BrModelLoader(new Gson(), "bedrock_models");
 
     @SubscribeEvent
     public static void onEvent(RegisterClientReloadListenersEvent event) {

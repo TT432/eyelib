@@ -10,9 +10,11 @@ import io.github.tt432.eyelib.client.model.bedrock.BrBone;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
+import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import io.github.tt432.eyelib.util.math.MathE;
+import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -23,9 +25,13 @@ import java.util.Map;
  * @author TT432
  */
 public class AnimationControllerSystem {
+    @Getter
+    private static MolangScope scope;
+
     public void update(float ticks) {
         for (var entity : EntityRenderHandler.entities) {
             AnimationControllerComponent component = entity.getAnimationControllerComponent();
+            scope = entity.getScope();
 
             ModelComponent modelComponent = entity.getModelComponent();
             BrModel model = modelComponent.getModel();
@@ -37,8 +43,9 @@ public class AnimationControllerSystem {
                 continue;
             }
 
-            for (int i = 0; i < component.getAnimationController().length; i++) {
-                BrAnimationController animationController = component.getAnimationController()[i];
+            for (int i = 0; i < component.getAnimationController().size(); i++) {
+                component.setCurrentControllerIndex(i);
+                BrAnimationController animationController = component.getAnimationController().get(i);
 
                 if (animationController == null || component.getTargetAnimation() == null)
                     continue;
@@ -46,7 +53,7 @@ public class AnimationControllerSystem {
                 BrAcState currState = component.getCurrState()[i];
 
                 if (currState == null) {
-                    switchState(i, ticks, component, animationController.initialState());
+                    switchState(ticks, component, animationController.initialState());
                 }
 
                 currState = component.getCurrState()[i];
@@ -58,35 +65,35 @@ public class AnimationControllerSystem {
                     MolangValue predicate = stringMolangValueEntry.getValue();
 
                     if (predicate.evalAsBool()) {
-                        switchState(i, ticks, component, animationController.states().get(stateName));
+                        switchState(ticks, component, animationController.states().get(stateName));
 
                         break;
                     }
                 }
 
                 float startedTime = (ticks - component.getStartTick()[i]) / 20;
-                currState = component.getCurrState()[i];
+                currState = component.getCurrentState();
                 Map<String, Float> blend = blend(component.getLastState()[i], currState, startedTime);
 
-                Map<String, BrAnimationEntry> animations = component.getTargetAnimation()[i].animations();
+                Map<String, BrAnimationEntry> animations = component.getTargetAnimation().animations();
 
                 updateAnimations(animations, blend, startedTime, infos, model.allBones());
             }
         }
     }
 
-    private static void switchState(int idx, float ticks, AnimationControllerComponent component, BrAcState currState) {
-        BrAcState lastState = component.getCurrState()[idx];
+    private static void switchState(float ticks, AnimationControllerComponent component, BrAcState currState) {
+        BrAcState lastState = component.getCurrentState();
 
         if (lastState != null) {
-            component.setLastState(idx, lastState);
+            component.setLastState(lastState);
             lastState.onExit().eval();
         }
 
-        component.setCurrState(idx, currState);
+        component.setCurrState(currState);
         currState.onEntry().eval();
 
-        component.updateStartTick(idx, ticks);
+        component.updateStartTick(ticks);
     }
 
     private static void updateAnimations(Map<String, BrAnimationEntry> targetAnimations, Map<String, Float> blend,

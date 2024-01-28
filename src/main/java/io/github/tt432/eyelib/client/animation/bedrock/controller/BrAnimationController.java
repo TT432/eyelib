@@ -4,8 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
-import io.github.tt432.eyelib.capability.AnimatableCapability;
-import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangSystemScope;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,51 +15,13 @@ import java.util.Map;
 public record BrAnimationController(
         String name,
         BrAcState initialState,
-        Map<String, BrAcState> states,
-        MolangScope scope
+        Map<String, BrAcState> states
 ) {
-
-    public BrAnimationController copy(AnimatableCapability<?> owner) {
-        var copiedScope = scope.copyWithOwner(owner);
-        Map<String, BrAcState> copiedStates = new HashMap<>();
-        states.forEach((k,v) -> copiedStates.put(k, v.copy(copiedScope)));
-
-        return new BrAnimationController(
-            name,
-                initialState.copy(copiedScope),
-                copiedStates,
-                copiedScope
-        );
-    }
-
     private static final String EXCEPTION = "can't parse animation controller json file: %s .";
 
-    public static BrAnimationController parse(String jsonName, JsonObject jsonObject) {
-        if (!(jsonObject.get("format_version") instanceof JsonPrimitive jp) || !jp.getAsString().equals("1.19.0")) {
-            throw new JsonParseException((EXCEPTION + "'format_version' not '1.19.0', please check the file.").formatted(jsonName));
-        }
-
-        if (!(jsonObject.get("animation_controllers") instanceof JsonObject jo)) {
-            throw new JsonParseException((EXCEPTION + "can't found 'animation_controllers'.").formatted(jsonName));
-        }
-
-        Map.Entry<String, JsonElement> animationControllers = jo.entrySet().stream().findFirst().orElse(null);
-
-        if (animationControllers == null) {
-            throw new JsonParseException((EXCEPTION + "'animation_controllers' not have any entry.").formatted(jsonName));
-        }
-
-        final String name;
+    public static BrAnimationController parse(String jsonName, String name,JsonObject animCtrlEntryJson) {
         final BrAcState initialState;
         final Map<String, BrAcState> states = new HashMap<>();
-        final MolangScope scope;
-
-        name = animationControllers.getKey();
-        scope = new MolangScope();
-
-        if (!(animationControllers.getValue() instanceof JsonObject animCtrlEntryJson)) {
-            throw new JsonParseException((EXCEPTION + "The file don't have entry 'animation_controllers'").formatted(jsonName));
-        }
 
         if (!(animCtrlEntryJson.get("states") instanceof JsonObject stateJson)) {
             throw new JsonParseException((EXCEPTION + "entry 'states' dose not JsonObject.").formatted(jsonName));
@@ -68,7 +29,7 @@ public record BrAnimationController(
 
         for (Map.Entry<String, JsonElement> singleState : stateJson.asMap().entrySet()) {
             try {
-                states.put(singleState.getKey(), BrAcState.parse(scope, singleState.getValue()));
+                states.put(singleState.getKey(), BrAcState.parse(MolangSystemScope.ANIMATIONS, singleState.getValue()));
             } catch (JsonParseException jsonParseException) {
                 throw new JsonParseException("can't parse controller json: %s".formatted(jsonName), jsonParseException);
             }
@@ -80,6 +41,6 @@ public record BrAnimationController(
             initialState = states.get("default");
         }
 
-        return new BrAnimationController(name, initialState, states, scope);
+        return new BrAnimationController(name, initialState, states);
     }
 }
