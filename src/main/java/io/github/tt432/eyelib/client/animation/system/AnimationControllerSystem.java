@@ -184,6 +184,10 @@ public class AnimationControllerSystem {
      * @return 0 ~ 1
      */
     public float blendProgress(@Nullable BrAcState lastState, float stateTimeSec) {
-        return lastState == null ? 1 : MathE.clamp(stateTimeSec / lastState.blendTransition(), 0, 1);
+        if (lastState == null || lastState.blendTransition() == 0) {
+            return 1;
+        } else {
+            return MathE.clamp(stateTimeSec / lastState.blendTransition(), 0, 1);
+        }
     }
 }
