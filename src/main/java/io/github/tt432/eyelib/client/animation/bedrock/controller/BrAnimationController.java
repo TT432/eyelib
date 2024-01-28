@@ -19,7 +19,7 @@ public record BrAnimationController(
 ) {
     private static final String EXCEPTION = "can't parse animation controller json file: %s .";
 
-    public static BrAnimationController parse(String jsonName, String name,JsonObject animCtrlEntryJson) {
+    public static BrAnimationController parse(String jsonName, String name, JsonObject animCtrlEntryJson) {
         final BrAcState initialState;
         final Map<String, BrAcState> states = new HashMap<>();
 

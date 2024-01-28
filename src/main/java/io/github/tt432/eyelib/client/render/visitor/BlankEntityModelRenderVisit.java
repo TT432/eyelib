@@ -6,7 +6,9 @@ import io.github.tt432.eyelib.client.model.bedrock.BrCube;
 import io.github.tt432.eyelib.client.model.bedrock.BrFace;
 import lombok.Setter;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import org.joml.*;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 /**
  * @author TT432

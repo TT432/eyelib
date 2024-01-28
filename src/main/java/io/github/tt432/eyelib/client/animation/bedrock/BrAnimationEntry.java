@@ -16,7 +16,7 @@ import java.util.TreeMap;
 /**
  * @param override_previous_animation TODO 不确定
  * @param anim_time_update            TODO 不确定
- * @param blendWeight                动画混合时的权重
+ * @param blendWeight                 动画混合时的权重
  * @param start_delay                 TODO 不确定
  * @param loop_delay                  TODO 不确定
  * @author TT432

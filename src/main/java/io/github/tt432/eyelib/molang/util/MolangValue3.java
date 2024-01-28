@@ -10,7 +10,7 @@ import io.github.tt432.eyelib.util.math.Axis;
  */
 public record MolangValue3(
         MolangValue x,
-MolangValue y,
+        MolangValue y,
         MolangValue z
 ) {
 
