@@ -135,7 +135,8 @@ public class MolangEvalVisitor extends MolangBaseVisitor<Float> {
 
             for (MolangParser.FuncParamContext funcParamContext : ctx.funcParam()) {
                 if (funcParamContext.STRING() != null) {
-                    params.add(funcParamContext.STRING().getText());
+                    String text = funcParamContext.STRING().getText();
+                    params.add(text.substring(1, text.length() - 1));
                 } else {
                     visit(funcParamContext.expr());
                 }
