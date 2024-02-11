@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import io.github.tt432.eyelib.molang.MolangSystemScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 
 import javax.annotation.Nullable;
@@ -37,7 +36,7 @@ public record BrAnimationEntry(
         TreeMap<Float, MolangValue[]> timeline,
         Map<String, BrBoneAnimation> bones
 ) {
-    public static BrAnimationEntry parse(MolangSystemScope scope, JsonObject jsonObject) {
+    public static BrAnimationEntry parse(JsonObject jsonObject) {
         final BrLoopType loop;
         final float animationLength;
         final boolean override_previous_animation;
@@ -52,13 +51,13 @@ public record BrAnimationEntry(
 
         loop = BrLoopType.parse(jsonObject.get("loop"));
         animationLength = jsonObject.get("animation_length") instanceof JsonPrimitive jp ? jp.getAsFloat() : 0;
-        soundEffects = loadMap(jsonObject, "sound_effects", scope);
-        particleEffects = loadMap(jsonObject, "particle_effects", scope);
+        soundEffects = loadMap(jsonObject, "sound_effects");
+        particleEffects = loadMap(jsonObject, "particle_effects");
         override_previous_animation = jsonObject.get("override_previous_animation") instanceof JsonPrimitive jp && jp.getAsBoolean();
-        anim_time_update = jsonObject.get("anim_time_update") instanceof JsonPrimitive jp ? MolangValue.parse(scope, jp.getAsString()) : null;
-        blend_weight = jsonObject.get("blend_weight") instanceof JsonPrimitive jp ? MolangValue.parse(scope, jp.getAsString()) : MolangValue.TRUE_VALUE;
-        start_delay = jsonObject.get("start_delay") instanceof JsonPrimitive jp ? MolangValue.parse(scope, jp.getAsString()) : null;
-        loop_delay = jsonObject.get("loop_delay") instanceof JsonPrimitive jp ? MolangValue.parse(scope, jp.getAsString()) : null;
+        anim_time_update = jsonObject.get("anim_time_update") instanceof JsonPrimitive jp ? MolangValue.parse(jp.getAsString()) : null;
+        blend_weight = jsonObject.get("blend_weight") instanceof JsonPrimitive jp ? MolangValue.parse(jp.getAsString()) : MolangValue.TRUE_VALUE;
+        start_delay = jsonObject.get("start_delay") instanceof JsonPrimitive jp ? MolangValue.parse(jp.getAsString()) : null;
+        loop_delay = jsonObject.get("loop_delay") instanceof JsonPrimitive jp ? MolangValue.parse(jp.getAsString()) : null;
 
         timeline = new TreeMap<>(Comparator.comparingDouble(k -> k));
 
@@ -70,19 +69,19 @@ public record BrAnimationEntry(
                     MolangValue[] molangValues = new MolangValue[ja.size()];
 
                     for (int i = 0; i < ja.asList().size(); i++) {
-                        molangValues[i] = MolangValue.parse(scope, ja.get(i).getAsString());
+                        molangValues[i] = MolangValue.parse(ja.get(i).getAsString());
                     }
 
                     timeline.put(timestamp, molangValues);
                 } else {
-                    timeline.put(timestamp, new MolangValue[]{MolangValue.parse(scope, value.getAsString())});
+                    timeline.put(timestamp, new MolangValue[]{MolangValue.parse(value.getAsString())});
                 }
             });
         }
 
         if (jsonObject.get("bones") instanceof JsonObject jo) {
             for (Map.Entry<String, JsonElement> entry : jo.entrySet()) {
-                bones.put(entry.getKey(), BrBoneAnimation.parse(scope, entry.getValue()));
+                bones.put(entry.getKey(), BrBoneAnimation.parse(entry.getValue()));
             }
         }
 
@@ -90,7 +89,7 @@ public record BrAnimationEntry(
                 start_delay, loop_delay, soundEffects, particleEffects, timeline, bones);
     }
 
-    private static TreeMap<Float, BrEffectsKeyFrame[]> loadMap(JsonObject jsonObject, String effectKey, MolangSystemScope scope) {
+    private static TreeMap<Float, BrEffectsKeyFrame[]> loadMap(JsonObject jsonObject, String effectKey) {
         if (jsonObject.get(effectKey) instanceof JsonObject jo) {
             TreeMap<Float, BrEffectsKeyFrame[]> map = new TreeMap<>(Comparator.comparingDouble(k -> k));
 
@@ -101,12 +100,12 @@ public record BrAnimationEntry(
                     BrEffectsKeyFrame[] keyFrames = new BrEffectsKeyFrame[ja.size()];
 
                     for (int i = 0; i < ja.asList().size(); i++) {
-                        keyFrames[i] = BrEffectsKeyFrame.parse(scope, timestamp, ja.get(i).getAsJsonObject());
+                        keyFrames[i] = BrEffectsKeyFrame.parse(timestamp, ja.get(i).getAsJsonObject());
                     }
 
                     map.put(timestamp, keyFrames);
                 } else {
-                    map.put(timestamp, new BrEffectsKeyFrame[]{BrEffectsKeyFrame.parse(scope, timestamp, value.getAsJsonObject())});
+                    map.put(timestamp, new BrEffectsKeyFrame[]{BrEffectsKeyFrame.parse(timestamp, value.getAsJsonObject())});
                 }
             });
 

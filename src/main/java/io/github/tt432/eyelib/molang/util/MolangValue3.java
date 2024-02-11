@@ -1,9 +1,14 @@
 package io.github.tt432.eyelib.molang.util;
 
 import com.google.gson.JsonArray;
-import io.github.tt432.eyelib.molang.MolangSystemScope;
+import com.mojang.datafixers.util.Either;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
-import io.github.tt432.eyelib.util.math.Axis;
+
+import java.util.List;
 
 /**
  * @author TT432
@@ -13,32 +18,42 @@ public record MolangValue3(
         MolangValue y,
         MolangValue z
 ) {
+    public static final Codec<MolangValue3> CODEC = Codec.either(
+                    Codec.either(Codec.STRING, Codec.FLOAT)
+                            .xmap(e -> e.right().map(Object::toString).orElseGet(() -> e.left().get()), Either::left)
+                            .listOf(),
+                    RecordCodecBuilder.<MolangValue3>create(ins -> ins.group(
+                            MolangValue.CODEC.optionalFieldOf("x", MolangValue.FALSE_VALUE).forGetter(o -> o.x),
+                            MolangValue.CODEC.optionalFieldOf("y", MolangValue.FALSE_VALUE).forGetter(o -> o.y),
+                            MolangValue.CODEC.optionalFieldOf("z", MolangValue.FALSE_VALUE).forGetter(o -> o.z)
+                    ).apply(ins, MolangValue3::new)))
+            .xmap(e -> e.left().map(sl -> new MolangValue3(
+                                    MolangValue.parse(sl.get(0)),
+                                    MolangValue.parse(sl.get(1)),
+                                    MolangValue.parse(sl.get(2))))
+                            .orElseGet(() -> e.right().get()),
+                    m3 -> Either.left(List.of(m3.x.getContext(), m3.y.getContext(), m3.z.getContext())));
 
-    public float getX() {
-        return x.eval();
+    public static final MolangValue3 ZERO = new MolangValue3(MolangValue.FALSE_VALUE, MolangValue.FALSE_VALUE, MolangValue.FALSE_VALUE);
+
+    public static final MolangValue3 AXIS_X = new MolangValue3(MolangValue.TRUE_VALUE, MolangValue.FALSE_VALUE, MolangValue.FALSE_VALUE);
+    public static final MolangValue3 AXIS_Y = new MolangValue3(MolangValue.FALSE_VALUE, MolangValue.TRUE_VALUE, MolangValue.FALSE_VALUE);
+    public static final MolangValue3 AXIS_Z = new MolangValue3(MolangValue.FALSE_VALUE, MolangValue.FALSE_VALUE, MolangValue.TRUE_VALUE);
+
+    public static MolangValue3 parse(JsonArray jsonArray) {
+        return CODEC.parse(JsonOps.INSTANCE, jsonArray)
+                .getOrThrow(true, RuntimeException::new);
     }
 
-    public float getY() {
-        return y.eval();
+    public float getX(MolangScope scope) {
+        return x.eval(scope);
     }
 
-    public float getZ() {
-        return z.eval();
+    public float getY(MolangScope scope) {
+        return y.eval(scope);
     }
 
-    public static MolangValue3 parse(MolangSystemScope scope, JsonArray array) {
-        return new MolangValue3(
-                MolangValue.parse(scope, array.get(0).getAsString()),
-                MolangValue.parse(scope, array.get(1).getAsString()),
-                MolangValue.parse(scope, array.get(2).getAsString())
-        );
-    }
-
-    public float get(Axis axis) {
-        return switch (axis) {
-            case X -> getX();
-            case Y -> getY();
-            case Z -> getZ();
-        };
+    public float getZ(MolangScope scope) {
+        return z.eval(scope);
     }
 }

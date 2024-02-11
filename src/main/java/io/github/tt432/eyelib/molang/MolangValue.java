@@ -1,47 +1,72 @@
 package io.github.tt432.eyelib.molang;
 
-import io.github.tt432.eyelib.molang.grammer.MolangLexer;
-import io.github.tt432.eyelib.molang.grammer.MolangParser;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import com.mojang.datafixers.util.Either;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * @author TT432
  */
-public record MolangValue(
-        MolangSystemScope scope,
-        ParseTree context
-) {
+public final class MolangValue {
     public static final float TRUE = 1;
     public static final float FALSE = 0;
 
-    public static final MolangValue TRUE_VALUE = MolangValue.parse(MolangSystemScope.NONE, "1");
-    public static final MolangValue FALSE_VALUE = MolangValue.parse(MolangSystemScope.NONE, "0");
+    public static final MolangValue TRUE_VALUE = new MolangValue("1");
+    public static final MolangValue FALSE_VALUE = new MolangValue("0");
 
-    public static MolangValue parse(MolangSystemScope scope, String sourceText) {
-        if (sourceText.isBlank()) {
-            return FALSE_VALUE;
-        }
+    public static final Codec<MolangValue> CODEC = Codec.either(
+                    Codec.STRING,
+                    RecordCodecBuilder.<MolangValue>create(ins -> ins.group(
+                            Codec.STRING.fieldOf("context").forGetter(o -> o.context)
+                    ).apply(ins, MolangValue::new)))
+            .xmap(e -> e.left().map(MolangValue::new).orElseGet(() -> e.right().get()),
+                    m -> Either.left(m.context));
 
-        MolangParser molangParser = new MolangParser(new CommonTokenStream(new MolangLexer(CharStreams.fromString(sourceText))));
-        return new MolangValue(scope, molangParser.exprSet());
+    @Getter
+    private final String context;
+    @Setter
+    private Method method;
+
+    public MolangValue(String context) {
+        this.context = context;
+        MolangCompileHandler.register(this);
     }
 
-    private static final MolangEvalVisitor VISITOR = new MolangEvalVisitor();
-
-    public float eval() {
-        VISITOR.setScope(scope.getScope());
-        Float accept = context.accept(VISITOR);
-
-        if (accept == null) {
-            return 0;
-        }
-
-        return accept;
+    public static MolangValue parse(String content) {
+        return parse(new JsonPrimitive(content));
     }
 
-    public boolean evalAsBool() {
-        return eval() != FALSE;
+    public static MolangValue parse(JsonElement json) {
+        return parse(json, FALSE_VALUE);
+    }
+
+    public static MolangValue parse(JsonElement json, MolangValue defaultValue) {
+        return CODEC.parse(JsonOps.INSTANCE, json)
+                .map(m -> m == null ? defaultValue : m)
+                .getOrThrow(true, RuntimeException::new);
+    }
+
+    public float eval(MolangScope scope) {
+        if (method != null) {
+            try {
+                return (Float) method.invoke(scope);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return 0F;
+    }
+
+    public boolean evalAsBool(MolangScope scope) {
+        return eval(scope) != FALSE;
     }
 }

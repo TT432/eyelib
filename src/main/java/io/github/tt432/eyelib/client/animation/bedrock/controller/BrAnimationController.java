@@ -4,7 +4,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
-import io.github.tt432.eyelib.molang.MolangSystemScope;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +28,7 @@ public record BrAnimationController(
 
         for (Map.Entry<String, JsonElement> singleState : stateJson.asMap().entrySet()) {
             try {
-                states.put(singleState.getKey(), BrAcState.parse(MolangSystemScope.ANIMATIONS, singleState.getValue()));
+                states.put(singleState.getKey(), BrAcState.parse(singleState.getValue()));
             } catch (JsonParseException jsonParseException) {
                 throw new JsonParseException("can't parse controller json: %s".formatted(jsonName), jsonParseException);
             }

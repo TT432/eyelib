@@ -64,7 +64,7 @@ public class AnimationControllerSystem {
                     String stateName = stringMolangValueEntry.getKey();
                     MolangValue predicate = stringMolangValueEntry.getValue();
 
-                    if (predicate.evalAsBool()) {
+                    if (predicate.evalAsBool(scope)) {
                         switchState(ticks, component, animationController.states().get(stateName));
 
                         break;
@@ -87,11 +87,11 @@ public class AnimationControllerSystem {
 
         if (lastState != null) {
             component.setLastState(lastState);
-            lastState.onExit().eval();
+            lastState.onExit().eval(scope);
         }
 
         component.setCurrState(currState);
-        currState.onEntry().eval();
+        currState.onEntry().eval(scope);
 
         component.updateStartTick(ticks);
     }
@@ -101,7 +101,7 @@ public class AnimationControllerSystem {
         for (Map.Entry<String, Float> animEntry : blend.entrySet()) {
             var animName = animEntry.getKey();
             BrAnimationEntry animation = targetAnimations.get(animName);
-            float multiplier = animation.blendWeight().eval() * animEntry.getValue();
+            float multiplier = animation.blendWeight().eval(scope) * animEntry.getValue();
 
             float animTick = startedTime;
 
@@ -129,7 +129,7 @@ public class AnimationControllerSystem {
 
                 BoneRenderInfoEntry boneRenderInfoEntry = infos.get(brBone);
 
-                Vector3f p = boneAnim.lerpPosition(animTick);
+                Vector3f p = boneAnim.lerpPosition(scope, animTick);
 
                 if (p != null) {
                     p.div(16).mul(multiplier);
@@ -137,7 +137,7 @@ public class AnimationControllerSystem {
                     boneRenderInfoEntry.getRenderPosition().add(p);
                 }
 
-                Vector3f r = boneAnim.lerpRotation(animTick);
+                Vector3f r = boneAnim.lerpRotation(scope, animTick);
 
                 if (r != null) {
                     r.mul(multiplier).mul(EyeMath.DEGREES_TO_RADIANS);
@@ -145,7 +145,7 @@ public class AnimationControllerSystem {
                     boneRenderInfoEntry.getRenderRotation().add(-r.x, -r.y, r.z);
                 }
 
-                Vector3f s = boneAnim.lerpScale(animTick);
+                Vector3f s = boneAnim.lerpScale(scope, animTick);
 
                 if (s != null) {
                     boneRenderInfoEntry.getRenderScala().mul(
@@ -168,11 +168,11 @@ public class AnimationControllerSystem {
         Map<String, Float> result = new HashMap<>();
 
         currState.animations().forEach((animationName, blendValue) ->
-                result.put(animationName, blendProgress * blendValue.eval()));
+                result.put(animationName, blendProgress * blendValue.eval(scope)));
 
         if (lastState != null && blendProgress < 1) {
             lastState.animations().forEach((animationName, blendValue) ->
-                    result.put(animationName, result.getOrDefault(animationName, 0F) + (1 - blendProgress) * blendValue.eval()));
+                    result.put(animationName, result.getOrDefault(animationName, 0F) + (1 - blendProgress) * blendValue.eval(scope)));
         }
 
         return result;

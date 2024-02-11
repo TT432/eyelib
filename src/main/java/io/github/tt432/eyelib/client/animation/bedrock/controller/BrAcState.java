@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.client.animation.bedrock.controller;
 
 import com.google.gson.*;
-import io.github.tt432.eyelib.molang.MolangSystemScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 
 import java.util.ArrayList;
@@ -26,7 +25,7 @@ public record BrAcState(
         float blendTransition,
         boolean blendViaShortestPath
 ) {
-    public static BrAcState parse(MolangSystemScope scope, JsonElement value) throws JsonParseException {
+    public static BrAcState parse(JsonElement value) throws JsonParseException {
         final Map<String, MolangValue> animations;
         final MolangValue onEntry;
         final MolangValue onExit;
@@ -46,7 +45,7 @@ public record BrAcState(
             for (JsonElement jsonElement : ja.asList()) {
                 if (jsonElement instanceof JsonObject animationJson) {
                     for (Map.Entry<String, JsonElement> entry : animationJson.entrySet()) {
-                        animations.put(entry.getKey(), MolangValue.parse(scope, entry.getValue().getAsString()));
+                        animations.put(entry.getKey(), MolangValue.parse(entry.getValue().getAsString()));
                     }
                 } else if (jsonElement instanceof JsonPrimitive animationName) {
                     animations.put(animationName.getAsString(), MolangValue.TRUE_VALUE);
@@ -61,7 +60,7 @@ public record BrAcState(
                 molangText.append(jsonElement.getAsString());
             }
 
-            onEntry = MolangValue.parse(scope, molangText.toString());
+            onEntry = MolangValue.parse(molangText.toString());
         } else {
             onEntry = MolangValue.TRUE_VALUE;
         }
@@ -73,7 +72,7 @@ public record BrAcState(
                 molangText.append(jsonElement.getAsString());
             }
 
-            onExit = MolangValue.parse(scope, molangText.toString());
+            onExit = MolangValue.parse(molangText.toString());
         } else {
             onExit = MolangValue.TRUE_VALUE;
         }
@@ -83,7 +82,7 @@ public record BrAcState(
 
             for (JsonElement jsonElement : ja) {
                 if (jsonElement instanceof JsonObject particleEffectObject)
-                    particles.add(BrAcParticleEffect.parse(scope, particleEffectObject));
+                    particles.add(BrAcParticleEffect.parse(particleEffectObject));
             }
 
             particleEffects.addAll(particles);
@@ -107,7 +106,7 @@ public record BrAcState(
             for (JsonElement jsonElement : ja) {
                 if (jsonElement instanceof JsonObject transitionObject) {
                     transitionObject.asMap().forEach((k, v) ->
-                            transitionMap.put(k, MolangValue.parse(scope, v.getAsString().replace("\n", ""))));
+                            transitionMap.put(k, MolangValue.parse(v.getAsString().replace("\n", ""))));
                 }
             }
 

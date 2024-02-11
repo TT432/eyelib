@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.animation.bedrock;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import io.github.tt432.eyelib.molang.MolangSystemScope;
+import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.util.MolangValue3;
 import io.github.tt432.eyelib.util.math.Curves;
@@ -49,7 +49,8 @@ public record BrBoneKeyFrame(
      * @param weight     weight
      * @return 值
      */
-    public static Vector3f catmullromLerp(BrBoneKeyFrame beforePlus,
+    public static Vector3f catmullromLerp(MolangScope scope,
+                                          BrBoneKeyFrame beforePlus,
                                           BrBoneKeyFrame before,
                                           BrBoneKeyFrame after,
                                           BrBoneKeyFrame afterPlus,
@@ -61,14 +62,14 @@ public record BrBoneKeyFrame(
         boolean lastPointPredicate = afterPlus != null && after.dataPoints.length == 1;
 
         if (firstPointPredicate)
-            catmullromArray.add(cTempP1.set(beforePlus.getTick(), beforePlus.get(1).getX()));
+            catmullromArray.add(cTempP1.set(beforePlus.getTick(), beforePlus.get(1).getX(scope)));
 
-        catmullromArray.add(cTempP2.set(before.getTick(), before.get(1).getX()));
+        catmullromArray.add(cTempP2.set(before.getTick(), before.get(1).getX(scope)));
 
-        catmullromArray.add(cTempP3.set(after.getTick(), after.get(0).getX()));
+        catmullromArray.add(cTempP3.set(after.getTick(), after.get(0).getX(scope)));
 
         if (lastPointPredicate)
-            catmullromArray.add(cTempP4.set(afterPlus.getTick(), afterPlus.get(0).getX()));
+            catmullromArray.add(cTempP4.set(afterPlus.getTick(), afterPlus.get(0).getX(scope)));
 
         float time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
 
@@ -77,14 +78,14 @@ public record BrBoneKeyFrame(
         catmullromArray.clear();
 
         if (firstPointPredicate)
-            catmullromArray.add(cTempP1.set(beforePlus.getTick(), beforePlus.get(1).getY()));
+            catmullromArray.add(cTempP1.set(beforePlus.getTick(), beforePlus.get(1).getY(scope)));
 
-        catmullromArray.add(cTempP2.set(before.getTick(), before.get(1).getY()));
+        catmullromArray.add(cTempP2.set(before.getTick(), before.get(1).getY(scope)));
 
-        catmullromArray.add(cTempP3.set(after.getTick(), after.get(0).getY()));
+        catmullromArray.add(cTempP3.set(after.getTick(), after.get(0).getY(scope)));
 
         if (lastPointPredicate)
-            catmullromArray.add(cTempP4.set(afterPlus.getTick(), afterPlus.get(0).getY()));
+            catmullromArray.add(cTempP4.set(afterPlus.getTick(), afterPlus.get(0).getY(scope)));
 
         time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
 
@@ -93,14 +94,14 @@ public record BrBoneKeyFrame(
         catmullromArray.clear();
 
         if (firstPointPredicate)
-            catmullromArray.add(cTempP1.set(beforePlus.getTick(), beforePlus.get(1).getZ()));
+            catmullromArray.add(cTempP1.set(beforePlus.getTick(), beforePlus.get(1).getZ(scope)));
 
-        catmullromArray.add(cTempP2.set(before.getTick(), before.get(1).getZ()));
+        catmullromArray.add(cTempP2.set(before.getTick(), before.get(1).getZ(scope)));
 
-        catmullromArray.add(cTempP3.set(after.getTick(), after.get(0).getZ()));
+        catmullromArray.add(cTempP3.set(after.getTick(), after.get(0).getZ(scope)));
 
         if (lastPointPredicate)
-            catmullromArray.add(cTempP4.set(afterPlus.getTick(), afterPlus.get(0).getZ()));
+            catmullromArray.add(cTempP4.set(afterPlus.getTick(), afterPlus.get(0).getZ(scope)));
 
         time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
 
@@ -116,21 +117,21 @@ public record BrBoneKeyFrame(
      * @param weight 权重
      * @return 值
      */
-    public Vector3f linearLerp(BrBoneKeyFrame other, Vector3f result, float weight) {
+    public Vector3f linearLerp(MolangScope scope, BrBoneKeyFrame other, Vector3f result, float weight) {
         var aDataPoint = this.dataPoints.length > 1 && getTick() < other.getTick() ? 1 : 0;
         var bDataPoint = other.dataPoints.length > 1 && getTick() > other.getTick() ? 1 : 0;
 
         MolangValue3 am3 = get(aDataPoint);
         MolangValue3 bm3 = other.get(bDataPoint);
 
-        float ax = am3.getX();
-        float bx = bm3.getX();
+        float ax = am3.getX(scope);
+        float bx = bm3.getX(scope);
 
-        float ay = am3.getY();
-        float by = bm3.getY();
+        float ay = am3.getY(scope);
+        float by = bm3.getY(scope);
 
-        float az = am3.getZ();
-        float bz = bm3.getZ();
+        float az = am3.getZ(scope);
+        float bz = bm3.getZ(scope);
 
         return result.set(
                 ax == bx ? ax : MathE.lerp(ax, bx, weight),
@@ -153,17 +154,17 @@ public record BrBoneKeyFrame(
         return dataPoints[dataPoint];
     }
 
-    public static BrBoneKeyFrame parse(MolangSystemScope scope, float timestamp, JsonElement json) throws JsonParseException {
+    public static BrBoneKeyFrame parse(float timestamp, JsonElement json) throws JsonParseException {
         MolangValue3[] dataPoints;
         BrBoneKeyFrame.LerpMode lerpMode;
 
         if (json.isJsonArray()) {
             lerpMode = LerpMode.LINEAR;
 
-            dataPoints = new MolangValue3[]{MolangValue3.parse(scope, json.getAsJsonArray())};
+            dataPoints = new MolangValue3[]{MolangValue3.parse(json.getAsJsonArray())};
         } else if (json.isJsonPrimitive()) {
             lerpMode = LerpMode.LINEAR;
-            MolangValue value = MolangValue.parse(scope, json.getAsString());
+            MolangValue value = MolangValue.parse(json.getAsString());
             dataPoints = new MolangValue3[]{new MolangValue3(value, value, value)};
         } else if (json.isJsonObject()) {
             JsonObject jo = json.getAsJsonObject();
@@ -176,13 +177,13 @@ public record BrBoneKeyFrame(
             String post = "post";
 
             if (jo.has(pre) && !jo.has(post)) {
-                dataPoints = new MolangValue3[]{MolangValue3.parse(scope, jo.get(pre).getAsJsonArray())};
+                dataPoints = new MolangValue3[]{MolangValue3.parse(jo.get(pre).getAsJsonArray())};
             } else if (jo.has(post) && (!jo.has(pre) || lerpMode == LerpMode.CATMULLROM)) {
-                dataPoints = new MolangValue3[]{MolangValue3.parse(scope, jo.get(post).getAsJsonArray())};
+                dataPoints = new MolangValue3[]{MolangValue3.parse(jo.get(post).getAsJsonArray())};
             } else {
                 dataPoints = new MolangValue3[]{
-                        MolangValue3.parse(scope, jo.get(pre).getAsJsonArray()),
-                        MolangValue3.parse(scope, jo.get(post).getAsJsonArray())
+                        MolangValue3.parse(jo.get(pre).getAsJsonArray()),
+                        MolangValue3.parse(jo.get(post).getAsJsonArray())
                 };
             }
         } else {

@@ -4,7 +4,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
-import io.github.tt432.eyelib.molang.MolangSystemScope;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
@@ -29,7 +28,7 @@ public record BrAnimation(
         }
 
         for (Map.Entry<String, JsonElement> entry : jo.entrySet()) {
-            animations.put(entry.getKey(), BrAnimationEntry.parse(MolangSystemScope.ANIMATIONS, entry.getValue().getAsJsonObject()));
+            animations.put(entry.getKey(), BrAnimationEntry.parse(entry.getValue().getAsJsonObject()));
         }
 
         return new BrAnimation(animations);
