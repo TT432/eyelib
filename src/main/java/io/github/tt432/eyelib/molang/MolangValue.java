@@ -57,7 +57,7 @@ public final class MolangValue {
     public float eval(MolangScope scope) {
         if (method != null) {
             try {
-                return (Float) method.invoke(scope);
+                return (Float) method.invoke(null, scope);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }
