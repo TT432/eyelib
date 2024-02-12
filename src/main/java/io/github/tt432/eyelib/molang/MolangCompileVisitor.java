@@ -24,6 +24,12 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
 
         String[] split = string.split(";");
 
+        for (int i = 0; i < split.length; i++) {
+            if (split[i].isEmpty() || split[i].equals("null")) {
+                split[i] = "0F";
+            }
+        }
+
         StringBuilder r = new StringBuilder();
 
         for (int i = 0; i < split.length - 1; i++) {

@@ -42,6 +42,7 @@ public class BrAnimationLoader extends SimpleJsonResourceReloadListener {
 
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
+        MolangCompileHandler.onReload();
         animations.clear();
 
         pObject.forEach((rl, json) -> {

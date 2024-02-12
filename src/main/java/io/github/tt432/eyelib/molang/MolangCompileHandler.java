@@ -7,6 +7,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
@@ -38,27 +39,35 @@ public class MolangCompileHandler {
         }
     }
 
+    static boolean reloadable = true;
+
     static class MolangCompileHandlerReloadListener extends SimplePreparableReloadListener {
         @Override
         protected Object prepare(ResourceManager resourceManager, ProfilerFiller profilerFiller) {
-            onReload();
             return "";
         }
 
         @Override
         protected void apply(Object o, ResourceManager resourceManager, ProfilerFiller profilerFiller) {
+            reloadable = true;
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onEvent(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(new MolangCompileHandlerReloadListener());
     }
 
     private static CustomClassLoader classLoader;
+    private static ClassPool classPool;
 
     public static void onReload() {
-        classLoader = new CustomClassLoader(MolangScope.class.getClassLoader());
+        if (reloadable) {
+            reloadable = false;
+            classLoader = new CustomClassLoader(MolangScope.class.getClassLoader());
+            classPool = new ClassPool();
+            classPool.appendClassPath(new LoaderClassPath(classLoader));
+        }
     }
 
     private static final MolangCompileVisitor visitor = new MolangCompileVisitor();
@@ -72,11 +81,9 @@ public class MolangCompileHandler {
     }
 
     private static void compileAll(String className) throws NoSuchMethodException, CannotCompileException, NotFoundException, IOException {
-        ClassPool cp = ClassPool.getDefault();
+        CtClass ctClass = classPool.makeClass(className);
 
-        CtClass ctClass = cp.makeClass(className);
-
-        CtClass scopeClass = cp.get(MolangScope.class.getName());
+        CtClass scopeClass = classPool.get(MolangScope.class.getName());
 
         CtMethod emptyEval = new CtMethod(CtClass.floatType, "emptyEval",
                 new CtClass[]{CtClass.floatType}, ctClass);
