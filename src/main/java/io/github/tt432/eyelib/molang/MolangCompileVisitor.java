@@ -5,6 +5,7 @@ import io.github.tt432.eyelib.molang.grammer.MolangBaseVisitor;
 import io.github.tt432.eyelib.molang.grammer.MolangParser;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -104,17 +105,19 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
 
     @Override
     public String visitFunction(MolangParser.FunctionContext ctx) {
-        StringBuilder builder = new StringBuilder();
-
+        List<String> params = new ArrayList<>();
         for (MolangParser.FuncParamContext funcParamContext : ctx.funcParam()) {
+            String text;
             if (funcParamContext.STRING() != null) {
-                builder.append(funcParamContext.STRING().getText()).append(",");
+                text = funcParamContext.STRING().getText();
             } else {
-                builder.append(visit(funcParamContext.expr())).append(",");
+                text = visit(funcParamContext.expr());
             }
+            params.add(text.replace('\'', '\"'));
         }
+        String joined = String.join(",", params);
 
-        return "(MolangFunctionHandler.tryExecuteFunction(\"${ctx.ID().getText()}\", $1, new Object[] {${builder.toString()}}}))";
+        return "(io.github.tt432.eyelib.molang.MolangFunctionHandler.tryExecuteFunction(\"${ctx.ID().getText()}\", $1, new Object[] {${joined}}))";
     }
 
     @Override
