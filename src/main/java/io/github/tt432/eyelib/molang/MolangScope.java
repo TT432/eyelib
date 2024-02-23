@@ -19,9 +19,6 @@ public class MolangScope {
     Map<String, Object> animationData = new HashMap<>();
 
     public float get(String name) {
-        if (name.startsWith("q."))
-            name = "query." + name.substring(2);
-
         if (cache.containsKey(name)) {
             return cache.get(name);
         } else if (GlobalMolangVariable.contains(name)) {

@@ -15,6 +15,8 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,12 +77,13 @@ public class MolangCompileHandler {
     public static void tryCompileAll(String className) {
         try {
             compileAll(className);
-        } catch (NotFoundException | CannotCompileException | NoSuchMethodException | IOException e) {
+        } catch (NotFoundException | CannotCompileException | NoSuchMethodException | IOException |
+                 IllegalAccessException e) {
             e.printStackTrace();
         }
     }
 
-    private static void compileAll(String className) throws NoSuchMethodException, CannotCompileException, NotFoundException, IOException {
+    private static void compileAll(String className) throws NoSuchMethodException, CannotCompileException, NotFoundException, IOException, IllegalAccessException {
         CtClass ctClass = classPool.makeClass(className);
 
         CtClass scopeClass = classPool.get(MolangScope.class.getName());
@@ -112,9 +115,12 @@ public class MolangCompileHandler {
         byte[] bytecode = ctClass.toBytecode();
         Class<?> aClass = classLoader.createClass(className, bytecode, 0, bytecode.length);
 
+        MethodHandles.Lookup publicLookup = MethodHandles.publicLookup();
+        MethodType mt = MethodType.methodType(float.class, MolangScope.class);
+
         for (int i = 0; i < values.size(); i++) {
             MolangValue valuei = values.get(i);
-            valuei.setMethod(aClass.getMethod("eval${i}", MolangScope.class));
+            valuei.setMethod(publicLookup.findStatic(aClass, "eval${i}", mt));
         }
 
         values.clear();

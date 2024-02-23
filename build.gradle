@@ -94,7 +94,7 @@ dependencies {
     implementation "net.neoforged:neoforge:${neo_version}"
 
     libraries 'org.javassist:javassist:3.30.2-GA'
-    jarJar 'org.javassist:javassist:[3.0, 4.0)'
+    jarJar 'org.javassist:javassist:[3.30.2-GA,)'
 
     annotationProcessor 'systems.manifold:manifold-strings:2024.1.1'
 }

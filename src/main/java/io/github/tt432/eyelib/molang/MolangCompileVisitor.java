@@ -12,6 +12,26 @@ import java.util.List;
  * @author TT432
  */
 public class MolangCompileVisitor extends MolangBaseVisitor<String> {
+    private static String alias(String sourceName) {
+        return switch (sourceName) {
+            case "c" -> "context";
+            case "m" -> "math";
+            case "t" -> "temp";
+            case "q" -> "query";
+            default -> sourceName;
+        };
+    }
+
+    private static String rename(String name) {
+        int i = name.indexOf(".");
+
+        if (i != -1) {
+            return alias(name.substring(0, i)) + name.substring(i);
+        }
+
+        return name;
+    }
+
     @Override
     public String visitExprSet(MolangParser.ExprSetContext ctx) {
         StringBuilder result = new StringBuilder();
@@ -75,7 +95,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
 
     @Override
     public String visitAssignmentOperator(MolangParser.AssignmentOperatorContext ctx) {
-        return "($1.set(\"${ctx.ID().getText()}\", ${visit(ctx.expr())}))";
+        return "($1.set(\"${rename(ctx.ID().getText())}\", ${visit(ctx.expr())}))";
     }
 
     @Override
@@ -107,22 +127,46 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
     public String visitFunction(MolangParser.FunctionContext ctx) {
         List<String> params = new ArrayList<>();
         for (MolangParser.FuncParamContext funcParamContext : ctx.funcParam()) {
-            String text;
             if (funcParamContext.STRING() != null) {
-                text = funcParamContext.STRING().getText();
+                String text = funcParamContext.STRING().getText();
+                params.add("\"${text.substring(1, text.length()-1)}\"");
             } else {
-                text = visit(funcParamContext.expr());
+                String text = visit(funcParamContext.expr());
+                params.add(text);
             }
-            params.add(text.replace('\'', '\"'));
         }
         String joined = String.join(",", params);
 
-        return "(io.github.tt432.eyelib.molang.MolangFunctionHandler.tryExecuteFunction(\"${ctx.ID().getText()}\", $1, new Object[] {${joined}}))";
+        String methodName = rename(ctx.ID().getText());
+        String method = MolangMappingTree.INSTANCE.findMethod(methodName);
+
+        if (!method.equals("0F")) {
+            return "${method}(${joined})";
+        } else {
+            return "0F";
+        }
     }
 
     @Override
     public String visitVariable(MolangParser.VariableContext ctx) {
-        return "$1.get(\"${ctx.getText()}\")";
+        String fieldName = rename(ctx.getText());
+        String field = MolangMappingTree.INSTANCE.findField(fieldName);
+
+        if (!field.equals("0F")) {
+            return field;
+        } else {
+            String method = MolangMappingTree.INSTANCE.findMethod(fieldName);
+
+            if (!method.equals("0F")) {
+                if (fieldName.startsWith("query.")) {
+                    return method + "($1)";
+                } else {
+                    return method + "()";
+                }
+            } else {
+                return "$1.get(\"${fieldName}\")";
+            }
+        }
     }
 
     @Override
@@ -132,7 +176,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
 
     @Override
     public String visitParenthesesPrecedence(MolangParser.ParenthesesPrecedenceContext ctx) {
-        return visit(ctx.expr());
+        return "(${visit(ctx.expr())})";
     }
 
     @Override

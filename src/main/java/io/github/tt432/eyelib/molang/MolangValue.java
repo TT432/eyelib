@@ -9,8 +9,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
 
 /**
  * @author TT432
@@ -33,7 +32,7 @@ public final class MolangValue {
     @Getter
     private final String context;
     @Setter
-    private Method method;
+    private MethodHandle method;
 
     public MolangValue(String context) {
         this.context = context;
@@ -57,8 +56,8 @@ public final class MolangValue {
     public float eval(MolangScope scope) {
         if (method != null) {
             try {
-                return (Float) method.invoke(null, scope);
-            } catch (IllegalAccessException | InvocationTargetException e) {
+                return (float) method.invoke(scope);
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
         }
