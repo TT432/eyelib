@@ -91,7 +91,7 @@ public class MolangCompileHandler {
         CtMethod emptyEval = new CtMethod(CtClass.floatType, "emptyEval",
                 new CtClass[]{CtClass.floatType}, ctClass);
         emptyEval.setModifiers(Modifier.STATIC | Modifier.PUBLIC);
-        emptyEval.setBody("{return $1;}");
+        emptyEval.setBody("{return (float) $1;}");
         ctClass.addMethod(emptyEval);
 
         for (int i = 0; i < values.size(); i++) {
@@ -106,6 +106,8 @@ public class MolangCompileHandler {
                             new CommonTokenStream(
                                     new MolangLexer(CharStreams.fromString(valuei.getContext())))
                     ).exprSet());
+
+            System.out.println(body);
 
             method.setBody("{${body}}");
 

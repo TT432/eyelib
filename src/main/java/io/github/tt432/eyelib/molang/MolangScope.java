@@ -32,8 +32,9 @@ public class MolangScope {
         return get(name) != MolangValue.FALSE;
     }
 
-    public void set(String name, float value) {
+    public float set(String name, float value) {
         cache.put(name, value);
+        return value;
     }
 
     @Nullable

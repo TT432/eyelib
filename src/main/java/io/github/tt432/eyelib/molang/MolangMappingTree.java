@@ -2,7 +2,10 @@ package io.github.tt432.eyelib.molang;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforgespi.language.ModFileScanData;
 import org.objectweb.asm.Type;
 
@@ -14,10 +17,16 @@ import java.util.*;
  * @author TT432
  */
 @Slf4j
+@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class MolangMappingTree {
     public static final MolangMappingTree INSTANCE = new MolangMappingTree();
 
-    static {
+    @SubscribeEvent
+    public static void onEvent(FMLCommonSetupEvent event) {
+        onModStart();
+    }
+
+    public static void onModStart() {
         Type annotationType = Type.getType(MolangMapping.class);
         List<ModFileScanData> allScanData = ModList.get().getAllScanData();
 

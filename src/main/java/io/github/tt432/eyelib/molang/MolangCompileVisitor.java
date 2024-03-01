@@ -57,7 +57,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
             r.append("emptyEval(${split[i]});");
         }
 
-        r.append("return ").append(split[split.length - 1]).append(";");
+        r.append("return (float) ").append(split[split.length - 1]).append(";");
 
         return r.toString();
     }
