@@ -107,8 +107,6 @@ public class MolangCompileHandler {
                                     new MolangLexer(CharStreams.fromString(valuei.getContext())))
                     ).exprSet());
 
-            System.out.println(body);
-
             method.setBody("{${body}}");
 
             ctClass.addMethod(method);
