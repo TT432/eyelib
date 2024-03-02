@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.animation.system;
 
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.animation.bedrock.BrBoneAnimation;
+import io.github.tt432.eyelib.client.animation.bedrock.BrEffectsKeyFrame;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAcState;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
 import io.github.tt432.eyelib.client.animation.component.AnimationControllerComponent;
@@ -15,11 +16,15 @@ import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import io.github.tt432.eyelib.util.math.MathE;
 import lombok.Getter;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author TT432
@@ -77,7 +82,7 @@ public class AnimationControllerSystem {
 
                 Map<String, BrAnimationEntry> animations = component.getTargetAnimation().animations();
 
-                updateAnimations(animations, blend, startedTime, infos, model.allBones());
+                updateAnimations(animations, blend, startedTime, infos, model.allBones(), component);
             }
         }
     }
@@ -94,10 +99,28 @@ public class AnimationControllerSystem {
         currState.onEntry().eval(scope);
 
         component.updateStartTick(ticks);
+
+        component.resetSoundEvents(currState);
+    }
+
+    private static void processSoundEvent(float ticks, String animName, AnimationControllerComponent component) {
+        TreeMap<Float, BrEffectsKeyFrame[]> soundEffect = component.getCurrentSoundEvents().get(animName);
+
+        if (soundEffect != null && !soundEffect.isEmpty() && soundEffect.firstKey() < ticks) {
+            for (BrEffectsKeyFrame brEffectsKeyFrame : soundEffect.pollFirstEntry().getValue()) {
+                Object owner = scope.getOwner().getOwner();
+
+                if (owner instanceof Entity e) {
+                    SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(new ResourceLocation(brEffectsKeyFrame.effect()));
+                    e.playSound(soundEvent);
+                }
+            }
+        }
     }
 
     private static void updateAnimations(Map<String, BrAnimationEntry> targetAnimations, Map<String, Float> blend,
-                                         float startedTime, BoneRenderInfos infos, Map<String, BrBone> stringBrBoneMap) {
+                                         float startedTime, BoneRenderInfos infos, Map<String, BrBone> stringBrBoneMap,
+                                         AnimationControllerComponent component) {
         for (Map.Entry<String, Float> animEntry : blend.entrySet()) {
             var animName = animEntry.getKey();
             BrAnimationEntry animation = targetAnimations.get(animName);
@@ -107,7 +130,10 @@ public class AnimationControllerSystem {
 
             if (startedTime > animation.animationLength() && animation.animationLength() > 0) {
                 switch (animation.loop()) {
-                    case LOOP -> animTick = startedTime % animation.animationLength();
+                    case LOOP -> {
+                        animTick = startedTime % animation.animationLength();
+                        component.resetSoundEvent(animName);
+                    }
                     case ONCE -> {
                         continue;
                     }
@@ -116,6 +142,8 @@ public class AnimationControllerSystem {
                     }
                 }
             }
+
+            processSoundEvent(animTick, animName, component);
 
             for (Map.Entry<String, BrBoneAnimation> stringBrBoneAnimationEntry : animation.bones().entrySet()) {
                 var boneName = stringBrBoneAnimationEntry.getKey();
