@@ -14,7 +14,6 @@ import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.util.math.EyeMath;
-import io.github.tt432.eyelib.util.math.MathE;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
@@ -177,9 +176,9 @@ public class AnimationControllerSystem {
 
                 if (s != null) {
                     boneRenderInfoEntry.getRenderScala().mul(
-                            MathE.notZero(1 + ((s.x - 1) * multiplier), 0.00001F),
-                            MathE.notZero(1 + ((s.y - 1) * multiplier), 0.00001F),
-                            MathE.notZero(1 + ((s.z - 1) * multiplier), 0.00001F)
+                            EyeMath.notZero(1 + ((s.x - 1) * multiplier), 0.00001F),
+                            EyeMath.notZero(1 + ((s.y - 1) * multiplier), 0.00001F),
+                            EyeMath.notZero(1 + ((s.z - 1) * multiplier), 0.00001F)
                     );
                 }
 
@@ -215,7 +214,7 @@ public class AnimationControllerSystem {
         if (lastState == null || lastState.blendTransition() == 0) {
             return 1;
         } else {
-            return MathE.clamp(stateTimeSec / lastState.blendTransition(), 0, 1);
+            return EyeMath.clamp(stateTimeSec / lastState.blendTransition(), 0, 1);
         }
     }
 }

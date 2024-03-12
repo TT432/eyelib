@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.util.MolangValue3;
 import io.github.tt432.eyelib.util.math.Curves;
-import io.github.tt432.eyelib.util.math.MathE;
+import io.github.tt432.eyelib.util.math.EyeMath;
 import net.minecraft.util.Mth;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -134,9 +134,9 @@ public record BrBoneKeyFrame(
         float bz = bm3.getZ(scope);
 
         return result.set(
-                ax == bx ? ax : MathE.lerp(ax, bx, weight),
-                ay == by ? ay : MathE.lerp(ay, by, weight),
-                az == bz ? az : MathE.lerp(az, bz, weight)
+                ax == bx ? ax : EyeMath.lerp(ax, bx, weight),
+                ay == by ? ay : EyeMath.lerp(ay, by, weight),
+                az == bz ? az : EyeMath.lerp(az, bz, weight)
         );
     }
 
