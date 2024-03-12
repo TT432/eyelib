@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.molang.function;
 
 import io.github.tt432.eyelib.molang.MolangMapping;
 import io.github.tt432.eyelib.util.math.EyeMath;
-import io.github.tt432.eyelib.util.math.MathE;
 import net.minecraft.util.Mth;
 
 /**
@@ -62,11 +61,11 @@ public class MolangMath {
     }
 
     public static float lerp(float start, float end, float v) {
-        return MathE.lerp(start, end, v);
+        return EyeMath.lerp(start, end, v);
     }
 
     public static float lerprotate(float start, float end, float v) {
-        return MathE.lerpYaw(start, end, v);
+        return EyeMath.lerpYaw(start, end, v);
     }
 
     public static float ln(float v) {
