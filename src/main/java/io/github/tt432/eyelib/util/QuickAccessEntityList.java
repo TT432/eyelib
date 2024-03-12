@@ -2,13 +2,11 @@ package io.github.tt432.eyelib.util;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
-import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * {@link QuickAccessEntityList} is a specialized collection that enables fast lookup, addition,
@@ -37,11 +35,14 @@ import java.util.Map;
  *
  * @author TT432
  */
-@NoArgsConstructor
 public class QuickAccessEntityList<I extends IdentifiableObject> implements Collection<I> {
 
-    Map<Integer, Integer> idToIdxMap = new Int2IntOpenHashMap();
+    Int2IntOpenHashMap idToIdxMap = new Int2IntOpenHashMap();
     List<I> entities = new ReferenceArrayList<>();
+
+    public QuickAccessEntityList() {
+        idToIdxMap.defaultReturnValue(-1);
+    }
 
     @Override
     public int size() {
@@ -99,11 +100,10 @@ public class QuickAccessEntityList<I extends IdentifiableObject> implements Coll
         return entities.add(i);
     }
 
-    @Override
-    public boolean remove(Object o) {
-        Integer i = idToIdxMap.get(((I) o).id());
+    public boolean remove(int id) {
+        var i = idToIdxMap.get(id);
 
-        if (i == null) {
+        if (i == -1) {
             return false;
         }
 
@@ -120,9 +120,14 @@ public class QuickAccessEntityList<I extends IdentifiableObject> implements Coll
             entities.remove(size - 1);
         }
 
-        idToIdxMap.remove(((I) o).id());
+        idToIdxMap.remove(id);
 
         return true;
+    }
+
+    @Override
+    public boolean remove(Object o) {
+        return remove(((IdentifiableObject) o).id());
     }
 
     @Override
@@ -139,7 +144,7 @@ public class QuickAccessEntityList<I extends IdentifiableObject> implements Coll
     public boolean addAll(@NotNull Collection<? extends I> c) {
         boolean isModified = false;
         for (I item : c) {
-            if (idToIdxMap.putIfAbsent(item.id(), entities.size()) == null) {
+            if (idToIdxMap.putIfAbsent(item.id(), entities.size()) == -1) {
                 entities.add(item);
                 isModified = true;
             }
