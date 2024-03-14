@@ -11,3 +11,7 @@
 该 mod 的 `Capability` 被附加到大多数游戏对象上，所以你可以通过修改 `Capability` 的内容来修改游戏对象的渲染。
 
 你可以在 `io.github.tt432.eyelib.capability` 包下找到该 mod 的 `Capability`。
+
+## 关于 Molang
+
+Molang 解析使用 [Antlr-Molang](https://github.com/TT432/antlr-molang)。
