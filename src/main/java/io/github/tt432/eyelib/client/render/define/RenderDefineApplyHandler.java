@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.render.define;
 import io.github.tt432.eyelib.capability.AnimatableCapability;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
-import io.github.tt432.eyelib.client.animation.component.AnimationControllerComponent;
+import io.github.tt432.eyelib.client.animation.component.AnimationComponent;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import io.github.tt432.eyelib.client.loader.BrAnimationControllerLoader;
 import io.github.tt432.eyelib.client.loader.BrAnimationLoader;
@@ -70,7 +70,7 @@ public class RenderDefineApplyHandler {
             modelComponent.setRenderTypeFactory(renderTypeFactory);
             modelComponent.setVisitor(new BlankEntityModelRenderVisit());
 
-            AnimationControllerComponent animComponent = capability.getAnimationControllerComponent();
+            AnimationComponent animComponent = capability.getAnimationComponent();
             RDAnimationController entry = renderDefine.animationControllerEntry();
 
             String animationName = entry.animation();

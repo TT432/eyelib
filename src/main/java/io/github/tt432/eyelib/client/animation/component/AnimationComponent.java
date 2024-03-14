@@ -18,7 +18,7 @@ import java.util.*;
  */
 @Nullable
 @Getter
-public class AnimationControllerComponent {
+public class AnimationComponent {
     BrAcState[] lastState;
     BrAcState[] currState;
     BrAnimation targetAnimation;

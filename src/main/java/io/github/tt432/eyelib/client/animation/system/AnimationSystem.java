@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.client.animation.bedrock.BrBoneAnimation;
 import io.github.tt432.eyelib.client.animation.bedrock.BrEffectsKeyFrame;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAcState;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
-import io.github.tt432.eyelib.client.animation.component.AnimationControllerComponent;
+import io.github.tt432.eyelib.client.animation.component.AnimationComponent;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import io.github.tt432.eyelib.client.model.bedrock.BrBone;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
@@ -28,13 +28,13 @@ import java.util.TreeMap;
 /**
  * @author TT432
  */
-public class AnimationControllerSystem {
+public class AnimationSystem {
     @Getter
     private static MolangScope scope;
 
     public void update(float ticks) {
-        for (var entity : EntityRenderHandler.entities) {
-            AnimationControllerComponent component = entity.getAnimationControllerComponent();
+        for (var entity : EntityRenderSystem.entities) {
+            AnimationComponent component = entity.getAnimationComponent();
             scope = entity.getScope();
 
             ModelComponent modelComponent = entity.getModelComponent();
@@ -86,7 +86,7 @@ public class AnimationControllerSystem {
         }
     }
 
-    private static void switchState(float ticks, AnimationControllerComponent component, BrAcState currState) {
+    private static void switchState(float ticks, AnimationComponent component, BrAcState currState) {
         BrAcState lastState = component.getCurrentState();
 
         if (lastState != null) {
@@ -102,7 +102,7 @@ public class AnimationControllerSystem {
         component.resetSoundEvents(currState);
     }
 
-    private static void processSoundEvent(float ticks, String animName, AnimationControllerComponent component) {
+    private static void processSoundEvent(float ticks, String animName, AnimationComponent component) {
         TreeMap<Float, BrEffectsKeyFrame[]> soundEffect = component.getCurrentSoundEvents().get(animName);
 
         if (soundEffect != null && !soundEffect.isEmpty() && soundEffect.firstKey() < ticks) {
@@ -119,7 +119,7 @@ public class AnimationControllerSystem {
 
     private static void updateAnimations(Map<String, BrAnimationEntry> targetAnimations, Map<String, Float> blend,
                                          float startedTime, BoneRenderInfos infos, Map<String, BrBone> stringBrBoneMap,
-                                         AnimationControllerComponent component) {
+                                         AnimationComponent component) {
         for (Map.Entry<String, Float> animEntry : blend.entrySet()) {
             var animName = animEntry.getKey();
             BrAnimationEntry animation = targetAnimations.get(animName);

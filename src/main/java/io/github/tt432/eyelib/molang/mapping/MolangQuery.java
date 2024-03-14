@@ -126,13 +126,13 @@ public class MolangQuery {
     }
 
     public static float any_animation_finished(MolangScope scope) {
-        return scope.getOwner().getAnimationControllerComponent().anyAnimationFinished(partial_tick(scope))
+        return scope.getOwner().getAnimationComponent().anyAnimationFinished(partial_tick(scope))
                 ? MolangValue.TRUE
                 : MolangValue.FALSE;
     }
 
     public static float all_animation_finished(MolangScope scope) {
-        return scope.getOwner().getAnimationControllerComponent().allAnimationFinished(partial_tick(scope))
+        return scope.getOwner().getAnimationComponent().allAnimationFinished(partial_tick(scope))
                 ? MolangValue.TRUE
                 : MolangValue.FALSE;
     }

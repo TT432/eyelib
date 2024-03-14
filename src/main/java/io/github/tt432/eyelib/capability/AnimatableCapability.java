@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.capability;
 
-import io.github.tt432.eyelib.client.animation.component.AnimationControllerComponent;
+import io.github.tt432.eyelib.client.animation.component.AnimationComponent;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.IdentifiableObject;
@@ -24,7 +24,7 @@ public class AnimatableCapability<T> implements IdentifiableObject {
     ModelComponent modelComponent = new ModelComponent();
 
     @NotNull
-    AnimationControllerComponent animationControllerComponent = new AnimationControllerComponent();
+    AnimationComponent animationComponent = new AnimationComponent();
 
     public <N> Optional<N> ownerAs(Class<N> tClass) {
         if (tClass.isInstance(owner)) {

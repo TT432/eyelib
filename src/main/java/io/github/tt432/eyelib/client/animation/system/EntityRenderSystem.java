@@ -28,8 +28,8 @@ import java.util.List;
  * @author TT432
  */
 @Mod.EventBusSubscriber
-public class EntityRenderHandler {
-    private static final AnimationControllerSystem controllerSystem = new AnimationControllerSystem();
+public class EntityRenderSystem {
+    private static final AnimationSystem controllerSystem = new AnimationSystem();
 
     public static final QuickAccessEntityList<AnimatableCapability<?>> entities = new QuickAccessEntityList<>();
     private static final List<AnimatableCapability<?>> readyToRemove = new ArrayList<>();
