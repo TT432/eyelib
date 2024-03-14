@@ -3,10 +3,12 @@ package io.github.tt432.eyelib.molang;
 
 import io.github.tt432.eyelib.molang.grammer.MolangBaseVisitor;
 import io.github.tt432.eyelib.molang.grammer.MolangParser;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author TT432
@@ -26,10 +28,10 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
         int i = name.indexOf(".");
 
         if (i != -1) {
-            return alias(name.substring(0, i)) + name.substring(i);
+            return (alias(name.substring(0, i)) + name.substring(i)).toLowerCase(Locale.ROOT);
         }
 
-        return name;
+        return name.toLowerCase(Locale.ROOT);
     }
 
     @Override
@@ -126,25 +128,20 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
     @Override
     public String visitFunction(MolangParser.FunctionContext ctx) {
         List<String> params = new ArrayList<>();
+
         for (MolangParser.FuncParamContext funcParamContext : ctx.funcParam()) {
             if (funcParamContext.STRING() != null) {
                 String text = funcParamContext.STRING().getText();
                 params.add("\"${text.substring(1, text.length()-1)}\"");
             } else {
-                String text = visit(funcParamContext.expr());
-                params.add(text);
+                params.add(visit(funcParamContext.expr()));
             }
         }
+
         String joined = String.join(",", params);
 
         String methodName = rename(ctx.ID().getText());
-        String method = MolangMappingTree.INSTANCE.findMethod(methodName);
-
-        if (!method.equals("0F")) {
-            return "${method}(${joined})";
-        } else {
-            return "0F";
-        }
+        return MolangMappingTree.INSTANCE.findMethod(methodName, joined);
     }
 
     @Override
@@ -155,14 +152,10 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
         if (!field.equals("0F")) {
             return field;
         } else {
-            String method = MolangMappingTree.INSTANCE.findMethod(fieldName);
+            String method = MolangMappingTree.INSTANCE.findMethod(fieldName, "");
 
             if (!method.equals("0F")) {
-                if (fieldName.startsWith("query.")) {
-                    return method + "($1)";
-                } else {
-                    return method + "()";
-                }
+                return method;
             } else {
                 return "$1.get(\"${fieldName}\")";
             }

@@ -1,6 +1,6 @@
-package io.github.tt432.eyelib.molang.function;
+package io.github.tt432.eyelib.molang.mapping;
 
-import io.github.tt432.eyelib.molang.MolangMapping;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import net.minecraft.util.Mth;
 
@@ -9,7 +9,8 @@ import net.minecraft.util.Mth;
  */
 @MolangMapping("math")
 public class MolangMath {
-    public static final float pi = 3.14159265358979323846F;
+    public static final float pi = EyeMath.PI;
+    public static final float e = EyeMath.E;
 
     public static float abs(float v) {
         return Math.abs(v);

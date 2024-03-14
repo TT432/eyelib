@@ -8,6 +8,8 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
+
 /**
  * @author TT432
  */
@@ -23,6 +25,14 @@ public class AnimatableCapability<T> implements IdentifiableObject {
 
     @NotNull
     AnimationControllerComponent animationControllerComponent = new AnimationControllerComponent();
+
+    public <N> Optional<N> ownerAs(Class<N> tClass) {
+        if (tClass.isInstance(owner)) {
+            return Optional.of((N) owner);
+        }
+
+        return Optional.empty();
+    }
 
     @Override
     public int id() {

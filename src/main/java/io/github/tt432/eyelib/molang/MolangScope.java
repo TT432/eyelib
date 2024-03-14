@@ -19,13 +19,7 @@ public class MolangScope {
     Map<String, Object> animationData = new HashMap<>();
 
     public float get(String name) {
-        if (cache.containsKey(name)) {
-            return cache.get(name);
-        } else if (GlobalMolangVariable.contains(name)) {
-            return GlobalMolangVariable.get(name).get(this);
-        }
-
-        return 0;
+        return cache.getOrDefault(name, 1F);
     }
 
     public boolean getBool(String name) {
@@ -42,6 +36,10 @@ public class MolangScope {
         if (animationData.containsKey(key))
             return (T) animationData.get(key);
         return defaultValue;
+    }
+
+    public <T> T getOrCreateExtraData(String key, T defaultValue) {
+        return (T) animationData.computeIfAbsent(key, s -> defaultValue);
     }
 
     public void setExtraData(String key, Object value) {

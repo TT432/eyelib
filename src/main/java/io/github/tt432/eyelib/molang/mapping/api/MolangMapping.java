@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.molang;
+package io.github.tt432.eyelib.molang.mapping.api;
 
 /**
  * usage:
@@ -11,8 +11,9 @@ package io.github.tt432.eyelib.molang;
  *     }
  * }
  * }</pre>
- *
- * 此处的 max 可以对应 math.max(a, b)
+ * <p>
+ * 此处的 max 可以对应 math.max(a, b) <br/>
+ * targetClass's method & field must is public & static
  *
  * @author TT432
  */
@@ -21,4 +22,9 @@ public @interface MolangMapping {
      * @return molang function or field name
      */
     String value();
+
+    /**
+     * @return will add MolangScope arg first if false
+     */
+    boolean pureFunction() default true;
 }

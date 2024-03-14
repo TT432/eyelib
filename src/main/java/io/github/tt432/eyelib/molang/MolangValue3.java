@@ -1,12 +1,10 @@
-package io.github.tt432.eyelib.molang.util;
+package io.github.tt432.eyelib.molang;
 
 import com.google.gson.JsonArray;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.molang.MolangValue;
 
 import java.util.List;
 

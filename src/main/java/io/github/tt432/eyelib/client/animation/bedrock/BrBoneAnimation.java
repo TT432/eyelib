@@ -4,7 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.molang.util.MolangValue3;
+import io.github.tt432.eyelib.molang.MolangValue3;
 import io.github.tt432.eyelib.util.ImmutableFloatTreeMap;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;

@@ -1,7 +1,7 @@
-package io.github.tt432.eyelib.molang.function;
+package io.github.tt432.eyelib.molang.mapping;
 
-import io.github.tt432.eyelib.molang.MolangMapping;
 import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,10 +9,10 @@ import java.util.Map;
 /**
  * @author TT432
  */
-@MolangMapping("eyelib")
+@MolangMapping(value = "eyelib", pureFunction = false)
 public class MolangEyelib {
-    public static Map<String, Boolean> getGlowing(MolangScope scope) {
-        return scope.getExtraData("glowing", new HashMap<>());
+    private static Map<String, Boolean> getGlowing(MolangScope scope) {
+        return scope.getOrCreateExtraData("glowing", new HashMap<>());
     }
 
     public static float add_glow(MolangScope scope, Object... params) {

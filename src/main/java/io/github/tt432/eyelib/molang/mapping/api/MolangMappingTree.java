@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.molang;
+package io.github.tt432.eyelib.molang.mapping.api;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +38,9 @@ public class MolangMappingTree {
                     String memberName = a.memberName();
 
                     try {
-                        INSTANCE.addNode(a.annotationData().get("value").toString(), Class.forName(memberName));
+                        Map<String, Object> annotationData = a.annotationData();
+                        INSTANCE.addNode(annotationData.get("value").toString(),
+                                new MolangClass(Class.forName(memberName), (Boolean) annotationData.get("pureFunction")));
                     } catch (ReflectiveOperationException | LinkageError e) {
                         log.error("[MolangMappingTree] Failed to load: {}", memberName, e);
                     }
@@ -47,41 +49,43 @@ public class MolangMappingTree {
         }
     }
 
-    private final Map<String, Node> children = new HashMap<>();
+    public record MolangClass(
+            Class<?> classInstance,
+            boolean pureFunction
+    ) {
+    }
+
+    private final Node toplevelNode = new Node();
 
     @RequiredArgsConstructor
     private static class Node {
         final Map<String, Node> children = new HashMap<>();
-        final List<Class<?>> actualClasses = new ArrayList<>();
+        final List<MolangClass> actualClasses = new ArrayList<>();
     }
 
-    public void addNode(String name, Class<?> actualClass) {
+    public void addNode(String name, MolangClass actualClass) {
         String[] split = name.split("\\.");
 
-        Node last = null;
+        Node last = toplevelNode;
 
         for (String s : split) {
-            if (last == null) {
-                last = children.computeIfAbsent(s, $ -> new Node());
-            } else {
-                last = last.children.computeIfAbsent(s, $ -> new Node());
-            }
+            last = last.children.computeIfAbsent(s, $ -> new Node());
         }
 
-        if (last != null) {
-            last.actualClasses.add(actualClass);
-        }
+        last.actualClasses.add(actualClass);
     }
 
     public String findField(String name) {
         int i = name.indexOf(".");
 
         if (i != -1) {
-            List<Class<?>> classes = findClasses(name.substring(0, i));
+            var classes = findClasses(name.substring(0, i));
 
             String foundField = null;
 
-            for (Class<?> aClass : classes) {
+            for (var classData : classes) {
+                var aClass = classData.classInstance;
+
                 try {
                     String fieldName = name.substring(i);
                     aClass.getField(fieldName);
@@ -102,51 +106,48 @@ public class MolangMappingTree {
         return "0F";
     }
 
-    public String findMethod(String name) {
+    public String findMethod(String name, String args) {
         int i = name.indexOf(".");
 
         if (i != -1) {
-            List<Class<?>> classes = findClasses(name.substring(0, i));
+            var classes = findClasses(name.substring(0, i));
 
             String foundMethod = null;
 
-            for (Class<?> aClass : classes) {
+            for (var classData : classes) {
+                var aClass = classData.classInstance;
                 String methodName = name.substring(i + 1);
 
-                for (Method method : aClass.getDeclaredMethods()) {
-                    if (Modifier.isPublic(method.getModifiers())
-                            && Modifier.isStatic(method.getModifiers())
+                for (Method method : aClass.getMethods()) {
+                    if (Modifier.isStatic(method.getModifiers())
                             && method.getReturnType().equals(float.class)
                             && method.getName().equals(methodName)) {
-                        foundMethod = "${aClass.getName()}.${methodName}";
+                        if (classData.pureFunction) {
+                            foundMethod = "${aClass.getName()}.${methodName}($1, ${args})";
+                        } else {
+                            foundMethod = "${aClass.getName()}.${methodName}(${args})";
+                        }
+
                         break;
                     }
                 }
             }
 
-            if (foundMethod == null) {
-                foundMethod = "0F";
-            }
-
-            return foundMethod;
+            return Objects.requireNonNullElse(foundMethod, "0F");
         }
 
         return "0F";
     }
 
-    public List<Class<?>> findClasses(String name) {
+    public List<MolangClass> findClasses(String name) {
         String[] split = name.split("\\.");
 
-        Node last = null;
+        Node last = toplevelNode;
 
         for (String s : split) {
-            last = children.get(s);
+            last = toplevelNode.children.get(s);
         }
 
-        if (last != null) {
-            return last.actualClasses;
-        }
-
-        return List.of();
+        return last.actualClasses;
     }
 }
