@@ -13,9 +13,9 @@ import java.util.Arrays;
  */
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
-public class ImmutableFloatTreeMap<V> {
+public sealed class ImmutableFloatTreeMap<V> {
 
-    public static class Empty<V> extends ImmutableFloatTreeMap<V> {
+    public static final class Empty<V> extends ImmutableFloatTreeMap<V> {
 
         @NoArgsConstructor(access = AccessLevel.PRIVATE)
         private static class S {
