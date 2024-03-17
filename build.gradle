@@ -96,7 +96,7 @@ dependencies {
     libraries 'org.javassist:javassist:3.30.2-GA'
     jarJar 'org.javassist:javassist:[3.30.2-GA,)'
 
-    annotationProcessor 'systems.manifold:manifold-strings:2024.1.1'
+    annotationProcessor 'systems.manifold:manifold-strings:2024.1.9'
 }
 
 tasks.withType(JavaCompile) {
