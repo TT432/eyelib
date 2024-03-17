@@ -58,8 +58,8 @@ public class RenderDefineApplyHandler {
 
             modelComponent.setModel(model);
             // new Random(seed).nextInt(bound) 在bound为2^n时存在问题
-            int randomIdx = Math.abs(new Random(entity.getId()).nextInt()) % material.textures().length;
-            ResourceLocation texture = material.textures()[randomIdx];
+            int randomIdx = Math.abs(new Random(entity.getId()).nextInt()) % material.textures().size();
+            ResourceLocation texture = material.textures().get(randomIdx);
             modelComponent.setTexture(new ResourceLocation(texture.getNamespace(),
                     "textures/" + texture.getPath() + ".png"));
             // TODO 补充更多的 renderType，或者找到一个检索的办法

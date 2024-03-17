@@ -2,8 +2,10 @@ package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.model.bedrock.material.ModelMaterial;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
@@ -20,6 +22,7 @@ import java.util.Map;
  * @author TT432
  */
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+@Slf4j
 public class BrModelLoader extends SimpleJsonResourceReloadListener {
     private static final BrModelLoader INSTANCE = new BrModelLoader(new Gson(), "bedrock_models");
 
@@ -51,7 +54,8 @@ public class BrModelLoader extends SimpleJsonResourceReloadListener {
             ResourceLocation key = entry.getKey();
 
             if (key.getPath().endsWith("material")) {
-                materials.put(key, ModelMaterial.parse(entry.getValue().getAsJsonObject()));
+                materials.put(key, ModelMaterial.CODEC.parse(JsonOps.INSTANCE, entry.getValue())
+                        .getOrThrow(true, log::error));
             } else {
                 models.put(key, BrModel.parse(key.toString(), entry.getValue().getAsJsonObject()));
             }
