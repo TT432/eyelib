@@ -9,7 +9,7 @@ import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
 import io.github.tt432.eyelib.client.render.visitor.BrModelRenderVisitor;
 import io.github.tt432.eyelib.event.InitComponentEvent;
-import io.github.tt432.eyelib.util.QuickAccessEntityList;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.entity.Entity;
@@ -31,7 +31,7 @@ import java.util.List;
 public class EntityRenderSystem {
     private static final AnimationSystem controllerSystem = new AnimationSystem();
 
-    public static final QuickAccessEntityList<AnimatableCapability<?>> entities = new QuickAccessEntityList<>();
+    public static final Int2ObjectOpenHashMap<AnimatableCapability<?>> entities = new Int2ObjectOpenHashMap<>();
     private static final List<AnimatableCapability<?>> readyToRemove = new ArrayList<>();
 
     @SubscribeEvent
@@ -43,7 +43,7 @@ public class EntityRenderSystem {
             cap.init(entity);
         }
 
-        entities.add(cap);
+        entities.put(cap.id(), cap);
         NeoForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
     }
 
@@ -58,14 +58,14 @@ public class EntityRenderSystem {
     }
 
     private static void removeRemovedEntity() {
-        for (AnimatableCapability<?> entity : entities) {
+        entities.values().forEach(entity -> {
             if (entity.getOwner() instanceof Entity le && le.isRemoved()) {
                 readyToRemove.add(entity);
             }
-        }
+        });
 
         for (AnimatableCapability<?> animatableCapability : readyToRemove) {
-            entities.remove(animatableCapability);
+            entities.remove(animatableCapability.id());
         }
 
         readyToRemove.clear();

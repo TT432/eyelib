@@ -33,7 +33,7 @@ public class AnimationSystem {
     private static MolangScope scope;
 
     public void update(float ticks) {
-        for (var entity : EntityRenderSystem.entities) {
+        EntityRenderSystem.entities.values().forEach(entity -> {
             AnimationComponent component = entity.getAnimationComponent();
             scope = entity.getScope();
 
@@ -44,7 +44,7 @@ public class AnimationSystem {
             infos.reset();
 
             if (model == null || component.getAnimationController() == null) {
-                continue;
+                return;
             }
 
             for (int i = 0; i < component.getAnimationController().size(); i++) {
@@ -83,7 +83,7 @@ public class AnimationSystem {
 
                 updateAnimations(animations, blend, startedTime, infos, model.allBones(), component);
             }
-        }
+        });
     }
 
     private static void switchState(float ticks, AnimationComponent component, BrAcState currState) {
