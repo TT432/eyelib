@@ -161,7 +161,7 @@ public record BrBoneKeyFrame(
         if (json.isJsonArray()) {
             lerpMode = LerpMode.LINEAR;
 
-            dataPoints = new MolangValue3[]{MolangValue3.parse(json.getAsJsonArray())};
+            dataPoints = new MolangValue3[]{MolangValue3.parse(json)};
         } else if (json.isJsonPrimitive()) {
             lerpMode = LerpMode.LINEAR;
             MolangValue value = MolangValue.parse(json.getAsString());
@@ -177,13 +177,13 @@ public record BrBoneKeyFrame(
             String post = "post";
 
             if (jo.has(pre) && !jo.has(post)) {
-                dataPoints = new MolangValue3[]{MolangValue3.parse(jo.get(pre).getAsJsonArray())};
+                dataPoints = new MolangValue3[]{MolangValue3.parse(jo.get(pre))};
             } else if (jo.has(post) && (!jo.has(pre) || lerpMode == LerpMode.CATMULLROM)) {
-                dataPoints = new MolangValue3[]{MolangValue3.parse(jo.get(post).getAsJsonArray())};
+                dataPoints = new MolangValue3[]{MolangValue3.parse(jo.get(post))};
             } else {
                 dataPoints = new MolangValue3[]{
-                        MolangValue3.parse(jo.get(pre).getAsJsonArray()),
-                        MolangValue3.parse(jo.get(post).getAsJsonArray())
+                        MolangValue3.parse(jo.get(pre)),
+                        MolangValue3.parse(jo.get(post))
                 };
             }
         } else {

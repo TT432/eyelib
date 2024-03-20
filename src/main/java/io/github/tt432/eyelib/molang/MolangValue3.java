@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.molang;
 
-import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
@@ -40,8 +40,8 @@ public record MolangValue3(
             ).apply(ins, MolangValue3::new))
     ).xmap(e -> e.map(Function.identity(), Function.identity()), Either::right);
 
-    public static MolangValue3 parse(JsonArray jsonArray) {
-        return CODEC.parse(JsonOps.INSTANCE, jsonArray).getOrThrow(true, RuntimeException::new);
+    public static MolangValue3 parse(JsonElement ele) {
+        return CODEC.parse(JsonOps.INSTANCE, ele).getOrThrow(true, RuntimeException::new);
     }
 
     public float getX(MolangScope scope) {

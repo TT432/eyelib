@@ -23,7 +23,9 @@ public final class MolangValue {
     public static final MolangValue FALSE_VALUE = new MolangValue("0");
 
     public static final Codec<MolangValue> CODEC = Codec.either(
-            Codec.STRING.xmap(MolangValue::new, MolangValue::toString),
+            Codec.either(Codec.STRING, Codec.FLOAT)
+                    .xmap(e -> e.map(Function.identity(), Object::toString), Either::left)
+                    .xmap(MolangValue::new, MolangValue::toString),
             RecordCodecBuilder.<MolangValue>create(ins -> ins.group(
                     Codec.STRING.fieldOf("context").forGetter(o -> o.context)
             ).apply(ins, MolangValue::new))
