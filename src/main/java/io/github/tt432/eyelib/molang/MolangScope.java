@@ -45,12 +45,4 @@ public class MolangScope {
     public void setExtraData(String key, Object value) {
         animationData.put(key, value);
     }
-
-    public MolangScope copyWithOwner(AnimatableCapability<?> capability) {
-        MolangScope result = new MolangScope();
-        result.owner = capability;
-        result.cache = new HashMap<>(cache);
-        result.animationData = new HashMap<>(animationData);
-        return result;
-    }
 }
