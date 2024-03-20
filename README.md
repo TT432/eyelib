@@ -12,6 +12,9 @@ The mod uses a `Capability`-based structure.
 
 You can find the `Capability` in the `io.github.tt432.eyelib.capability` package.
 
-## About Molang
+## Dependencies
 
-Molang Parser use [Antlr-Molang](https://github.com/TT432/antlr-molang).
+- [Antlr-Molang](https://github.com/TT432/antlr-molang) for parse Molang.
+- [Manifold: String Templates](https://github.com/manifold-systems/manifold/blob/master/manifold-deps-parent/manifold-strings/README.md) for String Template.
+- [javassist](http://www.javassist.org/) for generate bytecode for Molang.
+- [lombok](https://projectlombok.org/) for generate getter/setter and more.
