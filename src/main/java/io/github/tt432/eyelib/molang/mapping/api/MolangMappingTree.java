@@ -39,8 +39,10 @@ public class MolangMappingTree {
 
                     try {
                         Map<String, Object> annotationData = a.annotationData();
+                        Object isPureFunction = annotationData.get("pureFunction");
                         INSTANCE.addNode(annotationData.get("value").toString(),
-                                new MolangClass(Class.forName(memberName), (Boolean) annotationData.get("pureFunction")));
+                                new MolangClass(Class.forName(memberName),
+                                        isPureFunction == null || (boolean) isPureFunction));
                     } catch (ReflectiveOperationException | LinkageError e) {
                         log.error("[MolangMappingTree] Failed to load: {}", memberName, e);
                     }
@@ -122,8 +124,12 @@ public class MolangMappingTree {
                     if (Modifier.isStatic(method.getModifiers())
                             && method.getReturnType().equals(float.class)
                             && method.getName().equals(methodName)) {
-                        if (classData.pureFunction) {
-                            foundMethod = "${aClass.getName()}.${methodName}($1, ${args})";
+                        if (!classData.pureFunction) {
+                            if (args.isEmpty()) {
+                                foundMethod = "${aClass.getName()}.${methodName}($1)";
+                            } else {
+                                foundMethod = "${aClass.getName()}.${methodName}($1, ${args})";
+                            }
                         } else {
                             foundMethod = "${aClass.getName()}.${methodName}(${args})";
                         }
@@ -145,9 +151,15 @@ public class MolangMappingTree {
         Node last = toplevelNode;
 
         for (String s : split) {
-            last = toplevelNode.children.get(s);
+            if (last != null) {
+                last = last.children.get(s);
+            }
         }
 
-        return last.actualClasses;
+        if (last != null) {
+            return last.actualClasses;
+        }
+
+        return List.of();
     }
 }
