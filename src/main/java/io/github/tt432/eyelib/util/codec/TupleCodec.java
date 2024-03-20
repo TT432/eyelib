@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * @author TT432
@@ -84,31 +85,34 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
     @Override
     default <T> DataResult<Pair<List<Object>, T>> decode(DynamicOps<T> ops, T input) {
-        ops.getStream(input).map(s -> {
-            List<Codec<?>> codecs = getCodecs();
-            List<T> list = s.toList();
+        DataResult<Stream<T>> stream = ops.getStream(input);
+        return stream.error()
+                .<DataResult<Pair<List<Object>, T>>>map(streamPartialResult ->
+                        DataResult.error(streamPartialResult::message))
+                .orElse(stream.result().<DataResult<Pair<List<Object>, T>>>map(s -> {
+                    List<Codec<?>> codecs = getCodecs();
+                    List<T> list = s.toList();
 
-            if (list.size() == codecs.size()) {
-                return DataResult.error(() -> "can't process as ${this}, size not equals.");
-            }
+                    if (list.size() != codecs.size()) {
+                        return DataResult.error(() -> "can't process as ${this}, size not equals.");
+                    }
 
-            List<Object> result = new ArrayList<>();
+                    List<Object> result = new ArrayList<>();
 
-            for (int i = 0; i < codecs.size(); i++) {
-                var decode = codecs.get(i).decode(ops, list.get(i)).get().mapBoth(Pair::getFirst, Function.identity());
+                    for (int i = 0; i < codecs.size(); i++) {
+                        var decode = codecs.get(i).decode(ops, list.get(i)).get().mapBoth(Pair::getFirst, Function.identity());
 
-                decode.ifLeft(result::add);
+                        decode.ifLeft(result::add);
 
-                var right = decode.right();
+                        var right = decode.right();
 
-                if (right.isPresent()) {
-                    return DataResult.error(() -> this + " error: " + right.get().message());
-                }
-            }
+                        if (right.isPresent()) {
+                            return DataResult.error(() -> this + " error: " + right.get().message());
+                        }
+                    }
 
-            return DataResult.success(result);
-        });
-        return DataResult.error(() -> this + " can't process as list.");
+                    return DataResult.success(Pair.of(result, input));
+                }).orElse(DataResult.error(() -> this + " can't parse as list.")));
     }
 
     @Override
