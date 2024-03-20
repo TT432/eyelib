@@ -116,7 +116,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         List<Codec<?>> codecs = getCodecs();
 
         if (input.size() != codecs.size())
-            return DataResult.error(() -> "can't encode ${this}, because ${java.util.Arrays.toString(input)}'s size not equals this.");
+            return DataResult.error(() -> "can't encode ${this}, because input array size not equals this.");
 
         final ListBuilder<T> builder = ops.listBuilder();
 
