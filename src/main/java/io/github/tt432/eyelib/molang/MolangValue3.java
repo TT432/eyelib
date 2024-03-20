@@ -5,8 +5,10 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.util.codec.Tuple;
+import io.github.tt432.eyelib.util.codec.TupleCodec;
 
-import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author TT432
@@ -16,31 +18,30 @@ public record MolangValue3(
         MolangValue y,
         MolangValue z
 ) {
+    private static final MolangValue MOLANG0 = MolangValue.FALSE_VALUE;
+    private static final MolangValue MOLANG1 = MolangValue.TRUE_VALUE;
+
+    public static final MolangValue3 ZERO = new MolangValue3(MOLANG0, MOLANG0, MOLANG0);
+
+    public static final MolangValue3 AXIS_X = new MolangValue3(MOLANG1, MOLANG0, MOLANG0);
+    public static final MolangValue3 AXIS_Y = new MolangValue3(MOLANG0, MOLANG1, MOLANG0);
+    public static final MolangValue3 AXIS_Z = new MolangValue3(MOLANG0, MOLANG0, MOLANG1);
+
     public static final Codec<MolangValue3> CODEC = Codec.either(
-                    Codec.either(Codec.STRING, Codec.FLOAT)
-                            .xmap(e -> e.right().map(Object::toString).orElseGet(() -> e.left().get()), Either::left)
-                            .listOf(),
-                    RecordCodecBuilder.<MolangValue3>create(ins -> ins.group(
-                            MolangValue.CODEC.optionalFieldOf("x", MolangValue.FALSE_VALUE).forGetter(o -> o.x),
-                            MolangValue.CODEC.optionalFieldOf("y", MolangValue.FALSE_VALUE).forGetter(o -> o.y),
-                            MolangValue.CODEC.optionalFieldOf("z", MolangValue.FALSE_VALUE).forGetter(o -> o.z)
-                    ).apply(ins, MolangValue3::new)))
-            .xmap(e -> e.left().map(sl -> new MolangValue3(
-                                    MolangValue.parse(sl.get(0)),
-                                    MolangValue.parse(sl.get(1)),
-                                    MolangValue.parse(sl.get(2))))
-                            .orElseGet(() -> e.right().get()),
-                    m3 -> Either.left(List.of(m3.x.getContext(), m3.y.getContext(), m3.z.getContext())));
-
-    public static final MolangValue3 ZERO = new MolangValue3(MolangValue.FALSE_VALUE, MolangValue.FALSE_VALUE, MolangValue.FALSE_VALUE);
-
-    public static final MolangValue3 AXIS_X = new MolangValue3(MolangValue.TRUE_VALUE, MolangValue.FALSE_VALUE, MolangValue.FALSE_VALUE);
-    public static final MolangValue3 AXIS_Y = new MolangValue3(MolangValue.FALSE_VALUE, MolangValue.TRUE_VALUE, MolangValue.FALSE_VALUE);
-    public static final MolangValue3 AXIS_Z = new MolangValue3(MolangValue.FALSE_VALUE, MolangValue.FALSE_VALUE, MolangValue.TRUE_VALUE);
+            TupleCodec.tuple(
+                    MolangValue.CODEC,
+                    MolangValue.CODEC,
+                    MolangValue.CODEC
+            ).bmap(MolangValue3::new, mv3 -> Tuple.of(mv3.x, mv3.y, mv3.z)),
+            RecordCodecBuilder.<MolangValue3>create(ins -> ins.group(
+                    MolangValue.CODEC.optionalFieldOf("x", MOLANG0).forGetter(MolangValue3::x),
+                    MolangValue.CODEC.optionalFieldOf("y", MOLANG0).forGetter(MolangValue3::y),
+                    MolangValue.CODEC.optionalFieldOf("z", MOLANG0).forGetter(MolangValue3::z)
+            ).apply(ins, MolangValue3::new))
+    ).xmap(e -> e.map(Function.identity(), Function.identity()), Either::right);
 
     public static MolangValue3 parse(JsonArray jsonArray) {
-        return CODEC.parse(JsonOps.INSTANCE, jsonArray)
-                .getOrThrow(true, RuntimeException::new);
+        return CODEC.parse(JsonOps.INSTANCE, jsonArray).getOrThrow(true, RuntimeException::new);
     }
 
     public float getX(MolangScope scope) {
