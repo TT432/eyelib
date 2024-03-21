@@ -6,8 +6,10 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.util.codec.Codecs;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.invoke.MethodHandle;
 import java.util.function.Function;
@@ -15,6 +17,7 @@ import java.util.function.Function;
 /**
  * @author TT432
  */
+@Slf4j
 public final class MolangValue {
     public static final float TRUE = 1;
     public static final float FALSE = 0;
@@ -29,7 +32,7 @@ public final class MolangValue {
             RecordCodecBuilder.<MolangValue>create(ins -> ins.group(
                     Codec.STRING.fieldOf("context").forGetter(o -> o.context)
             ).apply(ins, MolangValue::new))
-    ).xmap(e -> e.map(Function.identity(), Function.identity()), Either::left);
+    ).xmap(Codecs::identity, Either::left);
 
     @Getter
     private final String context;
@@ -50,9 +53,7 @@ public final class MolangValue {
     }
 
     public static MolangValue parse(JsonElement json, MolangValue defaultValue) {
-        return CODEC.parse(JsonOps.INSTANCE, json)
-                .map(m -> m == null ? defaultValue : m)
-                .getOrThrow(true, RuntimeException::new);
+        return CODEC.parse(JsonOps.INSTANCE, json).result().orElse(defaultValue);
     }
 
     public float eval(MolangScope scope) {
