@@ -95,17 +95,6 @@ dependencies {
 
     libraries 'org.javassist:javassist:3.30.2-GA'
     jarJar 'org.javassist:javassist:[3.30.2-GA,)'
-
-    annotationProcessor 'systems.manifold:manifold-strings:2024.1.9'
-}
-
-tasks.withType(JavaCompile) {
-    if (name == 'neoFormRecompile') return;
-
-    options.compilerArgs += [
-            '-Xplugin:Manifold',
-            '-Amanifold.strings.simple.disabled=true'
-    ]
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

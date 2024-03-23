@@ -56,7 +56,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
         StringBuilder r = new StringBuilder();
 
         for (int i = 0; i < split.length - 1; i++) {
-            r.append("emptyEval(${split[i]});");
+            r.append("emptyEval(" + split[i] + ");");
         }
 
         r.append("return (float) ").append(split[split.length - 1]).append(";");
@@ -66,18 +66,18 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
 
     @Override
     public String visitTernaryConditionalOperator(MolangParser.TernaryConditionalOperatorContext ctx) {
-        return "((${visit(ctx.expr(0))}) != 0F ? ${visit(ctx.expr(1))} : ${visit(ctx.expr(2))})";
+        return "((" + visit(ctx.expr(0)) + ") != 0F ? " + visit(ctx.expr(1)) + " : " + visit(ctx.expr(2)) + ")";
     }
 
     @Override
     public String visitBinaryConditionalOperator(MolangParser.BinaryConditionalOperatorContext ctx) {
-        return "((${visit(ctx.expr(0))}) != 0F ? ${visit(ctx.expr(1))} : 0F)";
+        return "((" + visit(ctx.expr(0)) + ") != 0F ? " + visit(ctx.expr(1)) + " : 0F)";
     }
 
     @Override
     public String visitSingleSignedAtom(MolangParser.SingleSignedAtomContext ctx) {
         if (ctx.op != null && ctx.op.getText().charAt(0) == '-') {
-            return "-${visit(ctx.atom())}";
+            return "-" + visit(ctx.atom()) + "";
         } else {
             return visit(ctx.atom());
         }
@@ -85,34 +85,34 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
 
     @Override
     public String visitComparisonOperator(MolangParser.ComparisonOperatorContext ctx) {
-        return "(${visit(ctx.expr(0))} ${ctx.op.getText()} ${visit(ctx.expr(1))} ? 1F : 0F)";
+        return "(" + visit(ctx.expr(0)) + " " + ctx.op.getText() + " " + visit(ctx.expr(1)) + " ? 1F : 0F)";
     }
 
     @Override
     public String visitLogicOperator(MolangParser.LogicOperatorContext ctx) {
         List<MolangParser.ExprContext> expr = ctx.expr();
 
-        return "(((${visit(expr.get(0))}) != 0F) ${ctx.op.getText()} ((${visit(expr.get(1))}) != 0F) ? 1F : 0F)";
+        return "(((" + visit(expr.get(0)) + ") != 0F) " + ctx.op.getText() + " ((" + visit(expr.get(1)) + ") != 0F) ? 1F : 0F)";
     }
 
     @Override
     public String visitAssignmentOperator(MolangParser.AssignmentOperatorContext ctx) {
-        return "($1.set(\"${rename(ctx.ID().getText())}\", ${visit(ctx.expr())}))";
+        return "($1.set(\"" + rename(ctx.ID().getText()) + "\", " + visit(ctx.expr()) + "))";
     }
 
     @Override
     public String visitMulOrDiv(MolangParser.MulOrDivContext ctx) {
-        return "(${visit(ctx.expr(0))} ${ctx.op.getText().charAt(0)} ${visit(ctx.expr(1))})";
+        return "(" + visit(ctx.expr(0)) + " " + ctx.op.getText().charAt(0) + " " + visit(ctx.expr(1)) + ")";
     }
 
     @Override
     public String visitAddOrSub(MolangParser.AddOrSubContext ctx) {
-        return "(${visit(ctx.expr(0))} ${ctx.op.getText().charAt(0)} ${visit(ctx.expr(1))})";
+        return "(" + visit(ctx.expr(0)) + " " + ctx.op.getText().charAt(0) + " " + visit(ctx.expr(1)) + ")";
     }
 
     @Override
     public String visitNeExpr(MolangParser.NeExprContext ctx) {
-        return "((${visit(ctx.expr())}) != 0F ? 0F : 1F)";
+        return "((" + visit(ctx.expr()) + ") != 0F ? 0F : 1F)";
     }
 
     @Override
@@ -122,7 +122,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
 
     @Override
     public String visitEqualsOperator(MolangParser.EqualsOperatorContext ctx) {
-        return "(${visit(ctx.expr(0))} ${ctx.op.getText()} ${visit(ctx.expr(1))} ? 1F : 0F)";
+        return "(" + visit(ctx.expr(0)) + " " + ctx.op.getText() + " " + visit(ctx.expr(1)) + " ? 1F : 0F)";
     }
 
     @Override
@@ -132,7 +132,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
         for (MolangParser.FuncParamContext funcParamContext : ctx.funcParam()) {
             if (funcParamContext.STRING() != null) {
                 String text = funcParamContext.STRING().getText();
-                params.add("\"${text.substring(1, text.length()-1)}\"");
+                params.add("\"" + text.substring(1, text.length()-1) + "\"");
             } else {
                 params.add(visit(funcParamContext.expr()));
             }
@@ -157,19 +157,19 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
             if (!method.equals("0F")) {
                 return method;
             } else {
-                return "$1.get(\"${fieldName}\")";
+                return "$1.get(\"" + fieldName + "\")";
             }
         }
     }
 
     @Override
     public String visitNumber(MolangParser.NumberContext ctx) {
-        return "((float) ${ctx.getText()})";
+        return "((float) " + ctx.getText() + ")";
     }
 
     @Override
     public String visitParenthesesPrecedence(MolangParser.ParenthesesPrecedenceContext ctx) {
-        return "(${visit(ctx.expr())})";
+        return "(" + visit(ctx.expr()) + ")";
     }
 
     @Override

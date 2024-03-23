@@ -15,6 +15,5 @@
 ## 依赖
 
 - [Antlr-Molang](https://github.com/TT432/antlr-molang) 用于解析 Molang。
-- [Manifold: String Templates](https://github.com/manifold-systems/manifold/blob/master/manifold-deps-parent/manifold-strings/README.md) 用于使用字符串模板。
 - [javassist](http://www.javassist.org/) 用于生成 Molang 的字节码。
 - [lombok](https://projectlombok.org/) 用于生成 getter/setter 等。

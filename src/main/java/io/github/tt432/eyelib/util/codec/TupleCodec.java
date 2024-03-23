@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 /**
  * @author TT432
  */
+@SuppressWarnings({"unchecked", "rawtypes", "unused"})
 public sealed interface TupleCodec extends Codec<List<Object>> {
     List<Codec<?>> getCodecs();
 
@@ -94,7 +95,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
                     List<T> list = s.toList();
 
                     if (list.size() != codecs.size()) {
-                        return DataResult.error(() -> "can't process as ${this}, size not equals.");
+                        return DataResult.error(() -> "can't process as " + this + ", size not equals.");
                     }
 
                     List<Object> result = new ArrayList<>();
@@ -120,7 +121,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         List<Codec<?>> codecs = getCodecs();
 
         if (input.size() != codecs.size())
-            return DataResult.error(() -> "can't encode ${this}, because input array size not equals this.");
+            return DataResult.error(() -> "can't encode " + this + ", because input array size not equals this.");
 
         final ListBuilder<T> builder = ops.listBuilder();
 
@@ -143,7 +144,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple1[${codec}]";
+            return "Tuple1[" + codec + "]";
         }
     }
 
@@ -159,7 +160,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple2[${codec1}, ${codec2}]";
+            return "Tuple2[" + codec1 + ", " + codec2 + "]";
         }
     }
 
@@ -175,7 +176,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple3[${codec1}, ${codec2}, ${codec3}]";
+            return "Tuple3[" + codec1 + ", " + codec2 + ", " + codec3 + "]";
         }
     }
 
@@ -192,7 +193,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple4[${codec1}, ${codec2}, ${codec3}, ${codec4}]";
+            return "Tuple4[" + codec1 + ", " + codec2 + ", " + codec3 + ", " + codec4 + "]";
         }
     }
 
@@ -209,7 +210,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple5[${codec1}, ${codec2}, ${codec3}, ${codec4}, ${codec5}]";
+            return "Tuple5[" + codec1 + ", " + codec2 + ", " + codec3 + ", " + codec4 + ", " + codec5 + "]";
         }
     }
 
@@ -226,7 +227,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple6[${codec1}, ${codec2}, ${codec3}, ${codec4}, ${codec5}, ${codec6}]";
+            return "Tuple6[" + codec1 + ", " + codec2 + ", " + codec3 + ", " + codec4 + ", " + codec5 + ", " + codec6 + "]";
         }
     }
 
@@ -243,7 +244,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple7[${codec1}, ${codec2}, ${codec3}, ${codec4}, ${codec5}, ${codec6}, ${codec7}]";
+            return "Tuple7[" + codec1 + ", " + codec2 + ", " + codec3 + ", " + codec4 + ", " + codec5 + ", " + codec6 + ", " + codec7 + "]";
         }
     }
 
@@ -261,7 +262,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple8[${codec1}, ${codec2}, ${codec3}, ${codec4}, ${codec5}, ${codec6}, ${codec7}, ${codec8}]";
+            return "Tuple8[" + codec1 + ", " + codec2 + ", " + codec3 + ", " + codec4 + ", " + codec5 + ", " + codec6 + ", " + codec7 + ", " + codec8 + "]";
         }
     }
 
@@ -279,7 +280,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple9[${codec1}, ${codec2}, ${codec3}, ${codec4}, ${codec5}, ${codec6}, ${codec7}, ${codec8}, ${codec9}]";
+            return "Tuple9[" + codec1 + ", " + codec2 + ", " + codec3 + ", " + codec4 + ", " + codec5 + ", " + codec6 + ", " + codec7 + ", " + codec8 + ", " + codec9 + "]";
         }
     }
 
@@ -297,7 +298,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple10[${codec1}, ${codec2}, ${codec3}, ${codec4}, ${codec5}, ${codec6}, ${codec7}, ${codec8}, ${codec9}, ${codec10}]";
+            return "Tuple10[" + codec1 + ", " + codec2 + ", " + codec3 + ", " + codec4 + ", " + codec5 + ", " + codec6 + ", " + codec7 + ", " + codec8 + ", " + codec9 + ", " + codec10 + "]";
         }
     }
 
@@ -316,7 +317,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple11[${codec1}, ${codec2}, ${codec3}, ${codec4}, ${codec5}, ${codec6}, ${codec7}, ${codec8}, ${codec9}, ${codec10}, ${codec11}]";
+            return "Tuple11[" + codec1 + ", " + codec2 + ", " + codec3 + ", " + codec4 + ", " + codec5 + ", " + codec6 + ", " + codec7 + ", " + codec8 + ", " + codec9 + ", " + codec10 + ", " + codec11 + "]";
         }
     }
 
@@ -336,7 +337,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple12[${codec1}, ${codec2}, ${codec3}, ${codec4}, ${codec5}, ${codec6}, ${codec7}, ${codec8}, ${codec9}, ${codec10}, ${codec11}, ${codec12}]";
+            return "Tuple12[" + codec1 + ", " + codec2 + ", " + codec3 + ", " + codec4 + ", " + codec5 + ", " + codec6 + ", " + codec7 + ", " + codec8 + ", " + codec9 + ", " + codec10 + ", " + codec11 + ", " + codec12 + "]";
         }
     }
 
@@ -356,7 +357,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple13[${codec1}, ${codec2}, ${codec3}, ${codec4}, ${codec5}, ${codec6}, ${codec7}, ${codec8}, ${codec9}, ${codec10}, ${codec11}, ${codec12}, ${codec13}]";
+            return "Tuple13[" + codec1 + ", " + codec2 + ", " + codec3 + ", " + codec4 + ", " + codec5 + ", " + codec6 + ", " + codec7 + ", " + codec8 + ", " + codec9 + ", " + codec10 + ", " + codec11 + ", " + codec12 + ", " + codec13 + "]";
         }
     }
 
@@ -377,7 +378,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple14[${codec1}, ${codec2}, ${codec3}, ${codec4}, ${codec5}, ${codec6}, ${codec7}, ${codec8}, ${codec9}, ${codec10}, ${codec11}, ${codec12}, ${codec13}, ${codec14}]";
+            return "Tuple14[" + codec1 + ", " + codec2 + ", " + codec3 + ", " + codec4 + ", " + codec5 + ", " + codec6 + ", " + codec7 + ", " + codec8 + ", " + codec9 + ", " + codec10 + ", " + codec11 + ", " + codec12 + ", " + codec13 + ", " + codec14 + "]";
         }
     }
 
@@ -398,7 +399,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple15[${codec1}, ${codec2}, ${codec3}, ${codec4}, ${codec5}, ${codec6}, ${codec7}, ${codec8}, ${codec9}, ${codec10}, ${codec11}, ${codec12}, ${codec13}, ${codec14}, ${codec15}]";
+            return "Tuple15[" + codec1 + ", " + codec2 + ", " + codec3 + ", " + codec4 + ", " + codec5 + ", " + codec6 + ", " + codec7 + ", " + codec8 + ", " + codec9 + ", " + codec10 + ", " + codec11 + ", " + codec12 + ", " + codec13 + ", " + codec14 + ", " + codec15 + "]";
         }
     }
 
@@ -420,7 +421,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
 
         @Override
         public String toString() {
-            return "Tuple16[${codec1}, ${codec2}, ${codec3}, ${codec4}, ${codec5}, ${codec6}, ${codec7}, ${codec8}, ${codec9}, ${codec10}, ${codec11}, ${codec12}, ${codec13}, ${codec14}, ${codec15}, ${codec16}]";
+            return "Tuple16[" + codec1 + ", " + codec2 + ", " + codec3 + ", " + codec4 + ", " + codec5 + ", " + codec6 + ", " + codec7 + ", " + codec8 + ", " + codec9 + ", " + codec10 + ", " + codec11 + ", " + codec12 + ", " + codec13 + ", " + codec14 + ", " + codec15 + ", " + codec16 + "]";
         }
     }
 }

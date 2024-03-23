@@ -92,7 +92,7 @@ public class MolangMappingTree {
                     String fieldName = name.substring(i);
                     aClass.getField(fieldName);
 
-                    foundField = "${aClass.getName()}.${fieldName}";
+                    foundField = aClass.getName() + "." + fieldName;
                     break;
                 } catch (NoSuchFieldException ignored) {
                 }
@@ -126,12 +126,12 @@ public class MolangMappingTree {
                             && method.getName().equals(methodName)) {
                         if (!classData.pureFunction) {
                             if (args.isEmpty()) {
-                                foundMethod = "${aClass.getName()}.${methodName}($1)";
+                                foundMethod = aClass.getName() + "." + methodName + "($1)";
                             } else {
-                                foundMethod = "${aClass.getName()}.${methodName}($1, ${args})";
+                                foundMethod = aClass.getName() + "." + methodName + "($1, " + args + ")";
                             }
                         } else {
-                            foundMethod = "${aClass.getName()}.${methodName}(${args})";
+                            foundMethod = aClass.getName() + "." + methodName + "(" + args + ")";
                         }
 
                         break;

@@ -97,7 +97,7 @@ public class MolangCompileHandler {
         for (int i = 0; i < values.size(); i++) {
             MolangValue valuei = values.get(i);
 
-            CtMethod method = new CtMethod(CtClass.floatType, "eval${i}",
+            CtMethod method = new CtMethod(CtClass.floatType, "eval" + i + "",
                     new CtClass[]{scopeClass}, ctClass);
             method.setModifiers(Modifier.STATIC | Modifier.PUBLIC);
 
@@ -107,7 +107,7 @@ public class MolangCompileHandler {
                                     new MolangLexer(CharStreams.fromString(valuei.getContext())))
                     ).exprSet());
 
-            method.setBody("{${body}}");
+            method.setBody("{" + body + "}");
 
             ctClass.addMethod(method);
         }
@@ -120,7 +120,7 @@ public class MolangCompileHandler {
 
         for (int i = 0; i < values.size(); i++) {
             MolangValue valuei = values.get(i);
-            valuei.setMethod(publicLookup.findStatic(aClass, "eval${i}", mt));
+            valuei.setMethod(publicLookup.findStatic(aClass, "eval" + i + "", mt));
         }
 
         values.clear();
