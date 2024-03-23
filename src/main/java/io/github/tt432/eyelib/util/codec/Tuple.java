@@ -10,6 +10,7 @@ import java.util.List;
  * <pre>{@code
  *     Tuple.of(1, 2) // Tuple.T2<Integer,Integer>
  * }</pre>
+ *
  * @author TT432
  */
 public sealed interface Tuple permits Tuple.T10, Tuple.T11, Tuple.T12, Tuple.T13, Tuple.T14, Tuple.T15, Tuple.T16, Tuple.T2, Tuple.T3, Tuple.T4, Tuple.T5, Tuple.T6, Tuple.T7, Tuple.T8, Tuple.T9 {

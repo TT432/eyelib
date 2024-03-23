@@ -13,6 +13,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,20 +21,20 @@ import java.util.Map;
 /**
  * @author TT432
  */
+@Getter
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class BrAnimationLoader extends SimpleJsonResourceReloadListener {
-    public static final BrAnimationLoader INSTANCE = new BrAnimationLoader(new Gson(), "animations/bedrock");
+    public static final BrAnimationLoader INSTANCE = new BrAnimationLoader();
 
     @SubscribeEvent
     public static void onEvent(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(INSTANCE);
     }
 
-    @Getter
     private final Map<ResourceLocation, BrAnimation> animations = new HashMap<>();
 
-    private BrAnimationLoader(Gson pGson, String pDirectory) {
-        super(pGson, pDirectory);
+    private BrAnimationLoader() {
+        super(new Gson(), "animations/bedrock");
     }
 
     public static BrAnimation getAnimation(ResourceLocation resourceLocation) {
@@ -41,7 +42,7 @@ public class BrAnimationLoader extends SimpleJsonResourceReloadListener {
     }
 
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
+    protected void apply(Map<ResourceLocation, JsonElement> pObject, @NotNull ResourceManager pResourceManager, @NotNull ProfilerFiller pProfiler) {
         MolangCompileHandler.onReload();
         animations.clear();
 

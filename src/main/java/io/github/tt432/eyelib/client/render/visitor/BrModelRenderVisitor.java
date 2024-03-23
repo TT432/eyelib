@@ -14,22 +14,22 @@ import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 public class BrModelRenderVisitor {
 
     public void setupLight(int light) {
-
+        // need child to impl this
     }
 
     public void visitBone(PoseStack poseStack, BrBone bone, BoneRenderInfoEntry boneRenderInfoEntry, VertexConsumer consumer, boolean before) {
-
+        // need child to impl this
     }
 
     public void visitCube(PoseStack poseStack, BrCube cube, VertexConsumer consumer) {
-
+        // need child to impl this
     }
 
     public void visitVertex(PoseStack poseStack, BrCube cube, BrFace face, int vertexId, VertexConsumer consumer) {
-
+        // need child to impl this
     }
 
     public void visitLocator(PoseStack poseStack, BrBone bone, String name, BrLocator locator, BoneRenderInfoEntry boneRenderInfoEntry, VertexConsumer consumer) {
-
+        // need child to impl this
     }
 }

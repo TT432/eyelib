@@ -3,6 +3,9 @@ package io.github.tt432.eyelib.molang;
 import io.github.tt432.eyelib.molang.grammer.MolangLexer;
 import io.github.tt432.eyelib.molang.grammer.MolangParser;
 import javassist.*;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -13,6 +16,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -23,6 +27,8 @@ import java.util.List;
 /**
  * @author TT432
  */
+@Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class MolangCompileHandler {
     private static final List<MolangValue> values = new ArrayList<>();
@@ -41,17 +47,22 @@ public class MolangCompileHandler {
         }
     }
 
-    static boolean reloadable = true;
+    private static boolean reloadable = true;
 
-    static class MolangCompileHandlerReloadListener extends SimplePreparableReloadListener {
+
+    private static final class MolangCompileHandlerReloadListener extends SimplePreparableReloadListener<Object> {
         @Override
-        protected Object prepare(ResourceManager resourceManager, ProfilerFiller profilerFiller) {
+        protected @NotNull Object prepare(@NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerFiller) {
             return "";
         }
 
-        @Override
-        protected void apply(Object o, ResourceManager resourceManager, ProfilerFiller profilerFiller) {
+        private static void setReloadable() {
             reloadable = true;
+        }
+
+        @Override
+        protected void apply(Object o, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerFiller) {
+            setReloadable();
         }
     }
 
@@ -79,7 +90,7 @@ public class MolangCompileHandler {
             compileAll(className);
         } catch (NotFoundException | CannotCompileException | NoSuchMethodException | IOException |
                  IllegalAccessException e) {
-            e.printStackTrace();
+            log.error("Error occurred", e);
         }
     }
 
@@ -97,7 +108,7 @@ public class MolangCompileHandler {
         for (int i = 0; i < values.size(); i++) {
             MolangValue valuei = values.get(i);
 
-            CtMethod method = new CtMethod(CtClass.floatType, "eval" + i + "",
+            CtMethod method = new CtMethod(CtClass.floatType, "eval" + i,
                     new CtClass[]{scopeClass}, ctClass);
             method.setModifiers(Modifier.STATIC | Modifier.PUBLIC);
 
@@ -120,7 +131,7 @@ public class MolangCompileHandler {
 
         for (int i = 0; i < values.size(); i++) {
             MolangValue valuei = values.get(i);
-            valuei.setMethod(publicLookup.findStatic(aClass, "eval" + i + "", mt));
+            valuei.setMethod(publicLookup.findStatic(aClass, "eval" + i, mt));
         }
 
         values.clear();

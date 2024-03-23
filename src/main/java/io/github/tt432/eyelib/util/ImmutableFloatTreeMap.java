@@ -52,6 +52,7 @@ public sealed class ImmutableFloatTreeMap<V> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static <V> ImmutableFloatTreeMap<V> empty() {
         return (ImmutableFloatTreeMap<V>) Empty.S.INSTANCE;
     }

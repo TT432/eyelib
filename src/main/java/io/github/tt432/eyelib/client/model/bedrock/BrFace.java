@@ -10,12 +10,12 @@ import org.joml.Vector3f;
  */
 @Getter
 public class BrFace {
-    Vector3f normal;
+    private final Vector3f normal;
     /**
      * uv0 -> uv1
      */
-    Vector2f[] uv;
-    Vector3f[] vertex;
+    private final Vector2f[] uv;
+    private final Vector3f[] vertex;
 
     public BrFace(Vector3f normal, Pair<Vector2f, Vector2f> uv, Vector3f[] vertex) {
         this.normal = normal;

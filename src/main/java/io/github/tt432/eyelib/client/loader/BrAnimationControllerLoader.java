@@ -21,21 +21,20 @@ import java.util.Map;
 /**
  * @author TT432
  */
+@Getter
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class BrAnimationControllerLoader extends SimpleJsonResourceReloadListener {
-    public static final BrAnimationControllerLoader INSTANCE =
-            new BrAnimationControllerLoader(new Gson(), "animation_controllers");
+    public static final BrAnimationControllerLoader INSTANCE = new BrAnimationControllerLoader();
 
     @SubscribeEvent
     public static void onEvent(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(INSTANCE);
     }
 
-    @Getter
     private final Map<ResourceLocation, BrAnimationControllers> animationControllers = new HashMap<>();
 
-    private BrAnimationControllerLoader(Gson pGson, String pDirectory) {
-        super(pGson, pDirectory);
+    private BrAnimationControllerLoader() {
+        super(new Gson(), "animation_controllers");
     }
 
     public static BrAnimationControllers getController(ResourceLocation location) {

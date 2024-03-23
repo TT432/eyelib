@@ -56,7 +56,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
         StringBuilder r = new StringBuilder();
 
         for (int i = 0; i < split.length - 1; i++) {
-            r.append("emptyEval(" + split[i] + ");");
+            r.append("emptyEval(").append(split[i]).append(");");
         }
 
         r.append("return (float) ").append(split[split.length - 1]).append(";");
@@ -77,7 +77,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
     @Override
     public String visitSingleSignedAtom(MolangParser.SingleSignedAtomContext ctx) {
         if (ctx.op != null && ctx.op.getText().charAt(0) == '-') {
-            return "-" + visit(ctx.atom()) + "";
+            return "-" + visit(ctx.atom());
         } else {
             return visit(ctx.atom());
         }
@@ -132,7 +132,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
         for (MolangParser.FuncParamContext funcParamContext : ctx.funcParam()) {
             if (funcParamContext.STRING() != null) {
                 String text = funcParamContext.STRING().getText();
-                params.add("\"" + text.substring(1, text.length()-1) + "\"");
+                params.add("\"" + text.substring(1, text.length() - 1) + "\"");
             } else {
                 params.add(visit(funcParamContext.expr()));
             }

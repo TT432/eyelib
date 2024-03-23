@@ -29,9 +29,6 @@ public record BrBoneAnimation(
         ImmutableFloatTreeMap<BrBoneKeyFrame> position,
         ImmutableFloatTreeMap<BrBoneKeyFrame> scale
 ) {
-    private static BrBoneKeyFrame before = null;
-    private static BrBoneKeyFrame after = null;
-    private static BrBoneKeyFrame result = null;
     private static final Vector3f tempResult = new Vector3f();
 
     public Vector3f lerpRotation(MolangScope scope, float currentTick) {
@@ -64,9 +61,9 @@ public record BrBoneAnimation(
      * @return 值
      */
     public static Vector3f lerp(MolangScope scope, ImmutableFloatTreeMap<BrBoneKeyFrame> frames, float currentTick) {
-        before = frames.floorEntry(currentTick);
-        after = frames.higherEntry(currentTick);
-        result = null;
+        BrBoneKeyFrame before = frames.floorEntry(currentTick);
+        BrBoneKeyFrame after = frames.higherEntry(currentTick);
+        BrBoneKeyFrame result = null;
 
         boolean isBeforeTime = before != null && EyeMath.epsilon(before.getTick(), currentTick, epsilon);
         boolean isAfterTime = after != null && EyeMath.epsilon(after.getTick(), currentTick, epsilon);

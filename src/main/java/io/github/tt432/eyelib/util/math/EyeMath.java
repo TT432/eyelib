@@ -37,10 +37,6 @@ public class EyeMath {
         return Math.abs(b - a) < epsilon;
     }
 
-    public static float clamp(float x, float min, float max) {
-        return (x < min) ? min : ((x > max) ? max : x);
-    }
-
     public static float lerpYaw(float a, float b, float position) {
         a = wrapDegrees(a);
         b = wrapDegrees(b);

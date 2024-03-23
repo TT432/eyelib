@@ -12,6 +12,7 @@ import io.github.tt432.eyelib.event.InitComponentEvent;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -23,6 +24,7 @@ import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author TT432
@@ -77,8 +79,9 @@ public class EntityRenderSystem {
         AnimatableCapability<Object> cap = entity.getData(EyelibCapabilities.ANIMATABLE);
         ModelComponent modelComponent = cap.getModelComponent();
         BrModelRenderVisitor visitor = modelComponent.getVisitor();
+        Function<ResourceLocation, RenderType> renderTypeFactory = modelComponent.getRenderTypeFactory();
 
-        if (modelComponent.getModel() != null && modelComponent.getTexture() != null && visitor != null) {
+        if (modelComponent.getModel() != null && modelComponent.getTexture() != null && visitor != null && renderTypeFactory != null) {
             event.setCanceled(true);
 
             visitor.setupLight(event.getPackedLight());
@@ -86,7 +89,7 @@ public class EntityRenderSystem {
             PoseStack poseStack = event.getPoseStack();
             var model = modelComponent.getModel();
 
-            RenderType renderType = modelComponent.getRenderTypeFactory().apply(modelComponent.getTexture());
+            RenderType renderType = renderTypeFactory.apply(modelComponent.getTexture());
             VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderType);
 
             poseStack.pushPose();

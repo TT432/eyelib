@@ -13,6 +13,7 @@ import net.neoforged.neoforge.client.model.IModelBuilder;
 import net.neoforged.neoforge.client.model.geometry.IGeometryBakingContext;
 import net.neoforged.neoforge.client.model.geometry.SimpleUnbakedGeometry;
 import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -28,7 +29,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
     BrModel model;
 
     @Override
-    protected void addQuads(IGeometryBakingContext owner, IModelBuilder<?> modelBuilder, ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelTransform, ResourceLocation modelLocation) {
+    protected void addQuads(@NotNull IGeometryBakingContext owner, @NotNull IModelBuilder<?> modelBuilder, @NotNull ModelBaker baker, @NotNull Function<Material, TextureAtlasSprite> spriteGetter, @NotNull ModelState modelTransform, @NotNull ResourceLocation modelLocation) {
         for (BrBone value : model.allBones().values()) {
             for (BrCube cube : value.cubes()) {
                 List<BakedQuad> quads = makeQuads(cube, spriteGetter.apply(owner.getMaterial("texture")));

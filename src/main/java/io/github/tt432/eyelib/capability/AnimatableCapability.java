@@ -6,7 +6,6 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.IdentifiableObject;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -15,17 +14,16 @@ import java.util.Optional;
  */
 @Getter
 public class AnimatableCapability<T> implements IdentifiableObject {
-    @Nullable
-    T owner;
-
-    MolangScope scope;
+    private T owner;
+    private MolangScope scope;
 
     @NotNull
-    ModelComponent modelComponent = new ModelComponent();
+    private final ModelComponent modelComponent = new ModelComponent();
 
     @NotNull
-    AnimationComponent animationComponent = new AnimationComponent();
+    private final AnimationComponent animationComponent = new AnimationComponent();
 
+    @SuppressWarnings("unchecked")
     public <N> Optional<N> ownerAs(Class<N> tClass) {
         if (tClass.isInstance(owner)) {
             return Optional.of((N) owner);

@@ -3,6 +3,8 @@ package io.github.tt432.eyelib.molang.mapping;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -24,7 +26,9 @@ import static io.github.tt432.eyelib.molang.MolangValue.TRUE;
  * @author TT432
  */
 @MolangMapping(value = "query", pureFunction = false)
-public class MolangQuery {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@SuppressWarnings("unused")
+public final class MolangQuery {
     private static float slot_getter(MolangScope scope, EquipmentSlot slot, Object... objects) {
         if (!(scope.getOwner().getOwner() instanceof LivingEntity livingEntity))
             return FALSE;

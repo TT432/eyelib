@@ -2,6 +2,8 @@ package io.github.tt432.eyelib.molang.mapping;
 
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,7 +12,9 @@ import java.util.Map;
  * @author TT432
  */
 @MolangMapping(value = "eyelib", pureFunction = false)
-public class MolangEyelib {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@SuppressWarnings("unused")
+public final class MolangEyelib {
     private static Map<String, Boolean> getGlowing(MolangScope scope) {
         return scope.getOrCreateExtraData("glowing", new HashMap<>());
     }

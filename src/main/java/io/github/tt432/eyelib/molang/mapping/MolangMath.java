@@ -2,13 +2,17 @@ package io.github.tt432.eyelib.molang.mapping;
 
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.util.math.EyeMath;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import net.minecraft.util.Mth;
 
 /**
  * @author TT432
  */
 @MolangMapping("math")
-public class MolangMath {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@SuppressWarnings("unused")
+public final class MolangMath {
     public static final float pi = EyeMath.PI;
     public static final float e = EyeMath.E;
 

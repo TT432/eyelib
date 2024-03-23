@@ -17,6 +17,7 @@ import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -214,7 +215,7 @@ public class AnimationSystem {
         if (lastState == null || lastState.blendTransition() == 0) {
             return 1;
         } else {
-            return EyeMath.clamp(stateTimeSec / lastState.blendTransition(), 0, 1);
+            return Mth.clamp(stateTimeSec / lastState.blendTransition(), 0, 1);
         }
     }
 }

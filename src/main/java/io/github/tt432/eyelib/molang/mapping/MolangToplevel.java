@@ -2,12 +2,16 @@ package io.github.tt432.eyelib.molang.mapping;
 
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.util.math.EyeMath;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /**
  * @author TT432
  */
 @MolangMapping("")
-public class MolangToplevel {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@SuppressWarnings("unused")
+public final class MolangToplevel {
     public static final float pi = EyeMath.PI;
     public static final float e = EyeMath.E;
 }

@@ -14,6 +14,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +25,7 @@ import java.util.Map;
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 @Slf4j
 public class BrModelLoader extends SimpleJsonResourceReloadListener {
-    private static final BrModelLoader INSTANCE = new BrModelLoader(new Gson(), "bedrock_models");
+    private static final BrModelLoader INSTANCE = new BrModelLoader();
 
     @SubscribeEvent
     public static void onEvent(RegisterClientReloadListenersEvent event) {
@@ -42,12 +43,12 @@ public class BrModelLoader extends SimpleJsonResourceReloadListener {
         return INSTANCE.materials.get(location);
     }
 
-    private BrModelLoader(Gson pGson, String pDirectory) {
-        super(pGson, pDirectory);
+    private BrModelLoader() {
+        super(new Gson(), "bedrock_models");
     }
 
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
+    protected void apply(Map<ResourceLocation, JsonElement> pObject, @NotNull ResourceManager pResourceManager, @NotNull ProfilerFiller pProfiler) {
         models.clear();
 
         for (Map.Entry<ResourceLocation, JsonElement> entry : pObject.entrySet()) {

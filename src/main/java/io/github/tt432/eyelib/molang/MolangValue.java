@@ -61,7 +61,7 @@ public final class MolangValue {
             try {
                 return (float) method.invoke(scope);
             } catch (Throwable e) {
-                e.printStackTrace();
+                log.error("Error occurred", e);
             }
         }
 

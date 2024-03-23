@@ -17,6 +17,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.model.geometry.IGeometryLoader;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author TT432
@@ -36,12 +37,12 @@ public class BlockBrModelLoader implements IGeometryLoader<UnBakedBrModel>, Reso
     ResourceManager resourceManager;
 
     @Override
-    public void onResourceManagerReload(ResourceManager pResourceManager) {
+    public void onResourceManagerReload(@NotNull ResourceManager pResourceManager) {
         this.resourceManager = pResourceManager;
     }
 
     @Override
-    public UnBakedBrModel read(JsonObject jsonObject, JsonDeserializationContext deserializationContext) throws JsonParseException {
+    public @NotNull UnBakedBrModel read(@NotNull JsonObject jsonObject, @NotNull JsonDeserializationContext deserializationContext) throws JsonParseException {
         return new UnBakedBrModel(BrModel.parse("$dummy", jsonObject));
     }
 }

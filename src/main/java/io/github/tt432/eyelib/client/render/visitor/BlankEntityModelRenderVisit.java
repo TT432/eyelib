@@ -13,11 +13,11 @@ import org.joml.Vector4f;
 /**
  * @author TT432
  */
+@Setter
 public class BlankEntityModelRenderVisit extends BrModelRenderVisitor {
     private static final Vector4f tPosition = new Vector4f();
     private static final Vector3f tNormal = new Vector3f();
 
-    @Setter
     int light;
 
     @Override

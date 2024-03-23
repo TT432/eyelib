@@ -7,7 +7,10 @@ import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.core.Direction;
-import org.joml.*;
+import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix4f;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
 
 import java.util.Arrays;
 import java.util.List;
@@ -96,41 +99,21 @@ public record BrCube(
         south.right().div(textureHeight);
         west.right().div(textureHeight);
 
-        origin
-                .set(-(origin.x + size.x), origin.y, origin.z)
-                .div(16);
+        origin.set(-(origin.x + size.x), origin.y, origin.z).div(16);
 
-        float maxX = origin.x + (size.x + inflate) / 16;
-        float maxY = origin.y + (size.y + inflate) / 16;
-        float maxZ = origin.z + (size.z + inflate) / 16;
-
-        float minX = origin.x - inflate / 16;
-        float minY = origin.y - inflate / 16;
-        float minZ = origin.z - inflate / 16;
-
-        Vector3f[] corners = new Vector3f[]{
-                new Vector3f(minX, minY, minZ),
-                new Vector3f(maxX, minY, minZ),
-                new Vector3f(maxX, maxY, minZ),
-                new Vector3f(minX, maxY, minZ),
-                new Vector3f(minX, minY, maxZ),
-                new Vector3f(maxX, minY, maxZ),
-                new Vector3f(maxX, maxY, maxZ),
-                new Vector3f(minX, maxY, maxZ)
-        };
+        Vector3f[] corners = getCorners(origin, size, inflate);
 
         pivot.div(16).mul(-1, 1, 1);
         rotation.mul(EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1);
 
         Matrix4f translate = new Matrix4f()
                 .translation(pivot)
-                .rotate(new Quaternionf().rotationZYX(rotation.z, rotation.y, rotation.x))
-                .translate(pivot.negate(new Vector3f()));
+                .rotateAffineZYX(rotation.z, rotation.y, rotation.x)
+                .translate(-pivot.x, -pivot.y, -pivot.z);
 
-        corners = Arrays.stream(corners)
-                .map(v -> translate.transformAffine(new Vector4f(v, 1)))
-                .map(v4 -> new Vector3f(v4.x, v4.y, v4.z).div(v4.w))
-                .toArray(Vector3f[]::new);
+        for (Vector3f corner : corners) {
+            corner.mulPosition(translate);
+        }
 
         Vector3f[][] faces = new Vector3f[][]{
                 {corners[6], corners[2], corners[3], corners[7],},
@@ -149,6 +132,28 @@ public record BrCube(
                 new BrFace(Direction.WEST.step(), west, faces[4]),
                 new BrFace(Direction.SOUTH.step(), south, faces[5])
         });
+    }
+
+    @NotNull
+    private static Vector3f[] getCorners(Vector3f origin, Vector3f size, float inflate) {
+        final float scalar = 1F / 16F;
+        float maxX = origin.x + (size.x + inflate) * scalar;
+        float maxY = origin.y + (size.y + inflate) * scalar;
+        float maxZ = origin.z + (size.z + inflate) * scalar;
+        float minX = origin.x - inflate * scalar;
+        float minY = origin.y - inflate * scalar;
+        float minZ = origin.z - inflate * scalar;
+
+        return new Vector3f[]{
+                new Vector3f(minX, minY, minZ),
+                new Vector3f(maxX, minY, minZ),
+                new Vector3f(maxX, maxY, minZ),
+                new Vector3f(minX, maxY, minZ),
+                new Vector3f(minX, minY, maxZ),
+                new Vector3f(maxX, minY, maxZ),
+                new Vector3f(maxX, maxY, maxZ),
+                new Vector3f(minX, maxY, maxZ)
+        };
     }
 
     private static Pair<Vector2f, Vector2f> zero() {
