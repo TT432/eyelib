@@ -13,11 +13,11 @@ public class BoneRenderInfoEntry {
     private final BrBone bindBone;
 
     @NotNull
-    Vector3f renderScala = new Vector3f(1);
+    private final Vector3f renderScala = new Vector3f(1);
     @NotNull
-    Vector3f renderPosition;
+    private final Vector3f renderPosition;
     @NotNull
-    Vector3f renderRotation;
+    private final Vector3f renderRotation;
 
     public BoneRenderInfoEntry(BrBone bindBone) {
         this.bindBone = bindBone;

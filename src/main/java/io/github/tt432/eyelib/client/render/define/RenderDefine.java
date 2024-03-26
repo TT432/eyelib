@@ -13,6 +13,13 @@ public record RenderDefine(
         ResourceLocation material,
         RDAnimationController animationControllerEntry
 ) {
+
+    public record RDAnimationController(
+            String name,
+            String animation
+    ) {
+    }
+
     public static RenderDefine parse(JsonObject object) {
         RDAnimationController entry;
 

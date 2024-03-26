@@ -71,7 +71,7 @@ public class RenderDefineApplyHandler {
             modelComponent.setVisitor(new BlankEntityModelRenderVisit());
 
             AnimationComponent animComponent = capability.getAnimationComponent();
-            RDAnimationController entry = renderDefine.animationControllerEntry();
+            RenderDefine.RDAnimationController entry = renderDefine.animationControllerEntry();
 
             String animationName = entry.animation();
             String name = entry.name();

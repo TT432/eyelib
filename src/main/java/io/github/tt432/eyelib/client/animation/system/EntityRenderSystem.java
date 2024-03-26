@@ -10,6 +10,8 @@ import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
 import io.github.tt432.eyelib.client.render.visitor.BrModelRenderVisitor;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
@@ -30,6 +32,7 @@ import java.util.function.Function;
  * @author TT432
  */
 @Mod.EventBusSubscriber
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EntityRenderSystem {
     private static final AnimationSystem controllerSystem = new AnimationSystem();
 

@@ -65,8 +65,8 @@ public record BrBoneAnimation(
         BrBoneKeyFrame after = frames.higherEntry(currentTick);
         BrBoneKeyFrame result = null;
 
-        boolean isBeforeTime = before != null && EyeMath.epsilon(before.getTick(), currentTick, epsilon);
-        boolean isAfterTime = after != null && EyeMath.epsilon(after.getTick(), currentTick, epsilon);
+        boolean isBeforeTime = before != null && EyeMath.epsilon(before.timestamp(), currentTick, epsilon);
+        boolean isAfterTime = after != null && EyeMath.epsilon(after.timestamp(), currentTick, epsilon);
         boolean onlyBefore = before != null && after == null;
         boolean onlyAfter = after != null && before == null;
 
@@ -75,13 +75,13 @@ public record BrBoneAnimation(
         } else if (isAfterTime || onlyAfter) {
             result = after;
         } else if (after != null) {
-            var weight = EyeMath.getWeight(before.getTick(), after.getTick(), currentTick);
+            var weight = EyeMath.getWeight(before.timestamp(), after.timestamp(), currentTick);
 
             if (before.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR && after.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR) {
                 return before.linearLerp(scope, after, tempResult, weight);
             } else if (before.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM || after.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM) {
-                var beforePlus = frames.lowerEntry(before.getTick());
-                var afterPlus = frames.higherEntry(after.getTick());
+                var beforePlus = frames.lowerEntry(before.timestamp());
+                var afterPlus = frames.higherEntry(after.timestamp());
 
                 return BrBoneKeyFrame.catmullromLerp(
                         scope,
@@ -93,8 +93,8 @@ public record BrBoneAnimation(
         }
 
         if (result != null) {
-            MolangValue3 m3 = result.get(result.getTick() > currentTick ||
-                    EyeMath.epsilon(result.getTick(), currentTick, epsilon) ? 0 : result.dataPoints().length - 1);
+            MolangValue3 m3 = result.get(result.timestamp() > currentTick ||
+                    EyeMath.epsilon(result.timestamp(), currentTick, epsilon) ? 0 : result.dataPoints().length - 1);
 
             return tempResult.set(m3.getX(scope), m3.getY(scope), m3.getZ(scope));
         }

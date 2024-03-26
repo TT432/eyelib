@@ -29,10 +29,6 @@ public record BrBoneKeyFrame(
         CATMULLROM
     }
 
-    public float getTick() {
-        return timestamp;
-    }
-
     private static final List<Vector2f> catmullromArray = new ArrayList<>();
     private static final Vector2f cTempP1 = new Vector2f();
     private static final Vector2f cTempP2 = new Vector2f();
@@ -62,14 +58,14 @@ public record BrBoneKeyFrame(
         boolean lastPointPredicate = afterPlus != null && after.dataPoints.length == 1;
 
         if (firstPointPredicate)
-            catmullromArray.add(cTempP1.set(beforePlus.getTick(), beforePlus.get(1).getX(scope)));
+            catmullromArray.add(cTempP1.set(beforePlus.timestamp(), beforePlus.get(1).getX(scope)));
 
-        catmullromArray.add(cTempP2.set(before.getTick(), before.get(1).getX(scope)));
+        catmullromArray.add(cTempP2.set(before.timestamp(), before.get(1).getX(scope)));
 
-        catmullromArray.add(cTempP3.set(after.getTick(), after.get(0).getX(scope)));
+        catmullromArray.add(cTempP3.set(after.timestamp(), after.get(0).getX(scope)));
 
         if (lastPointPredicate)
-            catmullromArray.add(cTempP4.set(afterPlus.getTick(), afterPlus.get(0).getX(scope)));
+            catmullromArray.add(cTempP4.set(afterPlus.timestamp(), afterPlus.get(0).getX(scope)));
 
         float time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
 
@@ -78,14 +74,14 @@ public record BrBoneKeyFrame(
         catmullromArray.clear();
 
         if (firstPointPredicate)
-            catmullromArray.add(cTempP1.set(beforePlus.getTick(), beforePlus.get(1).getY(scope)));
+            catmullromArray.add(cTempP1.set(beforePlus.timestamp(), beforePlus.get(1).getY(scope)));
 
-        catmullromArray.add(cTempP2.set(before.getTick(), before.get(1).getY(scope)));
+        catmullromArray.add(cTempP2.set(before.timestamp(), before.get(1).getY(scope)));
 
-        catmullromArray.add(cTempP3.set(after.getTick(), after.get(0).getY(scope)));
+        catmullromArray.add(cTempP3.set(after.timestamp(), after.get(0).getY(scope)));
 
         if (lastPointPredicate)
-            catmullromArray.add(cTempP4.set(afterPlus.getTick(), afterPlus.get(0).getY(scope)));
+            catmullromArray.add(cTempP4.set(afterPlus.timestamp(), afterPlus.get(0).getY(scope)));
 
         time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
 
@@ -94,14 +90,14 @@ public record BrBoneKeyFrame(
         catmullromArray.clear();
 
         if (firstPointPredicate)
-            catmullromArray.add(cTempP1.set(beforePlus.getTick(), beforePlus.get(1).getZ(scope)));
+            catmullromArray.add(cTempP1.set(beforePlus.timestamp(), beforePlus.get(1).getZ(scope)));
 
-        catmullromArray.add(cTempP2.set(before.getTick(), before.get(1).getZ(scope)));
+        catmullromArray.add(cTempP2.set(before.timestamp(), before.get(1).getZ(scope)));
 
-        catmullromArray.add(cTempP3.set(after.getTick(), after.get(0).getZ(scope)));
+        catmullromArray.add(cTempP3.set(after.timestamp(), after.get(0).getZ(scope)));
 
         if (lastPointPredicate)
-            catmullromArray.add(cTempP4.set(afterPlus.getTick(), afterPlus.get(0).getZ(scope)));
+            catmullromArray.add(cTempP4.set(afterPlus.timestamp(), afterPlus.get(0).getZ(scope)));
 
         time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
 
@@ -118,8 +114,8 @@ public record BrBoneKeyFrame(
      * @return 值
      */
     public Vector3f linearLerp(MolangScope scope, BrBoneKeyFrame other, Vector3f result, float weight) {
-        var aDataPoint = this.dataPoints.length > 1 && getTick() < other.getTick() ? 1 : 0;
-        var bDataPoint = other.dataPoints.length > 1 && getTick() > other.getTick() ? 1 : 0;
+        var aDataPoint = this.dataPoints.length > 1 && this.timestamp() < other.timestamp() ? 1 : 0;
+        var bDataPoint = other.dataPoints.length > 1 && this.timestamp() > other.timestamp() ? 1 : 0;
 
         MolangValue3 am3 = get(aDataPoint);
         MolangValue3 bm3 = other.get(bDataPoint);
