@@ -20,7 +20,7 @@ repositories {
 }
 ```
 
-then, you need to set up dependencies:
+然后你需要设置 dependencies：
 
 ```groovy
 dependencies {
