@@ -4,6 +4,31 @@
 
 [English](README.md) | [中文](README.cn.md)
 
+## 快速上手
+
+第一步是配置 GitHub packages 仓库。[Github 文档](https://docs.github.com/zh/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry)。
+
+```groovy
+repositories {
+    maven {
+        url = uri("https://maven.pkg.github.com/TT432/eyelib")
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+            password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+        }
+   }
+}
+```
+
+then, you need to set up dependencies:
+
+```groovy
+dependencies {
+    // 如果你需要 jarJar，用 'implementation "io.github.tt432:eyelib:0.1.0:all"'
+    implementation "io.github.tt432:eyelib:0.1.0"
+}
+```
+
 ## 功能
 
 该 mod 的结构基于 `Capability`。
