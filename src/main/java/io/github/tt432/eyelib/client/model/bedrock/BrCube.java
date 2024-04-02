@@ -24,11 +24,19 @@ public record BrCube(
 
     private static final Gson gson = new Gson();
 
+    private static Vector3f parse(JsonObject object, String ele) {
+        if (object.get(ele) instanceof JsonArray ja) {
+            return new Vector3f(ja.get(0).getAsFloat(), ja.get(1).getAsFloat(), ja.get(2).getAsFloat());
+        }
+
+        return new Vector3f();
+    }
+
     public static BrCube parse(int textureHeight, int textureWidth, JsonObject jsonObject) {
-        Vector3f origin = jsonObject.get("origin") instanceof JsonArray ja ? new Vector3f(gson.fromJson(ja, float[].class)) : new Vector3f(0);
-        Vector3f size = jsonObject.get("size") instanceof JsonArray ja ? new Vector3f(gson.fromJson(ja, float[].class)) : new Vector3f();
-        Vector3f rotation = jsonObject.get("rotation") instanceof JsonArray ja ? new Vector3f(gson.fromJson(ja, float[].class)) : new Vector3f(0);
-        Vector3f pivot = jsonObject.get("pivot") instanceof JsonArray ja ? new Vector3f(gson.fromJson(ja, float[].class)) : new Vector3f(0);
+        Vector3f origin = parse(jsonObject, "origin");
+        Vector3f size = parse(jsonObject, "size");
+        Vector3f rotation = parse(jsonObject, "rotation");
+        Vector3f pivot = parse(jsonObject, "pivot");
 
         float inflate = jsonObject.get("inflate") instanceof JsonPrimitive jp ? jp.getAsFloat() : 0;
 
