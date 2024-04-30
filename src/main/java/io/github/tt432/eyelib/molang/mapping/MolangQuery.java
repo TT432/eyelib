@@ -10,10 +10,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Objects;
@@ -216,8 +213,12 @@ public final class MolangQuery {
         return livingFloat(scope, l -> l.getAttackAnim(partial_tick(scope)));
     }
 
-    public static float is_attaking(MolangScope scope) {
+    public static float is_attacking(MolangScope scope) {
         return attack_time(scope) > 0 ? TRUE : FALSE;
+    }
+
+    public static float is_powered(MolangScope scope) {
+        return scope.getOwner().ownerAs(PowerableMob.class).map(c -> c.isPowered() ? TRUE : FALSE).orElse(FALSE);
     }
 
     public static float has_helmet(MolangScope scope) {
