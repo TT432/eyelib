@@ -13,7 +13,7 @@ package io.github.tt432.eyelib.molang.mapping.api;
  * }</pre>
  * <p>
  * 此处的 max 可以对应 math.max(a, b) <br/>
- * targetClass's method & field must is public & static
+ * 目标类的方法或字段都需要是 public static 才可调用
  *
  * @author TT432
  */
