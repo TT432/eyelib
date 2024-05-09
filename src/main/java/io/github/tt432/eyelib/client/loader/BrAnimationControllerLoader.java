@@ -46,9 +46,6 @@ public class BrAnimationControllerLoader extends SimpleJsonResourceReloadListene
         MolangCompileHandler.onReload();
         animationControllers.clear();
 
-        pObject.forEach((key, value) -> {
-            animationControllers.put(key, BrAnimationControllers.parse(key.toString(), value.getAsJsonObject()));
-            MolangCompileHandler.tryCompileAll(key.toString().replace(":", "$"));
-        });
+        pObject.forEach((key, value) -> animationControllers.put(key, BrAnimationControllers.parse(key.toString(), value.getAsJsonObject())));
     }
 }

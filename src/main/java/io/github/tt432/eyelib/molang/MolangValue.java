@@ -8,8 +8,8 @@ import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.util.codec.Codecs;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.invoke.MethodHandle;
 import java.util.function.Function;
@@ -35,13 +35,14 @@ public final class MolangValue {
     ).xmap(Codecs::identity, Either::left);
 
     @Getter
+    @NotNull
     private final String context;
-    @Setter
-    private MethodHandle method;
+    @NotNull
+    private final MethodHandle method;
 
-    public MolangValue(String context) {
+    public MolangValue(@NotNull String context) {
         this.context = context;
-        MolangCompileHandler.register(this);
+        method = MolangCompileHandler.compile(this);
     }
 
     public static MolangValue parse(String content) {
@@ -57,12 +58,10 @@ public final class MolangValue {
     }
 
     public float eval(MolangScope scope) {
-        if (method != null) {
-            try {
-                return (float) method.invoke(scope);
-            } catch (Throwable e) {
-                log.error("Error occurred", e);
-            }
+        try {
+            return (float) method.invoke(scope);
+        } catch (Throwable e) {
+            log.error("Error occurred", e);
         }
 
         return 0F;

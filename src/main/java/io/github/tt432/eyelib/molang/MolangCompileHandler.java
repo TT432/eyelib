@@ -19,10 +19,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author TT432
@@ -31,13 +30,46 @@ import java.util.List;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class MolangCompileHandler {
-    private static final List<MolangValue> values = new ArrayList<>();
+    private static int currIdx;
 
-    public static void register(MolangValue value) {
-        values.add(value);
+    public static MethodHandle compile(MolangValue value) {
+        try {
+            return tryCompile(value);
+        } catch (NotFoundException | CannotCompileException | NoSuchMethodException | IOException |
+                 IllegalAccessException e) {
+            throw new MolangUncompilableException(e);
+        }
     }
 
-    static class CustomClassLoader extends ClassLoader {
+    public static MethodHandle tryCompile(MolangValue value) throws NotFoundException, CannotCompileException, IOException, NoSuchMethodException, IllegalAccessException {
+        currIdx++;
+        String classname = "CompiledMolang$" + currIdx;
+        CtClass ctClass = classPool.makeClass(classname);
+
+        CtClass scopeClass = classPool.get(MolangScope.class.getName());
+        CtMethod method = new CtMethod(CtClass.floatType, "eval", new CtClass[]{scopeClass}, ctClass);
+        method.setModifiers(Modifier.STATIC | Modifier.PUBLIC);
+
+        var body = visitor.visitExprSet(
+                new MolangParser(
+                        new CommonTokenStream(
+                                new MolangLexer(CharStreams.fromString(value.getContext())))
+                ).exprSet());
+
+        method.setBody("{" + body + "}");
+
+        ctClass.addMethod(method);
+
+        byte[] bytecode = ctClass.toBytecode();
+        Class<?> aClass = classLoader.createClass(classname, bytecode, 0, bytecode.length);
+
+        MethodHandles.Lookup publicLookup = MethodHandles.publicLookup();
+        MethodType mt = MethodType.methodType(float.class, MolangScope.class);
+
+        return publicLookup.findStatic(aClass, "eval", mt);
+    }
+
+    private static class CustomClassLoader extends ClassLoader {
         public CustomClassLoader(ClassLoader parent) {
             super(parent);
         }
@@ -49,20 +81,15 @@ public class MolangCompileHandler {
 
     private static boolean reloadable = true;
 
-
     private static final class MolangCompileHandlerReloadListener extends SimplePreparableReloadListener<Object> {
         @Override
         protected @NotNull Object prepare(@NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerFiller) {
             return "";
         }
 
-        private static void setReloadable() {
-            reloadable = true;
-        }
-
         @Override
         protected void apply(Object o, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerFiller) {
-            setReloadable();
+            reloadable = true;
         }
     }
 
@@ -84,56 +111,4 @@ public class MolangCompileHandler {
     }
 
     private static final MolangCompileVisitor visitor = new MolangCompileVisitor();
-
-    public static void tryCompileAll(String className) {
-        try {
-            compileAll(className);
-        } catch (NotFoundException | CannotCompileException | NoSuchMethodException | IOException |
-                 IllegalAccessException e) {
-            log.error("Error occurred", e);
-        }
-    }
-
-    private static void compileAll(String className) throws NoSuchMethodException, CannotCompileException, NotFoundException, IOException, IllegalAccessException {
-        CtClass ctClass = classPool.makeClass(className);
-
-        CtClass scopeClass = classPool.get(MolangScope.class.getName());
-
-        CtMethod emptyEval = new CtMethod(CtClass.floatType, "emptyEval",
-                new CtClass[]{CtClass.floatType}, ctClass);
-        emptyEval.setModifiers(Modifier.STATIC | Modifier.PUBLIC);
-        emptyEval.setBody("{return (float) $1;}");
-        ctClass.addMethod(emptyEval);
-
-        for (int i = 0; i < values.size(); i++) {
-            MolangValue valuei = values.get(i);
-
-            CtMethod method = new CtMethod(CtClass.floatType, "eval" + i,
-                    new CtClass[]{scopeClass}, ctClass);
-            method.setModifiers(Modifier.STATIC | Modifier.PUBLIC);
-
-            var body = visitor.visitExprSet(
-                    new MolangParser(
-                            new CommonTokenStream(
-                                    new MolangLexer(CharStreams.fromString(valuei.getContext())))
-                    ).exprSet());
-
-            method.setBody("{" + body + "}");
-
-            ctClass.addMethod(method);
-        }
-
-        byte[] bytecode = ctClass.toBytecode();
-        Class<?> aClass = classLoader.createClass(className, bytecode, 0, bytecode.length);
-
-        MethodHandles.Lookup publicLookup = MethodHandles.publicLookup();
-        MethodType mt = MethodType.methodType(float.class, MolangScope.class);
-
-        for (int i = 0; i < values.size(); i++) {
-            MolangValue valuei = values.get(i);
-            valuei.setMethod(publicLookup.findStatic(aClass, "eval" + i, mt));
-        }
-
-        values.clear();
-    }
 }

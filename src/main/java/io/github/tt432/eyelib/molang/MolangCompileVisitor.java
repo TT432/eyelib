@@ -56,7 +56,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
         StringBuilder r = new StringBuilder();
 
         for (int i = 0; i < split.length - 1; i++) {
-            r.append("emptyEval(").append(split[i]).append(");");
+            r.append("io.github.tt432.eyelib.util.EyelibUtils.blackhole(").append(split[i]).append(");");
         }
 
         r.append("return (float) ").append(split[split.length - 1]).append(";");
