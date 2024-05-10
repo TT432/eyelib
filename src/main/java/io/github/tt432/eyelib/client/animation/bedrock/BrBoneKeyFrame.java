@@ -62,10 +62,10 @@ public record BrBoneKeyFrame(
 
         catmullromArray.add(cTempP2.set(before.timestamp(), before.get(1).getX(scope)));
 
-        catmullromArray.add(cTempP3.set(after.timestamp(), after.get(0).getX(scope)));
+        catmullromArray.add(cTempP3.set(after.timestamp(), after.getFirst().getX(scope)));
 
         if (lastPointPredicate)
-            catmullromArray.add(cTempP4.set(afterPlus.timestamp(), afterPlus.get(0).getX(scope)));
+            catmullromArray.add(cTempP4.set(afterPlus.timestamp(), afterPlus.getFirst().getX(scope)));
 
         float time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
 
@@ -78,10 +78,10 @@ public record BrBoneKeyFrame(
 
         catmullromArray.add(cTempP2.set(before.timestamp(), before.get(1).getY(scope)));
 
-        catmullromArray.add(cTempP3.set(after.timestamp(), after.get(0).getY(scope)));
+        catmullromArray.add(cTempP3.set(after.timestamp(), after.getFirst().getY(scope)));
 
         if (lastPointPredicate)
-            catmullromArray.add(cTempP4.set(afterPlus.timestamp(), afterPlus.get(0).getY(scope)));
+            catmullromArray.add(cTempP4.set(afterPlus.timestamp(), afterPlus.getFirst().getY(scope)));
 
         time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
 
@@ -94,10 +94,10 @@ public record BrBoneKeyFrame(
 
         catmullromArray.add(cTempP2.set(before.timestamp(), before.get(1).getZ(scope)));
 
-        catmullromArray.add(cTempP3.set(after.timestamp(), after.get(0).getZ(scope)));
+        catmullromArray.add(cTempP3.set(after.timestamp(), after.getFirst().getZ(scope)));
 
         if (lastPointPredicate)
-            catmullromArray.add(cTempP4.set(afterPlus.timestamp(), afterPlus.get(0).getZ(scope)));
+            catmullromArray.add(cTempP4.set(afterPlus.timestamp(), afterPlus.getFirst().getZ(scope)));
 
         time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
 
@@ -134,6 +134,10 @@ public record BrBoneKeyFrame(
                 ay == by ? ay : EyeMath.lerp(ay, by, weight),
                 az == bz ? az : EyeMath.lerp(az, bz, weight)
         );
+    }
+
+    public MolangValue3 getFirst() {
+        return dataPoints[0];
     }
 
     /**

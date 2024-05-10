@@ -5,7 +5,6 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.util.codec.Codecs;
 import io.github.tt432.eyelib.util.codec.Tuple;
 import io.github.tt432.eyelib.util.codec.TupleCodec;
 import lombok.extern.slf4j.Slf4j;
@@ -39,10 +38,10 @@ public record MolangValue3(
                     MolangValue.CODEC.optionalFieldOf("y", MOLANG0).forGetter(MolangValue3::y),
                     MolangValue.CODEC.optionalFieldOf("z", MOLANG0).forGetter(MolangValue3::z)
             ).apply(ins, MolangValue3::new))
-    ).xmap(Codecs::identity, Either::right);
+    ).xmap(Either::unwrap, Either::right);
 
     public static MolangValue3 parse(JsonElement ele) {
-        return CODEC.parse(JsonOps.INSTANCE, ele).getOrThrow(true, log::error);
+        return CODEC.parse(JsonOps.INSTANCE, ele).getPartialOrThrow();
     }
 
     public float getX(MolangScope scope) {

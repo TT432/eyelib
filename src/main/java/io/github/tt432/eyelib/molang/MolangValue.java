@@ -6,7 +6,6 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.util.codec.Codecs;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,7 @@ public final class MolangValue {
             RecordCodecBuilder.<MolangValue>create(ins -> ins.group(
                     Codec.STRING.fieldOf("context").forGetter(o -> o.context)
             ).apply(ins, MolangValue::new))
-    ).xmap(Codecs::identity, Either::left);
+    ).xmap(Either::unwrap, Either::left);
 
     @Getter
     @NotNull

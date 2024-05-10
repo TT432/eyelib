@@ -18,10 +18,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.TickEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ import java.util.function.Function;
 /**
  * @author TT432
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EntityRenderSystem {
     private static final AnimationSystem controllerSystem = new AnimationSystem();
@@ -53,13 +53,11 @@ public class EntityRenderSystem {
     }
 
     @SubscribeEvent
-    public static void onEvent(TickEvent.RenderTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
-            removeRemovedEntity();
+    public static void onEvent(RenderFrameEvent.Post event) {
+        removeRemovedEntity();
 
-            float ticks = ClientTickHandler.getTick() + event.renderTickTime;
-            controllerSystem.update(ticks);
-        }
+        float ticks = ClientTickHandler.getTick() + event.getPartialTick();
+        controllerSystem.update(ticks);
     }
 
     private static void removeRemovedEntity() {

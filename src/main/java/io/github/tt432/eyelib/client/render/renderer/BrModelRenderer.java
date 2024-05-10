@@ -9,10 +9,11 @@ import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.visitor.BrModelRenderVisitor;
+import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /**
@@ -21,15 +22,17 @@ import org.joml.Vector3f;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BrModelRenderer {
     private static final Vector3f nPivot = new Vector3f();
-    private static final Quaternionf tQ = new Quaternionf();
 
-    private static final float R180 = (float) Math.toRadians(180);
+    private static final float R180 = 180 * EyeMath.DEGREES_TO_RADIANS;
 
     public static void render(BrModel model, BoneRenderInfos infos, PoseStack poseStack, VertexConsumer consumer, BrModelRenderVisitor visitor) {
         poseStack.pushPose();
 
-        tQ.rotationZYX(0, R180, 0);
-        poseStack.mulPose(tQ);
+        PoseStack.Pose last = poseStack.last();
+        Matrix4f pose = last.pose();
+        pose.rotateY(R180);
+        Matrix3f normal = last.normal();
+        normal.rotateY(R180);
 
         for (BrBone toplevelBone : model.toplevelBones()) {
             renderBone(poseStack, visitor, infos, toplevelBone, consumer);
@@ -45,7 +48,8 @@ public class BrModelRenderer {
 
         visitor.visitBone(poseStack, bone, boneRenderInfoEntry, consumer, true);
 
-        Matrix4f m4 = poseStack.last().pose();
+        PoseStack.Pose last = poseStack.last();
+        Matrix4f m4 = last.pose();
 
         m4.translate(boneRenderInfoEntry.getRenderPosition());
 
@@ -55,8 +59,9 @@ public class BrModelRenderer {
 
         Vector3f rotation = boneRenderInfoEntry.getRenderRotation();
 
-        tQ.rotationZYX(rotation.z, rotation.y, rotation.x);
-        poseStack.mulPose(tQ);
+        Matrix3f normal = last.normal();
+        normal.rotateZYX(rotation);
+        m4.rotateZYX(rotation);
 
         Vector3f scale = boneRenderInfoEntry.getRenderScala();
 

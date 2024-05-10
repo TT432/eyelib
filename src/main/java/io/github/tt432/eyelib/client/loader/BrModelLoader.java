@@ -12,7 +12,7 @@ import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * @author TT432
  */
-@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 @Slf4j
 public class BrModelLoader extends SimpleJsonResourceReloadListener {
     private static final BrModelLoader INSTANCE = new BrModelLoader();
@@ -56,7 +56,7 @@ public class BrModelLoader extends SimpleJsonResourceReloadListener {
 
             if (key.getPath().endsWith("material")) {
                 materials.put(key, ModelMaterial.CODEC.parse(JsonOps.INSTANCE, entry.getValue())
-                        .getOrThrow(true, log::error));
+                        .getPartialOrThrow());
             } else {
                 models.put(key, BrModel.parse(key.toString(), entry.getValue().getAsJsonObject()));
             }

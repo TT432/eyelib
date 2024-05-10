@@ -4,7 +4,6 @@ import com.google.gson.JsonElement;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelib.util.codec.Codecs;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -29,10 +28,10 @@ public enum BrLoopType {
                                 default -> "false";
                             }),
                     Codec.BOOL.xmap(b -> b ? LOOP : ONCE, t -> t == LOOP))
-            .xmap(Codecs::identity, Either::left)
+            .xmap(Either::unwrap, Either::left)
             .orElse(ONCE);
 
     public static BrLoopType parse(JsonElement json) {
-        return CODEC.parse(JsonOps.INSTANCE, json).getOrThrow(true, log::error);
+        return CODEC.parse(JsonOps.INSTANCE, json).getPartialOrThrow();
     }
 }
