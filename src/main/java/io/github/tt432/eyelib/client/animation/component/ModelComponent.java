@@ -21,6 +21,7 @@ public class ModelComponent {
     ResourceLocation texture;
     @Nullable
     Function<ResourceLocation, RenderType> renderTypeFactory;
+    boolean isSolid;
     @Nullable
     BrModelRenderVisitor visitor;
 

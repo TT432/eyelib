@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.capability.AnimatableCapability;
 import io.github.tt432.eyelib.capability.EyelibCapabilities;
 import io.github.tt432.eyelib.client.ClientTickHandler;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
+import io.github.tt432.eyelib.client.render.BrModelTextures;
 import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
 import io.github.tt432.eyelib.client.render.visitor.BrModelRenderVisitor;
 import io.github.tt432.eyelib.event.InitComponentEvent;
@@ -81,8 +82,9 @@ public class EntityRenderSystem {
         ModelComponent modelComponent = cap.getModelComponent();
         BrModelRenderVisitor visitor = modelComponent.getVisitor();
         Function<ResourceLocation, RenderType> renderTypeFactory = modelComponent.getRenderTypeFactory();
+        ResourceLocation texture = modelComponent.getTexture();
 
-        if (modelComponent.getModel() != null && modelComponent.getTexture() != null && visitor != null && renderTypeFactory != null) {
+        if (modelComponent.getModel() != null && texture != null && visitor != null && renderTypeFactory != null) {
             event.setCanceled(true);
 
             visitor.setupLight(event.getPackedLight());
@@ -90,12 +92,13 @@ public class EntityRenderSystem {
             PoseStack poseStack = event.getPoseStack();
             var model = modelComponent.getModel();
 
-            RenderType renderType = renderTypeFactory.apply(modelComponent.getTexture());
+            RenderType renderType = renderTypeFactory.apply(texture);
             VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderType);
 
             poseStack.pushPose();
 
-            BrModelRenderer.render(model, modelComponent.getInfos(), poseStack, buffer, visitor);
+            BrModelRenderer.render(model, modelComponent.getInfos(), poseStack, buffer,
+                    BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), visitor);
 
             poseStack.popPose();
         }

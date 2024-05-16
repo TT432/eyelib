@@ -63,10 +63,18 @@ public class RenderDefineApplyHandler {
             modelComponent.setTexture(new ResourceLocation(texture.getNamespace(),
                     "textures/" + texture.getPath() + ".png"));
             // TODO 补充更多的 renderType，或者找到一个检索的办法
+            boolean isSolid;
             Function<ResourceLocation, RenderType> renderTypeFactory = switch (material.renderType().toString()) {
-                case "minecraft:cutout" -> RenderType::entityCutout;
-                default -> RenderType::entitySolid;// "minecraft:solid"
+                case "minecraft:cutout" -> {
+                    isSolid = false;
+                    yield RenderType::entityCutout;
+                }
+                default -> {
+                    isSolid = true;
+                    yield RenderType::entitySolid;
+                }// "minecraft:solid"
             };
+            modelComponent.setSolid(isSolid);
             modelComponent.setRenderTypeFactory(renderTypeFactory);
             modelComponent.setVisitor(new BlankEntityModelRenderVisit());
 

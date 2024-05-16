@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.client.model.bedrock.BrBone;
 import io.github.tt432.eyelib.client.model.bedrock.BrCube;
 import io.github.tt432.eyelib.client.model.bedrock.BrFace;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
+import io.github.tt432.eyelib.client.render.BrModelTextures;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.visitor.BrModelRenderVisitor;
@@ -15,6 +16,8 @@ import lombok.NoArgsConstructor;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+
+import javax.annotation.Nullable;
 
 /**
  * @author TT432
@@ -26,6 +29,16 @@ public class BrModelRenderer {
     private static final float R180 = 180 * EyeMath.DEGREES_TO_RADIANS;
 
     public static void render(BrModel model, BoneRenderInfos infos, PoseStack poseStack, VertexConsumer consumer, BrModelRenderVisitor visitor) {
+        render(model, infos, poseStack, consumer, null, visitor);
+    }
+
+    @Nullable
+    private static BrModelTextures.TwoSideInfoMap lastTwoSideInfoMap;
+
+    public static void render(BrModel model, BoneRenderInfos infos, PoseStack poseStack, VertexConsumer consumer,
+                              BrModelTextures.TwoSideInfoMap map, BrModelRenderVisitor visitor) {
+        lastTwoSideInfoMap = map;
+
         poseStack.pushPose();
 
         PoseStack.Pose last = poseStack.last();
@@ -74,8 +87,10 @@ public class BrModelRenderer {
         bone.locators().forEach((name, locator) ->
                 visitor.visitLocator(poseStack, bone, name, locator, boneRenderInfoEntry, consumer));
 
-        for (BrCube cube : bone.cubes()) {
-            renderCube(poseStack, visitor, cube, consumer);
+        for (int i = 0; i < bone.cubes().size(); i++) {
+            BrCube brCube = bone.cubes().get(i);
+            renderCube(poseStack, visitor, brCube,
+                    lastTwoSideInfoMap == null || lastTwoSideInfoMap.isTwoSide(bone.name(), i), consumer);
         }
 
         for (BrBone child : bone.children()) {
@@ -85,16 +100,20 @@ public class BrModelRenderer {
         poseStack.popPose();
     }
 
-    private static void renderCube(PoseStack poseStack, BrModelRenderVisitor visitor, BrCube cube, VertexConsumer consumer) {
+    private static void renderCube(PoseStack poseStack, BrModelRenderVisitor visitor, BrCube cube,
+                                   boolean needTwoSide, VertexConsumer consumer) {
         visitor.visitCube(poseStack, cube, consumer);
 
         for (BrFace face : cube.faces()) {
+
             for (int i = 0; i < face.getVertex().length; i++) {
                 visitor.visitVertex(poseStack, cube, face, i, consumer);
             }
 
-            for (int i = face.getVertex().length - 1; i >= 0; i--) {
-                visitor.visitVertex(poseStack, cube, face, i, consumer);
+            if (needTwoSide) {
+                for (int i = face.getVertex().length - 1; i >= 0; i--) {
+                    visitor.visitVertex(poseStack, cube, face, i, consumer);
+                }
             }
         }
     }
