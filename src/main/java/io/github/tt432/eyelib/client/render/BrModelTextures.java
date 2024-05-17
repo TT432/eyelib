@@ -49,7 +49,6 @@ public class BrModelTextures {
 
                     try (NativeImage nativeimage = new NativeImage(width[0], height[0], false)) {
                         nativeimage.downloadTexture(0, false);
-                        nativeimage.flipY();
 
                         model.allBones().forEach((boneName, bone) ->
                                 builder.put(boneName, new TwoSideInfo(boneName, processBone(bone, isSolid, nativeimage))));
