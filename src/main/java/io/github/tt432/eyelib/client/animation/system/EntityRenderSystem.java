@@ -18,12 +18,12 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RenderFrameEvent;
-import net.neoforged.neoforge.client.event.RenderLivingEvent;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.client.event.RenderLivingEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ import java.util.function.Function;
 /**
  * @author TT432
  */
-@EventBusSubscriber
+@Mod.EventBusSubscriber
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EntityRenderSystem {
     private static final AnimationSystem controllerSystem = new AnimationSystem();
@@ -43,22 +43,20 @@ public class EntityRenderSystem {
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
         Entity entity = event.getEntity();
-        var cap = entity.getData(EyelibCapabilities.ANIMATABLE);
-
-        if (cap.getOwner() != entity) {
-            cap.init(entity);
-        }
-
-        entities.put(cap.id(), cap);
-        NeoForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
+        entity.getCapability(EyelibCapabilities.ANIMATABLE).ifPresent(cap -> {
+            entities.put(cap.id(), cap);
+            MinecraftForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
+        });
     }
 
     @SubscribeEvent
-    public static void onEvent(RenderFrameEvent.Post event) {
-        removeRemovedEntity();
+    public static void onEvent(TickEvent.RenderTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            removeRemovedEntity();
 
-        float ticks = ClientTickHandler.getTick() + event.getPartialTick();
-        controllerSystem.update(ticks);
+            float ticks = ClientTickHandler.getTick() + event.renderTickTime;
+            controllerSystem.update(ticks);
+        }
     }
 
     private static void removeRemovedEntity() {
@@ -78,29 +76,30 @@ public class EntityRenderSystem {
     @SubscribeEvent
     public static void onEvent(RenderLivingEvent.Pre event) {
         LivingEntity entity = event.getEntity();
-        AnimatableCapability<Object> cap = entity.getData(EyelibCapabilities.ANIMATABLE);
-        ModelComponent modelComponent = cap.getModelComponent();
-        BrModelRenderVisitor visitor = modelComponent.getVisitor();
-        Function<ResourceLocation, RenderType> renderTypeFactory = modelComponent.getRenderTypeFactory();
-        ResourceLocation texture = modelComponent.getTexture();
+        entity.getCapability(EyelibCapabilities.ANIMATABLE).ifPresent( cap ->{
+            ModelComponent modelComponent = cap.getModelComponent();
+            BrModelRenderVisitor visitor = modelComponent.getVisitor();
+            Function<ResourceLocation, RenderType> renderTypeFactory = modelComponent.getRenderTypeFactory();
+            ResourceLocation texture = modelComponent.getTexture();
 
-        if (modelComponent.getModel() != null && texture != null && visitor != null && renderTypeFactory != null) {
-            event.setCanceled(true);
+            if (modelComponent.getModel() != null && texture != null && visitor != null && renderTypeFactory != null) {
+                event.setCanceled(true);
 
-            visitor.setupLight(event.getPackedLight());
+                visitor.setupLight(event.getPackedLight());
 
-            PoseStack poseStack = event.getPoseStack();
-            var model = modelComponent.getModel();
+                PoseStack poseStack = event.getPoseStack();
+                var model = modelComponent.getModel();
 
-            RenderType renderType = renderTypeFactory.apply(texture);
-            VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderType);
+                RenderType renderType = renderTypeFactory.apply(texture);
+                VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderType);
 
-            poseStack.pushPose();
+                poseStack.pushPose();
 
-            BrModelRenderer.render(model, modelComponent.getInfos(), poseStack, buffer,
-                    BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), visitor);
+                BrModelRenderer.render(model, modelComponent.getInfos(), poseStack, buffer,
+                        BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), visitor);
 
-            poseStack.popPose();
-        }
+                poseStack.popPose();
+            }
+        });
     }
 }

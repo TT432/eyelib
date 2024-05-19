@@ -92,7 +92,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
     public String visitLogicOperator(MolangParser.LogicOperatorContext ctx) {
         List<MolangParser.ExprContext> expr = ctx.expr();
 
-        return "(((" + visit(expr.getFirst()) + ") != 0F) " + ctx.op.getText() + " ((" + visit(expr.get(1)) + ") != 0F) ? 1F : 0F)";
+        return "(((" + visit(expr.get(0)) + ") != 0F) " + ctx.op.getText() + " ((" + visit(expr.get(1)) + ") != 0F) ? 1F : 0F)";
     }
 
     @Override

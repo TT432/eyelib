@@ -1,7 +1,8 @@
 {
   "pack": {
-    "description": "eyelib resources",
-    "pack_format": 15,
-    "forge:server_data_pack_format": 12
+    "description": {
+      "text": "${mod_id} resources"
+    },
+    "pack_format": 15
   }
 }

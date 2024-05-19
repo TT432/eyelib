@@ -3,20 +3,51 @@ package io.github.tt432.eyelib.capability;
 import io.github.tt432.eyelib.Eyelib;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredRegister;
-import net.neoforged.neoforge.registries.NeoForgeRegistries;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.common.capabilities.*;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EyelibCapabilities {
-    public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
-            DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, Eyelib.MOD_ID);
+    public static final Capability<AnimatableCapability> ANIMATABLE = CapabilityManager.get(new CapabilityToken<>() {
+    });
 
-    public static final DeferredHolder<AttachmentType<?>, AttachmentType<AnimatableCapability<Object>>> ANIMATABLE =
-            ATTACHMENT_TYPES.register("animatable",
-                    () -> AttachmentType.builder(() -> new AnimatableCapability<>()).build());
+    @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+    public static final class RegistryEvents {
+        @SubscribeEvent
+        public static void registerCaps(RegisterCapabilitiesEvent event) {
+            event.register(AnimatableCapability.class);
+        }
+    }
+
+    @Mod.EventBusSubscriber
+    public static final class AttachCapabilitiesEvents {
+        @SubscribeEvent
+        public static void onEvent(AttachCapabilitiesEvent event) {
+            ICapabilityProvider provider = new ICapabilityProvider() {
+                LazyOptional<AnimatableCapability<?>> capa = LazyOptional.of(() -> {
+                    AnimatableCapability<Object> result = new AnimatableCapability<>();
+                    result.init(event.getObject());
+                    return result;
+                });
+
+                @Override
+                public <T> LazyOptional<T> getCapability(Capability<T> cap, @Nullable Direction direction) {
+                    if (cap == ANIMATABLE) {
+                        return capa.cast();
+                    }
+                    return LazyOptional.empty();
+                }
+            };
+            event.addCapability(new ResourceLocation(Eyelib.MOD_ID, "animatable"), provider);
+        }
+    }
 }

@@ -105,16 +105,10 @@ public class BrModelRenderer {
         visitor.visitCube(poseStack, cube, consumer);
 
         for (BrFace face : cube.faces()) {
-
             for (int i = 0; i < face.getVertex().length; i++) {
                 visitor.visitVertex(poseStack, cube, face, i, consumer);
             }
 
-            if (needTwoSide) {
-                for (int i = face.getVertex().length - 1; i >= 0; i--) {
-                    visitor.visitVertex(poseStack, cube, face, i, consumer);
-                }
-            }
         }
     }
 }
