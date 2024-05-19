@@ -125,10 +125,10 @@ public record BrCube(
 
         Vector3f[][] faces = new Vector3f[][]{
                 {corners[6], corners[2], corners[3], corners[7],},
-                {corners[5], corners[1], corners[0], corners[4],},
-                {corners[3], corners[0], corners[4], corners[7],},
-                {corners[2], corners[1], corners[0], corners[3],},
+                {corners[1], corners[5], corners[4], corners[0],},
                 {corners[6], corners[5], corners[1], corners[2],},
+                {corners[2], corners[1], corners[0], corners[3],},
+                {corners[3], corners[0], corners[4], corners[7],},
                 {corners[7], corners[4], corners[5], corners[6],}
         };
 
