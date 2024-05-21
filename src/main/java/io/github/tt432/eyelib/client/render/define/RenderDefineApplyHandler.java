@@ -56,12 +56,10 @@ public class RenderDefineApplyHandler {
                 return;
             }
 
-            modelComponent.setModel(model);
             // new Random(seed).nextInt(bound) 在bound为2^n时存在问题
             int randomIdx = Math.abs(new Random(entity.getId()).nextInt()) % material.textures().size();
             ResourceLocation texture = material.textures().get(randomIdx);
-            modelComponent.setTexture(new ResourceLocation(texture.getNamespace(),
-                    "textures/" + texture.getPath() + ".png"));
+
             // TODO 补充更多的 renderType，或者找到一个检索的办法
             boolean isSolid;
             Function<ResourceLocation, RenderType> renderTypeFactory = switch (material.renderType().toString()) {
@@ -74,9 +72,15 @@ public class RenderDefineApplyHandler {
                     yield RenderType::entitySolid;
                 }// "minecraft:solid"
             };
-            modelComponent.setSolid(isSolid);
-            modelComponent.setRenderTypeFactory(renderTypeFactory);
-            modelComponent.setVisitor(new BlankEntityModelRenderVisit());
+
+            modelComponent.setInfo(new ModelComponent.Info(
+                    model,
+                    new ResourceLocation(texture.getNamespace(),
+                            "textures/" + texture.getPath() + ".png"),
+                    renderTypeFactory,
+                    isSolid,
+                    new BlankEntityModelRenderVisit()
+            ));
 
             AnimationComponent animComponent = capability.getAnimationComponent();
             RenderDefine.RDAnimationController entry = renderDefine.animationControllerEntry();

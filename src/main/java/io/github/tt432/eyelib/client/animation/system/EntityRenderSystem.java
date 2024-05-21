@@ -78,25 +78,27 @@ public class EntityRenderSystem {
         LivingEntity entity = event.getEntity();
         entity.getCapability(EyelibCapabilities.ANIMATABLE).ifPresent( cap ->{
             ModelComponent modelComponent = cap.getModelComponent();
-            BrModelRenderVisitor visitor = modelComponent.getVisitor();
-            Function<ResourceLocation, RenderType> renderTypeFactory = modelComponent.getRenderTypeFactory();
-            ResourceLocation texture = modelComponent.getTexture();
+            ModelComponent.Info info = modelComponent.getInfo();
 
-            if (modelComponent.getModel() != null && texture != null && visitor != null && renderTypeFactory != null) {
+            if (info!=null) {
+                BrModelRenderVisitor visitor = info.visitor();
+                Function<ResourceLocation, RenderType> renderTypeFactory = info.renderTypeFactory();
+                ResourceLocation texture = info.texture();
+
                 event.setCanceled(true);
 
                 visitor.setupLight(event.getPackedLight());
 
                 PoseStack poseStack = event.getPoseStack();
-                var model = modelComponent.getModel();
+                var model = info.model();
 
                 RenderType renderType = renderTypeFactory.apply(texture);
                 VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderType);
 
                 poseStack.pushPose();
 
-                BrModelRenderer.render(model, modelComponent.getInfos(), poseStack, buffer,
-                        BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), visitor);
+                BrModelRenderer.render(model, modelComponent.getBoneInfos(), poseStack, buffer,
+                        BrModelTextures.getTwoSideInfo(model, info.isSolid(), texture), visitor);
 
                 poseStack.popPose();
             }

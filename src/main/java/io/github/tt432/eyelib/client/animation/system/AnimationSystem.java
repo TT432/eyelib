@@ -39,14 +39,14 @@ public class AnimationSystem {
             scope = entity.getScope();
 
             ModelComponent modelComponent = entity.getModelComponent();
-            BrModel model = modelComponent.getModel();
+            ModelComponent.Info info = modelComponent.getInfo();
 
-            BoneRenderInfos infos = modelComponent.getInfos();
+            if (info == null || component.getAnimationController() == null) return;
+
+            BrModel model = info.model();
+
+            BoneRenderInfos infos = modelComponent.getBoneInfos();
             infos.reset();
-
-            if (model == null || component.getAnimationController() == null) {
-                return;
-            }
 
             for (int i = 0; i < component.getAnimationController().size(); i++) {
                 component.setCurrentControllerIndex(i);
