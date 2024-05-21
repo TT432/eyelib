@@ -6,8 +6,8 @@ import io.github.tt432.eyelib.client.render.visitor.BrModelRenderVisitor;
 import lombok.Data;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.function.Function;
 
 /**
@@ -15,15 +15,17 @@ import java.util.function.Function;
  */
 @Data
 public class ModelComponent {
-    @Nullable
-    BrModel model;
-    @Nullable
-    ResourceLocation texture;
-    @Nullable
-    Function<ResourceLocation, RenderType> renderTypeFactory;
-    boolean isSolid;
-    @Nullable
-    BrModelRenderVisitor visitor;
+    public record Info(
+            BrModel model,
+            ResourceLocation texture,
+            Function<ResourceLocation, RenderType> renderTypeFactory,
+            boolean isSolid,
+            BrModelRenderVisitor visitor
+    ) {
+    }
 
-    final BoneRenderInfos infos = new BoneRenderInfos();
+    @Nullable
+    ModelComponent.Info info;
+
+    final BoneRenderInfos boneInfos = new BoneRenderInfos();
 }
