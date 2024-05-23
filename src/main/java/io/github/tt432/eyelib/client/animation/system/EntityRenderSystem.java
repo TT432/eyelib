@@ -2,13 +2,12 @@ package io.github.tt432.eyelib.client.animation.system;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.tt432.eyelib.capability.AnimatableCapability;
-import io.github.tt432.eyelib.capability.EyelibCapabilities;
+import io.github.tt432.eyelib.capability.AnimatableComponent;
+import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.client.ClientTickHandler;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import io.github.tt432.eyelib.client.render.BrModelTextures;
 import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
-import io.github.tt432.eyelib.client.render.visitor.BrModelRenderVisitor;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.AccessLevel;
@@ -37,13 +36,13 @@ import java.util.function.Function;
 public class EntityRenderSystem {
     private static final AnimationSystem controllerSystem = new AnimationSystem();
 
-    public static final Int2ObjectOpenHashMap<AnimatableCapability<?>> entities = new Int2ObjectOpenHashMap<>();
-    private static final List<AnimatableCapability<?>> readyToRemove = new ArrayList<>();
+    public static final Int2ObjectOpenHashMap<AnimatableComponent<?>> entities = new Int2ObjectOpenHashMap<>();
+    private static final List<AnimatableComponent<?>> readyToRemove = new ArrayList<>();
 
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
         Entity entity = event.getEntity();
-        entity.getCapability(EyelibCapabilities.ANIMATABLE).ifPresent(cap -> {
+        entity.getCapability(EyelibAttachableData.ANIMATABLE).ifPresent(cap -> {
             entities.put(cap.id(), cap);
             MinecraftForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
         });
@@ -66,7 +65,7 @@ public class EntityRenderSystem {
             }
         });
 
-        for (AnimatableCapability<?> animatableCapability : readyToRemove) {
+        for (AnimatableComponent<?> animatableCapability : readyToRemove) {
             entities.remove(animatableCapability.id());
         }
 
@@ -76,32 +75,35 @@ public class EntityRenderSystem {
     @SubscribeEvent
     public static void onEvent(RenderLivingEvent.Pre event) {
         LivingEntity entity = event.getEntity();
-        entity.getCapability(EyelibCapabilities.ANIMATABLE).ifPresent( cap ->{
-            ModelComponent modelComponent = cap.getModelComponent();
-            ModelComponent.Info info = modelComponent.getInfo();
+        var capability = entity.getCapability(EyelibAttachableData.ANIMATABLE).resolve();
 
-            if (info!=null) {
-                BrModelRenderVisitor visitor = info.visitor();
-                Function<ResourceLocation, RenderType> renderTypeFactory = info.renderTypeFactory();
-                ResourceLocation texture = info.texture();
+        if (capability.isEmpty()) return;
 
-                event.setCanceled(true);
+        AnimatableComponent<?> cap = capability.get();
+        ModelComponent modelComponent = cap.getModelComponent();
+        ModelComponent.Info info = modelComponent.getInfo();
 
-                visitor.setupLight(event.getPackedLight());
+        if (info != null) {
+            var visitor = info.visitor();
+            Function<ResourceLocation, RenderType> renderTypeFactory = info.renderTypeFactory();
+            ResourceLocation texture = info.texture();
 
-                PoseStack poseStack = event.getPoseStack();
-                var model = info.model();
+            event.setCanceled(true);
 
-                RenderType renderType = renderTypeFactory.apply(texture);
-                VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderType);
+            visitor.setupLight(event.getPackedLight());
 
-                poseStack.pushPose();
+            PoseStack poseStack = event.getPoseStack();
+            var model = info.model();
 
-                BrModelRenderer.render(model, modelComponent.getBoneInfos(), poseStack, buffer,
-                        BrModelTextures.getTwoSideInfo(model, info.isSolid(), texture), visitor);
+            RenderType renderType = renderTypeFactory.apply(texture);
+            VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderType);
 
-                poseStack.popPose();
-            }
-        });
+            poseStack.pushPose();
+
+            BrModelRenderer.render(model, modelComponent.getBoneInfos(), poseStack, buffer,
+                    BrModelTextures.getTwoSideInfo(model, info.isSolid(), texture), visitor);
+
+            poseStack.popPose();
+        }
     }
 }

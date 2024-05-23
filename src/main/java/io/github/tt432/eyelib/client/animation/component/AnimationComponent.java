@@ -1,14 +1,19 @@
 package io.github.tt432.eyelib.client.animation.component;
 
 import com.google.common.collect.ImmutableList;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.animation.bedrock.BrEffectsKeyFrame;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAcState;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
+import io.github.tt432.eyelib.client.loader.BrAnimationControllerLoader;
+import io.github.tt432.eyelib.client.loader.BrAnimationLoader;
 import lombok.Getter;
 import lombok.Setter;
+import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -19,6 +24,18 @@ import java.util.*;
 @Nullable
 @Getter
 public class AnimationComponent {
+    public record SerializableInfo(
+            ResourceLocation animationControllers,
+            ResourceLocation targetAnimations
+    ) {
+        public static final Codec<SerializableInfo> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+                ResourceLocation.CODEC.fieldOf("animationControllers").forGetter(o -> o.animationControllers),
+                ResourceLocation.CODEC.fieldOf("targetAnimations").forGetter(o -> o.targetAnimations)
+        ).apply(ins, SerializableInfo::new));
+    }
+
+    SerializableInfo serializableInfo;
+
     BrAcState[] lastState;
     BrAcState[] currState;
     BrAnimation targetAnimation;
@@ -31,7 +48,12 @@ public class AnimationComponent {
     @Setter
     int currentControllerIndex;
 
-    public void setup(BrAnimationControllers animationControllers, BrAnimation targetAnimations) {
+    public void setup(ResourceLocation animationControllersName, ResourceLocation targetAnimationsName) {
+        serializableInfo = new SerializableInfo(animationControllersName, targetAnimationsName);
+
+        BrAnimationControllers animationControllers = BrAnimationControllerLoader.getController(animationControllersName);
+        BrAnimation targetAnimations = BrAnimationLoader.getAnimation(targetAnimationsName);
+
         this.animationController = ImmutableList.copyOf(animationControllers.animation_controllers().values());
         this.targetAnimation = targetAnimations;
         int animationControllerSize = animationController.size();

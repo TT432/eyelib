@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.render.visitor;
+package io.github.tt432.eyelib.client.render.visitor.builtin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -11,7 +11,7 @@ import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 /**
  * @author TT432
  */
-public class BrModelRenderVisitor {
+public class ModelRenderVisitor {
 
     public void setupLight(int light) {
         // need child to impl this

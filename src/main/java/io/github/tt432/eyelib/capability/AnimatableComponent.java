@@ -1,5 +1,7 @@
 package io.github.tt432.eyelib.capability;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.animation.component.AnimationComponent;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import io.github.tt432.eyelib.molang.MolangScope;
@@ -13,7 +15,17 @@ import java.util.Optional;
  * @author TT432
  */
 @Getter
-public class AnimatableCapability<T> implements IdentifiableObject {
+public class AnimatableComponent<T> implements IdentifiableObject {
+    public static final Codec<AnimatableComponent<Object>> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            ModelComponent.SerializableInfo.CODEC.optionalFieldOf("model").forGetter(ac -> Optional.ofNullable(ac.modelComponent.getSerializableInfo())),
+            AnimationComponent.SerializableInfo.CODEC.optionalFieldOf("animation").forGetter(ac -> Optional.ofNullable(ac.animationComponent.getSerializableInfo()))
+    ).apply(ins, (mcsi, acsi) -> {
+        AnimatableComponent<Object> result = new AnimatableComponent<>();
+        mcsi.ifPresent(result.modelComponent::setInfo);
+        acsi.ifPresent(i -> result.animationComponent.setup(i.animationControllers(), i.targetAnimations()));
+        return result;
+    }));
+
     private T owner;
     private MolangScope scope;
 

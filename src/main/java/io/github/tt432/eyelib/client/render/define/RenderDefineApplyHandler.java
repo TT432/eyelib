@@ -1,21 +1,16 @@
 package io.github.tt432.eyelib.client.render.define;
 
-import io.github.tt432.eyelib.capability.AnimatableCapability;
-import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
-import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
+import io.github.tt432.eyelib.capability.AnimatableComponent;
 import io.github.tt432.eyelib.client.animation.component.AnimationComponent;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
-import io.github.tt432.eyelib.client.loader.BrAnimationControllerLoader;
-import io.github.tt432.eyelib.client.loader.BrAnimationLoader;
 import io.github.tt432.eyelib.client.loader.BrModelLoader;
 import io.github.tt432.eyelib.client.loader.ModelReplacerLoader;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.model.bedrock.material.ModelMaterial;
-import io.github.tt432.eyelib.client.render.visitor.BlankEntityModelRenderVisit;
+import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -24,7 +19,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.Random;
-import java.util.function.Function;
 
 /**
  * @author TT432
@@ -35,7 +29,7 @@ public class RenderDefineApplyHandler {
 
     @SubscribeEvent
     public static void onEvent(InitComponentEvent event) {
-        if (event.entity instanceof Entity entity && event.componentObject instanceof AnimatableCapability<?> capability) {
+        if (event.entity instanceof Entity entity && event.componentObject instanceof AnimatableComponent<?> capability) {
             ModelComponent modelComponent = capability.getModelComponent();
 
             RenderDefine renderDefine = ModelReplacerLoader.byTarget(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()));
@@ -60,26 +54,12 @@ public class RenderDefineApplyHandler {
             int randomIdx = Math.abs(new Random(entity.getId()).nextInt()) % material.textures().size();
             ResourceLocation texture = material.textures().get(randomIdx);
 
-            // TODO 补充更多的 renderType，或者找到一个检索的办法
-            boolean isSolid;
-            Function<ResourceLocation, RenderType> renderTypeFactory = switch (material.renderType().toString()) {
-                case "minecraft:cutout" -> {
-                    isSolid = false;
-                    yield RenderType::entityCutout;
-                }
-                default -> {
-                    isSolid = true;
-                    yield RenderType::entitySolid;
-                }// "minecraft:solid"
-            };
-
-            modelComponent.setInfo(new ModelComponent.Info(
-                    model,
+            modelComponent.setInfo(new ModelComponent.SerializableInfo(
+                    renderDefine.model(),
                     new ResourceLocation(texture.getNamespace(),
                             "textures/" + texture.getPath() + ".png"),
-                    renderTypeFactory,
-                    isSolid,
-                    new BlankEntityModelRenderVisit()
+                    material.renderType(),
+                    BuiltInBrModelRenderVisitors.BLANK.getId()
             ));
 
             AnimationComponent animComponent = capability.getAnimationComponent();
@@ -89,10 +69,7 @@ public class RenderDefineApplyHandler {
             String name = entry.name();
 
             if (!animationName.isBlank() && !name.isBlank()) {
-                BrAnimationControllers controller = BrAnimationControllerLoader.getController(new ResourceLocation(name));
-                BrAnimation animation = BrAnimationLoader.getAnimation(new ResourceLocation(animationName));
-
-                animComponent.setup(controller, animation);
+                animComponent.setup(new ResourceLocation(name), new ResourceLocation(animationName));
             }
         }
     }

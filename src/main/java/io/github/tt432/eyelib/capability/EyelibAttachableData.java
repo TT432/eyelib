@@ -16,15 +16,15 @@ import org.jetbrains.annotations.Nullable;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class EyelibCapabilities {
-    public static final Capability<AnimatableCapability> ANIMATABLE = CapabilityManager.get(new CapabilityToken<>() {
+public class EyelibAttachableData {
+    public static final Capability<AnimatableComponent<?>> ANIMATABLE = CapabilityManager.get(new CapabilityToken<>() {
     });
 
     @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
     public static final class RegistryEvents {
         @SubscribeEvent
         public static void registerCaps(RegisterCapabilitiesEvent event) {
-            event.register(AnimatableCapability.class);
+            event.register(AnimatableComponent.class);
         }
     }
 
@@ -33,8 +33,8 @@ public class EyelibCapabilities {
         @SubscribeEvent
         public static void onEvent(AttachCapabilitiesEvent event) {
             ICapabilityProvider provider = new ICapabilityProvider() {
-                LazyOptional<AnimatableCapability<?>> capa = LazyOptional.of(() -> {
-                    AnimatableCapability<Object> result = new AnimatableCapability<>();
+                LazyOptional<AnimatableComponent<?>> capa = LazyOptional.of(() -> {
+                    AnimatableComponent<Object> result = new AnimatableComponent<>();
                     result.init(event.getObject());
                     return result;
                 });
