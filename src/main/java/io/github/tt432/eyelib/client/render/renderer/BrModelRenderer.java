@@ -9,7 +9,7 @@ import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.render.BrModelTextures;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
-import io.github.tt432.eyelib.client.render.visitor.BrModelRenderVisitor;
+import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -28,7 +28,8 @@ public class BrModelRenderer {
 
     private static final float R180 = 180 * EyeMath.DEGREES_TO_RADIANS;
 
-    public static void render(BrModel model, BoneRenderInfos infos, PoseStack poseStack, VertexConsumer consumer, BrModelRenderVisitor visitor) {
+    public static void render(BrModel model, BoneRenderInfos infos, PoseStack poseStack, VertexConsumer consumer,
+                              ModelRenderVisitor visitor) {
         render(model, infos, poseStack, consumer, null, visitor);
     }
 
@@ -36,7 +37,7 @@ public class BrModelRenderer {
     private static BrModelTextures.TwoSideInfoMap lastTwoSideInfoMap;
 
     public static void render(BrModel model, BoneRenderInfos infos, PoseStack poseStack, VertexConsumer consumer,
-                              BrModelTextures.TwoSideInfoMap map, BrModelRenderVisitor visitor) {
+                              BrModelTextures.TwoSideInfoMap map, ModelRenderVisitor visitor) {
         lastTwoSideInfoMap = map;
 
         poseStack.pushPose();
@@ -54,7 +55,8 @@ public class BrModelRenderer {
         poseStack.popPose();
     }
 
-    private static void renderBone(PoseStack poseStack, BrModelRenderVisitor visitor, BoneRenderInfos infos, BrBone bone, VertexConsumer consumer) {
+    private static void renderBone(PoseStack poseStack, ModelRenderVisitor visitor, BoneRenderInfos infos, BrBone bone,
+                                   VertexConsumer consumer) {
         poseStack.pushPose();
 
         BoneRenderInfoEntry boneRenderInfoEntry = infos.get(bone);
@@ -100,7 +102,7 @@ public class BrModelRenderer {
         poseStack.popPose();
     }
 
-    private static void renderCube(PoseStack poseStack, BrModelRenderVisitor visitor, BrCube cube,
+    private static void renderCube(PoseStack poseStack, ModelRenderVisitor visitor, BrCube cube,
                                    boolean needTwoSide, VertexConsumer consumer) {
         visitor.visitCube(poseStack, cube, consumer);
 

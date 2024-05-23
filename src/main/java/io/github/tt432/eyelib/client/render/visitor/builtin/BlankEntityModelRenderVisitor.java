@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.render.visitor;
+package io.github.tt432.eyelib.client.render.visitor.builtin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -14,7 +14,7 @@ import org.joml.Vector4f;
  * @author TT432
  */
 @Setter
-public class BlankEntityModelRenderVisit extends BrModelRenderVisitor {
+public class BlankEntityModelRenderVisitor extends ModelRenderVisitor {
     private static final Vector4f tPosition = new Vector4f();
     private static final Vector3f tNormal = new Vector3f();
 

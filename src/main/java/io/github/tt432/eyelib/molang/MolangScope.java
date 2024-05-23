@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.molang;
 
-import io.github.tt432.eyelib.capability.AnimatableCapability;
+import io.github.tt432.eyelib.capability.AnimatableComponent;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,7 @@ import java.util.Map;
 public class MolangScope {
     @Getter
     @Setter
-    private AnimatableCapability<?> owner = null;
+    private AnimatableComponent<?> owner = null;
     private final Map<String, Float> cache = new HashMap<>();
     private final Map<String, Object> animationData = new HashMap<>();
 
@@ -33,14 +33,17 @@ public class MolangScope {
     }
 
     @Nullable
+    @SuppressWarnings("unchecked")
     public <T> T getExtraData(String key) {
         return (T) animationData.get(key);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T getExtraData(String key, @NotNull T defaultValue) {
         return (T) animationData.getOrDefault(key, defaultValue);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T getOrCreateExtraData(String key, T defaultValue) {
         return (T) animationData.computeIfAbsent(key, s -> defaultValue);
     }

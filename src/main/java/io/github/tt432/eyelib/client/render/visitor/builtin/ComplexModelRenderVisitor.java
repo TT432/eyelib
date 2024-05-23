@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.render.visitor;
+package io.github.tt432.eyelib.client.render.visitor.builtin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -13,9 +13,9 @@ import lombok.AllArgsConstructor;
  * @author TT432
  */
 @AllArgsConstructor
-public class ComplexBrModelRenderVisitor extends BrModelRenderVisitor {
-    public final BrModelRenderVisitor visitorA;
-    public final BrModelRenderVisitor visitorB;
+public class ComplexModelRenderVisitor extends ModelRenderVisitor {
+    public final ModelRenderVisitor visitorA;
+    public final ModelRenderVisitor visitorB;
 
     @Override
     public void setupLight(int light) {

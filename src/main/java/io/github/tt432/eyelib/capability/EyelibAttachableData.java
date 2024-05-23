@@ -12,11 +12,13 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class EyelibCapabilities {
+public class EyelibAttachableData {
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
             DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, Eyelib.MOD_ID);
 
-    public static final DeferredHolder<AttachmentType<?>, AttachmentType<AnimatableCapability<Object>>> ANIMATABLE =
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<AnimatableComponent<Object>>> ANIMATABLE =
             ATTACHMENT_TYPES.register("animatable",
-                    () -> AttachmentType.builder(() -> new AnimatableCapability<>()).build());
+                    () -> AttachmentType.builder(() -> new AnimatableComponent<>())
+                            .serialize(AnimatableComponent.CODEC)
+                            .build());
 }
