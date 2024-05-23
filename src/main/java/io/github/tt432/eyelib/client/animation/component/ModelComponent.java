@@ -8,8 +8,10 @@ import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorRegistry;
 import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
 import io.github.tt432.eyelib.util.client.RenderTypeSerializations;
+import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +34,18 @@ public class ModelComponent {
                 ResourceLocation.CODEC.fieldOf("renderType").forGetter(o -> o.renderType),
                 ResourceLocation.CODEC.fieldOf("locator").forGetter(o -> o.locator)
         ).apply(ins, SerializableInfo::new));
+
+        public static final StreamCodec<ByteBuf, SerializableInfo> STREAM_CODEC = StreamCodec.composite(
+                ResourceLocation.STREAM_CODEC,
+                SerializableInfo::model,
+                ResourceLocation.STREAM_CODEC,
+                SerializableInfo::texture,
+                ResourceLocation.STREAM_CODEC,
+                SerializableInfo::renderType,
+                ResourceLocation.STREAM_CODEC,
+                SerializableInfo::locator,
+                SerializableInfo::new
+        );
     }
 
     public record Info(
