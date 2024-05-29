@@ -26,13 +26,13 @@ public class ModelComponent {
             ResourceLocation model,
             ResourceLocation texture,
             ResourceLocation renderType,
-            ResourceLocation locator
+            ResourceLocation visitor
     ) {
         public static final Codec<SerializableInfo> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 ResourceLocation.CODEC.fieldOf("model").forGetter(o -> o.model),
                 ResourceLocation.CODEC.fieldOf("texture").forGetter(o -> o.texture),
                 ResourceLocation.CODEC.fieldOf("renderType").forGetter(o -> o.renderType),
-                ResourceLocation.CODEC.fieldOf("locator").forGetter(o -> o.locator)
+                ResourceLocation.CODEC.fieldOf("visitor").forGetter(o -> o.visitor)
         ).apply(ins, SerializableInfo::new));
 
         public static final StreamCodec<ByteBuf, SerializableInfo> STREAM_CODEC = StreamCodec.composite(
@@ -43,7 +43,7 @@ public class ModelComponent {
                 ResourceLocation.STREAM_CODEC,
                 SerializableInfo::renderType,
                 ResourceLocation.STREAM_CODEC,
-                SerializableInfo::locator,
+                SerializableInfo::visitor,
                 SerializableInfo::new
         );
     }
