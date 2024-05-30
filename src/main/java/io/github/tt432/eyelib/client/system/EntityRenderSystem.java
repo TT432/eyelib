@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.animation.system;
+package io.github.tt432.eyelib.client.system;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
