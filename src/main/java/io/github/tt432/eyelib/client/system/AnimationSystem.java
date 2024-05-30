@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.animation.system;
+package io.github.tt432.eyelib.client.system;
 
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.animation.bedrock.BrBoneAnimation;
