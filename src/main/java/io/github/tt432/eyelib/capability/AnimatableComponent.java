@@ -5,7 +5,8 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.animation.component.AnimationComponent;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.network.AnimatableComponentSyncPacket;
+import io.github.tt432.eyelib.network.AnimationComponentSyncPacket;
+import io.github.tt432.eyelib.network.ModelComponentSyncPacket;
 import io.github.tt432.eyelib.util.IdentifiableObject;
 import lombok.Getter;
 import net.minecraft.world.entity.Entity;
@@ -38,12 +39,20 @@ public class AnimatableComponent<T> implements IdentifiableObject {
     @NotNull
     private final AnimationComponent animationComponent = new AnimationComponent();
 
-    public void sync(){
-        ownerAs(Entity.class).ifPresent(e -> PacketDistributor.sendToPlayersTrackingEntity(e,
-                new AnimatableComponentSyncPacket(
-                        e.getId(),
-                        modelComponent.getSerializableInfo(),
-                        animationComponent.getSerializableInfo())));
+    public void sync() {
+        if (modelComponent.serializable()) {
+            ownerAs(Entity.class).ifPresent(e -> PacketDistributor.sendToPlayersTrackingEntityAndSelf(e,
+                    new ModelComponentSyncPacket(
+                            e.getId(),
+                            modelComponent.getSerializableInfo())));
+        }
+
+        if (animationComponent.serializable()) {
+            ownerAs(Entity.class).ifPresent(e -> PacketDistributor.sendToPlayersTrackingEntityAndSelf(e,
+                    new AnimationComponentSyncPacket(
+                            e.getId(),
+                            animationComponent.getSerializableInfo())));
+        }
     }
 
     @SuppressWarnings("unchecked")
