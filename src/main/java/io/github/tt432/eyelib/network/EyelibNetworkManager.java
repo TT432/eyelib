@@ -20,12 +20,18 @@ public class EyelibNetworkManager {
     @SubscribeEvent
     public static void register(final RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar(Eyelib.MOD_ID);
-        registrar.playToClient(AnimatableComponentSyncPacket.TYPE,
-                AnimatableComponentSyncPacket.STREAM_CODEC,
+        registrar.playToClient(ModelComponentSyncPacket.TYPE,
+                ModelComponentSyncPacket.STREAM_CODEC,
                 (payload, context) -> {
                     AnimatableComponent<Object> data = Minecraft.getInstance().level.getEntity(payload.entityId())
                             .getData(EyelibAttachableData.ANIMATABLE);
                     data.getModelComponent().setInfo(payload.modelInfo());
+                });
+        registrar.playToClient(AnimationComponentSyncPacket.TYPE,
+                AnimationComponentSyncPacket.STREAM_CODEC,
+                (payload, context) -> {
+                    AnimatableComponent<Object> data = Minecraft.getInstance().level.getEntity(payload.entityId())
+                            .getData(EyelibAttachableData.ANIMATABLE);
                     var info = payload.animationInfo();
                     data.getAnimationComponent().setup(info.animationControllers(), info.targetAnimations());
                 });

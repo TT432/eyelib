@@ -46,6 +46,12 @@ public class AnimationComponent {
 
     SerializableInfo serializableInfo;
 
+    public boolean serializable(){
+        return serializableInfo != null
+                && serializableInfo.animationControllers != null
+                && serializableInfo.targetAnimations != null;
+    }
+
     BrAcState[] lastState;
     BrAcState[] currState;
     BrAnimation targetAnimation;

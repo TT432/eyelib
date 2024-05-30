@@ -61,6 +61,14 @@ public class ModelComponent {
     ModelComponent.Info info;
     SerializableInfo serializableInfo;
 
+    public boolean serializable() {
+        return serializableInfo != null
+                && serializableInfo.model != null
+                && serializableInfo.texture != null
+                && serializableInfo.renderType != null
+                && serializableInfo.visitor != null;
+    }
+
     public void setInfo(SerializableInfo serializableInfo) {
         this.serializableInfo = serializableInfo;
 
