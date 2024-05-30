@@ -1,12 +1,7 @@
 package io.github.tt432.eyelib.network;
 
-import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
-import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.FriendlyByteBuf;
 
 /**
  * @author TT432
@@ -14,20 +9,24 @@ import net.minecraft.resources.ResourceLocation;
 public record ModelComponentSyncPacket(
         int entityId,
         ModelComponent.SerializableInfo modelInfo
-) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<ModelComponentSyncPacket> TYPE =
-            new CustomPacketPayload.Type<>(new ResourceLocation(Eyelib.MOD_ID, "model_component"));
+) {
+    public static void encode(ModelComponentSyncPacket packet, FriendlyByteBuf buf) {
+        buf.writeInt(packet.entityId);
+        buf.writeResourceLocation(packet.modelInfo().model());
+        buf.writeResourceLocation(packet.modelInfo().texture());
+        buf.writeResourceLocation(packet.modelInfo().renderType());
+        buf.writeResourceLocation(packet.modelInfo().visitor());
+    }
 
-    public static final StreamCodec<ByteBuf, ModelComponentSyncPacket> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.VAR_INT,
-            ModelComponentSyncPacket::entityId,
-            ModelComponent.SerializableInfo.STREAM_CODEC,
-            ModelComponentSyncPacket::modelInfo,
-            ModelComponentSyncPacket::new
-    );
-
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
+    public static ModelComponentSyncPacket decode(FriendlyByteBuf byteBuf) {
+        return new ModelComponentSyncPacket(
+                byteBuf.readInt(),
+                new ModelComponent.SerializableInfo(
+                        byteBuf.readResourceLocation(),
+                        byteBuf.readResourceLocation(),
+                        byteBuf.readResourceLocation(),
+                        byteBuf.readResourceLocation()
+                )
+        );
     }
 }

@@ -6,11 +6,12 @@ import io.github.tt432.eyelib.client.animation.component.AnimationComponent;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.network.AnimationComponentSyncPacket;
+import io.github.tt432.eyelib.network.EyelibNetworkManager;
 import io.github.tt432.eyelib.network.ModelComponentSyncPacket;
 import io.github.tt432.eyelib.util.IdentifiableObject;
 import lombok.Getter;
 import net.minecraft.world.entity.Entity;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -41,14 +42,14 @@ public class AnimatableComponent<T> implements IdentifiableObject {
 
     public void sync() {
         if (modelComponent.serializable()) {
-            ownerAs(Entity.class).ifPresent(e -> PacketDistributor.sendToPlayersTrackingEntityAndSelf(e,
+            ownerAs(Entity.class).ifPresent(e -> EyelibNetworkManager.INSTANCE.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> e),
                     new ModelComponentSyncPacket(
                             e.getId(),
                             modelComponent.getSerializableInfo())));
         }
 
         if (animationComponent.serializable()) {
-            ownerAs(Entity.class).ifPresent(e -> PacketDistributor.sendToPlayersTrackingEntityAndSelf(e,
+            ownerAs(Entity.class).ifPresent(e -> EyelibNetworkManager.INSTANCE.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> e),
                     new AnimationComponentSyncPacket(
                             e.getId(),
                             animationComponent.getSerializableInfo())));

@@ -11,10 +11,8 @@ import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationCon
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
 import io.github.tt432.eyelib.client.loader.BrAnimationControllerLoader;
 import io.github.tt432.eyelib.client.loader.BrAnimationLoader;
-import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
@@ -34,14 +32,6 @@ public class AnimationComponent {
                 ResourceLocation.CODEC.fieldOf("animationControllers").forGetter(o -> o.animationControllers),
                 ResourceLocation.CODEC.fieldOf("targetAnimations").forGetter(o -> o.targetAnimations)
         ).apply(ins, SerializableInfo::new));
-
-        public static final StreamCodec<ByteBuf, SerializableInfo> STREAM_CODEC = StreamCodec.composite(
-                ResourceLocation.STREAM_CODEC,
-                SerializableInfo::animationControllers,
-                ResourceLocation.STREAM_CODEC,
-                SerializableInfo::targetAnimations,
-                AnimationComponent.SerializableInfo::new
-        );
     }
 
     SerializableInfo serializableInfo;

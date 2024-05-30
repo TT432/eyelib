@@ -12,14 +12,14 @@ import lombok.NoArgsConstructor;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 /**
  * @author TT432
  */
-@EventBusSubscriber
+@Mod.EventBusSubscriber
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EyelibCommands {
     @SubscribeEvent
@@ -38,7 +38,10 @@ public class EyelibCommands {
 
                                                             if (entity == null) return -1;
 
-                                                            AnimatableComponent<Object> data = entity.getData(EyelibAttachableData.ANIMATABLE);
+                                                            AnimatableComponent<?> data = entity.getCapability(EyelibAttachableData.ANIMATABLE).resolve().orElse(null);
+
+                                                            if (data == null) return -1;
+
                                                             ModelComponent modelComponent = data.getModelComponent();
 
                                                             modelComponent.setInfo(new ModelComponent.SerializableInfo(

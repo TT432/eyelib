@@ -6,32 +6,44 @@ import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.simple.SimpleChannel;
 
 /**
  * @author TT432
  */
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EyelibNetworkManager {
-    @SubscribeEvent
-    public static void register(final RegisterPayloadHandlersEvent event) {
-        final PayloadRegistrar registrar = event.registrar(Eyelib.MOD_ID);
-        registrar.playToClient(ModelComponentSyncPacket.TYPE,
-                ModelComponentSyncPacket.STREAM_CODEC,
+    private static final String PROTOCOL_VERSION = "1";
+    public static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
+            new ResourceLocation(Eyelib.MOD_ID, "main"),
+            () -> PROTOCOL_VERSION,
+            PROTOCOL_VERSION::equals,
+            PROTOCOL_VERSION::equals
+    );
+
+    static int id;
+
+    public static void register() {
+        INSTANCE.registerMessage(id++,
+                ModelComponentSyncPacket.class,
+                ModelComponentSyncPacket::encode,
+                ModelComponentSyncPacket::decode,
                 (payload, context) -> {
-                    AnimatableComponent<Object> data = Minecraft.getInstance().level.getEntity(payload.entityId())
-                            .getData(EyelibAttachableData.ANIMATABLE);
+                    AnimatableComponent<?> data = Minecraft.getInstance().level.getEntity(payload.entityId())
+                            .getCapability(EyelibAttachableData.ANIMATABLE).resolve().orElse(null);
+                    if (data == null) return;
                     data.getModelComponent().setInfo(payload.modelInfo());
                 });
-        registrar.playToClient(AnimationComponentSyncPacket.TYPE,
-                AnimationComponentSyncPacket.STREAM_CODEC,
+        INSTANCE.registerMessage(id++,
+                AnimationComponentSyncPacket.class,
+                AnimationComponentSyncPacket::encode,
+                AnimationComponentSyncPacket::decode,
                 (payload, context) -> {
-                    AnimatableComponent<Object> data = Minecraft.getInstance().level.getEntity(payload.entityId())
-                            .getData(EyelibAttachableData.ANIMATABLE);
+                    AnimatableComponent<?> data = Minecraft.getInstance().level.getEntity(payload.entityId())
+                            .getCapability(EyelibAttachableData.ANIMATABLE).resolve().orElse(null);
+                    if (data == null) return;
                     var info = payload.animationInfo();
                     data.getAnimationComponent().setup(info.animationControllers(), info.targetAnimations());
                 });
