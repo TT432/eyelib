@@ -56,6 +56,8 @@ public class ModelComponent {
     }
 
     public void setInfo(SerializableInfo serializableInfo) {
+        if (serializableInfo.equals(this.serializableInfo)) return;
+
         this.serializableInfo = serializableInfo;
 
         RenderTypeSerializations.EntityRenderTypeData factory =
