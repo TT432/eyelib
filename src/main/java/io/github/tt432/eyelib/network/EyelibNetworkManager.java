@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
 
@@ -31,21 +32,29 @@ public class EyelibNetworkManager {
                 ModelComponentSyncPacket::encode,
                 ModelComponentSyncPacket::decode,
                 (payload, context) -> {
-                    AnimatableComponent<?> data = Minecraft.getInstance().level.getEntity(payload.entityId())
+                    if (Minecraft.getInstance().level == null) return;
+                    Entity entity = Minecraft.getInstance().level.getEntity(payload.entityId());
+                    if (entity == null) return;
+                    AnimatableComponent<?> data = entity
                             .getCapability(EyelibAttachableData.ANIMATABLE).resolve().orElse(null);
                     if (data == null) return;
                     data.getModelComponent().setInfo(payload.modelInfo());
+                    context.get().setPacketHandled(true);
                 });
         INSTANCE.registerMessage(id++,
                 AnimationComponentSyncPacket.class,
                 AnimationComponentSyncPacket::encode,
                 AnimationComponentSyncPacket::decode,
                 (payload, context) -> {
-                    AnimatableComponent<?> data = Minecraft.getInstance().level.getEntity(payload.entityId())
+                    if (Minecraft.getInstance().level == null) return;
+                    Entity entity = Minecraft.getInstance().level.getEntity(payload.entityId());
+                    if (entity == null) return;
+                    AnimatableComponent<?> data = entity
                             .getCapability(EyelibAttachableData.ANIMATABLE).resolve().orElse(null);
                     if (data == null) return;
                     var info = payload.animationInfo();
                     data.getAnimationComponent().setup(info.animationControllers(), info.targetAnimations());
+                    context.get().setPacketHandled(true);
                 });
     }
 }

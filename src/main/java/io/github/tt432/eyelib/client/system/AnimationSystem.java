@@ -104,7 +104,9 @@ public class AnimationSystem {
     }
 
     private static void processSoundEvent(float ticks, String animName, AnimationComponent component) {
-        TreeMap<Float, BrEffectsKeyFrame[]> soundEffect = component.getCurrentSoundEvents().get(animName);
+        Map<String, TreeMap<Float, BrEffectsKeyFrame[]>> currentSoundEvents = component.getCurrentSoundEvents();
+        if (currentSoundEvents == null) return;
+        TreeMap<Float, BrEffectsKeyFrame[]> soundEffect = currentSoundEvents.get(animName);
 
         if (soundEffect != null && !soundEffect.isEmpty() && soundEffect.firstKey() < ticks) {
             for (BrEffectsKeyFrame brEffectsKeyFrame : soundEffect.pollFirstEntry().getValue()) {
