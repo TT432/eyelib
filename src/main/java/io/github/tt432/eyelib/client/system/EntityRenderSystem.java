@@ -100,7 +100,7 @@ public class EntityRenderSystem {
 
             poseStack.pushPose();
 
-            BrModelRenderer.render(model, modelComponent.getBoneInfos(), poseStack, buffer,
+            BrModelRenderer.render(model, modelComponent.getBoneInfos(), poseStack, renderType, buffer,
                     BrModelTextures.getTwoSideInfo(model, info.isSolid(), texture), visitor);
 
             poseStack.popPose();

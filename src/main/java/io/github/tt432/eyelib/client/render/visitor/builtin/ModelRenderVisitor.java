@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.client.model.bedrock.BrCube;
 import io.github.tt432.eyelib.client.model.bedrock.BrFace;
 import io.github.tt432.eyelib.client.model.bedrock.BrLocator;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
+import net.minecraft.client.renderer.RenderType;
 
 /**
  * @author TT432
@@ -17,19 +18,19 @@ public class ModelRenderVisitor {
         // need child to impl this
     }
 
-    public void visitBone(PoseStack poseStack, BrBone bone, BoneRenderInfoEntry boneRenderInfoEntry, VertexConsumer consumer, boolean before) {
+    public void visitBone(PoseStack poseStack, BrBone bone, RenderType renderType, BoneRenderInfoEntry boneRenderInfoEntry, VertexConsumer consumer, boolean before) {
         // need child to impl this
     }
 
-    public void visitCube(PoseStack poseStack, BrCube cube, VertexConsumer consumer) {
+    public void visitCube(PoseStack poseStack, BrCube cube, RenderType renderType, VertexConsumer consumer) {
         // need child to impl this
     }
 
-    public void visitVertex(PoseStack poseStack, BrCube cube, BrFace face, int vertexId, VertexConsumer consumer) {
+    public void visitVertex(PoseStack poseStack, BrCube cube, RenderType renderType, BrFace face, int vertexId, VertexConsumer consumer) {
         // need child to impl this
     }
 
-    public void visitLocator(PoseStack poseStack, BrBone bone, String name, BrLocator locator, BoneRenderInfoEntry boneRenderInfoEntry, VertexConsumer consumer) {
+    public void visitLocator(PoseStack poseStack, BrBone bone, RenderType renderType, String name, BrLocator locator, BoneRenderInfoEntry boneRenderInfoEntry, VertexConsumer consumer) {
         // need child to impl this
     }
 }
