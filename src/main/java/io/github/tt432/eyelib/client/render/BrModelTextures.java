@@ -29,7 +29,9 @@ public class BrModelTextures {
             Map<String, TwoSideInfo> map
     ) {
         public boolean isTwoSide(String boneName, int idx) {
-            return !map.containsKey(boneName) || map.get(boneName).cubeNeedTwoSide[idx];
+            return !map.containsKey(boneName)
+                    || map.get(boneName).cubeNeedTwoSide.length <= idx
+                    || map.get(boneName).cubeNeedTwoSide[idx];
         }
     }
 
