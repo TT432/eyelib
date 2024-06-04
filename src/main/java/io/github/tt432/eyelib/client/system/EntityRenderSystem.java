@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.client.system;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.capability.AnimatableComponent;
-import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.client.ClientTickHandler;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import io.github.tt432.eyelib.client.render.BrModelTextures;
@@ -42,10 +41,12 @@ public class EntityRenderSystem {
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
         Entity entity = event.getEntity();
-        entity.getCapability(EyelibAttachableData.ANIMATABLE).ifPresent(cap -> {
-            entities.put(cap.id(), cap);
-            MinecraftForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
-        });
+        AnimatableComponent<Entity> cap = AnimatableComponent.getComponent(entity);
+
+        if (cap == null) return;
+
+        entities.put(cap.id(), cap);
+        MinecraftForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
     }
 
     @SubscribeEvent
@@ -75,11 +76,10 @@ public class EntityRenderSystem {
     @SubscribeEvent
     public static void onEvent(RenderLivingEvent.Pre event) {
         LivingEntity entity = event.getEntity();
-        var capability = entity.getCapability(EyelibAttachableData.ANIMATABLE).resolve();
+        AnimatableComponent<?> cap = AnimatableComponent.getComponent(entity);
 
-        if (capability.isEmpty()) return;
+        if (cap == null) return;
 
-        AnimatableComponent<?> cap = capability.get();
         ModelComponent modelComponent = cap.getModelComponent();
         ModelComponent.Info info = modelComponent.getInfo();
 

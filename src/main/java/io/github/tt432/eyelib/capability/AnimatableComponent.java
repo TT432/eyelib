@@ -13,6 +13,7 @@ import lombok.Getter;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -30,6 +31,11 @@ public class AnimatableComponent<T> implements IdentifiableObject {
         acsi.ifPresent(i -> result.animationComponent.setup(i.animationControllers(), i.targetAnimations()));
         return result;
     }));
+
+    @Nullable
+    public static <T extends Entity> AnimatableComponent<T> getComponent(T entity) {
+        return entity.getCapability(EyelibAttachableData.ANIMATABLE).<AnimatableComponent<T>>cast().resolve().orElse(null);
+    }
 
     private T owner;
     private MolangScope scope;

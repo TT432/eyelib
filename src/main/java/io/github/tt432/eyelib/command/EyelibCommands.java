@@ -5,7 +5,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import io.github.tt432.eyelib.capability.AnimatableComponent;
-import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.client.animation.component.ModelComponent;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -38,7 +37,7 @@ public class EyelibCommands {
 
                                                             if (entity == null) return -1;
 
-                                                            AnimatableComponent<?> data = entity.getCapability(EyelibAttachableData.ANIMATABLE).resolve().orElse(null);
+                                                            AnimatableComponent<?> data = AnimatableComponent.getComponent(entity);
 
                                                             if (data == null) return -1;
 
