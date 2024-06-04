@@ -60,7 +60,7 @@ public class BrModelRenderer {
                                    BoneRenderInfos infos, BrBone bone, VertexConsumer consumer) {
         poseStack.pushPose();
 
-        BoneRenderInfoEntry boneRenderInfoEntry = infos.get(bone);
+        BoneRenderInfoEntry boneRenderInfoEntry = infos.get(bone.name());
 
         visitor.visitBone(poseStack, bone, renderType, boneRenderInfoEntry, consumer, true);
 
@@ -78,6 +78,11 @@ public class BrModelRenderer {
         Matrix3f normal = last.normal();
         normal.rotateZYX(rotation);
         m4.rotateZYX(rotation);
+
+        Vector3f boneRotation = bone.rotation();
+
+        normal.rotateZYX(boneRotation);
+        m4.rotateZYX(boneRotation);
 
         Vector3f scale = boneRenderInfoEntry.getRenderScala();
 

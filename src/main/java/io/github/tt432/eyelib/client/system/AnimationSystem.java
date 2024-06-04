@@ -6,9 +6,6 @@ import io.github.tt432.eyelib.client.animation.bedrock.BrEffectsKeyFrame;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAcState;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
 import io.github.tt432.eyelib.client.animation.component.AnimationComponent;
-import io.github.tt432.eyelib.client.animation.component.ModelComponent;
-import io.github.tt432.eyelib.client.model.bedrock.BrBone;
-import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
@@ -38,14 +35,9 @@ public class AnimationSystem {
             AnimationComponent component = entity.getAnimationComponent();
             scope = entity.getScope();
 
-            ModelComponent modelComponent = entity.getModelComponent();
-            ModelComponent.Info info = modelComponent.getInfo();
+            if (component.getAnimationController() == null) return;
 
-            if (info == null || component.getAnimationController() == null) return;
-
-            BrModel model = info.model();
-
-            BoneRenderInfos infos = modelComponent.getBoneInfos();
+            BoneRenderInfos infos = entity.getModelComponent().getBoneInfos();
             infos.reset();
 
             for (int i = 0; i < component.getAnimationController().size(); i++) {
@@ -82,7 +74,7 @@ public class AnimationSystem {
 
                 Map<String, BrAnimationEntry> animations = component.getTargetAnimation().animations();
 
-                updateAnimations(animations, blend, startedTime, infos, model.allBones(), component);
+                updateAnimations(animations, blend, startedTime, infos, component);
             }
         });
     }
@@ -121,8 +113,7 @@ public class AnimationSystem {
     }
 
     private static void updateAnimations(Map<String, BrAnimationEntry> targetAnimations, Map<String, Float> blend,
-                                         float startedTime, BoneRenderInfos infos, Map<String, BrBone> stringBrBoneMap,
-                                         AnimationComponent component) {
+                                         float startedTime, BoneRenderInfos infos, AnimationComponent component) {
         for (Map.Entry<String, Float> animEntry : blend.entrySet()) {
             var animName = animEntry.getKey();
             BrAnimationEntry animation = targetAnimations.get(animName);
@@ -150,15 +141,7 @@ public class AnimationSystem {
             for (Map.Entry<String, BrBoneAnimation> stringBrBoneAnimationEntry : animation.bones().entrySet()) {
                 var boneName = stringBrBoneAnimationEntry.getKey();
                 var boneAnim = stringBrBoneAnimationEntry.getValue();
-
-                BrBone brBone = stringBrBoneMap.get(boneName);
-
-                if (brBone == null) {
-                    continue;
-                }
-
-                BoneRenderInfoEntry boneRenderInfoEntry = infos.get(brBone);
-
+                BoneRenderInfoEntry boneRenderInfoEntry = infos.get(boneName);
                 Vector3f p = boneAnim.lerpPosition(scope, animTick);
 
                 if (p != null) {
