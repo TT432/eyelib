@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.animation.component;
+package io.github.tt432.eyelib.capability.component;
 
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
