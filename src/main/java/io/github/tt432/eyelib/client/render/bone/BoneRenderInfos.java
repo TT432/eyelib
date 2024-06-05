@@ -21,4 +21,9 @@ public class BoneRenderInfos {
     public BoneRenderInfoEntry get(String boneName) {
         return infos.computeIfAbsent(boneName, s -> new BoneRenderInfoEntry());
     }
+
+    public void set(BoneRenderInfos other) {
+        reset();
+        infos.putAll(other.infos);
+    }
 }

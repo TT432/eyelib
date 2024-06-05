@@ -2,13 +2,12 @@ package io.github.tt432.eyelib.capability;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.client.animation.component.AnimationComponent;
-import io.github.tt432.eyelib.client.animation.component.ModelComponent;
+import io.github.tt432.eyelib.capability.component.AnimationComponent;
+import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.network.AnimationComponentSyncPacket;
 import io.github.tt432.eyelib.network.EyelibNetworkManager;
 import io.github.tt432.eyelib.network.ModelComponentSyncPacket;
-import io.github.tt432.eyelib.util.IdentifiableObject;
 import lombok.Getter;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.network.PacketDistributor;
@@ -21,20 +20,20 @@ import java.util.Optional;
  * @author TT432
  */
 @Getter
-public class AnimatableComponent<T> implements IdentifiableObject {
-    public static final Codec<AnimatableComponent<Object>> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+public class RenderData<T> {
+    public static final Codec<RenderData<Object>> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             ModelComponent.SerializableInfo.CODEC.optionalFieldOf("model").forGetter(ac -> Optional.ofNullable(ac.modelComponent.getSerializableInfo())),
             AnimationComponent.SerializableInfo.CODEC.optionalFieldOf("animation").forGetter(ac -> Optional.ofNullable(ac.animationComponent.getSerializableInfo()))
     ).apply(ins, (mcsi, acsi) -> {
-        AnimatableComponent<Object> result = new AnimatableComponent<>();
+        RenderData<Object> result = new RenderData<>();
         mcsi.ifPresent(result.modelComponent::setInfo);
         acsi.ifPresent(i -> result.animationComponent.setup(i.animationControllers(), i.targetAnimations()));
         return result;
     }));
 
     @Nullable
-    public static <T extends Entity> AnimatableComponent<T> getComponent(T entity) {
-        return entity.getCapability(EyelibAttachableData.ANIMATABLE).<AnimatableComponent<T>>cast().resolve().orElse(null);
+    public static <T extends Entity> RenderData<T> getComponent(T entity) {
+        return entity.getCapability(EyelibAttachableData.ANIMATABLE).<RenderData<T>>cast().resolve().orElse(null);
     }
 
     private T owner;
@@ -69,11 +68,6 @@ public class AnimatableComponent<T> implements IdentifiableObject {
         }
 
         return Optional.empty();
-    }
-
-    @Override
-    public int id() {
-        return owner.hashCode();
     }
 
     public void init(T owner) {

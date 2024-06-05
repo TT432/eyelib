@@ -4,8 +4,8 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import io.github.tt432.eyelib.capability.AnimatableComponent;
-import io.github.tt432.eyelib.client.animation.component.ModelComponent;
+import io.github.tt432.eyelib.capability.RenderData;
+import io.github.tt432.eyelib.capability.component.ModelComponent;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.commands.CommandSourceStack;
@@ -37,7 +37,7 @@ public class EyelibCommands {
 
                                                             if (entity == null) return -1;
 
-                                                            AnimatableComponent<?> data = AnimatableComponent.getComponent(entity);
+                                                            RenderData<?> data = RenderData.getComponent(entity);
 
                                                             if (data == null) return -1;
 

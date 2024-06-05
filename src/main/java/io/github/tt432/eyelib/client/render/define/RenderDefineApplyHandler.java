@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.client.render.define;
 
-import io.github.tt432.eyelib.capability.AnimatableComponent;
-import io.github.tt432.eyelib.client.animation.component.AnimationComponent;
-import io.github.tt432.eyelib.client.animation.component.ModelComponent;
+import io.github.tt432.eyelib.capability.RenderData;
+import io.github.tt432.eyelib.capability.component.AnimationComponent;
+import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.loader.BrModelLoader;
 import io.github.tt432.eyelib.client.loader.ModelReplacerLoader;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
@@ -29,7 +29,7 @@ public class RenderDefineApplyHandler {
 
     @SubscribeEvent
     public static void onEvent(InitComponentEvent event) {
-        if (event.entity instanceof Entity entity && event.componentObject instanceof AnimatableComponent<?> capability) {
+        if (event.entity instanceof Entity entity && event.componentObject instanceof RenderData<?> capability) {
             ModelComponent modelComponent = capability.getModelComponent();
 
             RenderDefine renderDefine = ModelReplacerLoader.byTarget(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()));

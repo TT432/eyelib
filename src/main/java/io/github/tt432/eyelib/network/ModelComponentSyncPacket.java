@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.network;
 
-import io.github.tt432.eyelib.client.animation.component.ModelComponent;
+import io.github.tt432.eyelib.capability.component.ModelComponent;
 import net.minecraft.network.FriendlyByteBuf;
 
 /**

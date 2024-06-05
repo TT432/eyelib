@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.molang;
 
-import io.github.tt432.eyelib.capability.AnimatableComponent;
+import io.github.tt432.eyelib.capability.RenderData;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,7 @@ import java.util.Map;
 public class MolangScope {
     @Getter
     @Setter
-    private AnimatableComponent<?> owner = null;
+    private RenderData<?> owner = null;
     private final Map<String, Float> cache = new HashMap<>();
     private final Map<String, Object> animationData = new HashMap<>();
 

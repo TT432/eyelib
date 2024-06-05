@@ -16,6 +16,6 @@ public class BuiltInBrModelRenderVisitors {
     public static final DeferredRegister<ModelRenderVisitor> VISITORS =
             DeferredRegister.create(ModelRenderVisitorRegistry.VISITOR_REGISTRY_KEY, Eyelib.MOD_ID);
 
-    public static final RegistryObject<BlankEntityModelRenderVisitor > BLANK =
+    public static final RegistryObject<BlankEntityModelRenderVisitor> BLANK =
             VISITORS.register("blank", BlankEntityModelRenderVisitor::new);
 }

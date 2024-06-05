@@ -1,14 +1,15 @@
-package io.github.tt432.eyelib.client.system;
+package io.github.tt432.eyelib.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.tt432.eyelib.capability.AnimatableComponent;
-import io.github.tt432.eyelib.client.ClientTickHandler;
-import io.github.tt432.eyelib.client.animation.component.ModelComponent;
+import io.github.tt432.eyelib.capability.RenderData;
+import io.github.tt432.eyelib.capability.component.AnimationComponent;
+import io.github.tt432.eyelib.capability.component.ModelComponent;
+import io.github.tt432.eyelib.client.animation.BrAnimator;
 import io.github.tt432.eyelib.client.render.BrModelTextures;
+import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
 import io.github.tt432.eyelib.event.InitComponentEvent;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
@@ -24,6 +25,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
@@ -33,50 +35,42 @@ import java.util.function.Function;
 @Mod.EventBusSubscriber
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EntityRenderSystem {
-    private static final AnimationSystem controllerSystem = new AnimationSystem();
-
-    public static final Int2ObjectOpenHashMap<AnimatableComponent<?>> entities = new Int2ObjectOpenHashMap<>();
-    private static final List<AnimatableComponent<?>> readyToRemove = new ArrayList<>();
+    private static final List<RenderData<?>> entities = Collections.synchronizedList(new ArrayList<>());
 
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
         Entity entity = event.getEntity();
-        AnimatableComponent<Entity> cap = AnimatableComponent.getComponent(entity);
+        RenderData<Entity> cap = RenderData.getComponent(entity);
 
         if (cap == null) return;
 
-        entities.put(cap.id(), cap);
+        entities.add(cap);
         MinecraftForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
     }
 
     @SubscribeEvent
     public static void onEvent(TickEvent.RenderTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
-            removeRemovedEntity();
+            entities.removeIf(entity -> entity.getOwner() instanceof Entity le && le.isRemoved());
 
             float ticks = ClientTickHandler.getTick() + event.renderTickTime;
-            controllerSystem.update(ticks);
+
+            entities.forEach(entity -> {
+                AnimationComponent component = entity.getAnimationComponent();
+                var scope = entity.getScope();
+
+                if (component.getAnimationController() == null) return;
+
+                BoneRenderInfos tickedInfos = BrAnimator.tickAnimation(component, scope, ticks);
+                entity.getModelComponent().getBoneInfos().set(tickedInfos);
+            });
         }
-    }
-
-    private static void removeRemovedEntity() {
-        entities.values().forEach(entity -> {
-            if (entity.getOwner() instanceof Entity le && le.isRemoved()) {
-                readyToRemove.add(entity);
-            }
-        });
-
-        for (AnimatableComponent<?> animatableCapability : readyToRemove) {
-            entities.remove(animatableCapability.id());
-        }
-
-        readyToRemove.clear();
     }
 
     @SubscribeEvent
     public static void onEvent(RenderLivingEvent.Pre event) {
         LivingEntity entity = event.getEntity();
-        AnimatableComponent<?> cap = AnimatableComponent.getComponent(entity);
+        RenderData<?> cap = RenderData.getComponent(entity);
 
         if (cap == null) return;
 
@@ -100,7 +94,7 @@ public class EntityRenderSystem {
 
             poseStack.pushPose();
 
-            BrModelRenderer.render(model, modelComponent.getBoneInfos(), poseStack, renderType, buffer,
+            BrModelRenderer.render(entity, model, modelComponent.getBoneInfos(), poseStack, renderType, buffer,
                     BrModelTextures.getTwoSideInfo(model, info.isSolid(), texture), visitor);
 
             poseStack.popPose();
