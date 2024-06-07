@@ -64,6 +64,8 @@ public class AnimationComponent {
         BrAnimationControllers animationControllers = BrAnimationControllerLoader.getController(animationControllersName);
         BrAnimation targetAnimations = BrAnimationLoader.getAnimation(targetAnimationsName);
 
+        if (animationControllers == null || targetAnimations == null) return;
+
         this.animationController = ImmutableList.copyOf(animationControllers.animation_controllers().values());
         this.targetAnimation = targetAnimations;
         int animationControllerSize = animationController.size();

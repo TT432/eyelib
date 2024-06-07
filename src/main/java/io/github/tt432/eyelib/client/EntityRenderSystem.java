@@ -63,7 +63,11 @@ public class EntityRenderSystem {
             }
         }
 
-        if (info != null) {
+        if (info != null
+                && info.model() != null
+                && info.texture() != null
+                && info.visitor() != null
+                && info.renderTypeFactory() != null) {
             var visitor = info.visitor();
             Function<ResourceLocation, RenderType> renderTypeFactory = info.renderTypeFactory();
             ResourceLocation texture = info.texture();
