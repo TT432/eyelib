@@ -6,9 +6,11 @@ import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
+import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.render.BrModelTextures;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
+import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -23,8 +25,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-
-import java.util.function.Function;
 
 /**
  * @author TT432
@@ -49,9 +49,6 @@ public class EntityRenderSystem {
 
         if (cap == null) return;
 
-        ModelComponent modelComponent = cap.getModelComponent();
-        ModelComponent.Info info = modelComponent.getInfo();
-
         if (cap.getAnimationComponent().getSerializableInfo() != null) {
             AnimationComponent component = cap.getAnimationComponent();
             var scope = cap.getScope();
@@ -63,29 +60,26 @@ public class EntityRenderSystem {
             }
         }
 
-        if (info != null
-                && info.model() != null
-                && info.texture() != null
-                && info.visitor() != null
-                && info.renderTypeFactory() != null) {
-            var visitor = info.visitor();
-            Function<ResourceLocation, RenderType> renderTypeFactory = info.renderTypeFactory();
-            ResourceLocation texture = info.texture();
+        ModelComponent modelComponent = cap.getModelComponent();
 
+        BrModel model = modelComponent.getModel();
+        ResourceLocation texture = modelComponent.getTexture();
+        ModelRenderVisitor visitor = modelComponent.getVisitor();
+
+        if (model != null && texture != null && visitor != null) {
             event.setCanceled(true);
 
             visitor.setupLight(event.getPackedLight());
 
             PoseStack poseStack = event.getPoseStack();
-            var model = info.model();
 
-            RenderType renderType = renderTypeFactory.apply(texture);
+            RenderType renderType = modelComponent.getRenderType(texture);
             VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderType);
 
             poseStack.pushPose();
 
             BrModelRenderer.render(entity, model, modelComponent.getBoneInfos(), poseStack, renderType, buffer,
-                    BrModelTextures.getTwoSideInfo(model, info.isSolid(), texture), visitor);
+                    BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), visitor);
 
             poseStack.popPose();
         }

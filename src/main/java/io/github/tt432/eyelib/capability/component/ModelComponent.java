@@ -11,10 +11,8 @@ import io.github.tt432.eyelib.util.client.RenderTypeSerializations;
 import lombok.Getter;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.function.Function;
 
 /**
  * @author TT432
@@ -35,17 +33,6 @@ public class ModelComponent {
         ).apply(ins, SerializableInfo::new));
     }
 
-    public record Info(
-            BrModel model,
-            ResourceLocation texture,
-            Function<ResourceLocation, RenderType> renderTypeFactory,
-            boolean isSolid,
-            ModelRenderVisitor visitor
-    ) {
-    }
-
-    @Nullable
-    ModelComponent.Info info;
     SerializableInfo serializableInfo;
 
     public boolean serializable() {
@@ -60,17 +47,32 @@ public class ModelComponent {
         if (Objects.equals(serializableInfo, this.serializableInfo)) return;
 
         this.serializableInfo = serializableInfo;
+        boneInfos.reset();
+    }
 
-        RenderTypeSerializations.EntityRenderTypeData factory =
-                RenderTypeSerializations.getFactory(serializableInfo.renderType);
+    public BrModel getModel() {
+        if (serializableInfo == null) return null;
+        return BrModelLoader.getModel(serializableInfo.model);
+    }
 
-        info = new Info(
-                BrModelLoader.getModel(serializableInfo.model),
-                serializableInfo.texture,
-                factory.factory(),
-                factory.isSolid(),
-                ModelRenderVisitorRegistry.VISITOR_REGISTRY.get().getValue(serializableInfo.visitor)
-        );
+    public ResourceLocation getTexture() {
+        if (serializableInfo == null) return null;
+        return serializableInfo.texture;
+    }
+
+    public RenderType getRenderType(ResourceLocation texture) {
+        if (serializableInfo == null) return null;
+        return RenderTypeSerializations.getFactory(serializableInfo.renderType).factory().apply(texture);
+    }
+
+    public boolean isSolid() {
+        if (serializableInfo == null) return true;
+        return RenderTypeSerializations.getFactory(serializableInfo.renderType).isSolid();
+    }
+
+    public ModelRenderVisitor getVisitor() {
+        if (serializableInfo == null) return null;
+        return ModelRenderVisitorRegistry.VISITOR_REGISTRY.get().getValue(serializableInfo.visitor);
     }
 
     final BoneRenderInfos boneInfos = new BoneRenderInfos();

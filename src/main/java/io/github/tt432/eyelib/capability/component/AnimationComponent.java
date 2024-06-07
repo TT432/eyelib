@@ -55,16 +55,18 @@ public class AnimationComponent {
     int currentControllerIndex;
 
     public void setup(ResourceLocation animationControllersName, ResourceLocation targetAnimationsName) {
-        if (serializableInfo != null
-                && animationControllersName.equals(serializableInfo.animationControllers)
-                && targetAnimationsName.equals(serializableInfo.targetAnimations)) return;
-
-        serializableInfo = new SerializableInfo(animationControllersName, targetAnimationsName);
+        if (animationControllersName == null || targetAnimationsName == null) return;
 
         BrAnimationControllers animationControllers = BrAnimationControllerLoader.getController(animationControllersName);
         BrAnimation targetAnimations = BrAnimationLoader.getAnimation(targetAnimationsName);
 
         if (animationControllers == null || targetAnimations == null) return;
+
+        if (serializableInfo != null
+                && animationControllersName.equals(serializableInfo.animationControllers)
+                && targetAnimationsName.equals(serializableInfo.targetAnimations)) return;
+
+        serializableInfo = new SerializableInfo(animationControllersName, targetAnimationsName);
 
         this.animationController = ImmutableList.copyOf(animationControllers.animation_controllers().values());
         this.targetAnimation = targetAnimations;
