@@ -1,15 +1,16 @@
-package io.github.tt432.eyelib.client.system;
+package io.github.tt432.eyelib.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
-import io.github.tt432.eyelib.client.ClientTickHandler;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
+import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.render.BrModelTextures;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
+import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -24,8 +25,6 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-
-import java.util.function.Function;
 
 /**
  * @author TT432
@@ -50,9 +49,6 @@ public class EntityRenderSystem {
         LivingEntity entity = event.getEntity();
         RenderData<?> cap = RenderData.getComponent(entity);
 
-        ModelComponent modelComponent = cap.getModelComponent();
-        ModelComponent.Info info = modelComponent.getInfo();
-
         if (cap.getAnimationComponent().getSerializableInfo() != null) {
             AnimationComponent component = cap.getAnimationComponent();
             var scope = cap.getScope();
@@ -64,29 +60,26 @@ public class EntityRenderSystem {
             }
         }
 
-        if (info != null
-                && info.model() != null
-                && info.texture() != null
-                && info.visitor() != null
-                && info.renderTypeFactory() != null) {
-            var visitor = info.visitor();
-            Function<ResourceLocation, RenderType> renderTypeFactory = info.renderTypeFactory();
-            ResourceLocation texture = info.texture();
+        ModelComponent modelComponent = cap.getModelComponent();
 
+        BrModel model = modelComponent.getModel();
+        ResourceLocation texture = modelComponent.getTexture();
+        ModelRenderVisitor visitor = modelComponent.getVisitor();
+
+        if (model != null && texture != null && visitor != null) {
             event.setCanceled(true);
 
             visitor.setupLight(event.getPackedLight());
 
             PoseStack poseStack = event.getPoseStack();
-            var model = info.model();
 
-            RenderType renderType = renderTypeFactory.apply(texture);
+            RenderType renderType = modelComponent.getRenderType(texture);
             VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderType);
 
             poseStack.pushPose();
 
             BrModelRenderer.render(entity, model, modelComponent.getBoneInfos(), poseStack, renderType, buffer,
-                    BrModelTextures.getTwoSideInfo(model, info.isSolid(), texture), visitor);
+                    BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), visitor);
 
             poseStack.popPose();
         }
