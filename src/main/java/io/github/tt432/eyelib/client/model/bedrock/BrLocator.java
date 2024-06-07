@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.client.model.bedrock;
 
 import com.google.gson.*;
+import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.Getter;
 import org.joml.Vector3f;
 
@@ -34,9 +35,13 @@ public class BrLocator {
         if (value instanceof JsonArray ja) {
             result.offset = new Vector3f(gson.fromJson(ja, float[].class));
         } else if (value instanceof JsonObject jo) {
+            result.offset = jo.get("offset") instanceof JsonArray ja ? new Vector3f(gson.fromJson(ja, float[].class)) : new Vector3f(0);
             result.rotation = jo.get("rotation") instanceof JsonArray ja ? new Vector3f(gson.fromJson(ja, float[].class)) : new Vector3f(0);
             result.ignoreInheritedScale = jo.get("ignore_inherited_scale") instanceof JsonPrimitive jp && jp.getAsBoolean();
         }
+
+        result.offset.div(16).mul(-1, 1, 1);
+        result.rotation.mul(EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1);
 
         return result;
     }

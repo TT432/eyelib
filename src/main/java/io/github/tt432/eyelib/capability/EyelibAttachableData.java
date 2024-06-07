@@ -16,9 +16,9 @@ public class EyelibAttachableData {
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
             DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, Eyelib.MOD_ID);
 
-    public static final DeferredHolder<AttachmentType<?>, AttachmentType<AnimatableComponent<Object>>> ANIMATABLE =
-            ATTACHMENT_TYPES.register("animatable",
-                    () -> AttachmentType.builder(() -> new AnimatableComponent<>())
-                            .serialize(AnimatableComponent.CODEC)
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<RenderData<Object>>> RENDER_DATA =
+            ATTACHMENT_TYPES.register("render_data",
+                    () -> AttachmentType.builder(() -> new RenderData<>())
+                            .serialize(RenderData.CODEC)
                             .build());
 }

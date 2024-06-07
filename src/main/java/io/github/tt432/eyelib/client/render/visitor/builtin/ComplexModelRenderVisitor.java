@@ -8,6 +8,9 @@ import io.github.tt432.eyelib.client.model.bedrock.BrFace;
 import io.github.tt432.eyelib.client.model.bedrock.BrLocator;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import lombok.AllArgsConstructor;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.world.entity.Entity;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author TT432
@@ -24,26 +27,26 @@ public class ComplexModelRenderVisitor extends ModelRenderVisitor {
     }
 
     @Override
-    public void visitBone(PoseStack poseStack, BrBone bone, BoneRenderInfoEntry boneRenderInfoEntry, VertexConsumer consumer, boolean before) {
-        visitorA.visitBone(poseStack, bone, boneRenderInfoEntry, consumer, before);
-        visitorB.visitBone(poseStack, bone, boneRenderInfoEntry, consumer, before);
+    public void visitBone(@Nullable Entity renderTarget, PoseStack poseStack, BrBone bone, RenderType renderType, BoneRenderInfoEntry boneRenderInfoEntry, VertexConsumer consumer, boolean before) {
+        visitorA.visitBone(renderTarget, poseStack, bone, renderType, boneRenderInfoEntry, consumer, before);
+        visitorB.visitBone(renderTarget, poseStack, bone, renderType, boneRenderInfoEntry, consumer, before);
     }
 
     @Override
-    public void visitCube(PoseStack poseStack, BrCube cube, VertexConsumer consumer) {
-        visitorA.visitCube(poseStack, cube, consumer);
-        visitorB.visitCube(poseStack, cube, consumer);
+    public void visitCube(@Nullable Entity renderTarget, PoseStack poseStack, BrCube cube, RenderType renderType, VertexConsumer consumer) {
+        visitorA.visitCube(renderTarget, poseStack, cube, renderType, consumer);
+        visitorB.visitCube(renderTarget, poseStack, cube, renderType, consumer);
     }
 
     @Override
-    public void visitVertex(PoseStack poseStack, BrCube cube, BrFace face, int vertexId, VertexConsumer consumer) {
-        visitorA.visitVertex(poseStack, cube, face, vertexId, consumer);
-        visitorB.visitVertex(poseStack, cube, face, vertexId, consumer);
+    public void visitVertex(@Nullable Entity renderTarget, PoseStack poseStack, BrCube cube, RenderType renderType, BrFace face, int vertexId, VertexConsumer consumer) {
+        visitorA.visitVertex(renderTarget, poseStack, cube, renderType, face, vertexId, consumer);
+        visitorB.visitVertex(renderTarget, poseStack, cube, renderType, face, vertexId, consumer);
     }
 
     @Override
-    public void visitLocator(PoseStack poseStack, BrBone bone, String name, BrLocator locator, BoneRenderInfoEntry boneRenderInfoEntry, VertexConsumer consumer) {
-        visitorA.visitLocator(poseStack, bone, name, locator, boneRenderInfoEntry, consumer);
-        visitorB.visitLocator(poseStack, bone, name, locator, boneRenderInfoEntry, consumer);
+    public void visitLocator(@Nullable Entity renderTarget, PoseStack poseStack, BrBone bone, RenderType renderType, String name, BrLocator locator, BoneRenderInfoEntry boneRenderInfoEntry, VertexConsumer consumer) {
+        visitorA.visitLocator(renderTarget, poseStack, bone, renderType, name, locator, boneRenderInfoEntry, consumer);
+        visitorB.visitLocator(renderTarget, poseStack, bone, renderType, name, locator, boneRenderInfoEntry, consumer);
     }
 }

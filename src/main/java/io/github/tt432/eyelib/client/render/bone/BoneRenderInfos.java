@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.client.render.bone;
 
-import io.github.tt432.eyelib.client.model.bedrock.BrBone;
 import lombok.Getter;
 
 import java.util.HashMap;
@@ -19,7 +18,12 @@ public class BoneRenderInfos {
         }
     }
 
-    public BoneRenderInfoEntry get(BrBone bone) {
-        return infos.computeIfAbsent(bone.name(), s -> new BoneRenderInfoEntry(bone));
+    public BoneRenderInfoEntry get(String boneName) {
+        return infos.computeIfAbsent(boneName, s -> new BoneRenderInfoEntry());
+    }
+
+    public void set(BoneRenderInfos other) {
+        reset();
+        infos.putAll(other.infos);
     }
 }

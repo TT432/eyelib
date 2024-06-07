@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.animation.component;
+package io.github.tt432.eyelib.capability.component;
 
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
@@ -46,7 +46,7 @@ public class AnimationComponent {
 
     SerializableInfo serializableInfo;
 
-    public boolean serializable(){
+    public boolean serializable() {
         return serializableInfo != null
                 && serializableInfo.animationControllers != null
                 && serializableInfo.targetAnimations != null;
@@ -65,6 +65,10 @@ public class AnimationComponent {
     int currentControllerIndex;
 
     public void setup(ResourceLocation animationControllersName, ResourceLocation targetAnimationsName) {
+        if (serializableInfo != null
+                && animationControllersName.equals(serializableInfo.animationControllers)
+                && targetAnimationsName.equals(serializableInfo.targetAnimations)) return;
+
         serializableInfo = new SerializableInfo(animationControllersName, targetAnimationsName);
 
         BrAnimationControllers animationControllers = BrAnimationControllerLoader.getController(animationControllersName);

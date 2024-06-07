@@ -5,7 +5,10 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.client.model.bedrock.BrCube;
 import io.github.tt432.eyelib.client.model.bedrock.BrFace;
 import lombok.Setter;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.world.entity.Entity;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -26,7 +29,7 @@ public class BlankEntityModelRenderVisitor extends ModelRenderVisitor {
     }
 
     @Override
-    public void visitVertex(PoseStack poseStack, BrCube cube, BrFace face, int vertexId, VertexConsumer consumer) {
+    public void visitVertex(@Nullable Entity renderTarget, PoseStack poseStack, BrCube cube, RenderType renderType, BrFace face, int vertexId, VertexConsumer consumer) {
         Vector3f normal = face.getNormal();
         Vector3f vertex = face.getVertex()[vertexId];
         Vector2f uv = face.getUv()[vertexId];

@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.network;
 
 import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.client.animation.component.AnimationComponent;
+import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
