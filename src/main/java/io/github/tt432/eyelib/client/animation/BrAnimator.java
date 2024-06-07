@@ -13,6 +13,7 @@ import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
@@ -100,7 +101,10 @@ public final class BrAnimator {
 
                 if (owner instanceof Entity e) {
                     SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(new ResourceLocation(brEffectsKeyFrame.effect()));
-                    e.playSound(soundEvent);
+                    if (!e.isSilent()) {
+                        e.level().playSound(Minecraft.getInstance().player,
+                                e.getX(), e.getY(), e.getZ(), soundEvent, e.getSoundSource(), 1, 1);
+                    }
                 }
             }
         }
