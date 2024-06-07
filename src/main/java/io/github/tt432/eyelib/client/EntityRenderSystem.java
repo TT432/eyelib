@@ -17,26 +17,21 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Function;
 
 /**
  * @author TT432
  */
-@Mod.EventBusSubscriber
+@Mod.EventBusSubscriber(Dist.CLIENT)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EntityRenderSystem {
-    private static final List<RenderData<?>> entities = Collections.synchronizedList(new ArrayList<>());
-
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
         Entity entity = event.getEntity();
@@ -44,27 +39,7 @@ public class EntityRenderSystem {
 
         if (cap == null) return;
 
-        entities.add(cap);
         MinecraftForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
-    }
-
-    @SubscribeEvent
-    public static void onEvent(TickEvent.RenderTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
-            entities.removeIf(entity -> entity.getOwner() instanceof Entity le && le.isRemoved());
-
-            float ticks = ClientTickHandler.getTick() + event.renderTickTime;
-
-            entities.forEach(entity -> {
-                AnimationComponent component = entity.getAnimationComponent();
-                var scope = entity.getScope();
-
-                if (component.getAnimationController() == null) return;
-
-                BoneRenderInfos tickedInfos = BrAnimator.tickAnimation(component, scope, ticks);
-                entity.getModelComponent().getBoneInfos().set(tickedInfos);
-            });
-        }
     }
 
     @SubscribeEvent
@@ -76,6 +51,17 @@ public class EntityRenderSystem {
 
         ModelComponent modelComponent = cap.getModelComponent();
         ModelComponent.Info info = modelComponent.getInfo();
+
+        if (cap.getAnimationComponent().getSerializableInfo() != null) {
+            AnimationComponent component = cap.getAnimationComponent();
+            var scope = cap.getScope();
+
+            if (component.getAnimationController() != null) {
+                BoneRenderInfos tickedInfos = BrAnimator.tickAnimation(component, scope,
+                        ClientTickHandler.getTick() + Minecraft.getInstance().getPartialTick());
+                cap.getModelComponent().getBoneInfos().set(tickedInfos);
+            }
+        }
 
         if (info != null) {
             var visitor = info.visitor();
