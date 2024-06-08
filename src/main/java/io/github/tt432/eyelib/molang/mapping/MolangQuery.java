@@ -6,11 +6,14 @@ import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Objects;
@@ -158,6 +161,88 @@ public final class MolangQuery {
         return entityBool(scope, Entity::onGround);
     }
 
+    /**
+     * 摔落距离
+     */
+    public static float fall_distance(MolangScope scope) {
+        return entityFloat(scope, e -> e.fallDistance);
+    }
+
+    /**
+     * 跳跃
+     */
+    public static float is_jumping(MolangScope scope) {
+        return livingBool(scope, entity -> entity.jumping);
+    }
+
+    /**
+     * 疾跑
+     */
+    public static float is_sprinting(MolangScope scope) {
+        return entityBool(scope, Entity::isSprinting);
+    }
+
+    /**
+     * 下蹲
+     */
+    public static float is_sneaking(MolangScope scope) {
+        return is_crouching(scope);
+    }
+
+    /**
+     * 下蹲
+     */
+    public static float is_crouching(MolangScope scope) {
+        return entityBool(scope, Entity::isCrouching);
+    }
+
+    public static float is_on_climbable(MolangScope scope) {
+        return livingBool(scope, LivingEntity::onClimbable);
+    }
+
+    /**
+     * 游泳
+     */
+    public static float is_swimming(MolangScope scope) {
+        return entityBool(scope, Entity::isSwimming);
+    }
+
+    /**
+     * 判断玩家正在挖掘
+     */
+    public static float is_digging(MolangScope scope) {
+        MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
+        return (gameMode != null && gameMode.isDestroying()) ? TRUE : FALSE;
+    }
+
+    /**
+     * 吃
+     */
+    public static float is_eating(MolangScope scope) {
+        return livingBool(scope, p -> p.isUsingItem() && p.getUseItem().getUseAnimation() == UseAnim.EAT);
+    }
+
+    /**
+     * 喝
+     */
+    public static float is_drinking(MolangScope scope) {
+        return livingBool(scope, p -> p.isUsingItem() && p.getUseItem().getUseAnimation() == UseAnim.DRINK);
+    }
+
+    /**
+     * 主手挥动
+     */
+    public static float is_main_hand_swing(MolangScope scope) {
+        return livingBool(scope, e -> e.swinging && e.swingingArm == InteractionHand.MAIN_HAND);
+    }
+
+    /**
+     * 副手挥动
+     */
+    public static float is_off_hand_swing(MolangScope scope) {
+        return livingBool(scope, e -> e.swinging && e.swingingArm == InteractionHand.OFF_HAND);
+    }
+
     public static float is_in_water(MolangScope scope) {
         return entityBool(scope, Entity::isInWater);
     }
@@ -186,8 +271,46 @@ public final class MolangQuery {
         return pitch(scope);
     }
 
+    /**
+     * 坐下
+     */
     public static float sitting(MolangScope scope) {
         return entityBool(scope, e -> e.isPassenger() && (e.getVehicle() != null && e.getVehicle().shouldRiderSit()));
+    }
+
+    /**
+     * 坐下
+     */
+    public static float is_sitting(MolangScope scope) {
+        return sitting(scope);
+    }
+
+    /**
+     * 攀爬（本来是专属蜘蛛的，和其他的 living 合一起了）
+     */
+    public static float is_wall_climbing(MolangScope scope) {
+        return is_on_climbable(scope);
+    }
+
+    public static float is_damage_by(MolangScope scope, Object... damageTypes) {
+        return livingBool(scope, e -> {
+            if (e.getLastDamageSource() != null) {
+                ResourceLocation resourceLocation = e.level().registryAccess()
+                        .registry(Registries.DAMAGE_TYPE)
+                        .map(r -> r.getKey(e.getLastDamageSource().type()))
+                        .orElse(null);
+
+                if (resourceLocation != null) {
+                    for (Object damageType : damageTypes) {
+                        if (resourceLocation.toString().equals(damageType.toString())) return true;
+                    }
+
+                    return false;
+                }
+            }
+
+            return false;
+        });
     }
 
     public static float is_stalking(MolangScope scope) {
