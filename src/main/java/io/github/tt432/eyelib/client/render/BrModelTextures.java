@@ -49,11 +49,13 @@ public class BrModelTextures {
 
                     ImmutableMap.Builder<String, TwoSideInfo> builder = ImmutableMap.builder();
 
-                    try (NativeImage nativeimage = new NativeImage(width[0], height[0], false)) {
-                        nativeimage.downloadTexture(0, false);
+                    if (width[0] != 0 && height[0] != 0) {
+                        try (NativeImage nativeimage = new NativeImage(width[0], height[0], false)) {
+                            nativeimage.downloadTexture(0, false);
 
-                        model.allBones().forEach((boneName, bone) ->
-                                builder.put(boneName, new TwoSideInfo(boneName, processBone(bone, isSolid, nativeimage))));
+                            model.allBones().forEach((boneName, bone) ->
+                                    builder.put(boneName, new TwoSideInfo(boneName, processBone(bone, isSolid, nativeimage))));
+                        }
                     }
 
                     return new TwoSideInfoMap(builder.build());
