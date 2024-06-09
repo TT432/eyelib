@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.render.BrModelTextures;
+import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
 import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
@@ -69,8 +70,6 @@ public class EntityRenderSystem {
         if (model != null && texture != null && visitor != null) {
             event.setCanceled(true);
 
-            visitor.setupLight(event.getPackedLight());
-
             PoseStack poseStack = event.getPoseStack();
 
             RenderType renderType = modelComponent.getRenderType(texture);
@@ -78,7 +77,10 @@ public class EntityRenderSystem {
 
             poseStack.pushPose();
 
-            BrModelRenderer.render(entity, model, modelComponent.getBoneInfos(), poseStack, renderType, buffer,
+            RenderParams renderParams = new RenderParams(
+                    entity, poseStack.last().copy(), poseStack, renderType, buffer, event.getPackedLight());
+
+            BrModelRenderer.render(renderParams, model, modelComponent.getBoneInfos(),
                     BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), visitor);
 
             poseStack.popPose();
