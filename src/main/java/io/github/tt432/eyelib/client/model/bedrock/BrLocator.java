@@ -34,6 +34,7 @@ public class BrLocator {
 
         if (value instanceof JsonArray ja) {
             result.offset = new Vector3f(gson.fromJson(ja, float[].class));
+            result.rotation = new Vector3f();
         } else if (value instanceof JsonObject jo) {
             result.offset = jo.get("offset") instanceof JsonArray ja ? new Vector3f(gson.fromJson(ja, float[].class)) : new Vector3f(0);
             result.rotation = jo.get("rotation") instanceof JsonArray ja ? new Vector3f(gson.fromJson(ja, float[].class)) : new Vector3f(0);
