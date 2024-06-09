@@ -16,6 +16,14 @@ public final class MolangMath {
     public static final float pi = EyeMath.PI;
     public static final float e = EyeMath.E;
 
+    public static float degrees(float v) {
+        return v * EyeMath.RADIANS_TO_DEGREES;
+    }
+
+    public static float radians(float v) {
+        return v * EyeMath.DEGREES_TO_RADIANS;
+    }
+
     public static float abs(float v) {
         return Math.abs(v);
     }

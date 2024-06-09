@@ -292,6 +292,54 @@ public final class MolangQuery {
         return is_on_climbable(scope);
     }
 
+    public static float pos_x(MolangScope scope) {
+        return entityFloat(scope, e -> (float) e.position().x);
+    }
+
+    public static float pos_y(MolangScope scope) {
+        return entityFloat(scope, e -> (float) e.position().y);
+    }
+
+    public static float pos_z(MolangScope scope) {
+        return entityFloat(scope, e -> (float) e.position().z);
+    }
+
+    public static float climbing_x(MolangScope scope) {
+        return livingFloat(scope, e -> e.getLastClimbablePos()
+                .map(p ->
+                        new Vec3(p.getX(), p.getY(), p.getZ())
+                                .add(e.level().getBlockState(p).getCollisionShape(e.level(), p).bounds().getCenter())
+                                .subtract(e.position())
+                                .x)
+                .orElse(0D)
+                .floatValue());
+    }
+
+    public static float climbing_y(MolangScope scope) {
+        return livingFloat(scope, e -> e.getLastClimbablePos()
+                .map(p ->
+                        new Vec3(p.getX(), p.getY(), p.getZ())
+                                .add(e.level().getBlockState(p).getCollisionShape(e.level(), p).bounds().getCenter())
+                                .subtract(e.position())
+                                .y)
+                .orElse(0D)
+                .floatValue());
+    }
+
+    public static float climbing_z(MolangScope scope) {
+        return livingFloat(scope, e -> e.getLastClimbablePos()
+                .map(p -> new Vec3(p.getX(), p.getY(), p.getZ())
+                        .add(e.level().getBlockState(p).getCollisionShape(e.level(), p).bounds().getCenter())
+                        .subtract(e.position())
+                        .z)
+                .orElse(0D)
+                .floatValue());
+    }
+
+    public static float is_crawling(MolangScope scope) {
+        return entityBool(scope, Entity::isVisuallyCrawling);
+    }
+
     public static float is_damage_by(MolangScope scope, Object... damageTypes) {
         return livingBool(scope, e -> {
             if (e.getLastDamageSource() != null) {
