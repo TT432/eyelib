@@ -26,6 +26,8 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
 /**
  * @author TT432
@@ -77,8 +79,10 @@ public class EntityRenderSystem {
 
             poseStack.pushPose();
 
-            RenderParams renderParams = new RenderParams(
-                    entity, poseStack.last().copy(), poseStack, renderType, buffer, event.getPackedLight());
+            PoseStack.Pose last = poseStack.last();
+            RenderParams renderParams = new RenderParams(entity,
+                    new PoseStack.Pose(new Matrix4f(last.pose()), new Matrix3f(last.normal())),
+                    poseStack, renderType, buffer, event.getPackedLight());
 
             BrModelRenderer.render(renderParams, model, modelComponent.getBoneInfos(),
                     BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), visitor);
