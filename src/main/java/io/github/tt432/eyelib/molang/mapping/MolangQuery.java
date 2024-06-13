@@ -43,6 +43,14 @@ public final class MolangQuery {
         return FALSE;
     }
 
+    public static float has_main_hand(MolangScope scope) {
+        return livingBool(scope, e -> !e.getMainHandItem().isEmpty());
+    }
+
+    public static float has_off_hand(MolangScope scope) {
+        return livingBool(scope, e -> !e.getOffhandItem().isEmpty());
+    }
+
     public static float off_hand_is(MolangScope scope, Object... objects) {
         return slot_getter(scope, EquipmentSlot.OFFHAND, objects);
     }
