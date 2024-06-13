@@ -15,6 +15,8 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.util.List;
+
 /**
  * @author TT432
  */
@@ -31,7 +33,7 @@ public class EyelibCommands {
                         .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("model", StringArgumentType.string())
                                 .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("texture", StringArgumentType.string())
                                         .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("renderType", StringArgumentType.string())
-                                                .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("visitor", StringArgumentType.string())
+                                                .then(RequiredArgumentBuilder.<CommandSourceStack, String>argument("visitors", StringArgumentType.string())
                                                         .executes(context -> {
                                                             Entity entity = context.getSource().getEntity();
 
@@ -47,7 +49,7 @@ public class EyelibCommands {
                                                                     new ResourceLocation(StringArgumentType.getString(context, "model")),
                                                                     new ResourceLocation(StringArgumentType.getString(context, "texture")),
                                                                     new ResourceLocation(StringArgumentType.getString(context, "renderType")),
-                                                                    new ResourceLocation(StringArgumentType.getString(context, "visitor"))
+                                                                    List.of(new ResourceLocation(StringArgumentType.getString(context, "visitors")))
                                                             ));
 
                                                             data.sync();

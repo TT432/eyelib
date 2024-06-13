@@ -1,10 +1,12 @@
 package io.github.tt432.eyelib.capability.component;
 
+import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.loader.BrModelLoader;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
+import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorRegistry;
 import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
 import io.github.tt432.eyelib.util.client.RenderTypeSerializations;
@@ -12,6 +14,7 @@ import lombok.Getter;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -23,13 +26,13 @@ public class ModelComponent {
             ResourceLocation model,
             ResourceLocation texture,
             ResourceLocation renderType,
-            ResourceLocation visitor
+            List<ResourceLocation> visitors
     ) {
         public static final Codec<SerializableInfo> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 ResourceLocation.CODEC.fieldOf("model").forGetter(o -> o.model),
                 ResourceLocation.CODEC.fieldOf("texture").forGetter(o -> o.texture),
                 ResourceLocation.CODEC.fieldOf("renderType").forGetter(o -> o.renderType),
-                ResourceLocation.CODEC.fieldOf("visitor").forGetter(o -> o.visitor)
+                ResourceLocation.CODEC.listOf().fieldOf("visitors").forGetter(o -> o.visitors)
         ).apply(ins, SerializableInfo::new));
     }
 
@@ -40,13 +43,14 @@ public class ModelComponent {
                 && serializableInfo.model != null
                 && serializableInfo.texture != null
                 && serializableInfo.renderType != null
-                && serializableInfo.visitor != null;
+                && serializableInfo.visitors != null;
     }
 
     public void setInfo(SerializableInfo serializableInfo) {
         if (Objects.equals(serializableInfo, this.serializableInfo)) return;
 
         this.serializableInfo = serializableInfo;
+        cache = null;
         boneInfos.reset();
     }
 
@@ -70,9 +74,19 @@ public class ModelComponent {
         return RenderTypeSerializations.getFactory(serializableInfo.renderType).isSolid();
     }
 
-    public ModelRenderVisitor getVisitor() {
+    private ModelRenderVisitorList cache;
+
+    public ModelRenderVisitorList getVisitors() {
         if (serializableInfo == null) return null;
-        return ModelRenderVisitorRegistry.VISITOR_REGISTRY.get().getValue(serializableInfo.visitor);
+        if (cache != null) return cache;
+        ImmutableList.Builder<ModelRenderVisitor> builder = ImmutableList.builder();
+        serializableInfo.visitors.forEach(vi -> {
+            ModelRenderVisitor value = ModelRenderVisitorRegistry.VISITOR_REGISTRY.get().getValue(vi);
+            if (value != null)
+                builder.add(value);
+        });
+        cache = new ModelRenderVisitorList(builder.build());
+        return cache;
     }
 
     final BoneRenderInfos boneInfos = new BoneRenderInfos();

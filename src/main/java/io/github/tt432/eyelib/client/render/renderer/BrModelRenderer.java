@@ -9,7 +9,7 @@ import io.github.tt432.eyelib.client.render.BrModelTextures;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
-import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
+import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -31,7 +31,7 @@ public class BrModelRenderer {
     private static final Deque<BrModelTextures.TwoSideInfoMap> twoSideInfoMapStack = new ArrayDeque<>();
 
     public static void render(RenderParams renderParams, BrModel model, BoneRenderInfos infos,
-                              @Nullable BrModelTextures.TwoSideInfoMap map, ModelRenderVisitor visitor) {
+                              @Nullable BrModelTextures.TwoSideInfoMap map, ModelRenderVisitorList visitors) {
         twoSideInfoMapStack.push(map);
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();
@@ -43,21 +43,20 @@ public class BrModelRenderer {
         normal.rotateY(R180);
 
         for (BrBone toplevelBone : model.toplevelBones()) {
-            renderBone(renderParams, visitor, infos, toplevelBone);
+            renderBone(renderParams, visitors, infos, toplevelBone);
         }
 
         poseStack.popPose();
         twoSideInfoMapStack.pop();
     }
 
-    private static void renderBone(RenderParams renderParams, ModelRenderVisitor visitor,
-                                   BoneRenderInfos infos, BrBone bone) {
+    private static void renderBone(RenderParams renderParams, ModelRenderVisitorList visitors, BoneRenderInfos infos, BrBone bone) {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();
 
         BoneRenderInfoEntry boneRenderInfoEntry = infos.get(bone.name());
 
-        visitor.visitBone(renderParams, bone, boneRenderInfoEntry, true);
+        visitors.visitors().forEach(visitor -> visitor.visitBone(renderParams, bone, boneRenderInfoEntry, true));
 
         PoseStack.Pose last = poseStack.last();
         Matrix4f m4 = last.pose();
@@ -85,7 +84,7 @@ public class BrModelRenderer {
 
         m4.translate(renderPivot.negate(nPivot));
 
-        visitor.visitBone(renderParams, bone, boneRenderInfoEntry, false);
+        visitors.visitors().forEach(visitor -> visitor.visitBone(renderParams, bone, boneRenderInfoEntry, false));
 
         bone.locators().forEach((name, locator) -> {
             poseStack.pushPose();
@@ -96,7 +95,7 @@ public class BrModelRenderer {
             pose.rotateZYX(locator.getRotation());
             last1.normal().rotateZYX(locator.getRotation());
 
-            visitor.visitLocator(renderParams, bone, name, locator, boneRenderInfoEntry);
+            visitors.visitors().forEach(visitor -> visitor.visitLocator(renderParams, bone, name, locator, boneRenderInfoEntry));
 
             poseStack.popPose();
         });
@@ -104,29 +103,31 @@ public class BrModelRenderer {
         for (int i = 0; i < bone.cubes().size(); i++) {
             BrCube brCube = bone.cubes().get(i);
             BrModelTextures.TwoSideInfoMap lastTwoSideInfoMap = twoSideInfoMapStack.getLast();
-            renderCube(renderParams, visitor, brCube,
+            renderCube(renderParams, visitors, brCube,
                     lastTwoSideInfoMap == null || lastTwoSideInfoMap.isTwoSide(bone.name(), i));
         }
 
         for (BrBone child : bone.children()) {
-            renderBone(renderParams, visitor, infos, child);
+            renderBone(renderParams, visitors, infos, child);
         }
 
         poseStack.popPose();
     }
 
-    private static void renderCube(RenderParams renderParams, ModelRenderVisitor visitor,
+    private static void renderCube(RenderParams renderParams, ModelRenderVisitorList visitors,
                                    BrCube cube, boolean needTwoSide) {
-        visitor.visitCube(renderParams, cube);
+        visitors.visitors().forEach(visitor -> visitor.visitCube(renderParams, cube));
 
         for (BrFace face : cube.faces()) {
             for (int i = 0; i < face.getVertex().length; i++) {
-                visitor.visitVertex(renderParams, cube, face, i);
+                int finalI = i;
+                visitors.visitors().forEach(visitor -> visitor.visitVertex(renderParams, cube, face, finalI));
             }
 
             if (needTwoSide) {
                 for (int i = face.getVertex().length - 1; i >= 0; i--) {
-                    visitor.visitVertex(renderParams, cube, face, i);
+                    int finalI = i;
+                    visitors.visitors().forEach(visitor -> visitor.visitVertex(renderParams, cube, face, finalI));
                 }
             }
         }

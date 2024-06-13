@@ -3,6 +3,8 @@ package io.github.tt432.eyelib.network;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import net.minecraft.network.FriendlyByteBuf;
 
+import java.util.stream.IntStream;
+
 /**
  * @author TT432
  */
@@ -15,7 +17,8 @@ public record ModelComponentSyncPacket(
         buf.writeResourceLocation(packet.modelInfo().model());
         buf.writeResourceLocation(packet.modelInfo().texture());
         buf.writeResourceLocation(packet.modelInfo().renderType());
-        buf.writeResourceLocation(packet.modelInfo().visitor());
+        buf.writeInt(packet.modelInfo.visitors().size());
+        packet.modelInfo().visitors().forEach(buf::writeResourceLocation);
     }
 
     public static ModelComponentSyncPacket decode(FriendlyByteBuf byteBuf) {
@@ -25,7 +28,7 @@ public record ModelComponentSyncPacket(
                         byteBuf.readResourceLocation(),
                         byteBuf.readResourceLocation(),
                         byteBuf.readResourceLocation(),
-                        byteBuf.readResourceLocation()
+                        IntStream.range(0, byteBuf.readInt()).mapToObj(i -> byteBuf.readResourceLocation()).toList()
                 )
         );
     }
