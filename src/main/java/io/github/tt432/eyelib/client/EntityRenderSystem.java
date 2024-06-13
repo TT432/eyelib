@@ -11,7 +11,6 @@ import io.github.tt432.eyelib.client.render.BrModelTextures;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
-import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -65,9 +64,8 @@ public class EntityRenderSystem {
 
         BrModel model = modelComponent.getModel();
         ResourceLocation texture = modelComponent.getTexture();
-        ModelRenderVisitor visitor = modelComponent.getVisitor();
 
-        if (model != null && texture != null && visitor != null) {
+        if (model != null && texture != null) {
             event.setCanceled(true);
 
             PoseStack poseStack = event.getPoseStack();
@@ -81,7 +79,7 @@ public class EntityRenderSystem {
                     entity, poseStack.last().copy(), poseStack, renderType, buffer, event.getPackedLight());
 
             BrModelRenderer.render(renderParams, model, modelComponent.getBoneInfos(),
-                    BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), visitor);
+                    BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), modelComponent.getVisitors());
 
             poseStack.popPose();
         }

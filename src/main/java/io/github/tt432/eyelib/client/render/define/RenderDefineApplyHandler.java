@@ -7,7 +7,6 @@ import io.github.tt432.eyelib.client.loader.BrModelLoader;
 import io.github.tt432.eyelib.client.loader.ModelReplacerLoader;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.model.bedrock.material.ModelMaterial;
-import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -59,7 +58,7 @@ public class RenderDefineApplyHandler {
                     new ResourceLocation(texture.getNamespace(),
                             "textures/" + texture.getPath() + ".png"),
                     material.renderType(),
-                    BuiltInBrModelRenderVisitors.BLANK.getId()
+                    renderDefine.visitors()
             ));
 
             AnimationComponent animComponent = capability.getAnimationComponent();

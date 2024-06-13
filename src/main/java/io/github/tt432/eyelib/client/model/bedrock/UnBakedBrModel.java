@@ -5,6 +5,7 @@ import io.github.tt432.eyelib.client.render.BrModelTextures;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
+import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
 import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.AllArgsConstructor;
@@ -26,6 +27,7 @@ import org.joml.Vector3f;
 import org.joml.Vector4f;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -50,7 +52,8 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
 
         BrModelRenderer.render(new RenderParams(null, poseStack.last(),
                         poseStack, null, null, 0),
-                model, new BoneRenderInfos(), new BrModelTextures.TwoSideInfoMap(new HashMap<>()), new ModelRenderVisitor() {
+                model, new BoneRenderInfos(), new BrModelTextures.TwoSideInfoMap(new HashMap<>()),
+                new ModelRenderVisitorList(List.of(new ModelRenderVisitor() {
                     @Override
                     public void visitVertex(RenderParams renderParams, BrCube cube, BrFace face, int vertexId) {
                         Vector3f normal = face.getNormal();
@@ -79,7 +82,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
                             ci[0] = 0;
                         }
                     }
-                });
+                })));
 
         poseStack.popPose();
     }

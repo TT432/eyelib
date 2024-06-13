@@ -1,8 +1,11 @@
 package io.github.tt432.eyelib.client.render.define;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.minecraft.resources.ResourceLocation;
+
+import java.util.List;
 
 /**
  * @author TT432
@@ -11,7 +14,8 @@ public record RenderDefine(
         ResourceLocation target,
         ResourceLocation model,
         ResourceLocation material,
-        RDAnimationController animationControllerEntry
+        RDAnimationController animationControllerEntry,
+        List<ResourceLocation> visitors
 ) {
 
     public record RDAnimationController(
@@ -38,11 +42,16 @@ public record RenderDefine(
                 ? new ResourceLocation(jp.getAsString())
                 : new ResourceLocation(model.getNamespace(), model.getPath() + ".material");
 
+        List<ResourceLocation> visitors = object.get("visitors") instanceof JsonArray ja
+                ? ja.asList().stream().map(je -> new ResourceLocation(je.getAsString())).toList()
+                : List.of(new ResourceLocation("eyelib:blank"));
+
         return new RenderDefine(
                 new ResourceLocation(object.get("target") instanceof JsonPrimitive jp ? jp.getAsString() : "__empty"),
                 model,
                 material,
-                entry
+                entry,
+                visitors
         );
     }
 }
