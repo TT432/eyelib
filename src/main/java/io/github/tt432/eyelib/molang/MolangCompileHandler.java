@@ -14,8 +14,7 @@ import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -50,11 +49,17 @@ public class MolangCompileHandler {
         CtMethod method = new CtMethod(CtClass.floatType, "eval", new CtClass[]{scopeClass}, ctClass);
         method.setModifiers(Modifier.STATIC | Modifier.PUBLIC);
 
-        var body = visitor.visitExprSet(
-                new MolangParser(
-                        new CommonTokenStream(
-                                new MolangLexer(CharStreams.fromString(value.getContext())))
-                ).exprSet());
+        MolangParser molangParser = new MolangParser(
+                new CommonTokenStream(
+                        new MolangLexer(CharStreams.fromString(value.getContext())))
+        );
+        molangParser.addErrorListener(new BaseErrorListener() {
+            @Override
+            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+                log.error("parsing: {} with error:{}", value.getContext(), e.getMessage());
+            }
+        });
+        var body = visitor.visitExprSet(molangParser.exprSet());
 
         method.setBody("{" + body + "}");
 
