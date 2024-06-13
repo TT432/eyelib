@@ -66,6 +66,13 @@ public interface MolangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNeExpr(MolangParser.NeExprContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code comment}
+	 * labeled alternative in {@link MolangParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitComment(MolangParser.CommentContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code returnOperator}
 	 * labeled alternative in {@link MolangParser#expr}.
 	 * @param ctx the parse tree

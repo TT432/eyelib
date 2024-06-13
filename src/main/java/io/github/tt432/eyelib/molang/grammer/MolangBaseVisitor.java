@@ -73,6 +73,13 @@ public class MolangBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitComment(MolangParser.CommentContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitReturnOperator(MolangParser.ReturnOperatorContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
