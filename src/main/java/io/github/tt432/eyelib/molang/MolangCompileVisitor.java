@@ -47,6 +47,8 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
 
         String[] split = string.split(";");
 
+        if (split.length == 0) return "return 0F;";
+
         for (int i = 0; i < split.length; i++) {
             if (split[i].isEmpty() || split[i].equals("null")) {
                 split[i] = "0F";
