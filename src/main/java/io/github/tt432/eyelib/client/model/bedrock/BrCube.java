@@ -59,7 +59,7 @@ public record BrCube(
             int uvSizeZ = (int) size.z;
 
             up = Pair.of(new Vector2f(uv.x + uvSizeZ, uv.y), new Vector2f(uvSizeX, uvSizeZ));
-            down = Pair.of(new Vector2f(uv.x + uvSizeX + uvSizeZ, uv.y), new Vector2f(uvSizeX, uvSizeZ));
+            down = Pair.of(new Vector2f(uv.x + uvSizeX + uvSizeZ + uvSizeX, uv.y), new Vector2f(-uvSizeX, uvSizeZ));
             west = Pair.of(new Vector2f(uv.x, uv.y + uvSizeZ), new Vector2f(uvSizeZ, uvSizeY));
             north = Pair.of(new Vector2f(uv.x + uvSizeZ, uv.y + uvSizeZ), new Vector2f(uvSizeX, uvSizeY));
             east = Pair.of(new Vector2f(uv.x + uvSizeZ + uvSizeX, uv.y + uvSizeZ), new Vector2f(uvSizeZ, uvSizeY));
@@ -125,10 +125,10 @@ public record BrCube(
 
         Vector3f[][] faces = new Vector3f[][]{
                 {corners[6], corners[2], corners[3], corners[7],},
-                {corners[1], corners[5], corners[4], corners[0],},
-                {corners[6], corners[5], corners[1], corners[2],},
-                {corners[2], corners[1], corners[0], corners[3],},
+                {corners[4], corners[0], corners[1], corners[5],},
                 {corners[3], corners[0], corners[4], corners[7],},
+                {corners[2], corners[1], corners[0], corners[3],},
+                {corners[6], corners[5], corners[1], corners[2],},
                 {corners[7], corners[4], corners[5], corners[6],}
         };
 
