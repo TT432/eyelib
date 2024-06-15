@@ -3,31 +3,33 @@ package io.github.tt432.eyelib.client.model.bedrock;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.render.BrModelTextures;
 import io.github.tt432.eyelib.client.render.RenderParams;
+import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
 import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.AllArgsConstructor;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.client.model.BakedModelWrapper;
 import net.neoforged.neoforge.client.model.IModelBuilder;
 import net.neoforged.neoforge.client.model.geometry.IGeometryBakingContext;
 import net.neoforged.neoforge.client.model.geometry.SimpleUnbakedGeometry;
 import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Quaternionf;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import org.joml.*;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -36,6 +38,31 @@ import java.util.function.Function;
 @AllArgsConstructor
 public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
     BrModel model;
+    private final Map<String, Matrix4f> visitors = new HashMap<>();
+
+    /**
+     * 可以通过如下的方式获取 BakedModel
+     * <pre>
+     * {@code
+     * Minecraft.getInstance()
+     *      .getBlockRenderer()
+     *      .getBlockModel(level().getBlockState(blockPosition()))
+     * }
+     * </pre>
+     */
+    public static final class BakedBrModel extends BakedModelWrapper<BakedModel> {
+        public final Map<String, Matrix4f> visitors;
+
+        public BakedBrModel(BakedModel originalModel, Map<String, Matrix4f> visitors) {
+            super(originalModel);
+            this.visitors = Map.copyOf(visitors);
+        }
+    }
+
+    @Override
+    public BakedModel bake(IGeometryBakingContext context, ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState, ItemOverrides overrides, ResourceLocation modelLocation) {
+        return new BakedBrModel(super.bake(context, baker, spriteGetter, modelState, overrides, modelLocation), visitors);
+    }
 
     @Override
     protected void addQuads(@NotNull IGeometryBakingContext owner, @NotNull IModelBuilder<?> modelBuilder, @NotNull ModelBaker baker, @NotNull Function<Material, TextureAtlasSprite> spriteGetter, @NotNull ModelState modelTransform, @NotNull ResourceLocation modelLocation) {
@@ -44,6 +71,8 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
 
         poseStack.mulPose(new Quaternionf().rotateY(180 * EyeMath.DEGREES_TO_RADIANS));
         poseStack.translate(-0.5, 0, -0.5);
+
+        poseStack.mulPose(modelTransform.getRotation().getMatrix());
 
         TextureAtlasSprite texture = spriteGetter.apply(owner.getMaterial("texture"));
 
@@ -81,6 +110,11 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
                             modelBuilder.addUnculledFace(buffered[0].getQuad());
                             ci[0] = 0;
                         }
+                    }
+
+                    @Override
+                    public void visitLocator(RenderParams renderParams, BrBone bone, String name, BrLocator locator, BoneRenderInfoEntry boneRenderInfoEntry) {
+                        visitors.put(name, new Matrix4f(renderParams.poseStack().last().pose()));
                     }
                 })));
 
