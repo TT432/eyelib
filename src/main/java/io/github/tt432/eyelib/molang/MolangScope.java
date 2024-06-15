@@ -20,7 +20,7 @@ public class MolangScope {
     private final Map<String, Object> animationData = new HashMap<>();
 
     public float get(String name) {
-        return cache.getOrDefault(name, 1F);
+        return cache.getOrDefault(name, 0F);
     }
 
     public boolean getBool(String name) {
