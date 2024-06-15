@@ -6,10 +6,7 @@ import com.google.gson.JsonParseException;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.model.bedrock.UnBakedBrModel;
 import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.client.model.geometry.IGeometryLoader;
@@ -22,21 +19,10 @@ import org.jetbrains.annotations.NotNull;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
-public class BlockBrModelLoader implements IGeometryLoader<UnBakedBrModel>, ResourceManagerReloadListener {
-    @Getter
-    private static BlockBrModelLoader instance;
-
+public class BlockBrModelLoader implements IGeometryLoader<UnBakedBrModel> {
     @SubscribeEvent
     public static void onEvent(ModelEvent.RegisterGeometryLoaders event) {
-        instance = new BlockBrModelLoader();
-        event.register("bedrock_model", instance);
-    }
-
-    ResourceManager resourceManager;
-
-    @Override
-    public void onResourceManagerReload(@NotNull ResourceManager pResourceManager) {
-        this.resourceManager = pResourceManager;
+        event.register("bedrock_model", new BlockBrModelLoader());
     }
 
     @Override
