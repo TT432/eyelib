@@ -116,6 +116,9 @@ public final class BrAnimator {
         for (Map.Entry<String, Float> animEntry : blend.entrySet()) {
             var animName = animEntry.getKey();
             BrAnimationEntry animation = targetAnimations.get(animName);
+
+            if (animation == null) continue;
+
             float multiplier = animation.blendWeight().eval(scope) * animEntry.getValue();
 
             float animTick = startedTime;
