@@ -11,6 +11,7 @@ import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationCon
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
 import io.github.tt432.eyelib.client.loader.BrAnimationControllerLoader;
 import io.github.tt432.eyelib.client.loader.BrAnimationLoader;
+import io.github.tt432.eyelib.molang.MolangValue;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.resources.ResourceLocation;
@@ -48,6 +49,7 @@ public class AnimationComponent {
     List<BrAnimationController> animationController;
 
     Map<String, TreeMap<Float, BrEffectsKeyFrame[]>>[] soundEffects;
+    Map<String, TreeMap<Float, MolangValue[]>>[] timelines;
 
     float[] startTick;
 
@@ -75,6 +77,7 @@ public class AnimationComponent {
         currState = new BrAcState[animationControllerSize];
         startTick = new float[animationControllerSize];
         soundEffects = new Map[animationControllerSize];
+        timelines = new Map[animationControllerSize];
         reset();
     }
 
@@ -98,6 +101,10 @@ public class AnimationComponent {
 
     public Map<String, TreeMap<Float, BrEffectsKeyFrame[]>> getCurrentSoundEvents() {
         return soundEffects[currentControllerIndex];
+    }
+
+    public Map<String, TreeMap<Float, MolangValue[]>> getCurrentTimeline() {
+        return timelines[currentControllerIndex];
     }
 
     public void updateStartTick(float aTick) {
@@ -127,6 +134,24 @@ public class AnimationComponent {
 
         if (brAnimationEntry != null) {
             soundEffects[currentControllerIndex].put(animName, new TreeMap<>(brAnimationEntry.soundEffects()));
+        }
+    }
+
+    public void resetTimelines(BrAcState currState) {
+        timelines[currentControllerIndex] = new HashMap<>();
+
+        currState.animations().forEach((k, v) -> {
+            if (targetAnimation.animations().containsKey(k)) {
+                timelines[currentControllerIndex].put(k, new TreeMap<>(targetAnimation.animations().get(k).timeline()));
+            }
+        });
+    }
+
+    public void resetTimeline(String animName) {
+        BrAnimationEntry brAnimationEntry = targetAnimation.animations().get(animName);
+
+        if (brAnimationEntry != null) {
+            timelines[currentControllerIndex].put(animName, new TreeMap<>(brAnimationEntry.timeline()));
         }
     }
 }
