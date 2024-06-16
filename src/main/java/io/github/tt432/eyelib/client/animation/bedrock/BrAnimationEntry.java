@@ -54,10 +54,10 @@ public record BrAnimationEntry(
         soundEffects = loadMap(jsonObject, "sound_effects");
         particleEffects = loadMap(jsonObject, "particle_effects");
         override_previous_animation = jsonObject.get("override_previous_animation") instanceof JsonPrimitive jp && jp.getAsBoolean();
-        anim_time_update = jsonObject.get("anim_time_update") instanceof JsonPrimitive jp ? MolangValue.parse(jp.getAsString()) : null;
-        blend_weight = jsonObject.get("blend_weight") instanceof JsonPrimitive jp ? MolangValue.parse(jp.getAsString()) : MolangValue.TRUE_VALUE;
-        start_delay = jsonObject.get("start_delay") instanceof JsonPrimitive jp ? MolangValue.parse(jp.getAsString()) : null;
-        loop_delay = jsonObject.get("loop_delay") instanceof JsonPrimitive jp ? MolangValue.parse(jp.getAsString()) : null;
+        anim_time_update = MolangValue.parse(jsonObject.get("anim_time_update"));
+        blend_weight = MolangValue.parse(jsonObject.get("blend_weight"), MolangValue.TRUE_VALUE);
+        start_delay = MolangValue.parse(jsonObject.get("start_delay"));
+        loop_delay = MolangValue.parse(jsonObject.get("loop_delay"));
 
         timeline = new TreeMap<>(Comparator.comparingDouble(k -> k));
 

@@ -128,10 +128,4 @@ public interface MolangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitParenthesesPrecedence(MolangParser.ParenthesesPrecedenceContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MolangParser#funcParam}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFuncParam(MolangParser.FuncParamContext ctx);
 }

@@ -84,12 +84,12 @@ public class AnimationComponent {
 
     public boolean anyAnimationFinished(float ticks) {
         return getCurrentState().animations().keySet().stream()
-                .anyMatch(s -> (ticks - startTick[currentControllerIndex]) > targetAnimation.animations().get(s).animationLength());
+                .anyMatch(s -> ((ticks - startTick[currentControllerIndex]) / 20) > targetAnimation.animations().get(s).animationLength());
     }
 
-    public boolean allAnimationFinished(float ticks) {
+    public boolean allAnimationsFinished(float ticks) {
         return getCurrentState().animations().keySet().stream()
-                .allMatch(s -> (ticks - startTick[currentControllerIndex]) > targetAnimation.animations().get(s).animationLength());
+                .allMatch(s -> ((ticks - startTick[currentControllerIndex]) / 20) > targetAnimation.animations().get(s).animationLength());
     }
 
     public BrAcState getCurrentState() {

@@ -61,7 +61,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
             r.append("io.github.tt432.eyelib.util.EyelibUtils.blackhole(").append(split[i]).append(");");
         }
 
-        r.append("return (float) ").append(split[split.length - 1]).append(";");
+        r.append("return io.github.tt432.eyelib.util.EyelibUtils.blackhole(").append(split[split.length - 1]).append(");");
 
         return r.toString();
     }
@@ -131,19 +131,20 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
     public String visitFunction(MolangParser.FunctionContext ctx) {
         List<String> params = new ArrayList<>();
 
-        for (MolangParser.FuncParamContext funcParamContext : ctx.funcParam()) {
-            if (funcParamContext.STRING() != null) {
-                String text = funcParamContext.STRING().getText();
-                params.add("\"" + text.substring(1, text.length() - 1) + "\"");
-            } else {
-                params.add(visit(funcParamContext.expr()));
-            }
+        for (var expr: ctx.expr()) {
+            params.add(visit(expr));
         }
 
         String joined = String.join(",", params);
 
         String methodName = rename(ctx.ID().getText());
         return MolangMappingTree.INSTANCE.findMethod(methodName, joined);
+    }
+
+    @Override
+    public String visitComment(MolangParser.CommentContext ctx) {
+        String text = ctx.STRING().getText();
+        return "\"" + text.substring(1, text.length() - 1) + "\"";
     }
 
     @Override
