@@ -2,118 +2,69 @@ package io.github.tt432.eyelib.molang;
 
 import io.github.tt432.eyelib.molang.grammer.MolangLexer;
 import io.github.tt432.eyelib.molang.grammer.MolangParser;
-import javassist.*;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
-import net.minecraft.util.profiling.ProfilerFiller;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.EventPriority;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import org.antlr.v4.runtime.*;
-import org.jetbrains.annotations.NotNull;
+import org.codehaus.commons.compiler.CompileException;
+import org.codehaus.janino.SimpleCompiler;
 
-import java.io.IOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 
 /**
  * @author TT432
  */
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class MolangCompileHandler {
+    private static final MolangCompileVisitor visitor = new MolangCompileVisitor();
     private static int currIdx;
 
     public static MethodHandle compile(MolangValue value) {
         try {
             return tryCompile(value);
-        } catch (NotFoundException | CannotCompileException | NoSuchMethodException | IOException |
-                 IllegalAccessException e) {
+        } catch (IllegalAccessException | ClassNotFoundException | CompileException e) {
             throw new MolangUncompilableException(e);
         }
     }
 
-    public static MethodHandle tryCompile(MolangValue value) throws NotFoundException, CannotCompileException, IOException, NoSuchMethodException, IllegalAccessException {
+    public static MethodHandle tryCompile(MolangValue value) throws IllegalAccessException, ClassNotFoundException, CompileException {
         currIdx++;
         String classname = "CompiledMolang$" + currIdx;
-        CtClass ctClass = classPool.makeClass(classname);
 
-        CtClass scopeClass = classPool.get(MolangScope.class.getName());
-        CtMethod method = new CtMethod(CtClass.floatType, "eval", new CtClass[]{scopeClass}, ctClass);
-        method.setModifiers(Modifier.STATIC | Modifier.PUBLIC);
+        String molangString = value.getContext().trim();
+        String body;
 
-        MolangParser molangParser = new MolangParser(
-                new CommonTokenStream(
-                        new MolangLexer(CharStreams.fromString(value.getContext())))
-        );
-        molangParser.addErrorListener(new BaseErrorListener() {
-            @Override
-            public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-                log.error("parsing: {} with error:{}", value.getContext(), e.getMessage());
-            }
-        });
-        var body = visitor.visitExprSet(molangParser.exprSet());
+        if (molangString.isEmpty()) {
+            body = "return 0F;";
+        } else {
+            MolangParser molangParser = new MolangParser(
+                    new CommonTokenStream(
+                            new MolangLexer(CharStreams.fromString(molangString)))
+            );
+            molangParser.addErrorListener(new BaseErrorListener() {
+                @Override
+                public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+                    log.error("parsing: {} with error:{}", molangString, e.getMessage());
+                }
+            });
+            body = visitor.visitExprSet(molangParser.exprSet());
+        }
 
-        method.setBody("{" + body + "}");
+        String sourceCode = """
+                public final class %s {
+                    public static float eval(%s $1) {
+                        %s
+                    }
+                }
+                """.formatted(classname, MolangScope.class.getName(), body);
 
-        ctClass.addMethod(method);
-
-        byte[] bytecode = ctClass.toBytecode();
-        Class<?> aClass = classLoader.createClass(classname, bytecode, 0, bytecode.length);
-
+        SimpleCompiler simpleCompiler = new SimpleCompiler();
+        simpleCompiler.setParentClassLoader(MolangScope.class.getClassLoader());
+        simpleCompiler.cook(sourceCode);
+        var clazz = simpleCompiler.getClassLoader().loadClass(classname);
         MethodHandles.Lookup publicLookup = MethodHandles.publicLookup();
-        MethodType mt = MethodType.methodType(float.class, MolangScope.class);
-
-        return publicLookup.findStatic(aClass, "eval", mt);
+        return publicLookup.unreflect(clazz.getMethods()[0]);
     }
-
-    private static class CustomClassLoader extends ClassLoader {
-        public CustomClassLoader(ClassLoader parent) {
-            super(parent);
-        }
-
-        public Class<?> createClass(String name, byte[] b, int off, int len) {
-            return super.defineClass(name, b, off, len);
-        }
-    }
-
-    private static boolean reloadable = true;
-
-    private static final class MolangCompileHandlerReloadListener extends SimplePreparableReloadListener<Object> {
-        @Override
-        protected @NotNull Object prepare(@NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerFiller) {
-            return "";
-        }
-
-        @Override
-        protected void apply(Object o, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profilerFiller) {
-            reloadable = true;
-        }
-    }
-
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onEvent(RegisterClientReloadListenersEvent event) {
-        event.registerReloadListener(new MolangCompileHandlerReloadListener());
-    }
-
-    private static CustomClassLoader classLoader;
-    private static ClassPool classPool;
-
-    public static void onReload() {
-        if (reloadable) {
-            reloadable = false;
-            classLoader = new CustomClassLoader(MolangScope.class.getClassLoader());
-            classPool = new ClassPool();
-            classPool.appendClassPath(new LoaderClassPath(classLoader));
-        }
-    }
-
-    private static final MolangCompileVisitor visitor = new MolangCompileVisitor();
 }

@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.invoke.MethodHandle;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -25,9 +26,16 @@ public final class MolangValue {
     public static final MolangValue FALSE_VALUE = new MolangValue("0");
 
     public static final Codec<MolangValue> CODEC = Codec.either(
-            Codec.either(Codec.STRING, Codec.FLOAT)
-                    .xmap(e -> e.map(Function.identity(), Object::toString), Either::left)
-                    .xmap(MolangValue::new, MolangValue::toString),
+            Codec.either(
+                    Codec.either(Codec.STRING, Codec.FLOAT).listOf()
+                            .xmap(el -> el.stream().map(e -> e.map(Function.identity(), Object::toString))
+                                    .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
+                                    .toString(), s -> List.of(Either.left(s)))
+                            .xmap(MolangValue::new, MolangValue::toString),
+                    Codec.either(Codec.STRING, Codec.FLOAT)
+                            .xmap(e -> e.map(Function.identity(), Object::toString), Either::left)
+                            .xmap(MolangValue::new, MolangValue::toString)
+            ).xmap(Either::unwrap, Either::right),
             RecordCodecBuilder.<MolangValue>create(ins -> ins.group(
                     Codec.STRING.fieldOf("context").forGetter(o -> o.context)
             ).apply(ins, MolangValue::new))
@@ -49,6 +57,7 @@ public final class MolangValue {
     }
 
     public static MolangValue parse(JsonElement json) {
+        if (json==null) return FALSE_VALUE;
         return parse(json, FALSE_VALUE);
     }
 

@@ -99,8 +99,9 @@ dependencies {
     // For all intends and purposes: You can treat this dependency as if it is a normal library you would use.
     implementation "net.neoforged:neoforge:${neo_version}"
 
-    libraries 'org.javassist:javassist:3.30.2-GA'
-    jarJar 'org.javassist:javassist:[3.30.2-GA,)'
+    libraries 'org.codehaus.janino:janino:3.1.12'
+    jarJar 'org.codehaus.janino:janino:[3.1.12,)'
+    jarJar 'org.codehaus.janino:commons-compiler:[3.1.12,)'
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

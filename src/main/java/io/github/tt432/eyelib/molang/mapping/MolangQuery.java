@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.molang.mapping;
 
+import io.github.tt432.eyelib.client.ClientTickHandler;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
@@ -138,13 +139,13 @@ public final class MolangQuery {
     }
 
     public static float any_animation_finished(MolangScope scope) {
-        return scope.getOwner().getAnimationComponent().anyAnimationFinished(partial_tick(scope))
+        return scope.getOwner().getAnimationComponent().anyAnimationFinished(ClientTickHandler.getTick() + partial_tick(scope))
                 ? MolangValue.TRUE
                 : MolangValue.FALSE;
     }
 
-    public static float all_animation_finished(MolangScope scope) {
-        return scope.getOwner().getAnimationComponent().allAnimationFinished(partial_tick(scope))
+    public static float all_animations_finished(MolangScope scope) {
+        return scope.getOwner().getAnimationComponent().allAnimationsFinished(ClientTickHandler.getTick() + partial_tick(scope))
                 ? MolangValue.TRUE
                 : MolangValue.FALSE;
     }
