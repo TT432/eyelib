@@ -88,6 +88,7 @@ public final class BrAnimator {
         component.updateStartTick(ticks);
 
         component.resetSoundEvents(currState);
+        component.resetTimelines(currState);
     }
 
     private static void processSoundEvent(MolangScope scope, float ticks, String animName, AnimationComponent component) {
@@ -110,6 +111,18 @@ public final class BrAnimator {
         }
     }
 
+    private static void processTimeline(MolangScope scope, float ticks, String animName, AnimationComponent component) {
+        Map<String, TreeMap<Float, MolangValue[]>> currentTimeline = component.getCurrentTimeline();
+        if (currentTimeline == null) return;
+        TreeMap<Float, MolangValue[]> timeline = currentTimeline.get(animName);
+
+        if (timeline != null && !timeline.isEmpty() && timeline.firstKey() < ticks) {
+            for (MolangValue molangValue : timeline.pollFirstEntry().getValue()) {
+                molangValue.eval(scope);
+            }
+        }
+    }
+
     private static void updateAnimations(Map<String, BrAnimationEntry> targetAnimations, Map<String, Float> blend,
                                          float startedTime, BoneRenderInfos infos, AnimationComponent component,
                                          MolangScope scope) {
@@ -128,6 +141,7 @@ public final class BrAnimator {
                     case LOOP -> {
                         animTick = startedTime % animation.animationLength();
                         component.resetSoundEvent(animName);
+                        component.resetTimeline(animName);
                     }
                     case ONCE -> {
                         continue;
@@ -139,6 +153,7 @@ public final class BrAnimator {
             }
 
             processSoundEvent(scope, animTick, animName, component);
+            processTimeline(scope, animTick, animName, component);
 
             for (Map.Entry<String, BrBoneAnimation> stringBrBoneAnimationEntry : animation.bones().entrySet()) {
                 var boneName = stringBrBoneAnimationEntry.getKey();
