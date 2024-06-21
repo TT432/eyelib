@@ -6,6 +6,7 @@ import com.google.gson.JsonPrimitive;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 /**
  * @author TT432
@@ -43,7 +44,7 @@ public record RenderDefine(
                 : new ResourceLocation(model.getNamespace(), model.getPath() + ".material");
 
         List<ResourceLocation> visitors = object.get("visitors") instanceof JsonArray ja
-                ? ja.asList().stream().map(je -> new ResourceLocation(je.getAsString())).toList()
+                ? StreamSupport.stream(ja.spliterator(),false).map(je -> new ResourceLocation(je.getAsString())).toList()
                 : List.of(new ResourceLocation("eyelib:blank"));
 
         return new RenderDefine(

@@ -89,13 +89,13 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         DataResult<Stream<T>> stream = ops.getStream(input);
         return stream.error()
                 .<DataResult<Pair<List<Object>, T>>>map(streamPartialResult ->
-                        DataResult.error(streamPartialResult::message))
+                        DataResult.error(streamPartialResult.message()))
                 .orElse(stream.result().<DataResult<Pair<List<Object>, T>>>map(s -> {
                     List<Codec<?>> codecs = getCodecs();
                     List<T> list = s.toList();
 
                     if (list.size() != codecs.size()) {
-                        return DataResult.error(() -> "can't process as " + this + ", size not equals.");
+                        return DataResult.error("can't process as " + this + ", size not equals.");
                     }
 
                     List<Object> result = new ArrayList<>();
@@ -107,12 +107,12 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
                         var error = decode.error();
 
                         if (error.isPresent()) {
-                            return DataResult.error(() -> this + " error: " + error.get().message());
+                            return DataResult.error(this + " error: " + error.get().message());
                         }
                     }
 
                     return DataResult.success(Pair.of(result, input));
-                }).orElse(DataResult.error(() -> this + " can't parse as list.")));
+                }).orElse(DataResult.error(this + " can't parse as list.")));
     }
 
     @Override
@@ -120,7 +120,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         List<Codec<?>> codecs = getCodecs();
 
         if (input.size() != codecs.size())
-            return DataResult.error(() -> "can't encode " + this + ", because input array size not equals this.");
+            return DataResult.error("can't encode " + this + ", because input array size not equals this.");
 
         final ListBuilder<T> builder = ops.listBuilder();
 

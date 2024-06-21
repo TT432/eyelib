@@ -8,14 +8,13 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Objects;
 import java.util.function.Function;
@@ -36,7 +35,7 @@ public final class MolangQuery {
 
         for (Object object : objects) {
             if (new ResourceLocation(object.toString())
-                    .equals(BuiltInRegistries.ITEM.getKey(livingEntity.getItemBySlot(slot).getItem()))) {
+                    .equals(ForgeRegistries.ITEMS.getKey(livingEntity.getItemBySlot(slot).getItem()))) {
                 return TRUE;
             }
         }
@@ -83,7 +82,7 @@ public final class MolangQuery {
         if (hand == InteractionHand.MAIN_HAND) {
             for (Object object : objects) {
                 if (Objects.equals(
-                        BuiltInRegistries.ITEM.getKey(living.getMainHandItem().getItem()),
+                        ForgeRegistries.ITEMS.getKey(living.getMainHandItem().getItem()),
                         new ResourceLocation(object.toString()))) {
                     return TRUE;
                 }
@@ -91,7 +90,7 @@ public final class MolangQuery {
         } else {
             for (Object object : objects) {
                 if (Objects.equals(
-                        BuiltInRegistries.ITEM.getKey(living.getOffhandItem().getItem()),
+                        ForgeRegistries.ITEMS.getKey(living.getOffhandItem().getItem()),
                         new ResourceLocation(object.toString()))) {
                     return TRUE;
                 }
@@ -167,7 +166,7 @@ public final class MolangQuery {
     }
 
     public static float is_on_ground(MolangScope scope) {
-        return entityBool(scope, Entity::onGround);
+        return entityBool(scope, Entity::isOnGround);
     }
 
     /**
@@ -317,7 +316,7 @@ public final class MolangQuery {
         return livingFloat(scope, e -> e.getLastClimbablePos()
                 .map(p ->
                         new Vec3(p.getX(), p.getY(), p.getZ())
-                                .add(e.level().getBlockState(p).getCollisionShape(e.level(), p).bounds().getCenter())
+                                .add(e.level.getBlockState(p).getCollisionShape(e.level, p).bounds().getCenter())
                                 .subtract(e.position())
                                 .x)
                 .orElse(0D)
@@ -328,7 +327,7 @@ public final class MolangQuery {
         return livingFloat(scope, e -> e.getLastClimbablePos()
                 .map(p ->
                         new Vec3(p.getX(), p.getY(), p.getZ())
-                                .add(e.level().getBlockState(p).getCollisionShape(e.level(), p).bounds().getCenter())
+                                .add(e.level.getBlockState(p).getCollisionShape(e.level, p).bounds().getCenter())
                                 .subtract(e.position())
                                 .y)
                 .orElse(0D)
@@ -338,7 +337,7 @@ public final class MolangQuery {
     public static float climbing_z(MolangScope scope) {
         return livingFloat(scope, e -> e.getLastClimbablePos()
                 .map(p -> new Vec3(p.getX(), p.getY(), p.getZ())
-                        .add(e.level().getBlockState(p).getCollisionShape(e.level(), p).bounds().getCenter())
+                        .add(e.level.getBlockState(p).getCollisionShape(e.level, p).bounds().getCenter())
                         .subtract(e.position())
                         .z)
                 .orElse(0D)
@@ -350,24 +349,8 @@ public final class MolangQuery {
     }
 
     public static float is_damage_by(MolangScope scope, Object... damageTypes) {
-        return livingBool(scope, e -> {
-            if (e.getLastDamageSource() != null) {
-                ResourceLocation resourceLocation = e.level().registryAccess()
-                        .registry(Registries.DAMAGE_TYPE)
-                        .map(r -> r.getKey(e.getLastDamageSource().type()))
-                        .orElse(null);
-
-                if (resourceLocation != null) {
-                    for (Object damageType : damageTypes) {
-                        if (resourceLocation.toString().equals(damageType.toString())) return true;
-                    }
-
-                    return false;
-                }
-            }
-
-            return false;
-        });
+        // TODO
+        return 0F;
     }
 
     public static float is_stalking(MolangScope scope) {
@@ -437,7 +420,7 @@ public final class MolangQuery {
     }
 
     public static float vertical_speed(MolangScope scope) {
-        return livingFloat(scope, living -> living.onGround() ? 0 : (float) (living.getDeltaMovement().y * 20));
+        return livingFloat(scope, living -> living.isOnGround() ? 0 : (float) (living.getDeltaMovement().y * 20));
     }
 
     public static float head_yaw(MolangScope scope) {

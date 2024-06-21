@@ -10,12 +10,12 @@ import io.github.tt432.eyelib.client.model.bedrock.material.ModelMaterial;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Random;
 
@@ -31,7 +31,7 @@ public class RenderDefineApplyHandler {
         if (event.entity instanceof Entity entity && event.componentObject instanceof RenderData<?> capability) {
             ModelComponent modelComponent = capability.getModelComponent();
 
-            RenderDefine renderDefine = ModelReplacerLoader.byTarget(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()));
+            RenderDefine renderDefine = ModelReplacerLoader.byTarget(ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()));
 
             if (renderDefine == null) {
                 return;

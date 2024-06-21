@@ -26,6 +26,6 @@ public class ModelRenderVisitorRegistry {
 
     @SubscribeEvent
     public static void onEvent(NewRegistryEvent event) {
-        VISITOR_REGISTRY = event.create(RegistryBuilder.of(VISITOR_REGISTRY_KEY));
+        VISITOR_REGISTRY = event.create(new RegistryBuilder<ModelRenderVisitor>().setName(VISITOR_REGISTRY_KEY));
     }
 }
