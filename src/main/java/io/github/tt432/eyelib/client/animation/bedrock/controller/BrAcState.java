@@ -42,7 +42,7 @@ public record BrAcState(
         }
 
         if (jo.get("animations") instanceof JsonArray ja) {
-            for (JsonElement jsonElement : ja.asList()) {
+            for (JsonElement jsonElement : ja) {
                 if (jsonElement instanceof JsonObject animationJson) {
                     for (Map.Entry<String, JsonElement> entry : animationJson.entrySet()) {
                         animations.put(entry.getKey(), MolangValue.parse(entry.getValue().getAsString()));
@@ -105,8 +105,9 @@ public record BrAcState(
 
             for (JsonElement jsonElement : ja) {
                 if (jsonElement instanceof JsonObject transitionObject) {
-                    transitionObject.asMap().forEach((k, v) ->
-                            transitionMap.put(k, MolangValue.parse(v.getAsString().replace("\n", ""))));
+                    transitionObject.entrySet().forEach(entry ->
+                            transitionMap.put(entry.getKey(), MolangValue.parse(entry.getValue()
+                                    .getAsString().replace("\n", ""))));
                 }
             }
 

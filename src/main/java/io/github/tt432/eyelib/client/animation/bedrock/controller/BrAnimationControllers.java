@@ -27,8 +27,9 @@ public record BrAnimationControllers(
 
         Map<String, BrAnimationController> animationControllers = new HashMap<>();
 
-        jo.asMap().forEach((k, v) -> {
-            if (v instanceof JsonObject joIn && (!joIn.asMap().isEmpty())) {
+        jo.entrySet().forEach(entry -> {
+            if (entry.getValue() instanceof JsonObject joIn && (joIn.size()>0)) {
+                String k = entry.getKey();
                 animationControllers.put(k, BrAnimationController.parse(jsonName, k, joIn));
             }
         });

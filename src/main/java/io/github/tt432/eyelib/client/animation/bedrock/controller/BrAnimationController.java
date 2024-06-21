@@ -26,7 +26,7 @@ public record BrAnimationController(
             throw new JsonParseException((EXCEPTION + "entry 'states' dose not JsonObject.").formatted(jsonName));
         }
 
-        for (Map.Entry<String, JsonElement> singleState : stateJson.asMap().entrySet()) {
+        for (Map.Entry<String, JsonElement> singleState : stateJson.entrySet()) {
             try {
                 states.put(singleState.getKey(), BrAcState.parse(singleState.getValue()));
             } catch (JsonParseException jsonParseException) {

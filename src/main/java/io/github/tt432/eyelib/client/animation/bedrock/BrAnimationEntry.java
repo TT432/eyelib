@@ -62,19 +62,19 @@ public record BrAnimationEntry(
         timeline = new TreeMap<>(Comparator.comparingDouble(k -> k));
 
         if (jsonObject.get("timeline") instanceof JsonObject timelineJson) {
-            timelineJson.asMap().forEach((key, value) -> {
-                float timestamp = Float.parseFloat(key);
+            timelineJson.entrySet().forEach(entry -> {
+                float timestamp = Float.parseFloat(entry.getKey());
 
-                if (value instanceof JsonArray ja) {
+                if (entry.getValue() instanceof JsonArray ja) {
                     MolangValue[] molangValues = new MolangValue[ja.size()];
 
-                    for (int i = 0; i < ja.asList().size(); i++) {
+                    for (int i = 0; i < ja.size(); i++) {
                         molangValues[i] = MolangValue.parse(ja.get(i).getAsString());
                     }
 
                     timeline.put(timestamp, molangValues);
                 } else {
-                    timeline.put(timestamp, new MolangValue[]{MolangValue.parse(value.getAsString())});
+                    timeline.put(timestamp, new MolangValue[]{MolangValue.parse(entry.getValue().getAsString())});
                 }
             });
         }
@@ -93,13 +93,14 @@ public record BrAnimationEntry(
         if (jsonObject.get(effectKey) instanceof JsonObject jo) {
             TreeMap<Float, BrEffectsKeyFrame[]> map = new TreeMap<>(Comparator.comparingDouble(k -> k));
 
-            jo.asMap().forEach((key, value) -> {
-                float timestamp = Float.parseFloat(key);
+            jo.entrySet().forEach(entry -> {
+                var value = entry.getValue();
+                float timestamp = Float.parseFloat(entry.getKey());
 
                 if (value instanceof JsonArray ja) {
                     BrEffectsKeyFrame[] keyFrames = new BrEffectsKeyFrame[ja.size()];
 
-                    for (int i = 0; i < ja.asList().size(); i++) {
+                    for (int i = 0; i < ja.size(); i++) {
                         keyFrames[i] = BrEffectsKeyFrame.parse(timestamp, ja.get(i).getAsJsonObject());
                     }
 
