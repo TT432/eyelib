@@ -55,7 +55,7 @@ public class RenderDefineApplyHandler {
 
             modelComponent.setInfo(new ModelComponent.SerializableInfo(
                     renderDefine.model(),
-                    new ResourceLocation(texture.getNamespace(),
+                    ResourceLocation.fromNamespaceAndPath(texture.getNamespace(),
                             "textures/" + texture.getPath() + ".png"),
                     material.renderType(),
                     renderDefine.visitors()
@@ -68,7 +68,7 @@ public class RenderDefineApplyHandler {
             String name = entry.name();
 
             if (!animationName.isBlank() && !name.isBlank()) {
-                animComponent.setup(new ResourceLocation(name), new ResourceLocation(animationName));
+                animComponent.setup(ResourceLocation.parse(name), ResourceLocation.parse(animationName));
             }
         }
     }

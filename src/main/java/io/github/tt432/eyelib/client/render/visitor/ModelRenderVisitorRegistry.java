@@ -19,7 +19,7 @@ import net.neoforged.neoforge.registries.RegistryBuilder;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ModelRenderVisitorRegistry {
     public static final ResourceKey<Registry<ModelRenderVisitor>> VISITOR_REGISTRY_KEY =
-            ResourceKey.createRegistryKey(new ResourceLocation(Eyelib.MOD_ID, "model_render_visitor"));
+            ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "model_render_visitor"));
 
     public static final Registry<ModelRenderVisitor> VISITOR_REGISTRY = new RegistryBuilder<>(VISITOR_REGISTRY_KEY)
             .sync(true)

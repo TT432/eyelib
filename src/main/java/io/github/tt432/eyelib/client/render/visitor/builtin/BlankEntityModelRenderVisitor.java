@@ -32,8 +32,8 @@ public class BlankEntityModelRenderVisitor extends ModelRenderVisitor {
 
         VertexConsumer consumer = renderParams.consumer();
         int light = renderParams.light();
-        consumer.vertex(tPosition.x, tPosition.y, tPosition.z,
-                1, 1, 1, 1,
+        consumer.addVertex(tPosition.x, tPosition.y, tPosition.z,
+                0xFF_FF_FF_FF,
                 uv.x, uv.y,
                 OverlayTexture.NO_OVERLAY, light,
                 tNormal.x, tNormal.y, tNormal.z);

@@ -15,7 +15,7 @@ public record ModelMaterial(
         List<ResourceLocation> textures,
         ResourceLocation renderType
 ) {
-    private static final ResourceLocation solid = new ResourceLocation("solid");
+    private static final ResourceLocation solid = ResourceLocation.parse("solid");
 
     public static final Codec<ModelMaterial> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             ResourceLocation.CODEC.listOf().optionalFieldOf("textures", List.of()).forGetter(o -> o.textures),

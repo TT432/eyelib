@@ -36,18 +36,18 @@ public record RenderDefine(
             entry = new RDAnimationController("", "");
         }
 
-        ResourceLocation model = new ResourceLocation(object.get("model") instanceof JsonPrimitive jp ? jp.getAsString() : "__empty");
+        ResourceLocation model = ResourceLocation.parse(object.get("model") instanceof JsonPrimitive jp ? jp.getAsString() : "__empty");
 
         ResourceLocation material = object.get("material") instanceof JsonPrimitive jp
-                ? new ResourceLocation(jp.getAsString())
-                : new ResourceLocation(model.getNamespace(), model.getPath() + ".material");
+                ? ResourceLocation.parse(jp.getAsString())
+                : ResourceLocation.fromNamespaceAndPath(model.getNamespace(), model.getPath() + ".material");
 
         List<ResourceLocation> visitors = object.get("visitors") instanceof JsonArray ja
-                ? ja.asList().stream().map(je -> new ResourceLocation(je.getAsString())).toList()
-                : List.of(new ResourceLocation("eyelib:blank"));
+                ? ja.asList().stream().map(je -> ResourceLocation.parse(je.getAsString())).toList()
+                : List.of(ResourceLocation.parse("eyelib:blank"));
 
         return new RenderDefine(
-                new ResourceLocation(object.get("target") instanceof JsonPrimitive jp ? jp.getAsString() : "__empty"),
+                ResourceLocation.parse(object.get("target") instanceof JsonPrimitive jp ? jp.getAsString() : "__empty"),
                 model,
                 material,
                 entry,

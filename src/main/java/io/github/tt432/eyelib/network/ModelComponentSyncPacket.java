@@ -16,7 +16,7 @@ public record ModelComponentSyncPacket(
         ModelComponent.SerializableInfo modelInfo
 ) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<ModelComponentSyncPacket> TYPE =
-            new CustomPacketPayload.Type<>(new ResourceLocation(Eyelib.MOD_ID, "model_component"));
+            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "model_component"));
 
     public static final StreamCodec<ByteBuf, ModelComponentSyncPacket> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT,

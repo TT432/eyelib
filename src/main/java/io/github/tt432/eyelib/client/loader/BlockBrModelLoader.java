@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class BlockBrModelLoader implements IGeometryLoader<UnBakedBrModel> {
     @SubscribeEvent
     public static void onEvent(ModelEvent.RegisterGeometryLoaders event) {
-        event.register(new ResourceLocation(Eyelib.MOD_ID, "bedrock_model"), new BlockBrModelLoader());
+        event.register(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "bedrock_model"), new BlockBrModelLoader());
     }
 
     @Override

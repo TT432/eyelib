@@ -16,7 +16,7 @@ public record AnimationComponentSyncPacket(
         AnimationComponent.SerializableInfo animationInfo
 ) implements CustomPacketPayload {
     public static final Type<AnimationComponentSyncPacket> TYPE =
-            new Type<>(new ResourceLocation(Eyelib.MOD_ID, "animation_component"));
+            new Type<>(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "animation_component"));
 
     public static final StreamCodec<ByteBuf, AnimationComponentSyncPacket> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT,

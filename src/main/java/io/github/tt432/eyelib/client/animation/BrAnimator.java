@@ -101,7 +101,7 @@ public final class BrAnimator {
                 Object owner = scope.getOwner().getOwner();
 
                 if (owner instanceof Entity e) {
-                    SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(new ResourceLocation(brEffectsKeyFrame.effect()));
+                    SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(ResourceLocation.parse(brEffectsKeyFrame.effect()));
                     if (!e.isSilent()) {
                         e.level().playSound(Minecraft.getInstance().player,
                                 e.getX(), e.getY(), e.getZ(), soundEvent, e.getSoundSource(), 1, 1);

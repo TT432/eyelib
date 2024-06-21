@@ -18,13 +18,11 @@ import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.client.model.BakedModelWrapper;
 import net.neoforged.neoforge.client.model.IModelBuilder;
 import net.neoforged.neoforge.client.model.geometry.IGeometryBakingContext;
 import net.neoforged.neoforge.client.model.geometry.SimpleUnbakedGeometry;
 import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
-import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
 import java.util.HashMap;
@@ -60,12 +58,12 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
     }
 
     @Override
-    public BakedModel bake(IGeometryBakingContext context, ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState, ItemOverrides overrides, ResourceLocation modelLocation) {
-        return new BakedBrModel(super.bake(context, baker, spriteGetter, modelState, overrides, modelLocation), visitors);
+    public BakedModel bake(IGeometryBakingContext context, ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState, ItemOverrides overrides) {
+        return new BakedBrModel(super.bake(context, baker, spriteGetter, modelState, overrides), visitors);
     }
 
     @Override
-    protected void addQuads(@NotNull IGeometryBakingContext owner, @NotNull IModelBuilder<?> modelBuilder, @NotNull ModelBaker baker, @NotNull Function<Material, TextureAtlasSprite> spriteGetter, @NotNull ModelState modelTransform, @NotNull ResourceLocation modelLocation) {
+    protected void addQuads(IGeometryBakingContext owner, IModelBuilder<?> modelBuilder, ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelTransform) {
         PoseStack poseStack = new PoseStack();
         poseStack.pushPose();
 
@@ -76,7 +74,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
 
         TextureAtlasSprite texture = spriteGetter.apply(owner.getMaterial("texture"));
 
-        final QuadBakingVertexConsumer.Buffered[] buffered = {null};
+        final QuadBakingVertexConsumer[] buffered = {null};
         final int[] ci = {0};
 
         BrModelRenderer.render(new RenderParams(null, poseStack.last(),
@@ -100,14 +98,14 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
 
                         ci[0]++;
 
-                        buffered[0].vertex(tPosition.x, tPosition.y, tPosition.z,
-                                1, 1, 1, 1,
+                        buffered[0].addVertex(tPosition.x, tPosition.y, tPosition.z,
+                                0xFF_FF_FF_FF,
                                 uv.x, uv.y,
                                 OverlayTexture.NO_OVERLAY, 0,
                                 tNormal.x, tNormal.y, tNormal.z);
 
                         if (ci[0] == 4) {
-                            modelBuilder.addUnculledFace(buffered[0].getQuad());
+                            modelBuilder.addUnculledFace(buffered[0].bakeQuad());
                             ci[0] = 0;
                         }
                     }
@@ -121,8 +119,8 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
         poseStack.popPose();
     }
 
-    private static QuadBakingVertexConsumer.Buffered newBuffer(TextureAtlasSprite texture, Vector3f normal) {
-        QuadBakingVertexConsumer.Buffered consumer = new QuadBakingVertexConsumer.Buffered();
+    private static QuadBakingVertexConsumer newBuffer(TextureAtlasSprite texture, Vector3f normal) {
+        QuadBakingVertexConsumer consumer = new QuadBakingVertexConsumer();
         consumer.setSprite(texture);
         consumer.setShade(true);
         Direction nearest = Direction.getNearest(normal.x, normal.y, normal.z);

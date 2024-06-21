@@ -55,7 +55,7 @@ public class EntityRenderSystem {
 
             if (component.getAnimationController() != null) {
                 BoneRenderInfos tickedInfos = BrAnimator.tickAnimation(component, scope,
-                        ClientTickHandler.getTick() + Minecraft.getInstance().getPartialTick());
+                        ClientTickHandler.getTick() + Minecraft.getInstance().getTimer().getGameTimeDeltaTicks());
                 cap.getModelComponent().getBoneInfos().set(tickedInfos);
             }
         }

@@ -35,7 +35,7 @@ public final class MolangQuery {
             return FALSE;
 
         for (Object object : objects) {
-            if (new ResourceLocation(object.toString())
+            if (ResourceLocation.parse(object.toString())
                     .equals(BuiltInRegistries.ITEM.getKey(livingEntity.getItemBySlot(slot).getItem()))) {
                 return TRUE;
             }
@@ -84,7 +84,7 @@ public final class MolangQuery {
             for (Object object : objects) {
                 if (Objects.equals(
                         BuiltInRegistries.ITEM.getKey(living.getMainHandItem().getItem()),
-                        new ResourceLocation(object.toString()))) {
+                        ResourceLocation.parse(object.toString()))) {
                     return TRUE;
                 }
             }
@@ -92,7 +92,7 @@ public final class MolangQuery {
             for (Object object : objects) {
                 if (Objects.equals(
                         BuiltInRegistries.ITEM.getKey(living.getOffhandItem().getItem()),
-                        new ResourceLocation(object.toString()))) {
+                        ResourceLocation.parse(object.toString()))) {
                     return TRUE;
                 }
             }
@@ -135,7 +135,7 @@ public final class MolangQuery {
     }
 
     public static float partial_tick(MolangScope scope) {
-        return Minecraft.getInstance().getPartialTick();
+        return Minecraft.getInstance().getTimer().getGameTimeDeltaTicks();
     }
 
     public static float any_animation_finished(MolangScope scope) {

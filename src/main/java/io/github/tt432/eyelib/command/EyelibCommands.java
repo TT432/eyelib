@@ -43,10 +43,10 @@ public class EyelibCommands {
                                                             ModelComponent modelComponent = data.getModelComponent();
 
                                                             modelComponent.setInfo(new ModelComponent.SerializableInfo(
-                                                                    new ResourceLocation(StringArgumentType.getString(context, "model")),
-                                                                    new ResourceLocation(StringArgumentType.getString(context, "texture")),
-                                                                    new ResourceLocation(StringArgumentType.getString(context, "renderType")),
-                                                                    List.of(new ResourceLocation(StringArgumentType.getString(context, "visitors")))
+                                                                    ResourceLocation.parse(StringArgumentType.getString(context, "model")),
+                                                                    ResourceLocation.parse(StringArgumentType.getString(context, "texture")),
+                                                                    ResourceLocation.parse(StringArgumentType.getString(context, "renderType")),
+                                                                    List.of(ResourceLocation.parse(StringArgumentType.getString(context, "visitors")))
                                                             ));
 
                                                             data.sync();
