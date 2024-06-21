@@ -11,11 +11,11 @@ import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
 import io.github.tt432.eyelib.util.math.EyeMath;
+import io.github.tt432.eyelib.util.math.PoseWrapper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.ArrayDeque;
@@ -36,11 +36,12 @@ public class BrModelRenderer {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();
 
-        PoseStack.Pose last = poseStack.last();
-        Matrix4f pose = last.pose();
-        pose.rotateY(R180);
-        Matrix3f normal = last.normal();
-        normal.rotateY(R180);
+        try (var last = PoseWrapper.from(poseStack.last())) {
+            var pose = last.pose();
+            pose.rotateY(R180);
+            Matrix3f normal = last.normal();
+            normal.rotateY(R180);
+        }
 
         for (BrBone toplevelBone : model.toplevelBones()) {
             renderBone(renderParams, visitors, infos, toplevelBone);
@@ -51,53 +52,55 @@ public class BrModelRenderer {
     }
 
     private static void renderBone(RenderParams renderParams, ModelRenderVisitorList visitors, BoneRenderInfos infos, BrBone bone) {
-        PoseStack poseStack = renderParams.poseStack();
-        poseStack.pushPose();
+        renderParams.poseStack().pushPose();
 
         BoneRenderInfoEntry boneRenderInfoEntry = infos.get(bone.name());
 
         visitors.visitors().forEach(visitor -> visitor.visitBone(renderParams, bone, boneRenderInfoEntry, true));
 
-        PoseStack.Pose last = poseStack.last();
-        Matrix4f m4 = last.pose();
+        try (var last = PoseWrapper.from(renderParams.poseStack().last())) {
+            var m4 = last.pose();
 
-        m4.translate(boneRenderInfoEntry.getRenderPosition());
+            m4.translate(boneRenderInfoEntry.getRenderPosition());
 
-        Vector3f renderPivot = bone.pivot();
+            Vector3f renderPivot = bone.pivot();
 
-        m4.translate(renderPivot);
+            m4.translate(renderPivot);
 
-        Vector3f rotation = boneRenderInfoEntry.getRenderRotation();
+            Vector3f rotation = boneRenderInfoEntry.getRenderRotation();
 
-        Matrix3f normal = last.normal();
-        normal.rotateZYX(rotation);
-        m4.rotateZYX(rotation);
+            Matrix3f normal = last.normal();
+            normal.rotateZYX(rotation);
+            m4.rotateZYX(rotation);
 
-        Vector3f boneRotation = bone.rotation();
+            Vector3f boneRotation = bone.rotation();
 
-        normal.rotateZYX(boneRotation);
-        m4.rotateZYX(boneRotation);
+            normal.rotateZYX(boneRotation);
+            m4.rotateZYX(boneRotation);
 
-        Vector3f scale = boneRenderInfoEntry.getRenderScala();
+            Vector3f scale = boneRenderInfoEntry.getRenderScala();
 
-        poseStack.scale(scale.x, scale.y, scale.z);
+            last.pose().scale(scale.x, scale.y, scale.z);
+            last.normal().scale(scale.x, scale.y, scale.z);
 
-        m4.translate(renderPivot.negate(nPivot));
+            m4.translate(renderPivot.negate(nPivot));
+        }
 
         visitors.visitors().forEach(visitor -> visitor.visitBone(renderParams, bone, boneRenderInfoEntry, false));
 
         bone.locators().forEach((name, locator) -> {
-            poseStack.pushPose();
+            renderParams.poseStack().pushPose();
 
-            PoseStack.Pose last1 = poseStack.last();
-            Matrix4f pose = last1.pose();
-            pose.translate(locator.getOffset());
-            pose.rotateZYX(locator.getRotation());
-            last1.normal().rotateZYX(locator.getRotation());
+            try (var last1 = PoseWrapper.from(renderParams.poseStack().last())) {
+                var pose = last1.pose();
+                pose.translate(locator.getOffset());
+                pose.rotateZYX(locator.getRotation());
+                last1.normal().rotateZYX(locator.getRotation());
+            }
 
             visitors.visitors().forEach(visitor -> visitor.visitLocator(renderParams, bone, name, locator, boneRenderInfoEntry));
 
-            poseStack.popPose();
+            renderParams.poseStack().popPose();
         });
 
         for (int i = 0; i < bone.cubes().size(); i++) {
@@ -111,7 +114,7 @@ public class BrModelRenderer {
             renderBone(renderParams, visitors, infos, child);
         }
 
-        poseStack.popPose();
+        renderParams.poseStack().popPose();
     }
 
     private static void renderCube(RenderParams renderParams, ModelRenderVisitorList visitors,

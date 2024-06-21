@@ -1,6 +1,8 @@
 package io.github.tt432.eyelib.client.model.bedrock;
 
+import com.google.common.collect.Sets;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.datafixers.util.Pair;
 import io.github.tt432.eyelib.client.render.BrModelTextures;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
@@ -9,15 +11,14 @@ import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
 import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
 import io.github.tt432.eyelib.util.math.EyeMath;
+import io.github.tt432.eyelib.util.math.Jomls;
 import io.github.tt432.eyelib.util.math.PoseStacks;
+import io.github.tt432.eyelib.util.math.PoseWrapper;
 import lombok.AllArgsConstructor;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.Material;
-import net.minecraft.client.resources.model.ModelBaker;
-import net.minecraft.client.resources.model.ModelState;
+import net.minecraft.client.resources.model.*;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.model.BakedModelWrapper;
@@ -26,11 +27,12 @@ import net.minecraftforge.client.model.geometry.IGeometryBakingContext;
 import net.minecraftforge.client.model.geometry.SimpleUnbakedGeometry;
 import net.minecraftforge.client.model.pipeline.QuadBakingVertexConsumer;
 import org.jetbrains.annotations.NotNull;
-import org.joml.*;
+import org.joml.Matrix4f;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -61,19 +63,22 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
     }
 
     @Override
-    public BakedModel bake(IGeometryBakingContext context, ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState, ItemOverrides overrides, ResourceLocation modelLocation) {
+    public BakedModel bake(IGeometryBakingContext context, ModelBakery baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState, ItemOverrides overrides, ResourceLocation modelLocation) {
         return new BakedBrModel(super.bake(context, baker, spriteGetter, modelState, overrides, modelLocation), visitors);
     }
 
     @Override
-    protected void addQuads(@NotNull IGeometryBakingContext owner, @NotNull IModelBuilder<?> modelBuilder, @NotNull ModelBaker baker, @NotNull Function<Material, TextureAtlasSprite> spriteGetter, @NotNull ModelState modelTransform, @NotNull ResourceLocation modelLocation) {
+    protected void addQuads(@NotNull IGeometryBakingContext owner, @NotNull IModelBuilder<?> modelBuilder, @NotNull ModelBakery baker, @NotNull Function<Material, TextureAtlasSprite> spriteGetter, @NotNull ModelState modelTransform, @NotNull ResourceLocation modelLocation) {
         PoseStack poseStack = new PoseStack();
         poseStack.pushPose();
 
-        poseStack.mulPose(new Quaternionf().rotateY(180 * EyeMath.DEGREES_TO_RADIANS));
-        poseStack.translate(-0.5, 0, -0.5);
+        try (PoseWrapper wrapper = PoseWrapper.from(poseStack.last())) {
+            wrapper.pose().rotateY(180 * EyeMath.DEGREES_TO_RADIANS);
+            wrapper.normal().rotateY(180 * EyeMath.DEGREES_TO_RADIANS);
+            wrapper.pose().translate(-0.5F, 0, -0.5F);
 
-        PoseStacks.mulPose(poseStack, modelTransform.getRotation().getMatrix());
+            PoseStacks.mulPose(wrapper, Jomls.from(modelTransform.getRotation().getMatrix()));
+        }
 
         TextureAtlasSprite texture = spriteGetter.apply(owner.getMaterial("texture"));
 
@@ -89,37 +94,47 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
                         Vector3f normal = face.getNormal();
                         Vector3f vertex = face.getVertex()[vertexId];
                         var uv = mapUV(face.getUv()[vertexId], texture.getU0(), texture.getV0(), texture.getU1(), texture.getV1());
-                        PoseStack poseStack = renderParams.poseStack();
-                        PoseStack.Pose last = poseStack.last();
 
-                        var tPosition = last.pose().transformAffine(vertex.x, vertex.y, vertex.z, 1, new Vector4f());
-                        var tNormal = last.normal().transform(normal, new Vector3f());
+                        try (var last = PoseWrapper.from(renderParams.poseStack().last())) {
+                            var tPosition = last.pose().transformAffine(vertex.x, vertex.y, vertex.z, 1, new Vector4f());
+                            var tNormal = last.normal().transform(normal, new Vector3f());
 
-                        if (ci[0] == 0) {
-                            buffered[0] = newBuffer(texture, normal);
-                        }
+                            if (ci[0] == 0) {
+                                buffered[0] = newBuffer(texture, normal);
+                            }
 
-                        ci[0]++;
+                            ci[0]++;
 
-                        buffered[0].vertex(tPosition.x, tPosition.y, tPosition.z,
-                                1, 1, 1, 1,
-                                uv.x, uv.y,
-                                OverlayTexture.NO_OVERLAY, 0,
-                                tNormal.x, tNormal.y, tNormal.z);
+                            buffered[0].vertex(tPosition.x, tPosition.y, tPosition.z,
+                                    1, 1, 1, 1,
+                                    uv.x, uv.y,
+                                    OverlayTexture.NO_OVERLAY, 0,
+                                    tNormal.x, tNormal.y, tNormal.z);
 
-                        if (ci[0] == 4) {
-                            modelBuilder.addUnculledFace(buffered[0].getQuad());
-                            ci[0] = 0;
+                            if (ci[0] == 4) {
+                                modelBuilder.addUnculledFace(buffered[0].getQuad());
+                                ci[0] = 0;
+                            }
                         }
                     }
 
                     @Override
                     public void visitLocator(RenderParams renderParams, BrBone bone, String name, BrLocator locator, BoneRenderInfoEntry boneRenderInfoEntry) {
-                        visitors.put(name, new Matrix4f(renderParams.poseStack().last().pose()));
+                        visitors.put(name, Jomls.from(renderParams.poseStack().last().pose()));
                     }
                 })));
 
         poseStack.popPose();
+    }
+
+    @Override
+    public Collection<Material> getMaterials(IGeometryBakingContext context, Function<ResourceLocation, UnbakedModel> modelGetter, Set<Pair<String, String>> missingTextureErrors) {
+        Set<Material> textures = Sets.newHashSet();
+        if (context.hasMaterial("particle"))
+            textures.add(context.getMaterial("particle"));
+        if (context.hasMaterial("texture"))
+            textures.add(context.getMaterial("texture"));
+        return textures;
     }
 
     private static QuadBakingVertexConsumer.Buffered newBuffer(TextureAtlasSprite texture, Vector3f normal) {

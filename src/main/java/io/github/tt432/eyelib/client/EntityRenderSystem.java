@@ -2,6 +2,8 @@ package io.github.tt432.eyelib.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Matrix3f;
+import com.mojang.math.Matrix4f;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
@@ -25,8 +27,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 
 /**
  * @author TT432
@@ -45,7 +45,7 @@ public class EntityRenderSystem {
     }
 
     @SubscribeEvent
-    public static void onEvent(RenderLivingEvent.Pre event) {
+    public static void onEvent(RenderLivingEvent.Pre<?, ?> event) {
         LivingEntity entity = event.getEntity();
         RenderData<?> cap = RenderData.getComponent(entity);
 

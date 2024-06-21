@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.client.model.bedrock.BrCube;
 import io.github.tt432.eyelib.client.model.bedrock.BrFace;
 import io.github.tt432.eyelib.client.render.RenderParams;
+import io.github.tt432.eyelib.util.math.PoseWrapper;
 import lombok.Setter;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import org.joml.Vector2f;
@@ -25,7 +26,7 @@ public class BlankEntityModelRenderVisitor extends ModelRenderVisitor {
         Vector3f vertex = face.getVertex()[vertexId];
         Vector2f uv = face.getUv()[vertexId];
         PoseStack poseStack = renderParams.poseStack();
-        PoseStack.Pose last = poseStack.last();
+        var last = PoseWrapper.from(poseStack.last());
 
         last.pose().transformAffine(vertex.x, vertex.y, vertex.z, 1, tPosition);
         last.normal().transform(normal, tNormal);

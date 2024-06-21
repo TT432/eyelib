@@ -135,6 +135,9 @@ dependencies {
         jarJar.ranged(it, '[3.1.12,)')
     }
     jarJar('org.codehaus.janino:commons-compiler:[3.1.12,)')
+    jarJar(minecraftLibrary 'org.joml:joml:1.10.5') {
+        jarJar.ranged(it, '[1.10.5,)')
+    }
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

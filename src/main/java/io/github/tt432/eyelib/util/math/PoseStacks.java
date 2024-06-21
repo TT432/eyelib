@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.util.math;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.joml.Matrix3f;
@@ -19,8 +18,7 @@ public class PoseStacks {
         return (pMatrix.properties() & 16) != 0;
     }
 
-    public static void mulPose(PoseStack poseStack, Matrix4f pPose) {
-        PoseStack.Pose pose = poseStack.last();
+    public static void mulPose(PoseWrapper pose, Matrix4f pPose) {
         pose.pose().mul(pPose);
         if (!isPureTranslation(pPose)) {
             if (isOrthonormal(pPose)) {
