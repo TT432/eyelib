@@ -3,7 +3,7 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.gradle.userdev' version '7.0.142'
+    id 'net.neoforged.gradle.userdev' version '7.0.145'
     id "io.freefair.lombok" version "8.6"
 }
 
@@ -111,6 +111,18 @@ dependencies {
     libraries 'org.codehaus.janino:janino:3.1.12'
     jarJar 'org.codehaus.janino:janino:[3.1.12,)'
     jarJar 'org.codehaus.janino:commons-compiler:[3.1.12,)'
+}
+
+java {
+    withSourcesJar()
+}
+
+jar{
+    archiveClassifier="s"
+}
+
+tasks['jarJar'].configure {
+    archiveClassifier=''
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
