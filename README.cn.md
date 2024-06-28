@@ -25,7 +25,7 @@ repositories {
 ```groovy
 dependencies {
     // 如果你需要 jarJar，用 'implementation "io.github.tt432:eyelib:0.1.0:all"'
-    implementation "io.github.tt432:eyelib:0.1.0:all"
+    implementation "io.github.tt432:eyelib:1.21-0.1.2"
 }
 ```
 
