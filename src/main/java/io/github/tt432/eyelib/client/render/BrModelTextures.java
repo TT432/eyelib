@@ -40,7 +40,7 @@ public class BrModelTextures {
     public static TwoSideInfoMap getTwoSideInfo(BrModel model, boolean isSolid, ResourceLocation texture) {
         return map.computeIfAbsent(model.identifier(), ___ -> new HashMap<>())
                 .computeIfAbsent(texture, __ -> {
-                    Minecraft.getInstance().textureManager.getTexture(texture).bind();
+                    Minecraft.getInstance().getTextureManager().getTexture(texture).bind();
 
                     int[] width = new int[1];
                     int[] height = new int[1];
