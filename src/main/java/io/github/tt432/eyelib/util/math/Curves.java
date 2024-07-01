@@ -25,7 +25,7 @@ public class Curves {
         return catmullRom(weight, p0.y(), p1.y(), p2.y(), p3.y());
     }
 
-    private static float catmullRom(float t, float p0, float p1, float p2, float p3) {
+    public static float catmullRom(float t, float p0, float p1, float p2, float p3) {
         float v0 = (p2 - p0) * .5F;
         float v1 = (p3 - p1) * .5F;
         float t2 = t * t;
