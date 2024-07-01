@@ -1,8 +1,6 @@
 package io.github.tt432.eyelib.molang;
 
-import io.github.tt432.eyelib.capability.RenderData;
 import lombok.Getter;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,8 +12,7 @@ import java.util.Map;
  */
 public class MolangScope {
     @Getter
-    @Setter
-    private RenderData<?> owner = null;
+    private MolangOwnerSet owner = new MolangOwnerSet();
     private final Map<String, Float> cache = new HashMap<>();
     private final Map<String, Object> animationData = new HashMap<>();
 
@@ -30,6 +27,10 @@ public class MolangScope {
     public float set(String name, float value) {
         cache.put(name, value);
         return value;
+    }
+
+    public void setOwner(Object owner) {
+        this.owner.add(owner);
     }
 
     @Nullable

@@ -1,8 +1,10 @@
 package io.github.tt432.eyelib.molang.mapping;
 
+import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.client.ClientTickHandler;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -14,9 +16,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -30,135 +34,121 @@ import static io.github.tt432.eyelib.molang.MolangValue.TRUE;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @SuppressWarnings("unused")
 public final class MolangQuery {
-    private static float slot_getter(MolangScope scope, EquipmentSlot slot, Object... objects) {
-        if (!(scope.getOwner().getOwner() instanceof LivingEntity livingEntity))
-            return FALSE;
-
-        for (Object object : objects) {
-            if (ResourceLocation.parse(object.toString())
-                    .equals(BuiltInRegistries.ITEM.getKey(livingEntity.getItemBySlot(slot).getItem()))) {
-                return TRUE;
-            }
-        }
-
-        return FALSE;
-    }
-
-    public static float has_main_hand(MolangScope scope) {
+    @MolangFunction(value = "has_main_hand", description = "主手有物品")
+    public static float hasMainHand(MolangScope scope) {
         return livingBool(scope, e -> !e.getMainHandItem().isEmpty());
     }
 
-    public static float has_off_hand(MolangScope scope) {
+    @MolangFunction(value = "has_off_hand", description = "副手有物品")
+    public static float hasOffHand(MolangScope scope) {
         return livingBool(scope, e -> !e.getOffhandItem().isEmpty());
     }
 
-    public static float off_hand_is(MolangScope scope, Object... objects) {
-        return slot_getter(scope, EquipmentSlot.OFFHAND, objects);
+    @MolangFunction(value = "has_helmet", description = "已装备头盔")
+    public static float hasHelmet(MolangScope scope) {
+        return livingBool(scope, living -> !living.getItemBySlot(EquipmentSlot.HEAD).isEmpty());
     }
 
-    public static float main_hand_is(MolangScope scope, Object... objects) {
-        return slot_getter(scope, EquipmentSlot.MAINHAND, objects);
+    @MolangFunction(value = "has_chestplate", description = "已装备胸甲")
+    public static float hasChestplate(MolangScope scope) {
+        return livingBool(scope, living -> !living.getItemBySlot(EquipmentSlot.CHEST).isEmpty());
     }
 
-    public static float leggings_is(MolangScope scope, Object... objects) {
-        return slot_getter(scope, EquipmentSlot.LEGS, objects);
+    @MolangFunction(value = "has_leggings", description = "已装备护腿")
+    public static float hasLeggings(MolangScope scope) {
+        return livingBool(scope, living -> !living.getItemBySlot(EquipmentSlot.LEGS).isEmpty());
     }
 
-    public static float helmet_is(MolangScope scope, Object... objects) {
-        return slot_getter(scope, EquipmentSlot.HEAD, objects);
+    @MolangFunction(value = "has_boots", description = "已装备靴子")
+    public static float hasBoots(MolangScope scope) {
+        return livingBool(scope, living -> !living.getItemBySlot(EquipmentSlot.FEET).isEmpty());
     }
 
-    public static float chestplate_is(MolangScope scope, Object... objects) {
-        return slot_getter(scope, EquipmentSlot.CHEST, objects);
+    @MolangFunction(value = "off_hand_is", description = "副手是指定物品之一")
+    public static float offHandIs(MolangScope scope, Object... objects) {
+        return slotGetter(scope, EquipmentSlot.OFFHAND, objects);
     }
 
-    public static float boots_is(MolangScope scope, Object... objects) {
-        return slot_getter(scope, EquipmentSlot.FEET, objects);
+    @MolangFunction(value = "main_hand_is", description = "主手是指定物品之一")
+    public static float mainHandIs(MolangScope scope, Object... objects) {
+        return slotGetter(scope, EquipmentSlot.MAINHAND, objects);
     }
 
-    public static float hand_is(MolangScope scope, InteractionHand hand, Object... objects) {
-        if (!(scope.getOwner().getOwner() instanceof LivingEntity living))
-            return FALSE;
-
-        if (hand == InteractionHand.MAIN_HAND) {
-            for (Object object : objects) {
-                if (Objects.equals(
-                        BuiltInRegistries.ITEM.getKey(living.getMainHandItem().getItem()),
-                        ResourceLocation.parse(object.toString()))) {
-                    return TRUE;
-                }
-            }
-        } else {
-            for (Object object : objects) {
-                if (Objects.equals(
-                        BuiltInRegistries.ITEM.getKey(living.getOffhandItem().getItem()),
-                        ResourceLocation.parse(object.toString()))) {
-                    return TRUE;
-                }
-            }
-        }
-
-        return FALSE;
+    @MolangFunction(value = "leggings_is", description = "护腿是指定物品之一")
+    public static float leggingsIs(MolangScope scope, Object... objects) {
+        return slotGetter(scope, EquipmentSlot.LEGS, objects);
     }
 
-    public static float is_item_equipped(MolangScope scope, Object hand) {
-        String arg = hand.toString();
-
-        if (!(scope.getOwner().getOwner() instanceof LivingEntity living))
-            return FALSE;
-
-        if (arg.equals("main_hand") || arg.equals("0")) {
-            return living.getMainHandItem().isEmpty() ? FALSE : TRUE;
-        } else if (arg.equals("off_hand") || arg.equals("1")) {
-            return living.getOffhandItem().isEmpty() ? FALSE : TRUE;
-        }
-
-        return FALSE;
+    @MolangFunction(value = "helmet_is", description = "头盔是指定物品之一")
+    public static float helmetIs(MolangScope scope, Object... objects) {
+        return slotGetter(scope, EquipmentSlot.HEAD, objects);
     }
 
-    public static float actor_count(MolangScope scope) {
+    @MolangFunction(value = "chestplate_is", description = "胸甲是指定物品之一")
+    public static float chestplateIs(MolangScope scope, Object... objects) {
+        return slotGetter(scope, EquipmentSlot.CHEST, objects);
+    }
+
+    @MolangFunction(value = "boots_is", description = "鞋子是指定物品之一")
+    public static float bootsIs(MolangScope scope, Object... objects) {
+        return slotGetter(scope, EquipmentSlot.FEET, objects);
+    }
+
+    @MolangFunction(value = "is_item_equipped", description = "指定手上是否有物品 (有效参数 主手='main_hand' 或 0; 副手= 'off_hand' 或 1)")
+    public static float isItemEquipped(MolangScope scope, Object hand) {
+        return scope.getOwner().ownerAs(LivingEntity.class).map(living -> (switch (hand.toString()) {
+            case "main_hand", "0" -> living.getMainHandItem();
+            case "off_hand", "1" -> living.getOffhandItem();
+            default -> ItemStack.EMPTY;
+        }).isEmpty() ? FALSE : TRUE).orElse(FALSE);
+    }
+
+    @MolangFunction(value = "actor_count", description = "世界中实体的数量")
+    public static float actorCount(MolangScope scope) {
         if (Minecraft.getInstance().level != null)
             return Minecraft.getInstance().level.getEntityCount();
         return 0;
     }
 
-    public static float time_of_day(MolangScope scope) {
+    @MolangFunction(value = "time_of_day", description = "一天中的时间")
+    public static float timeOfDay(MolangScope scope) {
         if (Minecraft.getInstance().level != null)
             return Minecraft.getInstance().level.getDayTime() / 24000F;
         return 0;
     }
 
-    public static float moon_phase(MolangScope scope) {
+    @MolangFunction(value = "moon_phase", description = "月相")
+    public static float moonPhase(MolangScope scope) {
         if (Minecraft.getInstance().level != null)
             return Minecraft.getInstance().level.getMoonPhase();
         return 0;
     }
 
-    public static float partial_tick(MolangScope scope) {
+    @MolangFunction(value = "partial_tick", description = "距离上一帧的时间")
+    public static float partialTick(MolangScope scope) {
         return Minecraft.getInstance().getTimer().getGameTimeDeltaTicks();
     }
 
-    public static float any_animation_finished(MolangScope scope) {
-        return scope.getOwner().getAnimationComponent().anyAnimationFinished(ClientTickHandler.getTick() + partial_tick(scope))
-                ? MolangValue.TRUE
-                : MolangValue.FALSE;
+    @MolangFunction(value = "any_animation_finished", description = "任意动画播放完毕（动画控制器）")
+    public static float anyAnimationFinished(MolangScope scope) {
+        return scope.getOwner().ownerAs(RenderData.class).map(data ->
+                        data.getAnimationComponent().anyAnimationFinished(ClientTickHandler.getTick() + partialTick(scope))
+                                ? MolangValue.TRUE
+                                : MolangValue.FALSE)
+                .orElse(FALSE);
     }
 
-    public static float all_animations_finished(MolangScope scope) {
-        return scope.getOwner().getAnimationComponent().allAnimationsFinished(ClientTickHandler.getTick() + partial_tick(scope))
-                ? MolangValue.TRUE
-                : MolangValue.FALSE;
+    @MolangFunction(value = "all_animations_finished", description = "所有动画播放完毕（动画控制器）")
+    public static float allAnimationsFinished(MolangScope scope) {
+        return scope.getOwner().ownerAs(RenderData.class).map(data ->
+                        data.getAnimationComponent().allAnimationsFinished(ClientTickHandler.getTick() + partialTick(scope))
+                                ? MolangValue.TRUE
+                                : MolangValue.FALSE)
+                .orElse(FALSE);
     }
 
-    private static float entityBool(MolangScope scope, Function<Entity, Boolean> function) {
-        return scope.getOwner().ownerAs(Entity.class).map(function.andThen(b -> b ? TRUE : FALSE)).orElse(0F);
-    }
-
-    private static float entityFloat(MolangScope scope, Function<Entity, Float> function) {
-        return scope.getOwner().ownerAs(Entity.class).map(function).orElse(0F);
-    }
-
-    public static float distance_from_camera(MolangScope scope) {
+    @MolangFunction(value = "distance_from_camera", description = "距离摄像头的距离")
+    public static float distanceFromCamera(MolangScope scope) {
         return entityFloat(scope, e -> {
             if (Minecraft.getInstance().cameraEntity == null) return 0F;
 
@@ -166,154 +156,114 @@ public final class MolangQuery {
         });
     }
 
-    public static float is_on_ground(MolangScope scope) {
+    @MolangFunction(value = "is_on_ground", description = "正处于地面上")
+    public static float isOnGround(MolangScope scope) {
         return entityBool(scope, Entity::onGround);
     }
 
-    /**
-     * 摔落距离
-     */
-    public static float fall_distance(MolangScope scope) {
+    @MolangFunction(value = "fall_distance", description = "摔落的距离")
+    public static float fallDistance(MolangScope scope) {
         return entityFloat(scope, e -> e.fallDistance);
     }
 
-    /**
-     * 跳跃
-     */
-    public static float is_jumping(MolangScope scope) {
+    @MolangFunction(value = "is_jumping", description = "正在跳跃")
+    public static float isJumping(MolangScope scope) {
         return livingBool(scope, entity -> entity.jumping);
     }
 
-    /**
-     * 疾跑
-     */
-    public static float is_sprinting(MolangScope scope) {
+    @MolangFunction(value = "is_sprinting", description = "正在冲刺（疾跑）")
+    public static float isSprinting(MolangScope scope) {
         return entityBool(scope, Entity::isSprinting);
     }
 
-    /**
-     * 下蹲
-     */
-    public static float is_sneaking(MolangScope scope) {
-        return is_crouching(scope);
-    }
-
-    /**
-     * 下蹲
-     */
-    public static float is_crouching(MolangScope scope) {
+    @MolangFunction(value = "is_crouching", alias = "is_sneaking", description = "正在蹲下")
+    public static float isCrouching(MolangScope scope) {
         return entityBool(scope, Entity::isCrouching);
     }
 
-    public static float is_on_climbable(MolangScope scope) {
+    @MolangFunction(value = "is_on_climbable", alias = "is_wall_climbing", description = "正处于可以攀爬的方块内（比如梯子或藤蔓）")
+    public static float isOnClimbable(MolangScope scope) {
         return livingBool(scope, LivingEntity::onClimbable);
     }
 
-    /**
-     * 游泳
-     */
-    public static float is_swimming(MolangScope scope) {
+    @MolangFunction(value = "is_swimming", description = "正在游泳")
+    public static float isSwimming(MolangScope scope) {
         return entityBool(scope, Entity::isSwimming);
     }
 
-    /**
-     * 判断玩家正在挖掘
-     */
-    public static float is_digging(MolangScope scope) {
+    @MolangFunction(value = "is_digging", description = "正在挖掘（玩家）")
+    public static float isDigging(MolangScope scope) {
         MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
         return (gameMode != null && gameMode.isDestroying()) ? TRUE : FALSE;
     }
 
-    /**
-     * 吃
-     */
-    public static float is_eating(MolangScope scope) {
+    @MolangFunction(value = "is_eating", description = "正在食用物品")
+    public static float isEating(MolangScope scope) {
         return livingBool(scope, p -> p.isUsingItem() && p.getUseItem().getUseAnimation() == UseAnim.EAT);
     }
 
-    /**
-     * 喝
-     */
-    public static float is_drinking(MolangScope scope) {
+    @MolangFunction(value = "is_drinking", description = "正在饮用物品")
+    public static float isDrinking(MolangScope scope) {
         return livingBool(scope, p -> p.isUsingItem() && p.getUseItem().getUseAnimation() == UseAnim.DRINK);
     }
 
-    /**
-     * 主手挥动
-     */
-    public static float is_main_hand_swing(MolangScope scope) {
+    @MolangFunction(value = "is_main_hand_swing", description = "主手正在挥动")
+    public static float isMainHandSwing(MolangScope scope) {
         return livingBool(scope, e -> e.swinging && e.swingingArm == InteractionHand.MAIN_HAND);
     }
 
-    /**
-     * 副手挥动
-     */
-    public static float is_off_hand_swing(MolangScope scope) {
+    @MolangFunction(value = "is_off_hand_swing", description = "副手正在挥动")
+    public static float isOffHandSwing(MolangScope scope) {
         return livingBool(scope, e -> e.swinging && e.swingingArm == InteractionHand.OFF_HAND);
     }
 
-    public static float is_in_water(MolangScope scope) {
+    @MolangFunction(value = "is_in_water", description = "正在水中")
+    public static float isInWater(MolangScope scope) {
         return entityBool(scope, Entity::isInWater);
     }
 
-    public static float is_in_water_or_rain(MolangScope scope) {
+    @MolangFunction(value = "is_in_water_or_rain", description = "正在水中或在雨中")
+    public static float isInWaterOrRain(MolangScope scope) {
         return entityBool(scope, Entity::isInWaterRainOrBubble);
     }
 
+    @MolangFunction(value = "eye_target_y_rotation", alias = "yaw", description = "yaw 角度（y rot）")
     public static float yaw(MolangScope scope) {
-        return entityFloat(scope, e -> e.getViewYRot(partial_tick(scope)));
+        return entityFloat(scope, e -> e.getViewYRot(partialTick(scope)));
     }
 
-    public static float yaw_speed(MolangScope scope) {
-        return entityFloat(scope, e -> yaw(scope) - e.getViewYRot(partial_tick(scope) - 0.1F));
+    @MolangFunction(value = "yaw_speed", description = "yaw 轴旋转速度")
+    public static float yawSpeed(MolangScope scope) {
+        return entityFloat(scope, e -> yaw(scope) - e.getViewYRot(partialTick(scope) - 0.1F));
     }
 
+    @MolangFunction(value = "eye_target_x_rotation", alias = "pitch", description = "pitch 角度（x rot）")
     public static float pitch(MolangScope scope) {
-        return entityFloat(scope, e -> e.getViewXRot(partial_tick(scope)));
+        return entityFloat(scope, e -> e.getViewXRot(partialTick(scope)));
     }
 
-    public static float eye_target_y_rotation(MolangScope scope) {
-        return yaw(scope);
-    }
-
-    public static float eye_target_x_rotation(MolangScope scope) {
-        return pitch(scope);
-    }
-
-    /**
-     * 坐下
-     */
+    @MolangFunction(value = "sitting", alias = "is_sitting", description = "正在坐")
     public static float sitting(MolangScope scope) {
         return entityBool(scope, e -> e.isPassenger() && (e.getVehicle() != null && e.getVehicle().shouldRiderSit()));
     }
 
-    /**
-     * 坐下
-     */
-    public static float is_sitting(MolangScope scope) {
-        return sitting(scope);
-    }
-
-    /**
-     * 攀爬（本来是专属蜘蛛的，和其他的 living 合一起了）
-     */
-    public static float is_wall_climbing(MolangScope scope) {
-        return is_on_climbable(scope);
-    }
-
-    public static float pos_x(MolangScope scope) {
+    @MolangFunction(value = "pos_x", description = "实体 x 位置")
+    public static float posX(MolangScope scope) {
         return entityFloat(scope, e -> (float) e.position().x);
     }
 
-    public static float pos_y(MolangScope scope) {
+    @MolangFunction(value = "pos_y", description = "实体 y 位置")
+    public static float posY(MolangScope scope) {
         return entityFloat(scope, e -> (float) e.position().y);
     }
 
-    public static float pos_z(MolangScope scope) {
+    @MolangFunction(value = "pos_z", description = "实体 z 位置")
+    public static float posZ(MolangScope scope) {
         return entityFloat(scope, e -> (float) e.position().z);
     }
 
-    public static float climbing_x(MolangScope scope) {
+    @MolangFunction(value = "climbing_x", description = "实体位置指向可攀爬方块中心的向量的 x 分量")
+    public static float climbingX(MolangScope scope) {
         return livingFloat(scope, e -> e.getLastClimbablePos()
                 .map(p ->
                         new Vec3(p.getX(), p.getY(), p.getZ())
@@ -324,7 +274,8 @@ public final class MolangQuery {
                 .floatValue());
     }
 
-    public static float climbing_y(MolangScope scope) {
+    @MolangFunction(value = "climbing_y", description = "实体位置指向可攀爬方块中心的向量的 y 分量")
+    public static float climbingY(MolangScope scope) {
         return livingFloat(scope, e -> e.getLastClimbablePos()
                 .map(p ->
                         new Vec3(p.getX(), p.getY(), p.getZ())
@@ -335,7 +286,8 @@ public final class MolangQuery {
                 .floatValue());
     }
 
-    public static float climbing_z(MolangScope scope) {
+    @MolangFunction(value = "climbing_z", description = "实体位置指向可攀爬方块中心的向量的 z 分量")
+    public static float climbingZ(MolangScope scope) {
         return livingFloat(scope, e -> e.getLastClimbablePos()
                 .map(p -> new Vec3(p.getX(), p.getY(), p.getZ())
                         .add(e.level().getBlockState(p).getCollisionShape(e.level(), p).bounds().getCenter())
@@ -345,121 +297,101 @@ public final class MolangQuery {
                 .floatValue());
     }
 
-    public static float is_crawling(MolangScope scope) {
+    @MolangFunction(value = "is_crawling", description = "爬行（在陆地上被活板门等方块挤压导致趴下的动作）")
+    public static float isCrawling(MolangScope scope) {
         return entityBool(scope, Entity::isVisuallyCrawling);
     }
 
-    public static float is_damage_by(MolangScope scope, Object... damageTypes) {
+    @MolangFunction(value = "is_damage_by", description = "判断生物是否被指定的伤害类型所伤害")
+    public static float isDamageBy(MolangScope scope, Object... damageTypes) {
         return livingBool(scope, e -> {
             if (e.getLastDamageSource() != null) {
-                ResourceLocation resourceLocation = e.level().registryAccess()
+                return e.level().registryAccess()
                         .registry(Registries.DAMAGE_TYPE)
                         .map(r -> r.getKey(e.getLastDamageSource().type()))
-                        .orElse(null);
-
-                if (resourceLocation != null) {
-                    for (Object damageType : damageTypes) {
-                        if (resourceLocation.toString().equals(damageType.toString())) return true;
-                    }
-
-                    return false;
-                }
+                        .map(rl -> Arrays.stream(damageTypes).anyMatch(t -> rl.toString().equals(t.toString())))
+                        .orElse(false);
             }
 
             return false;
         });
     }
 
-    public static float is_stalking(MolangScope scope) {
+    @MolangFunction(value = "is_stalking", description = "判断生物是否正在追踪其他实体")
+    public static float isStalking(MolangScope scope) {
         return scope.getOwner().ownerAs(Mob.class)
-                .map(Mob::isAggressive)
-                .map(b -> b ? TRUE : FALSE)
+                .map(m->m.isAggressive()?TRUE:FALSE)
                 .orElse(0F);
     }
 
-    private static float livingBool(MolangScope scope, Function<LivingEntity, Boolean> function) {
-        return scope.getOwner().ownerAs(LivingEntity.class)
-                .map(function.andThen(b -> b ? TRUE : FALSE))
-                .orElse(0F);
+    @MolangFunction(value = "attack_time", description = "攻击时间")
+    public static float attackTime(MolangScope scope) {
+        return livingFloat(scope, l -> l.getAttackAnim(partialTick(scope)));
     }
 
-    private static float livingFloat(MolangScope scope, Function<LivingEntity, Float> function) {
-        return scope.getOwner().ownerAs(LivingEntity.class)
-                .map(function)
-                .orElse(0F);
+    @MolangFunction(value = "is_attacking", description = "是否正在攻击")
+    public static float isAttacking(MolangScope scope) {
+        return attackTime(scope) > 0 ? TRUE : FALSE;
     }
 
-    public static float attack_time(MolangScope scope) {
-        return livingFloat(scope, l -> l.getAttackAnim(partial_tick(scope)));
-    }
-
-    public static float is_attacking(MolangScope scope) {
-        return attack_time(scope) > 0 ? TRUE : FALSE;
-    }
-
-    public static float is_powered(MolangScope scope) {
+    @MolangFunction(value = "is_powered", description = "正在充能（类似苦力怕或凋灵）")
+    public static float isPowered(MolangScope scope) {
         return scope.getOwner().ownerAs(PowerableMob.class).map(c -> c.isPowered() ? TRUE : FALSE).orElse(FALSE);
     }
 
-    public static float has_helmet(MolangScope scope) {
-        return livingBool(scope, living -> !living.getItemBySlot(EquipmentSlot.HEAD).isEmpty());
-    }
-
-    public static float has_chestplate(MolangScope scope) {
-        return livingBool(scope, living -> !living.getItemBySlot(EquipmentSlot.CHEST).isEmpty());
-    }
-
-    public static float has_leggings(MolangScope scope) {
-        return livingBool(scope, living -> !living.getItemBySlot(EquipmentSlot.LEGS).isEmpty());
-    }
-
-    public static float has_boots(MolangScope scope) {
-        return livingBool(scope, living -> !living.getItemBySlot(EquipmentSlot.FEET).isEmpty());
-    }
-
+    @MolangFunction(value = "health", description = "生物血量")
     public static float health(MolangScope scope) {
         return livingFloat(scope, LivingEntity::getHealth);
     }
 
-    public static float max_health(MolangScope scope) {
+    @MolangFunction(value = "max_health", description = "生物最大血量")
+    public static float maxHealth(MolangScope scope) {
         return livingFloat(scope, LivingEntity::getMaxHealth);
     }
 
-    public static float is_on_fire(MolangScope scope) {
+    @MolangFunction(value = "is_on_fire", description = "正在着火")
+    public static float isOnFire(MolangScope scope) {
         return livingBool(scope, LivingEntity::isOnFire);
     }
 
-    public static float ground_speed(MolangScope scope) {
+    @MolangFunction(value = "ground_speed", description = "地面速度")
+    public static float groundSpeed(MolangScope scope) {
         return livingFloat(scope, livingEntity -> {
             Vec3 velocity = livingEntity.getDeltaMovement();
             return Mth.sqrt((float) ((velocity.x * velocity.x) + (velocity.z * velocity.z))) * 20;
         });
     }
 
-    public static float vertical_speed(MolangScope scope) {
+    @MolangFunction(value = "vertical_speed", description = "垂直速度")
+    public static float verticalSpeed(MolangScope scope) {
         return livingFloat(scope, living -> living.onGround() ? 0 : (float) (living.getDeltaMovement().y * 20));
     }
 
-    public static float head_yaw(MolangScope scope) {
-        return livingFloat(scope, e -> Mth.lerp(partial_tick(scope), e.yHeadRotO, e.yHeadRot));
+    @MolangFunction(value = "head_yaw", description = "头部的 yaw 旋转角度")
+    public static float headYaw(MolangScope scope) {
+        return livingFloat(scope, e -> Mth.lerp(partialTick(scope), e.yHeadRotO, e.yHeadRot));
     }
 
-    public static float head_yaw_speed(MolangScope scope) {
+    @MolangFunction(value = "head_yaw_speed", description = "头部 yaw 旋转速度")
+    public static float headYawSpeed(MolangScope scope) {
         return livingFloat(scope, e -> (e.getYHeadRot() - e.yHeadRotO) / 20);
     }
 
-    public static float body_yaw(MolangScope scope) {
-        return livingFloat(scope, e -> Mth.lerp(partial_tick(scope), e.yBodyRotO, e.yBodyRot));
+    @MolangFunction(value = "body_yaw", description = "身体 yaw 旋转角度")
+    public static float bodyYaw(MolangScope scope) {
+        return livingFloat(scope, e -> Mth.lerp(partialTick(scope), e.yBodyRotO, e.yBodyRot));
     }
 
-    public static float body_yaw_speed(MolangScope scope) {
+    @MolangFunction(value = "body_yaw_speed", description = "身体 yaw 旋转角度")
+    public static float bodyYawSpeed(MolangScope scope) {
         return livingFloat(scope, e -> (e.yBodyRot - e.yBodyRotO) / 20);
     }
 
-    public static float head_yaw_offset(MolangScope scope) {
+    @MolangFunction(value = "head_yaw_offset", description = "头部 yaw 偏移")
+    public static float headYawOffset(MolangScope scope) {
         return livingFloat(scope, living -> {
-            float hRot = head_yaw(scope);
-            float bRot = body_yaw(scope);
+            float hRot = headYaw(scope);
+            float bRot = bodyYaw(scope);
             float netHeadYaw = hRot - bRot;
 
             if (sitting(scope) == TRUE && living.getVehicle() instanceof LivingEntity) {
@@ -476,15 +408,69 @@ public final class MolangQuery {
         });
     }
 
-    public static float head_pitch_offset(MolangScope scope) {
-        return livingFloat(scope, living -> -Mth.lerp(partial_tick(scope), living.xRotO, living.getXRot()));
+    @MolangFunction(value = "head_pitch_offset", description = "头部 pitch 偏移")
+    public static float headPitchOffset(MolangScope scope) {
+        return livingFloat(scope, living -> -Mth.lerp(partialTick(scope), living.xRotO, living.getXRot()));
     }
 
+    @MolangFunction(value = "baby", alias = "is_baby", description = "幼年体")
     public static float baby(MolangScope scope) {
         return livingBool(scope, LivingEntity::isBaby);
     }
 
-    public static float is_baby(MolangScope scope) {
-        return livingBool(scope, LivingEntity::isBaby);
+    @FunctionalInterface
+    interface ToBooleanFunction<K> {
+        boolean apply(K key);
+    }
+
+    private static float entityBool(MolangScope scope, ToBooleanFunction<Entity> function) {
+        return scope.getOwner().ownerAs(Entity.class).map(l -> function.apply(l) ? TRUE : FALSE).orElse(0F);
+    }
+
+    private static float entityFloat(MolangScope scope, Function<Entity, Float> function) {
+        return scope.getOwner().ownerAs(Entity.class).map(function).orElse(0F);
+    }
+
+    private static float livingBool(MolangScope scope, ToBooleanFunction<LivingEntity> function) {
+        return scope.getOwner().ownerAs(LivingEntity.class)
+                .map(l -> function.apply(l) ? TRUE : FALSE)
+                .orElse(0F);
+    }
+
+    private static float livingFloat(MolangScope scope, Function<LivingEntity, Float> function) {
+        return scope.getOwner().ownerAs(LivingEntity.class)
+                .map(function)
+                .orElse(0F);
+    }
+
+    private static float handIs(MolangScope scope, InteractionHand hand, Object... objects) {
+        return scope.getOwner().ownerAs(LivingEntity.class).map(living -> {
+            ItemStack handItem = hand == InteractionHand.MAIN_HAND
+                    ? living.getMainHandItem()
+                    : living.getOffhandItem();
+
+            for (Object object : objects) {
+                if (Objects.equals(
+                        BuiltInRegistries.ITEM.getKey(handItem.getItem()),
+                        ResourceLocation.parse(object.toString()))) {
+                    return TRUE;
+                }
+            }
+
+            return FALSE;
+        }).orElse(FALSE);
+    }
+
+    private static float slotGetter(MolangScope scope, EquipmentSlot slot, Object... objects) {
+        return scope.getOwner().ownerAs(LivingEntity.class).map(livingEntity -> {
+            for (Object object : objects) {
+                if (ResourceLocation.parse(object.toString())
+                        .equals(BuiltInRegistries.ITEM.getKey(livingEntity.getItemBySlot(slot).getItem()))) {
+                    return TRUE;
+                }
+            }
+
+            return FALSE;
+        }).orElse(FALSE);
     }
 }

@@ -21,19 +21,18 @@ public class MolangCompileHandler {
     private static final MolangCompileVisitor visitor = new MolangCompileVisitor();
     private static int currIdx;
 
-    public static MethodHandle compile(MolangValue value) {
+    public static MethodHandle compile(String content) {
         try {
-            return tryCompile(value);
+            return tryCompile(content.trim());
         } catch (IllegalAccessException | ClassNotFoundException | CompileException e) {
             throw new MolangUncompilableException(e);
         }
     }
 
-    public static MethodHandle tryCompile(MolangValue value) throws IllegalAccessException, ClassNotFoundException, CompileException {
+    public static MethodHandle tryCompile(String molangString) throws IllegalAccessException, ClassNotFoundException, CompileException {
         currIdx++;
         String classname = "CompiledMolang$" + currIdx;
 
-        String molangString = value.getContext().trim();
         String body;
 
         if (molangString.isEmpty()) {

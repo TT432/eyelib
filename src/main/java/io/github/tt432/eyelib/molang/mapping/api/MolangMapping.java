@@ -1,5 +1,10 @@
 package io.github.tt432.eyelib.molang.mapping.api;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
  * usage:
  *
@@ -17,6 +22,8 @@ package io.github.tt432.eyelib.molang.mapping.api;
  *
  * @author TT432
  */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface MolangMapping {
     /**
      * @return molang function or field name

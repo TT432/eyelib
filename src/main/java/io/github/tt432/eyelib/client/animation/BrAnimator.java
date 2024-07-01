@@ -98,15 +98,13 @@ public final class BrAnimator {
 
         if (soundEffect != null && !soundEffect.isEmpty() && soundEffect.firstKey() < ticks) {
             for (BrEffectsKeyFrame brEffectsKeyFrame : soundEffect.pollFirstEntry().getValue()) {
-                Object owner = scope.getOwner().getOwner();
-
-                if (owner instanceof Entity e) {
+                scope.getOwner().ownerAs(Entity.class).ifPresent(e -> {
                     SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(ResourceLocation.parse(brEffectsKeyFrame.effect()));
                     if (!e.isSilent()) {
                         e.level().playSound(Minecraft.getInstance().player,
                                 e.getX(), e.getY(), e.getZ(), soundEvent, e.getSoundSource(), 1, 1);
                     }
-                }
+                });
             }
         }
     }

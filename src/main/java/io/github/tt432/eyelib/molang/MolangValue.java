@@ -2,62 +2,63 @@ package io.github.tt432.eyelib.molang;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import lombok.Getter;
+import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.invoke.MethodHandle;
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * @author TT432
  */
 @Slf4j
-public final class MolangValue {
+public record MolangValue(
+        @NotNull String context,
+        @NotNull MethodHandle method
+) {
+    public MolangValue(@NotNull String context) {
+        this(context, MolangCompileHandler.compile(context));
+    }
+
     public static final float TRUE = 1;
     public static final float FALSE = 0;
 
-    public static final MolangValue TRUE_VALUE = new MolangValue("1");
-    public static final MolangValue FALSE_VALUE = new MolangValue("0");
+    private static final Float2ObjectOpenHashMap<MolangValue> MOLANG_VALUE_CONSTANT_POOL = new Float2ObjectOpenHashMap<>();
 
-    public static final Codec<MolangValue> CODEC = Codec.either(
-            Codec.either(
-                    Codec.either(Codec.STRING, Codec.FLOAT).listOf()
-                            .xmap(el -> el.stream().map(e -> e.map(Function.identity(), Object::toString))
-                                    .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
-                                    .toString(), s -> List.of(Either.left(s)))
-                            .xmap(MolangValue::new, MolangValue::toString),
-                    Codec.either(Codec.STRING, Codec.FLOAT)
-                            .xmap(e -> e.map(Function.identity(), Object::toString), Either::left)
-                            .xmap(MolangValue::new, MolangValue::toString)
-            ).xmap(Either::unwrap, Either::right),
+    public static final MolangValue ONE = getConstant(TRUE);
+    public static final MolangValue ZERO = getConstant(FALSE);
+    public static final MolangValue TRUE_VALUE = ONE;
+    public static final MolangValue FALSE_VALUE = ZERO;
+
+    public static MolangValue getConstant(float value) {
+        return MOLANG_VALUE_CONSTANT_POOL.computeIfAbsent(value, k -> new MolangValue(String.valueOf(k)));
+    }
+
+    public static final Codec<MolangValue> CODEC = Codec.withAlternative(
+            Codec.withAlternative(
+                            Codec.withAlternative(
+                                    Codec.STRING,
+                                    Codec.FLOAT.xmap(Object::toString, Float::parseFloat)),
+                            Codec.withAlternative(
+                                    Codec.STRING,
+                                    Codec.FLOAT.xmap(Object::toString, Float::parseFloat)
+                            ).listOf().xmap(sl -> String.join("", sl), List::of))
+                    .xmap(MolangValue::new, MolangValue::toString),
             RecordCodecBuilder.<MolangValue>create(ins -> ins.group(
                     Codec.STRING.fieldOf("context").forGetter(o -> o.context)
             ).apply(ins, MolangValue::new))
-    ).xmap(Either::unwrap, Either::left);
-
-    @Getter
-    @NotNull
-    private final String context;
-    @NotNull
-    private final MethodHandle method;
-
-    public MolangValue(@NotNull String context) {
-        this.context = context;
-        method = MolangCompileHandler.compile(this);
-    }
+    );
 
     public static MolangValue parse(String content) {
         return parse(new JsonPrimitive(content));
     }
 
     public static MolangValue parse(JsonElement json) {
-        if (json==null) return FALSE_VALUE;
+        if (json == null) return FALSE_VALUE;
         return parse(json, FALSE_VALUE);
     }
 
@@ -82,5 +83,10 @@ public final class MolangValue {
     @Override
     public String toString() {
         return context;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this || (obj instanceof MolangValue mv && mv.context.equals(context));
     }
 }

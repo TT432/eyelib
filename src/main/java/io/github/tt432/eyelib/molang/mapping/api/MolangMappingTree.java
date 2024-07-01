@@ -1,14 +1,17 @@
 package io.github.tt432.eyelib.molang.mapping.api;
 
-import lombok.RequiredArgsConstructor;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforgespi.language.ModFileScanData;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Type;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -18,15 +21,16 @@ import java.util.*;
  */
 @Slf4j
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MolangMappingTree {
     public static final MolangMappingTree INSTANCE = new MolangMappingTree();
 
     @SubscribeEvent
     public static void onEvent(FMLCommonSetupEvent event) {
-        onModStart();
+        setupMolangMappingTree();
     }
 
-    public static void onModStart() {
+    public static void setupMolangMappingTree() {
         Type annotationType = Type.getType(MolangMapping.class);
         List<ModFileScanData> allScanData = ModList.get().getAllScanData();
 
@@ -57,12 +61,19 @@ public class MolangMappingTree {
     ) {
     }
 
-    private final Node toplevelNode = new Node();
+    public record FunctionInfo(
+            @Nullable MolangFunction molangFunction,
+            MolangClass molangClass,
+            Method method
+    ) {
+    }
 
-    @RequiredArgsConstructor
-    private static class Node {
-        final Map<String, Node> children = new HashMap<>();
-        final List<MolangClass> actualClasses = new ArrayList<>();
+    public final Node toplevelNode = new Node();
+
+    public static class Node {
+        public final Map<String, Node> children = new HashMap<>();
+        public final List<MolangClass> actualClasses = new ArrayList<>();
+        public final Map<String, FunctionInfo> actualFunctions = new HashMap<>();
     }
 
     public void addNode(String name, MolangClass actualClass) {
@@ -75,6 +86,27 @@ public class MolangMappingTree {
         }
 
         last.actualClasses.add(actualClass);
+        for (Method method : actualClass.classInstance().getMethods()) {
+            if (Modifier.isStatic(method.getModifiers()) && method.getReturnType().equals(float.class)) {
+                processMethod(actualClass, method, last);
+            }
+        }
+    }
+
+    private static void processMethod(MolangClass actualClass, Method method, Node last) {
+        for (Annotation annotation : method.getAnnotations()) {
+            if (annotation instanceof MolangFunction molangFunction) {
+                last.actualFunctions.put(molangFunction.value(), new FunctionInfo(molangFunction, actualClass, method));
+
+                for (var alias : molangFunction.alias()) {
+                    last.actualFunctions.put(alias, new FunctionInfo(molangFunction, actualClass, method));
+                }
+
+                return;
+            }
+        }
+
+        last.actualFunctions.put(method.getName(), new FunctionInfo(null, actualClass, method));
     }
 
     public String findField(String name) {
@@ -112,30 +144,30 @@ public class MolangMappingTree {
         int i = name.indexOf(".");
 
         if (i != -1) {
-            var classes = findClasses(name.substring(0, i));
+            var node = findNode(name.substring(0, i));
+
+            if (node == null) return "0F";
+
+            String methodName = name.substring(i + 1);
+
+            FunctionInfo functionInfo = node.actualFunctions.get(methodName);
 
             String foundMethod = null;
 
-            for (var classData : classes) {
-                var aClass = classData.classInstance;
-                String methodName = name.substring(i + 1);
+            if (functionInfo != null) {
+                MolangClass molangClass = functionInfo.molangClass;
+                Class<?> aClass = molangClass.classInstance();
 
-                for (Method method : aClass.getMethods()) {
-                    if (Modifier.isStatic(method.getModifiers())
-                            && method.getReturnType().equals(float.class)
-                            && method.getName().equals(methodName)) {
-                        if (!classData.pureFunction) {
-                            if (args.isEmpty()) {
-                                foundMethod = aClass.getName() + "." + methodName + "($1)";
-                            } else {
-                                foundMethod = aClass.getName() + "." + methodName + "($1, " + args + ")";
-                            }
-                        } else {
-                            foundMethod = aClass.getName() + "." + methodName + "(" + args + ")";
-                        }
+                methodName = functionInfo.method.getName();
 
-                        break;
+                if (!molangClass.pureFunction) {
+                    if (args.isEmpty()) {
+                        foundMethod = aClass.getName() + "." + methodName + "($1)";
+                    } else {
+                        foundMethod = aClass.getName() + "." + methodName + "($1, " + args + ")";
                     }
+                } else {
+                    foundMethod = aClass.getName() + "." + methodName + "(" + args + ")";
                 }
             }
 
@@ -145,7 +177,7 @@ public class MolangMappingTree {
         return "0F";
     }
 
-    public List<MolangClass> findClasses(String name) {
+    private Node findNode(String name) {
         String[] split = name.split("\\.");
 
         Node last = toplevelNode;
@@ -156,10 +188,11 @@ public class MolangMappingTree {
             }
         }
 
-        if (last != null) {
-            return last.actualClasses;
-        }
+        return last;
+    }
 
-        return List.of();
+    public List<MolangClass> findClasses(String name) {
+        Node node = findNode(name);
+        return node != null ? node.actualClasses : List.of();
     }
 }

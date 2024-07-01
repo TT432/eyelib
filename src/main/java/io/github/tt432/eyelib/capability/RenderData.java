@@ -71,5 +71,6 @@ public class RenderData<T> {
         this.owner = owner;
         scope = new MolangScope();
         scope.setOwner(this);
+        scope.setOwner(this.owner);
     }
 }
