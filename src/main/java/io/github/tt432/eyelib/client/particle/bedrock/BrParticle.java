@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.particle.bedrock;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponentManager;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
@@ -13,11 +14,9 @@ import it.unimi.dsi.fastutil.floats.FloatList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector2f;
 
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * @author TT432
@@ -35,21 +34,21 @@ public record BrParticle(
             Description description,
             Map<String, Curve> curves,
             Events events,
-            Map<String, Object> components
+            Map<ResourceLocation, ParticleComponent> components
     ) {
+        @SuppressWarnings("unchecked")
+        public <T extends ParticleComponent> Optional<T> getComponent(ResourceLocation location) {
+            return (Optional<T>) Optional.ofNullable(components.get(location));
+        }
+
         public static final Codec<ParticleEffect> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 Description.CODEC.fieldOf("description").forGetter(o -> o.description),
                 Codec.unboundedMap(Codec.STRING, Curve.CODEC).optionalFieldOf("curves", Map.of())
                         .forGetter(o -> o.curves),
                 Events.CODEC.optionalFieldOf("events", new Events()).forGetter(o -> o.events),
                 Codec.dispatchedMap(
-                        Codec.STRING,
-                        id -> {
-                            ParticleComponentManager.ParticleComponentInfo particleComponentInfo =
-                                    ParticleComponentManager.all.byName.get(ResourceLocation.parse(id));
-                            if (particleComponentInfo == null) return Codec.unit(new Object());
-                            return particleComponentInfo.codec();
-                        }
+                        ResourceLocation.CODEC,
+                        ParticleComponentManager::codec
                 ).optionalFieldOf("components", Map.of()).forGetter(o -> o.components)
         ).apply(ins, ParticleEffect::new));
 
@@ -65,11 +64,11 @@ public record BrParticle(
 
             public record BasicRenderParameters(
                     String material,
-                    String texture
+                    ResourceLocation texture
             ) {
                 public static final Codec<BasicRenderParameters> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                         Codec.STRING.fieldOf("material").forGetter(o -> o.material),
-                        Codec.STRING.fieldOf("texture").forGetter(o -> o.texture)
+                        ResourceLocation.CODEC.fieldOf("texture").forGetter(o -> o.texture)
                 ).apply(ins, BasicRenderParameters::new));
             }
         }
@@ -142,15 +141,13 @@ public record BrParticle(
             }
 
             public float calculate(MolangScope scope) {
-                float inputValue = input.eval(scope);
-                float horizontalRange = horizontal_range.eval(scope);
-                float normalizedInput = inputValue / horizontalRange;
+                float time = input.eval(scope) / horizontal_range.eval(scope);
 
                 return switch (type) {
-                    case LINEAR -> calculateLinear(normalizedInput, scope);
-                    case BEZIER -> calculateBezier(normalizedInput, scope);
-                    case BEZIER_CHAIN -> calculateBezierChain(normalizedInput);
-                    case CATMULL_ROM -> calculateCatmullRom(normalizedInput, scope);
+                    case LINEAR -> calculateLinear(time, scope);
+                    case BEZIER -> calculateBezier(time, scope);
+                    case BEZIER_CHAIN -> calculateBezierChain(time);
+                    case CATMULL_ROM -> calculateCatmullRom(time, scope);
                 };
             }
 
@@ -193,16 +190,12 @@ public record BrParticle(
             }
 
             private float calculateCatmullRom(float input, MolangScope scope) {
-                var before = nodes.floorEntry(input);
-                var after = nodes.higherEntry(input);
+                List<Vector2f> catmullromArray = new ArrayList<>();
+                nodes.forEach((k, v) -> catmullromArray.add(new Vector2f(k, v.eval(scope))));
 
-                if (before == null) return after.getValue().eval(scope);
-                else if (after == null) return before.getValue().eval(scope);
-                else return Curves.catmullRom(input,
-                            Objects.requireNonNullElse(nodes.lowerEntry(before.getKey()), before).getValue().eval(scope),
-                            before.getValue().eval(scope),
-                            after.getValue().eval(scope),
-                            Objects.requireNonNullElse(nodes.higherEntry(after.getKey()), after).getValue().eval(scope));
+                float c = nodes.size() - 3;
+                float u = (1 + input * c) / (c + 2);
+                return Curves.lerpSplineCurve(catmullromArray, u);
             }
 
             private float bezier(float t, float p0, float p1, float p2, float p3) {

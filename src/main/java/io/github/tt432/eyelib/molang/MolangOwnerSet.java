@@ -1,6 +1,8 @@
 package io.github.tt432.eyelib.molang;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -8,6 +10,9 @@ import java.util.Optional;
  * @author TT432
  */
 public class MolangOwnerSet {
+    @Nullable
+    @Setter
+    private MolangOwnerSet parent;
     private final ObjectArrayList<Object> list = new ObjectArrayList<>();
 
     @SuppressWarnings("unchecked")
@@ -18,7 +23,7 @@ public class MolangOwnerSet {
             }
         }
 
-        return Optional.empty();
+        return Optional.ofNullable(parent).flatMap(p -> p.ownerAs(tClass));
     }
 
     public void add(Object o) {

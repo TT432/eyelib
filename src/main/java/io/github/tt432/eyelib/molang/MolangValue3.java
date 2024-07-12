@@ -8,6 +8,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.util.codec.Tuple;
 import io.github.tt432.eyelib.util.codec.TupleCodec;
 import lombok.extern.slf4j.Slf4j;
+import org.joml.Vector3f;
 
 /**
  * @author TT432
@@ -54,5 +55,9 @@ public record MolangValue3(
 
     public float getZ(MolangScope scope) {
         return z.eval(scope);
+    }
+
+    public Vector3f eval(MolangScope scope) {
+        return new Vector3f(getX(scope), getY(scope), getZ(scope));
     }
 }

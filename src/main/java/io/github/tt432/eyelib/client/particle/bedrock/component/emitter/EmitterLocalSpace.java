@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.particle.bedrock.component.emitter;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ComponentTarget;
-import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponent;
+import io.github.tt432.eyelib.client.particle.bedrock.component.RegisterParticleComponent;
 
 /**
  * 该组件指定发射器的参考系。仅在发射器附加到实体时适用。<br/>
@@ -15,15 +15,17 @@ import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponen
  *
  * @author TT432
  */
-@ParticleComponent(value = "emitter_local_space", target = ComponentTarget.EMITTER)
+@RegisterParticleComponent(value = "emitter_local_space", target = ComponentTarget.EMITTER)
 public record EmitterLocalSpace(
         boolean position,
         boolean rotation,
         boolean velocity
-) {
+) implements EmitterParticleComponent {
+    public static final EmitterLocalSpace EMPTY = new EmitterLocalSpace(false, false, false);
+
     public static final Codec<EmitterLocalSpace> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            Codec.BOOL.fieldOf("position").forGetter(o -> o.position),
-            Codec.BOOL.fieldOf("rotation").forGetter(o -> o.rotation),
-            Codec.BOOL.fieldOf("velocity").forGetter(o -> o.velocity)
+            Codec.BOOL.optionalFieldOf("position", false).forGetter(o -> o.position),
+            Codec.BOOL.optionalFieldOf("rotation", false).forGetter(o -> o.rotation),
+            Codec.BOOL.optionalFieldOf("velocity", false).forGetter(o -> o.velocity)
     ).apply(ins, EmitterLocalSpace::new));
 }

@@ -4,7 +4,8 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ComponentTarget;
-import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponent;
+import io.github.tt432.eyelib.client.particle.bedrock.component.RegisterParticleComponent;
+import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterParticleComponent;
 import io.github.tt432.eyelib.util.Collectors;
 
 import java.util.Comparator;
@@ -15,14 +16,14 @@ import java.util.TreeMap;
 /**
  * @author TT432
  */
-@ParticleComponent(value = "emitter_lifetime_events", target = ComponentTarget.EMITTER)
+@RegisterParticleComponent(value = "emitter_lifetime_events", target = ComponentTarget.EMITTER)
 public record EmitterLifetimeEvents(
         List<String> creationEvent,
         List<String> expirationEvent,
         Timeline timeline,
         TravelDistanceEvents travelDistanceEvents,
         LoopingTravelDistanceEvents loopingTravelDistanceEvents
-) {
+) implements EmitterParticleComponent {
     public static final Codec<EmitterLifetimeEvents> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.STRING.listOf().optionalFieldOf("creation_event", List.of()).forGetter(o -> o.creationEvent),
             Codec.STRING.listOf().optionalFieldOf("expiration_event", List.of()).forGetter(o -> o.expirationEvent),

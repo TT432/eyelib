@@ -7,6 +7,7 @@ public class EyelibUtils {
     public static float blackhole(float f) {
         return f;
     }
+
     public static float blackhole(String f) {
         return 0;
     }

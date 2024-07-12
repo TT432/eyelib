@@ -26,27 +26,28 @@ public class ParticleComponentManager {
             ResourceLocation name,
             String type,
             ComponentTarget target,
-            Class<?> clazz,
-            Codec<Object> codec
+            Class<ParticleComponent> clazz,
+            Codec<ParticleComponent> codec
     ) {
     }
 
-    public static class ComponentSet {
-        public final Map<ResourceLocation, ParticleComponentInfo> byName = new HashMap<>();
-        public final Map<String, List<ParticleComponentInfo>> byType = new HashMap<>();
-    }
+    public static final Map<ResourceLocation, ParticleComponentInfo> byName = new HashMap<>();
+    public static final Map<String, List<ParticleComponentInfo>> byType = new HashMap<>();
 
-    public static final ComponentSet all = new ComponentSet();
-    public static final ComponentSet emitter = new ComponentSet();
-    public static final ComponentSet particle = new ComponentSet();
+    public static Codec<ParticleComponent> codec(ResourceLocation particleComponentName) {
+        ParticleComponentInfo particleComponentInfo = byName.get(particleComponentName);
+        if (particleComponentInfo != null) return particleComponentInfo.codec();
+        else return Codec.unit(ParticleComponent.EMPTY);
+    }
 
     @SubscribeEvent
     public static void onEvent(FMLCommonSetupEvent event) {
         loadParticleComponents();
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private static void loadParticleComponents() {
-        Type annotationType = Type.getType(ParticleComponent.class);
+        Type annotationType = Type.getType(RegisterParticleComponent.class);
         List<ModFileScanData> allScanData = ModList.get().getAllScanData();
 
         for (ModFileScanData scanData : allScanData) {
@@ -57,21 +58,15 @@ public class ParticleComponentManager {
                     String memberName = a.memberName();
 
                     try {
-                        var clazz = Class.forName(memberName, false,
+                        Class clazz = Class.forName(memberName, false,
                                 ParticleComponentManager.class.getClassLoader());
                         Codec codec = (Codec) clazz.getField("CODEC").get(null);
                         ComponentTarget target = ComponentTarget.valueOf(((ModAnnotation.EnumHolder) a.annotationData().get("target")).value());
                         var name = ResourceLocation.parse((String) a.annotationData().get("value"));
                         var type = (String) a.annotationData().get("type");
                         var info = new ParticleComponentInfo(name, type, target, clazz, codec);
-                        var set = switch (target) {
-                            case EMITTER -> emitter;
-                            case PARTICLE -> particle;
-                        };
-                        set.byName.put(name, info);
-                        set.byType.computeIfAbsent(type, k -> new ArrayList<>()).add(info);
-                        all.byName.put(name, info);
-                        all.byType.computeIfAbsent(type, k -> new ArrayList<>()).add(info);
+                        byName.put(name, info);
+                        byType.computeIfAbsent(type, k -> new ArrayList<>()).add(info);
                     } catch (ReflectiveOperationException | LinkageError e) {
                         log.error("[ParticleComponentManager] Failed to load: {}", memberName, e);
                     }

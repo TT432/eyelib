@@ -1,31 +1,92 @@
 package io.github.tt432.eyelib.client.particle.bedrock.component.particle.appearance;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.client.particle.bedrock.BrParticleParticle;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ComponentTarget;
-import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponent;
+import io.github.tt432.eyelib.client.particle.bedrock.component.RegisterParticleComponent;
+import io.github.tt432.eyelib.client.particle.bedrock.component.particle.ParticleParticleComponent;
+import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.MolangValue2;
 import io.github.tt432.eyelib.molang.MolangValue3;
+import io.github.tt432.eyelib.util.math.EyeMath;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 /**
  * @author TT432
  */
-@ParticleComponent(value = "particle_appearance_billboard", target = ComponentTarget.PARTICLE)
+@RegisterParticleComponent(value = "particle_appearance_billboard", target = ComponentTarget.PARTICLE)
 public record ParticleAppearanceBillboard(
         MolangValue2 size,
         FaceCameraMode facingCameraMode,
         Direction direction,
         UV uv
-) {
+) implements ParticleParticleComponent {
     public static final Codec<ParticleAppearanceBillboard> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             MolangValue2.CODEC.fieldOf("size").forGetter(o -> o.size),
             FaceCameraMode.CODEC.fieldOf("facing_camera_mode").forGetter(o -> o.facingCameraMode),
             Direction.CODEC.optionalFieldOf("direction", Direction.EMPTY).forGetter(o -> o.direction),
             UV.CODEC.optionalFieldOf("uv", UV.EMPTY).forGetter(o -> o.uv)
     ).apply(ins, ParticleAppearanceBillboard::new));
+
+    public Vector4f getUV(BrParticleParticle particle) {
+        return uv.getUV(particle.molangScope, particle.getLifetime(), particle.getAge());
+    }
+
+    public Vector2f getSize(BrParticleParticle particle) {
+        return size.eval(particle.molangScope);
+    }
+
+    public void transform(BrParticleParticle particle, PoseStack poseStack) {
+        PoseStack.Pose last = poseStack.last();
+        var m4 = last.pose();
+        MolangScope scope = particle.molangScope;
+
+        float velocity = particle.getVelocity().length();
+        Vector3f direction = velocity > direction().minSpeedThreshold ? switch (direction().mode) {
+            case DERIVE_FROM_VELOCITY -> particle.getVelocity().normalize(new Vector3f());
+            case CUSTOM_DIRECTION -> direction().customDirection.eval(scope);
+        } : new Vector3f();
+
+        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+
+        switch (facingCameraMode) {
+            case ROTATE_XYZ -> m4.rotate(camera.rotation());
+            case ROTATE_Y -> m4.rotationY(180 * EyeMath.DEGREES_TO_RADIANS
+                    - camera.rotation().getEulerAnglesZYX(new Vector3f()).y);
+
+            case LOOKAT_XYZ -> m4.rotate(camera.rotation());
+            case LOOKAT_Y -> m4.rotationY(180 * EyeMath.DEGREES_TO_RADIANS
+                    - camera.rotation().getEulerAnglesZYX(new Vector3f()).y);
+
+            case DIRECTION_X -> m4.lookAlong(direction, new Vector3f(0, 1, 0));
+            case DIRECTION_Y -> m4.lookAlong(direction, new Vector3f(1, 0, 0));
+            case DIRECTION_Z -> m4.lookAlong(direction, new Vector3f(0, 1, 0));
+
+            case EMITTER_TRANSFORM_XY -> {
+                // 粒子匹配发射器的 xy 平面变换
+                // 假设有发射器变换矩阵 emitterMatrix
+                // todo m4.set(emitterMatrix).rotateX(cameraRot.x).rotateY(cameraRot.y).rotateZ(cameraRot.z);
+            }
+            case EMITTER_TRANSFORM_XZ -> {
+                // 粒子匹配发射器的 xz 平面变换
+                // todo m4.set(emitterMatrix).rotateX(cameraRot.x).rotateY(cameraRot.y).rotateZ(cameraRot.z);
+            }
+            case EMITTER_TRANSFORM_YZ -> {
+                // 粒子匹配发射器的 yz 平面变换
+                // todo m4.set(emitterMatrix).rotateX(cameraRot.x).rotateY(cameraRot.y).rotateZ(cameraRot.z);
+            }
+        }
+    }
 
     /**
      * 指定粒子的UV坐标
@@ -51,12 +112,23 @@ public record ParticleAppearanceBillboard(
                 Flipbook.CODEC.optionalFieldOf("flipbook", Flipbook.EMPTY).forGetter(o -> o.flipbook)
         ).apply(ins, UV::new));
 
+        public Vector4f getUV(MolangScope scope, float lifetime, float time) {
+            if (flipbook.isEmpty()) {
+                Vector2f uv = this.uv.eval(scope);
+                Vector2f size = uvSize.eval(scope);
+                return new Vector4f(uv.x, uv.y, size.x, size.y).div(textureWidth, textureHeight, textureWidth, textureHeight);
+            } else {
+                return flipbook.get(scope, lifetime, time).div(textureWidth, textureHeight, textureWidth, textureHeight);
+            }
+        }
+
         public record Flipbook(
                 MolangValue2 baseUV,
                 MolangValue2 sizeUV,
                 MolangValue2 stepUV,
                 MolangValue framesPerSecond,
                 MolangValue maxFrame,
+                // todo
                 boolean stretchToLifetime,
                 boolean loop
         ) {
@@ -69,11 +141,35 @@ public record ParticleAppearanceBillboard(
                     MolangValue2.CODEC.fieldOf("base_UV").forGetter(o -> o.baseUV),
                     MolangValue2.CODEC.fieldOf("size_UV").forGetter(o -> o.sizeUV),
                     MolangValue2.CODEC.fieldOf("step_UV").forGetter(o -> o.stepUV),
-                    MolangValue.CODEC.fieldOf("frames_per_second").forGetter(o -> o.framesPerSecond),
+                    MolangValue.CODEC.optionalFieldOf("frames_per_second", MolangValue.ZERO)
+                            .forGetter(o -> o.framesPerSecond),
                     MolangValue.CODEC.fieldOf("max_frame").forGetter(o -> o.maxFrame),
                     Codec.BOOL.optionalFieldOf("stretch_to_lifetime", false).forGetter(o -> o.stretchToLifetime),
                     Codec.BOOL.optionalFieldOf("loop", false).forGetter(o -> o.loop)
             ).apply(ins, Flipbook::new));
+
+            public Vector4f get(MolangScope scope, float lifetime, float time) {
+                int max = Mth.floor(maxFrame.eval(scope));
+                int frame;
+                if (stretchToLifetime) frame = Mth.floor((time / lifetime) * max);
+                else frame = Mth.floor(framesPerSecond.eval(scope) * time);
+
+                if (frame > max) {
+                    if (loop) {
+                        frame %= max;
+                    } else {
+                        frame = max;
+                    }
+                }
+
+                Vector2f base = baseUV.eval(scope).add(stepUV.eval(scope).mul(frame));
+                return new Vector4f(
+                        base.x,
+                        base.y,
+                        sizeUV.getX(scope),
+                        sizeUV.getY(scope)
+                );
+            }
 
             public boolean isEmpty() {
                 return this == EMPTY;

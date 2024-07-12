@@ -3,13 +3,16 @@ package io.github.tt432.eyelib.client.particle.bedrock.component.particle.motion
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ComponentTarget;
-import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponent;
+import io.github.tt432.eyelib.client.particle.bedrock.component.RegisterParticleComponent;
+import io.github.tt432.eyelib.client.particle.bedrock.component.particle.ParticleParticleComponent;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.util.codec.EyelibCodec;
 
 import java.util.List;
 
 /**
+ * todo
+ *
  * @param collisionDrag            改变粒子在碰撞时的速度。对于模拟碰撞时的摩擦/阻力很有用，<br/>
  *                                 例如，一个粒子碰到地面时会逐渐减速直至停止。<br/>
  *                                 这个阻力在接触时以 blocks/sec 的速度减慢粒子
@@ -21,7 +24,7 @@ import java.util.List;
  * @param expireOnContact          如果为 true，则在接触时触发粒子消失
  * @author TT432
  */
-@ParticleComponent(value = "particle_motion_collision", target = ComponentTarget.PARTICLE)
+@RegisterParticleComponent(value = "particle_motion_collision", target = ComponentTarget.PARTICLE)
 public record ParticleMotionCollision(
         MolangValue enabled,
         float collisionDrag,
@@ -29,7 +32,7 @@ public record ParticleMotionCollision(
         float collisionRadius,
         boolean expireOnContact,
         List<Event> events
-) {
+) implements ParticleParticleComponent {
     public static final Codec<ParticleMotionCollision> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             MolangValue.CODEC.optionalFieldOf("enabled", MolangValue.TRUE_VALUE).forGetter(o -> o.enabled),
             Codec.FLOAT.optionalFieldOf("collision_drag", 0F).forGetter(o -> o.collisionDrag),

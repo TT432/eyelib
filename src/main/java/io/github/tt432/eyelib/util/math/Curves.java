@@ -17,8 +17,8 @@ public class Curves {
         int intPoint = (int) Math.floor(p);
         float weight = p - intPoint;
 
-        Vector2f p0 = points.get(intPoint == 0 ? intPoint : intPoint - 1);
-        Vector2f p1 = points.get(intPoint);
+        Vector2f p0 = points.get(intPoint == 0 ? intPoint : Math.min(intPoint - 1, points.size() - 1));
+        Vector2f p1 = points.get(Math.min(intPoint, points.size() - 1));
         Vector2f p2 = points.get(intPoint > points.size() - 2 ? points.size() - 1 : intPoint + 1);
         Vector2f p3 = points.get(intPoint > points.size() - 3 ? points.size() - 1 : intPoint + 2);
 
