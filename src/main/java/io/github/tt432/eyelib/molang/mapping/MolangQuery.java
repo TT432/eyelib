@@ -126,7 +126,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "partial_tick", description = "距离上一帧的时间")
     public static float partialTick(MolangScope scope) {
-        return Minecraft.getInstance().getTimer().getGameTimeDeltaTicks();
+        return Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
     }
 
     @MolangFunction(value = "any_animation_finished", description = "任意动画播放完毕（动画控制器）")
