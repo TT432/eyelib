@@ -15,6 +15,7 @@ public record RenderParams(
         PoseStack poseStack,
         RenderType renderType,
         VertexConsumer consumer,
-        int light
+        int light,
+        int overlay
 ) {
 }

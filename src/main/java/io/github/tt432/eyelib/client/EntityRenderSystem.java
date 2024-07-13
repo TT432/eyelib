@@ -12,10 +12,12 @@ import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
 import io.github.tt432.eyelib.event.InitComponentEvent;
+import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -76,7 +78,10 @@ public class EntityRenderSystem {
             poseStack.pushPose();
 
             RenderParams renderParams = new RenderParams(
-                    entity, poseStack.last().copy(), poseStack, renderType, buffer, event.getPackedLight());
+                    entity, poseStack.last().copy(), poseStack, renderType, buffer, event.getPackedLight(),
+                    LivingEntityRenderer.getOverlayCoords(entity,
+                            ((LivingEntityRendererAccessor) (event.getRenderer()))
+                                    .callGetWhiteOverlayProgress(entity, event.getPartialTick())));
 
             BrModelRenderer.render(renderParams, model, modelComponent.getBoneInfos(),
                     BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), modelComponent.getVisitors());

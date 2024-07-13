@@ -7,7 +7,8 @@
   "mixins": [
   ],
   "client": [
-    "HumanoidModelMixin"
+    "HumanoidModelMixin",
+    "LivingEntityRendererAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

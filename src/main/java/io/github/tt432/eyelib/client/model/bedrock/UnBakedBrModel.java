@@ -78,7 +78,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
         final int[] ci = {0};
 
         BrModelRenderer.render(new RenderParams(null, poseStack.last(),
-                        poseStack, null, null, 0),
+                        poseStack, null, null, 0, OverlayTexture.NO_OVERLAY),
                 model, new BoneRenderInfos(), new BrModelTextures.TwoSideInfoMap(new HashMap<>()),
                 new ModelRenderVisitorList(List.of(new ModelRenderVisitor() {
                     @Override

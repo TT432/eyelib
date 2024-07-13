@@ -6,7 +6,6 @@ import io.github.tt432.eyelib.client.model.bedrock.BrCube;
 import io.github.tt432.eyelib.client.model.bedrock.BrFace;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import lombok.Setter;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -31,11 +30,10 @@ public class BlankEntityModelRenderVisitor extends ModelRenderVisitor {
         last.normal().transform(normal, tNormal);
 
         VertexConsumer consumer = renderParams.consumer();
-        int light = renderParams.light();
         consumer.addVertex(tPosition.x, tPosition.y, tPosition.z,
                 0xFF_FF_FF_FF,
                 uv.x, uv.y,
-                OverlayTexture.NO_OVERLAY, light,
+                renderParams.overlay(), renderParams.light(),
                 tNormal.x, tNormal.y, tNormal.z);
     }
 }
