@@ -32,5 +32,6 @@ dependencies {
 ## 依赖
 
 - [Antlr-Molang](https://github.com/TT432/antlr-molang) 用于解析 Molang。
-- [javassist](http://www.javassist.org/) 用于生成 Molang 的字节码。
+- [janino](https://janino-compiler.github.io/janino/) 用于生成 Molang 的字节码。
 - [lombok](https://projectlombok.org/) 用于生成 getter/setter 等。
+- [EffekseerForMultiLanguages](https://github.com/effekseer/EffekseerForMultiLanguages) 用于 effekseer 支持。

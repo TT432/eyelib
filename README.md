@@ -6,7 +6,8 @@ the renderer lib for _Minecraft_.
 
 ## Getting Started
 
-the first step is set up github packages maven.[Github Docs](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry).
+the first step is set up github packages
+maven.[Github Docs](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-gradle-registry).
 
 ```groovy
 repositories {
@@ -16,7 +17,7 @@ repositories {
             username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
             password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
         }
-   }
+    }
 }
 ```
 
@@ -31,5 +32,6 @@ dependencies {
 ## Dependencies
 
 - [Antlr-Molang](https://github.com/TT432/antlr-molang) for parse Molang.
-- [javassist](http://www.javassist.org/) for generate bytecode for Molang.
+- [janino](https://janino-compiler.github.io/janino/) for generate bytecode for Molang.
 - [lombok](https://projectlombok.org/) for generate getter/setter and more.
+- [EffekseerForMultiLanguages](https://github.com/effekseer/EffekseerForMultiLanguages) for effekseer support;
