@@ -13,14 +13,18 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BrParticleManager {
-    private static final Map<String, BrParticleEmitter> emitters = Collections.synchronizedMap(new HashMap<>());
+    private static final Map<String, BrParticleEmitter> emitters = new ConcurrentHashMap<>();
     private static final List<BrParticleParticle> particles = Collections.synchronizedList(new ArrayList<>());
 
     public static void spawnEmitter(final String id, final BrParticleEmitter emitter) {
