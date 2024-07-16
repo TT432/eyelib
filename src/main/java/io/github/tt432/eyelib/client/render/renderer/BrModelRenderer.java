@@ -91,9 +91,9 @@ public class BrModelRenderer {
 
             PoseStack.Pose last1 = poseStack.last();
             Matrix4f pose = last1.pose();
-            pose.translate(locator.getOffset());
-            pose.rotateZYX(locator.getRotation());
-            last1.normal().rotateZYX(locator.getRotation());
+            pose.translate(locator.offset());
+            pose.rotateZYX(locator.rotation());
+            last1.normal().rotateZYX(locator.rotation());
 
             visitors.visitors().forEach(visitor -> visitor.visitLocator(renderParams, bone, name, locator, boneRenderInfoEntry));
 
