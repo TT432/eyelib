@@ -6,10 +6,10 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
+import io.github.tt432.eyelib.util.ResourceLocations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -43,10 +43,10 @@ public class EyelibCommands {
                                                             ModelComponent modelComponent = data.getModelComponent();
 
                                                             modelComponent.setInfo(new ModelComponent.SerializableInfo(
-                                                                    ResourceLocation.parse(StringArgumentType.getString(context, "model")),
-                                                                    ResourceLocation.parse(StringArgumentType.getString(context, "texture")),
-                                                                    ResourceLocation.parse(StringArgumentType.getString(context, "renderType")),
-                                                                    List.of(ResourceLocation.parse(StringArgumentType.getString(context, "visitors")))
+                                                                    ResourceLocations.of(StringArgumentType.getString(context, "model")),
+                                                                    ResourceLocations.of(StringArgumentType.getString(context, "texture")),
+                                                                    ResourceLocations.of(StringArgumentType.getString(context, "renderType")),
+                                                                    List.of(ResourceLocations.of(StringArgumentType.getString(context, "visitors")))
                                                             ));
 
                                                             data.sync();

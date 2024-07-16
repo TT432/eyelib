@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.util.ResourceLocations;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
@@ -15,7 +16,7 @@ public record ModelMaterial(
         List<ResourceLocation> textures,
         ResourceLocation renderType
 ) {
-    private static final ResourceLocation solid = ResourceLocation.parse("solid");
+    private static final ResourceLocation solid = ResourceLocations.of("solid");
 
     public static final Codec<ModelMaterial> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             ResourceLocation.CODEC.listOf().optionalFieldOf("textures", List.of()).forGetter(o -> o.textures),

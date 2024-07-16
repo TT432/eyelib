@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.particle.effekseer;
 import Effekseer.swig.EffekseerEffectCore;
 import Effekseer.swig.EffekseerTextureType;
 import com.google.common.base.CaseFormat;
+import io.github.tt432.eyelib.util.ResourceLocations;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
@@ -138,7 +139,7 @@ public class EfkefcObject {
             dir.append("/").append(lowerUnderscore(split[i]));
         }
 
-        return ResourceLocation.fromNamespaceAndPath(namespace, dir.toString());
+        return ResourceLocations.of(namespace, dir.toString());
     }
 
     private static String lowerUnderscore(String s) {

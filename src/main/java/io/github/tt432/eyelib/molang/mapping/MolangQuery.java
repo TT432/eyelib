@@ -6,13 +6,13 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
+import io.github.tt432.eyelib.util.ResourceLocations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
@@ -320,7 +320,7 @@ public final class MolangQuery {
     @MolangFunction(value = "is_stalking", description = "判断生物是否正在追踪其他实体")
     public static float isStalking(MolangScope scope) {
         return scope.getOwner().ownerAs(Mob.class)
-                .map(m->m.isAggressive()?TRUE:FALSE)
+                .map(m -> m.isAggressive() ? TRUE : FALSE)
                 .orElse(0F);
     }
 
@@ -452,7 +452,7 @@ public final class MolangQuery {
             for (Object object : objects) {
                 if (Objects.equals(
                         BuiltInRegistries.ITEM.getKey(handItem.getItem()),
-                        ResourceLocation.parse(object.toString()))) {
+                        ResourceLocations.of(object.toString()))) {
                     return TRUE;
                 }
             }
@@ -464,7 +464,7 @@ public final class MolangQuery {
     private static float slotGetter(MolangScope scope, EquipmentSlot slot, Object... objects) {
         return scope.getOwner().ownerAs(LivingEntity.class).map(livingEntity -> {
             for (Object object : objects) {
-                if (ResourceLocation.parse(object.toString())
+                if (ResourceLocations.of(object.toString())
                         .equals(BuiltInRegistries.ITEM.getKey(livingEntity.getItemBySlot(slot).getItem()))) {
                     return TRUE;
                 }

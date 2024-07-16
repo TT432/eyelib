@@ -6,9 +6,9 @@ import com.google.gson.JsonParseException;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.model.bedrock.UnBakedBrModel;
+import io.github.tt432.eyelib.util.ResourceLocations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class BlockBrModelLoader implements IGeometryLoader<UnBakedBrModel> {
     @SubscribeEvent
     public static void onEvent(ModelEvent.RegisterGeometryLoaders event) {
-        event.register(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "bedrock_model"), new BlockBrModelLoader());
+        event.register(ResourceLocations.of(Eyelib.MOD_ID, "bedrock_model"), new BlockBrModelLoader());
     }
 
     @Override

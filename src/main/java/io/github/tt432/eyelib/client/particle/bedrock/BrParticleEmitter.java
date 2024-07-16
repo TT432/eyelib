@@ -4,6 +4,7 @@ import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterL
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.shape.Direction;
 import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.util.ResourceLocations;
 import io.github.tt432.eyelib.util.SimpleTimer;
 import io.github.tt432.eyelib.util.data.Blackboard;
 import lombok.Getter;
@@ -20,8 +21,7 @@ import java.util.List;
  * @author TT432
  */
 public class BrParticleEmitter {
-    private static final ResourceLocation emitterLocalSpaceKey =
-            ResourceLocation.parse("emitter_local_space");
+    private static final ResourceLocation emitterLocalSpaceKey = ResourceLocations.of("emitter_local_space");
 
     @Getter
     private final BrParticle particle;

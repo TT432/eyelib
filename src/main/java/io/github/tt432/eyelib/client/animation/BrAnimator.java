@@ -10,11 +10,11 @@ import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.util.ResourceLocations;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -99,7 +99,7 @@ public final class BrAnimator {
         if (soundEffect != null && !soundEffect.isEmpty() && soundEffect.firstKey() < ticks) {
             for (BrEffectsKeyFrame brEffectsKeyFrame : soundEffect.pollFirstEntry().getValue()) {
                 scope.getOwner().ownerAs(Entity.class).ifPresent(e -> {
-                    SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(ResourceLocation.parse(brEffectsKeyFrame.effect()));
+                    SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(ResourceLocations.of(brEffectsKeyFrame.effect()));
                     if (!e.isSilent()) {
                         e.level().playSound(Minecraft.getInstance().player,
                                 e.getX(), e.getY(), e.getZ(), soundEvent, e.getSoundSource(), 1, 1);

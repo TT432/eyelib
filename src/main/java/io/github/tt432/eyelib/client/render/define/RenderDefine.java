@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.render.define;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import io.github.tt432.eyelib.util.ResourceLocations;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
@@ -36,18 +37,18 @@ public record RenderDefine(
             entry = new RDAnimationController("", "");
         }
 
-        ResourceLocation model = ResourceLocation.parse(object.get("model") instanceof JsonPrimitive jp ? jp.getAsString() : "__empty");
+        ResourceLocation model = ResourceLocations.of(object.get("model") instanceof JsonPrimitive jp ? jp.getAsString() : "__empty");
 
         ResourceLocation material = object.get("material") instanceof JsonPrimitive jp
-                ? ResourceLocation.parse(jp.getAsString())
-                : ResourceLocation.fromNamespaceAndPath(model.getNamespace(), model.getPath() + ".material");
+                ? ResourceLocations.of(jp.getAsString())
+                : ResourceLocations.of(model.getNamespace(), model.getPath() + ".material");
 
         List<ResourceLocation> visitors = object.get("visitors") instanceof JsonArray ja
-                ? ja.asList().stream().map(je -> ResourceLocation.parse(je.getAsString())).toList()
-                : List.of(ResourceLocation.parse("eyelib:blank"));
+                ? ja.asList().stream().map(je -> ResourceLocations.of(je.getAsString())).toList()
+                : List.of(ResourceLocations.of("eyelib:blank"));
 
         return new RenderDefine(
-                ResourceLocation.parse(object.get("target") instanceof JsonPrimitive jp ? jp.getAsString() : "__empty"),
+                ResourceLocations.of(object.get("target") instanceof JsonPrimitive jp ? jp.getAsString() : "__empty"),
                 model,
                 material,
                 entry,

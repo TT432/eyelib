@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.client.particle.bedrock.component;
 
 import com.mojang.serialization.Codec;
+import io.github.tt432.eyelib.util.ResourceLocations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +63,7 @@ public class ParticleComponentManager {
                                 ParticleComponentManager.class.getClassLoader());
                         Codec codec = (Codec) clazz.getField("CODEC").get(null);
                         ComponentTarget target = ComponentTarget.valueOf(((ModAnnotation.EnumHolder) a.annotationData().get("target")).value());
-                        var name = ResourceLocation.parse((String) a.annotationData().get("value"));
+                        var name = ResourceLocations.of((String) a.annotationData().get("value"));
                         var type = (String) a.annotationData().get("type");
                         var info = new ParticleComponentInfo(name, type, target, clazz, codec);
                         byName.put(name, info);

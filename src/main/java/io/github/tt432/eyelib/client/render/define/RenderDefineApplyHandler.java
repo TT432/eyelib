@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.client.loader.ModelReplacerLoader;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.model.bedrock.material.ModelMaterial;
 import io.github.tt432.eyelib.event.InitComponentEvent;
+import io.github.tt432.eyelib.util.ResourceLocations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -55,7 +56,7 @@ public class RenderDefineApplyHandler {
 
             modelComponent.setInfo(new ModelComponent.SerializableInfo(
                     renderDefine.model(),
-                    ResourceLocation.fromNamespaceAndPath(texture.getNamespace(),
+                    ResourceLocations.of(texture.getNamespace(),
                             "textures/" + texture.getPath() + ".png"),
                     material.renderType(),
                     renderDefine.visitors()
@@ -68,7 +69,7 @@ public class RenderDefineApplyHandler {
             String name = entry.name();
 
             if (!animationName.isBlank() && !name.isBlank()) {
-                animComponent.setup(ResourceLocation.parse(name), ResourceLocation.parse(animationName));
+                animComponent.setup(ResourceLocations.of(name), ResourceLocations.of(animationName));
             }
         }
     }
