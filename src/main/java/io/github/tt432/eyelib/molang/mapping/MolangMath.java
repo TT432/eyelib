@@ -37,11 +37,11 @@ public final class MolangMath {
     }
 
     public static float atan(float v) {
-        return (float) Math.atan(v);
+        return (float) Math.toDegrees(Math.atan(v));
     }
 
     public static float atan2(float v1, float v2) {
-        return (float) Mth.atan2(v1, v2);
+        return (float) Math.toDegrees(Mth.atan2(v1, v2));
     }
 
     public static float ceil(float v) {

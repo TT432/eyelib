@@ -229,7 +229,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "eye_target_y_rotation", alias = "yaw", description = "yaw 角度（y rot）")
     public static float yaw(MolangScope scope) {
-        return entityFloat(scope, e -> e.getViewYRot(partialTick(scope)));
+        return entityFloat(scope, e -> e.getViewYRot(0));
     }
 
     @MolangFunction(value = "yaw_speed", description = "yaw 轴旋转速度")
@@ -239,7 +239,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "eye_target_x_rotation", alias = "pitch", description = "pitch 角度（x rot）")
     public static float pitch(MolangScope scope) {
-        return entityFloat(scope, e -> e.getViewXRot(partialTick(scope)));
+        return entityFloat(scope, e -> e.getViewXRot(0));
     }
 
     @MolangFunction(value = "sitting", alias = "is_sitting", description = "正在坐")
@@ -357,19 +357,42 @@ public final class MolangQuery {
     @MolangFunction(value = "ground_speed", description = "地面速度")
     public static float groundSpeed(MolangScope scope) {
         return livingFloat(scope, livingEntity -> {
-            Vec3 velocity = livingEntity.getDeltaMovement();
-            return Mth.sqrt((float) ((velocity.x * velocity.x) + (velocity.z * velocity.z))) * 20;
+            float vx = (float) (livingEntity.position().x - livingEntity.xo);
+            float vz = (float) (livingEntity.position().z - livingEntity.zo);
+            return Mth.sqrt((vx * vx) + (vz * vz)) * 20;
         });
+    }
+
+    @MolangFunction(value = "is_damage", description = "正在受伤")
+    public static float isDamage(MolangScope scope) {
+        return livingBool(scope, living -> living.hurtTime > 0);
     }
 
     @MolangFunction(value = "vertical_speed", description = "垂直速度")
     public static float verticalSpeed(MolangScope scope) {
-        return livingFloat(scope, living -> living.onGround() ? 0 : (float) (living.getDeltaMovement().y * 20));
+        return livingFloat(scope, living -> living.onGround() ? 0 : (float) (living.position().y - living.yo) * 20);
     }
 
     @MolangFunction(value = "head_yaw", description = "头部的 yaw 旋转角度")
     public static float headYaw(MolangScope scope) {
-        return livingFloat(scope, e -> Mth.lerp(partialTick(scope), e.yHeadRotO, e.yHeadRot));
+        return livingFloat(scope, livingEntity -> {
+            var partialTicks = partialTick(scope);
+            var lerpBodyRot = Mth.rotLerp(partialTicks, livingEntity.yBodyRotO, livingEntity.yBodyRot);
+            var lerpHeadRot = Mth.rotLerp(partialTicks, livingEntity.yHeadRotO, livingEntity.yHeadRot);
+            float netHeadYaw = lerpHeadRot - lerpBodyRot;
+            boolean shouldSit = livingEntity.isPassenger() && (livingEntity.getVehicle() != null && livingEntity.getVehicle().shouldRiderSit());
+            if (shouldSit && livingEntity.getVehicle() instanceof LivingEntity vehicle) {
+                lerpBodyRot = Mth.rotLerp(partialTicks, vehicle.yBodyRotO, vehicle.yBodyRot);
+                netHeadYaw = lerpHeadRot - lerpBodyRot;
+                float clampedHeadYaw = Mth.clamp(Mth.wrapDegrees(netHeadYaw), -85, 85);
+                lerpBodyRot = lerpHeadRot - clampedHeadYaw;
+                if (clampedHeadYaw * clampedHeadYaw > 2500f) {
+                    lerpBodyRot += clampedHeadYaw * 0.2f;
+                }
+                netHeadYaw = lerpHeadRot - lerpBodyRot;
+            }
+            return Mth.clamp(Mth.wrapDegrees(netHeadYaw), -85, 85);
+        });
     }
 
     @MolangFunction(value = "head_yaw_speed", description = "头部 yaw 旋转速度")
@@ -379,7 +402,12 @@ public final class MolangQuery {
 
     @MolangFunction(value = "body_yaw", description = "身体 yaw 旋转角度")
     public static float bodyYaw(MolangScope scope) {
-        return livingFloat(scope, e -> Mth.lerp(partialTick(scope), e.yBodyRotO, e.yBodyRot));
+        return scope.getOwner().ownerAs(LivingEntity.class)
+                .map(living -> Mth.wrapDegrees(Mth.rotLerp(partialTick(scope),
+                        living.yBodyRotO, living.yBodyRot)))
+                .orElse(scope.getOwner().ownerAs(Entity.class)
+                        .map(e -> Mth.wrapDegrees(e.getYRot()))
+                        .orElse(0F));
     }
 
     @MolangFunction(value = "body_yaw_speed", description = "身体 yaw 旋转角度")
