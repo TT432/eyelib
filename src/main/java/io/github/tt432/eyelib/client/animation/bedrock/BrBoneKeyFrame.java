@@ -1,32 +1,42 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
+import com.google.common.collect.ImmutableList;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.MolangValue3;
+import io.github.tt432.eyelib.util.codec.EyelibCodec;
 import io.github.tt432.eyelib.util.math.Curves;
 import io.github.tt432.eyelib.util.math.EyeMath;
-import net.minecraft.util.Mth;
+import net.minecraft.util.StringRepresentable;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author TT432
  */
 public record BrBoneKeyFrame(
         float timestamp,
-        MolangValue3[] dataPoints,
+        List<MolangValue3> dataPoints,
         BrBoneKeyFrame.LerpMode lerpMode
 ) {
-    public enum LerpMode {
+    public enum LerpMode implements StringRepresentable {
         LINEAR,
-        CATMULLROM
+        CATMULLROM;
+        public static final Codec<LerpMode> CODEC = StringRepresentable.fromEnum(LerpMode::values);
+
+        @Override
+        @NotNull
+        public String getSerializedName() {
+            return name().toLowerCase();
+        }
     }
 
     private static final List<Vector2f> catmullromArray = new ArrayList<>();
@@ -52,58 +62,55 @@ public record BrBoneKeyFrame(
                                           BrBoneKeyFrame afterPlus,
                                           float weight,
                                           Vector3f result) {
-        catmullromArray.clear();
+        boolean firstPointPredicate = beforePlus != null && before.dataPoints.size() == 1;
+        boolean lastPointPredicate = afterPlus != null && after.dataPoints.size() == 1;
+        weight = weight + (beforePlus != null ? 1 : 0);
 
-        boolean firstPointPredicate = beforePlus != null && before.dataPoints.length == 1;
-        boolean lastPointPredicate = afterPlus != null && after.dataPoints.length == 1;
+        setupCurvePoints(scope, beforePlus, before, after, afterPlus,
+                firstPointPredicate, lastPointPredicate, MolangValue3::getX);
 
-        if (firstPointPredicate)
-            catmullromArray.add(cTempP1.set(beforePlus.timestamp(), beforePlus.get(1).getX(scope)));
-
-        catmullromArray.add(cTempP2.set(before.timestamp(), before.get(1).getX(scope)));
-
-        catmullromArray.add(cTempP3.set(after.timestamp(), after.getFirst().getX(scope)));
-
-        if (lastPointPredicate)
-            catmullromArray.add(cTempP4.set(afterPlus.timestamp(), afterPlus.getFirst().getX(scope)));
-
-        float time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
+        float time = weight / (catmullromArray.size() - 1);
 
         var x = Curves.lerpSplineCurve(catmullromArray, time);
 
-        catmullromArray.clear();
+        setupCurvePoints(scope, beforePlus, before, after, afterPlus,
+                firstPointPredicate, lastPointPredicate, MolangValue3::getY);
 
-        if (firstPointPredicate)
-            catmullromArray.add(cTempP1.set(beforePlus.timestamp(), beforePlus.get(1).getY(scope)));
-
-        catmullromArray.add(cTempP2.set(before.timestamp(), before.get(1).getY(scope)));
-
-        catmullromArray.add(cTempP3.set(after.timestamp(), after.getFirst().getY(scope)));
-
-        if (lastPointPredicate)
-            catmullromArray.add(cTempP4.set(afterPlus.timestamp(), afterPlus.getFirst().getY(scope)));
-
-        time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
+        time = weight / (catmullromArray.size() - 1);
 
         var y = Curves.lerpSplineCurve(catmullromArray, time);
 
-        catmullromArray.clear();
+        setupCurvePoints(scope, beforePlus, before, after, afterPlus,
+                firstPointPredicate, lastPointPredicate, MolangValue3::getZ);
 
-        if (firstPointPredicate)
-            catmullromArray.add(cTempP1.set(beforePlus.timestamp(), beforePlus.get(1).getZ(scope)));
-
-        catmullromArray.add(cTempP2.set(before.timestamp(), before.get(1).getZ(scope)));
-
-        catmullromArray.add(cTempP3.set(after.timestamp(), after.getFirst().getZ(scope)));
-
-        if (lastPointPredicate)
-            catmullromArray.add(cTempP4.set(afterPlus.timestamp(), afterPlus.getFirst().getZ(scope)));
-
-        time = (weight + (beforePlus != null ? 1 : 0)) / (catmullromArray.size() - 1);
+        time = weight / (catmullromArray.size() - 1);
 
         var z = Curves.lerpSplineCurve(catmullromArray, time);
 
         return result.set(x, y, z);
+    }
+
+    @FunctionalInterface
+    interface MolangValue3AxisFunction {
+        float apply(MolangValue3 mv3, MolangScope scope);
+    }
+
+    private static void setupCurvePoints(MolangScope scope,
+                                         BrBoneKeyFrame beforePlus, BrBoneKeyFrame before,
+                                         BrBoneKeyFrame after, BrBoneKeyFrame afterPlus,
+                                         boolean firstPointPredicate, boolean lastPointPredicate,
+                                         MolangValue3AxisFunction function) {
+        catmullromArray.clear();
+
+        if (firstPointPredicate)
+            catmullromArray.add(cTempP1.set(beforePlus.timestamp(), function.apply(beforePlus.getPost(), scope)));
+
+        catmullromArray.add(cTempP2.set(before.timestamp(), function.apply(before.getPost(), scope)));
+
+        catmullromArray.add(cTempP3.set(after.timestamp(), function.apply(after.getPre(), scope)));
+
+        if (lastPointPredicate)
+            catmullromArray.add(cTempP4.set(afterPlus.timestamp(), function.apply(afterPlus.getPre(), scope)));
     }
 
     /**
@@ -114,11 +121,8 @@ public record BrBoneKeyFrame(
      * @return 值
      */
     public Vector3f linearLerp(MolangScope scope, BrBoneKeyFrame other, Vector3f result, float weight) {
-        var aDataPoint = this.dataPoints.length > 1 && this.timestamp() < other.timestamp() ? 1 : 0;
-        var bDataPoint = other.dataPoints.length > 1 && this.timestamp() > other.timestamp() ? 1 : 0;
-
-        MolangValue3 am3 = get(aDataPoint);
-        MolangValue3 bm3 = other.get(bDataPoint);
+        var am3 = this.dataPoints.size() > 1 && this.timestamp() < other.timestamp() ? getPost() : getPre();
+        var bm3 = other.dataPoints.size() > 1 && this.timestamp() > other.timestamp() ? other.getPost() : other.getPre();
 
         float ax = am3.getX(scope);
         float bx = bm3.getX(scope);
@@ -136,77 +140,49 @@ public record BrBoneKeyFrame(
         );
     }
 
-    public MolangValue3 getFirst() {
-        return dataPoints[0];
+    public MolangValue3 getPre() {
+        return dataPoints.getFirst();
     }
 
-    /**
-     * 获取对应数据点的对应轴的指定索引的值
-     *
-     * @param dataPoint 索引
-     * @return 值
-     */
-    public MolangValue3 get(int dataPoint) {
-        if (dataPoint != 0) {
-            dataPoint = Mth.clamp(dataPoint, 0, dataPoints.length - 1);
+    public MolangValue3 getPost() {
+        return dataPoints.getLast();
+    }
+
+    public record Factory(
+            List<MolangValue3> dataPoints,
+            LerpMode lerpMode
+    ) {
+        public static final Codec<Factory> CODEC = Codec.withAlternative(
+                Codec.withAlternative(
+                        MolangValue3.CODEC,
+                        MolangValue.CODEC.xmap(mv -> new MolangValue3(mv, mv, mv), MolangValue3::x)
+                ).xmap(m3 -> new Factory(List.of(m3), LerpMode.LINEAR), f -> f.dataPoints().getFirst()),
+                EyelibCodec.check(RecordCodecBuilder.create(ins -> ins.group(
+                        LerpMode.CODEC.optionalFieldOf("lerp_mode", LerpMode.LINEAR).forGetter(Factory::lerpMode),
+                        MolangValue3.CODEC.optionalFieldOf("pre").forGetter(f -> Optional.of(f.dataPoints().getFirst())),
+                        MolangValue3.CODEC.optionalFieldOf("post").forGetter(f -> f.dataPoints().size() < 2 ? Optional.empty() : Optional.of(f.dataPoints().getLast()))
+                ).apply(ins, (mode, pre, post) -> {
+                    if (pre.isPresent() && post.isEmpty()) {
+                        return new Factory(List.of(pre.get()), mode);
+                    } else if (post.isPresent() && (pre.isEmpty() || mode == LerpMode.CATMULLROM)) {
+                        return new Factory(List.of(post.get()), mode);
+                    } else {
+                        var builder = ImmutableList.<MolangValue3>builder();
+                        pre.ifPresent(builder::add);
+                        post.ifPresent(builder::add);
+                        return new Factory(builder.build(), mode);
+                    }
+                })), f -> f.dataPoints.isEmpty()
+                        ? DataResult.error(() -> "BoneKeyFrame need pre or post.")
+                        : DataResult.success(f))
+        );
+
+        public static Factory from(BrBoneKeyFrame keyFrame) {
+            return new Factory(keyFrame.dataPoints, keyFrame.lerpMode);
         }
 
-        return dataPoints[dataPoint];
-    }
-
-    public static BrBoneKeyFrame parse(float timestamp, JsonElement json) throws JsonParseException {
-        MolangValue3[] dataPoints;
-        BrBoneKeyFrame.LerpMode lerpMode;
-
-        if (json.isJsonArray()) {
-            lerpMode = LerpMode.LINEAR;
-
-            dataPoints = new MolangValue3[]{MolangValue3.parse(json)};
-        } else if (json.isJsonPrimitive()) {
-            lerpMode = LerpMode.LINEAR;
-            MolangValue value = MolangValue.parse(json.getAsString());
-            dataPoints = new MolangValue3[]{new MolangValue3(value, value, value)};
-        } else if (json.isJsonObject()) {
-            JsonObject jo = json.getAsJsonObject();
-
-            if (jo.has("lerp_mode"))
-                lerpMode = LerpMode.valueOf(jo.get("lerp_mode").getAsString().toUpperCase());
-            else lerpMode = LerpMode.LINEAR;
-
-            String pre = "pre";
-            String post = "post";
-
-            if (jo.has(pre) && !jo.has(post)) {
-                dataPoints = new MolangValue3[]{MolangValue3.parse(jo.get(pre))};
-            } else if (jo.has(post) && (!jo.has(pre) || lerpMode == LerpMode.CATMULLROM)) {
-                dataPoints = new MolangValue3[]{MolangValue3.parse(jo.get(post))};
-            } else {
-                dataPoints = new MolangValue3[]{
-                        MolangValue3.parse(jo.get(pre)),
-                        MolangValue3.parse(jo.get(post))
-                };
-            }
-        } else {
-            throw new JsonParseException("");
+        public BrBoneKeyFrame create(float timestamp) {
+            return new BrBoneKeyFrame(timestamp, dataPoints, lerpMode);
         }
-
-        return new BrBoneKeyFrame(timestamp, dataPoints, lerpMode);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof BrBoneKeyFrame bbkf && bbkf.timestamp == timestamp
-                && Arrays.equals(bbkf.dataPoints, dataPoints) && bbkf.lerpMode == lerpMode;
-    }
-
-    @Override
-    public int hashCode() {
-        return Float.hashCode(timestamp) & Arrays.hashCode(dataPoints) & lerpMode.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "BrBoneKeyFrame { timestamp : %f ; dataPints : %s ; lerpMode : %s ; }"
-                .formatted(timestamp, Arrays.toString(dataPoints), lerpMode.name());
     }
 }

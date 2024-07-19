@@ -1,9 +1,7 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
-import com.google.gson.JsonElement;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.JsonOps;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -30,8 +28,4 @@ public enum BrLoopType {
                     Codec.BOOL.xmap(b -> b ? LOOP : ONCE, t -> t == LOOP))
             .xmap(Either::unwrap, Either::left)
             .orElse(ONCE);
-
-    public static BrLoopType parse(JsonElement json) {
-        return CODEC.parse(JsonOps.INSTANCE, json).getPartialOrThrow();
-    }
 }

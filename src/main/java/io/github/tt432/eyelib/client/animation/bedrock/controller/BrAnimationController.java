@@ -1,12 +1,10 @@
 package io.github.tt432.eyelib.client.animation.bedrock.controller;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author TT432
@@ -16,30 +14,26 @@ public record BrAnimationController(
         BrAcState initialState,
         Map<String, BrAcState> states
 ) {
-    private static final String EXCEPTION = "can't parse animation controller json file: %s .";
+    record Factory(
+            Optional<String> initialState,
+            Map<String, BrAcState> states
+    ) {
+        public static final Codec<Factory> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+                Codec.STRING.optionalFieldOf("initial_state").forGetter(o -> o.initialState),
+                Codec.unboundedMap(Codec.STRING, BrAcState.CODEC).fieldOf("states").forGetter(o -> o.states)
+        ).apply(ins, Factory::new));
 
-    public static BrAnimationController parse(String jsonName, String name, JsonObject animCtrlEntryJson) {
-        final BrAcState initialState;
-        final Map<String, BrAcState> states = new HashMap<>();
-
-        if (!(animCtrlEntryJson.get("states") instanceof JsonObject stateJson)) {
-            throw new JsonParseException((EXCEPTION + "entry 'states' dose not JsonObject.").formatted(jsonName));
+        public static Factory from(BrAnimationController controller) {
+            return new Factory(controller.states.entrySet().stream()
+                    .filter(e -> e.getValue().equals(controller.initialState))
+                    .findFirst()
+                    .map(Map.Entry::getKey)
+                    .or(() -> Optional.of("default")),
+                    controller.states);
         }
 
-        for (Map.Entry<String, JsonElement> singleState : stateJson.asMap().entrySet()) {
-            try {
-                states.put(singleState.getKey(), BrAcState.parse(singleState.getValue()));
-            } catch (JsonParseException jsonParseException) {
-                throw new JsonParseException("can't parse controller json: %s".formatted(jsonName), jsonParseException);
-            }
+        public BrAnimationController create(String name) {
+            return new BrAnimationController(name, states.get(initialState.orElse("default")), states);
         }
-
-        if (animCtrlEntryJson.get("initial_state") instanceof JsonPrimitive isj) {
-            initialState = states.get(isj.getAsString());
-        } else {
-            initialState = states.get("default");
-        }
-
-        return new BrAnimationController(name, initialState, states);
     }
 }

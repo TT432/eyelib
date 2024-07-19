@@ -1,14 +1,13 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.util.codec.EyelibCodec;
 
 import javax.annotation.Nullable;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -31,87 +30,32 @@ public record BrAnimationEntry(
         MolangValue start_delay,
         @Nullable
         MolangValue loop_delay,
-        TreeMap<Float, BrEffectsKeyFrame[]> soundEffects,
-        TreeMap<Float, BrEffectsKeyFrame[]> particleEffects,
-        TreeMap<Float, MolangValue[]> timeline,
+        TreeMap<Float, List<BrEffectsKeyFrame>> soundEffects,
+        TreeMap<Float, List<BrEffectsKeyFrame>> particleEffects,
+        TreeMap<Float, List<MolangValue>> timeline,
         Map<String, BrBoneAnimation> bones
 ) {
-    public static BrAnimationEntry parse(JsonObject jsonObject) {
-        final BrLoopType loop;
-        final float animationLength;
-        final boolean override_previous_animation;
-        final MolangValue anim_time_update;
-        final MolangValue blend_weight;
-        final MolangValue start_delay;
-        final MolangValue loop_delay;
-        final TreeMap<Float, BrEffectsKeyFrame[]> soundEffects;
-        final TreeMap<Float, BrEffectsKeyFrame[]> particleEffects;
-        final TreeMap<Float, MolangValue[]> timeline;
-        final Map<String, BrBoneAnimation> bones = new HashMap<>();
+    private static final Codec<TreeMap<Float, List<BrEffectsKeyFrame>>> EFFECTS_CODEC = EyelibCodec.treeMap(
+            Codec.FLOAT,
+            EyelibCodec.singleOrList(BrEffectsKeyFrame.CODEC),
+            Comparator.comparingDouble(k -> k)
+    );
 
-        loop = BrLoopType.parse(jsonObject.get("loop"));
-        animationLength = jsonObject.get("animation_length") instanceof JsonPrimitive jp ? jp.getAsFloat() : 0;
-        soundEffects = loadMap(jsonObject, "sound_effects");
-        particleEffects = loadMap(jsonObject, "particle_effects");
-        override_previous_animation = jsonObject.get("override_previous_animation") instanceof JsonPrimitive jp && jp.getAsBoolean();
-        anim_time_update = MolangValue.parse(jsonObject.get("anim_time_update"));
-        blend_weight = MolangValue.parse(jsonObject.get("blend_weight"), MolangValue.TRUE_VALUE);
-        start_delay = MolangValue.parse(jsonObject.get("start_delay"));
-        loop_delay = MolangValue.parse(jsonObject.get("loop_delay"));
-
-        timeline = new TreeMap<>(Comparator.comparingDouble(k -> k));
-
-        if (jsonObject.get("timeline") instanceof JsonObject timelineJson) {
-            timelineJson.asMap().forEach((key, value) -> {
-                float timestamp = Float.parseFloat(key);
-
-                if (value instanceof JsonArray ja) {
-                    MolangValue[] molangValues = new MolangValue[ja.size()];
-
-                    for (int i = 0; i < ja.asList().size(); i++) {
-                        molangValues[i] = MolangValue.parse(ja.get(i).getAsString());
-                    }
-
-                    timeline.put(timestamp, molangValues);
-                } else {
-                    timeline.put(timestamp, new MolangValue[]{MolangValue.parse(value.getAsString())});
-                }
-            });
-        }
-
-        if (jsonObject.get("bones") instanceof JsonObject jo) {
-            for (Map.Entry<String, JsonElement> entry : jo.entrySet()) {
-                bones.put(entry.getKey(), BrBoneAnimation.parse(entry.getValue()));
-            }
-        }
-
-        return new BrAnimationEntry(loop, animationLength, override_previous_animation, anim_time_update, blend_weight,
-                start_delay, loop_delay, soundEffects, particleEffects, timeline, bones);
-    }
-
-    private static TreeMap<Float, BrEffectsKeyFrame[]> loadMap(JsonObject jsonObject, String effectKey) {
-        if (jsonObject.get(effectKey) instanceof JsonObject jo) {
-            TreeMap<Float, BrEffectsKeyFrame[]> map = new TreeMap<>(Comparator.comparingDouble(k -> k));
-
-            jo.asMap().forEach((key, value) -> {
-                float timestamp = Float.parseFloat(key);
-
-                if (value instanceof JsonArray ja) {
-                    BrEffectsKeyFrame[] keyFrames = new BrEffectsKeyFrame[ja.size()];
-
-                    for (int i = 0; i < ja.asList().size(); i++) {
-                        keyFrames[i] = BrEffectsKeyFrame.parse(timestamp, ja.get(i).getAsJsonObject());
-                    }
-
-                    map.put(timestamp, keyFrames);
-                } else {
-                    map.put(timestamp, new BrEffectsKeyFrame[]{BrEffectsKeyFrame.parse(timestamp, value.getAsJsonObject())});
-                }
-            });
-
-            return map;
-        } else {
-            return new TreeMap<>(Comparator.comparingDouble(k -> k));
-        }
-    }
+    public static final Codec<BrAnimationEntry> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            BrLoopType.CODEC.optionalFieldOf("loop", BrLoopType.ONCE).forGetter(o -> o.loop),
+            Codec.FLOAT.optionalFieldOf("animation_length", 0F).forGetter(o -> o.animationLength),
+            Codec.BOOL.optionalFieldOf("override_previous_animation", false).forGetter(o -> o.override_previous_animation),
+            MolangValue.CODEC.optionalFieldOf("anim_time_update", MolangValue.ZERO).forGetter(o -> o.anim_time_update),
+            MolangValue.CODEC.optionalFieldOf("blendWeight", MolangValue.ONE).forGetter(o -> o.blendWeight),
+            MolangValue.CODEC.optionalFieldOf("start_delay", MolangValue.ZERO).forGetter(o -> o.start_delay),
+            MolangValue.CODEC.optionalFieldOf("loop_delay", MolangValue.ZERO).forGetter(o -> o.loop_delay),
+            EFFECTS_CODEC.optionalFieldOf("sound_effects", new TreeMap<>()).forGetter(o -> o.soundEffects),
+            EFFECTS_CODEC.optionalFieldOf("particle_effects", new TreeMap<>()).forGetter(o -> o.particleEffects),
+            EyelibCodec.treeMap(
+                    Codec.FLOAT,
+                    EyelibCodec.singleOrList(MolangValue.CODEC),
+                    Comparator.comparingDouble(k -> k)
+            ).optionalFieldOf("timeline", new TreeMap<>()).forGetter(o -> o.timeline),
+            Codec.unboundedMap(Codec.STRING, BrBoneAnimation.CODEC).optionalFieldOf("bones", Map.of()).forGetter(o -> o.bones)
+    ).apply(ins, BrAnimationEntry::new));
 }

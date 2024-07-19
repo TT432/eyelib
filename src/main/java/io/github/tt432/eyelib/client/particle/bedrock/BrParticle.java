@@ -91,10 +91,10 @@ public record BrParticle(
                             }, tmap -> tmap.values().stream().toList())
                             .optionalFieldOf("nodes", new TreeMap<>()).forGetter(o -> o.nodes),
                     EyelibCodec.treeMap(
-                            Codec.STRING.xmap(Float::parseFloat, String::valueOf),
+                            EyelibCodec.STR_FLOAT_CODEC,
                             ChainNode.CODEC,
                             Comparator.comparingDouble(k -> k)
-                    ).optionalFieldOf("chainNodes", new TreeMap<>()).forGetter(o -> o.chainNodes),
+                    ).optionalFieldOf("chain_nodes", new TreeMap<>()).forGetter(o -> o.chainNodes),
                     MolangValue.CODEC.optionalFieldOf("input", MolangValue.ZERO).forGetter(o -> o.input),
                     MolangValue.CODEC.optionalFieldOf("horizontal_range", MolangValue.ONE)
                             .forGetter(o -> o.horizontal_range)

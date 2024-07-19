@@ -27,7 +27,7 @@ public record ParticleLifetimeEvents(
                     .forGetter(o -> o.creationEvent),
             EyelibCodec.singleOrList(Codec.STRING).optionalFieldOf("expiration_event", List.of())
                     .forGetter(o -> o.expirationEvent),
-            EyelibCodec.treeMap(Codec.STRING.xmap(Float::parseFloat, String::valueOf),
+            EyelibCodec.treeMap(EyelibCodec.STR_FLOAT_CODEC,
                             EyelibCodec.singleOrList(Codec.STRING),
                             Comparator.comparingDouble(k -> k))
                     .optionalFieldOf("timeline", new TreeMap<>()).forGetter(o -> o.timeline)

@@ -1,12 +1,13 @@
 package io.github.tt432.eyelib.client.animation.bedrock.controller;
 
-import com.google.gson.*;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.MolangValue;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @param animations           动画名称 -> 混合系数（动画变换倍数）
@@ -25,97 +26,29 @@ public record BrAcState(
         float blendTransition,
         boolean blendViaShortestPath
 ) {
-    public static BrAcState parse(JsonElement value) throws JsonParseException {
-        final Map<String, MolangValue> animations;
-        final MolangValue onEntry;
-        final MolangValue onExit;
-        final List<BrAcParticleEffect> particleEffects = new ArrayList<>();
-        final List<String> soundEffects = new ArrayList<>();
-        final Map<String, MolangValue> transitions = new HashMap<>();
-        final float blendTransition;
-        final boolean blendViaShortestPath;
-
-        animations = new HashMap<>();
-
-        if (!(value instanceof JsonObject jo)) {
-            throw new JsonParseException("can't parse animation controller state entry.");
-        }
-
-        if (jo.get("animations") instanceof JsonArray ja) {
-            for (JsonElement jsonElement : ja.asList()) {
-                if (jsonElement instanceof JsonObject animationJson) {
-                    for (Map.Entry<String, JsonElement> entry : animationJson.entrySet()) {
-                        animations.put(entry.getKey(), MolangValue.parse(entry.getValue().getAsString()));
-                    }
-                } else if (jsonElement instanceof JsonPrimitive animationName) {
-                    animations.put(animationName.getAsString(), MolangValue.TRUE_VALUE);
-                }
-            }
-        }
-
-        if (jo.get("on_entry") instanceof JsonArray ja) {
-            StringBuilder molangText = new StringBuilder();
-
-            for (JsonElement jsonElement : ja) {
-                molangText.append(jsonElement.getAsString());
-            }
-
-            onEntry = MolangValue.parse(molangText.toString());
-        } else {
-            onEntry = MolangValue.TRUE_VALUE;
-        }
-
-        if (jo.get("on_exit") instanceof JsonArray ja) {
-            StringBuilder molangText = new StringBuilder();
-
-            for (JsonElement jsonElement : ja) {
-                molangText.append(jsonElement.getAsString());
-            }
-
-            onExit = MolangValue.parse(molangText.toString());
-        } else {
-            onExit = MolangValue.TRUE_VALUE;
-        }
-
-        if (jo.get("particle_effects") instanceof JsonArray ja) {
-            List<BrAcParticleEffect> particles = new ArrayList<>();
-
-            for (JsonElement jsonElement : ja) {
-                if (jsonElement instanceof JsonObject particleEffectObject)
-                    particles.add(BrAcParticleEffect.parse(particleEffectObject));
-            }
-
-            particleEffects.addAll(particles);
-        }
-
-        if (jo.get("sound_effects") instanceof JsonArray ja) {
-            List<String> sounds = new ArrayList<>();
-
-            for (JsonElement jsonElement : ja) {
-                if (jsonElement instanceof JsonObject soundEffect) {
-                    sounds.add(soundEffect.get("effect").getAsString());
-                }
-            }
-
-            soundEffects.addAll(sounds);
-        }
-
-        if (jo.get("transitions") instanceof JsonArray ja) {
-            Map<String, MolangValue> transitionMap = new HashMap<>();
-
-            for (JsonElement jsonElement : ja) {
-                if (jsonElement instanceof JsonObject transitionObject) {
-                    transitionObject.asMap().forEach((k, v) ->
-                            transitionMap.put(k, MolangValue.parse(v.getAsString().replace("\n", ""))));
-                }
-            }
-
-            transitions.putAll(transitionMap);
-        }
-
-        blendTransition = jo.get("blend_transition") instanceof JsonPrimitive jp ? jp.getAsFloat() : 0;
-        blendViaShortestPath = jo.get("blend_via_shortest_path") instanceof JsonPrimitive jp && jp.getAsBoolean();
-
-        return new BrAcState(animations, onEntry, onExit, particleEffects, soundEffects, transitions, blendTransition, blendViaShortestPath);
-    }
+    public static final Codec<BrAcState> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            Codec.withAlternative(
+                    Codec.STRING.xmap(s -> Map.of(s, MolangValue.TRUE_VALUE), map -> map.keySet().iterator().next()),
+                    Codec.unboundedMap(Codec.STRING, MolangValue.CODEC)
+            ).listOf().xmap(
+                    l -> l.stream()
+                            .map(Map::entrySet)
+                            .flatMap(Set::stream)
+                            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b)),
+                    List::of
+            ).optionalFieldOf("animations", Map.of()).forGetter(o -> o.animations),
+            MolangValue.CODEC.optionalFieldOf("on_entry", MolangValue.ZERO).forGetter(o -> o.onEntry),
+            MolangValue.CODEC.optionalFieldOf("on_exit", MolangValue.ZERO).forGetter(o -> o.onExit),
+            BrAcParticleEffect.CODEC.listOf().optionalFieldOf("particle_effects", List.of()).forGetter(o -> o.particleEffects),
+            Codec.STRING.listOf().optionalFieldOf("sound_effects", List.of()).forGetter(o -> o.soundEffects),
+            Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).listOf().xmap(
+                    l -> l.stream()
+                            .map(Map::entrySet)
+                            .flatMap(Set::stream)
+                            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b)),
+                    List::of
+            ).optionalFieldOf("transitions", Map.of()).forGetter(o -> o.transitions),
+            Codec.FLOAT.optionalFieldOf("blend_transition", 0F).forGetter(o -> o.blendTransition),
+            Codec.BOOL.optionalFieldOf("blend_via_shortest_path", false).forGetter(o -> o.blendViaShortestPath)
+    ).apply(ins, BrAcState::new));
 }

@@ -23,7 +23,6 @@ import org.joml.Vector3f;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * @author TT432
@@ -92,9 +91,9 @@ public final class BrAnimator {
     }
 
     private static void processSoundEvent(MolangScope scope, float ticks, String animName, AnimationComponent component) {
-        Map<String, TreeMap<Float, BrEffectsKeyFrame[]>> currentSoundEvents = component.getCurrentSoundEvents();
+        var currentSoundEvents = component.getCurrentSoundEvents();
         if (currentSoundEvents == null) return;
-        TreeMap<Float, BrEffectsKeyFrame[]> soundEffect = currentSoundEvents.get(animName);
+        var soundEffect = currentSoundEvents.get(animName);
 
         if (soundEffect != null && !soundEffect.isEmpty() && soundEffect.firstKey() < ticks) {
             for (BrEffectsKeyFrame brEffectsKeyFrame : soundEffect.pollFirstEntry().getValue()) {
@@ -110,9 +109,9 @@ public final class BrAnimator {
     }
 
     private static void processTimeline(MolangScope scope, float ticks, String animName, AnimationComponent component) {
-        Map<String, TreeMap<Float, MolangValue[]>> currentTimeline = component.getCurrentTimeline();
+        var currentTimeline = component.getCurrentTimeline();
         if (currentTimeline == null) return;
-        TreeMap<Float, MolangValue[]> timeline = currentTimeline.get(animName);
+        var timeline = currentTimeline.get(animName);
 
         if (timeline != null && !timeline.isEmpty() && timeline.firstKey() < ticks) {
             for (MolangValue molangValue : timeline.pollFirstEntry().getValue()) {

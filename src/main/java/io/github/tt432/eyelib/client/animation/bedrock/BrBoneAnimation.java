@@ -1,18 +1,12 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue3;
 import io.github.tt432.eyelib.util.ImmutableFloatTreeMap;
 import io.github.tt432.eyelib.util.math.EyeMath;
-import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import org.joml.Vector3f;
-
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * if rotation_global
@@ -29,7 +23,20 @@ public record BrBoneAnimation(
         ImmutableFloatTreeMap<BrBoneKeyFrame> position,
         ImmutableFloatTreeMap<BrBoneKeyFrame> scale
 ) {
-    private static final Vector3f tempResult = new Vector3f();
+    private static final Codec<ImmutableFloatTreeMap<BrBoneKeyFrame>> KEY_FRAME_LIST_CODEC = Codec.withAlternative(
+            ImmutableFloatTreeMap.dispatched(f -> BrBoneKeyFrame.Factory.CODEC.xmap(
+                    factory -> factory.create(f),
+                    BrBoneKeyFrame.Factory::from
+            )),
+            BrBoneKeyFrame.Factory.CODEC.xmap(f -> f.create(0), BrBoneKeyFrame.Factory::from)
+                    .xmap(ImmutableFloatTreeMap::of, map -> map.getData().get(0))
+    );
+
+    public static final Codec<BrBoneAnimation> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            KEY_FRAME_LIST_CODEC.optionalFieldOf("rotation", ImmutableFloatTreeMap.empty()).forGetter(o -> o.rotation),
+            KEY_FRAME_LIST_CODEC.optionalFieldOf("position", ImmutableFloatTreeMap.empty()).forGetter(o -> o.position),
+            KEY_FRAME_LIST_CODEC.optionalFieldOf("scale", ImmutableFloatTreeMap.empty()).forGetter(o -> o.scale)
+    ).apply(ins, BrBoneAnimation::new));
 
     public Vector3f lerpRotation(MolangScope scope, float currentTick) {
         return lerp(scope, rotation, currentTick);
@@ -41,14 +48,6 @@ public record BrBoneAnimation(
 
     public Vector3f lerpScale(MolangScope scope, float currentTick) {
         return lerp(scope, scale, currentTick);
-    }
-
-    public float getLastTick() {
-        return Math.max(last(scale), Math.max(last(rotation), last(position)));
-    }
-
-    float last(ImmutableFloatTreeMap<BrBoneKeyFrame> frames) {
-        return frames != null && !frames.isEmpty() ? frames.lastKey() : 0;
     }
 
     private static final float epsilon = 1F / 1200F;
@@ -78,7 +77,7 @@ public record BrBoneAnimation(
             var weight = EyeMath.getWeight(before.timestamp(), after.timestamp(), currentTick);
 
             if (before.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR && after.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR) {
-                return before.linearLerp(scope, after, tempResult, weight);
+                return before.linearLerp(scope, after, new Vector3f(), weight);
             } else if (before.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM || after.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM) {
                 var beforePlus = frames.lowerEntry(before.timestamp());
                 var afterPlus = frames.higherEntry(after.timestamp());
@@ -88,71 +87,18 @@ public record BrBoneAnimation(
                         beforePlus,
                         before, after,
                         afterPlus,
-                        weight, tempResult);
+                        weight, new Vector3f());
             }
         }
 
         if (result != null) {
-            MolangValue3 m3 = result.get(result.timestamp() > currentTick ||
-                    EyeMath.epsilon(result.timestamp(), currentTick, epsilon) ? 0 : result.dataPoints().length - 1);
+            MolangValue3 m3 = result.timestamp() > currentTick || EyeMath.epsilon(result.timestamp(), currentTick, epsilon)
+                    ? result.getPre()
+                    : result.getPost();
 
-            return tempResult.set(m3.getX(scope), m3.getY(scope), m3.getZ(scope));
+            return m3.eval(scope);
         }
 
         return null;
-    }
-
-    public static BrBoneAnimation parse(JsonElement json) throws JsonParseException {
-        JsonObject object = json.getAsJsonObject();
-
-        JsonElement rotationJson = object.get("rotation");
-        JsonElement positionJson = object.get("position");
-        JsonElement scaleJson = object.get("scale");
-
-        return new BrBoneAnimation(
-                toKeyFrameList(rotationJson),
-                toKeyFrameList(positionJson),
-                toKeyFrameList(scaleJson)
-        );
-    }
-
-    static ImmutableFloatTreeMap<BrBoneKeyFrame> toKeyFrameList(JsonElement element) {
-        if (element == null) {
-            return ImmutableFloatTreeMap.empty();
-        }
-
-        if (element.isJsonObject()) {
-            return process(element.getAsJsonObject());
-        } else {
-            BrBoneKeyFrame keyFrame = BrBoneKeyFrame.parse(0, element);
-            Float2ObjectOpenHashMap<BrBoneKeyFrame> data = new Float2ObjectOpenHashMap<>();
-            data.put(0, keyFrame);
-            return ImmutableFloatTreeMap.of(new float[]{0}, data);
-        }
-    }
-
-    private static int i = 0;
-
-    public static ImmutableFloatTreeMap<BrBoneKeyFrame> process(JsonObject jsonObject) {
-        Float2ObjectOpenHashMap<BrBoneKeyFrame> data = new Float2ObjectOpenHashMap<>();
-
-        Set<Map.Entry<String, JsonElement>> entries = jsonObject.entrySet();
-
-        int size = entries.size();
-
-        float[] keys = new float[size];
-
-        i = 0;
-
-        entries.forEach(e -> {
-            float timestamp = Float.parseFloat(e.getKey());
-            BrBoneKeyFrame keyFrame = BrBoneKeyFrame.parse(timestamp, e.getValue());
-            data.put(timestamp, keyFrame);
-            keys[i++] = timestamp;
-        });
-
-        Arrays.sort(keys);
-
-        return ImmutableFloatTreeMap.of(keys, data);
     }
 }

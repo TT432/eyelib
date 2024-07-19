@@ -13,9 +13,7 @@ public class BoneRenderInfos {
     private final Map<String, BoneRenderInfoEntry> infos = new HashMap<>();
 
     public void reset() {
-        for (BoneRenderInfoEntry value : infos.values()) {
-            value.resetRenderInfo();
-        }
+        infos.values().forEach(BoneRenderInfoEntry::resetRenderInfo);
     }
 
     public BoneRenderInfoEntry get(String boneName) {

@@ -58,8 +58,8 @@ public class AnimationComponent {
     BrAnimation targetAnimation;
     List<BrAnimationController> animationController;
 
-    Map<String, TreeMap<Float, BrEffectsKeyFrame[]>>[] soundEffects;
-    Map<String, TreeMap<Float, MolangValue[]>>[] timelines;
+    Map<String, TreeMap<Float, List<BrEffectsKeyFrame>>>[] soundEffects;
+    Map<String, TreeMap<Float, List<MolangValue>>>[] timelines;
 
     float[] startTick;
 
@@ -109,11 +109,11 @@ public class AnimationComponent {
         return currState[currentControllerIndex];
     }
 
-    public Map<String, TreeMap<Float, BrEffectsKeyFrame[]>> getCurrentSoundEvents() {
+    public Map<String, TreeMap<Float, List<BrEffectsKeyFrame>>> getCurrentSoundEvents() {
         return soundEffects[currentControllerIndex];
     }
 
-    public Map<String, TreeMap<Float, MolangValue[]>> getCurrentTimeline() {
+    public Map<String, TreeMap<Float, List<MolangValue>>> getCurrentTimeline() {
         return timelines[currentControllerIndex];
     }
 
@@ -140,10 +140,10 @@ public class AnimationComponent {
     }
 
     public void resetSoundEvent(String animName) {
-        BrAnimationEntry brAnimationEntry = targetAnimation.animations().get(animName);
+        BrAnimationEntry BrAnimationEntry = targetAnimation.animations().get(animName);
 
-        if (brAnimationEntry != null) {
-            soundEffects[currentControllerIndex].put(animName, new TreeMap<>(brAnimationEntry.soundEffects()));
+        if (BrAnimationEntry != null) {
+            soundEffects[currentControllerIndex].put(animName, new TreeMap<>(BrAnimationEntry.soundEffects()));
         }
     }
 
@@ -158,10 +158,10 @@ public class AnimationComponent {
     }
 
     public void resetTimeline(String animName) {
-        BrAnimationEntry brAnimationEntry = targetAnimation.animations().get(animName);
+        BrAnimationEntry BrAnimationEntry = targetAnimation.animations().get(animName);
 
-        if (brAnimationEntry != null) {
-            timelines[currentControllerIndex].put(animName, new TreeMap<>(brAnimationEntry.timeline()));
+        if (BrAnimationEntry != null) {
+            timelines[currentControllerIndex].put(animName, new TreeMap<>(BrAnimationEntry.timeline()));
         }
     }
 }

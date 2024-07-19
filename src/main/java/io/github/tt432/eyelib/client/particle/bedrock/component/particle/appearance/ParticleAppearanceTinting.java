@@ -52,7 +52,7 @@ public record ParticleAppearanceTinting(
     ) {
         public static final Codec<Color> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 EyelibCodec.treeMap(
-                        Codec.STRING.xmap(Float::parseFloat, String::valueOf),
+                        EyelibCodec.STR_FLOAT_CODEC,
                         Codec.STRING.xmap(s -> Integer.parseUnsignedInt(s.substring(1), 16), Float::toString),
                         Comparator.comparingDouble(k -> k)
                 ).fieldOf("gradient").forGetter(o -> o.gradient),

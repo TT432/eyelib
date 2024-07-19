@@ -1,12 +1,17 @@
 package io.github.tt432.eyelib.util;
 
+import com.mojang.serialization.Codec;
+import io.github.tt432.eyelib.util.codec.EyelibCodec;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author TT432
@@ -57,12 +62,28 @@ public sealed class ImmutableFloatTreeMap<V> {
         return (ImmutableFloatTreeMap<V>) Empty.S.INSTANCE;
     }
 
+    public static <V> Codec<ImmutableFloatTreeMap<V>> codec(Codec<V> valueCodec) {
+        return Codec.unboundedMap(EyelibCodec.STR_FLOAT_CODEC, valueCodec)
+                .xmap(map -> of(new FloatArrayList(map.keySet()).toFloatArray(), new Float2ObjectOpenHashMap<>(map)),
+                        map -> map.data);
+    }
+
+    public static <V> Codec<ImmutableFloatTreeMap<V>> dispatched(Function<Float, Codec<? extends V>> valueCodec) {
+        return Codec.dispatchedMap(EyelibCodec.STR_FLOAT_CODEC, valueCodec)
+                .xmap(map -> of(new FloatArrayList(map.keySet()).toFloatArray(), new Float2ObjectOpenHashMap<>(map)),
+                        map -> map.data);
+    }
+
     private final float[] sortedKeys;
     private final Float2ObjectOpenHashMap<V> data;
 
     public static <V> ImmutableFloatTreeMap<V> of(float[] sortedKeys, Float2ObjectOpenHashMap<V> data) {
         if (sortedKeys.length == 0) return empty();
         else return new ImmutableFloatTreeMap<>(sortedKeys, data);
+    }
+
+    public static <V> ImmutableFloatTreeMap<V> of(V value) {
+        return new ImmutableFloatTreeMap<>(new float[]{0}, new Float2ObjectOpenHashMap<>(Map.of(0F, value)));
     }
 
     public V floorEntry(float currentTick) {

@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
@@ -44,6 +45,6 @@ public class BrAnimationLoader extends SimpleJsonResourceReloadListener {
     protected void apply(Map<ResourceLocation, JsonElement> pObject, @NotNull ResourceManager pResourceManager, @NotNull ProfilerFiller pProfiler) {
         animations.clear();
 
-        pObject.forEach((rl, json) -> animations.put(rl, BrAnimation.parse(rl.toString(), json.getAsJsonObject())));
+        pObject.forEach((rl, json) -> animations.put(rl, BrAnimation.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow()));
     }
 }

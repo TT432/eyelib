@@ -1,10 +1,7 @@
 package io.github.tt432.eyelib.molang;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.JsonOps;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.util.codec.EyelibCodec;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -38,33 +35,10 @@ public record MolangValue(
         return MOLANG_VALUE_CONSTANT_POOL.computeIfAbsent(value, k -> new MolangValue(String.valueOf(k)));
     }
 
-    public static final Codec<MolangValue> CODEC = Codec.withAlternative(
-            Codec.withAlternative(
-                            Codec.withAlternative(
-                                    Codec.STRING,
-                                    Codec.FLOAT.xmap(Object::toString, Float::parseFloat)),
-                            Codec.withAlternative(
-                                    Codec.STRING,
-                                    Codec.FLOAT.xmap(Object::toString, Float::parseFloat)
-                            ).listOf().xmap(sl -> String.join("", sl), List::of))
-                    .xmap(MolangValue::new, MolangValue::toString),
-            RecordCodecBuilder.<MolangValue>create(ins -> ins.group(
-                    Codec.STRING.fieldOf("context").forGetter(o -> o.context)
-            ).apply(ins, MolangValue::new))
-    );
-
-    public static MolangValue parse(String content) {
-        return parse(new JsonPrimitive(content));
-    }
-
-    public static MolangValue parse(JsonElement json) {
-        if (json == null) return FALSE_VALUE;
-        return parse(json, FALSE_VALUE);
-    }
-
-    public static MolangValue parse(JsonElement json, MolangValue defaultValue) {
-        return CODEC.parse(JsonOps.INSTANCE, json).result().orElse(defaultValue);
-    }
+    public static final Codec<MolangValue> CODEC = EyelibCodec.singleOrList(
+                    Codec.withAlternative(Codec.STRING, Codec.FLOAT.xmap(Object::toString, Float::parseFloat)))
+            .xmap(sl -> String.join("", sl), List::of)
+            .xmap(MolangValue::new, MolangValue::toString);
 
     public float eval(MolangScope scope) {
         try {

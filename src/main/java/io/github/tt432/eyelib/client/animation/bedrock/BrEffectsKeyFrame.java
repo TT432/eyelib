@@ -1,9 +1,10 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.MolangValue;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 /**
  * @author TT432
@@ -11,18 +12,13 @@ import org.jetbrains.annotations.Nullable;
 public record BrEffectsKeyFrame(
         float timestamp,
         String effect,
-        @Nullable String locator,
-        @Nullable MolangValue preEffectScript
+        Optional<String> locator,
+        Optional<MolangValue> preEffectScript
 ) {
-    public static BrEffectsKeyFrame parse(float timestamp, JsonObject object) {
-        final String effect;
-        final String locator;
-        final MolangValue preEffectScript;
-
-        effect = object.get("effect") instanceof JsonPrimitive jp ? jp.getAsString() : "";
-        locator = object.get("locator") instanceof JsonPrimitive jp ? jp.getAsString() : null;
-        preEffectScript = object.get("pre_effect_script") instanceof JsonPrimitive jp ? MolangValue.parse(jp.getAsString()) : null;
-
-        return new BrEffectsKeyFrame(timestamp, effect, locator, preEffectScript);
-    }
+    public static final Codec<BrEffectsKeyFrame> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            Codec.FLOAT.fieldOf("timestamp").forGetter(o -> o.timestamp),
+            Codec.STRING.fieldOf("effect").forGetter(o -> o.effect),
+            Codec.STRING.optionalFieldOf("locator").forGetter(o -> o.locator),
+            MolangValue.CODEC.optionalFieldOf("preEffectScript").forGetter(o -> o.preEffectScript)
+    ).apply(ins, BrEffectsKeyFrame::new));
 }
