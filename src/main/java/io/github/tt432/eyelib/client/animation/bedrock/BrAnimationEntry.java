@@ -2,8 +2,13 @@ package io.github.tt432.eyelib.client.animation.bedrock;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.client.animation.AnimationEffect;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.util.ResourceLocations;
 import io.github.tt432.eyelib.util.codec.EyelibCodec;
+import net.minecraft.client.Minecraft;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.Entity;
 
 import javax.annotation.Nullable;
 import java.util.Comparator;
@@ -30,9 +35,9 @@ public record BrAnimationEntry(
         MolangValue start_delay,
         @Nullable
         MolangValue loop_delay,
-        TreeMap<Float, List<BrEffectsKeyFrame>> soundEffects,
-        TreeMap<Float, List<BrEffectsKeyFrame>> particleEffects,
-        TreeMap<Float, List<MolangValue>> timeline,
+        AnimationEffect<BrEffectsKeyFrame> soundEffects,
+        AnimationEffect<BrEffectsKeyFrame> particleEffects,
+        AnimationEffect<MolangValue> timeline,
         Map<String, BrBoneAnimation> bones
 ) {
     private static final Codec<TreeMap<Float, List<BrEffectsKeyFrame>>> EFFECTS_CODEC = EyelibCodec.treeMap(
@@ -49,13 +54,23 @@ public record BrAnimationEntry(
             MolangValue.CODEC.optionalFieldOf("blendWeight", MolangValue.ONE).forGetter(o -> o.blendWeight),
             MolangValue.CODEC.optionalFieldOf("start_delay", MolangValue.ZERO).forGetter(o -> o.start_delay),
             MolangValue.CODEC.optionalFieldOf("loop_delay", MolangValue.ZERO).forGetter(o -> o.loop_delay),
-            EFFECTS_CODEC.optionalFieldOf("sound_effects", new TreeMap<>()).forGetter(o -> o.soundEffects),
-            EFFECTS_CODEC.optionalFieldOf("particle_effects", new TreeMap<>()).forGetter(o -> o.particleEffects),
-            EyelibCodec.treeMap(
-                    Codec.FLOAT,
-                    EyelibCodec.singleOrList(MolangValue.CODEC),
-                    Comparator.comparingDouble(k -> k)
-            ).optionalFieldOf("timeline", new TreeMap<>()).forGetter(o -> o.timeline),
+            EFFECTS_CODEC.xmap(map -> new AnimationEffect<>(map, (scope, frame) ->
+                    scope.getOwner().ownerAs(Entity.class).ifPresent(e -> {
+                        SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(ResourceLocations.of(frame.effect()));
+                        if (!e.isSilent()) {
+                            e.level().playSound(Minecraft.getInstance().player,
+                                    e.getX(), e.getY(), e.getZ(), soundEvent, e.getSoundSource(), 1, 1);
+                        }
+                    })), AnimationEffect::data
+            ).optionalFieldOf("sound_effects", AnimationEffect.empty()).forGetter(o -> o.soundEffects),
+            EFFECTS_CODEC.xmap(map -> new AnimationEffect<>(map, (scope, frame) -> {
+                        // todo
+                    }), AnimationEffect::data
+            ).optionalFieldOf("particle_effects", AnimationEffect.empty()).forGetter(o -> o.particleEffects),
+            EyelibCodec.treeMap(Codec.FLOAT, EyelibCodec.singleOrList(MolangValue.CODEC), Comparator.comparingDouble(k -> k))
+                    .xmap(map -> new AnimationEffect<>(map, (scope, mv) -> mv.eval(scope)), AnimationEffect::data)
+                    .optionalFieldOf("timeline", AnimationEffect.empty())
+                    .forGetter(o -> o.timeline),
             Codec.unboundedMap(Codec.STRING, BrBoneAnimation.CODEC).optionalFieldOf("bones", Map.of()).forGetter(o -> o.bones)
     ).apply(ins, BrAnimationEntry::new));
 }

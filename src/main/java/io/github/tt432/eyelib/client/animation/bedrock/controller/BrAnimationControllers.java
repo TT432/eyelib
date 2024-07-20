@@ -9,7 +9,7 @@ import java.util.Map;
  * @author TT432
  */
 public record BrAnimationControllers(
-        Map<String, BrAnimationController> animation_controllers
+        Map<String, BrAnimationController> animationControllers
 ) {
     public static final Codec<BrAnimationControllers> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.dispatchedMap(
@@ -18,6 +18,6 @@ public record BrAnimationControllers(
                             f -> f.create(k),
                             BrAnimationController.Factory::from
                     )
-            ).optionalFieldOf("animation_controllers", Map.of()).forGetter(o -> o.animation_controllers)
+            ).optionalFieldOf("animation_controllers", Map.of()).forGetter(o -> o.animationControllers)
     ).apply(ins, BrAnimationControllers::new));
 }

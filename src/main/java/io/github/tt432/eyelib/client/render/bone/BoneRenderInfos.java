@@ -10,6 +10,8 @@ import java.util.Map;
  */
 @Getter
 public class BoneRenderInfos {
+    public static final BoneRenderInfos EMPTY = new BoneRenderInfos();
+
     private final Map<String, BoneRenderInfoEntry> infos = new HashMap<>();
 
     public void reset() {

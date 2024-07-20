@@ -3,10 +3,11 @@ package io.github.tt432.eyelib.client.animation.bedrock;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.molang.MolangValue3;
 import io.github.tt432.eyelib.util.ImmutableFloatTreeMap;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import org.joml.Vector3f;
+
+import java.util.Optional;
 
 /**
  * if rotation_global
@@ -38,15 +39,15 @@ public record BrBoneAnimation(
             KEY_FRAME_LIST_CODEC.optionalFieldOf("scale", ImmutableFloatTreeMap.empty()).forGetter(o -> o.scale)
     ).apply(ins, BrBoneAnimation::new));
 
-    public Vector3f lerpRotation(MolangScope scope, float currentTick) {
+    public Optional<Vector3f> lerpRotation(MolangScope scope, float currentTick) {
         return lerp(scope, rotation, currentTick);
     }
 
-    public Vector3f lerpPosition(MolangScope scope, float currentTick) {
+    public Optional<Vector3f> lerpPosition(MolangScope scope, float currentTick) {
         return lerp(scope, position, currentTick);
     }
 
-    public Vector3f lerpScale(MolangScope scope, float currentTick) {
+    public Optional<Vector3f> lerpScale(MolangScope scope, float currentTick) {
         return lerp(scope, scale, currentTick);
     }
 
@@ -59,7 +60,9 @@ public record BrBoneAnimation(
      * @param currentTick 当前 tick
      * @return 值
      */
-    public static Vector3f lerp(MolangScope scope, ImmutableFloatTreeMap<BrBoneKeyFrame> frames, float currentTick) {
+    public static Optional<Vector3f> lerp(MolangScope scope,
+                                          ImmutableFloatTreeMap<BrBoneKeyFrame> frames,
+                                          float currentTick) {
         BrBoneKeyFrame before = frames.floorEntry(currentTick);
         BrBoneKeyFrame after = frames.higherEntry(currentTick);
         BrBoneKeyFrame result = null;
@@ -77,28 +80,17 @@ public record BrBoneAnimation(
             var weight = EyeMath.getWeight(before.timestamp(), after.timestamp(), currentTick);
 
             if (before.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR && after.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR) {
-                return before.linearLerp(scope, after, new Vector3f(), weight);
+                return Optional.of(before.linearLerp(scope, after, weight));
             } else if (before.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM || after.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM) {
                 var beforePlus = frames.lowerEntry(before.timestamp());
                 var afterPlus = frames.higherEntry(after.timestamp());
 
-                return BrBoneKeyFrame.catmullromLerp(
-                        scope,
-                        beforePlus,
-                        before, after,
-                        afterPlus,
-                        weight, new Vector3f());
+                return Optional.of(BrBoneKeyFrame.catmullromLerp(scope, beforePlus, before, after, afterPlus, weight));
             }
         }
 
-        if (result != null) {
-            MolangValue3 m3 = result.timestamp() > currentTick || EyeMath.epsilon(result.timestamp(), currentTick, epsilon)
-                    ? result.getPre()
-                    : result.getPost();
-
-            return m3.eval(scope);
-        }
-
-        return null;
+        return Optional.ofNullable(result)
+                .map(r -> r.get(r.timestamp() > currentTick || EyeMath.epsilon(r.timestamp(), currentTick, epsilon))
+                        .eval(scope));
     }
 }

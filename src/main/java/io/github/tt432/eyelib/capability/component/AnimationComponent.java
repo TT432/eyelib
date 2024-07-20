@@ -3,8 +3,8 @@ package io.github.tt432.eyelib.capability.component;
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.client.animation.AnimationEffect;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
-import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.animation.bedrock.BrEffectsKeyFrame;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAcState;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
@@ -19,7 +19,10 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author TT432
@@ -45,7 +48,21 @@ public class AnimationComponent {
         );
     }
 
+    private static class SingleController {
+        float startTick;
+        BrAcState lastState;
+        BrAcState currState;
+        Map<String, AnimationEffect.Runtime<BrEffectsKeyFrame>> soundEffects;
+        Map<String, AnimationEffect.Runtime<MolangValue>> timelines;
+    }
+
     SerializableInfo serializableInfo;
+    Map<String, SingleController> controllerData;
+    Optional<BrAnimation> targetAnimation = Optional.empty();
+    List<BrAnimationController> animationController;
+
+    @Setter
+    String currentControllerName;
 
     public boolean serializable() {
         return serializableInfo != null
@@ -53,18 +70,9 @@ public class AnimationComponent {
                 && serializableInfo.targetAnimations != null;
     }
 
-    BrAcState[] lastState;
-    BrAcState[] currState;
-    BrAnimation targetAnimation;
-    List<BrAnimationController> animationController;
-
-    Map<String, TreeMap<Float, List<BrEffectsKeyFrame>>>[] soundEffects;
-    Map<String, TreeMap<Float, List<MolangValue>>>[] timelines;
-
-    float[] startTick;
-
-    @Setter
-    int currentControllerIndex;
+    private SingleController currentController() {
+        return controllerData.get(currentControllerName);
+    }
 
     public void setup(ResourceLocation animationControllersName, ResourceLocation targetAnimationsName) {
         if (animationControllersName == null || targetAnimationsName == null) return;
@@ -80,88 +88,87 @@ public class AnimationComponent {
 
         serializableInfo = new SerializableInfo(animationControllersName, targetAnimationsName);
 
-        this.animationController = ImmutableList.copyOf(animationControllers.animation_controllers().values());
-        this.targetAnimation = targetAnimations;
-        int animationControllerSize = animationController.size();
-        lastState = new BrAcState[animationControllerSize];
-        currState = new BrAcState[animationControllerSize];
-        startTick = new float[animationControllerSize];
-        soundEffects = new Map[animationControllerSize];
-        timelines = new Map[animationControllerSize];
-        reset();
+        this.animationController = ImmutableList.copyOf(animationControllers.animationControllers().values());
+        this.targetAnimation = Optional.of(targetAnimations);
+
+        controllerData = new HashMap<>();
+
+        for (var s : animationController) {
+            SingleController controller = new SingleController();
+            controllerData.put(s.name(), controller);
+            controller.startTick = -1;
+        }
     }
 
-    public void reset() {
-        Arrays.fill(startTick, -1);
+    private boolean animationFinished(float ticks, String animationName) {
+        return targetAnimation.map(ta -> ((ticks - currentController().startTick) / 20)
+                        > ta.animations().get(animationName).animationLength())
+                .orElse(false);
     }
 
     public boolean anyAnimationFinished(float ticks) {
-        return getCurrentState().animations().keySet().stream()
-                .anyMatch(s -> ((ticks - startTick[currentControllerIndex]) / 20) > targetAnimation.animations().get(s).animationLength());
+        return getCurrentState().map(cs -> cs.animations().keySet().stream().anyMatch(s -> animationFinished(ticks, s)))
+                .orElse(false);
     }
 
     public boolean allAnimationsFinished(float ticks) {
-        return getCurrentState().animations().keySet().stream()
-                .allMatch(s -> ((ticks - startTick[currentControllerIndex]) / 20) > targetAnimation.animations().get(s).animationLength());
+        return getCurrentState().map(cs -> cs.animations().keySet().stream().allMatch(s -> animationFinished(ticks, s)))
+                .orElse(false);
     }
 
-    public BrAcState getCurrentState() {
-        return currState[currentControllerIndex];
-    }
-
-    public Map<String, TreeMap<Float, List<BrEffectsKeyFrame>>> getCurrentSoundEvents() {
-        return soundEffects[currentControllerIndex];
-    }
-
-    public Map<String, TreeMap<Float, List<MolangValue>>> getCurrentTimeline() {
-        return timelines[currentControllerIndex];
-    }
-
-    public void updateStartTick(float aTick) {
-        this.startTick[currentControllerIndex] = aTick;
-    }
-
-    public void setLastState(BrAcState lastState) {
-        this.lastState[currentControllerIndex] = lastState;
+    public Optional<BrAcState> getCurrentState() {
+        return Optional.ofNullable(currentController().currState);
     }
 
     public void setCurrState(BrAcState currState) {
-        this.currState[currentControllerIndex] = currState;
+        currentController().currState = currState;
+    }
+
+    public float getStartTick() {
+        return currentController().startTick;
+    }
+
+    public void setStartTick(float aTick) {
+        currentController().startTick = aTick;
+    }
+
+    public Optional<BrAcState> getLastState() {
+        return Optional.ofNullable(currentController().lastState);
+    }
+
+    public void setLastState(BrAcState lastState) {
+        currentController().lastState = lastState;
+    }
+
+    public Optional<Map<String, AnimationEffect.Runtime<BrEffectsKeyFrame>>> getSoundEffects() {
+        return Optional.ofNullable(currentController().soundEffects);
     }
 
     public void resetSoundEvents(BrAcState currState) {
-        soundEffects[currentControllerIndex] = new HashMap<>();
+        currentController().soundEffects = new HashMap<>();
 
-        currState.animations().forEach((k, v) -> {
-            if (targetAnimation.animations().containsKey(k)) {
-                soundEffects[currentControllerIndex].put(k, new TreeMap<>(targetAnimation.animations().get(k).soundEffects()));
-            }
-        });
+        currState.animations().forEach((k, v) -> targetAnimation.filter(t -> t.animations().containsKey(k))
+                .ifPresent(t -> currentController().soundEffects.put(k, t.animations().get(k).soundEffects().runtime())));
     }
 
     public void resetSoundEvent(String animName) {
-        BrAnimationEntry BrAnimationEntry = targetAnimation.animations().get(animName);
+        targetAnimation.map(t -> t.animations().get(animName))
+                .ifPresent(entry -> currentController().soundEffects.put(animName, entry.soundEffects().runtime()));
+    }
 
-        if (BrAnimationEntry != null) {
-            soundEffects[currentControllerIndex].put(animName, new TreeMap<>(BrAnimationEntry.soundEffects()));
-        }
+    public Optional<Map<String, AnimationEffect.Runtime<MolangValue>>> getTimeline() {
+        return Optional.ofNullable(currentController().timelines);
     }
 
     public void resetTimelines(BrAcState currState) {
-        timelines[currentControllerIndex] = new HashMap<>();
+        currentController().timelines = new HashMap<>();
 
-        currState.animations().forEach((k, v) -> {
-            if (targetAnimation.animations().containsKey(k)) {
-                timelines[currentControllerIndex].put(k, new TreeMap<>(targetAnimation.animations().get(k).timeline()));
-            }
-        });
+        currState.animations().forEach((k, v) -> targetAnimation.filter(t -> t.animations().containsKey(k))
+                .ifPresent(t -> currentController().timelines.put(k, t.animations().get(k).timeline().runtime())));
     }
 
     public void resetTimeline(String animName) {
-        BrAnimationEntry BrAnimationEntry = targetAnimation.animations().get(animName);
-
-        if (BrAnimationEntry != null) {
-            timelines[currentControllerIndex].put(animName, new TreeMap<>(BrAnimationEntry.timeline()));
-        }
+        targetAnimation.map(t->t.animations().get(animName))
+                .ifPresent(entry -> currentController().timelines.put(animName, entry.timeline().runtime()));
     }
 }

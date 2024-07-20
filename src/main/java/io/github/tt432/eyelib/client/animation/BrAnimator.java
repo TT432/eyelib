@@ -2,27 +2,20 @@ package io.github.tt432.eyelib.client.animation;
 
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
-import io.github.tt432.eyelib.client.animation.bedrock.BrBoneAnimation;
-import io.github.tt432.eyelib.client.animation.bedrock.BrEffectsKeyFrame;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAcState;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.molang.MolangValue;
-import io.github.tt432.eyelib.util.ResourceLocations;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import net.minecraft.client.Minecraft;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
-import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author TT432
@@ -30,191 +23,131 @@ import java.util.Map;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class BrAnimator {
     public static BoneRenderInfos tickAnimation(AnimationComponent component, MolangScope scope, float ticks) {
-        BoneRenderInfos infos = new BoneRenderInfos();
-
-        for (int i = 0; i < component.getAnimationController().size(); i++) {
-            component.setCurrentControllerIndex(i);
-            BrAnimationController animationController = component.getAnimationController().get(i);
-
-            if (animationController == null || component.getTargetAnimation() == null)
-                continue;
-
-            BrAcState currState = component.getCurrState()[i];
-
-            if (currState == null) {
-                switchState(ticks, scope, component, animationController.initialState());
-            }
-
-            currState = component.getCurrState()[i];
-
-            Map<String, MolangValue> transitions = currState.transitions();
-
-            for (Map.Entry<String, MolangValue> stringMolangValueEntry : transitions.entrySet()) {
-                String stateName = stringMolangValueEntry.getKey();
-                MolangValue predicate = stringMolangValueEntry.getValue();
-
-                if (predicate.evalAsBool(scope)) {
-                    switchState(ticks, scope, component, animationController.states().get(stateName));
-
-                    break;
-                }
-            }
-
-            float startedTime = (ticks - component.getStartTick()[i]) / 20;
-            currState = component.getCurrentState();
-            Map<String, Float> blend = blend(scope, component.getLastState()[i], currState, startedTime);
-
-            Map<String, BrAnimationEntry> animations = component.getTargetAnimation().animations();
-
-            updateAnimations(animations, blend, startedTime, infos, component, scope);
-        }
-
-        return infos;
+        return component.getTargetAnimation().map(t -> {
+            BoneRenderInfos infos = new BoneRenderInfos();
+            component.getAnimationController().stream()
+                    .filter(Objects::nonNull)
+                    .forEach(controller -> {
+                        component.setCurrentControllerName(controller.name());
+                        tickController(component, controller, ticks, scope, infos);
+                    });
+            return infos;
+        }).orElse(BoneRenderInfos.EMPTY);
     }
 
+    private static void tickController(AnimationComponent component, BrAnimationController animationController,
+                                       float ticks, MolangScope scope, BoneRenderInfos infos) {
+        var currState = component.getCurrentState()
+                .or(() -> Optional.of(switchState(ticks, scope, component, animationController.initialState())))
+                .map(state -> state.transitions().entrySet().stream()
+                        .filter(e -> e.getValue().evalAsBool(scope))
+                        .findFirst()
+                        .map(entry -> switchState(ticks, scope, component, animationController.states().get(entry.getKey())))
+                        .orElse(state));
 
-    private static void switchState(float ticks, MolangScope scope, AnimationComponent component, BrAcState currState) {
-        BrAcState lastState = component.getCurrentState();
+        float startedTime = (ticks - component.getStartTick()) / 20;
 
-        if (lastState != null) {
+        component.getTargetAnimation().ifPresent(anim -> currState.ifPresent(cs -> updateAnimations(anim.animations(),
+                blend(scope, component.getLastState(), cs, startedTime), startedTime, infos, component, scope)));
+    }
+
+    private static BrAcState switchState(float ticks, MolangScope scope, AnimationComponent component, BrAcState currState) {
+        component.getCurrentState().ifPresent(lastState -> {
             component.setLastState(lastState);
             lastState.onExit().eval(scope);
-        }
+        });
 
         component.setCurrState(currState);
         currState.onEntry().eval(scope);
 
-        component.updateStartTick(ticks);
+        component.setStartTick(ticks);
 
         component.resetSoundEvents(currState);
         component.resetTimelines(currState);
+
+        return currState;
     }
 
-    private static void processSoundEvent(MolangScope scope, float ticks, String animName, AnimationComponent component) {
-        var currentSoundEvents = component.getCurrentSoundEvents();
-        if (currentSoundEvents == null) return;
-        var soundEffect = currentSoundEvents.get(animName);
+    private static <V> void processEffect(String animaName, float ticks, MolangScope scope,
+                                          Map<String, AnimationEffect.Runtime<V>> map) {
+        AnimationEffect.Runtime<V> vRuntime = map.get(animaName);
 
-        if (soundEffect != null && !soundEffect.isEmpty() && soundEffect.firstKey() < ticks) {
-            for (BrEffectsKeyFrame brEffectsKeyFrame : soundEffect.pollFirstEntry().getValue()) {
-                scope.getOwner().ownerAs(Entity.class).ifPresent(e -> {
-                    SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(ResourceLocations.of(brEffectsKeyFrame.effect()));
-                    if (!e.isSilent()) {
-                        e.level().playSound(Minecraft.getInstance().player,
-                                e.getX(), e.getY(), e.getZ(), soundEvent, e.getSoundSource(), 1, 1);
-                    }
-                });
-            }
-        }
-    }
-
-    private static void processTimeline(MolangScope scope, float ticks, String animName, AnimationComponent component) {
-        var currentTimeline = component.getCurrentTimeline();
-        if (currentTimeline == null) return;
-        var timeline = currentTimeline.get(animName);
-
-        if (timeline != null && !timeline.isEmpty() && timeline.firstKey() < ticks) {
-            for (MolangValue molangValue : timeline.pollFirstEntry().getValue()) {
-                molangValue.eval(scope);
-            }
+        if (vRuntime != null && !vRuntime.data().isEmpty() && vRuntime.data().firstKey() < ticks) {
+            vRuntime.data().pollFirstEntry().getValue().forEach(v -> vRuntime.action().accept(scope, v));
         }
     }
 
     private static void updateAnimations(Map<String, BrAnimationEntry> targetAnimations, Map<String, Float> blend,
                                          float startedTime, BoneRenderInfos infos, AnimationComponent component,
                                          MolangScope scope) {
-        for (Map.Entry<String, Float> animEntry : blend.entrySet()) {
-            var animName = animEntry.getKey();
+        blend.forEach((animName, blendValue) -> {
             BrAnimationEntry animation = targetAnimations.get(animName);
 
-            if (animation == null) continue;
+            if (animation == null) return;
 
-            float multiplier = animation.blendWeight().eval(scope) * animEntry.getValue();
+            float multiplier = animation.blendWeight().eval(scope) * blendValue;
 
-            float animTick = startedTime;
+            evaluateAnimationTime(startedTime, animation, component, animName).ifPresent(animTick -> {
+                component.getSoundEffects().ifPresent(sound -> processEffect(animName, animTick, scope, sound));
+                component.getTimeline().ifPresent(timeline -> processEffect(animName, animTick, scope, timeline));
 
-            if (startedTime > animation.animationLength() && animation.animationLength() > 0) {
-                switch (animation.loop()) {
-                    case LOOP -> {
-                        animTick = startedTime % animation.animationLength();
-                        component.resetSoundEvent(animName);
-                        component.resetTimeline(animName);
-                    }
-                    case ONCE -> {
-                        continue;
-                    }
-                    default -> {
-                        // no
-                    }
-                }
-            }
+                animation.bones().forEach((boneName, boneAnim) -> {
+                    BoneRenderInfoEntry entry = infos.get(boneName);
 
-            processSoundEvent(scope, animTick, animName, component);
-            processTimeline(scope, animTick, animName, component);
+                    boneAnim.lerpPosition(scope, animTick).ifPresent(p ->
+                            entry.getRenderPosition().add(p.mul(multiplier / 16)));
 
-            for (Map.Entry<String, BrBoneAnimation> stringBrBoneAnimationEntry : animation.bones().entrySet()) {
-                var boneName = stringBrBoneAnimationEntry.getKey();
-                var boneAnim = stringBrBoneAnimationEntry.getValue();
-                BoneRenderInfoEntry boneRenderInfoEntry = infos.get(boneName);
-                Vector3f p = boneAnim.lerpPosition(scope, animTick);
+                    boneAnim.lerpRotation(scope, animTick).ifPresent(r ->
+                            entry.getRenderRotation()
+                                    .add(r.mul(multiplier * EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1)));
 
-                if (p != null) {
-                    p.div(16).mul(multiplier);
-
-                    boneRenderInfoEntry.getRenderPosition().add(p);
-                }
-
-                Vector3f r = boneAnim.lerpRotation(scope, animTick);
-
-                if (r != null) {
-                    r.mul(multiplier).mul(EyeMath.DEGREES_TO_RADIANS);
-
-                    boneRenderInfoEntry.getRenderRotation().add(-r.x, -r.y, r.z);
-                }
-
-                Vector3f s = boneAnim.lerpScale(scope, animTick);
-
-                if (s != null) {
-                    boneRenderInfoEntry.getRenderScala().mul(
+                    boneAnim.lerpScale(scope, animTick).ifPresent(s -> entry.getRenderScala().mul(
                             EyeMath.notZero(1 + ((s.x - 1) * multiplier), 0.00001F),
                             EyeMath.notZero(1 + ((s.y - 1) * multiplier), 0.00001F),
                             EyeMath.notZero(1 + ((s.z - 1) * multiplier), 0.00001F)
-                    );
-                }
+                    ));
 
-                // TODO other effect
+                    // TODO other effect
+                });
+            });
+        });
+    }
+
+    private static Optional<Float> evaluateAnimationTime(float startedTime, BrAnimationEntry animation,
+                                                         AnimationComponent component, String animName) {
+        if (startedTime > animation.animationLength() && animation.animationLength() > 0) {
+            switch (animation.loop()) {
+                case LOOP:
+                    component.resetSoundEvent(animName);
+                    component.resetTimeline(animName);
+                    return Optional.of(startedTime % animation.animationLength());
+                case ONCE:
+                    return Optional.empty();
             }
         }
+
+        return Optional.of(startedTime);
     }
 
     /**
      * @return animation -> scale
      */
-    private static Map<String, Float> blend(MolangScope scope, @Nullable BrAcState lastState, BrAcState currState, float stateTimeSec) {
-        float blendProgress = blendProgress(lastState, stateTimeSec);
-        Map<String, Float> result = new HashMap<>();
+    private static Map<String, Float> blend(MolangScope scope, Optional<BrAcState> lastState,
+                                            BrAcState currState, float stateTimeSec) {
+        float blendProgress = lastState.filter(ls -> ls.blendTransition() != 0)
+                .map(ls -> Mth.clamp(stateTimeSec / ls.blendTransition(), 0, 1))
+                .orElse(1F);
 
-        currState.animations().forEach((animationName, blendValue) ->
-                result.put(animationName, blendProgress * blendValue.eval(scope)));
+        Map<String, Float> result = currState.animations().entrySet().stream()
+                .map(entry -> Map.entry(entry.getKey(), blendProgress * entry.getValue().eval(scope)))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        if (lastState != null && blendProgress < 1) {
-            lastState.animations().forEach((animationName, blendValue) ->
-                    result.put(animationName, result.getOrDefault(animationName, 0F) + (1 - blendProgress) * blendValue.eval(scope)));
+        if (blendProgress < 1) {
+            lastState.ifPresent(ls -> ls.animations().forEach((animationName, blendValue) ->
+                    result.put(animationName, result.getOrDefault(animationName, 0F)
+                            + (1 - blendProgress) * blendValue.eval(scope))));
         }
 
         return result;
-    }
-
-    /**
-     * @param lastState    current animation controller state
-     * @param stateTimeSec second of the time form state start time
-     * @return 0 ~ 1
-     */
-    private static float blendProgress(@Nullable BrAcState lastState, float stateTimeSec) {
-        if (lastState == null || lastState.blendTransition() == 0) {
-            return 1;
-        } else {
-            return Mth.clamp(stateTimeSec / lastState.blendTransition(), 0, 1);
-        }
     }
 }

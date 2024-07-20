@@ -60,34 +60,25 @@ public record BrBoneKeyFrame(
                                           BrBoneKeyFrame before,
                                           BrBoneKeyFrame after,
                                           BrBoneKeyFrame afterPlus,
-                                          float weight,
-                                          Vector3f result) {
+                                          float weight) {
         boolean firstPointPredicate = beforePlus != null && before.dataPoints.size() == 1;
         boolean lastPointPredicate = afterPlus != null && after.dataPoints.size() == 1;
         weight = weight + (beforePlus != null ? 1 : 0);
 
-        setupCurvePoints(scope, beforePlus, before, after, afterPlus,
+        var xArray = setupCurvePoints(scope, beforePlus, before, after, afterPlus,
                 firstPointPredicate, lastPointPredicate, MolangValue3::getX);
 
-        float time = weight / (catmullromArray.size() - 1);
-
-        var x = Curves.lerpSplineCurve(catmullromArray, time);
-
-        setupCurvePoints(scope, beforePlus, before, after, afterPlus,
+        var yArray = setupCurvePoints(scope, beforePlus, before, after, afterPlus,
                 firstPointPredicate, lastPointPredicate, MolangValue3::getY);
 
-        time = weight / (catmullromArray.size() - 1);
-
-        var y = Curves.lerpSplineCurve(catmullromArray, time);
-
-        setupCurvePoints(scope, beforePlus, before, after, afterPlus,
+        var zArray = setupCurvePoints(scope, beforePlus, before, after, afterPlus,
                 firstPointPredicate, lastPointPredicate, MolangValue3::getZ);
 
-        time = weight / (catmullromArray.size() - 1);
-
-        var z = Curves.lerpSplineCurve(catmullromArray, time);
-
-        return result.set(x, y, z);
+        return new Vector3f(
+                Curves.lerpSplineCurve(xArray, weight / (xArray.size() - 1)),
+                Curves.lerpSplineCurve(yArray, weight / (yArray.size() - 1)),
+                Curves.lerpSplineCurve(zArray, weight / (zArray.size() - 1))
+        );
     }
 
     @FunctionalInterface
@@ -95,22 +86,24 @@ public record BrBoneKeyFrame(
         float apply(MolangValue3 mv3, MolangScope scope);
     }
 
-    private static void setupCurvePoints(MolangScope scope,
-                                         BrBoneKeyFrame beforePlus, BrBoneKeyFrame before,
-                                         BrBoneKeyFrame after, BrBoneKeyFrame afterPlus,
-                                         boolean firstPointPredicate, boolean lastPointPredicate,
-                                         MolangValue3AxisFunction function) {
-        catmullromArray.clear();
+    private static ArrayList<Vector2f> setupCurvePoints(MolangScope scope,
+                                                        BrBoneKeyFrame beforePlus, BrBoneKeyFrame before,
+                                                        BrBoneKeyFrame after, BrBoneKeyFrame afterPlus,
+                                                        boolean firstPointPredicate, boolean lastPointPredicate,
+                                                        MolangValue3AxisFunction function) {
+        ArrayList<Vector2f> points = new ArrayList<>();
 
         if (firstPointPredicate)
-            catmullromArray.add(cTempP1.set(beforePlus.timestamp(), function.apply(beforePlus.getPost(), scope)));
+            points.add(new Vector2f(beforePlus.timestamp(), function.apply(beforePlus.getPost(), scope)));
 
-        catmullromArray.add(cTempP2.set(before.timestamp(), function.apply(before.getPost(), scope)));
+        points.add(new Vector2f(before.timestamp(), function.apply(before.getPost(), scope)));
 
-        catmullromArray.add(cTempP3.set(after.timestamp(), function.apply(after.getPre(), scope)));
+        points.add(new Vector2f(after.timestamp(), function.apply(after.getPre(), scope)));
 
         if (lastPointPredicate)
-            catmullromArray.add(cTempP4.set(afterPlus.timestamp(), function.apply(afterPlus.getPre(), scope)));
+            points.add(new Vector2f(afterPlus.timestamp(), function.apply(afterPlus.getPre(), scope)));
+
+        return points;
     }
 
     /**
@@ -120,7 +113,7 @@ public record BrBoneKeyFrame(
      * @param weight 权重
      * @return 值
      */
-    public Vector3f linearLerp(MolangScope scope, BrBoneKeyFrame other, Vector3f result, float weight) {
+    public Vector3f linearLerp(MolangScope scope, BrBoneKeyFrame other, float weight) {
         var am3 = this.dataPoints.size() > 1 && this.timestamp() < other.timestamp() ? getPost() : getPre();
         var bm3 = other.dataPoints.size() > 1 && this.timestamp() > other.timestamp() ? other.getPost() : other.getPre();
 
@@ -133,11 +126,15 @@ public record BrBoneKeyFrame(
         float az = am3.getZ(scope);
         float bz = bm3.getZ(scope);
 
-        return result.set(
-                ax == bx ? ax : EyeMath.lerp(ax, bx, weight),
-                ay == by ? ay : EyeMath.lerp(ay, by, weight),
-                az == bz ? az : EyeMath.lerp(az, bz, weight)
+        return new Vector3f(
+                EyeMath.lerp(ax, bx, weight),
+                EyeMath.lerp(ay, by, weight),
+                EyeMath.lerp(az, bz, weight)
         );
+    }
+
+    public MolangValue3 get(boolean isPre) {
+        return isPre ? getPre() : getPost();
     }
 
     public MolangValue3 getPre() {

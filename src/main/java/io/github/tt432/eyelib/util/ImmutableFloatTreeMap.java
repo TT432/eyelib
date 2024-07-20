@@ -45,16 +45,6 @@ public sealed class ImmutableFloatTreeMap<V> {
         public V higherEntry(float currentTick) {
             return null;
         }
-
-        @Override
-        public boolean isEmpty() {
-            return true;
-        }
-
-        @Override
-        public float lastKey() {
-            return 0;
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -133,13 +123,5 @@ public sealed class ImmutableFloatTreeMap<V> {
         }
 
         return null;
-    }
-
-    public boolean isEmpty() {
-        return sortedKeys.length > 0;
-    }
-
-    public float lastKey() {
-        return sortedKeys[sortedKeys.length - 1];
     }
 }
