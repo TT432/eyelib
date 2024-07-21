@@ -19,7 +19,8 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public class EyelibNetworkManager {
     @SubscribeEvent
     public static void register(final RegisterPayloadHandlersEvent event) {
-        final PayloadRegistrar registrar = event.registrar(Eyelib.MOD_ID);
+        final PayloadRegistrar registrar = event.registrar(Eyelib.MOD_ID).optional();
+
         registrar.playToClient(ModelComponentSyncPacket.TYPE,
                 ModelComponentSyncPacket.STREAM_CODEC,
                 (payload, context) -> {
@@ -30,6 +31,7 @@ public class EyelibNetworkManager {
                     if (data == null) return;
                     data.getModelComponent().setInfo(payload.modelInfo());
                 });
+
         registrar.playToClient(AnimationComponentSyncPacket.TYPE,
                 AnimationComponentSyncPacket.STREAM_CODEC,
                 (payload, context) -> {
