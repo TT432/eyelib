@@ -14,6 +14,8 @@ public record BrAnimation(
         Map<String, BrAnimationEntry> animations
 ) {
     public static final Codec<BrAnimation> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            Codec.unboundedMap(Codec.STRING, BrAnimationEntry.CODEC).fieldOf("animations").forGetter(o -> o.animations)
+            Codec.dispatchedMap(Codec.STRING, name -> BrAnimationEntry.Factory.CODEC
+                    .xmap(f -> f.create(name), BrAnimationEntry.Factory::from)
+            ).fieldOf("animations").forGetter(o -> o.animations)
     ).apply(ins, BrAnimation::new));
 }
