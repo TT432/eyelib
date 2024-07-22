@@ -39,12 +39,6 @@ public record BrBoneKeyFrame(
         }
     }
 
-    private static final List<Vector2f> catmullromArray = new ArrayList<>();
-    private static final Vector2f cTempP1 = new Vector2f();
-    private static final Vector2f cTempP2 = new Vector2f();
-    private static final Vector2f cTempP3 = new Vector2f();
-    private static final Vector2f cTempP4 = new Vector2f();
-
     /**
      * 平滑插值
      *

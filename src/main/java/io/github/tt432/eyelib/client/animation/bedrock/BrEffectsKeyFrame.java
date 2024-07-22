@@ -19,6 +19,6 @@ public record BrEffectsKeyFrame(
             Codec.FLOAT.fieldOf("timestamp").forGetter(o -> o.timestamp),
             Codec.STRING.fieldOf("effect").forGetter(o -> o.effect),
             Codec.STRING.optionalFieldOf("locator").forGetter(o -> o.locator),
-            MolangValue.CODEC.optionalFieldOf("preEffectScript").forGetter(o -> o.preEffectScript)
+            MolangValue.CODEC.optionalFieldOf("pre_effect_script").forGetter(o -> o.preEffectScript)
     ).apply(ins, BrEffectsKeyFrame::new));
 }
