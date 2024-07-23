@@ -118,7 +118,7 @@ java {
 }
 
 jar{
-    archiveClassifier="s"
+    archiveClassifier="slim"
 }
 
 tasks['jarJar'].configure {
