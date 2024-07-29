@@ -34,4 +34,5 @@ dependencies {
 - [Antlr-Molang](https://github.com/TT432/antlr-molang) for parse Molang.
 - [janino](https://janino-compiler.github.io/janino/) for generate bytecode for Molang.
 - [lombok](https://projectlombok.org/) for generate getter/setter and more.
-- [EffekseerForMultiLanguages](https://github.com/effekseer/EffekseerForMultiLanguages) for effekseer support;
+- [EffekseerForMultiLanguages](https://github.com/effekseer/EffekseerForMultiLanguages) for effekseer support.
+- [Chin](https://github.com/TT432/chin) for utils.

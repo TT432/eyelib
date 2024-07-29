@@ -2,11 +2,11 @@ package io.github.tt432.eyelib.client.particle.bedrock.component.particle.motion
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.chin.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ComponentTarget;
 import io.github.tt432.eyelib.client.particle.bedrock.component.RegisterParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.particle.ParticleParticleComponent;
 import io.github.tt432.eyelib.molang.MolangValue;
-import io.github.tt432.eyelib.util.codec.EyelibCodec;
 
 import java.util.List;
 
@@ -39,7 +39,7 @@ public record ParticleMotionCollision(
             Codec.FLOAT.optionalFieldOf("coefficient_of_restitution", 0F).forGetter(o -> o.coefficientOfRestitution),
             Codec.FLOAT.optionalFieldOf("collision_radius", 0F).forGetter(o -> o.collisionRadius),
             Codec.BOOL.optionalFieldOf("expire_on_contact", false).forGetter(o -> o.expireOnContact),
-            EyelibCodec.singleOrList(Event.CODEC).optionalFieldOf("events", List.of()).forGetter(o -> o.events)
+            ChinExtraCodecs.singleOrList(Event.CODEC).optionalFieldOf("events", List.of()).forGetter(o -> o.events)
     ).apply(ins, ParticleMotionCollision::new));
 
     /**

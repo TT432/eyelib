@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.molang;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelib.util.codec.EyelibCodec;
+import io.github.tt432.chin.codec.ChinExtraCodecs;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -35,10 +35,14 @@ public record MolangValue(
         return MOLANG_VALUE_CONSTANT_POOL.computeIfAbsent(value, k -> new MolangValue(String.valueOf(k)));
     }
 
-    public static final Codec<MolangValue> CODEC = EyelibCodec.singleOrList(
-                    Codec.withAlternative(Codec.STRING, Codec.FLOAT.xmap(Object::toString, Float::parseFloat)))
-            .xmap(sl -> String.join("", sl), List::of)
-            .xmap(MolangValue::new, MolangValue::toString);
+    public static final Codec<MolangValue> CODEC;
+
+    static {
+        Codec<String> codec = Codec.withAlternative(Codec.STRING, Codec.FLOAT.xmap(Object::toString, Float::parseFloat));
+        CODEC = ChinExtraCodecs.singleOrList(codec)
+                .xmap(sl -> String.join("", sl), List::of)
+                .xmap(MolangValue::new, MolangValue::toString);
+    }
 
     public float eval(MolangScope scope) {
         try {

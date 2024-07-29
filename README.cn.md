@@ -35,3 +35,4 @@ dependencies {
 - [janino](https://janino-compiler.github.io/janino/) 用于生成 Molang 的字节码。
 - [lombok](https://projectlombok.org/) 用于生成 getter/setter 等。
 - [EffekseerForMultiLanguages](https://github.com/effekseer/EffekseerForMultiLanguages) 用于 effekseer 支持。
+- [Chin](https://github.com/TT432/chin) 用于提供工具类。

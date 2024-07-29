@@ -1,7 +1,9 @@
 package io.github.tt432.eyelib.client.particle.bedrock;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.chin.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponentManager;
 import io.github.tt432.eyelib.molang.MolangScope;
@@ -80,25 +82,24 @@ public record BrParticle(
                 MolangValue input,
                 MolangValue horizontal_range
         ) {
-            public static final Codec<Curve> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-                    Type.CODEC.optionalFieldOf("type", Type.LINEAR).forGetter(o -> o.type),
-                    MolangValue.CODEC.listOf().xmap(list -> {
-                                TreeMap<Float, MolangValue> r = new TreeMap<>(Comparator.comparingDouble(k -> k));
-                                for (int i = 0; i < list.size(); i++) {
-                                    r.put(i / (list.size() - 1F), list.get(i));
-                                }
-                                return r;
-                            }, tmap -> tmap.values().stream().toList())
-                            .optionalFieldOf("nodes", new TreeMap<>()).forGetter(o -> o.nodes),
-                    EyelibCodec.treeMap(
-                            EyelibCodec.STR_FLOAT_CODEC,
-                            ChainNode.CODEC,
-                            Comparator.comparingDouble(k -> k)
-                    ).optionalFieldOf("chain_nodes", new TreeMap<>()).forGetter(o -> o.chainNodes),
-                    MolangValue.CODEC.optionalFieldOf("input", MolangValue.ZERO).forGetter(o -> o.input),
-                    MolangValue.CODEC.optionalFieldOf("horizontal_range", MolangValue.ONE)
-                            .forGetter(o -> o.horizontal_range)
-            ).apply(ins, Curve::new));
+            public static final Codec<Curve> CODEC = RecordCodecBuilder.create(ins -> {
+                Comparator<Float> comparator = Comparator.comparingDouble(k -> k);
+                return ins.group(
+                        Type.CODEC.optionalFieldOf("type", Type.LINEAR).forGetter(o -> o.type),
+                        MolangValue.CODEC.listOf().xmap(list -> {
+                                    TreeMap<Float, MolangValue> r = new TreeMap<>(Comparator.comparingDouble(k -> k));
+                                    for (int i = 0; i < list.size(); i++) {
+                                        r.put(i / (list.size() - 1F), list.get(i));
+                                    }
+                                    return r;
+                                }, tmap -> tmap.values().stream().toList())
+                                .optionalFieldOf("nodes", new TreeMap<>()).forGetter(o -> o.nodes),
+                        ChinExtraCodecs.treeMap(EyelibCodec.STR_FLOAT_CODEC, ChainNode.CODEC, comparator).optionalFieldOf("chain_nodes", new TreeMap<>()).forGetter(o -> o.chainNodes),
+                        MolangValue.CODEC.optionalFieldOf("input", MolangValue.ZERO).forGetter(o -> o.input),
+                        MolangValue.CODEC.optionalFieldOf("horizontal_range", MolangValue.ONE)
+                                .forGetter(o -> o.horizontal_range)
+                ).apply(ins, Curve::new);
+            });
 
             public record ChainNode(
                     float leftValue,
@@ -106,24 +107,22 @@ public record BrParticle(
                     float leftSlope,
                     float rightSlope
             ) {
-                public static final Codec<ChainNode> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-                        EyelibCodec.withAlternative(
-                                Codec.FLOAT.fieldOf("left_value"),
-                                Codec.FLOAT.fieldOf("value")
-                        ).forGetter(o -> o.leftValue),
-                        EyelibCodec.withAlternative(
-                                Codec.FLOAT.fieldOf("right_value"),
-                                Codec.FLOAT.fieldOf("value")
-                        ).forGetter(o -> o.rightValue),
-                        EyelibCodec.withAlternative(
-                                Codec.FLOAT.fieldOf("left_slope"),
-                                Codec.FLOAT.fieldOf("slope")
-                        ).forGetter(o -> o.leftSlope),
-                        EyelibCodec.withAlternative(
-                                Codec.FLOAT.fieldOf("right_slope"),
-                                Codec.FLOAT.fieldOf("slope")
-                        ).forGetter(o -> o.rightSlope)
-                ).apply(ins, ChainNode::new));
+                public static final Codec<ChainNode> CODEC = RecordCodecBuilder.create(ins -> {
+                    final MapCodec<Float> primary = Codec.FLOAT.fieldOf("right_slope");
+                    final MapCodec<? extends Float> alternative = Codec.FLOAT.fieldOf("slope");
+                    final MapCodec<Float> primary1 = Codec.FLOAT.fieldOf("left_slope");
+                    final MapCodec<? extends Float> alternative1 = Codec.FLOAT.fieldOf("slope");
+                    final MapCodec<Float> primary2 = Codec.FLOAT.fieldOf("right_value");
+                    final MapCodec<? extends Float> alternative2 = Codec.FLOAT.fieldOf("value");
+                    final MapCodec<Float> primary3 = Codec.FLOAT.fieldOf("left_value");
+                    final MapCodec<? extends Float> alternative3 = Codec.FLOAT.fieldOf("value");
+                    return ins.group(
+                            ChinExtraCodecs.withAlternative(primary3, alternative3).forGetter(o -> o.leftValue),
+                            ChinExtraCodecs.withAlternative(primary2, alternative2).forGetter(o -> o.rightValue),
+                            ChinExtraCodecs.withAlternative(primary1, alternative1).forGetter(o -> o.leftSlope),
+                            ChinExtraCodecs.withAlternative(primary, alternative).forGetter(o -> o.rightSlope)
+                    ).apply(ins, ChainNode::new);
+                });
             }
 
             public enum Type implements StringRepresentable {

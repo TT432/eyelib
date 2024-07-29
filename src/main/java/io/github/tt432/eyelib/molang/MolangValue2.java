@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.molang;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelib.util.codec.Tuple;
-import io.github.tt432.eyelib.util.codec.TupleCodec;
+import io.github.tt432.chin.codec.ChinExtraCodecs;
+import io.github.tt432.chin.util.Tuple;
 import lombok.extern.slf4j.Slf4j;
 import org.joml.Vector2f;
 
@@ -20,7 +20,7 @@ public record MolangValue2(
     public static final MolangValue2 AXIS_X = new MolangValue2(MolangValue.ONE, MolangValue.ZERO);
     public static final MolangValue2 AXIS_Y = new MolangValue2(MolangValue.ZERO, MolangValue.ONE);
 
-    public static final Codec<MolangValue2> CODEC = TupleCodec.tuple(MolangValue.CODEC, MolangValue.CODEC)
+    public static final Codec<MolangValue2> CODEC = ChinExtraCodecs.tuple(MolangValue.CODEC, MolangValue.CODEC)
             .bmap(MolangValue2::new, mv2 -> Tuple.of(mv2.x, mv2.y));
 
     public float getX(MolangScope scope) {

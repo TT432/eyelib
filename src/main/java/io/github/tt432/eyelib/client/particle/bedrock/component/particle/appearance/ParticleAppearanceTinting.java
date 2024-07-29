@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.particle.bedrock.component.particle.appear
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.chin.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleParticle;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ComponentTarget;
 import io.github.tt432.eyelib.client.particle.bedrock.component.RegisterParticleComponent;
@@ -50,14 +51,14 @@ public record ParticleAppearanceTinting(
             TreeMap<Float, Integer> gradient,
             MolangValue interpolant
     ) {
-        public static final Codec<Color> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-                EyelibCodec.treeMap(
-                        EyelibCodec.STR_FLOAT_CODEC,
-                        Codec.STRING.xmap(s -> Integer.parseUnsignedInt(s.substring(1), 16), Float::toString),
-                        Comparator.comparingDouble(k -> k)
-                ).fieldOf("gradient").forGetter(o -> o.gradient),
-                MolangValue.CODEC.fieldOf("interpolant").forGetter(o -> o.interpolant)
-        ).apply(ins, Color::new));
+        public static final Codec<Color> CODEC = RecordCodecBuilder.create(ins -> {
+            final Codec<Integer> elementCodec = Codec.STRING.xmap(s -> Integer.parseUnsignedInt(s.substring(1), 16), Float::toString);
+            Comparator<Float> comparator = Comparator.comparingDouble(k -> k);
+            return ins.group(
+                    ChinExtraCodecs.treeMap(EyelibCodec.STR_FLOAT_CODEC, elementCodec, comparator).fieldOf("gradient").forGetter(o -> o.gradient),
+                    MolangValue.CODEC.fieldOf("interpolant").forGetter(o -> o.interpolant)
+            ).apply(ins, Color::new);
+        });
 
         public int getColor(MolangScope scope) {
             float v = interpolant.eval(scope);
