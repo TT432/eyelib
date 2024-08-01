@@ -51,6 +51,8 @@ public class EntityRenderSystem {
         LivingEntity entity = event.getEntity();
         RenderData<?> cap = RenderData.getComponent(entity);
 
+        if (!cap.isUseBuiltInRenderSystem()) return;
+
         if (cap.getAnimationComponent().getSerializableInfo() != null) {
             AnimationComponent component = cap.getAnimationComponent();
             var scope = cap.getScope();

@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.network.AnimationComponentSyncPacket;
 import io.github.tt432.eyelib.network.ModelComponentSyncPacket;
 import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,8 @@ public class RenderData<T> {
 
     private T owner;
     private MolangScope scope;
+    @Setter
+    private boolean useBuiltInRenderSystem = true;
 
     @NotNull
     private final ModelComponent modelComponent = new ModelComponent();

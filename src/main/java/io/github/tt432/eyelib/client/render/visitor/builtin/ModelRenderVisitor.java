@@ -9,22 +9,30 @@ import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 
 /**
  * @author TT432
+ * @see io.github.tt432.eyelib.client.render.renderer.BrModelRenderer
  */
 public class ModelRenderVisitor {
+    public void visitModel(RenderParams renderParams) {
 
-    public void visitBone(RenderParams renderParams, BrBone bone, BoneRenderInfoEntry boneRenderInfoEntry, boolean before) {
-        // need child to impl this
+    }
+
+    public void visitBone(RenderParams renderParams, BrBone bone, BoneRenderInfoEntry boneRenderInfoEntry) {
+
     }
 
     public void visitCube(RenderParams renderParams, BrCube cube) {
-        // need child to impl this
+
+    }
+
+    public void visitFace(RenderParams renderParams, BrCube cube, BrFace face) {
+
     }
 
     public void visitVertex(RenderParams renderParams, BrCube cube, BrFace face, int vertexId) {
-        // need child to impl this
+
     }
 
     public void visitLocator(RenderParams renderParams, BrBone bone, String name, BrLocator locator, BoneRenderInfoEntry boneRenderInfoEntry) {
-        // need child to impl this
+
     }
 }

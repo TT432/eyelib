@@ -3,7 +3,7 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.gradle.userdev' version '7.0.145'
+    id 'net.neoforged.gradle.userdev' version '7.0.157'
     id "io.freefair.lombok" version "8.6"
 }
 
@@ -109,6 +109,7 @@ dependencies {
     implementation "net.neoforged:neoforge:${neo_version}"
 
     implementation 'io.github.tt432.chin:chin:1.0.1'
+    jarJar 'io.github.tt432.chin:chin:[1.0.1,)'
 
     libraries 'org.codehaus.janino:janino:3.1.12'
     jarJar 'org.codehaus.janino:janino:[3.1.12,)'
