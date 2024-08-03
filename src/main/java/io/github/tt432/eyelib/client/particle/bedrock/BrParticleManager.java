@@ -28,6 +28,7 @@ public class BrParticleManager {
     private static final List<BrParticleParticle> particles = Collections.synchronizedList(new ArrayList<>());
 
     public static void spawnEmitter(final String id, final BrParticleEmitter emitter) {
+        if (emitters.containsKey(id)) return;
         emitters.put(id, emitter);
     }
 

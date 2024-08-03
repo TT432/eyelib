@@ -108,12 +108,11 @@ dependencies {
     // For all intends and purposes: You can treat this dependency as if it is a normal library you would use.
     implementation "net.neoforged:neoforge:${neo_version}"
 
-    implementation 'io.github.tt432.chin:chin:1.0.1'
-    jarJar 'io.github.tt432.chin:chin:[1.0.1,)'
+    implementation jarJar('io.github.tt432.chin:chin:[1.0.1,)')
 
-    libraries 'org.codehaus.janino:janino:3.1.12'
-    jarJar 'org.codehaus.janino:janino:[3.1.12,)'
-    jarJar 'org.codehaus.janino:commons-compiler:[3.1.12,)'
+    var janinoVersion = '3.1.12'
+    jarJar libraries("org.codehaus.janino:janino:$janinoVersion")
+    jarJar "org.codehaus.janino:commons-compiler:[$janinoVersion,)"
 }
 
 java {
