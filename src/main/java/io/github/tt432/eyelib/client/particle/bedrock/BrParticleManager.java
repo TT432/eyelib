@@ -29,11 +29,11 @@ public class BrParticleManager {
 
     public static void spawnEmitter(final String id, final BrParticleEmitter emitter) {
         if (emitters.containsKey(id)) return;
-        emitters.put(id, emitter);
+        Thread.startVirtualThread(() -> emitters.put(id, emitter));
     }
 
     public static void removeEmitter(final String id) {
-        emitters.remove(id);
+        Thread.startVirtualThread(() -> emitters.remove(id));
     }
 
     public static void spawnParticle(final BrParticleParticle particle) {
@@ -45,7 +45,7 @@ public class BrParticleManager {
     public static final class ModEvents {
         @SubscribeEvent
         public static void onEvent(FMLClientSetupEvent event) {
-            new Thread(() -> {
+            Thread.startVirtualThread(() -> {
                 while (true) {
                     Minecraft instance = Minecraft.getInstance();
 
@@ -59,13 +59,9 @@ public class BrParticleManager {
                         particles.forEach(BrParticleParticle::onRenderFrame);
                     }
 
-                    try {
-                        Thread.sleep(0);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
+                    Thread.yield();
                 }
-            }).start();
+            });
         }
     }
 
