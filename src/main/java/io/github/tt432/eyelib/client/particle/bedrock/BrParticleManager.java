@@ -49,16 +49,20 @@ public class BrParticleManager {
                 while (true) {
                     Minecraft instance = Minecraft.getInstance();
 
-                    synchronized (instance) {
-                        if (instance.level != null) {
-                            emitters.forEach((k, e) -> e.getTimer().setPaused(instance.isPaused()));
-                            particles.forEach(e -> e.getTimer().setPaused(instance.isPaused()));
+                    if (instance.level != null) {
+                        emitters.forEach((k, e) -> e.getTimer().setPaused(instance.isPaused()));
+                        particles.forEach(e -> e.getTimer().setPaused(instance.isPaused()));
 
-                            emitters.entrySet().removeIf(e -> e.getValue().isRemoved());
-                            emitters.values().forEach(BrParticleEmitter::onRenderFrame);
-                            particles.removeIf(BrParticleParticle::isRemoved);
-                            particles.forEach(BrParticleParticle::onRenderFrame);
-                        }
+                        emitters.entrySet().removeIf(e -> e.getValue().isRemoved());
+                        emitters.values().forEach(BrParticleEmitter::onRenderFrame);
+                        particles.removeIf(BrParticleParticle::isRemoved);
+                        particles.forEach(BrParticleParticle::onRenderFrame);
+                    }
+
+                    try {
+                        Thread.sleep(0);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                     }
                 }
             }).start();

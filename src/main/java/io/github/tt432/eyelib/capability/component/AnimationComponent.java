@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.capability.component;
 
-import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.animation.Animation;
@@ -19,7 +18,6 @@ import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -50,14 +48,14 @@ public class AnimationComponent {
     SerializableInfo serializableInfo;
     Map<String, Object> controllerData;
     AnimationSet targetAnimation = AnimationSet.EMPTY;
-    List<BrAnimationController> animationController;
+    Map<String, BrAnimationController> animationController;
 
     @Setter
     String currentControllerName;
 
     public BrAnimationController.Data currentData() {
         return (BrAnimationController.Data) controllerData.computeIfAbsent(currentControllerName,
-                s -> animationController.stream().filter(c -> c.name().equals(s)).findFirst().orElse(null));
+                s -> animationController.get(currentControllerName).createData());
     }
 
     public boolean serializable() {
@@ -80,12 +78,11 @@ public class AnimationComponent {
 
         serializableInfo = new SerializableInfo(animationControllersName, targetAnimationsName);
 
-        this.animationController = ImmutableList.copyOf(animationControllers.animationControllers().values());
+        this.animationController = new HashMap<>(animationControllers.animationControllers());
         this.targetAnimation = AnimationSet.from(targetAnimations);
 
         controllerData = new HashMap<>();
-
-        for (var s : animationController) {
+        for (var s : animationController.values()) {
             BrAnimationController.Data data = s.createData();
             controllerData.put(s.name(), data);
             data.setStartTick(-1);

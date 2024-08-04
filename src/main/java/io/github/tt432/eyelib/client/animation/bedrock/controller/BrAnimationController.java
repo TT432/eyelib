@@ -64,8 +64,8 @@ public record BrAnimationController(
             });
         }
 
-        public List<AnimationEffect.Runtime<?>> getEffects() {
-            return effects.values().stream().flatMap(List::stream).toList();
+        public List<AnimationEffect.Runtime<?>> getEffects(String animName) {
+            return effects.get(animName);
         }
     }
 
@@ -114,7 +114,7 @@ public record BrAnimationController(
             if (animation == null) return;
 
             animation.tickAnimation(data.getData(animation), targetAnimations, scope, startedTime,
-                    animation.blendWeight().eval(scope) * blendValue, infos, data.getEffects(),
+                    animation.blendWeight().eval(scope) * blendValue, infos, data.getEffects(animName),
                     () -> data.resetEffects(animName, targetAnimations));
         });
     }

@@ -17,7 +17,10 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @param override_previous_animation TODO 不确定
@@ -145,39 +148,42 @@ public record BrAnimationEntry(
     public void tickAnimation(Object data, AnimationSet animationSet, MolangScope scope,
                               float ticks, float multiplier, BoneRenderInfos infos,
                               List<AnimationEffect.Runtime<?>> runtime, Runnable loopAction) {
-        evaluateAnimationTime(ticks, loopAction).ifPresent(animTick -> {
-            runtime.forEach(r -> AnimationEffect.Runtime.processEffect(r, ticks, scope));
+        float animTick;
 
-            bones().forEach((boneName, boneAnim) -> {
-                BoneRenderInfoEntry entry = infos.get(boneName);
-
-                boneAnim.lerpPosition(scope, animTick).ifPresent(p ->
-                        entry.getRenderPosition().add(p.mul(multiplier / 16)));
-
-                boneAnim.lerpRotation(scope, animTick).ifPresent(r ->
-                        entry.getRenderRotation()
-                                .add(r.mul(multiplier * EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1)));
-
-                boneAnim.lerpScale(scope, animTick).ifPresent(s -> entry.getRenderScala().mul(
-                        EyeMath.notZero(1 + (s.x - 1) * multiplier, 0.00001F),
-                        EyeMath.notZero(1 + (s.y - 1) * multiplier, 0.00001F),
-                        EyeMath.notZero(1 + (s.z - 1) * multiplier, 0.00001F)
-                ));
-            });
-        });
-    }
-
-    private Optional<Float> evaluateAnimationTime(float startedTime, Runnable loopAction) {
-        if (isAnimationFinished(startedTime) && animationLength() > 0) {
+        if (isAnimationFinished(ticks) && animationLength() > 0) {
             switch (loop()) {
                 case LOOP:
                     loopAction.run();
-                    return Optional.of(startedTime % animationLength());
+                    animTick = ticks % animationLength();
+                    break;
                 case ONCE:
-                    return Optional.empty();
+                    return;
+                default:
+                    animTick = ticks;
             }
+        } else {
+            animTick = ticks;
         }
 
-        return Optional.of(startedTime);
+        for (AnimationEffect.Runtime<?> r : runtime) {
+            AnimationEffect.Runtime.processEffect(r, ticks, scope);
+        }
+
+        bones().forEach((boneName, boneAnim) -> {
+            BoneRenderInfoEntry entry = infos.get(boneName);
+
+            boneAnim.lerpPosition(scope, animTick).ifPresent(p ->
+                    entry.getRenderPosition().add(p.mul(multiplier / 16)));
+
+            boneAnim.lerpRotation(scope, animTick).ifPresent(r ->
+                    entry.getRenderRotation()
+                            .add(r.mul(multiplier * EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1)));
+
+            boneAnim.lerpScale(scope, animTick).ifPresent(s -> entry.getRenderScala().mul(
+                    EyeMath.notZero(1 + (s.x - 1) * multiplier, 0.00001F),
+                    EyeMath.notZero(1 + (s.y - 1) * multiplier, 0.00001F),
+                    EyeMath.notZero(1 + (s.z - 1) * multiplier, 0.00001F)
+            ));
+        });
     }
 }
