@@ -11,6 +11,7 @@ import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.util.ResourceLocations;
+import io.github.tt432.eyelib.util.codec.EyelibCodec;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundEvent;
@@ -48,7 +49,7 @@ public record BrAnimationEntry(
         Map<String, BrBoneAnimation> bones
 ) implements Animation<Object> {
     private static final Codec<TreeMap<Float, List<BrEffectsKeyFrame>>> EFFECTS_CODEC = ChinExtraCodecs.treeMap(
-            Codec.FLOAT,
+            EyelibCodec.STR_FLOAT_CODEC,
             ChinExtraCodecs.singleOrList(BrEffectsKeyFrame.CODEC),
             Comparator.comparingDouble(k -> k)
     );
@@ -93,7 +94,7 @@ public record BrAnimationEntry(
                                 // todo
                             }), AnimationEffect::data
                     ).optionalFieldOf("particle_effects", AnimationEffect.empty()).forGetter(o -> o.particleEffects),
-                    ChinExtraCodecs.treeMap(Codec.FLOAT, elementCodec, comparator)
+                    ChinExtraCodecs.treeMap(EyelibCodec.STR_FLOAT_CODEC, elementCodec, comparator)
                             .xmap(map -> new AnimationEffect<>(map, (scope, mv) -> mv.eval(scope)), AnimationEffect::data)
                             .optionalFieldOf("timeline", AnimationEffect.empty())
                             .forGetter(o -> o.timeline),
