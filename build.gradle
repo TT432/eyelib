@@ -5,6 +5,7 @@ plugins {
     id 'maven-publish'
     id 'net.neoforged.gradle.userdev' version '7.0.157'
     id "io.freefair.lombok" version "8.6"
+    id 'signing'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -115,8 +116,13 @@ dependencies {
     jarJar "org.codehaus.janino:commons-compiler:[$janinoVersion,)"
 }
 
+signing {
+    sign publishing.publications
+}
+
 java {
     withSourcesJar()
+    withJavadocJar()
 }
 
 jar {
@@ -153,19 +159,46 @@ tasks.withType(ProcessResources).configureEach {
 }
 
 publishing {
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/TT432/eyelib")
-            credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
-                password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            pom {
+                name = project.mod_name
+                description = project.mod_description
+                url = "https://github.com/${githubUserName}/${githubRepoName}"
+
+                scm {
+                    connection = "scm:git:git://github.com/${githubUserName}/${githubRepoName}.git"
+                    developerConnection = "scm:git:ssh://github.com/${githubUserName}/${githubRepoName}.git"
+                    url = "https://github.com/${githubUserName}/${githubRepoName}"
+                }
+
+                licenses {
+                    license {
+                        name = 'MIT'
+                        url = "https://github.com/${githubUserName}/${githubRepoName}/tree/master/LICENSE"
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'tt432'
+                        name = 'Chin'
+                        email = '2437315224@qq.com'
+                    }
+                }
             }
         }
     }
-    publications {
-        gpr(MavenPublication) {
-            from components.java
+
+    repositories {
+        maven {
+            url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            credentials {
+                username = project.findProperty("ossrhUsername")
+                password = project.findProperty("ossrhPassword")
+            }
         }
     }
 }
