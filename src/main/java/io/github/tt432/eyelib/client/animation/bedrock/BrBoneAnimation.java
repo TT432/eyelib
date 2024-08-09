@@ -7,8 +7,6 @@ import io.github.tt432.eyelib.util.ImmutableFloatTreeMap;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import org.joml.Vector3f;
 
-import java.util.Optional;
-
 /**
  * if rotation_global
  * relative_to / rotation -> 'entity'
@@ -39,15 +37,15 @@ public record BrBoneAnimation(
             KEY_FRAME_LIST_CODEC.optionalFieldOf("scale", ImmutableFloatTreeMap.empty()).forGetter(o -> o.scale)
     ).apply(ins, BrBoneAnimation::new));
 
-    public Optional<Vector3f> lerpRotation(MolangScope scope, float currentTick) {
+    public Vector3f lerpRotation(MolangScope scope, float currentTick) {
         return lerp(scope, rotation, currentTick);
     }
 
-    public Optional<Vector3f> lerpPosition(MolangScope scope, float currentTick) {
+    public Vector3f lerpPosition(MolangScope scope, float currentTick) {
         return lerp(scope, position, currentTick);
     }
 
-    public Optional<Vector3f> lerpScale(MolangScope scope, float currentTick) {
+    public Vector3f lerpScale(MolangScope scope, float currentTick) {
         return lerp(scope, scale, currentTick);
     }
 
@@ -60,9 +58,9 @@ public record BrBoneAnimation(
      * @param currentTick 当前 tick
      * @return 值
      */
-    public static Optional<Vector3f> lerp(MolangScope scope,
-                                          ImmutableFloatTreeMap<BrBoneKeyFrame> frames,
-                                          float currentTick) {
+    public static Vector3f lerp(MolangScope scope,
+                                ImmutableFloatTreeMap<BrBoneKeyFrame> frames,
+                                float currentTick) {
         BrBoneKeyFrame before = frames.floorEntry(currentTick);
         BrBoneKeyFrame after = frames.higherEntry(currentTick);
         BrBoneKeyFrame result = null;
@@ -80,17 +78,19 @@ public record BrBoneAnimation(
             var weight = EyeMath.getWeight(before.timestamp(), after.timestamp(), currentTick);
 
             if (before.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR && after.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR) {
-                return Optional.of(before.linearLerp(scope, after, weight));
+                return before.linearLerp(scope, after, weight);
             } else if (before.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM || after.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM) {
                 var beforePlus = frames.lowerEntry(before.timestamp());
                 var afterPlus = frames.higherEntry(after.timestamp());
 
-                return Optional.of(BrBoneKeyFrame.catmullromLerp(scope, beforePlus, before, after, afterPlus, weight));
+                return BrBoneKeyFrame.catmullromLerp(scope, beforePlus, before, after, afterPlus, weight);
             }
         }
 
-        return Optional.ofNullable(result)
-                .map(r -> r.get(r.timestamp() > currentTick || EyeMath.epsilon(r.timestamp(), currentTick, epsilon))
-                        .eval(scope));
+        if (result != null) {
+            return result.get(result.timestamp() > currentTick || EyeMath.epsilon(result.timestamp(), currentTick, epsilon)).eval(scope);
+        } else {
+            return null;
+        }
     }
 }
