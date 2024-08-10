@@ -20,8 +20,7 @@ public final class BrAnimator {
         for (BrAnimationController controller : component.getAnimationController().values()) {
             if (controller == null) continue;
 
-            component.setCurrentControllerName(controller.name());
-            controller.tickAnimation(component.currentData(), component.getTargetAnimation(),
+            controller.tickAnimation(component.getControllerData(controller.name()), component.getTargetAnimation(),
                     scope, ticks, 1, infos, List.of(), () -> {
                     });
         }

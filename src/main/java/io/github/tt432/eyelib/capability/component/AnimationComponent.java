@@ -2,24 +2,20 @@ package io.github.tt432.eyelib.capability.component;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.AnimationSet;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
-import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAcState;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
 import io.github.tt432.eyelib.client.loader.BrAnimationControllerLoader;
 import io.github.tt432.eyelib.client.loader.BrAnimationLoader;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
-import lombok.Setter;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * @author TT432
@@ -50,12 +46,9 @@ public class AnimationComponent {
     AnimationSet targetAnimation = AnimationSet.EMPTY;
     Map<String, BrAnimationController> animationController;
 
-    @Setter
-    String currentControllerName;
-
-    public BrAnimationController.Data currentData() {
-        return (BrAnimationController.Data) controllerData.computeIfAbsent(currentControllerName,
-                s -> animationController.get(currentControllerName).createData());
+    public BrAnimationController.Data getControllerData(String controllerName) {
+        return (BrAnimationController.Data) controllerData.computeIfAbsent(controllerName,
+                s -> animationController.get(s).createData());
     }
 
     public boolean serializable() {
@@ -87,25 +80,5 @@ public class AnimationComponent {
             controllerData.put(s.name(), data);
             data.setStartTick(-1);
         }
-    }
-
-    private boolean animationFinished(float ticks, String animationName) {
-        Animation<?> animation = targetAnimation.animations().get(animationName);
-        if (animation == null) return false;
-        return animation.isAnimationFinished((ticks - currentData().getStartTick()) / 20);
-    }
-
-    public boolean anyAnimationFinished(float ticks) {
-        return getCurrentState().map(cs -> cs.animations().keySet().stream().anyMatch(s -> animationFinished(ticks, s)))
-                .orElse(false);
-    }
-
-    public boolean allAnimationsFinished(float ticks) {
-        return getCurrentState().map(cs -> cs.animations().keySet().stream().allMatch(s -> animationFinished(ticks, s)))
-                .orElse(false);
-    }
-
-    public Optional<BrAcState> getCurrentState() {
-        return Optional.ofNullable(currentData().getCurrState());
     }
 }

@@ -1,9 +1,11 @@
 package io.github.tt432.eyelib.molang.mapping;
 
-import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.client.ClientTickHandler;
+import io.github.tt432.eyelib.client.animation.AnimationSet;
+import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAcState;
+import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
+import io.github.tt432.eyelib.molang.MolangOwnerSet;
 import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.util.ResourceLocations;
@@ -131,20 +133,26 @@ public final class MolangQuery {
 
     @MolangFunction(value = "any_animation_finished", description = "任意动画播放完毕（动画控制器）")
     public static float anyAnimationFinished(MolangScope scope) {
-        return scope.getOwner().ownerAs(RenderData.class).map(data ->
-                        data.getAnimationComponent().anyAnimationFinished(ClientTickHandler.getTick() + partialTick(scope))
-                                ? MolangValue.TRUE
-                                : MolangValue.FALSE)
-                .orElse(FALSE);
+        MolangOwnerSet owner = scope.getOwner();
+        return owner.onHiveOwners(BrAcState.class, AnimationSet.class, BrAnimationController.Data.class,
+                (state, animationSet, data) -> {
+                    float currTime = (ClientTickHandler.getTick() + partialTick(scope) - data.getStartTick()) / 20F;
+
+                    return state.animations().keySet().stream()
+                            .anyMatch(animationName -> animationSet.animations().get(animationName).isAnimationFinished(currTime));
+                }).orElse(false) ? TRUE : FALSE;
     }
 
     @MolangFunction(value = "all_animations_finished", description = "所有动画播放完毕（动画控制器）")
     public static float allAnimationsFinished(MolangScope scope) {
-        return scope.getOwner().ownerAs(RenderData.class).map(data ->
-                        data.getAnimationComponent().allAnimationsFinished(ClientTickHandler.getTick() + partialTick(scope))
-                                ? MolangValue.TRUE
-                                : MolangValue.FALSE)
-                .orElse(FALSE);
+        MolangOwnerSet owner = scope.getOwner();
+        return owner.onHiveOwners(BrAcState.class, AnimationSet.class, BrAnimationController.Data.class,
+                (state, animationSet, data) -> {
+                    float currTime = (ClientTickHandler.getTick() + partialTick(scope) - data.getStartTick()) / 20F;
+
+                    return state.animations().keySet().stream()
+                            .allMatch(animationName -> animationSet.animations().get(animationName).isAnimationFinished(currTime));
+                }).orElse(false) ? TRUE : FALSE;
     }
 
     @MolangFunction(value = "distance_from_camera", description = "距离摄像头的距离")

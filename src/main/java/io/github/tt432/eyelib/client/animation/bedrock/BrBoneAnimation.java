@@ -49,8 +49,6 @@ public record BrBoneAnimation(
         return lerp(scope, scale, currentTick);
     }
 
-    private static final float epsilon = 1F / 1200F;
-
     /**
      * 计算插值
      *
@@ -63,18 +61,8 @@ public record BrBoneAnimation(
                                 float currentTick) {
         BrBoneKeyFrame before = frames.floorEntry(currentTick);
         BrBoneKeyFrame after = frames.higherEntry(currentTick);
-        BrBoneKeyFrame result = null;
 
-        boolean isBeforeTime = before != null && EyeMath.epsilon(before.timestamp(), currentTick, epsilon);
-        boolean isAfterTime = after != null && EyeMath.epsilon(after.timestamp(), currentTick, epsilon);
-        boolean onlyBefore = before != null && after == null;
-        boolean onlyAfter = after != null && before == null;
-
-        if (isBeforeTime || (!isAfterTime && onlyBefore)) {
-            result = before;
-        } else if (isAfterTime || onlyAfter) {
-            result = after;
-        } else if (after != null) {
+        if (before != null && after != null) {
             var weight = EyeMath.getWeight(before.timestamp(), after.timestamp(), currentTick);
 
             if (before.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR && after.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR) {
@@ -85,12 +73,12 @@ public record BrBoneAnimation(
 
                 return BrBoneKeyFrame.catmullromLerp(scope, beforePlus, before, after, afterPlus, weight);
             }
+        } else if (before != null) {
+            return before.get(before.timestamp() >= currentTick).eval(scope);
+        } else if (after != null) {
+            return after.get(after.timestamp() >= currentTick).eval(scope);
         }
 
-        if (result != null) {
-            return result.get(result.timestamp() > currentTick || EyeMath.epsilon(result.timestamp(), currentTick, epsilon)).eval(scope);
-        } else {
-            return null;
-        }
+        return null;
     }
 }

@@ -92,7 +92,7 @@ public record BrAnimationEntry(
         }
 
         for (AnimationEffect.Runtime<?> r : runtime) {
-            AnimationEffect.Runtime.processEffect(r, ticks, scope);
+            AnimationEffect.Runtime.processEffect(r, animTick, scope);
         }
 
         for (Map.Entry<String, BrBoneAnimation> boneEntry : bones().entrySet()) {
@@ -149,7 +149,7 @@ public record BrAnimationEntry(
                     Codec.FLOAT.optionalFieldOf("animation_length", 0F).forGetter(o -> o.animationLength),
                     Codec.BOOL.optionalFieldOf("override_previous_animation", false).forGetter(o -> o.override_previous_animation),
                     MolangValue.CODEC.optionalFieldOf("anim_time_update", MolangValue.ZERO).forGetter(o -> o.anim_time_update),
-                    MolangValue.CODEC.optionalFieldOf("blendWeight", MolangValue.ONE).forGetter(o -> o.blendWeight),
+                    MolangValue.CODEC.optionalFieldOf("blend_weight", MolangValue.ONE).forGetter(o -> o.blendWeight),
                     MolangValue.CODEC.optionalFieldOf("start_delay", MolangValue.ZERO).forGetter(o -> o.start_delay),
                     MolangValue.CODEC.optionalFieldOf("loop_delay", MolangValue.ZERO).forGetter(o -> o.loop_delay),
                     EFFECTS_CODEC.xmap(map -> new AnimationEffect<>(map, (scope, frame) ->

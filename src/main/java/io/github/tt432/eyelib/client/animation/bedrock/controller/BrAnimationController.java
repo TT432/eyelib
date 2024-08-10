@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.client.animation.AnimationEffect;
 import io.github.tt432.eyelib.client.animation.AnimationSet;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangValue;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.util.Mth;
@@ -24,7 +25,9 @@ public record BrAnimationController(
 ) implements Animation<BrAnimationController.Data> {
     @Override
     public Data createData() {
-        return new Data();
+        Data data = new Data();
+        data.currState = initialState;
+        return data;
     }
 
     @Override
@@ -74,26 +77,34 @@ public record BrAnimationController(
                               float ticks, float multiplier, BoneRenderInfos infos,
                               List<AnimationEffect.Runtime<?>> runtime, Runnable loopAction) {
         var currState = data.getCurrState();
-        if (currState == null) currState = switchState(ticks, scope, data, animationSet, initialState());
-        currState = currState.transitions().entrySet().stream()
-                .filter(e -> e.getValue().evalAsBool(scope))
-                .findFirst()
-                .map(entry -> switchState(ticks, scope, data, animationSet, states().get(entry.getKey())))
-                .orElse(currState);
+        if (currState == null) return;
 
-        float startedTime = (ticks - data.getStartTick()) / 20;
+        scope.getOwner().replace(Data.class, data);
+        scope.getOwner().replace(AnimationSet.class, animationSet);
+        scope.getOwner().replace(BrAcState.class, currState);
 
-        updateAnimations(animationSet, blend(scope, data.getLastState(), currState, startedTime),
-                startedTime, infos, data, scope);
+        for (Map.Entry<String, MolangValue> entry : currState.transitions().entrySet()) {
+            if (entry.getValue().evalAsBool(scope)) {
+                currState = switchState(ticks, scope, data, animationSet, states().get(entry.getKey()));
+                break;
+            }
+        }
+
+        scope.getOwner().replace(BrAcState.class, currState);
+
+        blend(animationSet, infos, data, scope, data.getLastState(),
+                currState, (ticks - data.getStartTick()) / 20);
     }
 
     private static BrAcState switchState(float ticks, MolangScope scope, Data data,
                                          AnimationSet animationSet, BrAcState currState) {
-        BrAcState currentState = data.getCurrState();
+        BrAcState lastState = data.getCurrState();
 
-        if (currentState != null) {
-            data.setLastState(currentState);
-            currentState.onExit().eval(scope);
+        if (lastState == currState) return currState;
+
+        if (lastState != null) {
+            data.setLastState(lastState);
+            lastState.onExit().eval(scope);
         }
 
         currState.onEntry().eval(scope);
@@ -105,45 +116,37 @@ public record BrAnimationController(
         return currState;
     }
 
-    private static void updateAnimations(AnimationSet targetAnimations, Map<String, Float> blend,
-                                         float startedTime, BoneRenderInfos infos, Data data,
-                                         MolangScope scope) {
-        blend.forEach((animName, blendValue) -> {
-            var animation = targetAnimations.animations().get(animName);
-
-            if (animation == null) return;
-
-            animation.tickAnimation(data.getData(animation), targetAnimations, scope, startedTime,
-                    animation.blendWeight().eval(scope) * blendValue, infos, data.getEffects(animName),
-                    () -> data.resetEffects(animName, targetAnimations));
-        });
-    }
-
-    /**
-     * @return animation -> scale
-     */
-    private static Map<String, Float> blend(MolangScope scope, @Nullable BrAcState lastState,
-                                            BrAcState currState, float stateTimeSec) {
+    private static void blend(AnimationSet targetAnimations, BoneRenderInfos infos, Data data,
+                              MolangScope scope, @Nullable BrAcState lastState, BrAcState currState, float stateTimeSec) {
         float blendProgress;
 
-        if (lastState == null || lastState.blendTransition() == 0) {
-            blendProgress = 1;
-        } else {
+        if (lastState != null && lastState.blendTransition() != 0) {
             blendProgress = Mth.clamp(stateTimeSec / lastState.blendTransition(), 0, 1);
+        } else {
+            blendProgress = 1;
         }
 
-        Map<String, Float> result = new HashMap<>();
-
-        currState.animations().forEach((animationName, blendValue) ->
-                result.put(animationName, blendProgress * blendValue.eval(scope)));
+        currState.animations().forEach((animationName, blendValue) -> updateAnimations(targetAnimations, animationName,
+                blendProgress * blendValue.eval(scope),
+                stateTimeSec, infos, data, scope));
 
         if (lastState != null && blendProgress < 1) {
-            lastState.animations().forEach((animationName, blendValue) ->
-                    result.put(animationName, result.getOrDefault(animationName, 0F)
-                            + (1 - blendProgress) * blendValue.eval(scope)));
+            lastState.animations().forEach((animationName, blendValue) -> updateAnimations(targetAnimations, animationName,
+                    (1 - blendProgress) * blendValue.eval(scope),
+                    stateTimeSec, infos, data, scope));
         }
+    }
 
-        return result;
+    private static void updateAnimations(AnimationSet targetAnimations, String animName, float blendValue,
+                                         float startedTime, BoneRenderInfos infos, Data data,
+                                         MolangScope scope) {
+        var animation = targetAnimations.animations().get(animName);
+
+        if (animation == null) return;
+
+        animation.tickAnimation(data.getData(animation), targetAnimations, scope, startedTime,
+                Math.clamp(animation.blendWeight().eval(scope), 0, 1) * blendValue, infos,
+                data.getEffects(animName), () -> data.resetEffects(animName, targetAnimations));
     }
 
     record Factory(
