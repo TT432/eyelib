@@ -15,6 +15,10 @@ public class MolangOwnerSet {
     private MolangOwnerSet parent;
     private final ObjectArrayList<Object> list = new ObjectArrayList<>();
 
+    public void remove(Class<?> clazz) {
+        list.removeIf(clazz::isInstance);
+    }
+
     @SuppressWarnings("unchecked")
     public <N> Optional<N> ownerAs(Class<N> tClass) {
         for (var owner : list) {
