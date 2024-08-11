@@ -44,6 +44,8 @@ public class EfkefcRenderHandler {
     }
 
     public static void render(RenderInfo info) {
+        if (!EfkefcLoader.INSTANCE.isOpened()) return;
+
         info.time = ClientTickHandler.getTick();
 
         RENDER_INFOS.add(info);
@@ -51,11 +53,15 @@ public class EfkefcRenderHandler {
 
     @SubscribeEvent
     public static void onEvent(ClientPlayerNetworkEvent.LoggingOut event) {
+        if (!EfkefcLoader.INSTANCE.isOpened()) return;
+
         RENDER_INFOS.clear();
     }
 
     @SubscribeEvent
     public static void onEvent(RenderLevelStageEvent event) {
+        if (!EfkefcLoader.INSTANCE.isOpened()) return;
+
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) return;
 
         var time = ClientTickHandler.getTick();

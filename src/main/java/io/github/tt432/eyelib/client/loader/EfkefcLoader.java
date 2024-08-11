@@ -5,6 +5,7 @@ import Effekseer.swig.EffekseerManagerCore;
 import io.github.tt432.eyelib.client.particle.effekseer.EfkefcObject;
 import io.github.tt432.eyelib.util.SharedLibraryLoader;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.FileToIdConverter;
@@ -30,6 +31,9 @@ public class EfkefcLoader implements ResourceManagerReloadListener {
 
     public static final FileToIdConverter LISTER = new FileToIdConverter("efkefcs", ".efkefc");
 
+    @Getter
+    private boolean opened;
+
     private EffekseerManagerCore core;
     private final Map<ResourceLocation, EfkefcObject> efkefcMap = new HashMap<>();
 
@@ -42,7 +46,14 @@ public class EfkefcLoader implements ResourceManagerReloadListener {
     }
 
     private void init() {
-        new SharedLibraryLoader().load("EffekseerNativeForJava");
+        try {
+            new SharedLibraryLoader().load("EffekseerNativeForJava");
+            opened = true;
+        } catch (Throwable t) {
+            log.error("Failed to load EffekseerNativeForJava", t);
+            return;
+        }
+
         EffekseerBackendCore.InitializeWithOpenGL();
 
         core = new EffekseerManagerCore();
@@ -51,6 +62,8 @@ public class EfkefcLoader implements ResourceManagerReloadListener {
 
     @Override
     public void onResourceManagerReload(ResourceManager pResourceManager) {
+        if (!opened) return;
+
         efkefcMap.clear();
         LISTER.listMatchingResources(pResourceManager).forEach((key, resource) -> {
             key = LISTER.fileToId(key);
