@@ -25,9 +25,7 @@ public record BrAnimationController(
 ) implements Animation<BrAnimationController.Data> {
     @Override
     public Data createData() {
-        Data data = new Data();
-        data.currState = initialState;
-        return data;
+        return new Data();
     }
 
     @Override
@@ -77,7 +75,7 @@ public record BrAnimationController(
                               float ticks, float multiplier, BoneRenderInfos infos,
                               List<AnimationEffect.Runtime<?>> runtime, Runnable loopAction) {
         var currState = data.getCurrState();
-        if (currState == null) return;
+        if (currState == null) currState = switchState(ticks, scope, data, animationSet, initialState());
 
         scope.getOwner().replace(Data.class, data);
         scope.getOwner().replace(AnimationSet.class, animationSet);
