@@ -2,8 +2,6 @@ package io.github.tt432.eyelib.client.cursor;
 
 import io.github.tt432.eyelib.util.client.NativeImages;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.fml.common.EventBusSubscriber;
 import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.system.MemoryUtil;
 
@@ -12,7 +10,6 @@ import java.nio.ByteBuffer;
 /**
  * @author TT432
  */
-@EventBusSubscriber(value = Dist.CLIENT)
 public class CursorManager {
     public static Cursor load(ResourceLocation location, int xhot, int yhot) {
         return NativeImages.downloadImage(location,
