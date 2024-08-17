@@ -6,9 +6,9 @@
   "mixins": [
   ],
   "client": [
+    "GuiGraphicsMixin",
     "HumanoidModelMixin",
-    "LivingEntityRendererAccessor",
-    "GuiGraphicsMixin"
+    "LivingEntityRendererAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
