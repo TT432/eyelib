@@ -53,6 +53,7 @@ public record BrAnimationController(
 
         public void resetEffects(String animName, AnimationSet targetAnimation) {
             var animation = targetAnimation.animations().get(animName);
+            effects.forEach((k, v) -> v.removeIf(r -> r.data().isEmpty()));
             animation.getAllEffect().forEach(effect ->
                     effects.computeIfAbsent(animName, s -> new ArrayList<>()).add(effect.runtime()));
         }

@@ -15,10 +15,23 @@ public record BrEffectsKeyFrame(
         Optional<String> locator,
         Optional<MolangValue> preEffectScript
 ) {
-    public static final Codec<BrEffectsKeyFrame> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            Codec.FLOAT.fieldOf("timestamp").forGetter(o -> o.timestamp),
-            Codec.STRING.fieldOf("effect").forGetter(o -> o.effect),
-            Codec.STRING.optionalFieldOf("locator").forGetter(o -> o.locator),
-            MolangValue.CODEC.optionalFieldOf("pre_effect_script").forGetter(o -> o.preEffectScript)
-    ).apply(ins, BrEffectsKeyFrame::new));
+    public record Factory(
+            String effect,
+            Optional<String> locator,
+            Optional<MolangValue> preEffectScript
+    ) {
+        public static final Codec<Factory> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+                Codec.STRING.fieldOf("effect").forGetter(o -> o.effect),
+                Codec.STRING.optionalFieldOf("locator").forGetter(o -> o.locator),
+                MolangValue.CODEC.optionalFieldOf("pre_effect_script").forGetter(o -> o.preEffectScript)
+        ).apply(ins, Factory::new));
+
+        public BrEffectsKeyFrame to(float timestamp) {
+            return new BrEffectsKeyFrame(timestamp, effect, locator, preEffectScript);
+        }
+
+        public static Factory from(BrEffectsKeyFrame keyFrame) {
+            return new Factory(keyFrame.effect(), keyFrame.locator(), keyFrame.preEffectScript);
+        }
+    }
 }

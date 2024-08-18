@@ -23,6 +23,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 /**
  * @param override_previous_animation TODO 不确定
@@ -49,11 +50,17 @@ public record BrAnimationEntry(
         AnimationEffect<MolangValue> timeline,
         Map<String, BrBoneAnimation> bones
 ) implements Animation<BrAnimationEntry.Data> {
-    private static final Codec<TreeMap<Float, List<BrEffectsKeyFrame>>> EFFECTS_CODEC = ChinExtraCodecs.treeMap(
+    private static final Codec<TreeMap<Float, List<BrEffectsKeyFrame>>> EFFECTS_CODEC = Codec.dispatchedMap(
             EyelibCodec.STR_FLOAT_CODEC,
-            ChinExtraCodecs.singleOrList(BrEffectsKeyFrame.CODEC),
-            Comparator.comparingDouble(k -> k)
-    );
+            f -> ChinExtraCodecs.singleOrList(BrEffectsKeyFrame.Factory.CODEC).xmap(
+                    fList -> fList.stream().map(v -> v.to(f)).toList(),
+                    vList -> vList.stream().map(BrEffectsKeyFrame.Factory::from).toList()
+            )
+    ).xmap(map -> {
+        TreeMap<Float, List<BrEffectsKeyFrame>> result = new TreeMap<>(Comparator.comparingDouble(k -> k));
+        result.putAll(map);
+        return result;
+    }, Function.identity());
 
     public static final class Data {
         int loopedTimes;
@@ -78,8 +85,9 @@ public record BrAnimationEntry(
         if (animationLength() > 0) {
             animTick = switch (loop()) {
                 case LOOP -> {
-                    if (ticks / animationLength() > data.loopedTimes) {
-                        data.loopedTimes = (int) (ticks / animationLength());
+                    int loopedTimes = (int) (ticks / animationLength());
+                    if (loopedTimes > data.loopedTimes) {
+                        data.loopedTimes = loopedTimes;
                         loopAction.run();
                     }
                     yield ticks % animationLength();
