@@ -1,11 +1,13 @@
-package io.github.tt432.eyelib.client.model.bedrock;
+package io.github.tt432.eyelib.client.model;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.tt432.eyelib.client.model.bedrock.BrModel;
+import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
+import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.BrModelTextures;
 import io.github.tt432.eyelib.client.render.RenderParams;
-import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
-import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
+import io.github.tt432.eyelib.client.render.ModelRenderer;
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
 import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
 import io.github.tt432.eyelib.util.math.EyeMath;
@@ -75,7 +77,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
 
         TextureAtlasSprite texture = spriteGetter.apply(owner.getMaterial("texture"));
 
-        BrModelRenderer.render(new RenderParams(null, poseStack.last(),
+        ModelRenderer.render(new RenderParams(null, poseStack.last(),
                         poseStack, null, null, 0, OverlayTexture.NO_OVERLAY),
                 model, new BoneRenderInfos(), new BrModelTextures.TwoSideInfoMap(new HashMap<>()),
                 new ModelRenderVisitorList(List.of(new BakeModelVisitor(modelBuilder, texture, visitors))));
@@ -90,17 +92,16 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
         final Map<String, Matrix4f> visitor;
 
         @Override
-        public void visitFace(RenderParams renderParams, BrCube cube, BrFace face) {
-            Vector3f normal = face.getNormal();
+        public void visitFace(RenderParams renderParams, Model.Cube cube, List<Vector3fc> vertexes, List<Vector2fc> uvs, Vector3fc normal) {
             QuadBakingVertexConsumer buffered = newBuffer(texture, normal);
 
             for (int vertexId = 0; vertexId < 4; vertexId++) {
-                Vector3f vertex = face.getVertex()[vertexId];
-                var uv = mapUV(face.getUv()[vertexId], texture.getU0(), texture.getV0(), texture.getU1(), texture.getV1());
+                var vertex = vertexes.get(vertexId);
+                var uv = mapUV(uvs.get(vertexId), texture.getU0(), texture.getV0(), texture.getU1(), texture.getV1());
                 PoseStack poseStack = renderParams.poseStack();
                 PoseStack.Pose last = poseStack.last();
 
-                var tPosition = last.pose().transformAffine(vertex.x, vertex.y, vertex.z, 1, new Vector4f());
+                var tPosition = last.pose().transformAffine(vertex.x(), vertex.y(), vertex.z(), 1, new Vector4f());
                 var tNormal = last.normal().transform(normal, new Vector3f());
 
                 buffered.addVertex(tPosition.x, tPosition.y, tPosition.z,
@@ -114,23 +115,23 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
         }
 
         @Override
-        public void visitLocator(RenderParams renderParams, BrBone bone, String name, BrLocator locator, BoneRenderInfoEntry boneRenderInfoEntry) {
+        public <G extends Model.Bone, R extends ModelRuntimeData<G, ?, R>> void visitLocator(RenderParams renderParams, Model.Bone bone, String name, LocatorEntry locator, G group, R data, ModelTransformer<G, R> transformer) {
             visitors.put(name, new Matrix4f(renderParams.poseStack().last().pose()));
         }
     }
 
-    private static QuadBakingVertexConsumer newBuffer(TextureAtlasSprite texture, Vector3f normal) {
+    private static QuadBakingVertexConsumer newBuffer(TextureAtlasSprite texture, Vector3fc normal) {
         QuadBakingVertexConsumer consumer = new QuadBakingVertexConsumer();
         consumer.setSprite(texture);
         consumer.setShade(true);
-        Direction nearest = Direction.getNearest(normal.x, normal.y, normal.z);
+        Direction nearest = Direction.getNearest(normal.x(), normal.y(), normal.z());
         consumer.setDirection(nearest);
         return consumer;
     }
 
-    private static Vector2f mapUV(Vector2f uv, float u0, float v0, float u1, float v1) {
-        float u = uv.x * (u1 - u0) + u0;
-        float v = uv.y * (v1 - v0) + v0;
+    private static Vector2f mapUV(Vector2fc uv, float u0, float v0, float u1, float v1) {
+        float u = uv.x() * (u1 - u0) + u0;
+        float v = uv.y() * (v1 - v0) + v0;
         return new Vector2f(u, v);
     }
 }

@@ -2,13 +2,13 @@ package io.github.tt432.eyelib.client.particle.bedrock;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.tt432.eyelib.client.particle.bedrock.component.particle.ParticleParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.particle.appearance.ParticleAppearanceBillboard;
+import io.github.tt432.eyelib.client.particle.bedrock.component.particle.ParticleParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.particle.appearance.ParticleAppearanceLighting;
 import io.github.tt432.eyelib.client.particle.bedrock.component.particle.appearance.ParticleAppearanceTinting;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.SimpleTimer;
-import io.github.tt432.eyelib.util.data.Blackboard;
+import io.github.tt432.eyelib.util.Blackboard;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;

@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.client.animation;
 
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
-import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
 import lombok.AccessLevel;
@@ -14,13 +13,18 @@ import java.util.List;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class BrAnimator {
+    @SuppressWarnings("unchecked")
+    private static <T> T cast(Object o) {
+        return (T) o;
+    }
+
     public static BoneRenderInfos tickAnimation(AnimationComponent component, MolangScope scope, float ticks) {
         BoneRenderInfos infos = new BoneRenderInfos();
 
-        for (BrAnimationController controller : component.getAnimationController().values()) {
-            if (controller == null) continue;
+        for (var animation : component.getAnimations().values()) {
+            if (animation == null) continue;
 
-            controller.tickAnimation(component.getControllerData(controller.name()), component.getTargetAnimation(),
+            animation.tickAnimation(cast(component.getAnimationData(animation.name())), component.getAnimationSet(),
                     scope, ticks, 1, infos, List.of(), () -> {
                     });
         }

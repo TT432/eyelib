@@ -8,7 +8,7 @@ import io.github.tt432.eyelib.client.particle.bedrock.component.RegisterParticle
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterParticleComponent;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
-import io.github.tt432.eyelib.util.data.Blackboard;
+import io.github.tt432.eyelib.util.Blackboard;
 
 /**
  * 发射器会循环工作直到被移除。

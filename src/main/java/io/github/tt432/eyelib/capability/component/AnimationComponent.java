@@ -2,9 +2,9 @@ package io.github.tt432.eyelib.capability.component;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.AnimationSet;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
-import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
 import io.github.tt432.eyelib.client.loader.BrAnimationControllerLoader;
 import io.github.tt432.eyelib.client.loader.BrAnimationLoader;
@@ -42,13 +42,12 @@ public class AnimationComponent {
     }
 
     SerializableInfo serializableInfo;
-    Map<String, Object> controllerData;
-    AnimationSet targetAnimation = AnimationSet.EMPTY;
-    Map<String, BrAnimationController> animationController;
+    AnimationSet animationSet = AnimationSet.EMPTY;
+    Map<String, Animation<?>> animations = new HashMap<>();
+    Map<String, Object> animationData = new HashMap<>();
 
-    public BrAnimationController.Data getControllerData(String controllerName) {
-        return (BrAnimationController.Data) controllerData.computeIfAbsent(controllerName,
-                s -> animationController.get(s).createData());
+    public Object getAnimationData(String controllerName) {
+        return animationData.computeIfAbsent(controllerName, s -> animations.get(s).createData());
     }
 
     public boolean serializable() {
@@ -71,14 +70,13 @@ public class AnimationComponent {
 
         serializableInfo = new SerializableInfo(animationControllersName, targetAnimationsName);
 
-        this.animationController = new HashMap<>(animationControllers.animationControllers());
-        this.targetAnimation = AnimationSet.from(targetAnimations);
+        this.animations = new HashMap<>(animationControllers.animationControllers());
+        this.animationSet = AnimationSet.from(targetAnimations);
 
-        controllerData = new HashMap<>();
-        for (var s : animationController.values()) {
-            BrAnimationController.Data data = s.createData();
-            controllerData.put(s.name(), data);
-            data.setStartTick(-1);
+        animationData = new HashMap<>();
+        for (var s : animations.values()) {
+            var data = s.createData();
+            animationData.put(s.name(), data);
         }
     }
 }

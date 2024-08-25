@@ -1,11 +1,14 @@
 package io.github.tt432.eyelib.client.model.bedrock;
 
 import com.google.gson.*;
+import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelib.client.model.ModelRuntimeData;
+import io.github.tt432.eyelib.client.model.locator.GroupLocator;
+import io.github.tt432.eyelib.client.model.locator.ModelLocator;
+import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import net.minecraft.world.phys.AABB;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,10 +21,21 @@ public record BrModel(
         int textureWidth,
         int textureHeight,
         AABB visibleBox,
-        List<BrBone> toplevelBones,
-        Map<String, BrBone> allBones
-) {
+        Map<String, BrBone> toplevelBones,
+        Map<String, BrBone> allBones,
+        ModelLocator locator
+) implements Model {
     private static final Gson gson = new Gson();
+
+    @Override
+    public String name() {
+        return identifier;
+    }
+
+    @Override
+    public ModelRuntimeData<?, ?, ?> data() {
+        return new BoneRenderInfos();
+    }
 
     public static BrModel parse(String modelName, JsonObject object) {
         String version;
@@ -29,7 +43,7 @@ public record BrModel(
         int textureWidth;
         int textureHeight;
         AABB visibleBox;
-        List<BrBone> toplevelBones = new ArrayList<>();
+        Map<String, BrBone> toplevelBones = new HashMap<>();
         Map<String, BrBone> allBones = new HashMap<>();
 
         if (!(object.get("format_version") instanceof JsonPrimitive versionJson)) {
@@ -85,11 +99,21 @@ public record BrModel(
 
         allBones.forEach((name, bone) -> {
             if (bone.parent() == null)
-                toplevelBones.add(bone);
+                toplevelBones.put(name, bone);
             else
-                allBones.get(bone.parent()).children().add(bone);
+                allBones.get(bone.parent()).children().put(name, bone);
         });
 
-        return new BrModel(version, identifier, textureWidth, textureHeight, visibleBox, toplevelBones, allBones);
+        Map<String, GroupLocator> locators = new HashMap<>();
+        toplevelBones.forEach((k, v) -> locators.put(k, getLocator(v)));
+
+        return new BrModel(version, identifier, textureWidth, textureHeight, visibleBox, toplevelBones, allBones,
+                new ModelLocator(locators));
+    }
+
+    private static GroupLocator getLocator(BrBone bone) {
+        Map<String, GroupLocator> children = new HashMap<>();
+        bone.children().forEach((name, group) -> children.put(name, getLocator(group)));
+        return new GroupLocator(children, bone.locators().values().stream().map(BrLocator::locatorEntry).toList());
     }
 }

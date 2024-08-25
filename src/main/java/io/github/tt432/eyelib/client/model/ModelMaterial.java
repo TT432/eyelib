@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.model.bedrock.material;
+package io.github.tt432.eyelib.client.model;
 
 import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;

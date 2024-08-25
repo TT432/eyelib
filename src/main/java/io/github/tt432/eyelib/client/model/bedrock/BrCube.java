@@ -4,24 +4,23 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.core.Direction;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Matrix4f;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
+import org.joml.*;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author TT432
  */
 public record BrCube(
-        BrFace[] faces
-) {
-
+        List<List<Vector3fc>> vertexes,
+        List<List<Vector2fc>> uvs,
+        List<Vector3fc> normals
+) implements Model.Cube {
     private static final Gson gson = new Gson();
 
     private static Vector3f parse(JsonObject object, String ele) {
@@ -30,6 +29,16 @@ public record BrCube(
         }
 
         return new Vector3f();
+    }
+
+    private static void flipX(Pair<Vector2f, Vector2f> face) {
+        face.left().x += face.right().x;
+        face.right().x *= -1;
+    }
+
+    private static void flipY(Pair<Vector2f, Vector2f> face) {
+        face.left().y += face.right().y;
+        face.right().y *= -1;
     }
 
     public static BrCube parse(int textureHeight, int textureWidth, JsonObject jsonObject) {
@@ -69,8 +78,7 @@ public record BrCube(
 
             if (mirror) {
                 for (Pair<Vector2f, Vector2f> face : List.of(up, down, west, north, east, south)) {
-                    face.left().x += face.right().x;
-                    face.right().x *= -1;
+                    flipX(face);
                 }
                 var t = west;
                 west = east;
@@ -79,11 +87,12 @@ public record BrCube(
         } else if (jsonObject.get("uv") instanceof JsonObject jo) {
             //  face
             up = getUVFromFace(jo, "up");
+            flipY(up);
             down = getUVFromFace(jo, "down");
             north = getUVFromFace(jo, "north");
-            east = getUVFromFace(jo, "east");
+            east = getUVFromFace(jo, "west");
             south = getUVFromFace(jo, "south");
-            west = getUVFromFace(jo, "west");
+            west = getUVFromFace(jo, "east");
         } else {
             up = zero();
             down = zero();
@@ -123,23 +132,42 @@ public record BrCube(
             corner.mulPosition(translate);
         }
 
-        Vector3f[][] faces = new Vector3f[][]{
-                {corners[6], corners[2], corners[3], corners[7],},
-                {corners[4], corners[0], corners[1], corners[5],},
-                {corners[3], corners[0], corners[4], corners[7],},
-                {corners[2], corners[1], corners[0], corners[3],},
-                {corners[6], corners[5], corners[1], corners[2],},
-                {corners[7], corners[4], corners[5], corners[6],}
-        };
+        return new BrCube(
+                List.of(
+                        List.of(corners[6], corners[2], corners[3], corners[7]),
+                        List.of(corners[4], corners[0], corners[1], corners[5]),
+                        List.of(corners[3], corners[0], corners[4], corners[7]),
+                        List.of(corners[2], corners[1], corners[0], corners[3]),
+                        List.of(corners[6], corners[5], corners[1], corners[2]),
+                        List.of(corners[7], corners[4], corners[5], corners[6])
+                ),
+                List.of(
+                        getUv(up),
+                        getUv(down),
+                        getUv(east),
+                        getUv(north),
+                        getUv(west),
+                        getUv(south)),
+                List.of(
+                        Direction.UP.step(),
+                        Direction.DOWN.step(),
+                        Direction.EAST.step(),
+                        Direction.NORTH.step(),
+                        Direction.WEST.step(),
+                        Direction.SOUTH.step()
+                )
+        );
+    }
 
-        return new BrCube(new BrFace[]{
-                new BrFace(Direction.UP.step(), up, faces[0]),
-                new BrFace(Direction.DOWN.step(), down, faces[1]),
-                new BrFace(Direction.EAST.step(), east, faces[2]),
-                new BrFace(Direction.NORTH.step(), north, faces[3]),
-                new BrFace(Direction.WEST.step(), west, faces[4]),
-                new BrFace(Direction.SOUTH.step(), south, faces[5])
-        });
+    private static List<Vector2fc> getUv(Pair<Vector2f, Vector2f> uv) {
+        var uv1 = uv.right().add(uv.left(), new Vector2f());
+
+        return List.of(
+                uv.left(),
+                new Vector2f(uv.left().x, uv1.y),
+                uv1,
+                new Vector2f(uv1.x, uv.left().y)
+        );
     }
 
     @NotNull
@@ -177,20 +205,5 @@ public record BrCube(
         } else {
             return Pair.of(new Vector2f(), new Vector2f());
         }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof BrCube bc && Arrays.equals(bc.faces, faces);
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(faces);
-    }
-
-    @Override
-    public String toString() {
-        return "BrCube { faces: " + Arrays.toString(faces) + " }";
     }
 }

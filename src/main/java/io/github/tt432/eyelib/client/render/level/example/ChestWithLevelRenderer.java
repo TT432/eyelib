@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.render.level.example;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.tt432.eyelib.client.render.level.WithLevelRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -32,7 +33,7 @@ import static net.minecraft.world.level.block.Block.UPDATE_CLIENTS;
  *     }
  * }
  * }</pre>
- * 
+ *
  * @author TT432
  */
 public interface ChestWithLevelRenderer<T extends BlockEntity & LidBlockEntity> extends BlockEntityRenderer<T>, WithLevelRenderer<T> {
@@ -61,7 +62,7 @@ public interface ChestWithLevelRenderer<T extends BlockEntity & LidBlockEntity> 
             Level level = blockEntity.getLevel();
 
             if (level != null)
-                level.sendBlockUpdated(blockEntity.getBlockPos(), blockState, blockState, UPDATE_CLIENTS);
+                RenderSystem.recordRenderCall(() -> level.sendBlockUpdated(blockEntity.getBlockPos(), blockState, blockState, UPDATE_CLIENTS));
         }
 
         return result;

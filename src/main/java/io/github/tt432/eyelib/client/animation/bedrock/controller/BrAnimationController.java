@@ -36,7 +36,7 @@ public record BrAnimationController(
     public static class Data {
         @Setter
         @Getter
-        private float startTick;
+        private float startTick = -1;
         @Setter
         @Getter
         private BrAcState lastState;

@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.client.model.bedrock;
 
 import com.google.gson.*;
+import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import org.joml.Vector3f;
 
@@ -8,10 +9,8 @@ import org.joml.Vector3f;
  * @author TT432
  */
 public record BrLocator(
-        Vector3f offset,
-        Vector3f rotation,
+        LocatorEntry locatorEntry,
         boolean ignoreInheritedScale,
-        String key,
         boolean isNullObject
 ) {
     public static final String NULL_OBJ_PREFIX = "_null_";
@@ -45,6 +44,6 @@ public record BrLocator(
         offset.div(16).mul(-1, 1, 1);
         rotation.mul(EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1);
 
-        return new BrLocator(offset, rotation, ignoreInheritedScale, rKey, isNullObject);
+        return new BrLocator(new LocatorEntry(rKey, offset, rotation), ignoreInheritedScale, isNullObject);
     }
 }

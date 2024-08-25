@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
-import io.github.tt432.eyelib.client.model.bedrock.UnBakedBrModel;
+import io.github.tt432.eyelib.client.model.UnBakedBrModel;
 import io.github.tt432.eyelib.util.ResourceLocations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

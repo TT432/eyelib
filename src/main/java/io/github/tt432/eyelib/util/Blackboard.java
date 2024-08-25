@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.util.data;
+package io.github.tt432.eyelib.util;
 
 import java.util.HashMap;
 import java.util.Map;

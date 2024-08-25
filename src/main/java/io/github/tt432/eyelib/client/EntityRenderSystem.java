@@ -10,7 +10,7 @@ import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.render.BrModelTextures;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
-import io.github.tt432.eyelib.client.render.renderer.BrModelRenderer;
+import io.github.tt432.eyelib.client.render.ModelRenderer;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
 import lombok.AccessLevel;
@@ -57,7 +57,7 @@ public class EntityRenderSystem {
             AnimationComponent component = cap.getAnimationComponent();
             var scope = cap.getScope();
 
-            if (component.getAnimationController() != null) {
+            if (component.getAnimations() != null) {
                 BoneRenderInfos tickedInfos = BrAnimator.tickAnimation(component, scope,
                         ClientTickHandler.getTick() + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
                 cap.getModelComponent().getBoneInfos().set(tickedInfos);
@@ -85,7 +85,7 @@ public class EntityRenderSystem {
                             ((LivingEntityRendererAccessor) (event.getRenderer()))
                                     .callGetWhiteOverlayProgress(entity, event.getPartialTick())));
 
-            BrModelRenderer.render(renderParams, model, modelComponent.getBoneInfos(),
+            ModelRenderer.render(renderParams, model, modelComponent.getBoneInfos(),
                     BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), modelComponent.getVisitors());
 
             poseStack.popPose();

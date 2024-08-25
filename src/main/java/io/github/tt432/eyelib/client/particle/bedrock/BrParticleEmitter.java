@@ -6,7 +6,7 @@ import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.shape.Di
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.ResourceLocations;
 import io.github.tt432.eyelib.util.SimpleTimer;
-import io.github.tt432.eyelib.util.data.Blackboard;
+import io.github.tt432.eyelib.util.Blackboard;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.resources.ResourceLocation;

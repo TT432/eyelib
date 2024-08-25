@@ -5,7 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import io.github.tt432.eyelib.client.model.UnbakedModelPart;
 import io.github.tt432.eyelib.util.ResourceLocations;
-import io.github.tt432.eyelib.util.client.model.BakedModels;
+import io.github.tt432.eyelib.util.client.BakedModels;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;

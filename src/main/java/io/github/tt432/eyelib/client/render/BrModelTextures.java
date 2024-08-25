@@ -2,15 +2,13 @@ package io.github.tt432.eyelib.client.render;
 
 import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.platform.NativeImage;
-import io.github.tt432.eyelib.client.model.bedrock.BrBone;
-import io.github.tt432.eyelib.client.model.bedrock.BrCube;
-import io.github.tt432.eyelib.client.model.bedrock.BrFace;
-import io.github.tt432.eyelib.client.model.bedrock.BrModel;
+import io.github.tt432.eyelib.client.model.Model;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
-import org.joml.Vector2f;
+import org.joml.Vector2fc;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -37,8 +35,8 @@ public class BrModelTextures {
 
     private static final Map<String, Map<ResourceLocation, TwoSideInfoMap>> map = new HashMap<>();
 
-    public static TwoSideInfoMap getTwoSideInfo(BrModel model, boolean isSolid, ResourceLocation texture) {
-        return map.computeIfAbsent(model.identifier(), ___ -> new HashMap<>())
+    public static TwoSideInfoMap getTwoSideInfo(Model model, boolean isSolid, ResourceLocation texture) {
+        return map.computeIfAbsent(model.name(), ___ -> new HashMap<>())
                 .computeIfAbsent(texture, __ -> {
                     Minecraft.getInstance().getTextureManager().getTexture(texture).bind();
 
@@ -53,7 +51,7 @@ public class BrModelTextures {
                         try (NativeImage nativeimage = new NativeImage(width[0], height[0], false)) {
                             nativeimage.downloadTexture(0, false);
 
-                            model.allBones().forEach((boneName, bone) ->
+                            model.toplevelBones().forEach((boneName, bone) ->
                                     builder.put(boneName, new TwoSideInfo(boneName, processBone(bone, isSolid, nativeimage))));
                         }
                     }
@@ -62,16 +60,16 @@ public class BrModelTextures {
                 });
     }
 
-    private static boolean[] processBone(BrBone bone, boolean isSolid, NativeImage intBuffer) {
-        bone.children().forEach(boneIn -> processBone(boneIn, isSolid, intBuffer));
+    private static boolean[] processBone(Model.Bone bone, boolean isSolid, NativeImage intBuffer) {
+        bone.children().values().forEach(boneIn -> processBone(boneIn, isSolid, intBuffer));
 
         boolean[] result = new boolean[bone.cubes().size()];
 
         for (int i = 0; i < bone.cubes().size(); i++) {
-            BrCube brCube = bone.cubes().get(i);
+            var cube = bone.cubes().get(i);
 
-            for (BrFace face : brCube.faces()) {
-                if (cubeAnyTransparent(isSolid, intBuffer, face)) {
+            for (int i1 = 0; i1 < cube.vertexes().size(); i1++) {
+                if (cubeAnyTransparent(isSolid, intBuffer, cube.uvs().get(i1))) {
                     result[i] = true;
                     break;
                 }
@@ -81,12 +79,11 @@ public class BrModelTextures {
         return result;
     }
 
-    private static boolean cubeAnyTransparent(boolean isSolid, NativeImage buffer, BrFace face) {
-        Vector2f[] uv = face.getUv();
-        int x = (int) (uv[0].x * buffer.getWidth());
-        int y = (int) (uv[0].y * buffer.getHeight());
-        int width = (int) ((uv[2].x - uv[0].x) * buffer.getWidth());
-        int height = (int) ((uv[2].y - uv[0].y) * buffer.getHeight());
+    private static boolean cubeAnyTransparent(boolean isSolid, NativeImage buffer, List<Vector2fc> uv) {
+        int x = (int) (uv.getFirst().x() * buffer.getWidth());
+        int y = (int) (uv.getFirst().y() * buffer.getHeight());
+        int width = (int) ((uv.get(2).x() - uv.getFirst().x()) * buffer.getWidth());
+        int height = (int) ((uv.get(2).y() - uv.getFirst().y()) * buffer.getHeight());
 
         for (int j = 0; j < height; j++) {
             for (int k = 0; k < width; k++) {

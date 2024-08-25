@@ -2,12 +2,12 @@ package io.github.tt432.eyelib.client.particle.bedrock.component.emitter.lifetim
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ComponentTarget;
 import io.github.tt432.eyelib.client.particle.bedrock.component.RegisterParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterParticleComponent;
+import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.molang.MolangValue;
-import io.github.tt432.eyelib.util.data.Blackboard;
+import io.github.tt432.eyelib.util.Blackboard;
 
 /**
  * 当 {@link #activationExpression} 非零时，发射器将“开启”；当其为零时，发射器将“关闭”。这对于通过实体变量驱动附加到实体的发射器的情况非常有用。

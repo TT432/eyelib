@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.client.model.bedrock;
 
 import com.google.gson.*;
+import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -23,11 +24,11 @@ public record BrBone(
         @Nullable String binding,
         boolean reset,
         @Nullable String material,
-        List<BrBone> children,
+        Map<String, BrBone> children,
         List<BrCube> cubes,
         List<BrTextureMesh> texture_meshes,
         Map<String, BrLocator> locators
-) {
+) implements Model.Bone {
 
     private static final Gson gson = new Gson();
 
@@ -39,7 +40,7 @@ public record BrBone(
         final String binding;
         final boolean reset;
         final String material;
-        final List<BrBone> children = new ArrayList<>();
+        final Map<String, BrBone> children = new HashMap<>();
         final List<BrCube> cubes = new ArrayList<>();
         final List<BrTextureMesh> texture_meshes = new ArrayList<>();
         final Map<String, BrLocator> locators = new HashMap<>();

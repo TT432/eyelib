@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
-import io.github.tt432.eyelib.client.model.bedrock.material.ModelMaterial;
+import io.github.tt432.eyelib.client.model.ModelMaterial;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;

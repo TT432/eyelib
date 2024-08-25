@@ -106,7 +106,7 @@ public record BrAnimationEntry(
         for (Map.Entry<String, BrBoneAnimation> boneEntry : bones().entrySet()) {
             var boneName = boneEntry.getKey();
             var boneAnim = boneEntry.getValue();
-            BoneRenderInfoEntry entry = infos.get(boneName);
+            BoneRenderInfoEntry entry = infos.getData(boneName);
 
             Vector3f pos = boneAnim.lerpPosition(scope, animTick);
 

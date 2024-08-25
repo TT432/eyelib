@@ -6,7 +6,7 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.loader.BrModelLoader;
 import io.github.tt432.eyelib.client.loader.ModelReplacerLoader;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
-import io.github.tt432.eyelib.client.model.bedrock.material.ModelMaterial;
+import io.github.tt432.eyelib.client.model.ModelMaterial;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.util.ResourceLocations;
 import lombok.AccessLevel;
