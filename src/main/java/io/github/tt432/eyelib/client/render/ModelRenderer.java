@@ -5,7 +5,6 @@ import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.locator.GroupLocator;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
-import io.github.tt432.eyelib.client.model.locator.ModelLocator;
 import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
 import io.github.tt432.eyelib.util.math.EyeMath;
@@ -45,7 +44,7 @@ public class ModelRenderer {
         visitors.visitors().forEach(v -> v.visitModel(renderParams));
 
         for (var toplevelBone : model.toplevelBones().values()) {
-            renderBone(renderParams, map, visitors, cast(infos), model, toplevelBone);
+            renderBone(renderParams, map, visitors, cast(infos), model, toplevelBone, model.locator().getGroup(toplevelBone.name()));
         }
 
         poseStack.popPose();
@@ -54,38 +53,34 @@ public class ModelRenderer {
     @SuppressWarnings("unchecked")
     private static <G extends Model.Bone, R extends ModelRuntimeData<G, Object, R>> void renderBone(
             RenderParams renderParams, @Nullable BrModelTextures.TwoSideInfoMap map,
-            ModelRenderVisitorList visitors, R infos, Model model, G bone
+            ModelRenderVisitorList visitors, R infos, Model model, G bone, GroupLocator locatorsGroup
     ) {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();
 
-        var data = infos.getData(bone.name());
         ModelTransformer<G, R> transformer = infos.transformer();
 
         applyBoneTranslate(poseStack, bone, infos, transformer);
 
         visitors.visitors().forEach(visitor -> visitor.visitBone(renderParams, bone, infos, transformer));
 
-        visitLocators(renderParams, visitors, model, bone, poseStack, bone, infos, transformer);
+        visitLocators(renderParams, visitors, bone, poseStack, bone, infos, transformer, locatorsGroup);
 
         for (int i = 0; i < bone.cubes().size(); i++) {
             renderCube(renderParams, visitors, bone.cubes().get(i), map == null || map.isTwoSide(bone.name(), i));
         }
 
         for (var child : bone.children().values()) {
-            renderBone(renderParams, map, visitors, infos, model, (G) child);
+            renderBone(renderParams, map, visitors, infos, model, (G) child, locatorsGroup.getChild(child.name()));
         }
 
         poseStack.popPose();
     }
 
     private static <G extends Model.Bone, R extends ModelRuntimeData<G, Object, R>> void visitLocators(
-            RenderParams renderParams, ModelRenderVisitorList visitors, Model model, Model.Bone bone, PoseStack poseStack,
-            G group, R data, ModelTransformer<G, R> transformer
+            RenderParams renderParams, ModelRenderVisitorList visitors, Model.Bone bone, PoseStack poseStack,
+            G group, R data, ModelTransformer<G, R> transformer, GroupLocator locatorsGroup
     ) {
-        ModelLocator locators = model.locator();
-        if (locators == null) return;
-        GroupLocator locatorsGroup = locators.getGroup(bone.name());
         if (locatorsGroup == null) return;
         List<LocatorEntry> cubes = locatorsGroup.cubes();
         if (cubes == null) return;

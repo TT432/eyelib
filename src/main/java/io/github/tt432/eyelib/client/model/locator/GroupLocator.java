@@ -9,11 +9,11 @@ import java.util.Map;
  * @author TT432
  */
 public record GroupLocator(
-        Map<String, ? extends ModelGroupNode<LocatorEntry>> children,
+        Map<String, GroupLocator> children,
         List<LocatorEntry> cubes
 ) implements ModelGroupNode<LocatorEntry> {
     @Override
-    public ModelGroupNode<LocatorEntry> getChild(String groupName) {
+    public GroupLocator getChild(String groupName) {
         return children.get(groupName);
     }
 
