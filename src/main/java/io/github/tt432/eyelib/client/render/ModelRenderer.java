@@ -111,24 +111,15 @@ public class ModelRenderer {
         var renderPivot = transformer.pivot(model, data);
         pose.translate(renderPivot);
 
-        applyBoneRotation(model, data, transformer, last);
+        var rotation = transformer.rotation(model, data);
+
+        last.normal().rotateZYX(rotation.z(), rotation.y(), rotation.x());
+        last.pose().rotateZYX(rotation.z(), rotation.y(), rotation.x());
 
         var scale = transformer.scale(model, data);
         poseStack.scale(scale.x(), scale.y(), scale.z());
 
         pose.translate(-renderPivot.x(), -renderPivot.y(), -renderPivot.z());
-    }
-
-    private static <G extends Model.Bone, R extends ModelRuntimeData<G, ?, R>> void applyBoneRotation(
-            G model, R data, ModelTransformer<G, R> transformer, PoseStack.Pose last
-    ) {
-        Matrix4f pose = last.pose();
-        Matrix3f normal = last.normal();
-
-        var rotation = transformer.rotation(model, data);
-
-        normal.rotateZYX(rotation.z(), rotation.y(), rotation.x());
-        pose.rotateZYX(rotation.z(), rotation.y(), rotation.x());
     }
 
     private static void renderCube(RenderParams renderParams, ModelRenderVisitorList visitors,

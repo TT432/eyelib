@@ -5,9 +5,9 @@ import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.BrModelTextures;
+import io.github.tt432.eyelib.client.render.ModelRenderer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
-import io.github.tt432.eyelib.client.render.ModelRenderer;
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
 import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
 import io.github.tt432.eyelib.util.math.EyeMath;
@@ -73,7 +73,8 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
         poseStack.mulPose(new Quaternionf().rotateY(180 * EyeMath.DEGREES_TO_RADIANS));
         poseStack.translate(-0.5, 0, -0.5);
 
-        poseStack.mulPose(modelTransform.getRotation().getMatrix());
+        poseStack.last().pose().mul(modelTransform.getRotation().getMatrix());
+        poseStack.last().normal().mul(modelTransform.getRotation().getNormalMatrix());
 
         TextureAtlasSprite texture = spriteGetter.apply(owner.getMaterial("texture"));
 
@@ -93,21 +94,22 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
 
         @Override
         public void visitFace(RenderParams renderParams, Model.Cube cube, List<Vector3fc> vertexes, List<Vector2fc> uvs, Vector3fc normal) {
-            QuadBakingVertexConsumer buffered = newBuffer(texture, normal);
+            PoseStack poseStack = renderParams.poseStack();
+            PoseStack.Pose last = poseStack.last();
+
+            var tNormal = last.normal().transform(normal, new Vector3f());
+            QuadBakingVertexConsumer buffered = newBuffer(texture, tNormal);
 
             for (int vertexId = 0; vertexId < 4; vertexId++) {
                 var vertex = vertexes.get(vertexId);
                 var uv = mapUV(uvs.get(vertexId), texture.getU0(), texture.getV0(), texture.getU1(), texture.getV1());
-                PoseStack poseStack = renderParams.poseStack();
-                PoseStack.Pose last = poseStack.last();
 
-                var tPosition = last.pose().transformAffine(vertex.x(), vertex.y(), vertex.z(), 1, new Vector4f());
-                var tNormal = last.normal().transform(normal, new Vector3f());
+                var tPosition = last.pose().transformPosition(vertex, new Vector3f());
 
                 buffered.addVertex(tPosition.x, tPosition.y, tPosition.z,
                         0xFF_FF_FF_FF,
                         uv.x, uv.y,
-                        OverlayTexture.NO_OVERLAY, 0,
+                        OverlayTexture.NO_OVERLAY, renderParams.light(),
                         tNormal.x, tNormal.y, tNormal.z);
             }
 
@@ -124,8 +126,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
         QuadBakingVertexConsumer consumer = new QuadBakingVertexConsumer();
         consumer.setSprite(texture);
         consumer.setShade(true);
-        Direction nearest = Direction.getNearest(normal.x(), normal.y(), normal.z());
-        consumer.setDirection(nearest);
+        consumer.setDirection(Direction.getNearest(normal.x(), normal.y(), normal.z()));
         return consumer;
     }
 

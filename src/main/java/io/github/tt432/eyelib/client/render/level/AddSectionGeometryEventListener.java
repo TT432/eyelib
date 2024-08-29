@@ -35,16 +35,19 @@ public class AddSectionGeometryEventListener {
             BlockPos posTarget = posSource.offset(15, 15, 15);
 
             for (BlockPos pos : BlockPos.betweenClosed(posSource, posTarget)) {
-                BlockEntity blockEntity = region.getBlockEntity(pos);
+                try {
+                    BlockEntity blockEntity = region.getBlockEntity(pos);
 
-                if (blockEntity == null) continue;
+                    if (blockEntity == null) continue;
 
-                BlockEntityRenderDispatcher dispatcher = Minecraft.getInstance().getBlockEntityRenderDispatcher();
-                BlockEntityRenderer<BlockEntity> renderer = dispatcher.getRenderer(blockEntity);
-                Vec3 cameraPos = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+                    BlockEntityRenderDispatcher dispatcher = Minecraft.getInstance().getBlockEntityRenderDispatcher();
+                    BlockEntityRenderer<BlockEntity> renderer = dispatcher.getRenderer(blockEntity);
+                    Vec3 cameraPos = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
 
-                if (renderer instanceof WithLevelRenderer<?> r && r.needRender(cast(blockEntity), cameraPos)) {
-                    r.render(pos, event.getSectionOrigin(), context);
+                    if (renderer instanceof WithLevelRenderer<?> r && r.needRender(cast(blockEntity), cameraPos)) {
+                        r.render(pos, event.getSectionOrigin(), context);
+                    }
+                } catch (Exception ignored) {
                 }
             }
         }
