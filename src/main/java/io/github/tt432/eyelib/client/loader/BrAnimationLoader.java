@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
@@ -22,6 +23,7 @@ import java.util.Map;
  * @author TT432
  */
 @Getter
+@Slf4j
 @EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class BrAnimationLoader extends SimpleJsonResourceReloadListener {
     public static final BrAnimationLoader INSTANCE = new BrAnimationLoader();
@@ -45,6 +47,12 @@ public class BrAnimationLoader extends SimpleJsonResourceReloadListener {
     protected void apply(Map<ResourceLocation, JsonElement> pObject, @NotNull ResourceManager pResourceManager, @NotNull ProfilerFiller pProfiler) {
         animations.clear();
 
-        pObject.forEach((rl, json) -> animations.put(rl, BrAnimation.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow()));
+        pObject.forEach((rl, json) -> {
+            try {
+                animations.put(rl, BrAnimation.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow());
+            } catch (Exception e) {
+                log.error("can't load animation {}", rl, e);
+            }
+        });
     }
 }

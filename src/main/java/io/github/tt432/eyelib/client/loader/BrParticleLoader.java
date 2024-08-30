@@ -47,7 +47,11 @@ public class BrParticleLoader extends SimpleJsonResourceReloadListener {
 
         for (Map.Entry<ResourceLocation, JsonElement> entry : pObject.entrySet()) {
             ResourceLocation key = entry.getKey();
-            particles.put(key, BrParticle.CODEC.parse(JsonOps.INSTANCE, entry.getValue().getAsJsonObject()).getPartialOrThrow());
+            try {
+                particles.put(key, BrParticle.CODEC.parse(JsonOps.INSTANCE, entry.getValue().getAsJsonObject()).getOrThrow());
+            } catch (Exception e) {
+                log.error("Failed to load particle {}", key, e);
+            }
         }
     }
 }

@@ -3,8 +3,8 @@ package io.github.tt432.eyelib.client.loader;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.model.ModelMaterial;
+import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -54,11 +54,14 @@ public class BrModelLoader extends SimpleJsonResourceReloadListener {
         for (Map.Entry<ResourceLocation, JsonElement> entry : pObject.entrySet()) {
             ResourceLocation key = entry.getKey();
 
-            if (key.getPath().endsWith("material")) {
-                materials.put(key, ModelMaterial.CODEC.parse(JsonOps.INSTANCE, entry.getValue())
-                        .getPartialOrThrow());
-            } else {
-                models.put(key, BrModel.parse(key.toString(), entry.getValue().getAsJsonObject()));
+            try {
+                if (key.getPath().endsWith("material")) {
+                    materials.put(key, ModelMaterial.CODEC.parse(JsonOps.INSTANCE, entry.getValue()).getOrThrow());
+                } else {
+                    models.put(key, BrModel.parse(key.toString(), entry.getValue().getAsJsonObject()));
+                }
+            } catch (Exception e) {
+                log.error("can't load model {}", key, e);
             }
         }
     }

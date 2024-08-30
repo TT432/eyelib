@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
@@ -22,6 +23,7 @@ import java.util.Map;
  * @author TT432
  */
 @Getter
+@Slf4j
 @EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class BrAnimationControllerLoader extends SimpleJsonResourceReloadListener {
     public static final BrAnimationControllerLoader INSTANCE = new BrAnimationControllerLoader();
@@ -45,7 +47,12 @@ public class BrAnimationControllerLoader extends SimpleJsonResourceReloadListene
     protected void apply(Map<ResourceLocation, JsonElement> pObject, @NotNull ResourceManager pResourceManager, @NotNull ProfilerFiller pProfiler) {
         animationControllers.clear();
 
-        pObject.forEach((key, value) -> animationControllers.put(key,
-                BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, value).getOrThrow()));
+        pObject.forEach((key, value) -> {
+            try {
+                animationControllers.put(key, BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, value).getOrThrow());
+            } catch (Exception e) {
+                log.error("can't load animation controller {}", key, e);
+            }
+        });
     }
 }
