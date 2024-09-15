@@ -44,7 +44,7 @@ public class ModelRenderer {
         visitors.visitors().forEach(v -> v.visitModel(renderParams));
 
         for (var toplevelBone : model.toplevelBones().values()) {
-            renderBone(renderParams, map, visitors, cast(infos), model, toplevelBone, model.locator().getGroup(toplevelBone.name()));
+            renderBone(renderParams, map, visitors, cast(infos), toplevelBone, model.locator().getGroup(toplevelBone.name()));
         }
 
         poseStack.popPose();
@@ -53,7 +53,7 @@ public class ModelRenderer {
     @SuppressWarnings("unchecked")
     private static <G extends Model.Bone, R extends ModelRuntimeData<G, Object, R>> void renderBone(
             RenderParams renderParams, @Nullable BrModelTextures.TwoSideInfoMap map,
-            ModelRenderVisitorList visitors, R infos, Model model, G bone, GroupLocator locatorsGroup
+            ModelRenderVisitorList visitors, R infos, G bone, GroupLocator locatorsGroup
     ) {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();
@@ -71,7 +71,7 @@ public class ModelRenderer {
         }
 
         for (var child : bone.children().values()) {
-            renderBone(renderParams, map, visitors, infos, model, (G) child, locatorsGroup.getChild(child.name()));
+            renderBone(renderParams, map, visitors, infos, (G) child, locatorsGroup.getChild(child.name()));
         }
 
         poseStack.popPose();
