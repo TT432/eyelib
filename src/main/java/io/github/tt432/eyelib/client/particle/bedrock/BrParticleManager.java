@@ -57,9 +57,14 @@ public class BrParticleManager {
                         emitters.values().forEach(BrParticleEmitter::onRenderFrame);
                         particles.removeIf(BrParticleParticle::isRemoved);
                         particles.forEach(BrParticleParticle::onRenderFrame);
+                        Thread.yield();
+                    } else {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
-
-                    Thread.yield();
                 }
             });
         }

@@ -26,15 +26,14 @@ public class AddSectionGeometryEventListener {
     @AllArgsConstructor
     public static final class WithLevelRendererAdditionalSectionRenderer
             implements AddSectionGeometryEvent.AdditionalSectionRenderer {
-        private final AddSectionGeometryEvent event;
+        private final BlockPos sectionOrigin;
 
         @Override
         public void render(AddSectionGeometryEvent.SectionRenderingContext context) {
             BlockAndTintGetter region = context.getRegion();
-            BlockPos posSource = event.getSectionOrigin();
-            BlockPos posTarget = posSource.offset(15, 15, 15);
+            BlockPos posTarget = sectionOrigin.offset(15, 15, 15);
 
-            for (BlockPos pos : BlockPos.betweenClosed(posSource, posTarget)) {
+            for (BlockPos pos : BlockPos.betweenClosed(sectionOrigin, posTarget)) {
                 try {
                     BlockEntity blockEntity = region.getBlockEntity(pos);
 
@@ -45,7 +44,7 @@ public class AddSectionGeometryEventListener {
                     Vec3 cameraPos = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
 
                     if (renderer instanceof WithLevelRenderer<?> r && r.needRender(cast(blockEntity), cameraPos)) {
-                        r.render(pos, event.getSectionOrigin(), context);
+                        r.render(pos, sectionOrigin, context);
                     }
                 } catch (Exception ignored) {
                 }
@@ -55,6 +54,6 @@ public class AddSectionGeometryEventListener {
 
     @SubscribeEvent
     public static void onEvent(AddSectionGeometryEvent event) {
-        event.addRenderer(new WithLevelRendererAdditionalSectionRenderer(event));
+        event.addRenderer(new WithLevelRendererAdditionalSectionRenderer(event.getSectionOrigin().immutable()));
     }
 }
