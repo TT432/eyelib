@@ -1,7 +1,9 @@
-package io.github.tt432.eyelib.client.render.level.example;
+package io.github.tt432.eyelib.client.render.sections.example;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import io.github.tt432.eyelib.client.render.level.WithLevelRenderer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.tt432.eyelib.client.render.sections.IConditionalBlockEntitySectionGeometryRenderer;
+import io.github.tt432.eyelib.client.render.sections.ISectionGeometryRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.core.BlockPos;
@@ -36,15 +38,15 @@ import static net.minecraft.world.level.block.Block.UPDATE_CLIENTS;
  *
  * @author TT432
  */
-public interface ChestWithLevelRenderer<T extends BlockEntity & LidBlockEntity> extends BlockEntityRenderer<T>, WithLevelRenderer<T> {
+public interface ChestWithLevelRenderer<T extends BlockEntity & LidBlockEntity> extends BlockEntityRenderer<T>, IConditionalBlockEntitySectionGeometryRenderer<T> {
     @Override
-    default void render(BlockPos pos, BlockPos origin, AddSectionGeometryEvent.SectionRenderingContext context) {
-        ChestWithLevelRenderers.render(pos, origin, context);
+    default void renderSectionGeometry(T blockEntity, AddSectionGeometryEvent.SectionRenderingContext context, PoseStack poseStack, BlockPos pos, BlockPos regionOrigin, ISectionGeometryRenderContext renderAndCacheContext) {
+        ChestWithLevelRenderers.render(context, poseStack, pos, regionOrigin, renderAndCacheContext);
     }
 
     @Override
-    default boolean needRender(T object, Vec3 cameraPos) {
-        return !shouldRender(object, cameraPos);
+    default boolean shouldRender(T blockEntity, BlockPos blockPos, BlockPos regionOrigin, Vec3 cameraPos) {
+        return !shouldRender(blockEntity, cameraPos);
     }
 
     boolean getLastShouldRender();

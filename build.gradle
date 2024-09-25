@@ -22,6 +22,17 @@ group = mod_group_id
 
 repositories {
     mavenLocal()
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
+        }
+    }
 }
 
 base {
@@ -121,7 +132,7 @@ dependencies {
     jarJar libraries("org.codehaus.janino:janino:$janinoVersion")
     jarJar "org.codehaus.janino:commons-compiler:[$janinoVersion,)"
     
-    // implementation("maven.modrinth:sodium:mc1.21-0.6.0-beta.1-neoforge")
+    compileOnly("maven.modrinth:sodium:mc1.21-0.6.0-beta.1-neoforge")
 }
 
 signing {
