@@ -46,7 +46,7 @@ public record AdditionalSectionGeometryBlockEntityRendererDispatcher(BlockPos re
         context.getPoseStack().translate(pos.getX() - regionOrigin.getX(), pos.getY() - regionOrigin.getY(), pos.getZ() - regionOrigin.getZ());
 
         try {
-            renderer.renderSectionGeometry(cast(blockEntity), context, new PoseStack(), pos, regionOrigin, new DefaultSectionGeometryRenderContext(context, CACHE.computeIfAbsent(renderer, renderer1 -> new BakedModelsCache()), pos, regionOrigin));
+            renderer.renderSectionGeometry(cast(blockEntity), context, new PoseStack(), pos, regionOrigin, new LightAwareSectionGeometryRenderContext(context, CACHE.computeIfAbsent(renderer, renderer1 -> new BakedModelsCache()), pos, regionOrigin));
         } catch (ClassCastException ignored) {
 
         }

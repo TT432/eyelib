@@ -33,8 +33,8 @@ import org.joml.Matrix4f;
  * @author Argon4W
  */
 @SuppressWarnings("UnstableApiUsage")
-public record DefaultSectionGeometryRenderContext(RandomSource randomSource, AddSectionGeometryEvent.SectionRenderingContext context, BakedModelsCache cache, BlockPos pos, BlockPos regionOrigin) implements ISectionGeometryRenderContext {
-    public DefaultSectionGeometryRenderContext(AddSectionGeometryEvent.SectionRenderingContext context, BakedModelsCache cache, BlockPos pos, BlockPos regionOrigin) {
+public record LightAwareSectionGeometryRenderContext(RandomSource randomSource, AddSectionGeometryEvent.SectionRenderingContext context, BakedModelsCache cache, BlockPos pos, BlockPos regionOrigin) implements ISectionGeometryRenderContext {
+    public LightAwareSectionGeometryRenderContext(AddSectionGeometryEvent.SectionRenderingContext context, BakedModelsCache cache, BlockPos pos, BlockPos regionOrigin) {
         this(RandomSource.createNewThreadLocalInstance(), context, cache, pos, regionOrigin);
     }
 
@@ -70,13 +70,13 @@ public record DefaultSectionGeometryRenderContext(RandomSource randomSource, Add
 
     @Override
     public MultiBufferSource getUncachedItemBufferSource() {
-        return ModList.get().isLoaded("sodium") ?  pRenderType -> new QuadLighterVertexConsumer() : renderType -> new VanillaVertexConsumer();
+        return ModList.get().isLoaded("sodium") ?  pRenderType -> new QuadLighterVertexConsumer() : renderType -> new VanillaEntityVertexConsumer();
     }
 
-    public class VanillaVertexConsumer implements VertexConsumer {
+    public class VanillaEntityVertexConsumer implements VertexConsumer {
         private final VertexConsumer vertexConsumer;
 
-        public VanillaVertexConsumer() {
+        public VanillaEntityVertexConsumer() {
             this.vertexConsumer = context.getOrCreateChunkBuffer(Sheets.translucentItemSheet());
         }
 
