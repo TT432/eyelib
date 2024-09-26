@@ -54,7 +54,6 @@ public class ChestWithLevelRenderers {
 
     public void render(AddSectionGeometryEvent.SectionRenderingContext context, PoseStack poseStack, BlockPos pos, BlockPos regionOrigin, ISectionGeometryRenderContext renderContext) {
         if (!baked) {
-            System.out.println("Not baked");
             baked = true;
 
             EntityModelSet models = Minecraft.getInstance().getEntityModels();
