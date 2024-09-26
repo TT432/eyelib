@@ -83,6 +83,7 @@ public class ChestWithLevelRenderers {
                 renderContext.renderCachedModel(model, poseStack, RenderType.solid(), OverlayTexture.NO_OVERLAY, ModelData.EMPTY);
             }
         }
+        //renderContext.renderCachedModel(Minecraft.getInstance().getBlockRenderer().getBlockModel(Blocks.DIRT.defaultBlockState()), poseStack, RenderType.solid(), OverlayTexture.NO_OVERLAY, ModelData.EMPTY);
 
         poseStack.popPose();
     }

@@ -21,6 +21,12 @@ import static net.minecraft.world.level.block.Block.UPDATE_CLIENTS;
  * <pre>{@code
  * @Mixin(ChestRenderer.class)
  * public abstract class ChestRendererMixin<T extends BlockEntity & LidBlockEntity> implements ChestWithLevelRenderer<T> {
+ * }
+ * }</pre>
+ *
+ * <pre>{@code
+ * @Mixin(ChestBlockEntity.class)
+ * public class ChestBlockEntityMixin implements IChestBlockEntityExtension {
  *     @Unique
  *     private boolean eyelib$lastShouldRender;
  *
@@ -49,24 +55,27 @@ public interface ChestWithLevelRenderer<T extends BlockEntity & LidBlockEntity> 
         return !shouldRender(blockEntity, cameraPos);
     }
 
-    boolean getLastShouldRender();
-
-    void setLastShouldRender(boolean v);
-
     @Override
     default boolean shouldRender(T blockEntity, Vec3 cameraPos) {
         boolean result = blockEntity.getOpenNess(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) > 0;
 
-        if (getLastShouldRender() != result) {
-            setLastShouldRender(result);
-
-            BlockState blockState = blockEntity.getBlockState();
-            Level level = blockEntity.getLevel();
-
-            if (level != null)
-                RenderSystem.recordRenderCall(() -> level.sendBlockUpdated(blockEntity.getBlockPos(), blockState, blockState, UPDATE_CLIENTS));
+        if (!(blockEntity instanceof IChestBlockEntityExtension extension)) {
+            return true;
         }
 
+        if (extension.getLastShouldRender() == result) {
+            return result;
+        }
+
+        extension.setLastShouldRender(result);
+        BlockState blockState = blockEntity.getBlockState();
+        Level level = blockEntity.getLevel();
+
+        if (level == null) {
+            return result;
+        }
+
+        RenderSystem.recordRenderCall(() -> level.sendBlockUpdated(blockEntity.getBlockPos(), blockState, blockState, UPDATE_CLIENTS));
         return result;
     }
 }
