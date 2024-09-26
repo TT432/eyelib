@@ -33,6 +33,11 @@ public record EmitterLifetimeOnce(
 
     @Override
     public void onTick(BrParticleEmitter emitter) {
+        if (!emitter.blackboard.getOrDefault("lifetime_once_emitted", false)) {
+            emitter.blackboard.put("lifetime_once_emitted", true);
+            emitter.onLoopStart();
+        }
+
         if (emitter.getAge() > Objects.requireNonNullElse(emitter.blackboard.get("lifetime_once"), 0F)) {
             emitter.remove();
         }
