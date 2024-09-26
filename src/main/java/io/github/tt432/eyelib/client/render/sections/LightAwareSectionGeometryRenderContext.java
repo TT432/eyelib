@@ -3,8 +3,7 @@ package io.github.tt432.eyelib.client.render.sections;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Transformation;
-import io.github.tt432.eyelib.client.render.sections.cache.DefaultRendererBakedModelsCache;
-import io.github.tt432.eyelib.client.render.sections.cache.IRendererBakedModelsCache;
+import io.github.tt432.eyelib.client.render.sections.cache.RendererBakedModelsCache;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -34,8 +33,8 @@ import org.joml.Matrix4f;
  * @author Argon4W
  */
 @SuppressWarnings("UnstableApiUsage")
-public record LightAwareSectionGeometryRenderContext(RandomSource randomSource, AddSectionGeometryEvent.SectionRenderingContext context, IRendererBakedModelsCache cache, BlockPos pos, BlockPos regionOrigin) implements ISectionGeometryRenderContext {
-    public LightAwareSectionGeometryRenderContext(AddSectionGeometryEvent.SectionRenderingContext context, IRendererBakedModelsCache cache, BlockPos pos, BlockPos regionOrigin) {
+public record LightAwareSectionGeometryRenderContext(RandomSource randomSource, AddSectionGeometryEvent.SectionRenderingContext context, RendererBakedModelsCache cache, BlockPos pos, BlockPos regionOrigin) implements SectionGeometryRenderContext {
+    public LightAwareSectionGeometryRenderContext(AddSectionGeometryEvent.SectionRenderingContext context, RendererBakedModelsCache cache, BlockPos pos, BlockPos regionOrigin) {
         this(RandomSource.createNewThreadLocalInstance(), context, cache, pos, regionOrigin);
     }
 

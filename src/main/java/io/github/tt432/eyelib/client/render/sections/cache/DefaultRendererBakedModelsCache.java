@@ -12,8 +12,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Argon4W
  */
-public class DefaultRendererBakedModelsCache implements IRendererBakedModelsCache {
-    private final Map<BakedModel, IBakedModelCache> modelCache;
+public class DefaultRendererBakedModelsCache implements RendererBakedModelsCache {
+    private final Map<BakedModel, BakedModelCache> modelCache;
 
     public DefaultRendererBakedModelsCache() {
         this.modelCache = new ConcurrentHashMap<>();
@@ -31,10 +31,10 @@ public class DefaultRendererBakedModelsCache implements IRendererBakedModelsCach
 
     @Override
     public int getSize() {
-        return modelCache.values().stream().mapToInt(IBakedModelCache::size).sum();
+        return modelCache.values().stream().mapToInt(BakedModelCache::size).sum();
     }
 
-    public IBakedModelCache createModelCache(BakedModel model) {
+    public BakedModelCache createModelCache(BakedModel model) {
         if (model instanceof SimpleBakedModel simple) {
             return new SimpleModelCache(simple);
         }

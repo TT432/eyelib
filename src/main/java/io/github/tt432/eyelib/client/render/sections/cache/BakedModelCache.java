@@ -6,7 +6,7 @@ import net.minecraft.client.resources.model.BakedModel;
 /**
  * @author Argon4W
  */
-public interface IBakedModelCache {
+public interface BakedModelCache {
     BakedModel getTransformedModel(Transformation transformation);
     int size();
 }

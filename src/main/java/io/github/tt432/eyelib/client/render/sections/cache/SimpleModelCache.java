@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.render.sections.cache;
 
 import com.mojang.math.Transformation;
-import io.github.tt432.eyelib.client.render.sections.ISimpleBakedModelExtension;
+import io.github.tt432.eyelib.client.render.sections.SimpleBakedModelExtension;
 import io.github.tt432.eyelib.util.EntryStreams;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.SimpleBakedModel;
@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Argon4W
  */
-public class SimpleModelCache implements IBakedModelCache {
+public class SimpleModelCache implements BakedModelCache {
     private final SimpleBakedModel model;
     private final Map<Transformation, BakedModel> modelCache;
 
@@ -30,7 +30,7 @@ public class SimpleModelCache implements IBakedModelCache {
     }
 
     public BakedModel getTransformedModel(IQuadTransformer transformer) {
-        return new SimpleBakedModel(model.unculledFaces.stream().map(transformer::process).toList(), model.culledFaces.entrySet().stream().map(EntryStreams.mapEntryValue(list -> list.stream().map(transformer::process).toList())).collect(EntryStreams.of()), model.useAmbientOcclusion(), model.usesBlockLight(), model.isGui3d(), model.getParticleIcon(), model.getTransforms(), model.getOverrides(), model instanceof ISimpleBakedModelExtension extension ? extension.eyelib$getRenderTypeGroup() : RenderTypeGroup.EMPTY);
+        return new SimpleBakedModel(model.unculledFaces.stream().map(transformer::process).toList(), model.culledFaces.entrySet().stream().map(EntryStreams.mapEntryValue(list -> list.stream().map(transformer::process).toList())).collect(EntryStreams.of()), model.useAmbientOcclusion(), model.usesBlockLight(), model.isGui3d(), model.getParticleIcon(), model.getTransforms(), model.getOverrides(), model instanceof SimpleBakedModelExtension extension ? extension.eyelib$getRenderTypeGroup() : RenderTypeGroup.EMPTY);
     }
 
     @Override

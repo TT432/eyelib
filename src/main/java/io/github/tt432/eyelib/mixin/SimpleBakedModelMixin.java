@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.mixin;
 
-import io.github.tt432.eyelib.client.render.sections.ISimpleBakedModelExtension;
+import io.github.tt432.eyelib.client.render.sections.SimpleBakedModelExtension;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -19,7 +19,7 @@ import java.util.Map;
  * @author Argon4W
  */
 @Mixin(SimpleBakedModel.class)
-public class SimpleBakedModelMixin implements ISimpleBakedModelExtension {
+public class SimpleBakedModelMixin implements SimpleBakedModelExtension {
     @Unique
     private RenderTypeGroup eyelib$renderTypeGroup;
 

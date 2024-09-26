@@ -2,8 +2,8 @@ package io.github.tt432.eyelib.client.render.sections.example;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelib.client.render.sections.IConditionalBlockEntitySectionGeometryRenderer;
-import io.github.tt432.eyelib.client.render.sections.ISectionGeometryRenderContext;
+import io.github.tt432.eyelib.client.render.sections.ConditionalBlockEntitySectionGeometryRenderer;
+import io.github.tt432.eyelib.client.render.sections.SectionGeometryRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.core.BlockPos;
@@ -26,7 +26,7 @@ import static net.minecraft.world.level.block.Block.UPDATE_CLIENTS;
  *
  * <pre>{@code
  * @Mixin(ChestBlockEntity.class)
- * public class ChestBlockEntityMixin implements IChestBlockEntityExtension {
+ * public class ChestBlockEntityMixin implements ChestBlockEntityExtension {
  *     @Unique
  *     private boolean eyelib$lastShouldRender;
  *
@@ -44,9 +44,9 @@ import static net.minecraft.world.level.block.Block.UPDATE_CLIENTS;
  *
  * @author TT432
  */
-public interface ChestWithLevelRenderer<T extends BlockEntity & LidBlockEntity> extends BlockEntityRenderer<T>, IConditionalBlockEntitySectionGeometryRenderer<T> {
+public interface ChestWithLevelRenderer<T extends BlockEntity & LidBlockEntity> extends BlockEntityRenderer<T>, ConditionalBlockEntitySectionGeometryRenderer<T> {
     @Override
-    default void renderSectionGeometry(T blockEntity, AddSectionGeometryEvent.SectionRenderingContext context, PoseStack poseStack, BlockPos pos, BlockPos regionOrigin, ISectionGeometryRenderContext renderAndCacheContext) {
+    default void renderSectionGeometry(T blockEntity, AddSectionGeometryEvent.SectionRenderingContext context, PoseStack poseStack, BlockPos pos, BlockPos regionOrigin, SectionGeometryRenderContext renderAndCacheContext) {
         ChestWithLevelRenderers.render(context, poseStack, pos, regionOrigin, renderAndCacheContext);
     }
 
@@ -59,7 +59,7 @@ public interface ChestWithLevelRenderer<T extends BlockEntity & LidBlockEntity> 
     default boolean shouldRender(T blockEntity, Vec3 cameraPos) {
         boolean result = blockEntity.getOpenNess(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) > 0;
 
-        if (!(blockEntity instanceof IChestBlockEntityExtension extension)) {
+        if (!(blockEntity instanceof ChestBlockEntityExtension extension)) {
             return true;
         }
 

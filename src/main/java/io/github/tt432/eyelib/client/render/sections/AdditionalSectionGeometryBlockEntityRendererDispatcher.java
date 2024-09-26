@@ -2,8 +2,8 @@ package io.github.tt432.eyelib.client.render.sections;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.render.sections.cache.DefaultRendererBakedModelsCache;
-import io.github.tt432.eyelib.client.render.sections.cache.ICustomRendererBakedModelsCacheProvider;
-import io.github.tt432.eyelib.client.render.sections.cache.IRendererBakedModelsCache;
+import io.github.tt432.eyelib.client.render.sections.cache.CustomRendererBakedModelsCacheProvider;
+import io.github.tt432.eyelib.client.render.sections.cache.RendererBakedModelsCache;
 import io.github.tt432.eyelib.client.render.sections.cache.UncachedRendererBakedModelsCache;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -18,19 +18,19 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Argon4W
  */
 public record AdditionalSectionGeometryBlockEntityRendererDispatcher(BlockPos regionOrigin) implements AddSectionGeometryEvent.AdditionalSectionRenderer {
-    public static final Map<IBlockEntitySectionGeometryRenderer<?>, IRendererBakedModelsCache> CACHE = new ConcurrentHashMap<>();
+    public static final Map<BlockEntitySectionGeometryRenderer<?>, RendererBakedModelsCache> CACHE = new ConcurrentHashMap<>();
 
     @Override
     public void render(@NotNull AddSectionGeometryEvent.SectionRenderingContext context) {
         BlockPos.betweenClosed(regionOrigin, regionOrigin.offset(16, 16, 16)).forEach(pos -> renderAt(pos, context));
     }
 
-    public IRendererBakedModelsCache getOrCreateCache(IBlockEntitySectionGeometryRenderer<?> renderer) {
+    public RendererBakedModelsCache getOrCreateCache(BlockEntitySectionGeometryRenderer<?> renderer) {
         return CACHE.compute(renderer, (renderer1, cache) -> cache == null ? createCache(renderer1) : (cache.getSize() > 128 ? new UncachedRendererBakedModelsCache() : cache));
     }
 
-    public IRendererBakedModelsCache createCache(IBlockEntitySectionGeometryRenderer<?> renderer) {
-        return renderer instanceof ICustomRendererBakedModelsCacheProvider provider ? provider.createCache() : new DefaultRendererBakedModelsCache();
+    public RendererBakedModelsCache createCache(BlockEntitySectionGeometryRenderer<?> renderer) {
+        return renderer instanceof CustomRendererBakedModelsCacheProvider provider ? provider.createCache() : new DefaultRendererBakedModelsCache();
     }
 
     @SuppressWarnings("unchecked")
@@ -45,11 +45,11 @@ public record AdditionalSectionGeometryBlockEntityRendererDispatcher(BlockPos re
             return;
         }
 
-        if (!(Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(blockEntity) instanceof IBlockEntitySectionGeometryRenderer<?> renderer)) {
+        if (!(Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(blockEntity) instanceof BlockEntitySectionGeometryRenderer<?> renderer)) {
             return;
         }
 
-        if (renderer instanceof IConditionalBlockEntitySectionGeometryRenderer<?> conditional && !conditional.shouldRender(cast(blockEntity), pos, regionOrigin, Minecraft.getInstance().gameRenderer.getMainCamera().getPosition())) {
+        if (renderer instanceof ConditionalBlockEntitySectionGeometryRenderer<?> conditional && !conditional.shouldRender(cast(blockEntity), pos, regionOrigin, Minecraft.getInstance().gameRenderer.getMainCamera().getPosition())) {
             return;
         }
 

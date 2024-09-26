@@ -8,6 +8,6 @@ import net.neoforged.neoforge.client.event.AddSectionGeometryEvent;
 /**
  * @author Argon4W
  */
-public interface IBlockEntitySectionGeometryRenderer<T extends BlockEntity> {
-    void renderSectionGeometry(T blockEntity, AddSectionGeometryEvent.SectionRenderingContext context, PoseStack poseStack, BlockPos pos, BlockPos regionOrigin, ISectionGeometryRenderContext renderAndCacheContext);
+public interface BlockEntitySectionGeometryRenderer<T extends BlockEntity> {
+    void renderSectionGeometry(T blockEntity, AddSectionGeometryEvent.SectionRenderingContext context, PoseStack poseStack, BlockPos pos, BlockPos regionOrigin, SectionGeometryRenderContext renderAndCacheContext);
 }

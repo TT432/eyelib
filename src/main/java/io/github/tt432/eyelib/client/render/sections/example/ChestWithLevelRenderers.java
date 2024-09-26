@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.render.sections.example;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import io.github.tt432.eyelib.client.model.UnbakedModelPart;
-import io.github.tt432.eyelib.client.render.sections.ISectionGeometryRenderContext;
+import io.github.tt432.eyelib.client.render.sections.SectionGeometryRenderContext;
 import io.github.tt432.eyelib.util.ResourceLocations;
 import io.github.tt432.eyelib.util.client.BakedModels;
 import lombok.experimental.UtilityClass;
@@ -19,7 +19,6 @@ import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.InventoryMenu;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
@@ -52,7 +51,7 @@ public class ChestWithLevelRenderers {
         };
     }
 
-    public void render(AddSectionGeometryEvent.SectionRenderingContext context, PoseStack poseStack, BlockPos pos, BlockPos regionOrigin, ISectionGeometryRenderContext renderContext) {
+    public void render(AddSectionGeometryEvent.SectionRenderingContext context, PoseStack poseStack, BlockPos pos, BlockPos regionOrigin, SectionGeometryRenderContext renderContext) {
         if (!baked) {
             baked = true;
 

@@ -28,8 +28,8 @@ import java.util.List;
  * @author Argon4W
  */
 @SuppressWarnings("deprecation")
-public record DynamicTransformedBakedModel(BakedModel model, Transformation transformation, IQuadTransformer transformer, IRendererBakedModelsCache cache) implements BakedModel {
-    public DynamicTransformedBakedModel(BakedModel model, Transformation transformation, IRendererBakedModelsCache cache) {
+public record DynamicTransformedBakedModel(BakedModel model, Transformation transformation, IQuadTransformer transformer, RendererBakedModelsCache cache) implements BakedModel {
+    public DynamicTransformedBakedModel(BakedModel model, Transformation transformation, RendererBakedModelsCache cache) {
         this(model, transformation, QuadTransformers.applying(transformation), cache);
     }
 

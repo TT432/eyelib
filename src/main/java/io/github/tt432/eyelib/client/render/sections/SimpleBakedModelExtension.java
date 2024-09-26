@@ -5,6 +5,6 @@ import net.neoforged.neoforge.client.RenderTypeGroup;
 /**
  * @author Argon4W
  */
-public interface ISimpleBakedModelExtension {
+public interface SimpleBakedModelExtension {
     RenderTypeGroup eyelib$getRenderTypeGroup();
 }
