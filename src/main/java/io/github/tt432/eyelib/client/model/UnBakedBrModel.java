@@ -58,6 +58,10 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
             super(originalModel);
             this.visitors = Map.copyOf(visitors);
         }
+
+        public BakedModel getOriginalModel() {
+            return originalModel;
+        }
     }
 
     @Override

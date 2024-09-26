@@ -1,7 +1,10 @@
 package io.github.tt432.eyelib.client.render.sections;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelib.client.render.sections.cache.BakedModelsCache;
+import io.github.tt432.eyelib.client.render.sections.cache.DefaultRendererBakedModelsCache;
+import io.github.tt432.eyelib.client.render.sections.cache.ICustomRendererBakedModelsCacheProvider;
+import io.github.tt432.eyelib.client.render.sections.cache.IRendererBakedModelsCache;
+import io.github.tt432.eyelib.client.render.sections.cache.UncachedRendererBakedModelsCache;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -15,16 +18,24 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Argon4W
  */
 public record AdditionalSectionGeometryBlockEntityRendererDispatcher(BlockPos regionOrigin) implements AddSectionGeometryEvent.AdditionalSectionRenderer {
-    public static final Map<IBlockEntitySectionGeometryRenderer<?>, BakedModelsCache> CACHE = new ConcurrentHashMap<>();
+    public static final Map<IBlockEntitySectionGeometryRenderer<?>, IRendererBakedModelsCache> CACHE = new ConcurrentHashMap<>();
 
     @Override
     public void render(@NotNull AddSectionGeometryEvent.SectionRenderingContext context) {
-        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        BlockPos.betweenClosed(regionOrigin, regionOrigin.offset(16, 16, 16)).forEach(pos -> renderAt(pos, context));
+    }
 
-        for (int index = 0; index < 16 * 16 * 16; index ++) {
-            int factor = index / 16;
-            renderAt(cursor.set(regionOrigin.getX() + index % 16, regionOrigin.getY() + factor % 16, regionOrigin.getZ() + factor / 16), context);
-        }
+    public IRendererBakedModelsCache getOrCreateCache(IBlockEntitySectionGeometryRenderer<?> renderer) {
+        return CACHE.compute(renderer, (renderer1, cache) -> cache == null ? createCache(renderer1) : (cache.getSize() > 128 ? new UncachedRendererBakedModelsCache() : cache));
+    }
+
+    public IRendererBakedModelsCache createCache(IBlockEntitySectionGeometryRenderer<?> renderer) {
+        return renderer instanceof ICustomRendererBakedModelsCacheProvider provider ? provider.createCache() : new DefaultRendererBakedModelsCache();
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends BlockEntity> T cast(BlockEntity o) {
+        return (T) o;
     }
 
     public void renderAt(BlockPos pos, AddSectionGeometryEvent.SectionRenderingContext context) {
@@ -46,16 +57,11 @@ public record AdditionalSectionGeometryBlockEntityRendererDispatcher(BlockPos re
         context.getPoseStack().translate(pos.getX() - regionOrigin.getX(), pos.getY() - regionOrigin.getY(), pos.getZ() - regionOrigin.getZ());
 
         try {
-            renderer.renderSectionGeometry(cast(blockEntity), context, new PoseStack(), pos, regionOrigin, new LightAwareSectionGeometryRenderContext(context, CACHE.computeIfAbsent(renderer, renderer1 -> new BakedModelsCache()), pos, regionOrigin));
+            renderer.renderSectionGeometry(cast(blockEntity), context, new PoseStack(), pos, regionOrigin, new LightAwareSectionGeometryRenderContext(context, getOrCreateCache(renderer), pos, regionOrigin));
         } catch (ClassCastException ignored) {
 
         }
 
         context.getPoseStack().popPose();
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T extends BlockEntity> T cast(BlockEntity o) {
-        return (T) o;
     }
 }
