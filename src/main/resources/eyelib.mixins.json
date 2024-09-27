@@ -8,7 +8,12 @@
   "client": [
     "GuiGraphicsMixin",
     "HumanoidModelMixin",
-    "LivingEntityRendererAccessor"
+    "LivingEntityRendererAccessor",
+    "RenderTypeMixin",
+    "SectionCompilerMixin",
+    "SimpleBakedModelMixin",
+    "compat.MaterialMixin",
+    "compat.TerrainRenderPassMixin"
   ],
   "injectors": {
     "defaultRequire": 1
