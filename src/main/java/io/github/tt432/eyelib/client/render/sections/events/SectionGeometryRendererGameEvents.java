@@ -9,6 +9,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.AddSectionGeometryEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 /**
@@ -33,7 +34,7 @@ public class SectionGeometryRendererGameEvents {
         }
 
         Vector3f position = event.getCamera().getPosition().toVector3f();
-        event.getLevelRenderer().renderSectionLayer(Sheets.translucentItemSheet(), position.x, position.y, position.z, event.getModelViewMatrix().translate(position.negate()), event.getProjectionMatrix());
+        event.getLevelRenderer().renderSectionLayer(Sheets.translucentItemSheet(), position.x, position.y, position.z, new Matrix4f(event.getModelViewMatrix()).translate(position.negate()), event.getProjectionMatrix());
         event.getLevelRenderer().renderBuffers.bufferSource().endBatch(Sheets.translucentItemSheet());
     }
 }
