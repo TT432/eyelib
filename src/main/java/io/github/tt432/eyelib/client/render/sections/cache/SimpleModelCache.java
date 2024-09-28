@@ -8,6 +8,7 @@ import net.minecraft.client.resources.model.SimpleBakedModel;
 import net.neoforged.neoforge.client.RenderTypeGroup;
 import net.neoforged.neoforge.client.model.IQuadTransformer;
 import net.neoforged.neoforge.client.model.QuadTransformers;
+import org.joml.Matrix4f;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,10 +27,10 @@ public class SimpleModelCache implements BakedModelCache {
 
     @Override
     public BakedModel getTransformedModel(Transformation transformation) {
-        return modelCache.computeIfAbsent(transformation, transformation1 -> getTransformedModel(QuadTransformers.applying(transformation1)));
+        return modelCache.computeIfAbsent(transformation, transformation1 -> getTransformedModel(transformation1.getMatrix(), QuadTransformers.applying(transformation1)));
     }
 
-    public BakedModel getTransformedModel(IQuadTransformer transformer) {
+    public BakedModel getTransformedModel(Matrix4f matrix4f, IQuadTransformer transformer) {
         return new SimpleBakedModel(model.unculledFaces.stream().map(transformer::process).toList(), model.culledFaces.entrySet().stream().map(EntryStreams.mapEntryValue(list -> list.stream().map(transformer::process).toList())).collect(EntryStreams.of()), model.useAmbientOcclusion(), model.usesBlockLight(), model.isGui3d(), model.getParticleIcon(), model.getTransforms(), model.getOverrides(), model instanceof SimpleBakedModelExtension extension ? extension.eyelib$getRenderTypeGroup() : RenderTypeGroup.EMPTY);
     }
 
