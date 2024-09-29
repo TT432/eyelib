@@ -9,8 +9,7 @@ import org.antlr.v4.runtime.*;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.SimpleCompiler;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author TT432
@@ -21,15 +20,16 @@ public class MolangCompileHandler {
     private static final MolangCompileVisitor visitor = new MolangCompileVisitor();
     private static int currIdx;
 
-    public static MethodHandle compile(String content) {
+    public static MolangValue.MolangFunction compile(String content) {
         try {
             return tryCompile(content.trim());
-        } catch (IllegalAccessException | ClassNotFoundException | CompileException e) {
+        } catch (IllegalAccessException | ClassNotFoundException | CompileException | InvocationTargetException |
+                 InstantiationException e) {
             throw new MolangUncompilableException(e);
         }
     }
 
-    public static MethodHandle tryCompile(String molangString) throws IllegalAccessException, ClassNotFoundException, CompileException {
+    public static MolangValue.MolangFunction tryCompile(String molangString) throws IllegalAccessException, ClassNotFoundException, CompileException, InvocationTargetException, InstantiationException {
         currIdx++;
         String classname = "CompiledMolang$" + currIdx;
 
@@ -52,18 +52,17 @@ public class MolangCompileHandler {
         }
 
         String sourceCode = """
-                public final class %s {
-                    public static float eval(%s $1) {
+                public final class %s implements %s {
+                    public float apply(%s $1) {
                         %s
                     }
                 }
-                """.formatted(classname, MolangScope.class.getName(), body);
+                """.formatted(classname, MolangValue.MolangFunction.class.getName(), MolangScope.class.getName(), body);
 
         SimpleCompiler simpleCompiler = new SimpleCompiler();
         simpleCompiler.setParentClassLoader(MolangScope.class.getClassLoader());
         simpleCompiler.cook(sourceCode);
         var clazz = simpleCompiler.getClassLoader().loadClass(classname);
-        MethodHandles.Lookup publicLookup = MethodHandles.publicLookup();
-        return publicLookup.unreflect(clazz.getMethods()[0]);
+        return (MolangValue.MolangFunction) clazz.getDeclaredConstructors()[0].newInstance();
     }
 }

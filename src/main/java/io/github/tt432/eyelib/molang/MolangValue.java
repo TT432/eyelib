@@ -6,7 +6,6 @@ import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.invoke.MethodHandle;
 import java.util.List;
 
 /**
@@ -15,8 +14,13 @@ import java.util.List;
 @Slf4j
 public record MolangValue(
         @NotNull String context,
-        @NotNull MethodHandle method
+        @NotNull MolangFunction method
 ) {
+    @FunctionalInterface
+    public interface MolangFunction {
+        float apply(@NotNull MolangScope scope);
+    }
+
     public MolangValue(@NotNull String context) {
         this(context, MolangCompileHandler.compile(context));
     }
@@ -45,13 +49,7 @@ public record MolangValue(
     }
 
     public float eval(MolangScope scope) {
-        try {
-            return (float) method.invoke(scope);
-        } catch (Throwable e) {
-            log.error("Error occurred", e);
-        }
-
-        return 0F;
+        return method.apply(scope);
     }
 
     public boolean evalAsBool(MolangScope scope) {
