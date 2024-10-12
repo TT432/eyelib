@@ -18,6 +18,9 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
+import net.minecraft.world.entity.ai.goal.WrappedGoal;
+import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.phys.Vec3;
@@ -345,6 +348,25 @@ public final class MolangQuery {
     @MolangFunction(value = "is_powered", description = "正在充能（类似苦力怕或凋灵）")
     public static float isPowered(MolangScope scope) {
         return scope.getOwner().ownerAs(PowerableMob.class).map(c -> c.isPowered() ? TRUE : FALSE).orElse(FALSE);
+    }
+
+    @MolangFunction(value = "creeper_swell", description = "苦力怕爆炸计时")
+    public static float creeperSwell(MolangScope scope) {
+        return scope.getOwner().ownerAs(Creeper.class).map(c -> c.swell).orElse(0);
+    }
+
+    @MolangFunction(value = "is_avoid", description = "正在逃离(比如苦力怕逃离猫)")
+    public static float isAvoid(MolangScope scope) {
+        return scope.getOwner().ownerAs(Mob.class).map(e -> {
+            for (WrappedGoal availableGoal : e.goalSelector.getAvailableGoals()) {
+                if (availableGoal.getGoal() instanceof AvoidEntityGoal<?> avoid
+                        && avoid.toAvoid != null) {
+                    return TRUE;
+                }
+            }
+
+            return FALSE;
+        }).orElse(FALSE);
     }
 
     @MolangFunction(value = "health", description = "生物血量")
