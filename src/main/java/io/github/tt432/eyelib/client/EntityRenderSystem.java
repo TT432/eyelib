@@ -8,9 +8,9 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.render.BrModelTextures;
+import io.github.tt432.eyelib.client.render.HighSpeedModelRenderer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
-import io.github.tt432.eyelib.client.render.ModelRenderer;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
 import lombok.AccessLevel;
@@ -27,6 +27,9 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author TT432
@@ -45,6 +48,8 @@ public class EntityRenderSystem {
 
         NeoForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
     }
+
+    private static final Map<ResourceLocation, HashMap<ResourceLocation, HighSpeedModelRenderer.HBakedModel>> cache = new HashMap<>();
 
     @SubscribeEvent
     public static void onEvent(RenderLivingEvent.Pre event) {
@@ -85,8 +90,14 @@ public class EntityRenderSystem {
                             ((LivingEntityRendererAccessor) (event.getRenderer()))
                                     .callGetWhiteOverlayProgress(entity, event.getPartialTick())));
 
-            ModelRenderer.render(renderParams, model, modelComponent.getBoneInfos(),
-                    BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), modelComponent.getVisitors());
+            var hbakedmodel = cache.computeIfAbsent(modelComponent.getSerializableInfo().model(), s -> new HashMap<>())
+                    .computeIfAbsent(modelComponent.getTexture(), i -> HighSpeedModelRenderer.HBakedModel.bake(model));
+
+            HighSpeedModelRenderer.render(renderParams, model, modelComponent.getBoneInfos(),
+                    BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), modelComponent.getVisitors(), hbakedmodel);
+
+//            ModelRenderer.render(renderParams, model, modelComponent.getBoneInfos(),
+//                    BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), modelComponent.getVisitors());
 
             poseStack.popPose();
         }
