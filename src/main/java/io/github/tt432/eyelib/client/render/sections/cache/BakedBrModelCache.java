@@ -19,6 +19,6 @@ public class BakedBrModelCache extends SimpleModelCache {
 
     @Override
     public BakedModel getTransformedModel(Matrix4f matrix4f, IQuadTransformer transformer) {
-        return new UnBakedBrModel.BakedBrModel(super.getTransformedModel(matrix4f, transformer), visitors.entrySet().stream().map(EntryStreams.mapEntryValue(m -> new Matrix4f(m).mul(matrix4f))).collect(EntryStreams.of()));
+        return new UnBakedBrModel.BakedBrModel(super.getTransformedModel(matrix4f, transformer), visitors.entrySet().stream().map(EntryStreams.mapEntryValue(m -> new Matrix4f(m).mul(matrix4f))).collect(EntryStreams.collect()));
     }
 }

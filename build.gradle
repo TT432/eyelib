@@ -131,8 +131,9 @@ dependencies {
     var janinoVersion = '3.1.12'
     jarJar libraries("org.codehaus.janino:janino:$janinoVersion")
     jarJar "org.codehaus.janino:commons-compiler:[$janinoVersion,)"
-    
-    compileOnly("maven.modrinth:sodium:mc1.21-0.6.0-beta.1-neoforge")
+
+    compileOnly("maven.modrinth:sodium:mc1.21-0.6.0-beta.2-neoforge")
+    compileOnly("maven.modrinth:iris:1.8.0-beta.5+1.21-neoforge")
 }
 
 signing {
