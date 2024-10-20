@@ -135,6 +135,6 @@ public record CachedEntityModel(Map<RenderType, List<BakedQuad>> cachedQuads) im
     }
 
     public static <E extends Entity> CachedEntityModel create(E entity) {
-        return new CachedEntityModel(Util.make(new HashMap<RenderType, QuadListBakingVertexConsumer>() , builder -> Minecraft.getInstance().getEntityRenderDispatcher().render(entity, 0, 0, 0, 0, 0, new PoseStack(), ModList.get().isLoaded("iris") ? renderType -> builder.computeIfAbsent(DynamicChunkBufferIrisCompat.unwrap(renderType), QuadListBakingVertexConsumer::new) : renderType -> builder.computeIfAbsent(renderType, QuadListBakingVertexConsumer::new), LightTexture.FULL_SKY)).entrySet().stream().map(EntryStreams.mapEntryValue(QuadListBakingVertexConsumer::getQuads)).collect(EntryStreams.collect()));
+        return new CachedEntityModel(Util.make(new HashMap<RenderType, QuadListBakingVertexConsumer>() , builder -> Minecraft.getInstance().getEntityRenderDispatcher().render(entity, 0, 0, 0, 0, 0, new PoseStack(), ModList.get().isLoaded("iris") ? renderType -> builder.computeIfAbsent(DynamicChunkBufferIrisCompat.unwrap(renderType), QuadListBakingVertexConsumer::new) : renderType -> builder.computeIfAbsent(renderType, QuadListBakingVertexConsumer::new), 0)).entrySet().stream().map(EntryStreams.mapEntryValue(QuadListBakingVertexConsumer::getQuads)).collect(EntryStreams.collect()));
     }
 }

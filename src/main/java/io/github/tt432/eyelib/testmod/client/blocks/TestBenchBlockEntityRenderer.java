@@ -45,7 +45,7 @@ public class TestBenchBlockEntityRenderer implements BlockEntityRenderer<TestBen
     public void renderSectionGeometry(TestBenchBlockEntity blockEntity, AddSectionGeometryEvent.SectionRenderingContext context, PoseStack poseStack, BlockPos pos, BlockPos regionOrigin, SectionGeometryRenderContext renderAndCacheContext) {
         poseStack.pushPose();
         poseStack.translate(0.5, 0, 0.5);
-        renderAndCacheContext.renderCachedEntity(EntityType.BOGGED.create(blockEntity.getLevel()), ResourceLocation.withDefaultNamespace("bogged_cache"), poseStack);
+        renderAndCacheContext.renderUncachedEntity(EntityType.BOGGED, 0, 0, 0, 0, 0, poseStack);
         poseStack.popPose();
     }
 

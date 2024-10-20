@@ -120,7 +120,7 @@ public class LightAwareSectionGeometryRenderContext implements SectionGeometryRe
     }
 
     public <E extends Entity> void renderCachedEntity(CachedEntityModel model, PoseStack poseStack, MultiBufferSource bufferSource) {
-        model.cachedQuads().keySet().forEach(renderType -> LightPipelineAwareModelBlockRenderer.render(bufferSource.getBuffer(renderType), context.getQuadLighter(true), context.getRegion(), cache.getTransformedModel(model, poseStack), context.getRegion().getBlockState(pos), pos, new PoseStack(), false, randomSource, 42L, OverlayTexture.NO_OVERLAY, ModelData.EMPTY, renderType));
+        model.cachedQuads().keySet().forEach(renderType -> LightPipelineAwareModelBlockRenderer.render(bufferSource.getBuffer(renderType), context.getQuadLighter(false), context.getRegion(), cache.getTransformedModel(model, poseStack), context.getRegion().getBlockState(pos), pos, new PoseStack(), false, randomSource, 42L, OverlayTexture.NO_OVERLAY, ModelData.EMPTY, renderType));
     }
 
     @Override
