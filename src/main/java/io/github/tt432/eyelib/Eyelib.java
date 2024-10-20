@@ -2,7 +2,6 @@ package io.github.tt432.eyelib;
 
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
-import io.github.tt432.eyelib.testmod.EyelibTestMod;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 
@@ -16,7 +15,5 @@ public class Eyelib {
     public Eyelib(IEventBus bus) {
         EyelibAttachableData.ATTACHMENT_TYPES.register(bus);
         BuiltInBrModelRenderVisitors.VISITORS.register(bus);
-
-        EyelibTestMod.register(bus);
     }
 }

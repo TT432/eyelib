@@ -119,8 +119,8 @@ public class LightAwareSectionGeometryRenderContext implements SectionGeometryRe
         renderCachedEntity(cache.getEntityModel(entityType, blockEntity.getLevel()), poseStack, bufferSource);
     }
 
-    public <E extends Entity> void renderCachedEntity(CachedEntityModel model, PoseStack poseStack, MultiBufferSource bufferSource) {
-        model.cachedQuads().keySet().forEach(renderType -> LightPipelineAwareModelBlockRenderer.render(bufferSource.getBuffer(renderType), context.getQuadLighter(false), context.getRegion(), cache.getTransformedModel(model, poseStack), context.getRegion().getBlockState(pos), pos, new PoseStack(), false, randomSource, 42L, OverlayTexture.NO_OVERLAY, ModelData.EMPTY, renderType));
+    public void renderCachedEntity(CachedEntityModel model, PoseStack poseStack, MultiBufferSource bufferSource) {
+        model.cachedQuads().keySet().forEach(ModList.get().isLoaded("sodium") ? renderType -> LightPipelineAwareModelBlockRenderer.render(bufferSource.getBuffer(renderType), context.getQuadLighter(true), context.getRegion(), cache.getTransformedModel(model, poseStack), context.getRegion().getBlockState(pos), pos, new PoseStack(), false, randomSource, 42L, OverlayTexture.NO_OVERLAY, ModelData.EMPTY, renderType) : renderType -> Minecraft.getInstance().getBlockRenderer().getModelRenderer().renderModel(new PoseStack().last(), bufferSource.getBuffer(renderType), context.getRegion().getBlockState(pos), cache.getTransformedModel(model, poseStack), 1.0f, 1.0f, 1.0f, getPackedLight(), OverlayTexture.NO_OVERLAY, ModelData.EMPTY, renderType));
     }
 
     @Override
