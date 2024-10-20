@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.render.sections;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Transformation;
+import io.github.tt432.eyelib.client.render.sections.cache.CachedEntityModel;
 import io.github.tt432.eyelib.client.render.sections.cache.RendererBakedModelsCache;
 import io.github.tt432.eyelib.client.render.sections.dynamic.DynamicChunkBuffers;
 import net.minecraft.Util;
@@ -57,7 +58,7 @@ public class LightAwareSectionGeometryRenderContext implements SectionGeometryRe
 
     @Override
     public void renderCachedModel(BakedModel model, BlockState blockState, PoseStack poseStack, RenderType renderType, int overlay, ModelData modelData) {
-        LightPipelineAwareModelBlockRenderer.render(context.getOrCreateChunkBuffer(renderType), context.getQuadLighter(true), context.getRegion(), cache.getTransformedModel(model, poseStack), blockState, pos, context.getPoseStack(), false, randomSource, 42L, overlay, modelData, renderType);
+        LightPipelineAwareModelBlockRenderer.render(context.getOrCreateChunkBuffer(renderType), context.getQuadLighter(false), context.getRegion(), cache.getTransformedModel(model, poseStack), blockState, pos, context.getPoseStack(), false, randomSource, 42L, overlay, modelData, renderType);
     }
 
     @Override
@@ -68,6 +69,58 @@ public class LightAwareSectionGeometryRenderContext implements SectionGeometryRe
     @Override
     public void renderUncachedItem(Level level, LivingEntity entity, int seed, ItemStack itemStack, ItemDisplayContext displayContext, boolean leftHand, PoseStack poseStack, int overlay) {
         Minecraft.getInstance().getItemRenderer().render(itemStack, displayContext, leftHand, poseStack, getUncachedItemBufferSource(), getPackedLight(), overlay, Minecraft.getInstance().getItemRenderer().getModel(itemStack, level, entity, seed));
+    }
+
+    @Override
+    public <E extends Entity> void renderCachedCutoutEntity(E entity, ResourceLocation cacheLocation, PoseStack poseStack) {
+        renderCachedEntity(entity, cacheLocation, poseStack, getUncachedDynamicCutoutBufferSource(entity));
+    }
+
+    @Override
+    public <E extends Entity> void renderCachedTranslucentEntity(E entity, ResourceLocation cacheLocation, PoseStack poseStack) {
+        renderCachedEntity(entity, cacheLocation, poseStack, getUncachedDynamicTranslucentBufferSource(entity));
+    }
+
+    @Override
+    public <E extends Entity> void renderCachedCutoutEntity(EntityType<? extends E> entityType, PoseStack poseStack) {
+        renderCachedEntity(entityType, poseStack, getUncachedDynamicCutoutBufferSource(DynamicChunkBuffers.getEntityTextureResourceLocation(entityType)));
+    }
+
+    @Override
+    public <E extends Entity> void renderCachedTranslucentEntity(EntityType<? extends E> entityType, PoseStack poseStack) {
+        renderCachedEntity(entityType, poseStack, getUncachedDynamicTranslucentBufferSource(DynamicChunkBuffers.getEntityTextureResourceLocation(entityType)));
+    }
+
+    @Override
+    public <E extends Entity> void renderCachedMultiEntity(E entity, ResourceLocation cacheLocation, PoseStack poseStack) {
+        renderCachedEntity(entity, cacheLocation, poseStack, getUncachedDynamicMultiBufferSource(entity));
+    }
+
+    @Override
+    public <E extends Entity> void renderCachedMultiEntity(EntityType<? extends E> entityType, PoseStack poseStack) {
+        renderCachedEntity(entityType, poseStack, getUncachedDynamicMultiBufferSource(DynamicChunkBuffers.getEntityTextureResourceLocation(entityType)));
+    }
+
+    @Override
+    public <E extends Entity> void renderCachedEntity(E entity, ResourceLocation cacheLocation, PoseStack poseStack) {
+        renderCachedEntity(entity, cacheLocation, poseStack, getUncachedDynamicBufferSource(entity));
+    }
+
+    @Override
+    public <E extends Entity> void renderCachedEntity(EntityType<? extends E> entityType, PoseStack poseStack) {
+        renderCachedEntity(entityType, poseStack, getUncachedDynamicBufferSource(DynamicChunkBuffers.getEntityTextureResourceLocation(entityType)));
+    }
+
+    public <E extends Entity> void renderCachedEntity(E entity, ResourceLocation cacheLocation, PoseStack poseStack, MultiBufferSource bufferSource) {
+        renderCachedEntity(cache.getEntityModel(entity, cacheLocation), poseStack, bufferSource);
+    }
+
+    public <E extends Entity> void renderCachedEntity(EntityType<? extends E> entityType, PoseStack poseStack, MultiBufferSource bufferSource) {
+        renderCachedEntity(cache.getEntityModel(entityType, blockEntity.getLevel()), poseStack, bufferSource);
+    }
+
+    public <E extends Entity> void renderCachedEntity(CachedEntityModel model, PoseStack poseStack, MultiBufferSource bufferSource) {
+        model.cachedQuads().keySet().forEach(renderType -> LightPipelineAwareModelBlockRenderer.render(bufferSource.getBuffer(renderType), context.getQuadLighter(true), context.getRegion(), cache.getTransformedModel(model, poseStack), context.getRegion().getBlockState(pos), pos, new PoseStack(), false, randomSource, 42L, OverlayTexture.NO_OVERLAY, ModelData.EMPTY, renderType));
     }
 
     @Override

@@ -187,7 +187,7 @@ public class DynamicChunkBuffers implements ResourceManagerReloadListener {
     }
 
     public static RenderType unwrapIrisRenderType(RenderType renderType) {
-        return ModList.get().isLoaded("iris") ? DynamicChunkBufferIrisCompat.unwrapIrisRenderType(renderType) : renderType;
+        return ModList.get().isLoaded("iris") ? DynamicChunkBufferIrisCompat.unwrap(renderType) : renderType;
     }
 
     private static RenderType addSodiumCutoutPass(ResourceLocation resourceLocation, RenderType cutoutRenderType) {
