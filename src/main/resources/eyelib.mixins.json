@@ -8,11 +8,24 @@
   "client": [
     "HumanoidModelMixin",
     "LivingEntityRendererAccessor",
+    "RenderSectionMixin",
     "RenderTypeMixin",
+    "SectionBufferBuilderPackMixin",
     "SectionCompilerMixin",
     "SimpleBakedModelMixin",
+    "compat.ChunkBufferBuildersMixin",
+    "compat.ChunkBuilderMeshingTaskMixin",
+    "compat.DefaultMaterialsMixin",
+    "compat.DefaultShaderInterfaceMixin",
     "compat.MaterialMixin",
-    "compat.TerrainRenderPassMixin"
+    "compat.RenderRegionManagerMixin",
+    "compat.ShaderChunkRendererMixin",
+    "compat.ShadowRendererMixin",
+    "compat.SodiumProgramsMixin",
+    "compat.SodiumWorldRendererMixin",
+    "compat.TerrainRenderPassMixin",
+    "compat.WorldRenderingPhaseMixin",
+    "compat.SodiumShaderMixin"
   ],
   "injectors": {
     "defaultRequire": 1

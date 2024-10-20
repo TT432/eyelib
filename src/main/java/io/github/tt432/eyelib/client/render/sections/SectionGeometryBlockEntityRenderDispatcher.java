@@ -17,8 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Argon4W
  */
-public record AdditionalSectionGeometryBlockEntityRendererDispatcher(BlockPos regionOrigin) implements AddSectionGeometryEvent.AdditionalSectionRenderer {
-    public static final Map<BlockEntitySectionGeometryRenderer<?>, RendererBakedModelsCache> CACHE = new ConcurrentHashMap<>();
+public record SectionGeometryBlockEntityRenderDispatcher(BlockPos regionOrigin) implements AddSectionGeometryEvent.AdditionalSectionRenderer {
+    public static final Map<BlockEntitySectionGeometryRenderer<?>, RendererBakedModelsCache> RENDERER_MODEL_CACHE = new ConcurrentHashMap<>();
 
     @Override
     public void render(@NotNull AddSectionGeometryEvent.SectionRenderingContext context) {
@@ -26,7 +26,7 @@ public record AdditionalSectionGeometryBlockEntityRendererDispatcher(BlockPos re
     }
 
     public RendererBakedModelsCache getOrCreateCache(BlockEntitySectionGeometryRenderer<?> renderer) {
-        return CACHE.compute(renderer, (renderer1, cache) -> cache == null ? createCache(renderer1) : (cache.getSize() > 128 ? new UncachedRendererBakedModelsCache() : cache));
+        return RENDERER_MODEL_CACHE.compute(renderer, (renderer1, cache) -> cache == null ? createCache(renderer1) : (cache.getSize() > 128 ? new UncachedRendererBakedModelsCache() : cache));
     }
 
     public RendererBakedModelsCache createCache(BlockEntitySectionGeometryRenderer<?> renderer) {
@@ -57,7 +57,7 @@ public record AdditionalSectionGeometryBlockEntityRendererDispatcher(BlockPos re
         context.getPoseStack().translate(pos.getX() - regionOrigin.getX(), pos.getY() - regionOrigin.getY(), pos.getZ() - regionOrigin.getZ());
 
         try {
-            renderer.renderSectionGeometry(cast(blockEntity), context, new PoseStack(), pos, regionOrigin, new LightAwareSectionGeometryRenderContext(context, getOrCreateCache(renderer), pos, regionOrigin));
+            renderer.renderSectionGeometry(cast(blockEntity), context, new PoseStack(), pos, regionOrigin, new LightAwareSectionGeometryRenderContext(context, getOrCreateCache(renderer), pos, regionOrigin, blockEntity));
         } catch (ClassCastException ignored) {
 
         }
