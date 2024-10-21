@@ -9,6 +9,9 @@ import org.joml.Matrix4f;
 
 import java.util.Map;
 
+/**
+ * @author Argon4W
+ */
 public class BakedBrModelCache extends SimpleModelCache {
     private final Map<String, Matrix4f> visitors;
 

@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.client.render.sections;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.tt432.eyelib.client.render.sections.dynamic.DynamicChunkBuffers;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.model.BakedModel;
@@ -22,6 +23,14 @@ public interface SectionGeometryRenderContext {
     void renderCachedModel(BakedModel model, BlockState blockState, PoseStack poseStack, RenderType renderType, int overlay, ModelData modelData);
     void renderUncachedItem(ItemStack itemStack, ItemDisplayContext displayContext, boolean leftHand, PoseStack poseStack, int overlay);
     void renderUncachedItem(Level level, LivingEntity entity, int seed, ItemStack itemStack, ItemDisplayContext displayContext, boolean leftHand, PoseStack poseStack, int overlay);
+    <E extends Entity> void renderCachedCutoutEntity(E entity, ResourceLocation cacheLocation, PoseStack poseStack);
+    <E extends Entity> void renderCachedTranslucentEntity(E entity, ResourceLocation cacheLocation, PoseStack poseStack);
+    <E extends Entity> void renderCachedCutoutEntity(EntityType<? extends E> entityType, PoseStack poseStack);
+    <E extends Entity> void renderCachedTranslucentEntity(EntityType<? extends E> entityType, PoseStack poseStack);
+    <E extends Entity> void renderCachedMultiEntity(E entity, ResourceLocation cacheLocation, PoseStack poseStack);
+    <E extends Entity> void renderCachedMultiEntity(EntityType<? extends E> entityType, PoseStack poseStack);
+    <E extends Entity> void renderCachedEntity(E entity, ResourceLocation cacheLocation, PoseStack poseStack);
+    <E extends Entity> void renderCachedEntity(EntityType<? extends E> entityType, PoseStack poseStack);
     <E extends Entity> void renderUncachedCutoutEntity(E entity, double x, double y, double z, float rotationYaw, float partialTicks, PoseStack poseStack);
     <E extends Entity> void renderUncachedTranslucentEntity(E entity, double x, double y, double z, float rotationYaw, float partialTicks, PoseStack poseStack);
     <E extends Entity> void renderUncachedCutoutEntity(EntityType<? extends E> entityType, double x, double y, double z, float rotationYaw, float partialTicks, PoseStack poseStack);
