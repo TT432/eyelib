@@ -9,6 +9,9 @@ import org.joml.Matrix4f;
 
 import java.util.Map;
 
+/**
+ * @author Argon4W
+ */
 public class BakedBrModelCache extends SimpleModelCache {
     private final Map<String, Matrix4f> visitors;
 
@@ -19,6 +22,6 @@ public class BakedBrModelCache extends SimpleModelCache {
 
     @Override
     public BakedModel getTransformedModel(Matrix4f matrix4f, IQuadTransformer transformer) {
-        return new UnBakedBrModel.BakedBrModel(super.getTransformedModel(matrix4f, transformer), visitors.entrySet().stream().map(EntryStreams.mapEntryValue(m -> new Matrix4f(m).mul(matrix4f))).collect(EntryStreams.of()));
+        return new UnBakedBrModel.BakedBrModel(super.getTransformedModel(matrix4f, transformer), visitors.entrySet().stream().map(EntryStreams.mapEntryValue(m -> new Matrix4f(m).mul(matrix4f))).collect(EntryStreams.collect()));
     }
 }
