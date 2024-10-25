@@ -13,6 +13,7 @@
     "SectionBufferBuilderPackMixin",
     "SectionCompilerMixin",
     "SimpleBakedModelMixin",
+    "SimpleTextureTextureImageMixin",
     "compat.ChunkBufferBuildersMixin",
     "compat.ChunkBuilderMeshingTaskMixin",
     "compat.DefaultMaterialsMixin",
@@ -22,10 +23,10 @@
     "compat.ShaderChunkRendererMixin",
     "compat.ShadowRendererMixin",
     "compat.SodiumProgramsMixin",
+    "compat.SodiumShaderMixin",
     "compat.SodiumWorldRendererMixin",
     "compat.TerrainRenderPassMixin",
-    "compat.WorldRenderingPhaseMixin",
-    "compat.SodiumShaderMixin"
+    "compat.WorldRenderingPhaseMixin"
   ],
   "injectors": {
     "defaultRequire": 1

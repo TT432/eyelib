@@ -132,6 +132,12 @@ dependencies {
     jarJar libraries("org.codehaus.janino:janino:$janinoVersion")
     jarJar "org.codehaus.janino:commons-compiler:[$janinoVersion,)"
 
+    jarJar libraries('com.twelvemonkeys.imageio:imageio-tga:3.12.0')
+    jarJar('com.twelvemonkeys.imageio:imageio-core:3.12.0')
+    jarJar('com.twelvemonkeys.common:common-lang:3.12.0')
+    jarJar('com.twelvemonkeys.common:common-image:3.12.0')
+    jarJar('com.twelvemonkeys.common:common-io:3.12.0')
+
     compileOnly("maven.modrinth:sodium:mc1.21-0.6.0-beta.2-neoforge")
     compileOnly("maven.modrinth:iris:1.8.0-beta.5+1.21-neoforge")
 }
