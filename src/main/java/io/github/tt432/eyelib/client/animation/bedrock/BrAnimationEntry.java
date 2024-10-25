@@ -27,7 +27,7 @@ import java.util.function.Function;
 
 /**
  * @param override_previous_animation TODO 不确定
- * @param anim_time_update            TODO 不确定
+ * @param anim_time_update            动画播放速度
  * @param blendWeight                 动画混合时的权重
  * @param start_delay                 TODO 不确定
  * @param loop_delay                  TODO 不确定
@@ -80,6 +80,9 @@ public record BrAnimationEntry(
     public void tickAnimation(Data data, AnimationSet animationSet, MolangScope scope,
                               float ticks, float multiplier, BoneRenderInfos infos,
                               List<AnimationEffect.Runtime<?>> runtime, Runnable loopAction) {
+        if (anim_time_update() != null)
+            ticks *= anim_time_update().eval(scope);
+
         float animTick;
 
         if (animationLength() > 0) {
