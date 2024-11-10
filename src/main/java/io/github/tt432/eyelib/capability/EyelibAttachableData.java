@@ -21,4 +21,10 @@ public class EyelibAttachableData {
                     () -> AttachmentType.builder(() -> new RenderData<>())
                             .serialize(RenderData.CODEC)
                             .build());
+
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<EntityStatistics>> ENTITY_STATISTICS =
+            ATTACHMENT_TYPES.register("entity_statistics",
+                    () -> AttachmentType.builder(EntityStatistics::new)
+                            .serialize(EntityStatistics.CODEC)
+                            .build());
 }
