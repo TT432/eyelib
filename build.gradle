@@ -126,7 +126,12 @@ dependencies {
     // For all intends and purposes: You can treat this dependency as if it is a normal library you would use.
     implementation "net.neoforged:neoforge:${neo_version}"
 
-    implementation jarJar('io.github.tt432.chin:chin:[1.0.1,)')
+    implementation jarJar('io.github.tt432.chin:chin:[21.0.3,)')
+    var imguiVersion = "1.86.12"
+    compileOnly("io.github.spair:imgui-java-binding:$imguiVersion")
+    compileOnly("io.github.spair:imgui-java-lwjgl3:$imguiVersion")
+
+    implementation 'io.github.tt432:imgui4mc:1.0.0'
 
     var janinoVersion = '3.1.12'
     jarJar libraries("org.codehaus.janino:janino:$janinoVersion")
