@@ -1,10 +1,10 @@
 package io.github.tt432.eyelib.molang.mapping;
 
+import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.client.ClientTickHandler;
 import io.github.tt432.eyelib.client.animation.AnimationSet;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAcState;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
-import io.github.tt432.eyelib.molang.MolangOwnerSet;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
@@ -115,6 +115,18 @@ public final class MolangQuery {
         return 0;
     }
 
+    @MolangFunction(value = "delta_time", description = "距离上一帧的秒数")
+    public static float deltaTime(MolangScope scope) {
+        return partialTick(scope) / 20F;
+    }
+
+    @MolangFunction(value = "anim_time", description = "动画播放秒数")
+    public static float animTime(MolangScope scope) {
+        return scope.getOwner().ownerAs(BrAnimationController.Data.class)
+                .map(data -> (ClientTickHandler.getTick() - data.getStartTick()) / 20F)
+                .orElse(0F);
+    }
+
     @MolangFunction(value = "time_of_day", description = "一天中的时间")
     public static float timeOfDay(MolangScope scope) {
         if (Minecraft.getInstance().level != null)
@@ -136,26 +148,16 @@ public final class MolangQuery {
 
     @MolangFunction(value = "any_animation_finished", description = "任意动画播放完毕（动画控制器）")
     public static float anyAnimationFinished(MolangScope scope) {
-        MolangOwnerSet owner = scope.getOwner();
-        return owner.onHiveOwners(BrAcState.class, AnimationSet.class, BrAnimationController.Data.class,
-                (state, animationSet, data) -> {
-                    float currTime = (ClientTickHandler.getTick() + partialTick(scope) - data.getStartTick()) / 20F;
-
-                    return state.animations().keySet().stream()
-                            .anyMatch(animationName -> animationSet.animations().get(animationName).isAnimationFinished(currTime));
-                }).orElse(false) ? TRUE : FALSE;
+        return scope.getOwner().onHiveOwners(BrAcState.class, AnimationSet.class,
+                (state, animationSet) -> state.animations().keySet().stream()
+                        .anyMatch(animationName -> animationSet.animations().get(animationName).isAnimationFinished(scope))).orElse(false) ? TRUE : FALSE;
     }
 
     @MolangFunction(value = "all_animations_finished", description = "所有动画播放完毕（动画控制器）")
     public static float allAnimationsFinished(MolangScope scope) {
-        MolangOwnerSet owner = scope.getOwner();
-        return owner.onHiveOwners(BrAcState.class, AnimationSet.class, BrAnimationController.Data.class,
-                (state, animationSet, data) -> {
-                    float currTime = (ClientTickHandler.getTick() + partialTick(scope) - data.getStartTick()) / 20F;
-
-                    return state.animations().keySet().stream()
-                            .allMatch(animationName -> animationSet.animations().get(animationName).isAnimationFinished(currTime));
-                }).orElse(false) ? TRUE : FALSE;
+        return scope.getOwner().onHiveOwners(BrAcState.class, AnimationSet.class,
+                (state, animationSet) -> state.animations().keySet().stream()
+                        .allMatch(animationName -> animationSet.animations().get(animationName).isAnimationFinished(scope))).orElse(false) ? TRUE : FALSE;
     }
 
     @MolangFunction(value = "distance_from_camera", description = "距离摄像头的距离")
@@ -165,6 +167,11 @@ public final class MolangQuery {
 
             return Minecraft.getInstance().cameraEntity.distanceTo(e);
         });
+    }
+
+    @MolangFunction(value = "modified_distance_moved", description = "移动过的距离")
+    public static float modifiedDistanceMoved(MolangScope scope) {
+        return scope.getOwner().ownerAs(Entity.class).map(e -> e.getData(EyelibAttachableData.ENTITY_STATISTICS).getDistanceWalked()).orElse(0F);
     }
 
     @MolangFunction(value = "is_on_ground", description = "正处于地面上")
