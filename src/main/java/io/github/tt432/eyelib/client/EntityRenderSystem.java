@@ -2,12 +2,12 @@ package io.github.tt432.eyelib.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
-import io.github.tt432.eyelib.client.render.BrModelTextures;
 import io.github.tt432.eyelib.client.render.HighSpeedModelRenderer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
@@ -93,11 +93,7 @@ public class EntityRenderSystem {
             var hbakedmodel = cache.computeIfAbsent(modelComponent.getSerializableInfo().model(), s -> new HashMap<>())
                     .computeIfAbsent(modelComponent.getTexture(), i -> HighSpeedModelRenderer.HBakedModel.bake(model));
 
-            HighSpeedModelRenderer.render(renderParams, model, modelComponent.getBoneInfos(),
-                    BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), modelComponent.getVisitors(), hbakedmodel);
-
-//            ModelRenderer.render(renderParams, model, modelComponent.getBoneInfos(),
-//                    BrModelTextures.getTwoSideInfo(model, modelComponent.isSolid(), texture), modelComponent.getVisitors());
+            Eyelib.getRenderHelper().highSpeedRender(renderParams, model, hbakedmodel, modelComponent.getBoneInfos());
 
             poseStack.popPose();
         }

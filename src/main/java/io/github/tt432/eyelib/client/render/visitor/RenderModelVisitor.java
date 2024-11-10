@@ -1,10 +1,9 @@
-package io.github.tt432.eyelib.client.render.visitor.builtin;
+package io.github.tt432.eyelib.client.render.visitor;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.render.RenderParams;
-import lombok.Setter;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -13,13 +12,12 @@ import org.joml.Vector4f;
 /**
  * @author TT432
  */
-@Setter
-public class BlankEntityModelRenderVisitor extends ModelRenderVisitor {
+public class RenderModelVisitor extends ModelVisitor {
     private static final Vector4f tPosition = new Vector4f();
     private static final Vector3f tNormal = new Vector3f();
 
     @Override
-    public void visitVertex(RenderParams renderParams, Model.Cube cube, Vector3fc vertex, Vector2fc uv, Vector3fc normal) {
+    public void visitVertex(RenderParams renderParams, Context context, Model.Cube cube, Vector3fc vertex, Vector2fc uv, Vector3fc normal) {
         PoseStack poseStack = renderParams.poseStack();
         PoseStack.Pose last = poseStack.last();
 

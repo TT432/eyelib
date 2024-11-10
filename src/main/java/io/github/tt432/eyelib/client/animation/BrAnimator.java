@@ -6,8 +6,6 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 /**
  * @author TT432
  */
@@ -25,8 +23,7 @@ public final class BrAnimator {
             if (animation == null) continue;
 
             animation.tickAnimation(cast(component.getAnimationData(animation.name())), component.getAnimationSet(),
-                    scope, ticks, 1, infos, List.of(), () -> {
-                    });
+                    scope, ticks, 1, infos);
         }
 
         return infos;

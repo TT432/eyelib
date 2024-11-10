@@ -19,10 +19,7 @@ import net.minecraft.world.entity.Entity;
 import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -38,7 +35,6 @@ public record BrAnimationEntry(
         BrLoopType loop,
         float animationLength,
         boolean override_previous_animation,
-        @Nullable
         MolangValue anim_time_update,
         MolangValue blendWeight,
         @Nullable
@@ -62,26 +58,37 @@ public record BrAnimationEntry(
         return result;
     }, Function.identity());
 
-    public static final class Data {
+    public final class Data {
         int loopedTimes;
+        private final List<AnimationEffect.Runtime<?>> effects = new ArrayList<>();
+
+        private Data resetEffects() {
+            effects.add(soundEffects.runtime());
+            effects.add(particleEffects.runtime());
+            effects.add(timeline.runtime());
+            return this;
+        }
+    }
+
+    @Override
+    public void onFinish(Data data) {
+        data.resetEffects();
+    }
+
+    @Override
+    public boolean isAnimationFinished(MolangScope scope) {
+        return anim_time_update().eval(scope) > animationLength;
     }
 
     @Override
     public Data createData() {
-        return new Data();
-    }
-
-    @Override
-    public List<AnimationEffect<?>> getAllEffect() {
-        return List.of(soundEffects, particleEffects, timeline);
+        return new Data().resetEffects();
     }
 
     @Override
     public void tickAnimation(Data data, AnimationSet animationSet, MolangScope scope,
-                              float ticks, float multiplier, BoneRenderInfos infos,
-                              List<AnimationEffect.Runtime<?>> runtime, Runnable loopAction) {
-        if (anim_time_update() != null)
-            ticks *= anim_time_update().eval(scope);
+                              float ticks, float multiplier, BoneRenderInfos infos) {
+        ticks = anim_time_update().eval(scope);
 
         float animTick;
 
@@ -91,7 +98,7 @@ public record BrAnimationEntry(
                     int loopedTimes = (int) (ticks / animationLength());
                     if (loopedTimes > data.loopedTimes) {
                         data.loopedTimes = loopedTimes;
-                        loopAction.run();
+                        data.resetEffects();
                     }
                     yield ticks % animationLength();
                 }
@@ -102,7 +109,7 @@ public record BrAnimationEntry(
             animTick = ticks;
         }
 
-        for (AnimationEffect.Runtime<?> r : runtime) {
+        for (AnimationEffect.Runtime<?> r : data.effects) {
             AnimationEffect.Runtime.processEffect(r, animTick, scope);
         }
 
@@ -159,7 +166,7 @@ public record BrAnimationEntry(
                     BrLoopType.CODEC.optionalFieldOf("loop", BrLoopType.ONCE).forGetter(o -> o.loop),
                     Codec.FLOAT.optionalFieldOf("animation_length", 0F).forGetter(o -> o.animationLength),
                     Codec.BOOL.optionalFieldOf("override_previous_animation", false).forGetter(o -> o.override_previous_animation),
-                    MolangValue.CODEC.optionalFieldOf("anim_time_update", MolangValue.ZERO).forGetter(o -> o.anim_time_update),
+                    MolangValue.CODEC.optionalFieldOf("anim_time_update", new MolangValue("query.anim_time + query.delta_time")).forGetter(o -> o.anim_time_update),
                     MolangValue.CODEC.optionalFieldOf("blend_weight", MolangValue.ONE).forGetter(o -> o.blendWeight),
                     MolangValue.CODEC.optionalFieldOf("start_delay", MolangValue.ZERO).forGetter(o -> o.start_delay),
                     MolangValue.CODEC.optionalFieldOf("loop_delay", MolangValue.ZERO).forGetter(o -> o.loop_delay),

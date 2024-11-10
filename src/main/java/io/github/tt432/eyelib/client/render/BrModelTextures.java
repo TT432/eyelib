@@ -5,10 +5,8 @@ import com.mojang.blaze3d.platform.NativeImage;
 import io.github.tt432.eyelib.client.model.Model;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
-import org.joml.Vector2fc;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -68,8 +66,11 @@ public class BrModelTextures {
         for (int i = 0; i < bone.cubes().size(); i++) {
             var cube = bone.cubes().get(i);
 
-            for (int i1 = 0; i1 < cube.vertexes().size(); i1++) {
-                if (cubeAnyTransparent(isSolid, intBuffer, cube.uvs().get(i1))) {
+            for (int i1 = 0; i1 < cube.pointsPerFace(); i1++) {
+                if (cubeAnyTransparent(isSolid, intBuffer,
+                        cube.uvU(i1, 0), cube.uvV(i1, 0),
+                        cube.uvU(i1, 2), cube.uvV(i1, 2)
+                )) {
                     result[i] = true;
                     break;
                 }
@@ -79,11 +80,11 @@ public class BrModelTextures {
         return result;
     }
 
-    private static boolean cubeAnyTransparent(boolean isSolid, NativeImage buffer, List<Vector2fc> uv) {
-        int x = (int) (uv.getFirst().x() * buffer.getWidth());
-        int y = (int) (uv.getFirst().y() * buffer.getHeight());
-        int width = (int) ((uv.get(2).x() - uv.getFirst().x()) * buffer.getWidth());
-        int height = (int) ((uv.get(2).y() - uv.getFirst().y()) * buffer.getHeight());
+    private static boolean cubeAnyTransparent(boolean isSolid, NativeImage buffer, float uv0u, float uv0v, float uv1u, float uv1v) {
+        int x = (int) (uv0u * buffer.getWidth());
+        int y = (int) (uv0v * buffer.getHeight());
+        int width = (int) ((uv1u - uv0u) * buffer.getWidth());
+        int height = (int) ((uv1v - uv0v) * buffer.getHeight());
 
         for (int j = 0; j < height; j++) {
             for (int k = 0; k < width; k++) {

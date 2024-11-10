@@ -8,7 +8,7 @@ import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorRegistry;
-import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
+import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import io.github.tt432.eyelib.util.client.RenderTypeSerializations;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
@@ -95,9 +95,9 @@ public class ModelComponent {
     public ModelRenderVisitorList getVisitors() {
         if (serializableInfo == null) return null;
         if (cache != null) return cache;
-        ImmutableList.Builder<ModelRenderVisitor> builder = ImmutableList.builder();
+        ImmutableList.Builder<ModelVisitor> builder = ImmutableList.builder();
         serializableInfo.visitors.forEach(vi -> {
-            ModelRenderVisitor value = ModelRenderVisitorRegistry.VISITOR_REGISTRY.get(vi);
+            var value = ModelRenderVisitorRegistry.VISITOR_REGISTRY.get(vi);
             if (value != null)
                 builder.add(value);
         });

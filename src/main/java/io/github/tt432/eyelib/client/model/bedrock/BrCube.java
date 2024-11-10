@@ -17,10 +17,12 @@ import java.util.List;
  * @author TT432
  */
 public record BrCube(
+        int faceCount,
+        int pointsPerFace,
         List<List<Vector3fc>> vertexes,
         List<List<Vector2fc>> uvs,
         List<Vector3fc> normals
-) implements Model.Cube {
+) implements Model.Cube.ConstCube {
     private static final Gson gson = new Gson();
 
     private static Vector3f parse(JsonObject object, String ele) {
@@ -77,7 +79,7 @@ public record BrCube(
             boolean mirror = jsonObject.get("mirror") instanceof JsonPrimitive jp && jp.getAsBoolean();
 
             if (mirror) {
-                for (Pair<Vector2f, Vector2f> face : List.of(up, down, west, north, east, south)) {
+                for (Pair<Vector2f, Vector2f> face : java.util.List.of(up, down, west, north, east, south)) {
                     flipX(face);
                 }
                 var t = west;
@@ -133,22 +135,24 @@ public record BrCube(
         }
 
         return new BrCube(
-                List.of(
-                        List.of(corners[6], corners[2], corners[3], corners[7]),
-                        List.of(corners[4], corners[0], corners[1], corners[5]),
-                        List.of(corners[3], corners[0], corners[4], corners[7]),
-                        List.of(corners[2], corners[1], corners[0], corners[3]),
-                        List.of(corners[6], corners[5], corners[1], corners[2]),
-                        List.of(corners[7], corners[4], corners[5], corners[6])
+                6,
+                4,
+                java.util.List.of(
+                        java.util.List.of(corners[6], corners[2], corners[3], corners[7]),
+                        java.util.List.of(corners[4], corners[0], corners[1], corners[5]),
+                        java.util.List.of(corners[3], corners[0], corners[4], corners[7]),
+                        java.util.List.of(corners[2], corners[1], corners[0], corners[3]),
+                        java.util.List.of(corners[6], corners[5], corners[1], corners[2]),
+                        java.util.List.of(corners[7], corners[4], corners[5], corners[6])
                 ),
-                List.of(
+                java.util.List.of(
                         getUv(up),
                         getUv(down),
                         getUv(east),
                         getUv(north),
                         getUv(west),
                         getUv(south)),
-                List.of(
+                java.util.List.of(
                         Direction.UP.step(),
                         Direction.DOWN.step(),
                         Direction.EAST.step(),
@@ -162,7 +166,7 @@ public record BrCube(
     private static List<Vector2fc> getUv(Pair<Vector2f, Vector2f> uv) {
         var uv1 = uv.right().add(uv.left(), new Vector2f());
 
-        return List.of(
+        return java.util.List.of(
                 uv.left(),
                 new Vector2f(uv.left().x, uv1.y),
                 uv1,

@@ -74,12 +74,14 @@ public record ModelPartModel(
     }
 
     public record Cube(
+            int faceCount,
+            int pointsPerFace,
             List<List<Vector3fc>> vertexes,
             List<List<Vector2fc>> uvs,
             List<Vector3fc> normals
-    ) implements Model.Cube {
+    ) implements Model.Cube.ConstCube {
         public Cube(ModelPart.Cube cube) {
-            this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+            this(cube.polygons.length, 4, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
             ModelPart.Polygon[] polygons = cube.polygons;
 
             for (ModelPart.Polygon polygon : polygons) {

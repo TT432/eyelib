@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.client.render.visitor;
 
 import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
 import io.github.tt432.eyelib.util.ResourceLocations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -18,10 +17,10 @@ import net.neoforged.neoforge.registries.RegistryBuilder;
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ModelRenderVisitorRegistry {
-    public static final ResourceKey<Registry<ModelRenderVisitor>> VISITOR_REGISTRY_KEY =
-            ResourceKey.createRegistryKey(ResourceLocations.of(Eyelib.MOD_ID, "model_render_visitor"));
+    public static final ResourceKey<Registry<ModelVisitor>> VISITOR_REGISTRY_KEY =
+            ResourceKey.createRegistryKey(ResourceLocations.of(Eyelib.MOD_ID, "model_visitor"));
 
-    public static final Registry<ModelRenderVisitor> VISITOR_REGISTRY = new RegistryBuilder<>(VISITOR_REGISTRY_KEY)
+    public static final Registry<ModelVisitor> VISITOR_REGISTRY = new RegistryBuilder<>(VISITOR_REGISTRY_KEY)
             .sync(true)
             .create();
 

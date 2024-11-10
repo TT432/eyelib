@@ -1,8 +1,6 @@
 package io.github.tt432.eyelib.client.render.visitor;
 
 import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.client.render.visitor.builtin.BlankEntityModelRenderVisitor;
-import io.github.tt432.eyelib.client.render.visitor.builtin.ModelRenderVisitor;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -13,9 +11,15 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BuiltInBrModelRenderVisitors {
-    public static final DeferredRegister<ModelRenderVisitor> VISITORS =
+    public static final DeferredRegister<ModelVisitor> VISITORS =
             DeferredRegister.create(ModelRenderVisitorRegistry.VISITOR_REGISTRY, Eyelib.MOD_ID);
 
-    public static final DeferredHolder<ModelRenderVisitor, BlankEntityModelRenderVisitor> BLANK =
-            VISITORS.register("blank", BlankEntityModelRenderVisitor::new);
+    public static final DeferredHolder<ModelVisitor, RenderModelVisitor> BLANK =
+            VISITORS.register("blank", RenderModelVisitor::new);
+
+    public static final DeferredHolder<ModelVisitor, CollectLocatorModelVisitor> COLLECT_LOCATOR =
+            VISITORS.register("collect_locator", CollectLocatorModelVisitor::new);
+
+    public static final DeferredHolder<ModelVisitor, HighSpeedRenderModelVisitor> HIGH_SPEED_RENDER =
+            VISITORS.register("high_speed", HighSpeedRenderModelVisitor::new);
 }

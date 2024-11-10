@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.client.animation.bedrock.controller;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.animation.Animation;
-import io.github.tt432.eyelib.client.animation.AnimationEffect;
 import io.github.tt432.eyelib.client.animation.AnimationSet;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
@@ -13,7 +12,9 @@ import lombok.Setter;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author TT432
@@ -24,13 +25,18 @@ public record BrAnimationController(
         Map<String, BrAcState> states
 ) implements Animation<BrAnimationController.Data> {
     @Override
-    public Data createData() {
-        return new Data();
+    public void onFinish(Data data) {
+// todo
     }
 
     @Override
-    public List<AnimationEffect<?>> getAllEffect() {
-        return List.of();
+    public boolean isAnimationFinished(MolangScope scope) {
+        return false; // todo
+    }
+
+    @Override
+    public Data createData() {
+        return new Data();
     }
 
     public static class Data {
@@ -43,38 +49,17 @@ public record BrAnimationController(
         @Setter
         @Getter
         private BrAcState currState;
-        private final Map<String, List<AnimationEffect.Runtime<?>>> effects = new HashMap<>();
         private final Map<String, Object> data = new HashMap<>();
 
         @SuppressWarnings("unchecked")
         public <D> D getData(Animation<?> animation) {
             return (D) data.computeIfAbsent(animation.name(), s -> animation.createData());
         }
-
-        public void resetEffects(String animName, AnimationSet targetAnimation) {
-            var animation = targetAnimation.animations().get(animName);
-            effects.forEach((k, v) -> v.removeIf(r -> r.data().isEmpty()));
-            animation.getAllEffect().forEach(effect ->
-                    effects.computeIfAbsent(animName, s -> new ArrayList<>()).add(effect.runtime()));
-        }
-
-        public void resetEffects(BrAcState currState, AnimationSet targetAnimation) {
-            currState.animations().keySet().forEach(animName -> {
-                Animation<?> animation = targetAnimation.animations().get(animName);
-                animation.getAllEffect().forEach(effect ->
-                        effects.computeIfAbsent(animName, s -> new ArrayList<>()).add(effect.runtime()));
-            });
-        }
-
-        public List<AnimationEffect.Runtime<?>> getEffects(String animName) {
-            return effects.get(animName);
-        }
     }
 
     @Override
     public void tickAnimation(Data data, AnimationSet animationSet, MolangScope scope,
-                              float ticks, float multiplier, BoneRenderInfos infos,
-                              List<AnimationEffect.Runtime<?>> runtime, Runnable loopAction) {
+                              float ticks, float multiplier, BoneRenderInfos infos) {
         var currState = data.getCurrState();
         if (currState == null) currState = switchState(ticks, scope, data, animationSet, initialState());
 
@@ -91,12 +76,10 @@ public record BrAnimationController(
 
         scope.getOwner().replace(BrAcState.class, currState);
 
-        blend(animationSet, infos, data, scope, data.getLastState(),
-                currState, (ticks - data.getStartTick()) / 20);
+        blend(animationSet, infos, data, scope, data.getLastState(), currState, (ticks - data.getStartTick()) / 20);
     }
 
-    private static BrAcState switchState(float ticks, MolangScope scope, Data data,
-                                         AnimationSet animationSet, BrAcState currState) {
+    private static BrAcState switchState(float ticks, MolangScope scope, Data data, AnimationSet animationSet, BrAcState currState) {
         BrAcState lastState = data.getCurrState();
 
         if (lastState == currState) return currState;
@@ -110,7 +93,10 @@ public record BrAnimationController(
 
         data.setCurrState(currState);
         data.setStartTick(ticks);
-        data.resetEffects(currState, animationSet);
+        currState.animations().keySet().forEach(animName -> {
+            Animation<?> animation = animationSet.animations().get(animName);
+            animation.onFinish(data.getData(animation));
+        });
 
         return currState;
     }
@@ -144,8 +130,7 @@ public record BrAnimationController(
         if (animation == null) return;
 
         animation.tickAnimation(data.getData(animation), targetAnimations, scope, startedTime,
-                Math.clamp(animation.blendWeight().eval(scope), 0, 1) * blendValue, infos,
-                data.getEffects(animName), () -> data.resetEffects(animName, targetAnimations));
+                Math.clamp(animation.blendWeight().eval(scope), 0, 1) * blendValue, infos);
     }
 
     record Factory(
