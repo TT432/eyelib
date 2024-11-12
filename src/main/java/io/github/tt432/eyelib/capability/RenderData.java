@@ -75,5 +75,7 @@ public class RenderData<T> {
         scope = new MolangScope();
         scope.setOwner(this);
         scope.setOwner(this.owner);
+
+        scope.set("variable.scale", 1);
     }
 }

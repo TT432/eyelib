@@ -62,6 +62,10 @@ public record BrAnimationEntry(
         int loopedTimes;
         private final List<AnimationEffect.Runtime<?>> effects = new ArrayList<>();
 
+        private float lastTicks;
+        public float animTime;
+        public float deltaTime;
+
         private Data resetEffects() {
             effects.add(soundEffects.runtime());
             effects.add(particleEffects.runtime());
@@ -76,8 +80,8 @@ public record BrAnimationEntry(
     }
 
     @Override
-    public boolean isAnimationFinished(MolangScope scope) {
-        return anim_time_update().eval(scope) > animationLength;
+    public boolean isAnimationFinished(Data data) {
+        return data.animTime > animationLength;
     }
 
     @Override
@@ -88,25 +92,28 @@ public record BrAnimationEntry(
     @Override
     public void tickAnimation(Data data, AnimationSet animationSet, MolangScope scope,
                               float ticks, float multiplier, BoneRenderInfos infos) {
-        ticks = anim_time_update().eval(scope);
+        scope.getOwner().replace(Data.class, data);
+        data.deltaTime = ticks - data.lastTicks;
+        var animTimeUpdate = anim_time_update().eval(scope);
+        data.animTime = animTimeUpdate;
 
         float animTick;
 
         if (animationLength() > 0) {
             animTick = switch (loop()) {
                 case LOOP -> {
-                    int loopedTimes = (int) (ticks / animationLength());
+                    int loopedTimes = (int) (animTimeUpdate / animationLength());
                     if (loopedTimes > data.loopedTimes) {
                         data.loopedTimes = loopedTimes;
                         data.resetEffects();
                     }
-                    yield ticks % animationLength();
+                    yield animTimeUpdate % animationLength();
                 }
-                case ONCE -> ticks;
-                default -> Math.min(ticks, animationLength());
+                case ONCE -> animTimeUpdate;
+                default -> Math.min(animTimeUpdate, animationLength());
             };
         } else {
-            animTick = ticks;
+            animTick = animTimeUpdate;
         }
 
         for (AnimationEffect.Runtime<?> r : data.effects) {
@@ -141,6 +148,8 @@ public record BrAnimationEntry(
                 );
             }
         }
+
+        data.lastTicks = ticks;
     }
 
     public record Factory(

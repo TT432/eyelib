@@ -1,8 +1,9 @@
 package io.github.tt432.eyelib.molang.mapping;
 
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
-import io.github.tt432.eyelib.client.ClientTickHandler;
+import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.AnimationSet;
+import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAcState;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
 import io.github.tt432.eyelib.molang.MolangScope;
@@ -117,14 +118,12 @@ public final class MolangQuery {
 
     @MolangFunction(value = "delta_time", description = "距离上一帧的秒数")
     public static float deltaTime(MolangScope scope) {
-        return partialTick(scope) / 20F;
+        return scope.getOwner().ownerAs(BrAnimationEntry.Data.class).map(data -> data.deltaTime).orElse(0F);
     }
 
     @MolangFunction(value = "anim_time", description = "动画播放秒数")
     public static float animTime(MolangScope scope) {
-        return scope.getOwner().ownerAs(BrAnimationController.Data.class)
-                .map(data -> (ClientTickHandler.getTick() - data.getStartTick()) / 20F)
-                .orElse(0F);
+        return scope.getOwner().ownerAs(BrAnimationEntry.Data.class).map(data -> data.animTime).orElse(0F);
     }
 
     @MolangFunction(value = "time_of_day", description = "一天中的时间")
@@ -148,16 +147,22 @@ public final class MolangQuery {
 
     @MolangFunction(value = "any_animation_finished", description = "任意动画播放完毕（动画控制器）")
     public static float anyAnimationFinished(MolangScope scope) {
-        return scope.getOwner().onHiveOwners(BrAcState.class, AnimationSet.class,
-                (state, animationSet) -> state.animations().keySet().stream()
-                        .anyMatch(animationName -> animationSet.animations().get(animationName).isAnimationFinished(scope))).orElse(false) ? TRUE : FALSE;
+        return scope.getOwner().onHiveOwners(BrAcState.class, AnimationSet.class, BrAnimationController.Data.class,
+                (state, animationSet, data) -> state.animations().keySet().stream()
+                        .anyMatch(animationName -> {
+                            Animation<?> animation = animationSet.animations().get(animationName);
+                            return animation.isAnimationFinished(data.getData(animation));
+                        })).orElse(false) ? TRUE : FALSE;
     }
 
     @MolangFunction(value = "all_animations_finished", description = "所有动画播放完毕（动画控制器）")
     public static float allAnimationsFinished(MolangScope scope) {
-        return scope.getOwner().onHiveOwners(BrAcState.class, AnimationSet.class,
-                (state, animationSet) -> state.animations().keySet().stream()
-                        .allMatch(animationName -> animationSet.animations().get(animationName).isAnimationFinished(scope))).orElse(false) ? TRUE : FALSE;
+        return scope.getOwner().onHiveOwners(BrAcState.class, AnimationSet.class, BrAnimationController.Data.class,
+                (state, animationSet, data) -> state.animations().keySet().stream()
+                        .allMatch(animationName -> {
+                            Animation<?> animation = animationSet.animations().get(animationName);
+                            return animation.isAnimationFinished(data.getData(animation));
+                        })).orElse(false) ? TRUE : FALSE;
     }
 
     @MolangFunction(value = "distance_from_camera", description = "距离摄像头的距离")

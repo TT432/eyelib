@@ -30,7 +30,7 @@ public record BrAnimationController(
     }
 
     @Override
-    public boolean isAnimationFinished(MolangScope scope) {
+    public boolean isAnimationFinished(Data data) {
         return false; // todo
     }
 

@@ -14,7 +14,7 @@ public interface Animation<D> {
 
     void onFinish(D data);
 
-    boolean isAnimationFinished(MolangScope scope);
+    boolean isAnimationFinished(D data);
 
     String name();
 
