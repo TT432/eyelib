@@ -1,11 +1,11 @@
 package io.github.tt432.eyelib.client.render.sections.cache;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelib.client.render.sections.dynamic.DynamicChunkBufferIrisCompat;
+import io.github.tt432.eyelib.client.render.sections.compat.IrisCompat;
+import io.github.tt432.eyelib.client.render.sections.compat.impl.IrisCompatImpl;
 import io.github.tt432.eyelib.util.EntryStreams;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
@@ -22,7 +22,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.client.ChunkRenderTypeSet;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.common.util.TriState;
@@ -135,6 +134,6 @@ public record CachedEntityModel(Map<RenderType, List<BakedQuad>> cachedQuads) im
     }
 
     public static <E extends Entity> CachedEntityModel create(E entity) {
-        return new CachedEntityModel(Util.make(new HashMap<RenderType, QuadListBakingVertexConsumer>() , builder -> Minecraft.getInstance().getEntityRenderDispatcher().render(entity, 0, 0, 0, 0, 0, new PoseStack(), ModList.get().isLoaded("iris") ? renderType -> builder.computeIfAbsent(DynamicChunkBufferIrisCompat.unwrap(renderType), QuadListBakingVertexConsumer::new) : renderType -> builder.computeIfAbsent(renderType, QuadListBakingVertexConsumer::new), 0)).entrySet().stream().map(EntryStreams.mapEntryValue(QuadListBakingVertexConsumer::getQuads)).collect(EntryStreams.collect()));
+        return new CachedEntityModel(Util.make(new HashMap<RenderType, QuadListBakingVertexConsumer>(), builder -> Minecraft.getInstance().getEntityRenderDispatcher().render(entity, 0, 0, 0, 0, 0, new PoseStack(), IrisCompat.getEntityBakingBufferSource(builder), 0)).entrySet().stream().map(EntryStreams.mapEntryValue(QuadListBakingVertexConsumer::getQuads)).collect(EntryStreams.collect()));
     }
 }

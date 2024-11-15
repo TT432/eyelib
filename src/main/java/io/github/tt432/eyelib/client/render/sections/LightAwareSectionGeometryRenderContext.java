@@ -1,12 +1,12 @@
 package io.github.tt432.eyelib.client.render.sections;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Transformation;
 import io.github.tt432.eyelib.client.render.sections.cache.CachedEntityModel;
 import io.github.tt432.eyelib.client.render.sections.cache.RendererBakedModelsCache;
+import io.github.tt432.eyelib.client.render.sections.compat.SodiumLikeCompat;
 import io.github.tt432.eyelib.client.render.sections.dynamic.DynamicChunkBuffers;
-import net.minecraft.Util;
+import io.github.tt432.eyelib.client.render.sections.events.SectionGeometryRenderTypeEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -23,7 +23,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.client.event.AddSectionGeometryEvent;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.client.model.lighting.LightPipelineAwareModelBlockRenderer;
@@ -48,7 +47,7 @@ public class LightAwareSectionGeometryRenderContext implements SectionGeometryRe
         this.pos = pos;
         this.blockEntity = blockEntity;
         this.randomSource = RandomSource.createNewThreadLocalInstance();
-        this.transformation = ModList.get().isLoaded("sodium") ? new Transformation(new Matrix4f(context.getPoseStack().last().pose())) : new Transformation(new Matrix4f(context.getPoseStack().last().pose()).translate(regionOrigin.getX(), regionOrigin.getY(), regionOrigin.getZ()));
+        this.transformation = new Transformation(new Matrix4f(context.getPoseStack().last().pose()));
     }
 
     @Override
@@ -120,7 +119,15 @@ public class LightAwareSectionGeometryRenderContext implements SectionGeometryRe
     }
 
     public void renderCachedEntity(CachedEntityModel model, PoseStack poseStack, MultiBufferSource bufferSource) {
-        model.cachedQuads().keySet().forEach(ModList.get().isLoaded("sodium") ? renderType -> LightPipelineAwareModelBlockRenderer.render(bufferSource.getBuffer(renderType), context.getQuadLighter(true), context.getRegion(), cache.getTransformedModel(model, poseStack), context.getRegion().getBlockState(pos), pos, new PoseStack(), false, randomSource, 42L, OverlayTexture.NO_OVERLAY, ModelData.EMPTY, renderType) : renderType -> Minecraft.getInstance().getBlockRenderer().getModelRenderer().renderModel(new PoseStack().last(), bufferSource.getBuffer(renderType), context.getRegion().getBlockState(pos), cache.getTransformedModel(model, poseStack), 1.0f, 1.0f, 1.0f, getPackedLight(), OverlayTexture.NO_OVERLAY, ModelData.EMPTY, renderType));
+        model.cachedQuads().keySet().forEach(SodiumLikeCompat.isInstalled() ? renderType ->  renderCachedEntityLightAwarePass(model, poseStack, bufferSource, renderType): renderType -> renderCachedEntityPass(model, poseStack, bufferSource, renderType));
+    }
+
+    private void renderCachedEntityLightAwarePass(CachedEntityModel model, PoseStack poseStack, MultiBufferSource bufferSource, RenderType renderType) {
+        LightPipelineAwareModelBlockRenderer.render(bufferSource.getBuffer(renderType), context.getQuadLighter(true), context.getRegion(), cache.getTransformedModel(model, poseStack), context.getRegion().getBlockState(pos), pos, new PoseStack(), false, randomSource, 42L, OverlayTexture.NO_OVERLAY, ModelData.EMPTY, renderType);
+    }
+
+    private void renderCachedEntityPass(CachedEntityModel model, PoseStack poseStack, MultiBufferSource bufferSource, RenderType renderType) {
+        Minecraft.getInstance().getBlockRenderer().getModelRenderer().renderModel(new PoseStack().last(), bufferSource.getBuffer(renderType), context.getRegion().getBlockState(pos), cache.getTransformedModel(model, poseStack), 1.0f, 1.0f, 1.0f, getPackedLight(), OverlayTexture.NO_OVERLAY, ModelData.EMPTY, renderType);
     }
 
     @Override
@@ -139,7 +146,7 @@ public class LightAwareSectionGeometryRenderContext implements SectionGeometryRe
     }
 
     @Override
-    public <E extends Entity> void renderUncachedTranslucentEntity(EntityType<? extends  E> entityType, double x, double y, double z, float rotationYaw, float partialTicks, PoseStack poseStack) {
+    public <E extends Entity> void renderUncachedTranslucentEntity(EntityType<? extends E> entityType, double x, double y, double z, float rotationYaw, float partialTicks, PoseStack poseStack) {
         renderUncachedTranslucentEntity(entityType.create(blockEntity.getLevel()), x, y, z, rotationYaw, partialTicks, poseStack);
     }
 
@@ -149,7 +156,7 @@ public class LightAwareSectionGeometryRenderContext implements SectionGeometryRe
     }
 
     @Override
-    public <E extends Entity> void renderUncachedMultiEntity(EntityType<? extends  E> entityType, double x, double y, double z, float rotationYaw, float partialTicks, PoseStack poseStack) {
+    public <E extends Entity> void renderUncachedMultiEntity(EntityType<? extends E> entityType, double x, double y, double z, float rotationYaw, float partialTicks, PoseStack poseStack) {
         renderUncachedMultiEntity(entityType.create(blockEntity.getLevel()), x, y, z, rotationYaw, partialTicks, poseStack);
     }
 
@@ -159,7 +166,7 @@ public class LightAwareSectionGeometryRenderContext implements SectionGeometryRe
     }
 
     @Override
-    public <E extends Entity> void renderUncachedEntity(EntityType<? extends  E> entityType, double x, double y, double z, float rotationYaw, float partialTicks, PoseStack poseStack) {
+    public <E extends Entity> void renderUncachedEntity(EntityType<? extends E> entityType, double x, double y, double z, float rotationYaw, float partialTicks, PoseStack poseStack) {
         renderUncachedEntity(entityType.create(blockEntity.getLevel()), x, y, z, rotationYaw, partialTicks, poseStack);
     }
 
@@ -175,7 +182,7 @@ public class LightAwareSectionGeometryRenderContext implements SectionGeometryRe
 
     @Override
     public MultiBufferSource getUncachedItemBufferSource() {
-        return ModList.get().isLoaded("sodium") ?  pRenderType -> new QuadLighterVertexConsumer(context, pos) : ignored -> new TransformingVertexPipeline(context.getOrCreateChunkBuffer(Sheets.translucentItemSheet()), transformation);
+        return SodiumLikeCompat.isInstalled() ? pRenderType -> new QuadLighterVertexConsumer(context, pos) : ignored -> new TransformingVertexPipeline(context.getOrCreateChunkBuffer(SectionGeometryRenderTypeEvents.getItemEntityTranslucentCull()), transformation);
     }
 
     @Override

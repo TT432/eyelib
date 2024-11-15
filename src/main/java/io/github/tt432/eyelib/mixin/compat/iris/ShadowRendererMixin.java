@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mixin.compat;
+package io.github.tt432.eyelib.mixin.compat.iris;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import io.github.tt432.eyelib.client.render.sections.dynamic.DynamicChunkBuffers;

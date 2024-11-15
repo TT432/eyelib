@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mixin.compat;
+package io.github.tt432.eyelib.mixin.compat.sodium;
 
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
 import net.minecraft.client.renderer.RenderType;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  */
 @Pseudo
 @Mixin(TerrainRenderPass.class)
-public class TerrainRenderPassMixin {
+public class SodiumTerrainRenderPassMixin {
     @Shadow @Final private RenderType renderType;
 
     @Inject(method = "supportsFragmentDiscard", at = @At("RETURN"), cancellable = true)

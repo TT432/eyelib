@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mixin.compat;
+package io.github.tt432.eyelib.mixin.compat.iris;
 
 import io.github.tt432.eyelib.client.render.sections.dynamic.DynamicChunkBuffers;
 import net.irisshaders.iris.pipeline.WorldRenderingPhase;

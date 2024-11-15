@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.render.sections.dynamic;
+package io.github.tt432.eyelib.client.render.sections.compat.impl.sodium;
 
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
 import net.minecraft.client.Minecraft;
@@ -9,10 +9,10 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * @author Argon4W
  */
-public class EntityTextureTerrainRenderPass extends TerrainRenderPass {
+public class SodiumEntityTextureTerrainRenderPass extends TerrainRenderPass {
     private final ResourceLocation textureResourceLocation;
 
-    public EntityTextureTerrainRenderPass(RenderType renderType, boolean isTranslucent, ResourceLocation textureResourceLocation) {
+    public SodiumEntityTextureTerrainRenderPass(RenderType renderType, boolean isTranslucent, ResourceLocation textureResourceLocation) {
         super(renderType, isTranslucent, true);
         this.textureResourceLocation = textureResourceLocation;
     }

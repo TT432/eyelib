@@ -1,6 +1,6 @@
-package io.github.tt432.eyelib.mixin.compat;
+package io.github.tt432.eyelib.mixin.compat.sodium;
 
-import io.github.tt432.eyelib.client.render.sections.dynamic.SodiumShaderExtension;
+import io.github.tt432.eyelib.client.render.sections.compat.impl.sodium.SodiumShaderExtension;
 import net.caffeinemc.mods.sodium.client.gl.shader.GlProgram;
 import net.caffeinemc.mods.sodium.client.render.chunk.ShaderChunkRenderer;
 import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderInterface;
@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Pseudo
 @Mixin(ShaderChunkRenderer.class)
-public class ShaderChunkRendererMixin {
+public class SodiumShaderChunkRendererMixin {
     @Shadow protected GlProgram<ChunkShaderInterface> activeProgram;
 
     @Inject(method = "begin", at = @At(value = "INVOKE", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/shader/ChunkShaderInterface;setupState()V"))

@@ -1,7 +1,7 @@
-package io.github.tt432.eyelib.mixin.compat;
+package io.github.tt432.eyelib.mixin.compat.sodium;
 
 import io.github.tt432.eyelib.client.render.sections.dynamic.DynamicChunkBuffers;
-import io.github.tt432.eyelib.client.render.sections.dynamic.DynamicChunkBufferSodiumCompat;
+import io.github.tt432.eyelib.client.render.sections.compat.impl.sodium.SodiumCompatImpl;
 import net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer;
 import net.caffeinemc.mods.sodium.client.render.chunk.ChunkRenderMatrices;
 import net.caffeinemc.mods.sodium.client.render.chunk.RenderSectionManager;
@@ -24,13 +24,13 @@ public class SodiumWorldRendererMixin {
     @Inject(method = "drawChunkLayer", at = @At("HEAD"), cancellable = true)
     public void drawChunkLayer(RenderType renderLayer, ChunkRenderMatrices matrices, double x, double y, double z, CallbackInfo ci) {
         if (DynamicChunkBuffers.DYNAMIC_CUTOUT_LAYERS.containsValue(renderLayer)) {
-            renderSectionManager.renderLayer(matrices, DynamicChunkBufferSodiumCompat.DYNAMIC_CUTOUT_PASSES.get(renderLayer), x, y, z);
+            renderSectionManager.renderLayer(matrices, SodiumCompatImpl.DYNAMIC_CUTOUT_PASSES.get(renderLayer), x, y, z);
             ci.cancel();
             return;
         }
 
         if (DynamicChunkBuffers.DYNAMIC_TRANSLUCENT_LAYERS.containsValue(renderLayer)) {
-            renderSectionManager.renderLayer(matrices, DynamicChunkBufferSodiumCompat.DYNAMIC_TRANSLUCENT_PASSES.get(renderLayer), x, y, z);
+            renderSectionManager.renderLayer(matrices, SodiumCompatImpl.DYNAMIC_TRANSLUCENT_PASSES.get(renderLayer), x, y, z);
             ci.cancel();
         }
     }

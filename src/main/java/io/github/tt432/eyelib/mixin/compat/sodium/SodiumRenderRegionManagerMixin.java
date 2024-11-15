@@ -1,9 +1,9 @@
-package io.github.tt432.eyelib.mixin.compat;
+package io.github.tt432.eyelib.mixin.compat.sodium;
 
 import com.google.common.collect.ImmutableList;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import io.github.tt432.eyelib.client.render.sections.dynamic.DynamicChunkBufferSodiumCompat;
+import io.github.tt432.eyelib.client.render.sections.compat.impl.sodium.SodiumCompatImpl;
 import net.caffeinemc.mods.sodium.client.render.chunk.region.RenderRegionManager;
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,9 +15,9 @@ import org.spongepowered.asm.mixin.injection.At;
  */
 @Pseudo
 @Mixin(RenderRegionManager.class)
-public abstract class RenderRegionManagerMixin {
+public abstract class SodiumRenderRegionManagerMixin {
     @WrapOperation(method = "uploadResults(Lnet/caffeinemc/mods/sodium/client/gl/device/CommandList;Lnet/caffeinemc/mods/sodium/client/render/chunk/region/RenderRegion;Ljava/util/Collection;)V", at = @At(value = "FIELD", target = "Lnet/caffeinemc/mods/sodium/client/render/chunk/terrain/DefaultTerrainRenderPasses;ALL:[Lnet/caffeinemc/mods/sodium/client/render/chunk/terrain/TerrainRenderPass;"))
     public TerrainRenderPass[] wrapAllTerrainRenderPasses(Operation<TerrainRenderPass[]> original) {
-        return ImmutableList.<TerrainRenderPass>builder().add(original.call()).addAll(DynamicChunkBufferSodiumCompat.DYNAMIC_CUTOUT_PASSES.values()).addAll(DynamicChunkBufferSodiumCompat.DYNAMIC_TRANSLUCENT_PASSES.values()).build().toArray(TerrainRenderPass[]::new);
+        return ImmutableList.<TerrainRenderPass>builder().add(original.call()).addAll(SodiumCompatImpl.DYNAMIC_CUTOUT_PASSES.values()).addAll(SodiumCompatImpl.DYNAMIC_TRANSLUCENT_PASSES.values()).build().toArray(TerrainRenderPass[]::new);
     }
 }

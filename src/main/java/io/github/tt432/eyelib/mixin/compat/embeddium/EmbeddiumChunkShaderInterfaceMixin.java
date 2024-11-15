@@ -1,11 +1,11 @@
-package io.github.tt432.eyelib.mixin.compat;
+package io.github.tt432.eyelib.mixin.compat.embeddium;
 
-import io.github.tt432.eyelib.client.render.sections.dynamic.EntityTextureTerrainRenderPass;
-import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderOptions;
-import net.caffeinemc.mods.sodium.client.render.chunk.shader.ChunkShaderTextureSlot;
-import net.caffeinemc.mods.sodium.client.render.chunk.shader.DefaultShaderInterface;
-import net.caffeinemc.mods.sodium.client.render.chunk.shader.ShaderBindingContext;
-import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
+import io.github.tt432.eyelib.client.render.sections.compat.impl.embeddium.EmbeddiumEntityTextureTerrainRenderPass;
+import org.embeddedt.embeddium.impl.render.chunk.shader.ChunkShaderInterface;
+import org.embeddedt.embeddium.impl.render.chunk.shader.ChunkShaderOptions;
+import org.embeddedt.embeddium.impl.render.chunk.shader.ChunkShaderTextureSlot;
+import org.embeddedt.embeddium.impl.render.chunk.shader.ShaderBindingContext;
+import org.embeddedt.embeddium.impl.render.chunk.terrain.TerrainRenderPass;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
@@ -18,8 +18,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * @author Argon4W
  */
 @Pseudo
-@Mixin(DefaultShaderInterface.class)
-public abstract class DefaultShaderInterfaceMixin {
+@Mixin(ChunkShaderInterface.class)
+public abstract class EmbeddiumChunkShaderInterfaceMixin {
     @Shadow @Deprecated(
         forRemoval = true
     ) protected abstract void bindTexture(ChunkShaderTextureSlot slot, int textureId);
@@ -34,7 +34,7 @@ public abstract class DefaultShaderInterfaceMixin {
 
     @Inject(method = "setupState", at = @At("TAIL"))
     public void setupState(CallbackInfo ci) {
-        if (eyelib$terrainRenderPass instanceof EntityTextureTerrainRenderPass pass) {
+        if (eyelib$terrainRenderPass instanceof EmbeddiumEntityTextureTerrainRenderPass pass) {
             bindTexture(ChunkShaderTextureSlot.BLOCK, pass.getTexture().getId());
         }
     }

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.render.sections.dynamic;
+package io.github.tt432.eyelib.client.render.sections.compat.impl.sodium;
 
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
 

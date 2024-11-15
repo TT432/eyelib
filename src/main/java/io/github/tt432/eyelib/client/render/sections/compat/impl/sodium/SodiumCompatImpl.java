@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.render.sections.dynamic;
+package io.github.tt432.eyelib.client.render.sections.compat.impl.sodium;
 
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.material.Material;
@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Argon4W
  */
-public class DynamicChunkBufferSodiumCompat {
+public class SodiumCompatImpl {
     public static final ConcurrentHashMap<RenderType, TerrainRenderPass> DYNAMIC_CUTOUT_PASSES = new ConcurrentHashMap<>();
     public static final ConcurrentHashMap<RenderType, Material> DYNAMIC_CUTOUT_MATERIALS = new ConcurrentHashMap<>();
 
@@ -19,7 +19,7 @@ public class DynamicChunkBufferSodiumCompat {
     public static final ConcurrentHashMap<RenderType, Material> DYNAMIC_TRANSLUCENT_MATERIALS = new ConcurrentHashMap<>();
 
     public static void markCutout(RenderType cutoutRenderType, ResourceLocation textureResourceLocation) {
-        EntityTextureTerrainRenderPass cutoutPass = new EntityTextureTerrainRenderPass(cutoutRenderType, false, textureResourceLocation);
+        SodiumEntityTextureTerrainRenderPass cutoutPass = new SodiumEntityTextureTerrainRenderPass(cutoutRenderType, false, textureResourceLocation);
         Material material = new Material(cutoutPass, AlphaCutoffParameter.ONE_TENTH, true);
 
         DYNAMIC_CUTOUT_PASSES.putIfAbsent(cutoutRenderType, cutoutPass);
@@ -27,7 +27,7 @@ public class DynamicChunkBufferSodiumCompat {
     }
 
     public static void markTranslucent(RenderType translucentRenderType, ResourceLocation textureResourceLocation) {
-        EntityTextureTerrainRenderPass translucentPass = new EntityTextureTerrainRenderPass(translucentRenderType, false, textureResourceLocation);
+        SodiumEntityTextureTerrainRenderPass translucentPass = new SodiumEntityTextureTerrainRenderPass(translucentRenderType, false, textureResourceLocation);
         Material material = new Material(translucentPass, AlphaCutoffParameter.ONE_TENTH, true);
 
         DYNAMIC_TRANSLUCENT_PASSES.putIfAbsent(translucentRenderType, translucentPass);

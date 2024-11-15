@@ -1,9 +1,9 @@
-package io.github.tt432.eyelib.mixin.compat;
+package io.github.tt432.eyelib.mixin.compat.iris;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import io.github.tt432.eyelib.client.render.sections.dynamic.EntityTextureTerrainRenderPass;
-import io.github.tt432.eyelib.client.render.sections.dynamic.SodiumShaderExtension;
+import io.github.tt432.eyelib.client.render.sections.compat.impl.sodium.SodiumEntityTextureTerrainRenderPass;
+import io.github.tt432.eyelib.client.render.sections.compat.impl.sodium.SodiumShaderExtension;
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
 import net.irisshaders.iris.pipeline.programs.SodiumShader;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,6 +27,6 @@ public class SodiumShaderMixin implements SodiumShaderExtension {
 
     @WrapOperation(method = "bindTextures", at = @At(value = "INVOKE", target = "Lnet/irisshaders/iris/gl/IrisRenderSystem;bindTextureToUnit(III)V", ordinal = 0))
     public void bindTextures(int target, int unit, int texture, Operation<Void> original) {
-        original.call(texture, unit, eyelib$terrainRenderPass instanceof EntityTextureTerrainRenderPass entityPass ? entityPass.getTexture().getId() : texture);
+        original.call(texture, unit, eyelib$terrainRenderPass instanceof SodiumEntityTextureTerrainRenderPass entityPass ? entityPass.getTexture().getId() : texture);
     }
 }
