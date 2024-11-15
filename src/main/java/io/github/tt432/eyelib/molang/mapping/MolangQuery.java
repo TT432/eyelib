@@ -165,6 +165,11 @@ public final class MolangQuery {
                         })).orElse(false) ? TRUE : FALSE;
     }
 
+    @MolangFunction(value = "is_alive", description = "判断实体是否存活")
+    public static float isAlive(MolangScope scope) {
+        return livingBool(scope, LivingEntity::isAlive);
+    }
+
     @MolangFunction(value = "distance_from_camera", description = "距离摄像头的距离")
     public static float distanceFromCamera(MolangScope scope) {
         return entityFloat(scope, e -> {
