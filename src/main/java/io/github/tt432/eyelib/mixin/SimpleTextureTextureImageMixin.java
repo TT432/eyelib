@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 
 /**
  * @author TT432
@@ -21,15 +22,14 @@ import java.io.InputStream;
 @Mixin(SimpleTexture.TextureImage.class)
 public class SimpleTextureTextureImageMixin {
     @WrapOperation(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/packs/resources/ResourceManager;getResourceOrThrow(Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/server/packs/resources/Resource;"))
-    private static Resource eyelib$getResourceOrThrow(ResourceManager instance, ResourceLocation resourceLocation, Operation<Resource> original) {
+    private static Resource eyelib$getResourceOrThrow(ResourceManager instance, ResourceLocation resourceLocation, Operation<Resource> original) throws FileNotFoundException {
         if (resourceLocation.getPath().endsWith(".png")) {
-            return instance.getResource(resourceLocation).orElseGet(() -> {
-                try {
-                    return instance.getResourceOrThrow(resourceLocation.withPath(resourceLocation.getPath().replace(".png", ".tga")));
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException(e);
-                }
-            });
+            Optional<Resource> resource = instance.getResource(resourceLocation);
+
+            if (resource.isEmpty()) {
+                ResourceLocation newLoc = resourceLocation.withPath(resourceLocation.getPath().replace(".png", ".tga"));
+                return instance.getResource(newLoc).orElseThrow(() -> new FileNotFoundException(resourceLocation + " & " + newLoc));
+            }
         }
 
         return original.call(instance, resourceLocation);
