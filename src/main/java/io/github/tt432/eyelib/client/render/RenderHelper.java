@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelib.client.model.bake.BakedModel;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
@@ -46,10 +47,10 @@ public class RenderHelper {
         return INSTANCE;
     }
 
-    public RenderHelper highSpeedRender(RenderParams params, Model model, HighSpeedModelRenderer.HBakedModel hBakedModel, BoneRenderInfos infos) {
+    public RenderHelper highSpeedRender(RenderParams params, Model model, BakedModel hBakedModel, BoneRenderInfos infos) {
         this.params = params;
         ModelVisitor.Context context = new ModelVisitor.Context();
-        context.put("HBackedModel", hBakedModel);
+        context.put("BackedModel", hBakedModel);
         BuiltInBrModelRenderVisitors.HIGH_SPEED_RENDER.get().visitModel(params, context, cast(infos), model);
         BuiltInBrModelRenderVisitors.COLLECT_LOCATOR.get().visitModel(params, context, cast(infos), model);
 

@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
-import io.github.tt432.eyelib.client.render.BrModelTextures;
 import io.github.tt432.eyelib.client.render.ModelRenderer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
@@ -84,7 +83,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
 
         ModelRenderer.render(new RenderParams(null, poseStack.last(),
                         poseStack, null, null, 0, OverlayTexture.NO_OVERLAY),
-                model, new BoneRenderInfos(), new BrModelTextures.TwoSideInfoMap(new HashMap<>()),
+                model, new BoneRenderInfos(),
                 new ModelRenderVisitorList(List.of(new BakeModelVisitor(modelBuilder, texture))));
 
         poseStack.popPose();

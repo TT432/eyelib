@@ -18,7 +18,6 @@ public class ModelRenderer {
     }
 
     public static <R extends ModelRuntimeData<?, ?, R>> void render(RenderParams renderParams, Model model, R infos,
-                                                                    @Nullable BrModelTextures.TwoSideInfoMap map,
                                                                     ModelRenderVisitorList visitors) {
         for (ModelVisitor visitor : visitors.visitors()) {
             visitor.visitModel(renderParams, new ModelVisitor.Context(), cast(infos), model);

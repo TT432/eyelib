@@ -4,9 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
+import io.github.tt432.eyelib.client.model.bake.BakedModel;
 import io.github.tt432.eyelib.client.model.locator.GroupLocator;
 import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
-import io.github.tt432.eyelib.client.render.HighSpeedModelRenderer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import lombok.Setter;
 
@@ -19,7 +19,7 @@ public class HighSpeedRenderModelVisitor extends RenderModelVisitor {
     public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitModel(RenderParams params, Context context, D infos, Model model) {
         super.visitModel(params, context, infos, model);
 
-        if (!context.contains("HBackedModel")) {
+        if (!context.contains("BackedModel")) {
             throw new RuntimeException("can't use HighSpeedRenderModelVisitor without HBackedModel");
         }
     }
@@ -37,7 +37,7 @@ public class HighSpeedRenderModelVisitor extends RenderModelVisitor {
             visitCube(renderParams, context, group.cubes().get(i));
         }
 
-        var bakedBone = context.<HighSpeedModelRenderer.HBakedModel>get("HBackedModel").bones().get(group.name());
+        var bakedBone = context.<BakedModel>get("BackedModel").bones().get(group.name());
 
         PoseStack.Pose last = poseStack.last();
         bakedBone.transformPos(last.pose());
@@ -52,7 +52,7 @@ public class HighSpeedRenderModelVisitor extends RenderModelVisitor {
         poseStack.popPose();
     }
 
-    private static void visitVertex(HighSpeedModelRenderer.HBakedBone bakedBone, VertexConsumer consumer, int overlay, int light) {
+    private static void visitVertex(BakedModel.BakedBone bakedBone, VertexConsumer consumer, int overlay, int light) {
         for (int nIdx = 0; nIdx < bakedBone.nxList().length; nIdx++) {
             consumer.addVertex(bakedBone.xListResult()[nIdx], bakedBone.yListResult()[nIdx], bakedBone.zListResult()[nIdx],
                     0xFF_FF_FF_FF, bakedBone.u()[nIdx], bakedBone.v()[nIdx], overlay, light,

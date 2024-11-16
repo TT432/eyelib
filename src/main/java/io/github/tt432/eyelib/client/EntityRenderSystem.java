@@ -7,8 +7,9 @@ import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
+import io.github.tt432.eyelib.client.model.bake.EmissiveModelBakeInfo;
+import io.github.tt432.eyelib.client.model.bake.TwoSideModelBakeInfo;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
-import io.github.tt432.eyelib.client.render.HighSpeedModelRenderer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.event.InitComponentEvent;
@@ -16,8 +17,12 @@ import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -27,9 +32,6 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author TT432
@@ -48,8 +50,6 @@ public class EntityRenderSystem {
 
         NeoForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
     }
-
-    private static final Map<ResourceLocation, HashMap<ResourceLocation, HighSpeedModelRenderer.HBakedModel>> cache = new HashMap<>();
 
     @SubscribeEvent
     public static void onEvent(RenderLivingEvent.Pre event) {
@@ -76,11 +76,12 @@ public class EntityRenderSystem {
 
         if (model != null && texture != null) {
             event.setCanceled(true);
+            MultiBufferSource multiBufferSource = event.getMultiBufferSource();
 
             PoseStack poseStack = event.getPoseStack();
 
             RenderType renderType = modelComponent.getRenderType(texture);
-            VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderType);
+            VertexConsumer buffer = multiBufferSource.getBuffer(renderType);
 
             poseStack.pushPose();
 
@@ -90,10 +91,19 @@ public class EntityRenderSystem {
                             ((LivingEntityRendererAccessor) (event.getRenderer()))
                                     .callGetWhiteOverlayProgress(entity, event.getPartialTick())));
 
-            var hbakedmodel = cache.computeIfAbsent(modelComponent.getSerializableInfo().model(), s -> new HashMap<>())
-                    .computeIfAbsent(modelComponent.getTexture(), i -> HighSpeedModelRenderer.HBakedModel.bake(model));
+            var bakedmodel = TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, modelComponent.isSolid(), texture);
+            Eyelib.getRenderHelper().highSpeedRender(renderParams, model, bakedmodel, modelComponent.getBoneInfos());
 
-            Eyelib.getRenderHelper().highSpeedRender(renderParams, model, hbakedmodel, modelComponent.getBoneInfos());
+            ResourceLocation emissiveTexture = texture.withPath(s -> s.replace(".png", ".emissive.png"));
+            AbstractTexture texture1 = Minecraft.getInstance().getTextureManager().getTexture(emissiveTexture);
+
+            if (texture1 != MissingTextureAtlasSprite.getTexture()) {
+                var rt1 = modelComponent.getRenderType(emissiveTexture);
+                VertexConsumer buffer1 = multiBufferSource.getBuffer(rt1);
+                var bakedmodel1 = EmissiveModelBakeInfo.INSTANCE.getBakedModel(model, modelComponent.isSolid(), emissiveTexture);
+                Eyelib.getRenderHelper().highSpeedRender(renderParams.withRenderType(rt1).withLight(LightTexture.FULL_BRIGHT).withConsumer(buffer1),
+                        model, bakedmodel1, modelComponent.getBoneInfos());
+            }
 
             poseStack.popPose();
         }
