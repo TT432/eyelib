@@ -18,6 +18,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * @author TT432
@@ -45,18 +48,25 @@ public class BrParticleManager {
     public static final class ModEvents {
         @SubscribeEvent
         public static void onEvent(FMLClientSetupEvent event) {
-            Thread.startVirtualThread(() -> {
+            new Thread(() -> {
+                Minecraft instance = Minecraft.getInstance();
+
+                BiConsumer<String, BrParticleEmitter> processEmitters = (k, e) -> e.getTimer().setPaused(instance.isPaused());
+                Consumer<BrParticleParticle> processParticles = e -> e.getTimer().setPaused(instance.isPaused());
+                Predicate<Map.Entry<String, BrParticleEmitter>> removeEmitters = e -> e.getValue().isRemoved();
+                Consumer<BrParticleEmitter> renderEmitters = BrParticleEmitter::onRenderFrame;
+                Predicate<BrParticleParticle> removeParticles = BrParticleParticle::isRemoved;
+                Consumer<BrParticleParticle> renderParticles = BrParticleParticle::onRenderFrame;
+
                 while (true) {
-                    Minecraft instance = Minecraft.getInstance();
-
                     if (instance.level != null) {
-                        emitters.forEach((k, e) -> e.getTimer().setPaused(instance.isPaused()));
-                        particles.forEach(e -> e.getTimer().setPaused(instance.isPaused()));
+                        emitters.forEach(processEmitters);
+                        particles.forEach(processParticles);
 
-                        emitters.entrySet().removeIf(e -> e.getValue().isRemoved());
-                        emitters.values().forEach(BrParticleEmitter::onRenderFrame);
-                        particles.removeIf(BrParticleParticle::isRemoved);
-                        particles.forEach(BrParticleParticle::onRenderFrame);
+                        emitters.entrySet().removeIf(removeEmitters);
+                        emitters.values().forEach(renderEmitters);
+                        particles.removeIf(removeParticles);
+                        particles.forEach(renderParticles);
                         Thread.yield();
                     } else {
                         try {
@@ -66,7 +76,7 @@ public class BrParticleManager {
                         }
                     }
                 }
-            });
+            }, "Eyelib Particle Thread").start();
         }
     }
 
