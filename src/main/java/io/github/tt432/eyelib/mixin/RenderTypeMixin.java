@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import io.github.tt432.eyelib.client.render.sections.RenderTypeExtension;
+import io.github.tt432.eyelib.client.render.sections.compat.SodiumLikeCompat;
 import io.github.tt432.eyelib.client.render.sections.events.SectionGeometryRenderTypeEvents;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
@@ -23,7 +24,7 @@ public class RenderTypeMixin implements RenderTypeExtension {
 
     @WrapOperation(method = "<clinit>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/RenderType;CHUNK_BUFFER_LAYERS:Lcom/google/common/collect/ImmutableList;"))
     private static void modifyChunkBufferLayers(ImmutableList<RenderType> value, Operation<Void> original) {
-        original.call(ImmutableList.builder().addAll(value).add(SectionGeometryRenderTypeEvents.getItemEntityTranslucentCull()).build());
+        original.call(SodiumLikeCompat.isInstalled() ? value : ImmutableList.builder().addAll(value).add(SectionGeometryRenderTypeEvents.getItemEntityTranslucentCull()).build());
     }
 
     @Override
