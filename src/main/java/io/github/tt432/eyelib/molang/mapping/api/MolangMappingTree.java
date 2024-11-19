@@ -112,69 +112,73 @@ public class MolangMappingTree {
     public String findField(String name) {
         int i = name.indexOf(".");
 
+        List<MolangClass> classes;
+
         if (i != -1) {
-            var classes = findClasses(name.substring(0, i));
-
-            String foundField = null;
-
-            for (var classData : classes) {
-                var aClass = classData.classInstance;
-
-                try {
-                    String fieldName = name.substring(i);
-                    aClass.getField(fieldName);
-
-                    foundField = aClass.getName() + "." + fieldName;
-                    break;
-                } catch (NoSuchFieldException ignored) {
-                }
-            }
-
-            if (foundField == null) {
-                foundField = "0F";
-            }
-
-            return foundField;
+            classes = findClasses(name.substring(0, i).toLowerCase(Locale.ROOT));
+        } else {
+            classes = findClasses("");
         }
 
-        return "0F";
+        String foundField = null;
+
+        for (var classData : classes) {
+            var aClass = classData.classInstance;
+
+            try {
+                String fieldName = name.substring(i);
+                aClass.getField(fieldName);
+
+                foundField = aClass.getName() + "." + fieldName;
+                break;
+            } catch (NoSuchFieldException ignored) {
+            }
+        }
+
+        if (foundField == null) {
+            foundField = "0F";
+        }
+
+        return foundField;
     }
 
     public String findMethod(String name, String args) {
         int i = name.indexOf(".");
 
+        Node node;
+
         if (i != -1) {
-            var node = findNode(name.substring(0, i));
-
-            if (node == null) return "0F";
-
-            String methodName = name.substring(i + 1);
-
-            FunctionInfo functionInfo = node.actualFunctions.get(methodName);
-
-            String foundMethod = null;
-
-            if (functionInfo != null) {
-                MolangClass molangClass = functionInfo.molangClass;
-                Class<?> aClass = molangClass.classInstance();
-
-                methodName = functionInfo.method.getName();
-
-                if (!molangClass.pureFunction) {
-                    if (args.isEmpty()) {
-                        foundMethod = aClass.getName() + "." + methodName + "($1)";
-                    } else {
-                        foundMethod = aClass.getName() + "." + methodName + "($1, " + args + ")";
-                    }
-                } else {
-                    foundMethod = aClass.getName() + "." + methodName + "(" + args + ")";
-                }
-            }
-
-            return Objects.requireNonNullElse(foundMethod, "0F");
+            node = findNode(name.substring(0, i).toLowerCase(Locale.ROOT));
+        } else {
+            node = findNode("");
         }
 
-        return "0F";
+        if (node == null) return "0F";
+
+        String methodName = name.substring(i + 1);
+
+        FunctionInfo functionInfo = node.actualFunctions.get(methodName);
+
+        String foundMethod = null;
+
+        if (functionInfo != null) {
+            MolangClass molangClass = functionInfo.molangClass;
+            Class<?> aClass = molangClass.classInstance();
+
+            methodName = functionInfo.method.getName();
+
+            if (!molangClass.pureFunction) {
+                if (args.isEmpty()) {
+                    foundMethod = aClass.getName() + "." + methodName + "($1)";
+                } else {
+                    foundMethod = aClass.getName() + "." + methodName + "($1, " + args + ")";
+                }
+            } else {
+                foundMethod = aClass.getName() + "." + methodName + "(" + args + ")";
+            }
+        }
+
+        return Objects.requireNonNullElse(foundMethod, "0F");
     }
 
     private Node findNode(String name) {

@@ -11,25 +11,33 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
  */
 public interface MolangVisitor<T> extends ParseTreeVisitor<T> {
 	/**
-	 * Visit a parse tree produced by {@link MolangParser#exprSet}.
+	 * Visit a parse tree produced by the {@code oneExpr}
+	 * labeled alternative in {@link MolangParser#exprSet}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitExprSet(MolangParser.ExprSetContext ctx);
+	T visitOneExpr(MolangParser.OneExprContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code ternaryConditionalOperator}
+	 * Visit a parse tree produced by the {@code base}
+	 * labeled alternative in {@link MolangParser#exprSet}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBase(MolangParser.BaseContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code signedAtom}
 	 * labeled alternative in {@link MolangParser#expr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitTernaryConditionalOperator(MolangParser.TernaryConditionalOperatorContext ctx);
+	T visitSignedAtom(MolangParser.SignedAtomContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code singleSignedAtom}
+	 * Visit a parse tree produced by the {@code objectRef}
 	 * labeled alternative in {@link MolangParser#expr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitSingleSignedAtom(MolangParser.SingleSignedAtomContext ctx);
+	T visitObjectRef(MolangParser.ObjectRefContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code comparisonOperator}
 	 * labeled alternative in {@link MolangParser#expr}.
@@ -45,13 +53,6 @@ public interface MolangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitAssignmentOperator(MolangParser.AssignmentOperatorContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code mulOrDiv}
-	 * labeled alternative in {@link MolangParser#expr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitMulOrDiv(MolangParser.MulOrDivContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code addOrSub}
 	 * labeled alternative in {@link MolangParser#expr}.
 	 * @param ctx the parse tree
@@ -65,20 +66,6 @@ public interface MolangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitNeExpr(MolangParser.NeExprContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code comment}
-	 * labeled alternative in {@link MolangParser#expr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitComment(MolangParser.CommentContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code returnOperator}
-	 * labeled alternative in {@link MolangParser#expr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitReturnOperator(MolangParser.ReturnOperatorContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code logicOperator}
 	 * labeled alternative in {@link MolangParser#expr}.
@@ -101,19 +88,47 @@ public interface MolangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitEqualsOperator(MolangParser.EqualsOperatorContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code function}
-	 * labeled alternative in {@link MolangParser#atom}.
+	 * Visit a parse tree produced by the {@code ternaryConditionalOperator}
+	 * labeled alternative in {@link MolangParser#expr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitFunction(MolangParser.FunctionContext ctx);
+	T visitTernaryConditionalOperator(MolangParser.TernaryConditionalOperatorContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code variable}
+	 * Visit a parse tree produced by the {@code stringValue}
+	 * labeled alternative in {@link MolangParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitStringValue(MolangParser.StringValueContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code mulOrDiv}
+	 * labeled alternative in {@link MolangParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitMulOrDiv(MolangParser.MulOrDivContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code nullCoalescing}
+	 * labeled alternative in {@link MolangParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNullCoalescing(MolangParser.NullCoalescingContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code scopedExprSet}
+	 * labeled alternative in {@link MolangParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitScopedExprSet(MolangParser.ScopedExprSetContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code value}
 	 * labeled alternative in {@link MolangParser#atom}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitVariable(MolangParser.VariableContext ctx);
+	T visitValue(MolangParser.ValueContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code number}
 	 * labeled alternative in {@link MolangParser#atom}.
@@ -128,4 +143,32 @@ public interface MolangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitParenthesesPrecedence(MolangParser.ParenthesesPrecedenceContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code this}
+	 * labeled alternative in {@link MolangParser#atom}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitThis(MolangParser.ThisContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code function}
+	 * labeled alternative in {@link MolangParser#values}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunction(MolangParser.FunctionContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code variable}
+	 * labeled alternative in {@link MolangParser#values}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitVariable(MolangParser.VariableContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code accessArray}
+	 * labeled alternative in {@link MolangParser#values}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAccessArray(MolangParser.AccessArrayContext ctx);
 }

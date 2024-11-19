@@ -48,12 +48,12 @@ public class MolangCompileHandler {
                     log.error("parsing: {} with error:{}", molangString, e.getMessage());
                 }
             });
-            body = visitor.visitExprSet(molangParser.exprSet());
+            body = "return " + visitor.visit(molangParser.exprSet()) + ";";
         }
 
         String sourceCode = """
                 public final class %s implements %s {
-                    public float apply(%s $1) {
+                    public float apply(final %s $1) {
                         %s
                     }
                 }

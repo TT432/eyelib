@@ -15,7 +15,7 @@ import java.util.Locale;
  */
 public class MolangCompileVisitor extends MolangBaseVisitor<String> {
     private static String alias(String sourceName) {
-        return switch (sourceName) {
+        return switch (sourceName.toLowerCase(Locale.ROOT)) {
             case "c" -> "context";
             case "m" -> "math";
             case "t" -> "temp";
@@ -35,7 +35,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
     }
 
     @Override
-    public String visitExprSet(MolangParser.ExprSetContext ctx) {
+    public String visitBase(MolangParser.BaseContext ctx) {
         StringBuilder result = new StringBuilder();
         int size = ctx.children.size();
 
@@ -45,7 +45,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
 
         String string = result.toString();
 
-        String[] split = string.split(";");
+        String[] split = string.split(";;");
 
         if (split.length == 0) return "return 0F;";
 
@@ -57,13 +57,29 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
 
         StringBuilder r = new StringBuilder();
 
-        for (int i = 0; i < split.length - 1; i++) {
-            r.append("io.github.tt432.eyelib.util.EyelibUtils.blackhole(").append(split[i]).append(");");
+        for (String s : split) {
+            if (!r.isEmpty()) {
+                r.append(", ");
+            }
+
+            r.append(s);
         }
 
-        r.append("return io.github.tt432.eyelib.util.EyelibUtils.blackhole(").append(split[split.length - 1]).append(");");
+        if (ctx.RETURN() == null) {
+            r.append(", 0.0F");
+        }
 
-        return r.toString();
+        return "io.github.tt432.eyelib.util.EyelibUtils.blackhole(" + r.append(")");
+    }
+
+    @Override
+    public String visitOneExpr(MolangParser.OneExprContext ctx) {
+        return "io.github.tt432.eyelib.util.EyelibUtils.blackhole(" + visit(ctx.expr()) + ")";
+    }
+
+    @Override
+    public String visitScopedExprSet(MolangParser.ScopedExprSetContext ctx) {
+        return visit(ctx.exprSet());
     }
 
     @Override
@@ -77,7 +93,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
     }
 
     @Override
-    public String visitSingleSignedAtom(MolangParser.SingleSignedAtomContext ctx) {
+    public String visitSignedAtom(MolangParser.SignedAtomContext ctx) {
         if (ctx.op != null && ctx.op.getText().charAt(0) == '-') {
             return "-" + visit(ctx.atom());
         } else {
@@ -95,6 +111,11 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
         List<MolangParser.ExprContext> expr = ctx.expr();
 
         return "(((" + visit(expr.getFirst()) + ") != 0F) " + ctx.op.getText() + " ((" + visit(expr.get(1)) + ") != 0F) ? 1F : 0F)";
+    }
+
+    @Override
+    public String visitNullCoalescing(MolangParser.NullCoalescingContext ctx) {
+        return "$1.contains(\"" + ctx.values() + "\") ? (" + visit(ctx.values()) + ") : (" + visit(ctx.expr()) + ")";
     }
 
     @Override
@@ -118,11 +139,6 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
     }
 
     @Override
-    public String visitReturnOperator(MolangParser.ReturnOperatorContext ctx) {
-        return visit(ctx.expr());
-    }
-
-    @Override
     public String visitEqualsOperator(MolangParser.EqualsOperatorContext ctx) {
         return "(" + visit(ctx.expr(0)) + " " + ctx.op.getText() + " " + visit(ctx.expr(1)) + " ? 1F : 0F)";
     }
@@ -131,8 +147,19 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
     public String visitFunction(MolangParser.FunctionContext ctx) {
         List<String> params = new ArrayList<>();
 
-        for (var expr: ctx.expr()) {
-            params.add(visit(expr));
+        for (var expr : ctx.expr()) {
+            if (expr instanceof MolangParser.ScopedExprSetContext) {
+                params.add("""
+                        new java.lang.Runnable() {
+                            @Override
+                            public void run() {
+                                %s;
+                            }
+                        }
+                        """.formatted(visit(expr)));
+            } else {
+                params.add(visit(expr));
+            }
         }
 
         String joined = String.join(",", params);
@@ -142,7 +169,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
     }
 
     @Override
-    public String visitComment(MolangParser.CommentContext ctx) {
+    public String visitStringValue(MolangParser.StringValueContext ctx) {
         String text = ctx.STRING().getText();
         return "\"" + text.substring(1, text.length() - 1) + "\"";
     }
@@ -177,6 +204,6 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
 
     @Override
     public String visitTerminal(TerminalNode node) {
-        return ";";
+        return ";;";
     }
 }

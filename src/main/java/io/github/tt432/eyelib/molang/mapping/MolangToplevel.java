@@ -14,4 +14,11 @@ import lombok.NoArgsConstructor;
 public final class MolangToplevel {
     public static final float pi = EyeMath.PI;
     public static final float e = EyeMath.E;
+
+    public static float loop(float times, Runnable r) {
+        for (int i = 0; i < times; i++) {
+            r.run();
+        }
+        return 0;
+    }
 }

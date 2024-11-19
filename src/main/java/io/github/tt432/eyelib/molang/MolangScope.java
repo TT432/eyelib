@@ -3,6 +3,8 @@ package io.github.tt432.eyelib.molang;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,6 +17,20 @@ public final class MolangScope {
 
     @Nullable
     private MolangScope parent;
+
+    private final Deque<Object> thisStack = new ArrayDeque<>();
+
+    public Object getThis() {
+        return thisStack.getLast();
+    }
+
+    public void pushThis(Object o) {
+        thisStack.push(o);
+    }
+
+    public void popThis() {
+        thisStack.pop();
+    }
 
     public void setParent(MolangScope parent) {
         this.parent = parent;
@@ -34,6 +50,10 @@ public final class MolangScope {
     }
 
     private final Map<String, MolangFloatFunction> cache = new HashMap<>();
+
+    public boolean contains(String name) {
+        return cache.containsKey(name) || (parent != null && parent.contains(name));
+    }
 
     public float get(String name) {
         return cache.getOrDefault(name, parent != null
