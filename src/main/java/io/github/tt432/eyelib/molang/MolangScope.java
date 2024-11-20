@@ -1,10 +1,12 @@
 package io.github.tt432.eyelib.molang;
 
+import io.github.tt432.eyelib.molang.type.MolangFloat;
+import io.github.tt432.eyelib.molang.type.MolangFloatSupplierObject;
+import io.github.tt432.eyelib.molang.type.MolangNull;
+import io.github.tt432.eyelib.molang.type.MolangObject;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,30 +20,9 @@ public final class MolangScope {
     @Nullable
     private MolangScope parent;
 
-    private final Deque<Object> thisStack = new ArrayDeque<>();
-
-    public Object getThis() {
-        return thisStack.getLast();
-    }
-
-    public void pushThis(Object o) {
-        thisStack.push(o);
-    }
-
-    public void popThis() {
-        thisStack.pop();
-    }
-
     public void setParent(MolangScope parent) {
         this.parent = parent;
         if (parent != null) owner.setParent(parent.owner);
-    }
-
-    @FunctionalInterface
-    public interface MolangFloatFunction {
-        MolangFloatFunction EMPTY = s -> 0;
-
-        float get(MolangScope scope);
     }
 
     @FunctionalInterface
@@ -49,34 +30,31 @@ public final class MolangScope {
         float get();
     }
 
-    private final Map<String, MolangFloatFunction> cache = new HashMap<>();
+    private final Map<String, MolangObject> cache = new HashMap<>();
 
     public boolean contains(String name) {
         return cache.containsKey(name) || (parent != null && parent.contains(name));
     }
 
-    public float get(String name) {
+    public MolangObject get(String name) {
         return cache.getOrDefault(name, parent != null
-                        ? parent.cache.getOrDefault(name, MolangFloatFunction.EMPTY)
-                        : MolangFloatFunction.EMPTY)
-                .get(this);
+                ? parent.cache.getOrDefault(name, MolangNull.INSTANCE)
+                : MolangNull.INSTANCE);
     }
 
-    public boolean getBool(String name) {
-        return get(name) != MolangValue.FALSE;
+    public MolangObject set(String name, float value) {
+        return set(name, MolangFloat.valueOf(value));
     }
 
-    public float set(String name, float value) {
-        return set(name, s -> value);
+    public MolangObject set(String name, FloatSupplier value) {
+        MolangFloatSupplierObject object = new MolangFloatSupplierObject(value);
+        cache.put(name, object);
+        return object;
     }
 
-    public float set(String name, MolangFloatFunction value) {
-        cache.put(name, value);
-        return value.get(this);
-    }
-
-    public float set(String name, FloatSupplier value) {
-        return set(name, s -> value.get());
+    public MolangObject set(String name, MolangObject object) {
+        cache.put(name, object);
+        return object;
     }
 
     public void setOwner(Object owner) {

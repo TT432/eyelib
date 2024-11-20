@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.molang;
 
 import io.github.tt432.eyelib.molang.grammer.MolangLexer;
 import io.github.tt432.eyelib.molang.grammer.MolangParser;
+import io.github.tt432.eyelib.molang.type.MolangObject;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,7 @@ public class MolangCompileHandler {
         String body;
 
         if (molangString.isEmpty()) {
-            body = "return 0F;";
+            return MolangValue.MolangFunction.NULL;
         } else {
             MolangParser molangParser = new MolangParser(
                     new CommonTokenStream(
@@ -53,11 +54,17 @@ public class MolangCompileHandler {
 
         String sourceCode = """
                 public final class %s implements %s {
-                    public float apply(final %s $1) {
+                    public %s apply(final %s $1) {
                         %s
                     }
                 }
-                """.formatted(classname, MolangValue.MolangFunction.class.getName(), MolangScope.class.getName(), body);
+                """.formatted(
+                classname,
+                MolangValue.MolangFunction.class.getName(),
+                MolangObject.class.getName(),
+                MolangScope.class.getName(),
+                body
+        );
 
         SimpleCompiler simpleCompiler = new SimpleCompiler();
         simpleCompiler.setParentClassLoader(MolangScope.class.getClassLoader());
