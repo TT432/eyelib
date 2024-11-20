@@ -4,9 +4,9 @@ import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterL
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.shape.Direction;
 import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.util.Blackboard;
 import io.github.tt432.eyelib.util.ResourceLocations;
 import io.github.tt432.eyelib.util.SimpleTimer;
-import io.github.tt432.eyelib.util.Blackboard;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.resources.ResourceLocation;
@@ -70,7 +70,7 @@ public class BrParticleEmitter {
 
         molangScope.setParent(parentScope);
         molangScope.setOwner(this);
-        particle.particleEffect().curves().forEach((k, v) -> molangScope.set(k, v::calculate));
+        particle.particleEffect().curves().forEach((k, v) -> molangScope.set(k, () -> v.calculate(molangScope)));
         molangScope.set("variable.emitter_age", this::getAge);
         molangScope.set("variable.emitter_lifetime", this::getLifetime);
         molangScope.set("variable.emitter_random_1", this::getRandom1);

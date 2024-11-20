@@ -112,12 +112,25 @@ public class MolangMappingTree {
     public String findField(String name) {
         int i = name.indexOf(".");
 
-        List<MolangClass> classes;
+        String fieldName;
+        String scopeName;
 
         if (i != -1) {
-            classes = findClasses(name.substring(0, i).toLowerCase(Locale.ROOT));
+            scopeName = name.substring(0, i).toLowerCase(Locale.ROOT);
+            fieldName = name.substring(i + 1);
         } else {
-            classes = findClasses("");
+            scopeName = "";
+            fieldName = name;
+        }
+
+        Node node = findNode(scopeName);
+
+        List<MolangClass> classes;
+
+        if (node == null) {
+            classes = List.of();
+        } else {
+            classes = node.actualClasses;
         }
 
         String foundField = null;
@@ -126,7 +139,6 @@ public class MolangMappingTree {
             var aClass = classData.classInstance;
 
             try {
-                String fieldName = name.substring(i);
                 aClass.getField(fieldName);
 
                 foundField = aClass.getName() + "." + fieldName;
@@ -136,6 +148,7 @@ public class MolangMappingTree {
         }
 
         if (foundField == null) {
+            log.debug("can't find field: {} in scope: {}", fieldName, scopeName);
             foundField = "0F";
         }
 
@@ -145,17 +158,22 @@ public class MolangMappingTree {
     public String findMethod(String name, String args) {
         int i = name.indexOf(".");
 
-        Node node;
+        String methodName;
+        String scopeName;
 
         if (i != -1) {
-            node = findNode(name.substring(0, i).toLowerCase(Locale.ROOT));
+            scopeName = name.substring(0, i).toLowerCase(Locale.ROOT);
+            methodName = name.substring(i + 1);
         } else {
-            node = findNode("");
+            scopeName = "";
+            methodName = name;
         }
 
-        if (node == null) return "0F";
+        Node node = findNode(scopeName);
 
-        String methodName = name.substring(i + 1);
+        if (node == null) {
+            return "0F";
+        }
 
         FunctionInfo functionInfo = node.actualFunctions.get(methodName);
 
@@ -176,6 +194,8 @@ public class MolangMappingTree {
             } else {
                 foundMethod = aClass.getName() + "." + methodName + "(" + args + ")";
             }
+        } else {
+            log.debug("can't find method: {} in scope: {}", methodName, scopeName);
         }
 
         return Objects.requireNonNullElse(foundMethod, "0F");
