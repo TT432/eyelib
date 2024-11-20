@@ -66,5 +66,10 @@ public class EyelibNetworkManager {
                         );
                     }
                 });
+
+        registrar.playToClient(ExtraEntityUpdateDataPacket.TYPE, ExtraEntityUpdateDataPacket.STREAM_CODEC,
+                (payload, context) ->
+                        Minecraft.getInstance().level.getEntity(payload.entityId())
+                                .setData(EyelibAttachableData.EXTRA_ENTITY_UPDATE, payload.data()));
     }
 }
