@@ -82,7 +82,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
         TextureAtlasSprite texture = spriteGetter.apply(owner.getMaterial("texture"));
 
         ModelRenderer.render(new RenderParams(null, poseStack.last(),
-                        poseStack, null, null, 0, OverlayTexture.NO_OVERLAY),
+                        poseStack, null, null, false, null, 0, OverlayTexture.NO_OVERLAY),
                 model, new BoneRenderInfos(),
                 new ModelRenderVisitorList(List.of(new BakeModelVisitor(modelBuilder, texture))));
 

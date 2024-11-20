@@ -41,17 +41,19 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     public BakedModel bake(Model model, TwoSideInfoMap twoSideInfoMap) {
         Map<String, BakedModel.BakedBone> bones = new HashMap<>();
 
-        model.toplevelBones().forEach((s, bone) -> collectBones(s, bone, bones, twoSideInfoMap.map.get(s)));
+        model.toplevelBones().forEach((s, bone) -> collectBones(s, bone, bones, twoSideInfoMap.map));
 
         return new BakedModel(bones);
     }
 
-    private static void collectBones(String name, Model.Bone bone, Map<String, BakedModel.BakedBone> bones, TwoSideInfo info) {
-        bones.put(name, bake(bone, info.cubeNeedTwoSide));
+    private static void collectBones(String name, Model.Bone bone, Map<String, BakedModel.BakedBone> bones, Map<String, TwoSideInfo> info) {
+        bones.put(name, bake(bone, info));
         bone.children().forEach((s, bone1) -> collectBones(s, bone1, bones, info));
     }
 
-    public static BakedModel.BakedBone bake(Model.Bone bone, boolean[] twoSide) {
+    public static BakedModel.BakedBone bake(Model.Bone bone, Map<String, TwoSideInfo> info) {
+        boolean[] twoSide = info.get(bone.name()).cubeNeedTwoSide();
+
         List<Vector3fc> vertexes = new ArrayList<>();
         List<Vector3fc> normals = new ArrayList<>();
         List<Vector2fc> uvs = new ArrayList<>();

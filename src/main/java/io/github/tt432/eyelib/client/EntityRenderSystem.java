@@ -7,8 +7,6 @@ import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
-import io.github.tt432.eyelib.client.model.bake.EmissiveModelBakeInfo;
-import io.github.tt432.eyelib.client.model.bake.TwoSideModelBakeInfo;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
@@ -85,14 +83,13 @@ public class EntityRenderSystem {
 
             poseStack.pushPose();
 
-            RenderParams renderParams = new RenderParams(
-                    entity, poseStack.last().copy(), poseStack, renderType, buffer, event.getPackedLight(),
+            RenderParams renderParams = new RenderParams(entity, poseStack.last().copy(), poseStack,
+                    renderType, texture, modelComponent.isSolid(), buffer, event.getPackedLight(),
                     LivingEntityRenderer.getOverlayCoords(entity,
                             ((LivingEntityRendererAccessor) (event.getRenderer()))
                                     .callGetWhiteOverlayProgress(entity, event.getPartialTick())));
 
-            var bakedmodel = TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, modelComponent.isSolid(), texture);
-            Eyelib.getRenderHelper().highSpeedRender(renderParams, model, bakedmodel, modelComponent.getBoneInfos());
+            Eyelib.getRenderHelper().render(renderParams, model, modelComponent.getBoneInfos());
 
             ResourceLocation emissiveTexture = texture.withPath(s -> s.replace(".png", ".emissive.png"));
             AbstractTexture texture1 = Minecraft.getInstance().getTextureManager().getTexture(emissiveTexture);
@@ -100,9 +97,13 @@ public class EntityRenderSystem {
             if (texture1 != MissingTextureAtlasSprite.getTexture()) {
                 var rt1 = modelComponent.getRenderType(emissiveTexture);
                 VertexConsumer buffer1 = multiBufferSource.getBuffer(rt1);
-                var bakedmodel1 = EmissiveModelBakeInfo.INSTANCE.getBakedModel(model, modelComponent.isSolid(), emissiveTexture);
-                Eyelib.getRenderHelper().highSpeedRender(renderParams.withRenderType(rt1).withLight(LightTexture.FULL_BRIGHT).withConsumer(buffer1),
-                        model, bakedmodel1, modelComponent.getBoneInfos());
+                Eyelib.getRenderHelper().render(
+                        renderParams
+                                .withRenderType(rt1)
+                                .withLight(LightTexture.FULL_BRIGHT)
+                                .withConsumer(buffer1)
+                                .withTexture(emissiveTexture),
+                        model, modelComponent.getBoneInfos());
             }
 
             poseStack.popPose();

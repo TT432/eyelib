@@ -14,7 +14,7 @@ import lombok.Setter;
  * @author TT432
  */
 @Setter
-public class HighSpeedRenderModelVisitor extends RenderModelVisitor {
+public class HighSpeedRenderModelVisitor extends ModelVisitor {
     @Override
     public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitModel(RenderParams params, Context context, D infos, Model model) {
         super.visitModel(params, context, infos, model);

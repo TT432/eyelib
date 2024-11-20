@@ -2,10 +2,11 @@ package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.model.Model;
-import io.github.tt432.eyelib.client.model.bake.BakedModel;
+import io.github.tt432.eyelib.client.model.bake.TwoSideModelBakeInfo;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
+import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -18,6 +19,7 @@ import java.util.Map;
  */
 @ParametersAreNonnullByDefault
 public class RenderHelper {
+    @Getter
     private final ModelVisitor.Context context = new ModelVisitor.Context();
     @Nullable
     private RenderParams params;
@@ -41,16 +43,8 @@ public class RenderHelper {
 
     public RenderHelper render(RenderParams params, Model model, BoneRenderInfos infos) {
         this.params = params;
-        BuiltInBrModelRenderVisitors.BLANK.get().visitModel(params, context, cast(infos), model);
-        BuiltInBrModelRenderVisitors.COLLECT_LOCATOR.get().visitModel(params, context, cast(infos), model);
-
-        return INSTANCE;
-    }
-
-    public RenderHelper highSpeedRender(RenderParams params, Model model, BakedModel hBakedModel, BoneRenderInfos infos) {
-        this.params = params;
         ModelVisitor.Context context = new ModelVisitor.Context();
-        context.put("BackedModel", hBakedModel);
+        context.put("BackedModel", TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, params.isSolid(), params.texture()));
         BuiltInBrModelRenderVisitors.HIGH_SPEED_RENDER.get().visitModel(params, context, cast(infos), model);
         BuiltInBrModelRenderVisitors.COLLECT_LOCATOR.get().visitModel(params, context, cast(infos), model);
 

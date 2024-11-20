@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import lombok.With;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +17,8 @@ public record RenderParams(
         PoseStack.Pose pose0,
         PoseStack poseStack,
         RenderType renderType,
+        ResourceLocation texture,
+        boolean isSolid,
         VertexConsumer consumer,
         int light,
         int overlay
