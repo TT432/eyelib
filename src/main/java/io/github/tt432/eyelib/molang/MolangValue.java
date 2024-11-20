@@ -2,6 +2,8 @@ package io.github.tt432.eyelib.molang;
 
 import com.mojang.serialization.Codec;
 import io.github.tt432.chin.codec.ChinExtraCodecs;
+import io.github.tt432.eyelib.molang.type.MolangNull;
+import io.github.tt432.eyelib.molang.type.MolangObject;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +20,9 @@ public record MolangValue(
 ) {
     @FunctionalInterface
     public interface MolangFunction {
-        float apply(@NotNull MolangScope scope);
+        MolangFunction NULL = s -> MolangNull.INSTANCE;
+
+        MolangObject apply(@NotNull MolangScope scope);
     }
 
     public MolangValue(@NotNull String context) {
@@ -48,12 +52,16 @@ public record MolangValue(
                 .xmap(MolangValue::new, MolangValue::toString);
     }
 
-    public float eval(MolangScope scope) {
+    public MolangObject getObject(MolangScope scope) {
         return method.apply(scope);
     }
 
+    public float eval(MolangScope scope) {
+        return getObject(scope).asFloat();
+    }
+
     public boolean evalAsBool(MolangScope scope) {
-        return eval(scope) != FALSE;
+        return getObject(scope).asBoolean();
     }
 
     @Override
