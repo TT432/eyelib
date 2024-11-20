@@ -52,6 +52,10 @@ public final class MolangMath {
         return Mth.cos(degrees * EyeMath.DEGREES_TO_RADIANS);
     }
 
+    public static float clamp(float value, float min, float max) {
+        return Mth.clamp(value, min, max);
+    }
+
     public static float die_roll(float num, float low, float high) {
         return (float) (((int) num) * (Math.random() * high - high));
     }

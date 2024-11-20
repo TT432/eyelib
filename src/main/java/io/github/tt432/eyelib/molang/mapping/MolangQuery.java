@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.molang.mapping;
 
+import io.github.tt432.eyelib.capability.ExtraEntityUpdateData;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.AnimationSet;
@@ -48,6 +49,78 @@ public final class MolangQuery {
     @MolangFunction(value = "has_off_hand", description = "副手有物品")
     public static float hasOffHand(MolangScope scope) {
         return livingBool(scope, e -> !e.getOffhandItem().isEmpty());
+    }
+
+    @MolangFunction(value = "is_moving", description = "正在移动")
+    public static float isMoving(MolangScope scope) {
+        return entityBool(scope, entity -> entity.xo != entity.getX() || entity.yo != entity.getY() || entity.zo != entity.getZ());
+    }
+
+    @MolangFunction(value = "has_target", description = "拥有目标")
+    public static float hasTarget(MolangScope scope) {
+        return scope.getOwner().ownerAs(Targeting.class).map(m -> m.getTarget() != null ? TRUE : FALSE).orElse(FALSE);
+    }
+
+    @MolangFunction(value = "target_x_rotation", description = "指向当前目标所需的 X 轴角度")
+    public static float targetXRotation(MolangScope scope) {
+        return scope.getOwner().onHiveOwners(Entity.class, Targeting.class, (entity, targeting) -> {
+            if (targeting.getTarget() != null) {
+                Vec3 targetPos = targeting.getTarget().position();
+                var x = targetPos.x - entity.getX();
+                var y = targetPos.y - entity.getY();
+                var z = targetPos.z - entity.getZ();
+                return (float) Math.atan2(y, Math.sqrt(x * x + z * z));
+            }
+
+            return FALSE;
+        }).orElse(FALSE);
+    }
+
+    @MolangFunction(value = "target_y_rotation", description = "指向当前目标所需的 Y 轴角度")
+    public static float targetYRotation(MolangScope scope) {
+        return scope.getOwner().onHiveOwners(Entity.class, Targeting.class, (entity, targeting) -> {
+            // 检查是否有目标
+            if (targeting.getTarget() != null) {
+                Vec3 targetPos = targeting.getTarget().position();
+
+                // 计算方向向量
+                double dx = targetPos.x - entity.getX();
+                double dz = targetPos.z - entity.getZ();
+
+                // 计算 Y 轴旋转角度 (水平旋转)
+                return (float) Math.toDegrees(Math.atan2(dz, dx)) - 90.0f; // 转换为角度并调整基准
+            }
+
+            // 如果没有目标，返回默认值
+            return 0.0f;
+        }).orElse(0.0f);
+    }
+
+    @MolangFunction(value = "damage_x", description = "受伤来源方向 x")
+    public static float damageX(MolangScope scope) {
+        return livingFloat(scope, living ->
+                living.getExistingData(EyelibAttachableData.EXTRA_ENTITY_UPDATE)
+                        .map(ExtraEntityUpdateData::lastHurtX)
+                        .orElse(0D)
+                        .floatValue());
+    }
+
+    @MolangFunction(value = "damage_y", description = "受伤来源方向 x")
+    public static float damageY(MolangScope scope) {
+        return livingFloat(scope, living ->
+                living.getExistingData(EyelibAttachableData.EXTRA_ENTITY_UPDATE)
+                        .map(ExtraEntityUpdateData::lastHurtY)
+                        .orElse(0D)
+                        .floatValue());
+    }
+
+    @MolangFunction(value = "damage_z", description = "受伤来源方向 x")
+    public static float damageZ(MolangScope scope) {
+        return livingFloat(scope, living ->
+                living.getExistingData(EyelibAttachableData.EXTRA_ENTITY_UPDATE)
+                        .map(ExtraEntityUpdateData::lastHurtZ)
+                        .orElse(0D)
+                        .floatValue());
     }
 
     @MolangFunction(value = "has_helmet", description = "已装备头盔")
