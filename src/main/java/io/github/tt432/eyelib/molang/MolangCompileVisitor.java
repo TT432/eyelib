@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObjects;
 import io.github.tt432.eyelib.util.EyelibUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import java.util.Locale;
 /**
  * @author TT432
  */
+@Slf4j
 public class MolangCompileVisitor extends MolangBaseVisitor<String> {
     private static String alias(String sourceName) {
         return switch (sourceName.toLowerCase(Locale.ROOT)) {
@@ -23,6 +25,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
             case "m" -> "math";
             case "t" -> "temp";
             case "q" -> "query";
+            case "v" -> "variable";
             default -> sourceName;
         };
     }
@@ -87,6 +90,12 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
     @Override
     public String visitAccessArray(MolangParser.AccessArrayContext ctx) {
         return EyelibUtils.class.getName() + ".get(" + visit(ctx.values()) + ", (int) " + visit(ctx.expr()) + ".asFloat())";
+    }
+
+    @Override
+    public String visitThis(MolangParser.ThisContext ctx) {
+        // todo
+        return valueOf("0F");
     }
 
     @Override
@@ -198,14 +207,19 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
         String fieldName = rename(ctx.getText());
         String field = MolangMappingTree.INSTANCE.findField(fieldName);
 
-        if (!field.equals("0F")) {
+        if (fieldName.startsWith("variable")) {
+            return "$1.get(\"" + fieldName + "\")";
+        }
+
+        if (field != null) {
             return valueOf(field);
         } else {
             String method = MolangMappingTree.INSTANCE.findMethod(fieldName, "");
 
-            if (!method.equals("0F")) {
+            if (method != null) {
                 return valueOf(method);
             } else {
+                log.debug("can't found field or method: {}", fieldName);
                 return "$1.get(\"" + fieldName + "\")";
             }
         }

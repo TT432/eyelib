@@ -109,6 +109,7 @@ public class MolangMappingTree {
         last.actualFunctions.put(method.getName(), new FunctionInfo(null, actualClass, method));
     }
 
+    @Nullable
     public String findField(String name) {
         int i = name.indexOf(".");
 
@@ -147,14 +148,10 @@ public class MolangMappingTree {
             }
         }
 
-        if (foundField == null) {
-            log.debug("can't find field: {} in scope: {}", fieldName, scopeName);
-            foundField = "0F";
-        }
-
         return foundField;
     }
 
+    @Nullable
     public String findMethod(String name, String args) {
         int i = name.indexOf(".");
 
@@ -194,11 +191,9 @@ public class MolangMappingTree {
             } else {
                 foundMethod = aClass.getName() + "." + methodName + "(" + args + ")";
             }
-        } else {
-            log.debug("can't find method: {} in scope: {}", methodName, scopeName);
         }
 
-        return Objects.requireNonNullElse(foundMethod, "0F");
+        return foundMethod;
     }
 
     private Node findNode(String name) {
