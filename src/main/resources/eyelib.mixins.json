@@ -16,13 +16,17 @@
     "SimpleTextureTextureImageMixin",
     "compat.embeddium.EmbeddiumChunkBufferBuildersMixin",
     "compat.embeddium.EmbeddiumChunkBuilderMeshingTaskMixin",
-    "compat.embeddium.EmbeddiumDefaultMaterialsMixin",
     "compat.embeddium.EmbeddiumChunkShaderInterfaceMixin",
+    "compat.embeddium.EmbeddiumDefaultMaterialsMixin",
     "compat.embeddium.EmbeddiumMaterialMixin",
     "compat.embeddium.EmbeddiumRenderRegionManagerMixin",
     "compat.embeddium.EmbeddiumShaderChunkRendererMixin",
-    "compat.embeddium.EmbeddiumWorldRendererMixin",
     "compat.embeddium.EmbeddiumTerrainRenderPassMixin",
+    "compat.embeddium.EmbeddiumWorldRendererMixin",
+    "compat.iris.ShadowRendererMixin",
+    "compat.iris.SodiumProgramsMixin",
+    "compat.iris.SodiumShaderMixin",
+    "compat.iris.WorldRenderingPhaseMixin",
     "compat.sodium.SodiumChunkBufferBuildersMixin",
     "compat.sodium.SodiumChunkBuilderMeshingTaskMixin",
     "compat.sodium.SodiumDefaultMaterialsMixin",
@@ -30,12 +34,8 @@
     "compat.sodium.SodiumMaterialMixin",
     "compat.sodium.SodiumRenderRegionManagerMixin",
     "compat.sodium.SodiumShaderChunkRendererMixin",
-    "compat.sodium.SodiumWorldRendererMixin",
     "compat.sodium.SodiumTerrainRenderPassMixin",
-    "compat.iris.ShadowRendererMixin",
-    "compat.iris.SodiumProgramsMixin",
-    "compat.iris.SodiumShaderMixin",
-    "compat.iris.WorldRenderingPhaseMixin"
+    "compat.sodium.SodiumWorldRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

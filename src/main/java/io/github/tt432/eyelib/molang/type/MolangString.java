@@ -21,6 +21,11 @@ public record MolangString(
     }
 
     @Override
+    public String asString() {
+        return v;
+    }
+
+    @Override
     public String toString() {
         return v;
     }

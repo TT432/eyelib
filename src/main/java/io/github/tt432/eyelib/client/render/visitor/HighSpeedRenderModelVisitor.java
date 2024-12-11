@@ -33,10 +33,6 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
 
         visitLocators(renderParams, context, group, poseStack, data, transformer, groupLocator);
 
-        for (int i = 0; i < group.cubes().size(); i++) {
-            visitCube(renderParams, context, group.cubes().get(i));
-        }
-
         var bakedBone = context.<BakedModel>get("BackedModel").bones().get(group.name());
 
         PoseStack.Pose last = poseStack.last();

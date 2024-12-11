@@ -61,7 +61,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
 
         for (int i = 0; i < split.length; i++) {
             if (split[i].isEmpty() || split[i].equals("null")) {
-                split[i] = "0F";
+                split[i] = MolangNull.class.getName() + ".INSTANCE";
             }
         }
 
@@ -89,7 +89,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
 
     @Override
     public String visitAccessArray(MolangParser.AccessArrayContext ctx) {
-        return EyelibUtils.class.getName() + ".get(" + visit(ctx.values()) + ", (int) " + visit(ctx.expr()) + ".asFloat())";
+        return EyelibUtils.class.getName() + ".get(" + visit(ctx.values()) + ", (" + visit(ctx.expr()) + ").asFloat())";
     }
 
     @Override

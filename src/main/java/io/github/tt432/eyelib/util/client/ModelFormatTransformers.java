@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.model.RootModelPartModel;
 import io.github.tt432.eyelib.client.model.bedrock.BrBone;
 import io.github.tt432.eyelib.client.model.bedrock.BrCube;
-import io.github.tt432.eyelib.client.model.bedrock.BrModel;
+import io.github.tt432.eyelib.client.model.bedrock.BrModelEntry;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -36,11 +36,11 @@ public final class ModelFormatTransformers {
     ) {
     }
 
-    public static HumanoidModel<?> getArmorModel(BrModel model, HumanoidModel<?> original) {
+    public static HumanoidModel<?> getArmorModel(BrModelEntry model, HumanoidModel<?> original) {
         return new HumanoidModel<>(getVanillaPart(model, new TranslationParams(original, new PoseStack())));
     }
 
-    public static ModelPart getVanillaPart(BrModel model, TranslationParams params) {
+    public static ModelPart getVanillaPart(BrModelEntry model, TranslationParams params) {
         PoseStack poseStack = params.poseStack;
         poseStack.pushPose();
         PoseStack.Pose last = poseStack.last();

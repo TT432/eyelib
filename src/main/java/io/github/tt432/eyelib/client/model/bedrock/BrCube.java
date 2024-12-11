@@ -204,7 +204,7 @@ public record BrCube(
         if (uvJson.get(face) instanceof JsonObject faceJson) {
             return Pair.of(
                     new Vector2f(gson.fromJson(faceJson.get("uv"), float[].class)),
-                    new Vector2f(gson.fromJson(faceJson.get("uv_size"), float[].class))
+                    faceJson.get("uv_size") instanceof JsonArray ja ? new Vector2f(gson.fromJson(ja, float[].class)) : new Vector2f(1, 1)
             );
         } else {
             return Pair.of(new Vector2f(), new Vector2f());

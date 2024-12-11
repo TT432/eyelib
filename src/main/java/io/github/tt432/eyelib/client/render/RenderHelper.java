@@ -43,7 +43,6 @@ public class RenderHelper {
 
     public RenderHelper render(RenderParams params, Model model, BoneRenderInfos infos) {
         this.params = params;
-        ModelVisitor.Context context = new ModelVisitor.Context();
         context.put("BackedModel", TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, params.isSolid(), params.texture()));
         BuiltInBrModelRenderVisitors.HIGH_SPEED_RENDER.get().visitModel(params, context, cast(infos), model);
         BuiltInBrModelRenderVisitors.COLLECT_LOCATOR.get().visitModel(params, context, cast(infos), model);

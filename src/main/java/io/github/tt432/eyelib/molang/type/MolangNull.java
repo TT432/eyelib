@@ -15,4 +15,9 @@ public class MolangNull implements MolangObject {
     public boolean asBoolean() {
         return false;
     }
+
+    @Override
+    public String asString() {
+        return "";
+    }
 }

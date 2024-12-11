@@ -1,13 +1,11 @@
 package io.github.tt432.eyelib.client.loader;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -23,7 +21,7 @@ import java.util.Map;
  */
 @EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 @Slf4j
-public class BrParticleLoader extends SimpleJsonResourceReloadListener {
+public class BrParticleLoader extends BrResourcesLoader {
     private static final BrParticleLoader INSTANCE = new BrParticleLoader();
 
     @SubscribeEvent
@@ -38,7 +36,7 @@ public class BrParticleLoader extends SimpleJsonResourceReloadListener {
     }
 
     private BrParticleLoader() {
-        super(new Gson(), "bedrock_particles");
+        super("particles", "json");
     }
 
     @Override

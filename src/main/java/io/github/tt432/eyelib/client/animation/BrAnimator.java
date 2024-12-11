@@ -19,12 +19,12 @@ public final class BrAnimator {
     public static BoneRenderInfos tickAnimation(AnimationComponent component, MolangScope scope, float ticks) {
         BoneRenderInfos infos = new BoneRenderInfos();
 
-        for (var animation : component.getAnimations().values()) {
-            if (animation == null) continue;
+        component.getAnimate().forEach((animation, multiplier) -> {
+            if (animation == null) return;
 
-            animation.tickAnimation(cast(component.getAnimationData(animation.name())), component.getAnimationSet(),
-                    scope, ticks, 1, infos);
-        }
+            animation.tickAnimation(cast(component.getAnimationData(animation.name())),
+                    component.getSerializableInfo().animations(), scope, ticks, multiplier.eval(scope), 1, infos);
+        });
 
         return infos;
     }

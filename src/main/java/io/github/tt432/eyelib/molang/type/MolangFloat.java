@@ -27,4 +27,9 @@ public class MolangFloat implements MolangObject {
     public boolean asBoolean() {
         return value != 0;
     }
+
+    @Override
+    public String asString() {
+        return "";
+    }
 }

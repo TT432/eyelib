@@ -1,6 +1,10 @@
 package io.github.tt432.eyelib;
 
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
+import io.github.tt432.eyelib.client.manager.AnimationManager;
+import io.github.tt432.eyelib.client.manager.MaterialManager;
+import io.github.tt432.eyelib.client.manager.ModelManager;
+import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import net.neoforged.bus.api.IEventBus;
@@ -20,5 +24,21 @@ public class Eyelib {
 
     public static RenderHelper getRenderHelper() {
         return RenderHelper.start();
+    }
+
+    public static AnimationManager getAnimationManager() {
+        return AnimationManager.INSTANCE;
+    }
+
+    public static MaterialManager getMaterialManager() {
+        return MaterialManager.INSTANCE;
+    }
+
+    public static ModelManager getModelManager() {
+        return ModelManager.INSTANCE;
+    }
+
+    public static RenderControllerManager getRenderControllerManager() {
+        return RenderControllerManager.INSTANCE;
     }
 }

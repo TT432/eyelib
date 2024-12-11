@@ -3,8 +3,8 @@ package io.github.tt432.eyelib.capability.component;
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.client.loader.BrModelLoader;
-import io.github.tt432.eyelib.client.model.bedrock.BrModel;
+import io.github.tt432.eyelib.Eyelib;
+import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorRegistry;
@@ -12,6 +12,7 @@ import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import io.github.tt432.eyelib.util.client.RenderTypeSerializations;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
+import lombok.With;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -26,21 +27,22 @@ import java.util.Objects;
  */
 @Getter
 public class ModelComponent {
+    @With
     public record SerializableInfo(
-            ResourceLocation model,
+            String model,
             ResourceLocation texture,
             ResourceLocation renderType,
             List<ResourceLocation> visitors
     ) {
         public static final Codec<SerializableInfo> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-                ResourceLocation.CODEC.fieldOf("model").forGetter(o -> o.model),
+                Codec.STRING.fieldOf("model").forGetter(o -> o.model),
                 ResourceLocation.CODEC.fieldOf("texture").forGetter(o -> o.texture),
                 ResourceLocation.CODEC.fieldOf("renderType").forGetter(o -> o.renderType),
                 ResourceLocation.CODEC.listOf().fieldOf("visitors").forGetter(o -> o.visitors)
         ).apply(ins, SerializableInfo::new));
 
         public static final StreamCodec<ByteBuf, SerializableInfo> STREAM_CODEC = StreamCodec.composite(
-                ResourceLocation.STREAM_CODEC,
+                ByteBufCodecs.STRING_UTF8,
                 SerializableInfo::model,
                 ResourceLocation.STREAM_CODEC,
                 SerializableInfo::texture,
@@ -70,9 +72,9 @@ public class ModelComponent {
         boneInfos.reset();
     }
 
-    public BrModel getModel() {
+    public Model getModel() {
         if (serializableInfo == null) return null;
-        return BrModelLoader.getModel(serializableInfo.model);
+        return Eyelib.getModelManager().get(serializableInfo.model);
     }
 
     public ResourceLocation getTexture() {

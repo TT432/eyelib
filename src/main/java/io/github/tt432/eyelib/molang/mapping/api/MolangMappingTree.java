@@ -169,7 +169,7 @@ public class MolangMappingTree {
         Node node = findNode(scopeName);
 
         if (node == null) {
-            return "0F";
+            return null;
         }
 
         FunctionInfo functionInfo = node.actualFunctions.get(methodName);

@@ -1,14 +1,13 @@
 package io.github.tt432.eyelib.client.loader;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -25,7 +24,7 @@ import java.util.Map;
 @Getter
 @Slf4j
 @EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
-public class BrAnimationLoader extends SimpleJsonResourceReloadListener {
+public class BrAnimationLoader extends BrResourcesLoader {
     public static final BrAnimationLoader INSTANCE = new BrAnimationLoader();
 
     @SubscribeEvent
@@ -36,7 +35,7 @@ public class BrAnimationLoader extends SimpleJsonResourceReloadListener {
     private final Map<ResourceLocation, BrAnimation> animations = new HashMap<>();
 
     private BrAnimationLoader() {
-        super(new Gson(), "animations/bedrock");
+        super("animations", "json");
     }
 
     public static BrAnimation getAnimation(ResourceLocation resourceLocation) {
@@ -54,5 +53,9 @@ public class BrAnimationLoader extends SimpleJsonResourceReloadListener {
                 log.error("can't load animation {}", rl, e);
             }
         });
+
+        for (BrAnimation value : animations.values()) {
+            value.animations().forEach((s, a) -> Eyelib.getAnimationManager().put(s, a));
+        }
     }
 }

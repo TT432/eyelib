@@ -2,79 +2,77 @@ package io.github.tt432.eyelib.capability.component;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.Animation;
-import io.github.tt432.eyelib.client.animation.AnimationSet;
-import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
-import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
-import io.github.tt432.eyelib.client.loader.BrAnimationControllerLoader;
-import io.github.tt432.eyelib.client.loader.BrAnimationLoader;
+import io.github.tt432.eyelib.molang.MolangValue;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author TT432
  */
-@Nullable
 @Getter
 public class AnimationComponent {
+    @ParametersAreNonnullByDefault
     public record SerializableInfo(
-            ResourceLocation animationControllers,
-            ResourceLocation targetAnimations
+            Map<String, String> animations,
+            Map<String, MolangValue> animate
     ) {
         public static final Codec<SerializableInfo> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-                ResourceLocation.CODEC.fieldOf("animationControllers").forGetter(o -> o.animationControllers),
-                ResourceLocation.CODEC.fieldOf("targetAnimations").forGetter(o -> o.targetAnimations)
+                Codec.unboundedMap(Codec.STRING, Codec.STRING).fieldOf("animations").forGetter(SerializableInfo::animations),
+                Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).fieldOf("animate").forGetter(SerializableInfo::animate)
         ).apply(ins, SerializableInfo::new));
 
         public static final StreamCodec<ByteBuf, SerializableInfo> STREAM_CODEC = StreamCodec.composite(
-                ResourceLocation.STREAM_CODEC,
-                SerializableInfo::animationControllers,
-                ResourceLocation.STREAM_CODEC,
-                SerializableInfo::targetAnimations,
-                AnimationComponent.SerializableInfo::new
+                ByteBufCodecs.map(HashMap::new, ByteBufCodecs.STRING_UTF8, ByteBufCodecs.STRING_UTF8),
+                SerializableInfo::animations,
+                ByteBufCodecs.map(HashMap::new, ByteBufCodecs.STRING_UTF8, MolangValue.STREAM_CODEC),
+                SerializableInfo::animate,
+                SerializableInfo::new
         );
     }
 
-    SerializableInfo serializableInfo;
-    AnimationSet animationSet = AnimationSet.EMPTY;
-    Map<String, Animation<?>> animations = new HashMap<>();
-    Map<String, Object> animationData = new HashMap<>();
-
     public Object getAnimationData(String controllerName) {
-        return animationData.computeIfAbsent(controllerName, s -> animations.get(s).createData());
+        return animationData.computeIfAbsent(controllerName,
+                s -> Eyelib.getAnimationManager().get(s).createData());
     }
 
     public boolean serializable() {
-        return serializableInfo != null
-                && serializableInfo.animationControllers != null
-                && serializableInfo.targetAnimations != null;
+        return serializableInfo != null;
     }
 
-    public void setup(ResourceLocation animationControllersName, ResourceLocation targetAnimationsName) {
-        if (animationControllersName == null || targetAnimationsName == null) return;
+    @Nullable
+    SerializableInfo serializableInfo;
+    private final Map<Animation<?>, MolangValue> animate = new HashMap<>();
+    private final Map<String, Object> animationData = new HashMap<>();
 
-        BrAnimationControllers animationControllers = BrAnimationControllerLoader.getController(animationControllersName);
-        BrAnimation targetAnimations = BrAnimationLoader.getAnimation(targetAnimationsName);
+    public void setInfo(SerializableInfo info) {
+        setup(info.animations, info.animate);
+    }
 
-        if (animationControllers == null || targetAnimations == null) return;
-
+    public void setup(Map<String, String> animations, Map<String, MolangValue> animate) {
         if (serializableInfo != null
-                && animationControllersName.equals(serializableInfo.animationControllers)
-                && targetAnimationsName.equals(serializableInfo.targetAnimations)) return;
+                && serializableInfo.animate.equals(animate)
+                && serializableInfo.animations.equals(animations)) return;
 
-        serializableInfo = new SerializableInfo(animationControllersName, targetAnimationsName);
+        serializableInfo = new SerializableInfo(animations, animate);
 
-        this.animations = new HashMap<>(animationControllers.animationControllers());
-        this.animationSet = AnimationSet.from(targetAnimations);
+        this.animate.clear();
+        animationData.clear();
 
-        animationData = new HashMap<>();
-        for (var s : animations.values()) {
+        animate.forEach((s, v) ->
+                this.animate.put(Eyelib.getAnimationManager().get(animations.get(s)), v));
+
+        new HashMap<>();
+        for (var s : this.animate.keySet()) {
+            if (s == null) continue;
             var data = s.createData();
             animationData.put(s.name(), data);
         }

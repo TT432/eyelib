@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.model.bedrock;
 import com.google.gson.*;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.util.math.EyeMath;
+import lombok.With;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -16,6 +17,7 @@ import java.util.*;
  * @param texture_meshes TODO 效果不明  推测：类似 BlockModel
  * @author TT432
  */
+@With
 public record BrBone(
         String name,
         @Nullable String parent,

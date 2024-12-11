@@ -5,7 +5,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.chin.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.AnimationEffect;
-import io.github.tt432.eyelib.client.animation.AnimationSet;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
@@ -46,6 +45,40 @@ public record BrAnimationEntry(
         AnimationEffect<MolangValue> timeline,
         Map<String, BrBoneAnimation> bones
 ) implements Animation<BrAnimationEntry.Data> {
+    public static Codec<BrAnimationEntry> codec(String name) {
+        return RecordCodecBuilder.create(ins -> {
+            final Codec<List<MolangValue>> elementCodec = ChinExtraCodecs.singleOrList(MolangValue.CODEC);
+            Comparator<Float> comparator = Comparator.comparingDouble(k -> k);
+            return ins.group(
+                    BrLoopType.CODEC.optionalFieldOf("loop", BrLoopType.ONCE).forGetter(o -> o.loop),
+                    Codec.FLOAT.optionalFieldOf("animation_length", 0F).forGetter(o -> o.animationLength),
+                    Codec.BOOL.optionalFieldOf("override_previous_animation", false).forGetter(o -> o.override_previous_animation),
+                    MolangValue.CODEC.optionalFieldOf("anim_time_update", new MolangValue("query.anim_time + query.delta_time")).forGetter(o -> o.anim_time_update),
+                    MolangValue.CODEC.optionalFieldOf("blend_weight", MolangValue.ONE).forGetter(o -> o.blendWeight),
+                    MolangValue.CODEC.optionalFieldOf("start_delay", MolangValue.ZERO).forGetter(o -> o.start_delay),
+                    MolangValue.CODEC.optionalFieldOf("loop_delay", MolangValue.ZERO).forGetter(o -> o.loop_delay),
+                    EFFECTS_CODEC.xmap(map -> new AnimationEffect<>(map, (scope, frame) ->
+                            scope.getOwner().ownerAs(Entity.class).ifPresent(e -> {
+                                SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(ResourceLocations.of(frame.effect()));
+                                if (!e.isSilent()) {
+                                    e.level().playSound(Minecraft.getInstance().player,
+                                            e.getX(), e.getY(), e.getZ(), soundEvent, e.getSoundSource(), 1, 1);
+                                }
+                            })), AnimationEffect::data
+                    ).optionalFieldOf("sound_effects", AnimationEffect.empty()).forGetter(o -> o.soundEffects),
+                    EFFECTS_CODEC.xmap(map -> new AnimationEffect<>(map, (scope, frame) -> {
+                                // todo
+                            }), AnimationEffect::data
+                    ).optionalFieldOf("particle_effects", AnimationEffect.empty()).forGetter(o -> o.particleEffects),
+                    ChinExtraCodecs.treeMap(EyelibCodec.STR_FLOAT_CODEC, elementCodec, comparator)
+                            .xmap(map -> new AnimationEffect<>(map, (scope, mv) -> mv.eval(scope)), AnimationEffect::data)
+                            .optionalFieldOf("timeline", AnimationEffect.empty())
+                            .forGetter(o -> o.timeline),
+                    Codec.unboundedMap(Codec.STRING.xmap(s -> s.toLowerCase(Locale.ROOT), s -> s), BrBoneAnimation.CODEC).optionalFieldOf("bones", Map.of()).forGetter(o -> o.bones)
+            ).apply(ins, (a, b, c, d, e, f, g, h, i, j, k) -> new BrAnimationEntry(name, a, b, c, d, e, f, g, h, i, j, k));
+        });
+    }
+
     private static final Codec<TreeMap<Float, List<BrEffectsKeyFrame>>> EFFECTS_CODEC = Codec.dispatchedMap(
             EyelibCodec.STR_FLOAT_CODEC,
             f -> ChinExtraCodecs.singleOrList(BrEffectsKeyFrame.Factory.CODEC).xmap(
@@ -90,11 +123,14 @@ public record BrAnimationEntry(
     }
 
     @Override
-    public void tickAnimation(Data data, AnimationSet animationSet, MolangScope scope,
-                              float ticks, float multiplier, BoneRenderInfos infos) {
+    public void tickAnimation(Data data, Map<String, String> animations, MolangScope scope,
+                              float ticks, float playSpeed, float multiplier, BoneRenderInfos infos) {
+        multiplier *= Math.clamp(blendWeight().eval(scope), 0, 1);
+
         scope.getOwner().replace(Data.class, data);
         data.deltaTime = ticks - data.lastTicks;
-        var animTimeUpdate = anim_time_update().eval(scope);
+        data.lastTicks = ticks;
+        var animTimeUpdate = data.animTime + (anim_time_update().eval(scope) - data.animTime) * playSpeed;
         data.animTime = animTimeUpdate;
 
         float animTick;
@@ -128,108 +164,23 @@ public record BrAnimationEntry(
             Vector3f pos = boneAnim.lerpPosition(scope, animTick);
 
             if (pos != null) {
-                entry.getRenderPosition().add(pos.mul(multiplier / 16).mul(-1, 1, 1));
+                pos.mul(multiplier).div(16).mul(-1, 1, 1);
+                entry.getRenderPosition().add(pos);
             }
 
             Vector3f rotation = boneAnim.lerpRotation(scope, animTick);
 
             if (rotation != null) {
-                entry.getRenderRotation()
-                        .add(rotation.mul(multiplier * EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1));
+                rotation.mul(multiplier).mul(EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1);
+                entry.getRenderRotation().add(rotation);
             }
 
             Vector3f scale = boneAnim.lerpScale(scope, animTick);
 
             if (scale != null) {
-                entry.getRenderScala().mul(
-                        EyeMath.notZero(1 + (scale.x - 1) * multiplier, 0.00001F),
-                        EyeMath.notZero(1 + (scale.y - 1) * multiplier, 0.00001F),
-                        EyeMath.notZero(1 + (scale.z - 1) * multiplier, 0.00001F)
-                );
+                scale.sub(1, 1, 1).mul(multiplier).add(1, 1, 1);
+                entry.getRenderScala().mul(scale);
             }
-        }
-
-        data.lastTicks = ticks;
-    }
-
-    public record Factory(
-            BrLoopType loop,
-            float animationLength,
-            boolean override_previous_animation,
-            @Nullable
-            MolangValue anim_time_update,
-            MolangValue blendWeight,
-            @Nullable
-            MolangValue start_delay,
-            @Nullable
-            MolangValue loop_delay,
-            AnimationEffect<BrEffectsKeyFrame> soundEffects,
-            AnimationEffect<BrEffectsKeyFrame> particleEffects,
-            AnimationEffect<MolangValue> timeline,
-            Map<String, BrBoneAnimation> bones
-    ) {
-        public static final Codec<Factory> CODEC = RecordCodecBuilder.create(ins -> {
-            final Codec<List<MolangValue>> elementCodec = ChinExtraCodecs.singleOrList(MolangValue.CODEC);
-            Comparator<Float> comparator = Comparator.comparingDouble(k -> k);
-            return ins.group(
-                    BrLoopType.CODEC.optionalFieldOf("loop", BrLoopType.ONCE).forGetter(o -> o.loop),
-                    Codec.FLOAT.optionalFieldOf("animation_length", 0F).forGetter(o -> o.animationLength),
-                    Codec.BOOL.optionalFieldOf("override_previous_animation", false).forGetter(o -> o.override_previous_animation),
-                    MolangValue.CODEC.optionalFieldOf("anim_time_update", new MolangValue("query.anim_time + query.delta_time")).forGetter(o -> o.anim_time_update),
-                    MolangValue.CODEC.optionalFieldOf("blend_weight", MolangValue.ONE).forGetter(o -> o.blendWeight),
-                    MolangValue.CODEC.optionalFieldOf("start_delay", MolangValue.ZERO).forGetter(o -> o.start_delay),
-                    MolangValue.CODEC.optionalFieldOf("loop_delay", MolangValue.ZERO).forGetter(o -> o.loop_delay),
-                    EFFECTS_CODEC.xmap(map -> new AnimationEffect<>(map, (scope, frame) ->
-                            scope.getOwner().ownerAs(Entity.class).ifPresent(e -> {
-                                SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(ResourceLocations.of(frame.effect()));
-                                if (!e.isSilent()) {
-                                    e.level().playSound(Minecraft.getInstance().player,
-                                            e.getX(), e.getY(), e.getZ(), soundEvent, e.getSoundSource(), 1, 1);
-                                }
-                            })), AnimationEffect::data
-                    ).optionalFieldOf("sound_effects", AnimationEffect.empty()).forGetter(o -> o.soundEffects),
-                    EFFECTS_CODEC.xmap(map -> new AnimationEffect<>(map, (scope, frame) -> {
-                                // todo
-                            }), AnimationEffect::data
-                    ).optionalFieldOf("particle_effects", AnimationEffect.empty()).forGetter(o -> o.particleEffects),
-                    ChinExtraCodecs.treeMap(EyelibCodec.STR_FLOAT_CODEC, elementCodec, comparator)
-                            .xmap(map -> new AnimationEffect<>(map, (scope, mv) -> mv.eval(scope)), AnimationEffect::data)
-                            .optionalFieldOf("timeline", AnimationEffect.empty())
-                            .forGetter(o -> o.timeline),
-                    Codec.unboundedMap(Codec.STRING, BrBoneAnimation.CODEC).optionalFieldOf("bones", Map.of()).forGetter(o -> o.bones)
-            ).apply(ins, Factory::new);
-        });
-
-        public BrAnimationEntry create(String name) {
-            return new BrAnimationEntry(
-                    name,
-                    loop,
-                    animationLength,
-                    override_previous_animation,
-                    anim_time_update,
-                    blendWeight,
-                    start_delay,
-                    loop_delay,
-                    soundEffects,
-                    particleEffects,
-                    timeline,
-                    bones);
-        }
-
-        public static Factory from(BrAnimationEntry entry) {
-            return new Factory(
-                    entry.loop(),
-                    entry.animationLength(),
-                    entry.override_previous_animation(),
-                    entry.anim_time_update(),
-                    entry.blendWeight(),
-                    entry.start_delay(),
-                    entry.loop_delay(),
-                    entry.soundEffects(),
-                    entry.particleEffects(),
-                    entry.timeline(),
-                    entry.bones()
-            );
         }
     }
 }

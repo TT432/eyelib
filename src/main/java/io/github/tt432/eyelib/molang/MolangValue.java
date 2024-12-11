@@ -4,11 +4,15 @@ import com.mojang.serialization.Codec;
 import io.github.tt432.chin.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;
+import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import lombok.extern.slf4j.Slf4j;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author TT432
@@ -46,14 +50,19 @@ public record MolangValue(
     public static final Codec<MolangValue> CODEC;
 
     static {
-        Codec<String> codec = Codec.withAlternative(Codec.STRING, Codec.FLOAT.xmap(Object::toString, Float::parseFloat));
+        Codec<String> codec = Codec.withAlternative(
+                Codec.withAlternative(Codec.STRING, Codec.FLOAT.xmap(Object::toString, Float::parseFloat)),
+                Codec.BOOL.xmap(b -> b ? "1" : "0", s -> s.equals("1"))
+        );
         CODEC = ChinExtraCodecs.singleOrList(codec)
                 .xmap(sl -> String.join("", sl), List::of)
                 .xmap(MolangValue::new, MolangValue::toString);
     }
 
+    public static final StreamCodec<ByteBuf, MolangValue> STREAM_CODEC = ByteBufCodecs.fromCodec(CODEC);
+
     public MolangObject getObject(MolangScope scope) {
-        return method.apply(scope);
+        return Objects.requireNonNullElse(method.apply(scope), MolangNull.INSTANCE);
     }
 
     public float eval(MolangScope scope) {

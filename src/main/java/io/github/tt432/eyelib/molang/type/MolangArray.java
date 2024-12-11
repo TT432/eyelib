@@ -8,9 +8,17 @@ import java.util.List;
 /**
  * @author TT432
  */
-public class MolangArray implements MolangObject {
-    @Getter
-    List<MolangObject> value = new ArrayList<>();
+@Getter
+public class MolangArray<T extends MolangObject> implements MolangObject {
+    List<T> value;
+
+    public MolangArray(List<T> value) {
+        this.value = value;
+    }
+
+    public MolangArray() {
+        this(new ArrayList<>());
+    }
 
     @Override
     public float asFloat() {
@@ -20,5 +28,10 @@ public class MolangArray implements MolangObject {
     @Override
     public boolean asBoolean() {
         return false;
+    }
+
+    @Override
+    public String asString() {
+        return "";
     }
 }

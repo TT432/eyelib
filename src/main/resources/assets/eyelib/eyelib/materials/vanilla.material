@@ -1,0 +1,28 @@
+{
+  "materials": {
+    "cutout": {
+      "vertexShader": "a",
+      "fragmentShader": "b",
+      "defines": [],
+      "samplerStates": [],
+      "states": [],
+      "variants": []
+    },
+    "translucent": {
+      "vertexShader": "a",
+      "fragmentShader": "b",
+      "defines": [],
+      "samplerStates": [],
+      "states": [],
+      "variants": []
+    },
+    "solid": {
+      "vertexShader": "a",
+      "fragmentShader": "b",
+      "defines": [],
+      "samplerStates": [],
+      "states": [],
+      "variants": []
+    }
+  }
+}

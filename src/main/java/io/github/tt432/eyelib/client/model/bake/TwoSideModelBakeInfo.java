@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.model.bake;
 
 import com.google.common.collect.ImmutableMap;
 import io.github.tt432.eyelib.client.model.Model;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
@@ -39,7 +40,7 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
 
     @Override
     public BakedModel bake(Model model, TwoSideInfoMap twoSideInfoMap) {
-        Map<String, BakedModel.BakedBone> bones = new HashMap<>();
+        Map<String, BakedModel.BakedBone> bones = new Object2ObjectOpenHashMap<>();
 
         model.toplevelBones().forEach((s, bone) -> collectBones(s, bone, bones, twoSideInfoMap.map));
 

@@ -120,7 +120,7 @@ public final class MolangMath {
     public static float random_integer(float low, float high) {
         double min = Math.ceil(low);
         double max = Math.floor(high);
-        return (float) Math.floor(Math.random() * (max - min) + min);
+        return (float) Math.round(Math.random() * (max - min) + min);
     }
 
     public static float round(float v) {

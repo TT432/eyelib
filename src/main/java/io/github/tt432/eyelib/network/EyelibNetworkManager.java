@@ -44,7 +44,7 @@ public class EyelibNetworkManager {
                     if (entity == null) return;
                     RenderData<?> data = RenderData.getComponent(entity);
                     var info = payload.animationInfo();
-                    data.getAnimationComponent().setup(info.animationControllers(), info.targetAnimations());
+                    data.getAnimationComponent().setInfo(info);
                 });
 
         registrar.playToClient(RemoveParticlePacket.TYPE, RemoveParticlePacket.STREAM_CODEC,

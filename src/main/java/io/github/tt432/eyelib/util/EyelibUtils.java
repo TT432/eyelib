@@ -13,7 +13,7 @@ public class EyelibUtils {
     }
 
     public static MolangObject get(MolangObject object, float index) {
-        return object instanceof MolangArray ma
+        return object instanceof MolangArray<?> ma
                 ? ma.getValue().get(Math.min(Math.max((int) index, 0), ma.getValue().size() - 1))
                 : MolangNull.INSTANCE;
     }

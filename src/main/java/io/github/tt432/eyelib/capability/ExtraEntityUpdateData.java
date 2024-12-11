@@ -33,7 +33,6 @@ public record ExtraEntityUpdateData(
             Codec.DOUBLE.fieldOf("lastHurtY").forGetter(ExtraEntityUpdateData::lastHurtY),
             Codec.DOUBLE.fieldOf("lastHurtZ").forGetter(ExtraEntityUpdateData::lastHurtZ)
     ).apply(ins, ExtraEntityUpdateData::new));
-
     public static final StreamCodec<ByteBuf, ExtraEntityUpdateData> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT,
             ExtraEntityUpdateData::targetId,
@@ -51,12 +50,14 @@ public record ExtraEntityUpdateData(
     }
 
     public ExtraEntityUpdateData update(Entity entity) {
+        var r = this;
+
         if (entity instanceof Mob targeting) {
             if (!entity.level().isClientSide) {
                 if (targeting.getTarget() != null) {
-                    return withTargetId(targeting.getTarget().getId());
+                    r = r.withTargetId(targeting.getTarget().getId());
                 } else {
-                    return withTargetId(-1);
+                    r = r.withTargetId(-1);
                 }
             } else {
                 if ((targeting.getTarget() == null || targeting.getTarget().getId() != targetId) && targetId != -1) {
@@ -65,7 +66,7 @@ public record ExtraEntityUpdateData(
             }
         }
 
-        return this;
+        return r;
     }
 
     @EventBusSubscriber
@@ -99,7 +100,7 @@ public record ExtraEntityUpdateData(
             ExtraEntityUpdateData data = entity.getData(key);
             ExtraEntityUpdateData updated = data.update(entity);
 
-            if (data != updated) {
+            if (!entity.level().isClientSide && data != updated) {
                 entity.setData(key, updated);
                 PacketDistributor.sendToPlayersTrackingEntityAndSelf(entity, new ExtraEntityUpdateDataPacket(entity.getId(), updated));
             }

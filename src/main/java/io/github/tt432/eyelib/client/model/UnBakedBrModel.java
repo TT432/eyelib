@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.client.model;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.ModelRenderer;
@@ -37,7 +36,7 @@ import java.util.function.Function;
  */
 @AllArgsConstructor
 public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
-    BrModel model;
+    Model model;
     private final Map<String, Matrix4f> visitors = new HashMap<>();
 
     /**

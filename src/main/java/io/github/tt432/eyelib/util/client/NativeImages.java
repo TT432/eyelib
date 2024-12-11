@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.util.client;
 import com.mojang.blaze3d.platform.NativeImage;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,11 @@ import static org.lwjgl.opengl.GL11.*;
  */
 @UtilityClass
 public class NativeImages {
+    public void uploadImage(ResourceLocation texture, NativeImage image) {
+        DynamicTexture dynamicTexture = new DynamicTexture(image);
+        Minecraft.getInstance().getTextureManager().register(texture, dynamicTexture);
+    }
+
     @Nullable
     public <R> R downloadImage(ResourceLocation texture, Function<NativeImage, R> imageFunction) {
         Minecraft.getInstance().getTextureManager().getTexture(texture).bind();

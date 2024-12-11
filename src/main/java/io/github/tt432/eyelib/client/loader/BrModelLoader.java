@@ -1,31 +1,32 @@
 package io.github.tt432.eyelib.client.loader;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelib.client.model.ModelMaterial;
+import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
+import io.github.tt432.eyelib.client.model.bedrock.BrModelEntry;
+import io.github.tt432.eyelib.util.search.Searchable;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * @author TT432
  */
 @EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 @Slf4j
-public class BrModelLoader extends SimpleJsonResourceReloadListener {
-    private static final BrModelLoader INSTANCE = new BrModelLoader();
+public class BrModelLoader extends BrResourcesLoader implements Searchable<BrModel> {
+    public static final BrModelLoader INSTANCE = new BrModelLoader();
 
     @SubscribeEvent
     public static void onEvent(RegisterClientReloadListenersEvent event) {
@@ -33,18 +34,20 @@ public class BrModelLoader extends SimpleJsonResourceReloadListener {
     }
 
     private final Map<ResourceLocation, BrModel> models = new HashMap<>();
-    private final Map<ResourceLocation, ModelMaterial> materials = new HashMap<>();
+
+    @Override
+    public Stream<Map.Entry<String, BrModel>> search(String searchStr) {
+        return models.entrySet().stream()
+                .filter(entry -> StringUtils.contains(entry.getKey().toString(), searchStr))
+                .map(entry -> Map.entry(entry.getKey().toString(), entry.getValue()));
+    }
 
     public static BrModel getModel(ResourceLocation location) {
         return INSTANCE.models.get(location);
     }
 
-    public static ModelMaterial getMaterial(ResourceLocation location) {
-        return INSTANCE.materials.get(location);
-    }
-
     private BrModelLoader() {
-        super(new Gson(), "bedrock_models");
+        super("models", "json");
     }
 
     @Override
@@ -55,13 +58,15 @@ public class BrModelLoader extends SimpleJsonResourceReloadListener {
             ResourceLocation key = entry.getKey();
 
             try {
-                if (key.getPath().endsWith("material")) {
-                    materials.put(key, ModelMaterial.CODEC.parse(JsonOps.INSTANCE, entry.getValue()).getOrThrow());
-                } else {
-                    models.put(key, BrModel.parse(key.toString(), entry.getValue().getAsJsonObject()));
-                }
+                models.put(key, BrModel.parse(entry.getValue().getAsJsonObject()));
             } catch (Exception e) {
                 log.error("can't load model {}", key, e);
+            }
+        }
+
+        for (BrModel value : models.values()) {
+            for (BrModelEntry model : value.models()) {
+                Eyelib.getModelManager().put(model.name().split(":")[0], model);
             }
         }
     }

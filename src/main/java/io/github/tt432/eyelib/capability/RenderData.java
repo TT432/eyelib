@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.capability;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
+import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.network.AnimationComponentSyncPacket;
@@ -26,7 +27,7 @@ public class RenderData<T> {
     ).apply(ins, (mcsi, acsi) -> {
         RenderData<Object> result = new RenderData<>();
         mcsi.ifPresent(result.modelComponent::setInfo);
-        acsi.ifPresent(i -> result.animationComponent.setup(i.animationControllers(), i.targetAnimations()));
+        acsi.ifPresent(result.animationComponent::setInfo);
         return result;
     }));
 
@@ -45,19 +46,17 @@ public class RenderData<T> {
     @NotNull
     private final AnimationComponent animationComponent = new AnimationComponent();
 
+    private final ClientEntityComponent clientEntityComponent = new ClientEntityComponent();
+
     public void sync() {
         if (modelComponent.serializable()) {
             ownerAs(Entity.class).ifPresent(e -> PacketDistributor.sendToPlayersTrackingEntityAndSelf(e,
-                    new ModelComponentSyncPacket(
-                            e.getId(),
-                            modelComponent.getSerializableInfo())));
+                    new ModelComponentSyncPacket(e.getId(), modelComponent.getSerializableInfo())));
         }
 
         if (animationComponent.serializable()) {
             ownerAs(Entity.class).ifPresent(e -> PacketDistributor.sendToPlayersTrackingEntityAndSelf(e,
-                    new AnimationComponentSyncPacket(
-                            e.getId(),
-                            animationComponent.getSerializableInfo())));
+                    new AnimationComponentSyncPacket(e.getId(), animationComponent.getSerializableInfo())));
         }
     }
 

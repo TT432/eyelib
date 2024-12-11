@@ -7,4 +7,6 @@ public interface MolangObject {
     float asFloat();
 
     boolean asBoolean();
+
+    String asString();
 }

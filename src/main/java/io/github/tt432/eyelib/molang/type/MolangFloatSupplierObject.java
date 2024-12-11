@@ -18,4 +18,9 @@ public record MolangFloatSupplierObject(
     public boolean asBoolean() {
         return supplier.get() != 0;
     }
+
+    @Override
+    public String asString() {
+        return "";
+    }
 }

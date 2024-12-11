@@ -2,14 +2,18 @@ package io.github.tt432.eyelib.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
+import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
-import io.github.tt432.eyelib.client.model.bedrock.BrModel;
+import io.github.tt432.eyelib.client.entity.BrClientEntity;
+import io.github.tt432.eyelib.client.loader.BrClientEntityLoader;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
+import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
 import lombok.AccessLevel;
@@ -21,7 +25,9 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.api.distmarker.Dist;
@@ -56,20 +62,53 @@ public class EntityRenderSystem {
 
         if (!cap.isUseBuiltInRenderSystem()) return;
 
+        BrClientEntity clientEntity = BrClientEntityLoader.INSTANCE.getEntities().get(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()));
+
+        ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
+
+        BrClientEntity oldEntity = clientEntityComponent.getClientEntity();
+
+        boolean changed = false;
+
+        if (clientEntity != null) {
+            if (oldEntity == null || !oldEntity.identifier().equals(clientEntity.identifier())) {
+                clientEntityComponent.setClientEntity(clientEntity);
+                changed = true;
+            }
+        }
+
+        if (clientEntityComponent.getClientEntity() != null) {
+            for (String renderController : clientEntityComponent.getClientEntity().render_controllers()) {
+                RenderControllerEntry renderControllerEntry = Eyelib.getRenderControllerManager().get(renderController);
+                if (renderControllerEntry != null)
+                    renderControllerEntry.setupModel(cap.getScope(), clientEntityComponent.getClientEntity(), cap.getModelComponent());
+            }
+
+            if (changed) {
+                clientEntityComponent.getClientEntity().scripts().ifPresent(s -> {
+                    s.initialize().eval(cap.getScope());
+                    s.pre_animation().eval(cap.getScope());
+                });
+            }
+
+            BrClientEntity ce = clientEntityComponent.getClientEntity();
+            ce.scripts().ifPresent(s -> cap.getAnimationComponent().setup(ce.animations(), s.animate()));
+        }
+
         if (cap.getAnimationComponent().getSerializableInfo() != null) {
             AnimationComponent component = cap.getAnimationComponent();
             var scope = cap.getScope();
 
-            if (component.getAnimations() != null) {
-                BoneRenderInfos tickedInfos = BrAnimator.tickAnimation(component, scope,
-                        ClientTickHandler.getTick() + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
+            if (component.getSerializableInfo() != null) {
+                float ticks = (ClientTickHandler.getTick() + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) / 20;
+                BoneRenderInfos tickedInfos = BrAnimator.tickAnimation(component, scope, ticks);
                 cap.getModelComponent().getBoneInfos().set(tickedInfos);
             }
         }
 
         ModelComponent modelComponent = cap.getModelComponent();
 
-        BrModel model = modelComponent.getModel();
+        var model = modelComponent.getModel();
         ResourceLocation texture = modelComponent.getTexture();
 
         if (model != null && texture != null) {
@@ -89,9 +128,19 @@ public class EntityRenderSystem {
                             ((LivingEntityRendererAccessor) (event.getRenderer()))
                                     .callGetWhiteOverlayProgress(entity, event.getPartialTick())));
 
+            if (clientEntityComponent.getClientEntity() != null) {
+                clientEntityComponent.getClientEntity().scripts().ifPresent(s -> {
+                    var scope = cap.getScope();
+                    poseStack.scale(s.getScaleX(scope), s.getScaleY(scope), s.getScaleZ(scope));
+                });
+            }
+
+            float yBodyRot = Mth.rotLerp(event.getPartialTick(), entity.yBodyRotO, entity.yBodyRot);
+            poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
+
             Eyelib.getRenderHelper().render(renderParams, model, modelComponent.getBoneInfos());
 
-            ResourceLocation emissiveTexture = texture.withPath(s -> s.replace(".png", ".emissive.png"));
+            ResourceLocation emissiveTexture = texture.withPath(s -> replacePng(s, ".png", ".emissive.png"));
             AbstractTexture texture1 = Minecraft.getInstance().getTextureManager().getTexture(emissiveTexture);
 
             if (texture1 != MissingTextureAtlasSprite.getTexture()) {
@@ -107,6 +156,17 @@ public class EntityRenderSystem {
             }
 
             poseStack.popPose();
+        }
+    }
+
+    static String replacePng(String originalString, String old, String newStr) {
+        int lastIndexOfDot = originalString.lastIndexOf(old);
+
+        if (lastIndexOfDot != -1) {
+            String beforeDot = originalString.substring(0, lastIndexOfDot);
+            return beforeDot + newStr;
+        } else {
+            return originalString;
         }
     }
 }

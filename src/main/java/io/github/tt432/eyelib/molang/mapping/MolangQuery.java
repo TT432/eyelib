@@ -1,9 +1,9 @@
 package io.github.tt432.eyelib.molang.mapping;
 
+import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.capability.ExtraEntityUpdateData;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.client.animation.Animation;
-import io.github.tt432.eyelib.client.animation.AnimationSet;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAcState;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
@@ -21,11 +21,24 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
+import net.minecraft.world.entity.ai.goal.EatBlockGoal;
+import net.minecraft.world.entity.ai.goal.RangedAttackGoal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.animal.Wolf;
+import net.minecraft.world.entity.animal.camel.Camel;
+import net.minecraft.world.entity.animal.horse.AbstractChestedHorse;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.RangedAttackMob;
+import net.minecraft.world.entity.monster.warden.Warden;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -78,9 +91,8 @@ public final class MolangQuery {
 
     @MolangFunction(value = "target_y_rotation", description = "指向当前目标所需的 Y 轴角度")
     public static float targetYRotation(MolangScope scope) {
-        return scope.getOwner().onHiveOwners(Entity.class, Targeting.class, (entity, targeting) -> {
-            // 检查是否有目标
-            if (targeting.getTarget() != null) {
+        return xHeadYaw(scope, entity -> {
+            if (entity instanceof Targeting targeting && targeting.getTarget() != null) {
                 Vec3 targetPos = targeting.getTarget().position();
 
                 // 计算方向向量
@@ -91,9 +103,8 @@ public final class MolangQuery {
                 return (float) Math.toDegrees(Math.atan2(dz, dx)) - 90.0f; // 转换为角度并调整基准
             }
 
-            // 如果没有目标，返回默认值
-            return 0.0f;
-        }).orElse(0.0f);
+            return 0F;
+        });
     }
 
     @MolangFunction(value = "damage_x", description = "受伤来源方向 x")
@@ -182,6 +193,10 @@ public final class MolangQuery {
         }).isEmpty() ? FALSE : TRUE).orElse(FALSE);
     }
 
+    public static float isItemEquipped(MolangScope scope) {
+        return ((int) isItemEquipped(scope, "0")) | ((int) isItemEquipped(scope, "1"));
+    }
+
     @MolangFunction(value = "actor_count", description = "世界中实体的数量")
     public static float actorCount(MolangScope scope) {
         if (Minecraft.getInstance().level != null)
@@ -194,9 +209,101 @@ public final class MolangQuery {
         return scope.getOwner().ownerAs(BrAnimationEntry.Data.class).map(data -> data.deltaTime).orElse(0F);
     }
 
-    @MolangFunction(value = "anim_time", description = "动画播放秒数")
+    @MolangFunction(value = "anim_time", alias = "life_time", description = "动画播放秒数")
     public static float animTime(MolangScope scope) {
         return scope.getOwner().ownerAs(BrAnimationEntry.Data.class).map(data -> data.animTime).orElse(0F);
+    }
+
+    @MolangFunction(value = "is_sniffing", description = "正在嗅")
+    public static float isSniffing(MolangScope scope) {
+        return scope.getOwner().ownerAs(LivingEntity.class).map(living -> living.getBrain().isActive(Activity.SNIFF)).orElse(false) ? TRUE : FALSE;
+    }
+
+    @MolangFunction(value = "is_roaring", description = "正在咆哮")
+    public static float isRoaring(MolangScope scope) {
+        return scope.getOwner().ownerAs(LivingEntity.class).map(living -> living.getBrain().isActive(Activity.ROAR)).orElse(false) ? TRUE : FALSE;
+    }
+
+    @MolangFunction(value = "is_sonic_boom", description = "唢呐爆炸")
+    public static float isSonicBoom(MolangScope scope) {
+        return scope.getOwner().ownerAs(Warden.class).map(w -> w.getBrain().isActive(Activity.FIGHT)).orElse(false) ? TRUE : FALSE;
+    }
+
+    @MolangFunction(value = "is_emerging", description = "正在出生")
+    public static float isEmerging(MolangScope scope) {
+        return scope.getOwner().ownerAs(Warden.class).map(w -> w.hasPose(Pose.EMERGING)).orElse(false) ? TRUE : FALSE;
+    }
+
+    @MolangFunction(value = "trade_tier", description = "村民交易等级")
+    public static float tradeTier(MolangScope scope) {
+        return scope.getOwner().ownerAs(Villager.class).map(v -> v.getVillagerData().getLevel()).orElse(0);
+    }
+
+    @MolangFunction(value = "dash_cooldown_progress", description = "冲刺冷却")
+    public static float dashCooldownProgress(MolangScope scope) {
+        return scope.getOwner().ownerAs(Camel.class).map(c -> c.getJumpCooldown() / 55F).orElse(0F);
+    }
+
+    @MolangFunction(value = "is_saddled", description = "正在背负")
+    public static float isSaddled(MolangScope scope) {
+        return scope.getOwner().ownerAs(AbstractHorse.class).map(AbstractHorse::isSaddled).orElse(false) ? TRUE : FALSE;
+    }
+
+    @MolangFunction(value = "is_chested", description = "")
+    public static float isChested(MolangScope scope) {
+        return scope.getOwner().ownerAs(AbstractChestedHorse.class).map(AbstractChestedHorse::hasChest).orElse(false) ? TRUE : FALSE;
+    }
+
+    @MolangFunction(value = "facing_target_to_range_attack", description = "正在进行远程攻击")
+    public static float facingTargetToRageAttack(MolangScope scope) {
+        return scope.getOwner().ownerAs(RangedAttackMob.class)
+                .map(r -> {
+                    for (WrappedGoal availableGoal : ((Mob) r).goalSelector.getAvailableGoals()) {
+                        if (availableGoal.getGoal() instanceof RangedAttackGoal && availableGoal.isRunning()) {
+                            return TRUE;
+                        }
+                    }
+
+                    return FALSE;
+                }).orElse(FALSE);
+    }
+
+    @MolangFunction(value = "is_avoiding_mobs", description = "正在从怪物逃离")
+    public static float isAvoidingMobs(MolangScope scope) {
+        return scope.getOwner().ownerAs(Mob.class).map(e -> {
+            for (WrappedGoal availableGoal : e.goalSelector.getAvailableGoals()) {
+                if (availableGoal.getGoal() instanceof AvoidEntityGoal<?> avoid
+                        && avoid.toAvoid instanceof Mob) {
+                    return TRUE;
+                }
+            }
+
+            return FALSE;
+        }).orElse(FALSE);
+    }
+
+    @MolangFunction(value = "is_grazing", description = "正在吃草")
+    public static float isGrazing(MolangScope scope) {
+        return scope.getOwner().ownerAs(Mob.class)
+                .map(r -> {
+                    for (WrappedGoal availableGoal : r.goalSelector.getAvailableGoals()) {
+                        if (availableGoal.getGoal() instanceof EatBlockGoal && availableGoal.isRunning()) {
+                            return TRUE;
+                        }
+                    }
+
+                    return FALSE;
+                }).orElse(FALSE);
+    }
+
+    @MolangFunction(value = "time_since_last_vibration_detection", description = "自最后一次检测到声波的时间（监守者）")
+    public static float timeSinceLastVibrationDetection(MolangScope scope) {
+        return scope.getOwner().ownerAs(Warden.class).map(w -> (40L - w.getBrain().getTimeUntilExpiry(MemoryModuleType.VIBRATION_COOLDOWN)) / 20F).orElse(0F);
+    }
+
+    @MolangFunction(value = "heartbeat_phase", description = "心跳（监守者）")
+    public static float heartbeatPhase(MolangScope scope) {
+        return scope.getOwner().ownerAs(Warden.class).map(w -> w.getHeartAnimation(partialTicks(scope))).orElse(0F);
     }
 
     @MolangFunction(value = "time_of_day", description = "一天中的时间")
@@ -214,26 +321,28 @@ public final class MolangQuery {
     }
 
     @MolangFunction(value = "partial_tick", description = "距离上一帧的时间")
-    public static float partialTick(MolangScope scope) {
+    public static float partialTicks(MolangScope scope) {
         return Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
     }
 
     @MolangFunction(value = "any_animation_finished", description = "任意动画播放完毕（动画控制器）")
     public static float anyAnimationFinished(MolangScope scope) {
-        return scope.getOwner().onHiveOwners(BrAcState.class, AnimationSet.class, BrAnimationController.Data.class,
-                (state, animationSet, data) -> state.animations().keySet().stream()
+        return scope.getOwner().onHiveOwners(BrAcState.class, BrAnimationController.Data.class,
+                (state, data) -> state.animations().keySet().stream()
                         .anyMatch(animationName -> {
-                            Animation<?> animation = animationSet.animations().get(animationName);
+                            Animation<?> animation = Eyelib.getAnimationManager().get(data.currentAnimations.get(animationName));
+                            if (animation == null) return false;
                             return animation.isAnimationFinished(data.getData(animation));
                         })).orElse(false) ? TRUE : FALSE;
     }
 
     @MolangFunction(value = "all_animations_finished", description = "所有动画播放完毕（动画控制器）")
     public static float allAnimationsFinished(MolangScope scope) {
-        return scope.getOwner().onHiveOwners(BrAcState.class, AnimationSet.class, BrAnimationController.Data.class,
-                (state, animationSet, data) -> state.animations().keySet().stream()
+        return scope.getOwner().onHiveOwners(BrAcState.class, BrAnimationController.Data.class,
+                (state, data) -> state.animations().keySet().stream()
                         .allMatch(animationName -> {
-                            Animation<?> animation = animationSet.animations().get(animationName);
+                            Animation<?> animation = Eyelib.getAnimationManager().get(data.currentAnimations.get(animationName));
+                            if (animation == null) return true;
                             return animation.isAnimationFinished(data.getData(animation));
                         })).orElse(false) ? TRUE : FALSE;
     }
@@ -335,7 +444,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "yaw_speed", description = "yaw 轴旋转速度")
     public static float yawSpeed(MolangScope scope) {
-        return entityFloat(scope, e -> yaw(scope) - e.getViewYRot(partialTick(scope) - 0.1F));
+        return entityFloat(scope, e -> yaw(scope) - e.getViewYRot(partialTicks(scope) - 0.1F));
     }
 
     @MolangFunction(value = "eye_target_x_rotation", alias = "pitch", description = "pitch 角度（x rot）")
@@ -365,37 +474,50 @@ public final class MolangQuery {
 
     @MolangFunction(value = "climbing_x", description = "实体位置指向可攀爬方块中心的向量的 x 分量")
     public static float climbingX(MolangScope scope) {
-        return livingFloat(scope, e -> e.getLastClimbablePos()
-                .map(p ->
-                        new Vec3(p.getX(), p.getY(), p.getZ())
-                                .add(e.level().getBlockState(p).getCollisionShape(e.level(), p).bounds().getCenter())
-                                .subtract(e.position())
-                                .x)
+        return livingFloat(scope, e -> e.onClimbable()
+                ? e.getLastClimbablePos()
+                .map(p -> {
+                    VoxelShape shape = e.level().getBlockState(p).getCollisionShape(e.level(), p);
+                    return shape.isEmpty() ? 0F : new Vec3(p.getX(), p.getY(), p.getZ())
+                            .add(shape.bounds().getCenter())
+                            .subtract(e.position())
+                            .x;
+                })
                 .orElse(0D)
-                .floatValue());
+                .floatValue()
+                : 0F);
     }
 
     @MolangFunction(value = "climbing_y", description = "实体位置指向可攀爬方块中心的向量的 y 分量")
     public static float climbingY(MolangScope scope) {
-        return livingFloat(scope, e -> e.getLastClimbablePos()
-                .map(p ->
-                        new Vec3(p.getX(), p.getY(), p.getZ())
-                                .add(e.level().getBlockState(p).getCollisionShape(e.level(), p).bounds().getCenter())
-                                .subtract(e.position())
-                                .y)
+        return livingFloat(scope, e -> e.onClimbable()
+                ? e.getLastClimbablePos()
+                .map(p -> {
+                    VoxelShape shape = e.level().getBlockState(p).getCollisionShape(e.level(), p);
+                    return shape.isEmpty() ? 0F : new Vec3(p.getX(), p.getY(), p.getZ())
+                            .add(shape.bounds().getCenter())
+                            .subtract(e.position())
+                            .y;
+                })
                 .orElse(0D)
-                .floatValue());
+                .floatValue()
+                : 0F);
     }
 
     @MolangFunction(value = "climbing_z", description = "实体位置指向可攀爬方块中心的向量的 z 分量")
     public static float climbingZ(MolangScope scope) {
-        return livingFloat(scope, e -> e.getLastClimbablePos()
-                .map(p -> new Vec3(p.getX(), p.getY(), p.getZ())
-                        .add(e.level().getBlockState(p).getCollisionShape(e.level(), p).bounds().getCenter())
-                        .subtract(e.position())
-                        .z)
+        return livingFloat(scope, e -> e.onClimbable()
+                ? e.getLastClimbablePos()
+                .map(p -> {
+                    VoxelShape shape = e.level().getBlockState(p).getCollisionShape(e.level(), p);
+                    return shape.isEmpty() ? 0F : new Vec3(p.getX(), p.getY(), p.getZ())
+                            .add(shape.bounds().getCenter())
+                            .subtract(e.position())
+                            .z;
+                })
                 .orElse(0D)
-                .floatValue());
+                .floatValue()
+                : 0F);
     }
 
     @MolangFunction(value = "is_crawling", description = "爬行（在陆地上被活板门等方块挤压导致趴下的动作）")
@@ -427,7 +549,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "attack_time", description = "攻击时间")
     public static float attackTime(MolangScope scope) {
-        return livingFloat(scope, l -> l.getAttackAnim(partialTick(scope)));
+        return livingFloat(scope, l -> l.getAttackAnim(partialTicks(scope)));
     }
 
     @MolangFunction(value = "is_attacking", description = "是否正在攻击")
@@ -440,9 +562,15 @@ public final class MolangQuery {
         return scope.getOwner().ownerAs(PowerableMob.class).map(c -> c.isPowered() ? TRUE : FALSE).orElse(FALSE);
     }
 
-    @MolangFunction(value = "creeper_swell", description = "苦力怕爆炸计时")
+    @MolangFunction(value = "creeper_swell", alias = "swell_amount", description = "苦力怕爆炸计时")
     public static float creeperSwell(MolangScope scope) {
-        return scope.getOwner().ownerAs(Creeper.class).map(c -> c.swell).orElse(0);
+        return scope.getOwner().ownerAs(Creeper.class).map(c -> c.swell)
+                .orElse(scope.getOwner().ownerAs(WitherBoss.class).map(WitherBoss::getInvulnerableTicks).orElse(0));
+    }
+
+    @MolangFunction(value = "invulnerable_ticks", description = "")
+    public static float invulnerableTicks(MolangScope scope) {
+        return scope.getOwner().ownerAs(WitherBoss.class).map(WitherBoss::getInvulnerableTicks).orElse(0);
     }
 
     @MolangFunction(value = "is_avoid", description = "正在逃离(比如苦力怕逃离猫)")
@@ -474,18 +602,37 @@ public final class MolangQuery {
         return livingBool(scope, LivingEntity::isOnFire);
     }
 
-    @MolangFunction(value = "ground_speed", description = "地面速度")
+    @MolangFunction(value = "ground_speed", alias = "modified_move_speed", description = "地面速度")
     public static float groundSpeed(MolangScope scope) {
-        return livingFloat(scope, livingEntity -> {
-            float vx = (float) (livingEntity.position().x - livingEntity.xo);
-            float vz = (float) (livingEntity.position().z - livingEntity.zo);
-            return Mth.sqrt((vx * vx) + (vz * vz)) * 20;
+        return livingFloat(scope, e -> {
+            var xo = e.xo;
+            var zo = e.zo;
+
+            var x = e.getX();
+            var z = e.getZ();
+
+            return (float) Math.sqrt((x - xo) * (x - xo) + (z - zo) * (z - zo));
         });
     }
+
+//    @MolangFunction(value = "modified_move_speed", description = "移动速度")
+//    public static float modifiedMoveSpeed(MolangScope scope) {
+//        return livingFloat(scope, e -> e.zza);
+//    }
 
     @MolangFunction(value = "is_damage", description = "正在受伤")
     public static float isDamage(MolangScope scope) {
         return livingBool(scope, living -> living.hurtTime > 0);
+    }
+
+    @MolangFunction(value = "hurt_time", description = "受伤时间")
+    public static float hurtTime(MolangScope scope) {
+        return livingFloat(scope, living -> (float) living.hurtTime / 20);
+    }
+
+    @MolangFunction(value = "is_riding", description = "正在骑乘")
+    public static float isRiding(MolangScope scope) {
+        return livingBool(scope, e -> e.getVehicle() != null);
     }
 
     @MolangFunction(value = "vertical_speed", description = "垂直速度")
@@ -493,12 +640,16 @@ public final class MolangQuery {
         return livingFloat(scope, living -> living.onGround() ? 0 : (float) (living.position().y - living.yo) * 20);
     }
 
-    @MolangFunction(value = "head_yaw", description = "头部的 yaw 旋转角度")
+    @MolangFunction(value = "head_yaw", alias = "head_y_rotation", description = "头部的 yaw 旋转角度")
     public static float headYaw(MolangScope scope) {
+        return xHeadYaw(scope, l -> Mth.rotLerp(partialTicks(scope), l.yHeadRotO, l.yHeadRot));
+    }
+
+    private static float xHeadYaw(MolangScope scope, Function<LivingEntity, Float> function) {
         return livingFloat(scope, livingEntity -> {
-            var partialTicks = partialTick(scope);
+            var partialTicks = partialTicks(scope);
             var lerpBodyRot = Mth.rotLerp(partialTicks, livingEntity.yBodyRotO, livingEntity.yBodyRot);
-            var lerpHeadRot = Mth.rotLerp(partialTicks, livingEntity.yHeadRotO, livingEntity.yHeadRot);
+            var lerpHeadRot = function.apply(livingEntity);
             float netHeadYaw = lerpHeadRot - lerpBodyRot;
             boolean shouldSit = livingEntity.isPassenger() && (livingEntity.getVehicle() != null && livingEntity.getVehicle().shouldRiderSit());
             if (shouldSit && livingEntity.getVehicle() instanceof LivingEntity vehicle) {
@@ -520,10 +671,20 @@ public final class MolangQuery {
         return livingFloat(scope, e -> (e.getYHeadRot() - e.yHeadRotO) / 20);
     }
 
+    @MolangFunction(value = "is_standing", description = "站立")
+    public static float isStanding(MolangScope scope) {
+        return scope.getOwner().ownerAs(AbstractHorse.class).map(AbstractHorse::isStanding).orElse(false) ? TRUE : FALSE;
+    }
+
+    @MolangFunction(value = "shake_angle", description = "头摇晃角度（狼）")
+    public static float shakeAngle(MolangScope scope) {
+        return scope.getOwner().ownerAs(Wolf.class).map(w -> w.getHeadRollAngle(partialTicks(scope))).orElse(0F);
+    }
+
     @MolangFunction(value = "body_yaw", description = "身体 yaw 旋转角度")
     public static float bodyYaw(MolangScope scope) {
         return scope.getOwner().ownerAs(LivingEntity.class)
-                .map(living -> Mth.wrapDegrees(Mth.rotLerp(partialTick(scope),
+                .map(living -> Mth.wrapDegrees(Mth.rotLerp(partialTicks(scope),
                         living.yBodyRotO, living.yBodyRot)))
                 .orElse(scope.getOwner().ownerAs(Entity.class)
                         .map(e -> Mth.wrapDegrees(e.getYRot()))
@@ -558,7 +719,12 @@ public final class MolangQuery {
 
     @MolangFunction(value = "head_pitch_offset", description = "头部 pitch 偏移")
     public static float headPitchOffset(MolangScope scope) {
-        return livingFloat(scope, living -> -Mth.lerp(partialTick(scope), living.xRotO, living.getXRot()));
+        return livingFloat(scope, living -> -Mth.lerp(partialTicks(scope), living.xRotO, living.getXRot()));
+    }
+
+    @MolangFunction(value = "body_y_rotation", description = "身体 pitch 偏移")
+    public static float bodyXRotation(MolangScope scope) {
+        return livingFloat(scope, living -> Mth.lerp(partialTicks(scope), living.yBodyRotO, living.yBodyRot));
     }
 
     @MolangFunction(value = "baby", alias = "is_baby", description = "幼年体")
