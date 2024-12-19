@@ -1,9 +1,14 @@
 package io.github.tt432.eyelib.client.model.bake;
 
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import java.util.Map;
+
+import static com.mojang.blaze3d.vertex.DefaultVertexFormat.NEW_ENTITY;
 
 /**
  * @author TT432
@@ -27,8 +32,24 @@ public record BakedModel(
             float[] nzListResult,
 
             float[] u,
-            float[] v
+            float[] v,
+            BufferBuilder vertices
     ) {
+        public BakedBone(float[] xList, float[] yList, float[] zList,
+                         float[] nxList, float[] nyList, float[] nzList,
+                         float[] xListResult, float[] yListResult, float[] zListResult,
+                         float[] nxListResult, float[] nyListResult, float[] nzListResult,
+                         float[] u, float[] v) {
+            this(xList, yList, zList, nxList, nyList, nzList,
+                    xListResult, yListResult, zListResult, nxListResult, nyListResult, nzListResult,
+                    u, v, new BufferBuilder(new ByteBufferBuilder(NEW_ENTITY.getVertexSize() * xList.length), VertexFormat.Mode.QUADS, NEW_ENTITY));
+            for (int i = 0; i < xList.length; i++) {
+                vertices.addVertex(xList[i], yList[i], zList[i],
+                        0, u[i], v[i], 0, 0,
+                        nxList[i], nyList[i], nzList[i]);
+            }
+        }
+
         public void transformPos(Matrix4f m4) {
             float m00 = m4.m00(), m01 = m4.m01(), m02 = m4.m02();
             float m10 = m4.m10(), m11 = m4.m11(), m12 = m4.m12();

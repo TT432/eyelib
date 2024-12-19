@@ -3,6 +3,8 @@ package io.github.tt432.eyelib.client.model.bedrock;
 import com.google.gson.*;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.util.math.EyeMath;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.With;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -42,10 +44,10 @@ public record BrBone(
         final String binding;
         final boolean reset;
         final String material;
-        final Map<String, BrBone> children = new HashMap<>();
-        final List<BrCube> cubes = new ArrayList<>();
-        final List<BrTextureMesh> texture_meshes = new ArrayList<>();
-        final Map<String, BrLocator> locators = new HashMap<>();
+        final Map<String, BrBone> children = new Object2ObjectOpenHashMap<>();
+        final List<BrCube> cubes = new ObjectArrayList<>();
+        final List<BrTextureMesh> texture_meshes = new ObjectArrayList<>();
+        final Map<String, BrLocator> locators = new Object2ObjectOpenHashMap<>();
 
         name = jsonObject.get("name") instanceof JsonPrimitive jp ? jp.getAsString() : null;
         Objects.requireNonNull(name, "cube must have name.");

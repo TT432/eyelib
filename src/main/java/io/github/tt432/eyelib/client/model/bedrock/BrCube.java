@@ -7,6 +7,7 @@ import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.Pair;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.core.Direction;
 import org.jetbrains.annotations.NotNull;
 import org.joml.*;
@@ -137,22 +138,22 @@ public record BrCube(
         return new BrCube(
                 6,
                 4,
-                java.util.List.of(
-                        java.util.List.of(corners[6], corners[2], corners[3], corners[7]),
-                        java.util.List.of(corners[4], corners[0], corners[1], corners[5]),
-                        java.util.List.of(corners[3], corners[0], corners[4], corners[7]),
-                        java.util.List.of(corners[2], corners[1], corners[0], corners[3]),
-                        java.util.List.of(corners[6], corners[5], corners[1], corners[2]),
-                        java.util.List.of(corners[7], corners[4], corners[5], corners[6])
+                ObjectList.of(
+                        ObjectList.of(corners[6], corners[2], corners[3], corners[7]),
+                        ObjectList.of(corners[4], corners[0], corners[1], corners[5]),
+                        ObjectList.of(corners[3], corners[0], corners[4], corners[7]),
+                        ObjectList.of(corners[2], corners[1], corners[0], corners[3]),
+                        ObjectList.of(corners[6], corners[5], corners[1], corners[2]),
+                        ObjectList.of(corners[7], corners[4], corners[5], corners[6])
                 ),
-                java.util.List.of(
+                ObjectList.of(
                         getUv(up),
                         getUv(down),
                         getUv(east),
                         getUv(north),
                         getUv(west),
                         getUv(south)),
-                java.util.List.of(
+                ObjectList.of(
                         Direction.UP.step(),
                         Direction.DOWN.step(),
                         Direction.EAST.step(),
@@ -166,7 +167,7 @@ public record BrCube(
     private static List<Vector2fc> getUv(Pair<Vector2f, Vector2f> uv) {
         var uv1 = uv.right().add(uv.left(), new Vector2f());
 
-        return java.util.List.of(
+        return ObjectList.of(
                 uv.left(),
                 new Vector2f(uv.left().x, uv1.y),
                 uv1,

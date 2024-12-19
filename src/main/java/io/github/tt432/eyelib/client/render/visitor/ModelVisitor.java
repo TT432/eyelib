@@ -8,12 +8,13 @@ import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.util.math.EyeMath;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector2fc;
 import org.joml.Vector3fc;
 
-import java.util.HashMap;
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
@@ -67,7 +68,7 @@ public class ModelVisitor {
     }
 
     public void visitCube(RenderParams renderParams, Context context, Model.Cube cube) {
-        for (int i = 0; i < cube.vertexes().size(); i++) {
+        for (int i = 0; i < cube.faceCount(); i++) {
             List<Vector3fc> vertexes = cube.vertexes().get(i);
             List<Vector2fc> uvs = cube.uvs().get(i);
             Vector3fc normal = cube.normals().get(i);
@@ -153,7 +154,7 @@ public class ModelVisitor {
     }
 
     public static final class Context {
-        private final Map<String, Object> data = new HashMap<>();
+        private final Map<String, Object> data = new Object2ObjectOpenHashMap<>();
 
         public void put(String key, Object value) {
             data.put(key, value);
@@ -164,7 +165,9 @@ public class ModelVisitor {
         }
 
         @SuppressWarnings("unchecked")
+        @Nullable
         public <T> T get(String key) {
+            if (!data.containsKey(key)) return null;
             return (T) data.get(key);
         }
 

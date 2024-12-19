@@ -6,6 +6,7 @@
   "mixins": [
   ],
   "client": [
+    "BufferBuilderMixin",
     "HumanoidModelMixin",
     "LivingEntityRendererAccessor",
     "RenderSectionMixin",
@@ -14,6 +15,7 @@
     "SectionCompilerMixin",
     "SimpleBakedModelMixin",
     "SimpleTextureTextureImageMixin",
+    "VertexBufferMixin",
     "compat.embeddium.EmbeddiumChunkBufferBuildersMixin",
     "compat.embeddium.EmbeddiumChunkBuilderMeshingTaskMixin",
     "compat.embeddium.EmbeddiumChunkShaderInterfaceMixin",

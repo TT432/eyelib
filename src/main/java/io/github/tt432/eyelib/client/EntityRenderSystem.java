@@ -11,11 +11,16 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.loader.BrClientEntityLoader;
+import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
+import io.github.tt432.eyelib.compute.LazyComputeBufferBuilder;
+import io.github.tt432.eyelib.compute.VertexComputeHelper;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
+import it.unimi.dsi.fastutil.Pair;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
@@ -32,10 +37,13 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+
+import java.util.Map;
 
 /**
  * @author TT432
@@ -54,6 +62,10 @@ public class EntityRenderSystem {
 
         NeoForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
     }
+
+    private static final Map<RenderType, Pair<VertexComputeHelper, MultiBufferSource>> helpers = new Object2ObjectOpenHashMap<>();
+
+    private static final boolean irisInstalled = ModList.get().isLoaded("iris");
 
     @SubscribeEvent
     public static void onEvent(RenderLivingEvent.Pre event) {
@@ -138,7 +150,15 @@ public class EntityRenderSystem {
             float yBodyRot = Mth.rotLerp(event.getPartialTick(), entity.yBodyRotO, entity.yBodyRot);
             poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
 
-            Eyelib.getRenderHelper().render(renderParams, model, modelComponent.getBoneInfos());
+            RenderHelper renderHelper = Eyelib.getRenderHelper();
+
+            {
+                if (!irisInstalled) {
+                    var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), event.getMultiBufferSource()));
+                    ((LazyComputeBufferBuilder) buffer).setEyelib$helper(helper.left());
+                }
+                renderHelper.render(renderParams, model, modelComponent.getBoneInfos());
+            }
 
             ResourceLocation emissiveTexture = texture.withPath(s -> replacePng(s, ".png", ".emissive.png"));
             AbstractTexture texture1 = Minecraft.getInstance().getTextureManager().getTexture(emissiveTexture);
@@ -146,7 +166,13 @@ public class EntityRenderSystem {
             if (texture1 != MissingTextureAtlasSprite.getTexture()) {
                 var rt1 = modelComponent.getRenderType(emissiveTexture);
                 VertexConsumer buffer1 = multiBufferSource.getBuffer(rt1);
-                Eyelib.getRenderHelper().render(
+                renderHelper = Eyelib.getRenderHelper();
+
+                if (!irisInstalled) {
+                    var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), event.getMultiBufferSource()));
+                    ((LazyComputeBufferBuilder) buffer1).setEyelib$helper(helper.left());
+                }
+                renderHelper.render(
                         renderParams
                                 .withRenderType(rt1)
                                 .withLight(LightTexture.FULL_BRIGHT)
