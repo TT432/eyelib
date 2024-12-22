@@ -32,4 +32,9 @@ public class MolangFloat implements MolangObject {
     public String asString() {
         return "";
     }
+
+    @Override
+    public String toString() {
+        return Float.toString(value);
+    }
 }

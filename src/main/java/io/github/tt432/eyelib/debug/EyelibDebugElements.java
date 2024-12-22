@@ -58,7 +58,7 @@ public class EyelibDebugElements implements ImGuiWindowElements {
                 MolangScope scope = component.getScope();
 
                 if (scope != null && cache != null) {
-                    ImGui.textWrapped("molang: " + cache.eval(scope));
+                    ImGui.textWrapped("molang: " + cache.getObject(scope).toString());
                 } else {
                     ImGui.textWrapped("molang: not a valid molang");
                 }

@@ -33,4 +33,10 @@ public class EyelibAttachableData {
                     () -> AttachmentType.builder(ExtraEntityUpdateData::empty)
                             .serialize(ExtraEntityUpdateData.CODEC)
                             .build());
+
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<ExtraEntityData>> EXTRA_ENTITY_DATA =
+            ATTACHMENT_TYPES.register("extra_entity_data",
+                    () -> AttachmentType.builder(ExtraEntityData::empty)
+                            .serialize(ExtraEntityData.CODEC)
+                            .build());
 }

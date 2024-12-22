@@ -145,10 +145,14 @@ public class EntityRenderSystem {
                     var scope = cap.getScope();
                     poseStack.scale(s.getScaleX(scope), s.getScaleY(scope), s.getScaleZ(scope));
                 });
-            }
 
-            float yBodyRot = Mth.rotLerp(event.getPartialTick(), entity.yBodyRotO, entity.yBodyRot);
-            poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
+                if (entity.isBaby()) {
+                    poseStack.scale(0.5F, 0.5F, 0.5F);
+                }
+
+                float yBodyRot = Mth.rotLerp(event.getPartialTick(), entity.yBodyRotO, entity.yBodyRot);
+                poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
+            }
 
             RenderHelper renderHelper = Eyelib.getRenderHelper();
 

@@ -34,4 +34,9 @@ public class MolangArray<T extends MolangObject> implements MolangObject {
     public String asString() {
         return "";
     }
+
+    @Override
+    public String toString() {
+        return value.toString();
+    }
 }

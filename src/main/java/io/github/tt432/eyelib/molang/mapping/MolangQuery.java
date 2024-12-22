@@ -17,6 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
@@ -32,6 +33,7 @@ import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.RangedAttackMob;
+import net.minecraft.world.entity.monster.Vex;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.schedule.Activity;
@@ -105,6 +107,60 @@ public final class MolangQuery {
 
             return 0F;
         });
+    }
+
+    @MolangFunction(value = "is_charging", description = "充能")
+    public static float isCharging(MolangScope scope) {
+        return scope.getOwner().ownerAs(Vex.class).map(v -> v.isCharging() ? TRUE : FALSE)
+                .orElse(livingBool(scope, LivingEntity::isUsingItem));
+    }
+
+    @MolangFunction(value = "is_gliding", description = "滑翔")
+    public static float isGliding(MolangScope scope) {
+        return livingBool(scope, le -> le.getFallFlyingTicks() > 0);
+    }
+
+    @MolangFunction(value = "is_sleeping", description = "睡觉")
+    public static float isSleeping(MolangScope scope) {
+        return livingBool(scope, LivingEntity::isSleeping);
+    }
+
+    @MolangFunction(value = "item_is_charged", description = "物品正在充能")
+    public static float itemIsCharged(MolangScope scope) {
+        return itemIsCharged(scope, "0");
+    }
+
+    public static float itemIsCharged(MolangScope scope, Object hand) {
+        return livingBool(scope, living -> living.getUsedItemHand() == (switch (hand.toString()) {
+            case "main_hand", "0" -> InteractionHand.MAIN_HAND;
+            case "off_hand", "1" -> InteractionHand.OFF_HAND;
+            default -> InteractionHand.MAIN_HAND;
+        }));
+    }
+
+    @MolangFunction(value = "main_hand_item_use_duration", description = "主手物品使用时间")
+    public static float mainHandItemUseDuration(MolangScope scope) {
+        return livingFloat(scope, living -> (float) living.getTicksUsingItem() / living.getUseItem().getUseDuration(living));
+    }
+
+    @MolangFunction(value = "is_tamed", description = "驯服了")
+    public static float isTamed(MolangScope scope) {
+        return scope.getOwner().ownerAs(TamableAnimal.class).map(TamableAnimal::isTame).orElse(false) ? TRUE : FALSE;
+    }
+
+    @MolangFunction(value = "get_name", description = "获取名称")
+    public static String getName(MolangScope scope) {
+        return scope.getOwner().ownerAs(Entity.class).map(Entity::getName).orElse(Component.empty()).getString();
+    }
+
+    @MolangFunction(value = "variant", description = "变体")
+    public static float variant(MolangScope scope) {
+        return livingFloat(scope, l -> (float) l.getData(EyelibAttachableData.EXTRA_ENTITY_DATA).variant());
+    }
+
+    @MolangFunction(value = "mark_variant", description = "变体")
+    public static float markVariant(MolangScope scope) {
+        return livingFloat(scope, l -> (float) l.getData(EyelibAttachableData.EXTRA_ENTITY_DATA).mark_variant());
     }
 
     @MolangFunction(value = "damage_x", description = "受伤来源方向 x")
@@ -630,7 +686,7 @@ public final class MolangQuery {
         return livingFloat(scope, living -> (float) living.hurtTime / 20);
     }
 
-    @MolangFunction(value = "is_riding", description = "正在骑乘")
+    @MolangFunction(value = "is_riding", alias = "has_rider", description = "正在骑乘")
     public static float isRiding(MolangScope scope) {
         return livingBool(scope, e -> e.getVehicle() != null);
     }

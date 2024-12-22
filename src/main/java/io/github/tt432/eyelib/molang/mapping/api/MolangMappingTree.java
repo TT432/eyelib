@@ -87,7 +87,7 @@ public class MolangMappingTree {
 
         last.actualClasses.add(actualClass);
         for (Method method : actualClass.classInstance().getMethods()) {
-            if (Modifier.isStatic(method.getModifiers()) && method.getReturnType().equals(float.class)) {
+            if (Modifier.isStatic(method.getModifiers())) {
                 processMethod(actualClass, method, last);
             }
         }
