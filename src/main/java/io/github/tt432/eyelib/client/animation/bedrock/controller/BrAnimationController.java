@@ -24,6 +24,12 @@ public record BrAnimationController(
         BrAcState initialState,
         Map<String, BrAcState> states
 ) implements Animation<BrAnimationController.Data> {
+    public static final Codec<BrAnimationController> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            Codec.STRING.fieldOf("name").forGetter(BrAnimationController::name),
+            BrAcState.CODEC.fieldOf("initialState").forGetter(BrAnimationController::initialState),
+            Codec.unboundedMap(Codec.STRING, BrAcState.CODEC).fieldOf("states").forGetter(BrAnimationController::states)
+    ).apply(ins, BrAnimationController::new));
+
     @Override
     public void onFinish(Data data) {
 // todo

@@ -1,6 +1,8 @@
 package io.github.tt432.eyelib.client.model.bedrock;
 
 import com.google.gson.*;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import org.joml.Vector3f;
@@ -14,6 +16,11 @@ public record BrLocator(
         boolean isNullObject
 ) {
     public static final String NULL_OBJ_PREFIX = "_null_";
+    public static final Codec<BrLocator> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            LocatorEntry.CODEC.fieldOf("locatorEntry").forGetter(BrLocator::locatorEntry),
+            Codec.BOOL.fieldOf("ignoreInheritedScale").forGetter(BrLocator::ignoreInheritedScale),
+            Codec.BOOL.fieldOf("isNullObject").forGetter(BrLocator::isNullObject)
+    ).apply(ins, BrLocator::new));
 
     private static final Gson gson = new Gson();
 

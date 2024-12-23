@@ -28,8 +28,8 @@ public record BrAcState(
 ) {
     public static final Codec<BrAcState> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.withAlternative(
-                    Codec.STRING.xmap(s -> Map.of(s, MolangValue.TRUE_VALUE), map -> map.keySet().iterator().next()),
-                    Codec.unboundedMap(Codec.STRING, MolangValue.CODEC)
+                    Codec.unboundedMap(Codec.STRING, MolangValue.CODEC),
+                    Codec.STRING.xmap(s -> Map.of(s, MolangValue.TRUE_VALUE), map -> map.keySet().iterator().next())
             ).listOf().xmap(
                     l -> l.stream()
                             .map(Map::entrySet)

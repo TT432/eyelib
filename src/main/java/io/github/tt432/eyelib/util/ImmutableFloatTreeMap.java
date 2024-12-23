@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.util;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelib.util.codec.EyelibCodec;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import lombok.AccessLevel;
@@ -10,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -53,15 +53,33 @@ public sealed class ImmutableFloatTreeMap<V> {
     }
 
     public static <V> Codec<ImmutableFloatTreeMap<V>> codec(Codec<V> valueCodec) {
-        return Codec.unboundedMap(EyelibCodec.STR_FLOAT_CODEC, valueCodec)
-                .xmap(map -> of(new FloatArrayList(map.keySet()).toFloatArray(), new Float2ObjectOpenHashMap<>(map)),
-                        map -> map.data);
+        return Codec.unboundedMap(Codec.STRING, valueCodec)
+                .xmap(map -> {
+                    Map<Float, V> newMap = new HashMap<>();
+                    map.forEach((k, v) -> newMap.put(Float.parseFloat(k), v));
+                    float[] floatArray = new FloatArrayList(newMap.keySet()).toFloatArray();
+                    Arrays.sort(floatArray);
+                    return of(floatArray, new Float2ObjectOpenHashMap<>(newMap));
+                }, map -> {
+                    Map<String, V> newMap = new HashMap<>();
+                    map.data.forEach((k, v) -> newMap.put(k.toString(), v));
+                    return newMap;
+                });
     }
 
-    public static <V> Codec<ImmutableFloatTreeMap<V>> dispatched(Function<Float, Codec<? extends V>> valueCodec) {
-        return Codec.dispatchedMap(EyelibCodec.STR_FLOAT_CODEC, valueCodec)
-                .xmap(map -> of(new FloatArrayList(map.keySet()).toFloatArray(), new Float2ObjectOpenHashMap<>(map)),
-                        map -> map.data);
+    public static <V> Codec<ImmutableFloatTreeMap<V>> dispatched(Function<Float, Codec<V>> valueCodec) {
+        return Codec.dispatchedMap(Codec.STRING, s -> valueCodec.apply(Float.parseFloat(s)))
+                .xmap(map -> {
+                    Map<Float, V> newMap = new HashMap<>();
+                    map.forEach((k, v) -> newMap.put(Float.parseFloat(k), v));
+                    float[] floatArray = new FloatArrayList(newMap.keySet()).toFloatArray();
+                    Arrays.sort(floatArray);
+                    return of(floatArray, new Float2ObjectOpenHashMap<>(newMap));
+                }, map -> {
+                    Map<String, V> newMap = new HashMap<>();
+                    map.data.forEach((k, v) -> newMap.put(k.toString(), v));
+                    return newMap;
+                });
     }
 
     private final float[] sortedKeys;

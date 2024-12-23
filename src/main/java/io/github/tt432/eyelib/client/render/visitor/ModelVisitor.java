@@ -9,10 +9,7 @@ import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-import org.joml.Vector2fc;
-import org.joml.Vector3fc;
+import org.joml.*;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -69,8 +66,8 @@ public class ModelVisitor {
 
     public void visitCube(RenderParams renderParams, Context context, Model.Cube cube) {
         for (int i = 0; i < cube.faceCount(); i++) {
-            List<Vector3fc> vertexes = cube.vertexes().get(i);
-            List<Vector2fc> uvs = cube.uvs().get(i);
+            List<Vector3f> vertexes = cube.vertexes().get(i);
+            List<Vector2f> uvs = cube.uvs().get(i);
             Vector3fc normal = cube.normals().get(i);
 
             visitFace(renderParams, context, cube, vertexes, uvs, normal);
@@ -92,7 +89,7 @@ public class ModelVisitor {
     }
 
     public void visitFace(RenderParams renderParams, Context context, Model.Cube cube,
-                          List<Vector3fc> vertexes, List<Vector2fc> uvs, Vector3fc normal) {
+                          List<Vector3f> vertexes, List<Vector2f> uvs, Vector3fc normal) {
 
     }
 

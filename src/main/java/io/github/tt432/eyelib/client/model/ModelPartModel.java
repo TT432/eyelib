@@ -6,8 +6,7 @@ import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import net.minecraft.client.model.geom.ModelPart;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
-import org.joml.Vector2fc;
-import org.joml.Vector3fc;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -76,16 +75,16 @@ public record ModelPartModel(
     public record Cube(
             int faceCount,
             int pointsPerFace,
-            List<List<Vector3fc>> vertexes,
-            List<List<Vector2fc>> uvs,
-            List<Vector3fc> normals
+            List<List<Vector3f>> vertexes,
+            List<List<Vector2f>> uvs,
+            List<Vector3f> normals
     ) implements Model.Cube.ConstCube {
         public Cube(ModelPart.Cube cube) {
             this(cube.polygons.length, 4, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
             ModelPart.Polygon[] polygons = cube.polygons;
 
             for (ModelPart.Polygon polygon : polygons) {
-                List<Vector3fc> tempList = new ArrayList<>();
+                List<Vector3f> tempList = new ArrayList<>();
 
                 for (ModelPart.Vertex vertex : polygon.vertices) {
                     tempList.add(vertex.pos);
@@ -95,7 +94,7 @@ public record ModelPartModel(
             }
 
             for (ModelPart.Polygon polygon : polygons) {
-                List<Vector2fc> tempList = new ArrayList<>();
+                List<Vector2f> tempList = new ArrayList<>();
 
                 for (ModelPart.Vertex vertex : polygon.vertices) {
                     tempList.add(new Vector2f(vertex.u, vertex.v));

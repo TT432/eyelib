@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.loader;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
+import io.github.tt432.eyelib.util.search.Searchable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
@@ -12,9 +13,11 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * @author TT432
@@ -22,7 +25,7 @@ import java.util.Map;
 @Slf4j
 @Getter
 @EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
-public class BrClientEntityLoader extends BrResourcesLoader {
+public class BrClientEntityLoader extends BrResourcesLoader implements Searchable<BrClientEntity> {
     public static final BrClientEntityLoader INSTANCE = new BrClientEntityLoader();
 
     @SubscribeEvent
@@ -50,5 +53,12 @@ public class BrClientEntityLoader extends BrResourcesLoader {
                 log.error("can't load entity {}", key, e);
             }
         }
+    }
+
+    @Override
+    public Stream<Map.Entry<String, BrClientEntity>> search(String searchStr) {
+        return entities.entrySet().stream()
+                .filter(entry -> StringUtils.contains(entry.getKey().toString(), searchStr))
+                .map(entry -> Map.entry(entry.getKey().toString(), entry.getValue()));
     }
 }

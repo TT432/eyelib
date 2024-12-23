@@ -4,11 +4,16 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.chin.codec.ChinExtraCodecs;
+import io.github.tt432.chin.util.Tuple;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.core.Direction;
+import net.minecraft.util.ExtraCodecs;
 import org.jetbrains.annotations.NotNull;
 import org.joml.*;
 
@@ -20,10 +25,17 @@ import java.util.List;
 public record BrCube(
         int faceCount,
         int pointsPerFace,
-        List<List<Vector3fc>> vertexes,
-        List<List<Vector2fc>> uvs,
-        List<Vector3fc> normals
+        List<List<Vector3f>> vertexes,
+        List<List<Vector2f>> uvs,
+        List<Vector3f> normals
 ) implements Model.Cube.ConstCube {
+    public static final Codec<BrCube> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            Codec.INT.fieldOf("faceCount").forGetter(BrCube::faceCount),
+            Codec.INT.fieldOf("pointsPerFace").forGetter(BrCube::pointsPerFace),
+            ExtraCodecs.VECTOR3F.listOf().listOf().fieldOf("vertexes").forGetter(BrCube::vertexes),
+            ChinExtraCodecs.tuple(Codec.FLOAT, Codec.FLOAT).bmap(Vector2f::new, v2f -> Tuple.of(v2f.x, v2f.y)).listOf().listOf().fieldOf("uvs").forGetter(BrCube::uvs),
+            ExtraCodecs.VECTOR3F.listOf().fieldOf("normals").forGetter(BrCube::normals)
+    ).apply(ins, BrCube::new));
     private static final Gson gson = new Gson();
 
     private static Vector3f parse(JsonObject object, String ele) {
@@ -164,7 +176,7 @@ public record BrCube(
         );
     }
 
-    private static List<Vector2fc> getUv(Pair<Vector2f, Vector2f> uv) {
+    private static List<Vector2f> getUv(Pair<Vector2f, Vector2f> uv) {
         var uv1 = uv.right().add(uv.left(), new Vector2f());
 
         return ObjectList.of(

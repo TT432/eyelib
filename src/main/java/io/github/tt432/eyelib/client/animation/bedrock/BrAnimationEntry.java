@@ -10,7 +10,6 @@ import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.util.ResourceLocations;
-import io.github.tt432.eyelib.util.codec.EyelibCodec;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundEvent;
@@ -19,7 +18,6 @@ import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * @param override_previous_animation TODO 不确定
@@ -70,8 +68,15 @@ public record BrAnimationEntry(
                                 // todo
                             }), AnimationEffect::data
                     ).optionalFieldOf("particle_effects", AnimationEffect.empty()).forGetter(o -> o.particleEffects),
-                    ChinExtraCodecs.treeMap(EyelibCodec.STR_FLOAT_CODEC, elementCodec, comparator)
-                            .xmap(map -> new AnimationEffect<>(map, (scope, mv) -> mv.eval(scope)), AnimationEffect::data)
+                    Codec.unboundedMap(Codec.STRING, elementCodec).xmap(map -> {
+                                TreeMap<Float, List<MolangValue>> result = new TreeMap<>(comparator);
+                                map.forEach((k, v) -> result.put(Float.parseFloat(k), v));
+                                return result;
+                            }, map -> {
+                                Map<String, List<MolangValue>> result = new HashMap<>();
+                                map.forEach((k, v) -> result.put(k.toString(), v));
+                                return result;
+                            }).xmap(map -> new AnimationEffect<>(map, (scope, mv) -> mv.eval(scope)), AnimationEffect::data)
                             .optionalFieldOf("timeline", AnimationEffect.empty())
                             .forGetter(o -> o.timeline),
                     Codec.unboundedMap(Codec.STRING.xmap(s -> s.toLowerCase(Locale.ROOT), s -> s), BrBoneAnimation.CODEC).optionalFieldOf("bones", Map.of()).forGetter(o -> o.bones)
@@ -80,16 +85,20 @@ public record BrAnimationEntry(
     }
 
     private static final Codec<TreeMap<Float, List<BrEffectsKeyFrame>>> EFFECTS_CODEC = Codec.dispatchedMap(
-            EyelibCodec.STR_FLOAT_CODEC,
+            Codec.STRING,
             f -> ChinExtraCodecs.singleOrList(BrEffectsKeyFrame.Factory.CODEC).xmap(
-                    fList -> fList.stream().map(v -> v.to(f)).toList(),
+                    fList -> fList.stream().map(v -> v.to(Float.parseFloat(f))).toList(),
                     vList -> vList.stream().map(BrEffectsKeyFrame.Factory::from).toList()
             )
     ).xmap(map -> {
         TreeMap<Float, List<BrEffectsKeyFrame>> result = new TreeMap<>(Comparator.comparingDouble(k -> k));
-        result.putAll(map);
+        map.forEach((k, v) -> result.put(Float.parseFloat(k), v));
         return result;
-    }, Function.identity());
+    }, map -> {
+        Map<String, List<BrEffectsKeyFrame>> result = new HashMap<>();
+        map.forEach((k, v) -> result.put(k.toString(), v));
+        return result;
+    });
 
     public final class Data {
         int loopedTimes;

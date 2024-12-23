@@ -94,7 +94,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
         final TextureAtlasSprite texture;
 
         @Override
-        public void visitFace(RenderParams renderParams, Context context, Model.Cube cube, List<Vector3fc> vertexes, List<Vector2fc> uvs, Vector3fc normal) {
+        public void visitFace(RenderParams renderParams, Context context, Model.Cube cube, List<Vector3f> vertexes, List<Vector2f> uvs, Vector3fc normal) {
             PoseStack poseStack = renderParams.poseStack();
             PoseStack.Pose last = poseStack.last();
 

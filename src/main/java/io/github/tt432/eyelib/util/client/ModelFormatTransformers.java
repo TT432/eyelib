@@ -12,9 +12,8 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.core.Direction;
-import org.joml.Vector2fc;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -105,9 +104,9 @@ public final class ModelFormatTransformers {
         ModelPart.Polygon[] polygons = new ModelPart.Polygon[faceCount];
 
         for (int i = 0; i < faceCount; i++) {
-            List<Vector3fc> vertexes = cube.vertexes().get(i);
+            List<Vector3f> vertexes = cube.vertexes().get(i);
             var vertexCount = vertexes.size();
-            List<Vector2fc> uvs = cube.uvs().get(i);
+            List<Vector2f> uvs = cube.uvs().get(i);
             var vertexArray = new ModelPart.Vertex[vertexCount];
 
             var wrapper = params.poseStack().last();

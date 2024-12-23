@@ -3,9 +3,7 @@ package io.github.tt432.eyelib.client.model;
 import io.github.tt432.chin.util.Lists;
 import io.github.tt432.eyelib.client.model.locator.ModelLocator;
 import org.joml.Vector2f;
-import org.joml.Vector2fc;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 
 import java.util.List;
 import java.util.Map;
@@ -31,27 +29,27 @@ public interface Model {
     }
 
     interface Cube {
-        default List<List<Vector3fc>> vertexes() {
+        default List<List<Vector3f>> vertexes() {
             return Lists.asList(faceCount(), i -> Lists.asList(pointsPerFace(), j -> new Vector3f(positionX(i, j), positionY(i, j), positionZ(i, j))));
         }
 
-        default List<List<Vector2fc>> uvs() {
+        default List<List<Vector2f>> uvs() {
             return Lists.asList(faceCount(), i -> Lists.asList(pointsPerFace(), j -> new Vector2f(uvU(i, j), uvV(i, j))));
         }
 
-        default List<Vector3fc> normals() {
+        default List<Vector3f> normals() {
             return Lists.asList(faceCount(), i -> new Vector3f(normalX(i), normalY(i), normalZ(i)));
         }
 
         interface ConstCube extends Cube {
             @Override
-            List<List<Vector3fc>> vertexes();
+            List<List<Vector3f>> vertexes();
 
             @Override
-            List<List<Vector2fc>> uvs();
+            List<List<Vector2f>> uvs();
 
             @Override
-            List<Vector3fc> normals();
+            List<Vector3f> normals();
 
             @Override
             default float positionX(int faceIndex, int pointIndex) {
