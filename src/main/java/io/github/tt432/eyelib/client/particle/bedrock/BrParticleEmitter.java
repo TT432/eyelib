@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.particle.bedrock;
 
+import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterLocalSpace;
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.shape.Direction;
@@ -15,6 +16,7 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -80,11 +82,13 @@ public class BrParticleEmitter {
 
         space = particle.particleEffect().<EmitterLocalSpace>getComponent(emitterLocalSpaceKey)
                 .orElse(EmitterLocalSpace.EMPTY);
-        components = particle.particleEffect().components().values().stream()
-                .filter(EmitterParticleComponent.class::isInstance)
-                .map(EmitterParticleComponent.class::cast)
-                .toList();
-        components.forEach(c -> c.onStart(this));
+        components = new ArrayList<>();
+        for (ParticleComponent particleComponent : particle.particleEffect().components().values()) {
+            if (particleComponent instanceof EmitterParticleComponent emitterParticleComponent) {
+                components.add(emitterParticleComponent);
+                emitterParticleComponent.onStart(this);
+            }
+        }
         this.level = level;
         this.position = position;
 

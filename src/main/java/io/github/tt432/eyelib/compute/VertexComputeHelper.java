@@ -85,8 +85,6 @@ public class VertexComputeHelper {
             buffer.upload();
         }
 
-        // iris 兼容
-        int currentProgram = glGetInteger(GL_CURRENT_PROGRAM);
         glUseProgram(VertexComputeShader.getShader().program());
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vertexBuffer);
         transformBuffer.bind(1);
@@ -96,8 +94,5 @@ public class VertexComputeHelper {
 
         glDispatchCompute(vertices, 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-        // iris 兼容
-        glUseProgram(currentProgram);
     }
 }

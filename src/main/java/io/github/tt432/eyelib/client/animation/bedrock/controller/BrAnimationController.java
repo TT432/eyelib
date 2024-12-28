@@ -7,14 +7,13 @@ import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * @author TT432
@@ -55,8 +54,8 @@ public record BrAnimationController(
         @Setter
         @Getter
         private BrAcState currState;
-        private final Map<String, Object> data = new HashMap<>();
-        public final Map<String, String> currentAnimations = new HashMap<>();
+        private final Map<String, Object> data = new Object2ObjectOpenHashMap<>();
+        public Map<String, String> currentAnimations = new Object2ObjectOpenHashMap<>();
 
         @SuppressWarnings("unchecked")
         public <D> D getData(Animation<?> animation) {
@@ -67,8 +66,7 @@ public record BrAnimationController(
     @Override
     public void tickAnimation(Data data, Map<String, String> animations, MolangScope scope,
                               float ticks, float playSpeed, float multiplier, BoneRenderInfos infos) {
-        data.currentAnimations.clear();
-        data.currentAnimations.putAll(animations);
+        data.currentAnimations = animations;
 
         var currState = data.getCurrState();
         if (currState == null) currState = switchState(ticks, scope, data, animations, initialState());
@@ -145,25 +143,26 @@ public record BrAnimationController(
     }
 
     record Factory(
-            Optional<String> initialState,
+            String initialState,
             Map<String, BrAcState> states
     ) {
         public static final Codec<Factory> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-                Codec.STRING.optionalFieldOf("initial_state").forGetter(o -> o.initialState),
+                Codec.STRING.optionalFieldOf("initial_state", "default").forGetter(o -> o.initialState),
                 Codec.unboundedMap(Codec.STRING, BrAcState.CODEC).fieldOf("states").forGetter(o -> o.states)
         ).apply(ins, Factory::new));
 
         public static Factory from(BrAnimationController controller) {
-            return new Factory(controller.states.entrySet().stream()
-                    .filter(e -> e.getValue().equals(controller.initialState))
-                    .findFirst()
-                    .map(Map.Entry::getKey)
-                    .or(() -> Optional.of("default")),
-                    controller.states);
+            for (Map.Entry<String, BrAcState> e : controller.states.entrySet()) {
+                if (e.getValue().equals(controller.initialState)) {
+                    return new Factory(e.getKey(), controller.states);
+                }
+            }
+
+            return new Factory("default", controller.states);
         }
 
         public BrAnimationController create(String name) {
-            return new BrAnimationController(name, states.get(initialState.orElse("default")), states);
+            return new BrAnimationController(name, states.get(initialState), states);
         }
     }
 }

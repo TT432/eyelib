@@ -3,11 +3,9 @@ package io.github.tt432.eyelib.client.animation.bedrock.controller;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.MolangValue;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * @param animations           动画名称 -> 混合系数（动画变换倍数）
@@ -31,10 +29,16 @@ public record BrAcState(
                     Codec.unboundedMap(Codec.STRING, MolangValue.CODEC),
                     Codec.STRING.xmap(s -> Map.of(s, MolangValue.TRUE_VALUE), map -> map.keySet().iterator().next())
             ).listOf().xmap(
-                    l -> l.stream()
-                            .map(Map::entrySet)
-                            .flatMap(Set::stream)
-                            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b)),
+                    l -> {
+                        Map<String, MolangValue> result = new Object2ObjectOpenHashMap<>();
+                        for (Map<String, MolangValue> stringMolangValueMap : l) {
+                            Set<Map.Entry<String, MolangValue>> entrySet = stringMolangValueMap.entrySet();
+                            for (Map.Entry<String, MolangValue> entry : entrySet) {
+                                result.put(entry.getKey(), entry.getValue());
+                            }
+                        }
+                        return result;
+                    },
                     List::of
             ).optionalFieldOf("animations", Map.of()).forGetter(o -> o.animations),
             MolangValue.CODEC.optionalFieldOf("on_entry", MolangValue.ZERO).forGetter(o -> o.onEntry),
@@ -42,10 +46,16 @@ public record BrAcState(
             BrAcParticleEffect.CODEC.listOf().optionalFieldOf("particle_effects", List.of()).forGetter(o -> o.particleEffects),
             Codec.STRING.listOf().optionalFieldOf("sound_effects", List.of()).forGetter(o -> o.soundEffects),
             Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).listOf().xmap(
-                    l -> l.stream()
-                            .map(Map::entrySet)
-                            .flatMap(Set::stream)
-                            .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b)),
+                    l -> {
+                        Map<String, MolangValue> map = new Object2ObjectOpenHashMap<>();
+                        for (Map<String, MolangValue> stringMolangValueMap : l) {
+                            Set<Map.Entry<String, MolangValue>> entrySet = stringMolangValueMap.entrySet();
+                            for (Map.Entry<String, MolangValue> entry : entrySet) {
+                                map.put(entry.getKey(), entry.getValue());
+                            }
+                        }
+                        return map;
+                    },
                     List::of
             ).optionalFieldOf("transitions", Map.of()).forGetter(o -> o.transitions),
             Codec.FLOAT.optionalFieldOf("blend_transition", 0F).forGetter(o -> o.blendTransition),

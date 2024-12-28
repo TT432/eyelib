@@ -8,15 +8,14 @@ import io.github.tt432.chin.util.Tuple;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.locator.GroupLocator;
+import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.model.locator.ModelLocator;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author TT432
@@ -164,6 +163,10 @@ public record BrModelEntry(
     private static GroupLocator getLocator(BrBone bone) {
         Map<String, GroupLocator> children = new HashMap<>();
         bone.children().forEach((name, group) -> children.put(name, getLocator(group)));
-        return new GroupLocator(children, bone.locators().values().stream().map(BrLocator::locatorEntry).toList());
+        List<LocatorEntry> list = new ArrayList<>();
+        for (BrLocator brLocator : bone.locators().values()) {
+            list.add(brLocator.locatorEntry());
+        }
+        return new GroupLocator(children, list);
     }
 }

@@ -92,7 +92,7 @@ public record BrParticle(
                                         r.put(i / (list.size() - 1F), list.get(i));
                                     }
                                     return r;
-                                }, tmap -> tmap.values().stream().toList())
+                                }, tmap -> new ArrayList<>(tmap.values()))
                                 .optionalFieldOf("nodes", new TreeMap<>()).forGetter(o -> o.nodes),
                         ChinExtraCodecs.treeMap(EyelibCodec.STR_FLOAT_CODEC, ChainNode.CODEC, comparator).optionalFieldOf("chain_nodes", new TreeMap<>()).forGetter(o -> o.chainNodes),
                         MolangValue.CODEC.optionalFieldOf("input", MolangValue.ZERO).forGetter(o -> o.input),

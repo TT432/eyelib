@@ -12,15 +12,12 @@ import io.github.tt432.eyelib.molang.type.MolangObject;
 import io.github.tt432.eyelib.molang.type.MolangString;
 import io.github.tt432.eyelib.util.client.NativeImages;
 import io.github.tt432.eyelib.util.client.Textures;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * @param part_visibility TODO
@@ -38,37 +35,65 @@ public record RenderControllerEntry(
             MolangValue.CODEC.listOf().optionalFieldOf("textures", List.of()).forGetter(RenderControllerEntry::textures),
             Codec.unboundedMap(Codec.STRING, Codec.unboundedMap(Codec.STRING, Codec.STRING.listOf())).optionalFieldOf("arrays", Map.of()).forGetter(RenderControllerEntry::arrays),
             Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).listOf().xmap(
-                    l -> l.stream()
-                            .flatMap(map -> map.entrySet().stream())
-                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
+                    l -> {
+                        Map<String, MolangValue> result = new Object2ObjectOpenHashMap<>();
+                        for (Map<String, MolangValue> map : l) {
+                            for (Map.Entry<String, MolangValue> stringMolangValueEntry : map.entrySet()) {
+                                if (result.put(stringMolangValueEntry.getKey(), stringMolangValueEntry.getValue()) != null) {
+                                    throw new IllegalStateException("Duplicate key");
+                                }
+                            }
+                        }
+                        return result;
+                    },
                     List::of
             ).optionalFieldOf("materials", Map.of()).forGetter(RenderControllerEntry::materials),
             Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).listOf().xmap(
-                    l -> l.stream()
-                            .flatMap(map -> map.entrySet().stream())
-                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
+                    l -> {
+                        Map<String, MolangValue> result = new Object2ObjectOpenHashMap<>();
+                        for (Map<String, MolangValue> map : l) {
+                            for (Map.Entry<String, MolangValue> stringMolangValueEntry : map.entrySet()) {
+                                if (result.put(stringMolangValueEntry.getKey(), stringMolangValueEntry.getValue()) != null) {
+                                    throw new IllegalStateException("Duplicate key");
+                                }
+                            }
+                        }
+                        return result;
+                    },
                     List::of
             ).optionalFieldOf("part_visibility", Map.of()).forGetter(RenderControllerEntry::part_visibility)
     ).apply(ins, RenderControllerEntry::new));
 
     public void initArrays(MolangScope scope) {
         for (Map<String, List<String>> value : arrays.values()) {
-            value.forEach((name, list) -> scope.set(name.toLowerCase(Locale.ROOT), new MolangArray<>(list.stream().map(MolangString::new).toList())));
+            value.forEach((name, list) -> {
+                List<MolangString> result = new ArrayList<>();
+                for (String s : list) {
+                    result.add(new MolangString(s));
+                }
+                scope.set(name.toLowerCase(Locale.ROOT), new MolangArray<>(result));
+            });
         }
     }
 
     public ResourceLocation getTexture(MolangScope scope, BrClientEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath("complex", textures.stream()
-                .map(mv -> entity.textures().get(mv.getObject(scope).asString()
-                        .toLowerCase(Locale.ROOT).replace("texture.", "")))
-                .collect(Collectors.joining()).replace(":", "_") + ".png");
+        StringBuilder sb = new StringBuilder();
+        for (MolangValue mv : textures) {
+            String s = entity.textures().get(mv.getObject(scope).asString()
+                    .toLowerCase(Locale.ROOT).replace("texture.", ""));
+            sb.append(s);
+        }
+        return ResourceLocation.fromNamespaceAndPath("complex", sb.toString().replace(":", "_") + ".png");
     }
 
     public ResourceLocation getEmissiveTexture(MolangScope scope, BrClientEntity entity) {
-        return ResourceLocation.fromNamespaceAndPath("complex", textures.stream()
-                .map(mv -> entity.textures().get(mv.getObject(scope).asString()
-                        .toLowerCase(Locale.ROOT).replace("texture.", "")))
-                .collect(Collectors.joining()).replace(":", "_") + ".emissive.png");
+        StringBuilder sb = new StringBuilder();
+        for (MolangValue mv : textures) {
+            String s = entity.textures().get(mv.getObject(scope).asString()
+                    .toLowerCase(Locale.ROOT).replace("texture.", ""));
+            sb.append(s);
+        }
+        return ResourceLocation.fromNamespaceAndPath("complex", sb.toString().replace(":", "_") + ".emissive.png");
     }
 
     public void setupModel(MolangScope scope, BrClientEntity entity, ModelComponent component) {
@@ -79,13 +104,23 @@ public record RenderControllerEntry(
             texture = getTexture(scope, entity);
 
             if (Minecraft.getInstance().getTextureManager().getTexture(texture) == MissingTextureAtlasSprite.getTexture()) {
-                NativeImages.uploadImage(texture, Textures.layerMerging(textures.stream().map(mv -> ResourceLocation.parse(entity.textures().get(mv.getObject(scope).asString().toLowerCase(Locale.ROOT).replace("texture.", "") instanceof String s ? s : "minecraft:missingno"))).toList()));
+                List<ResourceLocation> list = new ArrayList<>();
+                for (MolangValue mv : textures) {
+                    ResourceLocation parse = ResourceLocation.parse(entity.textures().get(mv.getObject(scope).asString().toLowerCase(Locale.ROOT).replace("texture.", "") instanceof String s ? s : "minecraft:missingno"));
+                    list.add(parse);
+                }
+                NativeImages.uploadImage(texture, Textures.layerMerging(list));
             }
 
             ResourceLocation emissiveTexture = getEmissiveTexture(scope, entity);
 
             if (Minecraft.getInstance().getTextureManager().getTexture(emissiveTexture) == MissingTextureAtlasSprite.getTexture()) {
-                NativeImages.uploadImage(emissiveTexture, Textures.layerMerging(textures.stream().map(mv -> ResourceLocation.parse(entity.textures().get(mv.getObject(scope).asString().toLowerCase(Locale.ROOT).replace("texture.", "") instanceof String s ? s : "minecraft:missingno")).withPath(s -> replacePng(s, ".png", ".emissive.png"))).toList()));
+                List<ResourceLocation> list = new ArrayList<>();
+                for (MolangValue mv : textures) {
+                    ResourceLocation resourceLocation = ResourceLocation.parse(entity.textures().get(mv.getObject(scope).asString().toLowerCase(Locale.ROOT).replace("texture.", "") instanceof String s ? s : "minecraft:missingno")).withPath(s -> replacePng(s, ".png", ".emissive.png"));
+                    list.add(resourceLocation);
+                }
+                NativeImages.uploadImage(emissiveTexture, Textures.layerMerging(list));
             }
         } else {
             texture = MissingTextureAtlasSprite.getLocation();

@@ -87,8 +87,22 @@ public record BrAnimationEntry(
     private static final Codec<TreeMap<Float, List<BrEffectsKeyFrame>>> EFFECTS_CODEC = Codec.dispatchedMap(
             Codec.STRING,
             f -> ChinExtraCodecs.singleOrList(BrEffectsKeyFrame.Factory.CODEC).xmap(
-                    fList -> fList.stream().map(v -> v.to(Float.parseFloat(f))).toList(),
-                    vList -> vList.stream().map(BrEffectsKeyFrame.Factory::from).toList()
+                    fList -> {
+                        List<BrEffectsKeyFrame> list = new ArrayList<>();
+                        for (BrEffectsKeyFrame.Factory v : fList) {
+                            BrEffectsKeyFrame brEffectsKeyFrame = v.to(Float.parseFloat(f));
+                            list.add(brEffectsKeyFrame);
+                        }
+                        return list;
+                    },
+                    vList -> {
+                        List<BrEffectsKeyFrame.Factory> list = new ArrayList<>();
+                        for (BrEffectsKeyFrame brEffectsKeyFrame : vList) {
+                            BrEffectsKeyFrame.Factory from = BrEffectsKeyFrame.Factory.from(brEffectsKeyFrame);
+                            list.add(from);
+                        }
+                        return list;
+                    }
             )
     ).xmap(map -> {
         TreeMap<Float, List<BrEffectsKeyFrame>> result = new TreeMap<>(Comparator.comparingDouble(k -> k));
@@ -161,35 +175,36 @@ public record BrAnimationEntry(
             animTick = animTimeUpdate;
         }
 
-        for (AnimationEffect.Runtime<?> r : data.effects) {
+        List<AnimationEffect.Runtime<?>> effects = data.effects;
+        for (int i = 0; i < effects.size(); i++) {
+            AnimationEffect.Runtime<?> r = effects.get(i);
             AnimationEffect.Runtime.processEffect(r, animTick, scope);
         }
 
-        for (Map.Entry<String, BrBoneAnimation> boneEntry : bones().entrySet()) {
-            var boneName = boneEntry.getKey();
-            var boneAnim = boneEntry.getValue();
+        float finalMultiplier = multiplier;
+        bones().forEach((boneName, boneAnim) -> {
             BoneRenderInfoEntry entry = infos.getData(boneName);
 
             Vector3f pos = boneAnim.lerpPosition(scope, animTick);
 
             if (pos != null) {
-                pos.mul(multiplier).div(16).mul(-1, 1, 1);
+                pos.mul(finalMultiplier).div(16).mul(-1, 1, 1);
                 entry.getRenderPosition().add(pos);
             }
 
             Vector3f rotation = boneAnim.lerpRotation(scope, animTick);
 
             if (rotation != null) {
-                rotation.mul(multiplier).mul(EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1);
+                rotation.mul(finalMultiplier).mul(EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1);
                 entry.getRenderRotation().add(rotation);
             }
 
             Vector3f scale = boneAnim.lerpScale(scope, animTick);
 
             if (scale != null) {
-                scale.sub(1, 1, 1).mul(multiplier).add(1, 1, 1);
+                scale.sub(1, 1, 1).mul(finalMultiplier).add(1, 1, 1);
                 entry.getRenderScala().mul(scale);
             }
-        }
+        });
     }
 }

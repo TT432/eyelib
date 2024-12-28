@@ -1,9 +1,9 @@
 package io.github.tt432.eyelib.molang;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,9 +14,9 @@ public class MolangOwnerSet {
     @Nullable
     @Setter
     private MolangOwnerSet parent;
-    private final ObjectArrayList<Object> list = new ObjectArrayList<>();
+    private final List<Object> list = new ArrayList<>();
 
-    public void remove(Class<?> clazz) {
+    public <T> void remove(Class<T> clazz) {
         list.removeIf(clazz::isInstance);
     }
 

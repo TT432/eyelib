@@ -2,13 +2,14 @@ package io.github.tt432.eyelib.client.particle.bedrock;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.tt432.eyelib.client.particle.bedrock.component.particle.appearance.ParticleAppearanceBillboard;
+import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.particle.ParticleParticleComponent;
+import io.github.tt432.eyelib.client.particle.bedrock.component.particle.appearance.ParticleAppearanceBillboard;
 import io.github.tt432.eyelib.client.particle.bedrock.component.particle.appearance.ParticleAppearanceLighting;
 import io.github.tt432.eyelib.client.particle.bedrock.component.particle.appearance.ParticleAppearanceTinting;
 import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.util.SimpleTimer;
 import io.github.tt432.eyelib.util.Blackboard;
+import io.github.tt432.eyelib.util.SimpleTimer;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
@@ -22,6 +23,7 @@ import net.minecraft.world.level.LightLayer;
 import org.joml.*;
 
 import java.lang.Math;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -103,10 +105,13 @@ public class BrParticleParticle {
         tinting = particleEffect.<ParticleAppearanceTinting>getComponent(ResourceLocation
                         .withDefaultNamespace("particle_appearance_tinting"))
                 .orElse(null);
-        components = particleEffect.components().values().stream()
-                .filter(ParticleParticleComponent.class::isInstance)
-                .map(ParticleParticleComponent.class::cast)
-                .toList();
+
+        components = new ArrayList<>();
+        for (ParticleComponent particleComponent : particleEffect.components().values()) {
+            if (particleComponent instanceof ParticleParticleComponent particleParticleComponent) {
+                components.add(particleParticleComponent);
+            }
+        }
 
         components.forEach(c -> c.onStart(this));
     }
