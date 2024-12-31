@@ -44,7 +44,7 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
         if (renderParams.consumer() instanceof LazyComputeBufferBuilder lazy && lazy.getEyelib$helper() != null) {
             VertexComputeHelper helper = lazy.getEyelib$helper();
             helper.pushTransform(last.pose(), last.normal(), 0xFF_FF_FF_FF, renderParams.overlay(), renderParams.light());
-            helper.addIndex(bakedBone.nxList().length);
+            helper.addIndex(bakedBone.vertexSize());
 
             BufferBuilders.putAll((BufferBuilder) lazy, bakedBone.vertices());
         } else {
@@ -62,10 +62,16 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
     }
 
     private static void visitVertex(BakedModel.BakedBone bakedBone, VertexConsumer consumer, int overlay, int light) {
-        for (int nIdx = 0; nIdx < bakedBone.nxList().length; nIdx++) {
-            consumer.addVertex(bakedBone.xListResult()[nIdx], bakedBone.yListResult()[nIdx], bakedBone.zListResult()[nIdx],
+        for (int nIdx = 0; nIdx < bakedBone.vertexSize(); nIdx++) {
+            consumer.addVertex(
+                    bakedBone.positionResult()[nIdx * 3],
+                    bakedBone.positionResult()[nIdx * 3 + 1],
+                    bakedBone.positionResult()[nIdx * 3 + 2],
                     0xFF_FF_FF_FF, bakedBone.u()[nIdx], bakedBone.v()[nIdx], overlay, light,
-                    bakedBone.nxListResult()[nIdx], bakedBone.nyListResult()[nIdx], bakedBone.nzListResult()[nIdx]);
+                    bakedBone.normalResult()[nIdx * 3],
+                    bakedBone.normalResult()[nIdx * 3 + 1],
+                    bakedBone.normalResult()[nIdx * 3 + 2]
+            );
         }
     }
 }

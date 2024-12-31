@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.molang.type;
 /**
  * @author TT432
  */
-public class MolangNull implements MolangObject {
+public record MolangNull() implements MolangObject {
     public static final MolangNull INSTANCE = new MolangNull();
 
     @Override
