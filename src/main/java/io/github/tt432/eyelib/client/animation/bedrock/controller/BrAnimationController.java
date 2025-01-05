@@ -35,8 +35,21 @@ public record BrAnimationController(
     }
 
     @Override
-    public boolean isAnimationFinished(Data data) {
-        return false; // todo
+    public boolean anyAnimationFinished(Data data) {
+        return data.currState.animations().keySet().stream().anyMatch(animationName -> {
+            Animation<?> animation = Eyelib.getAnimationManager().get(data.currentAnimations.get(animationName));
+            if (animation == null) return true;
+            return animation.anyAnimationFinished(data.getData(animation));
+        });
+    }
+
+    @Override
+    public boolean allAnimationFinished(Data data) {
+        return data.currState.animations().keySet().stream().allMatch(animationName -> {
+            Animation<?> animation = Eyelib.getAnimationManager().get(data.currentAnimations.get(animationName));
+            if (animation == null) return true;
+            return animation.anyAnimationFinished(data.getData(animation));
+        });
     }
 
     @Override
@@ -65,14 +78,14 @@ public record BrAnimationController(
 
     @Override
     public void tickAnimation(Data data, Map<String, String> animations, MolangScope scope,
-                              float ticks, float playSpeed, float multiplier, BoneRenderInfos infos) {
+                              float ticks, float multiplier, BoneRenderInfos infos) {
         data.currentAnimations = animations;
 
         var currState = data.getCurrState();
         if (currState == null) currState = switchState(ticks, scope, data, animations, initialState());
 
         scope.getOwner().replace(Data.class, data);
-        scope.getOwner().replace(BrAcState.class, currState);
+        scope.getOwner().replace(BrAnimationController.class, this);
 
         for (Map.Entry<String, MolangValue> entry : currState.transitions().entrySet()) {
             if (entry.getValue().evalAsBool(scope)) {
@@ -83,7 +96,7 @@ public record BrAnimationController(
 
         scope.getOwner().replace(BrAcState.class, currState);
 
-        blend(animations, infos, data, scope, data.getLastState(), currState, multiplier, playSpeed, ticks - data.getStartTick());
+        blend(animations, infos, data, scope, data.getLastState(), currState, multiplier, ticks - data.getStartTick());
     }
 
     private static BrAcState switchState(float ticks, MolangScope scope, Data data,
@@ -112,7 +125,7 @@ public record BrAnimationController(
 
     private static void blend(Map<String, String> animations, BoneRenderInfos infos, Data data,
                               MolangScope scope, @Nullable BrAcState lastState, BrAcState currState,
-                              float multiplier, float playSpeed, float stateTimeSec) {
+                              float multiplier, float stateTimeSec) {
         float blendProgress;
 
         if (lastState != null && lastState.blendTransition() != 0) {
@@ -123,23 +136,23 @@ public record BrAnimationController(
 
         currState.animations().forEach((animationName, blendValue) ->
                 updateAnimations(animations, animationName, blendProgress * blendValue.eval(scope),
-                        multiplier, playSpeed, stateTimeSec, infos, data, scope));
+                        multiplier, stateTimeSec, infos, data, scope));
 
         if (lastState != null && blendProgress < 1) {
             lastState.animations().forEach((animationName, blendValue) ->
                     updateAnimations(animations, animationName, (1 - blendProgress) * blendValue.eval(scope),
-                            multiplier, playSpeed, stateTimeSec, infos, data, scope));
+                            multiplier, stateTimeSec, infos, data, scope));
         }
     }
 
     private static void updateAnimations(Map<String, String> animations, String animName, float blendValue,
-                                         float multiplier, float playSpeed, float startedTime, BoneRenderInfos infos,
+                                         float multiplier, float startedTime, BoneRenderInfos infos,
                                          Data data, MolangScope scope) {
         var animation = Eyelib.getAnimationManager().get(animations.get(animName));
 
         if (animation == null) return;
 
-        animation.tickAnimation(data.getData(animation), animations, scope, startedTime, playSpeed, multiplier * blendValue, infos);
+        animation.tickAnimation(data.getData(animation), animations, scope, startedTime, multiplier * blendValue, infos);
     }
 
     record Factory(

@@ -18,9 +18,11 @@ public interface Animation<D> {
 
     void onFinish(D data);
 
-    boolean isAnimationFinished(D data);
+    boolean anyAnimationFinished(D data);
+
+    boolean allAnimationFinished(D data);
 
     D createData();
 
-    void tickAnimation(D data, Map<String, String> animations, MolangScope scope, float ticks, float playSpeed, float multiplier, BoneRenderInfos renderInfos);
+    void tickAnimation(D data, Map<String, String> animations, MolangScope scope, float ticks, float multiplier, BoneRenderInfos renderInfos);
 }

@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 /**
  * @author TT432
@@ -20,8 +22,35 @@ import java.util.Objects;
 @Slf4j
 public record MolangValue(
         @NotNull String context,
-        @NotNull MolangFunction method
+        @NotNull LazyInitializer<MolangFunction> method
 ) {
+    static class LazyInitializer<T> {
+        private final Supplier<T> initializer;
+        private volatile CompletableFuture<T> future;
+        private final T defaultValue;
+
+        public LazyInitializer(Supplier<T> initializer, T defaultValue) {
+            this.initializer = initializer;
+            this.defaultValue = defaultValue;
+            this.future = null;
+        }
+
+        public T get() {
+            if (future == null) {
+                synchronized (this) {
+                    if (future == null) {
+                        future = CompletableFuture.supplyAsync(initializer);
+                    }
+                }
+            }
+            try {
+                return future.getNow(defaultValue);
+            } catch (Exception e) {
+                return defaultValue;
+            }
+        }
+    }
+
     @FunctionalInterface
     public interface MolangFunction {
         MolangFunction NULL = s -> MolangNull.INSTANCE;
@@ -30,7 +59,7 @@ public record MolangValue(
     }
 
     public MolangValue(@NotNull String context) {
-        this(context, MolangCompileHandler.compile(context));
+        this(context, new LazyInitializer<>(() -> MolangCompileHandler.compile(context), MolangFunction.NULL));
     }
 
     public static final float TRUE = 1;
@@ -62,7 +91,7 @@ public record MolangValue(
     public static final StreamCodec<ByteBuf, MolangValue> STREAM_CODEC = ByteBufCodecs.fromCodec(CODEC);
 
     public MolangObject getObject(MolangScope scope) {
-        return Objects.requireNonNullElse(method.apply(scope), MolangNull.INSTANCE);
+        return Objects.requireNonNullElse(method.get().apply(scope), MolangNull.INSTANCE);
     }
 
     public float eval(MolangScope scope) {

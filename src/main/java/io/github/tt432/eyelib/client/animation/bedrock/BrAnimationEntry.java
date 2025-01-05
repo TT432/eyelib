@@ -136,8 +136,13 @@ public record BrAnimationEntry(
     }
 
     @Override
-    public boolean isAnimationFinished(Data data) {
-        return data.animTime > animationLength;
+    public boolean anyAnimationFinished(Data data) {
+        return data.loopedTimes > 0 || data.animTime > animationLength;
+    }
+
+    @Override
+    public boolean allAnimationFinished(Data data) {
+        return anyAnimationFinished(data);
     }
 
     @Override
@@ -147,13 +152,13 @@ public record BrAnimationEntry(
 
     @Override
     public void tickAnimation(Data data, Map<String, String> animations, MolangScope scope,
-                              float ticks, float playSpeed, float multiplier, BoneRenderInfos infos) {
+                              float ticks, float multiplier, BoneRenderInfos infos) {
         multiplier *= Math.clamp(blendWeight().eval(scope), 0, 1);
 
         scope.getOwner().replace(Data.class, data);
         data.deltaTime = ticks - data.lastTicks;
         data.lastTicks = ticks;
-        var animTimeUpdate = data.animTime + (anim_time_update().eval(scope) - data.animTime) * playSpeed;
+        var animTimeUpdate = data.animTime + (anim_time_update().eval(scope) - data.animTime);
         data.animTime = animTimeUpdate;
 
         float animTick;

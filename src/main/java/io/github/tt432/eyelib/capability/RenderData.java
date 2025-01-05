@@ -14,6 +14,8 @@ import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -22,11 +24,17 @@ import java.util.Optional;
 @Getter
 public class RenderData<T> {
     public static final Codec<RenderData<Object>> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            ModelComponent.SerializableInfo.CODEC.optionalFieldOf("model").forGetter(ac -> Optional.ofNullable(ac.modelComponent.getSerializableInfo())),
+            ModelComponent.SerializableInfo.CODEC.listOf().optionalFieldOf("model").forGetter(ac -> Optional.of(ac.modelComponents.stream().map(ModelComponent::getSerializableInfo).toList())),
             AnimationComponent.SerializableInfo.CODEC.optionalFieldOf("animation").forGetter(ac -> Optional.ofNullable(ac.animationComponent.getSerializableInfo()))
     ).apply(ins, (mcsi, acsi) -> {
         RenderData<Object> result = new RenderData<>();
-        mcsi.ifPresent(result.modelComponent::setInfo);
+        mcsi.ifPresent(l -> {
+            for (ModelComponent.SerializableInfo serializableInfo : l) {
+                ModelComponent e = new ModelComponent();
+                e.setInfo(serializableInfo);
+                result.modelComponents.add(e);
+            }
+        });
         acsi.ifPresent(result.animationComponent::setInfo);
         return result;
     }));
@@ -41,7 +49,7 @@ public class RenderData<T> {
     private boolean useBuiltInRenderSystem = true;
 
     @NotNull
-    private final ModelComponent modelComponent = new ModelComponent();
+    private final List<ModelComponent> modelComponents = new ArrayList<>();
 
     @NotNull
     private final AnimationComponent animationComponent = new AnimationComponent();
@@ -49,10 +57,16 @@ public class RenderData<T> {
     private final ClientEntityComponent clientEntityComponent = new ClientEntityComponent();
 
     public void sync() {
-        if (modelComponent.serializable()) {
-            ownerAs(Entity.class).ifPresent(e -> PacketDistributor.sendToPlayersTrackingEntityAndSelf(e,
-                    new ModelComponentSyncPacket(e.getId(), modelComponent.getSerializableInfo())));
+        List<ModelComponent.SerializableInfo> components = new ArrayList<>();
+
+        for (ModelComponent modelComponent : modelComponents) {
+            if (modelComponent.serializable()) {
+                components.add(modelComponent.getSerializableInfo());
+            }
         }
+
+        ownerAs(Entity.class).ifPresent(e -> PacketDistributor.sendToPlayersTrackingEntityAndSelf(e,
+                new ModelComponentSyncPacket(e.getId(), components)));
 
         if (animationComponent.serializable()) {
             ownerAs(Entity.class).ifPresent(e -> PacketDistributor.sendToPlayersTrackingEntityAndSelf(e,

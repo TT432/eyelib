@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.network;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.capability.RenderData;
+import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.loader.BrParticleLoader;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
@@ -34,7 +35,12 @@ public class EyelibNetworkManager {
                     if (entity == null) return;
                     RenderData<?> data = RenderData.getComponent(entity);
                     if (data == null) return;
-                    data.getModelComponent().setInfo(payload.modelInfo());
+                    data.getModelComponents().clear();
+                    for (ModelComponent.SerializableInfo serializableInfo : payload.modelInfo()) {
+                        ModelComponent e = new ModelComponent();
+                        e.setInfo(serializableInfo);
+                        data.getModelComponents().add(e);
+                    }
                 });
 
         registrar.playToClient(AnimationComponentSyncPacket.TYPE, AnimationComponentSyncPacket.STREAM_CODEC,

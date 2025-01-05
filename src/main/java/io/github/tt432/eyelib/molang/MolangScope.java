@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public final class MolangScope {
     @Getter
-    private MolangOwnerSet owner = new MolangOwnerSet();
+    private final MolangOwnerSet owner = new MolangOwnerSet();
 
     @Nullable
     private MolangScope parent;

@@ -14,6 +14,9 @@ import io.github.tt432.eyelib.compute.VertexComputeHelper;
 import io.github.tt432.eyelib.util.client.BufferBuilders;
 import lombok.Setter;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
+
 /**
  * @author TT432
  */
@@ -41,17 +44,26 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
 
         PoseStack.Pose last = poseStack.last();
 
-        if (renderParams.consumer() instanceof LazyComputeBufferBuilder lazy && lazy.getEyelib$helper() != null) {
-            VertexComputeHelper helper = lazy.getEyelib$helper();
-            helper.pushTransform(last.pose(), last.normal(), 0xFF_FF_FF_FF, renderParams.overlay(), renderParams.light());
-            helper.addIndex(bakedBone.vertexSize());
+        AtomicBoolean render = new AtomicBoolean(renderParams.partVisibility().isEmpty());
+        renderParams.partVisibility().forEach((k, v) -> {
+            if (!Pattern.compile(k.replace("*", ".*")).matcher(group.name()).matches() || v) {
+                render.set(true);
+            }
+        });
 
-            BufferBuilders.putAll((BufferBuilder) lazy, bakedBone.vertices());
-        } else {
-            bakedBone.transformPos(last.pose());
-            bakedBone.transformNormal(last.normal());
+        if (render.get()) {
+            if (renderParams.consumer() instanceof LazyComputeBufferBuilder lazy && lazy.getEyelib$helper() != null) {
+                VertexComputeHelper helper = lazy.getEyelib$helper();
+                helper.pushTransform(last.pose(), last.normal(), 0xFF_FF_FF_FF, renderParams.overlay(), renderParams.light());
+                helper.addIndex(bakedBone.vertexSize());
 
-            visitVertex(bakedBone, renderParams.consumer(), renderParams.overlay(), renderParams.light());
+                BufferBuilders.putAll((BufferBuilder) lazy, bakedBone.vertices());
+            } else {
+                bakedBone.transformPos(last.pose());
+                bakedBone.transformNormal(last.normal());
+
+                visitVertex(bakedBone, renderParams.consumer(), renderParams.overlay(), renderParams.light());
+            }
         }
 
         for (var child : group.children().values()) {

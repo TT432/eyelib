@@ -35,6 +35,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.horse.Llama;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.level.block.WoolCarpetBlock;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
@@ -43,6 +46,7 @@ import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -89,11 +93,14 @@ public class EntityRenderSystem {
             }
         }
 
+        List<ModelComponent> components = cap.getModelComponents();
+        components.clear();
+
         if (clientEntityComponent.getClientEntity() != null) {
             for (String renderController : clientEntityComponent.getClientEntity().render_controllers()) {
                 RenderControllerEntry renderControllerEntry = Eyelib.getRenderControllerManager().get(renderController);
                 if (renderControllerEntry != null)
-                    renderControllerEntry.setupModel(cap.getScope(), clientEntityComponent.getClientEntity(), cap.getModelComponent());
+                    components.add(renderControllerEntry.setupModel(cap.getScope(), clientEntityComponent.getClientEntity()));
             }
 
             if (changed) {
@@ -114,79 +121,90 @@ public class EntityRenderSystem {
             if (component.getSerializableInfo() != null) {
                 float ticks = (ClientTickHandler.getTick() + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) / 20;
                 BoneRenderInfos tickedInfos = BrAnimator.tickAnimation(component, scope, ticks);
-                cap.getModelComponent().getBoneInfos().set(tickedInfos);
+
+                for (ModelComponent modelComponent : cap.getModelComponents()) {
+                    modelComponent.getBoneInfos().set(tickedInfos);
+                }
             }
         }
 
-        ModelComponent modelComponent = cap.getModelComponent();
-
-        var model = modelComponent.getModel();
-        ResourceLocation texture = modelComponent.getTexture();
-
-        if (model != null && texture != null) {
-            event.setCanceled(true);
-            MultiBufferSource multiBufferSource = event.getMultiBufferSource();
-
-            PoseStack poseStack = event.getPoseStack();
-
-            RenderType renderType = modelComponent.getRenderType(texture);
-            VertexConsumer buffer = multiBufferSource.getBuffer(renderType);
-
-            poseStack.pushPose();
-
-            RenderParams renderParams = new RenderParams(entity, poseStack.last().copy(), poseStack,
-                    renderType, texture, modelComponent.isSolid(), buffer, event.getPackedLight(),
-                    LivingEntityRenderer.getOverlayCoords(entity,
-                            ((LivingEntityRendererAccessor) (event.getRenderer()))
-                                    .callGetWhiteOverlayProgress(entity, event.getPartialTick())));
-
-            if (clientEntityComponent.getClientEntity() != null) {
-                clientEntityComponent.getClientEntity().scripts().ifPresent(s -> {
-                    var scope = cap.getScope();
-                    poseStack.scale(s.getScaleX(scope), s.getScaleY(scope), s.getScaleZ(scope));
-                });
-
-                if (entity.isBaby()) {
-                    poseStack.scale(0.5F, 0.5F, 0.5F);
-                }
-
-                float yBodyRot = Mth.rotLerp(event.getPartialTick(), entity.yBodyRotO, entity.yBodyRot);
-                poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
+        if (entity instanceof Llama llama) {
+            if (llama.getBodyArmorItem().getItem() instanceof BlockItem bi && bi.getBlock() instanceof WoolCarpetBlock wc) {
+                cap.getScope().set("variable.decortextureindex", wc.getColor().getId() + 1);
+            } else {
+                cap.getScope().set("variable.decortextureindex", 0);
             }
-
-            RenderHelper renderHelper = Eyelib.getRenderHelper();
-
-            {
-                if (!irisInstalled) {
-                    var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), event.getMultiBufferSource()));
-                    ((LazyComputeBufferBuilder) buffer).setEyelib$helper(helper.left());
-                }
-                renderHelper.render(renderParams, model, modelComponent.getBoneInfos());
-            }
-
-            ResourceLocation emissiveTexture = texture.withPath(s -> replacePng(s, ".png", ".emissive.png"));
-            AbstractTexture texture1 = Minecraft.getInstance().getTextureManager().getTexture(emissiveTexture);
-
-            if (texture1 != MissingTextureAtlasSprite.getTexture()) {
-                var rt1 = modelComponent.getRenderType(emissiveTexture);
-                VertexConsumer buffer1 = multiBufferSource.getBuffer(rt1);
-                renderHelper = Eyelib.getRenderHelper();
-
-                if (!irisInstalled) {
-                    var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), event.getMultiBufferSource()));
-                    ((LazyComputeBufferBuilder) buffer1).setEyelib$helper(helper.left());
-                }
-                renderHelper.render(
-                        renderParams
-                                .withRenderType(rt1)
-                                .withLight(LightTexture.FULL_BRIGHT)
-                                .withConsumer(buffer1)
-                                .withTexture(emissiveTexture),
-                        model, modelComponent.getBoneInfos());
-            }
-
-            poseStack.popPose();
         }
+
+        components.forEach(modelComponent -> {
+            var model = modelComponent.getModel();
+            ResourceLocation texture = modelComponent.getTexture();
+
+            if (model != null && texture != null) {
+                event.setCanceled(true);
+                MultiBufferSource multiBufferSource = event.getMultiBufferSource();
+
+                PoseStack poseStack = event.getPoseStack();
+
+                RenderType renderType = modelComponent.getRenderType(texture);
+                VertexConsumer buffer = multiBufferSource.getBuffer(renderType);
+
+                poseStack.pushPose();
+
+                RenderParams renderParams = new RenderParams(entity, poseStack.last().copy(), poseStack,
+                        renderType, texture, modelComponent.isSolid(), buffer, event.getPackedLight(),
+                        LivingEntityRenderer.getOverlayCoords(entity,
+                                ((LivingEntityRendererAccessor) (event.getRenderer()))
+                                        .callGetWhiteOverlayProgress(entity, event.getPartialTick())),
+                        modelComponent.getPartVisibility());
+
+                if (clientEntityComponent.getClientEntity() != null) {
+                    clientEntityComponent.getClientEntity().scripts().ifPresent(s -> {
+                        var scope = cap.getScope();
+                        poseStack.scale(s.getScaleX(scope), s.getScaleY(scope), s.getScaleZ(scope));
+                    });
+
+                    if (entity.isBaby()) {
+                        poseStack.scale(0.5F, 0.5F, 0.5F);
+                    }
+
+                    float yBodyRot = Mth.rotLerp(event.getPartialTick(), entity.yBodyRotO, entity.yBodyRot);
+                    poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
+                }
+
+                {
+                    RenderHelper renderHelper = Eyelib.getRenderHelper();
+                    if (!irisInstalled) {
+                        var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), event.getMultiBufferSource()));
+                        ((LazyComputeBufferBuilder) buffer).setEyelib$helper(helper.left());
+                    }
+                    renderHelper.render(renderParams, model, modelComponent.getBoneInfos());
+                }
+
+                ResourceLocation emissiveTexture = texture.withPath(s -> replacePng(s, ".png", ".emissive.png"));
+                AbstractTexture texture1 = Minecraft.getInstance().getTextureManager().getTexture(emissiveTexture);
+
+                if (texture1 != MissingTextureAtlasSprite.getTexture()) {
+                    var rt1 = modelComponent.getRenderType(emissiveTexture);
+                    VertexConsumer buffer1 = multiBufferSource.getBuffer(rt1);
+                    RenderHelper renderHelper = Eyelib.getRenderHelper();
+
+                    if (!irisInstalled) {
+                        var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), event.getMultiBufferSource()));
+                        ((LazyComputeBufferBuilder) buffer1).setEyelib$helper(helper.left());
+                    }
+                    renderHelper.render(
+                            renderParams
+                                    .withRenderType(rt1)
+                                    .withLight(LightTexture.FULL_BRIGHT)
+                                    .withConsumer(buffer1)
+                                    .withTexture(emissiveTexture),
+                            model, modelComponent.getBoneInfos());
+                }
+
+                poseStack.popPose();
+            }
+        });
     }
 
     static String replacePng(String originalString, String old, String newStr) {

@@ -28,7 +28,7 @@ public final class BrAnimator {
             if (animation == null) continue;
 
             animation.tickAnimation(cast(component.getAnimationData(animation.name())),
-                    component.getSerializableInfo().animations(), scope, ticks, multiplier.eval(scope), 1, infos);
+                    component.getSerializableInfo().animations(), scope, ticks, multiplier.eval(scope), infos);
         }
 
         return infos;

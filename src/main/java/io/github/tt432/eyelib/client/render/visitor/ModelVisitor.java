@@ -14,6 +14,8 @@ import org.joml.*;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 /**
  * @author TT432
@@ -53,8 +55,17 @@ public class ModelVisitor {
 
         visitLocators(renderParams, context, group, poseStack, data, transformer, groupLocator);
 
-        for (int i = 0; i < group.cubes().size(); i++) {
-            visitCube(renderParams, context, group.cubes().get(i));
+        AtomicBoolean render = new AtomicBoolean(renderParams.partVisibility().isEmpty());
+        renderParams.partVisibility().forEach((k, v) -> {
+            if (!Pattern.compile(k.replace("*", ".*")).matcher(group.name()).matches() || v) {
+                render.set(true);
+            }
+        });
+
+        if (render.get()) {
+            for (int i = 0; i < group.cubes().size(); i++) {
+                visitCube(renderParams, context, group.cubes().get(i));
+            }
         }
 
         for (var child : group.children().values()) {

@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import lombok.With;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
@@ -21,6 +22,7 @@ public record RenderParams(
         boolean isSolid,
         VertexConsumer consumer,
         int light,
-        int overlay
+        int overlay,
+        Object2BooleanOpenHashMap<String> partVisibility
 ) {
 }

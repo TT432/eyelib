@@ -12,6 +12,7 @@ import io.github.tt432.eyelib.molang.type.MolangObject;
 import io.github.tt432.eyelib.molang.type.MolangString;
 import io.github.tt432.eyelib.util.client.NativeImages;
 import io.github.tt432.eyelib.util.client.Textures;
+import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
@@ -79,9 +80,7 @@ public record RenderControllerEntry(
     public ResourceLocation getTexture(MolangScope scope, BrClientEntity entity) {
         StringBuilder sb = new StringBuilder();
         for (MolangValue mv : textures) {
-            String s = entity.textures().get(mv.getObject(scope).asString()
-                    .toLowerCase(Locale.ROOT).replace("texture.", ""));
-            sb.append(s);
+            sb.append(get(scope, mv, "texture", entity.textures()));
         }
         return ResourceLocation.fromNamespaceAndPath("complex", sb.toString().replace(":", "_") + ".png");
     }
@@ -96,7 +95,7 @@ public record RenderControllerEntry(
         return ResourceLocation.fromNamespaceAndPath("complex", sb.toString().replace(":", "_") + ".emissive.png");
     }
 
-    public void setupModel(MolangScope scope, BrClientEntity entity, ModelComponent component) {
+    public ModelComponent setupModel(MolangScope scope, BrClientEntity entity) {
         initArrays(scope);
         ResourceLocation texture;
 
@@ -106,7 +105,7 @@ public record RenderControllerEntry(
             if (Minecraft.getInstance().getTextureManager().getTexture(texture) == MissingTextureAtlasSprite.getTexture()) {
                 List<ResourceLocation> list = new ArrayList<>();
                 for (MolangValue mv : textures) {
-                    ResourceLocation parse = ResourceLocation.parse(entity.textures().get(mv.getObject(scope).asString().toLowerCase(Locale.ROOT).replace("texture.", "") instanceof String s ? s : "minecraft:missingno"));
+                    ResourceLocation parse = ResourceLocation.parse(get(scope, mv, "texture", entity.textures()));
                     list.add(parse);
                 }
                 NativeImages.uploadImage(texture, Textures.layerMerging(list));
@@ -117,7 +116,7 @@ public record RenderControllerEntry(
             if (Minecraft.getInstance().getTextureManager().getTexture(emissiveTexture) == MissingTextureAtlasSprite.getTexture()) {
                 List<ResourceLocation> list = new ArrayList<>();
                 for (MolangValue mv : textures) {
-                    ResourceLocation resourceLocation = ResourceLocation.parse(entity.textures().get(mv.getObject(scope).asString().toLowerCase(Locale.ROOT).replace("texture.", "") instanceof String s ? s : "minecraft:missingno")).withPath(s -> replacePng(s, ".png", ".emissive.png"));
+                    ResourceLocation resourceLocation = ResourceLocation.parse(get(scope, mv, "texture", entity.textures())).withPath(s -> replacePng(s, ".png", ".emissive.png"));
                     list.add(resourceLocation);
                 }
                 NativeImages.uploadImage(emissiveTexture, Textures.layerMerging(list));
@@ -126,26 +125,20 @@ public record RenderControllerEntry(
             texture = MissingTextureAtlasSprite.getLocation();
         }
 
-        ModelComponent.SerializableInfo serializableInfo = component.getSerializableInfo();
+        ModelComponent component = new ModelComponent();
 
-        if (serializableInfo == null) {
-            component.setInfo(new ModelComponent.SerializableInfo(
-                    entity.geometry().get(geometry.getObject(scope).asString()),
-                    texture,
-                    ResourceLocation.parse(materials.containsKey("*") ? get(scope, materials.get("*"), "material", entity.materials()) : ""),
-                    List.of()
-            ));
-        } else {
-            if (geometry != MolangValue.ZERO)
-                serializableInfo = serializableInfo.withModel(get(scope, geometry, "geometry", entity.geometry()));
-            if (!textures.isEmpty())
-                serializableInfo = serializableInfo.withTexture(texture);
-            var material = materials.containsKey("*") ? get(scope, materials.get("*"), "material", entity.materials()) : "";
-            if (material != null && !materials.isEmpty() && !material.isEmpty())
-                serializableInfo = serializableInfo.withRenderType(ResourceLocation.parse(material));
+        component.setInfo(new ModelComponent.SerializableInfo(
+                get(scope, geometry, "geometry", entity.geometry()),
+                texture,
+                ResourceLocation.parse(materials.containsKey("*") ? get(scope, materials.get("*"), "material", entity.materials()) : "")
+        ));
 
-            component.setInfo(serializableInfo);
-        }
+        Object2BooleanOpenHashMap<String> partVisibility = component.getPartVisibility();
+        partVisibility.clear();
+
+        part_visibility.forEach((k, v) -> partVisibility.put(k, v.evalAsBool(scope)));
+
+        return component;
     }
 
     String get(MolangScope scope, MolangValue value, String type, Map<String, String> map) {

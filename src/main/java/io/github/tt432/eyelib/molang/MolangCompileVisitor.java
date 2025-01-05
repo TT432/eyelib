@@ -105,14 +105,13 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
 
     @Override
     public String visitTernaryConditionalOperator(MolangParser.TernaryConditionalOperatorContext ctx) {
-        return valueOf(visit(ctx.expr(0)) + ".asBoolean() ? "
-                + visit(ctx.expr(1)) + ".asFloat() : " + visit(ctx.expr(2)) + ".asFloat()");
+        return visit(ctx.expr(0)) + ".asBoolean() ? " + visit(ctx.expr(1)) + " : " + visit(ctx.expr(2));
     }
 
     @Override
     public String visitBinaryConditionalOperator(MolangParser.BinaryConditionalOperatorContext ctx) {
-        return valueOf(visit(ctx.expr(0)) + ".asBoolean() ? "
-                + visit(ctx.expr(1)) + ".asFloat() : 0F");
+        return visit(ctx.expr(0)) + ".asBoolean() ? "
+                + visit(ctx.expr(1)) + " : " + MolangNull.class.getName() + ".INSTANCE";
     }
 
     @Override
@@ -186,7 +185,11 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
                         }
                         """.formatted(visit(expr)));
             } else {
-                params.add(visit(expr) + ".asFloat()");
+                if (expr instanceof MolangParser.StringValueContext) {
+                    params.add(visit(expr) + ".asString()");
+                } else {
+                    params.add(visit(expr) + ".asFloat()");
+                }
             }
         }
 
@@ -207,7 +210,8 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
         String fieldName = rename(ctx.getText());
         String field = MolangMappingTree.INSTANCE.findField(fieldName);
 
-        if (fieldName.startsWith("variable")) {
+        if (fieldName.startsWith("variable") || fieldName.startsWith("array") || fieldName.startsWith("texture")
+                || fieldName.startsWith("material") || fieldName.startsWith("geometry")) {
             return "$1.get(\"" + fieldName + "\")";
         }
 
