@@ -46,6 +46,11 @@ public class NativeImages {
 
     public NativeImage loadImage(InputStream inputStream) throws IOException {
         var bufferedImage = ImageIO.read(inputStream);
+
+        if (bufferedImage == null) {
+            throw new IllegalArgumentException("Invalid buffer");
+        }
+
         var image = new NativeImage(NativeImage.Format.RGBA,
                 bufferedImage.getWidth(), bufferedImage.getHeight(), false);
         var w = bufferedImage.getWidth();
