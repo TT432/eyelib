@@ -30,6 +30,7 @@ import java.util.List;
  * @author TT432
  */
 public class BrParticleParticle {
+    @Getter
     private final BrParticleEmitter emitter;
     @Getter
     private final Vector3f position = new Vector3f();
@@ -169,10 +170,10 @@ public class BrParticleParticle {
 
         float x = size.x;
         float y = size.y;
-        var p0 = new Vector3f(x, y, 0).mulPosition(m4).add(position).sub(cameraPos);
-        var p1 = new Vector3f(-x, y, 0).mulPosition(m4).add(position).sub(cameraPos);
-        var p2 = new Vector3f(-x, -y, 0).mulPosition(m4).add(position).sub(cameraPos);
-        var p3 = new Vector3f(x, -y, 0).mulPosition(m4).add(position).sub(cameraPos);
+        var p0 = new Vector3f(x, y, 0).mulPosition(m4).add(position).add(emitter.getPosition()).sub(cameraPos);
+        var p1 = new Vector3f(-x, y, 0).mulPosition(m4).add(position).add(emitter.getPosition()).sub(cameraPos);
+        var p2 = new Vector3f(-x, -y, 0).mulPosition(m4).add(position).add(emitter.getPosition()).sub(cameraPos);
+        var p3 = new Vector3f(x, -y, 0).mulPosition(m4).add(position).add(emitter.getPosition()).sub(cameraPos);
 
         Vector3f normal = new Vector3f(0, 0, 1).mul(m3);
         int light;

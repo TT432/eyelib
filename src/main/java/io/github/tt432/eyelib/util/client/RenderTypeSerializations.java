@@ -27,7 +27,7 @@ public class RenderTypeSerializations {
     public static EntityRenderTypeData getFactory(ResourceLocation id) {
         return switch (id.toString()) {
             case "minecraft:cutout" -> new EntityRenderTypeData(id, false, RenderType::entityCutout);
-            case "minecraft:translucent" -> new EntityRenderTypeData(id, false, RenderType::entityTranslucent);
+            case "minecraft:translucent", "minecraft:particles_blend" -> new EntityRenderTypeData(id, false, RenderType::entityTranslucent);
             default -> new EntityRenderTypeData(id, true, RenderType::entitySolid);
         };
     }

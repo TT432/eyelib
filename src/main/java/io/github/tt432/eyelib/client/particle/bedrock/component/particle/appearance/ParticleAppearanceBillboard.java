@@ -58,6 +58,7 @@ public record ParticleAppearanceBillboard(
         } : new Vector3f();
 
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+        var emitterRotation = particle.getEmitter().getRotation();
 
         switch (facingCameraMode) {
             case ROTATE_XYZ -> m4.rotate(camera.rotation());
@@ -75,15 +76,15 @@ public record ParticleAppearanceBillboard(
             case EMITTER_TRANSFORM_XY -> {
                 // 粒子匹配发射器的 xy 平面变换
                 // 假设有发射器变换矩阵 emitterMatrix
-                // todo m4.set(emitterMatrix).rotateX(cameraRot.x).rotateY(cameraRot.y).rotateZ(cameraRot.z);
+                m4.rotateZYX(emitterRotation);
             }
             case EMITTER_TRANSFORM_XZ -> {
                 // 粒子匹配发射器的 xz 平面变换
-                // todo m4.set(emitterMatrix).rotateX(cameraRot.x).rotateY(cameraRot.y).rotateZ(cameraRot.z);
+                m4.rotateZYX(emitterRotation).rotateX(90 * EyeMath.DEGREES_TO_RADIANS);
             }
             case EMITTER_TRANSFORM_YZ -> {
                 // 粒子匹配发射器的 yz 平面变换
-                // todo m4.set(emitterMatrix).rotateX(cameraRot.x).rotateY(cameraRot.y).rotateZ(cameraRot.z);
+                m4.rotateZYX(emitterRotation).rotateY(90 * EyeMath.DEGREES_TO_RADIANS);
             }
         }
     }
@@ -149,14 +150,14 @@ public record ParticleAppearanceBillboard(
             ).apply(ins, Flipbook::new));
 
             public Vector4f get(MolangScope scope, float lifetime, float time) {
-                int max = Mth.floor(maxFrame.eval(scope));
+                int max = Mth.floor(maxFrame.eval(scope)) - 1;
                 int frame;
                 if (stretchToLifetime) frame = Mth.floor((time / lifetime) * max);
                 else frame = Mth.floor(framesPerSecond.eval(scope) * time);
 
                 if (frame > max) {
                     if (loop) {
-                        frame %= max;
+                        frame %= (max + 1);
                     } else {
                         frame = max;
                     }

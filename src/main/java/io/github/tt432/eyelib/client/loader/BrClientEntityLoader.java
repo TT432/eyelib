@@ -35,6 +35,10 @@ public class BrClientEntityLoader extends BrResourcesLoader implements Searchabl
 
     private final Map<ResourceLocation, BrClientEntity> entities = new HashMap<>();
 
+    public BrClientEntity get(ResourceLocation id) {
+        return entities.get(id);
+    }
+
     private BrClientEntityLoader() {
         super("entity", "json");
     }

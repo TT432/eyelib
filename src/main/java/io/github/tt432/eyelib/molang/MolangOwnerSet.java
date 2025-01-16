@@ -3,9 +3,9 @@ package io.github.tt432.eyelib.molang;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author TT432
@@ -14,7 +14,7 @@ public class MolangOwnerSet {
     @Nullable
     @Setter
     private MolangOwnerSet parent;
-    private final List<Object> list = new ArrayList<>();
+    private final List<Object> list = new CopyOnWriteArrayList<>();
 
     public <T> void remove(Class<T> clazz) {
         list.removeIf(clazz::isInstance);

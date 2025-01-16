@@ -4,6 +4,12 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.Animation;
+import io.github.tt432.eyelib.client.animation.AnimationEffects;
+import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
+import io.github.tt432.eyelib.client.entity.BrClientEntity;
+import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
+import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
+import io.github.tt432.eyelib.client.particle.bedrock.BrParticleRenderManager;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
@@ -11,9 +17,13 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * @author TT432
@@ -69,6 +79,7 @@ public record BrAnimationController(
         private BrAcState currState;
         private final Map<String, Object> data = new Object2ObjectOpenHashMap<>();
         public Map<String, String> currentAnimations = new Object2ObjectOpenHashMap<>();
+        private final List<RuntimeParticlePlayData> particles = new ArrayList<>();
 
         @SuppressWarnings("unchecked")
         public <D> D getData(Animation<?> animation) {
@@ -78,7 +89,7 @@ public record BrAnimationController(
 
     @Override
     public void tickAnimation(Data data, Map<String, String> animations, MolangScope scope,
-                              float ticks, float multiplier, BoneRenderInfos infos) {
+                              float ticks, float multiplier, BoneRenderInfos infos, AnimationEffects effects) {
         data.currentAnimations = animations;
 
         var currState = data.getCurrState();
@@ -96,7 +107,9 @@ public record BrAnimationController(
 
         scope.getOwner().replace(BrAcState.class, currState);
 
-        blend(animations, infos, data, scope, data.getLastState(), currState, multiplier, ticks - data.getStartTick());
+        blend(animations, infos, data, scope, data.getLastState(), currState, multiplier, ticks - data.getStartTick(), effects);
+
+        effects.particles.add(data.particles);
     }
 
     private static BrAcState switchState(float ticks, MolangScope scope, Data data,
@@ -108,9 +121,31 @@ public record BrAnimationController(
         if (lastState != null) {
             data.setLastState(lastState);
             lastState.onExit().eval(scope);
+            if (!data.particles.isEmpty()) {
+                for (var particle : data.particles) {
+                    BrParticleRenderManager.removeEmitter(particle.particleUUID());
+                }
+
+                data.particles.clear();
+            }
         }
 
         currState.onEntry().eval(scope);
+        scope.getOwner().onHiveOwners(Entity.class, BrClientEntity.class, (entity, clientEntity) -> {
+            for (BrAcParticleEffect particleEffect : currState.particleEffects()) {
+                String uuid = UUID.randomUUID().toString();
+                particleEffect.effect().map(clientEntity.particle_effects()::get).ifPresent(effect -> {
+                    BrParticle particle = Eyelib.getParticleManager().get(effect);
+                    if (particle != null) {
+                        BrParticleEmitter emitter = new BrParticleEmitter(particle, scope, entity.level(), entity.position().toVector3f());
+                        BrParticleRenderManager.spawnEmitter(uuid, emitter);
+                        data.particles.add(new RuntimeParticlePlayData(uuid, emitter, particleEffect.locator().orElse(null), ticks));
+                    }
+                });
+            }
+
+            return null;
+        });
 
         data.setCurrState(currState);
         data.setStartTick(ticks);
@@ -125,7 +160,7 @@ public record BrAnimationController(
 
     private static void blend(Map<String, String> animations, BoneRenderInfos infos, Data data,
                               MolangScope scope, @Nullable BrAcState lastState, BrAcState currState,
-                              float multiplier, float stateTimeSec) {
+                              float multiplier, float stateTimeSec, AnimationEffects effects) {
         float blendProgress;
 
         if (lastState != null && lastState.blendTransition() != 0) {
@@ -136,23 +171,23 @@ public record BrAnimationController(
 
         currState.animations().forEach((animationName, blendValue) ->
                 updateAnimations(animations, animationName, blendProgress * blendValue.eval(scope),
-                        multiplier, stateTimeSec, infos, data, scope));
+                        multiplier, stateTimeSec, infos, data, scope, effects));
 
         if (lastState != null && blendProgress < 1) {
             lastState.animations().forEach((animationName, blendValue) ->
                     updateAnimations(animations, animationName, (1 - blendProgress) * blendValue.eval(scope),
-                            multiplier, stateTimeSec, infos, data, scope));
+                            multiplier, stateTimeSec, infos, data, scope, effects));
         }
     }
 
     private static void updateAnimations(Map<String, String> animations, String animName, float blendValue,
                                          float multiplier, float startedTime, BoneRenderInfos infos,
-                                         Data data, MolangScope scope) {
+                                         Data data, MolangScope scope, AnimationEffects effects) {
         var animation = Eyelib.getAnimationManager().get(animations.get(animName));
 
         if (animation == null) return;
 
-        animation.tickAnimation(data.getData(animation), animations, scope, startedTime, multiplier * blendValue, infos);
+        animation.tickAnimation(data.getData(animation), animations, scope, startedTime, multiplier * blendValue, infos, effects);
     }
 
     record Factory(

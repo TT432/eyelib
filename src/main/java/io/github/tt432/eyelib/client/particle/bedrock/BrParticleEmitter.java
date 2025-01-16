@@ -33,8 +33,11 @@ public class BrParticleEmitter {
     private final Level level;
 
     private final List<EmitterParticleComponent> components;
-    // todo
+    @Getter
     private final EmitterLocalSpace space;
+
+    @Getter
+    private final Vector3f rotation = new Vector3f();
 
     @Getter
     private final RandomSource random = RandomSource.create();
@@ -127,14 +130,14 @@ public class BrParticleEmitter {
                 if (pos != null) {
                     emitCount++;
                     BrParticleParticle emitParticle = new BrParticleParticle(this);
-                    emitParticle.getPosition().set(pos.eval(emitParticle.molangScope).add(position));
+                    emitParticle.getPosition().set(pos.eval(emitParticle.molangScope));
 
                     if (direction != null) {
                         var vec = direction.getVec(emitParticle.molangScope, position, emitParticle.getPosition());
                         emitParticle.getVelocity().add(vec.mul(emitParticle.getSpeed()));
                     }
 
-                    BrParticleManager.spawnParticle(emitParticle);
+                    BrParticleRenderManager.spawnParticle(emitParticle);
                 }
             });
         }

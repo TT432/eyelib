@@ -1,10 +1,11 @@
 package io.github.tt432.eyelib.client.particle.bedrock;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.tt432.eyelib.util.client.RenderTypeSerializations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -26,7 +27,7 @@ import java.util.function.Predicate;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class BrParticleManager {
+public class BrParticleRenderManager {
     private static final Map<String, BrParticleEmitter> emitters = new ConcurrentHashMap<>();
     private static final List<BrParticleParticle> particles = Collections.synchronizedList(new ArrayList<>());
 
@@ -93,8 +94,10 @@ public class BrParticleManager {
             if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
                 PoseStack poseStack = event.getPoseStack();
                 particles.forEach(particle -> {
+                    String material = particle.getEmitter().getParticle().particleEffect().description().basicRenderParameters().material();
+                    RenderTypeSerializations.EntityRenderTypeData factory = RenderTypeSerializations.getFactory(ResourceLocation.parse(material));
                     var buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(
-                            RenderType.entityCutout(particle.getTexture().withSuffix(".png"))
+                            factory.factory().apply(particle.getTexture().withSuffix(".png"))
                     );
                     particle.render(poseStack, buffer);
                 });

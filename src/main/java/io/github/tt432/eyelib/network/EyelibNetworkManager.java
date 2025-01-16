@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.loader.BrParticleLoader;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticleManager;
+import io.github.tt432.eyelib.client.particle.bedrock.BrParticleRenderManager;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
@@ -54,13 +54,13 @@ public class EyelibNetworkManager {
                 });
 
         registrar.playToClient(RemoveParticlePacket.TYPE, RemoveParticlePacket.STREAM_CODEC,
-                (payload, context) -> BrParticleManager.removeEmitter(payload.removeId()));
+                (payload, context) -> BrParticleRenderManager.removeEmitter(payload.removeId()));
 
         registrar.playToClient(SpawnParticlePacket.TYPE, SpawnParticlePacket.STREAM_CODEC,
                 (payload, context) -> {
                     BrParticle particle = BrParticleLoader.getParticle(payload.particleId());
                     if (particle != null) {
-                        BrParticleManager.spawnEmitter(
+                        BrParticleRenderManager.spawnEmitter(
                                 payload.spawnId(),
                                 new BrParticleEmitter(
                                         particle,

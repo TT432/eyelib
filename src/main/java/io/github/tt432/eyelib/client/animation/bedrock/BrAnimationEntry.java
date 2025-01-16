@@ -3,8 +3,15 @@ package io.github.tt432.eyelib.client.animation.bedrock;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.chin.codec.ChinExtraCodecs;
+import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.AnimationEffect;
+import io.github.tt432.eyelib.client.animation.AnimationEffects;
+import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
+import io.github.tt432.eyelib.client.entity.BrClientEntity;
+import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
+import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
+import io.github.tt432.eyelib.client.particle.bedrock.BrParticleRenderManager;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
@@ -55,18 +62,38 @@ public record BrAnimationEntry(
                     MolangValue.CODEC.optionalFieldOf("blend_weight", MolangValue.ONE).forGetter(o -> o.blendWeight),
                     MolangValue.CODEC.optionalFieldOf("start_delay", MolangValue.ZERO).forGetter(o -> o.start_delay),
                     MolangValue.CODEC.optionalFieldOf("loop_delay", MolangValue.ZERO).forGetter(o -> o.loop_delay),
-                    EFFECTS_CODEC.xmap(map -> new AnimationEffect<>(map, (scope, frame) ->
-                            scope.getOwner().ownerAs(Entity.class).ifPresent(e -> {
-                                SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(ResourceLocations.of(frame.effect()));
-                                if (!e.isSilent()) {
-                                    e.level().playSound(Minecraft.getInstance().player,
-                                            e.getX(), e.getY(), e.getZ(), soundEvent, e.getSoundSource(), 1, 1);
+                    EFFECTS_CODEC.xmap(map -> new AnimationEffect<>(map, (scope, ticks, frame) ->
+                            scope.getOwner().onHiveOwners(Entity.class, BrClientEntity.class, (e, clientEntity) -> {
+                                String s = clientEntity.sound_effects().get(frame.effect());
+
+                                if (s != null) {
+                                    SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(ResourceLocations.of(s));
+
+                                    if (!e.isSilent()) {
+                                        e.level().playSound(Minecraft.getInstance().player,
+                                                e.getX(), e.getY(), e.getZ(), soundEvent, e.getSoundSource(), 1, 1);
+                                    }
                                 }
+
+                                return null;
                             })), AnimationEffect::data
                     ).optionalFieldOf("sound_effects", AnimationEffect.empty()).forGetter(o -> o.soundEffects),
-                    EFFECTS_CODEC.xmap(map -> new AnimationEffect<>(map, (scope, frame) -> {
-                                // todo
-                            }), AnimationEffect::data
+                    EFFECTS_CODEC.xmap(map -> new AnimationEffect<>(map, (scope, ticks, frame) ->
+                            scope.getOwner().onHiveOwners(Entity.class, Data.class, BrClientEntity.class, (entity, data, clientEntity) -> {
+                                String s = clientEntity.particle_effects().get(frame.effect());
+
+                                if (s != null) {
+                                    BrParticle brParticle = Eyelib.getParticleManager().get(s);
+                                    if (brParticle != null) {
+                                        String uuid = UUID.randomUUID().toString();
+                                        BrParticleEmitter emitter = new BrParticleEmitter(brParticle, scope, entity.level(), new Vector3f());
+                                        data.particles.add(new RuntimeParticlePlayData(uuid, emitter, frame.locator().orElse(null), ticks));
+                                        BrParticleRenderManager.spawnEmitter(uuid, emitter);
+                                    }
+                                }
+
+                                return null;
+                            })), AnimationEffect::data
                     ).optionalFieldOf("particle_effects", AnimationEffect.empty()).forGetter(o -> o.particleEffects),
                     Codec.unboundedMap(Codec.STRING, elementCodec).xmap(map -> {
                                 TreeMap<Float, List<MolangValue>> result = new TreeMap<>(comparator);
@@ -76,7 +103,7 @@ public record BrAnimationEntry(
                                 Map<String, List<MolangValue>> result = new HashMap<>();
                                 map.forEach((k, v) -> result.put(k.toString(), v));
                                 return result;
-                            }).xmap(map -> new AnimationEffect<>(map, (scope, mv) -> mv.eval(scope)), AnimationEffect::data)
+                            }).xmap(map -> new AnimationEffect<>(map, (scope, ticks, mv) -> mv.eval(scope)), AnimationEffect::data)
                             .optionalFieldOf("timeline", AnimationEffect.empty())
                             .forGetter(o -> o.timeline),
                     Codec.unboundedMap(Codec.STRING.xmap(s -> s.toLowerCase(Locale.ROOT), s -> s), BrBoneAnimation.CODEC).optionalFieldOf("bones", Map.of()).forGetter(o -> o.bones)
@@ -118,6 +145,8 @@ public record BrAnimationEntry(
         int loopedTimes;
         private final List<AnimationEffect.Runtime<?>> effects = new ArrayList<>();
 
+        private final List<RuntimeParticlePlayData> particles = new ArrayList<>();
+
         private float lastTicks;
         public float animTime;
         public float deltaTime;
@@ -133,6 +162,12 @@ public record BrAnimationEntry(
     @Override
     public void onFinish(Data data) {
         data.resetEffects();
+
+        for (var particle : data.particles) {
+            BrParticleRenderManager.removeEmitter(particle.particleUUID());
+        }
+
+        data.particles.clear();
     }
 
     @Override
@@ -152,7 +187,7 @@ public record BrAnimationEntry(
 
     @Override
     public void tickAnimation(Data data, Map<String, String> animations, MolangScope scope,
-                              float ticks, float multiplier, BoneRenderInfos infos) {
+                              float ticks, float multiplier, BoneRenderInfos infos, AnimationEffects effects) {
         multiplier *= Math.clamp(blendWeight().eval(scope), 0, 1);
 
         scope.getOwner().replace(Data.class, data);
@@ -180,9 +215,8 @@ public record BrAnimationEntry(
             animTick = animTimeUpdate;
         }
 
-        List<AnimationEffect.Runtime<?>> effects = data.effects;
-        for (int i = 0; i < effects.size(); i++) {
-            AnimationEffect.Runtime<?> r = effects.get(i);
+        for (int i = 0; i < data.effects.size(); i++) {
+            AnimationEffect.Runtime<?> r = data.effects.get(i);
             AnimationEffect.Runtime.processEffect(r, animTick, scope);
         }
 
@@ -211,5 +245,7 @@ public record BrAnimationEntry(
                 entry.getRenderScala().mul(scale);
             }
         });
+
+        effects.particles.add(data.particles);
     }
 }
