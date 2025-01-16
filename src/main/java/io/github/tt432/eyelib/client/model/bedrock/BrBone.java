@@ -2,8 +2,10 @@ package io.github.tt432.eyelib.client.model.bedrock;
 
 import com.google.gson.*;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -30,7 +32,7 @@ public record BrBone(
         @Nullable String parent,
         Vector3f pivot,
         Vector3f rotation,
-        @Nullable String binding,
+        @Nullable MolangValue binding,
         boolean reset,
         @Nullable String material,
         Map<String, BrBone> children,
@@ -44,11 +46,11 @@ public record BrBone(
             Codec.STRING.optionalFieldOf("parent", "").forGetter(BrBone::parent),
             ExtraCodecs.VECTOR3F.fieldOf("pivot").forGetter(BrBone::pivot),
             ExtraCodecs.VECTOR3F.fieldOf("rotation").forGetter(BrBone::rotation),
-            Codec.STRING.optionalFieldOf("binding", "").forGetter(BrBone::binding),
+            MolangValue.CODEC.optionalFieldOf("binding", MolangValue.ZERO).forGetter(BrBone::binding),
             Codec.BOOL.fieldOf("reset").forGetter(BrBone::reset),
             Codec.STRING.optionalFieldOf("material", "").forGetter(BrBone::material),
             BrCube.CODEC.listOf().fieldOf("cubes").forGetter(BrBone::cubes),
-            BrTextureMesh.CODEC.listOf().fieldOf("texture_meshes").forGetter(BrBone::texture_meshes),
+            BrTextureMesh.CODEC.listOf().optionalFieldOf("texture_meshes", List.of()).forGetter(BrBone::texture_meshes),
             Codec.unboundedMap(Codec.STRING, BrLocator.CODEC).fieldOf("locators").forGetter(BrBone::locators)
     ).apply(ins, (string, string2, vector3f, vector3f2, string3, aBoolean, string4, brCubes, brTextureMeshes, stringBrLocatorMap) -> new BrBone(string, string2, vector3f, vector3f2, string3, aBoolean, string4, new Object2ObjectOpenHashMap<>(), brCubes, brTextureMeshes, stringBrLocatorMap)));
     private static final Gson gson = new Gson();
@@ -58,7 +60,7 @@ public record BrBone(
         final String parent;
         final Vector3f pivot;
         final Vector3f rotation;
-        final String binding;
+        final MolangValue binding;
         final boolean reset;
         final String material;
         final Map<String, BrBone> children = new Object2ObjectOpenHashMap<>();
@@ -73,7 +75,7 @@ public record BrBone(
         pivot.div(16).mul(-1, 1, 1);
         rotation = jsonObject.get("rotation") instanceof JsonArray ja ? new Vector3f(gson.fromJson(ja, float[].class)) : new Vector3f(0);
         rotation.mul(EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1);
-        binding = jsonObject.get("binding") instanceof JsonPrimitive jp ? jp.getAsString() : "";
+        binding = jsonObject.get("binding") instanceof JsonPrimitive jp ? MolangValue.CODEC.parse(JsonOps.INSTANCE, jp).getOrThrow() : MolangValue.ZERO;
         reset = jsonObject.get("reset") instanceof JsonPrimitive jp && jp.getAsBoolean();
         material = jsonObject.get("material") instanceof JsonPrimitive jp ? jp.getAsString() : "";
 
@@ -85,7 +87,13 @@ public record BrBone(
             }
         }
 
-        // TODO parse texture_meshes
+        if (jsonObject.get("texture_meshes") instanceof JsonArray ja) {
+            for (JsonElement jsonElement : ja) {
+                if (jsonElement instanceof JsonObject jo) {
+                    texture_meshes.add(BrTextureMesh.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow());
+                }
+            }
+        }
 
         if (jsonObject.get("locators") instanceof JsonObject jo) {
             for (Map.Entry<String, JsonElement> entry : jo.entrySet()) {
