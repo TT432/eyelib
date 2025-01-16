@@ -4,7 +4,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.model.Model;
-import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.util.client.RenderTypeSerializations;
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
@@ -58,7 +57,6 @@ public class ModelComponent {
         if (Objects.equals(serializableInfo, this.serializableInfo)) return;
 
         this.serializableInfo = serializableInfo;
-        boneInfos.reset();
     }
 
     public Model getModel() {
@@ -81,6 +79,5 @@ public class ModelComponent {
         return RenderTypeSerializations.getFactory(serializableInfo.renderType).isSolid();
     }
 
-    final BoneRenderInfos boneInfos = new BoneRenderInfos();
     final Object2BooleanOpenHashMap<String> partVisibility = new Object2BooleanOpenHashMap<>();
 }
