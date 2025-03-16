@@ -5,12 +5,12 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.capability.RenderData;
-import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
+import io.github.tt432.eyelib.client.attachable.PlayerItemInHandAttachableLayer;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.client.render.RenderHelper;
@@ -86,19 +86,12 @@ public class EntityRenderSystem {
 
         List<ModelComponent> components = setupClientEntity(entity, clientEntityComponent, cap);
 
-        BoneRenderInfos tickedInfos;
         AnimationEffects effects = new AnimationEffects();
 
+        BoneRenderInfos tickedInfos;
         if (cap.getAnimationComponent().getSerializableInfo() != null) {
-            AnimationComponent component = cap.getAnimationComponent();
-            var scope = cap.getScope();
-
-            if (component.getSerializableInfo() != null) {
-                float ticks = (ClientTickHandler.getTick() + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) / 20;
-                tickedInfos = BrAnimator.tickAnimation(component, scope, effects, ticks);
-            } else {
-                tickedInfos = BoneRenderInfos.EMPTY;
-            }
+            tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), cap.getScope(), effects,
+                    (ClientTickHandler.getTick() + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) / 20);
         } else {
             tickedInfos = BoneRenderInfos.EMPTY;
         }
@@ -192,6 +185,9 @@ public class EntityRenderSystem {
                 }
 
                 poseStack.popPose();
+
+                var ticks = (ClientTickHandler.getTick() + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) / 20;
+                PlayerItemInHandAttachableLayer.render(renderParams, cap.getScope(), model, tickedInfos, multiBufferSource, ticks, helpers);
             }
         });
     }

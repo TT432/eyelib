@@ -1,12 +1,23 @@
 package io.github.tt432.eyelib.client.model;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.chin.util.Lists;
+import io.github.tt432.eyelib.client.model.locator.GroupLocator;
+import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.model.locator.ModelLocator;
+import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
+import io.github.tt432.eyelib.client.render.RenderParams;
+import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
+import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
+import io.github.tt432.eyelib.molang.MolangValue;
+import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
 /**
  * @author TT432
@@ -20,12 +31,70 @@ public interface Model {
 
     ModelLocator locator();
 
+    default <D extends ModelRuntimeData<Model.Bone, ?, D>> void accept(RenderParams params, ModelVisitContext context, D infos, ModelVisitor visitor) {
+        visitor.visitPreModel(params, context, infos, this);
+
+        for (var toplevelBone : toplevelBones().values()) {
+            toplevelBone.accept(params, context, infos, locator().getGroup(toplevelBone.name()), visitor);
+        }
+
+        visitor.visitPostModel(params, context, infos, this);
+    }
+
     interface Bone {
         String name();
+
+        MolangValue binding();
 
         Map<String, ? extends Bone> children();
 
         List<? extends Cube> cubes();
+
+        default <D extends ModelRuntimeData<Model.Bone, ?, D>> void accept(RenderParams params, ModelVisitContext context, D infos, GroupLocator groupLocator, ModelVisitor visitor) {
+            ModelTransformer<Bone, D> transformer = infos.transformer();
+            visitor.visitPreBone(params, context, this, infos, groupLocator, transformer);
+
+            if (null == groupLocator) return;
+
+            List<LocatorEntry> cubes = groupLocator.cubes();
+
+            if (cubes != null) {
+                PoseStack poseStack = params.poseStack();
+
+                cubes.forEach(locator -> {
+                    poseStack.pushPose();
+
+                    PoseStack.Pose last1 = poseStack.last();
+                    Matrix4f pose = last1.pose();
+                    pose.translate(locator.offset());
+                    pose.rotateZYX(locator.rotation());
+                    last1.normal().rotateZYX(locator.rotation());
+
+                    visitor.visitLocator(params, context, this, locator, infos, transformer);
+
+                    poseStack.popPose();
+                });
+            }
+
+            AtomicBoolean render = new AtomicBoolean(params.partVisibility().isEmpty());
+            params.partVisibility().forEach((k, v) -> {
+                if (!Pattern.compile(k.replace("*", ".*")).matcher(name()).matches() || v) {
+                    render.set(true);
+                }
+            });
+
+            if (render.get()) {
+                for (int i = 0; i < cubes().size(); i++) {
+                    cubes().get(i).accept(params, context, visitor);
+                }
+            }
+
+            for (var child : children().values()) {
+                child.accept(params, context, infos, groupLocator.getChild(child.name()), visitor);
+            }
+
+            visitor.visitPostBone(params, context, this, infos, groupLocator.getChild(name()), transformer);
+        }
     }
 
     interface Cube {
@@ -111,5 +180,9 @@ public interface Model {
         float normalY(int faceIndex);
 
         float normalZ(int faceIndex);
+
+        default void accept(RenderParams params, ModelVisitContext context, ModelVisitor visitor) {
+            visitor.visitCube(params, context, this);
+        }
     }
 }

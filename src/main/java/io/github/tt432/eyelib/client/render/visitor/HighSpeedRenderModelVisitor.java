@@ -23,8 +23,8 @@ import java.util.regex.Pattern;
 @Setter
 public class HighSpeedRenderModelVisitor extends ModelVisitor {
     @Override
-    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitModel(RenderParams params, Context context, D infos, Model model) {
-        super.visitModel(params, context, infos, model);
+    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitPreModel(RenderParams params, ModelVisitContext context, D infos, Model model) {
+        super.visitPreModel(params, context, infos, model);
 
         if (!context.contains("BackedModel")) {
             throw new RuntimeException("can't use HighSpeedRenderModelVisitor without HBackedModel");
@@ -32,13 +32,11 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
     }
 
     @Override
-    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitBone(RenderParams renderParams, Context context, Model model, Model.Bone group, D data, GroupLocator groupLocator, ModelTransformer<Model.Bone, D> transformer) {
+    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitPreBone(RenderParams renderParams, ModelVisitContext context, Model.Bone group, D data, GroupLocator groupLocator, ModelTransformer<Model.Bone, D> transformer) {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();
 
         applyBoneTranslate(poseStack, group, cast(data), transformer);
-
-        visitLocators(renderParams, context, group, poseStack, data, transformer, groupLocator);
 
         var bakedBone = context.<BakedModel>get("BackedModel").bones().get(group.name());
 
@@ -65,12 +63,10 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
                 visitVertex(bakedBone, renderParams.consumer(), renderParams.overlay(), renderParams.light());
             }
         }
+    }
 
-        for (var child : group.children().values()) {
-            visitBone(renderParams, context, model, child, data, groupLocator.getChild(child.name()), transformer);
-        }
-
-        poseStack.popPose();
+    @Override
+    public void visitCube(RenderParams renderParams, ModelVisitContext context, Model.Cube cube) {
     }
 
     private static void visitVertex(BakedModel.BakedBone bakedBone, VertexConsumer consumer, int overlay, int light) {

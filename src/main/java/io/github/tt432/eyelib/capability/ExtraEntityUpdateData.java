@@ -25,14 +25,17 @@ public record ExtraEntityUpdateData(
         int targetId,
         double lastHurtX,
         double lastHurtY,
-        double lastHurtZ
+        double lastHurtZ,
+        float speed
 ) {
     public static final Codec<ExtraEntityUpdateData> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.INT.fieldOf("targetId").forGetter(ExtraEntityUpdateData::targetId),
             Codec.DOUBLE.fieldOf("lastHurtX").forGetter(ExtraEntityUpdateData::lastHurtX),
             Codec.DOUBLE.fieldOf("lastHurtY").forGetter(ExtraEntityUpdateData::lastHurtY),
-            Codec.DOUBLE.fieldOf("lastHurtZ").forGetter(ExtraEntityUpdateData::lastHurtZ)
+            Codec.DOUBLE.fieldOf("lastHurtZ").forGetter(ExtraEntityUpdateData::lastHurtZ),
+            Codec.FLOAT.fieldOf("speed").forGetter(ExtraEntityUpdateData::speed)
     ).apply(ins, ExtraEntityUpdateData::new));
+
     public static final StreamCodec<ByteBuf, ExtraEntityUpdateData> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT,
             ExtraEntityUpdateData::targetId,
@@ -42,11 +45,13 @@ public record ExtraEntityUpdateData(
             ExtraEntityUpdateData::lastHurtY,
             ByteBufCodecs.DOUBLE,
             ExtraEntityUpdateData::lastHurtZ,
+            ByteBufCodecs.FLOAT,
+            ExtraEntityUpdateData::speed,
             ExtraEntityUpdateData::new
     );
 
     public static ExtraEntityUpdateData empty() {
-        return new ExtraEntityUpdateData(-1, 0, 0, 0);
+        return new ExtraEntityUpdateData(-1, 0, 0, 0, 0);
     }
 
     public ExtraEntityUpdateData update(Entity entity) {
@@ -62,6 +67,22 @@ public record ExtraEntityUpdateData(
             } else {
                 if ((targeting.getTarget() == null || targeting.getTarget().getId() != targetId) && targetId != -1) {
                     targeting.setTarget((LivingEntity) targeting.level().getEntity(targetId));
+                }
+            }
+        }
+
+        if (entity instanceof Mob l) {
+            if (!entity.level().isClientSide) {
+                float speed;
+
+                if (!l.getNavigation().isDone()) {
+                    speed = l.getSpeed() + 0.1F;
+                } else {
+                    speed = 0;
+                }
+
+                if (speed != this.speed) {
+                    r = r.withSpeed(speed);
                 }
             }
         }

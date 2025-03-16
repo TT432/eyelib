@@ -31,6 +31,7 @@ import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.monster.Vex;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
@@ -82,7 +83,7 @@ public final class MolangQuery {
                 return (float) Math.atan2(y, Math.sqrt(x * x + z * z));
             }
 
-            return FALSE;
+            return pitch(scope);
         }).orElse(FALSE);
     }
 
@@ -100,7 +101,7 @@ public final class MolangQuery {
                 return (float) Math.toDegrees(Math.atan2(dz, dx)) - 90.0f; // 转换为角度并调整基准
             }
 
-            return 0F;
+            return headYaw(scope) + Mth.rotLerp(partialTicks(scope), entity.yBodyRotO, entity.yBodyRot);
         });
     }
 
@@ -110,26 +111,46 @@ public final class MolangQuery {
                 .orElse(livingBool(scope, LivingEntity::isUsingItem));
     }
 
+    private static ItemStack getItemBySlot(LivingEntity entity, String slotName, int slotId) {
+        return switch (slotName) {
+            case "slot.weapon.mainhand" -> entity.getMainHandItem();
+            case "slot.weapon.offhand" -> entity.getOffhandItem();
+            case "slot.armor.head" -> entity.getItemBySlot(EquipmentSlot.HEAD);
+            case "slot.armor.chest" -> entity.getItemBySlot(EquipmentSlot.CHEST);
+            case "slot.armor.legs" -> entity.getItemBySlot(EquipmentSlot.LEGS);
+            case "slot.armor.feet" -> entity.getItemBySlot(EquipmentSlot.FEET);
+            case "slot.hotbar" ->
+                    entity instanceof Player p ? p.inventoryMenu.getSlot(slotId + 36).getItem() : ItemStack.EMPTY;
+            case "slot.inventory" ->
+                    entity instanceof Player p ? p.inventoryMenu.getSlot(slotId).getItem() : ItemStack.EMPTY;
+            case "slot.enderchest" ->
+                    entity instanceof Player p ? p.getEnderChestInventory().getItem(slotId) : ItemStack.EMPTY;
+            case "slot.saddle", "slot.equippable" ->
+                    entity instanceof AbstractHorse h ? h.getInventory().getItem(slotId) : ItemStack.EMPTY;
+            case "slot.armor" -> entity instanceof Mob m ? m.getBodyArmorItem() : ItemStack.EMPTY;
+            case "slot.chest" ->
+                    entity instanceof AbstractChestedHorse h ? h.getInventory().getItem(slotId + 1) : ItemStack.EMPTY;
+            default -> ItemStack.EMPTY;
+        };
+    }
+
     @MolangFunction(value = "is_item_name_any", description = "在手上的物品")
     public static float isItemNameAny(MolangScope scope, Object hand, Object... items) {
         return isItemNameAny(scope, hand, 0, items);
     }
 
     public static float isItemNameAny(MolangScope scope, Object hand, float index, Object... items) {
-        return switch (hand.toString()) {
-            case "slot.weapon.mainhand" -> livingBool(scope, l -> {
-                var itemKey = BuiltInRegistries.ITEM.getKey(l.getMainHandItem().getItem());
+        return livingBool(scope, l -> {
+            var itemKey = BuiltInRegistries.ITEM.getKey(getItemBySlot(l, hand.toString(), (int) index).getItem());
 
-                for (Object item : items) {
-                    if (ResourceLocation.parse(item.toString()).equals(itemKey)) {
-                        return true;
-                    }
+            for (Object item : items) {
+                if (ResourceLocation.parse(item.toString()).equals(itemKey)) {
+                    return true;
                 }
+            }
 
-                return false;
-            });
-            default -> 0;
-        };
+            return false;
+        });
     }
 
     @MolangFunction(value = "is_gliding", description = "滑翔")
@@ -168,6 +189,15 @@ public final class MolangQuery {
     @MolangFunction(value = "get_name", description = "获取名称")
     public static String getName(MolangScope scope) {
         return scope.getOwner().ownerAs(Entity.class).map(Entity::getName).orElse(Component.empty()).getString();
+    }
+
+    @MolangFunction(value = "item_slot_to_bone_name", description = "从 item slot 获取 bone 的名称")
+    public static String itemSlotToBoneName(MolangScope scope, Object slot) {
+        return switch (slot.toString()) {
+            case "main_hand" -> "rightitem";
+            case "off_hand" -> "leftitem";
+            default -> slot.toString();
+        };
     }
 
     @MolangFunction(value = "variant", description = "变体")
@@ -649,7 +679,7 @@ public final class MolangQuery {
         return livingBool(scope, LivingEntity::isOnFire);
     }
 
-    @MolangFunction(value = "ground_speed", alias = "modified_move_speed", description = "地面速度")
+    @MolangFunction(value = "ground_speed", description = "地面速度")
     public static float groundSpeed(MolangScope scope) {
         return livingFloat(scope, e -> {
             var xo = e.xo;
@@ -658,8 +688,13 @@ public final class MolangQuery {
             var x = e.getX();
             var z = e.getZ();
 
-            return (float) Math.sqrt((x - xo) * (x - xo) + (z - zo) * (z - zo));
+            return 20 * (float) Math.sqrt((x - xo) * (x - xo) + (z - zo) * (z - zo));
         });
+    }
+
+    @MolangFunction(value = "modified_move_speed", description = "移动速度")
+    public static float modifiedMoveSpeed(MolangScope scope) {
+        return livingFloat(scope, e -> e.getData(EyelibAttachableData.EXTRA_ENTITY_UPDATE).speed());
     }
 
     @MolangFunction(value = "is_damage", description = "正在受伤")

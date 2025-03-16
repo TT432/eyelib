@@ -8,14 +8,9 @@ import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.util.math.EyeMath;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.joml.*;
 
-import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
 
 /**
  * @author TT432
@@ -28,7 +23,11 @@ public class ModelVisitor {
         return (T) o;
     }
 
-    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitModel(RenderParams params, Context context, D infos, Model model) {
+    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitModel(RenderParams params, ModelVisitContext context, D infos, Model model) {
+        model.accept(params, context, infos, this);
+    }
+
+    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitPreModel(RenderParams params, ModelVisitContext context, D infos, Model model) {
         PoseStack poseStack = params.poseStack();
         poseStack.pushPose();
 
@@ -37,45 +36,30 @@ public class ModelVisitor {
         pose.rotateY(R180);
         Matrix3f normal = last.normal();
         normal.rotateY(R180);
+    }
 
-        for (var toplevelBone : model.toplevelBones().values()) {
-            visitBone(params, context, model, toplevelBone, cast(infos), model.locator().getGroup(toplevelBone.name()), infos.transformer());
-        }
-
+    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitPostModel(RenderParams params, ModelVisitContext context, D infos, Model model) {
+        PoseStack poseStack = params.poseStack();
         poseStack.popPose();
     }
 
-    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitBone(RenderParams renderParams, Context context,
-                                                                         Model model, Model.Bone group, D data, GroupLocator groupLocator,
-                                                                         ModelTransformer<Model.Bone, D> transformer) {
+    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitPreBone(RenderParams renderParams, ModelVisitContext context,
+                                                                            Model.Bone group, D data, GroupLocator groupLocator,
+                                                                            ModelTransformer<Model.Bone, D> transformer) {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();
 
         applyBoneTranslate(poseStack, group, cast(data), transformer);
+    }
 
-        visitLocators(renderParams, context, group, poseStack, data, transformer, groupLocator);
-
-        AtomicBoolean render = new AtomicBoolean(renderParams.partVisibility().isEmpty());
-        renderParams.partVisibility().forEach((k, v) -> {
-            if (!Pattern.compile(k.replace("*", ".*")).matcher(group.name()).matches() || v) {
-                render.set(true);
-            }
-        });
-
-        if (render.get()) {
-            for (int i = 0; i < group.cubes().size(); i++) {
-                visitCube(renderParams, context, group.cubes().get(i));
-            }
-        }
-
-        for (var child : group.children().values()) {
-            visitBone(renderParams, context, model, child, data, groupLocator.getChild(child.name()), transformer);
-        }
-
+    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitPostBone(RenderParams renderParams, ModelVisitContext context,
+                                                                             Model.Bone group, D data, GroupLocator groupLocator,
+                                                                             ModelTransformer<Model.Bone, D> transformer) {
+        PoseStack poseStack = renderParams.poseStack();
         poseStack.popPose();
     }
 
-    public void visitCube(RenderParams renderParams, Context context, Model.Cube cube) {
+    public void visitCube(RenderParams renderParams, ModelVisitContext context, Model.Cube cube) {
         for (int i = 0; i < cube.faceCount(); i++) {
             List<Vector3f> vertexes = cube.vertexes().get(i);
             List<Vector2f> uvs = cube.uvs().get(i);
@@ -99,19 +83,19 @@ public class ModelVisitor {
         }
     }
 
-    public void visitFace(RenderParams renderParams, Context context, Model.Cube cube,
+    public void visitFace(RenderParams renderParams, ModelVisitContext context, Model.Cube cube,
                           List<Vector3f> vertexes, List<Vector2f> uvs, Vector3fc normal) {
 
     }
 
-    public void visitVertex(RenderParams renderParams, Context context, Model.Cube cube,
+    public void visitVertex(RenderParams renderParams, ModelVisitContext context, Model.Cube cube,
                             Vector3fc vertex, Vector2fc uv, Vector3fc normal) {
 
     }
 
-    public <G extends Model.Bone, R extends ModelRuntimeData<G, ?, R>> void visitLocator(
-            RenderParams renderParams, Context context, Model.Bone bone,
-            LocatorEntry locator, R data, ModelTransformer<G, R> transformer
+    public <R extends ModelRuntimeData<Model.Bone, ?, R>> void visitLocator(
+            RenderParams renderParams, ModelVisitContext context, Model.Bone bone,
+            LocatorEntry locator, R data, ModelTransformer<Model.Bone, R> transformer
     ) {
 
     }
@@ -136,56 +120,5 @@ public class ModelVisitor {
         poseStack.scale(scale.x(), scale.y(), scale.z());
 
         pose.translate(-renderPivot.x(), -renderPivot.y(), -renderPivot.z());
-    }
-
-    protected <R extends ModelRuntimeData<Model.Bone, ?, R>> void visitLocators(
-            RenderParams renderParams, Context context, Model.Bone bone, PoseStack poseStack,
-            R data, ModelTransformer<Model.Bone, R> transformer, GroupLocator locatorsGroup
-    ) {
-        if (locatorsGroup == null) return;
-        List<LocatorEntry> cubes = locatorsGroup.cubes();
-        if (cubes == null) return;
-
-        cubes.forEach(locator -> {
-            poseStack.pushPose();
-
-            PoseStack.Pose last1 = poseStack.last();
-            Matrix4f pose = last1.pose();
-            pose.translate(locator.offset());
-            pose.rotateZYX(locator.rotation());
-            last1.normal().rotateZYX(locator.rotation());
-
-            visitLocator(renderParams, context, bone, locator, data, transformer);
-
-            poseStack.popPose();
-        });
-    }
-
-    public static final class Context {
-        private final Map<String, Object> data = new Object2ObjectOpenHashMap<>();
-
-        public void put(String key, Object value) {
-            data.put(key, value);
-        }
-
-        public boolean contains(String key) {
-            return data.containsKey(key);
-        }
-
-        @SuppressWarnings("unchecked")
-        @Nullable
-        public <T> T get(String key) {
-            if (!data.containsKey(key)) return null;
-            return (T) data.get(key);
-        }
-
-        @SuppressWarnings("unchecked")
-        public <T> T orCreate(String key, T value) {
-            return (T) data.computeIfAbsent(key, s -> value);
-        }
-
-        public void clear() {
-            data.clear();
-        }
     }
 }

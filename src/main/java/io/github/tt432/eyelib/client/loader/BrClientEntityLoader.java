@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.loader;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
+import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import io.github.tt432.eyelib.util.search.Searchable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
@@ -37,6 +39,15 @@ public class BrClientEntityLoader extends BrResourcesLoader implements Searchabl
 
     public BrClientEntity get(ResourceLocation id) {
         return entities.get(id);
+    }
+
+    public void put(ResourceLocation id, BrClientEntity entity) {
+        entities.put(id, entity);
+        NeoForge.EVENT_BUS.post(new ManagerEntryChangedEvent(getManagerName(), id.toString(), entity));
+    }
+
+    public String getManagerName() {
+        return "BrClientEntityLoader";
     }
 
     private BrClientEntityLoader() {

@@ -19,7 +19,7 @@ public final class BrAnimator {
         return (T) o;
     }
 
-    public static BoneRenderInfos tickAnimation(AnimationComponent component, MolangScope scope,AnimationEffects effects, float ticks) {
+    public static BoneRenderInfos tickAnimation(AnimationComponent component, MolangScope scope, AnimationEffects effects, float ticks) {
         BoneRenderInfos infos = new BoneRenderInfos();
 
         for (Map.Entry<Animation<?>, MolangValue> entry : component.getAnimate().entrySet()) {

@@ -15,7 +15,9 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.core.Direction;
 import net.minecraft.util.ExtraCodecs;
 import org.jetbrains.annotations.NotNull;
-import org.joml.*;
+import org.joml.Matrix4f;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
 
 import java.util.List;
 
@@ -51,7 +53,9 @@ public record BrCube(
         face.right().x *= -1;
     }
 
-    private static void flipY(Pair<Vector2f, Vector2f> face) {
+    private static void flip(Pair<Vector2f, Vector2f> face) {
+        face.left().x += face.right().x;
+        face.right().x *= -1;
         face.left().y += face.right().y;
         face.right().y *= -1;
     }
@@ -102,8 +106,9 @@ public record BrCube(
         } else if (jsonObject.get("uv") instanceof JsonObject jo) {
             //  face
             up = getUVFromFace(jo, "up");
-            flipY(up);
+//            flip(up);
             down = getUVFromFace(jo, "down");
+//            flip(down);
             north = getUVFromFace(jo, "north");
             east = getUVFromFace(jo, "west");
             south = getUVFromFace(jo, "south");

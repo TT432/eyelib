@@ -32,7 +32,7 @@ public record BrBone(
         @Nullable String parent,
         Vector3f pivot,
         Vector3f rotation,
-        @Nullable MolangValue binding,
+        MolangValue binding,
         boolean reset,
         @Nullable String material,
         Map<String, BrBone> children,

@@ -19,7 +19,7 @@ public class EyelibAttachableData {
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<RenderData<Object>>> RENDER_DATA =
             ATTACHMENT_TYPES.register("render_data",
                     () -> AttachmentType.builder(() -> new RenderData<>())
-                            .serialize(RenderData.CODEC)
+                            .serialize(RenderData.codec())
                             .build());
 
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<EntityStatistics>> ENTITY_STATISTICS =
@@ -38,5 +38,11 @@ public class EyelibAttachableData {
             ATTACHMENT_TYPES.register("extra_entity_data",
                     () -> AttachmentType.builder(ExtraEntityData::empty)
                             .serialize(ExtraEntityData.CODEC)
+                            .build());
+
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<ItemInHandRenderData>> ITEM_IN_HAND_RENDER_DATA =
+            ATTACHMENT_TYPES.register("item_in_hand_render_data",
+                    () -> AttachmentType.builder(ItemInHandRenderData::empty)
+                            .serialize(ItemInHandRenderData.CODEC)
                             .build());
 }

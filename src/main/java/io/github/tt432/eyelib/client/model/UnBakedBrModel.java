@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.client.render.ModelRenderer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
+import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
@@ -96,7 +97,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
         final TextureAtlasSprite texture;
 
         @Override
-        public void visitFace(RenderParams renderParams, Context context, Model.Cube cube, List<Vector3f> vertexes, List<Vector2f> uvs, Vector3fc normal) {
+        public void visitFace(RenderParams renderParams, ModelVisitContext context, Model.Cube cube, List<Vector3f> vertexes, List<Vector2f> uvs, Vector3fc normal) {
             PoseStack poseStack = renderParams.poseStack();
             PoseStack.Pose last = poseStack.last();
 
@@ -120,7 +121,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
         }
 
         @Override
-        public <G extends Model.Bone, R extends ModelRuntimeData<G, ?, R>> void visitLocator(RenderParams renderParams, Context context, Model.Bone bone, LocatorEntry locator, R data, ModelTransformer<G, R> transformer) {
+        public <R extends ModelRuntimeData<Model.Bone, ?, R>> void visitLocator(RenderParams renderParams, ModelVisitContext context, Model.Bone bone, LocatorEntry locator, R data, ModelTransformer<Model.Bone, R> transformer) {
             visitors.put(locator.name(), new Matrix4f(renderParams.poseStack().last().pose()));
         }
     }

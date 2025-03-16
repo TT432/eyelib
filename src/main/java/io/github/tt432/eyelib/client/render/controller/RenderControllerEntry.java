@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
+import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.type.MolangArray;
@@ -17,8 +18,10 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.common.NeoForge;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @param part_visibility TODO
@@ -29,8 +32,19 @@ public record RenderControllerEntry(
         List<MolangValue> textures,
         Map<String, Map<String, List<String>>> arrays,
         Map<String, MolangValue> materials,
-        Map<String, MolangValue> part_visibility
+        Map<String, MolangValue> part_visibility,
+        AtomicBoolean needReloadTexture
 ) {
+    public RenderControllerEntry(
+            MolangValue geometry,
+            List<MolangValue> textures,
+            Map<String, Map<String, List<String>>> arrays,
+            Map<String, MolangValue> materials,
+            Map<String, MolangValue> part_visibility
+    ) {
+        this(geometry, textures, arrays, materials, part_visibility, new AtomicBoolean());
+    }
+
     public static final Codec<RenderControllerEntry> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             MolangValue.CODEC.optionalFieldOf("geometry", MolangValue.ZERO).forGetter(RenderControllerEntry::geometry),
             MolangValue.CODEC.listOf().optionalFieldOf("textures", List.of()).forGetter(RenderControllerEntry::textures),
@@ -95,6 +109,14 @@ public record RenderControllerEntry(
         return ResourceLocation.fromNamespaceAndPath("complex", sb.toString().replace(":", "_") + ".emissive.png");
     }
 
+    public RenderControllerEntry {
+        NeoForge.EVENT_BUS.addListener(ManagerEntryChangedEvent.class, e -> {
+            if (e.getManagerName().equals("Texture")) {
+                needReloadTexture.set(true);
+            }
+        });
+    }
+
     public ModelComponent setupModel(MolangScope scope, BrClientEntity entity) {
         initArrays(scope);
         ResourceLocation texture;
@@ -102,7 +124,10 @@ public record RenderControllerEntry(
         if (!textures.isEmpty()) {
             texture = getTexture(scope, entity);
 
-            if (Minecraft.getInstance().getTextureManager().getTexture(texture) == MissingTextureAtlasSprite.getTexture()) {
+            boolean needReloadTexture = this.needReloadTexture.get();
+
+            if (Minecraft.getInstance().getTextureManager().getTexture(texture) == MissingTextureAtlasSprite.getTexture()
+                    || needReloadTexture) {
                 List<ResourceLocation> list = new ArrayList<>();
                 for (MolangValue mv : textures) {
                     ResourceLocation parse = ResourceLocation.parse(get(scope, mv, "texture", entity.textures()));
@@ -113,7 +138,8 @@ public record RenderControllerEntry(
 
             ResourceLocation emissiveTexture = getEmissiveTexture(scope, entity);
 
-            if (Minecraft.getInstance().getTextureManager().getTexture(emissiveTexture) == MissingTextureAtlasSprite.getTexture()) {
+            if (Minecraft.getInstance().getTextureManager().getTexture(emissiveTexture) == MissingTextureAtlasSprite.getTexture()
+                    || needReloadTexture) {
                 List<ResourceLocation> list = new ArrayList<>();
                 for (MolangValue mv : textures) {
                     ResourceLocation resourceLocation = ResourceLocation.parse(get(scope, mv, "texture", entity.textures())).withPath(s -> replacePng(s, ".png", ".emissive.png"));
@@ -121,6 +147,8 @@ public record RenderControllerEntry(
                 }
                 NativeImages.uploadImage(emissiveTexture, Textures.layerMerging(list));
             }
+
+            this.needReloadTexture.set(false);
         } else {
             texture = MissingTextureAtlasSprite.getLocation();
         }

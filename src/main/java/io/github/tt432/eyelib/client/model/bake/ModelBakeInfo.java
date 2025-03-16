@@ -1,10 +1,13 @@
 package io.github.tt432.eyelib.client.model.bake;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import it.unimi.dsi.fastutil.ints.Int2BooleanFunction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.common.NeoForge;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +20,13 @@ import static org.lwjgl.opengl.GL11.*;
  */
 public abstract class ModelBakeInfo<Info> {
     private final Map<String, HashMap<ResourceLocation, BakedModel>> modelCache = new HashMap<>();
+
+    {
+        NeoForge.EVENT_BUS.addListener(ManagerEntryChangedEvent.class, e -> {
+            if (e.getManagerName().equals(ModelManager.class.getSimpleName()))
+                modelCache.remove(e.getEntryName());
+        });
+    }
 
     public BakedModel getBakedModel(Model model, boolean isSolid, ResourceLocation texture) {
         return modelCache.computeIfAbsent(model.name(), s -> new HashMap<>())

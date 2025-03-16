@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public class CollectLocatorModelVisitor extends ModelVisitor {
     @Override
-    public <G extends Model.Bone, R extends ModelRuntimeData<G, ?, R>> void visitLocator(RenderParams renderParams, Context context, Model.Bone bone, LocatorEntry locator, R data, ModelTransformer<G, R> transformer) {
+    public <R extends ModelRuntimeData<Model.Bone, ?, R>> void visitLocator(RenderParams renderParams, ModelVisitContext context, Model.Bone bone, LocatorEntry locator, R data, ModelTransformer<Model.Bone, R> transformer) {
         context.<Map<String, Matrix4f>>orCreate("locators", new HashMap<>()).put(locator.name(), new Matrix4f(renderParams.poseStack().poseStack.getLast().pose()));
     }
 }

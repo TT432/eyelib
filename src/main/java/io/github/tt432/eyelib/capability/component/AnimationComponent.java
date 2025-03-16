@@ -4,16 +4,19 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.Animation;
+import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.neoforged.neoforge.common.NeoForge;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author TT432
@@ -55,6 +58,22 @@ public class AnimationComponent {
 
     public void setInfo(SerializableInfo info) {
         setup(info.animations, info.animate);
+    }
+
+    {
+        NeoForge.EVENT_BUS.addListener(ManagerEntryChangedEvent.class, e -> {
+            if (e.getManagerName().equals(Eyelib.getAnimationManager().getManagerName())) {
+                AtomicBoolean changed = new AtomicBoolean(false);
+                animate.forEach((k, v) -> {
+                    if (k.name().equals(e.getEntryName())) {
+                        changed.set(true);
+                    }
+                });
+                if (changed.get()) {
+                    serializableInfo = null;
+                }
+            }
+        });
     }
 
     public void setup(Map<String, String> animations, Map<String, MolangValue> animate) {

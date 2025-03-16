@@ -166,8 +166,8 @@ public class MolangCompileVisitor extends MolangBaseVisitor<String> {
 
     @Override
     public String visitEqualsOperator(MolangParser.EqualsOperatorContext ctx) {
-        return valueOf(visit(ctx.expr(0)) + ".asFloat() " + ctx.op.getText() + " "
-                + visit(ctx.expr(1)) + ".asFloat() ? 1F : 0F");
+        return valueOf(visit(ctx.expr(0)) + (ctx.op.getText().equals("==") ? ".equalsF" : "nEqualsF")
+                + "(" + visit(ctx.expr(1)) + ")");
     }
 
     @Override

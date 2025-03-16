@@ -17,7 +17,7 @@ public class RenderModelVisitor extends ModelVisitor {
     private static final Vector3f tNormal = new Vector3f();
 
     @Override
-    public void visitVertex(RenderParams renderParams, Context context, Model.Cube cube, Vector3fc vertex, Vector2fc uv, Vector3fc normal) {
+    public void visitVertex(RenderParams renderParams, ModelVisitContext context, Model.Cube cube, Vector3fc vertex, Vector2fc uv, Vector3fc normal) {
         PoseStack poseStack = renderParams.poseStack();
         PoseStack.Pose last = poseStack.last();
 

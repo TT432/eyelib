@@ -23,21 +23,23 @@ import java.util.Optional;
  */
 @Getter
 public class RenderData<T> {
-    public static final Codec<RenderData<Object>> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            ModelComponent.SerializableInfo.CODEC.listOf().optionalFieldOf("model").forGetter(ac -> Optional.of(ac.modelComponents.stream().map(ModelComponent::getSerializableInfo).toList())),
-            AnimationComponent.SerializableInfo.CODEC.optionalFieldOf("animation").forGetter(ac -> Optional.ofNullable(ac.animationComponent.getSerializableInfo()))
-    ).apply(ins, (mcsi, acsi) -> {
-        RenderData<Object> result = new RenderData<>();
-        mcsi.ifPresent(l -> {
-            for (ModelComponent.SerializableInfo serializableInfo : l) {
-                ModelComponent e = new ModelComponent();
-                e.setInfo(serializableInfo);
-                result.modelComponents.add(e);
-            }
-        });
-        acsi.ifPresent(result.animationComponent::setInfo);
-        return result;
-    }));
+    public static <T> Codec<RenderData<T>> codec() {
+        return RecordCodecBuilder.create(ins -> ins.group(
+                ModelComponent.SerializableInfo.CODEC.listOf().optionalFieldOf("model").forGetter(ac -> Optional.of(ac.modelComponents.stream().map(ModelComponent::getSerializableInfo).toList())),
+                AnimationComponent.SerializableInfo.CODEC.optionalFieldOf("animation").forGetter(ac -> Optional.ofNullable(ac.animationComponent.getSerializableInfo()))
+        ).apply(ins, (mcsi, acsi) -> {
+            RenderData<T> result = new RenderData<>();
+            mcsi.ifPresent(l -> {
+                for (ModelComponent.SerializableInfo serializableInfo : l) {
+                    ModelComponent e = new ModelComponent();
+                    e.setInfo(serializableInfo);
+                    result.modelComponents.add(e);
+                }
+            });
+            acsi.ifPresent(result.animationComponent::setInfo);
+            return result;
+        }));
+    }
 
     public static RenderData<Object> getComponent(Entity entity) {
         return entity.getData(EyelibAttachableData.RENDER_DATA);

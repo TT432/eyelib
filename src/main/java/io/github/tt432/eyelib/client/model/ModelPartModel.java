@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.model;
 import io.github.tt432.eyelib.client.model.locator.ModelLocator;
 import io.github.tt432.eyelib.client.model.transformer.ModelPartTransformer;
 import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
+import io.github.tt432.eyelib.molang.MolangValue;
 import net.minecraft.client.model.geom.ModelPart;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
@@ -69,6 +70,11 @@ public record ModelPartModel(
             this(name, modelPart, new ArrayList<>(), new HashMap<>());
             modelPart.cubes.forEach(c -> cubes.add(new Cube(c)));
             modelPart.children.forEach((k, v) -> children.put(k, new Bone(k, v)));
+        }
+
+        @Override
+        public MolangValue binding() {
+            return MolangValue.ZERO;
         }
     }
 
