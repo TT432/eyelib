@@ -11,6 +11,7 @@ import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationCon
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import io.github.tt432.eyelib.client.model.bedrock.BrModelEntry;
+import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
 import io.github.tt432.eyelib.event.TextureChangedEvent;
 import io.github.tt432.eyelib.util.client.NativeImages;
@@ -227,6 +228,11 @@ public class EyelibManagerScreen extends Screen {
         loadJsonFiles(basePath, "entity", jo -> {
             var entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
             Eyelib.getClientEntityLoader().put(ResourceLocation.parse(entity.identifier()), entity);
+        });
+
+        loadJsonFiles(basePath, "particles", jo -> {
+            var particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
+            Eyelib.getParticleManager().put(particle.particleEffect().description().identifier(), particle);
         });
 
         Path texturePath = basePath.resolve("textures");
