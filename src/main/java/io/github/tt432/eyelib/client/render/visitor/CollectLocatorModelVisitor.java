@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.render.visitor;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
@@ -16,6 +17,19 @@ import java.util.Map;
 public class CollectLocatorModelVisitor extends ModelVisitor {
     @Override
     public <R extends ModelRuntimeData<Model.Bone, ?, R>> void visitLocator(RenderParams renderParams, ModelVisitContext context, Model.Bone bone, LocatorEntry locator, R data, ModelTransformer<Model.Bone, R> transformer) {
-        context.<Map<String, Matrix4f>>orCreate("locators", new HashMap<>()).put(locator.name(), new Matrix4f(renderParams.poseStack().poseStack.getLast().pose()));
+        PoseStack poseStack = renderParams.poseStack();
+        poseStack.pushPose();
+        PoseStack.Pose last = poseStack.last();
+        Matrix4f pose = last.pose();
+
+        pose.translate(locator.offset());
+
+        var rotation = locator.rotation();
+
+        last.normal().rotateZYX(rotation.z(), rotation.y(), rotation.x());
+        last.pose().rotateZYX(rotation.z(), rotation.y(), rotation.x());
+
+        context.<Map<String, Matrix4f>>orCreate("locators", new HashMap<>()).put(locator.name(), new Matrix4f(poseStack.poseStack.getLast().pose()));
+        poseStack.popPose();
     }
 }
