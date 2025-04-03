@@ -10,6 +10,7 @@ import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.Fox;
 import net.minecraft.world.entity.animal.horse.Llama;
+import net.minecraft.world.entity.animal.horse.TraderLlama;
 import net.minecraft.world.entity.monster.Zombie;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -48,6 +49,11 @@ public class EntityExtraDataHandler {
                 case Llama llama -> {
                     ExtraEntityData data = llama.getData(EyelibAttachableData.EXTRA_ENTITY_DATA);
                     ExtraEntityData newData = data.withVariant(llama.getVariant().getId());
+
+                    if (llama instanceof TraderLlama) {
+                        newData = newData.withMark_variant(1);
+                    }
+
                     llama.setData(EyelibAttachableData.EXTRA_ENTITY_DATA, newData);
                 }
                 case Fox fox -> {
