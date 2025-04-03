@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.molang;
 
 import com.mojang.serialization.Codec;
 import io.github.tt432.chin.codec.ChinExtraCodecs;
+import io.github.tt432.eyelib.molang.compiler.MolangCompileHandler;
 import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;
 import io.netty.buffer.ByteBuf;
@@ -22,7 +23,7 @@ import java.util.function.Supplier;
 @Slf4j
 public record MolangValue(
         @NotNull String context,
-        @NotNull LazyInitializer<MolangFunction> method
+        @NotNull MolangFunction method
 ) {
     static class LazyInitializer<T> {
         private final Supplier<T> initializer;
@@ -59,7 +60,7 @@ public record MolangValue(
     }
 
     public MolangValue(@NotNull String context) {
-        this(context, new LazyInitializer<>(() -> MolangCompileHandler.compile(context), MolangFunction.NULL));
+        this(context, MolangCompileHandler.compile(context));
     }
 
     public static final float TRUE = 1;
@@ -91,7 +92,7 @@ public record MolangValue(
     public static final StreamCodec<ByteBuf, MolangValue> STREAM_CODEC = ByteBufCodecs.fromCodec(CODEC);
 
     public MolangObject getObject(MolangScope scope) {
-        return Objects.requireNonNullElse(method.get().apply(scope), MolangNull.INSTANCE);
+        return Objects.requireNonNullElse(method.apply(scope), MolangNull.INSTANCE);
     }
 
     public float eval(MolangScope scope) {

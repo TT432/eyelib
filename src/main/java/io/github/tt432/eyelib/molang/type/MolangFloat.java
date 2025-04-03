@@ -6,6 +6,8 @@ package io.github.tt432.eyelib.molang.type;
 public record MolangFloat(
         float value
 ) implements MolangObject {
+    public static final MolangFloat ZERO = new MolangFloat(0);
+
     public static MolangFloat valueOf(float value) {
         return new MolangFloat(value);
     }
@@ -27,6 +29,11 @@ public record MolangFloat(
     @Override
     public String asString() {
         return "";
+    }
+
+    @Override
+    public boolean isNumber() {
+        return true;
     }
 
     @Override

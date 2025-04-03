@@ -20,4 +20,9 @@ public record MolangNull() implements MolangObject {
     public String asString() {
         return "";
     }
+
+    @Override
+    public boolean isNumber() {
+        return false;
+    }
 }

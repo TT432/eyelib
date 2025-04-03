@@ -67,12 +67,12 @@ public interface MolangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNeExpr(MolangParser.NeExprContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code logicOperator}
+	 * Visit a parse tree produced by the {@code andOperator}
 	 * labeled alternative in {@link MolangParser#expr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitLogicOperator(MolangParser.LogicOperatorContext ctx);
+	T visitAndOperator(MolangParser.AndOperatorContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code binaryConditionalOperator}
 	 * labeled alternative in {@link MolangParser#expr}.
@@ -95,12 +95,26 @@ public interface MolangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitTernaryConditionalOperator(MolangParser.TernaryConditionalOperatorContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code orOperator}
+	 * labeled alternative in {@link MolangParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOrOperator(MolangParser.OrOperatorContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code stringValue}
 	 * labeled alternative in {@link MolangParser#expr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitStringValue(MolangParser.StringValueContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code loop}
+	 * labeled alternative in {@link MolangParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLoop(MolangParser.LoopContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code mulOrDiv}
 	 * labeled alternative in {@link MolangParser#expr}.

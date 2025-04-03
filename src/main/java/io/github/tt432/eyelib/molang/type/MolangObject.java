@@ -12,6 +12,8 @@ public interface MolangObject {
 
     String asString();
 
+    boolean isNumber();
+
     @CalledByGeneratedMethod
     default float equalsF(MolangObject other) {
         return equals(other) ? 1 : 0;

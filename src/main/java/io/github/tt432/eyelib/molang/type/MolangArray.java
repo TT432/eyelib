@@ -30,6 +30,11 @@ public record MolangArray<T extends MolangObject>(
     }
 
     @Override
+    public boolean isNumber() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return value.toString();
     }

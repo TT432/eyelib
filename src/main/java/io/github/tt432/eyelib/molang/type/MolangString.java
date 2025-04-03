@@ -26,6 +26,11 @@ public record MolangString(
     }
 
     @Override
+    public boolean isNumber() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return v;
     }

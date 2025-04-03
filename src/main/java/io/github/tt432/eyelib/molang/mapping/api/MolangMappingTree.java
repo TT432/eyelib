@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Type;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -73,7 +74,7 @@ public class MolangMappingTree {
     public static class Node {
         public final Map<String, Node> children = new HashMap<>();
         public final List<MolangClass> actualClasses = new ArrayList<>();
-        public final Map<String, FunctionInfo> actualFunctions = new HashMap<>();
+        public final Map<String, List<FunctionInfo>> actualFunctions = new HashMap<>();
     }
 
     public void addNode(String name, MolangClass actualClass) {
@@ -96,21 +97,27 @@ public class MolangMappingTree {
     private static void processMethod(MolangClass actualClass, Method method, Node last) {
         for (Annotation annotation : method.getAnnotations()) {
             if (annotation instanceof MolangFunction molangFunction) {
-                last.actualFunctions.put(molangFunction.value(), new FunctionInfo(molangFunction, actualClass, method));
+                last.actualFunctions.computeIfAbsent(molangFunction.value(), s -> new ArrayList<>()).add(new FunctionInfo(molangFunction, actualClass, method));
 
                 for (var alias : molangFunction.alias()) {
-                    last.actualFunctions.put(alias, new FunctionInfo(molangFunction, actualClass, method));
+                    last.actualFunctions.computeIfAbsent(alias, s -> new ArrayList<>()).add(new FunctionInfo(molangFunction, actualClass, method));
                 }
 
                 return;
             }
         }
 
-        last.actualFunctions.put(method.getName(), new FunctionInfo(null, actualClass, method));
+        last.actualFunctions.computeIfAbsent(method.getName(), s -> new ArrayList<>()).add(new FunctionInfo(null, actualClass, method));
+    }
+
+    public record FieldData(
+            Class<?> clazz,
+            Field field
+    ) {
     }
 
     @Nullable
-    public String findField(String name) {
+    public FieldData findField(String name) {
         int i = name.indexOf(".");
 
         String fieldName;
@@ -134,25 +141,25 @@ public class MolangMappingTree {
             classes = node.actualClasses;
         }
 
-        String foundField = null;
-
         for (var classData : classes) {
             var aClass = classData.classInstance;
 
             try {
-                aClass.getField(fieldName);
-
-                foundField = aClass.getName() + "." + fieldName;
-                break;
+                return new FieldData(aClass, aClass.getField(fieldName));
             } catch (NoSuchFieldException ignored) {
             }
         }
 
-        return foundField;
+        return null;
+    }
+
+    public record MethodData(
+            List<FunctionInfo> functionInfos
+    ) {
     }
 
     @Nullable
-    public String findMethod(String name, String args) {
+    public MethodData findMethod(String name) {
         int i = name.indexOf(".");
 
         String methodName;
@@ -172,28 +179,13 @@ public class MolangMappingTree {
             return null;
         }
 
-        FunctionInfo functionInfo = node.actualFunctions.get(methodName);
-
-        String foundMethod = null;
+        var functionInfo = node.actualFunctions.get(methodName);
 
         if (functionInfo != null) {
-            MolangClass molangClass = functionInfo.molangClass;
-            Class<?> aClass = molangClass.classInstance();
-
-            methodName = functionInfo.method.getName();
-
-            if (!molangClass.pureFunction) {
-                if (args.isEmpty()) {
-                    foundMethod = aClass.getName() + "." + methodName + "($1)";
-                } else {
-                    foundMethod = aClass.getName() + "." + methodName + "($1, " + args + ")";
-                }
-            } else {
-                foundMethod = aClass.getName() + "." + methodName + "(" + args + ")";
-            }
+            return new MethodData(functionInfo);
         }
 
-        return foundMethod;
+        return null;
     }
 
     private Node findNode(String name) {
