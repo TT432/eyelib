@@ -650,8 +650,13 @@ public final class MolangQuery {
 
     @MolangFunction(value = "creeper_swell", alias = "swell_amount", description = "苦力怕爆炸计时")
     public static float creeperSwell(MolangScope scope) {
-        return scope.getOwner().ownerAs(Creeper.class).map(c -> c.swell)
-                .orElse(scope.getOwner().ownerAs(WitherBoss.class).map(WitherBoss::getInvulnerableTicks).orElse(0));
+        return scope.getOwner().ownerAs(Creeper.class).map(c -> c.swell / 30F)
+                .orElse(Float.valueOf(scope.getOwner().ownerAs(WitherBoss.class).map(WitherBoss::getInvulnerableTicks).orElse(0)));
+    }
+
+    @MolangFunction(value = "swelling_dir", description = "苦力怕爆炸方向")
+    public static float swellingDir(MolangScope scope) {
+        return scope.getOwner().ownerAs(Creeper.class).map(Creeper::getSwellDir).orElse(0);
     }
 
     @MolangFunction(value = "invulnerable_ticks", description = "")
