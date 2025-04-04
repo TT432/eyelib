@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.github.tt432.eyelib.client.model.Model;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
@@ -31,7 +32,7 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
                     downloadTexture(texture, nativeimage ->
                             model.toplevelBones().forEach((boneName, bone) ->
                                     processBone(bone, nativeimage,
-                                            a -> (((a & 0xFF) != 0xFF) && !isSolid) || ((a & 0xFF) == 0 && isSolid),
+                                            color -> ((FastColor.ABGR32.alpha(color) & 0xFF) == 0xFF) == isSolid,
                                             (n, d) -> builder.put(n, new TwoSideInfo(n, d)))));
 
                     return new TwoSideInfoMap(builder.build());
