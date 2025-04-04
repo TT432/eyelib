@@ -7,10 +7,7 @@ import io.github.tt432.eyelib.client.entity.BrClientEntity;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
-import io.github.tt432.eyelib.molang.type.MolangArray;
-import io.github.tt432.eyelib.molang.type.MolangNull;
-import io.github.tt432.eyelib.molang.type.MolangObject;
-import io.github.tt432.eyelib.molang.type.MolangString;
+import io.github.tt432.eyelib.molang.type.*;
 import io.github.tt432.eyelib.util.client.NativeImages;
 import io.github.tt432.eyelib.util.client.Textures;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
@@ -79,16 +76,28 @@ public record RenderControllerEntry(
             ).optionalFieldOf("part_visibility", Map.of()).forGetter(RenderControllerEntry::part_visibility)
     ).apply(ins, RenderControllerEntry::new));
 
-    public void initArrays(MolangScope scope) {
+    public void initArrays(MolangScope scope, BrClientEntity clientEntity) {
         for (Map<String, List<String>> value : arrays.values()) {
             value.forEach((name, list) -> {
-                List<MolangString> result = new ArrayList<>();
+                List<MolangDynamicObject> result = new ArrayList<>();
                 for (String s : list) {
-                    result.add(new MolangString(s));
+                    result.add(new MolangDynamicObject(() -> scope.get(s.toLowerCase(Locale.ROOT))));
                 }
                 scope.set(name.toLowerCase(Locale.ROOT), new MolangArray<>(result));
             });
         }
+
+        clientEntity.textures().forEach((name, value) -> {
+            scope.set("texture." + name.toLowerCase(Locale.ROOT), new MolangString(value));
+        });
+
+        clientEntity.geometry().forEach((name, value) -> {
+            scope.set("geometry." + name.toLowerCase(Locale.ROOT), new MolangString(value));
+        });
+
+        clientEntity.materials().forEach((name, value) -> {
+            scope.set("material." + name.toLowerCase(Locale.ROOT), new MolangString(value));
+        });
     }
 
     public ResourceLocation getTexture(MolangScope scope, BrClientEntity entity) {
@@ -118,7 +127,7 @@ public record RenderControllerEntry(
     }
 
     public ModelComponent setupModel(MolangScope scope, BrClientEntity entity) {
-        initArrays(scope);
+        initArrays(scope, entity);
         ResourceLocation texture;
 
         if (!textures.isEmpty()) {
@@ -176,6 +185,8 @@ public record RenderControllerEntry(
             var r = map.get(value.context().toLowerCase(Locale.ROOT).replace(type + ".", ""));
 
             return Objects.requireNonNullElse(r, "minecraft:null");
+        } else if (object instanceof MolangString || object instanceof MolangDynamicObject) {
+            return Objects.requireNonNullElse(object.asString(), "minecraft:null");
         } else {
             var r = map.get(object.asString().toLowerCase(Locale.ROOT).replace(type + ".", ""));
 
