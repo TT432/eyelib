@@ -160,7 +160,7 @@ public class BrParticleParticle {
             billboard.transform(this, poseStack);
         }
 
-        m4.rotateZ(rotation);
+        m4.rotateZ((float) Math.toRadians(rotation));
 
         var size = billboard == null ? new Vector2f(1, 1) : billboard.getSize(this);
 

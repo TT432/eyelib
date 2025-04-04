@@ -26,10 +26,7 @@ import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
-import io.github.tt432.eyelib.compute.LazyComputeBufferBuilder;
-import io.github.tt432.eyelib.compute.VertexComputeHelper;
 import io.github.tt432.eyelib.molang.MolangScope;
-import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -56,8 +53,7 @@ public class PlayerItemInHandAttachableLayer {
     private static final boolean irisInstalled = ModList.get().isLoaded("iris");
 
     public static void render(RenderParams params, MolangScope scope, Model parentModel,
-                              BoneRenderInfos infos, MultiBufferSource multiBufferSource, float partialTicks,
-                              Map<RenderType, Pair<VertexComputeHelper, MultiBufferSource>> helpers) {
+                              BoneRenderInfos infos, MultiBufferSource multiBufferSource, float partialTicks) {
         if (params.renderTarget() instanceof LivingEntity living) {
             BrClientEntity leftClientEntity = BrAttachableLoader.INSTANCE.getAttachables().get(BuiltInRegistries.ITEM.getKey(living.getMainHandItem().getItem()));
             BrClientEntity rightClientEntity = BrAttachableLoader.INSTANCE.getAttachables().get(BuiltInRegistries.ITEM.getKey(living.getOffhandItem().getItem()));
@@ -66,15 +62,14 @@ public class PlayerItemInHandAttachableLayer {
             RenderHelper renderHelper = Eyelib.getRenderHelper();
 
             if (leftClientEntity != null)
-                render(params, scope, parentModel, infos, multiBufferSource, partialTicks, helpers, living, leftClientEntity, renderHelper, data.leftHandData());
+                render(params, scope, parentModel, infos, multiBufferSource, partialTicks, living, leftClientEntity, renderHelper, data.leftHandData());
             if (rightClientEntity != null)
-                render(params, scope, parentModel, infos, multiBufferSource, partialTicks, helpers, living, rightClientEntity, renderHelper, data.rightHandData());
+                render(params, scope, parentModel, infos, multiBufferSource, partialTicks, living, rightClientEntity, renderHelper, data.rightHandData());
         }
     }
 
     private static void render(RenderParams params, MolangScope scope, Model parentModel, BoneRenderInfos infos,
                                MultiBufferSource multiBufferSource, float partialTicks,
-                               Map<RenderType, Pair<VertexComputeHelper, MultiBufferSource>> helpers,
                                LivingEntity living, BrClientEntity clientEntity, RenderHelper renderHelper, RenderData<ItemStack> renderData) {
         for (String renderController : clientEntity.render_controllers()) {
             final Matrix4f[] bindingTransform = {null};
@@ -112,7 +107,7 @@ public class PlayerItemInHandAttachableLayer {
                             Matrix4f trans = bindingTransform[0].invert(new Matrix4f()).mul(parentBindingTransform);
                             poseStack.poseStack.push(new PoseStack.Pose(trans, new Matrix3f(trans).invert().transpose()));
                             render(multiBufferSource, poseStack, clientEntity, living, partialTicks,
-                                    params.light(), params.overlay(), renderData, helpers);
+                                    params.light(), params.overlay(), renderData);
                         }
                     }
                 }
@@ -121,8 +116,7 @@ public class PlayerItemInHandAttachableLayer {
     }
 
     private static void render(MultiBufferSource multiBufferSource, PoseStack poseStack, BrClientEntity clientEntity,
-                               LivingEntity entity, float partialTicks, int light, int overlay, RenderData<ItemStack> cap,
-                               Map<RenderType, Pair<VertexComputeHelper, MultiBufferSource>> helpers) {
+                               LivingEntity entity, float partialTicks, int light, int overlay, RenderData<ItemStack> cap) {
         List<ModelComponent> components = setupClientEntity(clientEntity, cap);
 
         AnimationEffects effects = new AnimationEffects();
@@ -157,10 +151,6 @@ public class PlayerItemInHandAttachableLayer {
 
                 {
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
-                    if (!irisInstalled) {
-                        var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
-                        ((LazyComputeBufferBuilder) buffer).setEyelib$helper(helper.left());
-                    }
                     renderHelper.render(renderParams, model, tickedInfos);
 
                     renderHelper.collectLocators(model, tickedInfos);
@@ -192,10 +182,6 @@ public class PlayerItemInHandAttachableLayer {
                     VertexConsumer buffer1 = multiBufferSource.getBuffer(rt1);
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
 
-                    if (!irisInstalled) {
-                        var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
-                        ((LazyComputeBufferBuilder) buffer1).setEyelib$helper(helper.left());
-                    }
                     renderHelper.render(
                             renderParams
                                     .withRenderType(rt1)

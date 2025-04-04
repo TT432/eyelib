@@ -10,7 +10,6 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
-import io.github.tt432.eyelib.client.attachable.PlayerItemInHandAttachableLayer;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.client.render.RenderHelper;
@@ -48,10 +47,12 @@ import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author TT432
@@ -78,7 +79,11 @@ public class EntityRenderSystem {
     @SubscribeEvent
     public static void onEvent(RenderLivingEvent.Pre event) {
         LivingEntity entity = event.getEntity();
-        RenderData<?> cap = RenderData.getComponent(entity);
+        RenderData<Object> cap = RenderData.getComponent(entity);
+
+        if (cap.getOwner() != entity) {
+            cap.init(entity);
+        }
 
         if (!cap.isUseBuiltInRenderSystem()) return;
 
@@ -98,26 +103,33 @@ public class EntityRenderSystem {
 
         setupExtraMolang(entity, cap);
 
+        var rendered = renderComponents(event.getMultiBufferSource(), event.getPoseStack(), event.getPackedLight(),
+                LivingEntityRenderer.getOverlayCoords(entity, ((LivingEntityRendererAccessor) (event.getRenderer())).callGetWhiteOverlayProgress(entity, event.getPartialTick())),
+                event.getPartialTick(), entity, cap, components, tickedInfos, effects);
+        if (rendered) {
+            event.setCanceled(true);
+        }
+    }
+
+    public static boolean renderComponents(MultiBufferSource multiBufferSource, PoseStack poseStack,
+                                           int packedLight, int overlay, float partialTick,
+                                           @Nullable LivingEntity entity, RenderData<Object> cap, List<ModelComponent> components,
+                                           BoneRenderInfos tickedInfos, AnimationEffects effects) {
+        AtomicBoolean rendered = new AtomicBoolean(false);
+        ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
         components.forEach(modelComponent -> {
             var model = modelComponent.getModel();
             ResourceLocation texture = modelComponent.getTexture();
 
             if (model != null && texture != null) {
-                event.setCanceled(true);
-                MultiBufferSource multiBufferSource = event.getMultiBufferSource();
-
-                PoseStack poseStack = event.getPoseStack();
-
+                rendered.set(true);
                 RenderType renderType = modelComponent.getRenderType(texture);
                 VertexConsumer buffer = multiBufferSource.getBuffer(renderType);
 
                 poseStack.pushPose();
 
                 RenderParams renderParams = new RenderParams(entity, poseStack.last().copy(), poseStack,
-                        renderType, texture, modelComponent.isSolid(), buffer, event.getPackedLight(),
-                        LivingEntityRenderer.getOverlayCoords(entity,
-                                ((LivingEntityRendererAccessor) (event.getRenderer()))
-                                        .callGetWhiteOverlayProgress(entity, event.getPartialTick())),
+                        renderType, texture, modelComponent.isSolid(), buffer, packedLight, overlay,
                         modelComponent.getPartVisibility());
 
                 if (clientEntityComponent.getClientEntity() != null) {
@@ -126,18 +138,20 @@ public class EntityRenderSystem {
                         poseStack.scale(s.getScaleX(scope), s.getScaleY(scope), s.getScaleZ(scope));
                     });
 
-                    if (entity.isBaby()) {
-                        poseStack.scale(0.5F, 0.5F, 0.5F);
-                    }
+                    if (entity != null) {
+                        if (entity.isBaby()) {
+                            poseStack.scale(0.5F, 0.5F, 0.5F);
+                        }
 
-                    float yBodyRot = Mth.rotLerp(event.getPartialTick(), entity.yBodyRotO, entity.yBodyRot);
-                    poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
+                        float yBodyRot = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
+                        poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
+                    }
                 }
 
                 {
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
                     if (!irisInstalled) {
-                        var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), event.getMultiBufferSource()));
+                        var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
                         ((LazyComputeBufferBuilder) buffer).setEyelib$helper(helper.left());
                     }
                     renderHelper.render(renderParams, model, tickedInfos);
@@ -153,8 +167,8 @@ public class EntityRenderSystem {
 
                                 if (emitter.getSpace().position() || emitter.getPosition().equals(0, 0, 0)) {
                                     if (matrix4f != null) {
-                                        matrix4f.transformPosition(emitter.getPosition().zero());
-                                    } else {
+                                        matrix4f.transformPosition(emitter.getPosition().zero()).add(Minecraft.getInstance().gameRenderer.getMainCamera().getPosition().toVector3f());
+                                    } else if (entity != null) {
                                         emitter.getPosition().set(entity.getX(), entity.getY(), entity.getZ());
                                     }
                                 }
@@ -172,7 +186,7 @@ public class EntityRenderSystem {
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
 
                     if (!irisInstalled) {
-                        var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), event.getMultiBufferSource()));
+                        var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
                         ((LazyComputeBufferBuilder) buffer1).setEyelib$helper(helper.left());
                     }
                     renderHelper.render(
@@ -186,10 +200,12 @@ public class EntityRenderSystem {
 
                 poseStack.popPose();
 
-                var ticks = (ClientTickHandler.getTick() + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) / 20;
-                PlayerItemInHandAttachableLayer.render(renderParams, cap.getScope(), model, tickedInfos, multiBufferSource, ticks, helpers);
+//                var ticks = (ClientTickHandler.getTick() + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) / 20;
+//                PlayerItemInHandAttachableLayer.render(renderParams, cap.getScope(), model, tickedInfos, multiBufferSource, ticks);
             }
         });
+
+        return rendered.get();
     }
 
     private static void setupExtraMolang(LivingEntity entity, RenderData<?> cap) {
