@@ -88,10 +88,10 @@ public abstract class ModelBakeInfo<Info> {
     protected boolean pixelAnyMatch(NativeImage buffer,
                                     float uv0u, float uv0v, float uv1u, float uv1v,
                                     Int2BooleanFunction f) {
-        int x = Math.round(uv0u * buffer.getWidth());
-        int y = Math.round(uv0v * buffer.getHeight());
-        int width = Math.round((uv1u - uv0u) * buffer.getWidth());
-        int height = Math.round((uv1v - uv0v) * buffer.getHeight());
+        int x = Math.round(uv0u * (buffer.getWidth() - 1));
+        int y = Math.round(uv0v * (buffer.getHeight() - 1));
+        int width = Math.round((uv1u - uv0u) * (buffer.getWidth() - 1));
+        int height = Math.round((uv1v - uv0v) * (buffer.getHeight() - 1));
 
         for (int j = 0; j < height; j++) {
             for (int k = 0; k < width; k++) {
