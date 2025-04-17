@@ -36,6 +36,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.horse.Llama;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.WoolCarpetBlock;
@@ -145,14 +147,19 @@ public class EntityRenderSystem {
 
                         float yBodyRot = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
                         poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
+                        AttributeInstance scaleAttr = entity.getAttribute(Attributes.SCALE);
+                        if (scaleAttr != null) {
+                            double scaleValue = scaleAttr.getValue();
+                            poseStack.scale((float) scaleValue, (float) scaleValue, (float) scaleValue);
+                        }
                     }
                 }
 
                 {
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
-                    if (!irisInstalled) {
+                    if (!irisInstalled && buffer instanceof LazyComputeBufferBuilder lazy) {
                         var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
-                        ((LazyComputeBufferBuilder) buffer).setEyelib$helper(helper.left());
+                        lazy.setEyelib$helper(helper.left());
                     }
                     renderHelper.render(renderParams, model, tickedInfos);
 
@@ -185,9 +192,9 @@ public class EntityRenderSystem {
                     VertexConsumer buffer1 = multiBufferSource.getBuffer(rt1);
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
 
-                    if (!irisInstalled) {
+                    if (!irisInstalled && buffer1 instanceof LazyComputeBufferBuilder lazy) {
                         var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
-                        ((LazyComputeBufferBuilder) buffer1).setEyelib$helper(helper.left());
+                        lazy.setEyelib$helper(helper.left());
                     }
                     renderHelper.render(
                             renderParams
@@ -233,9 +240,9 @@ public class EntityRenderSystem {
         }
 
         List<ModelComponent> components = cap.getModelComponents();
-        components.clear();
 
         if (clientEntityComponent.getClientEntity() != null) {
+            components.clear();
             BrClientEntity ce = clientEntityComponent.getClientEntity();
 
             for (String renderController : ce.render_controllers()) {
