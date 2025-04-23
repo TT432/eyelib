@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.molang.compiler;
 
 import io.github.dmlloyd.classfile.ClassFile;
+import io.github.dmlloyd.classfile.ClassHierarchyResolver;
 import io.github.dmlloyd.classfile.TypeKind;
 import io.github.dmlloyd.classfile.extras.reflect.AccessFlag;
 import io.github.tt432.eyelib.molang.MolangUncompilableException;
@@ -18,8 +19,10 @@ import java.io.IOException;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
 
+import static io.github.dmlloyd.classfile.extras.constant.ConstantUtils.referenceClassDesc;
 import static io.github.dmlloyd.classfile.extras.reflect.ClassFileFormatVersion.RELEASE_21;
-import static io.github.tt432.eyelib.molang.compiler.MolangClassDescs.*;
+import static io.github.tt432.eyelib.molang.compiler.MolangClassDescs.CD_MolangObject;
+import static io.github.tt432.eyelib.molang.compiler.MolangClassDescs.CD_MolangScope;
 import static java.lang.constant.ConstantDescs.*;
 
 /**
@@ -70,39 +73,66 @@ public class MolangCompileHandler {
         currIdx++;
         var compiledClassName = context.compiledClassName = "CompiledMolang$" + currIdx;
 
-        var code = context.code = ClassFile.of().build(ClassDesc.of(compiledClassName),
-                classBuilder -> classBuilder.withVersion(RELEASE_21.major(), 0)
-                        .withInterfaceSymbols(ClassDesc.of(MolangValue.MolangFunction.class.getName()))
-                        .withField("originalString", CD_String, fieldBuilder -> {
-                            fieldBuilder.withFlags(AccessFlag.FINAL, AccessFlag.STATIC);
-                        })
-                        .withMethod("<clinit>", MethodTypeDesc.of(CD_void), ClassFile.ACC_STATIC, methodBuilder -> methodBuilder.withCode(codeBuilder -> {
-                            codeBuilder.ldc(molangString).putstatic(ClassDesc.of(compiledClassName), "originalString", CD_String).return_();
-                        }))
-                        .withMethod("<init>", MethodTypeDesc.of(CD_void), ClassFile.ACC_PUBLIC, methodBuilder -> methodBuilder.withCode(codeBuilder -> {
-                            codeBuilder.aload(0)
-                                    .invokespecial(CD_Object, "<init>", MethodTypeDesc.of(CD_void))
-                                    .return_();
-                        }))
-                        .withMethod("apply", MethodTypeDesc.of(CD_MolangObject, CD_MolangScope), ClassFile.ACC_PUBLIC,
-                                methodBuilder -> methodBuilder.withCode(codeBuilder -> {
-                                    visitor.startVisitor(codeBuilder);
+        var code = context.code = ClassFile.of()
+                .withOptions(ClassFile.ClassHierarchyResolverOption.of(cd -> {
+                    if (!cd.isClassOrInterface())
+                        return null;
 
-                                    MolangParser molangParser = new MolangParser(
-                                            new CommonTokenStream(
-                                                    new MolangLexer(CharStreams.fromString(molangString)))
-                                    );
-                                    molangParser.addErrorListener(new BaseErrorListener() {
-                                        @Override
-                                        public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-                                            log.error("parsing: {} with error:{}", molangString, e.getMessage());
-                                        }
-                                    });
+                    if (cd.equals(CD_Object))
+                        return ClassHierarchyResolver.ClassHierarchyInfo.ofClass(null);
 
-                                    visitor.visit(molangParser.exprSet());
+                    Class<?> cl = null;
+                    try {
+                        String result;
+                        if (cd.isClassOrInterface()) {
+                            String desc = cd.descriptorString();
+                            result = desc.substring(1, desc.length() - 1);
+                        } else {
+                            throw new IllegalArgumentException(cd.descriptorString());
+                        }
+                        cl = Class.forName(result.replace('/', '.'), false, MolangValue.class.getClassLoader());
+                    } catch (ClassNotFoundException ignored) {
+                    }
+                    if (cl == null) {
+                        return null;
+                    }
 
-                                    codeBuilder.return_(TypeKind.REFERENCE);
-                                })));
+                    return cl.isInterface() ? ClassHierarchyResolver.ClassHierarchyInfo.ofInterface()
+                            : ClassHierarchyResolver.ClassHierarchyInfo.ofClass(referenceClassDesc(cl.getSuperclass()));
+                }))
+                .build(ClassDesc.of(compiledClassName),
+                        classBuilder -> classBuilder.withVersion(RELEASE_21.major(), 0)
+                                .withInterfaceSymbols(ClassDesc.of(MolangValue.MolangFunction.class.getName()))
+                                .withField("originalString", CD_String, fieldBuilder -> {
+                                    fieldBuilder.withFlags(AccessFlag.FINAL, AccessFlag.STATIC);
+                                })
+                                .withMethod("<clinit>", MethodTypeDesc.of(CD_void), ClassFile.ACC_STATIC, methodBuilder -> methodBuilder.withCode(codeBuilder -> {
+                                    codeBuilder.ldc(molangString).putstatic(ClassDesc.of(compiledClassName), "originalString", CD_String).return_();
+                                }))
+                                .withMethod("<init>", MethodTypeDesc.of(CD_void), ClassFile.ACC_PUBLIC, methodBuilder -> methodBuilder.withCode(codeBuilder -> {
+                                    codeBuilder.aload(0)
+                                            .invokespecial(CD_Object, "<init>", MethodTypeDesc.of(CD_void))
+                                            .return_();
+                                }))
+                                .withMethod("apply", MethodTypeDesc.of(CD_MolangObject, CD_MolangScope), ClassFile.ACC_PUBLIC,
+                                        methodBuilder -> methodBuilder.withCode(codeBuilder -> {
+                                            visitor.startVisitor(codeBuilder);
+
+                                            MolangParser molangParser = new MolangParser(
+                                                    new CommonTokenStream(
+                                                            new MolangLexer(CharStreams.fromString(molangString)))
+                                            );
+                                            molangParser.addErrorListener(new BaseErrorListener() {
+                                                @Override
+                                                public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+                                                    log.error("parsing: {} with error:{}", molangString, e.getMessage());
+                                                }
+                                            });
+
+                                            visitor.visit(molangParser.exprSet());
+
+                                            codeBuilder.return_(TypeKind.REFERENCE);
+                                        })));
 
         MyClassLoader.INSTANCE.myDefineClass(compiledClassName, code, 0, code.length);
         var clazz = MyClassLoader.INSTANCE.loadClass(compiledClassName);
