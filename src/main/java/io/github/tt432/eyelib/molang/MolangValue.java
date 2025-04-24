@@ -12,10 +12,9 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 
 /**
  * @author TT432
@@ -25,33 +24,6 @@ public record MolangValue(
         @NotNull String context,
         @NotNull MolangFunction method
 ) {
-    static class LazyInitializer<T> {
-        private final Supplier<T> initializer;
-        private volatile CompletableFuture<T> future;
-        private final T defaultValue;
-
-        public LazyInitializer(Supplier<T> initializer, T defaultValue) {
-            this.initializer = initializer;
-            this.defaultValue = defaultValue;
-            this.future = null;
-        }
-
-        public T get() {
-            if (future == null) {
-                synchronized (this) {
-                    if (future == null) {
-                        future = CompletableFuture.supplyAsync(initializer);
-                    }
-                }
-            }
-            try {
-                return future.getNow(defaultValue);
-            } catch (Exception e) {
-                return defaultValue;
-            }
-        }
-    }
-
     @FunctionalInterface
     public interface MolangFunction {
         MolangFunction NULL = s -> MolangNull.INSTANCE;
@@ -92,7 +64,21 @@ public record MolangValue(
     public static final StreamCodec<ByteBuf, MolangValue> STREAM_CODEC = ByteBufCodecs.fromCodec(CODEC);
 
     public MolangObject getObject(MolangScope scope) {
-        return Objects.requireNonNullElse(method.apply(scope), MolangNull.INSTANCE);
+        try {
+            return Objects.requireNonNullElse(method.apply(scope), MolangNull.INSTANCE);
+        } catch (Throwable e) {
+            try {
+                Field originalString = method.getClass().getDeclaredField("originalString");
+                originalString.setAccessible(true);
+                log.error("molang: {}", originalString.get(null), e);
+                String name = method.getClass().getSimpleName();
+                byte[] bytes = MolangCompileHandler.getClasses().get(name);
+                if (bytes != null) MolangCompileHandler.exportClass(name, bytes);
+            } catch (IllegalAccessException | NoSuchFieldException ex) {
+                throw new RuntimeException(ex);
+            }
+            return MolangNull.INSTANCE;
+        }
     }
 
     public float eval(MolangScope scope) {

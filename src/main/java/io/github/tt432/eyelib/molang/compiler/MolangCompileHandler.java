@@ -9,6 +9,7 @@ import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.grammer.MolangLexer;
 import io.github.tt432.eyelib.molang.grammer.MolangParser;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.antlr.v4.runtime.*;
@@ -18,6 +19,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
+import java.util.HashMap;
+import java.util.Map;
 
 import static io.github.dmlloyd.classfile.extras.constant.ConstantUtils.referenceClassDesc;
 import static io.github.dmlloyd.classfile.extras.reflect.ClassFileFormatVersion.RELEASE_21;
@@ -32,6 +35,8 @@ import static java.lang.constant.ConstantDescs.*;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MolangCompileHandler {
     private static final MolangCompileVisitor visitor = new MolangCompileVisitor();
+    @Getter
+    private static final Map<String, byte[]> classes = new HashMap<>();
     private static int currIdx;
 
     public static class CompileContext {
@@ -44,13 +49,17 @@ public class MolangCompileHandler {
         try {
             return tryCompile(content.trim(), compileContext);
         } catch (Throwable e) {
-            new File("eyelib_generatedClasses").mkdirs();
-            try (var fs = new FileOutputStream("./eyelib_generatedClasses/" + compileContext.compiledClassName + ".class")) {
-                fs.write(compileContext.code);
-            } catch (IOException ee) {
-                throw new RuntimeException(ee);
-            }
+            exportClass(compileContext.compiledClassName, compileContext.code);
             throw new MolangUncompilableException("can't compile molang: " + content + ", class name: " + compileContext.compiledClassName, e);
+        }
+    }
+
+    public static void exportClass(String className, byte[] code) {
+        new File("eyelib_generatedClasses").mkdirs();
+        try (var fs = new FileOutputStream("./eyelib_generatedClasses/" + className + ".class")) {
+            fs.write(code);
+        } catch (IOException ee) {
+            throw new RuntimeException(ee);
         }
     }
 
@@ -135,6 +144,7 @@ public class MolangCompileHandler {
                                         })));
 
         MyClassLoader.INSTANCE.myDefineClass(compiledClassName, code, 0, code.length);
+        classes.put(compiledClassName, code);
         var clazz = MyClassLoader.INSTANCE.loadClass(compiledClassName);
         return (MolangValue.MolangFunction) clazz.getDeclaredConstructors()[0].newInstance();
     }
