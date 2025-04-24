@@ -563,7 +563,7 @@ public final class MolangQuery {
         return livingFloat(scope, e -> e.onClimbable()
                 ? e.getLastClimbablePos()
                 .map(p -> {
-                    VoxelShape shape = e.level().getBlockState(p).getCollisionShape(e.level(), p);
+                    VoxelShape shape = e.level().getBlockState(p).getShape(e.level(), p);
                     return shape.isEmpty() ? 0F : new Vec3(p.getX(), p.getY(), p.getZ())
                             .add(shape.bounds().getCenter())
                             .subtract(e.position())
@@ -579,7 +579,7 @@ public final class MolangQuery {
         return livingFloat(scope, e -> e.onClimbable()
                 ? e.getLastClimbablePos()
                 .map(p -> {
-                    VoxelShape shape = e.level().getBlockState(p).getCollisionShape(e.level(), p);
+                    VoxelShape shape = e.level().getBlockState(p).getShape(e.level(), p);
                     return shape.isEmpty() ? 0F : new Vec3(p.getX(), p.getY(), p.getZ())
                             .add(shape.bounds().getCenter())
                             .subtract(e.position())
@@ -595,7 +595,7 @@ public final class MolangQuery {
         return livingFloat(scope, e -> e.onClimbable()
                 ? e.getLastClimbablePos()
                 .map(p -> {
-                    VoxelShape shape = e.level().getBlockState(p).getCollisionShape(e.level(), p);
+                    VoxelShape shape = e.level().getBlockState(p).getShape(e.level(), p);
                     return shape.isEmpty() ? 0F : new Vec3(p.getX(), p.getY(), p.getZ())
                             .add(shape.bounds().getCenter())
                             .subtract(e.position())
