@@ -363,7 +363,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<MolangCompileVisitor
 
                         if (i >= last) {
                             codeBuilder.dup();
-                            codeBuilder.bipush(last - i);
+                            codeBuilder.bipush(i-last);
                         }
                     }
                     var type = visit(ctx.expr(i));
