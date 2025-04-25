@@ -12,7 +12,6 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Objects;
 
@@ -67,16 +66,11 @@ public record MolangValue(
         try {
             return Objects.requireNonNullElse(method.apply(scope), MolangNull.INSTANCE);
         } catch (Throwable e) {
-            try {
-                Field originalString = method.getClass().getDeclaredField("originalString");
-                originalString.setAccessible(true);
-                log.error("molang: {}", originalString.get(null), e);
-                String name = method.getClass().getSimpleName();
-                byte[] bytes = MolangCompileHandler.getClasses().get(name);
-                if (bytes != null) MolangCompileHandler.exportClass(name, bytes);
-            } catch (IllegalAccessException | NoSuchFieldException ex) {
-                throw new RuntimeException(ex);
-            }
+            log.error("molang: {}", context, e);
+            String name = method.getClass().getSimpleName();
+            byte[] bytes = MolangCompileHandler.getClasses().get(name);
+            if (bytes != null) MolangCompileHandler.exportClass(name, bytes);
+
             return MolangNull.INSTANCE;
         }
     }
