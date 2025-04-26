@@ -79,13 +79,13 @@ public record BakedModel(
             float m20 = m3.m20(), m21 = m3.m21(), m22 = m3.m22();
 
             for (int i = 0; i < vertexSize; i++) {
-                var nx = normal[i];
-                var ny = normal[i];
-                var nz = normal[i];
+                var nx = normal[i * 3];
+                var ny = normal[i * 3 + 1];
+                var nz = normal[i * 3 + 2];
 
-                normalResult[i] = m00 * nx + (m10 * ny + (m20 * nz));
-                normalResult[i] = m01 * nx + (m11 * ny + (m21 * nz));
-                normalResult[i] = m02 * nx + (m12 * ny + (m22 * nz));
+                normalResult[i * 3] = m00 * nx + (m10 * ny + (m20 * nz));
+                normalResult[i * 3 + 1] = m01 * nx + (m11 * ny + (m21 * nz));
+                normalResult[i * 3 + 2] = m02 * nx + (m12 * ny + (m22 * nz));
             }
         }
     }

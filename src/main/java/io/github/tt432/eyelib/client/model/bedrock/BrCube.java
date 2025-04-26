@@ -12,7 +12,6 @@ import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import net.minecraft.core.Direction;
 import net.minecraft.util.ExtraCodecs;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
@@ -171,14 +170,18 @@ public record BrCube(
                         getUv(west),
                         getUv(south)),
                 ObjectList.of(
-                        Direction.UP.step(),
-                        Direction.DOWN.step(),
-                        Direction.EAST.step(),
-                        Direction.NORTH.step(),
-                        Direction.WEST.step(),
-                        Direction.SOUTH.step()
+                        getNormal(corners[6], corners[2], corners[3]),
+                        getNormal(corners[4], corners[0], corners[1]),
+                        getNormal(corners[3], corners[0], corners[4]),
+                        getNormal(corners[2], corners[1], corners[0]),
+                        getNormal(corners[6], corners[5], corners[1]),
+                        getNormal(corners[7], corners[4], corners[5])
                 )
         );
+    }
+
+    private static Vector3f getNormal(Vector3f a, Vector3f b, Vector3f c) {
+        return b.sub(a, new Vector3f()).cross(c.sub(a, new Vector3f())).normalize();
     }
 
     private static List<Vector2f> getUv(Pair<Vector2f, Vector2f> uv) {

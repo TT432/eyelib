@@ -83,7 +83,7 @@ public class VertexComputeShader {
                         uint transformedNormalX = uint(int(clamp(transformedNormal.x, -1.0, 1.0) * 127.0) & 0xFF);
                         uint transformedNormalY = uint(int(clamp(transformedNormal.y, -1.0, 1.0) * 127.0) & 0xFF);
                         uint transformedNormalZ = uint(int(clamp(transformedNormal.z, -1.0, 1.0) * 127.0) & 0xFF);
-                        data.vertices[index].normal = (transformedNormalX << 16) | (transformedNormalY << 8) | (transformedNormalZ << 0);
+                        data.vertices[index].normal = (transformedNormalZ << 16) | (transformedNormalY << 8) | (transformedNormalX << 0);
                     }
                     """);
         });

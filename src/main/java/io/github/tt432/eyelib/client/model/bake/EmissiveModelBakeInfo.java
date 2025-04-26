@@ -69,30 +69,28 @@ public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.I
             }
         }
 
-        float[] xList = new float[vertexes.size()];
-        float[] yList = new float[vertexes.size()];
-        float[] zList = new float[vertexes.size()];
+        var vertexSize = vertexes.size();
 
-        float[] nxList = new float[normals.size()];
-        float[] nyList = new float[normals.size()];
-        float[] nzList = new float[normals.size()];
+        float[] xList = new float[vertexSize];
+        float[] yList = new float[vertexSize];
+        float[] zList = new float[vertexSize];
 
-        float[] u = new float[uvs.size()];
-        float[] v = new float[uvs.size()];
+        float[] nxList = new float[vertexSize];
+        float[] nyList = new float[vertexSize];
+        float[] nzList = new float[vertexSize];
 
-        for (int i = 0; i < vertexes.size(); i++) {
+        float[] u = new float[vertexSize];
+        float[] v = new float[vertexSize];
+
+        for (int i = 0; i < vertexSize; i++) {
             xList[i] = vertexes.get(i).x();
             yList[i] = vertexes.get(i).y();
             zList[i] = vertexes.get(i).z();
-        }
 
-        for (int i = 0; i < normals.size(); i++) {
             nxList[i] = normals.get(i).x();
             nyList[i] = normals.get(i).y();
             nzList[i] = normals.get(i).z();
-        }
 
-        for (int i = 0; i < uvs.size(); i++) {
             u[i] = uvs.get(i).x();
             v[i] = uvs.get(i).y();
         }
@@ -119,8 +117,10 @@ public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.I
                 uvs.add(new Vector2f(cube.uvU(i, j), cube.uvV(i, j)));
             }
 
+            Vector3f normal = new Vector3f(cube.normalX(i), cube.normalY(i), cube.normalZ(i));
+
             for (int j = 0; j < cube.pointsPerFace() * 2; j++) {
-                normals.add(new Vector3f(cube.normalX(i), cube.normalY(i), cube.normalZ(i)));
+                normals.add(normal);
             }
         }
     }

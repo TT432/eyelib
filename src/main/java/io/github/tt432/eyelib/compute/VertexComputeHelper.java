@@ -43,6 +43,8 @@ public class VertexComputeHelper {
         };
     }
 
+    private static final Matrix4f MATRIX = new Matrix4f();
+
     public void pushTransform(Matrix4f transform, Matrix3f normal, int color, int overlay, int light) {
         transformIndex++;
 
@@ -50,7 +52,7 @@ public class VertexComputeHelper {
         long normalPointer = normalBuffer.reserve(4 * 4 * 3);
 
         transform.get(MemoryUtil.memByteBuffer(transformPointer, 4 * 4 * 4));
-        normal.get3x4(MemoryUtil.memByteBuffer(normalPointer, 4 * 4 * 3));
+        MATRIX.set(normal).get3x4(MemoryUtil.memByteBuffer(normalPointer, 4 * 4 * 3));
 
         MemoryUtil.memPutInt(extraDataBuffer.reserve(4), color);
         MemoryUtil.memPutInt(extraDataBuffer.reserve(4), overlay);
