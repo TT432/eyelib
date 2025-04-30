@@ -73,19 +73,22 @@ public record ParticleAppearanceTinting(
         }
 
         public static int interpolateColor(int c1, int c2, float t) {
+            int c1a = c1 >>> 24;
             int c1r = (c1 >> 16) & 255;
             int c1g = (c1 >> 8) & 255;
             int c1b = c1 & 255;
 
+            int c2a = c2 >>> 24;
             int c2r = (c2 >> 16) & 255;
             int c2g = (c2 >> 8) & 255;
             int c2b = c2 & 255;
 
+            int a = (int) (c1a + (c2a - c1a) * t);
             int r = (int) (c1r + (c2r - c1r) * t);
             int g = (int) (c1g + (c2g - c1g) * t);
             int b = (int) (c1b + (c2b - c1b) * t);
 
-            return (r << 16) | (g << 8) | b;
+            return (a << 24) | (r << 16) | (g << 8) | b;
         }
     }
 }
