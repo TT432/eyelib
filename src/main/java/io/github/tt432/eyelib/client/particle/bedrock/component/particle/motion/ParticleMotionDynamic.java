@@ -56,7 +56,7 @@ public record ParticleMotionDynamic(
         acceleration.add(dragForce);
         velocity.add(acceleration.mul(deltaTime));
         Vector3f position = particle.getPosition();
-        position.add(velocity.mul(deltaTime, new Vector3f()));
+        position.add(velocity.mul(deltaTime, new Vector3f()).div(16));
 
         float rotAcceleration = rotationAcceleration.eval(scope);
         float rotDragCoefficient = rotationDragCoefficient.eval(scope);

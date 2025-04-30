@@ -33,7 +33,7 @@ public record Direction(
         return switch (type) {
             case INWARDS -> center.sub(other, new Vector3f()).normalize();
             case OUTWARDS -> other.sub(center, new Vector3f()).normalize();
-            case CUSTOM -> custom.eval(scope).normalize();
+            case CUSTOM -> custom.eval(scope);
         };
     }
 
