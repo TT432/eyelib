@@ -75,10 +75,15 @@ public record BrParticle(
             }
         }
 
+        public record CurveNodes(
+                Optional<TreeMap<Float, MolangValue>> nodes,
+                Optional<TreeMap<Float, Curve.ChainNode>> chainNodes
+        ) {
+        }
+
         public record Curve(
                 Type type,
-                TreeMap<Float, MolangValue> nodes,
-                TreeMap<Float, ChainNode> chainNodes,
+                CurveNodes nodes,
                 MolangValue input,
                 MolangValue horizontal_range
         ) {
@@ -86,17 +91,25 @@ public record BrParticle(
                 Comparator<Float> comparator = Comparator.comparingDouble(k -> k);
                 return ins.group(
                         Type.CODEC.optionalFieldOf("type", Type.LINEAR).forGetter(o -> o.type),
-                        MolangValue.CODEC.listOf().xmap(list -> {
-                                    TreeMap<Float, MolangValue> r = new TreeMap<>(Comparator.comparingDouble(k -> k));
-                                    for (int i = 0; i < list.size(); i++) {
-                                        r.put(i / (list.size() - 1F), list.get(i));
-                                    }
-                                    return r;
-                                }, tmap -> new ArrayList<>(tmap.values()))
-                                .optionalFieldOf("nodes", new TreeMap<>()).forGetter(o -> o.nodes),
-                        ChinExtraCodecs.treeMap(EyelibCodec.STR_FLOAT_CODEC, ChainNode.CODEC, comparator).optionalFieldOf("chain_nodes", new TreeMap<>()).forGetter(o -> o.chainNodes),
+                        Codec.withAlternative(
+                                        ChinExtraCodecs.treeMap(EyelibCodec.STR_FLOAT_CODEC, ChainNode.CODEC, comparator).xmap(
+                                                a -> new CurveNodes(Optional.empty(), Optional.of(a)),
+                                                nodes -> nodes.chainNodes().orElse(new TreeMap<>())
+                                        ),
+                                        MolangValue.CODEC.listOf().xmap(list -> {
+                                            TreeMap<Float, MolangValue> r = new TreeMap<>(Comparator.comparingDouble(k -> k));
+                                            for (int i = 0; i < list.size(); i++) {
+                                                r.put(i / (list.size() - 1F), list.get(i));
+                                            }
+                                            return r;
+                                        }, tmap -> new ArrayList<>(tmap.values())).xmap(
+                                                a -> new CurveNodes(Optional.of(a), Optional.empty()),
+                                                nodes -> nodes.nodes().orElse(new TreeMap<>())
+                                        ))
+                                .optionalFieldOf("nodes", new CurveNodes(Optional.empty(), Optional.empty()))
+                                .forGetter(o -> o.nodes),
                         MolangValue.CODEC.optionalFieldOf("input", MolangValue.ZERO).forGetter(o -> o.input),
-                        MolangValue.CODEC.optionalFieldOf("horizontal_range", MolangValue.ONE)
+                        MolangValue.CODEC.optionalFieldOf("horizontal_range", new MolangValue("v.particle_lifetime"))
                                 .forGetter(o -> o.horizontal_range)
                 ).apply(ins, Curve::new);
             });
@@ -151,50 +164,58 @@ public record BrParticle(
             }
 
             private float calculateLinear(float input, MolangScope scope) {
-                var before = nodes.floorEntry(input);
-                var after = nodes.higherEntry(input);
+                return nodes.nodes.map(nodes -> {
+                    var before = nodes.floorEntry(input);
+                    var after = nodes.higherEntry(input);
 
-                if (before == null) return after.getValue().eval(scope);
-                else if (after == null) return before.getValue().eval(scope);
-                else return EyeMath.lerp(before.getValue().eval(scope),
-                            after.getValue().eval(scope),
-                            (input - before.getKey()) / (after.getKey() - before.getKey()));
+                    if (before == null) return after.getValue().eval(scope);
+                    else if (after == null) return before.getValue().eval(scope);
+                    else return EyeMath.lerp(before.getValue().eval(scope),
+                                after.getValue().eval(scope),
+                                (input - before.getKey()) / (after.getKey() - before.getKey()));
+                }).orElse(0F);
             }
 
             private float calculateBezier(float input, MolangScope scope) {
-                if (nodes.size() != 4) return 0;
-                FloatList floats = new FloatArrayList();
+                return nodes.nodes.map(nodes -> {
+                    if (nodes.size() != 4) return 0F;
+                    FloatList floats = new FloatArrayList();
 
-                nodes.forEach((k, v) -> floats.add(v.eval(scope)));
+                    nodes.forEach((k, v) -> floats.add(v.eval(scope)));
 
-                return bezier(input, floats.getFloat(0), floats.getFloat(1),
-                        floats.getFloat(2), floats.getFloat(3));
+                    return bezier(input, floats.getFloat(0), floats.getFloat(1),
+                            floats.getFloat(2), floats.getFloat(3));
+                }).orElse(0F);
             }
 
             private float calculateBezierChain(float input) {
-                if (chainNodes.isEmpty()) return 0;
+                return nodes.chainNodes.map(chainNodes -> {
+                    if (chainNodes.isEmpty()) return 0F;
 
-                Map.Entry<Float, ChainNode> lowerEntry = chainNodes.floorEntry(input);
-                Map.Entry<Float, ChainNode> higherEntry = chainNodes.ceilingEntry(input);
+                    Map.Entry<Float, ChainNode> lowerEntry = chainNodes.floorEntry(input);
+                    Map.Entry<Float, ChainNode> higherEntry = chainNodes.ceilingEntry(input);
 
-                if (lowerEntry == null || higherEntry == null || lowerEntry.equals(higherEntry)) {
-                    return lowerEntry != null ? lowerEntry.getValue().leftValue : 0;
-                }
+                    if (lowerEntry == null || higherEntry == null || lowerEntry.equals(higherEntry)) {
+                        return lowerEntry != null ? lowerEntry.getValue().leftValue : 0;
+                    }
 
-                ChainNode lowerNode = lowerEntry.getValue();
-                ChainNode higherNode = higherEntry.getValue();
+                    ChainNode lowerNode = lowerEntry.getValue();
+                    ChainNode higherNode = higherEntry.getValue();
 
-                float t = (input - lowerEntry.getKey()) / (higherEntry.getKey() - lowerEntry.getKey());
-                return bezierChain(t, lowerNode.leftValue, higherNode.rightValue, lowerNode.leftSlope, higherNode.rightSlope);
+                    float t = (input - lowerEntry.getKey()) / (higherEntry.getKey() - lowerEntry.getKey());
+                    return bezierChain(t, lowerNode.leftValue, higherNode.rightValue, lowerNode.leftSlope, higherNode.rightSlope);
+                }).orElse(0F);
             }
 
             private float calculateCatmullRom(float input, MolangScope scope) {
-                List<Vector2f> catmullromArray = new ArrayList<>();
-                nodes.forEach((k, v) -> catmullromArray.add(new Vector2f(k, v.eval(scope))));
+                return nodes.nodes.map(nodes -> {
+                    List<Vector2f> catmullromArray = new ArrayList<>();
+                    nodes.forEach((k, v) -> catmullromArray.add(new Vector2f(k, v.eval(scope))));
 
-                float c = nodes.size() - 3;
-                float u = (1 + input * c) / (c + 2);
-                return Curves.lerpSplineCurve(catmullromArray, u);
+                    float c = nodes.size() - 3;
+                    float u = (1 + input * c) / (c + 2);
+                    return Curves.lerpSplineCurve(catmullromArray, u);
+                }).orElse(0F);
             }
 
             private float bezier(float t, float p0, float p1, float p2, float p3) {
@@ -203,8 +224,14 @@ public record BrParticle(
             }
 
             private float bezierChain(float t, float p0, float p1, float m0, float m1) {
-                float u = 1 - t;
-                return (u * u * u * p0) + (3 * u * u * t * m0) + (3 * u * t * t * m1) + (t * t * t * p1);
+                // 根据贝塞尔曲线公式计算中间点
+                float h00 = (2 * t * t * t) - (3 * t * t) + 1;
+                float h10 = t * t * t - (2 * t * t) + t;
+                float h01 = (-2 * t * t * t) + (3 * t * t);
+                float h11 = t * t * t - t * t;
+
+                // 计算最终结果
+                return h00 * p0 + h10 * m0 + h01 * p1 + h11 * m1;
             }
         }
 
