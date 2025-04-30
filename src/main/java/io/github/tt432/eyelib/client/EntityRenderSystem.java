@@ -76,7 +76,7 @@ public class EntityRenderSystem {
 
     private static final Map<RenderType, Pair<VertexComputeHelper, MultiBufferSource>> helpers = new Object2ObjectOpenHashMap<>();
 
-    private static final boolean irisInstalled = ModList.get().isLoaded("iris");
+    private static final boolean cantUseHighSpeedRender = ModList.get().isLoaded("iris") || Minecraft.ON_OSX;
 
     @SubscribeEvent
     public static void onEvent(RenderLivingEvent.Pre event) {
@@ -157,7 +157,7 @@ public class EntityRenderSystem {
 
                 {
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
-                    if (!irisInstalled && buffer instanceof LazyComputeBufferBuilder lazy) {
+                    if (!cantUseHighSpeedRender && buffer instanceof LazyComputeBufferBuilder lazy) {
                         var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
                         lazy.setEyelib$helper(helper.left());
                     }
@@ -192,7 +192,7 @@ public class EntityRenderSystem {
                     VertexConsumer buffer1 = multiBufferSource.getBuffer(rt1);
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
 
-                    if (!irisInstalled && buffer1 instanceof LazyComputeBufferBuilder lazy) {
+                    if (!cantUseHighSpeedRender && buffer1 instanceof LazyComputeBufferBuilder lazy) {
                         var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
                         lazy.setEyelib$helper(helper.left());
                     }
