@@ -489,8 +489,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "is_digging", description = "正在挖掘（玩家）")
     public static float isDigging(MolangScope scope) {
-        MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
-        return (gameMode != null && gameMode.isDestroying()) ? TRUE : FALSE;
+        return entityBool(scope, e -> e.getData(EyelibAttachableData.EXTRA_ENTITY_DATA).is_dig());
     }
 
     @MolangFunction(value = "is_eating", description = "正在食用物品")

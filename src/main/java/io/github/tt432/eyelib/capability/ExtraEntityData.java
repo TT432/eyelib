@@ -12,16 +12,14 @@ import net.minecraft.network.codec.StreamCodec;
  */
 @With
 public record ExtraEntityData(
-        int variant,
-        int mark_variant,
         boolean facing_target_to_range_attack,
         boolean is_avoiding_mobs,
         boolean is_grazing,
-        boolean is_avoid
+        boolean is_avoid,
+        boolean is_dig
 ) {
     public static final ExtraEntityData EMPTY = new ExtraEntityData(
-            -1,
-            -1,
+            false,
             false,
             false,
             false,
@@ -29,19 +27,14 @@ public record ExtraEntityData(
     );
 
     public static final Codec<ExtraEntityData> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            Codec.INT.fieldOf("variant").forGetter(ExtraEntityData::variant),
-            Codec.INT.fieldOf("mark_variant").forGetter(ExtraEntityData::mark_variant),
             Codec.BOOL.fieldOf("facing_target_to_range_attack").forGetter(ExtraEntityData::facing_target_to_range_attack),
             Codec.BOOL.fieldOf("is_avoiding_mobs").forGetter(ExtraEntityData::is_avoiding_mobs),
             Codec.BOOL.fieldOf("is_grazing").forGetter(ExtraEntityData::is_grazing),
-            Codec.BOOL.fieldOf("is_avoid").forGetter(ExtraEntityData::is_avoid)
+            Codec.BOOL.fieldOf("is_avoid").forGetter(ExtraEntityData::is_avoid),
+            Codec.BOOL.fieldOf("is_dig").forGetter(ExtraEntityData::is_dig)
     ).apply(ins, ExtraEntityData::new));
 
     public static final StreamCodec<ByteBuf, ExtraEntityData> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.VAR_INT,
-            ExtraEntityData::variant,
-            ByteBufCodecs.VAR_INT,
-            ExtraEntityData::mark_variant,
             ByteBufCodecs.BOOL,
             ExtraEntityData::facing_target_to_range_attack,
             ByteBufCodecs.BOOL,
@@ -50,6 +43,8 @@ public record ExtraEntityData(
             ExtraEntityData::is_grazing,
             ByteBufCodecs.BOOL,
             ExtraEntityData::is_avoid,
+            ByteBufCodecs.BOOL,
+            ExtraEntityData::is_dig,
             ExtraEntityData::new
     );
 

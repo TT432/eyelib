@@ -9,6 +9,7 @@
     "BufferBuilderMixin",
     "HumanoidModelMixin",
     "LivingEntityRendererAccessor",
+    "MultiPlayerGameModeMixin",
     "SimpleTextureTextureImageMixin",
     "VertexBufferMixin"
   ],

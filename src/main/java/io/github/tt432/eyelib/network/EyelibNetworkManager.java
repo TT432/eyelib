@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.network;
 
 import io.github.tt432.eyelib.Eyelib;
+import io.github.tt432.eyelib.capability.ExtraEntityData;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
@@ -12,9 +13,11 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -27,6 +30,17 @@ public class EyelibNetworkManager {
     @SubscribeEvent
     public static void register(final RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar(Eyelib.MOD_ID).optional();
+
+        registrar.playToServer(UpdateDestroyInfoPacket.TYPE, UpdateDestroyInfoPacket.STREAM_CODEC,
+                (payload, context) -> {
+                    Player player = context.player();
+                    ExtraEntityData data = player.getData(EyelibAttachableData.EXTRA_ENTITY_DATA);
+
+                    if (data.is_dig() != payload.dig()) {
+                        player.setData(EyelibAttachableData.EXTRA_ENTITY_DATA, data = data.with_dig(payload.dig()));
+                        PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new ExtraEntityDataPacket(player.getId(), data));
+                    }
+                });
 
         registrar.playToClient(ModelComponentSyncPacket.TYPE, ModelComponentSyncPacket.STREAM_CODEC,
                 (payload, context) -> {
