@@ -16,7 +16,6 @@ import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
-import io.github.tt432.eyelib.molang.mapping.MolangQuery;
 import io.github.tt432.eyelib.util.ResourceLocations;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import net.minecraft.client.Minecraft;
@@ -195,7 +194,7 @@ public record BrAnimationEntry(
         multiplier *= Math.clamp(blendWeight().eval(scope), 0, 1);
 
         scope.getOwner().replace(Data.class, data);
-        if (data.lastTicks == 0) data.lastTicks = ticks - MolangQuery.partialTicks(scope);
+        if (data.lastTicks == 0) data.lastTicks = ticks;
         data.deltaTime = ticks - data.lastTicks;
         data.lastTicks = ticks;
         var animTimeUpdate = data.animTime + (anim_time_update().eval(scope) - data.animTime);
