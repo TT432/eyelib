@@ -102,7 +102,7 @@ public record ParticleAppearanceBillboard(
 
     public static void applyDirectionX(Matrix4f m4, Vector3f direction) {
         // x 轴沿方向向量
-        Vector3f xAxis = new Vector3f(direction);
+        Vector3f xAxis = new Vector3f(direction.x == 0 && direction.y == 0 && direction.z == 0 ? new Vector3f(1,0,0) : direction);
         // 计算 y 轴
         Vector3f yAxis = new Vector3f();
         up.cross(xAxis, yAxis).normalize();
@@ -118,7 +118,7 @@ public record ParticleAppearanceBillboard(
 
     public static void applyDirectionY(Matrix4f m4, Vector3f direction) {
         // y 轴沿方向向量
-        Vector3f yAxis = new Vector3f(direction);
+        Vector3f yAxis = new Vector3f(direction.x == 0 && direction.y == 0 && direction.z == 0 ? new Vector3f(0,1,0) : direction);
         // 计算 x 轴
         Vector3f xAxis = new Vector3f();
         up.cross(yAxis, xAxis).normalize();
@@ -134,7 +134,7 @@ public record ParticleAppearanceBillboard(
 
     public static void applyDirectionZ(Matrix4f m4, Vector3f direction) {
         // z 轴沿方向向量
-        Vector3f zAxis = new Vector3f(direction);
+        Vector3f zAxis = new Vector3f(direction.x == 0 && direction.y == 0 && direction.z == 0 ? new Vector3f(0,0,1) : direction);
         // 计算 y 轴
         Vector3f yAxis = new Vector3f();
         up.cross(zAxis, yAxis).normalize();
