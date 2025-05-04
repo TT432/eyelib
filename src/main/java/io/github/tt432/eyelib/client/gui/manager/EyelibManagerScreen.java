@@ -133,13 +133,16 @@ public class EyelibManagerScreen extends Screen {
         return future;
     }
 
+    static String lastPath;
+
     private static CompletableFuture<Optional<Path>> folderSelectDialog(String title, @org.jetbrains.annotations.Nullable Path origin) {
         CompletableFuture<Optional<Path>> future = new CompletableFuture<>();
 
         FILE_DIALOG_EXECUTOR.submit(() -> {
-            String path = origin != null ? origin.toAbsolutePath().toString() : "";
+            String path = lastPath != null ? lastPath : (origin != null ? origin.toAbsolutePath().toString() : "");
 
             String result = TinyFileDialogs.tinyfd_selectFolderDialog(title, path);
+            lastPath = result;
 
             future.complete(Optional.ofNullable(result).map(Paths::get));
         });
