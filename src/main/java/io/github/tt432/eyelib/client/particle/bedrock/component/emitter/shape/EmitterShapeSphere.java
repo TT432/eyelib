@@ -41,7 +41,7 @@ public record EmitterShapeSphere(
 
             var r = radius.eval(scope);
 
-            if (surfaceOnly) {
+            if (!surfaceOnly) {
                 r *= random.nextFloat();
             }
 

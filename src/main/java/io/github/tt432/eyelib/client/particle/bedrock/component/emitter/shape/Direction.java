@@ -31,8 +31,8 @@ public record Direction(
 
     public Vector3f getVec(MolangScope scope, Vector3f center, Vector3f other) {
         return switch (type) {
-            case INWARDS -> center.sub(other, new Vector3f()).normalize();
-            case OUTWARDS -> other.sub(center, new Vector3f()).normalize();
+            case INWARDS -> center.sub(other, new Vector3f()).normalize().mul(16);
+            case OUTWARDS -> other.sub(center, new Vector3f()).normalize().mul(16);
             case CUSTOM -> custom.eval(scope);
         };
     }

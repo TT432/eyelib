@@ -17,6 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -49,13 +50,6 @@ public record ParticleAppearanceBillboard(
     public void transform(BrParticleParticle particle, PoseStack poseStack) {
         PoseStack.Pose last = poseStack.last();
         var m4 = last.pose();
-        MolangScope scope = particle.molangScope;
-
-        float velocity = particle.getVelocity().length();
-        Vector3f direction = velocity > direction().minSpeedThreshold ? switch (direction().mode) {
-            case DERIVE_FROM_VELOCITY -> particle.getVelocity().normalize(new Vector3f());
-            case CUSTOM_DIRECTION -> direction().customDirection.eval(scope);
-        } : new Vector3f();
 
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
         var emitterRotation = particle.getEmitter().getRotation();
@@ -69,13 +63,12 @@ public record ParticleAppearanceBillboard(
             case LOOKAT_Y -> m4.rotationY(180 * EyeMath.DEGREES_TO_RADIANS
                     - camera.rotation().getEulerAnglesZYX(new Vector3f()).y);
 
-            case DIRECTION_X -> m4.lookAlong(direction, new Vector3f(0, 1, 0));
-            case DIRECTION_Y -> m4.lookAlong(direction, new Vector3f(1, 0, 0));
-            case DIRECTION_Z -> m4.lookAlong(direction, new Vector3f(0, 1, 0));
+            case DIRECTION_X -> applyDirectionX(m4, direction(particle, m4));
+            case DIRECTION_Y -> applyDirectionY(m4, direction(particle, m4));
+            case DIRECTION_Z -> applyDirectionZ(m4, direction(particle, m4));
 
             case EMITTER_TRANSFORM_XY -> {
                 // 粒子匹配发射器的 xy 平面变换
-                // 假设有发射器变换矩阵 emitterMatrix
                 m4.rotateZYX(emitterRotation);
             }
             case EMITTER_TRANSFORM_XZ -> {
@@ -87,6 +80,72 @@ public record ParticleAppearanceBillboard(
                 m4.rotateZYX(emitterRotation).rotateY(90 * EyeMath.DEGREES_TO_RADIANS);
             }
         }
+    }
+
+    Vector3f direction(BrParticleParticle particle, Matrix4f m4) {
+        MolangScope scope = particle.molangScope;
+        float velocity = particle.getVelocity().length();
+        Vector3f direction = velocity > direction().minSpeedThreshold ? switch (direction().mode) {
+            case DERIVE_FROM_VELOCITY ->
+                    particle.getVelocity().equals(new Vector3f()) ? new Vector3f() : particle.getVelocity().normalize(new Vector3f());
+            case CUSTOM_DIRECTION -> direction().customDirection.eval(scope);
+        } : new Vector3f();
+
+        if (!direction.equals(new Vector3f())) {
+            m4.lookAlong(direction, new Vector3f(0, 1, 0));
+        }
+
+        return direction;
+    }
+
+    static final Vector3f up = new Vector3f(0, 1, 0);
+
+    public static void applyDirectionX(Matrix4f m4, Vector3f direction) {
+        // x 轴沿方向向量
+        Vector3f xAxis = new Vector3f(direction);
+        // 计算 y 轴
+        Vector3f yAxis = new Vector3f();
+        up.cross(xAxis, yAxis).normalize();
+        // 计算 z 轴
+        Vector3f zAxis = new Vector3f();
+        xAxis.cross(yAxis, zAxis).normalize();
+
+        // 设置矩阵的坐标轴
+        m4.setColumn(0, new Vector4f(xAxis.x, xAxis.y, xAxis.z, 0));
+        m4.setColumn(1, new Vector4f(yAxis.x, yAxis.y, yAxis.z, 0));
+        m4.setColumn(2, new Vector4f(zAxis.x, zAxis.y, zAxis.z, 0));
+    }
+
+    public static void applyDirectionY(Matrix4f m4, Vector3f direction) {
+        // y 轴沿方向向量
+        Vector3f yAxis = new Vector3f(direction);
+        // 计算 x 轴
+        Vector3f xAxis = new Vector3f();
+        up.cross(yAxis, xAxis).normalize();
+        // 计算 z 轴
+        Vector3f zAxis = new Vector3f();
+        yAxis.cross(xAxis, zAxis).normalize();
+
+        // 设置矩阵的坐标轴
+        m4.setColumn(0, new Vector4f(xAxis.x, xAxis.y, xAxis.z, 0));
+        m4.setColumn(1, new Vector4f(yAxis.x, yAxis.y, yAxis.z, 0));
+        m4.setColumn(2, new Vector4f(zAxis.x, zAxis.y, zAxis.z, 0));
+    }
+
+    public static void applyDirectionZ(Matrix4f m4, Vector3f direction) {
+        // z 轴沿方向向量
+        Vector3f zAxis = new Vector3f(direction);
+        // 计算 y 轴
+        Vector3f yAxis = new Vector3f();
+        up.cross(zAxis, yAxis).normalize();
+        // 计算 x 轴
+        Vector3f xAxis = new Vector3f();
+        yAxis.cross(zAxis, xAxis).normalize();
+
+        // 设置矩阵的坐标轴
+        m4.setColumn(0, new Vector4f(xAxis.x, xAxis.y, xAxis.z, 0));
+        m4.setColumn(1, new Vector4f(yAxis.x, yAxis.y, yAxis.z, 0));
+        m4.setColumn(2, new Vector4f(zAxis.x, zAxis.y, zAxis.z, 0));
     }
 
     /**

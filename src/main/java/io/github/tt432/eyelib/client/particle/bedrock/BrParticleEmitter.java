@@ -133,7 +133,7 @@ public class BrParticleEmitter {
                     emitParticle.getPosition().set(pos.eval(emitParticle.molangScope));
 
                     if (direction != null) {
-                        var vec = direction.getVec(emitParticle.molangScope, position, emitParticle.getPosition());
+                        var vec = direction.getVec(emitParticle.molangScope, new Vector3f(), emitParticle.getPosition());
                         emitParticle.getVelocity().add(vec.mul(emitParticle.getSpeed()));
                     }
 
