@@ -8,12 +8,16 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.Blackboard;
 import io.github.tt432.eyelib.util.ResourceLocations;
 import io.github.tt432.eyelib.util.SimpleTimer;
+import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.Getter;
 import lombok.Setter;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -37,7 +41,7 @@ public class BrParticleEmitter {
     private final EmitterLocalSpace space;
 
     @Getter
-    private final Vector3f rotation = new Vector3f();
+    private final Matrix4f baseRotation = new Matrix4f();
 
     @Getter
     private final RandomSource random = RandomSource.create();
@@ -120,6 +124,29 @@ public class BrParticleEmitter {
 
         components.forEach(c -> c.onPreTick(this));
         components.forEach(c -> c.onTick(this));
+    }
+
+    public void initPose(@Nullable Matrix4f locatorMatrix, @Nullable Entity attachedEntity) {
+        baseRotation.identity();
+        Matrix4f matrix4f = new Matrix4f()
+                .translate(Minecraft.getInstance().gameRenderer.getMainCamera().getPosition().toVector3f(), new Matrix4f())
+                .mul(locatorMatrix);
+
+        if (space.position() || position.equals(0, 0, 0)) {
+            if (locatorMatrix != null) {
+                matrix4f.transformPosition(position.zero());
+            } else if (attachedEntity != null) {
+                position.set(attachedEntity.getX(), attachedEntity.getY(), attachedEntity.getZ());
+            }
+        }
+
+        if (space.position() && space.rotation()) {
+            if (locatorMatrix != null) {
+                baseRotation.set(matrix4f);
+            } else if (attachedEntity != null) {
+                baseRotation.rotateZYX(new Vector3f(attachedEntity.getXRot() * EyeMath.DEGREES_TO_RADIANS, attachedEntity.getYRot() * EyeMath.DEGREES_TO_RADIANS, 0));
+            }
+        }
     }
 
     public void emit() {

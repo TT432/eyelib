@@ -11,7 +11,6 @@ import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
@@ -169,16 +168,7 @@ public class EntityRenderSystem {
                     if (locators != null) {
                         for (List<RuntimeParticlePlayData> particle : effects.particles) {
                             for (RuntimeParticlePlayData data : particle) {
-                                Matrix4f matrix4f = locators.get(data.locator());
-                                BrParticleEmitter emitter = data.emitter();
-
-                                if (emitter.getSpace().position() || emitter.getPosition().equals(0, 0, 0)) {
-                                    if (matrix4f != null) {
-                                        matrix4f.transformPosition(emitter.getPosition().zero()).add(Minecraft.getInstance().gameRenderer.getMainCamera().getPosition().toVector3f());
-                                    } else if (entity != null) {
-                                        emitter.getPosition().set(entity.getX(), entity.getY(), entity.getZ());
-                                    }
-                                }
+                                data.emitter().initPose(locators.get(data.locator()), entity);
                             }
                         }
                     }

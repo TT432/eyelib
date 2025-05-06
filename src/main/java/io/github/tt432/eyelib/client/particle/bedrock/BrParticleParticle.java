@@ -10,6 +10,7 @@ import io.github.tt432.eyelib.client.particle.bedrock.component.particle.appeara
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.Blackboard;
 import io.github.tt432.eyelib.util.SimpleTimer;
+import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
@@ -157,6 +158,14 @@ public class BrParticleParticle {
         Matrix4f m4 = last.pose();
         Matrix3f m3 = last.normal();
 
+        m4.translate(cameraPos.negate()).translate(position);
+
+        if (emitter.getSpace().position() && emitter.getSpace().rotation()) {
+            m4.mul(emitter.getBaseRotation()).rotateY(EyeMath.PI);
+        } else {
+            m4.translate(emitter.getPosition());
+        }
+
         if (billboard != null) {
             billboard.transform(this, poseStack);
         }
@@ -171,10 +180,10 @@ public class BrParticleParticle {
 
         float x = size.x;
         float y = size.y;
-        var p0 = new Vector3f(x, y, 0).mulPosition(m4).add(position).add(emitter.getPosition()).sub(cameraPos);
-        var p1 = new Vector3f(-x, y, 0).mulPosition(m4).add(position).add(emitter.getPosition()).sub(cameraPos);
-        var p2 = new Vector3f(-x, -y, 0).mulPosition(m4).add(position).add(emitter.getPosition()).sub(cameraPos);
-        var p3 = new Vector3f(x, -y, 0).mulPosition(m4).add(position).add(emitter.getPosition()).sub(cameraPos);
+        var p0 = new Vector3f(x, y, 0).mulPosition(m4);
+        var p1 = new Vector3f(-x, y, 0).mulPosition(m4);
+        var p2 = new Vector3f(-x, -y, 0).mulPosition(m4);
+        var p3 = new Vector3f(x, -y, 0).mulPosition(m4);
 
         Vector3f normal = new Vector3f(0, 0, 1).mul(m3);
         int light;
@@ -198,6 +207,16 @@ public class BrParticleParticle {
                 OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
         vertexConsumer.addVertex(p3.x, p3.y, p3.z, color, uv.x, uv.y + uv.w,
                 OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
+
+//        Minecraft.getInstance().options.reducedDebugInfo()
+//        VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.debugLineStrip(8));
+//        buffer.addVertex(m4, 0, 0, 0).setColor(0xFFFF0000);
+//        buffer.addVertex(m4, 1, 0, 0).setColor(0xFFFF0000);
+//        buffer.addVertex(m4, 0, 0, 0).setColor(0xFF00FF00);
+//        buffer.addVertex(m4, 0, 1, 0).setColor(0xFF00FF00);
+//        buffer.addVertex(m4, 0, 0, 0).setColor(0xFF0000FF);
+//        buffer.addVertex(m4, 0, 0, 1).setColor(0xFF0000FF);
+//        Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
 
         poseStack.popPose();
     }

@@ -52,7 +52,8 @@ public record ParticleAppearanceBillboard(
         var m4 = last.pose();
 
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-        var emitterRotation = particle.getEmitter().getRotation();
+        var emitterRotation = new Vector3f();
+//                particle.getEmitter().getRotation();
 
         switch (facingCameraMode) {
             case ROTATE_XYZ -> m4.rotate(camera.rotation());
@@ -91,61 +92,25 @@ public record ParticleAppearanceBillboard(
             case CUSTOM_DIRECTION -> direction().customDirection.eval(scope);
         } : new Vector3f();
 
-        if (!direction.equals(new Vector3f())) {
-            m4.lookAlong(direction, new Vector3f(0, 1, 0));
-        }
-
         return direction;
     }
 
-    static final Vector3f up = new Vector3f(0, 1, 0);
-
-    public static void applyDirectionX(Matrix4f m4, Vector3f direction) {
-        // x 轴沿方向向量
-        Vector3f xAxis = new Vector3f(direction.x == 0 && direction.y == 0 && direction.z == 0 ? new Vector3f(1,0,0) : direction);
-        // 计算 y 轴
-        Vector3f yAxis = new Vector3f();
-        up.cross(xAxis, yAxis).normalize();
-        // 计算 z 轴
-        Vector3f zAxis = new Vector3f();
-        xAxis.cross(yAxis, zAxis).normalize();
-
-        // 设置矩阵的坐标轴
-        m4.setColumn(0, new Vector4f(xAxis.x, xAxis.y, xAxis.z, 0));
-        m4.setColumn(1, new Vector4f(yAxis.x, yAxis.y, yAxis.z, 0));
-        m4.setColumn(2, new Vector4f(zAxis.x, zAxis.y, zAxis.z, 0));
+    public static void applyDirectionX(Matrix4f m4, Vector3f n) {
+        var a = Math.atan2(n.x, n.z);
+        var o = Math.atan2(n.y, Math.sqrt(Math.pow(n.x, 2) + Math.pow(n.z, 2)));
+        m4.rotateYXZ(new Vector3f(0, (float) (a - Math.PI / 2), (float) (o)));
     }
 
-    public static void applyDirectionY(Matrix4f m4, Vector3f direction) {
-        // y 轴沿方向向量
-        Vector3f yAxis = new Vector3f(direction.x == 0 && direction.y == 0 && direction.z == 0 ? new Vector3f(0,1,0) : direction);
-        // 计算 x 轴
-        Vector3f xAxis = new Vector3f();
-        up.cross(yAxis, xAxis).normalize();
-        // 计算 z 轴
-        Vector3f zAxis = new Vector3f();
-        yAxis.cross(xAxis, zAxis).normalize();
-
-        // 设置矩阵的坐标轴
-        m4.setColumn(0, new Vector4f(xAxis.x, xAxis.y, xAxis.z, 0));
-        m4.setColumn(1, new Vector4f(yAxis.x, yAxis.y, yAxis.z, 0));
-        m4.setColumn(2, new Vector4f(zAxis.x, zAxis.y, zAxis.z, 0));
+    public static void applyDirectionY(Matrix4f m4, Vector3f n) {
+        var a = Math.atan2(n.x, n.z);
+        var s = Math.atan2(n.y, Math.sqrt(Math.pow(n.x, 2) + Math.pow(n.z, 2)));
+        m4.rotateYXZ(new Vector3f((float) (s - Math.PI / 2), (float) (a - Math.PI), 0));
     }
 
-    public static void applyDirectionZ(Matrix4f m4, Vector3f direction) {
-        // z 轴沿方向向量
-        Vector3f zAxis = new Vector3f(direction.x == 0 && direction.y == 0 && direction.z == 0 ? new Vector3f(0,0,1) : direction);
-        // 计算 y 轴
-        Vector3f yAxis = new Vector3f();
-        up.cross(zAxis, yAxis).normalize();
-        // 计算 x 轴
-        Vector3f xAxis = new Vector3f();
-        yAxis.cross(zAxis, xAxis).normalize();
-
-        // 设置矩阵的坐标轴
-        m4.setColumn(0, new Vector4f(xAxis.x, xAxis.y, xAxis.z, 0));
-        m4.setColumn(1, new Vector4f(yAxis.x, yAxis.y, yAxis.z, 0));
-        m4.setColumn(2, new Vector4f(zAxis.x, zAxis.y, zAxis.z, 0));
+    public static void applyDirectionZ(Matrix4f m4, Vector3f n) {
+        var a = Math.atan2(n.x, n.z);
+        var s = Math.atan2(n.y, Math.sqrt(Math.pow(n.x, 2) + Math.pow(n.z, 2)));
+        m4.rotateYXZ(new Vector3f((float) -s, (float) a, 0));
     }
 
     /**
