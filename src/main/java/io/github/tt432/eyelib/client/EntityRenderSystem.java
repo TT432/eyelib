@@ -19,6 +19,7 @@ import io.github.tt432.eyelib.compute.LazyComputeBufferBuilder;
 import io.github.tt432.eyelib.compute.VertexComputeHelper;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
+import io.github.tt432.eyelib.molang.MolangScope;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.AccessLevel;
@@ -88,6 +89,9 @@ public class EntityRenderSystem {
 
         if (!cap.isUseBuiltInRenderSystem()) return;
 
+        MolangScope scope = cap.getScope();
+        scope.set("variable.partial_tick", event.getPartialTick());
+
         ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
 
         List<ModelComponent> components = setupClientEntity(entity, clientEntityComponent, cap);
@@ -96,8 +100,8 @@ public class EntityRenderSystem {
 
         BoneRenderInfos tickedInfos;
         if (cap.getAnimationComponent().getSerializableInfo() != null) {
-            tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), cap.getScope(), effects,
-                    (ClientTickHandler.getTick() + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) / 20);
+            tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
+                    (ClientTickHandler.getTick() + event.getPartialTick()) / 20);
         } else {
             tickedInfos = BoneRenderInfos.EMPTY;
         }
@@ -110,6 +114,8 @@ public class EntityRenderSystem {
         if (rendered) {
             event.setCanceled(true);
         }
+
+        scope.remove("variable.partial_tick");
     }
 
     public static boolean renderComponents(MultiBufferSource multiBufferSource, PoseStack poseStack,

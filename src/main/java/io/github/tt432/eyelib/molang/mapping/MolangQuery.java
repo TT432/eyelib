@@ -4,6 +4,8 @@ import io.github.tt432.eyelib.capability.ExtraEntityUpdateData;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
+import io.github.tt432.eyelib.common.behavior.component.MarkVariant;
+import io.github.tt432.eyelib.common.behavior.component.Variant;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
@@ -11,7 +13,6 @@ import io.github.tt432.eyelib.util.ResourceLocations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -202,12 +203,18 @@ public final class MolangQuery {
 
     @MolangFunction(value = "variant", description = "变体")
     public static float variant(MolangScope scope) {
-        return livingFloat(scope, l -> (float) l.getData(EyelibAttachableData.EXTRA_ENTITY_DATA).variant());
+        return livingFloat(scope, l -> {
+            Variant component = l.getData(EyelibAttachableData.ENTITY_BEHAVIOR_DATA).component(Variant.class);
+            return component != null ? (float) component.value() : 0;
+        });
     }
 
     @MolangFunction(value = "mark_variant", description = "变体")
     public static float markVariant(MolangScope scope) {
-        return livingFloat(scope, l -> (float) l.getData(EyelibAttachableData.EXTRA_ENTITY_DATA).mark_variant());
+        return livingFloat(scope, l -> {
+            MarkVariant component = l.getData(EyelibAttachableData.ENTITY_BEHAVIOR_DATA).component(MarkVariant.class);
+            return component != null ? (float) component.value() : 0;
+        });
     }
 
     @MolangFunction(value = "damage_x", description = "受伤来源方向 x")
@@ -413,6 +420,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "partial_tick", description = "距离上一帧的时间")
     public static float partialTicks(MolangScope scope) {
+        if (scope.contains("variable.partial_tick")) return scope.get("variable.partial_tick").asFloat();
         return Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
     }
 

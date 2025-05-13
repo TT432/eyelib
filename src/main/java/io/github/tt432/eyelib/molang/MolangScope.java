@@ -57,6 +57,10 @@ public final class MolangScope {
         return object;
     }
 
+    public void remove(String name) {
+        cache.remove(name);
+    }
+
     public void setOwner(Object owner) {
         this.owner.add(owner);
     }
