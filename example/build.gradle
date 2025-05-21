@@ -4,16 +4,6 @@ plugins {
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.88'
     id "io.freefair.lombok" version "8.6"
-    id 'signing'
-}
-
-tasks.named('wrapper', Wrapper).configure {
-    // Define wrapper values here so as to not have to always do so when updating gradlew.properties.
-    // Switching this to Wrapper.DistributionType.ALL will download the full gradle sources that comes with
-    // documentation attached on cursor hover of gradle classes and methods. However, this comes with increased
-    // file size for Gradle. If you do switch this to ALL, run the Gradle wrapper task twice afterwards.
-    // (Verify by checking gradle/wrapper/gradle-wrapper.properties to see if distributionUrl now points to `-all`)
-    distributionType = Wrapper.DistributionType.BIN
 }
 
 version = mod_version
@@ -55,7 +45,7 @@ neoForge {
     }
 
     // This line is optional. Access Transformers are automatically detected
-    accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
+//    accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
 
     // Default run configurations.
     // These can be tweaked, removed, or duplicated as needed.
@@ -130,40 +120,11 @@ configurations {
 }
 
 dependencies {
-    implementation jarJar('io.github.tt432.chin:chin:[21.0.3,)')
-    var imguiVersion = "1.86.12"
-    compileOnly("io.github.spair:imgui-java-binding:$imguiVersion")
-    compileOnly("io.github.spair:imgui-java-lwjgl3:$imguiVersion")
-
-    implementation 'io.github.tt432:imgui4mc:1.0.0'
-
-    jarJar additionalRuntimeClasspath(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))
-
-    jarJar additionalRuntimeClasspath(implementation('com.twelvemonkeys.imageio:imageio-tga:3.12.0'))
-    jarJar('com.twelvemonkeys.imageio:imageio-core:3.12.0')
-    jarJar('com.twelvemonkeys.common:common-lang:3.12.0')
-    jarJar('com.twelvemonkeys.common:common-image:3.12.0')
-    jarJar('com.twelvemonkeys.common:common-io:3.12.0')
-
-    compileOnly("maven.modrinth:sodium:mc1.21-0.6.0-beta.2-neoforge")
-    compileOnly("maven.modrinth:iris:1.8.0-beta.5+1.21-neoforge")
-    compileOnly("maven.modrinth:embeddium:1.0.11+mc1.21.1-neoforge")
-
-    implementation("maven.modrinth:physicsmod:3.0.20")
-
-    implementation "org.lwjgl:lwjgl-assimp:3.3.3"
-    runtimeOnly "org.lwjgl:lwjgl-assimp:3.3.3:natives-windows"
+    implementation(rootProject)
 }
 
-signing {
-    sign publishing.publications
-}
-
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
-
+// This block of code expands all declared replace properties in the specified resource targets.
+// A missing property will result in an error. Properties are expanded using ${} Groovy notation.
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
     var replaceProperties = [
             minecraft_version      : minecraft_version,
@@ -189,51 +150,6 @@ sourceSets.main.resources.srcDir generateModMetadata
 // To avoid having to run "generateModMetadata" manually, make it run on every project reload
 neoForge.ideSyncTask generateModMetadata
 
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-
-            pom {
-                name = project.mod_name
-                description = project.mod_description
-                url = "https://github.com/${githubUserName}/${githubRepoName}"
-
-                scm {
-                    connection = "scm:git:git://github.com/${githubUserName}/${githubRepoName}.git"
-                    developerConnection = "scm:git:ssh://github.com/${githubUserName}/${githubRepoName}.git"
-                    url = "https://github.com/${githubUserName}/${githubRepoName}"
-                }
-
-                licenses {
-                    license {
-                        name = 'MIT'
-                        url = "https://github.com/${githubUserName}/${githubRepoName}/tree/master/LICENSE"
-                    }
-                }
-
-                developers {
-                    developer {
-                        id = 'tt432'
-                        name = 'Chin'
-                        email = '2437315224@qq.com'
-                    }
-                }
-            }
-        }
-    }
-
-    repositories {
-        maven {
-            url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
-            credentials {
-                username = project.findProperty("ossrhUsername")
-                password = project.findProperty("ossrhPassword")
-            }
-        }
-    }
-}
-
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
@@ -244,27 +160,4 @@ idea {
         downloadSources = true
         downloadJavadoc = true
     }
-}
-
-tasks.register("runWithRenderDoc", Exec) {
-    def javaExecTask = tasks.withType(JavaExec).named("runClient").get()
-    def javaHome = javaExecTask.javaLauncher.get().metadata.installationPath.asFile.absolutePath
-
-    commandLine = [
-            "E:\\RenderDoc\\renderdoccmd.exe",
-            "capture",
-            "--opt-hook-children",
-            "--wait-for-exit",
-            "--working-dir",
-            ".",
-            "$javaHome/bin/java.exe",
-            "-Xmx64m",
-            "-Xms64m",
-            "-Dorg.gradle.appname=gradlew",
-            "-Dorg.gradle.java.home=$javaHome",
-            "-classpath",
-            "gradle/wrapper/gradle-wrapper.jar",
-            "org.gradle.wrapper.GradleWrapperMain",
-            "runClient"
-    ]
 }
