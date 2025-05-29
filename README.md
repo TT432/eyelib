@@ -5,6 +5,7 @@ the renderer lib for _Minecraft_.
 [English](README.md) | [中文](README.cn.md)
 
 ![Maven Central Version](https://img.shields.io/maven-central/v/io.github.tt432/eyelib)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/TT432/eyelib)
 
 ## Getting Started
 
