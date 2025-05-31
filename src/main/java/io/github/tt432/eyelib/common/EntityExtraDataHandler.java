@@ -39,60 +39,60 @@ public class EntityExtraDataHandler {
     public static void onEvent(EntityJoinLevelEvent event) {
         if (!event.getLevel().isClientSide) {
             switch (event.getEntity()) {
-                case Zombie z -> {
-                    ExtraEntityData oldData = z.getData(EyelibAttachableData.EXTRA_ENTITY_DATA);
-                    if (oldData.variant() == -1) {
-                        ExtraEntityData data = oldData.withVariant(z.getRandom().nextInt(3));
-                        z.setData(EyelibAttachableData.EXTRA_ENTITY_DATA, data);
-                    }
-                }
-                case Llama llama -> {
-                    ExtraEntityData data = llama.getData(EyelibAttachableData.EXTRA_ENTITY_DATA);
-                    ExtraEntityData newData = data.withVariant(llama.getVariant().getId());
-
-                    if (llama instanceof TraderLlama) {
-                        newData = newData.withMark_variant(1);
-                    }
-
-                    llama.setData(EyelibAttachableData.EXTRA_ENTITY_DATA, newData);
-                }
-                case Fox fox -> {
-                    ExtraEntityData data = fox.getData(EyelibAttachableData.EXTRA_ENTITY_DATA);
-
-                    if (data.variant() == -1) {
-                        ExtraEntityData newData;
-                        if (fox.getVariant() == Fox.Type.SNOW) {
-                            newData = data.withVariant(switch (weightedRandom(fox.getRandom(), new int[]{5, 1, 1, 1})) {
-                                case 0 -> 1;
-                                case 1 -> 9;
-                                case 2 -> 10;
-                                case 3 -> 11;
-                                default -> -1;
-                            });
-                        } else {
-                            newData = data.withVariant(switch (weightedRandom(fox.getRandom(), new int[]{5, 1, 1, 1, 1, 1, 1, 1})) {
-                                case 0 -> 0;
-                                case 1 -> 6;
-                                case 2 -> 2;
-                                case 3 -> 3;
-                                case 4 -> 4;
-                                case 5 -> 5;
-                                case 6 -> 8;
-                                case 7 -> 7;
-                                default -> -1;
-                            });
-                        }
-
-                        fox.setData(EyelibAttachableData.EXTRA_ENTITY_DATA, newData);
-                    }
-                }
-                case Chicken chicken -> {
-                    ExtraEntityData oldData = chicken.getData(EyelibAttachableData.EXTRA_ENTITY_DATA);
-                    if (oldData.variant() == -1) {
-                        ExtraEntityData data = oldData.withVariant(chicken.getRandom().nextInt(3));
-                        chicken.setData(EyelibAttachableData.EXTRA_ENTITY_DATA, data);
-                    }
-                }
+                // case Zombie z -> {
+                //     ExtraEntityData oldData = z.getData(EyelibAttachableData.EXTRA_ENTITY_DATA);
+                //     if (oldData.variant() == -1) {
+                //         ExtraEntityData data = oldData.withVariant(z.getRandom().nextInt(3));
+                //         z.setData(EyelibAttachableData.EXTRA_ENTITY_DATA, data);
+                //     }
+                // }
+                // case Llama llama -> {
+                //     ExtraEntityData data = llama.getData(EyelibAttachableData.EXTRA_ENTITY_DATA);
+                //     ExtraEntityData newData = data.withVariant(llama.getVariant().getId());
+                //
+                //     if (llama instanceof TraderLlama) {
+                //         newData = newData.withMark_variant(1);
+                //     }
+                //
+                //     llama.setData(EyelibAttachableData.EXTRA_ENTITY_DATA, newData);
+                // }
+                // case Fox fox -> {
+                //     ExtraEntityData data = fox.getData(EyelibAttachableData.EXTRA_ENTITY_DATA);
+                //
+                //     if (data.variant() == -1) {
+                //         ExtraEntityData newData;
+                //         if (fox.getVariant() == Fox.Type.SNOW) {
+                //             newData = data.withVariant(switch (weightedRandom(fox.getRandom(), new int[]{5, 1, 1, 1})) {
+                //                 case 0 -> 1;
+                //                 case 1 -> 9;
+                //                 case 2 -> 10;
+                //                 case 3 -> 11;
+                //                 default -> -1;
+                //             });
+                //         } else {
+                //             newData = data.withVariant(switch (weightedRandom(fox.getRandom(), new int[]{5, 1, 1, 1, 1, 1, 1, 1})) {
+                //                 case 0 -> 0;
+                //                 case 1 -> 6;
+                //                 case 2 -> 2;
+                //                 case 3 -> 3;
+                //                 case 4 -> 4;
+                //                 case 5 -> 5;
+                //                 case 6 -> 8;
+                //                 case 7 -> 7;
+                //                 default -> -1;
+                //             });
+                //         }
+                //
+                //         fox.setData(EyelibAttachableData.EXTRA_ENTITY_DATA, newData);
+                //     }
+                // }
+                // case Chicken chicken -> {
+                //     ExtraEntityData oldData = chicken.getData(EyelibAttachableData.EXTRA_ENTITY_DATA);
+                //     if (oldData.variant() == -1) {
+                //         ExtraEntityData data = oldData.withVariant(chicken.getRandom().nextInt(3));
+                //         chicken.setData(EyelibAttachableData.EXTRA_ENTITY_DATA, data);
+                //     }
+                // }
                 default -> {
                 }
             }

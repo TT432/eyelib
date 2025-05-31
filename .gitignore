@@ -24,3 +24,9 @@ runs
 run-data
 
 repo
+
+# Python specific
+python/__pycache__/
+python/*.pyc
+python/.venv/
+python/test_output/

@@ -4,8 +4,8 @@ import io.github.tt432.eyelib.capability.ExtraEntityUpdateData;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
-import io.github.tt432.eyelib.common.behavior.component.MarkVariant;
-import io.github.tt432.eyelib.common.behavior.component.Variant;
+//import io.github.tt432.eyelib.common.behavior.component.MarkVariant;
+//import io.github.tt432.eyelib.common.behavior.component.Variant;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
@@ -203,18 +203,20 @@ public final class MolangQuery {
 
     @MolangFunction(value = "variant", description = "变体")
     public static float variant(MolangScope scope) {
-        return livingFloat(scope, l -> {
-            Variant component = l.getData(EyelibAttachableData.ENTITY_BEHAVIOR_DATA).component(Variant.class);
-            return component != null ? (float) component.value() : 0;
-        });
+        // return livingFloat(scope, l -> {
+        //     Variant component = l.getData(EyelibAttachableData.ENTITY_BEHAVIOR_DATA).component(Variant.class);
+        //     return component != null ? (float) component.value() : 0;
+        // });
+        return 0; // Temporarily return 0
     }
 
     @MolangFunction(value = "mark_variant", description = "变体")
     public static float markVariant(MolangScope scope) {
-        return livingFloat(scope, l -> {
-            MarkVariant component = l.getData(EyelibAttachableData.ENTITY_BEHAVIOR_DATA).component(MarkVariant.class);
-            return component != null ? (float) component.value() : 0;
-        });
+        // return livingFloat(scope, l -> {
+        //     MarkVariant component = l.getData(EyelibAttachableData.ENTITY_BEHAVIOR_DATA).component(MarkVariant.class);
+        //     return component != null ? (float) component.value() : 0;
+        // });
+        return 0; // Temporarily return 0
     }
 
     @MolangFunction(value = "damage_x", description = "受伤来源方向 x")
