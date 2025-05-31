@@ -96,5 +96,10 @@ public class EyelibNetworkManager {
                 (payload, context) ->
                         Minecraft.getInstance().level.getEntity(payload.entityId())
                                 .setData(EyelibAttachableData.EXTRA_ENTITY_DATA, payload.data()));
+
+        registrar.playToClient(EntityBehaviorDataUpdatePacket.TYPE, EntityBehaviorDataUpdatePacket.STREAM_CODEC,
+                (payload, context) ->
+                        Minecraft.getInstance().level.getEntity(payload.entityId())
+                                .setData(EyelibAttachableData.ENTITY_BEHAVIOR_DATA, payload.data()));
     }
 }
