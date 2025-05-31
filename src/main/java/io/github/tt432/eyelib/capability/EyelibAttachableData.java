@@ -45,4 +45,10 @@ public class EyelibAttachableData {
                     () -> AttachmentType.builder(ItemInHandRenderData::empty)
                             .serialize(ItemInHandRenderData.CODEC)
                             .build());
+
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<EntityBehaviorData>> ENTITY_BEHAVIOR_DATA =
+            ATTACHMENT_TYPES.register("entity_behavior_data",
+                    () -> AttachmentType.builder(() -> new EntityBehaviorData())
+                            .serialize(EntityBehaviorData.CODEC)
+                            .build());
 }
