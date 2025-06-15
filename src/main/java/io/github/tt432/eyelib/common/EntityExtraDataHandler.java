@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.common;
 
 import io.github.tt432.eyelib.capability.ExtraEntityData;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
-import io.github.tt432.eyelib.network.ExtraEntityDataPacket;
+import io.github.tt432.eyelib.network.UniDataUpdatePacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.*;
@@ -21,10 +21,8 @@ public class EntityExtraDataHandler {
     @SubscribeEvent
     public static void onEvent(PlayerEvent.StartTracking event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
-            PacketDistributor.sendToPlayer(sp, new ExtraEntityDataPacket(
-                    event.getTarget().getId(),
-                    event.getTarget().getData(EyelibAttachableData.EXTRA_ENTITY_DATA)
-            ));
+            PacketDistributor.sendToPlayer(sp,
+                    UniDataUpdatePacket.crate(event.getTarget(), EyelibAttachableData.EXTRA_ENTITY_DATA));
         }
     }
 
@@ -69,7 +67,8 @@ public class EntityExtraDataHandler {
                 event.getEntity().setData(EyelibAttachableData.EXTRA_ENTITY_DATA, data);
 
                 if (oldData != data)
-                    PacketDistributor.sendToPlayersTrackingEntityAndSelf(r, new ExtraEntityDataPacket(r.getId(), data));
+                    PacketDistributor.sendToPlayersTrackingEntityAndSelf(r,
+                            UniDataUpdatePacket.crate(r, EyelibAttachableData.EXTRA_ENTITY_DATA));
             }
         }
     }

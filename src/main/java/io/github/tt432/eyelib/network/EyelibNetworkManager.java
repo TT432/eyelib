@@ -27,6 +27,10 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 @EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EyelibNetworkManager {
+    private static <T> T cast(Object o) {
+        return (T) o;
+    }
+
     @SubscribeEvent
     public static void register(final RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar(Eyelib.MOD_ID).optional();
@@ -91,6 +95,12 @@ public class EyelibNetworkManager {
                 (payload, context) ->
                         Minecraft.getInstance().level.getEntity(payload.entityId())
                                 .setData(EyelibAttachableData.EXTRA_ENTITY_UPDATE, payload.data()));
+
+        registrar.playToClient(UniDataUpdatePacket.TYPE, UniDataUpdatePacket.STREAM_CODEC,
+                (payload, context) -> {
+                    Minecraft.getInstance().level.getEntity(payload.entityId())
+                            .setData(payload::attachmentType, cast(payload.data().o()));
+                });
 
         registrar.playToClient(ExtraEntityDataPacket.TYPE, ExtraEntityDataPacket.STREAM_CODEC,
                 (payload, context) ->
