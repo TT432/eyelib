@@ -17,11 +17,15 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.slf4j.Logger;
 
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import static io.github.tt432.eyelib.molang.compiler.MolangClassDescs.*;
@@ -363,7 +367,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<MolangCompileVisitor
 
                         if (i >= last) {
                             codeBuilder.dup();
-                            codeBuilder.bipush(i-last);
+                            codeBuilder.bipush(i - last);
                         }
                     }
                     var type = visit(ctx.expr(i));
@@ -411,6 +415,14 @@ public class MolangCompileVisitor extends MolangBaseVisitor<MolangCompileVisitor
         return CompileContext.UNKNOWN;
     }
 
+    private static final Set<String> loggedCache = new HashSet<>();
+
+    private static void logOnce(String msg, BiConsumer<Logger, String> logAction) {
+        if (loggedCache.contains(msg)) return;
+        loggedCache.add(msg);
+        logAction.accept(log, msg);
+    }
+
     @Override
     public CompileContext visitVariable(MolangParser.VariableContext ctx) {
         String fieldName = rename(ctx.getText());
@@ -442,7 +454,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<MolangCompileVisitor
                 }
             }
 
-            log.debug("can't found field or method: {}", fieldName);
+            logOnce("can't found field or method: " + fieldName, Logger::debug);
             return getField(fieldName);
         }
     }
