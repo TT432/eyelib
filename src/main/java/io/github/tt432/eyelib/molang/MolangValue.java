@@ -68,7 +68,7 @@ public record MolangValue(
         } catch (Throwable e) {
             log.error("molang: {}", context, e);
             String name = method.getClass().getSimpleName();
-            byte[] bytes = MolangCompileHandler.getClasses().get(name);
+            byte[] bytes = MolangCompileHandler.getClassCache().get(name).bytecode();
             if (bytes != null) MolangCompileHandler.exportClass(name, bytes);
 
             return MolangNull.INSTANCE;
