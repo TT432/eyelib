@@ -139,20 +139,14 @@ dependencies {
 
     jarJar additionalRuntimeClasspath(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))
 
-    jarJar additionalRuntimeClasspath(implementation('com.twelvemonkeys.imageio:imageio-tga:3.12.0'))
-    jarJar('com.twelvemonkeys.imageio:imageio-core:3.12.0')
-    jarJar('com.twelvemonkeys.common:common-lang:3.12.0')
-    jarJar('com.twelvemonkeys.common:common-image:3.12.0')
-    jarJar('com.twelvemonkeys.common:common-io:3.12.0')
-
     compileOnly("maven.modrinth:sodium:mc1.21-0.6.0-beta.2-neoforge")
     compileOnly("maven.modrinth:iris:1.8.0-beta.5+1.21-neoforge")
     compileOnly("maven.modrinth:embeddium:1.0.11+mc1.21.1-neoforge")
 
-    implementation("maven.modrinth:physicsmod:3.0.20")
+//    implementation("maven.modrinth:physicsmod:3.0.20")
 
-    implementation "org.lwjgl:lwjgl-assimp:3.3.3"
-    runtimeOnly "org.lwjgl:lwjgl-assimp:3.3.3:natives-windows"
+//    implementation "org.lwjgl:lwjgl-assimp:3.3.3"
+//    runtimeOnly "org.lwjgl:lwjgl-assimp:3.3.3:natives-windows"
 }
 
 signing {
