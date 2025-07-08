@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -29,7 +30,7 @@ import java.util.function.Predicate;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BrParticleRenderManager {
     private static final Map<String, BrParticleEmitter> emitters = new ConcurrentHashMap<>();
-    private static final List<BrParticleParticle> particles = Collections.synchronizedList(new ArrayList<>());
+    private static final List<BrParticleParticle> particles = new CopyOnWriteArrayList<>();
 
     public static void spawnEmitter(final String id, final BrParticleEmitter emitter) {
         if (emitters.containsKey(id)) return;
