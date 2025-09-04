@@ -24,5 +24,6 @@ public interface Animation<D> {
 
     D createData();
 
-    void tickAnimation(D data, Map<String, String> animations, MolangScope scope, float ticks, float multiplier, BoneRenderInfos renderInfos, AnimationEffects effects);
+    void tickAnimation(D data, Map<String, String> animations, MolangScope scope, float ticks, float multiplier,
+                       BoneRenderInfos renderInfos, AnimationEffects effects, Runnable animationStartFeedback);
 }

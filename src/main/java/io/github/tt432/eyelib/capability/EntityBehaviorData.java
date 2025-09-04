@@ -20,6 +20,7 @@ public class EntityBehaviorData {
             BehaviorEntity.CODEC.optionalFieldOf("behavior").forGetter(o -> o.behavior),
             ComponentGroup.CODEC.listOf().fieldOf("componentGroups").forGetter(o -> o.componentGroups)
     ).apply(ins, EntityBehaviorData::new));
+
     public static final StreamCodec<ByteBuf, EntityBehaviorData> STREAM_CODEC = ByteBufCodecs.fromCodec(CODEC);
     @Getter
     private Optional<BehaviorEntity> behavior;

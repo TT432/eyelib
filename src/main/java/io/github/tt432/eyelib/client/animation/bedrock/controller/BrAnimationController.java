@@ -89,7 +89,8 @@ public record BrAnimationController(
 
     @Override
     public void tickAnimation(Data data, Map<String, String> animations, MolangScope scope,
-                              float ticks, float multiplier, BoneRenderInfos infos, AnimationEffects effects) {
+                              float ticks, float multiplier, BoneRenderInfos infos, AnimationEffects effects,
+                              Runnable animationStartFeedback) {
         data.currentAnimations = animations;
 
         var currState = data.getCurrState();
@@ -107,7 +108,8 @@ public record BrAnimationController(
 
         scope.getOwner().replace(BrAcState.class, currState);
 
-        blend(animations, infos, data, scope, data.getLastState(), currState, multiplier, ticks - data.getStartTick(), effects);
+        blend(animations, infos, data, scope, data.getLastState(), currState, multiplier,
+                ticks - data.getStartTick(), effects, animationStartFeedback);
 
         effects.particles.add(data.particles);
     }
@@ -160,7 +162,8 @@ public record BrAnimationController(
 
     private static void blend(Map<String, String> animations, BoneRenderInfos infos, Data data,
                               MolangScope scope, @Nullable BrAcState lastState, BrAcState currState,
-                              float multiplier, float stateTimeSec, AnimationEffects effects) {
+                              float multiplier, float stateTimeSec, AnimationEffects effects,
+                              Runnable animationStartFeedback) {
         float blendProgress;
 
         if (lastState != null && lastState.blendTransition() != 0) {
@@ -171,23 +174,25 @@ public record BrAnimationController(
 
         currState.animations().forEach((animationName, blendValue) ->
                 updateAnimations(animations, animationName, blendProgress * blendValue.eval(scope),
-                        multiplier, stateTimeSec, infos, data, scope, effects));
+                        multiplier, stateTimeSec, infos, data, scope, effects, animationStartFeedback));
 
         if (lastState != null && blendProgress < 1) {
             lastState.animations().forEach((animationName, blendValue) ->
                     updateAnimations(animations, animationName, (1 - blendProgress) * blendValue.eval(scope),
-                            multiplier, stateTimeSec, infos, data, scope, effects));
+                            multiplier, stateTimeSec, infos, data, scope, effects, animationStartFeedback));
         }
     }
 
     private static void updateAnimations(Map<String, String> animations, String animName, float blendValue,
                                          float multiplier, float startedTime, BoneRenderInfos infos,
-                                         Data data, MolangScope scope, AnimationEffects effects) {
+                                         Data data, MolangScope scope, AnimationEffects effects,
+                                         Runnable animationStartFeedback) {
         var animation = Eyelib.getAnimationManager().get(animations.get(animName));
 
         if (animation == null) return;
 
-        animation.tickAnimation(data.getData(animation), animations, scope, startedTime, multiplier * blendValue, infos, effects);
+        animation.tickAnimation(data.getData(animation), animations, scope, startedTime,
+                multiplier * blendValue, infos, effects, animationStartFeedback);
     }
 
     record Factory(

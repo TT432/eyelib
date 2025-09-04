@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import io.github.tt432.eyelib.Eyelib;
+import io.github.tt432.eyelib.EyelibClient;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
@@ -38,16 +39,17 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.animal.Bee;
 import net.minecraft.world.entity.animal.horse.Llama;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.WoolCarpetBlock;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -76,7 +78,16 @@ public class EntityRenderSystem {
 
     private static final Map<RenderType, Pair<VertexComputeHelper, MultiBufferSource>> helpers = new Object2ObjectOpenHashMap<>();
 
-    private static final boolean cantUseHighSpeedRender = ModList.get().isLoaded("iris") || Minecraft.ON_OSX;
+    private static final boolean canUseHighSpeedRender = EyelibClient.supportComputeShader();
+
+    @SubscribeEvent
+    public static void onEvent(EntityTickEvent.Pre event) {
+        switch (event.getEntity()) {
+            case Bee bee -> bee.updateSwingTime();
+            default -> {
+            }
+        }
+    }
 
     @SubscribeEvent
     public static void onEvent(RenderLivingEvent.Pre event) {
@@ -91,6 +102,7 @@ public class EntityRenderSystem {
 
         MolangScope scope = cap.getScope();
         scope.set("variable.partial_tick", event.getPartialTick());
+        scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
 
         ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
 
@@ -101,7 +113,11 @@ public class EntityRenderSystem {
         BoneRenderInfos tickedInfos;
         if (cap.getAnimationComponent().getSerializableInfo() != null) {
             tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
-                    (ClientTickHandler.getTick() + event.getPartialTick()) / 20);
+                    (ClientTickHandler.getTick() + event.getPartialTick()) / 20, () -> {
+                        clientEntityComponent.getClientEntity().scripts().ifPresent(scripts -> {
+                            scripts.pre_animation().eval(scope);
+                        });
+                    });
         } else {
             tickedInfos = BoneRenderInfos.EMPTY;
         }
@@ -162,7 +178,7 @@ public class EntityRenderSystem {
 
                 {
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
-                    if (!cantUseHighSpeedRender && buffer instanceof LazyComputeBufferBuilder lazy) {
+                    if (canUseHighSpeedRender && buffer instanceof LazyComputeBufferBuilder lazy) {
                         var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
                         lazy.setEyelib$helper(helper.left());
                     }
@@ -188,7 +204,7 @@ public class EntityRenderSystem {
                     VertexConsumer buffer1 = multiBufferSource.getBuffer(rt1);
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
 
-                    if (!cantUseHighSpeedRender && buffer1 instanceof LazyComputeBufferBuilder lazy) {
+                    if (canUseHighSpeedRender && buffer1 instanceof LazyComputeBufferBuilder lazy) {
                         var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
                         lazy.setEyelib$helper(helper.left());
                     }

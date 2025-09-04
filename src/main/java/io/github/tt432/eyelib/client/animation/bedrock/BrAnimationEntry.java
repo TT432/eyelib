@@ -190,8 +190,13 @@ public record BrAnimationEntry(
 
     @Override
     public void tickAnimation(Data data, Map<String, String> animations, MolangScope scope,
-                              float ticks, float multiplier, BoneRenderInfos infos, AnimationEffects effects) {
+                              float ticks, float multiplier, BoneRenderInfos infos, AnimationEffects effects,
+                              Runnable animationStartFeedback) {
         multiplier *= Math.clamp(blendWeight().eval(scope), 0, 1);
+
+        if (data.animTime == 0) {
+            animationStartFeedback.run();
+        }
 
         scope.getOwner().replace(Data.class, data);
         if (data.lastTicks == 0) data.lastTicks = ticks;
@@ -209,6 +214,8 @@ public record BrAnimationEntry(
                     if (loopedTimes > data.loopedTimes) {
                         data.loopedTimes = loopedTimes;
                         data.resetEffects();
+
+                        animationStartFeedback.run();
                     }
                     yield animTimeUpdate % animationLength();
                 }

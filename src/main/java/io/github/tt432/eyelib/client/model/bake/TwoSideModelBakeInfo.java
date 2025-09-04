@@ -10,10 +10,7 @@ import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author TT432
@@ -54,7 +51,10 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     }
 
     public static BakedModel.BakedBone bake(Model.Bone bone, Map<String, TwoSideInfo> info) {
-        boolean[] twoSide = info.get(bone.name()).cubeNeedTwoSide();
+        TwoSideInfo twoSideInfo = info.get(bone.name());
+        boolean[] allTrue = new boolean[bone.cubes().size()];
+        Arrays.fill(allTrue, true);
+        boolean[] twoSide = twoSideInfo == null ? allTrue : twoSideInfo.cubeNeedTwoSide();
 
         List<Vector3fc> vertexes = new ArrayList<>();
         List<Vector3fc> normals = new ArrayList<>();

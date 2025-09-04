@@ -20,6 +20,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.animal.Wolf;
@@ -457,7 +458,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "modified_distance_moved", description = "移动过的距离")
     public static float modifiedDistanceMoved(MolangScope scope) {
-        return scope.getOwner().ownerAs(Entity.class).map(e -> e.getData(EyelibAttachableData.ENTITY_STATISTICS).getDistanceWalked()).orElse(0F);
+        return scope.getOwner().ownerAs(Entity.class).map(e -> e.getData(EyelibAttachableData.ENTITY_STATISTICS).distanceWalked()).orElse(0F);
     }
 
     @MolangFunction(value = "is_on_ground", description = "正处于地面上")
@@ -706,7 +707,17 @@ public final class MolangQuery {
 
     @MolangFunction(value = "modified_move_speed", description = "移动速度")
     public static float modifiedMoveSpeed(MolangScope scope) {
-        return livingFloat(scope, e -> e.getData(EyelibAttachableData.EXTRA_ENTITY_UPDATE).speed());
+        return livingFloat(scope, e -> {
+            var xo = e.xo;
+            var zo = e.zo;
+
+            var x = e.getX();
+            var z = e.getZ();
+
+            return ((float) Math.sqrt((x - xo) * (x - xo) + (z - zo) * (z - zo)))
+                    / ((float) e.getAttributeBaseValue(Attributes.MOVEMENT_SPEED) *
+                    /* 疾跑乘数，原版没有，只能硬编码 */1.3F);
+        });
     }
 
     @MolangFunction(value = "is_damage", description = "正在受伤")

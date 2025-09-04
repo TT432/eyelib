@@ -11,6 +11,9 @@ import io.github.tt432.chin.util.Tuple;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.Pair;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.util.ExtraCodecs;
 import org.jetbrains.annotations.NotNull;
@@ -151,32 +154,64 @@ public record BrCube(
             corner.mulPosition(translate);
         }
 
+        List<List<Vector3f>> vertexes = ObjectList.of(
+                ObjectList.of(corners[6], corners[2], corners[3], corners[7]),
+                ObjectList.of(corners[4], corners[0], corners[1], corners[5]),
+                ObjectList.of(corners[3], corners[0], corners[4], corners[7]),
+                ObjectList.of(corners[2], corners[1], corners[0], corners[3]),
+                ObjectList.of(corners[6], corners[5], corners[1], corners[2]),
+                ObjectList.of(corners[7], corners[4], corners[5], corners[6])
+        );
+
+        var uvs = ObjectList.of(
+                getUv(up),
+                getUv(down),
+                getUv(east),
+                getUv(north),
+                getUv(west),
+                getUv(south));
+
+        ObjectList<Vector3f> normals = ObjectList.of(
+                getNormal(corners[6], corners[2], corners[3]),
+                getNormal(corners[4], corners[0], corners[1]),
+                getNormal(corners[3], corners[0], corners[4]),
+                getNormal(corners[2], corners[1], corners[0]),
+                getNormal(corners[6], corners[5], corners[1]),
+                getNormal(corners[7], corners[4], corners[5])
+        );
+
+        IntList removeIndexes = new IntArrayList();
+
+        for (int i = 0; i < 6; i++) {
+            if (Float.isNaN(normals.get(i).x) || Float.isNaN(normals.get(i).y) || Float.isNaN(normals.get(i).z)) {
+                removeIndexes.add(i);
+            }
+        }
+
+        if (!removeIndexes.isEmpty()) {
+            List<List<Vector3f>> newVertexes = new ObjectArrayList<>();
+            ObjectList<List<Vector2f>> newUvs = new ObjectArrayList<>();
+            ObjectList<Vector3f> newNormals = new ObjectArrayList<>();
+
+            for (int i = 0; i < 6; i++) {
+                if (!removeIndexes.contains(i)) {
+                    newVertexes.add(vertexes.get(i));
+                    newUvs.add(uvs.get(i));
+                    newNormals.add(normals.get(i));
+                }
+            }
+
+            vertexes = newVertexes;
+            uvs = newUvs;
+            normals = newNormals;
+        }
+
         return new BrCube(
-                6,
+                normals.size(),
                 4,
-                ObjectList.of(
-                        ObjectList.of(corners[6], corners[2], corners[3], corners[7]),
-                        ObjectList.of(corners[4], corners[0], corners[1], corners[5]),
-                        ObjectList.of(corners[3], corners[0], corners[4], corners[7]),
-                        ObjectList.of(corners[2], corners[1], corners[0], corners[3]),
-                        ObjectList.of(corners[6], corners[5], corners[1], corners[2]),
-                        ObjectList.of(corners[7], corners[4], corners[5], corners[6])
-                ),
-                ObjectList.of(
-                        getUv(up),
-                        getUv(down),
-                        getUv(east),
-                        getUv(north),
-                        getUv(west),
-                        getUv(south)),
-                ObjectList.of(
-                        getNormal(corners[6], corners[2], corners[3]),
-                        getNormal(corners[4], corners[0], corners[1]),
-                        getNormal(corners[3], corners[0], corners[4]),
-                        getNormal(corners[2], corners[1], corners[0]),
-                        getNormal(corners[6], corners[5], corners[1]),
-                        getNormal(corners[7], corners[4], corners[5])
-                )
+                vertexes,
+                uvs,
+                normals
         );
     }
 

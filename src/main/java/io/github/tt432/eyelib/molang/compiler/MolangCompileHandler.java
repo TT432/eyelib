@@ -35,8 +35,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static io.github.dmlloyd.classfile.extras.constant.ConstantUtils.referenceClassDesc;
-import static io.github.dmlloyd.classfile.extras.reflect.ClassFileFormatVersion.*;
-import static io.github.tt432.eyelib.molang.compiler.MolangClassDescs.*;
+import static io.github.dmlloyd.classfile.extras.reflect.ClassFileFormatVersion.RELEASE_21;
+import static io.github.tt432.eyelib.molang.compiler.MolangClassDescs.CD_MolangObject;
+import static io.github.tt432.eyelib.molang.compiler.MolangClassDescs.CD_MolangScope;
 import static java.lang.constant.ConstantDescs.*;
 
 /**
@@ -121,6 +122,8 @@ public class MolangCompileHandler {
         ensureInitialized();
 
         String normalizedContent = content.trim();
+
+        if (normalizedContent.isBlank()) return MolangValue.MolangFunction.NULL;
 
         // 先检查表达式缓存
         MolangValue.MolangFunction cached = expressionCache.get(normalizedContent);
@@ -295,7 +298,7 @@ public class MolangCompileHandler {
      * 获取缓存统计信息
      */
     public static void printCacheStats() {
-        log.info("Cache Stats - Expression Cache: {}, Class Cache: {}", 
+        log.info("Cache Stats - Expression Cache: {}, Class Cache: {}",
                 expressionCache.size(), classCache.size());
     }
 
@@ -318,7 +321,6 @@ public class MolangCompileHandler {
             }
         }
     }
-
 
 
     /**
@@ -372,7 +374,7 @@ public class MolangCompileHandler {
         if (currentTask != null) {
             currentTask.cancel(false);
         }
-        
+
         // 最后一次导出
         try {
             exportCache();

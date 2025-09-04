@@ -26,4 +26,8 @@ public abstract class Manager<T> {
     public String getManagerName() {
         return getClass().getSimpleName();
     }
+
+    public Map<String, T> getAllData() {
+        return new HashMap<>(data);
+    }
 }

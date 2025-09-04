@@ -121,7 +121,11 @@ public class PlayerItemInHandAttachableLayer {
 
         AnimationEffects effects = new AnimationEffects();
 
-        BoneRenderInfos tickedInfos = tickAnimations(cap, effects);
+        BoneRenderInfos tickedInfos = tickAnimations(cap, effects, () -> {
+            clientEntity.scripts().ifPresent(scripts -> {
+                scripts.pre_animation().eval(cap.getScope());
+            });
+        });
 
         components.forEach(modelComponent -> {
             var model = modelComponent.getModel();
@@ -207,10 +211,12 @@ public class PlayerItemInHandAttachableLayer {
         }
     }
 
-    private static @NotNull BoneRenderInfos tickAnimations(RenderData<ItemStack> cap, AnimationEffects effects) {
+    private static @NotNull BoneRenderInfos tickAnimations(RenderData<ItemStack> cap, AnimationEffects effects,
+                                                           Runnable animationStartFeedback) {
         if (cap.getAnimationComponent().getSerializableInfo() != null) {
             return BrAnimator.tickAnimation(cap.getAnimationComponent(), cap.getScope(), effects,
-                    (ClientTickHandler.getTick() + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) / 20);
+                    (ClientTickHandler.getTick() + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) / 20,
+                    animationStartFeedback);
         } else {
             return BoneRenderInfos.EMPTY;
         }

@@ -16,11 +16,11 @@ public class EntityStatisticsHandler {
     @SubscribeEvent
     public static void onEvent(EntityTickEvent.Post event) {
         Entity entity = event.getEntity();
-        EntityStatistics data = entity.getData(EyelibAttachableData.ENTITY_STATISTICS);
         Vec3 pos = entity.position();
         var x = pos.x - entity.xo;
-        var y = pos.y - entity.yo;
         var z = pos.z - entity.zo;
-        data.setDistanceWalked((float) (data.getDistanceWalked() + Math.sqrt(x * x + y * y + z * z)));
+        EntityStatistics data = entity.getData(EyelibAttachableData.ENTITY_STATISTICS);
+        entity.setData(EyelibAttachableData.ENTITY_STATISTICS,
+                data.withDistanceWalked(data.distanceWalked() + (float) Math.sqrt(x * x + z * z)));
     }
 }

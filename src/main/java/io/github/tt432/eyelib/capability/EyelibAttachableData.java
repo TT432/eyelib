@@ -24,8 +24,9 @@ public class EyelibAttachableData {
 
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<EntityStatistics>> ENTITY_STATISTICS =
             ATTACHMENT_TYPES.register("entity_statistics",
-                    () -> AttachmentType.builder(EntityStatistics::new)
+                    () -> AttachmentType.builder(EntityStatistics::empty)
                             .serialize(EntityStatistics.CODEC)
+                            .sync(EntityStatistics.STREAM_CODEC)
                             .build());
 
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<ExtraEntityUpdateData>> EXTRA_ENTITY_UPDATE =
@@ -50,5 +51,6 @@ public class EyelibAttachableData {
             ATTACHMENT_TYPES.register("entity_behavior_data",
                     () -> AttachmentType.builder(() -> new EntityBehaviorData())
                             .serialize(EntityBehaviorData.CODEC)
+                            .sync(EntityBehaviorData.STREAM_CODEC)
                             .build());
 }

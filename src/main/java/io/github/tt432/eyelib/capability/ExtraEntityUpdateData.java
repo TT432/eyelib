@@ -76,7 +76,7 @@ public record ExtraEntityUpdateData(
                 float speed;
 
                 if (!l.getNavigation().isDone()) {
-                    speed = l.getSpeed() * 4;
+                    speed = l.getSpeed();
                 } else {
                     speed = 0;
                 }

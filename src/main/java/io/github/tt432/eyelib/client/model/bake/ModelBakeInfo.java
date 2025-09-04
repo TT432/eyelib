@@ -70,7 +70,7 @@ public abstract class ModelBakeInfo<Info> {
         for (int i = 0; i < bone.cubes().size(); i++) {
             var cube = bone.cubes().get(i);
 
-            for (int i1 = 0; i1 < cube.pointsPerFace(); i1++) {
+            for (int i1 = 0; i1 < cube.faceCount(); i1++) {
                 if (pixelAnyMatch(intBuffer,
                         cube.uvU(i1, 0), cube.uvV(i1, 0),
                         cube.uvU(i1, 2), cube.uvV(i1, 2),
