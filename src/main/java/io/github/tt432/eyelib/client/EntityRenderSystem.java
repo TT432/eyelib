@@ -78,8 +78,6 @@ public class EntityRenderSystem {
 
     private static final Map<RenderType, Pair<VertexComputeHelper, MultiBufferSource>> helpers = new Object2ObjectOpenHashMap<>();
 
-    private static final boolean canUseHighSpeedRender = EyelibClient.supportComputeShader();
-
     @SubscribeEvent
     public static void onEvent(EntityTickEvent.Pre event) {
         switch (event.getEntity()) {
@@ -178,7 +176,7 @@ public class EntityRenderSystem {
 
                 {
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
-                    if (canUseHighSpeedRender && buffer instanceof LazyComputeBufferBuilder lazy) {
+                    if (EyelibClient.supportComputeShader() && buffer instanceof LazyComputeBufferBuilder lazy) {
                         var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
                         lazy.setEyelib$helper(helper.left());
                     }
@@ -204,7 +202,7 @@ public class EntityRenderSystem {
                     VertexConsumer buffer1 = multiBufferSource.getBuffer(rt1);
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
 
-                    if (canUseHighSpeedRender && buffer1 instanceof LazyComputeBufferBuilder lazy) {
+                    if (EyelibClient.supportComputeShader() && buffer1 instanceof LazyComputeBufferBuilder lazy) {
                         var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
                         lazy.setEyelib$helper(helper.left());
                     }

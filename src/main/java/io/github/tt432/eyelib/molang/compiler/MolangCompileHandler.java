@@ -36,8 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static io.github.dmlloyd.classfile.extras.constant.ConstantUtils.referenceClassDesc;
 import static io.github.dmlloyd.classfile.extras.reflect.ClassFileFormatVersion.RELEASE_21;
-import static io.github.tt432.eyelib.molang.compiler.MolangClassDescs.CD_MolangObject;
-import static io.github.tt432.eyelib.molang.compiler.MolangClassDescs.CD_MolangScope;
+import static io.github.tt432.eyelib.molang.compiler.MolangClassDescs.*;
 import static java.lang.constant.ConstantDescs.*;
 
 /**
