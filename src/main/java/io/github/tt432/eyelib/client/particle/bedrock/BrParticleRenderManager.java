@@ -45,7 +45,7 @@ public class BrParticleRenderManager {
         particles.add(particle);
     }
 
-    @EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+    @EventBusSubscriber(value = Dist.CLIENT)
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static final class ModEvents {
         @SubscribeEvent
