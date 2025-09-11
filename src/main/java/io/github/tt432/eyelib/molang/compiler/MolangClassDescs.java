@@ -11,6 +11,6 @@ import java.lang.constant.ClassDesc;
  */
 @UtilityClass
 public class MolangClassDescs {
-    public ClassDesc CD_MolangObject = ClassDesc.of(MolangObject.class.getName());
-    public ClassDesc CD_MolangScope =ClassDesc.of(MolangScope .class.getName());
+    public static final ClassDesc CD_MolangObject = ClassDesc.of(MolangObject.class.getName());
+    public static final ClassDesc CD_MolangScope =ClassDesc.of(MolangScope .class.getName());
 }
