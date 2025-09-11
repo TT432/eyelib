@@ -78,7 +78,14 @@ public class EntityRenderSystem {
 
     private static final Map<RenderType, Pair<VertexComputeHelper, MultiBufferSource>> helpers = new Object2ObjectOpenHashMap<>();
 
-    private static final boolean canUseHighSpeedRender = EyelibClient.supportComputeShader();
+    // 保证在渲染线程上执行
+    private static Boolean _canUseHighSpeedRender = null;
+    private static boolean canUseHighSpeedRender() {
+        if (_canUseHighSpeedRender == null) {
+            _canUseHighSpeedRender = EyelibClient.supportComputeShader();
+        }
+        return _canUseHighSpeedRender;
+    }
 
     @SubscribeEvent
     public static void onEvent(EntityTickEvent.Pre event) {
@@ -178,7 +185,7 @@ public class EntityRenderSystem {
 
                 {
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
-                    if (canUseHighSpeedRender && buffer instanceof LazyComputeBufferBuilder lazy) {
+                    if (canUseHighSpeedRender() && buffer instanceof LazyComputeBufferBuilder lazy) {
                         var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
                         lazy.setEyelib$helper(helper.left());
                     }
@@ -204,7 +211,7 @@ public class EntityRenderSystem {
                     VertexConsumer buffer1 = multiBufferSource.getBuffer(rt1);
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
 
-                    if (canUseHighSpeedRender && buffer1 instanceof LazyComputeBufferBuilder lazy) {
+                    if (canUseHighSpeedRender() && buffer1 instanceof LazyComputeBufferBuilder lazy) {
                         var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
                         lazy.setEyelib$helper(helper.left());
                     }
