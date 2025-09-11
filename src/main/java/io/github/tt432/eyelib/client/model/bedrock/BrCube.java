@@ -11,8 +11,6 @@ import io.github.tt432.chin.util.Tuple;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.Pair;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.util.ExtraCodecs;
@@ -24,7 +22,6 @@ import org.joml.Vector3f;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 
 /**
  * @author TT432
