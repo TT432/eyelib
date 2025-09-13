@@ -21,7 +21,7 @@ import java.util.*;
  * @author TT432
  */
 @Slf4j
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MolangMappingTree {
     public static final MolangMappingTree INSTANCE = new MolangMappingTree();

@@ -20,7 +20,7 @@ import java.util.Map;
 /**
  * @author TT432
  */
-@EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(value = Dist.CLIENT)
 @Slf4j
 public class BrParticleLoader extends BrResourcesLoader {
     private static final BrParticleLoader INSTANCE = new BrParticleLoader();

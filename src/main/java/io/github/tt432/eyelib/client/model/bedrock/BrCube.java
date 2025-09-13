@@ -11,8 +11,6 @@ import io.github.tt432.chin.util.Tuple;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.Pair;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import net.minecraft.util.ExtraCodecs;
@@ -21,7 +19,9 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author TT432
@@ -62,6 +62,31 @@ public record BrCube(
         face.right().y *= -1;
     }
 
+    private enum Rotation {
+        NONE,
+        CLOCKWISE_90,
+        CLOCKWISE_180,
+        CLOCKWISE_270;
+
+        public List<Vector2f> rotateUv(List<Vector2f> uvs) {
+            return switch (this) {
+                case NONE -> uvs;
+                case CLOCKWISE_270 -> List.of(uvs.get(3), uvs.get(0), uvs.get(1), uvs.get(2));
+                case CLOCKWISE_180 -> List.of(uvs.get(2), uvs.get(3), uvs.get(0), uvs.get(1));
+                case CLOCKWISE_90 -> List.of(uvs.get(1), uvs.get(2), uvs.get(3), uvs.get(0));
+            };
+        }
+
+        public static Rotation fromDegree(int degree) {
+            return switch (degree) {
+                case 90 -> CLOCKWISE_90;
+                case 180 -> CLOCKWISE_180;
+                case 270 -> CLOCKWISE_270;
+                default -> NONE;
+            };
+        }
+    }
+
     public static BrCube parse(int textureHeight, int textureWidth, JsonObject jsonObject) {
         Vector3f origin = parse(jsonObject, "origin");
         Vector3f size = parse(jsonObject, "size");
@@ -77,6 +102,8 @@ public record BrCube(
         Pair<Vector2f, Vector2f> east;
         Pair<Vector2f, Vector2f> south;
         Pair<Vector2f, Vector2f> west;
+        Rotation[] uvRotations = { Rotation.NONE, Rotation.NONE, Rotation.NONE, Rotation.NONE, Rotation.NONE, Rotation.NONE };
+        Set<Integer> removeIndexes = new HashSet<>();
 
         if (jsonObject.get("uv") instanceof JsonArray ja) {
             //  box
@@ -107,14 +134,12 @@ public record BrCube(
             }
         } else if (jsonObject.get("uv") instanceof JsonObject jo) {
             //  face
-            up = getUVFromFace(jo, "up");
-//            flip(up);
-            down = getUVFromFace(jo, "down");
-//            flip(down);
-            north = getUVFromFace(jo, "north");
-            east = getUVFromFace(jo, "west");
-            south = getUVFromFace(jo, "south");
-            west = getUVFromFace(jo, "east");
+            up = getUVFromFace(jo, "up", 0, removeIndexes, uvRotations);
+            down = getUVFromFace(jo, "down", 1, removeIndexes, uvRotations);
+            east = getUVFromFace(jo, "west", 2, removeIndexes, uvRotations);
+            north = getUVFromFace(jo, "north", 3, removeIndexes, uvRotations);
+            west = getUVFromFace(jo, "east", 4, removeIndexes, uvRotations);
+            south = getUVFromFace(jo, "south", 5, removeIndexes, uvRotations);
         } else {
             up = zero();
             down = zero();
@@ -156,7 +181,7 @@ public record BrCube(
 
         List<List<Vector3f>> vertexes = ObjectList.of(
                 ObjectList.of(corners[6], corners[2], corners[3], corners[7]),
-                ObjectList.of(corners[4], corners[0], corners[1], corners[5]),
+                ObjectList.of(corners[1], corners[5], corners[4], corners[0]),
                 ObjectList.of(corners[3], corners[0], corners[4], corners[7]),
                 ObjectList.of(corners[2], corners[1], corners[0], corners[3]),
                 ObjectList.of(corners[6], corners[5], corners[1], corners[2]),
@@ -164,23 +189,22 @@ public record BrCube(
         );
 
         var uvs = ObjectList.of(
-                getUv(up),
-                getUv(down),
-                getUv(east),
-                getUv(north),
-                getUv(west),
-                getUv(south));
+                uvRotations[0].rotateUv(getUv(up)),
+                uvRotations[1].rotateUv(getUv(down)),
+                uvRotations[2].rotateUv(getUv(east)),
+                uvRotations[3].rotateUv(getUv(north)),
+                uvRotations[4].rotateUv(getUv(west)),
+                uvRotations[5].rotateUv(getUv(south))
+        );
 
         ObjectList<Vector3f> normals = ObjectList.of(
                 getNormal(corners[6], corners[2], corners[3]),
-                getNormal(corners[4], corners[0], corners[1]),
+                getNormal(corners[1], corners[5], corners[4]),
                 getNormal(corners[3], corners[0], corners[4]),
                 getNormal(corners[2], corners[1], corners[0]),
                 getNormal(corners[6], corners[5], corners[1]),
                 getNormal(corners[7], corners[4], corners[5])
         );
-
-        IntList removeIndexes = new IntArrayList();
 
         for (int i = 0; i < 6; i++) {
             if (Float.isNaN(normals.get(i).x) || Float.isNaN(normals.get(i).y) || Float.isNaN(normals.get(i).z)) {
@@ -256,14 +280,29 @@ public record BrCube(
         return Pair.of(new Vector2f(), new Vector2f());
     }
 
-    private static Pair<Vector2f, Vector2f> getUVFromFace(JsonObject uvJson, String face) {
+    private static Pair<Pair<Vector2f, Vector2f>, Rotation> getUVFromFaceJson(JsonObject uvJson, String face) {
         if (uvJson.get(face) instanceof JsonObject faceJson) {
             return Pair.of(
-                    new Vector2f(gson.fromJson(faceJson.get("uv"), float[].class)),
-                    faceJson.get("uv_size") instanceof JsonArray ja ? new Vector2f(gson.fromJson(ja, float[].class)) : new Vector2f(1, 1)
+                    Pair.of(
+                            new Vector2f(gson.fromJson(faceJson.get("uv"), float[].class)),
+                            faceJson.get("uv_size") instanceof JsonArray ja ? new Vector2f(gson.fromJson(ja, float[].class)) : new Vector2f(1, 1)
+                    ),
+                    Rotation.fromDegree(faceJson.get("uv_rotation") instanceof JsonPrimitive jp ? jp.getAsInt() : 0)
             );
         } else {
-            return Pair.of(new Vector2f(), new Vector2f());
+            return null;
         }
     }
+
+    private static Pair<Vector2f, Vector2f> getUVFromFace(JsonObject uvJson, String face, int index, Set<Integer> removeIndexes, Rotation[] uvRotations) {
+        var ret = getUVFromFaceJson(uvJson, face);
+        if (ret == null) {
+            removeIndexes.add(index);
+            return zero();
+        } else {
+            uvRotations[index] = ret.right();
+            return ret.left();
+        }
+    }
+
 }

@@ -55,7 +55,7 @@ import java.util.function.Consumer;
 @Slf4j
 public class EyelibManagerScreen extends Screen {
 
-    @EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+    @EventBusSubscriber(value = Dist.CLIENT)
     public static final class ModEvents {
         public static final KeyMapping openScreen = new KeyMapping("Open Eyelib Manager Screen", GLFW.GLFW_KEY_I, "Eyelib");
 

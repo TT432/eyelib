@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(value = Dist.CLIENT)
 public class BlockBrModelLoader implements IGeometryLoader<UnBakedBrModel> {
     @SubscribeEvent
     public static void onEvent(ModelEvent.RegisterGeometryLoaders event) {
