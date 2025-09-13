@@ -21,7 +21,7 @@ import java.util.*;
  */
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber
 public class ParticleComponentManager {
     public record ParticleComponentInfo(
             ResourceLocation name,

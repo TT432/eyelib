@@ -14,7 +14,7 @@ import net.neoforged.neoforge.registries.RegistryBuilder;
 /**
  * @author TT432
  */
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ModelRenderVisitorRegistry {
     public static final ResourceKey<Registry<ModelVisitor>> VISITOR_REGISTRY_KEY =

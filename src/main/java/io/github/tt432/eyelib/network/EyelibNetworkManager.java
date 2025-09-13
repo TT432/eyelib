@@ -24,7 +24,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 /**
  * @author TT432
  */
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EyelibNetworkManager {
     private static <T> T cast(Object o) {

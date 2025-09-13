@@ -27,7 +27,7 @@ import java.util.stream.Stream;
  */
 @Slf4j
 @Getter
-@EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(value = Dist.CLIENT)
 public class BrAttachableLoader extends BrResourcesLoader implements Searchable<BrClientEntity> {
     public static final BrAttachableLoader INSTANCE = new BrAttachableLoader();
 
