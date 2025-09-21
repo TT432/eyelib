@@ -130,7 +130,7 @@ var generateModMetadata = tasks.register('generateModMetadata', ProcessResources
     into 'build/generated/sources/modMetadata'
 }
 sourceSets.main.resources.srcDir generateModMetadata
-//neoForge.ideSyncTask generateModMetadata
+processResources.dependsOn(generateModMetadata)
 
 publishing {
     publications {
