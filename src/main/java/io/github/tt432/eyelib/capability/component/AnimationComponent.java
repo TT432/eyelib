@@ -6,11 +6,12 @@ import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import io.github.tt432.eyelib.molang.MolangValue;
-import io.netty.buffer.ByteBuf;
+import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
+import io.github.tt432.eyelib.util.codec.stream.StreamCodecs;
 import lombok.Getter;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.neoforged.neoforge.common.NeoForge;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.EventPriority;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -33,13 +34,23 @@ public class AnimationComponent {
                 Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).fieldOf("animate").forGetter(SerializableInfo::animate)
         ).apply(ins, SerializableInfo::new));
 
-        public static final StreamCodec<ByteBuf, SerializableInfo> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.map(HashMap::new, ByteBufCodecs.STRING_UTF8, ByteBufCodecs.STRING_UTF8),
-                SerializableInfo::animations,
-                ByteBufCodecs.map(HashMap::new, ByteBufCodecs.STRING_UTF8, MolangValue.STREAM_CODEC),
-                SerializableInfo::animate,
-                SerializableInfo::new
-        );
+        public static final StreamCodec<SerializableInfo> STREAM_CODEC = new StreamCodec<>() {
+            private final StreamCodec<Map<String, String>> animationsCodec = StreamCodecs.createForMap(StreamCodecs.STRING, StreamCodecs.STRING);
+            private final StreamCodec<Map<String, MolangValue>> animateCodec = StreamCodecs.createForMap(StreamCodecs.STRING, MolangValue.STREAM_CODEC);
+
+            @Override
+            public void encode(SerializableInfo obj, FriendlyByteBuf buf) {
+                animationsCodec.encode(obj.animations, buf);
+                animateCodec.encode(obj.animate, buf);
+            }
+
+            @Override
+            public SerializableInfo decode(FriendlyByteBuf buf) {
+                var animations = animationsCodec.decode(buf);
+                var animate = animateCodec.decode(buf);
+                return new SerializableInfo(animations, animate);
+            }
+        };
     }
 
     public Object getAnimationData(String controllerName) {
@@ -61,7 +72,7 @@ public class AnimationComponent {
     }
 
     {
-        NeoForge.EVENT_BUS.addListener(ManagerEntryChangedEvent.class, e -> {
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ManagerEntryChangedEvent.class, e -> {
             if (e.getManagerName().equals(Eyelib.getAnimationManager().getManagerName())) {
                 AtomicBoolean changed = new AtomicBoolean(false);
                 animate.forEach((k, v) -> {

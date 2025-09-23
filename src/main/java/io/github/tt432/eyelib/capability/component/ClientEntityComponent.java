@@ -5,7 +5,8 @@ import io.github.tt432.eyelib.client.entity.BrClientEntity;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import lombok.Getter;
 import lombok.Setter;
-import net.neoforged.neoforge.common.NeoForge;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.EventPriority;
 
 /**
  * @author TT432
@@ -16,7 +17,7 @@ public class ClientEntityComponent {
     private BrClientEntity clientEntity;
 
     {
-        NeoForge.EVENT_BUS.addListener(ManagerEntryChangedEvent.class, event -> {
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ManagerEntryChangedEvent.class, event -> {
             if (event.getManagerName().equals(Eyelib.getClientEntityLoader().getManagerName())
                     && clientEntity != null
                     && event.getEntryName().equals(clientEntity.identifier())) {
