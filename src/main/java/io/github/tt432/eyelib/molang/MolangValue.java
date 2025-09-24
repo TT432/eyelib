@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;
 import io.github.tt432.eyelib.util.codec.CodecHelper;
 import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
-import io.github.tt432.eyelib.util.codec.stream.StreamCodecs;
+import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +60,7 @@ public record MolangValue(
                 .xmap(MolangValue::new, MolangValue::toString);
     }
 
-    public static final StreamCodec<MolangValue> STREAM_CODEC = StreamCodecs.fromCodec(CODEC);
+    public static final StreamCodec<MolangValue> STREAM_CODEC = EyelibStreamCodecs.fromCodec(CODEC);
 
     public MolangObject getObject(MolangScope scope) {
         try {

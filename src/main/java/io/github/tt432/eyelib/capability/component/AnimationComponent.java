@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
-import io.github.tt432.eyelib.util.codec.stream.StreamCodecs;
+import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
 import lombok.Getter;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.common.MinecraftForge;
@@ -35,8 +35,8 @@ public class AnimationComponent {
         ).apply(ins, SerializableInfo::new));
 
         public static final StreamCodec<SerializableInfo> STREAM_CODEC = new StreamCodec<>() {
-            private final StreamCodec<Map<String, String>> animationsCodec = StreamCodecs.createForMap(StreamCodecs.STRING, StreamCodecs.STRING);
-            private final StreamCodec<Map<String, MolangValue>> animateCodec = StreamCodecs.createForMap(StreamCodecs.STRING, MolangValue.STREAM_CODEC);
+            private final StreamCodec<Map<String, String>> animationsCodec = EyelibStreamCodecs.map(EyelibStreamCodecs.STRING, EyelibStreamCodecs.STRING);
+            private final StreamCodec<Map<String, MolangValue>> animateCodec = EyelibStreamCodecs.map(EyelibStreamCodecs.STRING, MolangValue.STREAM_CODEC);
 
             @Override
             public void encode(SerializableInfo obj, FriendlyByteBuf buf) {

@@ -2,10 +2,10 @@ package io.github.tt432.eyelib.capability;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.netty.buffer.ByteBuf;
+import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
+import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
 import lombok.With;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 
 /**
  * @author TT432
@@ -34,19 +34,26 @@ public record ExtraEntityData(
             Codec.BOOL.fieldOf("is_dig").forGetter(ExtraEntityData::is_dig)
     ).apply(ins, ExtraEntityData::new));
 
-    public static final StreamCodec<ByteBuf, ExtraEntityData> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.BOOL,
-            ExtraEntityData::facing_target_to_range_attack,
-            ByteBufCodecs.BOOL,
-            ExtraEntityData::is_avoiding_mobs,
-            ByteBufCodecs.BOOL,
-            ExtraEntityData::is_grazing,
-            ByteBufCodecs.BOOL,
-            ExtraEntityData::is_avoid,
-            ByteBufCodecs.BOOL,
-            ExtraEntityData::is_dig,
-            ExtraEntityData::new
-    );
+    public static final StreamCodec<ExtraEntityData> STREAM_CODEC = new StreamCodec<>() {
+        @Override
+        public void encode(ExtraEntityData obj, FriendlyByteBuf buf) {
+            EyelibStreamCodecs.BOOL.encode(obj.facing_target_to_range_attack, buf);
+            EyelibStreamCodecs.BOOL.encode(obj.is_avoiding_mobs, buf);
+            EyelibStreamCodecs.BOOL.encode(obj.is_grazing, buf);
+            EyelibStreamCodecs.BOOL.encode(obj.is_avoid, buf);
+            EyelibStreamCodecs.BOOL.encode(obj.is_dig, buf);
+        }
+
+        @Override
+        public ExtraEntityData decode(FriendlyByteBuf buf) {
+            var facingTargetToRangeAttack = EyelibStreamCodecs.BOOL.decode(buf);
+            var isAvoidingMobs = EyelibStreamCodecs.BOOL.decode(buf);
+            var isGrazing = EyelibStreamCodecs.BOOL.decode(buf);
+            var isAvoid = EyelibStreamCodecs.BOOL.decode(buf);
+            var isDig = EyelibStreamCodecs.BOOL.decode(buf);
+            return new ExtraEntityData(facingTargetToRangeAttack, isAvoidingMobs, isGrazing, isAvoid, isDig);
+        }
+    };
 
     public static ExtraEntityData empty() {
         return EMPTY;

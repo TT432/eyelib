@@ -3,19 +3,19 @@ package io.github.tt432.eyelib.capability;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.network.ExtraEntityUpdateDataPacket;
-import io.netty.buffer.ByteBuf;
+import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
+import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
 import lombok.With;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
-import net.neoforged.neoforge.event.tick.EntityTickEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.network.PacketDistributor;
 
 /**
  * @author TT432
@@ -36,19 +36,26 @@ public record ExtraEntityUpdateData(
             Codec.FLOAT.fieldOf("speed").forGetter(ExtraEntityUpdateData::speed)
     ).apply(ins, ExtraEntityUpdateData::new));
 
-    public static final StreamCodec<ByteBuf, ExtraEntityUpdateData> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.VAR_INT,
-            ExtraEntityUpdateData::targetId,
-            ByteBufCodecs.DOUBLE,
-            ExtraEntityUpdateData::lastHurtX,
-            ByteBufCodecs.DOUBLE,
-            ExtraEntityUpdateData::lastHurtY,
-            ByteBufCodecs.DOUBLE,
-            ExtraEntityUpdateData::lastHurtZ,
-            ByteBufCodecs.FLOAT,
-            ExtraEntityUpdateData::speed,
-            ExtraEntityUpdateData::new
-    );
+    public static final StreamCodec<ExtraEntityUpdateData> STREAM_CODEC = new StreamCodec<>() {
+        @Override
+        public void encode(ExtraEntityUpdateData obj, FriendlyByteBuf buf) {
+            EyelibStreamCodecs.VAR_INT.encode(obj.targetId, buf);
+            EyelibStreamCodecs.DOUBLE.encode(obj.lastHurtX, buf);
+            EyelibStreamCodecs.DOUBLE.encode(obj.lastHurtY, buf);
+            EyelibStreamCodecs.DOUBLE.encode(obj.lastHurtZ, buf);
+            EyelibStreamCodecs.FLOAT.encode(obj.speed, buf);
+        }
+
+        @Override
+        public ExtraEntityUpdateData decode(FriendlyByteBuf buf) {
+            var targetId = EyelibStreamCodecs.VAR_INT.decode(buf);
+            var lastHurtX = EyelibStreamCodecs.DOUBLE.decode(buf);
+            var lastHurtY = EyelibStreamCodecs.DOUBLE.decode(buf);
+            var lastHurtZ = EyelibStreamCodecs.DOUBLE.decode(buf);
+            var speed = EyelibStreamCodecs.FLOAT.decode(buf);
+            return new ExtraEntityUpdateData(targetId, lastHurtX, lastHurtY, lastHurtZ, speed);
+        }
+    };
 
     public static ExtraEntityUpdateData empty() {
         return new ExtraEntityUpdateData(-1, 0, 0, 0, 0);
@@ -90,10 +97,10 @@ public record ExtraEntityUpdateData(
         return r;
     }
 
-    @EventBusSubscriber
+    @Mod.EventBusSubscriber
     public static final class Events {
         @SubscribeEvent
-        public static void onEvent(LivingIncomingDamageEvent event) {
+        public static void onEvent(LivingDamageEvent event) {
             Entity directEntity = event.getSource().getDirectEntity();
             var key = EyelibAttachableData.EXTRA_ENTITY_UPDATE;
 
@@ -109,13 +116,13 @@ public record ExtraEntityUpdateData(
 
                 if (data != updated) {
                     entity.setData(key, updated);
-                    PacketDistributor.sendToPlayersTrackingEntityAndSelf(entity, new ExtraEntityUpdateDataPacket(entity.getId(), updated));
+                    PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity).send(new ExtraEntityUpdateDataPacket(entity.getId(), updated));
                 }
             }
         }
 
         @SubscribeEvent
-        public static void onEvent(EntityTickEvent.Pre event) {
+        public static void onEvent(LivingEvent.LivingTickEvent event) {
             Entity entity = event.getEntity();
             var key = EyelibAttachableData.EXTRA_ENTITY_UPDATE;
             ExtraEntityUpdateData data = entity.getData(key);

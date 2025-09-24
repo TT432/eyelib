@@ -5,10 +5,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.common.behavior.BehaviorEntity;
 import io.github.tt432.eyelib.common.behavior.component.Component;
 import io.github.tt432.eyelib.common.behavior.component.group.ComponentGroup;
-import io.netty.buffer.ByteBuf;
+import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
+import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
 import lombok.Getter;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 
 import java.util.*;
 
@@ -21,7 +20,8 @@ public class EntityBehaviorData {
             ComponentGroup.CODEC.listOf().fieldOf("componentGroups").forGetter(o -> o.componentGroups)
     ).apply(ins, EntityBehaviorData::new));
 
-    public static final StreamCodec<ByteBuf, EntityBehaviorData> STREAM_CODEC = ByteBufCodecs.fromCodec(CODEC);
+    public static final StreamCodec<EntityBehaviorData> STREAM_CODEC = EyelibStreamCodecs.fromCodec(CODEC);
+
     @Getter
     private Optional<BehaviorEntity> behavior;
     @Getter

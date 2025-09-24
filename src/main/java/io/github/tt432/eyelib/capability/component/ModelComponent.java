@@ -5,13 +5,13 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.util.client.RenderTypeSerializations;
-import io.netty.buffer.ByteBuf;
+import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
+import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import lombok.Getter;
 import lombok.With;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Objects;
@@ -33,15 +33,22 @@ public class ModelComponent {
                 ResourceLocation.CODEC.fieldOf("renderType").forGetter(SerializableInfo::renderType)
         ).apply(ins, SerializableInfo::new));
 
-        public static final StreamCodec<ByteBuf, SerializableInfo> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.STRING_UTF8,
-                SerializableInfo::model,
-                ResourceLocation.STREAM_CODEC,
-                SerializableInfo::texture,
-                ResourceLocation.STREAM_CODEC,
-                SerializableInfo::renderType,
-                SerializableInfo::new
-        );
+        public static final StreamCodec<SerializableInfo> STREAM_CODEC = new StreamCodec<>() {
+            @Override
+            public void encode(SerializableInfo obj, FriendlyByteBuf buf) {
+                EyelibStreamCodecs.STRING.encode(obj.model, buf);
+                EyelibStreamCodecs.RESOURCE_LOCATION.encode(obj.texture, buf);
+                EyelibStreamCodecs.RESOURCE_LOCATION.encode(obj.renderType, buf);
+            }
+
+            @Override
+            public SerializableInfo decode(FriendlyByteBuf buf) {
+                var model = EyelibStreamCodecs.STRING.decode(buf);
+                var texture = EyelibStreamCodecs.RESOURCE_LOCATION.decode(buf);
+                var type = EyelibStreamCodecs.RESOURCE_LOCATION.decode(buf);
+                return new SerializableInfo(model, texture, type);
+            }
+        };
     }
 
     SerializableInfo serializableInfo;
