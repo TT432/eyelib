@@ -1,56 +1,73 @@
 package io.github.tt432.eyelib.capability;
 
 import io.github.tt432.eyelib.Eyelib;
+import io.github.tt432.eyelib.util.data_attach.DataAttachment;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredRegister;
-import net.neoforged.neoforge.registries.NeoForgeRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.entity.living.LivingConversionEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 /**
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@Mod.EventBusSubscriber
 public class EyelibAttachableData {
-    public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
-            DeferredRegister.create(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, Eyelib.MOD_ID);
 
-    public static final DeferredHolder<AttachmentType<?>, AttachmentType<RenderData<Object>>> RENDER_DATA =
-            ATTACHMENT_TYPES.register("render_data",
-                    () -> AttachmentType.builder(() -> new RenderData<>())
-                            .serialize(RenderData.codec())
-                            .build());
+    // <editor-fold desc="Capability ids">
 
-    public static final DeferredHolder<AttachmentType<?>, AttachmentType<EntityStatistics>> ENTITY_STATISTICS =
-            ATTACHMENT_TYPES.register("entity_statistics",
-                    () -> AttachmentType.builder(EntityStatistics::empty)
-                            .serialize(EntityStatistics.CODEC)
-                            .sync(EntityStatistics.STREAM_CODEC)
-                            .build());
+    private static final ResourceLocation RENDER_DATA_ID = modLoc("render_data");
+    private static final ResourceLocation ENTITY_STATISTICS_ID = modLoc("entity_statistics");
+    private static final ResourceLocation EXTRA_ENTITY_UPDATE_ID = modLoc("extra_entity_update");
+    private static final ResourceLocation EXTRA_ENTITY_DATA_ID = modLoc("extra_entity_data");
+    private static final ResourceLocation ITEM_IN_HAND_RENDER_DATA_ID = modLoc("item_in_hand_render_data");
+    private static final ResourceLocation ENTITY_BEHAVIOR_DATA_ID = modLoc("entity_behavior_data");
 
-    public static final DeferredHolder<AttachmentType<?>, AttachmentType<ExtraEntityUpdateData>> EXTRA_ENTITY_UPDATE =
-            ATTACHMENT_TYPES.register("extra_entity_update",
-                    () -> AttachmentType.builder(ExtraEntityUpdateData::empty)
-                            .serialize(ExtraEntityUpdateData.CODEC)
-                            .build());
+    // </editor-fold>
 
-    public static final DeferredHolder<AttachmentType<?>, AttachmentType<ExtraEntityData>> EXTRA_ENTITY_DATA =
-            ATTACHMENT_TYPES.register("extra_entity_data",
-                    () -> AttachmentType.builder(ExtraEntityData::empty)
-                            .serialize(ExtraEntityData.CODEC)
-                            .build());
+    // <editor-fold desc="Data Attachments">
 
-    public static final DeferredHolder<AttachmentType<?>, AttachmentType<ItemInHandRenderData>> ITEM_IN_HAND_RENDER_DATA =
-            ATTACHMENT_TYPES.register("item_in_hand_render_data",
-                    () -> AttachmentType.builder(ItemInHandRenderData::empty)
-                            .serialize(ItemInHandRenderData.CODEC)
-                            .build());
+    // tt432: All caps are only for LivingEntity.
+    public static final DataAttachment<RenderData<Object>> RENDER_DATA = new DataAttachment<>(RENDER_DATA_ID, RenderData::new, RenderData.codec(), null);
+    public static final DataAttachment<EntityStatistics> ENTITY_STATISTICS = new DataAttachment<>(ENTITY_STATISTICS_ID, EntityStatistics::empty, EntityStatistics.CODEC, EntityStatistics.STREAM_CODEC);
+    public static final DataAttachment<ExtraEntityUpdateData> EXTRA_ENTITY_UPDATE = new DataAttachment<>(EXTRA_ENTITY_UPDATE_ID, ExtraEntityUpdateData::empty, ExtraEntityUpdateData.CODEC, null);
+    public static final DataAttachment<ExtraEntityData> EXTRA_ENTITY_DATA = new DataAttachment<>(EXTRA_ENTITY_DATA_ID, ExtraEntityData::empty, ExtraEntityData.CODEC, null);
+    public static final DataAttachment<ItemInHandRenderData> ITEM_IN_HAND_RENDER_DATA = new DataAttachment<>(ITEM_IN_HAND_RENDER_DATA_ID, ItemInHandRenderData::empty, ItemInHandRenderData.CODEC, null);
+    public static final DataAttachment<EntityBehaviorData> ENTITY_BEHAVIOR_DATA = new DataAttachment<>(ENTITY_BEHAVIOR_DATA_ID, EntityBehaviorData::new, EntityBehaviorData.CODEC, EntityBehaviorData.STREAM_CODEC);
 
-    public static final DeferredHolder<AttachmentType<?>, AttachmentType<EntityBehaviorData>> ENTITY_BEHAVIOR_DATA =
-            ATTACHMENT_TYPES.register("entity_behavior_data",
-                    () -> AttachmentType.builder(() -> new EntityBehaviorData())
-                            .serialize(EntityBehaviorData.CODEC)
-                            .sync(EntityBehaviorData.STREAM_CODEC)
-                            .build());
+    // </editor-fold>
+
+    private static ResourceLocation modLoc(String path) {
+        return ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, path);
+    }
+
+    @SubscribeEvent
+    public static void onRegister(RegisterCapabilitiesEvent event) {
+        event.register(RenderData.class);
+        event.register(EntityStatistics.class);
+        event.register(ExtraEntityUpdateData.class);
+        event.register(ExtraEntityData.class);
+        event.register(ItemInHandRenderData.class);
+        event.register(EntityBehaviorData.class);
+    }
+
+    @SubscribeEvent
+    public static void onAttachEntity(AttachCapabilitiesEvent<Entity> event) {
+        if (event.getObject() instanceof LivingEntity livingEntity) {
+            event.addCapability(RENDER_DATA.id(), RENDER_DATA.createDataAttachmentProvider());
+            event.addCapability(ENTITY_STATISTICS.id(), ENTITY_STATISTICS.createDataAttachmentProvider());
+            event.addCapability(EXTRA_ENTITY_UPDATE.id(), EXTRA_ENTITY_UPDATE.createDataAttachmentProvider());
+            event.addCapability(EXTRA_ENTITY_DATA.id(), EXTRA_ENTITY_DATA.createDataAttachmentProvider());
+            event.addCapability(ITEM_IN_HAND_RENDER_DATA.id(), ITEM_IN_HAND_RENDER_DATA.createDataAttachmentProvider());
+            event.addCapability(ENTITY_BEHAVIOR_DATA.id(), ENTITY_BEHAVIOR_DATA.createDataAttachmentProvider());
+        }
+    }
 }
