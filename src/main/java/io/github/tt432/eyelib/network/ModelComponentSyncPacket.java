@@ -1,12 +1,9 @@
 package io.github.tt432.eyelib.network;
 
-import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
-import io.github.tt432.eyelib.util.ResourceLocations;
-import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
+import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,20 +14,21 @@ import java.util.List;
 public record ModelComponentSyncPacket(
         int entityId,
         List<ModelComponent.SerializableInfo> modelInfo
-) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<ModelComponentSyncPacket> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocations.of(Eyelib.MOD_ID, "model_component"));
+) {
+    public static final StreamCodec<ModelComponentSyncPacket> STREAM_CODEC = new StreamCodec<>() {
+        private static final StreamCodec<List<ModelComponent.SerializableInfo>> LIST_CODEC = EyelibStreamCodecs.list(ArrayList::new, ModelComponent.SerializableInfo.STREAM_CODEC);
 
-    public static final StreamCodec<ByteBuf, ModelComponentSyncPacket> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.VAR_INT,
-            ModelComponentSyncPacket::entityId,
-            ByteBufCodecs.collection(ArrayList::new, ModelComponent.SerializableInfo.STREAM_CODEC),
-            ModelComponentSyncPacket::modelInfo,
-            ModelComponentSyncPacket::new
-    );
+        @Override
+        public void encode(ModelComponentSyncPacket obj, FriendlyByteBuf buf) {
+            EyelibStreamCodecs.VAR_INT.encode(obj.entityId, buf);
+            LIST_CODEC.encode(obj.modelInfo, buf);
+        }
 
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
+        @Override
+        public ModelComponentSyncPacket decode(FriendlyByteBuf buf) {
+            var entityId = EyelibStreamCodecs.VAR_INT.decode(buf);
+            var modelInfo = LIST_CODEC.decode(buf);
+            return new ModelComponentSyncPacket(entityId, modelInfo);
+        }
+    };
 }

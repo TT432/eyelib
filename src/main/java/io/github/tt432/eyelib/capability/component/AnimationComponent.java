@@ -35,8 +35,8 @@ public class AnimationComponent {
         ).apply(ins, SerializableInfo::new));
 
         public static final StreamCodec<SerializableInfo> STREAM_CODEC = new StreamCodec<>() {
-            private final StreamCodec<Map<String, String>> animationsCodec = EyelibStreamCodecs.map(EyelibStreamCodecs.STRING, EyelibStreamCodecs.STRING);
-            private final StreamCodec<Map<String, MolangValue>> animateCodec = EyelibStreamCodecs.map(EyelibStreamCodecs.STRING, MolangValue.STREAM_CODEC);
+            private final StreamCodec<Map<String, String>> animationsCodec = EyelibStreamCodecs.map(HashMap::new, EyelibStreamCodecs.STRING, EyelibStreamCodecs.STRING);
+            private final StreamCodec<Map<String, MolangValue>> animateCodec = EyelibStreamCodecs.map(HashMap::new, EyelibStreamCodecs.STRING, MolangValue.STREAM_CODEC);
 
             @Override
             public void encode(SerializableInfo obj, FriendlyByteBuf buf) {

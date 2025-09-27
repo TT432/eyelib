@@ -1,19 +1,19 @@
 package io.github.tt432.eyelib.capability;
 
 import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.util.data_attach.DataAttachment;
+import io.github.tt432.eyelib.util.data_attach.DataAttachmentType;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.event.entity.living.LivingConversionEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.IForgeRegistry;
+import net.minecraftforge.registries.RegistryBuilder;
+import net.minecraftforge.registries.RegistryObject;
+
+import java.util.function.Supplier;
 
 /**
  * @author TT432
@@ -21,6 +21,11 @@ import net.minecraftforge.fml.common.Mod;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Mod.EventBusSubscriber
 public class EyelibAttachableData {
+
+    public static final ResourceKey<Registry<DataAttachmentType<?>>> DATA_ATTACHMENTS_KEY = ResourceKey.createRegistryKey(modLoc("data_attachments"));
+
+    public static final DeferredRegister<DataAttachmentType<?>> DATA_ATTACHMENTS = DeferredRegister.create(DATA_ATTACHMENTS_KEY, Eyelib.MOD_ID);
+    public static final Supplier<IForgeRegistry<DataAttachmentType<?>>> REGISTRY = DATA_ATTACHMENTS.makeRegistry(RegistryBuilder::new);
 
     // <editor-fold desc="Capability ids">
 
@@ -35,13 +40,13 @@ public class EyelibAttachableData {
 
     // <editor-fold desc="Data Attachments">
 
-    // tt432: All caps are only for LivingEntity.
-    public static final DataAttachment<RenderData<Object>> RENDER_DATA = new DataAttachment<>(RENDER_DATA_ID, RenderData::new, RenderData.codec(), null);
-    public static final DataAttachment<EntityStatistics> ENTITY_STATISTICS = new DataAttachment<>(ENTITY_STATISTICS_ID, EntityStatistics::empty, EntityStatistics.CODEC, EntityStatistics.STREAM_CODEC);
-    public static final DataAttachment<ExtraEntityUpdateData> EXTRA_ENTITY_UPDATE = new DataAttachment<>(EXTRA_ENTITY_UPDATE_ID, ExtraEntityUpdateData::empty, ExtraEntityUpdateData.CODEC, null);
-    public static final DataAttachment<ExtraEntityData> EXTRA_ENTITY_DATA = new DataAttachment<>(EXTRA_ENTITY_DATA_ID, ExtraEntityData::empty, ExtraEntityData.CODEC, null);
-    public static final DataAttachment<ItemInHandRenderData> ITEM_IN_HAND_RENDER_DATA = new DataAttachment<>(ITEM_IN_HAND_RENDER_DATA_ID, ItemInHandRenderData::empty, ItemInHandRenderData.CODEC, null);
-    public static final DataAttachment<EntityBehaviorData> ENTITY_BEHAVIOR_DATA = new DataAttachment<>(ENTITY_BEHAVIOR_DATA_ID, EntityBehaviorData::new, EntityBehaviorData.CODEC, EntityBehaviorData.STREAM_CODEC);
+    // tt432: All attachments are only for LivingEntity now.
+    public static final RegistryObject<DataAttachmentType<RenderData<Object>>> RENDER_DATA = DATA_ATTACHMENTS.register(RENDER_DATA_ID.getPath(), () -> new DataAttachmentType<>(RENDER_DATA_ID, RenderData::new, RenderData.codec(), null));
+    public static final RegistryObject<DataAttachmentType<EntityStatistics>> ENTITY_STATISTICS = DATA_ATTACHMENTS.register(ENTITY_STATISTICS_ID.getPath(), () -> new DataAttachmentType<>(ENTITY_STATISTICS_ID, EntityStatistics::empty, EntityStatistics.CODEC, EntityStatistics.STREAM_CODEC));
+    public static final RegistryObject<DataAttachmentType<ExtraEntityUpdateData>> EXTRA_ENTITY_UPDATE = DATA_ATTACHMENTS.register(EXTRA_ENTITY_UPDATE_ID.getPath(), () -> new DataAttachmentType<>(EXTRA_ENTITY_UPDATE_ID, ExtraEntityUpdateData::empty, ExtraEntityUpdateData.CODEC, null));
+    public static final RegistryObject<DataAttachmentType<ExtraEntityData>> EXTRA_ENTITY_DATA = DATA_ATTACHMENTS.register(EXTRA_ENTITY_DATA_ID.getPath(), () -> new DataAttachmentType<>(EXTRA_ENTITY_DATA_ID, ExtraEntityData::empty, ExtraEntityData.CODEC, null));
+    public static final RegistryObject<DataAttachmentType<ItemInHandRenderData>> ITEM_IN_HAND_RENDER_DATA = DATA_ATTACHMENTS.register(ITEM_IN_HAND_RENDER_DATA_ID.getPath(), () -> new DataAttachmentType<>(ITEM_IN_HAND_RENDER_DATA_ID, ItemInHandRenderData::empty, ItemInHandRenderData.CODEC, null));
+    public static final RegistryObject<DataAttachmentType<EntityBehaviorData>> ENTITY_BEHAVIOR_DATA = DATA_ATTACHMENTS.register(ENTITY_BEHAVIOR_DATA_ID.getPath(), () -> new DataAttachmentType<>(ENTITY_BEHAVIOR_DATA_ID, EntityBehaviorData::new, EntityBehaviorData.CODEC, EntityBehaviorData.STREAM_CODEC));
 
     // </editor-fold>
 
@@ -49,25 +54,11 @@ public class EyelibAttachableData {
         return ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, path);
     }
 
-    @SubscribeEvent
-    public static void onRegister(RegisterCapabilitiesEvent event) {
-        event.register(RenderData.class);
-        event.register(EntityStatistics.class);
-        event.register(ExtraEntityUpdateData.class);
-        event.register(ExtraEntityData.class);
-        event.register(ItemInHandRenderData.class);
-        event.register(EntityBehaviorData.class);
-    }
-
-    @SubscribeEvent
-    public static void onAttachEntity(AttachCapabilitiesEvent<Entity> event) {
-        if (event.getObject() instanceof LivingEntity livingEntity) {
-            event.addCapability(RENDER_DATA.id(), RENDER_DATA.createDataAttachmentProvider());
-            event.addCapability(ENTITY_STATISTICS.id(), ENTITY_STATISTICS.createDataAttachmentProvider());
-            event.addCapability(EXTRA_ENTITY_UPDATE.id(), EXTRA_ENTITY_UPDATE.createDataAttachmentProvider());
-            event.addCapability(EXTRA_ENTITY_DATA.id(), EXTRA_ENTITY_DATA.createDataAttachmentProvider());
-            event.addCapability(ITEM_IN_HAND_RENDER_DATA.id(), ITEM_IN_HAND_RENDER_DATA.createDataAttachmentProvider());
-            event.addCapability(ENTITY_BEHAVIOR_DATA.id(), ENTITY_BEHAVIOR_DATA.createDataAttachmentProvider());
+    public static DataAttachmentType<?> getById(ResourceLocation id) {
+        var optional = REGISTRY.get().getHolder(id);
+        if (optional.isPresent()) {
+            return optional.get().get();
         }
+        throw new IllegalStateException("Unknown attachment type: " + id);
     }
 }

@@ -1,95 +1,48 @@
 package io.github.tt432.eyelib.network;
 
-import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.util.ResourceLocations;
-import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Entity;
-import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.NeoForgeRegistries;
-
-import java.util.HashMap;
-import java.util.Map;
+import io.github.tt432.eyelib.capability.EyelibAttachableData;
+import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
+import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
+import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
+import io.github.tt432.eyelib.util.data_attach.DataAttachmentType;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraftforge.registries.RegistryObject;
 
 /**
  * @author TT432
  */
-public record UniDataUpdatePacket<T>(
-        int entityId,
-        NamedData<T> data
-) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<UniDataUpdatePacket<?>> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocations.of(Eyelib.MOD_ID, "uni_data_update"));
-
-
-    record NamedData<T>(
-            ResourceLocation key,
-            T o
-    ) {
+public record UniDataUpdatePacket<T>(int entityId, DataAttachmentType<T> type, T data) {
+    public static <T> UniDataUpdatePacket<T> crate(LivingEntity entity, RegistryObject<DataAttachmentType<T>> holder) {
+        var type = holder.get();
+        var data = DataAttachmentHelper.getOrCreate(type, entity);
+        return crate(entity.getId(), type, data);
     }
 
-    public static <T> void add(ResourceLocation attachmentId, StreamCodec<ByteBuf, T> codec) {
-        codecMap.put(attachmentId, codec);
+    public static <T> UniDataUpdatePacket<T> crate(int entityId, DataAttachmentType<T> type, T data) {
+        return new UniDataUpdatePacket<>(entityId, type, data);
     }
 
-    public static UniDataUpdatePacket<?> crate(Entity entity, DeferredHolder<AttachmentType<?>, ?> holder) {
-        return crate(entity.getId(), holder.getKey().location(), entity.getData(holder.get()));
+    private void encode(FriendlyByteBuf buf) {
+        type.getStreamCodec().encode(data, buf);
     }
 
-    public static <T> UniDataUpdatePacket<T> crate(int entityId, ResourceLocation attachmentId, T data) {
-        return new UniDataUpdatePacket<>(entityId, new NamedData<>(attachmentId, data));
-    }
+    public static final StreamCodec<UniDataUpdatePacket<?>> STREAM_CODEC = new StreamCodec<>() {
+        @Override
+        public void encode(UniDataUpdatePacket<?> obj, FriendlyByteBuf buf) {
+            EyelibStreamCodecs.VAR_INT.encode(obj.entityId, buf);
+            EyelibStreamCodecs.RESOURCE_LOCATION.encode(obj.type.id(), buf);
+            obj.encode(buf);
+        }
 
-    public static final Map<ResourceLocation, StreamCodec<ByteBuf, ?>> codecMap = new HashMap<>();
-
-    public AttachmentType<?> attachmentType() {
-        return NeoForgeRegistries.ATTACHMENT_TYPES.get(data.key);
-    }
-
-    private static <T> T cast(Object o) {
-        return (T) o;
-    }
-
-    private static final StreamCodec<ByteBuf, NamedData<?>> NAMED_DATA_CODEC = ResourceLocation.STREAM_CODEC.dispatch(
-            NamedData::key,
-            k -> {
-                // 获取特定键的编解码器
-                StreamCodec<ByteBuf, ?> codec = codecMap.get(k);
-
-                // 处理未找到编解码器的情况
-                if (codec == null) {
-                    throw new IllegalArgumentException("Unknown key: " + k);
-                }
-
-                // 将编解码器转换为处理NamedData<?>的类型
-                return new StreamCodec<>() {
-                    @Override
-                    public NamedData<?> decode(ByteBuf buffer) {
-                        return new NamedData<>(k, codec.decode(buffer));
-                    }
-
-                    @Override
-                    public void encode(ByteBuf buffer, NamedData<?> value) {
-                        codec.encode(buffer, UniDataUpdatePacket.cast(value.o()));
-                    }
-                };
-            }
-    );
-
-    public static final StreamCodec<ByteBuf, UniDataUpdatePacket<?>> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.VAR_INT,
-            UniDataUpdatePacket::entityId,
-            NAMED_DATA_CODEC,
-            UniDataUpdatePacket::data,
-            UniDataUpdatePacket::new
-    );
-
-    @Override
-    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        @Override
+        public UniDataUpdatePacket<?> decode(FriendlyByteBuf buf) {
+            var entityId = EyelibStreamCodecs.VAR_INT.decode(buf);
+            var id = EyelibStreamCodecs.RESOURCE_LOCATION.decode(buf);
+            var type = EyelibAttachableData.getById(id);
+            var data = type.getStreamCodec().decode(buf);
+            return new UniDataUpdatePacket(entityId, type, data);
+        }
+    };
 }

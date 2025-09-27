@@ -14,7 +14,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 public class DataAttachmentContainerCapability {
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "data_attachment");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "data_attachments");
 
     public static final Capability<IDataAttachmentContainer> INSTANCE = CapabilityManager.get(new CapabilityToken<>() {
     });

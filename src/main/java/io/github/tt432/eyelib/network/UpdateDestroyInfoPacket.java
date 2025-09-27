@@ -1,29 +1,24 @@
 package io.github.tt432.eyelib.network;
 
-import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.util.ResourceLocations;
-import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 
 /**
  * @author TT432
  */
 public record UpdateDestroyInfoPacket(
         boolean dig
-) implements CustomPacketPayload {
-    public static final Type<UpdateDestroyInfoPacket> TYPE =
-            new Type<>(ResourceLocations.of(Eyelib.MOD_ID, "update_destroy_info"));
+) {
+    public static final StreamCodec<UpdateDestroyInfoPacket> STREAM_CODEC = new StreamCodec<>() {
+        @Override
+        public void encode(UpdateDestroyInfoPacket obj, FriendlyByteBuf buf) {
+            buf.writeBoolean(obj.dig);
+        }
 
-    public static final StreamCodec<ByteBuf, UpdateDestroyInfoPacket> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.BOOL,
-            UpdateDestroyInfoPacket::dig,
-            UpdateDestroyInfoPacket::new
-    );
-
-    @Override
-    public Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
+        @Override
+        public UpdateDestroyInfoPacket decode(FriendlyByteBuf buf) {
+            var dig = buf.readBoolean();
+            return new UpdateDestroyInfoPacket(dig);
+        }
+    };
 }

@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.client.loader.BrClientEntityLoader;
 import io.github.tt432.eyelib.client.manager.*;
 import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
+import io.github.tt432.eyelib.network.EyelibNetworkManager;
 import io.github.tt432.eyelib.network.UniDataUpdatePacket;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
@@ -18,10 +19,10 @@ public class Eyelib {
     public static final String MOD_ID = "eyelib";
 
     public Eyelib(IEventBus bus) {
-        EyelibAttachableData.ATTACHMENT_TYPES.register(bus);
+        EyelibAttachableData.DATA_ATTACHMENTS.register(bus);
         BuiltInBrModelRenderVisitors.VISITORS.register(bus);
 
-        UniDataUpdatePacket.add(EyelibAttachableData.EXTRA_ENTITY_DATA.getId(), ExtraEntityData.STREAM_CODEC);
+        EyelibNetworkManager.register();
     }
 
     public static RenderHelper getRenderHelper() {

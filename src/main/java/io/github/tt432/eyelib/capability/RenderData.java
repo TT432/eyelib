@@ -7,11 +7,12 @@ import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.network.AnimationComponentSyncPacket;
+import io.github.tt432.eyelib.network.EyelibNetworkManager;
 import io.github.tt432.eyelib.network.ModelComponentSyncPacket;
+import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.world.entity.Entity;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ public class RenderData<T> {
     }
 
     public static RenderData<Object> getComponent(Entity entity) {
-        return entity.getData(EyelibAttachableData.RENDER_DATA);
+        return DataAttachmentHelper.getOrCreate(EyelibAttachableData.RENDER_DATA.get(), entity);
     }
 
     private T owner;
@@ -67,11 +68,11 @@ public class RenderData<T> {
             }
         }
 
-        ownerAs(Entity.class).ifPresent(e -> PacketDistributor.sendToPlayersTrackingEntityAndSelf(e,
+        ownerAs(Entity.class).ifPresent(e -> EyelibNetworkManager.sendToTrackedAndSelf(e,
                 new ModelComponentSyncPacket(e.getId(), components)));
 
         if (animationComponent.serializable()) {
-            ownerAs(Entity.class).ifPresent(e -> PacketDistributor.sendToPlayersTrackingEntityAndSelf(e,
+            ownerAs(Entity.class).ifPresent(e -> EyelibNetworkManager.sendToTrackedAndSelf(e,
                     new AnimationComponentSyncPacket(e.getId(), animationComponent.getSerializableInfo())));
         }
     }

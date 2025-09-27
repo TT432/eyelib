@@ -3,8 +3,10 @@ package io.github.tt432.eyelib.capability;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.network.ExtraEntityUpdateDataPacket;
+import io.github.tt432.eyelib.network.EyelibNetworkManager;
 import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
 import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
+import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
 import lombok.With;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
@@ -15,7 +17,6 @@ import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
 
 /**
  * @author TT432
@@ -102,12 +103,12 @@ public record ExtraEntityUpdateData(
         @SubscribeEvent
         public static void onEvent(LivingDamageEvent event) {
             Entity directEntity = event.getSource().getDirectEntity();
-            var key = EyelibAttachableData.EXTRA_ENTITY_UPDATE;
+            var key = EyelibAttachableData.EXTRA_ENTITY_UPDATE.get();
 
             if (directEntity != null) {
                 Vec3 depos = directEntity.position();
                 LivingEntity entity = event.getEntity();
-                ExtraEntityUpdateData data = entity.getData(key);
+                ExtraEntityUpdateData data = DataAttachmentHelper.getOrCreate(key, entity);
                 Vec3 epos = entity.position();
                 ExtraEntityUpdateData updated = data.update(entity)
                         .withLastHurtX(depos.x() - epos.x())
@@ -115,8 +116,8 @@ public record ExtraEntityUpdateData(
                         .withLastHurtZ(depos.z() - epos.z());
 
                 if (data != updated) {
-                    entity.setData(key, updated);
-                    PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity).send(new ExtraEntityUpdateDataPacket(entity.getId(), updated));
+                    DataAttachmentHelper.set(key, entity, updated);
+                    EyelibNetworkManager.sendToTrackedAndSelf(entity, new ExtraEntityUpdateDataPacket(entity.getId(), updated));
                 }
             }
         }
@@ -124,13 +125,13 @@ public record ExtraEntityUpdateData(
         @SubscribeEvent
         public static void onEvent(LivingEvent.LivingTickEvent event) {
             Entity entity = event.getEntity();
-            var key = EyelibAttachableData.EXTRA_ENTITY_UPDATE;
-            ExtraEntityUpdateData data = entity.getData(key);
+            var key = EyelibAttachableData.EXTRA_ENTITY_UPDATE.get();
+            ExtraEntityUpdateData data = DataAttachmentHelper.getOrCreate(key, entity);
             ExtraEntityUpdateData updated = data.update(entity);
 
             if (!entity.level().isClientSide && data != updated) {
-                entity.setData(key, updated);
-                PacketDistributor.sendToPlayersTrackingEntityAndSelf(entity, new ExtraEntityUpdateDataPacket(entity.getId(), updated));
+                DataAttachmentHelper.set(key, entity, updated);
+                EyelibNetworkManager.sendToTrackedAndSelf(entity, new ExtraEntityUpdateDataPacket(entity.getId(), updated));
             }
         }
     }
