@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.animation.bedrock.controller;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.util.codec.CodecHelper;
 
 import java.util.Map;
 
@@ -12,7 +13,7 @@ public record BrAnimationControllers(
         Map<String, BrAnimationController> animationControllers
 ) {
     public static final Codec<BrAnimationControllers> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            Codec.dispatchedMap(
+            CodecHelper.dispatchedMap(
                     Codec.STRING,
                     k -> BrAnimationController.Factory.CODEC.xmap(
                             f -> f.create(k),

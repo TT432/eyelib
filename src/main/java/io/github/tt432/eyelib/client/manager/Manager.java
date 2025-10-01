@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.manager;
 
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
-import net.neoforged.neoforge.common.NeoForge;
+import net.minecraftforge.common.MinecraftForge;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
@@ -15,7 +15,7 @@ public abstract class Manager<T> {
 
     public void put(String name, T value) {
         data.put(name, value);
-        NeoForge.EVENT_BUS.post(new ManagerEntryChangedEvent(getManagerName(), name, value));
+        MinecraftForge.EVENT_BUS.post(new ManagerEntryChangedEvent(getManagerName(), name, value));
     }
 
     @Nullable

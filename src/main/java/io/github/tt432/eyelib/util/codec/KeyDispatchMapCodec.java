@@ -7,6 +7,8 @@ import com.mojang.serialization.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Optional;
@@ -20,6 +22,8 @@ public record KeyDispatchMapCodec<K, V>(
         Codec<K> keyCodec,
         Function<K, @NotNull Codec<? extends V>> elementCodec
 ) implements Codec<Map<K, V>> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(KeyDispatchMapCodec.class);
 
     @Override
     public <T> DataResult<Pair<Map<K, V>, T>> decode(final DynamicOps<T> ops, final T input) {
@@ -47,7 +51,7 @@ public record KeyDispatchMapCodec<K, V>(
                     final DataResult<? extends V> value = key.flatMap(s -> elementCodec.apply(s).parse(ops, pair.getSecond()));
 
                     final DataResult<Pair<K, V>> entryResult = key.apply2stable(Pair::of, value);
-                    final Optional<Pair<K, V>> entry = entryResult.resultOrPartial();
+                    final Optional<Pair<K, V>> entry = entryResult.resultOrPartial(LOGGER::warn);
                     if (entry.isPresent()) {
                         final V existingValue = read.putIfAbsent(entry.get().getFirst(), entry.get().getSecond());
                         if (existingValue != null) {
@@ -55,7 +59,8 @@ public record KeyDispatchMapCodec<K, V>(
                             return r.apply2stable((u, p) -> u, DataResult.error(() -> "Duplicate entry for key: '" + entry.get().getFirst() + "'"));
                         }
                     }
-                    if (entryResult.isError()) {
+                    // XXX: isError -> error().isPresent() ?
+                    if (entryResult.error().isPresent()) {
                         failed.add(pair);
                     }
 

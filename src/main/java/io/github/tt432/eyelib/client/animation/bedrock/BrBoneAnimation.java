@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.ImmutableFloatTreeMap;
+import io.github.tt432.eyelib.util.codec.CodecHelper;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import org.joml.Vector3f;
 
@@ -22,7 +23,7 @@ public record BrBoneAnimation(
         ImmutableFloatTreeMap<BrBoneKeyFrame> position,
         ImmutableFloatTreeMap<BrBoneKeyFrame> scale
 ) {
-    private static final Codec<ImmutableFloatTreeMap<BrBoneKeyFrame>> KEY_FRAME_LIST_CODEC = Codec.withAlternative(
+    private static final Codec<ImmutableFloatTreeMap<BrBoneKeyFrame>> KEY_FRAME_LIST_CODEC = CodecHelper.withAlternative(
             ImmutableFloatTreeMap.dispatched(f -> BrBoneKeyFrame.Factory.CODEC.xmap(
                     factory -> factory.create(f),
                     BrBoneKeyFrame.Factory::from

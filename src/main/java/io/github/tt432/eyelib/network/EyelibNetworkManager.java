@@ -94,6 +94,10 @@ public class EyelibNetworkManager {
                 .add();
     }
 
+    public static void sendToServer(Object packet) {
+        INSTANCE.sendToServer(packet);
+    }
+
     public static void sendToTrackedAndSelf(Entity entity, Object packet) {
         INSTANCE.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity), packet);
     }

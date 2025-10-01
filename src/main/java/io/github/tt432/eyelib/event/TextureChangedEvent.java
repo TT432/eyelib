@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.event;
 
-import net.neoforged.bus.api.Event;
+import net.minecraftforge.eventbus.api.Event;
 
 /**
  * @author TT432

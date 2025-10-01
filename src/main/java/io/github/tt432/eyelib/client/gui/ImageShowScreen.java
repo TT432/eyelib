@@ -6,10 +6,11 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
-import io.github.tt432.chin.util.Lists;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.loader.BrModelLoader;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
+import io.github.tt432.eyelib.util.client.ModelResourceLocationHelper;
+import io.github.tt432.eyelib.util.math.FastColorHelper;
 import io.github.tt432.eyelib.util.search.SearchResults;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -20,16 +21,14 @@ import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.client.resources.metadata.animation.FrameSize;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ResourceMetadata;
-import net.minecraft.util.FastColor;
-import net.neoforged.neoforge.client.event.RenderFrameEvent;
+import net.minecraftforge.event.TickEvent;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
@@ -38,6 +37,8 @@ import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author TT432
@@ -46,7 +47,7 @@ public class ImageShowScreen extends Screen  {
 //    @EventBusSubscriber(Dist.CLIENT)
     public static final class Events {
 //        @SubscribeEvent
-        public static void onEvent(RenderFrameEvent.Post event) {
+        public static void onEvent(TickEvent.RenderTickEvent event) {
             if (Minecraft.getInstance().screen == null
                     && InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_G)) {
                 Minecraft.getInstance().setScreen(new ImageShowScreen());
@@ -77,7 +78,7 @@ public class ImageShowScreen extends Screen  {
         blockModel.resolveParents(modelBakery.unbakedCache::get);
         return modelBakery.new ModelBakerImpl(
                 (modelLoc, loc) -> sprite,
-                ModelResourceLocation.inventory(ResourceLocation.withDefaultNamespace("test_show_image"))
+                ModelResourceLocationHelper.inventory(ResourceLocation.withDefaultNamespace("test_show_image"))
         ).bakeUncached(blockModel, BlockModelRotation.X0_Y0);
     }
 
@@ -123,7 +124,7 @@ public class ImageShowScreen extends Screen  {
         private static final int slot5yOffset = 0;
 
         public <T> void update(SearchResults<T> results) {
-            options = Lists.asList(results.getSuggestions().size(), i -> results.getSuggestions().get(i).getKey());
+            options = results.getSuggestions().stream().map(Map.Entry::getKey).collect(Collectors.toList());
 
             if (selectedIndex > options.size() - 1) {
                 selectedIndex = options.size() - 1;
@@ -313,7 +314,7 @@ public class ImageShowScreen extends Screen  {
             guiGraphics.blit(100, 100, 100, 100, 100, sprite);
             rendertarget.unbindWrite();
             RenderTargets.swap(mainRenderTarget, rendertarget);
-            renderBlurredBackground(partialTick);
+            renderDirtBackground(guiGraphics);
             RenderTargets.swap(mainRenderTarget, rendertarget);
             mainRenderTarget.bindWrite(false);
 
@@ -325,17 +326,6 @@ public class ImageShowScreen extends Screen  {
 
             guiGraphics.blit(100, 100, 100, 100, 100, sprite);
         }
-    }
-
-    @SuppressWarnings("removal")
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        if (this.minecraft.level == null) {
-            this.renderPanorama(guiGraphics, partialTick);
-        }
-
-        //this.renderBlurredBackground(partialTick);
-        this.renderMenuBackground(guiGraphics);
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.client.event.ScreenEvent.BackgroundRendered(this, guiGraphics));
     }
 
     double dragX;
@@ -358,7 +348,7 @@ public class ImageShowScreen extends Screen  {
 
                 for (int x = 0; x < w; x++) {
                     for (int y = 0; y < h; y++) {
-                        image.setPixelRGBA(x, y, FastColor.ABGR32.fromArgb32(bufferedImage.getRGB(x, y)));
+                        image.setPixelRGBA(x, y, FastColorHelper.argbToAbgr(bufferedImage.getRGB(x, y)));
                     }
                 }
 
@@ -370,7 +360,7 @@ public class ImageShowScreen extends Screen  {
                                 ResourceLocation.withDefaultNamespace("builtin"),
                                 new FrameSize(w, h),
                                 image,
-                                ResourceMetadata.EMPTY
+                                AnimationMetadataSection.EMPTY
                         ),
                         w, h, 0, 0
                 );

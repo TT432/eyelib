@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.client.animation.bedrock;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.chin.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.AnimationEffect;
@@ -17,7 +16,10 @@ import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.util.ResourceLocations;
+import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
+import io.github.tt432.eyelib.util.codec.CodecHelper;
 import io.github.tt432.eyelib.util.math.EyeMath;
+import io.github.tt432.eyelib.util.math.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
@@ -111,7 +113,7 @@ public record BrAnimationEntry(
         });
     }
 
-    private static final Codec<TreeMap<Float, List<BrEffectsKeyFrame>>> EFFECTS_CODEC = Codec.dispatchedMap(
+    private static final Codec<TreeMap<Float, List<BrEffectsKeyFrame>>> EFFECTS_CODEC = CodecHelper.dispatchedMap(
             Codec.STRING,
             f -> ChinExtraCodecs.singleOrList(BrEffectsKeyFrame.Factory.CODEC).xmap(
                     fList -> {
@@ -192,7 +194,7 @@ public record BrAnimationEntry(
     public void tickAnimation(Data data, Map<String, String> animations, MolangScope scope,
                               float ticks, float multiplier, BoneRenderInfos infos, AnimationEffects effects,
                               Runnable animationStartFeedback) {
-        multiplier *= Math.clamp(blendWeight().eval(scope), 0, 1);
+        multiplier *= MathHelper.clamp(blendWeight().eval(scope), 0, 1);
 
         if (data.animTime == 0) {
             animationStartFeedback.run();

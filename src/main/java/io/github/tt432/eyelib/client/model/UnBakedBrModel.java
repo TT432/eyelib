@@ -21,11 +21,12 @@ import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.core.Direction;
-import net.neoforged.neoforge.client.model.BakedModelWrapper;
-import net.neoforged.neoforge.client.model.IModelBuilder;
-import net.neoforged.neoforge.client.model.geometry.IGeometryBakingContext;
-import net.neoforged.neoforge.client.model.geometry.SimpleUnbakedGeometry;
-import net.neoforged.neoforge.client.model.pipeline.QuadBakingVertexConsumer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.client.model.BakedModelWrapper;
+import net.minecraftforge.client.model.IModelBuilder;
+import net.minecraftforge.client.model.geometry.IGeometryBakingContext;
+import net.minecraftforge.client.model.geometry.SimpleUnbakedGeometry;
+import net.minecraftforge.client.model.pipeline.QuadBakingVertexConsumer;
 import org.joml.*;
 
 import java.util.HashMap;
@@ -65,12 +66,12 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
     }
 
     @Override
-    public BakedModel bake(IGeometryBakingContext context, ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState, ItemOverrides overrides) {
-        return new BakedBrModel(super.bake(context, baker, spriteGetter, modelState, overrides), visitors);
+    public BakedModel bake(IGeometryBakingContext context, ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelState, ItemOverrides overrides, ResourceLocation modelLocation) {
+        return new BakedBrModel(super.bake(context, baker, spriteGetter, modelState, overrides, modelLocation), visitors);
     }
 
     @Override
-    protected void addQuads(IGeometryBakingContext owner, IModelBuilder<?> modelBuilder, ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelTransform) {
+    protected void addQuads(IGeometryBakingContext owner, IModelBuilder<?> modelBuilder, ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState modelTransform, ResourceLocation modelLocation) {
         PoseStack poseStack = new PoseStack();
         poseStack.pushPose();
 
@@ -110,11 +111,13 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
 
                 var tPosition = last.pose().transformPosition(vertex, new Vector3f());
 
-                buffered.addVertex(tPosition.x, tPosition.y, tPosition.z,
-                        0xFF_FF_FF_FF,
-                        uv.x, uv.y,
-                        OverlayTexture.NO_OVERLAY, renderParams.light(),
-                        tNormal.x, tNormal.y, tNormal.z);
+                buffered.vertex(tPosition.x, tPosition.y, tPosition.z)
+                        .color(0xFF_FF_FF_FF)
+                        .uv(uv.x, uv.y)
+                        .overlayCoords(OverlayTexture.NO_OVERLAY)
+                        .uv2(renderParams.light())
+                        .normal(tNormal.x, tNormal.y, tNormal.z)
+                        .endVertex();
             }
 
             modelBuilder.addUnculledFace(buffered.bakeQuad());

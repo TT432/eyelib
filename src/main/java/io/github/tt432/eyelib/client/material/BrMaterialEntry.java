@@ -11,6 +11,7 @@ import io.github.tt432.eyelib.client.gl.GLStates;
 import io.github.tt432.eyelib.client.gl.stencil.Face;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.util.client.RenderTypeSerializations;
+import io.github.tt432.eyelib.util.codec.CodecHelper;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
@@ -277,7 +278,7 @@ public record BrMaterialEntry(
                     ).apply(ins1, o -> o)).listOf()
                     .xmap(EnumSet::copyOf, ArrayList::new).optionalFieldOf("vertexFields").forGetter(BrMaterialEntry::vertexFields),
 
-            Codec.dispatchedMap(Codec.STRING, BrMaterialEntry.CODEC::apply).listOf().optionalFieldOf("variants", java.util.List.of()).forGetter(BrMaterialEntry::variants)
+            CodecHelper.dispatchedMap(Codec.STRING, BrMaterialEntry.CODEC::apply).listOf().optionalFieldOf("variants", java.util.List.of()).forGetter(BrMaterialEntry::variants)
     ).apply(ins, (p1, p2, p3, p4, p5, p6, p7, p8, p9, p10) -> {
         String[] split = name.split(":");
         String base;

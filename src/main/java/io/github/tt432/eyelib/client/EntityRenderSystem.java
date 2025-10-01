@@ -21,11 +21,13 @@ import io.github.tt432.eyelib.compute.VertexComputeHelper;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
 import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.util.client.PoseHelper;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -37,19 +39,18 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.Bee;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.animal.horse.Llama;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.WoolCarpetBlock;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RenderLivingEvent;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RenderLivingEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -61,7 +62,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author TT432
  */
-@EventBusSubscriber(Dist.CLIENT)
+@Mod.EventBusSubscriber(value = Dist.CLIENT)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EntityRenderSystem {
     @SubscribeEvent
@@ -73,7 +74,7 @@ public class EntityRenderSystem {
             cap.init(entity);
         }
 
-        NeoForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
+        MinecraftForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
     }
 
     private static final Map<RenderType, Pair<VertexComputeHelper, MultiBufferSource>> helpers = new Object2ObjectOpenHashMap<>();
@@ -88,16 +89,15 @@ public class EntityRenderSystem {
     }
 
     @SubscribeEvent
-    public static void onEvent(EntityTickEvent.Pre event) {
-        switch (event.getEntity()) {
-            case Bee bee -> bee.updateSwingTime();
-            default -> {
-            }
+    public static void onEvent(LivingEvent.LivingTickEvent event) {
+        var entity = event.getEntity();
+        if (entity instanceof Bee bee) {
+            bee.updateSwingTime();
         }
     }
 
     @SubscribeEvent
-    public static void onEvent(RenderLivingEvent.Pre event) {
+    public static <E extends LivingEntity, M extends EntityModel<E>> void onEvent(RenderLivingEvent.Pre<E, M> event) {
         LivingEntity entity = event.getEntity();
         RenderData<Object> cap = RenderData.getComponent(entity);
 
@@ -158,7 +158,7 @@ public class EntityRenderSystem {
 
                 poseStack.pushPose();
 
-                RenderParams renderParams = new RenderParams(entity, poseStack.last().copy(), poseStack,
+                RenderParams renderParams = new RenderParams(entity, PoseHelper.copy(poseStack.last()), poseStack,
                         renderType, texture, modelComponent.isSolid(), buffer, packedLight, overlay,
                         modelComponent.getPartVisibility());
 
@@ -175,11 +175,12 @@ public class EntityRenderSystem {
 
                         float yBodyRot = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
                         poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
-                        AttributeInstance scaleAttr = entity.getAttribute(Attributes.SCALE);
-                        if (scaleAttr != null) {
-                            double scaleValue = scaleAttr.getValue();
-                            poseStack.scale((float) scaleValue, (float) scaleValue, (float) scaleValue);
-                        }
+                        // XXX: No scale attribute in 1.20.1.
+//                        AttributeInstance scaleAttr = entity.getAttribute(Attributes.SCALE);
+//                        if (scaleAttr != null) {
+//                            double scaleValue = scaleAttr.getValue();
+//                            poseStack.scale((float) scaleValue, (float) scaleValue, (float) scaleValue);
+//                        }
                     }
                 }
 
@@ -236,7 +237,7 @@ public class EntityRenderSystem {
 
     private static void setupExtraMolang(LivingEntity entity, RenderData<?> cap) {
         if (entity instanceof Llama llama) {
-            if (llama.getBodyArmorItem().getItem() instanceof BlockItem bi && bi.getBlock() instanceof WoolCarpetBlock wc) {
+            if (llama.inventory.getItem(AbstractHorse.INV_SLOT_ARMOR).getItem() instanceof BlockItem bi && bi.getBlock() instanceof WoolCarpetBlock wc) {
                 cap.getScope().set("variable.decortextureindex", wc.getColor().getId() + 1);
             } else {
                 cap.getScope().set("variable.decortextureindex", 0);

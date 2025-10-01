@@ -4,10 +4,12 @@ import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.chin.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.MolangValue3;
+import io.github.tt432.eyelib.util.ListHelper;
+import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
+import io.github.tt432.eyelib.util.codec.CodecHelper;
 import io.github.tt432.eyelib.util.math.Curves;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import net.minecraft.util.StringRepresentable;
@@ -132,11 +134,11 @@ public record BrBoneKeyFrame(
     }
 
     public MolangValue3 getPre() {
-        return dataPoints.getFirst();
+        return ListHelper.getFirst(dataPoints);
     }
 
     public MolangValue3 getPost() {
-        return dataPoints.getLast();
+        return ListHelper.getLast(dataPoints);
     }
 
     public record Factory(
@@ -148,8 +150,8 @@ public record BrBoneKeyFrame(
         static {
             Codec<Factory> sourceCodec = RecordCodecBuilder.create(ins -> ins.group(
                     LerpMode.CODEC.optionalFieldOf("lerp_mode", LerpMode.LINEAR).forGetter(Factory::lerpMode),
-                    MolangValue3.CODEC.optionalFieldOf("pre").forGetter(f -> Optional.of(f.dataPoints().getFirst())),
-                    MolangValue3.CODEC.optionalFieldOf("post").forGetter(f -> f.dataPoints().size() < 2 ? Optional.empty() : Optional.of(f.dataPoints().getLast()))
+                    MolangValue3.CODEC.optionalFieldOf("pre").forGetter(f -> Optional.of(ListHelper.getFirst(f.dataPoints()))),
+                    MolangValue3.CODEC.optionalFieldOf("post").forGetter(f -> f.dataPoints().size() < 2 ? Optional.empty() : Optional.of(ListHelper.getLast(f.dataPoints())))
             ).apply(ins, (mode, pre, post) -> {
                 if (pre.isPresent() && post.isEmpty()) {
                     return new Factory(List.of(pre.get()), mode);
@@ -162,11 +164,11 @@ public record BrBoneKeyFrame(
                     return new Factory(builder.build(), mode);
                 }
             }));
-            CODEC = Codec.withAlternative(
-                    Codec.withAlternative(
+            CODEC = CodecHelper.withAlternative(
+                    CodecHelper.withAlternative(
                             MolangValue3.CODEC,
                             MolangValue.CODEC.xmap(mv -> new MolangValue3(mv, mv, mv), MolangValue3::x)
-                    ).xmap(m3 -> new Factory(List.of(m3), LerpMode.LINEAR), f -> f.dataPoints().getFirst()),
+                    ).xmap(m3 -> new Factory(List.of(m3), LerpMode.LINEAR), f -> ListHelper.getFirst(f.dataPoints())),
                     ChinExtraCodecs.check(sourceCodec, f1 -> f1.dataPoints.isEmpty()
                             ? DataResult.error(() -> "BoneKeyFrame need pre or post.")
                             : DataResult.success(f1))

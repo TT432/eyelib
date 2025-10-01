@@ -9,10 +9,12 @@ import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,9 +24,11 @@ import java.util.Map;
  */
 @Slf4j
 @Getter
-@EventBusSubscriber(value = Dist.CLIENT)
+@Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class BrMaterialLoader extends BrResourcesLoader {
     public static final BrMaterialLoader INSTANCE = new BrMaterialLoader();
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BrMaterialLoader.class);
 
     @SubscribeEvent
     public static void onEvent(RegisterClientReloadListenersEvent event) {
@@ -45,7 +49,7 @@ public class BrMaterialLoader extends BrResourcesLoader {
             ResourceLocation key = entry.getKey();
 
             try {
-                materials.put(key, BrMaterial.CODEC.parse(JsonOps.INSTANCE, entry.getValue().getAsJsonObject()).getOrThrow());
+                materials.put(key, BrMaterial.CODEC.parse(JsonOps.INSTANCE, entry.getValue().getAsJsonObject()).getOrThrow(false, LOGGER::warn));
             } catch (Exception e) {
                 log.error("can't load material {}", key, e);
             }

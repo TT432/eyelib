@@ -9,11 +9,13 @@ import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,9 +25,11 @@ import java.util.Map;
  */
 @Getter
 @Slf4j
-@EventBusSubscriber(value = Dist.CLIENT)
+@Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class BrAnimationLoader extends BrResourcesLoader {
     public static final BrAnimationLoader INSTANCE = new BrAnimationLoader();
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BrAnimationLoader.class);
 
     @SubscribeEvent
     public static void onEvent(RegisterClientReloadListenersEvent event) {
@@ -48,7 +52,7 @@ public class BrAnimationLoader extends BrResourcesLoader {
 
         pObject.forEach((rl, json) -> {
             try {
-                animations.put(rl, BrAnimation.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow());
+                animations.put(rl, BrAnimation.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow(false, LOGGER::warn));
             } catch (Exception e) {
                 log.error("can't load animation {}", rl, e);
             }

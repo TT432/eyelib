@@ -12,11 +12,13 @@ import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,9 +29,11 @@ import java.util.stream.Stream;
  */
 @Slf4j
 @Getter
-@EventBusSubscriber(value = Dist.CLIENT)
+@Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class BrAttachableLoader extends BrResourcesLoader implements Searchable<BrClientEntity> {
     public static final BrAttachableLoader INSTANCE = new BrAttachableLoader();
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BrAttachableLoader.class);
 
     @SubscribeEvent
     public static void onEvent(RegisterClientReloadListenersEvent event) {
@@ -70,7 +74,7 @@ public class BrAttachableLoader extends BrResourcesLoader implements Searchable<
             ResourceLocation key = entry.getKey();
 
             try {
-                BrClientEntity entity = CODEC.parse(JsonOps.INSTANCE, entry.getValue().getAsJsonObject()).getOrThrow();
+                BrClientEntity entity = CODEC.parse(JsonOps.INSTANCE, entry.getValue().getAsJsonObject()).getOrThrow(false, LOGGER::warn);
                 attachables.put(ResourceLocation.parse(entity.identifier()), entity);
             } catch (Exception e) {
                 log.error("can't load entity {}", key, e);

@@ -27,6 +27,8 @@ import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.util.client.PoseHelper;
+import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -38,7 +40,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.fml.ModList;
+import net.minecraftforge.fml.ModList;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -57,7 +59,7 @@ public class PlayerItemInHandAttachableLayer {
         if (params.renderTarget() instanceof LivingEntity living) {
             BrClientEntity leftClientEntity = BrAttachableLoader.INSTANCE.getAttachables().get(BuiltInRegistries.ITEM.getKey(living.getMainHandItem().getItem()));
             BrClientEntity rightClientEntity = BrAttachableLoader.INSTANCE.getAttachables().get(BuiltInRegistries.ITEM.getKey(living.getOffhandItem().getItem()));
-            ItemInHandRenderData data = living.getData(EyelibAttachableData.ITEM_IN_HAND_RENDER_DATA);
+            ItemInHandRenderData data = DataAttachmentHelper.getOrCreate(EyelibAttachableData.ITEM_IN_HAND_RENDER_DATA.get(), living);
             data.init(living, RenderData.getComponent(living));
             RenderHelper renderHelper = Eyelib.getRenderHelper();
 
@@ -137,7 +139,7 @@ public class PlayerItemInHandAttachableLayer {
 
                 poseStack.pushPose();
 
-                RenderParams renderParams = new RenderParams(entity, poseStack.last().copy(), poseStack,
+                RenderParams renderParams = new RenderParams(entity, PoseHelper.copy(poseStack.last()), poseStack,
                         renderType, texture, modelComponent.isSolid(), buffer, light, overlay,
                         modelComponent.getPartVisibility());
 
@@ -215,7 +217,7 @@ public class PlayerItemInHandAttachableLayer {
                                                            Runnable animationStartFeedback) {
         if (cap.getAnimationComponent().getSerializableInfo() != null) {
             return BrAnimator.tickAnimation(cap.getAnimationComponent(), cap.getScope(), effects,
-                    (ClientTickHandler.getTick() + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) / 20,
+                    (ClientTickHandler.getTick() + Minecraft.getInstance().timer.partialTick) / 20,
                     animationStartFeedback);
         } else {
             return BoneRenderInfos.EMPTY;

@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.animation.bedrock;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import io.github.tt432.eyelib.util.codec.EitherHelper;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -26,6 +27,6 @@ public enum BrLoopType {
                                 default -> "false";
                             }),
                     Codec.BOOL.xmap(b -> b ? LOOP : ONCE, t -> t == LOOP))
-            .xmap(Either::unwrap, Either::left)
+            .xmap(EitherHelper::unwrap, Either::left)
             .orElse(ONCE);
 }

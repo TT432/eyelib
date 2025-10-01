@@ -9,7 +9,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.client.gui.widget.ScrollPanel;
+import net.minecraftforge.client.gui.widget.ScrollPanel;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
@@ -54,7 +54,7 @@ public class EntitiesListPanel extends ScrollPanel {
     }
 
     public EntitiesListPanel(Minecraft client, int width, int height, int top, int left, int border, int barWidth, int barBgColor, int barColor, int barBorderColor) {
-        super(client, width, height, top, left, border, barWidth, barBgColor, barColor, barBorderColor);
+        super(client, width, height, top, left, border, barWidth, 0xC0101010, 0xD0101010, barBgColor, barColor, barBorderColor);
     }
 
     String lastSearch = "";
@@ -116,7 +116,7 @@ public class EntitiesListPanel extends ScrollPanel {
                         float a;
 
                         if (lastSelected != entityButton) {
-                            a = entityButton.animator.getTime(ClientTickHandler.getTick(), Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false), hover);
+                            a = entityButton.animator.getTime(ClientTickHandler.getTick(), Minecraft.getInstance().timer.partialTick, hover);
                         } else {
                             a = 1;
                         }

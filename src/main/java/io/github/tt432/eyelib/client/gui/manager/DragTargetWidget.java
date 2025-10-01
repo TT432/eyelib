@@ -48,10 +48,10 @@ final class DragTargetWidget extends AbstractContainerEventHandler implements Re
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         var a = animator.getTime(ClientTickHandler.getTick(), partialTick, hover(mouseX, mouseY));
 
-        guiGraphics.blitSprite(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "gui_bg_nine"), x, y, w, h);
+        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "gui_bg_nine"), x, y, 0, 0, w, h);
         RenderSystem.enableBlend();
         RenderSystem.setShaderColor(1, 1, 1, a);
-        guiGraphics.blitSprite(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "gui_bg_nine_selected"), x, y, w, h);
+        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "gui_bg_nine_selected"), x, y, 0, 0, w, h);
         RenderSystem.disableBlend();
         RenderSystem.setShaderColor(1, 1, 1, 1);
 
@@ -63,7 +63,7 @@ final class DragTargetWidget extends AbstractContainerEventHandler implements Re
 
         if (icon != null) {
             iconOffset = iconSize / 2;
-            guiGraphics.blitSprite(icon, x + w / 2 - iconOffset, y + h / 2 - iconOffset - th / 2, iconSize, iconSize);
+            guiGraphics.blit(icon, x + w / 2 - iconOffset, y + h / 2 - iconOffset - th / 2, 0, 0, iconSize, iconSize);
         }
 
         int tw = font.width(titleString);

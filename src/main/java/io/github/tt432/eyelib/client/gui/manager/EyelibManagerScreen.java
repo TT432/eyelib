@@ -15,6 +15,7 @@ import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
 import io.github.tt432.eyelib.event.TextureChangedEvent;
 import io.github.tt432.eyelib.util.client.NativeImages;
+import io.github.tt432.eyelib.util.math.MathHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.client.KeyMapping;
@@ -23,17 +24,19 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
-import net.neoforged.neoforge.common.NeoForge;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.apache.commons.io.IOUtils;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -55,7 +58,7 @@ import java.util.function.Consumer;
 @Slf4j
 public class EyelibManagerScreen extends Screen {
 
-    @EventBusSubscriber(value = Dist.CLIENT)
+    @Mod.EventBusSubscriber(value = Dist.CLIENT)
     public static final class ModEvents {
         public static final KeyMapping openScreen = new KeyMapping("Open Eyelib Manager Screen", GLFW.GLFW_KEY_I, "Eyelib");
 
@@ -65,11 +68,11 @@ public class EyelibManagerScreen extends Screen {
         }
     }
 
-    @EventBusSubscriber(Dist.CLIENT)
+    @Mod.EventBusSubscriber(Dist.CLIENT)
     public static final class Events {
 
         @SubscribeEvent
-        public static void onEvent(ClientTickEvent.Post event) {
+        public static void onEvent(TickEvent.ClientTickEvent event) {
             if (ModEvents.openScreen.isDown() && Minecraft.getInstance().screen == null) {
                 Minecraft.getInstance().setScreen(new EyelibManagerScreen());
             }
@@ -101,8 +104,8 @@ public class EyelibManagerScreen extends Screen {
                 startStamp = time;
             }
 
-            timer = Math.clamp(timerStamp + (fadeIn ? 1 : -1) * (time - startStamp), 0, animTime);
-            return Math.clamp(timer / animTime, 0, 1);
+            timer = MathHelper.clamp(timerStamp + (fadeIn ? 1 : -1) * (time - startStamp), 0, animTime);
+            return MathHelper.clamp(timer / animTime, 0, 1);
         }
     }
 
@@ -159,14 +162,14 @@ public class EyelibManagerScreen extends Screen {
     }
 
     public static void renderEntityButton(GuiGraphics guiGraphics, int x, int y, int s, float a, EntityButton entityButton) {
-        guiGraphics.blitSprite(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "gui_bg_nine"), x, y, s, s);
+        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "gui_bg_nine"), x, y, 0, 0, s, s);
         RenderSystem.enableBlend();
         RenderSystem.setShaderColor(1, 1, 1, a);
-        guiGraphics.blitSprite(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "gui_bg_nine_selected"), x, y, s, s);
+        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "gui_bg_nine_selected"), x, y, 0, 0, s, s);
         RenderSystem.disableBlend();
         RenderSystem.setShaderColor(1, 1, 1, 1);
 
-        guiGraphics.blitSprite(entityButton.icon, x + 4, y + 4, s - 8, s - 8);
+        guiGraphics.blit(entityButton.icon, x + 4, y + 4, 0, 0, s - 8, s - 8);
     }
 
     public static boolean hover(double x, double y, double w, double h, double mouseX, double mouseY) {
@@ -204,6 +207,8 @@ public class EyelibManagerScreen extends Screen {
 
     private static final Gson gson = new Gson();
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(EyelibManagerScreen.class);
+
     static void loadResourceFolder(Path basePath) {
         loadJsonFiles(basePath, "models", jo -> {
             var model = BrModel.parse(jo);
@@ -214,27 +219,27 @@ public class EyelibManagerScreen extends Screen {
         });
 
         loadJsonFiles(basePath, "animations", jo -> {
-            var animation = BrAnimation.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
+            var animation = BrAnimation.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
             animation.animations().forEach((k, v) -> Eyelib.getAnimationManager().put(k, v));
         });
 
         loadJsonFiles(basePath, "animation_controllers", jo -> {
-            var animation = BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
+            var animation = BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
             animation.animationControllers().forEach((k, v) -> Eyelib.getAnimationManager().put(k, v));
         });
 
         loadJsonFiles(basePath, "render_controllers", jo -> {
-            var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
+            var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
             controller.render_controllers().forEach((k, v) -> Eyelib.getRenderControllerManager().put(k, v));
         });
 
         loadJsonFiles(basePath, "entity", jo -> {
-            var entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
+            var entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
             Eyelib.getClientEntityLoader().put(ResourceLocation.parse(entity.identifier()), entity);
         });
 
         loadJsonFiles(basePath, "particles", jo -> {
-            var particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
+            var particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
             Eyelib.getParticleManager().put(particle.particleEffect().description().identifier(), particle);
         });
 
@@ -273,7 +278,7 @@ public class EyelibManagerScreen extends Screen {
             });
 
             if (!pngFiles.isEmpty()) {
-                NeoForge.EVENT_BUS.post(new TextureChangedEvent());
+                MinecraftForge.EVENT_BUS.post(new TextureChangedEvent());
             }
         }
     }
@@ -337,12 +342,12 @@ public class EyelibManagerScreen extends Screen {
                         }),
                 json(x1, y2, w, h, Component.literal("动画"), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/animation"),
                         jo -> {
-                            var animation = BrAnimation.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
+                            var animation = BrAnimation.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
                             animation.animations().forEach((k, v) -> Eyelib.getAnimationManager().put(k, v));
                         }),
                 json(x1, y3, w, h, Component.literal("动画控制器"), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/animation_controller"),
                         jo -> {
-                            var animation = BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
+                            var animation = BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
                             animation.animationControllers().forEach((k, v) -> Eyelib.getAnimationManager().put(k, v));
                         }),
                 new DragTargetWidget(x2, y1, w, h, new GuiAnimator(5), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/folder"), Component.literal("资源包文件夹"),
@@ -359,7 +364,7 @@ public class EyelibManagerScreen extends Screen {
                         }),
                 json(x2, y2, w, h, Component.literal("渲染控制器"), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/render_controller"),
                         jo -> {
-                            var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
+                            var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
                             controller.render_controllers().forEach((k, v) -> Eyelib.getRenderControllerManager().put(k, v));
                         }),
                 new DragTargetWidget(x2, y3, w, h, new GuiAnimator(5),
