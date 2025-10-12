@@ -12,19 +12,23 @@ import net.minecraft.network.codec.StreamCodec;
  */
 @With
 public record EntityStatistics(
+        float preDistanceWalked,
         float distanceWalked
 ) {
     public static final Codec<EntityStatistics> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            Codec.FLOAT.fieldOf("distanceWalked").forGetter(o -> o.distanceWalked)
+            Codec.FLOAT.fieldOf("preDistanceWalked").forGetter(EntityStatistics::preDistanceWalked),
+            Codec.FLOAT.fieldOf("distanceWalked").forGetter(EntityStatistics::distanceWalked)
     ).apply(ins, EntityStatistics::new));
 
     public static final StreamCodec<ByteBuf, EntityStatistics> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.FLOAT,
+            EntityStatistics::preDistanceWalked,
             ByteBufCodecs.FLOAT,
             EntityStatistics::distanceWalked,
             EntityStatistics::new
     );
 
     public static EntityStatistics empty() {
-        return new EntityStatistics(0);
+        return new EntityStatistics(0, 0);
     }
 }

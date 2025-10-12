@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.molang.mapping;
 
+import io.github.tt432.eyelib.capability.EntityStatistics;
 import io.github.tt432.eyelib.capability.ExtraEntityUpdateData;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
@@ -458,7 +459,10 @@ public final class MolangQuery {
 
     @MolangFunction(value = "modified_distance_moved", description = "移动过的距离")
     public static float modifiedDistanceMoved(MolangScope scope) {
-        return scope.getOwner().ownerAs(Entity.class).map(e -> e.getData(EyelibAttachableData.ENTITY_STATISTICS).distanceWalked()).orElse(0F);
+        return scope.getOwner().ownerAs(Entity.class).map(e -> {
+            EntityStatistics data = e.getData(EyelibAttachableData.ENTITY_STATISTICS);
+            return data.preDistanceWalked() + (data.distanceWalked() - data.preDistanceWalked()) * partialTicks(scope);
+        }).orElse(0F);
     }
 
     @MolangFunction(value = "is_on_ground", description = "正处于地面上")
