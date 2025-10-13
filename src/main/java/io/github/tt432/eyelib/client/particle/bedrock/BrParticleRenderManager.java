@@ -6,16 +6,14 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,18 +32,18 @@ public class BrParticleRenderManager {
 
     public static void spawnEmitter(final String id, final BrParticleEmitter emitter) {
         if (emitters.containsKey(id)) return;
-        Thread.startVirtualThread(() -> emitters.put(id, emitter));
+//        Thread.startVirtualThread(() -> emitters.put(id, emitter));
     }
 
     public static void removeEmitter(final String id) {
-        Thread.startVirtualThread(() -> emitters.remove(id));
+//        Thread.startVirtualThread(() -> emitters.remove(id));
     }
 
     public static void spawnParticle(final BrParticleParticle particle) {
         particles.add(particle);
     }
 
-    @EventBusSubscriber(value = Dist.CLIENT)
+    @Mod.EventBusSubscriber(value = Dist.CLIENT)
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static final class ModEvents {
         @SubscribeEvent
@@ -82,12 +80,13 @@ public class BrParticleRenderManager {
         }
     }
 
-    @EventBusSubscriber(Dist.CLIENT)
+    @Mod.EventBusSubscriber(Dist.CLIENT)
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static final class ForgeEvents {
         @SubscribeEvent
-        public static void onEvent(ClientTickEvent.Pre event) {
-            emitters.values().forEach(BrParticleEmitter::onTick);
+        public static void onEvent(TickEvent.ClientTickEvent event) {
+            if (event.phase == TickEvent.Phase.START)
+                emitters.values().forEach(BrParticleEmitter::onTick);
         }
 
         @SubscribeEvent
@@ -96,7 +95,7 @@ public class BrParticleRenderManager {
                 PoseStack poseStack = event.getPoseStack();
                 particles.forEach(particle -> {
                     String material = particle.getEmitter().getParticle().particleEffect().description().basicRenderParameters().material();
-                    RenderTypeSerializations.EntityRenderTypeData factory = RenderTypeSerializations.getFactory(ResourceLocation.parse(material));
+                    RenderTypeSerializations.EntityRenderTypeData factory = RenderTypeSerializations.getFactory(new ResourceLocation(material));
                     var buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(
                             factory.factory().apply(particle.getTexture().withSuffix(".png"))
                     );

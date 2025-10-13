@@ -9,6 +9,7 @@ import io.github.tt432.eyelib.client.particle.bedrock.component.RegisterParticle
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterParticleComponent;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.MolangValue3;
+import io.github.tt432.eyelib.util.codec.EitherHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import org.joml.Vector3f;
@@ -42,7 +43,7 @@ public record EmitterDisc(
                                 else return "y";
                             }),
                             MolangValue3.CODEC)
-                    .xmap(Either::unwrap, Either::right)
+                    .xmap(EitherHelper::unwrap, Either::right)
                     .optionalFieldOf("plane_normal", MolangValue3.AXIS_Y).forGetter(o -> o.planeNormal),
             MolangValue3.CODEC.optionalFieldOf("offset", MolangValue3.ZERO).forGetter(o -> o.offset),
             MolangValue.CODEC.optionalFieldOf("radius", MolangValue.TRUE_VALUE).forGetter(o -> o.radius),

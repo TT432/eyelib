@@ -1,11 +1,11 @@
 package io.github.tt432.eyelib.util.client;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import io.github.tt432.eyelib.util.math.FastColorHelper;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
@@ -58,7 +58,7 @@ public class NativeImages {
 
         for (int x = 0; x < w; x++) {
             for (int y = 0; y < h; y++) {
-                image.setPixelRGBA(x, y, FastColor.ABGR32.fromArgb32(bufferedImage.getRGB(x, y)));
+                image.setPixelRGBA(x, y, FastColorHelper.argbToAbgr(bufferedImage.getRGB(x, y)));
             }
         }
 

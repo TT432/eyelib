@@ -6,14 +6,15 @@ import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
 import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
 import io.github.tt432.eyelib.util.data_attach.DataAttachmentType;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
 import net.minecraftforge.registries.RegistryObject;
 
 /**
  * @author TT432
  */
 public record UniDataUpdatePacket<T>(int entityId, DataAttachmentType<T> type, T data) {
-    public static <T> UniDataUpdatePacket<T> crate(LivingEntity entity, RegistryObject<DataAttachmentType<T>> holder) {
+
+    public static <T> UniDataUpdatePacket<T> crate(Entity entity, RegistryObject<DataAttachmentType<T>> holder) {
         var type = holder.get();
         var data = DataAttachmentHelper.getOrCreate(type, entity);
         return crate(entity.getId(), type, data);

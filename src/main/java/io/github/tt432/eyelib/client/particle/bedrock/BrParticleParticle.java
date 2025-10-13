@@ -18,6 +18,7 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
@@ -99,14 +100,11 @@ public class BrParticleParticle {
         molangScope.set("variable.particle_random_4", this::getRandom4);
 
         BrParticle.ParticleEffect particleEffect = emitter.getParticle().particleEffect();
-        billboard = particleEffect.<ParticleAppearanceBillboard>getComponent(ResourceLocation
-                        .withDefaultNamespace("particle_appearance_billboard"))
+        billboard = particleEffect.<ParticleAppearanceBillboard>getComponent(new ResourceLocation("particle_appearance_billboard"))
                 .orElse(null);
-        lighting = particleEffect.<ParticleAppearanceLighting>getComponent(ResourceLocation
-                        .withDefaultNamespace("particle_appearance_lighting"))
+        lighting = particleEffect.<ParticleAppearanceLighting>getComponent(new ResourceLocation("particle_appearance_lighting"))
                 .orElse(null);
-        tinting = particleEffect.<ParticleAppearanceTinting>getComponent(ResourceLocation
-                        .withDefaultNamespace("particle_appearance_tinting"))
+        tinting = particleEffect.<ParticleAppearanceTinting>getComponent(new ResourceLocation("particle_appearance_tinting"))
                 .orElse(null);
 
         components = new ArrayList<>();
@@ -199,13 +197,31 @@ public class BrParticleParticle {
             );
         }
 
-        vertexConsumer.addVertex(p0.x, p0.y, p0.z, color, uv.x, uv.y,
+        vertexConsumer.vertex(p0.x, p0.y, p0.z,
+                FastColor.ABGR32.red(color),
+                FastColor.ABGR32.green(color),
+                FastColor.ABGR32.blue(color),
+                FastColor.ABGR32.alpha(color),
+
+                uv.x, uv.y,
                 OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
-        vertexConsumer.addVertex(p1.x, p1.y, p1.z, color, uv.x + uv.z, uv.y,
+        vertexConsumer.vertex(p1.x, p1.y, p1.z,
+                FastColor.ABGR32.red(color),
+                FastColor.ABGR32.green(color),
+                FastColor.ABGR32.blue(color),
+                FastColor.ABGR32.alpha(color), uv.x + uv.z, uv.y,
                 OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
-        vertexConsumer.addVertex(p2.x, p2.y, p2.z, color, uv.x + uv.z, uv.y + uv.w,
+        vertexConsumer.vertex(p2.x, p2.y, p2.z,
+                FastColor.ABGR32.red(color),
+                FastColor.ABGR32.green(color),
+                FastColor.ABGR32.blue(color),
+                FastColor.ABGR32.alpha(color), uv.x + uv.z, uv.y + uv.w,
                 OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
-        vertexConsumer.addVertex(p3.x, p3.y, p3.z, color, uv.x, uv.y + uv.w,
+        vertexConsumer.vertex(p3.x, p3.y, p3.z,
+                FastColor.ABGR32.red(color),
+                FastColor.ABGR32.green(color),
+                FastColor.ABGR32.blue(color),
+                FastColor.ABGR32.alpha(color), uv.x, uv.y + uv.w,
                 OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
 
 //        Minecraft.getInstance().options.reducedDebugInfo()

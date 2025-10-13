@@ -25,8 +25,8 @@ public class RenderModelVisitor extends ModelVisitor {
         last.normal().transform(normal, tNormal);
 
         VertexConsumer consumer = renderParams.consumer();
-        consumer.addVertex(tPosition.x, tPosition.y, tPosition.z,
-                0xFF_FF_FF_FF,
+        consumer.vertex(tPosition.x, tPosition.y, tPosition.z,
+                1, 1, 1, 1,
                 uv.x(), uv.y(),
                 renderParams.overlay(), renderParams.light(),
                 tNormal.x, tNormal.y, tNormal.z);

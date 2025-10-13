@@ -3,11 +3,12 @@ package io.github.tt432.eyelib.client.particle.bedrock;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.chin.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponentManager;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
+import io.github.tt432.eyelib.util.codec.CodecHelper;
 import io.github.tt432.eyelib.util.codec.EyelibCodec;
 import io.github.tt432.eyelib.util.math.Curves;
 import io.github.tt432.eyelib.util.math.EyeMath;
@@ -48,7 +49,7 @@ public record BrParticle(
                 Codec.unboundedMap(Codec.STRING, Curve.CODEC).optionalFieldOf("curves", Map.of())
                         .forGetter(o -> o.curves),
                 Events.CODEC.optionalFieldOf("events", new Events()).forGetter(o -> o.events),
-                Codec.dispatchedMap(
+                CodecHelper.dispatchedMap(
                         ResourceLocation.CODEC,
                         ParticleComponentManager::codec
                 ).optionalFieldOf("components", Map.of()).forGetter(o -> o.components)
@@ -91,7 +92,7 @@ public record BrParticle(
                 Comparator<Float> comparator = Comparator.comparingDouble(k -> k);
                 return ins.group(
                         Type.CODEC.optionalFieldOf("type", Type.LINEAR).forGetter(o -> o.type),
-                        Codec.withAlternative(
+                        CodecHelper.withAlternative(
                                         ChinExtraCodecs.treeMap(EyelibCodec.STR_FLOAT_CODEC, ChainNode.CODEC, comparator).xmap(
                                                 a -> new CurveNodes(Optional.empty(), Optional.of(a)),
                                                 nodes -> nodes.chainNodes().orElse(new TreeMap<>())

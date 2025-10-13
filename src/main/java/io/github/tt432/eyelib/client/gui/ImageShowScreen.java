@@ -26,6 +26,7 @@ import net.minecraft.client.resources.metadata.animation.FrameSize;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.event.TickEvent;
@@ -55,7 +56,7 @@ public class ImageShowScreen extends Screen  {
         }
     }
 
-    public static final ResourceLocation loc = ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "image_show");
+    public static final ResourceLocation loc = new ResourceLocation(Eyelib.MOD_ID, "image_show");
     boolean haveTexture = false;
     BakedModel model;
     TextureAtlasSprite sprite;
@@ -76,10 +77,11 @@ public class ImageShowScreen extends Screen  {
                 }
                 """);
         blockModel.resolveParents(modelBakery.unbakedCache::get);
+        ModelResourceLocation modelName = ModelResourceLocationHelper.inventory(new ResourceLocation("test_show_image"));
         return modelBakery.new ModelBakerImpl(
                 (modelLoc, loc) -> sprite,
-                ModelResourceLocationHelper.inventory(ResourceLocation.withDefaultNamespace("test_show_image"))
-        ).bakeUncached(blockModel, BlockModelRotation.X0_Y0);
+                modelName
+        ).bake(modelName, BlockModelRotation.X0_Y0);
     }
 
     protected EditBox input;
@@ -202,8 +204,8 @@ public class ImageShowScreen extends Screen  {
     BrModel brModel;
 
     public void switchModel(String model) {
-        brModel = BrModelLoader.getModel(ResourceLocation.parse(model));
-//        modelMaterial = BrModelLoader.getMaterial(ResourceLocation.parse(model).withSuffix(".material"));
+        brModel = BrModelLoader.getModel(new ResourceLocation(model));
+//        modelMaterial = BrModelLoader.getMaterial(new ResourceLocation(model).withSuffix(".material"));
     }
 
     @Override
@@ -357,7 +359,7 @@ public class ImageShowScreen extends Screen  {
                 sprite = new TextureAtlasSprite(
                         ImageShowScreen.loc,
                         new SpriteContents(
-                                ResourceLocation.withDefaultNamespace("builtin"),
+                                new ResourceLocation("builtin"),
                                 new FrameSize(w, h),
                                 image,
                                 AnimationMetadataSection.EMPTY

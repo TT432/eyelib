@@ -12,9 +12,9 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.GameShuttingDownEvent;
+import net.minecraftforge.event.GameShuttingDownEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.antlr.v4.runtime.*;
 
 import java.io.*;
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static io.github.dmlloyd.classfile.extras.constant.ConstantUtils.referenceClassDesc;
-import static io.github.dmlloyd.classfile.extras.reflect.ClassFileFormatVersion.RELEASE_21;
+import static io.github.dmlloyd.classfile.extras.reflect.ClassFileFormatVersion.RELEASE_17;
 import static io.github.tt432.eyelib.molang.compiler.MolangClassDescs.CD_MolangObject;
 import static io.github.tt432.eyelib.molang.compiler.MolangClassDescs.CD_MolangScope;
 import static java.lang.constant.ConstantDescs.*;
@@ -357,7 +357,7 @@ public class MolangCompileHandler {
         currentExportTask.set(newTask);
     }
 
-    @EventBusSubscriber
+    @Mod.EventBusSubscriber
     public static final class Events {
         @SubscribeEvent
         public static void onEvent(GameShuttingDownEvent event) {
@@ -457,7 +457,7 @@ public class MolangCompileHandler {
                             : ClassHierarchyResolver.ClassHierarchyInfo.ofClass(referenceClassDesc(cl.getSuperclass()));
                 }))
                 .build(ClassDesc.of(compiledClassName),
-                        classBuilder -> classBuilder.withVersion(RELEASE_21.major(), 0)
+                        classBuilder -> classBuilder.withVersion(RELEASE_17.major(), 0)
                                 .withInterfaceSymbols(ClassDesc.of(MolangValue.MolangFunction.class.getName()))
                                 .withField("originalString", CD_String, fieldBuilder -> {
                                     fieldBuilder.withFlags(AccessFlag.FINAL, AccessFlag.STATIC);

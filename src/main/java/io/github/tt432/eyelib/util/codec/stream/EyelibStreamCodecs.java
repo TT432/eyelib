@@ -43,7 +43,7 @@ public class EyelibStreamCodecs {
         @Override
         public ResourceLocation decode(FriendlyByteBuf buf) {
             var str = STRING.decode(buf);
-            return ResourceLocation.parse(str);
+            return new ResourceLocation(str);
         }
     };
 

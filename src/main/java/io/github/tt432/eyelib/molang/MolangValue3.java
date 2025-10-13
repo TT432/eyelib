@@ -2,8 +2,9 @@ package io.github.tt432.eyelib.molang;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
-import io.github.tt432.chin.codec.ChinExtraCodecs;
-import io.github.tt432.chin.util.Tuple;
+import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
+import io.github.tt432.eyelib.util.codec.CodecHelper;
+import io.github.tt432.eyelib.util.codec.Tuple;
 import lombok.extern.slf4j.Slf4j;
 import org.joml.Vector3f;
 
@@ -26,10 +27,10 @@ public record MolangValue3(
     public static final MolangValue3 AXIS_Y = new MolangValue3(MolangValue.ZERO, MolangValue.ONE, MolangValue.ZERO);
     public static final MolangValue3 AXIS_Z = new MolangValue3(MolangValue.ZERO, MolangValue.ZERO, MolangValue.ONE);
 
-    public static final Codec<MolangValue3> CODEC = Codec.withAlternative(
+    public static final Codec<MolangValue3> CODEC = CodecHelper.withAlternative(
             ChinExtraCodecs.tuple(MolangValue.CODEC, MolangValue.CODEC, MolangValue.CODEC)
                     .bmap(MolangValue3::new, mv3 -> Tuple.of(mv3.x, mv3.y, mv3.z)),
-            Codec.withAlternative(Codec.withAlternative(entry("x"), entry("y")), entry("z")).listOf()
+            CodecHelper.withAlternative(CodecHelper.withAlternative(entry("x"), entry("y")), entry("z")).listOf()
                     .xmap(l -> {
                                 Map<Object, Object> map = new HashMap<>();
                                 for (Map.Entry<String, MolangValue> stringMolangValueEntry : l) {

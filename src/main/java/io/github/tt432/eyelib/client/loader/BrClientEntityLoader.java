@@ -67,7 +67,7 @@ public class BrClientEntityLoader extends BrResourcesLoader implements Searchabl
 
             try {
                 BrClientEntity entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, entry.getValue().getAsJsonObject()).getOrThrow(false, LOGGER::warn);
-                entities.put(ResourceLocation.parse(entity.identifier()), entity);
+                entities.put(new ResourceLocation(entity.identifier()), entity);
             } catch (Exception e) {
                 log.error("can't load entity {}", key, e);
             }

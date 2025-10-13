@@ -33,7 +33,7 @@ public class EntitiesListPanel extends ScrollPanel {
                 allEntitiesList.add(new EyelibManagerScreen.EntityButton(
                         resourceLocation.toString(),
                         BuiltInRegistries.ENTITY_TYPE.get(resourceLocation).getDescription(),
-                        ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/entities/" + resourceLocation.toString().replace(":", "/"))
+                        new ResourceLocation(Eyelib.MOD_ID, "icons/entities/" + resourceLocation.toString().replace(":", "/"))
                 ));
             }
             filtedEntitiesList.addAll(allEntitiesList);

@@ -75,7 +75,7 @@ public class BrAttachableLoader extends BrResourcesLoader implements Searchable<
 
             try {
                 BrClientEntity entity = CODEC.parse(JsonOps.INSTANCE, entry.getValue().getAsJsonObject()).getOrThrow(false, LOGGER::warn);
-                attachables.put(ResourceLocation.parse(entity.identifier()), entity);
+                attachables.put(new ResourceLocation(entity.identifier()), entity);
             } catch (Exception e) {
                 log.error("can't load entity {}", key, e);
             }

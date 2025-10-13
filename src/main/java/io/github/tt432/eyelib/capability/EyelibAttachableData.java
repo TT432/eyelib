@@ -43,22 +43,23 @@ public class EyelibAttachableData {
     // tt432: All attachments are only for LivingEntity now.
     public static final RegistryObject<DataAttachmentType<RenderData<Object>>> RENDER_DATA = DATA_ATTACHMENTS.register(RENDER_DATA_ID.getPath(), () -> new DataAttachmentType<>(RENDER_DATA_ID, RenderData::new, RenderData.codec(), null));
     public static final RegistryObject<DataAttachmentType<EntityStatistics>> ENTITY_STATISTICS = DATA_ATTACHMENTS.register(ENTITY_STATISTICS_ID.getPath(), () -> new DataAttachmentType<>(ENTITY_STATISTICS_ID, EntityStatistics::empty, EntityStatistics.CODEC, EntityStatistics.STREAM_CODEC));
-    public static final RegistryObject<DataAttachmentType<ExtraEntityUpdateData>> EXTRA_ENTITY_UPDATE = DATA_ATTACHMENTS.register(EXTRA_ENTITY_UPDATE_ID.getPath(), () -> new DataAttachmentType<>(EXTRA_ENTITY_UPDATE_ID, ExtraEntityUpdateData::empty, ExtraEntityUpdateData.CODEC, null));
-    public static final RegistryObject<DataAttachmentType<ExtraEntityData>> EXTRA_ENTITY_DATA = DATA_ATTACHMENTS.register(EXTRA_ENTITY_DATA_ID.getPath(), () -> new DataAttachmentType<>(EXTRA_ENTITY_DATA_ID, ExtraEntityData::empty, ExtraEntityData.CODEC, null));
+    public static final RegistryObject<DataAttachmentType<ExtraEntityUpdateData>> EXTRA_ENTITY_UPDATE = DATA_ATTACHMENTS.register(EXTRA_ENTITY_UPDATE_ID.getPath(), () -> new DataAttachmentType<>(EXTRA_ENTITY_UPDATE_ID, ExtraEntityUpdateData::empty, ExtraEntityUpdateData.CODEC, ExtraEntityUpdateData.STREAM_CODEC));
+    public static final RegistryObject<DataAttachmentType<ExtraEntityData>> EXTRA_ENTITY_DATA = DATA_ATTACHMENTS.register(EXTRA_ENTITY_DATA_ID.getPath(), () -> new DataAttachmentType<>(EXTRA_ENTITY_DATA_ID, ExtraEntityData::empty, ExtraEntityData.CODEC, ExtraEntityData.STREAM_CODEC));
     public static final RegistryObject<DataAttachmentType<ItemInHandRenderData>> ITEM_IN_HAND_RENDER_DATA = DATA_ATTACHMENTS.register(ITEM_IN_HAND_RENDER_DATA_ID.getPath(), () -> new DataAttachmentType<>(ITEM_IN_HAND_RENDER_DATA_ID, ItemInHandRenderData::empty, ItemInHandRenderData.CODEC, null));
     public static final RegistryObject<DataAttachmentType<EntityBehaviorData>> ENTITY_BEHAVIOR_DATA = DATA_ATTACHMENTS.register(ENTITY_BEHAVIOR_DATA_ID.getPath(), () -> new DataAttachmentType<>(ENTITY_BEHAVIOR_DATA_ID, EntityBehaviorData::new, EntityBehaviorData.CODEC, EntityBehaviorData.STREAM_CODEC));
 
     // </editor-fold>
 
     private static ResourceLocation modLoc(String path) {
-        return ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, path);
+        return new ResourceLocation(Eyelib.MOD_ID, path);
     }
 
     public static DataAttachmentType<?> getById(ResourceLocation id) {
-        var optional = REGISTRY.get().getHolder(id);
-        if (optional.isPresent()) {
-            return optional.get().get();
+        var optional = REGISTRY.get().getValue(id);
+        if (optional != null) {
+            return optional;
+        } else {
+            throw new IllegalStateException("Unknown attachment type: " + id);
         }
-        throw new IllegalStateException("Unknown attachment type: " + id);
     }
 }

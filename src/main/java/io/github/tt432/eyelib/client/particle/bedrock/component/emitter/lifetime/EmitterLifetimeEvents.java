@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.client.particle.bedrock.component.ComponentTarget;
 import io.github.tt432.eyelib.client.particle.bedrock.component.RegisterParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterParticleComponent;
 import io.github.tt432.eyelib.util.Collectors;
+import io.github.tt432.eyelib.util.codec.EitherHelper;
 
 import java.util.Comparator;
 import java.util.List;
@@ -48,8 +49,8 @@ public record EmitterLifetimeEvents(
         public static final Timeline EMPTY = new Timeline(new TreeMap<>());
 
         public static final Codec<Timeline> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-                Codec.either(Codec.STRING.listOf(), Codec.STRING.xmap(List::of, List::getFirst))
-                        .xmap(Either::unwrap, Either::left)
+                Codec.either(Codec.STRING.listOf(), Codec.STRING.xmap(List::of, l -> l.get(0)))
+                        .xmap(EitherHelper::unwrap, Either::left)
                         .xmap(sl -> sl.stream().map(s -> s.split(":"))
                                         .map(s -> Map.entry(Float.parseFloat(s[0]), s[1]))
                                         .collect(Collectors.toTreeMap(Comparator.comparingDouble(k -> k),
@@ -73,8 +74,8 @@ public record EmitterLifetimeEvents(
         public static final TravelDistanceEvents EMPTY = new TravelDistanceEvents(new TreeMap<>());
 
         public static final Codec<TravelDistanceEvents> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-                Codec.either(Codec.STRING.listOf(), Codec.STRING.xmap(List::of, List::getFirst))
-                        .xmap(Either::unwrap, Either::left)
+                Codec.either(Codec.STRING.listOf(), Codec.STRING.xmap(List::of, l -> l.get(0)))
+                        .xmap(EitherHelper::unwrap, Either::left)
                         .xmap(sl -> sl.stream().map(s -> s.split(":"))
                                         .map(s -> Map.entry(Float.parseFloat(s[0]), s[1]))
                                         .collect(Collectors.toTreeMap(Comparator.comparingDouble(k -> k),

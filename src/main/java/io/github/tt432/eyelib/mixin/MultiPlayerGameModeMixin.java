@@ -5,11 +5,8 @@ import io.github.tt432.eyelib.network.UpdateDestroyInfoPacket;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,15 +25,15 @@ public class MultiPlayerGameModeMixin {
     @Shadow
     private boolean isDestroying;
 
-    @Inject(method = "lambda$startDestroyBlock$1", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;destroyBlock(Lnet/minecraft/core/BlockPos;)Z"))
-    private void startDestroyBlock1(BlockState blockstate1, PlayerInteractEvent.LeftClickBlock event, BlockPos loc, Direction face, int p_233728_, CallbackInfoReturnable<Packet> cir) {
-        EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(false));
-    }
-
-    @Inject(method = "lambda$startDestroyBlock$1", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientLevel;destroyBlockProgress(ILnet/minecraft/core/BlockPos;I)V"))
-    private void startDestroyBlock2(BlockState blockstate1, PlayerInteractEvent.LeftClickBlock event, BlockPos loc, Direction face, int p_233728_, CallbackInfoReturnable<Packet> cir) {
-        EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(true));
-    }
+//    @Inject(method = "lambda$startDestroyBlock$1", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;destroyBlock(Lnet/minecraft/core/BlockPos;)Z"))
+//    private void startDestroyBlock1(BlockState blockstate1, PlayerInteractEvent.LeftClickBlock event, BlockPos loc, Direction face, int p_233728_, CallbackInfoReturnable<Packet> cir) {
+//        EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(false));
+//    }
+//
+//    @Inject(method = "lambda$startDestroyBlock$1", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientLevel;destroyBlockProgress(ILnet/minecraft/core/BlockPos;I)V"))
+//    private void startDestroyBlock2(BlockState blockstate1, PlayerInteractEvent.LeftClickBlock event, BlockPos loc, Direction face, int p_233728_, CallbackInfoReturnable<Packet> cir) {
+//        EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(true));
+//    }
 
     @Inject(method = "startDestroyBlock", at = {@At(value = "RETURN", ordinal = 0), @At(value = "RETURN", ordinal = 1)})
     private void startDestroyBlock1(BlockPos loc, Direction face, CallbackInfoReturnable<Boolean> cir) {

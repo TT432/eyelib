@@ -3,9 +3,12 @@ package io.github.tt432.eyelib.client.animation.bedrock.controller;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.util.codec.CodecHelper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @param animations           动画名称 -> 混合系数（动画变换倍数）
@@ -25,7 +28,7 @@ public record BrAcState(
         boolean blendViaShortestPath
 ) {
     public static final Codec<BrAcState> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            Codec.withAlternative(
+            CodecHelper.withAlternative(
                     Codec.unboundedMap(Codec.STRING, MolangValue.CODEC),
                     Codec.STRING.xmap(s -> Map.of(s, MolangValue.TRUE_VALUE), map -> map.keySet().iterator().next())
             ).listOf().xmap(

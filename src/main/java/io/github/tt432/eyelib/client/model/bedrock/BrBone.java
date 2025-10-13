@@ -75,7 +75,7 @@ public record BrBone(
         pivot.div(16).mul(-1, 1, 1);
         rotation = jsonObject.get("rotation") instanceof JsonArray ja ? new Vector3f(gson.fromJson(ja, float[].class)) : new Vector3f(0);
         rotation.mul(EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1);
-        binding = jsonObject.get("binding") instanceof JsonPrimitive jp ? MolangValue.CODEC.parse(JsonOps.INSTANCE, jp).getOrThrow() : MolangValue.ZERO;
+        binding = jsonObject.get("binding") instanceof JsonPrimitive jp ? MolangValue.CODEC.parse(JsonOps.INSTANCE, jp).getOrThrow(false, IllegalArgumentException::new) : MolangValue.ZERO;
         reset = jsonObject.get("reset") instanceof JsonPrimitive jp && jp.getAsBoolean();
         material = jsonObject.get("material") instanceof JsonPrimitive jp ? jp.getAsString() : "";
 
@@ -90,7 +90,7 @@ public record BrBone(
         if (jsonObject.get("texture_meshes") instanceof JsonArray ja) {
             for (JsonElement jsonElement : ja) {
                 if (jsonElement instanceof JsonObject jo) {
-                    texture_meshes.add(BrTextureMesh.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow());
+                    texture_meshes.add(BrTextureMesh.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, IllegalArgumentException::new));
                 }
             }
         }

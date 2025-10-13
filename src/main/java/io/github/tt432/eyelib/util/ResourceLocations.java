@@ -17,14 +17,14 @@ public class ResourceLocations {
     }
 
     public static ResourceLocation of(String namespace, String path) {
-        return ResourceLocation.fromNamespaceAndPath(namespace, path);
+        return new ResourceLocation(namespace, path);
     }
 
     public static ResourceLocation of(String value) {
-        return ResourceLocation.parse(value);
+        return new ResourceLocation(value);
     }
 
     public static ResourceLocation mod(String path) {
-        return ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, path);
+        return new ResourceLocation(Eyelib.MOD_ID, path);
     }
 }

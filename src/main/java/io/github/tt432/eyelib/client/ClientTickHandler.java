@@ -20,7 +20,7 @@ public class ClientTickHandler {
 
     @SubscribeEvent
     public static void onEvent(TickEvent.ClientTickEvent event) {
-        if (!Minecraft.getInstance().isPaused())
+        if (!Minecraft.getInstance().isPaused() && event.phase == TickEvent.Phase.START)
             tick++;
     }
 }

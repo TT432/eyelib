@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.model;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.chin.util.Lists;
+
 import io.github.tt432.eyelib.client.model.locator.GroupLocator;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.model.locator.ModelLocator;
@@ -10,6 +10,7 @@ import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.util.Lists;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;

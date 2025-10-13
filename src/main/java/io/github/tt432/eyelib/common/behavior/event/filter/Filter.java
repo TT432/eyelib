@@ -10,9 +10,13 @@ import io.github.tt432.eyelib.common.behavior.event.filter.base.BaseFilter;
 public interface Filter {
     Codec<Filter> CODEC = Codec.either(BaseFilter.CODEC, ComplexFilter.CODEC.codec()).xmap(
             e -> e.left().map(b -> (Filter) b).orElse(e.right().orElseThrow()),
-            v -> switch (v) {
-                case BaseFilter<?> baseFilter -> Either.left(baseFilter);
-                case ComplexFilter complexFilter -> Either.right(complexFilter);
-                default -> throw new IllegalStateException("Unexpected value: " + v);
+            v -> {
+                if (v instanceof BaseFilter<?> baseFilter) {
+                    return Either.left(baseFilter);
+                } else if (v instanceof ComplexFilter complexFilter) {
+                    return Either.right(complexFilter);
+                } else {
+                    throw new IllegalStateException("Unexpected value: " + v);
+                }
             });
 }

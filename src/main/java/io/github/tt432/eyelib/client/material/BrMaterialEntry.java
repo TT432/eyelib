@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.client.material;
 
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -9,10 +8,8 @@ import io.github.tt432.eyelib.client.gl.BlendFactor;
 import io.github.tt432.eyelib.client.gl.DepthFunc;
 import io.github.tt432.eyelib.client.gl.GLStates;
 import io.github.tt432.eyelib.client.gl.stencil.Face;
-import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.util.client.RenderTypeSerializations;
 import io.github.tt432.eyelib.util.codec.CodecHelper;
-import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.StringRepresentable;
@@ -291,13 +288,7 @@ public record BrMaterialEntry(
     }));
 
     public enum VertexFormatElementEnum implements StringRepresentable {
-        Position(VertexFormatElement.POSITION),
-        Color(VertexFormatElement.COLOR),
-        UV0(VertexFormatElement.UV0),
-        UV1(VertexFormatElement.UV1),
-        UV2(VertexFormatElement.UV2),
-        Normal(VertexFormatElement.NORMAL),
-        BoneId0(null/* TODO */);
+        ;
 
         public static final Codec<VertexFormatElementEnum> CODEC = StringRepresentable.fromEnum(VertexFormatElementEnum::values);
         public final VertexFormatElement element;
@@ -310,18 +301,6 @@ public record BrMaterialEntry(
         public String getSerializedName() {
             return name();
         }
-    }
-
-    public VertexFormat getFormat() {
-        VertexFormat.Builder builder = VertexFormat.builder();
-
-        vertexFields.ifPresent(vf -> {
-            for (VertexFormatElementEnum vertexField : vf) {
-                builder.add(vertexField.name(), vertexField.element);
-            }
-        });
-
-        return builder.build();
     }
 
     public RenderType getRenderType(ResourceLocation texture) {
@@ -337,6 +316,6 @@ public record BrMaterialEntry(
 //                );
 
         // 临时使用
-        return RenderTypeSerializations.getFactory(ResourceLocation.parse(name)).factory().apply(texture);
+        return RenderTypeSerializations.getFactory(new ResourceLocation(name)).factory().apply(texture);
     }
 }

@@ -10,6 +10,7 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.util.ResourceLocations;
+import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
@@ -127,11 +128,6 @@ public final class MolangQuery {
                     entity instanceof Player p ? p.inventoryMenu.getSlot(slotId).getItem() : ItemStack.EMPTY;
             case "slot.enderchest" ->
                     entity instanceof Player p ? p.getEnderChestInventory().getItem(slotId) : ItemStack.EMPTY;
-            case "slot.saddle", "slot.equippable" ->
-                    entity instanceof AbstractHorse h ? h.getInventory().getItem(slotId) : ItemStack.EMPTY;
-            case "slot.armor" -> entity instanceof Mob m ? m.getBodyArmorItem() : ItemStack.EMPTY;
-            case "slot.chest" ->
-                    entity instanceof AbstractChestedHorse h ? h.getInventory().getItem(slotId + 1) : ItemStack.EMPTY;
             default -> ItemStack.EMPTY;
         };
     }
@@ -146,7 +142,7 @@ public final class MolangQuery {
             var itemKey = BuiltInRegistries.ITEM.getKey(getItemBySlot(l, hand.toString(), (int) index).getItem());
 
             for (Object item : items) {
-                if (ResourceLocation.parse(item.toString()).equals(itemKey)) {
+                if (new ResourceLocation(item.toString()).equals(itemKey)) {
                     return true;
                 }
             }
@@ -180,7 +176,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "main_hand_item_use_duration", description = "主手物品使用时间")
     public static float mainHandItemUseDuration(MolangScope scope) {
-        return livingFloat(scope, living -> (float) living.getTicksUsingItem() / living.getUseItem().getUseDuration(living));
+        return livingFloat(scope, living -> (float) living.getTicksUsingItem() / living.getUseItem().getUseDuration());
     }
 
     @MolangFunction(value = "is_tamed", description = "驯服了")
@@ -205,7 +201,7 @@ public final class MolangQuery {
     @MolangFunction(value = "variant", description = "变体")
     public static float variant(MolangScope scope) {
         return livingFloat(scope, l -> {
-            Variant component = l.getData(EyelibAttachableData.ENTITY_BEHAVIOR_DATA).component(Variant.class);
+            Variant component = DataAttachmentHelper.getOrCreate(EyelibAttachableData.ENTITY_BEHAVIOR_DATA.get(), l).component(Variant.class);
             return component != null ? (float) component.value() : 0;
         });
     }
@@ -213,7 +209,7 @@ public final class MolangQuery {
     @MolangFunction(value = "mark_variant", description = "变体")
     public static float markVariant(MolangScope scope) {
         return livingFloat(scope, l -> {
-            MarkVariant component = l.getData(EyelibAttachableData.ENTITY_BEHAVIOR_DATA).component(MarkVariant.class);
+            MarkVariant component = DataAttachmentHelper.getOrCreate(EyelibAttachableData.ENTITY_BEHAVIOR_DATA.get(), l).component(MarkVariant.class);
             return component != null ? (float) component.value() : 0;
         });
     }
@@ -221,28 +217,19 @@ public final class MolangQuery {
     @MolangFunction(value = "damage_x", description = "受伤来源方向 x")
     public static float damageX(MolangScope scope) {
         return livingFloat(scope, living ->
-                living.getExistingData(EyelibAttachableData.EXTRA_ENTITY_UPDATE)
-                        .map(ExtraEntityUpdateData::lastHurtX)
-                        .orElse(0D)
-                        .floatValue());
+                (float) DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_UPDATE.get(), living).lastHurtX());
     }
 
     @MolangFunction(value = "damage_y", description = "受伤来源方向 x")
     public static float damageY(MolangScope scope) {
         return livingFloat(scope, living ->
-                living.getExistingData(EyelibAttachableData.EXTRA_ENTITY_UPDATE)
-                        .map(ExtraEntityUpdateData::lastHurtY)
-                        .orElse(0D)
-                        .floatValue());
+                (float) DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_UPDATE.get(), living).lastHurtY());
     }
 
     @MolangFunction(value = "damage_z", description = "受伤来源方向 x")
     public static float damageZ(MolangScope scope) {
         return livingFloat(scope, living ->
-                living.getExistingData(EyelibAttachableData.EXTRA_ENTITY_UPDATE)
-                        .map(ExtraEntityUpdateData::lastHurtZ)
-                        .orElse(0D)
-                        .floatValue());
+                (float) DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_UPDATE.get(), living).lastHurtZ());
     }
 
     @MolangFunction(value = "has_helmet", description = "已装备头盔")
@@ -382,17 +369,17 @@ public final class MolangQuery {
 
     @MolangFunction(value = "facing_target_to_range_attack", description = "正在进行远程攻击")
     public static float facingTargetToRageAttack(MolangScope scope) {
-        return entityBool(scope, e -> e.getData(EyelibAttachableData.EXTRA_ENTITY_DATA).facing_target_to_range_attack());
+        return entityBool(scope, e -> DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), e).facing_target_to_range_attack());
     }
 
     @MolangFunction(value = "is_avoiding_mobs", description = "正在从怪物逃离")
     public static float isAvoidingMobs(MolangScope scope) {
-        return entityBool(scope, e -> e.getData(EyelibAttachableData.EXTRA_ENTITY_DATA).is_avoiding_mobs());
+        return entityBool(scope, e -> DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), e).is_avoiding_mobs());
     }
 
     @MolangFunction(value = "is_grazing", description = "正在吃草")
     public static float isGrazing(MolangScope scope) {
-        return entityBool(scope, e -> e.getData(EyelibAttachableData.EXTRA_ENTITY_DATA).is_grazing());
+        return entityBool(scope, e -> DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), e).is_grazing());
     }
 
     @MolangFunction(value = "time_since_last_vibration_detection", description = "自最后一次检测到声波的时间（监守者）")
@@ -422,7 +409,7 @@ public final class MolangQuery {
     @MolangFunction(value = "partial_tick", description = "距离上一帧的时间")
     public static float partialTicks(MolangScope scope) {
         if (scope.contains("variable.partial_tick")) return scope.get("variable.partial_tick").asFloat();
-        return Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
+        return Minecraft.getInstance().timer.partialTick;
     }
 
     @MolangFunction(value = "any_animation_finished", description = "任意动画播放完毕（动画控制器）")
@@ -458,7 +445,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "modified_distance_moved", description = "移动过的距离")
     public static float modifiedDistanceMoved(MolangScope scope) {
-        return scope.getOwner().ownerAs(Entity.class).map(e -> e.getData(EyelibAttachableData.ENTITY_STATISTICS).distanceWalked()).orElse(0F);
+        return scope.getOwner().ownerAs(Entity.class).map(e -> DataAttachmentHelper.getOrCreate(EyelibAttachableData.ENTITY_STATISTICS.get(), e).distanceWalked()).orElse(0F);
     }
 
     @MolangFunction(value = "is_on_ground", description = "正处于地面上")
@@ -498,7 +485,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "is_digging", description = "正在挖掘（玩家）")
     public static float isDigging(MolangScope scope) {
-        return entityBool(scope, e -> e.getData(EyelibAttachableData.EXTRA_ENTITY_DATA).is_dig());
+        return entityBool(scope, e -> DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), e).is_dig());
     }
 
     @MolangFunction(value = "is_eating", description = "正在食用物品")
@@ -674,7 +661,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "is_avoid", description = "正在逃离(比如苦力怕逃离猫)")
     public static float isAvoid(MolangScope scope) {
-        return entityBool(scope, e -> e.getData(EyelibAttachableData.EXTRA_ENTITY_DATA).is_avoid());
+        return entityBool(scope, e -> DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), e).is_avoid());
     }
 
     @MolangFunction(value = "health", description = "生物血量")

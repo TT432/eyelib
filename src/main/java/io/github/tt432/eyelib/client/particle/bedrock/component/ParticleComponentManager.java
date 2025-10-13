@@ -6,12 +6,12 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.ModList;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.fml.loading.modscan.ModAnnotation;
-import net.neoforged.neoforgespi.language.ModFileScanData;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.loading.moddiscovery.ModAnnotation;
+import net.minecraftforge.forgespi.language.ModFileScanData;
 import org.objectweb.asm.Type;
 
 import java.util.*;
@@ -21,7 +21,7 @@ import java.util.*;
  */
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@EventBusSubscriber
+@Mod.EventBusSubscriber
 public class ParticleComponentManager {
     public record ParticleComponentInfo(
             ResourceLocation name,
@@ -62,7 +62,7 @@ public class ParticleComponentManager {
                         Class clazz = Class.forName(memberName, false,
                                 ParticleComponentManager.class.getClassLoader());
                         Codec codec = (Codec) clazz.getField("CODEC").get(null);
-                        ComponentTarget target = ComponentTarget.valueOf(((ModAnnotation.EnumHolder) a.annotationData().get("target")).value());
+                        ComponentTarget target = ComponentTarget.valueOf(((ModAnnotation.EnumHolder) a.annotationData().get("target")).getValue());
                         var name = ResourceLocations.of((String) a.annotationData().get("value"));
                         var type = (String) a.annotationData().get("type");
                         var info = new ParticleComponentInfo(name, type, target, clazz, codec);

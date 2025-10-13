@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.molang;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.chin.codec.ChinExtraCodecs;
-import io.github.tt432.chin.util.Tuple;
+import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
+import io.github.tt432.eyelib.util.codec.Tuple;
 import lombok.extern.slf4j.Slf4j;
 import org.joml.Vector4f;
 

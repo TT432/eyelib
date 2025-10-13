@@ -48,10 +48,10 @@ final class DragTargetWidget extends AbstractContainerEventHandler implements Re
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         var a = animator.getTime(ClientTickHandler.getTick(), partialTick, hover(mouseX, mouseY));
 
-        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "gui_bg_nine"), x, y, 0, 0, w, h);
+        guiGraphics.blit(new ResourceLocation(Eyelib.MOD_ID, "gui_bg_nine"), x, y, 0, 0, w, h);
         RenderSystem.enableBlend();
         RenderSystem.setShaderColor(1, 1, 1, a);
-        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "gui_bg_nine_selected"), x, y, 0, 0, w, h);
+        guiGraphics.blit(new ResourceLocation(Eyelib.MOD_ID, "gui_bg_nine_selected"), x, y, 0, 0, w, h);
         RenderSystem.disableBlend();
         RenderSystem.setShaderColor(1, 1, 1, 1);
 

@@ -13,6 +13,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.NetworkEvent;
@@ -38,7 +39,7 @@ public class EyelibNetworkManager {
     }
 
     private static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
-            ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "networking"),
+            new ResourceLocation(Eyelib.MOD_ID, "networking"),
             () -> PROTOCOL_VERSION,
             PROTOCOL_VERSION::equals,
             PROTOCOL_VERSION::equals
@@ -100,6 +101,10 @@ public class EyelibNetworkManager {
 
     public static void sendToTrackedAndSelf(Entity entity, Object packet) {
         INSTANCE.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity), packet);
+    }
+
+    public static void sendToPlayer(ServerPlayer sp, Object packet) {
+        INSTANCE.send(PacketDistributor.PLAYER.with(() -> sp), packet);
     }
 
     // <editor-fold desc="Handlers">

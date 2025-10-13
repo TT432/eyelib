@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.EyelibClient;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
@@ -16,14 +15,10 @@ import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
-import io.github.tt432.eyelib.compute.LazyComputeBufferBuilder;
-import io.github.tt432.eyelib.compute.VertexComputeHelper;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.client.PoseHelper;
-import it.unimi.dsi.fastutil.Pair;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
@@ -75,17 +70,6 @@ public class EntityRenderSystem {
         }
 
         MinecraftForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
-    }
-
-    private static final Map<RenderType, Pair<VertexComputeHelper, MultiBufferSource>> helpers = new Object2ObjectOpenHashMap<>();
-
-    // 保证在渲染线程上执行
-    private static Boolean _canUseHighSpeedRender = null;
-    private static boolean canUseHighSpeedRender() {
-        if (_canUseHighSpeedRender == null) {
-            _canUseHighSpeedRender = EyelibClient.supportComputeShader();
-        }
-        return _canUseHighSpeedRender;
     }
 
     @SubscribeEvent
@@ -186,10 +170,6 @@ public class EntityRenderSystem {
 
                 {
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
-                    if (canUseHighSpeedRender() && buffer instanceof LazyComputeBufferBuilder lazy) {
-                        var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
-                        lazy.setEyelib$helper(helper.left());
-                    }
                     renderHelper.render(renderParams, model, tickedInfos);
 
                     renderHelper.collectLocators(model, tickedInfos);
@@ -212,10 +192,6 @@ public class EntityRenderSystem {
                     VertexConsumer buffer1 = multiBufferSource.getBuffer(rt1);
                     RenderHelper renderHelper = Eyelib.getRenderHelper();
 
-                    if (canUseHighSpeedRender() && buffer1 instanceof LazyComputeBufferBuilder lazy) {
-                        var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
-                        lazy.setEyelib$helper(helper.left());
-                    }
                     renderHelper.render(
                             renderParams
                                     .withRenderType(rt1)

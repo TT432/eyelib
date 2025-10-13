@@ -203,7 +203,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<MolangCompileVisitor
         Label label1 = codeBuilder.newLabel();
         Label label2 = codeBuilder.newLabel();
         List<MolangParser.ExprContext> expr = ctx.expr();
-        visit(expr.getFirst());
+        visit(expr.get(0));
         asBoolean();
         codeBuilder.ifeq(label1);
         visit(expr.get(1));
@@ -223,7 +223,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<MolangCompileVisitor
         Label label2 = codeBuilder.newLabel();
         Label label3 = codeBuilder.newLabel();
         List<MolangParser.ExprContext> expr = ctx.expr();
-        visit(expr.getFirst());
+        visit(expr.get(0));
         asBoolean();
         codeBuilder.ifne(label3);
         visit(expr.get(1));
@@ -461,7 +461,7 @@ public class MolangCompileVisitor extends MolangBaseVisitor<MolangCompileVisitor
 
     private CompileContext callMethod(MolangMappingTree.FunctionInfo method) {
         codeBuilder.invokestatic(ClassDesc.of(method.molangClass().classInstance().getName()), method.method().getName(),
-                MethodTypeDesc.of(getCDFromClass(method.method().getReturnType()), Stream.of(method.method().getParameterTypes()).map(this::getCDFromClass).toList()));
+                MethodTypeDesc.of(getCDFromClass(method.method().getReturnType()), Stream.of(method.method().getParameterTypes()).map(this::getCDFromClass).toArray(ClassDesc[]::new)));
         return toMolangObject(method.method().getReturnType());
     }
 

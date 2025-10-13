@@ -2,35 +2,36 @@ package io.github.tt432.eyelib.common;
 
 import io.github.tt432.eyelib.capability.ExtraEntityData;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
+import io.github.tt432.eyelib.network.EyelibNetworkManager;
 import io.github.tt432.eyelib.network.UniDataUpdatePacket;
+import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.*;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.tick.EntityTickEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 /**
  * @author TT432
  */
-@EventBusSubscriber
+@Mod.EventBusSubscriber
 public class EntityExtraDataHandler {
 
     @SubscribeEvent
     public static void onEvent(PlayerEvent.StartTracking event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
-            PacketDistributor.sendToPlayer(sp,
+            EyelibNetworkManager.sendToPlayer(sp,
                     UniDataUpdatePacket.crate(event.getTarget(), EyelibAttachableData.EXTRA_ENTITY_DATA));
         }
     }
 
     @SubscribeEvent
-    public static void onEvent(EntityTickEvent.Post event) {
+    public static void onEvent(LivingEvent.LivingTickEvent event) {
         if (!event.getEntity().level().isClientSide) {
             if (event.getEntity() instanceof Mob r) {
-                ExtraEntityData data = event.getEntity().getData(EyelibAttachableData.EXTRA_ENTITY_DATA);
+                ExtraEntityData data = DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), event.getEntity());
                 ExtraEntityData oldData = data;
                 var facing_target_to_range_attack = false;
                 var is_avoiding_mobs = false;
@@ -64,10 +65,10 @@ public class EntityExtraDataHandler {
                 if (data.is_avoid() != is_avoid)
                     data = data.with_avoid(is_avoid);
 
-                event.getEntity().setData(EyelibAttachableData.EXTRA_ENTITY_DATA, data);
+                DataAttachmentHelper.set(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), event.getEntity(), data);
 
                 if (oldData != data)
-                    PacketDistributor.sendToPlayersTrackingEntityAndSelf(r,
+                    EyelibNetworkManager.sendToTrackedAndSelf(r,
                             UniDataUpdatePacket.crate(r, EyelibAttachableData.EXTRA_ENTITY_DATA));
             }
         }

@@ -3,11 +3,11 @@ package io.github.tt432.eyelib.molang.mapping.api;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.ModList;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.neoforgespi.language.ModFileScanData;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.forgespi.language.ModFileScanData;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Type;
 
@@ -21,7 +21,7 @@ import java.util.*;
  * @author TT432
  */
 @Slf4j
-@EventBusSubscriber
+@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MolangMappingTree {
     public static final MolangMappingTree INSTANCE = new MolangMappingTree();

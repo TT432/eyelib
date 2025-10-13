@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import it.unimi.dsi.fastutil.ints.Int2BooleanFunction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.common.NeoForge;
+import net.minecraftforge.common.MinecraftForge;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +22,7 @@ public abstract class ModelBakeInfo<Info> {
     private final Map<String, HashMap<ResourceLocation, BakedModel>> modelCache = new HashMap<>();
 
     {
-        NeoForge.EVENT_BUS.addListener(ManagerEntryChangedEvent.class, e -> {
+        MinecraftForge.EVENT_BUS.<ManagerEntryChangedEvent>addListener(e -> {
             if (e.getManagerName().equals(ModelManager.class.getSimpleName()))
                 modelCache.remove(e.getEntryName());
         });

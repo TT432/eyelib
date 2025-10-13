@@ -1,13 +1,13 @@
 package io.github.tt432.eyelib.molang;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.chin.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.molang.compiler.MolangCompileHandler;
 import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;
+import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.util.codec.CodecHelper;
-import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
 import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
+import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;

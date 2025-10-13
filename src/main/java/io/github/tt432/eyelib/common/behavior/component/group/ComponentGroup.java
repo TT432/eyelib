@@ -24,7 +24,7 @@ public record ComponentGroup(
 ) {
     public static final ComponentGroup EMPTY = new ComponentGroup(new HashMap<>());
 
-    public static final Codec<ComponentGroup> CODEC = Codec.unboundedMap(Codec.STRING, new KeyDispatchMapCodec<>(Codec.STRING, s -> switch (ResourceLocation.parse(s).toString()) {
+    public static final Codec<ComponentGroup> CODEC = Codec.unboundedMap(Codec.STRING, new KeyDispatchMapCodec<>(Codec.STRING, s -> switch (new ResourceLocation(s).toString()) {
         case "minecraft:variant" -> Variant.CODEC;
         case "minecraft:mark_variant" -> MarkVariant.CODEC;
         default -> new Codec<Component>() {

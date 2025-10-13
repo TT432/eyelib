@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.client.model.bake;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -48,12 +47,15 @@ public record BakedModel(
                          float[] u, float[] v) {
             this(xList.length, merge(xList, yList, zList), merge(nxList, nyList, nzList),
                     merge(xListResult, yListResult, zListResult), merge(nxListResult, nyListResult, nzListResult),
-                    u, v, new BufferBuilder(new ByteBufferBuilder(NEW_ENTITY.getVertexSize() * xList.length), VertexFormat.Mode.QUADS, NEW_ENTITY));
+                    u, v, new BufferBuilder(NEW_ENTITY.getVertexSize() * xList.length));
+            vertices.begin(VertexFormat.Mode.QUADS, NEW_ENTITY);
             for (int i = 0; i < xList.length; i++) {
-                vertices.addVertex(xList[i], yList[i], zList[i],
-                        0, u[i], v[i], 0, 0,
+                vertices.vertex(xList[i], yList[i], zList[i],
+                        0, 0, 0, 0,
+                        u[i], v[i], 0, 0,
                         nxList[i], nyList[i], nzList[i]);
             }
+            vertices.end();
         }
 
         public void transformPos(Matrix4f m4) {

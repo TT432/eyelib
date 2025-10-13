@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.particle.bedrock.component.emitter.shape;
 import com.mojang.serialization.Codec;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue3;
+import io.github.tt432.eyelib.util.codec.CodecHelper;
 import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
@@ -16,7 +17,7 @@ public record Direction(
 ) {
     public static final Direction EMPTY = new Direction(Type.OUTWARDS, null);
 
-    public static final Codec<Direction> CODEC = Codec.withAlternative(
+    public static final Codec<Direction> CODEC = CodecHelper.withAlternative(
             Codec.STRING.xmap(s -> switch (s) {
                         case "inwards" -> new Direction(Type.INWARDS, MolangValue3.ZERO);
                         default -> new Direction(Type.OUTWARDS, MolangValue3.ZERO);

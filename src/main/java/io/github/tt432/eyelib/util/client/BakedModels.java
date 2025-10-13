@@ -12,8 +12,8 @@ import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.model.data.ModelData;
-import net.neoforged.neoforge.client.model.geometry.IUnbakedGeometry;
+import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.geometry.IUnbakedGeometry;
 
 /**
  * @author TT432
@@ -36,7 +36,7 @@ public class BakedModels {
         return Minecraft.getInstance().getModelManager().getModelBakery().new ModelBakerImpl(
                 (modelLoc, loc) -> Minecraft.getInstance().getTextureAtlas(loc.atlasLocation()).apply(loc.texture()),
                 modelResourceLocation
-        ).bakeUncached(model, BlockModelRotation.X0_Y0);
+        ).bake(modelResourceLocation, BlockModelRotation.X0_Y0);
     }
 
     public void render(PoseStack.Pose pose, VertexConsumer buffer, BakedModel model, RenderType type, BlockState state, int light) {

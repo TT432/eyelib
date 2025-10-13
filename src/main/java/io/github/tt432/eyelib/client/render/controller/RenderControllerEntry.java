@@ -15,7 +15,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.common.NeoForge;
+import net.minecraftforge.common.MinecraftForge;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -105,7 +105,7 @@ public record RenderControllerEntry(
         for (MolangValue mv : textures) {
             sb.append(get(scope, mv, "texture", entity.textures()));
         }
-        return ResourceLocation.fromNamespaceAndPath("complex", sb.toString().replace(":", "_") + ".png");
+        return new ResourceLocation("complex", sb.toString().replace(":", "_") + ".png");
     }
 
     public ResourceLocation getEmissiveTexture(MolangScope scope, BrClientEntity entity) {
@@ -115,11 +115,11 @@ public record RenderControllerEntry(
                     .toLowerCase(Locale.ROOT).replace("texture.", ""));
             sb.append(s);
         }
-        return ResourceLocation.fromNamespaceAndPath("complex", sb.toString().replace(":", "_") + ".emissive.png");
+        return new ResourceLocation("complex", sb.toString().replace(":", "_") + ".emissive.png");
     }
 
     public RenderControllerEntry {
-        NeoForge.EVENT_BUS.addListener(ManagerEntryChangedEvent.class, e -> {
+        MinecraftForge.EVENT_BUS.<ManagerEntryChangedEvent>addListener(e -> {
             if (e.getManagerName().equals("Texture")) {
                 needReloadTexture.set(true);
             }
@@ -139,7 +139,7 @@ public record RenderControllerEntry(
                     || needReloadTexture) {
                 List<ResourceLocation> list = new ArrayList<>();
                 for (MolangValue mv : textures) {
-                    ResourceLocation parse = ResourceLocation.parse(get(scope, mv, "texture", entity.textures()));
+                    ResourceLocation parse = new ResourceLocation(get(scope, mv, "texture", entity.textures()));
                     list.add(parse);
                 }
                 NativeImages.uploadImage(texture, Textures.layerMerging(list));
@@ -151,7 +151,7 @@ public record RenderControllerEntry(
                     || needReloadTexture) {
                 List<ResourceLocation> list = new ArrayList<>();
                 for (MolangValue mv : textures) {
-                    ResourceLocation resourceLocation = ResourceLocation.parse(get(scope, mv, "texture", entity.textures())).withPath(s -> replacePng(s, ".png", ".emissive.png"));
+                    ResourceLocation resourceLocation = new ResourceLocation(get(scope, mv, "texture", entity.textures())).withPath(s -> replacePng(s, ".png", ".emissive.png"));
                     list.add(resourceLocation);
                 }
                 NativeImages.uploadImage(emissiveTexture, Textures.layerMerging(list));
@@ -167,7 +167,7 @@ public record RenderControllerEntry(
         component.setInfo(new ModelComponent.SerializableInfo(
                 get(scope, geometry, "geometry", entity.geometry()),
                 texture,
-                ResourceLocation.parse(materials.containsKey("*") ? get(scope, materials.get("*"), "material", entity.materials()) : "")
+                new ResourceLocation(materials.containsKey("*") ? get(scope, materials.get("*"), "material", entity.materials()) : "")
         ));
 
         Object2BooleanOpenHashMap<String> partVisibility = component.getPartVisibility();

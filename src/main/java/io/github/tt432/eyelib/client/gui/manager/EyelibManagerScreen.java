@@ -162,10 +162,10 @@ public class EyelibManagerScreen extends Screen {
     }
 
     public static void renderEntityButton(GuiGraphics guiGraphics, int x, int y, int s, float a, EntityButton entityButton) {
-        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "gui_bg_nine"), x, y, 0, 0, s, s);
+        guiGraphics.blit(new ResourceLocation(Eyelib.MOD_ID, "gui_bg_nine"), x, y, 0, 0, s, s);
         RenderSystem.enableBlend();
         RenderSystem.setShaderColor(1, 1, 1, a);
-        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "gui_bg_nine_selected"), x, y, 0, 0, s, s);
+        guiGraphics.blit(new ResourceLocation(Eyelib.MOD_ID, "gui_bg_nine_selected"), x, y, 0, 0, s, s);
         RenderSystem.disableBlend();
         RenderSystem.setShaderColor(1, 1, 1, 1);
 
@@ -235,7 +235,7 @@ public class EyelibManagerScreen extends Screen {
 
         loadJsonFiles(basePath, "entity", jo -> {
             var entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-            Eyelib.getClientEntityLoader().put(ResourceLocation.parse(entity.identifier()), entity);
+            Eyelib.getClientEntityLoader().put(new ResourceLocation(entity.identifier()), entity);
         });
 
         loadJsonFiles(basePath, "particles", jo -> {
@@ -270,7 +270,7 @@ public class EyelibManagerScreen extends Screen {
             pngFiles.forEach(pngFile -> {
                 try {
                     NativeImage nativeImage = NativeImages.loadImage(new FileInputStream(pngFile.toFile()));
-                    ResourceLocation texture = ResourceLocation.withDefaultNamespace(pngFile.toString().replace(basePath.toString(), "").replace("\\", "/").substring(1).toLowerCase(Locale.ROOT));
+                    ResourceLocation texture = new ResourceLocation(pngFile.toString().replace(basePath.toString(), "").replace("\\", "/").substring(1).toLowerCase(Locale.ROOT));
                     NativeImages.uploadImage(texture, nativeImage);
                 } catch (IOException e) {
                     log.error("can't load file.", e);
@@ -332,7 +332,7 @@ public class EyelibManagerScreen extends Screen {
         int y3 = Math.round(board + padding * 2 + h * 2);
 
         widgets = List.of(
-                json(x1, y1, w, h, Component.literal("模型"), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/model"),
+                json(x1, y1, w, h, Component.literal("模型"), new ResourceLocation(Eyelib.MOD_ID, "icons/model"),
                         jo -> {
                             var model = BrModel.parse(jo);
 
@@ -340,17 +340,17 @@ public class EyelibManagerScreen extends Screen {
                                 Eyelib.getModelManager().put(brModelEntry.name(), brModelEntry);
                             }
                         }),
-                json(x1, y2, w, h, Component.literal("动画"), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/animation"),
+                json(x1, y2, w, h, Component.literal("动画"), new ResourceLocation(Eyelib.MOD_ID, "icons/animation"),
                         jo -> {
                             var animation = BrAnimation.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
                             animation.animations().forEach((k, v) -> Eyelib.getAnimationManager().put(k, v));
                         }),
-                json(x1, y3, w, h, Component.literal("动画控制器"), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/animation_controller"),
+                json(x1, y3, w, h, Component.literal("动画控制器"), new ResourceLocation(Eyelib.MOD_ID, "icons/animation_controller"),
                         jo -> {
                             var animation = BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
                             animation.animationControllers().forEach((k, v) -> Eyelib.getAnimationManager().put(k, v));
                         }),
-                new DragTargetWidget(x2, y1, w, h, new GuiAnimator(5), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/folder"), Component.literal("资源包文件夹"),
+                new DragTargetWidget(x2, y1, w, h, new GuiAnimator(5), new ResourceLocation(Eyelib.MOD_ID, "icons/folder"), Component.literal("资源包文件夹"),
                         (mx, my, b) -> {
                             if (hover(x2, y1, w, h, mx, my)) {
                                 folderSelectDialog("打开资源包文件夹", Path.of("/"))
@@ -362,13 +362,13 @@ public class EyelibManagerScreen extends Screen {
 
                             return false;
                         }),
-                json(x2, y2, w, h, Component.literal("渲染控制器"), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/render_controller"),
+                json(x2, y2, w, h, Component.literal("渲染控制器"), new ResourceLocation(Eyelib.MOD_ID, "icons/render_controller"),
                         jo -> {
                             var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
                             controller.render_controllers().forEach((k, v) -> Eyelib.getRenderControllerManager().put(k, v));
                         }),
                 new DragTargetWidget(x2, y3, w, h, new GuiAnimator(5),
-                        ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/entity"),
+                        new ResourceLocation(Eyelib.MOD_ID, "icons/entity"),
                         Component.literal("客户端实体"),
                         (mx, my, b) -> {
                             Minecraft.getInstance().setScreen(new EntitiesScreen());

@@ -46,7 +46,7 @@ public class DataAttachmentContainer implements IDataAttachmentContainer {
     @Override
     public void deserializeNBT(CompoundTag nbt) {
         for (var key : nbt.getAllKeys()) {
-            var id = ResourceLocation.parse(key);
+            var id = new ResourceLocation(key);
             var value = nbt.get(key);
             var type = EyelibAttachableData.getById(id);
             var attachment = new DataAttachment<>(type);

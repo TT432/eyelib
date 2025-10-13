@@ -11,7 +11,7 @@ import io.github.tt432.eyelib.client.render.visitor.CollectBoneTransformModelVis
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import lombok.Getter;
-import net.neoforged.neoforge.common.NeoForge;
+import net.minecraftforge.common.MinecraftForge;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -59,7 +59,7 @@ public class RenderHelper {
     }
 
     {
-        NeoForge.EVENT_BUS.addListener(ManagerEntryChangedEvent.class, e -> {
+        MinecraftForge.EVENT_BUS.<ManagerEntryChangedEvent>addListener(e -> {
             if (e.getManagerName().equals(ModelManager.class.getSimpleName()))
                 dfsModels.remove(e.getEntryName());
         });
@@ -69,14 +69,14 @@ public class RenderHelper {
         this.params = params;
         context.put("BackedModel", TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, params.isSolid(), params.texture()));
 
-        dfsModel(model).visit(params, context, BuiltInBrModelRenderVisitors.HIGH_SPEED_RENDER.get(), cast(infos), new DFSModel.StateMachine());
+        dfsModel(model).visit(params, context, BuiltInBrModelRenderVisitors.HIGH_SPEED_RENDER, cast(infos), new DFSModel.StateMachine());
 
         return INSTANCE;
     }
 
     public RenderHelper collectLocators(Model model, BoneRenderInfos infos) {
         if (params != null)
-            dfsModel(model).visit(params, context, BuiltInBrModelRenderVisitors.COLLECT_LOCATOR.get(), cast(infos), new DFSModel.StateMachine());
+            dfsModel(model).visit(params, context, BuiltInBrModelRenderVisitors.COLLECT_LOCATOR, cast(infos), new DFSModel.StateMachine());
         return this;
     }
 

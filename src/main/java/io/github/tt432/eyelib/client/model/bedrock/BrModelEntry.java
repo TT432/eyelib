@@ -3,14 +3,14 @@ package io.github.tt432.eyelib.client.model.bedrock;
 import com.google.gson.*;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.chin.codec.ChinExtraCodecs;
-import io.github.tt432.chin.util.Tuple;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.locator.GroupLocator;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.model.locator.ModelLocator;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
+import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
+import io.github.tt432.eyelib.util.codec.Tuple;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -33,7 +33,7 @@ public record BrModelEntry(
             Codec.STRING.fieldOf("name").forGetter(BrModelEntry::name),
             Codec.INT.fieldOf("textureWidth").forGetter(BrModelEntry::textureWidth),
             Codec.INT.fieldOf("textureHeight").forGetter(BrModelEntry::textureHeight),
-            ChinExtraCodecs.tuple(Vec3.CODEC, Vec3.CODEC).bmap(AABB::new, aabb -> Tuple.of(aabb.getMinPosition(), aabb.getMaxPosition())).fieldOf("visibleBox").forGetter(BrModelEntry::visibleBox),
+            ChinExtraCodecs.tuple(Vec3.CODEC, Vec3.CODEC).bmap(AABB::new, aabb -> Tuple.of(new Vec3(aabb.minX, aabb.minY, aabb.minZ), new Vec3(aabb.maxX, aabb.maxY, aabb.maxZ))).fieldOf("visibleBox").forGetter(BrModelEntry::visibleBox),
             Codec.unboundedMap(Codec.STRING, BrBone.CODEC).fieldOf("allBones").forGetter(BrModelEntry::allBones)
     ).apply(ins, (string, integer, integer2, aabb, allBones) -> {
         Object2ObjectOpenHashMap<String, BrBone> toplevelBones = new Object2ObjectOpenHashMap<>();

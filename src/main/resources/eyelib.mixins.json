@@ -3,14 +3,13 @@
   "minVersion": "0.8",
   "package": "io.github.tt432.eyelib.mixin",
   "compatibilityLevel": "JAVA_8",
+  "refmap": "eyelib.refmap.json",
   "mixins": [
   ],
   "client": [
-    "BufferBuilderMixin",
     "HumanoidModelMixin",
     "LivingEntityRendererAccessor",
-    "MultiPlayerGameModeMixin",
-    "VertexBufferMixin"
+    "MultiPlayerGameModeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

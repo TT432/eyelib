@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EyelibCodec {
     public static final Codec<Float> STR_FLOAT_CODEC =
-            Codec.withAlternative(Codec.FLOAT, Codec.STRING.xmap(Float::parseFloat, String::valueOf));
+            CodecHelper.withAlternative(Codec.FLOAT, Codec.STRING.xmap(Float::parseFloat, String::valueOf));
 
     public record CodecInfo<T>(Class<T> aClass, Codec<T> codec) {
     }
@@ -54,7 +54,7 @@ public class EyelibCodec {
             @Override
             public <T> DataResult<S> decode(DynamicOps<T> ops, MapLike<T> input) {
                 return input.entries()
-                        .map(p -> p.mapFirst(k -> ops.getStringValue(k).getOrThrow()))
+                        .map(p -> p.mapFirst(k -> ops.getStringValue(k).getOrThrow(false, IllegalArgumentException::new)))
                         .filter(p -> get().containsKey(p.getFirst()))
                         .findFirst()
                         .map(p -> get().get(p.getFirst()).fieldOf(p.getFirst()).decode(ops, input))

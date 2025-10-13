@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.util;
 
 import com.mojang.serialization.Codec;
+import io.github.tt432.eyelib.util.codec.CodecHelper;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import lombok.AccessLevel;
@@ -68,7 +69,7 @@ public sealed class ImmutableFloatTreeMap<V> {
     }
 
     public static <V> Codec<ImmutableFloatTreeMap<V>> dispatched(Function<Float, Codec<V>> valueCodec) {
-        return Codec.dispatchedMap(Codec.STRING, s -> valueCodec.apply(Float.parseFloat(s)))
+        return CodecHelper.dispatchedMap(Codec.STRING, s -> valueCodec.apply(Float.parseFloat(s)))
                 .xmap(map -> {
                     Map<Float, V> newMap = new HashMap<>();
                     map.forEach((k, v) -> newMap.put(Float.parseFloat(k), v));
