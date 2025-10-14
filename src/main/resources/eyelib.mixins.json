@@ -4,13 +4,15 @@
   "package": "io.github.tt432.eyelib.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "attachable.IClientItemExtensionsMixin"
   ],
   "client": [
     "BufferBuilderMixin",
     "HumanoidModelMixin",
     "LivingEntityRendererAccessor",
     "MultiPlayerGameModeMixin",
-    "VertexBufferMixin"
+    "VertexBufferMixin",
+    "attachable.AbstractContainerScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

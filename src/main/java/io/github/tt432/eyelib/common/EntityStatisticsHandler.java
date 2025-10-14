@@ -21,6 +21,7 @@ public class EntityStatisticsHandler {
         var z = pos.z - entity.zo;
         EntityStatistics data = entity.getData(EyelibAttachableData.ENTITY_STATISTICS);
         entity.setData(EyelibAttachableData.ENTITY_STATISTICS,
-                data.withDistanceWalked(data.distanceWalked() + (float) Math.sqrt(x * x + z * z)));
+                data.withPreDistanceWalked(data.distanceWalked())
+                        .withDistanceWalked(data.distanceWalked() + (float) Math.sqrt(x * x + z * z)));
     }
 }

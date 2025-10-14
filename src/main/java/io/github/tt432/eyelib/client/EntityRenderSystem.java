@@ -35,6 +35,7 @@ import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -42,6 +43,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.Bee;
 import net.minecraft.world.entity.animal.horse.Llama;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.WoolCarpetBlock;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -52,11 +55,13 @@ import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /**
  * @author TT432
@@ -80,6 +85,7 @@ public class EntityRenderSystem {
 
     // 保证在渲染线程上执行
     private static Boolean _canUseHighSpeedRender = null;
+
     private static boolean canUseHighSpeedRender() {
         if (_canUseHighSpeedRender == null) {
             _canUseHighSpeedRender = EyelibClient.supportComputeShader();
@@ -131,9 +137,12 @@ public class EntityRenderSystem {
 
         setupExtraMolang(entity, cap);
 
-        var rendered = renderComponents(event.getMultiBufferSource(), event.getPoseStack(), event.getPackedLight(),
-                LivingEntityRenderer.getOverlayCoords(entity, ((LivingEntityRendererAccessor) (event.getRenderer())).callGetWhiteOverlayProgress(entity, event.getPartialTick())),
-                event.getPartialTick(), entity, cap, components, tickedInfos, effects);
+        int overlay = LivingEntityRenderer.getOverlayCoords(entity, ((LivingEntityRendererAccessor) (event.getRenderer())).callGetWhiteOverlayProgress(entity, event.getPartialTick()));
+        int light = event.getPackedLight();
+        var rendered = renderComponents(event.getMultiBufferSource(), event.getPoseStack(), light, overlay,
+                event.getPartialTick(), entity, cap, components, tickedInfos, effects, helper -> {
+                    renderItemInHand(helper, event.getMultiBufferSource(), entity, light);
+                });
         if (rendered) {
             event.setCanceled(true);
         }
@@ -141,10 +150,47 @@ public class EntityRenderSystem {
         scope.remove("variable.partial_tick");
     }
 
-    public static boolean renderComponents(MultiBufferSource multiBufferSource, PoseStack poseStack,
-                                           int packedLight, int overlay, float partialTick,
-                                           @Nullable LivingEntity entity, RenderData<Object> cap, List<ModelComponent> components,
-                                           BoneRenderInfos tickedInfos, AnimationEffects effects) {
+    private static void renderItemInHand(RenderHelper helper, MultiBufferSource bufferSource, LivingEntity renderTarget, int light) {
+        PoseStack poseStack1 = new PoseStack();
+        Map<String, Matrix4f> locators = helper.getContext().get("locators");
+        var offHandPose = locators.get("off_hand");
+        if (offHandPose != null) {
+            poseStack1.poseStack.addLast(new PoseStack.Pose(offHandPose, new Matrix3f().identity()));
+            ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.OFF_HAND);
+            AttchableHandler.setRenderingHandItem(renderTarget, InteractionHand.OFF_HAND, itemInHand);
+            renderHandItem(bufferSource, renderTarget, itemInHand, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, light, poseStack1);
+            AttchableHandler.clearRenderingHandItem();
+        }
+
+        var mainHandPose = locators.get("main_hand");
+        if (mainHandPose != null) {
+            poseStack1.poseStack.addLast(new PoseStack.Pose(mainHandPose, new Matrix3f().identity()));
+            ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.MAIN_HAND);
+            AttchableHandler.setRenderingHandItem(renderTarget, InteractionHand.MAIN_HAND, itemInHand);
+            renderHandItem(bufferSource, renderTarget, itemInHand, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, light, poseStack1);
+            AttchableHandler.clearRenderingHandItem();
+        }
+    }
+
+    private static void renderHandItem(MultiBufferSource bufferSource, LivingEntity le, ItemStack item, ItemDisplayContext context,
+                                       int light, PoseStack poseStack) {
+        poseStack.pushPose();
+
+        if (!item.isEmpty()) {
+            poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            poseStack.translate(0, 0.125, -0.125);
+            Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer()
+                    .renderItem(le, item, context, true, poseStack, bufferSource, light);
+        }
+
+        poseStack.popPose();
+    }
+
+    public static <T> boolean renderComponents(MultiBufferSource multiBufferSource, PoseStack poseStack,
+                                               int packedLight, int overlay, float partialTick,
+                                               @Nullable LivingEntity entity, RenderData<T> cap, List<ModelComponent> components,
+                                               BoneRenderInfos tickedInfos, AnimationEffects effects, Consumer<RenderHelper> consumer) {
         AtomicBoolean rendered = new AtomicBoolean(false);
         ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
         components.forEach(modelComponent -> {
@@ -200,6 +246,8 @@ public class EntityRenderSystem {
                                 data.emitter().initPose(locators.get(data.locator()), entity);
                             }
                         }
+
+                        consumer.accept(renderHelper);
                     }
                 }
 
@@ -234,7 +282,7 @@ public class EntityRenderSystem {
         return rendered.get();
     }
 
-    private static void setupExtraMolang(LivingEntity entity, RenderData<?> cap) {
+    public static void setupExtraMolang(LivingEntity entity, RenderData<?> cap) {
         if (entity instanceof Llama llama) {
             if (llama.getBodyArmorItem().getItem() instanceof BlockItem bi && bi.getBlock() instanceof WoolCarpetBlock wc) {
                 cap.getScope().set("variable.decortextureindex", wc.getColor().getId() + 1);
@@ -244,7 +292,7 @@ public class EntityRenderSystem {
         }
     }
 
-    private static @NotNull List<ModelComponent> setupClientEntity(LivingEntity entity, ClientEntityComponent clientEntityComponent, RenderData<?> cap) {
+    public static @NotNull List<ModelComponent> setupClientEntity(LivingEntity entity, ClientEntityComponent clientEntityComponent, RenderData<?> cap) {
         BrClientEntity clientEntity = Eyelib.getClientEntityLoader().get(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()));
 
         BrClientEntity oldEntity = clientEntityComponent.getClientEntity();

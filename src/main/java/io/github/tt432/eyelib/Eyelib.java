@@ -2,6 +2,7 @@ package io.github.tt432.eyelib;
 
 import io.github.tt432.eyelib.capability.ExtraEntityData;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
+import io.github.tt432.eyelib.client.loader.BrAttachableLoader;
 import io.github.tt432.eyelib.client.loader.BrClientEntityLoader;
 import io.github.tt432.eyelib.client.manager.*;
 import io.github.tt432.eyelib.client.render.RenderHelper;
@@ -50,5 +51,9 @@ public class Eyelib {
 
     public static BrClientEntityLoader getClientEntityLoader() {
         return BrClientEntityLoader.INSTANCE;
+    }
+
+    public static BrAttachableLoader getAttachableLoader() {
+        return BrAttachableLoader.INSTANCE;
     }
 }
