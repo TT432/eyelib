@@ -1,7 +1,5 @@
 package io.github.tt432.eyelib.client.render.visitor;
 
-import com.github.argon4w.acceleratedrendering.AcceleratedRenderingModEntry;
-import com.github.argon4w.acceleratedrendering.core.CoreFeature;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
