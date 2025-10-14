@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.render.visitor;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.tt432.eyelib.client.compat.ar.ARCompat;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.bake.BakedModel;
@@ -50,6 +51,10 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
         });
 
         if (render.get()) {
+            if (ARCompat.AR_INSTALLED && ARCompat.renderWithAR(bakedBone, renderParams)) {
+                return;
+            }
+
             if (renderParams.consumer() instanceof LazyComputeBufferBuilder lazy && lazy.getEyelib$helper() != null) {
                 VertexComputeHelper helper = lazy.getEyelib$helper();
                 helper.pushTransform(last.pose(), last.normal(), 0xFF_FF_FF_FF, renderParams.overlay(), renderParams.light());
