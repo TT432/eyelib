@@ -9,28 +9,28 @@ import lombok.experimental.ExtensionMethod;
 
 @ExtensionMethod(VertexConsumerExtension.class)
 public class ARCompatImpl {
-	public static boolean renderWithAR(BakedModel.BakedBone bakedBone, RenderParams params) {
-		var extension = params.consumer().getAccelerated();
-		var pose = params.poseStack().last();
+    public static boolean renderWithAR(BakedModel.BakedBone bakedBone, RenderParams params) {
+        var extension = params.consumer().getAccelerated();
+        var pose = params.poseStack().last();
 
-		if (AcceleratedEntityRenderingFeature.isEnabled()
-				&& AcceleratedEntityRenderingFeature.shouldUseAcceleratedPipeline()
-				&& (CoreFeature.isRenderingLevel() || (CoreFeature.isRenderingGui() && AcceleratedEntityRenderingFeature.shouldAccelerateInGui()))
-				&& extension.isAccelerated()
-		) {
-			extension.doRender(
-					AcceleratedBakedBoneRenderer.INSTANCE,
-					bakedBone,
-					pose	.pose	(),
-					pose	.normal	(),
-					params	.light	(),
-					params	.overlay(),
-					-1
-			);
+        if (AcceleratedEntityRenderingFeature.isEnabled()
+                && AcceleratedEntityRenderingFeature.shouldUseAcceleratedPipeline()
+                && (CoreFeature.isRenderingLevel() || (CoreFeature.isRenderingGui() && AcceleratedEntityRenderingFeature.shouldAccelerateInGui()))
+                && extension.isAccelerated()
+        ) {
+            extension.doRender(
+                    AcceleratedBakedBoneRenderer.INSTANCE,
+                    bakedBone,
+                    pose.pose(),
+                    pose.normal(),
+                    params.light(),
+                    params.overlay(),
+                    -1
+            );
 
-			return true;
-		} else {
-			return false;
-		}
-	}
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

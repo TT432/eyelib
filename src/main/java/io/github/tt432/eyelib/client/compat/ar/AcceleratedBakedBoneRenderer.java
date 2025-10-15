@@ -18,66 +18,47 @@ import java.util.Map;
 
 @ExtensionMethod(VertexConsumerExtension.class)
 public class AcceleratedBakedBoneRenderer implements IAcceleratedRenderer<BakedModel.BakedBone> {
-	public static final AcceleratedBakedBoneRenderer INSTANCE = new AcceleratedBakedBoneRenderer();
+    public static final AcceleratedBakedBoneRenderer INSTANCE = new AcceleratedBakedBoneRenderer();
 
-	private final Map<BakedModel.BakedBone, Map<IBufferGraph, IMesh>> boneMeshes = new Reference2ObjectOpenHashMap<>();
+    private final Map<BakedModel.BakedBone, Map<IBufferGraph, IMesh>> boneMeshes = new Reference2ObjectOpenHashMap<>();
 
-	@Override
-	public void render(VertexConsumer vertexConsumer, BakedModel.BakedBone bakedBone, Matrix4f transform, Matrix3f normal, int light, int overlay, int color) {
-		var extension = vertexConsumer.getAccelerated();
-		var meshes = boneMeshes.get(bakedBone);
+    @Override
+    public void render(VertexConsumer vertexConsumer, BakedModel.BakedBone bakedBone, Matrix4f transform, Matrix3f normal, int light, int overlay, int color) {
+        var extension = vertexConsumer.getAccelerated();
 
-		extension.beginTransform(transform, normal);
+        extension.beginTransform(transform, normal);
 
-		if (meshes == null) {
-			meshes = new Object2ObjectOpenHashMap<>();
-			boneMeshes.put(bakedBone, meshes);
-		}
+        boneMeshes
+                .computeIfAbsent(bakedBone, b -> new Object2ObjectOpenHashMap<>())
+                .computeIfAbsent(extension, c -> {
+            var culledMeshCollector = new CulledMeshCollector(extension);
+            var meshBuilder = extension.decorate(culledMeshCollector);
 
-		var mesh = meshes.get(extension);
+            for (int nIdx = 0; nIdx < bakedBone.vertexSize(); nIdx++) {
+                meshBuilder.addVertex(
+                        bakedBone.position()[nIdx * 3],
+                        bakedBone.position()[nIdx * 3 + 1],
+                        bakedBone.position()[nIdx * 3 + 2],
+                        0xFF_FF_FF_FF, bakedBone.u()[nIdx], bakedBone.v()[nIdx], overlay, 0,
+                        bakedBone.normal()[nIdx * 3],
+                        bakedBone.normal()[nIdx * 3 + 1],
+                        bakedBone.normal()[nIdx * 3 + 2]
+                );
+            }
 
-		if (mesh != null) {
-			mesh.write(
-					extension,
-					color,
-					light,
-					overlay
-			);
+            culledMeshCollector.flush();
 
-			extension.endTransform();
-			return;
-		}
+            return AcceleratedEntityRenderingFeature
+                    .getMeshType()
+                    .getBuilder()
+                    .build(culledMeshCollector);
+        }).write(
+                extension,
+                color,
+                light,
+                overlay
+        );
 
-		var culledMeshCollector = new CulledMeshCollector(extension);
-		var meshBuilder = extension.decorate(culledMeshCollector);
-
-		for (int nIdx = 0; nIdx < bakedBone.vertexSize(); nIdx ++) {
-			meshBuilder.addVertex(
-					bakedBone.position()[nIdx * 3],
-					bakedBone.position()[nIdx * 3 + 1],
-					bakedBone.position()[nIdx * 3 + 2],
-					0xFF_FF_FF_FF, bakedBone.u()[nIdx], bakedBone.v()[nIdx], overlay, 0,
-					bakedBone.normal()[nIdx * 3],
-					bakedBone.normal()[nIdx * 3 + 1],
-					bakedBone.normal()[nIdx * 3 + 2]
-			);
-		}
-
-		culledMeshCollector.flush();
-
-		mesh = AcceleratedEntityRenderingFeature
-				.getMeshType()
-				.getBuilder()
-				.build(culledMeshCollector);
-
-		meshes.put(extension, mesh);
-		mesh.write(
-				extension,
-				color,
-				light,
-				overlay
-		);
-
-		extension.endTransform();
-	}
+        extension.endTransform();
+    }
 }
