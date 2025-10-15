@@ -31,33 +31,34 @@ public class AcceleratedBakedBoneRenderer implements IAcceleratedRenderer<BakedM
         boneMeshes
                 .computeIfAbsent(bakedBone, b -> new Object2ObjectOpenHashMap<>())
                 .computeIfAbsent(extension, c -> {
-            var culledMeshCollector = new CulledMeshCollector(extension);
-            var meshBuilder = extension.decorate(culledMeshCollector);
+                    var culledMeshCollector = new CulledMeshCollector(extension);
+                    var meshBuilder = extension.decorate(culledMeshCollector);
 
-            for (int nIdx = 0; nIdx < bakedBone.vertexSize(); nIdx++) {
-                meshBuilder.addVertex(
-                        bakedBone.position()[nIdx * 3],
-                        bakedBone.position()[nIdx * 3 + 1],
-                        bakedBone.position()[nIdx * 3 + 2],
-                        0xFF_FF_FF_FF, bakedBone.u()[nIdx], bakedBone.v()[nIdx], overlay, 0,
-                        bakedBone.normal()[nIdx * 3],
-                        bakedBone.normal()[nIdx * 3 + 1],
-                        bakedBone.normal()[nIdx * 3 + 2]
+                    for (int nIdx = 0; nIdx < bakedBone.vertexSize(); nIdx++) {
+                        meshBuilder.vertex(
+                                bakedBone.position()[nIdx * 3],
+                                bakedBone.position()[nIdx * 3 + 1],
+                                bakedBone.position()[nIdx * 3 + 2],
+                                1, 1, 1, 1,
+                                bakedBone.u()[nIdx], bakedBone.v()[nIdx], overlay, 0,
+                                bakedBone.normal()[nIdx * 3],
+                                bakedBone.normal()[nIdx * 3 + 1],
+                                bakedBone.normal()[nIdx * 3 + 2]
+                        );
+                    }
+
+                    culledMeshCollector.flush();
+
+                    return AcceleratedEntityRenderingFeature
+                            .getMeshType()
+                            .getBuilder()
+                            .build(culledMeshCollector);
+                }).write(
+                        extension,
+                        color,
+                        light,
+                        overlay
                 );
-            }
-
-            culledMeshCollector.flush();
-
-            return AcceleratedEntityRenderingFeature
-                    .getMeshType()
-                    .getBuilder()
-                    .build(culledMeshCollector);
-        }).write(
-                extension,
-                color,
-                light,
-                overlay
-        );
 
         extension.endTransform();
     }
