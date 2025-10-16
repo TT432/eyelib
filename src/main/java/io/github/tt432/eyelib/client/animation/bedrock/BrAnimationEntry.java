@@ -154,6 +154,7 @@ public record BrAnimationEntry(
         public float deltaTime;
 
         private Data resetEffects() {
+            effects.clear();
             effects.add(soundEffects.runtime());
             effects.add(particleEffects.runtime());
             effects.add(timeline.runtime());
