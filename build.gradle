@@ -133,6 +133,8 @@ dependencies {
     compileOnly("maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha")
 
     jarJar additionalRuntimeClasspath(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))
+// https://mvnrepository.com/artifact/com.h2database/h2
+    jarJar additionalRuntimeClasspath(implementation('com.h2database:h2:2.4.240'))
     compileOnly 'org.jetbrains:annotations:26.0.2'
 
     compileOnly(annotationProcessor('io.github.llamalad7:mixinextras-common:0.5.0'))

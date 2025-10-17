@@ -9,6 +9,7 @@ import io.github.tt432.eyelib.util.codec.CodecHelper;
 import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
 import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +29,16 @@ public record MolangValue(
         MolangFunction NULL = s -> MolangNull.INSTANCE;
 
         MolangObject apply(@NotNull MolangScope scope);
+    }
+
+    @AllArgsConstructor
+    public static class ConstMolangFunction implements MolangFunction {
+        MolangObject molangObject;
+
+        @Override
+        public MolangObject apply(@NotNull MolangScope scope) {
+            return molangObject;
+        }
     }
 
     public MolangValue(@NotNull String context) {
@@ -68,7 +79,7 @@ public record MolangValue(
         } catch (Throwable e) {
             log.error("molang: {}", context, e);
             String name = method.getClass().getSimpleName();
-            byte[] bytes = MolangCompileHandler.getClassCache().get(name).bytecode();
+            byte[] bytes = MolangCompileHandler.cache.getClassInfoByClassName(name).bytecode();
             if (bytes != null) MolangCompileHandler.exportClass(name, bytes);
 
             return MolangNull.INSTANCE;
