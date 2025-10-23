@@ -16,14 +16,11 @@ tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
-version = "${mod_version}+${minecraft_version}-neoforge"
+version = "${mod_version}+${minecraft_version}-forge"
 group = mod_group_id
 
 repositories {
     mavenCentral()
-    maven {
-        url = "https://api.modrinth.com/maven"
-    }
     mavenLocal()
     exclusiveContent {
         forRepository {
@@ -133,7 +130,7 @@ obfuscation {
 }
 
 dependencies {
-    implementation("maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha")
+    compileOnly("maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha")
 
     jarJar additionalRuntimeClasspath(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))
     compileOnly 'org.jetbrains:annotations:26.0.2'
