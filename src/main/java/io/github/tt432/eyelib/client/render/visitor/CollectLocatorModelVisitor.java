@@ -16,6 +16,11 @@ import java.util.Map;
  */
 public class CollectLocatorModelVisitor extends ModelVisitor {
     @Override
+    public void visitCube(RenderParams renderParams, ModelVisitContext context, Model.Cube cube) {
+
+    }
+
+    @Override
     public <R extends ModelRuntimeData<Model.Bone, ?, R>> void visitLocator(RenderParams renderParams, ModelVisitContext context, Model.Bone bone, LocatorEntry locator, R data, ModelTransformer<Model.Bone, R> transformer) {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();

@@ -4,6 +4,7 @@ import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.bedrock.BrBone;
 import io.github.tt432.eyelib.client.model.transformer.BedrockTransformer;
 import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
+import it.unimi.dsi.fastutil.Function;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -28,11 +29,12 @@ public class BoneRenderInfos implements ModelRuntimeData<BrBone, BoneRenderInfoE
         infos.putAll(other.infos);
     }
 
+    private static final Function<String, BoneRenderInfoEntry> FUNC = s -> new BoneRenderInfoEntry();
+
     @Override
     @NotNull
     public BoneRenderInfoEntry getData(String key) {
-        if (!infos.containsKey(key)) infos.put(key, new BoneRenderInfoEntry());
-        return infos.get(key);
+        return infos.computeIfAbsent(key, FUNC);
     }
 
     @Override

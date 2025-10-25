@@ -8,9 +8,12 @@ import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.util.math.EyeMath;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.joml.*;
 
+import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author TT432
@@ -49,7 +52,7 @@ public class ModelVisitor {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();
 
-        applyBoneTranslate(poseStack, group, cast(data), transformer);
+        applyBoneTranslate(context, poseStack, group, cast(data), transformer);
     }
 
     public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitPostBone(RenderParams renderParams, ModelVisitContext context,
@@ -101,24 +104,34 @@ public class ModelVisitor {
     }
 
     protected static <R extends ModelRuntimeData<Model.Bone, ?, R>> void applyBoneTranslate(
-            PoseStack poseStack, Model.Bone model, R data, ModelTransformer<Model.Bone, R> transformer
+            ModelVisitContext context, PoseStack poseStack, Model.Bone model, R data, ModelTransformer<Model.Bone, R> transformer
     ) {
-        PoseStack.Pose last = poseStack.last();
-        Matrix4f pose = last.pose();
+        context.<Map<String, PoseStack.Pose>>orCreate("bones", new Object2ObjectOpenHashMap<>()).compute(model.name(), (n, pose) -> {
+            if (pose == null) {
+                PoseStack.Pose last = poseStack.last();
+                Matrix4f m4 = last.pose();
 
-        pose.translate(transformer.position(model, data));
+                m4.translate(transformer.position(model, data));
 
-        var renderPivot = transformer.pivot(model, data);
-        pose.translate(renderPivot);
+                var renderPivot = transformer.pivot(model, data);
+                m4.translate(renderPivot);
 
-        var rotation = transformer.rotation(model, data);
+                var rotation = transformer.rotation(model, data);
 
-        last.normal().rotateZYX(rotation.z(), rotation.y(), rotation.x());
-        last.pose().rotateZYX(rotation.z(), rotation.y(), rotation.x());
+                last.normal().rotateZYX(rotation.z(), rotation.y(), rotation.x());
+                m4.rotateZYX(rotation.z(), rotation.y(), rotation.x());
 
-        var scale = transformer.scale(model, data);
-        poseStack.scale(scale.x(), scale.y(), scale.z());
+                var scale = transformer.scale(model, data);
+                poseStack.scale(scale.x(), scale.y(), scale.z());
 
-        pose.translate(-renderPivot.x(), -renderPivot.y(), -renderPivot.z());
+                m4.translate(-renderPivot.x(), -renderPivot.y(), -renderPivot.z());
+                return last.copy();
+            } else {
+                Deque<PoseStack.Pose> stack = poseStack.poseStack;
+                stack.removeLast();
+                stack.addLast(pose);
+                return pose;
+            }
+        });
     }
 }

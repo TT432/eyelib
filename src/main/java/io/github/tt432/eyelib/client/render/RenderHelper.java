@@ -7,7 +7,6 @@ import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.bake.TwoSideModelBakeInfo;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
-import io.github.tt432.eyelib.client.render.visitor.CollectBoneTransformModelVisitor;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import lombok.Getter;
@@ -77,12 +76,6 @@ public class RenderHelper {
     public RenderHelper collectLocators(Model model, BoneRenderInfos infos) {
         if (params != null)
             dfsModel(model).visit(params, context, BuiltInBrModelRenderVisitors.COLLECT_LOCATOR, cast(infos), new DFSModel.StateMachine());
-        return this;
-    }
-
-    public RenderHelper collectBoneTransform(Model model, BoneRenderInfos infos, String boneName) {
-        if (params != null)
-            dfsModel(model).visit(params, context, new CollectBoneTransformModelVisitor(boneName), cast(infos), new DFSModel.StateMachine());
         return this;
     }
 
