@@ -37,7 +37,7 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();
 
-        applyBoneTranslate(poseStack, group, cast(data), transformer);
+        applyBoneTranslate(context, poseStack, group, cast(data), transformer);
 
         var bakedBone = context.<BakedModel>get("BackedModel").bones().get(group.name());
 
