@@ -48,6 +48,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.WoolCarpetBlock;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -88,7 +89,7 @@ public class EntityRenderSystem {
 
     private static boolean canUseHighSpeedRender() {
         if (_canUseHighSpeedRender == null) {
-            _canUseHighSpeedRender = EyelibClient.supportComputeShader();
+            _canUseHighSpeedRender = EyelibClient.supportComputeShader() && !ModList.get().isLoaded("iris");
         }
         return _canUseHighSpeedRender;
     }
