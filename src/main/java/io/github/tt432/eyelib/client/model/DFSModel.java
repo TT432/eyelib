@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.AllArgsConstructor;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import org.joml.Matrix3f;
@@ -24,7 +25,7 @@ import java.util.regex.Pattern;
 public record DFSModel(
         List<Frame<?>> frames
 ) {
-    public <D extends ModelRuntimeData<? extends Model.Bone, ?, D>> void visit(RenderParams params, ModelVisitContext context,ModelVisitor visitor, D infos, StateMachine stateMachine) {
+    public <D extends ModelRuntimeData<? extends Model.Bone, ?, D>> void visit(RenderParams params, ModelVisitContext context, ModelVisitor visitor, D infos, StateMachine stateMachine) {
         for (int i = 0; i < frames.size(); i++) {
             frames.get(i).visit(params, context, visitor, cast(infos), stateMachine);
         }
@@ -112,16 +113,16 @@ public record DFSModel(
         private final GroupLocator groupLocator;
         private final ModelTransformer<Model.Bone, D> transformer;
 
+        private static final Object2ObjectOpenHashMap<String, Object2BooleanOpenHashMap<String>> partVisibilityCache = new Object2ObjectOpenHashMap<>();
+
         @Override
         public void visit(RenderParams params, ModelVisitContext context, ModelVisitor visitor, D infos, StateMachine stateMachine) {
             visitor.visitPreBone(params, context, group, infos, groupLocator, transformer);
 
-            AtomicBoolean render = new AtomicBoolean(params.partVisibility().isEmpty());
-            params.partVisibility().forEach((k, v) -> {
-                if (!Pattern.compile(k.replace("*", ".*")).matcher(group.name()).matches() || v) {
-                    render.set(true);
-                }
-            });
+            AtomicBoolean render = new AtomicBoolean(false);
+            params.partVisibility().forEach((k, v) ->
+                    render.set(partVisibilityCache.computeIfAbsent(k, __ -> new Object2BooleanOpenHashMap<>())
+                            .computeIfAbsent(group.name(), ___ -> !Pattern.compile(k.replace("*", ".*")).matcher(group.name()).matches() || v)));
             stateMachine.render = render.get();
         }
     }
