@@ -85,6 +85,68 @@ public sealed class ImmutableFloatTreeMap<V> {
 
     private final float[] sortedKeys;
     private final Float2ObjectOpenHashMap<V> data;
+    // .01s 索引参数与缓存（直接缓存 V[] 结果）
+    private static final int INDEX_SCALE = 100;
+    private final int indexStartSlot;
+    private final int indexEndSlot;
+    private final V[] floorValueBySlot;
+    private final V[] lowerValueBySlot;
+    private final V[] higherValueBySlot;
+    private final V firstValue;
+    private final V lastValue;
+
+    private static int toSlot(float value) {
+        return (int) (value * INDEX_SCALE);
+    }
+
+    @SuppressWarnings("unchecked")
+    private ImmutableFloatTreeMap(float[] sortedKeys, Float2ObjectOpenHashMap<V> data) {
+        this.sortedKeys = sortedKeys;
+        this.data = data;
+
+        if (sortedKeys.length == 0) {
+            this.indexStartSlot = 0;
+            this.indexEndSlot = -1;
+            this.floorValueBySlot = null;
+            this.lowerValueBySlot = null;
+            this.higherValueBySlot = null;
+            this.firstValue = null;
+            this.lastValue = null;
+            return;
+        }
+
+        this.indexStartSlot = toSlot(sortedKeys[0]);
+        this.indexEndSlot = toSlot(sortedKeys[sortedKeys.length - 1]);
+        int len = indexEndSlot - indexStartSlot + 1;
+        this.floorValueBySlot = (V[]) new Object[len];
+        this.lowerValueBySlot = (V[]) new Object[len];
+        this.higherValueBySlot = (V[]) new Object[len];
+        this.firstValue = data.get(sortedKeys[0]);
+        this.lastValue = data.get(sortedKeys[sortedKeys.length - 1]);
+
+        int fi = -1;
+        int keyIdx = 0;
+        for (int s = indexStartSlot; s <= indexEndSlot; s++) {
+            float threshold = s / (float) INDEX_SCALE;
+            while (keyIdx < sortedKeys.length && sortedKeys[keyIdx] <= threshold) {
+                fi = keyIdx;
+                keyIdx++;
+            }
+            int arrIndex = s - indexStartSlot;
+            if (fi >= 0) {
+                V floorVal = data.get(sortedKeys[fi]);
+                this.floorValueBySlot[arrIndex] = floorVal;
+                int lowerIdx = (toSlot(sortedKeys[fi]) == s) ? (fi - 1) : fi;
+                this.lowerValueBySlot[arrIndex] = lowerIdx >= 0 ? data.get(sortedKeys[lowerIdx]) : null;
+                int hi = fi + 1;
+                this.higherValueBySlot[arrIndex] = hi < sortedKeys.length ? data.get(sortedKeys[hi]) : null;
+            } else {
+                this.floorValueBySlot[arrIndex] = null;
+                this.lowerValueBySlot[arrIndex] = null;
+                this.higherValueBySlot[arrIndex] = sortedKeys.length > 0 ? data.get(sortedKeys[0]) : null;
+            }
+        }
+    }
 
     public static <V> ImmutableFloatTreeMap<V> of(float[] sortedKeys, Float2ObjectOpenHashMap<V> data) {
         if (sortedKeys.length == 0) return empty();
@@ -96,51 +158,26 @@ public sealed class ImmutableFloatTreeMap<V> {
     }
 
     public V floorEntry(float currentTick) {
-        int index = Arrays.binarySearch(sortedKeys, currentTick);
-
-        if (index >= 0) {
-            return data.get(sortedKeys[index]);
-        } else {
-            int closestBeforeIndex = -index - 2;
-
-            if (closestBeforeIndex >= 0) {
-                return data.get(sortedKeys[closestBeforeIndex]);
-            }
-        }
-
-        return null;
+        if (sortedKeys.length == 0) return null;
+        int slot = toSlot(currentTick);
+        if (slot < indexStartSlot) return null;
+        if (slot > indexEndSlot) return lastValue;
+        return floorValueBySlot[slot - indexStartSlot];
     }
 
     public V lowerEntry(float tick) {
-        int index = Arrays.binarySearch(sortedKeys, tick);
-
-        if (index >= 0) {
-            if (index - 1 >= 0)
-                return data.get(sortedKeys[index - 1]);
-        } else {
-            int closestBeforeIndex = -index - 2;
-
-            if (closestBeforeIndex >= 0) {
-                return data.get(sortedKeys[closestBeforeIndex]);
-            }
-        }
-
-        return null;
+        if (sortedKeys.length == 0) return null;
+        int slot = toSlot(tick);
+        if (slot < indexStartSlot) return null;
+        if (slot > indexEndSlot) return lastValue;
+        return lowerValueBySlot[slot - indexStartSlot];
     }
 
     public V higherEntry(float currentTick) {
-        int index = Arrays.binarySearch(sortedKeys, currentTick);
-
-        if (index >= 0) {
-            if (index + 1 < data.size())
-                return data.get(sortedKeys[index + 1]);
-        } else {
-            index = -index - 1;
-
-            if (index < data.size())
-                return data.get(sortedKeys[index]);
-        }
-
-        return null;
+        if (sortedKeys.length == 0) return null;
+        int slot = toSlot(currentTick);
+        if (slot < indexStartSlot) return firstValue;
+        if (slot > indexEndSlot) return null;
+        return higherValueBySlot[slot - indexStartSlot];
     }
 }
