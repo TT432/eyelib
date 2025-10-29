@@ -20,8 +20,23 @@ public record BrClientEntity(
         Map<String, String> particle_effects,
         Map<String, String> sound_effects,
         List<String> render_controllers,
-        Optional<BrClientEntityScripts> scripts
+        Optional<BrClientEntityScripts> scripts,
+        ClientEntityRuntimeData clientEntityRuntimeData
 ) {
+    public BrClientEntity(
+            String identifier,
+            Map<String, String> materials,
+            Map<String, String> textures,
+            Map<String, String> geometry,
+            Map<String, String> animations,
+            Map<String, String> particle_effects,
+            Map<String, String> sound_effects,
+            List<String> render_controllers,
+            Optional<BrClientEntityScripts> scripts
+    ) {
+        this(identifier, materials, textures, geometry, animations, particle_effects, sound_effects, render_controllers, scripts, new ClientEntityRuntimeData());
+    }
+
     public static final Codec<BrClientEntity> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             RecordCodecBuilder.<BrClientEntity>create(ins1 -> ins1.group(
                     RecordCodecBuilder.<BrClientEntity>create(ins2 -> ins2.group(

@@ -15,8 +15,6 @@ import io.github.tt432.eyelib.compute.VertexComputeHelper;
 import io.github.tt432.eyelib.util.client.BufferBuilders;
 import lombok.Setter;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 /**
  * @author TT432
  */
@@ -42,15 +40,7 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
 
         PoseStack.Pose last = poseStack.last();
 
-        AtomicBoolean render = new AtomicBoolean(true);
-        // todo 删除
-//        renderParams.partVisibility().forEach((k, v) -> {
-//            if (!Pattern.compile(k.replace("*", ".*")).matcher(group.id()).matches() || v) {
-//                render.set(true);
-//            }
-//        });
-
-        if (render.get()) {
+        if (renderParams.partVisibility().getOrDefault(group.id(), true)) {
             if (ARCompat.AR_INSTALLED && ARCompat.renderWithAR(bakedBone, renderParams)) {
                 return;
             }

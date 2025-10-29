@@ -16,8 +16,6 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
 
 /**
  * @author TT432
@@ -26,6 +24,8 @@ public interface Model {
     String name();
 
     Int2ObjectMap<? extends Bone> toplevelBones();
+
+    Int2ObjectMap<? extends Bone> allBones();
 
     ModelRuntimeData<?, ?, ?> data();
 
@@ -76,15 +76,7 @@ public interface Model {
                 });
             }
 
-            AtomicBoolean render = new AtomicBoolean(params.partVisibility().isEmpty());
-            // todo 删除这部分
-            params.partVisibility().forEach((k, v) -> {
-                if (!Pattern.compile(k.replace("*", ".*")).matcher(GlobalBoneIdHandler.get(id())).matches() || v) {
-                    render.set(true);
-                }
-            });
-
-            if (render.get()) {
+            if (params.partVisibility().getOrDefault(id(), true)) {
                 for (int i = 0; i < cubes().size(); i++) {
                     cubes().get(i).accept(params, context, visitor);
                 }

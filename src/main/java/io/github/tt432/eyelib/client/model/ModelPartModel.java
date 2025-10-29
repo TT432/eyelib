@@ -23,11 +23,13 @@ public record ModelPartModel(
         String name,
         ModelPart modelPart,
         ModelLocator locator,
-        Int2ObjectMap<Bone> toplevelBones
+        Int2ObjectMap<Bone> toplevelBones,
+        Int2ObjectMap<Bone> allBones
 ) implements Model {
     public ModelPartModel(String name, ModelPart modelPart, ModelLocator locator) {
-        this(name, modelPart, locator, new Int2ObjectOpenHashMap<>());
+        this(name, modelPart, locator, new Int2ObjectOpenHashMap<>(), new Int2ObjectOpenHashMap<>());
         modelPart.children.forEach((k, v) -> toplevelBones.put(GlobalBoneIdHandler.get(k), new Bone(k, v)));
+        toplevelBones.values().forEach(b -> b.add(allBones));
     }
 
     @Override
@@ -72,6 +74,11 @@ public record ModelPartModel(
             this(GlobalBoneIdHandler.get(name), modelPart, new ArrayList<>(), new Int2ObjectOpenHashMap<>());
             modelPart.cubes.forEach(c -> cubes.add(new Cube(c)));
             modelPart.children.forEach((k, v) -> children.put(GlobalBoneIdHandler.get(k), new Bone(k, v)));
+        }
+
+        public void add(Int2ObjectMap<Bone> bones) {
+            bones.put(id, this);
+            children.values().forEach(e -> e.add(bones));
         }
 
         @Override

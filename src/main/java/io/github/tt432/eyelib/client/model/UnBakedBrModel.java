@@ -10,7 +10,7 @@ import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import io.github.tt432.eyelib.util.math.EyeMath;
-import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
@@ -84,7 +84,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
 
         ModelRenderer.render(new RenderParams(null, poseStack.last(),
                         poseStack, null, null, false, null, 0,
-                        OverlayTexture.NO_OVERLAY, new Object2BooleanOpenHashMap<>()),
+                        OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap()),
                 model, new BoneRenderInfos(),
                 new ModelRenderVisitorList(List.of(new BakeModelVisitor(modelBuilder, texture))));
 

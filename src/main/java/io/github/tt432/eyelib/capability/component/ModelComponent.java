@@ -6,7 +6,7 @@ import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.util.client.RenderTypeSerializations;
 import io.netty.buffer.ByteBuf;
-import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.Getter;
 import lombok.With;
 import net.minecraft.client.renderer.RenderType;
@@ -79,5 +79,5 @@ public class ModelComponent {
         return RenderTypeSerializations.getFactory(serializableInfo.renderType).isSolid();
     }
 
-    final Object2BooleanOpenHashMap<String> partVisibility = new Object2BooleanOpenHashMap<>();
+    final Int2BooleanOpenHashMap partVisibility = new Int2BooleanOpenHashMap();
 }
