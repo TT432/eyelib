@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
-import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.AllArgsConstructor;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import org.joml.Matrix3f;
@@ -15,7 +15,6 @@ import org.joml.Matrix4f;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author TT432
@@ -75,7 +74,7 @@ public record DFSModel(
         }.visitModel(new RenderParams(
                 null, new PoseStack.Pose(new Matrix4f(), new Matrix3f()), new PoseStack(),
                 null, null, false, null, 0,
-                OverlayTexture.NO_OVERLAY, new Object2BooleanOpenHashMap<>()
+                OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap()
         ), new ModelVisitContext(), cast(model.data()), model);
 
         return result;
@@ -115,12 +114,7 @@ public record DFSModel(
         public void visit(RenderParams params, ModelVisitContext context, ModelVisitor visitor, D infos, StateMachine stateMachine) {
             visitor.visitPreBone(params, context, group, infos, groupLocator, transformer);
 
-            AtomicBoolean render = new AtomicBoolean(true);
-            // todo 删除这部分
-//            params.partVisibility().forEach((k, v) ->
-//                    render.set(partVisibilityCache.computeIfAbsent(k, __ -> new Object2BooleanOpenHashMap<>())
-//                            .computeIfAbsent(group.id(), ___ -> !Pattern.compile(k.replace("*", ".*")).matcher(group.id()).matches() || v)));
-            stateMachine.render = render.get();
+            stateMachine.render = params.partVisibility().getOrDefault(group.id(), true);
         }
     }
 

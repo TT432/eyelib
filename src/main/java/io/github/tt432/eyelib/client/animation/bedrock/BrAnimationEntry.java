@@ -238,28 +238,29 @@ public record BrAnimationEntry(
         }
 
         float finalMultiplier = multiplier;
-        bones().forEach((boneName, boneAnim) -> {
-            BoneRenderInfoEntry entry = infos.getData(boneName);
+        bones().int2ObjectEntrySet().forEach((entry) -> {
+            var boneName = entry.getIntKey();var  boneAnim=entry.getValue();
+            BoneRenderInfoEntry renderInfoEntry = infos.getData(boneName);
 
             Vector3f pos = boneAnim.lerpPosition(scope, animTick);
 
             if (pos != null) {
                 pos.mul(finalMultiplier).div(16).mul(-1, 1, 1);
-                entry.getRenderPosition().add(pos);
+                renderInfoEntry.getRenderPosition().add(pos);
             }
 
             Vector3f rotation = boneAnim.lerpRotation(scope, animTick);
 
             if (rotation != null) {
                 rotation.mul(finalMultiplier).mul(EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1);
-                entry.getRenderRotation().add(rotation);
+                renderInfoEntry.getRenderRotation().add(rotation);
             }
 
             Vector3f scale = boneAnim.lerpScale(scope, animTick);
 
             if (scale != null) {
                 scale.sub(1, 1, 1).mul(finalMultiplier).add(1, 1, 1);
-                entry.getRenderScala().mul(scale);
+                renderInfoEntry.getRenderScala().mul(scale);
             }
         });
 

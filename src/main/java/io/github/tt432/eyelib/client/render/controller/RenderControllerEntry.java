@@ -4,13 +4,13 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
+import io.github.tt432.eyelib.client.entity.RenderControllerRuntime;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.type.*;
 import io.github.tt432.eyelib.util.client.NativeImages;
 import io.github.tt432.eyelib.util.client.Textures;
-import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
@@ -21,7 +21,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * @param part_visibility TODO
  * @author TT432
  */
 public record RenderControllerEntry(
@@ -30,7 +29,8 @@ public record RenderControllerEntry(
         Map<String, Map<String, List<String>>> arrays,
         Map<String, MolangValue> materials,
         Map<String, MolangValue> part_visibility,
-        AtomicBoolean needReloadTexture
+        AtomicBoolean needReloadTexture,
+        RenderControllerRuntime renderControllerRuntime
 ) {
     public RenderControllerEntry(
             MolangValue geometry,
@@ -39,7 +39,7 @@ public record RenderControllerEntry(
             Map<String, MolangValue> materials,
             Map<String, MolangValue> part_visibility
     ) {
-        this(geometry, textures, arrays, materials, part_visibility, new AtomicBoolean());
+        this(geometry, textures, arrays, materials, part_visibility, new AtomicBoolean(), new RenderControllerRuntime());
     }
 
     public static final Codec<RenderControllerEntry> CODEC = RecordCodecBuilder.create(ins -> ins.group(
@@ -170,10 +170,8 @@ public record RenderControllerEntry(
                 new ResourceLocation(materials.containsKey("*") ? get(scope, materials.get("*"), "material", entity.materials()) : "")
         ));
 
-        Object2BooleanOpenHashMap<String> partVisibility = component.getPartVisibility();
-        partVisibility.clear();
-
-        part_visibility.forEach((k, v) -> partVisibility.put(k, v.evalAsBool(scope)));
+        var partVisibility = component.getPartVisibility();
+        renderControllerRuntime.evalPartVisibility(entity, this, partVisibility, scope);
 
         return component;
     }
