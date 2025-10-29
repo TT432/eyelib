@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ModelRuntimeData<M extends Model.Bone, D, S extends ModelRuntimeData<M, D, S>> {
     @Nullable
-    D getData(String key);
+    D getData(int id);
 
     ModelTransformer<M, S> transformer();
 }

@@ -10,12 +10,12 @@ import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import io.github.tt432.eyelib.molang.MolangValue;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 public interface Model {
     String name();
 
-    Map<String, ? extends Bone> toplevelBones();
+    Int2ObjectMap<? extends Bone> toplevelBones();
 
     ModelRuntimeData<?, ?, ?> data();
 
@@ -35,18 +35,18 @@ public interface Model {
         visitor.visitPreModel(params, context, infos, this);
 
         for (var toplevelBone : toplevelBones().values()) {
-            toplevelBone.accept(params, context, infos, locator().getGroup(toplevelBone.name()), visitor);
+            toplevelBone.accept(params, context, infos, locator().getGroup(toplevelBone.id()), visitor);
         }
 
         visitor.visitPostModel(params, context, infos, this);
     }
 
     interface Bone {
-        String name();
+        int id();
 
         MolangValue binding();
 
-        Map<String, ? extends Bone> children();
+        Int2ObjectMap<? extends Bone> children();
 
         List<? extends Cube> cubes();
 
@@ -77,8 +77,9 @@ public interface Model {
             }
 
             AtomicBoolean render = new AtomicBoolean(params.partVisibility().isEmpty());
+            // todo 删除这部分
             params.partVisibility().forEach((k, v) -> {
-                if (!Pattern.compile(k.replace("*", ".*")).matcher(name()).matches() || v) {
+                if (!Pattern.compile(k.replace("*", ".*")).matcher(GlobalBoneIdHandler.get(id())).matches() || v) {
                     render.set(true);
                 }
             });
@@ -90,10 +91,10 @@ public interface Model {
             }
 
             for (var child : children().values()) {
-                child.accept(params, context, infos, groupLocator.getChild(child.name()), visitor);
+                child.accept(params, context, infos, groupLocator.getChild(child.id()), visitor);
             }
 
-            visitor.visitPostBone(params, context, this, infos, groupLocator.getChild(name()), transformer);
+            visitor.visitPostBone(params, context, this, infos, groupLocator.getChild(id()), transformer);
         }
     }
 

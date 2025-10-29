@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.client.model.bake;
 
-import com.google.common.collect.ImmutableMap;
 import io.github.tt432.eyelib.client.model.Model;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
 import org.joml.Vector2f;
@@ -24,7 +24,7 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     public TwoSideInfoMap getBakeInfo(Model model, boolean isSolid, ResourceLocation texture) {
         return cache.computeIfAbsent(model.name(), ___ -> new HashMap<>())
                 .computeIfAbsent(texture, __ -> {
-                    ImmutableMap.Builder<String, TwoSideInfo> builder = ImmutableMap.builder();
+                    Int2ObjectMap<TwoSideInfo> builder = new Int2ObjectOpenHashMap<>();
 
                     downloadTexture(texture, nativeimage ->
                             model.toplevelBones().forEach((boneName, bone) ->
@@ -32,26 +32,30 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
                                             color -> ((FastColor.ABGR32.alpha(color) & 0xFF) == 0xFF) == isSolid,
                                             (n, d) -> builder.put(n, new TwoSideInfo(n, d)))));
 
-                    return new TwoSideInfoMap(builder.build());
+                    return new TwoSideInfoMap(builder);
                 });
     }
 
     @Override
     public BakedModel bake(Model model, TwoSideInfoMap twoSideInfoMap) {
-        Map<String, BakedModel.BakedBone> bones = new Object2ObjectOpenHashMap<>();
+        Int2ObjectMap<BakedModel.BakedBone> bones = new Int2ObjectOpenHashMap<>();
 
-        model.toplevelBones().forEach((s, bone) -> collectBones(s, bone, bones, twoSideInfoMap.map));
+        model.toplevelBones().int2ObjectEntrySet().forEach(entry -> {
+            var s = entry.getIntKey();
+            var bone = entry.getValue();
+            collectBones(s, bone, bones, twoSideInfoMap.map);
+        });
 
         return new BakedModel(bones);
     }
 
-    private static void collectBones(String name, Model.Bone bone, Map<String, BakedModel.BakedBone> bones, Map<String, TwoSideInfo> info) {
+    private static void collectBones(int name, Model.Bone bone, Int2ObjectMap<BakedModel.BakedBone> bones, Int2ObjectMap<TwoSideInfo> info) {
         bones.put(name, bake(bone, info));
         bone.children().forEach((s, bone1) -> collectBones(s, bone1, bones, info));
     }
 
-    public static BakedModel.BakedBone bake(Model.Bone bone, Map<String, TwoSideInfo> info) {
-        TwoSideInfo twoSideInfo = info.get(bone.name());
+    public static BakedModel.BakedBone bake(Model.Bone bone, Int2ObjectMap<TwoSideInfo> info) {
+        TwoSideInfo twoSideInfo = info.get(bone.id());
         boolean[] allTrue = new boolean[bone.cubes().size()];
         Arrays.fill(allTrue, true);
         boolean[] twoSide = twoSideInfo == null ? allTrue : twoSideInfo.cubeNeedTwoSide();
@@ -127,18 +131,18 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     }
 
     public record TwoSideInfo(
-            String boneName,
+            int boneId,
             boolean[] cubeNeedTwoSide
     ) {
     }
 
     public record TwoSideInfoMap(
-            Map<String, TwoSideInfo> map
+            Int2ObjectMap<TwoSideInfo> map
     ) {
-        public boolean isTwoSide(String boneName, int idx) {
-            return !map.containsKey(boneName)
-                    || map.get(boneName).cubeNeedTwoSide.length <= idx
-                    || map.get(boneName).cubeNeedTwoSide[idx];
+        public boolean isTwoSide(int boneId, int idx) {
+            return !map.containsKey(boneId)
+                    || map.get(boneId).cubeNeedTwoSide.length <= idx
+                    || map.get(boneId).cubeNeedTwoSide[idx];
         }
     }
 }

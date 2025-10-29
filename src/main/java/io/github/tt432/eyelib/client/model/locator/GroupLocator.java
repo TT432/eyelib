@@ -2,25 +2,26 @@ package io.github.tt432.eyelib.client.model.locator;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.model.tree.ModelGroupNode;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author TT432
  */
 public record GroupLocator(
-        Map<String, GroupLocator> children,
+        Int2ObjectMap< GroupLocator> children,
         List<LocatorEntry> cubes
 ) implements ModelGroupNode<LocatorEntry> {
     public static final Codec<GroupLocator> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            Codec.unboundedMap(Codec.STRING, GroupLocator.CODEC).fieldOf("children").forGetter(GroupLocator::children),
+            GlobalBoneIdHandler.map(GroupLocator.CODEC).fieldOf("children").forGetter(GroupLocator::children),
             LocatorEntry.CODEC.listOf().fieldOf("cubes").forGetter(GroupLocator::cubes)
     ).apply(ins, GroupLocator::new));
 
     @Override
-    public GroupLocator getChild(String groupName) {
+    public GroupLocator getChild(int groupName) {
         return children.get(groupName);
     }
 

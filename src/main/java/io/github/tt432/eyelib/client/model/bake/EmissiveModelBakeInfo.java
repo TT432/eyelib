@@ -1,9 +1,9 @@
 package io.github.tt432.eyelib.client.model.bake;
 
-import com.google.common.collect.ImmutableMap;
 import io.github.tt432.eyelib.client.model.Model;
 import it.unimi.dsi.fastutil.booleans.BooleanList;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
@@ -22,7 +22,7 @@ public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.I
     public static final EmissiveModelBakeInfo INSTANCE = new EmissiveModelBakeInfo();
 
     public record Info(
-            Map<String, BooleanList> map
+            Int2ObjectMap<BooleanList> map
     ) {
     }
 
@@ -32,7 +32,7 @@ public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.I
     public Info getBakeInfo(Model model, boolean isSolid, ResourceLocation texture) {
         return cache.computeIfAbsent(model.name(), ___ -> new HashMap<>())
                 .computeIfAbsent(texture, __ -> {
-                    ImmutableMap.Builder<String, BooleanList> builder = ImmutableMap.builder();
+                    Int2ObjectMap<BooleanList> builder = new Int2ObjectOpenHashMap<>();
 
                     downloadTexture(texture, nativeimage ->
                             model.toplevelBones().forEach((boneName, bone) ->
@@ -40,20 +40,20 @@ public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.I
                                             c -> c != 0,
                                             (n, d) -> builder.put(n, BooleanList.of(d)))));
 
-                    return new Info(builder.build());
+                    return new Info(builder);
                 });
     }
 
     @Override
     public BakedModel bake(Model model, Info info) {
-        Map<String, BakedModel.BakedBone> bones = new Object2ObjectOpenHashMap<>();
+        Int2ObjectMap<BakedModel.BakedBone> bones = new Int2ObjectOpenHashMap<>();
 
         model.toplevelBones().forEach((s, bone) -> collectBones(s, bone, bones, info));
 
         return new BakedModel(bones);
     }
 
-    private static void collectBones(String name, Model.Bone bone, Map<String, BakedModel.BakedBone> bones, Info info) {
+    private static void collectBones(int name, Model.Bone bone, Int2ObjectMap<BakedModel.BakedBone> bones, Info info) {
         bones.put(name, bake(bone, info.map.get(name)));
         bone.children().forEach((s, bone1) -> collectBones(s, bone1, bones, info));
     }

@@ -23,12 +23,12 @@ public class BedrockTransformer implements ModelTransformer<BrBone, BoneRenderIn
 
     @Override
     public Vector3fc position(BrBone model, BoneRenderInfos data) {
-        return data.getData(model.name()).getRenderPosition();
+        return data.getData(model.id()).getRenderPosition();
     }
 
     @Override
     public void position(BrBone model, BoneRenderInfos data, float x, float y, float z) {
-        data.getData(model.name()).getRenderPosition().set(x, y, z);
+        data.getData(model.id()).getRenderPosition().set(x, y, z);
     }
 
     @Override
@@ -38,13 +38,13 @@ public class BedrockTransformer implements ModelTransformer<BrBone, BoneRenderIn
 
     @Override
     public Vector3fc rotation(BrBone model, BoneRenderInfos data) {
-        return model.rotation().add(data.getData(model.name()).getRenderRotation(), new Vector3f());
+        return model.rotation().add(data.getData(model.id()).getRenderRotation(), new Vector3f());
     }
 
     @Override
     public void rotation(BrBone model, BoneRenderInfos data, float x, float y, float z) {
         Vector3f init = model.rotation();
-        data.getData(model.name()).getRenderRotation().set(x - init.x, y - init.y, z - init.z);
+        data.getData(model.id()).getRenderRotation().set(x - init.x, y - init.y, z - init.z);
     }
 
     @Override
@@ -54,11 +54,11 @@ public class BedrockTransformer implements ModelTransformer<BrBone, BoneRenderIn
 
     @Override
     public Vector3fc scale(BrBone model, BoneRenderInfos data) {
-        return data.getData(model.name()).getRenderScala();
+        return data.getData(model.id()).getRenderScala();
     }
 
     @Override
     public void scale(BrBone model, BoneRenderInfos data, float x, float y, float z) {
-        data.getData(model.name()).getRenderScala().set(x, y, z);
+        data.getData(model.id()).getRenderScala().set(x, y, z);
     }
 }

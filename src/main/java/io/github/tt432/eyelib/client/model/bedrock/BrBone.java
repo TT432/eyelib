@@ -4,9 +4,12 @@ import com.google.gson.*;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.util.math.EyeMath;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.With;
@@ -19,7 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * @param parent         that bone is toplevel if parent is null
+ * @param parent         that bone is toplevel if parent is -1
  * @param binding        using on 1.16.0 TODO
  * @param reset          bb has this field, but can't resolve mean TODO
  * @param material       bb has this field, but can't resolve mean TODO
@@ -28,22 +31,22 @@ import java.util.Objects;
  */
 @With
 public record BrBone(
-        String name,
-        @Nullable String parent,
+        int id,
+        int parent,
         Vector3f pivot,
         Vector3f rotation,
         MolangValue binding,
         boolean reset,
         @Nullable String material,
-        Map<String, BrBone> children,
+        Int2ObjectMap<BrBone> children,
         List<BrCube> cubes,
         List<BrTextureMesh> texture_meshes,
         Map<String, BrLocator> locators
 ) implements Model.Bone {
 
     public static final Codec<BrBone> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            Codec.STRING.fieldOf("name").forGetter(BrBone::name),
-            Codec.STRING.optionalFieldOf("parent", "").forGetter(BrBone::parent),
+            GlobalBoneIdHandler.STRING_ID_CODEC.fieldOf("name").forGetter(BrBone::id),
+            GlobalBoneIdHandler.STRING_ID_CODEC.optionalFieldOf("parent", -1).forGetter(BrBone::parent),
             ExtraCodecs.VECTOR3F.fieldOf("pivot").forGetter(BrBone::pivot),
             ExtraCodecs.VECTOR3F.fieldOf("rotation").forGetter(BrBone::rotation),
             MolangValue.CODEC.optionalFieldOf("binding", MolangValue.ZERO).forGetter(BrBone::binding),
@@ -52,7 +55,7 @@ public record BrBone(
             BrCube.CODEC.listOf().fieldOf("cubes").forGetter(BrBone::cubes),
             BrTextureMesh.CODEC.listOf().optionalFieldOf("texture_meshes", List.of()).forGetter(BrBone::texture_meshes),
             Codec.unboundedMap(Codec.STRING, BrLocator.CODEC).fieldOf("locators").forGetter(BrBone::locators)
-    ).apply(ins, (string, string2, vector3f, vector3f2, string3, aBoolean, string4, brCubes, brTextureMeshes, stringBrLocatorMap) -> new BrBone(string, string2, vector3f, vector3f2, string3, aBoolean, string4, new Object2ObjectOpenHashMap<>(), brCubes, brTextureMeshes, stringBrLocatorMap)));
+    ).apply(ins, (string, string2, vector3f, vector3f2, string3, aBoolean, string4, brCubes, brTextureMeshes, stringBrLocatorMap) -> new BrBone(string, string2, vector3f, vector3f2, string3, aBoolean, string4, new Int2ObjectOpenHashMap<>(), brCubes, brTextureMeshes, stringBrLocatorMap)));
     private static final Gson gson = new Gson();
 
     public static BrBone parse(int textureHeight, int textureWidth, JsonObject jsonObject) {
@@ -63,7 +66,7 @@ public record BrBone(
         final MolangValue binding;
         final boolean reset;
         final String material;
-        final Map<String, BrBone> children = new Object2ObjectOpenHashMap<>();
+        final Int2ObjectMap< BrBone> children = new Int2ObjectOpenHashMap<>();
         final List<BrCube> cubes = new ObjectArrayList<>();
         final List<BrTextureMesh> texture_meshes = new ObjectArrayList<>();
         final Map<String, BrLocator> locators = new Object2ObjectOpenHashMap<>();
@@ -101,6 +104,6 @@ public record BrBone(
             }
         }
 
-        return new BrBone(name, parent, pivot, rotation, binding, reset, material, children, cubes, texture_meshes, locators);
+        return new BrBone(GlobalBoneIdHandler.get(name), GlobalBoneIdHandler.get(parent), pivot, rotation, binding, reset, material, children, cubes, texture_meshes, locators);
     }
 }

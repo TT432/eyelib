@@ -8,7 +8,6 @@ import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.AllArgsConstructor;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import org.joml.Matrix3f;
@@ -17,7 +16,6 @@ import org.joml.Matrix4f;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
 
 /**
  * @author TT432
@@ -113,16 +111,15 @@ public record DFSModel(
         private final GroupLocator groupLocator;
         private final ModelTransformer<Model.Bone, D> transformer;
 
-        private static final Object2ObjectOpenHashMap<String, Object2BooleanOpenHashMap<String>> partVisibilityCache = new Object2ObjectOpenHashMap<>();
-
         @Override
         public void visit(RenderParams params, ModelVisitContext context, ModelVisitor visitor, D infos, StateMachine stateMachine) {
             visitor.visitPreBone(params, context, group, infos, groupLocator, transformer);
 
-            AtomicBoolean render = new AtomicBoolean(false);
-            params.partVisibility().forEach((k, v) ->
-                    render.set(partVisibilityCache.computeIfAbsent(k, __ -> new Object2BooleanOpenHashMap<>())
-                            .computeIfAbsent(group.name(), ___ -> !Pattern.compile(k.replace("*", ".*")).matcher(group.name()).matches() || v)));
+            AtomicBoolean render = new AtomicBoolean(true);
+            // todo 删除这部分
+//            params.partVisibility().forEach((k, v) ->
+//                    render.set(partVisibilityCache.computeIfAbsent(k, __ -> new Object2BooleanOpenHashMap<>())
+//                            .computeIfAbsent(group.id(), ___ -> !Pattern.compile(k.replace("*", ".*")).matcher(group.id()).matches() || v)));
             stateMachine.render = render.get();
         }
     }

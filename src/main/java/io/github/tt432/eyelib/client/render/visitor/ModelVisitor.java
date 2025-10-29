@@ -8,12 +8,12 @@ import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.util.math.EyeMath;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.joml.*;
 
 import java.util.Deque;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author TT432
@@ -106,7 +106,7 @@ public class ModelVisitor {
     protected static <R extends ModelRuntimeData<Model.Bone, ?, R>> void applyBoneTranslate(
             ModelVisitContext context, PoseStack poseStack, Model.Bone model, R data, ModelTransformer<Model.Bone, R> transformer
     ) {
-        context.<Map<String, PoseStack.Pose>>orCreate("bones", new Object2ObjectOpenHashMap<>()).compute(model.name(), (n, pose) -> {
+        context.<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>()).compute(model.id(), (n, pose) -> {
             if (pose == null) {
                 PoseStack.Pose last = poseStack.last();
                 Matrix4f m4 = last.pose();

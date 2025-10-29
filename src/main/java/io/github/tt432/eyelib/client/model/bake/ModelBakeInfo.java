@@ -42,7 +42,7 @@ public abstract class ModelBakeInfo<Info> {
 
     @FunctionalInterface
     public interface BoneDataConsumer {
-        void execute(String boneName, boolean[] data);
+        void execute(int boneId, boolean[] data);
     }
 
     protected void downloadTexture(ResourceLocation texture, Consumer<NativeImage> imageConsumer) {
@@ -82,7 +82,7 @@ public abstract class ModelBakeInfo<Info> {
             }
         }
 
-        consumer.execute(bone.name(), result);
+        consumer.execute(bone.id(), result);
     }
 
     protected boolean pixelAnyMatch(NativeImage buffer,
