@@ -2,10 +2,9 @@ package io.github.tt432.eyelib.client.model.bake;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-
-import java.util.Map;
 
 import static com.mojang.blaze3d.vertex.DefaultVertexFormat.NEW_ENTITY;
 
@@ -13,7 +12,7 @@ import static com.mojang.blaze3d.vertex.DefaultVertexFormat.NEW_ENTITY;
  * @author TT432
  */
 public record BakedModel(
-        Map<String, BakedBone> bones
+        Int2ObjectMap<BakedBone> bones
 ) {
     public record BakedBone(
             int vertexSize,

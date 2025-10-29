@@ -5,11 +5,10 @@ import io.github.tt432.eyelib.client.model.bedrock.BrBone;
 import io.github.tt432.eyelib.client.model.transformer.BedrockTransformer;
 import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import it.unimi.dsi.fastutil.Function;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 
 /**
  * @author TT432
@@ -18,7 +17,7 @@ import java.util.Map;
 public class BoneRenderInfos implements ModelRuntimeData<BrBone, BoneRenderInfoEntry, BoneRenderInfos> {
     public static final BoneRenderInfos EMPTY = new BoneRenderInfos();
 
-    private final Map<String, BoneRenderInfoEntry> infos = new Object2ObjectOpenHashMap<>();
+    private final Int2ObjectMap<BoneRenderInfoEntry> infos = new Int2ObjectOpenHashMap<>();
 
     public void reset() {
         infos.values().forEach(BoneRenderInfoEntry::resetRenderInfo);
@@ -29,12 +28,12 @@ public class BoneRenderInfos implements ModelRuntimeData<BrBone, BoneRenderInfoE
         infos.putAll(other.infos);
     }
 
-    private static final Function<String, BoneRenderInfoEntry> FUNC = s -> new BoneRenderInfoEntry();
+    private static final Function<Integer, BoneRenderInfoEntry> FUNC = s -> new BoneRenderInfoEntry();
 
     @Override
     @NotNull
-    public BoneRenderInfoEntry getData(String key) {
-        return infos.computeIfAbsent(key, FUNC);
+    public BoneRenderInfoEntry getData(int id) {
+        return infos.computeIfAbsent(id, FUNC);
     }
 
     @Override

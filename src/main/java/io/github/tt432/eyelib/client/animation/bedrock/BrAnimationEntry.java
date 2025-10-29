@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.client.animation.AnimationEffect;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
+import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleRenderManager;
@@ -20,6 +21,8 @@ import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.util.codec.CodecHelper;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import io.github.tt432.eyelib.util.math.MathHelper;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
@@ -50,7 +53,7 @@ public record BrAnimationEntry(
         AnimationEffect<BrEffectsKeyFrame> soundEffects,
         AnimationEffect<BrEffectsKeyFrame> particleEffects,
         AnimationEffect<MolangValue> timeline,
-        Map<String, BrBoneAnimation> bones
+        Int2ObjectMap<BrBoneAnimation> bones
 ) implements Animation<BrAnimationEntry.Data> {
     public static Codec<BrAnimationEntry> codec(String name) {
         return RecordCodecBuilder.create(ins -> {
@@ -108,7 +111,7 @@ public record BrAnimationEntry(
                             }).xmap(map -> new AnimationEffect<>(map, (scope, ticks, mv) -> mv.eval(scope)), AnimationEffect::data)
                             .optionalFieldOf("timeline", AnimationEffect.empty())
                             .forGetter(o -> o.timeline),
-                    Codec.unboundedMap(Codec.STRING.xmap(s -> s.toLowerCase(Locale.ROOT), s -> s), BrBoneAnimation.CODEC).optionalFieldOf("bones", Map.of()).forGetter(o -> o.bones)
+                    GlobalBoneIdHandler.map(BrBoneAnimation.CODEC).optionalFieldOf("bones", new Int2ObjectOpenHashMap<>()).forGetter(o -> o.bones)
             ).apply(ins, (a, b, c, d, e, f, g, h, i, j, k) -> new BrAnimationEntry(name, a, b, c, d, e, f, g, h, i, j, k));
         });
     }

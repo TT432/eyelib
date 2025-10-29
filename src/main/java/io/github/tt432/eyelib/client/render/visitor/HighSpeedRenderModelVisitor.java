@@ -12,7 +12,6 @@ import io.github.tt432.eyelib.client.render.RenderParams;
 import lombok.Setter;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
 
 /**
  * @author TT432
@@ -35,16 +34,17 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
 
         applyBoneTranslate(context, poseStack, group, cast(data), transformer);
 
-        var bakedBone = context.<BakedModel>get("BackedModel").bones().get(group.name());
+        var bakedBone = context.<BakedModel>get("BackedModel").bones().get(group.id());
 
         PoseStack.Pose last = poseStack.last();
 
-        AtomicBoolean render = new AtomicBoolean(renderParams.partVisibility().isEmpty());
-        renderParams.partVisibility().forEach((k, v) -> {
-            if (!Pattern.compile(k.replace("*", ".*")).matcher(group.name()).matches() || v) {
-                render.set(true);
-            }
-        });
+        AtomicBoolean render = new AtomicBoolean(true);
+        // todo 删除
+//        renderParams.partVisibility().forEach((k, v) -> {
+//            if (!Pattern.compile(k.replace("*", ".*")).matcher(group.id()).matches() || v) {
+//                render.set(true);
+//            }
+//        });
 
         if (render.get()) {
             if (ARCompat.AR_INSTALLED && ARCompat.renderWithAR(bakedBone, renderParams)) {

@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.util.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.model.RootModelPartModel;
 import io.github.tt432.eyelib.client.model.bedrock.BrBone;
 import io.github.tt432.eyelib.client.model.bedrock.BrCube;
@@ -49,7 +50,7 @@ public final class ModelFormatTransformers {
         last.pose().translate(0, -1.5F, 0);
 
         var result = new ModelPart(List.of(), model.toplevelBones().values().stream()
-                .map(b -> Map.entry(b.name(), getVanillaPart(b, params)))
+                .map(b -> Map.entry(GlobalBoneIdHandler.get(b.id()), getVanillaPart(b, params)))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 
         poseStack.popPose();
@@ -77,7 +78,7 @@ public final class ModelFormatTransformers {
 
         if (params.original() instanceof RootModelPartModel model) {
             visitModelPart(model.getRootPart(), (name, child) -> {
-                if (bone.name().equals(name)) {
+                if (bone.id()==GlobalBoneIdHandler.get(name)) {
                     PartPose initialPose = child.getInitialPose();
                     last.normal().rotateZYX(-initialPose.xRot, -initialPose.yRot, -initialPose.xRot);
                     last.pose().rotateZYX(-initialPose.xRot, -initialPose.yRot, -initialPose.xRot);
@@ -89,7 +90,7 @@ public final class ModelFormatTransformers {
         }
 
         ModelPart result = new ModelPart(bone.cubes().stream().map(c -> getVanillaCube(c, params)).toList(),
-                bone.children().values().stream().map(b -> Map.entry(b.name(), getVanillaPart(b, params)))
+                bone.children().values().stream().map(b -> Map.entry(GlobalBoneIdHandler.get(b.id()), getVanillaPart(b, params)))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         result.setInitialPose(pose.get());
         result.resetPose();

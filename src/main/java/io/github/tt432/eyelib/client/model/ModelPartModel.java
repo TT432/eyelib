@@ -4,6 +4,8 @@ import io.github.tt432.eyelib.client.model.locator.ModelLocator;
 import io.github.tt432.eyelib.client.model.transformer.ModelPartTransformer;
 import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.molang.MolangValue;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.model.geom.ModelPart;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
@@ -21,11 +23,11 @@ public record ModelPartModel(
         String name,
         ModelPart modelPart,
         ModelLocator locator,
-        Map<String, Bone> toplevelBones
+        Int2ObjectMap<Bone> toplevelBones
 ) implements Model {
     public ModelPartModel(String name, ModelPart modelPart, ModelLocator locator) {
-        this(name, modelPart, locator, new HashMap<>());
-        modelPart.children.forEach((k, v) -> toplevelBones.put(k, new Bone(k, v)));
+        this(name, modelPart, locator, new Int2ObjectOpenHashMap<>());
+        modelPart.children.forEach((k, v) -> toplevelBones.put(GlobalBoneIdHandler.get(k), new Bone(k, v)));
     }
 
     @Override
@@ -50,8 +52,8 @@ public record ModelPartModel(
         }
 
         @Override
-        public @Nullable ModelPart getData(String key) {
-            return parts.get(key);
+        public @Nullable ModelPart getData(int id) {
+            return parts.get(id);
         }
 
         @Override
@@ -61,15 +63,15 @@ public record ModelPartModel(
     }
 
     public record Bone(
-            String name,
+            int id,
             ModelPart modelPart,
             List<Cube> cubes,
-            Map<String, Bone> children
+            Int2ObjectMap<Bone> children
     ) implements Model.Bone {
         public Bone(String name, ModelPart modelPart) {
-            this(name, modelPart, new ArrayList<>(), new HashMap<>());
+            this(GlobalBoneIdHandler.get(name), modelPart, new ArrayList<>(), new Int2ObjectOpenHashMap<>());
             modelPart.cubes.forEach(c -> cubes.add(new Cube(c)));
-            modelPart.children.forEach((k, v) -> children.put(k, new Bone(k, v)));
+            modelPart.children.forEach((k, v) -> children.put(GlobalBoneIdHandler.get(k), new Bone(k, v)));
         }
 
         @Override

@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.model.bedrock;
 import com.google.gson.*;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.locator.GroupLocator;
@@ -11,11 +12,13 @@ import io.github.tt432.eyelib.client.model.locator.ModelLocator;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.util.codec.Tuple;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author TT432
@@ -25,8 +28,8 @@ public record BrModelEntry(
         int textureWidth,
         int textureHeight,
         AABB visibleBox,
-        Map<String, BrBone> toplevelBones,
-        Map<String, BrBone> allBones,
+        Int2ObjectMap<BrBone> toplevelBones,
+        Int2ObjectMap<BrBone> allBones,
         ModelLocator locator
 ) implements Model {
     public static final Codec<BrModelEntry> CODEC = RecordCodecBuilder.create(ins -> ins.group(
@@ -34,19 +37,21 @@ public record BrModelEntry(
             Codec.INT.fieldOf("textureWidth").forGetter(BrModelEntry::textureWidth),
             Codec.INT.fieldOf("textureHeight").forGetter(BrModelEntry::textureHeight),
             ChinExtraCodecs.tuple(Vec3.CODEC, Vec3.CODEC).bmap(AABB::new, aabb -> Tuple.of(new Vec3(aabb.minX, aabb.minY, aabb.minZ), new Vec3(aabb.maxX, aabb.maxY, aabb.maxZ))).fieldOf("visibleBox").forGetter(BrModelEntry::visibleBox),
-            Codec.unboundedMap(Codec.STRING, BrBone.CODEC).fieldOf("allBones").forGetter(BrModelEntry::allBones)
+            GlobalBoneIdHandler.map(BrBone.CODEC).fieldOf("allBones").forGetter(BrModelEntry::allBones)
     ).apply(ins, (string, integer, integer2, aabb, allBones) -> {
-        Object2ObjectOpenHashMap<String, BrBone> toplevelBones = new Object2ObjectOpenHashMap<>();
+        Int2ObjectMap<BrBone> toplevelBones = new Int2ObjectOpenHashMap<>();
 
-        allBones.forEach((name, bone) -> {
-            if (bone.parent() == null || allBones.get(bone.parent()) == null)
+        allBones.int2ObjectEntrySet().forEach((entry) -> {
+            var name = entry.getIntKey();
+            var bone = entry.getValue();
+            if (bone.parent() == -1 || allBones.get(bone.parent()) == null)
                 toplevelBones.put(name, bone);
             else
                 allBones.get(bone.parent()).children().put(name, bone);
         });
 
-        Map<String, GroupLocator> locators = new HashMap<>();
-        toplevelBones.forEach((k, v) -> locators.put(k, getLocator(v)));
+        Int2ObjectMap<GroupLocator> locators = new Int2ObjectOpenHashMap<>();
+        toplevelBones.int2ObjectEntrySet().forEach(entry -> locators.put(entry.getIntKey(), getLocator(entry.getValue())));
 
         return new BrModelEntry(string, integer, integer2, aabb, toplevelBones, allBones, new ModelLocator(locators));
     }));
@@ -61,8 +66,8 @@ public record BrModelEntry(
         int textureWidth;
         int textureHeight;
         AABB visibleBox;
-        Map<String, BrBone> toplevelBones = new HashMap<>();
-        Map<String, BrBone> allBones = new HashMap<>();
+        Int2ObjectMap<BrBone> toplevelBones = new Int2ObjectOpenHashMap<>();
+        Int2ObjectMap<BrBone> allBones = new Int2ObjectOpenHashMap<>();
 
         textureWidth = geometry.get("texturewidth") instanceof JsonPrimitive jp ? jp.getAsInt() : 256;
         textureHeight = geometry.get("textureheight") instanceof JsonPrimitive jp ? jp.getAsInt() : 256;
@@ -82,17 +87,19 @@ public record BrModelEntry(
                 (offset[2] / 16) + w / 2
         );
 
-        Map<String, GroupLocator> locators = new HashMap<>();
+        Int2ObjectMap<GroupLocator> locators = new Int2ObjectOpenHashMap<>();
 
         if (geometry.has("bones")) {
             for (JsonElement jsonElement : geometry.get("bones").getAsJsonArray()) {
                 BrBone parse = BrBone.parse(textureHeight, textureWidth, jsonElement.getAsJsonObject());
-                if (parse.parent() != null) parse = parse.withParent(parse.parent().toLowerCase(Locale.ROOT));
-                allBones.put(parse.name().toLowerCase(Locale.ROOT), parse);
+                if (parse.parent() != -1) parse = parse.withParent(parse.parent());
+                allBones.put(parse.id(), parse);
             }
 
-            allBones.forEach((name, bone) -> {
-                if (bone.parent() == null || allBones.get(bone.parent()) == null)
+            allBones.int2ObjectEntrySet().forEach((entry) -> {
+                var name = entry.getIntKey();
+                var bone = entry.getValue();
+                if (bone.parent() == -1 || allBones.get(bone.parent()) == null)
                     toplevelBones.put(name, bone);
                 else
                     allBones.get(bone.parent()).children().put(name, bone);
@@ -110,8 +117,8 @@ public record BrModelEntry(
         int textureWidth;
         int textureHeight;
         AABB visibleBox;
-        Map<String, BrBone> toplevelBones = new HashMap<>();
-        Map<String, BrBone> allBones = new HashMap<>();
+        Int2ObjectMap<BrBone> toplevelBones = new Int2ObjectOpenHashMap<>();
+        Int2ObjectMap<BrBone> allBones = new Int2ObjectOpenHashMap<>();
 
         // description
         JsonObject description = geometry.get("description").getAsJsonObject();
@@ -136,18 +143,20 @@ public record BrModelEntry(
                 (offset[2] / 16) + w / 2
         );
 
-        Map<String, GroupLocator> locators = new HashMap<>();
+        Int2ObjectMap<GroupLocator> locators = new Int2ObjectOpenHashMap<>();
 
         if (geometry.has("bones")) {
             for (JsonElement jsonElement : geometry.get("bones").getAsJsonArray()) {
                 BrBone parse = BrBone.parse(textureHeight, textureWidth, jsonElement.getAsJsonObject());
-                parse = parse.withName(parse.name().toLowerCase(Locale.ROOT));
-                if (parse.parent() != null) parse = parse.withParent(parse.parent().toLowerCase(Locale.ROOT));
-                allBones.put(parse.name(), parse);
+                parse = parse.withId(parse.id());
+                if (parse.parent() != -1) parse = parse.withParent(parse.parent());
+                allBones.put(parse.id(), parse);
             }
 
-            allBones.forEach((name, bone) -> {
-                if (bone.parent() == null || allBones.get(bone.parent()) == null)
+            allBones.int2ObjectEntrySet().forEach((entry) -> {
+                var name = entry.getIntKey();
+                var bone = entry.getValue();
+                if (bone.parent() == -1 || allBones.get(bone.parent()) == null)
                     toplevelBones.put(name, bone);
                 else
                     allBones.get(bone.parent()).children().put(name, bone);
@@ -161,8 +170,12 @@ public record BrModelEntry(
     }
 
     private static GroupLocator getLocator(BrBone bone) {
-        Map<String, GroupLocator> children = new HashMap<>();
-        bone.children().forEach((name, group) -> children.put(name, getLocator(group)));
+        Int2ObjectMap<GroupLocator> children = new Int2ObjectOpenHashMap<>();
+        bone.children().int2ObjectEntrySet().forEach((entry) -> {
+            var name = entry.getIntKey();
+            var group = entry.getValue();
+            children.put(name, getLocator(group));
+        });
         List<LocatorEntry> list = new ArrayList<>();
         for (BrLocator brLocator : bone.locators().values()) {
             list.add(brLocator.locatorEntry());
