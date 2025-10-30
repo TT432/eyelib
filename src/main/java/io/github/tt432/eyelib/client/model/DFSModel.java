@@ -8,24 +8,21 @@ import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
+import it.unimi.dsi.fastutil.objects.ReferenceList;
 import lombok.AllArgsConstructor;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author TT432
  */
 public record DFSModel(
-        List<Frame<?>> frames
+        ReferenceList<Frame<?>> frames
 ) {
     public <D extends ModelRuntimeData<? extends Model.Bone, ?, D>> void visit(RenderParams params, ModelVisitContext context, ModelVisitor visitor, D infos, StateMachine stateMachine) {
-        for (int i = 0; i < frames.size(); i++) {
-            frames.get(i).visit(params, context, visitor, cast(infos), stateMachine);
-        }
+        frames.forEach(frame -> frame.visit(params, context, visitor, cast(infos), stateMachine));
     }
 
     public static class StateMachine {
@@ -38,8 +35,7 @@ public record DFSModel(
     }
 
     public static DFSModel create(Model model) {
-        List<Frame<?>> frames = new ArrayList<>();
-        DFSModel result = new DFSModel(frames);
+        ReferenceList<Frame<?>> frames = new ReferenceArrayList<>();
 
         new ModelVisitor() {
             @Override
@@ -77,7 +73,7 @@ public record DFSModel(
                 OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap()
         ), new ModelVisitContext(), cast(model.data()), model);
 
-        return result;
+        return new DFSModel(frames);
     }
 
     public interface Frame<D extends ModelRuntimeData<Model.Bone, ?, D>> {
