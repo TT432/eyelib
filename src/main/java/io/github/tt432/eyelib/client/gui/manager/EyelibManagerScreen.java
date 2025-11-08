@@ -30,11 +30,15 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
+import org.apache.commons.io.monitor.FileAlterationMonitor;
+import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -204,6 +208,12 @@ public class EyelibManagerScreen extends Screen {
 
     private static final Gson gson = new Gson();
 
+    // 选中的资源路径与监控器
+    private static Path monitoredFolderPath;
+    private static String monitoredFolderPathText;
+    private static FileAlterationMonitor fileMonitor;
+    private static FileAlterationObserver fileObserver;
+
     static void loadResourceFolder(Path basePath) {
         loadJsonFiles(basePath, "models", jo -> {
             var model = BrModel.parse(jo);
@@ -278,6 +288,91 @@ public class EyelibManagerScreen extends Screen {
         }
     }
 
+    /**
+     * 增量加载单个文件
+     */
+    static void loadSingleFile(Path basePath, Path file) {
+        String relative = basePath.relativize(file).toString().replace("\\", "/");
+
+        try {
+            if (relative.endsWith(".json")) {
+                JsonObject jo = gson.fromJson(IOUtils.toString(new FileInputStream(file.toFile()), StandardCharsets.UTF_8), JsonObject.class);
+
+                if (relative.startsWith("models/")) {
+                    var model = BrModel.parse(jo);
+                    for (BrModelEntry brModelEntry : model.models()) {
+                        Eyelib.getModelManager().put(brModelEntry.name(), brModelEntry);
+                    }
+                } else if (relative.startsWith("animations/")) {
+                    var animation = BrAnimation.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
+                    animation.animations().forEach((k, v) -> Eyelib.getAnimationManager().put(k, v));
+                } else if (relative.startsWith("animation_controllers/")) {
+                    var animation = BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
+                    animation.animationControllers().forEach((k, v) -> Eyelib.getAnimationManager().put(k, v));
+                } else if (relative.startsWith("render_controllers/")) {
+                    var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
+                    controller.render_controllers().forEach((k, v) -> Eyelib.getRenderControllerManager().put(k, v));
+                } else if (relative.startsWith("entity/")) {
+                    var entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
+                    Eyelib.getClientEntityLoader().put(ResourceLocation.parse(entity.identifier()), entity);
+                } else if (relative.startsWith("particles/")) {
+                    var particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
+                    Eyelib.getParticleManager().put(particle.particleEffect().description().identifier(), particle);
+                }
+            } else if (relative.endsWith(".png") && relative.startsWith("textures/")) {
+                NativeImage nativeImage = NativeImages.loadImage(new FileInputStream(file.toFile()));
+                ResourceLocation texture = ResourceLocation.withDefaultNamespace(file.toString().replace(basePath.toString(), "").replace("\\", "/").substring(1).toLowerCase(Locale.ROOT));
+                NativeImages.uploadImage(texture, nativeImage);
+                NeoForge.EVENT_BUS.post(new TextureChangedEvent());
+            }
+        } catch (Exception e) {
+            log.error("can't load single file.", e);
+        }
+    }
+
+    private void startFolderMonitor(Path basePath) {
+        stopFolderMonitor();
+
+        fileObserver = new FileAlterationObserver(basePath.toFile());
+        fileObserver.addListener(new FileAlterationListenerAdaptor() {
+            @Override
+            public void onFileCreate(File file) {
+                Path p = file.toPath();
+                RenderSystem.recordRenderCall(() -> loadSingleFile(basePath, p));
+            }
+
+            @Override
+            public void onFileChange(File file) {
+                Path p = file.toPath();
+                RenderSystem.recordRenderCall(() -> loadSingleFile(basePath, p));
+            }
+
+            @Override
+            public void onFileDelete(File file) {
+                log.info("file deleted: {}", file.getAbsolutePath());
+            }
+        });
+
+        fileMonitor = new FileAlterationMonitor(1000L, fileObserver);
+        try {
+            fileMonitor.start();
+        } catch (Exception e) {
+            log.error("Failed to start file monitor.", e);
+        }
+    }
+
+    private void stopFolderMonitor() {
+        if (fileMonitor != null) {
+            try {
+                fileMonitor.stop();
+            } catch (Exception e) {
+                log.error("Failed to stop file monitor.", e);
+            }
+            fileMonitor = null;
+        }
+        fileObserver = null;
+    }
+
     static void loadJsonFiles(Path basePath, String subFolder, Consumer<JsonObject> jsonProcessor) {
         Path subPath = basePath.resolve(subFolder);
         if (Files.exists(subPath) && Files.isDirectory(subPath)) {
@@ -345,13 +440,24 @@ public class EyelibManagerScreen extends Screen {
                             var animation = BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
                             animation.animationControllers().forEach((k, v) -> Eyelib.getAnimationManager().put(k, v));
                         }),
-                new DragTargetWidget(x2, y1, w, h, new GuiAnimator(5), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/folder"), Component.literal("资源包文件夹"),
+                new DragTargetWidget(x2, y1, w, h, new GuiAnimator(5), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/folder"), Component.literal("监控资源文件夹"),
                         (mx, my, b) -> {
                             if (hover(x2, y1, w, h, mx, my)) {
                                 folderSelectDialog("打开资源包文件夹", Path.of("/"))
                                         .whenComplete((path, throwable) ->
                                                 RenderSystem.recordRenderCall(() ->
-                                                        path.ifPresent(EyelibManagerScreen::loadResourceFolder)));
+                                                        path.ifPresent(p -> {
+                                                            if (!p.toAbsolutePath().equals(monitoredFolderPath)) {
+                                                                if (monitoredFolderPath != null) {
+                                                                    stopFolderMonitor();
+                                                                }
+
+                                                                monitoredFolderPath = p.toAbsolutePath();
+                                                                monitoredFolderPathText = monitoredFolderPath.toString();
+                                                                loadResourceFolder(monitoredFolderPath);
+                                                                startFolderMonitor(monitoredFolderPath);
+                                                            }
+                                                        })));
                                 return true;
                             }
 
@@ -372,6 +478,19 @@ public class EyelibManagerScreen extends Screen {
         );
         for (DragTargetWidget widget : widgets) {
             addRenderableWidget(widget);
+        }
+    }
+
+    @Override
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+
+        if (monitoredFolderPathText != null && !monitoredFolderPathText.isEmpty()) {
+            var font = Minecraft.getInstance().font;
+            String display = "监控路径: " + monitoredFolderPathText;
+            int px = Math.round(width * 0.05F);
+            int py = Math.round(height * 0.05F);
+            guiGraphics.drawString(font, display, px, py, 0xFFFFFFFF);
         }
     }
 
