@@ -36,18 +36,16 @@ public class DataAttachmentContainerCapability {
 
         @SubscribeEvent
         public static void onPlayerClone(PlayerEvent.Clone event) {
-            var outcome = event.getEntity().getCapability(INSTANCE);
-            var original = event.getOriginal().getCapability(INSTANCE);
-            var data = original.orElseThrow(IllegalAccessError::new).serializeNBT();
-            outcome.orElseThrow(IllegalStateException::new).deserializeNBT(data);
-        }
+            if (!event.isWasDeath()) {
+                var original = event.getOriginal();
+                original.reviveCaps();
+                var originalCaps = original.getCapability(INSTANCE);
+                var data = originalCaps.orElseThrow(IllegalAccessError::new).serializeNBT();
+                original.invalidateCaps();
 
-        @SubscribeEvent
-        public static void onPlayerClone(LivingConversionEvent.Post event) {
-            var outcome = event.getOutcome().getCapability(INSTANCE);
-            var original = event.getEntity().getCapability(INSTANCE);
-            var data = original.orElseThrow(IllegalAccessError::new).serializeNBT();
-            outcome.orElseThrow(IllegalStateException::new).deserializeNBT(data);
+                var outcome = event.getEntity().getCapability(INSTANCE);
+                outcome.orElseThrow(IllegalStateException::new).deserializeNBT(data);
+            }
         }
     }
 }
