@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
+import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
@@ -176,10 +177,28 @@ public record BrAnimationController(
                 updateAnimations(animations, animationName, blendProgress * blendValue.eval(scope),
                         multiplier, stateTimeSec, infos, data, scope, effects, animationStartFeedback));
 
-        if (lastState != null && blendProgress < 1) {
-            lastState.animations().forEach((animationName, blendValue) ->
-                    updateAnimations(animations, animationName, (1 - blendProgress) * blendValue.eval(scope),
-                            multiplier, stateTimeSec, infos, data, scope, effects, animationStartFeedback));
+        if (lastState != null) {
+            if (blendProgress < 1) {
+                lastState.animations().forEach((animationName, blendValue) -> {
+                    var animation = Eyelib.getAnimationManager().get(animations.get(animationName));
+
+                    if (animation == null) return;
+
+                    if (data.getData(animation) instanceof BrAnimationEntry.Data d) {
+                        animation.tickAnimation(data.getData(animation), animations, scope, d.lastTicks,
+                                multiplier * (1 - blendProgress) * blendValue.eval(scope), infos, effects, animationStartFeedback);
+                    }
+                });
+            } else {
+                data.setLastState(null);
+                lastState.animations().forEach((name, blendValue) -> {
+                    var animation = Eyelib.getAnimationManager().get(animations.get(name));
+
+                    if (animation == null) return;
+
+                    animation.onFinish(data.getData(animation));
+                });
+            }
         }
     }
 

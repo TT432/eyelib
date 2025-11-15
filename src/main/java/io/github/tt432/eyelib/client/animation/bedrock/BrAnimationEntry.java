@@ -150,7 +150,7 @@ public record BrAnimationEntry(
 
         private final List<RuntimeParticlePlayData> particles = new ArrayList<>();
 
-        private float lastTicks;
+        public float lastTicks;
         public float animTime;
         public float deltaTime;
 
@@ -206,7 +206,7 @@ public record BrAnimationEntry(
         if (data.lastTicks == 0) data.lastTicks = ticks;
         data.deltaTime = ticks - data.lastTicks;
         data.lastTicks = ticks;
-        var animTimeUpdate = data.animTime + (anim_time_update().eval(scope) - data.animTime);
+        var animTimeUpdate = anim_time_update().eval(scope);
         data.animTime = animTimeUpdate;
 
         float animTick;
@@ -237,7 +237,8 @@ public record BrAnimationEntry(
 
         float finalMultiplier = multiplier;
         bones().int2ObjectEntrySet().forEach((entry) -> {
-            var boneName = entry.getIntKey();var  boneAnim=entry.getValue();
+            var boneName = entry.getIntKey();
+            var boneAnim = entry.getValue();
             BoneRenderInfoEntry renderInfoEntry = infos.getData(boneName);
 
             Vector3f pos = boneAnim.lerpPosition(scope, animTick);
