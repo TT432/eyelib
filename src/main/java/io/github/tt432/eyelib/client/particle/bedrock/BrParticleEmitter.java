@@ -6,8 +6,8 @@ import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterP
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.shape.Direction;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.Blackboard;
+import io.github.tt432.eyelib.util.FixedTimer;
 import io.github.tt432.eyelib.util.ResourceLocations;
-import io.github.tt432.eyelib.util.SimpleTimer;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.Getter;
 import lombok.Setter;
@@ -50,7 +50,7 @@ public class BrParticleEmitter {
     private final Vector3f position;
 
     @Getter
-    private final SimpleTimer timer;
+    private final FixedTimer timer;
 
     private final Direction direction;
 
@@ -75,7 +75,8 @@ public class BrParticleEmitter {
     public BrParticleEmitter(BrParticle particle, @Nullable MolangScope parentScope, Level level, Vector3f position) {
         this.particle = particle;
 
-        timer = new SimpleTimer();
+        timer = new FixedTimer();
+        timer.start();
 
         molangScope.setParent(parentScope);
         molangScope.setOwner(this);
@@ -106,7 +107,7 @@ public class BrParticleEmitter {
     }
 
     public float getAge() {
-        return timer.getNanoTime() / 1_000_000_000F;
+        return timer.seconds();
     }
 
     public float getLifetime() {
@@ -120,10 +121,10 @@ public class BrParticleEmitter {
     public void onRenderFrame() {
         if (removed) return;
 
-        if (!enabled) timer.reset();
-
-        components.forEach(c -> c.onPreTick(this));
-        components.forEach(c -> c.onTick(this));
+        while (timer.canNextStep()) {
+            components.forEach(c -> c.onPreTick(this));
+            components.forEach(c -> c.onTick(this));
+        }
     }
 
     public void initPose(@Nullable Matrix4f locatorMatrix, @Nullable Entity attachedEntity) {
@@ -171,7 +172,7 @@ public class BrParticleEmitter {
     }
 
     public void onLoopStart() {
-        timer.reset();
+        timer.start();
         random1 = random.nextFloat();
         random2 = random.nextFloat();
         random3 = random.nextFloat();

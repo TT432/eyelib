@@ -9,7 +9,7 @@ import io.github.tt432.eyelib.client.particle.bedrock.component.particle.appeara
 import io.github.tt432.eyelib.client.particle.bedrock.component.particle.appearance.ParticleAppearanceTinting;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.Blackboard;
-import io.github.tt432.eyelib.util.SimpleTimer;
+import io.github.tt432.eyelib.util.FixedTimer;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.Getter;
 import lombok.Setter;
@@ -57,7 +57,7 @@ public class BrParticleParticle {
     private final Blackboard blackboard = new Blackboard();
 
     @Getter
-    private final SimpleTimer timer;
+    private final FixedTimer timer;
 
     @Getter
     @Setter
@@ -81,7 +81,8 @@ public class BrParticleParticle {
     public BrParticleParticle(BrParticleEmitter emitter) {
         this.emitter = emitter;
 
-        timer = new SimpleTimer();
+        timer = new FixedTimer();
+        timer.start();
 
         random1 = emitter.getRandom().nextFloat();
         random2 = emitter.getRandom().nextFloat();
@@ -124,7 +125,7 @@ public class BrParticleParticle {
     }
 
     public float getAge() {
-        return Math.min(lifetime, timer.getNanoTime() / 1_000_000_000F);
+        return Math.min(lifetime, timer.realSec());
     }
 
     public BlockPos getBlockPosition() {
@@ -176,7 +177,7 @@ public class BrParticleParticle {
 
         Vector4f uv = billboard != null ? billboard.getUV(this) : new Vector4f(0, 0, 1, 1);
 
-        var color = tinting != null ? tinting.getColor(this) : 0xFF_FF_FF_FF;
+        var color = getColor();
 
         float x = size.x;
         float y = size.y;
@@ -185,7 +186,41 @@ public class BrParticleParticle {
         var p2 = new Vector3f(-x, -y, 0).mulPosition(m4);
         var p3 = new Vector3f(x, -y, 0).mulPosition(m4);
 
+        m3.set(m4).invert().transpose();
         Vector3f normal = new Vector3f(0, 0, 1).mul(m3);
+        int light = getLight();
+
+        vertexConsumer.addVertex(p0.x, p0.y, p0.z, color, uv.x, uv.y,
+                OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
+        vertexConsumer.addVertex(p1.x, p1.y, p1.z, color, uv.x + uv.z, uv.y,
+                OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
+        vertexConsumer.addVertex(p2.x, p2.y, p2.z, color, uv.x + uv.z, uv.y + uv.w,
+                OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
+        vertexConsumer.addVertex(p3.x, p3.y, p3.z, color, uv.x, uv.y + uv.w,
+                OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
+
+//        if (billboard != null) {
+//            renderRotatedQuad(vertexConsumer, Minecraft.getInstance().gameRenderer.getMainCamera(), billboard.quat(this));
+//        }
+
+//        Minecraft.getInstance().options.reducedDebugInfo();
+//        VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.debugLineStrip(8));
+//        buffer.addVertex(m4, 0, 0, 0).setColor(0xFFFF0000);
+//        buffer.addVertex(m4, 1, 0, 0).setColor(0xFFFF0000);
+//        buffer.addVertex(m4, 0, 0, 0).setColor(0xFF00FF00);
+//        buffer.addVertex(m4, 0, 1, 0).setColor(0xFF00FF00);
+//        buffer.addVertex(m4, 0, 0, 0).setColor(0xFF0000FF);
+//        buffer.addVertex(m4, 0, 0, 1).setColor(0xFF0000FF);
+//        Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
+
+        poseStack.popPose();
+    }
+
+    private int getColor() {
+        return tinting != null ? tinting.getColor(this) : 0xFF_FF_FF_FF;
+    }
+
+    private int getLight() {
         int light;
 
         if (lighting != null) {
@@ -198,26 +233,6 @@ public class BrParticleParticle {
                     level.getBrightness(LightLayer.SKY, blockPosition)
             );
         }
-
-        vertexConsumer.addVertex(p0.x, p0.y, p0.z, color, uv.x, uv.y,
-                OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
-        vertexConsumer.addVertex(p1.x, p1.y, p1.z, color, uv.x + uv.z, uv.y,
-                OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
-        vertexConsumer.addVertex(p2.x, p2.y, p2.z, color, uv.x + uv.z, uv.y + uv.w,
-                OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
-        vertexConsumer.addVertex(p3.x, p3.y, p3.z, color, uv.x, uv.y + uv.w,
-                OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
-
-//        Minecraft.getInstance().options.reducedDebugInfo()
-//        VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(RenderType.debugLineStrip(8));
-//        buffer.addVertex(m4, 0, 0, 0).setColor(0xFFFF0000);
-//        buffer.addVertex(m4, 1, 0, 0).setColor(0xFFFF0000);
-//        buffer.addVertex(m4, 0, 0, 0).setColor(0xFF00FF00);
-//        buffer.addVertex(m4, 0, 1, 0).setColor(0xFF00FF00);
-//        buffer.addVertex(m4, 0, 0, 0).setColor(0xFF0000FF);
-//        buffer.addVertex(m4, 0, 0, 1).setColor(0xFF0000FF);
-//        Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
-
-        poseStack.popPose();
+        return light;
     }
 }

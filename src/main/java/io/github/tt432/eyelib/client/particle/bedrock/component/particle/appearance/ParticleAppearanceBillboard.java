@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.particle.bedrock.component.particle.appear
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleParticle;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ComponentTarget;
 import io.github.tt432.eyelib.client.particle.bedrock.component.RegisterParticleComponent;
@@ -17,10 +18,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Matrix4f;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import org.joml.*;
+
+import java.lang.Math;
 
 /**
  * @author TT432
@@ -48,69 +48,12 @@ public record ParticleAppearanceBillboard(
     }
 
     public void transform(BrParticleParticle particle, PoseStack poseStack) {
-        PoseStack.Pose last = poseStack.last();
-        var m4 = last.pose();
-
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-        var emitterRotation = new Vector3f();
-//                particle.getEmitter().getRotation();
 
-        switch (facingCameraMode) {
-            case ROTATE_XYZ -> m4.rotate(camera.rotation());
-            case ROTATE_Y -> m4.rotationY(180 * EyeMath.DEGREES_TO_RADIANS
-                    - camera.rotation().getEulerAnglesZYX(new Vector3f()).y);
-
-            case LOOKAT_XYZ -> m4.rotate(camera.rotation());
-            case LOOKAT_Y -> m4.rotationY(180 * EyeMath.DEGREES_TO_RADIANS
-                    - camera.rotation().getEulerAnglesZYX(new Vector3f()).y);
-
-            case DIRECTION_X -> applyDirectionX(m4, direction(particle, m4));
-            case DIRECTION_Y -> applyDirectionY(m4, direction(particle, m4));
-            case DIRECTION_Z -> applyDirectionZ(m4, direction(particle, m4));
-
-            case EMITTER_TRANSFORM_XY -> {
-                // 粒子匹配发射器的 xy 平面变换
-                m4.rotateZYX(emitterRotation);
-            }
-            case EMITTER_TRANSFORM_XZ -> {
-                // 粒子匹配发射器的 xz 平面变换
-                m4.rotateZYX(emitterRotation).rotateX(90 * EyeMath.DEGREES_TO_RADIANS);
-            }
-            case EMITTER_TRANSFORM_YZ -> {
-                // 粒子匹配发射器的 yz 平面变换
-                m4.rotateZYX(emitterRotation).rotateY(90 * EyeMath.DEGREES_TO_RADIANS);
-            }
-        }
-    }
-
-    Vector3f direction(BrParticleParticle particle, Matrix4f m4) {
-        MolangScope scope = particle.molangScope;
-        float velocity = particle.getVelocity().length();
-        Vector3f direction = velocity > direction().minSpeedThreshold ? switch (direction().mode) {
-            case DERIVE_FROM_VELOCITY ->
-                    particle.getVelocity().equals(new Vector3f()) ? new Vector3f() : particle.getVelocity().normalize(new Vector3f());
-            case CUSTOM_DIRECTION -> direction().customDirection.eval(scope);
-        } : new Vector3f();
-
-        return direction;
-    }
-
-    public static void applyDirectionX(Matrix4f m4, Vector3f n) {
-        var a = Math.atan2(n.x, n.z);
-        var o = Math.atan2(n.y, Math.sqrt(Math.pow(n.x, 2) + Math.pow(n.z, 2)));
-        m4.rotateYXZ(new Vector3f(0, (float) (a - Math.PI / 2), (float) (o)));
-    }
-
-    public static void applyDirectionY(Matrix4f m4, Vector3f n) {
-        var a = Math.atan2(n.x, n.z);
-        var s = Math.atan2(n.y, Math.sqrt(Math.pow(n.x, 2) + Math.pow(n.z, 2)));
-        m4.rotateYXZ(new Vector3f((float) (s - Math.PI / 2), (float) (a - Math.PI), 0));
-    }
-
-    public static void applyDirectionZ(Matrix4f m4, Vector3f n) {
-        var a = Math.atan2(n.x, n.z);
-        var s = Math.atan2(n.y, Math.sqrt(Math.pow(n.x, 2) + Math.pow(n.z, 2)));
-        m4.rotateYXZ(new Vector3f((float) -s, (float) a, 0));
+        Quaternionf quaternion = new Quaternionf();
+        facingCameraMode.setRotation(particle, particle.getEmitter(), quaternion, camera,
+                Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true));
+        poseStack.mulPose(quaternion);
     }
 
     /**
@@ -202,59 +145,165 @@ public record ParticleAppearanceBillboard(
         }
     }
 
+    @FunctionalInterface
+    private interface FacingCameraMode {
+        void setRotation(BrParticleParticle particle, BrParticleEmitter emitter, Quaternionf quaternion, Camera camera, float partialTick);
+    }
+
+    private static final Vector3f UP = new Vector3f(0, 1, 0);
+
     /**
      * 表示面向相机的模式
      */
-    public enum FaceCameraMode implements StringRepresentable {
+    public enum FaceCameraMode implements StringRepresentable, FacingCameraMode {
         /**
          * 与相机对齐，垂直于视轴旋转
          */
-        ROTATE_XYZ,
+        ROTATE_XYZ {
+            @Override
+            public void setRotation(BrParticleParticle particle, BrParticleEmitter emitter, Quaternionf quaternion, Camera camera, float partialTick) {
+                quaternion.set(camera.rotation());
+            }
+        },
 
         /**
          * 与相机对齐，但围绕世界 y 轴旋转
          */
-        ROTATE_Y,
+        ROTATE_Y {
+            @Override
+            public void setRotation(BrParticleParticle particle, BrParticleEmitter emitter, Quaternionf quaternion, Camera camera, float partialTick) {
+                quaternion.set(0, camera.rotation().y, 0, camera.rotation().w);
+            }
+        },
 
         /**
          * 瞄准相机，偏向世界 y 轴向上
          */
-        LOOKAT_XYZ,
+        LOOKAT_XYZ {
+            @Override
+            public void setRotation(BrParticleParticle particle, BrParticleEmitter emitter, Quaternionf quaternion, Camera camera, float partialTick) {
+                Vector3f pp = particle.getPosition();
+                Vector3f ep = particle.getEmitter().getPosition();
+                var cp = camera.getPosition();
+
+                new Matrix4f().lookAt(
+                        pp.x + ep.x,
+                        pp.y + ep.y,
+                        pp.z + ep.z,
+                        (float) cp.x,
+                        (float) cp.y,
+                        (float) cp.z,
+                        0,
+                        1,
+                        0
+                ).invert().rotateY(Mth.PI).getNormalizedRotation(quaternion);
+            }
+        },
 
         /**
          * 瞄准相机，但围绕世界 y 轴旋转
          */
-        LOOKAT_Y,
+        LOOKAT_Y {
+            @Override
+            public void setRotation(BrParticleParticle particle, BrParticleEmitter emitter, Quaternionf quaternion, Camera camera, float partialTick) {
+                Vector3f pp = particle.getPosition();
+                Vector3f ep = particle.getEmitter().getPosition();
+                var cp = camera.getPosition();
+
+                new Matrix4f().lookAt(
+                        pp.x + ep.x,
+                        pp.y + ep.y,
+                        pp.z + ep.z,
+                        (float) cp.x,
+                        pp.y + ep.y,
+                        (float) cp.z,
+                        0,
+                        1,
+                        0
+                ).invert().rotateY(Mth.PI).getNormalizedRotation(quaternion);
+            }
+        },
 
         /**
          * 未旋转的粒子 x 轴沿着方向向量，未旋转的 y 轴试图向上对齐
          */
-        DIRECTION_X,
+        DIRECTION_X {
+            @Override
+            public void setRotation(BrParticleParticle particle, BrParticleEmitter emitter, Quaternionf quaternion, Camera camera, float partialTick) {
+                Vector3f vec = new Vector3f(particle.getVelocity());
+                double y = Math.atan2(vec.x, vec.z);
+                double z = Math.atan2(vec.y, Math.sqrt(Math.pow(vec.x, 2) + Math.pow(vec.z, 2)));
+                quaternion
+                        .rotateY((float) (y - Math.PI / 2))
+                        .rotateZ((float) z);
+            }
+        },
 
         /**
          * 未旋转的粒子 y 轴沿着方向向量，未旋转的 x 轴试图向上对齐
          */
-        DIRECTION_Y,
+        DIRECTION_Y {
+            @Override
+            public void setRotation(BrParticleParticle particle, BrParticleEmitter emitter, Quaternionf quaternion, Camera camera, float partialTick) {
+                Vector3f vec = new Vector3f(particle.getVelocity());
+                double y = Math.atan2(vec.x, vec.z);
+                double x = Math.atan2(vec.y, Math.sqrt(Math.pow(vec.x, 2) + Math.pow(vec.z, 2)));
+                quaternion.identity()
+                        .rotateY((float) (y - Math.PI))
+                        .rotateX((float) (x - Math.PI / 2));
+            }
+        },
 
         /**
          * 广告牌面朝向方向向量，未旋转的 y 轴试图向上对齐
          */
-        DIRECTION_Z,
+        DIRECTION_Z {
+            @Override
+            public void setRotation(BrParticleParticle particle, BrParticleEmitter emitter, Quaternionf quaternion, Camera camera, float partialTick) {
+                Vector3f vec = new Vector3f(particle.getVelocity());
+                double y = Math.atan2(vec.x, vec.z);
+                double x = Math.atan2(vec.y, Math.sqrt(Math.pow(vec.x, 2) + Math.pow(vec.z, 2)));
+                quaternion.identity()
+                        .rotateY((float) y)
+                        .rotateX((float) -x);
+            }
+        },
 
         /**
          * 使粒子匹配发射器的变换（广告牌平面将匹配变换的 xy 平面）
          */
-        EMITTER_TRANSFORM_XY,
+        EMITTER_TRANSFORM_XY {
+            @Override
+            public void setRotation(BrParticleParticle particle, BrParticleEmitter emitter, Quaternionf quaternion, Camera camera, float partialTick) {
+                Quaternionf base = new Quaternionf();
+                emitter.getBaseRotation().getNormalizedRotation(base);
+                quaternion.set(base);
+            }
+        },
 
         /**
          * 使粒子匹配发射器的变换（广告牌平面将匹配变换的 xz 平面）
          */
-        EMITTER_TRANSFORM_XZ,
+        EMITTER_TRANSFORM_XZ {
+            @Override
+            public void setRotation(BrParticleParticle particle, BrParticleEmitter emitter, Quaternionf quaternion, Camera camera, float partialTick) {
+                Quaternionf base = new Quaternionf();
+                emitter.getBaseRotation().getNormalizedRotation(base);
+                quaternion.set(base).rotateX(90 * EyeMath.DEGREES_TO_RADIANS);
+            }
+        },
 
         /**
          * 使粒子匹配发射器的变换（广告牌平面将匹配变换的 yz 平面）
          */
-        EMITTER_TRANSFORM_YZ;
+        EMITTER_TRANSFORM_YZ {
+            @Override
+            public void setRotation(BrParticleParticle particle, BrParticleEmitter emitter, Quaternionf quaternion, Camera camera, float partialTick) {
+                Quaternionf base = new Quaternionf();
+                emitter.getBaseRotation().getNormalizedRotation(base);
+                quaternion.set(base).rotateY(90 * EyeMath.DEGREES_TO_RADIANS);
+            }
+        };
         public static final Codec<FaceCameraMode> CODEC = StringRepresentable.fromEnum(FaceCameraMode::values);
 
         @Override
