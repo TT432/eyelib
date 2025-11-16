@@ -9,7 +9,7 @@ import io.github.tt432.eyelib.client.particle.bedrock.component.particle.appeara
 import io.github.tt432.eyelib.client.particle.bedrock.component.particle.appearance.ParticleAppearanceTinting;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.Blackboard;
-import io.github.tt432.eyelib.util.SimpleTimer;
+import io.github.tt432.eyelib.util.FixedTimer;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.Getter;
 import lombok.Setter;
@@ -58,7 +58,7 @@ public class BrParticleParticle {
     private final Blackboard blackboard = new Blackboard();
 
     @Getter
-    private final SimpleTimer timer;
+    private final FixedTimer timer;
 
     @Getter
     @Setter
@@ -82,7 +82,8 @@ public class BrParticleParticle {
     public BrParticleParticle(BrParticleEmitter emitter) {
         this.emitter = emitter;
 
-        timer = new SimpleTimer();
+        timer = new FixedTimer();
+        timer.start();
 
         random1 = emitter.getRandom().nextFloat();
         random2 = emitter.getRandom().nextFloat();
@@ -122,7 +123,7 @@ public class BrParticleParticle {
     }
 
     public float getAge() {
-        return Math.min(lifetime, timer.getNanoTime() / 1_000_000_000F);
+        return Math.min(lifetime, timer.realSec());
     }
 
     public BlockPos getBlockPosition() {
@@ -174,7 +175,7 @@ public class BrParticleParticle {
 
         Vector4f uv = billboard != null ? billboard.getUV(this) : new Vector4f(0, 0, 1, 1);
 
-        var color = tinting != null ? tinting.getColor(this) : 0xFF_FF_FF_FF;
+        var color = getColor();
 
         float x = size.x;
         float y = size.y;
@@ -183,19 +184,9 @@ public class BrParticleParticle {
         var p2 = new Vector3f(-x, -y, 0).mulPosition(m4);
         var p3 = new Vector3f(x, -y, 0).mulPosition(m4);
 
+        m3.set(m4).invert().transpose();
         Vector3f normal = new Vector3f(0, 0, 1).mul(m3);
-        int light;
-
-        if (lighting != null) {
-            light = LightTexture.FULL_BRIGHT;
-        } else {
-            BlockPos blockPosition = getBlockPosition();
-            Level level = emitter.getLevel();
-            light = LightTexture.pack(
-                    level.getBrightness(LightLayer.BLOCK, blockPosition),
-                    level.getBrightness(LightLayer.SKY, blockPosition)
-            );
-        }
+        int light = getLight();
 
         vertexConsumer.vertex(p0.x, p0.y, p0.z,
                 FastColor.ABGR32.red(color),
@@ -235,5 +226,25 @@ public class BrParticleParticle {
 //        Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
 
         poseStack.popPose();
+    }
+
+    private int getColor() {
+        return tinting != null ? tinting.getColor(this) : 0xFF_FF_FF_FF;
+    }
+
+    private int getLight() {
+        int light;
+
+        if (lighting != null) {
+            light = LightTexture.FULL_BRIGHT;
+        } else {
+            BlockPos blockPosition = getBlockPosition();
+            Level level = emitter.getLevel();
+            light = LightTexture.pack(
+                    level.getBrightness(LightLayer.BLOCK, blockPosition),
+                    level.getBrightness(LightLayer.SKY, blockPosition)
+            );
+        }
+        return light;
     }
 }
