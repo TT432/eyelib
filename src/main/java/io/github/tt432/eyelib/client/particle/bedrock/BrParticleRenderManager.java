@@ -31,11 +31,11 @@ public class BrParticleRenderManager {
 
     public static void spawnEmitter(final String id, final BrParticleEmitter emitter) {
         if (emitters.containsKey(id)) return;
-//        Thread.startVirtualThread(() -> emitters.put(id, emitter));
+        emitters.put(id, emitter);
     }
 
     public static void removeEmitter(final String id) {
-//        Thread.startVirtualThread(() -> emitters.remove(id));
+        emitters.remove(id);
     }
 
     public static void spawnParticle(final BrParticleParticle particle) {
@@ -51,13 +51,18 @@ public class BrParticleRenderManager {
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static final class ForgeEvents {
         @SubscribeEvent
+        public static void onEvent(TickEvent.RenderTickEvent event) {
+            if (event.phase != TickEvent.Phase.START) return;
+            emitters.object2ObjectEntrySet().removeIf(removeEmitters);
+            emitters.values().forEach(renderEmitters);
+            particles.removeIf(removeParticles);
+            particles.forEach(renderParticles);
+        }
+
+        @SubscribeEvent
         public static void onEvent(TickEvent.ClientTickEvent event) {
-            if (event.phase == TickEvent.Phase.START){
-                emitters.object2ObjectEntrySet().removeIf(removeEmitters);
-                emitters.values().forEach(renderEmitters);
-                particles.removeIf(removeParticles);
-                particles.forEach(renderParticles);
-            }
+            if (event.phase != TickEvent.Phase.START) return;
+            emitters.values().forEach(BrParticleEmitter::onTick);
         }
 
         @SubscribeEvent
