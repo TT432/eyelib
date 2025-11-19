@@ -275,9 +275,6 @@ public record ParticleAppearanceBillboard(
         EMITTER_TRANSFORM_XY {
             @Override
             public void setRotation(BrParticleParticle particle, BrParticleEmitter emitter, Quaternionf quaternion, Camera camera, float partialTick) {
-                Quaternionf base = new Quaternionf();
-                emitter.getBaseRotation().getNormalizedRotation(base);
-                quaternion.set(base);
             }
         },
 
@@ -287,9 +284,7 @@ public record ParticleAppearanceBillboard(
         EMITTER_TRANSFORM_XZ {
             @Override
             public void setRotation(BrParticleParticle particle, BrParticleEmitter emitter, Quaternionf quaternion, Camera camera, float partialTick) {
-                Quaternionf base = new Quaternionf();
-                emitter.getBaseRotation().getNormalizedRotation(base);
-                quaternion.set(base).rotateX(90 * EyeMath.DEGREES_TO_RADIANS);
+                quaternion.rotateX(90 * EyeMath.DEGREES_TO_RADIANS);
             }
         },
 
@@ -299,9 +294,7 @@ public record ParticleAppearanceBillboard(
         EMITTER_TRANSFORM_YZ {
             @Override
             public void setRotation(BrParticleParticle particle, BrParticleEmitter emitter, Quaternionf quaternion, Camera camera, float partialTick) {
-                Quaternionf base = new Quaternionf();
-                emitter.getBaseRotation().getNormalizedRotation(base);
-                quaternion.set(base).rotateY(90 * EyeMath.DEGREES_TO_RADIANS);
+                quaternion.rotateY(90 * EyeMath.DEGREES_TO_RADIANS);
             }
         };
         public static final Codec<FaceCameraMode> CODEC = StringRepresentable.fromEnum(FaceCameraMode::values);
