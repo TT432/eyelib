@@ -21,6 +21,5 @@ dependencies {
 
 - [Antlr-Molang](https://github.com/TT432/antlr-molang) for parse Molang.
 - [jdk-classfile-backport](https://github.com/dmlloyd/jdk-classfile-backport) for generate bytecode for Molang.
-- [TwelveMonkeys](https://github.com/haraldk/TwelveMonkeys) for .tga image support.
 - [lombok](https://projectlombok.org/) for generate getter/setter and more.
 - [Chin](https://github.com/TT432/chin) for utils.

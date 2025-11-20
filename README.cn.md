@@ -21,6 +21,5 @@ dependencies {
 
 - [Antlr-Molang](https://github.com/TT432/antlr-molang) 用于解析 Molang。
 - [jdk-classfile-backport](https://github.com/dmlloyd/jdk-classfile-backport) 用于生成 molang 字节码。
-- [TwelveMonkeys](https://github.com/haraldk/TwelveMonkeys) 用于 .tga 格式的图片支持。
 - [lombok](https://projectlombok.org/) 用于生成 getter/setter 等。
 - [Chin](https://github.com/TT432/chin) 用于提供工具类。
