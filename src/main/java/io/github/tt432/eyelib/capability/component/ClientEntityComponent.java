@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 import net.neoforged.neoforge.common.NeoForge;
 
+import java.util.List;
+
 /**
  * @author TT432
  */
@@ -14,6 +16,7 @@ import net.neoforged.neoforge.common.NeoForge;
 @Setter
 public class ClientEntityComponent {
     private BrClientEntity clientEntity;
+    public List<ModelComponent> components;
 
     {
         NeoForge.EVENT_BUS.addListener(ManagerEntryChangedEvent.class, event -> {

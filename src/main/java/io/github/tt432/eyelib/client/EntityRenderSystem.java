@@ -12,6 +12,7 @@ import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
+import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
@@ -22,7 +23,11 @@ import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
 import io.github.tt432.eyelib.molang.MolangScope;
 import it.unimi.dsi.fastutil.Pair;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
@@ -50,13 +55,14 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import java.util.List;
@@ -70,6 +76,8 @@ import java.util.function.Consumer;
 @EventBusSubscriber(Dist.CLIENT)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EntityRenderSystem {
+    private static final Reference2ObjectMap<Entity, RenderData<?>> entities = new Reference2ObjectOpenHashMap<>();
+
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
         Entity entity = event.getEntity();
@@ -79,7 +87,60 @@ public class EntityRenderSystem {
             cap.init(entity);
         }
 
+        entities.put(entity, cap);
+
         NeoForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
+    }
+
+    @SubscribeEvent
+    public static void onEvent(EntityLeaveLevelEvent event) {
+        entities.remove(event.getEntity());
+    }
+
+    @SubscribeEvent
+    public static void onEvent(RenderLevelStageEvent event) {
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_SKY) {
+            entities.reference2ObjectEntrySet().forEach(entry -> {
+                var cap = entry.getValue();
+
+                if (entry.getKey() instanceof LivingEntity entity) {
+                    ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
+
+                    cap.getClientEntityComponent().components = setupClientEntity(entity, clientEntityComponent, cap);
+                }
+            });
+
+            entities.reference2ObjectEntrySet().parallelStream().forEach(entry -> {
+                var cap = entry.getValue();
+                var e = entry.getKey();
+
+                if (e instanceof LivingEntity entity) {
+                    MolangScope scope = cap.getScope();
+                    ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
+
+                    AnimationEffects effects = new AnimationEffects();
+                    float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(true);
+                    scope.set("variable.partial_tick", partialTick);
+                    scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
+
+                    BoneRenderInfos tickedInfos;
+                    if (cap.getAnimationComponent().getSerializableInfo() != null) {
+                        tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
+                                (ClientTickHandler.getTick() + partialTick) / 20, () -> {
+                                    if (clientEntityComponent.getClientEntity() != null) {
+                                        clientEntityComponent.getClientEntity().scripts().ifPresent(scripts -> {
+                                            scripts.pre_animation().eval(scope);
+                                        });
+                                    }
+                                });
+                    } else {
+                        tickedInfos = BoneRenderInfos.EMPTY;
+                    }
+                    cap.getAnimationComponent().tickedInfos = tickedInfos;
+                    cap.getAnimationComponent().effects = effects;
+                }
+            });
+        }
     }
 
     private static final Map<RenderType, Pair<VertexComputeHelper, MultiBufferSource>> helpers = new Object2ObjectOpenHashMap<>();
@@ -118,74 +179,65 @@ public class EntityRenderSystem {
         scope.set("variable.partial_tick", event.getPartialTick());
         scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
 
-        ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
+        var components = cap.getClientEntityComponent().components;
+        var tickedInfos = cap.getAnimationComponent().tickedInfos;
+        var effects = cap.getAnimationComponent().effects;
 
-        List<ModelComponent> components = setupClientEntity(entity, clientEntityComponent, cap);
+        if (components != null && tickedInfos != null && effects != null) {
+            setupExtraMolang(entity, cap);
 
-        AnimationEffects effects = new AnimationEffects();
-
-        BoneRenderInfos tickedInfos;
-        if (cap.getAnimationComponent().getSerializableInfo() != null) {
-            tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
-                    (ClientTickHandler.getTick() + event.getPartialTick()) / 20, () -> {
-                        clientEntityComponent.getClientEntity().scripts().ifPresent(scripts -> {
-                            scripts.pre_animation().eval(scope);
-                        });
+            int overlay = LivingEntityRenderer.getOverlayCoords(entity, ((LivingEntityRendererAccessor) (event.getRenderer())).callGetWhiteOverlayProgress(entity, event.getPartialTick()));
+            int light = event.getPackedLight();
+            var rendered = renderComponents(event.getMultiBufferSource(), event.getPoseStack(), light, overlay,
+                    event.getPartialTick(), entity, cap, components, tickedInfos, effects, helper -> {
+                        renderItemInHand(helper, event.getMultiBufferSource(), entity, light);
                     });
-        } else {
-            tickedInfos = BoneRenderInfos.EMPTY;
-        }
-
-        setupExtraMolang(entity, cap);
-
-        int overlay = LivingEntityRenderer.getOverlayCoords(entity, ((LivingEntityRendererAccessor) (event.getRenderer())).callGetWhiteOverlayProgress(entity, event.getPartialTick()));
-        int light = event.getPackedLight();
-        var rendered = renderComponents(event.getMultiBufferSource(), event.getPoseStack(), light, overlay,
-                event.getPartialTick(), entity, cap, components, tickedInfos, effects, helper -> {
-                    renderItemInHand(helper, event.getMultiBufferSource(), entity, light);
-                });
-        if (rendered) {
-            event.setCanceled(true);
+            if (rendered) {
+                event.setCanceled(true);
+            }
         }
 
         scope.remove("variable.partial_tick");
     }
 
+    private static final int leftitem = GlobalBoneIdHandler.get("leftitem");
+    private static final int rightitem = GlobalBoneIdHandler.get("rightitem");
+
     private static void renderItemInHand(RenderHelper helper, MultiBufferSource bufferSource, LivingEntity renderTarget, int light) {
         PoseStack poseStack1 = new PoseStack();
-        Map<String, Matrix4f> locators = helper.getContext().get("locators");
-        var offHandPose = locators.get("off_hand");
+        var locators = helper.getContext().<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>());
+        var offHandPose = locators.get(leftitem);
         if (offHandPose != null) {
-            poseStack1.poseStack.addLast(new PoseStack.Pose(offHandPose, new Matrix3f().identity()));
+            poseStack1.poseStack.addLast(offHandPose);
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.OFF_HAND);
             AttchableHandler.setRenderingHandItem(renderTarget, InteractionHand.OFF_HAND, itemInHand);
-            renderHandItem(bufferSource, renderTarget, itemInHand, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, light, poseStack1);
+            renderHandItem(bufferSource, renderTarget, itemInHand, ItemDisplayContext.THIRD_PERSON_LEFT_HAND, light, poseStack1, true);
             AttchableHandler.clearRenderingHandItem();
         }
 
-        var mainHandPose = locators.get("main_hand");
+        var mainHandPose = locators.get(rightitem);
         if (mainHandPose != null) {
-            poseStack1.poseStack.addLast(new PoseStack.Pose(mainHandPose, new Matrix3f().identity()));
+            poseStack1.poseStack.addLast(mainHandPose);
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.MAIN_HAND);
             AttchableHandler.setRenderingHandItem(renderTarget, InteractionHand.MAIN_HAND, itemInHand);
-            renderHandItem(bufferSource, renderTarget, itemInHand, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, light, poseStack1);
+            renderHandItem(bufferSource, renderTarget, itemInHand, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, poseStack1, false);
             AttchableHandler.clearRenderingHandItem();
         }
     }
 
     private static void renderHandItem(MultiBufferSource bufferSource, LivingEntity le, ItemStack item, ItemDisplayContext context,
-                                       int light, PoseStack poseStack) {
-        poseStack.pushPose();
-
+                                       int light, PoseStack poseStack, boolean left) {
         if (!item.isEmpty()) {
+            poseStack.pushPose();
+
             poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-            poseStack.translate(0, 0.125, -0.125);
+            poseStack.translate(-0.25,0.1,-1.15);
             Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer()
-                    .renderItem(le, item, context, true, poseStack, bufferSource, light);
-        }
+                    .renderItem(le, item, context, left, poseStack, bufferSource, light);
 
-        poseStack.popPose();
+            poseStack.popPose();
+        }
     }
 
     public static <T> boolean renderComponents(MultiBufferSource multiBufferSource, PoseStack poseStack,
@@ -274,9 +326,6 @@ public class EntityRenderSystem {
                 }
 
                 poseStack.popPose();
-
-//                var ticks = (ClientTickHandler.getTick() + Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false)) / 20;
-//                PlayerItemInHandAttachableLayer.render(renderParams, cap.getScope(), model, tickedInfos, multiBufferSource, ticks);
             }
         });
 
