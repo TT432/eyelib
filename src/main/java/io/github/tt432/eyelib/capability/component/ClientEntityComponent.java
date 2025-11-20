@@ -8,6 +8,8 @@ import lombok.Setter;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.EventPriority;
 
+import java.util.List;
+
 /**
  * @author TT432
  */
@@ -15,6 +17,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 @Setter
 public class ClientEntityComponent {
     private BrClientEntity clientEntity;
+    public List<ModelComponent> components;
 
     {
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ManagerEntryChangedEvent.class, event -> {

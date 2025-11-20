@@ -4,6 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.Animation;
+import io.github.tt432.eyelib.client.animation.AnimationEffects;
+import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
@@ -66,6 +68,9 @@ public class AnimationComponent {
     SerializableInfo serializableInfo;
     private final Map<Animation<?>, MolangValue> animate = new HashMap<>();
     private final Map<String, Object> animationData = new HashMap<>();
+
+    public BoneRenderInfos tickedInfos;
+    public AnimationEffects effects;
 
     public void setInfo(SerializableInfo info) {
         setup(info.animations, info.animate);
