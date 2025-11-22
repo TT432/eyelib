@@ -134,6 +134,7 @@ public class EyelibNetworkManager {
         ctx.get().enqueueWork(() ->
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> NetClientHandlers.onRemoveParticlePacket(msg, ctx.get()))
         );
+
         ctx.get().setPacketHandled(true);
     }
 
