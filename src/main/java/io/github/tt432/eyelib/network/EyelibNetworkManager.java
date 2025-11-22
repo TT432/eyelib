@@ -72,10 +72,10 @@ public class EyelibNetworkManager {
                 });
 
         registrar.playToClient(RemoveParticlePacket.TYPE, RemoveParticlePacket.STREAM_CODEC,
-                (payload, context) -> BrParticleRenderManager.removeEmitter(payload.removeId()));
+                (payload, context) -> context.enqueueWork(() -> BrParticleRenderManager.removeEmitter(payload.removeId())));
 
         registrar.playToClient(SpawnParticlePacket.TYPE, SpawnParticlePacket.STREAM_CODEC,
-                (payload, context) -> {
+                (payload, context) -> context.enqueueWork(() -> {
                     BrParticle particle = BrParticleLoader.getParticle(payload.particleId());
                     if (particle != null) {
                         BrParticleRenderManager.spawnEmitter(
@@ -89,7 +89,7 @@ public class EyelibNetworkManager {
                                 )
                         );
                     }
-                });
+                }));
 
         registrar.playToClient(ExtraEntityUpdateDataPacket.TYPE, ExtraEntityUpdateDataPacket.STREAM_CODEC,
                 (payload, context) ->
