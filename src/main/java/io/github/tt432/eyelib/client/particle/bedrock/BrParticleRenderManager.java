@@ -30,16 +30,22 @@ public class BrParticleRenderManager {
     private static final ObjectList<BrParticleParticle> particles = new ObjectArrayList<>();
 
     public static void spawnEmitter(final String id, final BrParticleEmitter emitter) {
-        if (emitters.containsKey(id)) return;
-        emitters.put(id, emitter);
+        Minecraft.getInstance().submit(() -> {
+            if (emitters.containsKey(id)) return;
+            emitters.put(id, emitter);
+        });
     }
 
     public static void removeEmitter(final String id) {
-        emitters.remove(id);
+        Minecraft.getInstance().submit(() -> {
+            emitters.remove(id);
+        });
     }
 
     public static void spawnParticle(final BrParticleParticle particle) {
-        particles.add(particle);
+        Minecraft.getInstance().submit(() -> {
+            particles.add(particle);
+        });
     }
 
     private static final Predicate<Map.Entry<String, BrParticleEmitter>> removeEmitters = e -> e.getValue().isRemoved();
