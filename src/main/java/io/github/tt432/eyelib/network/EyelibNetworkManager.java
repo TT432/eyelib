@@ -88,6 +88,18 @@ public class EyelibNetworkManager {
                 .decoder(ExtraEntityDataPacket.STREAM_CODEC::decode)
                 .consumerMainThread(EyelibNetworkManager::onExtraEntityDataPacket)
                 .add();
+
+        INSTANCE.messageBuilder(DataAttachmentUpdatePacket.class, nextId())
+                .encoder(DataAttachmentUpdatePacket.STREAM_CODEC::encode)
+                .decoder(DataAttachmentUpdatePacket.STREAM_CODEC::decode)
+                .consumerMainThread(EyelibNetworkManager::onDataAttachmentUpdatePacket)
+                .add();
+
+        INSTANCE.messageBuilder(DataAttachmentSyncPacket.class, nextId())
+                .encoder(DataAttachmentSyncPacket.STREAM_CODEC::encode)
+                .decoder(DataAttachmentSyncPacket.STREAM_CODEC::decode)
+                .consumerMainThread(EyelibNetworkManager::onDataAttachmentSyncPacket)
+                .add();
     }
 
     public static void sendToServer(Object packet) {
@@ -160,6 +172,20 @@ public class EyelibNetworkManager {
                 consumer.accept(packet, context);
             }
         };
+    }
+
+    private static <C> void onDataAttachmentUpdatePacket(DataAttachmentUpdatePacket<C> packet, Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() ->
+                DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> NetClientHandlers.onDataAttachmentUpdatePacket(packet, ctx.get()))
+        );
+        ctx.get().setPacketHandled(true);
+    }
+
+    private static void onDataAttachmentSyncPacket(DataAttachmentSyncPacket packet, Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() ->
+                DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> NetClientHandlers.onDataAttachmentSyncPacket(packet, ctx.get()))
+        );
+        ctx.get().setPacketHandled(true);
     }
 
     // <editor-fold desc="Server handlers">
