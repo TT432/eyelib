@@ -2,12 +2,10 @@ package io.github.tt432.eyelib.mixin;
 
 import io.github.tt432.eyelib.network.EyelibNetworkManager;
 import io.github.tt432.eyelib.network.UpdateDestroyInfoPacket;
+import io.github.tt432.eyelib.util.client.ClientScheduler;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -44,13 +42,7 @@ public class MultiPlayerGameModeMixin {
     private void startDestroyBlock2(BlockPos loc, Direction face, CallbackInfoReturnable<Boolean> cir) {
         EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(true));
 
-        MinecraftForge.EVENT_BUS.register(new Object() {
-            @SubscribeEvent
-            public void onEvent(TickEvent.ClientTickEvent event) {
-                EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(false));
-                MinecraftForge.EVENT_BUS.unregister(this);
-            }
-        });
+        ClientScheduler.scheduleNextTick(() -> EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(false)));
     }
 
     @Inject(method = "stopDestroyBlock", at = @At("HEAD"))
@@ -74,13 +66,8 @@ public class MultiPlayerGameModeMixin {
     })
     private void continueDestroyBlock2(BlockPos posBlock, Direction directionFacing, CallbackInfoReturnable<Boolean> cir) {
         EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(true));
-        MinecraftForge.EVENT_BUS.register(new Object() {
-            @SubscribeEvent
-            public void onEvent(TickEvent.ClientTickEvent event) {
-                EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(false));
-                MinecraftForge.EVENT_BUS.unregister(this);
-            }
-        });
+
+        ClientScheduler.scheduleNextTick(() -> EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(false)));
     }
 
     @Inject(method = "continueDestroyBlock", at = {
