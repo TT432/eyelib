@@ -165,7 +165,7 @@ signing {
 
 java {
     withSourcesJar()
-    withJavadocJar()
+//    withJavadocJar()
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
