@@ -87,6 +87,18 @@ public class EyelibStreamCodecs {
         };
     }
 
+    public static final StreamCodec<CompoundTag> COMPOUND_TAG = new StreamCodec<CompoundTag>() {
+        @Override
+        public void encode(CompoundTag obj, FriendlyByteBuf buf) {
+            buf.writeNbt(obj);
+        }
+
+        @Override
+        public CompoundTag decode(FriendlyByteBuf buf) {
+            return buf.readNbt();
+        }
+    };
+
     public static <K, V> StreamCodec<Map<K, V>> map(Supplier<Map<K, V>> factory, StreamCodec<K> keyCodec, StreamCodec<V> valueCodec) {
         return new StreamCodec<>() {
             @Override

@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.client.loader.BrParticleLoader;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleRenderManager;
+import io.github.tt432.eyelib.util.data_attach.DataAttachmentContainerCapability;
 import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -94,6 +95,29 @@ public class NetClientHandlers {
         }
         var entity = Minecraft.getInstance().level.getEntity(packet.entityId());
         DataAttachmentHelper.set(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), entity, packet.data());
+    }
+
+    public static <C> void onDataAttachmentUpdatePacket(DataAttachmentUpdatePacket<C> packet, NetworkEvent.Context context) {
+        if (Minecraft.getInstance().level == null) {
+            return;
+        }
+        var entity = Minecraft.getInstance().level.getEntity(packet.entityId());
+        if (entity == null) {
+            return;
+        }
+        DataAttachmentHelper.set(packet.attachment(), entity, packet.value());
+    }
+
+    public static void onDataAttachmentSyncPacket(DataAttachmentSyncPacket packet, NetworkEvent.Context context) {
+        if (Minecraft.getInstance().level == null) {
+            return;
+        }
+        var entity = Minecraft.getInstance().level.getEntity(packet.entityId());
+        if (entity == null) {
+            return;
+        }
+        var cap = entity.getCapability(DataAttachmentContainerCapability.INSTANCE);
+        cap.ifPresent(container -> container.deserializeNBT(packet.data()));
     }
 
     // </editor-fold>
