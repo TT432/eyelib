@@ -42,7 +42,9 @@ public class RenderControllerRuntime {
             Int2ObjectOpenHashMap<ReferenceList<MolangValue>> part = new Int2ObjectOpenHashMap<>();
             partVisibility.put(clientEntity, part);
 
-            clientEntity.clientEntityRuntimeData().models.values().forEach(model -> {
+            ClientEntityRuntimeData data = clientEntity.clientEntityRuntimeData();
+            data.setup(clientEntity);
+            data.models.values().forEach(model -> {
                 model.allBones().int2ObjectEntrySet().forEach(entry -> {
                     renderController.part_visibility().forEach((k, v) -> {
                         if (Pattern.compile(k.replace("*", ".*"))
