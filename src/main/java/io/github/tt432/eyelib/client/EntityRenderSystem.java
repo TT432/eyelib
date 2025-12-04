@@ -105,16 +105,17 @@ public class EntityRenderSystem {
                 }
             });
 
+            float partialTick = event.getPartialTick();
+
             entities.reference2ObjectEntrySet().parallelStream().forEach(entry -> {
                 var cap = entry.getValue();
                 var e = entry.getKey();
 
-                if (e instanceof LivingEntity entity) {
+                if (e instanceof LivingEntity entity && cap != null) {
                     MolangScope scope = cap.getScope();
                     ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
 
                     AnimationEffects effects = new AnimationEffects();
-                    float partialTick = event.getPartialTick();
                     scope.set("variable.partial_tick", partialTick);
                     scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
 
@@ -210,7 +211,7 @@ public class EntityRenderSystem {
 
             poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-            poseStack.translate(-0.25,0.1,-1.15);
+            poseStack.translate(-0.25, 0.1, -1.15);
             Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer()
                     .renderItem(le, item, context, left, poseStack, bufferSource, light);
 
