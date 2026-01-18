@@ -52,30 +52,28 @@ public record BlitCall(
         }
         RenderSystem.setShader(shaderSupplier);
         Matrix4f matrix4f = poseStack.last().pose();
-        BufferBuilder buffer = Tesselator.getInstance().begin(
-                VertexFormat.Mode.QUADS,
-                vertexFormat
-        );
-        if (vertexFormat.contains(VertexFormatElement.COLOR)) {
-            buffer.addVertex(matrix4f, (float) this.x0, (float) this.y0, (float) this.z)
-                    .setUv(this.u0, this.v0)
-                    .setColor(this.r, this.g, this.b, this.a);
-            buffer.addVertex(matrix4f, (float) this.x0, (float) this.y1, (float) this.z)
-                    .setUv(this.u0, this.v1)
-                    .setColor(this.r, this.g, this.b, this.a);
-            buffer.addVertex(matrix4f, (float) this.x1, (float) this.y1, (float) this.z)
-                    .setUv(this.u1, this.v1)
-                    .setColor(this.r, this.g, this.b, this.a);
-            buffer.addVertex(matrix4f, (float) this.x1, (float) this.y0, (float) this.z)
-                    .setUv(this.u1, this.v0)
-                    .setColor(this.r, this.g, this.b, this.a);
+        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        if (vertexFormat.getElements().contains(DefaultVertexFormat.ELEMENT_COLOR)) {
+            buffer.vertex(matrix4f, (float) this.x0, (float) this.y0, (float) this.z)
+                    .uv(this.u0, this.v0)
+                    .color(this.r, this.g, this.b, this.a);
+            buffer.vertex(matrix4f, (float) this.x0, (float) this.y1, (float) this.z)
+                    .uv(this.u0, this.v1)
+                    .color(this.r, this.g, this.b, this.a);
+            buffer.vertex(matrix4f, (float) this.x1, (float) this.y1, (float) this.z)
+                    .uv(this.u1, this.v1)
+                    .color(this.r, this.g, this.b, this.a);
+            buffer.vertex(matrix4f, (float) this.x1, (float) this.y0, (float) this.z)
+                    .uv(this.u1, this.v0)
+                    .color(this.r, this.g, this.b, this.a);
         } else {
-            buffer.addVertex(matrix4f, (float) this.x0, (float) this.y0, (float) this.z).setUv(this.u0, this.v0);
-            buffer.addVertex(matrix4f, (float) this.x0, (float) this.y1, (float) this.z).setUv(this.u0, this.v1);
-            buffer.addVertex(matrix4f, (float) this.x1, (float) this.y1, (float) this.z).setUv(this.u1, this.v1);
-            buffer.addVertex(matrix4f, (float) this.x1, (float) this.y0, (float) this.z).setUv(this.u1, this.v0);
+            buffer.vertex(matrix4f, (float) this.x0, (float) this.y0, (float) this.z).uv(this.u0, this.v0);
+            buffer.vertex(matrix4f, (float) this.x0, (float) this.y1, (float) this.z).uv(this.u0, this.v1);
+            buffer.vertex(matrix4f, (float) this.x1, (float) this.y1, (float) this.z).uv(this.u1, this.v1);
+            buffer.vertex(matrix4f, (float) this.x1, (float) this.y0, (float) this.z).uv(this.u1, this.v0);
         }
-        BufferUploader.drawWithShader(buffer.buildOrThrow());
+        BufferUploader.drawWithShader(buffer.end());
         if (blend) {
             RenderSystem.disableBlend();
         }
