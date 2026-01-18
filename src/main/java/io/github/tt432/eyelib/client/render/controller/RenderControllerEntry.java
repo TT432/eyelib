@@ -126,7 +126,7 @@ public record RenderControllerEntry(
         });
     }
 
-    public ModelComponent setupModel(MolangScope scope, BrClientEntity entity) {
+    public ModelComponent setupModel(MolangScope scope, BrClientEntity entity, List<Runnable> syncedActions) {
         initArrays(scope, entity);
         ResourceLocation texture;
 
@@ -142,7 +142,7 @@ public record RenderControllerEntry(
                     ResourceLocation parse = new ResourceLocation(get(scope, mv, "texture", entity.textures()));
                     list.add(parse);
                 }
-                NativeImages.uploadImage(texture, Textures.layerMerging(list));
+                syncedActions.add(() -> NativeImages.uploadImage(texture, Textures.layerMerging(list)));
             }
 
             ResourceLocation emissiveTexture = getEmissiveTexture(scope, entity);
@@ -154,7 +154,7 @@ public record RenderControllerEntry(
                     ResourceLocation resourceLocation = new ResourceLocation(get(scope, mv, "texture", entity.textures())).withPath(s -> replacePng(s, ".png", ".emissive.png"));
                     list.add(resourceLocation);
                 }
-                NativeImages.uploadImage(emissiveTexture, Textures.layerMerging(list));
+                syncedActions.add(() -> NativeImages.uploadImage(emissiveTexture, Textures.layerMerging(list)));
             }
 
             this.needReloadTexture.set(false);

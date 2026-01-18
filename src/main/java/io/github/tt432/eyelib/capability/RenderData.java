@@ -10,6 +10,7 @@ import io.github.tt432.eyelib.network.AnimationComponentSyncPacket;
 import io.github.tt432.eyelib.network.EyelibNetworkManager;
 import io.github.tt432.eyelib.network.ModelComponentSyncPacket;
 import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
+import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.world.entity.Entity;
@@ -42,8 +43,9 @@ public class RenderData<T> {
         }));
     }
 
-    public static RenderData<Object> getComponent(Entity entity) {
-        return DataAttachmentHelper.getOrCreate(EyelibAttachableData.RENDER_DATA.get(), entity);
+    @SuppressWarnings("unchecked")
+    public static <T>RenderData<T> getComponent(Entity entity) {
+        return (RenderData<T>) DataAttachmentHelper.getOrCreate(EyelibAttachableData.RENDER_DATA.get(), entity);
     }
 
     private T owner;
