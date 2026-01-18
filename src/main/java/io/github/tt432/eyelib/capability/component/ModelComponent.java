@@ -59,6 +59,10 @@ public class ModelComponent {
         this.serializableInfo = serializableInfo;
     }
 
+    public boolean readyForRendering() {
+        return getModel() != null && getTexture() != null;
+    }
+
     public Model getModel() {
         if (serializableInfo == null) return null;
         return Eyelib.getModelManager().get(serializableInfo.model);

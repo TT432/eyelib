@@ -1,42 +1,30 @@
 package io.github.tt432.eyelib.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.EyelibClient;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
-import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.client.render.RenderParams;
+import io.github.tt432.eyelib.client.render.SimpleRenderAction;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
-import io.github.tt432.eyelib.compute.LazyComputeBufferBuilder;
-import io.github.tt432.eyelib.compute.VertexComputeHelper;
 import io.github.tt432.eyelib.event.InitComponentEvent;
-import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
 import io.github.tt432.eyelib.molang.MolangScope;
-import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.client.renderer.texture.AbstractTexture;
-import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -51,9 +39,9 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.WoolCarpetBlock;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
@@ -62,13 +50,12 @@ import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 /**
  * @author TT432
@@ -99,61 +86,52 @@ public class EntityRenderSystem {
 
     @SubscribeEvent
     public static void onEvent(RenderLevelStageEvent event) {
-        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_SKY) {
-            entities.reference2ObjectEntrySet().forEach(entry -> {
-                var cap = entry.getValue();
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY) return;
 
-                if (entry.getKey() instanceof LivingEntity entity) {
-                    ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
+        Vec3 position = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+        var camX = position.x;
+        var camY = position.y;
+        var camZ = position.z;
 
-                    cap.getClientEntityComponent().components = setupClientEntity(entity, clientEntityComponent, cap);
+        entities.reference2ObjectEntrySet()
+                .parallelStream()
+                .filter(e -> e.getKey().shouldRender(camX, camY, camZ))
+                .map(entry -> setupClientEntity(entry.getKey(), entry.getValue()))
+                .flatMap(Collection::stream)
+                .sequential()
+                .forEach(Runnable::run);
+
+        final float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(true);
+
+        entities.reference2ObjectEntrySet().parallelStream().forEach(entry -> {
+            var cap = entry.getValue();
+            var e = entry.getKey();
+
+            if (e instanceof LivingEntity entity && cap != null) {
+                MolangScope scope = cap.getScope();
+                ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
+
+                AnimationEffects effects = new AnimationEffects();
+                scope.set("variable.partial_tick", partialTick);
+                scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
+
+                BoneRenderInfos tickedInfos;
+                if (cap.getAnimationComponent().getSerializableInfo() != null) {
+                    tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
+                            (ClientTickHandler.getTick() + partialTick) / 20, () -> {
+                                if (clientEntityComponent.getClientEntity() != null) {
+                                    clientEntityComponent.getClientEntity().scripts().ifPresent(scripts -> {
+                                        scripts.pre_animation().eval(scope);
+                                    });
+                                }
+                            });
+                } else {
+                    tickedInfos = BoneRenderInfos.EMPTY;
                 }
-            });
-
-            final float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(true);
-
-            entities.reference2ObjectEntrySet().parallelStream().forEach(entry -> {
-                var cap = entry.getValue();
-                var e = entry.getKey();
-
-                if (e instanceof LivingEntity entity && cap != null) {
-                    MolangScope scope = cap.getScope();
-                    ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
-
-                    AnimationEffects effects = new AnimationEffects();
-                    scope.set("variable.partial_tick", partialTick);
-                    scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
-
-                    BoneRenderInfos tickedInfos;
-                    if (cap.getAnimationComponent().getSerializableInfo() != null) {
-                        tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
-                                (ClientTickHandler.getTick() + partialTick) / 20, () -> {
-                                    if (clientEntityComponent.getClientEntity() != null) {
-                                        clientEntityComponent.getClientEntity().scripts().ifPresent(scripts -> {
-                                            scripts.pre_animation().eval(scope);
-                                        });
-                                    }
-                                });
-                    } else {
-                        tickedInfos = BoneRenderInfos.EMPTY;
-                    }
-                    cap.getAnimationComponent().tickedInfos = tickedInfos;
-                    cap.getAnimationComponent().effects = effects;
-                }
-            });
-        }
-    }
-
-    private static final Map<RenderType, Pair<VertexComputeHelper, MultiBufferSource>> helpers = new Object2ObjectOpenHashMap<>();
-
-    // 保证在渲染线程上执行
-    private static Boolean _canUseHighSpeedRender = null;
-
-    private static boolean canUseHighSpeedRender() {
-        if (_canUseHighSpeedRender == null) {
-            _canUseHighSpeedRender = EyelibClient.supportComputeShader() && !ModList.get().isLoaded("iris");
-        }
-        return _canUseHighSpeedRender;
+                cap.getAnimationComponent().tickedInfos = tickedInfos;
+                cap.getAnimationComponent().effects = effects;
+            }
+        });
     }
 
     @SubscribeEvent
@@ -168,60 +146,54 @@ public class EntityRenderSystem {
     @SubscribeEvent
     public static void onEvent(RenderLivingEvent.Pre event) {
         LivingEntity entity = event.getEntity();
-        RenderData<Object> cap = RenderData.getComponent(entity);
-
-        if (cap.getOwner() != entity) {
-            cap.init(entity);
-        }
-
+        var cap = RenderData.getComponent(entity);
         if (!cap.isUseBuiltInRenderSystem()) return;
 
-        MolangScope scope = cap.getScope();
-        scope.set("variable.partial_tick", event.getPartialTick());
-        scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
+        if (SimpleRenderAction.builder(event)
+                .animation(cap.getAnimationComponent())
+                .extraRender((helper, action) -> {
+                    renderItemInHand(helper, action.multiBufferSource(), entity, action.packedLight());
+                })
+                .build()
+                .render()) {
+            event.setCanceled(true);
+        }
+    }
 
-        var components = cap.getClientEntityComponent().components;
-        var tickedInfos = cap.getAnimationComponent().tickedInfos;
-        var effects = cap.getAnimationComponent().effects;
+    public static <T> boolean renderEntity(SimpleRenderAction<T> data) {
+        var entity = data.entity();
+        var cap = data.renderData();
 
-        if (components != null && tickedInfos != null && effects != null) {
-            setupExtraMolang(entity, cap);
-
-            int overlay = LivingEntityRenderer.getOverlayCoords(entity, ((LivingEntityRendererAccessor) (event.getRenderer())).callGetWhiteOverlayProgress(entity, event.getPartialTick()));
-            int light = event.getPackedLight();
-            var rendered = renderComponents(event.getMultiBufferSource(), event.getPoseStack(), light, overlay,
-                    event.getPartialTick(), entity, cap, components, tickedInfos, effects, helper -> {
-                        renderItemInHand(helper, event.getMultiBufferSource(), entity, light);
-                    });
-            if (rendered) {
-                event.setCanceled(true);
-            }
+        if (cap.getOwner() != entity) {
+            ((RenderData) cap).init(entity);
         }
 
-        scope.remove("variable.partial_tick");
+        setupExtraMolang(entity, cap.getScope(), data.partialTick());
+
+        return data.animationNotNull() && renderComponents(data);
     }
 
     private static final int leftitem = GlobalBoneIdHandler.get("leftitem");
     private static final int rightitem = GlobalBoneIdHandler.get("rightitem");
 
-    private static void renderItemInHand(RenderHelper helper, MultiBufferSource bufferSource, LivingEntity renderTarget, int light) {
-        PoseStack poseStack1 = new PoseStack();
+    public static void renderItemInHand(RenderHelper helper, MultiBufferSource bufferSource, LivingEntity renderTarget, int light) {
+        PoseStack poseStack = new PoseStack();
         var locators = helper.getContext().<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>());
         var offHandPose = locators.get(leftitem);
         if (offHandPose != null) {
-            poseStack1.poseStack.addLast(offHandPose);
+            poseStack.poseStack.addLast(offHandPose);
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.OFF_HAND);
             AttchableHandler.setRenderingHandItem(renderTarget, InteractionHand.OFF_HAND, itemInHand);
-            renderHandItem(bufferSource, renderTarget, itemInHand, ItemDisplayContext.THIRD_PERSON_LEFT_HAND, light, poseStack1, true);
+            renderHandItem(bufferSource, renderTarget, itemInHand, ItemDisplayContext.THIRD_PERSON_LEFT_HAND, light, poseStack, true);
             AttchableHandler.clearRenderingHandItem();
         }
 
         var mainHandPose = locators.get(rightitem);
         if (mainHandPose != null) {
-            poseStack1.poseStack.addLast(mainHandPose);
+            poseStack.poseStack.addLast(mainHandPose);
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.MAIN_HAND);
             AttchableHandler.setRenderingHandItem(renderTarget, InteractionHand.MAIN_HAND, itemInHand);
-            renderHandItem(bufferSource, renderTarget, itemInHand, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, poseStack1, false);
+            renderHandItem(bufferSource, renderTarget, itemInHand, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, poseStack, false);
             AttchableHandler.clearRenderingHandItem();
         }
     }
@@ -241,119 +213,118 @@ public class EntityRenderSystem {
         }
     }
 
-    public static <T> boolean renderComponents(MultiBufferSource multiBufferSource, PoseStack poseStack,
-                                               int packedLight, int overlay, float partialTick,
-                                               @Nullable LivingEntity entity, RenderData<T> cap, List<ModelComponent> components,
-                                               BoneRenderInfos tickedInfos, AnimationEffects effects, Consumer<RenderHelper> consumer) {
-        AtomicBoolean rendered = new AtomicBoolean(false);
-        ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
-        components.forEach(modelComponent -> {
-            var model = modelComponent.getModel();
-            ResourceLocation texture = modelComponent.getTexture();
+    public static <T> boolean renderComponents(SimpleRenderAction<T> data) {
+        return data.renderData().getModelComponents().stream()
+                .filter(ModelComponent::readyForRendering)
+                .mapToLong(modelComponent -> {
+                    var model = modelComponent.getModel();
 
-            if (model != null && texture != null) {
-                rendered.set(true);
-                RenderType renderType = modelComponent.getRenderType(texture);
-                VertexConsumer buffer = multiBufferSource.getBuffer(renderType);
+                    var poseStack = data.poseStack();
+                    poseStack.pushPose();
 
-                poseStack.pushPose();
+                    RenderParams renderParams = data.renderParams(modelComponent);
 
-                RenderParams renderParams = new RenderParams(entity, poseStack.last().copy(), poseStack,
-                        renderType, texture, modelComponent.isSolid(), buffer, packedLight, overlay,
-                        modelComponent.getPartVisibility());
+                    var tickedInfos = data.tickedInfos();
+                    MultiBufferSource multiBufferSource = data.multiBufferSource();
 
-                if (clientEntityComponent.getClientEntity() != null) {
-                    clientEntityComponent.getClientEntity().scripts().ifPresent(s -> {
-                        var scope = cap.getScope();
-                        poseStack.scale(s.getScaleX(scope), s.getScaleY(scope), s.getScaleZ(scope));
-                    });
+                    setupEntityClientEntityData(data);
 
-                    if (entity != null) {
-                        if (entity.isBaby()) {
-                            poseStack.scale(0.5F, 0.5F, 0.5F);
-                        }
+                    RenderHelper renderHelper = Eyelib.getRenderHelper()
+                            .openHighSpeedRender(renderParams, multiBufferSource)
+                            .render(renderParams, model, tickedInfos)
+                            .collectLocators(model, tickedInfos);
 
-                        float yBodyRot = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
-                        poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
-                        AttributeInstance scaleAttr = entity.getAttribute(Attributes.SCALE);
-                        if (scaleAttr != null) {
-                            double scaleValue = scaleAttr.getValue();
-                            poseStack.scale((float) scaleValue, (float) scaleValue, (float) scaleValue);
-                        }
+                    setParticlesPosition(renderHelper, data.effects(), data.entity());
+
+                    data.extraRender().render(renderHelper, data);
+
+                    RenderParams emissiveRenderParams = renderParams.asEmissive(multiBufferSource, modelComponent);
+
+                    if (!emissiveRenderParams.textureMissing()) {
+                        Eyelib.getRenderHelper()
+                                .openHighSpeedRender(emissiveRenderParams, multiBufferSource)
+                                .render(emissiveRenderParams, model, tickedInfos);
                     }
-                }
 
-                {
-                    RenderHelper renderHelper = Eyelib.getRenderHelper();
-                    if (canUseHighSpeedRender() && buffer instanceof LazyComputeBufferBuilder lazy) {
-                        var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
-                        lazy.setEyelib$helper(helper.left());
-                    }
-                    renderHelper.render(renderParams, model, tickedInfos);
+                    poseStack.popPose();
 
-                    renderHelper.collectLocators(model, tickedInfos);
-                    Map<String, Matrix4f> locators = renderHelper.getContext().get("locators");
-
-                    if (locators != null) {
-                        for (List<RuntimeParticlePlayData> particle : effects.particles) {
-                            for (RuntimeParticlePlayData data : particle) {
-                                data.emitter().initPose(locators.get(data.locator()), entity);
-                            }
-                        }
-
-                        consumer.accept(renderHelper);
-                    }
-                }
-
-                ResourceLocation emissiveTexture = texture.withPath(s -> replacePng(s, ".png", ".emissive.png"));
-                AbstractTexture texture1 = Minecraft.getInstance().getTextureManager().getTexture(emissiveTexture);
-
-                if (texture1 != MissingTextureAtlasSprite.getTexture()) {
-                    var rt1 = modelComponent.getRenderType(emissiveTexture);
-                    VertexConsumer buffer1 = multiBufferSource.getBuffer(rt1);
-                    RenderHelper renderHelper = Eyelib.getRenderHelper();
-
-                    if (canUseHighSpeedRender() && buffer1 instanceof LazyComputeBufferBuilder lazy) {
-                        var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
-                        lazy.setEyelib$helper(helper.left());
-                    }
-                    renderHelper.render(
-                            renderParams
-                                    .withRenderType(rt1)
-                                    .withLight(LightTexture.FULL_BRIGHT)
-                                    .withConsumer(buffer1)
-                                    .withTexture(emissiveTexture),
-                            model, tickedInfos);
-                }
-
-                poseStack.popPose();
-            }
-        });
-
-        return rendered.get();
+                    return 1;
+                })
+                .sum() > 1;
     }
 
-    public static void setupExtraMolang(LivingEntity entity, RenderData<?> cap) {
-        if (entity instanceof Llama llama) {
-            if (llama.getBodyArmorItem().getItem() instanceof BlockItem bi && bi.getBlock() instanceof WoolCarpetBlock wc) {
-                cap.getScope().set("variable.decortextureindex", wc.getColor().getId() + 1);
-            } else {
-                cap.getScope().set("variable.decortextureindex", 0);
+    private static void setParticlesPosition(RenderHelper renderHelper, AnimationEffects effects, Entity entity) {
+        Map<String, Matrix4f> locators = renderHelper.getContext().get("locators");
+
+        if (locators == null) return;
+
+        effects.particles.stream()
+                .flatMap(Collection::stream)
+                .forEach(data -> data.emitter().initPose(locators.get(data.locator()), entity));
+    }
+
+    public static <T> void setupEntityClientEntityData(SimpleRenderAction<T> data) {
+        var cap = data.renderData();
+        var clientEntity = cap.getClientEntityComponent().getClientEntity();
+        var poseStack = data.poseStack();
+
+        if (clientEntity == null) return;
+
+        clientEntity.scripts().ifPresent(s -> {
+            var scope = cap.getScope();
+            poseStack.scale(s.getScaleX(scope), s.getScaleY(scope), s.getScaleZ(scope));
+        });
+
+        if (data.entity() instanceof LivingEntity livingEntity) {
+            if (livingEntity.isBaby()) {
+                poseStack.scale(0.5F, 0.5F, 0.5F);
+            }
+
+            float yBodyRot = Mth.rotLerp(data.partialTick(), livingEntity.yBodyRotO, livingEntity.yBodyRot);
+            poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
+            AttributeInstance scaleAttr = livingEntity.getAttribute(Attributes.SCALE);
+            if (scaleAttr != null) {
+                double scaleValue = scaleAttr.getValue();
+                poseStack.scale((float) scaleValue, (float) scaleValue, (float) scaleValue);
             }
         }
     }
 
-    public static @NotNull List<ModelComponent> setupClientEntity(LivingEntity entity, ClientEntityComponent clientEntityComponent, RenderData<?> cap) {
-        BrClientEntity clientEntity = Eyelib.getClientEntityLoader().get(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()));
+    public static void setupExtraMolang(Entity entity, MolangScope scope, float partialTick) {
+        if (entity instanceof Llama llama) {
+            if (llama.getBodyArmorItem().getItem() instanceof BlockItem bi && bi.getBlock() instanceof WoolCarpetBlock wc) {
+                scope.set("variable.decortextureindex", wc.getColor().getId() + 1);
+            } else {
+                scope.set("variable.decortextureindex", 0);
+            }
+        }
 
+        scope.set("variable.partial_tick", partialTick);
+        if (entity instanceof LivingEntity livingEntity)
+            scope.set("variable.attack_time", ((float) livingEntity.swingTime) / livingEntity.getCurrentSwingDuration());
+    }
+
+    public static @NotNull List<Runnable> setupClientEntity(Entity entity, RenderData<?> cap) {
+        return setupClientEntity(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()), cap);
+    }
+
+    public static @NotNull List<Runnable> setupClientEntity(ResourceLocation entityId, RenderData<?> cap) {
+        return setupClientEntity(Eyelib.getClientEntityLoader().get(entityId), cap);
+    }
+
+    public static @NotNull List<Runnable> setupClientEntity(BrClientEntity clientEntity, RenderData<?> cap) {
+        ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
         BrClientEntity oldEntity = clientEntityComponent.getClientEntity();
-
-        boolean changed = false;
+        List<Runnable> syncedActions = new ArrayList<>();
 
         if (clientEntity != null) {
             if (oldEntity == null || !oldEntity.identifier().equals(clientEntity.identifier())) {
                 clientEntityComponent.setClientEntity(clientEntity);
-                changed = true;
+
+                clientEntity.scripts().ifPresent(s -> {
+                    s.initialize().eval(cap.getScope());
+                    s.pre_animation().eval(cap.getScope());
+                });
             }
         }
 
@@ -366,14 +337,7 @@ public class EntityRenderSystem {
             for (String renderController : ce.render_controllers()) {
                 RenderControllerEntry renderControllerEntry = Eyelib.getRenderControllerManager().get(renderController);
                 if (renderControllerEntry != null)
-                    components.add(renderControllerEntry.setupModel(cap.getScope(), clientEntityComponent.getClientEntity()));
-            }
-
-            if (changed) {
-                ce.scripts().ifPresent(s -> {
-                    s.initialize().eval(cap.getScope());
-                    s.pre_animation().eval(cap.getScope());
-                });
+                    components.add(renderControllerEntry.setupModel(cap.getScope(), clientEntityComponent.getClientEntity(), syncedActions));
             }
 
             ce.scripts().ifPresent(s -> cap.getAnimationComponent().setup(ce.animations(), s.animate()));
@@ -383,17 +347,6 @@ public class EntityRenderSystem {
             cap.getScope().getOwner().remove(BrClientEntity.class);
         }
 
-        return components;
-    }
-
-    static String replacePng(String originalString, String old, String newStr) {
-        int lastIndexOfDot = originalString.lastIndexOf(old);
-
-        if (lastIndexOfDot != -1) {
-            String beforeDot = originalString.substring(0, lastIndexOfDot);
-            return beforeDot + newStr;
-        } else {
-            return originalString;
-        }
+        return syncedActions;
     }
 }

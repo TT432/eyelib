@@ -7,8 +7,8 @@ import io.github.tt432.eyelib.molang.type.MolangObject;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author TT432
@@ -30,7 +30,7 @@ public final class MolangScope {
         float get();
     }
 
-    private final Map<String, MolangObject> cache = new HashMap<>();
+    private final Map<String, MolangObject> cache = new ConcurrentHashMap<>();
 
     public boolean contains(String name) {
         return cache.containsKey(name) || (parent != null && parent.contains(name));

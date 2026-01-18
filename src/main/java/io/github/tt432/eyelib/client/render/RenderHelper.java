@@ -1,6 +1,8 @@
 package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.tt432.eyelib.EyelibClient;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelib.client.model.Model;
@@ -8,8 +10,15 @@ import io.github.tt432.eyelib.client.model.bake.TwoSideModelBakeInfo;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
+import io.github.tt432.eyelib.compute.LazyComputeBufferBuilder;
+import io.github.tt432.eyelib.compute.VertexComputeHelper;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
+import it.unimi.dsi.fastutil.Pair;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.Getter;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
@@ -24,6 +33,30 @@ import java.util.Map;
  */
 @ParametersAreNonnullByDefault
 public class RenderHelper {
+    private static Boolean _canUseHighSpeedRender = null;
+
+    private static final Map<RenderType, Pair<VertexComputeHelper, MultiBufferSource>> helpers = new Object2ObjectOpenHashMap<>();
+
+    private static boolean canUseHighSpeedRender() {
+        if (_canUseHighSpeedRender == null) {
+            _canUseHighSpeedRender = EyelibClient.supportComputeShader() && !ModList.get().isLoaded("iris");
+        }
+        return _canUseHighSpeedRender;
+    }
+
+    public RenderHelper openHighSpeedRender(RenderType renderType, MultiBufferSource multiBufferSource, VertexConsumer buffer) {
+        if (canUseHighSpeedRender() && buffer instanceof LazyComputeBufferBuilder lazy) {
+            var helper = helpers.computeIfAbsent(renderType, r -> Pair.of(new VertexComputeHelper(), multiBufferSource));
+            lazy.setEyelib$helper(helper.left());
+        }
+
+        return this;
+    }
+
+    public RenderHelper openHighSpeedRender(RenderParams params, MultiBufferSource multiBufferSource) {
+        return openHighSpeedRender(params.renderType(), multiBufferSource, params.consumer());
+    }
+
     @Getter
     private final ModelVisitContext context = new ModelVisitContext();
     @Nullable

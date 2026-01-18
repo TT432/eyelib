@@ -41,8 +41,9 @@ public class RenderData<T> {
         }));
     }
 
-    public static RenderData<Object> getComponent(Entity entity) {
-        return entity.getData(EyelibAttachableData.RENDER_DATA);
+    @SuppressWarnings("unchecked")
+    public static <T> RenderData<T> getComponent(Entity entity) {
+        return (RenderData<T>) entity.getData(EyelibAttachableData.RENDER_DATA);
     }
 
     private T owner;
