@@ -19,11 +19,8 @@ import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.molang.MolangScope;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -47,7 +44,6 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
@@ -56,6 +52,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import static net.minecraft.client.Minecraft.getInstance;
 
 /**
  * @author TT432
@@ -63,8 +63,6 @@ import java.util.Map;
 @EventBusSubscriber(Dist.CLIENT)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EntityRenderSystem {
-    private static final Reference2ObjectMap<Entity, RenderData<?>> entities = new Reference2ObjectOpenHashMap<>();
-
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
         Entity entity = event.getEntity();
@@ -74,40 +72,35 @@ public class EntityRenderSystem {
             cap.init(entity);
         }
 
-        entities.put(entity, cap);
-
         NeoForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
     }
 
-    @SubscribeEvent
-    public static void onEvent(EntityLeaveLevelEvent event) {
-        entities.remove(event.getEntity());
+    private static Stream<Entity> entities() {
+        return StreamSupport.stream(getInstance().level.entitiesForRendering().spliterator(), true);
     }
 
     @SubscribeEvent
     public static void onEvent(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY) return;
 
-        Vec3 position = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+        Vec3 position = getInstance().gameRenderer.getMainCamera().getPosition();
         var camX = position.x;
         var camY = position.y;
         var camZ = position.z;
 
-        entities.reference2ObjectEntrySet()
-                .parallelStream()
-                .filter(e -> e.getKey().shouldRender(camX, camY, camZ))
-                .map(entry -> setupClientEntity(entry.getKey(), entry.getValue()))
+        entities()
+                .filter(e -> e.shouldRender(camX, camY, camZ))
+                .map(entity -> setupClientEntity(entity, RenderData.getComponent(entity)))
                 .flatMap(Collection::stream)
                 .sequential()
                 .forEach(Runnable::run);
 
         final float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(true);
 
-        entities.reference2ObjectEntrySet().parallelStream().forEach(entry -> {
-            var cap = entry.getValue();
-            var e = entry.getKey();
+        entities().forEach(e -> {
+            var cap = RenderData.getComponent(e);
 
-            if (e instanceof LivingEntity entity && cap != null) {
+            if (e instanceof LivingEntity entity) {
                 MolangScope scope = cap.getScope();
                 ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
 
@@ -206,7 +199,7 @@ public class EntityRenderSystem {
             poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
             poseStack.translate(-0.25, 0.1, -1.15);
-            Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer()
+            getInstance().getEntityRenderDispatcher().getItemInHandRenderer()
                     .renderItem(le, item, context, left, poseStack, bufferSource, light);
 
             poseStack.popPose();
