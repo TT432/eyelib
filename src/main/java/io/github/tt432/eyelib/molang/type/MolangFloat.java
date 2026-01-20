@@ -7,6 +7,11 @@ public record MolangFloat(
         float value
 ) implements MolangObject {
     public static final MolangFloat ZERO = new MolangFloat(0);
+    public static final MolangFloat ONE = new MolangFloat(1);
+
+    public static MolangFloat valueOf(boolean value) {
+        return value ? ZERO : ONE;
+    }
 
     public static MolangFloat valueOf(float value) {
         return new MolangFloat(value);
