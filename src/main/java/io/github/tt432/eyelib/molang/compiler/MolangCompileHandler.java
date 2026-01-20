@@ -97,7 +97,7 @@ public class MolangCompileHandler {
                 MolangValue.MolangFunction result = (MolangValue.MolangFunction) clazz.getDeclaredConstructors()[0].newInstance();
                 cache.putFunctionCache(normalizedContent, result);
                 return result;
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.debug("Failed to load H2 cached class {}, will recompile", exprInfo.className, e);
             }
         }

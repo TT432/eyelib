@@ -19,8 +19,6 @@ import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.molang.MolangScope;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
@@ -45,7 +43,6 @@ import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -56,6 +53,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import static net.minecraft.client.Minecraft.getInstance;
 
 /**
  * @author TT432
@@ -63,8 +64,6 @@ import java.util.Map;
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EntityRenderSystem {
-    private static final Reference2ObjectMap<Entity, RenderData<?>> entities = new Reference2ObjectOpenHashMap<>();
-
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
         Entity entity = event.getEntity();
@@ -74,14 +73,11 @@ public class EntityRenderSystem {
             cap.init(entity);
         }
 
-        entities.put(entity, cap);
-
         MinecraftForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
     }
 
-    @SubscribeEvent
-    public static void onEvent(EntityLeaveLevelEvent event) {
-        entities.remove(event.getEntity());
+    private static Stream<Entity> entities() {
+        return StreamSupport.stream(getInstance().level.entitiesForRendering().spliterator(), true);
     }
 
     @SubscribeEvent
@@ -93,21 +89,23 @@ public class EntityRenderSystem {
         var camY = position.y;
         var camZ = position.z;
 
-        entities.reference2ObjectEntrySet()
-                .parallelStream()
-                .filter(e -> e.getKey().shouldRender(camX, camY, camZ))
-                .map(entry -> setupClientEntity(entry.getKey(), entry.getValue()))
+        entities()
+                .filter(entity -> entity.shouldRender(camX, camY, camZ))
+                .map(entity -> setupClientEntity(entity, RenderData.getComponent(entity)))
                 .flatMap(Collection::stream)
                 .sequential()
                 .forEach(Runnable::run);
 
         float partialTick = event.getPartialTick();
 
-        entities.reference2ObjectEntrySet().parallelStream().forEach(entry -> {
-            var cap = entry.getValue();
-            var e = entry.getKey();
+        entities().forEach(e -> {
+            var cap = RenderData.getComponent(e);
 
             if (e instanceof LivingEntity entity && cap != null) {
+                if (cap.getOwner() != entity) {
+                    cap.init(entity);
+                }
+
                 MolangScope scope = cap.getScope();
                 ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
 
