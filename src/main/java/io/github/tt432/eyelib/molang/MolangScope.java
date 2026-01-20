@@ -46,6 +46,14 @@ public final class MolangScope {
         return set(name, MolangFloat.valueOf(value));
     }
 
+    public MolangObject set(String name, double value) {
+        return set(name, MolangFloat.valueOf((float) value));
+    }
+
+    public MolangObject set(String name, boolean value) {
+        return set(name, MolangFloat.valueOf(value));
+    }
+
     public MolangObject set(String name, FloatSupplier value) {
         MolangFloatSupplierObject object = new MolangFloatSupplierObject(value);
         cache.put(name, object);
