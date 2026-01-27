@@ -10,7 +10,7 @@ public record MolangFloat(
     public static final MolangFloat ONE = new MolangFloat(1);
 
     public static MolangFloat valueOf(boolean value) {
-        return value ? ZERO : ONE;
+        return value ? ONE : ZERO;
     }
 
     public static MolangFloat valueOf(float value) {
