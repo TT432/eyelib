@@ -243,7 +243,7 @@ public class EntityRenderSystem {
 
                     return 1;
                 })
-                .sum() > 1;
+                .sum() > 0;
     }
 
     private static void setParticlesPosition(RenderHelper renderHelper, AnimationEffects effects, Entity entity) {
