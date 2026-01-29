@@ -25,7 +25,7 @@ import java.util.Map;
  */
 @Getter
 @Slf4j
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class BrAnimationLoader extends BrResourcesLoader {
     public static final BrAnimationLoader INSTANCE = new BrAnimationLoader();
 

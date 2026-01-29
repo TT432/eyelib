@@ -6,6 +6,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
+import java.util.Locale;
+
 /**
  * @author TT432
  */
@@ -27,7 +29,7 @@ public class GlobalBoneIdHandler {
     public static int get(String boneName) {
         if (boneName.isBlank()) return -1;
 
-        return map.computeIfAbsent(boneName, k -> {
+        return map.computeIfAbsent(boneName.toLowerCase(Locale.ROOT), k -> {
             int result = counter++;
             map2.put(result, boneName);
             return result;

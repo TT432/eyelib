@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 /**
  * @author TT432
  */
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 @Slf4j
 public class BrModelLoader extends BrResourcesLoader implements Searchable<BrModel> {
     public static final BrModelLoader INSTANCE = new BrModelLoader();

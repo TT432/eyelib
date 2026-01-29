@@ -12,14 +12,7 @@ public class DataAttachmentHelper {
     }
 
     public static <C> C getOrCreate(DataAttachmentType<C> attachment, Entity entity) {
-        var container = get(entity);
-        if (container.has(attachment)) {
-            return container.get(attachment);
-        }
-
-        var inst = attachment.factory().get();
-        container.set(attachment, inst);
-        return inst;
+        return get(entity).getOrCreate(attachment);
     }
 
     public static <C> @Nullable C getOrNull(DataAttachmentType<C> attachment, Entity entity) {

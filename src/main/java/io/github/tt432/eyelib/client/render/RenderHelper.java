@@ -29,16 +29,8 @@ public class RenderHelper {
     @Nullable
     private RenderParams params;
 
-    private static final RenderHelper INSTANCE = new RenderHelper();
-
-    private void reset() {
-        context.clear();
-        params = null;
-    }
-
     public static RenderHelper start() {
-        INSTANCE.reset();
-        return INSTANCE;
+        return new RenderHelper();
     }
 
     @SuppressWarnings("unchecked")
@@ -68,9 +60,9 @@ public class RenderHelper {
         this.params = params;
         context.put("BackedModel", TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, params.isSolid(), params.texture()));
 
-        dfsModel(model).visit(params, context, BuiltInBrModelRenderVisitors.HIGH_SPEED_RENDER, cast(infos), new DFSModel.StateMachine());
+        dfsModel(model).visit(params, context, BuiltInBrModelRenderVisitors.HIGH_SPEED_RENDER, infos, new DFSModel.StateMachine());
 
-        return INSTANCE;
+        return this;
     }
 
     public RenderHelper collectLocators(Model model, BoneRenderInfos infos) {
@@ -84,7 +76,7 @@ public class RenderHelper {
             renderOnLocator(visitorName, model, infos, params);
         }
 
-        return INSTANCE;
+        return this;
     }
 
     public RenderHelper renderOnLocator(String visitorName, Model model, BoneRenderInfos infos) {
@@ -92,7 +84,7 @@ public class RenderHelper {
             renderOnLocator(visitorName, model, infos, params);
         }
 
-        return INSTANCE;
+        return this;
     }
 
     private void renderOnLocator(String visitorName, Model model, BoneRenderInfos infos, RenderParams params) {

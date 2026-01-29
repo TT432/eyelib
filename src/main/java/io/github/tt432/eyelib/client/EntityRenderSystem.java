@@ -24,7 +24,6 @@ import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -46,6 +45,7 @@ import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 
@@ -241,7 +241,7 @@ public class EntityRenderSystem {
 
                     return 1;
                 })
-                .sum() > 1;
+                .sum() > 0;
     }
 
     private static void setParticlesPosition(RenderHelper renderHelper, AnimationEffects effects, Entity entity) {
@@ -296,8 +296,12 @@ public class EntityRenderSystem {
             scope.set("variable.attack_time", ((float) livingEntity.swingTime) / livingEntity.getCurrentSwingDuration());
     }
 
-    public static @NotNull List<Runnable> setupClientEntity(Entity entity, RenderData<?> cap) {
-        return setupClientEntity(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()), cap);
+    public static <T extends Entity> @NotNull List<Runnable> setupClientEntity(T entity, RenderData<T> cap) {
+        if (cap.getOwner() != entity) {
+            cap.init(entity);
+        }
+
+        return setupClientEntity(ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()), cap);
     }
 
     public static @NotNull List<Runnable> setupClientEntity(ResourceLocation entityId, RenderData<?> cap) {
