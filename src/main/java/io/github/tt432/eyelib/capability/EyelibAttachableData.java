@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.capability;
 import io.github.tt432.eyelib.Eyelib;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -26,19 +27,39 @@ public class EyelibAttachableData {
             ATTACHMENT_TYPES.register("entity_statistics",
                     () -> AttachmentType.builder(EntityStatistics::empty)
                             .serialize(EntityStatistics.CODEC)
-                            .sync(EntityStatistics.STREAM_CODEC)
+                            .sync((iAttachmentHolder, serverPlayer) -> {
+                                if (iAttachmentHolder instanceof Entity entity) {
+                                    return entity.tickCount % entity.getType().updateInterval() == 0;
+                                }
+
+                                return true;
+                            }, EntityStatistics.STREAM_CODEC)
                             .build());
 
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<ExtraEntityUpdateData>> EXTRA_ENTITY_UPDATE =
             ATTACHMENT_TYPES.register("extra_entity_update",
                     () -> AttachmentType.builder(ExtraEntityUpdateData::empty)
                             .serialize(ExtraEntityUpdateData.CODEC)
+                            .sync((iAttachmentHolder, serverPlayer) -> {
+                                if (iAttachmentHolder instanceof Entity entity) {
+                                    return entity.tickCount % entity.getType().updateInterval() == 0;
+                                }
+
+                                return true;
+                            }, ExtraEntityUpdateData.STREAM_CODEC)
                             .build());
 
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<ExtraEntityData>> EXTRA_ENTITY_DATA =
             ATTACHMENT_TYPES.register("extra_entity_data",
                     () -> AttachmentType.builder(ExtraEntityData::empty)
                             .serialize(ExtraEntityData.CODEC)
+                            .sync((iAttachmentHolder, serverPlayer) -> {
+                                if (iAttachmentHolder instanceof Entity entity) {
+                                    return entity.tickCount % entity.getType().updateInterval() == 0;
+                                }
+
+                                return true;
+                            }, ExtraEntityData.STREAM_CODEC)
                             .build());
 
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<ItemInHandRenderData>> ITEM_IN_HAND_RENDER_DATA =
@@ -49,8 +70,14 @@ public class EyelibAttachableData {
 
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<EntityBehaviorData>> ENTITY_BEHAVIOR_DATA =
             ATTACHMENT_TYPES.register("entity_behavior_data",
-                    () -> AttachmentType.builder(() -> new EntityBehaviorData())
+                    () -> AttachmentType.builder(EntityBehaviorData::new)
                             .serialize(EntityBehaviorData.CODEC)
-                            .sync(EntityBehaviorData.STREAM_CODEC)
+                            .sync((iAttachmentHolder, serverPlayer) -> {
+                                if (iAttachmentHolder instanceof Entity entity) {
+                                    return entity.tickCount % entity.getType().updateInterval() == 0;
+                                }
+
+                                return true;
+                            }, EntityBehaviorData.STREAM_CODEC)
                             .build());
 }

@@ -96,12 +96,6 @@ public class EyelibNetworkManager {
                         Minecraft.getInstance().level.getEntity(payload.entityId())
                                 .setData(EyelibAttachableData.EXTRA_ENTITY_UPDATE, payload.data()));
 
-        registrar.playToClient(UniDataUpdatePacket.TYPE, UniDataUpdatePacket.STREAM_CODEC,
-                (payload, context) -> {
-                    Minecraft.getInstance().level.getEntity(payload.entityId())
-                            .setData(payload::attachmentType, cast(payload.data().o()));
-                });
-
         registrar.playToClient(ExtraEntityDataPacket.TYPE, ExtraEntityDataPacket.STREAM_CODEC,
                 (payload, context) ->
                         Minecraft.getInstance().level.getEntity(payload.entityId())

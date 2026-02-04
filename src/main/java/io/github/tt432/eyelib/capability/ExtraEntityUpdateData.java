@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.capability;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.network.ExtraEntityUpdateDataPacket;
 import io.netty.buffer.ByteBuf;
 import lombok.With;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -15,7 +14,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * @author TT432
@@ -107,10 +105,7 @@ public record ExtraEntityUpdateData(
                         .withLastHurtY(depos.y() - epos.y())
                         .withLastHurtZ(depos.z() - epos.z());
 
-                if (data != updated) {
-                    entity.setData(key, updated);
-                    PacketDistributor.sendToPlayersTrackingEntityAndSelf(entity, new ExtraEntityUpdateDataPacket(entity.getId(), updated));
-                }
+                entity.setData(key, updated);
             }
         }
 
@@ -123,7 +118,7 @@ public record ExtraEntityUpdateData(
 
             if (!entity.level().isClientSide && data != updated) {
                 entity.setData(key, updated);
-                PacketDistributor.sendToPlayersTrackingEntityAndSelf(entity, new ExtraEntityUpdateDataPacket(entity.getId(), updated));
+//                PacketDistributor.sendToPlayersTrackingEntityAndSelf(entity, new ExtraEntityUpdateDataPacket(entity.getId(), updated));
             }
         }
     }
