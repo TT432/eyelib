@@ -130,7 +130,7 @@ configurations {
 }
 
 dependencies {
-    implementation("maven.modrinth:acceleratedrendering:1.0.5-1.21.1-alpha")
+    compileOnly("maven.modrinth:acceleratedrendering:1.0.5-1.21.1-alpha")
 
     implementation jarJar('io.github.tt432.chin:chin:[21.0.3,)')
     var imguiVersion = "1.86.12"

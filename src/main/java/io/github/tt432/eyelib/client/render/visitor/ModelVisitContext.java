@@ -15,6 +15,10 @@ public final class ModelVisitContext {
         data.put(key, value);
     }
 
+    public void put(ModelVisitContext other) {
+        data.putAll(other.data);
+    }
+
     public boolean contains(String key) {
         return data.containsKey(key);
     }

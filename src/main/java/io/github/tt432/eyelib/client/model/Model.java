@@ -44,6 +44,8 @@ public interface Model {
     interface Bone {
         int id();
 
+        int parent();
+
         MolangValue binding();
 
         Int2ObjectMap<? extends Bone> children();

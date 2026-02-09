@@ -36,6 +36,10 @@ public class BoneRenderInfos implements ModelRuntimeData<BrBone, BoneRenderInfoE
         return infos.computeIfAbsent(id, FUNC);
     }
 
+    public BoneRenderInfoEntry getOrDefault(int id) {
+        return infos.containsKey(id) ? infos.get(id) : BoneRenderInfoEntry.EMPTY;
+    }
+
     @Override
     public ModelTransformer<BrBone, BoneRenderInfos> transformer() {
         return BedrockTransformer.INSTANCE;

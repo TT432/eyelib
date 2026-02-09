@@ -87,7 +87,7 @@ public class VertexComputeHelper {
             buffer.upload();
         }
 
-        glUseProgram(VertexComputeShader.getShader().program());
+        glUseProgram(EyelibComputeShaders.getVertexShader().program());
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vertexBuffer);
         transformBuffer.bind(1);
         normalBuffer.bind(2);

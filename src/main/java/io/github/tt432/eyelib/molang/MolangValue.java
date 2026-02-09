@@ -33,7 +33,7 @@ public record MolangValue(
 
     @AllArgsConstructor
     public static class ConstMolangFunction implements MolangFunction {
-        MolangObject molangObject;
+        private final MolangObject molangObject;
 
         @Override
         public MolangObject apply(@NotNull MolangScope scope) {

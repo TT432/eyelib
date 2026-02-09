@@ -72,4 +72,10 @@ public final class MolangScope {
     public void setOwner(Object owner) {
         this.owner.add(owner);
     }
+
+    public MolangScope extend() {
+        MolangScope extended = new MolangScope();
+        extended.setParent(this);
+        return extended;
+    }
 }

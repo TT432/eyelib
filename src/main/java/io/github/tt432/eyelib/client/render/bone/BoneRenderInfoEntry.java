@@ -9,6 +9,8 @@ import org.joml.Vector3f;
  */
 @Data
 public class BoneRenderInfoEntry {
+    public static final BoneRenderInfoEntry EMPTY = new BoneRenderInfoEntry();
+
     @NotNull
     private final Vector3f renderScala = new Vector3f(1);
     @NotNull

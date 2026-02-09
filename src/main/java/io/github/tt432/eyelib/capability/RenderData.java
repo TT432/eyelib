@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
+import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.network.AnimationComponentSyncPacket;
 import io.github.tt432.eyelib.network.ModelComponentSyncPacket;
@@ -13,6 +14,7 @@ import lombok.Setter;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +60,9 @@ public class RenderData<T> {
     private final AnimationComponent animationComponent = new AnimationComponent();
 
     private final ClientEntityComponent clientEntityComponent = new ClientEntityComponent();
+
+    @Nullable
+    public RenderHelper renderHelper;
 
     public void sync() {
         List<ModelComponent.SerializableInfo> components = new ArrayList<>();

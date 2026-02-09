@@ -15,6 +15,7 @@ import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.SimpleRenderAction;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
+import io.github.tt432.eyelib.compute.ParallelAnimatorHelper;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.molang.MolangScope;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -52,8 +53,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static net.minecraft.client.Minecraft.getInstance;
 
@@ -75,10 +74,6 @@ public class EntityRenderSystem {
         NeoForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
     }
 
-    private static Stream<Entity> entities() {
-        return StreamSupport.stream(getInstance().level.entitiesForRendering().spliterator(), true);
-    }
-
     @SubscribeEvent
     public static void onEvent(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY) return;
@@ -88,43 +83,89 @@ public class EntityRenderSystem {
         var camY = position.y;
         var camZ = position.z;
 
-        entities()
+        renderEntities
+                .parallelStream()
+                .map(EntityWithPose::entity)
                 .filter(e -> e.shouldRender(camX, camY, camZ))
                 .map(entity -> setupClientEntity(entity, RenderData.getComponent(entity)))
                 .flatMap(Collection::stream)
-                .sequential()
+                .toList()
                 .forEach(Runnable::run);
 
         final float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(true);
 
-        entities().forEach(e -> {
-            var cap = RenderData.getComponent(e);
+        renderEntities
+                .parallelStream()
+                .map(EntityWithPose::entity)
+                .forEach(e -> {
+                    if (!(e instanceof LivingEntity entity)) return;
 
-            if (e instanceof LivingEntity entity) {
-                MolangScope scope = cap.getScope();
-                ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
+                    var cap = RenderData.getComponent(e);
+                    MolangScope scope = cap.getScope().extend();
+                    ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
 
-                AnimationEffects effects = new AnimationEffects();
-                scope.set("variable.partial_tick", partialTick);
-                scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
+                    AnimationEffects effects = new AnimationEffects();
+                    scope.set("variable.partial_tick", partialTick);
+                    scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
 
-                BoneRenderInfos tickedInfos;
-                if (cap.getAnimationComponent().getSerializableInfo() != null) {
-                    tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
-                            (ClientTickHandler.getTick() + partialTick) / 20, () -> {
-                                if (clientEntityComponent.getClientEntity() != null) {
-                                    clientEntityComponent.getClientEntity().scripts().ifPresent(scripts -> {
-                                        scripts.pre_animation().eval(scope);
-                                    });
-                                }
-                            });
-                } else {
-                    tickedInfos = BoneRenderInfos.EMPTY;
-                }
-                cap.getAnimationComponent().tickedInfos = tickedInfos;
-                cap.getAnimationComponent().effects = effects;
+                    BoneRenderInfos tickedInfos;
+                    if (cap.getAnimationComponent().getSerializableInfo() != null) {
+                        tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
+                                (ClientTickHandler.getTick() + partialTick) / 20, () -> {
+                                    if (clientEntityComponent.getClientEntity() != null) {
+                                        clientEntityComponent.getClientEntity().scripts().ifPresent(scripts -> {
+                                            scripts.pre_animation().eval(scope);
+                                        });
+                                    }
+                                });
+                    } else {
+                        tickedInfos = BoneRenderInfos.EMPTY;
+                    }
+                    cap.getAnimationComponent().tickedInfos = tickedInfos;
+                    cap.getAnimationComponent().effects = effects;
+                });
+
+        List<ParallelAnimatorHelper.ModelWithAnimation> modelWithAnimations = new ArrayList<>();
+        List<RenderData<?>> renderDatas = new ArrayList<>();
+        List<Integer> modelCounts = new ArrayList<>();
+
+        renderEntities
+                .stream()
+                .map(EntityWithPose::entity)
+                .filter(e -> e.shouldRender(camX, camY, camZ))
+                .map(RenderData::getComponent)
+                .forEach(renderData -> {
+                    renderDatas.add(renderData);
+                    int count = 0;
+                    for (ModelComponent modelComponent : renderData.getModelComponents()) {
+                        var modelWithAnimation = new ParallelAnimatorHelper.ModelWithAnimation(modelComponent.getModel(), renderData.getAnimationComponent().tickedInfos);
+                        modelWithAnimations.add(modelWithAnimation);
+                        count++;
+                    }
+                    modelCounts.add(count);
+                });
+        List<Int2ObjectMap<PoseStack.Pose>> int2ObjectMaps = ParallelAnimatorHelper.parallelAnimator(modelWithAnimations, renderEntities.stream().map(EntityWithPose::pose).toList());
+
+        int currentModelIndex = 0;
+        for (int i = 0; i < renderDatas.size(); i++) {
+            RenderData<?> renderData = renderDatas.get(i);
+            int count = modelCounts.get(i);
+
+            if (renderData.renderHelper == null) {
+                renderData.renderHelper = new RenderHelper();
             }
-        });
+
+            var bones = renderData.renderHelper.getContext().<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>());
+
+            for (int j = 0; j < count; j++) {
+                if (currentModelIndex < int2ObjectMaps.size()) {
+                    bones.putAll(int2ObjectMaps.get(currentModelIndex));
+                }
+                currentModelIndex++;
+            }
+        }
+
+        renderEntities.clear();
     }
 
     @SubscribeEvent
@@ -136,11 +177,20 @@ public class EntityRenderSystem {
         }
     }
 
+    record EntityWithPose(
+            Entity entity,
+            PoseStack.Pose pose
+    ) {
+    }
+
+    private static final List<EntityWithPose> renderEntities = new ArrayList<>();
+
     @SubscribeEvent
     public static void onEvent(RenderLivingEvent.Pre event) {
         LivingEntity entity = event.getEntity();
         var cap = RenderData.getComponent(entity);
         if (!cap.isUseBuiltInRenderSystem()) return;
+        renderEntities.add(new EntityWithPose(entity, event.getPoseStack().last()));
 
         if (SimpleRenderAction.builder(event)
                 .animation(cap.getAnimationComponent())
@@ -223,8 +273,13 @@ public class EntityRenderSystem {
                     setupEntityClientEntityData(data);
 
                     RenderHelper renderHelper = Eyelib.getRenderHelper()
-                            .openHighSpeedRender(renderParams, multiBufferSource)
-                            .render(renderParams, model, tickedInfos)
+                            .openHighSpeedRender(renderParams, multiBufferSource);
+
+                    if (data.renderData().renderHelper != null) {
+                        renderHelper.getContext().put(data.renderData().renderHelper.getContext());
+                    }
+
+                    renderHelper.render(renderParams, model, tickedInfos)
                             .collectLocators(model, tickedInfos);
 
                     setParticlesPosition(renderHelper, data.effects(), data.entity());

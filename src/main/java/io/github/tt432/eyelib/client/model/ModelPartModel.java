@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.molang.MolangValue;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.model.geom.ModelPart;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -28,7 +28,7 @@ public record ModelPartModel(
 ) implements Model {
     public ModelPartModel(String name, ModelPart modelPart, ModelLocator locator) {
         this(name, modelPart, locator, new Int2ObjectOpenHashMap<>(), new Int2ObjectOpenHashMap<>());
-        modelPart.children.forEach((k, v) -> toplevelBones.put(GlobalBoneIdHandler.get(k), new Bone(k, v)));
+        modelPart.children.forEach((k, v) -> toplevelBones.put(GlobalBoneIdHandler.get(k), new Bone(k, v, -1)));
         toplevelBones.values().forEach(b -> b.add(allBones));
     }
 
@@ -54,7 +54,7 @@ public record ModelPartModel(
         }
 
         @Override
-        public @Nullable ModelPart getData(int id) {
+        public @NotNull ModelPart getData(int id) {
             return parts.get(id);
         }
 
@@ -66,14 +66,15 @@ public record ModelPartModel(
 
     public record Bone(
             int id,
+            int parent,
             ModelPart modelPart,
             List<Cube> cubes,
             Int2ObjectMap<Bone> children
     ) implements Model.Bone {
-        public Bone(String name, ModelPart modelPart) {
-            this(GlobalBoneIdHandler.get(name), modelPart, new ArrayList<>(), new Int2ObjectOpenHashMap<>());
+        public Bone(String name, ModelPart modelPart, int parent) {
+            this(GlobalBoneIdHandler.get(name), parent, modelPart, new ArrayList<>(), new Int2ObjectOpenHashMap<>());
             modelPart.cubes.forEach(c -> cubes.add(new Cube(c)));
-            modelPart.children.forEach((k, v) -> children.put(GlobalBoneIdHandler.get(k), new Bone(k, v)));
+            modelPart.children.forEach((k, v) -> children.put(GlobalBoneIdHandler.get(k), new Bone(k, v, id)));
         }
 
         public void add(Int2ObjectMap<Bone> bones) {

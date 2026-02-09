@@ -104,24 +104,24 @@ public class ModelVisitor {
     }
 
     protected static <R extends ModelRuntimeData<Model.Bone, ?, R>> void applyBoneTranslate(
-            ModelVisitContext context, PoseStack poseStack, Model.Bone model, R data, ModelTransformer<Model.Bone, R> transformer
+            ModelVisitContext context, PoseStack poseStack, Model.Bone bone, R data, ModelTransformer<Model.Bone, R> transformer
     ) {
-        context.<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>()).compute(model.id(), (n, pose) -> {
+        context.<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>()).compute(bone.id(), (n, pose) -> {
             if (pose == null) {
                 PoseStack.Pose last = poseStack.last();
                 Matrix4f m4 = last.pose();
 
-                m4.translate(transformer.position(model, data));
+                m4.translate(transformer.position(bone, data));
 
-                var renderPivot = transformer.pivot(model, data);
+                var renderPivot = transformer.pivot(bone, data);
                 m4.translate(renderPivot);
 
-                var rotation = transformer.rotation(model, data);
+                var rotation = transformer.rotation(bone, data);
 
                 last.normal().rotateZYX(rotation.z(), rotation.y(), rotation.x());
                 m4.rotateZYX(rotation.z(), rotation.y(), rotation.x());
 
-                var scale = transformer.scale(model, data);
+                var scale = transformer.scale(bone, data);
                 poseStack.scale(scale.x(), scale.y(), scale.z());
 
                 m4.translate(-renderPivot.x(), -renderPivot.y(), -renderPivot.z());

@@ -47,7 +47,7 @@ public class BrParticleParticle {
 
     private final List<ParticleParticleComponent> components;
 
-    public final MolangScope molangScope = new MolangScope();
+    public final MolangScope molangScope;
 
     private final ParticleAppearanceBillboard billboard;
     private final ParticleAppearanceLighting lighting;
@@ -89,7 +89,7 @@ public class BrParticleParticle {
         random3 = emitter.getRandom().nextFloat();
         random4 = emitter.getRandom().nextFloat();
 
-        molangScope.setParent(emitter.molangScope);
+        molangScope = emitter.molangScope.extend();
         molangScope.setOwner(this);
         emitter.getParticle().particleEffect().curves().forEach((k, v) -> molangScope.set(k, () -> v.calculate(molangScope)));
         molangScope.set("variable.particle_age", this::getAge);

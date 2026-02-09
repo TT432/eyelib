@@ -3,6 +3,8 @@ package io.github.tt432.eyelib.compute;
 import lombok.extern.slf4j.Slf4j;
 import org.lwjgl.system.MemoryUtil;
 
+import java.util.Arrays;
+
 import static org.lwjgl.opengl.GL15.glDeleteBuffers;
 import static org.lwjgl.opengl.GL30.glBindBufferBase;
 import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
@@ -13,7 +15,7 @@ import static org.lwjgl.opengl.GL45.*;
  * @author TT432
  */
 @Slf4j
-class UnsafeWithGlBuffer {
+public class UnsafeWithGlBuffer {
     public int glPointer;
     public long pointer;
     public int capacity;
@@ -52,6 +54,7 @@ class UnsafeWithGlBuffer {
     private void resize(int newSize) {
         this.pointer = MemoryUtil.nmemRealloc(this.pointer, newSize);
         log.debug("Needed to grow BufferBuilder buffer: Old size {} bytes, new size {} bytes.", this.capacity, newSize);
+        log.debug(Arrays.toString(Thread.currentThread().getStackTrace()));
         if (this.pointer == 0L) {
             throw new OutOfMemoryError("Failed to resize buffer from " + this.capacity + " bytes to " + newSize + " bytes");
         } else {

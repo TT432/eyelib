@@ -173,9 +173,14 @@ public record BrAnimationController(
             blendProgress = 1;
         }
 
-        currState.animations().forEach((animationName, blendValue) ->
-                updateAnimations(animations, animationName, blendProgress * blendValue.eval(scope),
-                        multiplier, stateTimeSec, infos, data, scope, effects, animationStartFeedback));
+        currState.animations().forEach((animationName, blendValue) -> {
+            var animation = Eyelib.getAnimationManager().get(animations.get(animationName));
+
+            if (animation == null) return;
+
+            animation.tickAnimation(data.getData(animation), animations, scope.extend(), stateTimeSec,
+                    multiplier * blendProgress * blendValue.eval(scope), infos, effects, animationStartFeedback);
+        });
 
         if (lastState != null) {
             if (blendProgress < 1) {
@@ -200,18 +205,6 @@ public record BrAnimationController(
                 });
             }
         }
-    }
-
-    private static void updateAnimations(Map<String, String> animations, String animName, float blendValue,
-                                         float multiplier, float startedTime, BoneRenderInfos infos,
-                                         Data data, MolangScope scope, AnimationEffects effects,
-                                         Runnable animationStartFeedback) {
-        var animation = Eyelib.getAnimationManager().get(animations.get(animName));
-
-        if (animation == null) return;
-
-        animation.tickAnimation(data.getData(animation), animations, scope, startedTime,
-                multiplier * blendValue, infos, effects, animationStartFeedback);
     }
 
     record Factory(
