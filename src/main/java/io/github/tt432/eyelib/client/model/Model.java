@@ -5,7 +5,6 @@ import io.github.tt432.chin.util.Lists;
 import io.github.tt432.eyelib.client.model.locator.GroupLocator;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.model.locator.ModelLocator;
-import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
@@ -20,18 +19,18 @@ import java.util.List;
 /**
  * @author TT432
  */
-public interface Model {
+public interface Model<B extends Model.Bone<B>> {
     String name();
 
-    Int2ObjectMap<? extends Bone> toplevelBones();
+    Int2ObjectMap<B> toplevelBones();
 
-    Int2ObjectMap<? extends Bone> allBones();
+    Int2ObjectMap<B> allBones();
 
-    ModelRuntimeData<?, ?, ?> data();
+    ModelRuntimeData<B> data();
 
     ModelLocator locator();
 
-    default <D extends ModelRuntimeData<Model.Bone, ?, D>> void accept(RenderParams params, ModelVisitContext context, D infos, ModelVisitor visitor) {
+    default void accept(RenderParams params, ModelVisitContext context, ModelRuntimeData<B> infos, ModelVisitor visitor) {
         visitor.visitPreModel(params, context, infos, this);
 
         for (var toplevelBone : toplevelBones().values()) {
@@ -41,18 +40,20 @@ public interface Model {
         visitor.visitPostModel(params, context, infos, this);
     }
 
-    interface Bone {
+    interface Bone<B extends Model.Bone<B>> {
         int id();
+
+        int parent();
 
         MolangValue binding();
 
-        Int2ObjectMap<? extends Bone> children();
+        Int2ObjectMap<B> children();
 
         List<? extends Cube> cubes();
 
-        default <D extends ModelRuntimeData<Model.Bone, ?, D>> void accept(RenderParams params, ModelVisitContext context, D infos, GroupLocator groupLocator, ModelVisitor visitor) {
-            ModelTransformer<Bone, D> transformer = infos.transformer();
-            visitor.visitPreBone(params, context, this, infos, groupLocator, transformer);
+        @SuppressWarnings("unchecked")
+        default void accept(RenderParams params, ModelVisitContext context, ModelRuntimeData<B> data, GroupLocator groupLocator, ModelVisitor visitor) {
+            visitor.visitPreBone(params, context, (B) this, data, groupLocator);
 
             if (null == groupLocator) return;
 
@@ -70,7 +71,7 @@ public interface Model {
                     pose.rotateZYX(locator.rotation());
                     last1.normal().rotateZYX(locator.rotation());
 
-                    visitor.visitLocator(params, context, this, locator, infos, transformer);
+                    visitor.visitLocator(params, context, (B) this, locator, data);
 
                     poseStack.popPose();
                 });
@@ -83,10 +84,10 @@ public interface Model {
             }
 
             for (var child : children().values()) {
-                child.accept(params, context, infos, groupLocator.getChild(child.id()), visitor);
+                child.accept(params, context, data, groupLocator.getChild(child.id()), visitor);
             }
 
-            visitor.visitPostBone(params, context, this, infos, groupLocator.getChild(id()), transformer);
+            visitor.visitPostBone(params, context, (B) this, data, groupLocator.getChild(id()));
         }
     }
 

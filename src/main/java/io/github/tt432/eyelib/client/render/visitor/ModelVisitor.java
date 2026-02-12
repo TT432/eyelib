@@ -5,7 +5,6 @@ import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.locator.GroupLocator;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
-import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -26,11 +25,11 @@ public class ModelVisitor {
         return (T) o;
     }
 
-    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitModel(RenderParams params, ModelVisitContext context, D infos, Model model) {
+    public <B extends Model.Bone<B>> void visitModel(RenderParams params, ModelVisitContext context, ModelRuntimeData<B> infos, Model<B> model) {
         model.accept(params, context, infos, this);
     }
 
-    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitPreModel(RenderParams params, ModelVisitContext context, D infos, Model model) {
+    public <B extends Model.Bone<B>> void visitPreModel(RenderParams params, ModelVisitContext context, ModelRuntimeData<B> infos, Model<B> model) {
         PoseStack poseStack = params.poseStack();
         poseStack.pushPose();
 
@@ -41,23 +40,21 @@ public class ModelVisitor {
         normal.rotateY(R180);
     }
 
-    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitPostModel(RenderParams params, ModelVisitContext context, D infos, Model model) {
+    public <B extends Model.Bone<B>> void visitPostModel(RenderParams params, ModelVisitContext context, ModelRuntimeData<B> infos, Model<B> model) {
         PoseStack poseStack = params.poseStack();
         poseStack.popPose();
     }
 
-    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitPreBone(RenderParams renderParams, ModelVisitContext context,
-                                                                            Model.Bone group, D data, GroupLocator groupLocator,
-                                                                            ModelTransformer<Model.Bone, D> transformer) {
+    public <B extends Model.Bone<B>> void visitPreBone(RenderParams renderParams, ModelVisitContext context,
+                                                       B bone, ModelRuntimeData<B> data, GroupLocator groupLocator) {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();
 
-        applyBoneTranslate(context, poseStack, group, cast(data), transformer);
+        applyBoneTranslate(context, poseStack, bone, cast(data));
     }
 
-    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitPostBone(RenderParams renderParams, ModelVisitContext context,
-                                                                             Model.Bone group, D data, GroupLocator groupLocator,
-                                                                             ModelTransformer<Model.Bone, D> transformer) {
+    public <B extends Model.Bone<B>> void visitPostBone(RenderParams renderParams, ModelVisitContext context,
+                                                        B group, ModelRuntimeData<B> data, GroupLocator groupLocator) {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.popPose();
     }
@@ -96,32 +93,31 @@ public class ModelVisitor {
 
     }
 
-    public <R extends ModelRuntimeData<Model.Bone, ?, R>> void visitLocator(
-            RenderParams renderParams, ModelVisitContext context, Model.Bone bone,
-            LocatorEntry locator, R data, ModelTransformer<Model.Bone, R> transformer
+    public <B extends Model.Bone<B>> void visitLocator(
+            RenderParams renderParams, ModelVisitContext context, B bone, LocatorEntry locator, ModelRuntimeData<B> data
     ) {
 
     }
 
-    protected static <R extends ModelRuntimeData<Model.Bone, ?, R>> void applyBoneTranslate(
-            ModelVisitContext context, PoseStack poseStack, Model.Bone model, R data, ModelTransformer<Model.Bone, R> transformer
+    protected static <B extends Model.Bone<B>> void applyBoneTranslate(
+            ModelVisitContext context, PoseStack poseStack, B bone, ModelRuntimeData<B> data
     ) {
-        context.<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>()).compute(model.id(), (n, pose) -> {
+        context.<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>()).compute(bone.id(), (n, pose) -> {
             if (pose == null) {
                 PoseStack.Pose last = poseStack.last();
                 Matrix4f m4 = last.pose();
 
-                m4.translate(transformer.position(model, data));
+                m4.translate(data.position(bone));
 
-                var renderPivot = transformer.pivot(model, data);
+                var renderPivot = data.pivot(bone);
                 m4.translate(renderPivot);
 
-                var rotation = transformer.rotation(model, data);
+                var rotation = data.rotation(bone);
 
                 last.normal().rotateZYX(rotation.z(), rotation.y(), rotation.x());
                 m4.rotateZYX(rotation.z(), rotation.y(), rotation.x());
 
-                var scale = transformer.scale(model, data);
+                var scale = data.scale(bone);
                 poseStack.scale(scale.x(), scale.y(), scale.z());
 
                 m4.translate(-renderPivot.x(), -renderPivot.y(), -renderPivot.z());

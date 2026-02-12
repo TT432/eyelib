@@ -42,7 +42,7 @@ public record BrBone(
         List<BrCube> cubes,
         List<BrTextureMesh> texture_meshes,
         Map<String, BrLocator> locators
-) implements Model.Bone {
+) implements Model.Bone<BrBone> {
 
     public static final Codec<BrBone> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             GlobalBoneIdHandler.STRING_ID_CODEC.fieldOf("name").forGetter(BrBone::id),

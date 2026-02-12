@@ -28,7 +28,7 @@ public abstract class ModelBakeInfo<Info> {
         });
     }
 
-    public BakedModel getBakedModel(Model model, boolean isSolid, ResourceLocation texture) {
+    public <B extends Model.Bone<B>> BakedModel getBakedModel(Model<B> model, boolean isSolid, ResourceLocation texture) {
         return modelCache.computeIfAbsent(model.name(), s -> new HashMap<>())
                 .computeIfAbsent(texture, i -> {
                     Info bakeInfo = getBakeInfo(model, isSolid, texture);
@@ -36,9 +36,9 @@ public abstract class ModelBakeInfo<Info> {
                 });
     }
 
-    protected abstract Info getBakeInfo(Model model, boolean isSolid, ResourceLocation texture);
+    protected abstract <B extends Model.Bone<B>> Info getBakeInfo(Model<B> model, boolean isSolid, ResourceLocation texture);
 
-    protected abstract BakedModel bake(Model model, Info info);
+    protected abstract <B extends Model.Bone<B>> BakedModel bake(Model<B> model, Info info);
 
     @FunctionalInterface
     public interface BoneDataConsumer {
@@ -62,7 +62,7 @@ public abstract class ModelBakeInfo<Info> {
         }
     }
 
-    protected void processBone(Model.Bone bone, NativeImage intBuffer, Int2BooleanFunction f, BoneDataConsumer consumer) {
+    protected <B extends Model.Bone<B>> void processBone(B bone, NativeImage intBuffer, Int2BooleanFunction f, BoneDataConsumer consumer) {
         bone.children().values().forEach(boneIn -> processBone(boneIn, intBuffer, f, consumer));
 
         boolean[] result = new boolean[bone.cubes().size()];
