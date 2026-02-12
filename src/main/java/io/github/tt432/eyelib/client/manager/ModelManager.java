@@ -12,13 +12,13 @@ import java.util.Map;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class ModelManager extends Manager<Model> {
+public class ModelManager extends Manager<Model<?>> {
     public static final ModelManager INSTANCE = new ModelManager();
 
-    public final Map<String, GPUParallelModel> gpuModel = new HashMap<>();
+    public final Map<String, GPUParallelModel<?>> gpuModel = new HashMap<>();
 
     @Override
-    public void put(String name, Model value) {
+    public void put(String name, Model<?> value) {
         super.put(name, value);
         gpuModel.put(name, GPUParallelModel.from(value));
     }

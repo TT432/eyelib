@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
-import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import org.joml.Matrix4f;
 
@@ -21,7 +20,7 @@ public class CollectLocatorModelVisitor extends ModelVisitor {
     }
 
     @Override
-    public <R extends ModelRuntimeData<Model.Bone, ?, R>> void visitLocator(RenderParams renderParams, ModelVisitContext context, Model.Bone bone, LocatorEntry locator, R data, ModelTransformer<Model.Bone, R> transformer) {
+    public <B extends Model.Bone<B>> void visitLocator(RenderParams renderParams, ModelVisitContext context, B bone, LocatorEntry locator, ModelRuntimeData<B> data) {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();
         PoseStack.Pose last = poseStack.last();

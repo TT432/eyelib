@@ -6,10 +6,10 @@ struct Pose {
 };
 
 struct AnimationEntry {
-    vec3 bonePivot;
-    vec3 position;
-    vec3 rotation;
-    vec3 scale;
+    vec4 bonePivot;
+    vec4 position;
+    vec4 rotation;
+    vec4 scale;
 };
 
 layout (local_size_x = 1, local_size_y = 1) in;
@@ -94,15 +94,15 @@ void main() {
     for (int i = 0; i < (nextOffset - offset); i++) {
         AnimationEntry animationEntry =  animation.animationEntries[offset+i];
 
-        result.pose *= translate(animationEntry.position);
+        result.pose *= translate(animationEntry.position.xyz);
 
-        result.pose *= translate(animationEntry.bonePivot);
+        result.pose *= translate(animationEntry.bonePivot.xyz);
 
-        result.pose *= rotateZYX(animationEntry.rotation);
+        result.pose *= rotateZYX(animationEntry.rotation.xyz);
 
-        result.pose = result.pose * scale(animationEntry.scale);
+        result.pose = result.pose * scale(animationEntry.scale.xyz);
 
-        result.pose *= translate(-animationEntry.bonePivot);
+        result.pose *= translate(-animationEntry.bonePivot.xyz);
     }
 
     mat3 linearPart = mat3(result.pose);

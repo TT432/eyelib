@@ -17,8 +17,8 @@ public class ModelRenderer {
         return (T) o;
     }
 
-    public static <R extends ModelRuntimeData<?, ?, R>> void render(RenderParams renderParams, Model model, R infos,
-                                                                    ModelRenderVisitorList visitors) {
+    public static <R extends ModelRuntimeData<?>> void render(RenderParams renderParams, Model model, R infos,
+                                                              ModelRenderVisitorList visitors) {
         for (ModelVisitor visitor : visitors.visitors()) {
             visitor.visitModel(renderParams, new ModelVisitContext(), cast(infos), model);
         }

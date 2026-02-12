@@ -63,9 +63,9 @@ public class ModelComponent {
         return getModel() != null && getTexture() != null;
     }
 
-    public Model getModel() {
+    public <B extends Model.Bone<B>> Model<B> getModel() {
         if (serializableInfo == null) return null;
-        return Eyelib.getModelManager().get(serializableInfo.model);
+        return (Model<B>) Eyelib.getModelManager().get(serializableInfo.model);
     }
 
     public ResourceLocation getTexture() {

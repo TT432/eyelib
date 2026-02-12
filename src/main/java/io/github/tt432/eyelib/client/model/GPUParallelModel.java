@@ -2,10 +2,7 @@ package io.github.tt432.eyelib.client.model;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.client.model.bedrock.BrBone;
-import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
-import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
-import io.github.tt432.eyelib.compute.ParallelAnimatorHelper;
+import io.github.tt432.eyelib.compute.ModelWithAnimation;
 import io.github.tt432.eyelib.compute.UnsafeWithGlBuffer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -20,21 +17,24 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import static io.github.tt432.eyelib.compute.ParallelAnimatorHelper.putMatrix3f;
+import static io.github.tt432.eyelib.compute.ParallelAnimatorHelper.putMatrix4f;
+
 /**
  * @param model bone -> bone对应的计算链条
  * @author TT432
  */
-public record GPUParallelModel(
+public record GPUParallelModel<B extends Model.Bone<B>>(
         Int2ObjectMap<IntList> model,
         IntList animationBones,
         IntList modelOffsets,
-        List<Model.Bone> boneList,
+        List<B> boneList,
         long buffer,
         int bufferSize
 ) {
     public static final MemoryUtil.MemoryAllocator ALLOCATOR = MemoryUtil.getAllocator(false);
 
-    public static GPUParallelModel from(Model model) {
+    public static <B extends Model.Bone<B>> GPUParallelModel<B> from(Model<B> model) {
         Int2ObjectMap<IntList> nModel = new Int2ObjectOpenHashMap<>();
         for (var bone : model.allBones().int2ObjectEntrySet()) {
             IntArrayList nBones = new IntArrayList();
@@ -46,7 +46,7 @@ public record GPUParallelModel(
         IntList animationBones = new IntArrayList();
         IntList modelOffsets = new IntArrayList();
         int modelOffset = 0;
-        List<Model.Bone> boneList = new ArrayList<>();
+        List<B> boneList = new ArrayList<>();
         for (Int2ObjectMap.Entry<IntList> intListEntry : nModel.int2ObjectEntrySet()) {
             IntList bones = intListEntry.getValue();
             for (int i = 0; i < bones.size(); i++) {
@@ -59,10 +59,10 @@ public record GPUParallelModel(
         }
 
         var bufferSize = ANIMATION_ENTRY_BYTE_SIZE * boneList.size();
-        return new GPUParallelModel(nModel, animationBones, modelOffsets, boneList, ALLOCATOR.malloc(bufferSize), bufferSize);
+        return new GPUParallelModel<>(nModel, animationBones, modelOffsets, boneList, ALLOCATOR.malloc(bufferSize), bufferSize);
     }
 
-    private static void fillParent(Model model, int boneId, Model.Bone bone, IntList nBones) {
+    private static <B extends Model.Bone<B>> void fillParent(Model<B> model, int boneId, B bone, IntList nBones) {
         nBones.add(boneId);
         if (bone.parent() != -1) {
             fillParent(model, bone.parent(), model.allBones().get(bone.parent()), nBones);
@@ -94,15 +94,15 @@ public record GPUParallelModel(
     ) {
     }
 
-    private record OrderedModelWithAnimation(
+    private record OrderedModelWithAnimation<B extends Model.Bone<B>>(
             int order,
-            ParallelAnimatorHelper.ModelWithAnimation modelWithAnimation
+            ModelWithAnimation<B> modelWithAnimation
     ) {
     }
 
-    private record OrderedGPUParallelModel(
+    private record OrderedGPUParallelModel<B extends Model.Bone<B>>(
             int order,
-            GPUParallelModel model
+            GPUParallelModel<B> model
     ) {
     }
 
@@ -128,9 +128,33 @@ public record GPUParallelModel(
             }
         }
 
+        private record PutPose(
+                PoseStack.Pose pose,
+                int count
+        ) implements Action {
+            @Override
+            public int bytes() {
+                return count * POSE_ENTRY_BYTE_SIZE;
+            }
+
+            @Override
+            public void doAction(long ptr) {
+                for (int i = 0; i < count; i++) {
+                    putMatrix4f(ptr, pose.pose());
+                    putMatrix3f(ptr, pose.normal());
+                    ptr += POSE_ENTRY_BYTE_SIZE;
+                }
+            }
+        }
+
         void memCopy(long src, int bytes) {
             this.bytes += bytes;
             actions.add(new MemCopy(src, bytes));
+        }
+
+        void putPose(PoseStack.Pose pose, int count) {
+            this.bytes += count * POSE_ENTRY_BYTE_SIZE;
+            actions.add(new PutPose(pose, count));
         }
 
         void doAll() {
@@ -145,33 +169,38 @@ public record GPUParallelModel(
     private record StreamResult(
             IntList offsets,
             List<IntList> animationBones,
-            UnsafeWithGlBufferReserveBuilder builder
+            UnsafeWithGlBufferReserveBuilder builder,
+            UnsafeWithGlBufferReserveBuilder poseBuilder
     ) {
     }
 
-    public static AnimationInfo put(List<ParallelAnimatorHelper.ModelWithAnimation> modelWithAnimations,
-                                    UnsafeWithGlBuffer animationOffsets, UnsafeWithGlBuffer animation) {
+    private static <T> T cast(Object obj) {
+        return (T) obj;
+    }
+
+    public static AnimationInfo put(List<ModelWithAnimation<?>> modelWithAnimations, List<PoseStack.Pose> posesList,
+                                    UnsafeWithGlBuffer animationOffsets, UnsafeWithGlBuffer animation, UnsafeWithGlBuffer entityBasePose) {
         var streamResult = IntStream.range(0, modelWithAnimations.size())
-                .mapToObj(i -> new OrderedModelWithAnimation(i, modelWithAnimations.get(i)))
+                .mapToObj(i -> new OrderedModelWithAnimation<>(i, modelWithAnimations.get(i)))
                 .parallel()
                 .map(orderedModelWithAnimation -> {
-                    ParallelAnimatorHelper.ModelWithAnimation modelWithAnimation = orderedModelWithAnimation.modelWithAnimation();
-                    GPUParallelModel gpuModel = Eyelib.getModelManager().gpuModel.get(modelWithAnimation.model().name());
-                    List<Model.Bone> bones = gpuModel.boneList();
+                    var modelWithAnimation = orderedModelWithAnimation.modelWithAnimation();
+                    var gpuModel = Eyelib.getModelManager().gpuModel.get(modelWithAnimation.model().name());
+                    var bones = gpuModel.boneList();
 
                     for (int i = 0; i < bones.size(); i++) {
-                        put(gpuModel.buffer + (long) i * ANIMATION_ENTRY_BYTE_SIZE, bones.get(i), modelWithAnimation.infos());
+                        put(gpuModel.buffer + (long) i * ANIMATION_ENTRY_BYTE_SIZE, cast(bones.get(i)), modelWithAnimation.infos());
                     }
 
-                    return new OrderedGPUParallelModel(orderedModelWithAnimation.order, gpuModel);
+                    return new OrderedGPUParallelModel<>(orderedModelWithAnimation.order, gpuModel);
                 })
                 .toList()
                 .stream()
                 .sorted(Comparator.comparingInt(OrderedGPUParallelModel::order))
-                .map(OrderedGPUParallelModel::model)
                 .collect(
-                        () -> new StreamResult(new IntArrayList(), new ArrayList<>(), new UnsafeWithGlBufferReserveBuilder(animation)),
-                        (result, model) -> {
+                        () -> new StreamResult(new IntArrayList(), new ArrayList<>(), new UnsafeWithGlBufferReserveBuilder(animation), new UnsafeWithGlBufferReserveBuilder(entityBasePose)),
+                        (result, orderedModel) -> {
+                            var model = orderedModel.model();
                             var offsets = result.offsets;
                             if (!offsets.isEmpty()) {
                                 int last = offsets.getInt(offsets.size() - 1);
@@ -183,6 +212,8 @@ public record GPUParallelModel(
                             result.builder.memCopy(model.buffer, model.bufferSize);
 
                             result.animationBones.add(model.animationBones);
+
+                            result.poseBuilder.putPose(posesList.get(orderedModel.order()), model.boneList.size());
                         },
                         (r1, r2) -> {
                             // do nothing
@@ -190,6 +221,7 @@ public record GPUParallelModel(
                 );
 
         streamResult.builder.doAll();
+        streamResult.poseBuilder.doAll();
 
         var offsets = streamResult.offsets;
         MemoryUtil.memPutInt(animationOffsets.reserve(4), 0);
@@ -198,29 +230,29 @@ public record GPUParallelModel(
     }
 
     public static final int ANIMATION_ENTRY_BYTE_SIZE = 4 * 4 * 4;
+    public static final int POSE_ENTRY_BYTE_SIZE = (3 + 4) * 4 * 4;
 
-    public static void put(long buffer, Model.Bone bone, BoneRenderInfos infos) {
-        ModelTransformer<BrBone, BoneRenderInfos> transformer = infos.transformer();
-        Vector3fc pivot = transformer.pivot((BrBone) bone, infos);
-        Vector3fc position = transformer.position((BrBone) bone, infos);
-        Vector3fc rotation = transformer.rotation((BrBone) bone, infos);
-        Vector3fc scale = transformer.scale((BrBone) bone, infos);
+    private static <B extends Model.Bone<B>> void put(long buffer, B bone, ModelRuntimeData<B> infos) {
+        Vector3fc pivot = infos.pivot(bone);
+        Vector3fc position = infos.position(bone);
+        Vector3fc rotation = infos.rotation(bone);
+        Vector3fc scale = infos.scale(bone);
 
         MemoryUtil.memPutFloat(buffer, pivot.x());
-        MemoryUtil.memPutFloat(buffer, pivot.y());
-        MemoryUtil.memPutFloat(buffer, pivot.z());
-        MemoryUtil.memPutFloat(buffer, 0);
-        MemoryUtil.memPutFloat(buffer, position.x());
-        MemoryUtil.memPutFloat(buffer, position.y());
-        MemoryUtil.memPutFloat(buffer, position.z());
-        MemoryUtil.memPutFloat(buffer, 0);
-        MemoryUtil.memPutFloat(buffer, rotation.x());
-        MemoryUtil.memPutFloat(buffer, rotation.y());
-        MemoryUtil.memPutFloat(buffer, rotation.z());
-        MemoryUtil.memPutFloat(buffer, 0);
-        MemoryUtil.memPutFloat(buffer, scale.x());
-        MemoryUtil.memPutFloat(buffer, scale.y());
-        MemoryUtil.memPutFloat(buffer, scale.z());
-        MemoryUtil.memPutFloat(buffer, 0);
+        MemoryUtil.memPutFloat(buffer += 4, pivot.y());
+        MemoryUtil.memPutFloat(buffer += 4, pivot.z());
+        MemoryUtil.memPutFloat(buffer += 4, 0);
+        MemoryUtil.memPutFloat(buffer += 4, position.x());
+        MemoryUtil.memPutFloat(buffer += 4, position.y());
+        MemoryUtil.memPutFloat(buffer += 4, position.z());
+        MemoryUtil.memPutFloat(buffer += 4, 0);
+        MemoryUtil.memPutFloat(buffer += 4, rotation.x());
+        MemoryUtil.memPutFloat(buffer += 4, rotation.y());
+        MemoryUtil.memPutFloat(buffer += 4, rotation.z());
+        MemoryUtil.memPutFloat(buffer += 4, 0);
+        MemoryUtil.memPutFloat(buffer += 4, scale.x());
+        MemoryUtil.memPutFloat(buffer += 4, scale.y());
+        MemoryUtil.memPutFloat(buffer += 4, scale.z());
+        MemoryUtil.memPutFloat(buffer += 4, 0);
     }
 }

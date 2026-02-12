@@ -8,7 +8,6 @@ import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.bake.BakedModel;
 import io.github.tt432.eyelib.client.model.locator.GroupLocator;
-import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.compute.LazyComputeBufferBuilder;
 import io.github.tt432.eyelib.compute.VertexComputeHelper;
@@ -21,7 +20,7 @@ import lombok.Setter;
 @Setter
 public class HighSpeedRenderModelVisitor extends ModelVisitor {
     @Override
-    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitPreModel(RenderParams params, ModelVisitContext context, D infos, Model model) {
+    public <B extends Model.Bone<B>> void visitPreModel(RenderParams params, ModelVisitContext context, ModelRuntimeData<B> infos, Model<B> model) {
         super.visitPreModel(params, context, infos, model);
 
         if (!context.contains("BackedModel")) {
@@ -30,17 +29,17 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
     }
 
     @Override
-    public <D extends ModelRuntimeData<Model.Bone, ?, D>> void visitPreBone(RenderParams renderParams, ModelVisitContext context, Model.Bone group, D data, GroupLocator groupLocator, ModelTransformer<Model.Bone, D> transformer) {
+    public <B extends Model.Bone<B>> void visitPreBone(RenderParams renderParams, ModelVisitContext context, B bone, ModelRuntimeData<B> data, GroupLocator groupLocator) {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();
 
-        applyBoneTranslate(context, poseStack, group, cast(data), transformer);
+        applyBoneTranslate(context, poseStack, bone, cast(data));
 
-        var bakedBone = context.<BakedModel>get("BackedModel").bones().get(group.id());
+        var bakedBone = context.<BakedModel>get("BackedModel").bones().get(bone.id());
 
         PoseStack.Pose last = poseStack.last();
 
-        if (renderParams.partVisibility().getOrDefault(group.id(), true)) {
+        if (renderParams.partVisibility().getOrDefault(bone.id(), true)) {
             if (ARCompat.AR_INSTALLED && ARCompat.renderWithAR(bakedBone, renderParams)) {
                 return;
             }

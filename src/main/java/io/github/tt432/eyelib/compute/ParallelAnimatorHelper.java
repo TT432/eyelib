@@ -2,8 +2,6 @@ package io.github.tt432.eyelib.compute;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.model.GPUParallelModel;
-import io.github.tt432.eyelib.client.model.Model;
-import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -29,33 +27,24 @@ public class ParallelAnimatorHelper {
     private static final PersistentPoseBuffer poses = new PersistentPoseBuffer();
     private static final UnsafeWithGlBuffer entityBasePose = new UnsafeWithGlBuffer(16 * 4 + 12 * 4);
 
-    public record ModelWithAnimation(
-            Model model,
-            BoneRenderInfos infos
-    ) {
-    }
-
     public static List<Int2ObjectMap<PoseStack.Pose>> parallelAnimator(
-            List<ModelWithAnimation> modelWithAnimations,
+            List<ModelWithAnimation<?>> modelWithAnimations,
             List<PoseStack.Pose> posesList
     ) {
-        var animationInfo = GPUParallelModel.put(modelWithAnimations, animationOffsets, animation);
-
-        for (PoseStack.Pose pose : posesList) {
-            pose.pose().get(MemoryUtil.memByteBuffer(entityBasePose.reserve(4 * 4 * 4), 4 * 4 * 4));
-            pose.normal().get3x4(MemoryUtil.memByteBuffer(entityBasePose.reserve(4 * 4 * 3), 4 * 4 * 3));
-        }
+        var animationInfo = GPUParallelModel.put(modelWithAnimations, posesList, animationOffsets, animation, entityBasePose);
 
         int posesSize = (16 + 12) * 4 * animationInfo.parallelNumGroups();
         poses.ensureCapacity(posesSize);
 
         animationOffsets.upload();
         animation.upload();
+        entityBasePose.upload();
 
         glUseProgram(EyelibComputeShaders.getParallelAnimatorShader().program());
         animationOffsets.bind(0);
         animation.bind(1);
         poses.bind(2);
+        entityBasePose.bind(3);
 
         glDispatchCompute(animationInfo.parallelNumGroups(), 1, 1);
 
@@ -70,6 +59,7 @@ public class ParallelAnimatorHelper {
         animationOffsets.reset();
         animation.reset();
         poses.reset();
+        entityBasePose.reset();
     }
 
     private static List<PoseStack.Pose> getPoseList() {
@@ -180,5 +170,41 @@ public class ParallelAnimatorHelper {
         public void reset() {
             writeOffset = 0;
         }
+    }
+
+    public static void putMatrix3f(long address, Matrix3f matrix) {
+        MemoryUtil.memPutFloat(address + 0L * 4L, matrix.m00());
+        MemoryUtil.memPutFloat(address + 1L * 4L, matrix.m01());
+        MemoryUtil.memPutFloat(address + 2L * 4L, matrix.m02());
+
+        MemoryUtil.memPutFloat(address + 4L * 4L, matrix.m10());
+        MemoryUtil.memPutFloat(address + 5L * 4L, matrix.m11());
+        MemoryUtil.memPutFloat(address + 6L * 4L, matrix.m12());
+
+        MemoryUtil.memPutFloat(address + 8L * 4L, matrix.m20());
+        MemoryUtil.memPutFloat(address + 9L * 4L, matrix.m21());
+        MemoryUtil.memPutFloat(address + 10L * 4L, matrix.m22());
+    }
+
+    public static void putMatrix4f(long address, Matrix4f matrix) {
+        MemoryUtil.memPutFloat(address + 0L * 4L, matrix.m00());
+        MemoryUtil.memPutFloat(address + 1L * 4L, matrix.m01());
+        MemoryUtil.memPutFloat(address + 2L * 4L, matrix.m02());
+        MemoryUtil.memPutFloat(address + 3L * 4L, matrix.m03());
+
+        MemoryUtil.memPutFloat(address + 4L * 4L, matrix.m10());
+        MemoryUtil.memPutFloat(address + 5L * 4L, matrix.m11());
+        MemoryUtil.memPutFloat(address + 6L * 4L, matrix.m12());
+        MemoryUtil.memPutFloat(address + 7L * 4L, matrix.m13());
+
+        MemoryUtil.memPutFloat(address + 8L * 4L, matrix.m20());
+        MemoryUtil.memPutFloat(address + 9L * 4L, matrix.m21());
+        MemoryUtil.memPutFloat(address + 10L * 4L, matrix.m22());
+        MemoryUtil.memPutFloat(address + 11L * 4L, matrix.m23());
+
+        MemoryUtil.memPutFloat(address + 12L * 4L, matrix.m30());
+        MemoryUtil.memPutFloat(address + 13L * 4L, matrix.m31());
+        MemoryUtil.memPutFloat(address + 14L * 4L, matrix.m32());
+        MemoryUtil.memPutFloat(address + 15L * 4L, matrix.m33());
     }
 }

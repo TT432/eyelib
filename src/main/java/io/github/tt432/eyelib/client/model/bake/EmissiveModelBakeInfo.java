@@ -29,7 +29,7 @@ public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.I
     private final Map<String, Map<ResourceLocation, Info>> cache = new HashMap<>();
 
     @Override
-    public Info getBakeInfo(Model model, boolean isSolid, ResourceLocation texture) {
+    public <B extends Model.Bone<B>> Info getBakeInfo(Model<B> model, boolean isSolid, ResourceLocation texture) {
         return cache.computeIfAbsent(model.name(), ___ -> new HashMap<>())
                 .computeIfAbsent(texture, __ -> {
                     Int2ObjectMap<BooleanList> builder = new Int2ObjectOpenHashMap<>();
@@ -45,7 +45,7 @@ public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.I
     }
 
     @Override
-    public BakedModel bake(Model model, Info info) {
+    public <B extends Model.Bone<B>> BakedModel bake(Model<B> model, Info info) {
         Int2ObjectMap<BakedModel.BakedBone> bones = new Int2ObjectOpenHashMap<>();
 
         model.toplevelBones().forEach((s, bone) -> collectBones(s, bone, bones, info));
@@ -53,12 +53,12 @@ public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.I
         return new BakedModel(bones);
     }
 
-    private static void collectBones(int name, Model.Bone bone, Int2ObjectMap<BakedModel.BakedBone> bones, Info info) {
+    private static <B extends Model.Bone<B>> void collectBones(int name, B bone, Int2ObjectMap<BakedModel.BakedBone> bones, Info info) {
         bones.put(name, bake(bone, info.map.get(name)));
         bone.children().forEach((s, bone1) -> collectBones(s, bone1, bones, info));
     }
 
-    public static BakedModel.BakedBone bake(Model.Bone bone, BooleanList emissive) {
+    public static <B extends Model.Bone<B>> BakedModel.BakedBone bake(B bone, BooleanList emissive) {
         List<Vector3fc> vertexes = new ArrayList<>();
         List<Vector3fc> normals = new ArrayList<>();
         List<Vector2fc> uvs = new ArrayList<>();

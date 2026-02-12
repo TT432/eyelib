@@ -9,7 +9,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
  * @author TT432
  */
 public class ClientEntityRuntimeData {
-    Object2ObjectMap<String, Model> models = new Object2ObjectOpenHashMap<>();
+    Object2ObjectMap<String, Model<?>> models = new Object2ObjectOpenHashMap<>();
 
     public void setup(BrClientEntity clientEntity) {
         clientEntity.geometry().forEach((shortName, geometry) -> {

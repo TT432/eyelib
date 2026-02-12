@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.client.model;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
-import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.ModelRenderer;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
@@ -121,7 +120,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
         }
 
         @Override
-        public <R extends ModelRuntimeData<Model.Bone, ?, R>> void visitLocator(RenderParams renderParams, ModelVisitContext context, Model.Bone bone, LocatorEntry locator, R data, ModelTransformer<Model.Bone, R> transformer) {
+        public <B extends Model.Bone<B>> void visitLocator(RenderParams renderParams, ModelVisitContext context, B bone, LocatorEntry locator, ModelRuntimeData<B> data) {
             visitors.put(locator.name(), new Matrix4f(renderParams.poseStack().last().pose()));
         }
     }

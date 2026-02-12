@@ -15,6 +15,7 @@ import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.SimpleRenderAction;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
+import io.github.tt432.eyelib.compute.ModelWithAnimation;
 import io.github.tt432.eyelib.compute.ParallelAnimatorHelper;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.molang.MolangScope;
@@ -125,26 +126,27 @@ public class EntityRenderSystem {
                     cap.getAnimationComponent().effects = effects;
                 });
 
-        List<ParallelAnimatorHelper.ModelWithAnimation> modelWithAnimations = new ArrayList<>();
+        List<ModelWithAnimation<?>> modelWithAnimations = new ArrayList<>();
+        List<PoseStack.Pose> animationBasePoses = new ArrayList<>();
         List<RenderData<?>> renderDatas = new ArrayList<>();
         List<Integer> modelCounts = new ArrayList<>();
 
         renderEntities
                 .stream()
-                .map(EntityWithPose::entity)
-                .filter(e -> e.shouldRender(camX, camY, camZ))
-                .map(RenderData::getComponent)
-                .forEach(renderData -> {
-                    renderDatas.add(renderData);
+                .filter(e -> e.entity.shouldRender(camX, camY, camZ))
+                .map(e -> new RenderDataWithPose(RenderData.getComponent(e.entity), e.pose))
+                .forEach(e -> {
+                    renderDatas.add(e.renderData);
                     int count = 0;
-                    for (ModelComponent modelComponent : renderData.getModelComponents()) {
-                        var modelWithAnimation = new ParallelAnimatorHelper.ModelWithAnimation(modelComponent.getModel(), renderData.getAnimationComponent().tickedInfos);
+                    for (ModelComponent modelComponent : e.renderData.getModelComponents()) {
+                        var modelWithAnimation = new ModelWithAnimation<>(modelComponent.getModel(), e.renderData.getAnimationComponent().tickedInfos);
                         modelWithAnimations.add(modelWithAnimation);
+                        animationBasePoses.add(e.pose);
                         count++;
                     }
                     modelCounts.add(count);
                 });
-        List<Int2ObjectMap<PoseStack.Pose>> int2ObjectMaps = ParallelAnimatorHelper.parallelAnimator(modelWithAnimations, renderEntities.stream().map(EntityWithPose::pose).toList());
+        List<Int2ObjectMap<PoseStack.Pose>> int2ObjectMaps = ParallelAnimatorHelper.parallelAnimator(modelWithAnimations, animationBasePoses);
 
         int currentModelIndex = 0;
         for (int i = 0; i < renderDatas.size(); i++) {
@@ -156,6 +158,8 @@ public class EntityRenderSystem {
             }
 
             var bones = renderData.renderHelper.getContext().<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>());
+
+            bones.clear();
 
             for (int j = 0; j < count; j++) {
                 if (currentModelIndex < int2ObjectMaps.size()) {
@@ -179,6 +183,12 @@ public class EntityRenderSystem {
 
     record EntityWithPose(
             Entity entity,
+            PoseStack.Pose pose
+    ) {
+    }
+
+    record RenderDataWithPose(
+            RenderData<?> renderData,
             PoseStack.Pose pose
     ) {
     }
@@ -213,7 +223,28 @@ public class EntityRenderSystem {
 
         setupExtraMolang(entity, cap.getScope(), data.partialTick());
 
-        return data.animationNotNull() && renderComponents(data);
+        PoseStack poseStack = data.poseStack();
+        poseStack.pushPose();
+
+        if (data.entity() instanceof LivingEntity livingEntity) {
+            if (livingEntity.isBaby()) {
+                poseStack.scale(0.5F, 0.5F, 0.5F);
+            }
+
+            float yBodyRot = Mth.rotLerp(data.partialTick(), livingEntity.yBodyRotO, livingEntity.yBodyRot);
+            poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
+            AttributeInstance scaleAttr = livingEntity.getAttribute(Attributes.SCALE);
+            if (scaleAttr != null) {
+                double scaleValue = scaleAttr.getValue();
+                poseStack.scale((float) scaleValue, (float) scaleValue, (float) scaleValue);
+            }
+        }
+
+        var result = data.animationNotNull() && renderComponents(data);
+
+        poseStack.popPose();
+
+        return result;
     }
 
     private static final int leftitem = GlobalBoneIdHandler.get("leftitem");
@@ -322,20 +353,6 @@ public class EntityRenderSystem {
             var scope = cap.getScope();
             poseStack.scale(s.getScaleX(scope), s.getScaleY(scope), s.getScaleZ(scope));
         });
-
-        if (data.entity() instanceof LivingEntity livingEntity) {
-            if (livingEntity.isBaby()) {
-                poseStack.scale(0.5F, 0.5F, 0.5F);
-            }
-
-            float yBodyRot = Mth.rotLerp(data.partialTick(), livingEntity.yBodyRotO, livingEntity.yBodyRot);
-            poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
-            AttributeInstance scaleAttr = livingEntity.getAttribute(Attributes.SCALE);
-            if (scaleAttr != null) {
-                double scaleValue = scaleAttr.getValue();
-                poseStack.scale((float) scaleValue, (float) scaleValue, (float) scaleValue);
-            }
-        }
     }
 
     public static void setupExtraMolang(Entity entity, MolangScope scope, float partialTick) {
