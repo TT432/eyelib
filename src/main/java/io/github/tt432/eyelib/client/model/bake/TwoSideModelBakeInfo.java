@@ -21,7 +21,7 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     private final Map<String, Map<ResourceLocation, TwoSideInfoMap>> cache = new HashMap<>();
 
     @Override
-    public TwoSideInfoMap getBakeInfo(Model model, boolean isSolid, ResourceLocation texture) {
+    public <B extends Model.Bone<B>> TwoSideInfoMap getBakeInfo(Model<B> model, boolean isSolid, ResourceLocation texture) {
         return cache.computeIfAbsent(model.name(), ___ -> new HashMap<>())
                 .computeIfAbsent(texture, __ -> {
                     Int2ObjectMap<TwoSideInfo> builder = new Int2ObjectOpenHashMap<>();
@@ -37,7 +37,7 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     }
 
     @Override
-    public BakedModel bake(Model model, TwoSideInfoMap twoSideInfoMap) {
+    public <B extends Model.Bone<B>> BakedModel bake(Model<B> model, TwoSideInfoMap twoSideInfoMap) {
         Int2ObjectMap<BakedModel.BakedBone> bones = new Int2ObjectOpenHashMap<>();
 
         model.toplevelBones().int2ObjectEntrySet().forEach(entry -> {
@@ -49,12 +49,12 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
         return new BakedModel(bones);
     }
 
-    private static void collectBones(int name, Model.Bone bone, Int2ObjectMap<BakedModel.BakedBone> bones, Int2ObjectMap<TwoSideInfo> info) {
+    private static <B extends Model.Bone<B>> void collectBones(int name, B bone, Int2ObjectMap<BakedModel.BakedBone> bones, Int2ObjectMap<TwoSideInfo> info) {
         bones.put(name, bake(bone, info));
         bone.children().forEach((s, bone1) -> collectBones(s, bone1, bones, info));
     }
 
-    public static BakedModel.BakedBone bake(Model.Bone bone, Int2ObjectMap<TwoSideInfo> info) {
+    public static <B extends Model.Bone<B>> BakedModel.BakedBone bake(B bone, Int2ObjectMap<TwoSideInfo> info) {
         TwoSideInfo twoSideInfo = info.get(bone.id());
         boolean[] allTrue = new boolean[bone.cubes().size()];
         Arrays.fill(allTrue, true);

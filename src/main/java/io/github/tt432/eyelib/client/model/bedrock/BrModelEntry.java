@@ -58,7 +58,7 @@ public record BrModelEntry(
     private static final Gson gson = new Gson();
 
     @Override
-    public ModelRuntimeData<?, ?, ?> data() {
+    public ModelRuntimeData<?> data() {
         return new BoneRenderInfos();
     }
 

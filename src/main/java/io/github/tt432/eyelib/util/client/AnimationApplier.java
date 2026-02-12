@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.util.client;
 
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
-import io.github.tt432.eyelib.client.model.transformer.ModelTransformer;
 import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import lombok.experimental.UtilityClass;
 import org.joml.Vector3f;
@@ -12,32 +11,29 @@ import org.joml.Vector3f;
  */
 @UtilityClass
 public class AnimationApplier {
-    public <M extends Model.Bone, R extends ModelRuntimeData<M, ?, R>> void apply(
-            BoneRenderInfoEntry entry, M model, R data, ModelTransformer<M, R> transformer
+    public <M extends Model.Bone<M>, R extends ModelRuntimeData<M>> void apply(
+            BoneRenderInfoEntry entry, M model, R data
     ) {
-        var initPosition = transformer.initPosition(model, data);
+        var initPosition = data.initPosition(model);
         Vector3f renderPosition = entry.getRenderPosition();
-        transformer.position(
+        data.position(
                 model,
-                data,
                 renderPosition.x + initPosition.x(),
                 renderPosition.y + initPosition.y(),
                 renderPosition.z + initPosition.z()
         );
-        var initRotation = transformer.initRotation(model, data);
+        var initRotation = data.initRotation(model);
         Vector3f renderRotation = entry.getRenderRotation();
-        transformer.rotation(
+        data.rotation(
                 model,
-                data,
                 renderRotation.x + initRotation.x(),
                 renderRotation.y + initRotation.y(),
                 renderRotation.z + initRotation.z()
         );
-        var initScale = transformer.initScale(model, data);
+        var initScale = data.initScale(model);
         Vector3f renderScala = entry.getRenderScala();
-        transformer.scale(
+        data.scale(
                 model,
-                data,
                 renderScala.x * initScale.x(),
                 renderScala.y * initScale.y(),
                 renderScala.z * initScale.z()
