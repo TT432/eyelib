@@ -31,7 +31,7 @@ public class GlobalBoneIdHandler {
 
         return map.computeIfAbsent(boneName.toLowerCase(Locale.ROOT), k -> {
             int result = counter++;
-            map2.put(result, boneName);
+            map2.put(result, boneName.toLowerCase(Locale.ROOT));
             return result;
         });
     }
