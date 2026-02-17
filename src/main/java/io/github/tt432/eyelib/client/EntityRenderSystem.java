@@ -206,6 +206,11 @@ public class EntityRenderSystem {
         }
     }
 
+    // todo 权宜之计
+    private static <T> T cast(Object obj) {
+        return (T) obj;
+    }
+
     public static <T> boolean renderComponents(SimpleRenderAction<T> data) {
         return data.renderData().getModelComponents().stream()
                 .filter(ModelComponent::readyForRendering)
@@ -223,7 +228,7 @@ public class EntityRenderSystem {
                     setupEntityClientEntityData(data);
 
                     RenderHelper renderHelper = Eyelib.getRenderHelper()
-                            .render(renderParams, model, tickedInfos)
+                            .render(renderParams, model, cast(tickedInfos))
                             .collectLocators(model, tickedInfos);
 
                     setParticlesPosition(renderHelper, data.effects(), data.entity());
@@ -234,7 +239,7 @@ public class EntityRenderSystem {
 
                     if (!emissiveRenderParams.textureMissing()) {
                         Eyelib.getRenderHelper()
-                                .render(emissiveRenderParams, model, tickedInfos);
+                                .render(emissiveRenderParams, model, cast(tickedInfos));
                     }
 
                     poseStack.popPose();
