@@ -297,7 +297,7 @@ public class ModelPreviewScreen extends Screen {
             cleanupTextures();
             try {
                 BBModel model = new BBModelLoader().load(path);
-                BBModel.RepackedImage repacked = model.repackImage();
+                var repacked = model.repackImage();
                 this.currentModel = repacked.model();
                 this.renderModels = new Int2ObjectOpenHashMap<>();
                 this.renderModels.put(0, this.currentModel);
