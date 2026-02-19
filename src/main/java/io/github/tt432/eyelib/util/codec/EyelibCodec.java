@@ -3,9 +3,14 @@ package io.github.tt432.eyelib.util.codec;
 import com.mojang.serialization.*;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -14,6 +19,21 @@ import java.util.stream.Stream;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EyelibCodec {
+    public static final Codec<Vector2f> FLOATS2VEC2F_CODEC = Codec.FLOAT.listOf().xmap(
+            l -> new Vector2f(l.get(0), l.get(1)),
+            v -> List.of(v.x, v.y)
+    );
+
+    public static final Codec<Vector3f> FLOATS2VEC3F_CODEC = Codec.FLOAT.listOf().xmap(
+            l -> new Vector3f(l.get(0), l.get(1), l.get(2)),
+            v -> List.of(v.x, v.y, v.z)
+    );
+
+    public static final Codec<Vector4f> FLOATS2VEC4F_CODEC = Codec.FLOAT.listOf().xmap(
+            l -> new Vector4f(l.get(0), l.get(1), l.get(2), l.get(3)),
+            v -> List.of(v.x, v.y, v.z, v.w)
+    );
+
     public static final Codec<Float> STR_FLOAT_CODEC =
             CodecHelper.withAlternative(Codec.FLOAT, Codec.STRING.xmap(Float::parseFloat, String::valueOf));
 
@@ -68,6 +88,30 @@ public class EyelibCodec {
                         .findFirst()
                         .map(e -> e.getValue().encode(input, ops, prefix))
                         .orElse(prefix);
+            }
+        };
+    }
+
+    public static <A> MapCodec<Optional<A>> optionalMapCodec(MapCodec<A> mapCodec) {
+        return new MapCodec<>() {
+            @Override
+            public <T> RecordBuilder<T> encode(Optional<A> input, DynamicOps<T> ops, RecordBuilder<T> prefix) {
+                return input.map(p -> mapCodec.encode(p, ops, prefix)).orElse(prefix);
+            }
+
+            @Override
+            public <T> Stream<T> keys(final DynamicOps<T> ops) {
+                return mapCodec.keys(ops);
+            }
+
+            @Override
+            public <T> DataResult<Optional<A>> decode(final DynamicOps<T> ops, final MapLike<T> input) {
+                return DataResult.success(mapCodec.decode(ops, input).result());
+            }
+
+            @Override
+            public String toString() {
+                return mapCodec + "[mapResult Optional]";
             }
         };
     }

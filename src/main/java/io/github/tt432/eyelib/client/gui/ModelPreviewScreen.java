@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.client.gui;
 
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -14,6 +13,7 @@ import io.github.tt432.eyelib.client.model.bbmodel.BBModelLoader;
 import io.github.tt432.eyelib.client.model.bbmodel.Texture;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -297,30 +297,20 @@ public class ModelPreviewScreen extends Screen {
             cleanupTextures();
             try {
                 BBModel model = new BBModelLoader().load(path);
-                this.currentModel = model;
-                this.renderModels = model.splitByTexture();
+                BBModel.RepackedImage repacked = model.repackImage();
+                this.currentModel = repacked.model();
+                this.renderModels = new Int2ObjectOpenHashMap<>();
+                this.renderModels.put(0, this.currentModel);
                 this.statusMessage = "";
 
                 var tm = Minecraft.getInstance().getTextureManager();
-                if (model.textures() != null) {
-                    for (Texture tex : model.textures()) {
-                        if (tex.source() != null && !tex.source().isEmpty()) {
-                            try {
-                                NativeImage nativeImage = tex.getNativeImage();
-                                if (nativeImage != null) {
-                                    DynamicTexture dynamicTexture = new DynamicTexture(nativeImage);
-                                    ResourceLocation loc = ResourceLocation.fromNamespaceAndPath("eyelib", "dynamic/" + tex.uuid());
-                                    tm.register(loc, dynamicTexture);
-                                    loadedTextures.put(tex.uuid(), loc);
-                                    if (tex.id() != null) {
-                                        loadedTextures.put(tex.id(), loc);
-                                    }
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
+                Texture atlasTex = repacked.atlasTexture();
+                DynamicTexture dynamicTexture = new DynamicTexture(repacked.atlasImage());
+                ResourceLocation loc = ResourceLocation.fromNamespaceAndPath("eyelib", "dynamic/" + atlasTex.uuid());
+                tm.register(loc, dynamicTexture);
+                loadedTextures.put(atlasTex.uuid(), loc);
+                if (atlasTex.id() != null) {
+                    loadedTextures.put(atlasTex.id(), loc);
                 }
 
                 // Reset view

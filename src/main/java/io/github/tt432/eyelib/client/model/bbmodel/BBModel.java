@@ -1,8 +1,7 @@
 package io.github.tt432.eyelib.client.model.bbmodel;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
@@ -15,18 +14,27 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.joml.Vector4f;
+import org.lwjgl.stb.STBRPContext;
+import org.lwjgl.stb.STBRPNode;
+import org.lwjgl.stb.STBRPRect;
+import org.lwjgl.stb.STBRectPack;
+import org.lwjgl.system.MemoryStack;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public record BBModel(
         Meta meta,
         String name,
-        @SerializedName("model_identifier") String modelIdentifier,
-        @SerializedName("visible_box") double[] visibleBox,
+        @SerializedName("model_identifier")
+        String modelIdentifier,
+        @SerializedName("visible_box")
+        List<Double> visibleBox,
         Resolution resolution,
         List<Element> elements,
-        List<JsonElement> outliner,
+        List<Outliner> outliner,
         List<Texture> textures,
         List<Group> groups,
 
@@ -35,45 +43,20 @@ public record BBModel(
         Int2ObjectMap<BoneImpl> allBones,
         ModelLocator modelLocator
 ) implements Model<BoneImpl> {
+    public static final Codec<BBModel> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            Meta.CODEC.fieldOf("meta").forGetter(BBModel::meta),
+            Codec.STRING.fieldOf("name").forGetter(BBModel::name),
+            Codec.STRING.fieldOf("model_identifier").forGetter(BBModel::modelIdentifier),
+            Codec.DOUBLE.listOf().fieldOf("visible_box").forGetter(BBModel::visibleBox),
+            Resolution.CODEC.fieldOf("resolution").forGetter(BBModel::resolution),
+            Element.CODEC.listOf().fieldOf("elements").forGetter(BBModel::elements),
+            Outliner.CODEC.listOf().fieldOf("outliner").forGetter(BBModel::outliner),
+            Texture.CODEC.listOf().fieldOf("textures").forGetter(BBModel::textures),
+            Group.CODEC.listOf().optionalFieldOf("groups", List.of()).forGetter(BBModel::groups)
+    ).apply(ins, BBModel::new));
 
-    record Outliner(
-            String uuid,
-            boolean isOpen,
-            List<String> cubes,
-            List<Outliner> children
-    ) {
-        record CubeOrOutliner(
-                Outliner outliner,
-                String uuid
-        ) {
-        }
-
-        public static final Codec<Outliner> CODEC = Codec.recursive("Outliner", self ->
-                RecordCodecBuilder.create(ins -> ins.group(
-                        Codec.STRING.fieldOf("uuid").forGetter(Outliner::uuid),
-                        Codec.BOOL.fieldOf("isOpen").forGetter(Outliner::isOpen),
-                        Codec.withAlternative(
-                                        self.xmap(
-                                                o -> new CubeOrOutliner(o, null),
-                                                c -> c.outliner != null ? c.outliner : null
-                                        ),
-                                        Codec.STRING.xmap(
-                                                o -> new CubeOrOutliner(null, o),
-                                                c -> c.uuid != null ? c.uuid : null
-                                        )
-                                )
-                                .listOf().fieldOf("children").forGetter(o -> {
-                                    List<CubeOrOutliner> result = new ArrayList<>();
-                                    o.children.forEach(oo -> result.add(new CubeOrOutliner(oo, null)));
-                                    o.cubes.forEach(oo -> result.add(new CubeOrOutliner(null, oo)));
-                                    return result;
-                                })
-                ).apply(ins, (uuid, isOpen, children) -> new Outliner(
-                        uuid,
-                        isOpen,
-                        children.stream().filter(c -> c.uuid != null).map(CubeOrOutliner::uuid).toList(),
-                        children.stream().filter(c -> c.outliner != null).map(CubeOrOutliner::outliner).toList()
-                ))));
+    public BBModel(Meta meta, String name, String modelIdentifier, List<Double> visibleBox, Resolution resolution, List<Element> elements, List<Outliner> outliner, List<Texture> textures, List<Group> groups) {
+        this(meta, name, modelIdentifier, visibleBox, resolution, elements, outliner, textures, groups, new Int2ObjectOpenHashMap<>(), new Int2ObjectOpenHashMap<>(), new ModelLocator(new Int2ObjectOpenHashMap<>()));
     }
 
     public BBModel {
@@ -82,7 +65,7 @@ public record BBModel(
 
         var groupMap = groups.stream().map(g -> Map.entry(g.uuid(), g)).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-        initBones(elements, outliner, this, computedTopLevel, computedAllBones, groupMap, textures);
+        initBones(elements, outliner, computedTopLevel, computedAllBones, groupMap, textures);
 
         toplevelBones = computedTopLevel;
         allBones = computedAllBones;
@@ -101,7 +84,7 @@ public record BBModel(
         return new BbModelRuntimeData();
     }
 
-    private static void initBones(List<Element> elements, List<JsonElement> outliner, BBModel model,
+    private static void initBones(List<Element> elements, List<Outliner> outliner,
                                   Int2ObjectMap<BoneImpl> topLevelBonesMap, Int2ObjectMap<BoneImpl> allBonesMap,
                                   Map<String, Group> groupMap, List<Texture> textures) {
         Map<String, Element> elementMap = new HashMap<>();
@@ -123,55 +106,46 @@ public record BBModel(
             topLevelBonesMap.put(root.id(), root);
             allBonesMap.put(root.id(), root);
         } else {
-            for (JsonElement element : outliner) {
-                processOutlinerEntry(element, null, elementMap, model, topLevelBonesMap, allBonesMap, groupMap, textures);
+            for (var element : outliner) {
+                processOutlinerEntry(element, null, elementMap, topLevelBonesMap, allBonesMap, groupMap, textures);
             }
         }
     }
 
-    private static void processOutlinerEntry(JsonElement entry, BoneImpl parent,
-                                             Map<String, Element> elementMap, BBModel model,
+    private static void processOutlinerEntry(Outliner entry, BoneImpl parent, Map<String, Element> elementMap,
                                              Int2ObjectMap<BoneImpl> topLevelBonesMap, Int2ObjectMap<BoneImpl> allBonesMap,
                                              Map<String, Group> groupMap, List<Texture> textures) {
-        if (entry.isJsonObject()) {
-            JsonObject obj = entry.getAsJsonObject();
-            String uuid = obj.get("uuid").getAsString();
-            BoneImpl bone = new BoneImpl(GlobalBoneIdHandler.get(uuid), parent == null ? -1 : parent.id());
-            Group group = groupMap.get(uuid);
+        String uuid = entry.uuid();
+        Group group = groupMap.get(uuid);
+        if (group == null && entry.group().isPresent()) {
+            group = entry.group().get();
+        }
+        if (group == null) return;
+        BoneImpl bone = new BoneImpl(GlobalBoneIdHandler.get(group.name()), parent == null ? -1 : parent.id());
 
-            if (group.origin() != null) {
-                bone.origin().set(
-                        group.origin()[0] / 16,
-                        group.origin()[1] / 16,
-                        group.origin()[2] / 16
-                );
-            }
+        if (group.origin() != null) {
+            bone.origin().set(group.origin()).div(16);
+        }
 
-            if (group.rotation() != null) {
-                bone.rotation().set(
-                        group.rotation()[0] * EyeMath.DEGREES_TO_RADIANS,
-                        group.rotation()[1] * EyeMath.DEGREES_TO_RADIANS,
-                        group.rotation()[2] * EyeMath.DEGREES_TO_RADIANS
-                );
-            }
+        if (group.rotation() != null) {
+            bone.rotation().set(group.rotation()).mul(EyeMath.DEGREES_TO_RADIANS);
+        }
 
-            if (parent != null) {
-                parent.addChild(bone);
-            } else {
-                topLevelBonesMap.put(bone.id(), bone);
-            }
-            allBonesMap.put(bone.id(), bone);
+        if (parent != null) {
+            parent.addChild(bone);
+        } else {
+            topLevelBonesMap.put(bone.id(), bone);
+        }
+        allBonesMap.put(bone.id(), bone);
 
-            if (obj.has("children")) {
-                for (JsonElement child : obj.getAsJsonArray("children")) {
-                    processOutlinerEntry(child, bone, elementMap, model, topLevelBonesMap, allBonesMap, groupMap, textures);
-                }
-            }
-        } else if (entry.isJsonPrimitive() && entry.getAsJsonPrimitive().isString()) {
-            String uuid = entry.getAsString();
-            Element el = elementMap.get(uuid);
+        for (Outliner child : entry.children()) {
+            processOutlinerEntry(child, bone, elementMap, topLevelBonesMap, allBonesMap, groupMap, textures);
+        }
+
+        for (String cube : entry.cubes()) {
+            Element el = elementMap.get(cube);
             if (el != null && parent != null) {
-                parent.addCube(el.createBbCube(textures));
+                bone.addCube(el.createBbCube(textures));
             }
         }
     }
@@ -238,14 +212,236 @@ public record BBModel(
         return result;
     }
 
+    public record RepackedImage(
+            BBModel model,
+            Texture atlasTexture,
+            NativeImage atlasImage
+    ) {
+    }
+
+    private record AtlasRegion(int x, int y, int w, int h) {
+    }
+
+    private record AtlasPacking(int width, int height, Int2ObjectMap<AtlasRegion> regions) {
+    }
+
+    public RepackedImage repackImage() throws IOException {
+        if (textures == null || textures.isEmpty() || elements == null) {
+            throw new IOException("Missing textures/elements");
+        }
+
+        int padding = 1;
+
+        List<NativeImage> images = new ArrayList<>(textures.size());
+        int[] w = new int[textures.size()];
+        int[] h = new int[textures.size()];
+
+        for (int i = 0; i < textures.size(); i++) {
+            Texture tex = textures.get(i);
+            NativeImage img = null;
+            try {
+                img = tex.getNativeImage();
+            } catch (Exception ignored) {
+            }
+            images.add(img);
+
+            int tw = tex.uvWidth() > 0 ? tex.uvWidth() : (tex.width() > 0 ? tex.width() : 1);
+            int th = tex.uvHeight() > 0 ? tex.uvHeight() : (tex.height() > 0 ? tex.height() : 1);
+
+            if (img != null) {
+                tw = Math.max(tw, img.getWidth());
+                th = Math.max(th, img.getHeight());
+            }
+            w[i] = tw;
+            h[i] = th;
+        }
+
+        AtlasPacking packing = packAtlas(w, h, padding);
+
+        NativeImage atlas = new NativeImage(packing.width(), packing.height(), true);
+        for (int i = 0; i < textures.size(); i++) {
+            AtlasRegion region = packing.regions().get(i);
+            if (region == null) continue;
+            NativeImage src = images.get(i);
+            if (src == null) continue;
+
+            int copyW = Math.min(region.w(), src.getWidth());
+            int copyH = Math.min(region.h(), src.getHeight());
+            for (int yy = 0; yy < copyH; yy++) {
+                for (int xx = 0; xx < copyW; xx++) {
+                    atlas.setPixelRGBA(region.x() + xx, region.y() + yy, src.getPixelRGBA(xx, yy));
+                }
+            }
+        }
+
+        for (NativeImage img : images) {
+            if (img != null) {
+                img.close();
+            }
+        }
+
+        Texture atlasTexture = new Texture(
+                "atlas",
+                null,
+                null,
+                null,
+                "atlas",
+                null,
+                packing.width(),
+                packing.height(),
+                packing.width(),
+                packing.height(),
+                false,
+                true,
+                false,
+                false,
+                null,
+                null,
+                null,
+                0,
+                null,
+                null,
+                false,
+                true,
+                true,
+                false,
+                UUID.randomUUID().toString(),
+                null,
+                null
+        );
+
+        List<Element> newElements = new ArrayList<>(elements.size());
+        for (Element el : elements) {
+            Faces faces = el.faces();
+            if (faces == null) {
+                newElements.add(el);
+                continue;
+            }
+            Faces newFaces = new Faces(
+                    remapFace(faces.north(), packing, padding),
+                    remapFace(faces.east(), packing, padding),
+                    remapFace(faces.south(), packing, padding),
+                    remapFace(faces.west(), packing, padding),
+                    remapFace(faces.up(), packing, padding),
+                    remapFace(faces.down(), packing, padding)
+            );
+            newElements.add(el.withFaces(newFaces));
+        }
+
+        BBModel repackedModel = new BBModel(
+                meta, name, modelIdentifier, visibleBox, resolution,
+                newElements, outliner, List.of(atlasTexture),
+                groups, null, null, null
+        );
+
+        return new RepackedImage(repackedModel, atlasTexture, atlas);
+    }
+
+    private static FaceData remapFace(FaceData face, AtlasPacking packing, int padding) {
+        if (face == null) return null;
+        if (face.uv() == null) {
+            if (face.texture() == -1) return face;
+            return new FaceData(null, 0, face.cullFace(), face.rotation(), face.tint());
+        }
+
+        if (face.texture() != -1) {
+            AtlasRegion region = packing.regions().get(face.texture());
+            int ox = region != null ? region.x() : 0;
+            int oy = region != null ? region.y() : 0;
+
+            return new FaceData(new Vector4f(
+                    face.uv().x + ox,
+                    face.uv().y + oy,
+                    face.uv().z + ox,
+                    face.uv().w + oy
+            ), 0, face.cullFace(), face.rotation(), face.tint());
+        } else {
+            return face;
+        }
+    }
+
+    private static AtlasPacking packAtlas(int[] w, int[] h, int padding) throws IOException {
+        long area = 0;
+        int maxW = 1;
+        int maxH = 1;
+        int n = w.length;
+
+        int[] rw = new int[n];
+        int[] rh = new int[n];
+
+        for (int i = 0; i < n; i++) {
+            int ww = Math.max(1, w[i]) + padding * 2;
+            int hh = Math.max(1, h[i]) + padding * 2;
+            rw[i] = ww;
+            rh[i] = hh;
+            area += (long) ww * (long) hh;
+            maxW = Math.max(maxW, ww);
+            maxH = Math.max(maxH, hh);
+        }
+
+        int size = (int) Math.ceil(Math.sqrt(area));
+        int start = nextPow2(Math.max(size, Math.max(maxW, maxH)));
+        int atlasW = start;
+        int atlasH = start;
+
+        for (int i = 0; i < 12; i++) {
+            AtlasPacking packed = tryPack(atlasW, atlasH, rw, rh, padding);
+            if (packed != null) {
+                return packed;
+            }
+            if (atlasW <= atlasH) atlasW *= 2;
+            else atlasH *= 2;
+        }
+
+        throw new IOException("Failed to pack textures into atlas");
+    }
+
+    private static AtlasPacking tryPack(int atlasW, int atlasH, int[] rw, int[] rh, int padding) {
+        int n = rw.length;
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            STBRPContext ctx = STBRPContext.malloc(stack);
+            STBRPNode.Buffer nodes = STBRPNode.malloc(Math.max(1, atlasW), stack);
+            STBRectPack.stbrp_init_target(ctx, atlasW, atlasH, nodes);
+
+            Int2ObjectMap<AtlasRegion> regions = new Int2ObjectOpenHashMap<>();
+            try (STBRPRect.Buffer rects = STBRPRect.malloc(n, stack)) {
+                for (int i = 0; i < n; i++) {
+                    rects.get(i).id(i).w(rw[i]).h(rh[i]);
+                }
+
+                STBRectPack.stbrp_pack_rects(ctx, rects);
+
+                for (int i = 0; i < n; i++) {
+                    STBRPRect r = rects.get(i);
+                    if (!r.was_packed()) {
+                        return null;
+                    }
+                    regions.put(r.id(), new AtlasRegion(r.x() + padding, r.y() + padding, rw[r.id()] - padding * 2, rh[r.id()] - padding * 2));
+                }
+            }
+
+            return new AtlasPacking(atlasW, atlasH, regions);
+        }
+    }
+
+    private static int nextPow2(int v) {
+        int x = Math.max(1, v - 1);
+        x |= x >> 1;
+        x |= x >> 2;
+        x |= x >> 4;
+        x |= x >> 8;
+        x |= x >> 16;
+        return x + 1;
+    }
+
     private void checkFace(FaceData face, Set<Integer> usedTextures) {
-        if (face != null && face.texture() != null) {
+        if (face != null && face.texture() != -1) {
             usedTextures.add(face.texture());
         }
     }
 
     private boolean shouldRemove(FaceData face, int targetTextureId) {
-        return face == null || face.texture() == null || face.texture() != targetTextureId;
+        return face == null || face.texture() == -1 || face.texture() != targetTextureId;
     }
 
     @Override

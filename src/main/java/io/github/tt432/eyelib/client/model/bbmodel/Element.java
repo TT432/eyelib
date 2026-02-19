@@ -1,6 +1,9 @@
 package io.github.tt432.eyelib.client.model.bbmodel;
 
 import com.google.gson.annotations.SerializedName;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.util.codec.EyelibCodec;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import lombok.With;
@@ -25,37 +28,47 @@ public record Element(
         @SerializedName("allow_mirror_modeling")
         boolean allowMirrorModeling,
 
-        double[] from,
-        double[] to,
+        Vector3f from,
+        Vector3f to,
         int autouv,
         int color,
-        double[] origin,
+        Vector3f origin,
 
         @SerializedName("uv_offset")
-        double[] uvOffset,
+        Vector2f uvOffset,
 
         double inflate,
 
         Faces faces,
         String type,
         String uuid,
-        double[] rotation
+        Vector3f rotation
 ) {
+    public static final Codec<Element> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            Codec.STRING.fieldOf("name").forGetter(Element::name),
+            Codec.BOOL.fieldOf("box_uv").forGetter(Element::boxUv),
+            Codec.STRING.fieldOf("render_order").forGetter(Element::renderOrder),
+            Codec.BOOL.fieldOf("locked").forGetter(Element::locked),
+            Codec.BOOL.fieldOf("allow_mirror_modeling").forGetter(Element::allowMirrorModeling),
+            EyelibCodec.FLOATS2VEC3F_CODEC.fieldOf("from").forGetter(Element::from),
+            EyelibCodec.FLOATS2VEC3F_CODEC.fieldOf("to").forGetter(Element::to),
+            Codec.INT.fieldOf("autouv").forGetter(Element::autouv),
+            Codec.INT.fieldOf("color").forGetter(Element::color),
+            EyelibCodec.FLOATS2VEC3F_CODEC.fieldOf("origin").forGetter(Element::origin),
+            EyelibCodec.FLOATS2VEC2F_CODEC.optionalFieldOf("uv_offset", new Vector2f()).forGetter(Element::uvOffset),
+            Codec.DOUBLE.optionalFieldOf("inflate", 0D).forGetter(Element::inflate),
+            Faces.CODEC.fieldOf("faces").forGetter(Element::faces),
+            Codec.STRING.fieldOf("type").forGetter(Element::type),
+            Codec.STRING.fieldOf("uuid").forGetter(Element::uuid),
+            EyelibCodec.FLOATS2VEC3F_CODEC.optionalFieldOf("rotation", new Vector3f()).forGetter(Element::rotation)
+    ).apply(ins, Element::new));
+
     public BbCube createBbCube(List<Texture> textures) {
         Vector3f[] corners = getCorners();
 
         if (rotation() != null && origin() != null) {
-            Vector3f origin = new Vector3f(
-                    (float) origin()[0],
-                    (float) origin()[1],
-                    (float) origin()[2]
-            ).div(16);
-
-            Vector3f rotation = new Vector3f(
-                    (float) rotation()[0],
-                    (float) rotation()[1],
-                    (float) rotation()[2]
-            ).mul(EyeMath.DEGREES_TO_RADIANS);
+            Vector3f origin = new Vector3f(origin()).div(16);
+            Vector3f rotation = new Vector3f(rotation()).mul(EyeMath.DEGREES_TO_RADIANS);
 
             Matrix4f transform = new Matrix4f()
                     .translation(origin)
@@ -135,19 +148,27 @@ public record Element(
             return ObjectList.of(new Vector2f(), new Vector2f(), new Vector2f(), new Vector2f());
         }
 
-        Texture texture = textures.get(faceData.texture());
+        float width;
+        float height;
 
-        float width = texture.uvWidth();
-        float height = texture.uvHeight();
+        if (faceData.texture() != -1) {
+            Texture texture = textures.get(faceData.texture());
+
+            width = texture.uvWidth();
+            height = texture.uvHeight();
+        } else {
+            width = 0;
+            height = 0;
+        }
+
         if (width == 0 || height == 0) {
             return ObjectList.of(new Vector2f(), new Vector2f(), new Vector2f(), new Vector2f());
         }
 
-        double[] uvArray = faceData.uv(); // [u0, v0, u1, v1]
-        float u0 = (float) uvArray[0] / width;
-        float v0 = (float) uvArray[1] / height;
-        float u1 = (float) uvArray[2] / width;
-        float v1 = (float) uvArray[3] / height;
+        float u0 = faceData.uv().x / width;
+        float v0 = faceData.uv().y / height;
+        float u1 = faceData.uv().z / width;
+        float v1 = faceData.uv().w / height;
 
         return rotateUv(ObjectList.of(
                 new Vector2f(u0, v0), // LU
@@ -168,12 +189,12 @@ public record Element(
 
     private Vector3f[] getCorners() {
         final float scalar = 1F / 16F;
-        float maxX = (float) (to()[0] + inflate) * scalar;
-        float maxY = (float) (to()[1] + inflate) * scalar;
-        float maxZ = (float) (to()[2] + inflate) * scalar;
-        float minX = (float) (from()[0] - inflate) * scalar;
-        float minY = (float) (from()[1] - inflate) * scalar;
-        float minZ = (float) (from()[2] - inflate) * scalar;
+        float maxX = (float) (to.x + inflate) * scalar;
+        float maxY = (float) (to.y + inflate) * scalar;
+        float maxZ = (float) (to.z + inflate) * scalar;
+        float minX = (float) (from.x - inflate) * scalar;
+        float minY = (float) (from.y - inflate) * scalar;
+        float minZ = (float) (from.z - inflate) * scalar;
 
         return new Vector3f[]{
                 new Vector3f(minX, maxY, minZ),
