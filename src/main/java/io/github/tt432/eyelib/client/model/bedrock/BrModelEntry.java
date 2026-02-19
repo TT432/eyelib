@@ -14,6 +14,7 @@ import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.util.codec.Tuple;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import lombok.With;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -23,6 +24,7 @@ import java.util.List;
 /**
  * @author TT432
  */
+@With
 public record BrModelEntry(
         String name,
         int textureWidth,
@@ -31,7 +33,7 @@ public record BrModelEntry(
         Int2ObjectMap<BrBone> toplevelBones,
         Int2ObjectMap<BrBone> allBones,
         ModelLocator locator
-) implements Model {
+) implements Model<BrBone> {
     public static final Codec<BrModelEntry> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.STRING.fieldOf("name").forGetter(BrModelEntry::name),
             Codec.INT.fieldOf("textureWidth").forGetter(BrModelEntry::textureWidth),
@@ -58,7 +60,7 @@ public record BrModelEntry(
     private static final Gson gson = new Gson();
 
     @Override
-    public ModelRuntimeData<?> data() {
+    public ModelRuntimeData<BrBone> data() {
         return new BoneRenderInfos();
     }
 
