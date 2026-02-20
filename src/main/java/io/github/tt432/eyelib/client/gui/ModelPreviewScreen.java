@@ -26,7 +26,7 @@ import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.client.event.RenderFrameEvent;
+import net.minecraftforge.event.TickEvent;
 import org.lwjgl.glfw.GLFW;
 
 import java.nio.file.Path;
@@ -43,10 +43,10 @@ import java.util.Map;
  * @author TT432
  */
 public class ModelPreviewScreen extends Screen {
-//    @EventBusSubscriber(Dist.CLIENT)
+//    @Mod.EventBusSubscriber(Dist.CLIENT)
     public static final class Events {
 //        @SubscribeEvent
-        public static void onEvent(RenderFrameEvent.Post event) {
+        public static void onEvent(TickEvent.ClientTickEvent event) {
             if (Minecraft.getInstance().screen == null
                     && InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_G)) {
                 Minecraft.getInstance().setScreen(new ModelPreviewScreen());
@@ -104,8 +104,6 @@ public class ModelPreviewScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
-
         // Render search box
         this.searchBox.render(guiGraphics, mouseX, mouseY, partialTick);
 
@@ -196,7 +194,6 @@ public class ModelPreviewScreen extends Screen {
                 // Render
                 try {
                     Eyelib.getRenderHelper()
-                            .openHighSpeedRender(params, bufferSource)
                             .render(params, partModel, partModel.data());
                 } catch (Exception e) {
                     e.printStackTrace(); // Log rendering errors but don't crash screen
@@ -278,10 +275,10 @@ public class ModelPreviewScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         // Adjust scale
         float scrollSensitivity = 0.1f;
-        this.scale += (float) (scrollY * scrollSensitivity);
+        this.scale += (float) (delta * scrollSensitivity);
 
         // Clamp scale
         this.scale = Math.min(2.0f, this.scale);
@@ -306,7 +303,7 @@ public class ModelPreviewScreen extends Screen {
                 var tm = Minecraft.getInstance().getTextureManager();
                 Texture atlasTex = repacked.atlasTexture();
                 DynamicTexture dynamicTexture = new DynamicTexture(repacked.atlasImage());
-                ResourceLocation loc = ResourceLocation.fromNamespaceAndPath("eyelib", "dynamic/" + atlasTex.uuid());
+                ResourceLocation loc = new ResourceLocation("eyelib", "dynamic/" + atlasTex.uuid());
                 tm.register(loc, dynamicTexture);
                 loadedTextures.put(atlasTex.uuid(), loc);
                 if (atlasTex.id() != null) {
@@ -324,11 +321,6 @@ public class ModelPreviewScreen extends Screen {
                 this.statusMessage = "Failed to load .bbmodel: " + e.getMessage();
             }
         }
-    }
-
-    @Override
-    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-
     }
 
     @Override

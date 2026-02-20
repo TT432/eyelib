@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.util.codec.EyelibCodec;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
@@ -71,7 +72,7 @@ public record Texture(
                 Codec.BOOL.optionalFieldOf("particle", false).forGetter(Part1::particle),
                 Codec.BOOL.optionalFieldOf("use_as_default", false).forGetter(Part1::useAsDefault),
                 Codec.BOOL.optionalFieldOf("layers_enabled", false).forGetter(Part1::layersEnabled),
-                Codec.withAlternative(
+                EyelibCodec.withAlternative(
                         Codec.BOOL,
                         Codec.STRING.xmap(s -> s.equals("true"), Object::toString)
                 ).optionalFieldOf("sync_to_project", false).forGetter(Part1::syncToProject),

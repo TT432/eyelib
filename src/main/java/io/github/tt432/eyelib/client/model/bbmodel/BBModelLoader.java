@@ -40,7 +40,7 @@ public class BBModelLoader {
              InputStreamReader isr = new InputStreamReader(fis, StandardCharsets.UTF_8);
              BufferedReader reader = new BufferedReader(isr)) {
 
-            BBModel model = BBModel.CODEC.parse(JsonOps.INSTANCE, new Gson().fromJson(reader, JsonElement.class)).getOrThrow();
+            BBModel model = BBModel.CODEC.parse(JsonOps.INSTANCE, new Gson().fromJson(reader, JsonElement.class)).getOrThrow(false, IllegalArgumentException::new);
 
             if (model == null) {
                 log.error("Failed to parse JSON from file: {}", file.getAbsolutePath());

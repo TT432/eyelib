@@ -24,12 +24,12 @@ record Outliner(
     ) {
     }
 
-    public static final Codec<Outliner> CODEC = Codec.recursive("Outliner", self ->
+    public static final Codec<Outliner> CODEC = EyelibCodec.recursive("Outliner", self ->
             RecordCodecBuilder.create(ins -> ins.group(
                     Codec.STRING.fieldOf("uuid").forGetter(Outliner::uuid),
                     EyelibCodec.optionalMapCodec(Group.MAP_CODEC).forGetter(Outliner::group),
                     Codec.BOOL.fieldOf("isOpen").forGetter(Outliner::isOpen),
-                    Codec.withAlternative(
+                    EyelibCodec.withAlternative(
                                     self.xmap(
                                             o -> new CubeOrOutliner(o, null),
                                             c -> c.outliner != null ? c.outliner : null
