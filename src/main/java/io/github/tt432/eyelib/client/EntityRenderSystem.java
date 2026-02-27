@@ -10,10 +10,10 @@ import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.SimpleRenderAction;
-import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.molang.MolangScope;
@@ -108,7 +108,7 @@ public class EntityRenderSystem {
                 scope.set("variable.partial_tick", partialTick);
                 scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
 
-                BoneRenderInfos tickedInfos;
+                ModelRuntimeData tickedInfos;
                 if (cap.getAnimationComponent().getSerializableInfo() != null) {
                     tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
                             (ClientTickHandler.getTick() + partialTick) / 20, () -> {
@@ -119,7 +119,7 @@ public class EntityRenderSystem {
                                 }
                             });
                 } else {
-                    tickedInfos = BoneRenderInfos.EMPTY;
+                    tickedInfos = ModelRuntimeData.EMPTY;
                 }
                 cap.getAnimationComponent().tickedInfos = tickedInfos;
                 cap.getAnimationComponent().effects = effects;

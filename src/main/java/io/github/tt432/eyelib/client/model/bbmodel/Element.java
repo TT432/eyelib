@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.model.bbmodel;
 import com.google.gson.annotations.SerializedName;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.util.codec.EyelibCodec;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.objects.ObjectList;
@@ -11,6 +12,8 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
+import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 
 @With
@@ -63,7 +66,8 @@ public record Element(
             EyelibCodec.FLOATS2VEC3F_CODEC.optionalFieldOf("rotation", new Vector3f()).forGetter(Element::rotation)
     ).apply(ins, Element::new));
 
-    public BbCube createBbCube(List<Texture> textures) {
+    @Nullable
+    public Model.Cube createBbCube(int textureIndex, List<Texture> textures) {
         Vector3f[] corners = getCorners();
 
         if (rotation() != null && origin() != null) {
@@ -103,15 +107,33 @@ public record Element(
 
         // 5. UVs
         ObjectList<List<Vector2f>> uvs = ObjectList.of(
-                getUv(4, textures),
-                getUv(5, textures),
-                getUv(1, textures),
-                getUv(0, textures),
-                getUv(3, textures),
-                getUv(2, textures)
+                getUv(4, textureIndex, textures),
+                getUv(5, textureIndex, textures),
+                getUv(1, textureIndex, textures),
+                getUv(0, textureIndex, textures),
+                getUv(3, textureIndex, textures),
+                getUv(2, textureIndex, textures)
         );
 
-        return new BbCube(6, 4, vertexes, uvs, normals);
+        List<Model.Face> faces = new ArrayList<>();
+
+        for (int i = 0; i < vertexes.size(); i++) {
+            if (uvs.get(i) != null) {
+                List<Model.Vertex> vertices = new ArrayList<>();
+
+                for (int j = 0; j < vertexes.get(i).size(); j++) {
+                    vertices.add(new Model.Vertex(vertexes.get(i).get(j), uvs.get(i).get(j), normals.get(i)));
+                }
+
+                faces.add(new Model.Face(vertices, normals.get(i)));
+            }
+        }
+
+        if (faces.isEmpty()) {
+            return null;
+        } else {
+            return new Model.Cube(faces);
+        }
     }
 
     private ObjectList<Vector3f> normals(List<List<Vector3f>> vertexes) {
@@ -129,7 +151,8 @@ public record Element(
         return b.sub(a, new Vector3f()).cross(c.sub(a, new Vector3f())).normalize();
     }
 
-    private List<Vector2f> getUv(int faceIndex, List<Texture> textures) {
+    @Nullable
+    private List<Vector2f> getUv(int faceIndex, int textureIndex, List<Texture> textures) {
         Faces faces = faces();
         FaceData faceData = null;
         if (faces != null) {
@@ -145,24 +168,23 @@ public record Element(
         }
 
         if (faceData == null || faceData.uv() == null) {
-            return ObjectList.of(new Vector2f(), new Vector2f(), new Vector2f(), new Vector2f());
+            return null;
         }
 
         float width;
         float height;
 
-        if (faceData.texture() != -1) {
+        if (faceData.texture() == textureIndex) {
             Texture texture = textures.get(faceData.texture());
 
-            width = texture.uvWidth();
-            height = texture.uvHeight();
+            width = texture.imageWidth();
+            height = texture.imageHeight();
         } else {
-            width = 0;
-            height = 0;
+            return null;
         }
 
         if (width == 0 || height == 0) {
-            return ObjectList.of(new Vector2f(), new Vector2f(), new Vector2f(), new Vector2f());
+            return null;
         }
 
         float u0 = faceData.uv().x / width;

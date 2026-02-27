@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.model.bake;
 
+import com.google.common.collect.Lists;
 import io.github.tt432.eyelib.client.model.Model;
 import it.unimi.dsi.fastutil.booleans.BooleanList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -29,7 +30,7 @@ public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.I
     private final Map<String, Map<ResourceLocation, Info>> cache = new HashMap<>();
 
     @Override
-    public <B extends Model.Bone<B>> Info getBakeInfo(Model<B> model, boolean isSolid, ResourceLocation texture) {
+    public Info getBakeInfo(Model model, boolean isSolid, ResourceLocation texture) {
         return cache.computeIfAbsent(model.name(), ___ -> new HashMap<>())
                 .computeIfAbsent(texture, __ -> {
                     Int2ObjectMap<BooleanList> builder = new Int2ObjectOpenHashMap<>();
@@ -45,7 +46,7 @@ public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.I
     }
 
     @Override
-    public <B extends Model.Bone<B>> BakedModel bake(Model<B> model, Info info) {
+    public BakedModel bake(Model model, Info info) {
         Int2ObjectMap<BakedModel.BakedBone> bones = new Int2ObjectOpenHashMap<>();
 
         model.toplevelBones().forEach((s, bone) -> collectBones(s, bone, bones, info));
@@ -53,12 +54,12 @@ public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.I
         return new BakedModel(bones);
     }
 
-    private static <B extends Model.Bone<B>> void collectBones(int name, B bone, Int2ObjectMap<BakedModel.BakedBone> bones, Info info) {
+    private static void collectBones(int name, Model.Bone bone, Int2ObjectMap<BakedModel.BakedBone> bones, Info info) {
         bones.put(name, bake(bone, info.map.get(name)));
         bone.children().forEach((s, bone1) -> collectBones(s, bone1, bones, info));
     }
 
-    public static <B extends Model.Bone<B>> BakedModel.BakedBone bake(B bone, BooleanList emissive) {
+    public static BakedModel.BakedBone bake(Model.Bone bone, BooleanList emissive) {
         List<Vector3fc> vertexes = new ArrayList<>();
         List<Vector3fc> normals = new ArrayList<>();
         List<Vector2fc> uvs = new ArrayList<>();
@@ -104,23 +105,16 @@ public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.I
     }
 
     private static void bake(Model.Cube cube, List<Vector3fc> vertexes, List<Vector3fc> normals, List<Vector2fc> uvs) {
-        for (int i = 0; i < cube.faceCount(); i++) {
-            for (int j = 0; j < cube.pointsPerFace(); j++) {
-                vertexes.add(new Vector3f(cube.positionX(i, j), cube.positionY(i, j), cube.positionZ(i, j)));
-
-                uvs.add(new Vector2f(cube.uvU(i, j), cube.uvV(i, j)));
+        for (Model.Face face : cube.faces()) {
+            for (Model.Vertex vertex : face.vertexes()) {
+                vertexes.add(new Vector3f(vertex.position()));
+                uvs.add(new Vector2f(vertex.uv()));
+                normals.add(new Vector3f(vertex.normal()));
             }
-
-            for (int j = cube.pointsPerFace() - 1; j >= 0; j--) {
-                vertexes.add(new Vector3f(cube.positionX(i, j), cube.positionY(i, j), cube.positionZ(i, j)));
-
-                uvs.add(new Vector2f(cube.uvU(i, j), cube.uvV(i, j)));
-            }
-
-            Vector3f normal = new Vector3f(cube.normalX(i), cube.normalY(i), cube.normalZ(i));
-
-            for (int j = 0; j < cube.pointsPerFace() * 2; j++) {
-                normals.add(normal);
+            for (var vertex : Lists.reverse(face.vertexes())) {
+                vertexes.add(new Vector3f(vertex.position()));
+                uvs.add(new Vector2f(vertex.uv()));
+                normals.add(new Vector3f(vertex.normal()));
             }
         }
     }

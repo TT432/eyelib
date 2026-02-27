@@ -4,12 +4,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.render.ModelRenderer;
 import io.github.tt432.eyelib.client.render.RenderParams;
-import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import io.github.tt432.eyelib.util.math.EyeMath;
-import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
@@ -81,10 +79,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
 
         TextureAtlasSprite texture = spriteGetter.apply(owner.getMaterial("texture"));
 
-        ModelRenderer.render(new RenderParams(null, poseStack.last(),
-                        poseStack, null, null, false, null, 0,
-                        OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap()),
-                model, new BoneRenderInfos(),
+        ModelRenderer.render(RenderParams.noRender(), model, new ModelRuntimeData(),
                 new ModelRenderVisitorList(List.of(new BakeModelVisitor(modelBuilder, texture))));
 
         poseStack.popPose();
@@ -96,7 +91,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
         final TextureAtlasSprite texture;
 
         @Override
-        public void visitFace(RenderParams renderParams, ModelVisitContext context, Model.Cube cube, List<Vector3f> vertexes, List<Vector2f> uvs, Vector3fc normal) {
+        public void visitFace(RenderParams renderParams, ModelVisitContext context, Model.Cube cube, List<Vector3fc> vertexes, List<Vector2fc> uvs, Vector3fc normal) {
             PoseStack poseStack = renderParams.poseStack();
             PoseStack.Pose last = poseStack.last();
 
@@ -120,7 +115,7 @@ public class UnBakedBrModel extends SimpleUnbakedGeometry<UnBakedBrModel> {
         }
 
         @Override
-        public <B extends Model.Bone<B>> void visitLocator(RenderParams renderParams, ModelVisitContext context, B bone, LocatorEntry locator, ModelRuntimeData<B> data) {
+        public void visitLocator(RenderParams renderParams, ModelVisitContext context, Model.Bone bone, LocatorEntry locator, ModelRuntimeData data) {
             visitors.put(locator.name(), new Matrix4f(renderParams.poseStack().last().pose()));
         }
     }

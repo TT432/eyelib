@@ -35,7 +35,7 @@ import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 import java.io.File;
@@ -118,18 +118,16 @@ public class EyelibManagerScreen extends Screen {
         FILE_DIALOG_EXECUTOR.submit(() -> {
             String result = null;
 
-            try (MemoryStack stack = MemoryStack.stackPush()) {
-                PointerBuffer filterBuffer = stack.mallocPointer(filters.length);
+            PointerBuffer filterBuffer = MemoryUtil.memAllocPointer(filters.length);
 
-                for (String filter : filters) {
-                    filterBuffer.put(stack.UTF8(filter));
-                }
-                filterBuffer.flip();
-
-                String path = origin != null ? origin.toAbsolutePath().toString() : null;
-
-                result = TinyFileDialogs.tinyfd_openFileDialog(title, path, filterBuffer, filterLabel, false);
+            for (String filter : filters) {
+                filterBuffer.put(MemoryUtil.memUTF8(filter));
             }
+            filterBuffer.flip();
+
+            String path = origin != null ? origin.toAbsolutePath().toString() : null;
+
+            result = TinyFileDialogs.tinyfd_openFileDialog(title, path, filterBuffer, filterLabel, false);
 
             future.complete(Optional.ofNullable(result).map(Paths::get));
         });
@@ -219,7 +217,7 @@ public class EyelibManagerScreen extends Screen {
             var model = BrModel.parse(jo);
 
             for (BrModelEntry brModelEntry : model.models()) {
-                Eyelib.getModelManager().put(brModelEntry.name(), brModelEntry);
+                Eyelib.getModelManager().put(brModelEntry.name(), brModelEntry.createModel());
             }
         });
 
@@ -301,7 +299,7 @@ public class EyelibManagerScreen extends Screen {
                 if (relative.startsWith("models/")) {
                     var model = BrModel.parse(jo);
                     for (BrModelEntry brModelEntry : model.models()) {
-                        Eyelib.getModelManager().put(brModelEntry.name(), brModelEntry);
+                        Eyelib.getModelManager().put(brModelEntry.name(), brModelEntry.createModel());
                     }
                 } else if (relative.startsWith("animations/")) {
                     var animation = BrAnimation.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow();
@@ -427,7 +425,7 @@ public class EyelibManagerScreen extends Screen {
                             var model = BrModel.parse(jo);
 
                             for (BrModelEntry brModelEntry : model.models()) {
-                                Eyelib.getModelManager().put(brModelEntry.name(), brModelEntry);
+                                Eyelib.getModelManager().put(brModelEntry.name(), brModelEntry.createModel());
                             }
                         }),
                 json(x1, y2, w, h, Component.literal("动画"), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/animation"),

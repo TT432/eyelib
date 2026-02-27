@@ -29,6 +29,6 @@ public class BlockBrModelLoader implements IGeometryLoader<UnBakedBrModel> {
 
     @Override
     public @NotNull UnBakedBrModel read(@NotNull JsonObject jsonObject, @NotNull JsonDeserializationContext deserializationContext) throws JsonParseException {
-        return new UnBakedBrModel(BrModel.parse(jsonObject).models().get(0));
+        return new UnBakedBrModel(BrModel.parse(jsonObject).models().get(0).createModel());
     }
 }

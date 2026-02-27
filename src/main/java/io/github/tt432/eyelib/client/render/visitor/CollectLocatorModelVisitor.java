@@ -20,7 +20,7 @@ public class CollectLocatorModelVisitor extends ModelVisitor {
     }
 
     @Override
-    public <B extends Model.Bone<B>> void visitLocator(RenderParams renderParams, ModelVisitContext context, B bone, LocatorEntry locator, ModelRuntimeData<B> data) {
+    public void visitLocator(RenderParams renderParams, ModelVisitContext context, Model.Bone bone, LocatorEntry locator, ModelRuntimeData data) {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();
         PoseStack.Pose last = poseStack.last();

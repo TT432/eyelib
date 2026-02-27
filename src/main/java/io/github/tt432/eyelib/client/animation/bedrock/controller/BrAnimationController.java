@@ -8,10 +8,10 @@ import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
+import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleRenderManager;
-import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -90,7 +90,7 @@ public record BrAnimationController(
 
     @Override
     public void tickAnimation(Data data, Map<String, String> animations, MolangScope scope,
-                              float ticks, float multiplier, BoneRenderInfos infos, AnimationEffects effects,
+                              float ticks, float multiplier, ModelRuntimeData infos, AnimationEffects effects,
                               Runnable animationStartFeedback) {
         data.currentAnimations = animations;
 
@@ -161,7 +161,7 @@ public record BrAnimationController(
         return currState;
     }
 
-    private static void blend(Map<String, String> animations, BoneRenderInfos infos, Data data,
+    private static void blend(Map<String, String> animations, ModelRuntimeData infos, Data data,
                               MolangScope scope, @Nullable BrAcState lastState, BrAcState currState,
                               float multiplier, float stateTimeSec, AnimationEffects effects,
                               Runnable animationStartFeedback) {
@@ -203,7 +203,7 @@ public record BrAnimationController(
     }
 
     private static void updateAnimations(Map<String, String> animations, String animName, float blendValue,
-                                         float multiplier, float startedTime, BoneRenderInfos infos,
+                                         float multiplier, float startedTime, ModelRuntimeData infos,
                                          Data data, MolangScope scope, AnimationEffects effects,
                                          Runnable animationStartFeedback) {
         var animation = Eyelib.getAnimationManager().get(animations.get(animName));

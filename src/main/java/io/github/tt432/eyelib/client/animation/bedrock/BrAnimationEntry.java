@@ -10,11 +10,10 @@ import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleRenderManager;
-import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
-import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.util.ResourceLocations;
@@ -194,7 +193,7 @@ public record BrAnimationEntry(
 
     @Override
     public void tickAnimation(Data data, Map<String, String> animations, MolangScope scope,
-                              float ticks, float multiplier, BoneRenderInfos infos, AnimationEffects effects,
+                              float ticks, float multiplier, ModelRuntimeData infos, AnimationEffects effects,
                               Runnable animationStartFeedback) {
         multiplier *= Math.clamp(blendWeight().eval(scope), 0, 1);
 
@@ -239,27 +238,27 @@ public record BrAnimationEntry(
         bones().int2ObjectEntrySet().forEach((entry) -> {
             var boneName = entry.getIntKey();
             var boneAnim = entry.getValue();
-            BoneRenderInfoEntry renderInfoEntry = infos.getData(boneName);
+            var renderInfoEntry = infos.getData(boneName);
 
             Vector3f pos = boneAnim.lerpPosition(scope, animTick);
 
             if (pos != null) {
                 pos.mul(finalMultiplier).div(16).mul(-1, 1, 1);
-                renderInfoEntry.getRenderPosition().add(pos);
+                renderInfoEntry.position.add(pos);
             }
 
             Vector3f rotation = boneAnim.lerpRotation(scope, animTick);
 
             if (rotation != null) {
                 rotation.mul(finalMultiplier).mul(EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1);
-                renderInfoEntry.getRenderRotation().add(rotation);
+                renderInfoEntry.rotation.add(rotation);
             }
 
             Vector3f scale = boneAnim.lerpScale(scope, animTick);
 
             if (scale != null) {
                 scale.sub(1, 1, 1).mul(finalMultiplier).add(1, 1, 1);
-                renderInfoEntry.getRenderScala().mul(scale);
+                renderInfoEntry.scale.mul(scale);
             }
         });
 

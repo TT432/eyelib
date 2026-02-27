@@ -3,13 +3,15 @@ package io.github.tt432.eyelib.client.render.visitor;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
-import io.github.tt432.eyelib.client.model.locator.GroupLocator;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.joml.*;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+import org.joml.Vector2fc;
+import org.joml.Vector3fc;
 
 import java.util.Deque;
 import java.util.List;
@@ -25,11 +27,11 @@ public class ModelVisitor {
         return (T) o;
     }
 
-    public <B extends Model.Bone<B>> void visitModel(RenderParams params, ModelVisitContext context, ModelRuntimeData<B> infos, Model<B> model) {
+    public void visitModel(RenderParams params, ModelVisitContext context, ModelRuntimeData infos, Model model) {
         model.accept(params, context, infos, this);
     }
 
-    public <B extends Model.Bone<B>> void visitPreModel(RenderParams params, ModelVisitContext context, ModelRuntimeData<B> infos, Model<B> model) {
+    public void visitPreModel(RenderParams params, ModelVisitContext context, ModelRuntimeData infos, Model model) {
         PoseStack poseStack = params.poseStack();
         poseStack.pushPose();
 
@@ -40,51 +42,36 @@ public class ModelVisitor {
         normal.rotateY(R180);
     }
 
-    public <B extends Model.Bone<B>> void visitPostModel(RenderParams params, ModelVisitContext context, ModelRuntimeData<B> infos, Model<B> model) {
+    public void visitPostModel(RenderParams params, ModelVisitContext context, ModelRuntimeData infos, Model model) {
         PoseStack poseStack = params.poseStack();
         poseStack.popPose();
     }
 
-    public <B extends Model.Bone<B>> void visitPreBone(RenderParams renderParams, ModelVisitContext context,
-                                                       B bone, ModelRuntimeData<B> data, GroupLocator groupLocator) {
+    public void visitPreBone(RenderParams renderParams, ModelVisitContext context, Model.Bone bone, ModelRuntimeData data) {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();
 
         applyBoneTranslate(context, poseStack, bone, cast(data));
     }
 
-    public <B extends Model.Bone<B>> void visitPostBone(RenderParams renderParams, ModelVisitContext context,
-                                                        B group, ModelRuntimeData<B> data, GroupLocator groupLocator) {
+    public void visitPostBone(RenderParams renderParams, ModelVisitContext context, Model.Bone group, ModelRuntimeData data) {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.popPose();
     }
 
     public void visitCube(RenderParams renderParams, ModelVisitContext context, Model.Cube cube) {
-        for (int i = 0; i < cube.faceCount(); i++) {
-            List<Vector3f> vertexes = cube.vertexes().get(i);
-            List<Vector2f> uvs = cube.uvs().get(i);
-            Vector3fc normal = cube.normals().get(i);
+        for (Model.Face face : cube.faces()) {
+            visitFace(renderParams, context, cube, face.vertexes().stream().map(Model.Vertex::position).toList(),
+                    face.vertexes().stream().map(Model.Vertex::uv).toList(), face.normal());
 
-            visitFace(renderParams, context, cube, vertexes, uvs, normal);
-
-            for (int vertexIndex = 0; vertexIndex < vertexes.size(); vertexIndex++) {
-                Vector3fc vertex = vertexes.get(vertexIndex);
-                Vector2fc uv = uvs.get(vertexIndex);
-
-                visitVertex(renderParams, context, cube, vertex, uv, normal);
-            }
-
-            for (int vertexIndex = vertexes.size() - 1; vertexIndex >= 0; vertexIndex--) {
-                Vector3fc vertex = vertexes.get(vertexIndex);
-                Vector2fc uv = uvs.get(vertexIndex);
-
-                visitVertex(renderParams, context, cube, vertex, uv, normal);
+            for (Model.Vertex vertex : face.vertexes()) {
+                visitVertex(renderParams, context, cube, vertex.position(), vertex.uv(), vertex.normal());
             }
         }
     }
 
     public void visitFace(RenderParams renderParams, ModelVisitContext context, Model.Cube cube,
-                          List<Vector3f> vertexes, List<Vector2f> uvs, Vector3fc normal) {
+                          List<Vector3fc> vertexes, List<Vector2fc> uvs, Vector3fc normal) {
 
     }
 
@@ -93,14 +80,14 @@ public class ModelVisitor {
 
     }
 
-    public <B extends Model.Bone<B>> void visitLocator(
-            RenderParams renderParams, ModelVisitContext context, B bone, LocatorEntry locator, ModelRuntimeData<B> data
+    public void visitLocator(
+            RenderParams renderParams, ModelVisitContext context, Model.Bone bone, LocatorEntry locator, ModelRuntimeData data
     ) {
 
     }
 
-    protected static <B extends Model.Bone<B>> void applyBoneTranslate(
-            ModelVisitContext context, PoseStack poseStack, B bone, ModelRuntimeData<B> data
+    protected static void applyBoneTranslate(
+            ModelVisitContext context, PoseStack poseStack, Model.Bone bone, ModelRuntimeData data
     ) {
         context.<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>()).compute(bone.id(), (n, pose) -> {
             if (pose == null) {
@@ -109,7 +96,7 @@ public class ModelVisitor {
 
                 m4.translate(data.position(bone));
 
-                var renderPivot = data.pivot(bone);
+                var renderPivot = bone.pivot();
                 m4.translate(renderPivot);
 
                 var rotation = data.rotation(bone);

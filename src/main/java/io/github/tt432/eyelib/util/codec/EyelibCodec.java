@@ -1,16 +1,20 @@
 package io.github.tt432.eyelib.util.codec;
 
 import com.mojang.serialization.*;
+import io.github.tt432.chin.codec.ChinExtraCodecs;
+import io.github.tt432.chin.util.Tuple;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.joml.Vector2f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import net.minecraft.util.ExtraCodecs;
+import org.joml.*;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -19,6 +23,12 @@ import java.util.stream.Stream;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EyelibCodec {
+    public static final Codec<Vector2f> VEC2F = ChinExtraCodecs.tuple(Codec.FLOAT, Codec.FLOAT)
+            .bmap(Vector2f::new, v -> Tuple.of(v.x, v.y));
+
+    public static final Codec<Vector2fc> VEC2FC = VEC2F.xmap(v -> v, Vector2f::new);
+    public static final Codec<Vector3fc> VEC3FC = ExtraCodecs.VECTOR3F.xmap(v -> v, Vector3f::new);
+
     public static final Codec<Vector2f> FLOATS2VEC2F_CODEC = Codec.FLOAT.listOf().xmap(
             l -> new Vector2f(l.get(0), l.get(1)),
             v -> List.of(v.x, v.y)
@@ -38,6 +48,11 @@ public class EyelibCodec {
             Codec.withAlternative(Codec.FLOAT, Codec.STRING.xmap(Float::parseFloat, String::valueOf));
 
     public record CodecInfo<T>(Class<T> aClass, Codec<T> codec) {
+    }
+
+    public static <V> Codec<Int2ObjectMap<V>> int2ObjectMap(final Codec<V> elementCodec) {
+        return Codec.unboundedMap(Codec.INT, elementCodec)
+                .xmap(Int2ObjectOpenHashMap::new, Function.identity());
     }
 
     public static <S> MapCodec<S> list(Supplier<Map<String, CodecInfo<? extends S>>> codecs) {

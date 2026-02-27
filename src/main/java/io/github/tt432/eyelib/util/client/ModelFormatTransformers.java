@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.util.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.RootModelPartModel;
 import io.github.tt432.eyelib.client.model.bedrock.BrBone;
 import io.github.tt432.eyelib.client.model.bedrock.BrCube;
@@ -13,13 +14,9 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.core.Direction;
-import org.joml.Vector2f;
 import org.joml.Vector3f;
 
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -78,7 +75,7 @@ public final class ModelFormatTransformers {
 
         if (params.original() instanceof RootModelPartModel model) {
             visitModelPart(model.getRootPart(), (name, child) -> {
-                if (bone.id()==GlobalBoneIdHandler.get(name)) {
+                if (bone.id() == GlobalBoneIdHandler.get(name)) {
                     PartPose initialPose = child.getInitialPose();
                     last.normal().rotateZYX(-initialPose.xRot, -initialPose.yRot, -initialPose.xRot);
                     last.pose().rotateZYX(-initialPose.xRot, -initialPose.yRot, -initialPose.xRot);
@@ -101,38 +98,36 @@ public final class ModelFormatTransformers {
     private static final Set<Direction> ALL_VISIBLE = EnumSet.allOf(Direction.class);
 
     public static ModelPart.Cube getVanillaCube(BrCube cube, TranslationParams params) {
-        int faceCount = cube.vertexes().size();
-        ModelPart.Polygon[] polygons = new ModelPart.Polygon[faceCount];
-
-        for (int i = 0; i < faceCount; i++) {
-            List<Vector3f> vertexes = cube.vertexes().get(i);
-            var vertexCount = vertexes.size();
-            List<Vector2f> uvs = cube.uvs().get(i);
-            var vertexArray = new ModelPart.Vertex[vertexCount];
-
-            var wrapper = params.poseStack().last();
-            for (int i1 = 0; i1 < vertexCount; i1++) {
-                var uv = uvs.get(i);
-                Vector3f pos = vertexes.get(i1).mulPosition(wrapper.pose(), new Vector3f()).mul(16);
-                vertexArray[i1] = new ModelPart.Vertex(pos.x, pos.y, pos.z, uv.x(), uv.y()) {
+        var wrapper = params.poseStack().last();
+        List<ModelPart.Polygon> polygons = new ArrayList<>();
+        for (Model.Face face : cube.createCube().faces()) {
+            var normal = face.normal().mul(wrapper.normal(), new Vector3f());
+            List<ModelPart.Vertex> vertices = new ArrayList<>();
+            for (Model.Vertex vertex : face.vertexes()) {
+                Vector3f position = vertex.position().mulPosition(wrapper.pose(), new Vector3f()).mul(16);
+                vertices.add(new ModelPart.Vertex(
+                        position,
+                        vertex.uv().x(),
+                        vertex.uv().y()
+                ) {
                     @Override
                     public ModelPart.Vertex remap(float p_104385_, float p_104386_) {
                         return this;
                     }
-                };
+                });
             }
-
-            Vector3f normal = cube.normals().get(i).mul(wrapper.normal(), new Vector3f());
-            polygons[i] = new ModelPart.Polygon(vertexArray, 1, 1, 1,
-                    1, 1, 1, false,
-                    Direction.getNearest(normal.x, normal.y, normal.z));
+            polygons.add(new ModelPart.Polygon(vertices.toArray(ModelPart.Vertex[]::new),
+                    1, 1, 1, 1, 1, 1, false,
+                    Direction.getNearest(normal.x, normal.y, normal.z)));
         }
 
         var result = new ModelPart.Cube(0, 0, 0, 0, 0,
                 0, 0, 0, 0, 0, 0,
                 false, 0, 0, ALL_VISIBLE);
 
-        System.arraycopy(polygons, 0, result.polygons, 0, result.polygons.length);
+        for (int i = 0; i < polygons.size(); i++) {
+            result.polygons[i] = polygons.get(i);
+        }
 
         return result;
     }

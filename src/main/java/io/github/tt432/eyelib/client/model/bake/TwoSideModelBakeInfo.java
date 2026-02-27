@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.model.bake;
 
+import com.google.common.collect.Lists;
 import io.github.tt432.eyelib.client.model.Model;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -21,7 +22,7 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     private final Map<String, Map<ResourceLocation, TwoSideInfoMap>> cache = new HashMap<>();
 
     @Override
-    public <B extends Model.Bone<B>> TwoSideInfoMap getBakeInfo(Model<B> model, boolean isSolid, ResourceLocation texture) {
+    public TwoSideInfoMap getBakeInfo(Model model, boolean isSolid, ResourceLocation texture) {
         return cache.computeIfAbsent(model.name(), ___ -> new HashMap<>())
                 .computeIfAbsent(texture, __ -> {
                     Int2ObjectMap<TwoSideInfo> builder = new Int2ObjectOpenHashMap<>();
@@ -37,7 +38,7 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     }
 
     @Override
-    public <B extends Model.Bone<B>> BakedModel bake(Model<B> model, TwoSideInfoMap twoSideInfoMap) {
+    public BakedModel bake(Model model, TwoSideInfoMap twoSideInfoMap) {
         Int2ObjectMap<BakedModel.BakedBone> bones = new Int2ObjectOpenHashMap<>();
 
         model.toplevelBones().int2ObjectEntrySet().forEach(entry -> {
@@ -49,12 +50,12 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
         return new BakedModel(bones);
     }
 
-    private static <B extends Model.Bone<B>> void collectBones(int name, B bone, Int2ObjectMap<BakedModel.BakedBone> bones, Int2ObjectMap<TwoSideInfo> info) {
+    private static void collectBones(int name, Model.Bone bone, Int2ObjectMap<BakedModel.BakedBone> bones, Int2ObjectMap<TwoSideInfo> info) {
         bones.put(name, bake(bone, info));
         bone.children().forEach((s, bone1) -> collectBones(s, bone1, bones, info));
     }
 
-    public static <B extends Model.Bone<B>> BakedModel.BakedBone bake(B bone, Int2ObjectMap<TwoSideInfo> info) {
+    public static BakedModel.BakedBone bake(Model.Bone bone, Int2ObjectMap<TwoSideInfo> info) {
         TwoSideInfo twoSideInfo = info.get(bone.id());
         boolean[] allTrue = new boolean[bone.cubes().size()];
         Arrays.fill(allTrue, true);
@@ -105,27 +106,18 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     }
 
     private static void bake(Model.Cube cube, List<Vector3fc> vertexes, List<Vector3fc> normals, List<Vector2fc> uvs, boolean twoSide) {
-        for (int i = 0; i < cube.faceCount(); i++) {
-            for (int j = 0; j < cube.pointsPerFace(); j++) {
-                vertexes.add(new Vector3f(cube.positionX(i, j), cube.positionY(i, j), cube.positionZ(i, j)));
-
-                uvs.add(new Vector2f(cube.uvU(i, j), cube.uvV(i, j)));
+        for (Model.Face face : cube.faces()) {
+            for (Model.Vertex vertex : face.vertexes()) {
+                vertexes.add(new Vector3f(vertex.position()));
+                uvs.add(new Vector2f(vertex.uv()));
+                normals.add(new Vector3f(vertex.normal()));
             }
-
             if (twoSide) {
-                for (int j = cube.pointsPerFace() - 1; j >= 0; j--) {
-                    vertexes.add(new Vector3f(cube.positionX(i, j), cube.positionY(i, j), cube.positionZ(i, j)));
-
-                    uvs.add(new Vector2f(cube.uvU(i, j), cube.uvV(i, j)));
+                for (var vertex : Lists.reverse(face.vertexes())) {
+                    vertexes.add(new Vector3f(vertex.position()));
+                    uvs.add(new Vector2f(vertex.uv()));
+                    normals.add(new Vector3f(vertex.normal()));
                 }
-
-                for (int j = 0; j < cube.pointsPerFace(); j++) {
-                    normals.add(new Vector3f(cube.normalX(i), cube.normalY(i), cube.normalZ(i)));
-                }
-            }
-
-            for (int j = 0; j < cube.pointsPerFace(); j++) {
-                normals.add(new Vector3f(cube.normalX(i), cube.normalY(i), cube.normalZ(i)));
             }
         }
     }
