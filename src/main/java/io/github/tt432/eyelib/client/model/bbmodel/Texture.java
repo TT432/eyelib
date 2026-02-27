@@ -5,7 +5,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.util.codec.EyelibCodec;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -39,7 +38,7 @@ public record Texture(
         String uuid,
         String source,
 
-        byte[] sourceBytes
+        NativeImage nativeImage
 ) {
     private record Part1(
             String name,
@@ -111,10 +110,16 @@ public record Texture(
     public static final Codec<Texture> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Part1.MAP_CODEC.forGetter(tex -> new Part1(tex.name, tex.path, tex.folder, tex.namespace, tex.id, tex.group, tex.width, tex.height, tex.uvWidth, tex.uvHeight, tex.particle, tex.useAsDefault, tex.layersEnabled, tex.syncToProject, tex.renderMode)),
             Part2.MAP_CODEC.forGetter(tex -> new Part2(tex.renderSides, tex.pbrChannel, tex.frameTime, tex.frameOrderType, tex.frameOrder, tex.frameInterpolate, tex.visible, tex.internal, tex.saved, tex.uuid, tex.source))
-    ).apply(ins, (p1, p2) -> new Texture(p1.name, p1.path, p1.folder, p1.namespace, p1.id, p1.group, p1.width, p1.height, p1.uvWidth, p1.uvHeight, p1.particle, p1.useAsDefault, p1.layersEnabled, p1.syncToProject, p1.renderMode, p2.renderSides, p2.pbrChannel, p2.frameTime, p2.frameOrderType, p2.frameOrder, p2.frameInterpolate, p2.visible, p2.internal, p2.saved, p2.uuid, p2.source)));
+    ).apply(ins, (p1, p2) -> {
+        try {
+            return new Texture(p1.name, p1.path, p1.folder, p1.namespace, p1.id, p1.group, p1.width, p1.height, p1.uvWidth, p1.uvHeight, p1.particle, p1.useAsDefault, p1.layersEnabled, p1.syncToProject, p1.renderMode, p2.renderSides, p2.pbrChannel, p2.frameTime, p2.frameOrderType, p2.frameOrder, p2.frameInterpolate, p2.visible, p2.internal, p2.saved, p2.uuid, p2.source);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }));
 
-    public Texture(String name, String path, String folder, String namespace, String id, String group, int width, int height, int uvWidth, int uvHeight, boolean particle, boolean useAsDefault, boolean layersEnabled, boolean syncToProject, String renderMode, String renderSides, String pbrChannel, int frameTime, String frameOrderType, String frameOrder, boolean frameInterpolate, boolean visible, boolean internal, boolean saved, String uuid, String source) {
-        this(name, path, folder, namespace, id, group, width, height, uvWidth, uvHeight, particle, useAsDefault, layersEnabled, syncToProject, renderMode, renderSides, pbrChannel, frameTime, frameOrderType, frameOrder, frameInterpolate, visible, internal, saved, uuid, source, getBytes(source));
+    public Texture(String name, String path, String folder, String namespace, String id, String group, int width, int height, int uvWidth, int uvHeight, boolean particle, boolean useAsDefault, boolean layersEnabled, boolean syncToProject, String renderMode, String renderSides, String pbrChannel, int frameTime, String frameOrderType, String frameOrder, boolean frameInterpolate, boolean visible, boolean internal, boolean saved, String uuid, String source) throws IOException {
+        this(name, path, folder, namespace, id, group, width, height, uvWidth, uvHeight, particle, useAsDefault, layersEnabled, syncToProject, renderMode, renderSides, pbrChannel, frameTime, frameOrderType, frameOrder, frameInterpolate, visible, internal, saved, uuid, source, NativeImage.read(new ByteArrayInputStream(getBytes(source))));
     }
 
     private static byte[] getBytes(String source) {
@@ -133,11 +138,11 @@ public record Texture(
         return null;
     }
 
-    @Nullable
-    public NativeImage getNativeImage() throws IOException {
-        if (sourceBytes == null) {
-            return null;
-        }
-        return NativeImage.read(new ByteArrayInputStream(sourceBytes));
+    public int imageWidth() {
+        return nativeImage.getWidth();
+    }
+
+    public int imageHeight() {
+        return nativeImage.getHeight();
     }
 }

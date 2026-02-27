@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.util.client;
 
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
-import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
 import lombok.experimental.UtilityClass;
 import org.joml.Vector3f;
 
@@ -11,27 +10,25 @@ import org.joml.Vector3f;
  */
 @UtilityClass
 public class AnimationApplier {
-    public <M extends Model.Bone<M>, R extends ModelRuntimeData<M>> void apply(
-            BoneRenderInfoEntry entry, M model, R data
-    ) {
-        var initPosition = data.initPosition(model);
-        Vector3f renderPosition = entry.getRenderPosition();
+    public void apply(ModelRuntimeData.Entry entry, Model.Bone model, ModelRuntimeData data) {
+        var initPosition = model.position();
+        Vector3f renderPosition = entry.position;
         data.position(
                 model,
                 renderPosition.x + initPosition.x(),
                 renderPosition.y + initPosition.y(),
                 renderPosition.z + initPosition.z()
         );
-        var initRotation = data.initRotation(model);
-        Vector3f renderRotation = entry.getRenderRotation();
+        var initRotation = model.rotation();
+        Vector3f renderRotation = entry.rotation;
         data.rotation(
                 model,
                 renderRotation.x + initRotation.x(),
                 renderRotation.y + initRotation.y(),
                 renderRotation.z + initRotation.z()
         );
-        var initScale = data.initScale(model);
-        Vector3f renderScala = entry.getRenderScala();
+        var initScale = model.scale();
+        Vector3f renderScala = entry.scale;
         data.scale(
                 model,
                 renderScala.x * initScale.x(),

@@ -1,22 +1,23 @@
 package io.github.tt432.eyelib.client.model.bedrock;
 
 import com.google.gson.*;
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelib.client.model.locator.GroupLocator;
+import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.util.EntryStreams;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.With;
-import net.minecraft.util.ExtraCodecs;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,20 +43,7 @@ public record BrBone(
         List<BrCube> cubes,
         List<BrTextureMesh> texture_meshes,
         Map<String, BrLocator> locators
-) implements Model.Bone<BrBone> {
-
-    public static final Codec<BrBone> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            GlobalBoneIdHandler.STRING_ID_CODEC.fieldOf("name").forGetter(BrBone::id),
-            GlobalBoneIdHandler.STRING_ID_CODEC.optionalFieldOf("parent", -1).forGetter(BrBone::parent),
-            ExtraCodecs.VECTOR3F.fieldOf("pivot").forGetter(BrBone::pivot),
-            ExtraCodecs.VECTOR3F.fieldOf("rotation").forGetter(BrBone::rotation),
-            MolangValue.CODEC.optionalFieldOf("binding", MolangValue.ZERO).forGetter(BrBone::binding),
-            Codec.BOOL.fieldOf("reset").forGetter(BrBone::reset),
-            Codec.STRING.optionalFieldOf("material", "").forGetter(BrBone::material),
-            BrCube.CODEC.listOf().fieldOf("cubes").forGetter(BrBone::cubes),
-            BrTextureMesh.CODEC.listOf().optionalFieldOf("texture_meshes", List.of()).forGetter(BrBone::texture_meshes),
-            Codec.unboundedMap(Codec.STRING, BrLocator.CODEC).fieldOf("locators").forGetter(BrBone::locators)
-    ).apply(ins, (string, string2, vector3f, vector3f2, string3, aBoolean, string4, brCubes, brTextureMeshes, stringBrLocatorMap) -> new BrBone(string, string2, vector3f, vector3f2, string3, aBoolean, string4, new Int2ObjectOpenHashMap<>(), brCubes, brTextureMeshes, stringBrLocatorMap)));
+) {
     private static final Gson gson = new Gson();
 
     public static BrBone parse(int textureHeight, int textureWidth, JsonObject jsonObject) {
@@ -66,7 +54,7 @@ public record BrBone(
         final MolangValue binding;
         final boolean reset;
         final String material;
-        final Int2ObjectMap< BrBone> children = new Int2ObjectOpenHashMap<>();
+        final Int2ObjectMap<BrBone> children = new Int2ObjectOpenHashMap<>();
         final List<BrCube> cubes = new ObjectArrayList<>();
         final List<BrTextureMesh> texture_meshes = new ObjectArrayList<>();
         final Map<String, BrLocator> locators = new Object2ObjectOpenHashMap<>();
@@ -105,5 +93,18 @@ public record BrBone(
         }
 
         return new BrBone(GlobalBoneIdHandler.get(name), GlobalBoneIdHandler.get(parent), pivot, rotation, binding, reset, material, children, cubes, texture_meshes, locators);
+    }
+
+    public Model.Bone createBone() {
+        List<LocatorEntry> list = new ArrayList<>();
+        for (BrLocator brLocator : locators().values()) {
+            list.add(brLocator.locatorEntry());
+        }
+        var locator = new GroupLocator(new Int2ObjectOpenHashMap<>(), list);
+        return new Model.Bone(id, parent, pivot, rotation, new Vector3f(), new Vector3f(), binding,
+                children.int2ObjectEntrySet().stream().map(e -> Map.entry(e.getIntKey(), e.getValue().createBone())).collect(EntryStreams.collect(Int2ObjectOpenHashMap::new)),
+                cubes.stream().map(BrCube::createCube).toList(),
+                locator
+        );
     }
 }

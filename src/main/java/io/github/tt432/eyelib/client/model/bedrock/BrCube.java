@@ -4,21 +4,17 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.model.Model;
-import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
-import io.github.tt432.eyelib.util.codec.Tuple;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import net.minecraft.util.ExtraCodecs;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,19 +23,8 @@ import java.util.Set;
  * @author TT432
  */
 public record BrCube(
-        int faceCount,
-        int pointsPerFace,
-        List<List<Vector3f>> vertexes,
-        List<List<Vector2f>> uvs,
-        List<Vector3f> normals
-) implements Model.Cube.ConstCube {
-    public static final Codec<BrCube> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            Codec.INT.fieldOf("faceCount").forGetter(BrCube::faceCount),
-            Codec.INT.fieldOf("pointsPerFace").forGetter(BrCube::pointsPerFace),
-            ExtraCodecs.VECTOR3F.listOf().listOf().fieldOf("vertexes").forGetter(BrCube::vertexes),
-            ChinExtraCodecs.tuple(Codec.FLOAT, Codec.FLOAT).bmap(Vector2f::new, v2f -> Tuple.of(v2f.x, v2f.y)).listOf().listOf().fieldOf("uvs").forGetter(BrCube::uvs),
-            ExtraCodecs.VECTOR3F.listOf().fieldOf("normals").forGetter(BrCube::normals)
-    ).apply(ins, BrCube::new));
+        List<Model.Face> faces
+) {
     private static final Gson gson = new Gson();
 
     private static Vector3f parse(JsonObject object, String ele) {
@@ -102,7 +87,7 @@ public record BrCube(
         Pair<Vector2f, Vector2f> east;
         Pair<Vector2f, Vector2f> south;
         Pair<Vector2f, Vector2f> west;
-        Rotation[] uvRotations = { Rotation.NONE, Rotation.NONE, Rotation.NONE, Rotation.NONE, Rotation.NONE, Rotation.NONE };
+        Rotation[] uvRotations = {Rotation.NONE, Rotation.NONE, Rotation.NONE, Rotation.NONE, Rotation.NONE, Rotation.NONE};
         Set<Integer> removeIndexes = new HashSet<>();
 
         if (jsonObject.get("uv") instanceof JsonArray ja) {
@@ -230,13 +215,25 @@ public record BrCube(
             normals = newNormals;
         }
 
-        return new BrCube(
-                normals.size(),
-                4,
-                vertexes,
-                uvs,
-                normals
-        );
+        return new BrCube(getFaces(vertexes, uvs, normals));
+    }
+
+    private static @NotNull List<Model.Face> getFaces(List<List<Vector3f>> vertexes, ObjectList<List<Vector2f>> uvs, ObjectList<Vector3f> normals) {
+        List<Model.Face> faces = new ArrayList<>();
+
+        for (int i = 0; i < vertexes.size(); i++) {
+            List<Model.Vertex> vertices = new ArrayList<>();
+            List<Vector3f> vector3fs = vertexes.get(i);
+            for (int i1 = 0; i1 < vector3fs.size(); i1++) {
+                vertices.add(new Model.Vertex(
+                        vector3fs.get(i1),
+                        uvs.get(i).get(i1),
+                        normals.get(i)
+                ));
+            }
+            faces.add(new Model.Face(vertices, normals.get(i)));
+        }
+        return faces;
     }
 
     private static Vector3f getNormal(Vector3f a, Vector3f b, Vector3f c) {
@@ -305,4 +302,7 @@ public record BrCube(
         }
     }
 
+    public Model.Cube createCube() {
+        return new Model.Cube(faces);
+    }
 }

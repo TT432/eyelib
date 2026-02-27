@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.client.loader;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.model.UnBakedBrModel;
 import io.github.tt432.eyelib.client.model.bedrock.BrModel;
 import lombok.AccessLevel;
@@ -28,6 +27,6 @@ public class BlockBrModelLoader implements IGeometryLoader<UnBakedBrModel> {
 
     @Override
     public @NotNull UnBakedBrModel read(@NotNull JsonObject jsonObject, @NotNull JsonDeserializationContext deserializationContext) throws JsonParseException {
-        return new UnBakedBrModel(BrModel.parse(jsonObject).models().get(0));
+        return new UnBakedBrModel(BrModel.parse(jsonObject).models().get(0).createModel());
     }
 }

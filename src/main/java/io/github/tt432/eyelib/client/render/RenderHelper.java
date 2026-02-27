@@ -6,7 +6,6 @@ import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.bake.TwoSideModelBakeInfo;
-import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
@@ -57,7 +56,7 @@ public class RenderHelper {
         });
     }
 
-    public <B extends Model.Bone<B>> RenderHelper render(RenderParams params, Model<B> model, ModelRuntimeData<B> infos) {
+    public RenderHelper render(RenderParams params, Model model, ModelRuntimeData infos) {
         this.params = params;
         context.put("BackedModel", TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, params.isSolid(), params.texture()));
 
@@ -66,13 +65,13 @@ public class RenderHelper {
         return this;
     }
 
-    public RenderHelper collectLocators(Model model, BoneRenderInfos infos) {
+    public RenderHelper collectLocators(Model model, ModelRuntimeData infos) {
         if (params != null)
             dfsModel(model).visit(params, context, BuiltInBrModelRenderVisitors.COLLECT_LOCATOR, cast(infos), new DFSModel.StateMachine());
         return this;
     }
 
-    public RenderHelper renderOnLocator(RenderParams params, String visitorName, Model model, BoneRenderInfos infos) {
+    public RenderHelper renderOnLocator(RenderParams params, String visitorName, Model model, ModelRuntimeData infos) {
         if (context.contains("locators")) {
             renderOnLocator(visitorName, model, infos, params);
         }
@@ -80,7 +79,7 @@ public class RenderHelper {
         return this;
     }
 
-    public RenderHelper renderOnLocator(String visitorName, Model model, BoneRenderInfos infos) {
+    public RenderHelper renderOnLocator(String visitorName, Model model, ModelRuntimeData infos) {
         if (params != null && context.contains("locators")) {
             renderOnLocator(visitorName, model, infos, params);
         }
@@ -88,7 +87,7 @@ public class RenderHelper {
         return this;
     }
 
-    private void renderOnLocator(String visitorName, Model model, BoneRenderInfos infos, RenderParams params) {
+    private void renderOnLocator(String visitorName, Model model, ModelRuntimeData infos, RenderParams params) {
         Map<String, Matrix4f> locators = context.get("locators");
 
         locators.forEach((name, matrix) -> {

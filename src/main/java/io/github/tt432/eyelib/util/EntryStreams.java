@@ -50,11 +50,11 @@ public class EntryStreams {
         return entry -> Map.entry(function.apply(entry.getKey()), entry.getValue());
     }
 
-    public static  <K, V1, V2> Function<Map.Entry<K, V1>, Map.Entry<K, V2>> mapEntryValue(Function<V1, V2> function) {
+    public static <K, V1, V2> Function<Map.Entry<K, V1>, Map.Entry<K, V2>> mapEntryValue(Function<V1, V2> function) {
         return entry -> Map.entry(entry.getKey(), function.apply(entry.getValue()));
     }
 
-    public static  <K, V1, V2> Function<Map.Entry<K, V1>, Map.Entry<K, V2>> mapEntryValue(BiFunction<K, V1, V2> function) {
+    public static <K, V1, V2> Function<Map.Entry<K, V1>, Map.Entry<K, V2>> mapEntryValue(BiFunction<K, V1, V2> function) {
         return entry -> Map.entry(entry.getKey(), function.apply(entry.getKey(), entry.getValue()));
     }
 

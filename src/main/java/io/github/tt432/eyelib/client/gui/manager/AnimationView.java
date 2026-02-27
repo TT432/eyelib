@@ -7,8 +7,7 @@ import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
-import io.github.tt432.eyelib.client.render.bone.BoneRenderInfoEntry;
-import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
+import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import net.minecraft.client.Minecraft;
@@ -24,11 +23,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.gui.widget.ScrollPanel;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 import org.lwjgl.glfw.GLFW;
@@ -44,7 +40,7 @@ import java.util.stream.Stream;
 /**
  * @author TT432
  */
-@Mod.EventBusSubscriber(Dist.CLIENT)
+//@Mod.EventBusSubscriber(Dist.CLIENT)
 public class AnimationView extends Screen {
     @Nullable
     private String selectedAnimationName = null;
@@ -57,7 +53,7 @@ public class AnimationView extends Screen {
         super(title);
     }
 
-    @SubscribeEvent
+//    @SubscribeEvent
     public static void onEvent(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.START || Minecraft.getInstance().level == null) return;
 
@@ -473,14 +469,14 @@ public class AnimationView extends Screen {
         int boneId = GlobalBoneIdHandler.get(selectedBoneName);
         AnimationEffects effects = new AnimationEffects();
         for (float tick = 0; tick < animation.animationLength(); tick += 0.01F) {
-            BoneRenderInfos infos = new BoneRenderInfos();
+            ModelRuntimeData infos = new ModelRuntimeData();
             animation.tickAnimation(data, animations, scope, tick, 1, infos, effects, () -> {
             });
-            BoneRenderInfoEntry boneRenderInfoEntry = infos.getData(boneId);
+            var boneRenderInfoEntry = infos.getData(boneId);
             var vec3 = switch (animationChanel) {
-                case POS -> boneRenderInfoEntry.getRenderPosition().mul(16).mul(-1, 1, 1);
-                case ROT -> boneRenderInfoEntry.getRenderRotation().div(EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1);
-                case SCL -> boneRenderInfoEntry.getRenderScala();
+                case POS -> boneRenderInfoEntry.position.mul(16).mul(-1, 1, 1);
+                case ROT -> boneRenderInfoEntry.rotation.div(EyeMath.DEGREES_TO_RADIANS).mul(-1, -1, 1);
+                case SCL -> boneRenderInfoEntry.scale;
             };
             points.add(new Vector2f(tick, switch (axis) {
                 case X -> vec3.x;

@@ -6,7 +6,6 @@ import io.github.tt432.eyelib.client.compat.ar.ARCompat;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.bake.BakedModel;
-import io.github.tt432.eyelib.client.model.locator.GroupLocator;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import lombok.Setter;
 
@@ -16,7 +15,7 @@ import lombok.Setter;
 @Setter
 public class HighSpeedRenderModelVisitor extends ModelVisitor {
     @Override
-    public <B extends Model.Bone<B>> void visitPreModel(RenderParams params, ModelVisitContext context, ModelRuntimeData<B> infos, Model<B> model) {
+    public  void visitPreModel(RenderParams params, ModelVisitContext context, ModelRuntimeData infos, Model model) {
         super.visitPreModel(params, context, infos, model);
 
         if (!context.contains("BackedModel")) {
@@ -25,7 +24,7 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
     }
 
     @Override
-    public <B extends Model.Bone<B>> void visitPreBone(RenderParams renderParams, ModelVisitContext context, B bone, ModelRuntimeData<B> data, GroupLocator groupLocator) {
+    public void visitPreBone(RenderParams renderParams, ModelVisitContext context, Model.Bone bone, ModelRuntimeData data) {
         PoseStack poseStack = renderParams.poseStack();
         poseStack.pushPose();
 

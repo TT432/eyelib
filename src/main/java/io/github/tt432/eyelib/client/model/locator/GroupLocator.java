@@ -12,7 +12,7 @@ import java.util.List;
  * @author TT432
  */
 public record GroupLocator(
-        Int2ObjectMap< GroupLocator> children,
+        Int2ObjectMap<GroupLocator> children,
         List<LocatorEntry> cubes
 ) implements ModelGroupNode<LocatorEntry> {
     public static final Codec<GroupLocator> CODEC = RecordCodecBuilder.create(ins -> ins.group(

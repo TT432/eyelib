@@ -66,7 +66,7 @@ public class BrModelLoader extends BrResourcesLoader implements Searchable<BrMod
 
         for (BrModel value : models.values()) {
             for (BrModelEntry model : value.models()) {
-                Eyelib.getModelManager().put(model.name().split(":")[0], model);
+                Eyelib.getModelManager().put(model.name().split(":")[0], model.createModel());
             }
         }
     }

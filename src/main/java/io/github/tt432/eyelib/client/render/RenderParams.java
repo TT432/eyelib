@@ -34,6 +34,14 @@ public record RenderParams(
         int overlay,
         Int2BooleanOpenHashMap partVisibility
 ) {
+    public static RenderParams noRender() {
+        var poseStack = new PoseStack();
+        return new RenderParams(
+                null, poseStack.last(), poseStack, null, null, false,
+                null, 0, OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap()
+        );
+    }
+
     public static Builder builder(PoseStack poseStack, RenderType renderType, boolean isSolid, ResourceLocation texture, VertexConsumer consumer) {
         return new Builder(PoseHelper.copy(poseStack.last()), poseStack, renderType, isSolid, texture, consumer);
     }

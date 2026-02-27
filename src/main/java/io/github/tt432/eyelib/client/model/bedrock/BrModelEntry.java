@@ -1,25 +1,15 @@
 package io.github.tt432.eyelib.client.model.bedrock;
 
 import com.google.gson.*;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.model.Model;
-import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.locator.GroupLocator;
-import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
-import io.github.tt432.eyelib.client.model.locator.ModelLocator;
-import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
-import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
-import io.github.tt432.eyelib.util.codec.Tuple;
+import io.github.tt432.eyelib.util.EntryStreams;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.With;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author TT432
@@ -31,38 +21,9 @@ public record BrModelEntry(
         int textureHeight,
         AABB visibleBox,
         Int2ObjectMap<BrBone> toplevelBones,
-        Int2ObjectMap<BrBone> allBones,
-        ModelLocator locator
-) implements Model<BrBone> {
-    public static final Codec<BrModelEntry> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            Codec.STRING.fieldOf("name").forGetter(BrModelEntry::name),
-            Codec.INT.fieldOf("textureWidth").forGetter(BrModelEntry::textureWidth),
-            Codec.INT.fieldOf("textureHeight").forGetter(BrModelEntry::textureHeight),
-            ChinExtraCodecs.tuple(Vec3.CODEC, Vec3.CODEC).bmap(AABB::new, aabb -> Tuple.of(new Vec3(aabb.minX, aabb.minY, aabb.minZ), new Vec3(aabb.maxX, aabb.maxY, aabb.maxZ))).fieldOf("visibleBox").forGetter(BrModelEntry::visibleBox),
-            GlobalBoneIdHandler.map(BrBone.CODEC).fieldOf("allBones").forGetter(BrModelEntry::allBones)
-    ).apply(ins, (string, integer, integer2, aabb, allBones) -> {
-        Int2ObjectMap<BrBone> toplevelBones = new Int2ObjectOpenHashMap<>();
-
-        allBones.int2ObjectEntrySet().forEach((entry) -> {
-            var name = entry.getIntKey();
-            var bone = entry.getValue();
-            if (bone.parent() == -1 || allBones.get(bone.parent()) == null)
-                toplevelBones.put(name, bone);
-            else
-                allBones.get(bone.parent()).children().put(name, bone);
-        });
-
-        Int2ObjectMap<GroupLocator> locators = new Int2ObjectOpenHashMap<>();
-        toplevelBones.int2ObjectEntrySet().forEach(entry -> locators.put(entry.getIntKey(), getLocator(entry.getValue())));
-
-        return new BrModelEntry(string, integer, integer2, aabb, toplevelBones, allBones, new ModelLocator(locators));
-    }));
+        Int2ObjectMap<BrBone> allBones
+) {
     private static final Gson gson = new Gson();
-
-    @Override
-    public ModelRuntimeData<BrBone> data() {
-        return new BoneRenderInfos();
-    }
 
     public static BrModelEntry parse2(String identifier, JsonObject geometry) {
         int textureWidth;
@@ -106,12 +67,9 @@ public record BrModelEntry(
                 else
                     allBones.get(bone.parent()).children().put(name, bone);
             });
-
-            toplevelBones.forEach((k, v) -> locators.put(k, getLocator(v)));
         }
 
-        return new BrModelEntry(identifier, textureWidth, textureHeight, visibleBox,
-                toplevelBones, allBones, new ModelLocator(locators));
+        return new BrModelEntry(identifier, textureWidth, textureHeight, visibleBox, toplevelBones, allBones);
     }
 
     public static BrModelEntry parse(JsonObject geometry) {
@@ -145,8 +103,6 @@ public record BrModelEntry(
                 (offset[2] / 16) + w / 2
         );
 
-        Int2ObjectMap<GroupLocator> locators = new Int2ObjectOpenHashMap<>();
-
         if (geometry.has("bones")) {
             for (JsonElement jsonElement : geometry.get("bones").getAsJsonArray()) {
                 BrBone parse = BrBone.parse(textureHeight, textureWidth, jsonElement.getAsJsonObject());
@@ -163,25 +119,13 @@ public record BrModelEntry(
                 else
                     allBones.get(bone.parent()).children().put(name, bone);
             });
-
-            toplevelBones.forEach((k, v) -> locators.put(k, getLocator(v)));
         }
 
         return new BrModelEntry(identifier, textureWidth, textureHeight, visibleBox,
-                toplevelBones, allBones, new ModelLocator(locators));
+                toplevelBones, allBones);
     }
 
-    private static GroupLocator getLocator(BrBone bone) {
-        Int2ObjectMap<GroupLocator> children = new Int2ObjectOpenHashMap<>();
-        bone.children().int2ObjectEntrySet().forEach((entry) -> {
-            var name = entry.getIntKey();
-            var group = entry.getValue();
-            children.put(name, getLocator(group));
-        });
-        List<LocatorEntry> list = new ArrayList<>();
-        for (BrLocator brLocator : bone.locators().values()) {
-            list.add(brLocator.locatorEntry());
-        }
-        return new GroupLocator(children, list);
+    public Model createModel() {
+        return new Model(name, allBones.int2ObjectEntrySet().stream().map(e -> Map.entry(e.getIntKey(), e.getValue().createBone())).collect(EntryStreams.collect(Int2ObjectOpenHashMap::new)));
     }
 }

@@ -28,7 +28,7 @@ public abstract class ModelBakeInfo<Info> {
         });
     }
 
-    public <B extends Model.Bone<B>> BakedModel getBakedModel(Model<B> model, boolean isSolid, ResourceLocation texture) {
+    public BakedModel getBakedModel(Model model, boolean isSolid, ResourceLocation texture) {
         return modelCache.computeIfAbsent(model.name(), s -> new HashMap<>())
                 .computeIfAbsent(texture, i -> {
                     Info bakeInfo = getBakeInfo(model, isSolid, texture);
@@ -36,9 +36,9 @@ public abstract class ModelBakeInfo<Info> {
                 });
     }
 
-    protected abstract <B extends Model.Bone<B>> Info getBakeInfo(Model<B> model, boolean isSolid, ResourceLocation texture);
+    protected abstract Info getBakeInfo(Model model, boolean isSolid, ResourceLocation texture);
 
-    protected abstract <B extends Model.Bone<B>> BakedModel bake(Model<B> model, Info info);
+    protected abstract BakedModel bake(Model model, Info info);
 
     @FunctionalInterface
     public interface BoneDataConsumer {
@@ -62,7 +62,7 @@ public abstract class ModelBakeInfo<Info> {
         }
     }
 
-    protected <B extends Model.Bone<B>> void processBone(B bone, NativeImage intBuffer, Int2BooleanFunction f, BoneDataConsumer consumer) {
+    protected void processBone(Model.Bone bone, NativeImage intBuffer, Int2BooleanFunction f, BoneDataConsumer consumer) {
         bone.children().values().forEach(boneIn -> processBone(boneIn, intBuffer, f, consumer));
 
         boolean[] result = new boolean[bone.cubes().size()];
@@ -70,10 +70,12 @@ public abstract class ModelBakeInfo<Info> {
         for (int i = 0; i < bone.cubes().size(); i++) {
             var cube = bone.cubes().get(i);
 
-            for (int i1 = 0; i1 < cube.faceCount(); i1++) {
+            for (int j = 0; j < cube.faces().size(); j++) {
+                Model.Face face = cube.faces().get(j);
+                Model.Face.Rect uvbox = face.uvbox();
                 if (pixelAnyMatch(intBuffer,
-                        cube.uvU(i1, 0), cube.uvV(i1, 0),
-                        cube.uvU(i1, 2), cube.uvV(i1, 2),
+                        uvbox.u0(), uvbox.v0(),
+                        uvbox.u1(), uvbox.v1(),
                         f
                 )) {
                     result[i] = true;

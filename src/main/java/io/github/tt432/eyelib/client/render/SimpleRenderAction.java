@@ -6,7 +6,7 @@ import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.EntityRenderSystem;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
-import io.github.tt432.eyelib.client.render.bone.BoneRenderInfos;
+import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
 import lombok.With;
 import net.minecraft.client.renderer.LightTexture;
@@ -29,7 +29,7 @@ public record SimpleRenderAction<T>(
         int packedLight,
         int overlay,
         Entity entity,
-        BoneRenderInfos tickedInfos,
+        ModelRuntimeData tickedInfos,
         AnimationEffects effects,
         Builder.ExtraRender<T> extraRender
 ) {
@@ -74,7 +74,7 @@ public record SimpleRenderAction<T>(
         private int light = LightTexture.FULL_BRIGHT;
         private int overlay = OverlayTexture.NO_OVERLAY;
         Entity entity;
-        BoneRenderInfos tickedInfos = BoneRenderInfos.EMPTY;
+        ModelRuntimeData tickedInfos = ModelRuntimeData.EMPTY;
         AnimationEffects effects = new AnimationEffects();
         ExtraRender<T> extraRender = (helper, action) -> {
         };
@@ -101,7 +101,7 @@ public record SimpleRenderAction<T>(
             return this;
         }
 
-        public Builder<T> animation(BoneRenderInfos tickedInfos, AnimationEffects effects) {
+        public Builder<T> animation(ModelRuntimeData tickedInfos, AnimationEffects effects) {
             this.tickedInfos = tickedInfos;
             this.effects = effects;
             return this;
