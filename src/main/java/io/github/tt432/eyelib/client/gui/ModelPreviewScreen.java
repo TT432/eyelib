@@ -27,9 +27,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.lwjgl.glfw.GLFW;
 
@@ -46,9 +43,9 @@ import java.util.Map;
  * @author TT432
  */
 public class ModelPreviewScreen extends Screen {
-    @EventBusSubscriber(Dist.CLIENT)
+//    @EventBusSubscriber(Dist.CLIENT)
     public static final class Events {
-        @SubscribeEvent
+//        @SubscribeEvent
         public static void onEvent(ClientTickEvent.Pre event) {
             if (Minecraft.getInstance().screen == null
                     && InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_G)) {
