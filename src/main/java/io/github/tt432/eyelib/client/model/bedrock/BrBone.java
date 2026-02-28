@@ -7,9 +7,7 @@ import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.locator.GroupLocator;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.molang.MolangValue;
-import io.github.tt432.eyelib.util.EntryStreams;
 import io.github.tt432.eyelib.util.math.EyeMath;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -39,7 +37,6 @@ public record BrBone(
         MolangValue binding,
         boolean reset,
         @Nullable String material,
-        Int2ObjectMap<BrBone> children,
         List<BrCube> cubes,
         List<BrTextureMesh> texture_meshes,
         Map<String, BrLocator> locators
@@ -54,7 +51,6 @@ public record BrBone(
         final MolangValue binding;
         final boolean reset;
         final String material;
-        final Int2ObjectMap<BrBone> children = new Int2ObjectOpenHashMap<>();
         final List<BrCube> cubes = new ObjectArrayList<>();
         final List<BrTextureMesh> texture_meshes = new ObjectArrayList<>();
         final Map<String, BrLocator> locators = new Object2ObjectOpenHashMap<>();
@@ -92,7 +88,7 @@ public record BrBone(
             }
         }
 
-        return new BrBone(GlobalBoneIdHandler.get(name), GlobalBoneIdHandler.get(parent), pivot, rotation, binding, reset, material, children, cubes, texture_meshes, locators);
+        return new BrBone(GlobalBoneIdHandler.get(name), GlobalBoneIdHandler.get(parent), pivot, rotation, binding, reset, material, cubes, texture_meshes, locators);
     }
 
     public Model.Bone createBone() {
@@ -101,8 +97,8 @@ public record BrBone(
             list.add(brLocator.locatorEntry());
         }
         var locator = new GroupLocator(new Int2ObjectOpenHashMap<>(), list);
-        return new Model.Bone(id, parent, pivot, rotation, new Vector3f(), new Vector3f(), binding,
-                children.int2ObjectEntrySet().stream().map(e -> Map.entry(e.getIntKey(), e.getValue().createBone())).collect(EntryStreams.collect(Int2ObjectOpenHashMap::new)),
+        return new Model.Bone(id, parent, pivot, rotation, new Vector3f(), new Vector3f(1), binding,
+                new Int2ObjectOpenHashMap<>(),
                 cubes.stream().map(BrCube::createCube).toList(),
                 locator
         );

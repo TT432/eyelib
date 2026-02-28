@@ -87,7 +87,7 @@ public record BrCube(
         Pair<Vector2f, Vector2f> east;
         Pair<Vector2f, Vector2f> south;
         Pair<Vector2f, Vector2f> west;
-        Rotation[] uvRotations = { Rotation.NONE, Rotation.NONE, Rotation.NONE, Rotation.NONE, Rotation.NONE, Rotation.NONE };
+        Rotation[] uvRotations = {Rotation.NONE, Rotation.NONE, Rotation.NONE, Rotation.NONE, Rotation.NONE, Rotation.NONE};
         Set<Integer> removeIndexes = new HashSet<>();
 
         if (jsonObject.get("uv") instanceof JsonArray ja) {
@@ -193,6 +193,10 @@ public record BrCube(
 
         for (int i = 0; i < 6; i++) {
             if (Float.isNaN(normals.get(i).x) || Float.isNaN(normals.get(i).y) || Float.isNaN(normals.get(i).z)) {
+                removeIndexes.add(i);
+            }
+
+            if (uvs.get(i).stream().anyMatch(v -> v.x > 1 || v.y > 1)) {
                 removeIndexes.add(i);
             }
         }

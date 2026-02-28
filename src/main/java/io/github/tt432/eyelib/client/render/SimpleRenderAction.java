@@ -17,14 +17,13 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 
-import java.util.function.BiConsumer;
-
 /**
  * @author TT432
  */
 @With
 public record SimpleRenderAction<T>(
         MultiBufferSource multiBufferSource,
+        PoseStack.Pose pose0,
         PoseStack poseStack,
         RenderData<T> renderData,
         float partialTick,
@@ -123,7 +122,7 @@ public record SimpleRenderAction<T>(
         }
 
         public SimpleRenderAction<T> build() {
-            return new SimpleRenderAction<>(multiBufferSource, poseStack, renderData, partialTick, light, overlay, entity, tickedInfos, effects, extraRender);
+            return new SimpleRenderAction<>(multiBufferSource, poseStack.last().copy(), poseStack, renderData, partialTick, light, overlay, entity, tickedInfos, effects, extraRender);
         }
     }
 }

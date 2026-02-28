@@ -20,7 +20,6 @@ public record BrModelEntry(
         int textureWidth,
         int textureHeight,
         AABB visibleBox,
-        Int2ObjectMap<BrBone> toplevelBones,
         Int2ObjectMap<BrBone> allBones
 ) {
     private static final Gson gson = new Gson();
@@ -29,7 +28,6 @@ public record BrModelEntry(
         int textureWidth;
         int textureHeight;
         AABB visibleBox;
-        Int2ObjectMap<BrBone> toplevelBones = new Int2ObjectOpenHashMap<>();
         Int2ObjectMap<BrBone> allBones = new Int2ObjectOpenHashMap<>();
 
         textureWidth = geometry.get("texturewidth") instanceof JsonPrimitive jp ? jp.getAsInt() : 256;
@@ -58,18 +56,9 @@ public record BrModelEntry(
                 if (parse.parent() != -1) parse = parse.withParent(parse.parent());
                 allBones.put(parse.id(), parse);
             }
-
-            allBones.int2ObjectEntrySet().forEach((entry) -> {
-                var name = entry.getIntKey();
-                var bone = entry.getValue();
-                if (bone.parent() == -1 || allBones.get(bone.parent()) == null)
-                    toplevelBones.put(name, bone);
-                else
-                    allBones.get(bone.parent()).children().put(name, bone);
-            });
         }
 
-        return new BrModelEntry(identifier, textureWidth, textureHeight, visibleBox, toplevelBones, allBones);
+        return new BrModelEntry(identifier, textureWidth, textureHeight, visibleBox, allBones);
     }
 
     public static BrModelEntry parse(JsonObject geometry) {
@@ -77,7 +66,6 @@ public record BrModelEntry(
         int textureWidth;
         int textureHeight;
         AABB visibleBox;
-        Int2ObjectMap<BrBone> toplevelBones = new Int2ObjectOpenHashMap<>();
         Int2ObjectMap<BrBone> allBones = new Int2ObjectOpenHashMap<>();
 
         // description
@@ -110,19 +98,9 @@ public record BrModelEntry(
                 if (parse.parent() != -1) parse = parse.withParent(parse.parent());
                 allBones.put(parse.id(), parse);
             }
-
-            allBones.int2ObjectEntrySet().forEach((entry) -> {
-                var name = entry.getIntKey();
-                var bone = entry.getValue();
-                if (bone.parent() == -1 || allBones.get(bone.parent()) == null)
-                    toplevelBones.put(name, bone);
-                else
-                    allBones.get(bone.parent()).children().put(name, bone);
-            });
         }
 
-        return new BrModelEntry(identifier, textureWidth, textureHeight, visibleBox,
-                toplevelBones, allBones);
+        return new BrModelEntry(identifier, textureWidth, textureHeight, visibleBox, allBones);
     }
 
     public Model createModel() {

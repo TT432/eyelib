@@ -4,9 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.RootModelPartModel;
-import io.github.tt432.eyelib.client.model.bedrock.BrBone;
-import io.github.tt432.eyelib.client.model.bedrock.BrCube;
-import io.github.tt432.eyelib.client.model.bedrock.BrModelEntry;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -15,6 +12,7 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.core.Direction;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -33,11 +31,11 @@ public final class ModelFormatTransformers {
     ) {
     }
 
-    public static HumanoidModel<?> getArmorModel(BrModelEntry model, HumanoidModel<?> original) {
+    public static HumanoidModel<?> getArmorModel(Model model, HumanoidModel<?> original) {
         return new HumanoidModel<>(getVanillaPart(model, new TranslationParams(original, new PoseStack())));
     }
 
-    public static ModelPart getVanillaPart(BrModelEntry model, TranslationParams params) {
+    public static ModelPart getVanillaPart(Model model, TranslationParams params) {
         PoseStack poseStack = params.poseStack;
         poseStack.pushPose();
         PoseStack.Pose last = poseStack.last();
@@ -61,17 +59,17 @@ public final class ModelFormatTransformers {
         });
     }
 
-    public static ModelPart getVanillaPart(BrBone bone, TranslationParams params) {
+    public static ModelPart getVanillaPart(Model.Bone bone, TranslationParams params) {
         PoseStack poseStack = params.poseStack();
         poseStack.pushPose();
         AtomicReference<PartPose> pose = new AtomicReference<>(PartPose.ZERO);
 
         var last = poseStack.last();
-        Vector3f pivot = bone.pivot();
+        Vector3fc pivot = bone.pivot();
         last.pose().translate(pivot);
-        last.normal().rotateZYX(bone.rotation());
-        last.pose().rotateZYX(bone.rotation());
-        last.pose().translate(-pivot.x, -pivot.y, -pivot.z);
+        last.normal().rotateZYX(bone.rotation().z(), bone.rotation().y(), bone.rotation().x());
+        last.pose().rotateZYX(bone.rotation().z(), bone.rotation().y(), bone.rotation().x());
+        last.pose().translate(-pivot.x(), -pivot.y(), -pivot.z());
 
         if (params.original() instanceof RootModelPartModel model) {
             visitModelPart(model.getRootPart(), (name, child) -> {
@@ -97,10 +95,10 @@ public final class ModelFormatTransformers {
 
     private static final Set<Direction> ALL_VISIBLE = EnumSet.allOf(Direction.class);
 
-    public static ModelPart.Cube getVanillaCube(BrCube cube, TranslationParams params) {
+    public static ModelPart.Cube getVanillaCube(Model.Cube cube, TranslationParams params) {
         var wrapper = params.poseStack().last();
         List<ModelPart.Polygon> polygons = new ArrayList<>();
-        for (Model.Face face : cube.createCube().faces()) {
+        for (Model.Face face : cube.faces()) {
             var normal = face.normal().mul(wrapper.normal(), new Vector3f());
             List<ModelPart.Vertex> vertices = new ArrayList<>();
             for (Model.Vertex vertex : face.vertexes()) {
