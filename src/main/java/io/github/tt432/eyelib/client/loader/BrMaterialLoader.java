@@ -24,7 +24,7 @@ import java.util.Map;
  */
 @Slf4j
 @Getter
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class BrMaterialLoader extends BrResourcesLoader {
     public static final BrMaterialLoader INSTANCE = new BrMaterialLoader();
 

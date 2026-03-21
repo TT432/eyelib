@@ -28,7 +28,7 @@ import java.util.stream.Stream;
  */
 @Slf4j
 @Getter
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class BrClientEntityLoader extends BrResourcesLoader implements Searchable<BrClientEntity> {
     public static final BrClientEntityLoader INSTANCE = new BrClientEntityLoader();
 
