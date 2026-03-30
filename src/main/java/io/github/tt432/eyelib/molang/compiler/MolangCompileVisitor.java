@@ -6,8 +6,8 @@ import io.github.dmlloyd.classfile.Label;
 import io.github.dmlloyd.classfile.TypeKind;
 import io.github.dmlloyd.classfile.extras.constant.ConstantUtils;
 import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.molang.grammer.MolangBaseVisitor;
-import io.github.tt432.eyelib.molang.grammer.MolangParser;
+import io.github.tt432.eyelib.molang.generated.MolangBaseVisitor;
+import io.github.tt432.eyelib.molang.generated.MolangParser;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelib.molang.type.MolangFloat;
 import io.github.tt432.eyelib.molang.type.MolangNull;
@@ -17,6 +17,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.lang.constant.ClassDesc;
@@ -35,10 +36,11 @@ import static java.lang.constant.ConstantDescs.*;
  * @author TT432
  */
 @Slf4j
+@SuppressWarnings("NullAway")
 public class MolangCompileVisitor extends MolangBaseVisitor<MolangCompileVisitor.CompileContext> {
     @Getter
     @Setter
-    private CodeBuilder codeBuilder;
+    private @Nullable CodeBuilder codeBuilder;
 
     public void startVisitor(CodeBuilder methodVisitor) {
         this.codeBuilder = methodVisitor;

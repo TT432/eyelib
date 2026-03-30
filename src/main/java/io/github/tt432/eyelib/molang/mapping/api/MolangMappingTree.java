@@ -45,7 +45,9 @@ public class MolangMappingTree {
                     try {
                         Map<String, Object> annotationData = a.annotationData();
                         Object isPureFunction = annotationData.get("pureFunction");
-                        INSTANCE.addNode(annotationData.get("value").toString(),
+                        Object value = annotationData.get("value");
+                        if (value == null) continue;
+                        INSTANCE.addNode(value.toString(),
                                 new MolangClass(Class.forName(memberName),
                                         isPureFunction == null || (boolean) isPureFunction));
                     } catch (ReflectiveOperationException | LinkageError e) {
@@ -188,7 +190,7 @@ public class MolangMappingTree {
         return null;
     }
 
-    private Node findNode(String name) {
+    private @Nullable Node findNode(String name) {
         String[] split = name.split("\\.");
 
         Node last = toplevelNode;

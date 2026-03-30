@@ -9,7 +9,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.util.ExtraCodecs;
+import net.minecraft.world.phys.AABB;
 import org.joml.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +31,12 @@ public class EyelibCodec {
 
     public static final Codec<Vector2fc> VEC2FC = VEC2F.xmap(v -> v, Vector2f::new);
     public static final Codec<Vector3fc> VEC3FC = ExtraCodecs.VECTOR3F.xmap(v -> v, Vector3f::new);
+    public static final Codec<AABB> AABB_CODEC = Codec.DOUBLE.listOf().comapFlatMap(
+            l -> l.size() == 6
+                    ? DataResult.success(new AABB(l.get(0), l.get(1), l.get(2), l.get(3), l.get(4), l.get(5)))
+                    : DataResult.error(() -> "expected 6 values for AABB, got " + l.size()),
+            aabb -> List.of(aabb.minX, aabb.minY, aabb.minZ, aabb.maxX, aabb.maxY, aabb.maxZ)
+    );
 
     public static final Codec<Vector2f> FLOATS2VEC2F_CODEC = Codec.FLOAT.listOf().xmap(
             l -> new Vector2f(l.get(0), l.get(1)),
@@ -58,8 +66,8 @@ public class EyelibCodec {
 
     public static <S> MapCodec<S> list(Supplier<Map<String, CodecInfo<? extends S>>> codecs) {
         return new MapCodec<S>() {
-            private Map<String, MapCodec<S>> codecCache;
-            private Map<Class<? extends S>, MapCodec<S>> classCache;
+            private @Nullable Map<String, MapCodec<S>> codecCache;
+            private @Nullable Map<Class<? extends S>, MapCodec<S>> classCache;
 
             @SuppressWarnings("unchecked")
             Map<String, MapCodec<S>> get() {
@@ -77,7 +85,7 @@ public class EyelibCodec {
                 return codecCache;
             }
 
-            Map<Class<? extends S>, MapCodec<S>> getCache() {
+            @Nullable Map<Class<? extends S>, MapCodec<S>> getCache() {
                 get();
                 return classCache;
             }
@@ -89,17 +97,30 @@ public class EyelibCodec {
 
             @Override
             public <T> DataResult<S> decode(DynamicOps<T> ops, MapLike<T> input) {
-                return input.entries()
+                var result = input.entries()
                         .map(p -> p.mapFirst(k -> ops.getStringValue(k).getOrThrow(false, IllegalArgumentException::new)))
                         .filter(p -> get().containsKey(p.getFirst()))
                         .findFirst()
-                        .map(p -> get().get(p.getFirst()).fieldOf(p.getFirst()).decode(ops, input))
-                        .orElse(DataResult.error(() -> "can't parse " + input + " with " + this));
+                        .map(p -> {
+                            MapCodec<S> codec = get().get(p.getFirst());
+                            if (codec == null) {
+                                return DataResult.<S>error(() -> "no codec for " + p.getFirst());
+                            }
+                            return codec.fieldOf(p.getFirst()).decode(ops, input);
+                        });
+
+                if (result.isPresent()) {
+                    return result.get();
+                }
+
+                return DataResult.error(() -> "can't parse " + input + " with " + this);
             }
 
             @Override
             public <T> RecordBuilder<T> encode(S input, DynamicOps<T> ops, RecordBuilder<T> prefix) {
-                return getCache().entrySet().stream()
+                var cache = getCache();
+                if (cache == null) return prefix;
+                return cache.entrySet().stream()
                         .filter(e -> e.getKey().isInstance(input))
                         .findFirst()
                         .map(e -> e.getValue().encode(input, ops, prefix))

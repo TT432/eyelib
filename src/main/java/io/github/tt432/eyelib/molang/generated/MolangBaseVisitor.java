@@ -1,5 +1,5 @@
 // Generated from Molang.g4 by ANTLR 4.9.1
- package io.github.tt432.eyelib.molang.grammer;
+ package io.github.tt432.eyelib.molang.generated;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
 /**

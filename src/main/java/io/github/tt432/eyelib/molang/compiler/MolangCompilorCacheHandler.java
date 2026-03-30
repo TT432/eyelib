@@ -4,6 +4,7 @@ import io.github.tt432.eyelib.molang.MolangValue;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -30,6 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@SuppressWarnings("NullAway")
 public final class MolangCompilorCacheHandler implements MolangCompileCache {
     private static final Path CACHE_DIR = Paths.get(".cache", "eyelib", "compile");
 
@@ -230,7 +232,7 @@ public final class MolangCompilorCacheHandler implements MolangCompileCache {
      * H2 持久化缓存管理
      */
     static final class H2Cache {
-        private static Connection conn;
+        private static @Nullable Connection conn;
         // 避免每次查询都重复执行 DDL，建立一次后标记
         private static volatile boolean schemaReady = false;
 
