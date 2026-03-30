@@ -72,10 +72,11 @@ public abstract class ModelBakeInfo<Info> {
 
             for (int j = 0; j < cube.faces().size(); j++) {
                 Model.Face face = cube.faces().get(j);
-                Model.Face.Rect uvbox = face.uvbox();
+                var uv0 = face.vertexes().get(0).uv();
+                var uv2 = face.vertexes().get(2).uv();
                 if (pixelAnyMatch(intBuffer,
-                        uvbox.u0(), uvbox.v0(),
-                        uvbox.u1(), uvbox.v1(),
+                        uv0.x(), uv0.y(),
+                        uv2.x(), uv2.y(),
                         f
                 )) {
                     result[i] = true;

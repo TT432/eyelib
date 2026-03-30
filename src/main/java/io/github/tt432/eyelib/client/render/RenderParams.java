@@ -3,8 +3,8 @@ package io.github.tt432.eyelib.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
-import io.github.tt432.eyelib.util.client.PoseHelper;
 import io.github.tt432.eyelib.util.client.Textures;
+import io.github.tt432.eyelib.util.client.render.PoseCopies;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.With;
 import net.minecraft.client.Minecraft;
@@ -26,10 +26,10 @@ public record RenderParams(
         @Nullable Entity renderTarget,
         PoseStack.Pose pose0,
         PoseStack poseStack,
-        RenderType renderType,
-        ResourceLocation texture,
+        @Nullable RenderType renderType,
+        @Nullable ResourceLocation texture,
         boolean isSolid,
-        VertexConsumer consumer,
+        @Nullable VertexConsumer consumer,
         int light,
         int overlay,
         Int2BooleanOpenHashMap partVisibility
@@ -42,13 +42,28 @@ public record RenderParams(
         );
     }
 
-    public static Builder builder(PoseStack poseStack, RenderType renderType, boolean isSolid, ResourceLocation texture, VertexConsumer consumer) {
-        return new Builder(PoseHelper.copy(poseStack.last()), poseStack, renderType, isSolid, texture, consumer);
+    public static RenderParams noRender(PoseStack poseStack) {
+        return new RenderParams(
+                null, poseStack.last(), poseStack, null, null, false,
+                null, 0, OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap()
+        );
+    }
+
+    public static Builder builder(PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable ResourceLocation texture, @Nullable VertexConsumer consumer) {
+        return new Builder(PoseCopies.copy(poseStack.last()), poseStack, renderType, isSolid, texture, consumer);
     }
 
     public static Builder builder(PoseStack poseStack, MultiBufferSource multiBufferSource, ModelComponent modelComponent) {
         var texture = modelComponent.getTexture();
+        if (texture == null) {
+            return builder(poseStack, null, modelComponent.isSolid(), null, null)
+                    .partVisibility(modelComponent.getPartVisibility());
+        }
         RenderType renderType = modelComponent.getRenderType(texture);
+        if (renderType == null) {
+            return builder(poseStack, null, modelComponent.isSolid(), texture, null)
+                    .partVisibility(modelComponent.getPartVisibility());
+        }
         VertexConsumer buffer = multiBufferSource.getBuffer(renderType);
 
         return builder(poseStack, renderType, modelComponent.isSolid(), texture, buffer)
@@ -56,12 +71,18 @@ public record RenderParams(
     }
 
     public RenderParams asEmissive(MultiBufferSource multiBufferSource, ModelComponent modelComponent) {
+        if (texture == null) {
+            return withTexture(MissingTextureAtlasSprite.getLocation());
+        }
         ResourceLocation emissiveTextureLocation = texture.withPath(Textures::getEmissiveTexturePath);
         AbstractTexture emissiveTexture = Minecraft.getInstance().getTextureManager()
                 .getTexture(emissiveTextureLocation, MissingTextureAtlasSprite.getTexture());
 
         if (emissiveTexture != MissingTextureAtlasSprite.getTexture()) {
             var emissiveRenderType = modelComponent.getRenderType(emissiveTextureLocation);
+            if (emissiveRenderType == null) {
+                return withTexture(MissingTextureAtlasSprite.getLocation());
+            }
             VertexConsumer emissiveBuffer = multiBufferSource.getBuffer(emissiveRenderType);
             return withRenderType(emissiveRenderType)
                     .withConsumer(emissiveBuffer)
@@ -73,25 +94,29 @@ public record RenderParams(
     }
 
     public boolean textureMissing() {
-        return texture.equals(MissingTextureAtlasSprite.getLocation());
+        return texture == null || texture.equals(MissingTextureAtlasSprite.getLocation());
     }
 
     public static final class Builder {
         // required
         private final PoseStack.Pose pose0;
         private final PoseStack poseStack;
+        @Nullable
         private final RenderType renderType;
+        @Nullable
         private final ResourceLocation texture;
         private final boolean isSolid;
+        @Nullable
         private final VertexConsumer consumer;
 
         // optional
+        @Nullable
         private Entity renderTarget;
         private int light = LightTexture.FULL_BRIGHT;
         private int overlay = OverlayTexture.NO_OVERLAY;
         private Int2BooleanOpenHashMap partVisibility = new Int2BooleanOpenHashMap();
 
-        public Builder(PoseStack.Pose pose0, PoseStack poseStack, RenderType renderType, boolean isSolid, ResourceLocation texture, VertexConsumer consumer) {
+        public Builder(PoseStack.Pose pose0, PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable ResourceLocation texture, @Nullable VertexConsumer consumer) {
             this.pose0 = pose0;
             this.poseStack = poseStack;
             this.texture = texture;
@@ -100,7 +125,7 @@ public record RenderParams(
             this.renderType = renderType;
         }
 
-        public Builder entity(Entity entity) {
+        public Builder entity(@Nullable Entity entity) {
             renderTarget = entity;
             return this;
         }

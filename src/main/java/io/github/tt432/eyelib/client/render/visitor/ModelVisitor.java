@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.render.RenderParams;
-import io.github.tt432.eyelib.util.client.PoseHelper;
+import io.github.tt432.eyelib.util.client.render.PoseCopies;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -109,7 +109,7 @@ public class ModelVisitor {
                 poseStack.scale(scale.x(), scale.y(), scale.z());
 
                 m4.translate(-renderPivot.x(), -renderPivot.y(), -renderPivot.z());
-                return PoseHelper.copy(last);
+                return PoseCopies.copy(last);
             } else {
                 Deque<PoseStack.Pose> stack = poseStack.poseStack;
                 stack.removeLast();

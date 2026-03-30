@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.entity;
 
-import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelib.client.model.ModelLookup;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
@@ -13,7 +13,7 @@ public class ClientEntityRuntimeData {
 
     public void setup(BrClientEntity clientEntity) {
         clientEntity.geometry().forEach((shortName, geometry) -> {
-            models.put(shortName, Eyelib.getModelManager().get(geometry));
+            models.put(shortName, ModelLookup.get(geometry));
         });
     }
 }

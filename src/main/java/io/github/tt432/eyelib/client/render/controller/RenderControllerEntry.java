@@ -11,8 +11,8 @@ import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.type.*;
 import io.github.tt432.eyelib.util.client.NativeImages;
 import io.github.tt432.eyelib.util.client.Textures;
+import io.github.tt432.eyelib.util.client.texture.TexturePathHelper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
@@ -39,7 +39,7 @@ public record RenderControllerEntry(
             Map<String, MolangValue> materials,
             Map<String, MolangValue> part_visibility
     ) {
-        this(geometry, textures, arrays, materials, part_visibility, new AtomicBoolean(), new RenderControllerRuntime());
+        this(geometry, textures, arrays, materials, part_visibility, new AtomicBoolean(true), new RenderControllerRuntime());
     }
 
     public static final Codec<RenderControllerEntry> CODEC = RecordCodecBuilder.create(ins -> ins.group(
@@ -101,21 +101,11 @@ public record RenderControllerEntry(
     }
 
     public ResourceLocation getTexture(MolangScope scope, BrClientEntity entity) {
-        StringBuilder sb = new StringBuilder();
-        for (MolangValue mv : textures) {
-            sb.append(get(scope, mv, "texture", entity.textures()));
-        }
-        return new ResourceLocation("complex", sb.toString().replace(":", "_") + ".png");
+        return composeTextureLocation(resolveTextureLayerPaths(scope, entity), ".png");
     }
 
     public ResourceLocation getEmissiveTexture(MolangScope scope, BrClientEntity entity) {
-        StringBuilder sb = new StringBuilder();
-        for (MolangValue mv : textures) {
-            String s = entity.textures().get(mv.getObject(scope).asString()
-                    .toLowerCase(Locale.ROOT).replace("texture.", ""));
-            sb.append(s);
-        }
-        return new ResourceLocation("complex", sb.toString().replace(":", "_") + ".emissive.png");
+        return composeTextureLocation(resolveTextureLayerPaths(scope, entity), ".emissive.png");
     }
 
     public RenderControllerEntry {
@@ -131,30 +121,19 @@ public record RenderControllerEntry(
         ResourceLocation texture;
 
         if (!textures.isEmpty()) {
+            List<String> textureLayerPaths = resolveTextureLayerPaths(scope, entity);
             texture = getTexture(scope, entity);
-
-            boolean needReloadTexture = this.needReloadTexture.get();
-
-            if (Minecraft.getInstance().getTextureManager().getTexture(texture) == MissingTextureAtlasSprite.getTexture()
-                    || needReloadTexture) {
-                List<ResourceLocation> list = new ArrayList<>();
-                for (MolangValue mv : textures) {
-                    ResourceLocation parse = new ResourceLocation(get(scope, mv, "texture", entity.textures()));
-                    list.add(parse);
-                }
-                syncedActions.add(() -> NativeImages.uploadImage(texture, Textures.layerMerging(list)));
-            }
 
             ResourceLocation emissiveTexture = getEmissiveTexture(scope, entity);
 
-            if (Minecraft.getInstance().getTextureManager().getTexture(emissiveTexture) == MissingTextureAtlasSprite.getTexture()
-                    || needReloadTexture) {
-                List<ResourceLocation> list = new ArrayList<>();
-                for (MolangValue mv : textures) {
-                    ResourceLocation resourceLocation = new ResourceLocation(get(scope, mv, "texture", entity.textures())).withPath(s -> replacePng(s, ".png", ".emissive.png"));
-                    list.add(resourceLocation);
-                }
-                syncedActions.add(() -> NativeImages.uploadImage(emissiveTexture, Textures.layerMerging(list)));
+            boolean needReloadTexture = this.needReloadTexture.get();
+
+            if (needReloadTexture) {
+                List<ResourceLocation> textureLayers = toResourceLocations(textureLayerPaths);
+                syncedActions.add(() -> NativeImages.uploadImage(texture, Textures.layerMerging(textureLayers)));
+
+                List<ResourceLocation> emissiveTextureLayers = toResourceLocations(toEmissiveTextureLayerPaths(textureLayerPaths));
+                syncedActions.add(() -> NativeImages.uploadImage(emissiveTexture, Textures.layerMerging(emissiveTextureLayers)));
             }
 
             this.needReloadTexture.set(false);
@@ -192,14 +171,35 @@ public record RenderControllerEntry(
         }
     }
 
-    static String replacePng(String originalString, String old, String newStr) {
-        int lastIndexOfDot = originalString.lastIndexOf(old);
-
-        if (lastIndexOfDot != -1) {
-            String beforeDot = originalString.substring(0, lastIndexOfDot);
-            return beforeDot + newStr;
-        } else {
-            return originalString;
+    private ResourceLocation composeTextureLocation(List<String> layerPaths, String suffix) {
+        StringBuilder pathBuilder = new StringBuilder();
+        for (String layerPath : layerPaths) {
+            pathBuilder.append(layerPath);
         }
+        return new ResourceLocation("complex", pathBuilder.toString().replace(":", "_") + suffix);
+    }
+
+    private List<String> resolveTextureLayerPaths(MolangScope scope, BrClientEntity entity) {
+        List<String> layerPaths = new ArrayList<>(textures.size());
+        for (MolangValue texture : textures) {
+            layerPaths.add(get(scope, texture, "texture", entity.textures()));
+        }
+        return layerPaths;
+    }
+
+    private List<String> toEmissiveTextureLayerPaths(List<String> layerPaths) {
+        List<String> emissiveLayerPaths = new ArrayList<>(layerPaths.size());
+        for (String layerPath : layerPaths) {
+            emissiveLayerPaths.add(TexturePathHelper.getEmissiveTexturePath(layerPath));
+        }
+        return emissiveLayerPaths;
+    }
+
+    private List<ResourceLocation> toResourceLocations(List<String> layerPaths) {
+        List<ResourceLocation> resourceLocations = new ArrayList<>(layerPaths.size());
+        for (String layerPath : layerPaths) {
+            resourceLocations.add(new ResourceLocation(layerPath));
+        }
+        return resourceLocations;
     }
 }

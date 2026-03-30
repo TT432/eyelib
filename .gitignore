@@ -39,6 +39,7 @@ repo
 *.duckdb
 *.duckdb.wal
 NUL
+test_resources/
 
 文档
 .extrasrc

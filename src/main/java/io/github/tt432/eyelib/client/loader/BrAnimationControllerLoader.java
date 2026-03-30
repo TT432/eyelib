@@ -2,10 +2,8 @@ package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import io.github.tt432.eyelib.client.registry.ClientAssetRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -14,6 +12,7 @@ import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +22,6 @@ import java.util.Map;
 /**
  * @author TT432
  */
-@Getter
-@Slf4j
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class BrAnimationControllerLoader extends BrResourcesLoader {
     public static final BrAnimationControllerLoader INSTANCE = new BrAnimationControllerLoader();
@@ -42,8 +39,13 @@ public class BrAnimationControllerLoader extends BrResourcesLoader {
         super("animation_controllers", "json");
     }
 
+    @Nullable
     public static BrAnimationControllers getController(ResourceLocation location) {
         return INSTANCE.animationControllers.get(location);
+    }
+
+    public static Map<ResourceLocation, BrAnimationControllers> getAnimationControllers() {
+        return INSTANCE.animationControllers;
     }
 
     @Override
@@ -54,12 +56,9 @@ public class BrAnimationControllerLoader extends BrResourcesLoader {
             try {
                 animationControllers.put(key, BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, value).getOrThrow(false, LOGGER::warn));
             } catch (Exception e) {
-                log.error("can't load animation controller {}", key, e);
+                LOGGER.error("can't load animation controller {}", key, e);
             }
         });
-
-        for (var value : animationControllers.values()) {
-            value.animationControllers().forEach((s, a) -> Eyelib.getAnimationManager().put(s, a));
-        }
+        ClientAssetRegistry.replaceAnimationAssets(BrAnimationLoader.getAnimations(), animationControllers);
     }
 }

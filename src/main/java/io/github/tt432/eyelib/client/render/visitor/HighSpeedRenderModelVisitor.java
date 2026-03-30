@@ -30,7 +30,14 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
 
         applyBoneTranslate(context, poseStack, bone, cast(data));
 
-        var bakedBone = context.<BakedModel>get("BackedModel").bones().get(bone.id());
+        var bakedModel = context.<BakedModel>get("BackedModel");
+        if (bakedModel == null) {
+            return;
+        }
+        var bakedBone = bakedModel.bones().get(bone.id());
+        if (bakedBone == null) {
+            return;
+        }
 
         PoseStack.Pose last = poseStack.last();
 
@@ -42,7 +49,9 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
              bakedBone.transformPos(last.pose());
              bakedBone.transformNormal(last.normal());
 
-             visitVertex(bakedBone, renderParams.consumer(), renderParams.overlay(), renderParams.light());
+             if (renderParams.consumer() != null) {
+                 visitVertex(bakedBone, renderParams.consumer(), renderParams.overlay(), renderParams.light());
+             }
         }
     }
 

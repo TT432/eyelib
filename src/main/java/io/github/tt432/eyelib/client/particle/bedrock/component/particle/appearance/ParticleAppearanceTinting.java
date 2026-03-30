@@ -12,6 +12,7 @@ import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.MolangValue4;
 import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.util.codec.EyelibCodec;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector4f;
 
 import java.util.Comparator;
@@ -21,10 +22,11 @@ import java.util.TreeMap;
  * @author TT432
  */
 @RegisterParticleComponent(value = "particle_appearance_tinting", target = ComponentTarget.PARTICLE)
+@SuppressWarnings("NullAway")
 public record ParticleAppearanceTinting(
         boolean isGradient,
-        MolangValue4 staticColor,
-        Color gradientColor
+        @Nullable MolangValue4 staticColor,
+        @Nullable Color gradientColor
 ) implements ParticleParticleComponent {
     public static final Codec<ParticleAppearanceTinting> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.either(

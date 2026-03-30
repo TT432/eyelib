@@ -22,6 +22,7 @@ import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
+import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
 import java.lang.Math;
@@ -50,8 +51,11 @@ public class BrParticleParticle {
 
     public final MolangScope molangScope = new MolangScope();
 
+    @Nullable
     private final ParticleAppearanceBillboard billboard;
+    @Nullable
     private final ParticleAppearanceLighting lighting;
+    @Nullable
     private final ParticleAppearanceTinting tinting;
 
     @Getter

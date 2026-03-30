@@ -18,6 +18,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.*;
 
 import java.lang.Math;
@@ -26,6 +27,7 @@ import java.lang.Math;
  * @author TT432
  */
 @RegisterParticleComponent(value = "particle_appearance_billboard", target = ComponentTarget.PARTICLE)
+@SuppressWarnings("NullAway")
 public record ParticleAppearanceBillboard(
         MolangValue2 size,
         FaceCameraMode facingCameraMode,
@@ -91,11 +93,11 @@ public record ParticleAppearanceBillboard(
         }
 
         public record Flipbook(
-                MolangValue2 baseUV,
-                MolangValue2 sizeUV,
-                MolangValue2 stepUV,
-                MolangValue framesPerSecond,
-                MolangValue maxFrame,
+                @Nullable MolangValue2 baseUV,
+                @Nullable MolangValue2 sizeUV,
+                @Nullable MolangValue2 stepUV,
+                @Nullable MolangValue framesPerSecond,
+                @Nullable MolangValue maxFrame,
                 // todo
                 boolean stretchToLifetime,
                 boolean loop

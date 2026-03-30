@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.ImmutableFloatTreeMap;
 import io.github.tt432.eyelib.util.codec.CodecHelper;
 import io.github.tt432.eyelib.util.math.EyeMath;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 /**
@@ -38,14 +39,17 @@ public record BrBoneAnimation(
             KEY_FRAME_LIST_CODEC.optionalFieldOf("scale", ImmutableFloatTreeMap.empty()).forGetter(o -> o.scale)
     ).apply(ins, BrBoneAnimation::new));
 
+    @Nullable
     public Vector3f lerpRotation(MolangScope scope, float currentTick) {
         return lerp(scope, rotation, currentTick);
     }
 
+    @Nullable
     public Vector3f lerpPosition(MolangScope scope, float currentTick) {
         return lerp(scope, position, currentTick);
     }
 
+    @Nullable
     public Vector3f lerpScale(MolangScope scope, float currentTick) {
         return lerp(scope, scale, currentTick);
     }
@@ -57,6 +61,7 @@ public record BrBoneAnimation(
      * @param currentTick 当前 tick
      * @return 值
      */
+    @Nullable
     public static Vector3f lerp(MolangScope scope,
                                 ImmutableFloatTreeMap<BrBoneKeyFrame> frames,
                                 float currentTick) {
@@ -72,6 +77,9 @@ public record BrBoneAnimation(
                 var beforePlus = frames.lowerEntry(before.timestamp());
                 var afterPlus = frames.higherEntry(after.timestamp());
 
+                if (beforePlus == null || afterPlus == null) {
+                    return before.linearLerp(scope, after, weight);
+                }
                 return BrBoneKeyFrame.catmullromLerp(scope, beforePlus, before, after, afterPlus, weight);
             }
         } else if (before != null) {

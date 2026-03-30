@@ -78,8 +78,10 @@ public record BrMaterialEntry(
         default List<T> toList(BrMaterialEntry material, Map<String, BrMaterialEntry> materials) {
             BrMaterialEntry base = materials.get(material.base);
             var result = new ArrayList<>(get(material, materials));
-            add(result, base, materials);
-            sub(result, base, materials);
+            if (base != null) {
+                add(result, base, materials);
+                sub(result, base, materials);
+            }
             return result;
         }
     }

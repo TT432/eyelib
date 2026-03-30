@@ -17,6 +17,7 @@ import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,7 @@ public class BrAttachableLoader extends BrResourcesLoader implements Searchable<
 
     private final Map<ResourceLocation, BrClientEntity> attachables = new HashMap<>();
 
+    @Nullable
     public BrClientEntity get(ResourceLocation id) {
         return attachables.get(id);
     }

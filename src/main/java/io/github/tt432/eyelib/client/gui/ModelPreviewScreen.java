@@ -1,10 +1,13 @@
 package io.github.tt432.eyelib.client.gui;
 
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelib.client.model.Model;
@@ -17,6 +20,7 @@ import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.util.client.Textures;
+import io.github.tt432.eyelib.util.modbridge.ModBridgeModelUpdateEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -27,12 +31,15 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * A screen for previewing models from the ModelManager.
@@ -54,9 +61,13 @@ public class ModelPreviewScreen extends Screen {
         }
     }
 
+    @Nullable
     private EditBox searchBox;
+    @Nullable
     private Textures.ModelWithTexture currentModel;
+    @Nullable
     private DFSModel dfsModel;
+    @Nullable
     private BakedModel bakedModel;
     private String statusMessage = "";
 
@@ -71,6 +82,8 @@ public class ModelPreviewScreen extends Screen {
     private float translateX = 0;
     private float translateY = 0;
     private boolean isDragging = false;
+
+    private final Consumer<ModBridgeModelUpdateEvent> ON_MODEL_UPDATE = this::onEvent;
 
     public ModelPreviewScreen() {
         super(Component.literal("Model Preview"));
@@ -92,12 +105,16 @@ public class ModelPreviewScreen extends Screen {
 
         // Set initial focus to search box
         this.setInitialFocus(this.searchBox);
+
+        MinecraftForge.EVENT_BUS.addListener(ON_MODEL_UPDATE);
     }
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         // Render search box
-        this.searchBox.render(guiGraphics, mouseX, mouseY, partialTick);
+        if (this.searchBox != null) {
+            this.searchBox.render(guiGraphics, mouseX, mouseY, partialTick);
+        }
 
         // Calculate viewport dimensions
         int viewportWidth = (int) (this.width * VIEWPORT_SIZE_PERCENT);
@@ -174,8 +191,12 @@ public class ModelPreviewScreen extends Screen {
             try {
                 if (currentModel != null) {
                     ModelVisitContext context = new ModelVisitContext();
-                    context.put("BackedModel", bakedModel);
-                    this.dfsModel.visit(params, context, BuiltInBrModelRenderVisitors.HIGH_SPEED_RENDER, new ModelRuntimeData(), new DFSModel.StateMachine());
+                    if (bakedModel != null) {
+                        context.put("BackedModel", bakedModel);
+                    }
+                    if (this.dfsModel != null) {
+                        this.dfsModel.visit(params, context, BuiltInBrModelRenderVisitors.HIGH_SPEED_RENDER, new ModelRuntimeData(), new DFSModel.StateMachine());
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace(); // Log rendering errors but don't crash screen
@@ -191,7 +212,9 @@ public class ModelPreviewScreen extends Screen {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
-            performSearch(this.searchBox.getValue());
+            if (this.searchBox != null) {
+                performSearch(this.searchBox.getValue());
+            }
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
@@ -292,5 +315,22 @@ public class ModelPreviewScreen extends Screen {
                 this.statusMessage = "Failed to load .bbmodel: " + e.getMessage();
             }
         }
+    }
+
+    public void onEvent(ModBridgeModelUpdateEvent event) {
+        JsonObject jsonObject = new Gson().fromJson(event.json, JsonObject.class);
+        BBModel model = BBModel.CODEC.parse(JsonOps.INSTANCE, new Gson().fromJson(jsonObject.get("data").getAsString(), JsonObject.class)).getOrThrow(false, IllegalArgumentException::new);
+
+        this.currentModel = model.mergedModel();
+        var model1 = currentModel.model();
+        var info = TwoSideModelBakeInfo.INSTANCE.getBakeInfo(model1, true, new ResourceLocation(currentModel.atlasTexture().id()));
+        bakedModel = TwoSideModelBakeInfo.INSTANCE.bake(model1, info);
+        dfsModel = DFSModel.create(model1);
+    }
+
+    @Override
+    public void onClose() {
+        super.onClose();
+        MinecraftForge.EVENT_BUS.unregister(ON_MODEL_UPDATE);
     }
 }

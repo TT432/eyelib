@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.mixin;
 import io.github.tt432.eyelib.client.model.RootModelPartModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,7 +18,7 @@ import java.util.function.Function;
 @Mixin(HumanoidModel.class)
 public class HumanoidModelMixin implements RootModelPartModel {
     @Unique
-    private ModelPart eyelib$part;
+    private @Nullable ModelPart eyelib$part;
 
     @Inject(method = "<init>(Lnet/minecraft/client/model/geom/ModelPart;Ljava/util/function/Function;)V", at = @At("RETURN"))
     private void eyelib$init(ModelPart part, Function p_170680_, CallbackInfo ci) {
@@ -25,7 +26,7 @@ public class HumanoidModelMixin implements RootModelPartModel {
     }
 
     @Override
-    public ModelPart getRootPart() {
+    public @Nullable ModelPart getRootPart() {
         return eyelib$part;
     }
 }

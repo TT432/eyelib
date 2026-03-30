@@ -1,5 +1,7 @@
 package io.github.tt432.eyelib.util;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,6 +21,7 @@ public final class Blackboard {
     }
 
     @SuppressWarnings("unchecked")
+    @Nullable
     public <T> T get(String key) {
         return (T) data.get(key);
     }

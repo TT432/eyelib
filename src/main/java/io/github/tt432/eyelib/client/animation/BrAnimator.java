@@ -22,6 +22,10 @@ public final class BrAnimator {
     public static ModelRuntimeData tickAnimation(AnimationComponent component, MolangScope scope, AnimationEffects effects,
                                                  float ticks, Runnable animationStartFeedback) {
         ModelRuntimeData infos = new ModelRuntimeData();
+        var serializableInfo = component.getSerializableInfo();
+        if (serializableInfo == null) {
+            return infos;
+        }
 
         for (Map.Entry<Animation<?>, MolangValue> entry : component.getAnimate().entrySet()) {
             Animation<?> animation = entry.getKey();
@@ -29,7 +33,7 @@ public final class BrAnimator {
             if (animation == null) continue;
 
             animation.tickAnimation(cast(component.getAnimationData(animation.name())),
-                    component.getSerializableInfo().animations(), scope, ticks, multiplier.eval(scope),
+                    serializableInfo.animations(), scope, ticks, multiplier.eval(scope),
                     infos, effects, animationStartFeedback);
         }
 

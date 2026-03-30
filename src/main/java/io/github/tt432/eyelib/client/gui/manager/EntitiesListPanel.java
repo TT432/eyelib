@@ -11,6 +11,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.gui.widget.ScrollPanel;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
  */
 public class EntitiesListPanel extends ScrollPanel {
 
+    @Nullable
     static EyelibManagerScreen.EntityButton lastSelected;
 
     private final List<EyelibManagerScreen.EntityButton> allEntitiesList = new ArrayList<>();
@@ -76,11 +78,14 @@ public class EntitiesListPanel extends ScrollPanel {
     }
 
     private int lineAmount() {
+        if (filtedEntitiesList.isEmpty()) {
+            return 0;
+        }
         return (filtedEntitiesList.size() - 1) / buttonPreLine();
     }
 
     private int slotSize() {
-        return (width - (border * 2)) / 4;
+        return (width - (border * 2)) / buttonPreLine();
     }
 
     @Override
@@ -88,6 +93,7 @@ public class EntitiesListPanel extends ScrollPanel {
         return lineAmount() * slotSize();
     }
 
+    @Nullable
     private EyelibManagerScreen.EntityButton hoverButton;
 
     @Override

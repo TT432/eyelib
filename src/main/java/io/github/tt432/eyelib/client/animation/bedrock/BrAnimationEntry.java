@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.client.animation.bedrock;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.AnimationEffect;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
@@ -10,9 +9,10 @@ import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
+import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
+import io.github.tt432.eyelib.client.particle.ParticleLookup;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticleRenderManager;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.util.ResourceLocations;
@@ -27,7 +27,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3f;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
@@ -54,6 +54,14 @@ public record BrAnimationEntry(
         AnimationEffect<MolangValue> timeline,
         Int2ObjectMap<BrBoneAnimation> bones
 ) implements Animation<BrAnimationEntry.Data> {
+    // Helper to return null from lambdas with proper NullAway suppression
+    @SuppressWarnings("NullAway")
+    @Nullable
+    private static <T> T nil() {
+        @SuppressWarnings("NullAway")
+        T result = null;
+        return result;
+    }
     public static Codec<BrAnimationEntry> codec(String name) {
         return RecordCodecBuilder.create(ins -> {
             final Codec<List<MolangValue>> elementCodec = ChinExtraCodecs.singleOrList(MolangValue.CODEC);
@@ -78,8 +86,7 @@ public record BrAnimationEntry(
                                                 e.getX(), e.getY(), e.getZ(), soundEvent, e.getSoundSource(), 1, 1);
                                     }
                                 }
-
-                                return null;
+                                return Boolean.TRUE;
                             })), AnimationEffect::data
                     ).optionalFieldOf("sound_effects", AnimationEffect.empty()).forGetter(o -> o.soundEffects),
                     EFFECTS_CODEC.xmap(map -> new AnimationEffect<>(map, (scope, ticks, frame) ->
@@ -87,16 +94,15 @@ public record BrAnimationEntry(
                                 String s = clientEntity.particle_effects().get(frame.effect());
 
                                 if (s != null) {
-                                    BrParticle brParticle = Eyelib.getParticleManager().get(s);
+                                    BrParticle brParticle = ParticleLookup.get(ResourceLocations.of(s));
                                     if (brParticle != null) {
                                         String uuid = UUID.randomUUID().toString();
                                         BrParticleEmitter emitter = new BrParticleEmitter(brParticle, scope, entity.level(), new Vector3f());
                                         data.particles.add(new RuntimeParticlePlayData(uuid, emitter, frame.locator().orElse(null), ticks));
-                                        BrParticleRenderManager.spawnEmitter(uuid, emitter);
+                                        ParticleSpawnService.spawnEmitter(uuid, emitter);
                                     }
                                 }
-
-                                return null;
+                                return Boolean.TRUE;
                             })), AnimationEffect::data
                     ).optionalFieldOf("particle_effects", AnimationEffect.empty()).forGetter(o -> o.particleEffects),
                     Codec.unboundedMap(Codec.STRING, elementCodec).xmap(map -> {
@@ -172,7 +178,7 @@ public record BrAnimationEntry(
         data.resetEffects();
 
         for (var particle : data.particles) {
-            BrParticleRenderManager.removeEmitter(particle.particleUUID());
+            ParticleSpawnService.removeEmitter(particle.particleUUID());
         }
 
         data.particles.clear();
@@ -241,6 +247,9 @@ public record BrAnimationEntry(
             var boneName = entry.getIntKey();
             var boneAnim = entry.getValue();
             var renderInfoEntry = infos.getData(boneName);
+            if (renderInfoEntry == null) {
+                return;
+            }
 
             Vector3f pos = boneAnim.lerpPosition(scope, animTick);
 

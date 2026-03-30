@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.model.tree.ModelGroupNode;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public record GroupLocator(
     }
 
     @Override
+    @Nullable
     public LocatorEntry getCubeNode(int index) {
         if (index < 0 || index >= cubes.size()) return null;
         return cubes.get(index);

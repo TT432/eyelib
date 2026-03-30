@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 import org.lwjgl.glfw.GLFW;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +46,9 @@ public class AnimationView extends Screen {
     private String selectedAnimationName = null;
     @Nullable
     private String selectedBoneName = null;
+    @Nullable
     ButtonGroup animationChanelButtonGroup;
+    @Nullable
     StringsScrollPanel boneNameScrollPanel;
 
     protected AnimationView(Component title) {
@@ -71,6 +73,7 @@ public class AnimationView extends Screen {
         List<GuiEventListener> children = new ArrayList<>();
         @Nullable
         String selectedButtonName;
+        @Nullable
         GuiEventListener selectedButton;
         Map<String, List<GuiEventListener>> renderables;
 
@@ -146,8 +149,10 @@ public class AnimationView extends Screen {
 
     static class StringsScrollPanel extends ScrollPanel implements Refreshable {
         private final Supplier<Stream<String>> strings;
+        @Nullable
         private List<Button> buttons;
         private final OnPress onPress;
+        @Nullable
         private Button lastButton;
 
         private static final int buttonHeight = 20;
@@ -200,6 +205,9 @@ public class AnimationView extends Screen {
 
         @Override
         protected void drawPanel(GuiGraphics guiGraphics, int entryRight, int relativeY, Tesselator tess, int mouseX, int mouseY) {
+            if (buttons == null) {
+                return;
+            }
             for (int i = 0; i < buttons.size(); i++) {
                 var button = buttons.get(i);
                 button.setPosition(left + border, relativeY + (i * buttonHeight));
@@ -210,7 +218,7 @@ public class AnimationView extends Screen {
         @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
             return super.mouseClicked(mouseX, mouseY, button)
-                    || buttons.stream().anyMatch(b -> b.mouseClicked(mouseX, mouseY, button));
+                    || (buttons != null && buttons.stream().anyMatch(b -> b.mouseClicked(mouseX, mouseY, button)));
         }
     }
 
@@ -234,7 +242,9 @@ public class AnimationView extends Screen {
         addRenderableWidget(new StringsScrollPanel(() -> Eyelib.getAnimationManager().getAllData().keySet().stream(),
                 100, height - 10 - 30, 30, 10, 1, (name, button) -> {
             selectedAnimationName = name;
-            boneNameScrollPanel.refresh();
+            if (boneNameScrollPanel != null) {
+                boneNameScrollPanel.refresh();
+            }
         }));
 
         int initPosY = 30;
@@ -281,7 +291,7 @@ public class AnimationView extends Screen {
         return new RenderableEventListener() {
             @Override
             public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-                if (animationChanelButtonGroup.selectedButtonName == null) return;
+                if (animationChanelButtonGroup == null || animationChanelButtonGroup.selectedButtonName == null) return;
 
                 AnimationChanel chanel = switch (animationChanelButtonGroup.selectedButtonName) {
                     case "position" -> AnimationChanel.POS;

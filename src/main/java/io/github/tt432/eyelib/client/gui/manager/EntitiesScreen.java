@@ -5,6 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author TT432
@@ -14,6 +15,7 @@ public class EntitiesScreen extends Screen {
         super(Component.empty());
     }
 
+    @Nullable
     EntitiesListPanel panel;
     int border;
 
@@ -33,7 +35,9 @@ public class EntitiesScreen extends Screen {
     }
 
     void onEdited(String input) {
-        panel.onEdited(input);
+        if (panel != null) {
+            panel.onEdited(input);
+        }
     }
 
     @Override

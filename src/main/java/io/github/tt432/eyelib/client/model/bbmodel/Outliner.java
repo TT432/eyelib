@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.model.bbmodel;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.util.codec.EyelibCodec;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.Optional;
 /**
  * @author TT432
  */
+@SuppressWarnings("NullAway")
 record Outliner(
         String uuid,
         Optional<Group> group,
@@ -19,8 +21,8 @@ record Outliner(
         List<Outliner> children
 ) {
     record CubeOrOutliner(
-            Outliner outliner,
-            String uuid
+            @Nullable Outliner outliner,
+            @Nullable String uuid
     ) {
     }
 

@@ -6,13 +6,17 @@ import io.github.tt432.eyelib.molang.MolangValue3;
 import io.github.tt432.eyelib.util.codec.CodecHelper;
 import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
+
+import java.util.Objects;
 
 /**
  * @author TT432
  */
 public record Direction(
         Type type,
+        @Nullable
         MolangValue3 custom
 ) {
     public static final Direction EMPTY = new Direction(Type.OUTWARDS, null);
@@ -34,7 +38,7 @@ public record Direction(
         return switch (type) {
             case INWARDS -> center.sub(other, new Vector3f()).normalize().mul(16);
             case OUTWARDS -> other.sub(center, new Vector3f()).normalize().mul(16);
-            case CUSTOM -> custom.eval(scope);
+            case CUSTOM -> Objects.requireNonNull(custom, "custom direction").eval(scope);
         };
     }
 

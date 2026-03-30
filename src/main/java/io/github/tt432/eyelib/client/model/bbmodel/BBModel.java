@@ -11,6 +11,7 @@ import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.With;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 @With
+@SuppressWarnings("NullAway")
 public record BBModel(
         Meta meta,
         String name,
@@ -87,7 +89,7 @@ public record BBModel(
         }
     }
 
-    private static void processOutlinerEntry(Outliner entry, BBBone parent, Map<String, Element> elementMap,
+    private static void processOutlinerEntry(Outliner entry, @Nullable BBBone parent, Map<String, Element> elementMap,
                                              Int2ObjectMap<Model.Bone> allBonesMap,
                                              Map<String, Group> groupMap, int textureIndex, List<Texture> textures) {
         String uuid = entry.uuid();

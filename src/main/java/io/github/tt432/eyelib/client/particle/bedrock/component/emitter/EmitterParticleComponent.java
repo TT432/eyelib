@@ -4,6 +4,7 @@ import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.shape.Direction;
 import io.github.tt432.eyelib.molang.MolangScope;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 /**
@@ -31,6 +32,7 @@ public interface EmitterParticleComponent extends ParticleComponent {
         Vector3f eval(MolangScope scope);
     }
 
+    @Nullable
     default EvalVector3f getEmitPosition(BrParticleEmitter emitter) {
         return null;
     }

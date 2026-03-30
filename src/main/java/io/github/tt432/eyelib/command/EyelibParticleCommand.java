@@ -19,6 +19,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.UUID;
@@ -61,7 +62,7 @@ public final class EyelibParticleCommand {
         return builder.buildFuture();
     }
 
-    private static int execute(CommandContext<CommandSourceStack> ctx, Vec3 posArg) {
+    private static int execute(CommandContext<CommandSourceStack> ctx, @Nullable Vec3 posArg) {
         ServerPlayer player;
         try {
             player = ctx.getSource().getPlayerOrException();

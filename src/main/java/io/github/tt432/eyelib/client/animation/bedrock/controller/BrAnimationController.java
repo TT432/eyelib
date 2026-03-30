@@ -2,16 +2,17 @@ package io.github.tt432.eyelib.client.animation.bedrock.controller;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.Animation;
+import io.github.tt432.eyelib.client.animation.AnimationLookup;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
+import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
+import io.github.tt432.eyelib.client.particle.ParticleLookup;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticleRenderManager;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -34,6 +35,15 @@ public record BrAnimationController(
         BrAcState initialState,
         Map<String, BrAcState> states
 ) implements Animation<BrAnimationController.Data> {
+    // Helper to return null from lambdas with proper NullAway suppression
+    @SuppressWarnings("NullAway")
+    @Nullable
+    private static <T> T nil() {
+        @SuppressWarnings("NullAway")
+        T result = null;
+        return result;
+    }
+
     public static final Codec<BrAnimationController> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.STRING.fieldOf("name").forGetter(BrAnimationController::name),
             BrAcState.CODEC.fieldOf("initialState").forGetter(BrAnimationController::initialState),
@@ -47,8 +57,13 @@ public record BrAnimationController(
 
     @Override
     public boolean anyAnimationFinished(Data data) {
+        if (data.currState == null) {
+            return true;
+        }
         return data.currState.animations().keySet().stream().anyMatch(animationName -> {
-            Animation<?> animation = Eyelib.getAnimationManager().get(data.currentAnimations.get(animationName));
+            String animName = data.currentAnimations.get(animationName);
+            if (animName == null) return true;
+            Animation<?> animation = AnimationLookup.get(animName);
             if (animation == null) return true;
             return animation.anyAnimationFinished(data.getData(animation));
         });
@@ -56,9 +71,14 @@ public record BrAnimationController(
 
     @Override
     public boolean allAnimationFinished(Data data) {
+        if (data.currState == null) {
+            return false;
+        }
         return data.currState.animations().keySet().stream().allMatch(animationName -> {
-            Animation<?> animation = Eyelib.getAnimationManager().get(data.currentAnimations.get(animationName));
-            if (animation == null) return true;
+            String animName = data.currentAnimations.get(animationName);
+            if (animName == null) return false;
+            Animation<?> animation = AnimationLookup.get(animName);
+            if (animation == null) return false;
             return animation.anyAnimationFinished(data.getData(animation));
         });
     }
@@ -74,9 +94,11 @@ public record BrAnimationController(
         private float startTick = -1;
         @Setter
         @Getter
+        @Nullable
         private BrAcState lastState;
         @Setter
         @Getter
+        @Nullable
         private BrAcState currState;
         private final Map<String, Object> data = new Object2ObjectOpenHashMap<>();
         public Map<String, String> currentAnimations = new Object2ObjectOpenHashMap<>();
@@ -96,14 +118,22 @@ public record BrAnimationController(
 
         var currState = data.getCurrState();
         if (currState == null) currState = switchState(ticks, scope, data, animations, initialState());
+        if (currState == null) {
+            return;
+        }
 
         scope.getOwner().replace(Data.class, data);
         scope.getOwner().replace(BrAnimationController.class, this);
 
         for (Map.Entry<String, MolangValue> entry : currState.transitions().entrySet()) {
             if (entry.getValue().evalAsBool(scope)) {
-                currState = switchState(ticks, scope, data, animations, states().get(entry.getKey()));
-                break;
+                BrAcState nextState = states().get(entry.getKey());
+                if (nextState == null) break;
+                BrAcState switchedState = switchState(ticks, scope, data, animations, nextState);
+                if (switchedState != null) {
+                    currState = switchedState;
+                    break;
+                }
             }
         }
 
@@ -115,6 +145,7 @@ public record BrAnimationController(
         effects.particles.add(data.particles);
     }
 
+    @Nullable
     private static BrAcState switchState(float ticks, MolangScope scope, Data data,
                                          Map<String, String> animations, BrAcState currState) {
         BrAcState lastState = data.getCurrState();
@@ -126,7 +157,7 @@ public record BrAnimationController(
             lastState.onExit().eval(scope);
             if (!data.particles.isEmpty()) {
                 for (var particle : data.particles) {
-                    BrParticleRenderManager.removeEmitter(particle.particleUUID());
+                    ParticleSpawnService.removeEmitter(particle.particleUUID());
                 }
 
                 data.particles.clear();
@@ -138,22 +169,23 @@ public record BrAnimationController(
             for (BrAcParticleEffect particleEffect : currState.particleEffects()) {
                 String uuid = UUID.randomUUID().toString();
                 particleEffect.effect().map(clientEntity.particle_effects()::get).ifPresent(effect -> {
-                    BrParticle particle = Eyelib.getParticleManager().get(effect);
+                    BrParticle particle = ParticleLookup.get(effect);
                     if (particle != null) {
                         BrParticleEmitter emitter = new BrParticleEmitter(particle, scope, entity.level(), entity.position().toVector3f());
-                        BrParticleRenderManager.spawnEmitter(uuid, emitter);
+                        ParticleSpawnService.spawnEmitter(uuid, emitter);
                         data.particles.add(new RuntimeParticlePlayData(uuid, emitter, particleEffect.locator().orElse(null), ticks));
                     }
                 });
             }
-
-            return null;
+            return Boolean.TRUE;
         });
 
         data.setCurrState(currState);
         data.setStartTick(ticks);
         currState.animations().keySet().forEach(animName -> {
-            Animation<?> animation = Eyelib.getAnimationManager().get(animations.get(animName));
+            String anim = animations.get(animName);
+            if (anim == null) return;
+            Animation<?> animation = AnimationLookup.get(anim);
             if (animation == null) return;
             animation.onFinish(data.getData(animation));
         });
@@ -180,8 +212,9 @@ public record BrAnimationController(
         if (lastState != null) {
             if (blendProgress < 1) {
                 lastState.animations().forEach((animationName, blendValue) -> {
-                    var animation = Eyelib.getAnimationManager().get(animations.get(animationName));
-
+                    String anim = animations.get(animationName);
+                    if (anim == null) return;
+                    Animation<?> animation = AnimationLookup.get(anim);
                     if (animation == null) return;
 
                     if (data.getData(animation) instanceof BrAnimationEntry.Data d) {
@@ -190,10 +223,10 @@ public record BrAnimationController(
                     }
                 });
             } else {
-                data.setLastState(null);
                 lastState.animations().forEach((name, blendValue) -> {
-                    var animation = Eyelib.getAnimationManager().get(animations.get(name));
-
+                    String anim = animations.get(name);
+                    if (anim == null) return;
+                    Animation<?> animation = AnimationLookup.get(anim);
                     if (animation == null) return;
 
                     animation.onFinish(data.getData(animation));
@@ -206,8 +239,9 @@ public record BrAnimationController(
                                          float multiplier, float startedTime, ModelRuntimeData infos,
                                          Data data, MolangScope scope, AnimationEffects effects,
                                          Runnable animationStartFeedback) {
-        var animation = Eyelib.getAnimationManager().get(animations.get(animName));
-
+        String anim = animations.get(animName);
+        if (anim == null) return;
+        Animation<?> animation = AnimationLookup.get(anim);
         if (animation == null) return;
 
         animation.tickAnimation(data.getData(animation), animations, scope, startedTime,
@@ -234,7 +268,12 @@ public record BrAnimationController(
         }
 
         public BrAnimationController create(String name) {
-            return new BrAnimationController(name, states.get(initialState), states);
+            BrAcState initial = states.get(initialState);
+            if (initial == null) initial = states.get("default");
+            if (initial == null) {
+                initial = new BrAcState(Map.of(), MolangValue.ZERO, MolangValue.ZERO, List.of(), List.of(), Map.of(), 0F, false);
+            }
+            return new BrAnimationController(name, initial, states);
         }
     }
 }

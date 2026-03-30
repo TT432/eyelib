@@ -58,7 +58,9 @@ public class RenderHelper {
 
     public RenderHelper render(RenderParams params, Model model, ModelRuntimeData infos) {
         this.params = params;
-        context.put("BackedModel", TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, params.isSolid(), params.texture()));
+        if (params.texture() != null) {
+            context.put("BackedModel", TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, params.isSolid(), params.texture()));
+        }
 
         dfsModel(model).visit(params, context, BuiltInBrModelRenderVisitors.HIGH_SPEED_RENDER, infos, new DFSModel.StateMachine());
 
@@ -89,11 +91,14 @@ public class RenderHelper {
 
     private void renderOnLocator(String visitorName, Model model, ModelRuntimeData infos, RenderParams params) {
         Map<String, Matrix4f> locators = context.get("locators");
+        if (locators == null) {
+            return;
+        }
 
         locators.forEach((name, matrix) -> {
             if (name.split("_t_")[0].equals(visitorName)) {
                 PoseStack poseStack = new PoseStack();
-                poseStack.poseStack.addLast(new PoseStack.Pose(matrix, new Matrix3f()));
+                poseStack.poseStack.addLast(new PoseStack.Pose(new Matrix4f(matrix), new Matrix3f(matrix)));
                 render(params.withPoseStack(poseStack), model, infos);
             }
         });

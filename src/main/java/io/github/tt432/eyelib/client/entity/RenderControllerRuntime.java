@@ -44,7 +44,7 @@ public class RenderControllerRuntime {
 
             ClientEntityRuntimeData data = clientEntity.clientEntityRuntimeData();
             data.setup(clientEntity);
-            data.models.values().forEach(model -> {
+            data.models.values().stream().filter(java.util.Objects::nonNull).forEach(model -> {
                 model.allBones().int2ObjectEntrySet().forEach(entry -> {
                     renderController.part_visibility().forEach((k, v) -> {
                         if (Pattern.compile(k.replace("*", ".*"))

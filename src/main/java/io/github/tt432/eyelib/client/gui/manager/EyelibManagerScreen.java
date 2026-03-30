@@ -2,96 +2,54 @@ package io.github.tt432.eyelib.client.gui.manager;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
-import io.github.tt432.eyelib.client.entity.BrClientEntity;
-import io.github.tt432.eyelib.client.model.bedrock.BrModel;
-import io.github.tt432.eyelib.client.model.bedrock.BrModelEntry;
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
+import io.github.tt432.eyelib.client.gui.manager.io.FileDialogService;
+import io.github.tt432.eyelib.client.gui.manager.reload.ManagerResourceFolderWatcher;
+import io.github.tt432.eyelib.client.gui.manager.reload.ManagerResourceImportPlanner;
+import io.github.tt432.eyelib.client.registry.ClientAssetRegistry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
-import io.github.tt432.eyelib.event.TextureChangedEvent;
-import io.github.tt432.eyelib.util.client.NativeImages;
 import io.github.tt432.eyelib.util.math.MathHelper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
-import org.apache.commons.io.monitor.FileAlterationMonitor;
-import org.apache.commons.io.monitor.FileAlterationObserver;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 /**
  * @author TT432
  */
-@Slf4j
 public class EyelibManagerScreen extends Screen {
-
-    @Mod.EventBusSubscriber(value = Dist.CLIENT)
-    public static final class ModEvents {
-        public static final KeyMapping openScreen = new KeyMapping("Open Eyelib Manager Screen", GLFW.GLFW_KEY_I, "Eyelib");
-
-        @SubscribeEvent
-        public static void onEvent(RegisterKeyMappingsEvent event) {
-            event.register(openScreen);
-        }
-    }
-
-    @Mod.EventBusSubscriber(Dist.CLIENT)
-    public static final class Events {
-
-        @SubscribeEvent
-        public static void onEvent(TickEvent.ClientTickEvent event) {
-            if (ModEvents.openScreen.isDown() && Minecraft.getInstance().screen == null) {
-                Minecraft.getInstance().setScreen(new EyelibManagerScreen());
-            }
-        }
-    }
-
     protected EyelibManagerScreen() {
         super(Component.empty());
     }
 
-    @RequiredArgsConstructor
+    public static EyelibManagerScreen create() {
+        return new EyelibManagerScreen();
+    }
+
     static class GuiAnimator {
         public final int animTime;
         private float startStamp, timer, timerStamp;
         private boolean fadeIn;
+
+        GuiAnimator(int animTime) {
+            this.animTime = animTime;
+        }
 
         public final float getTime(int tick, float partialTicks, boolean state) {
             float time = tick + partialTicks;
@@ -113,54 +71,19 @@ public class EyelibManagerScreen extends Screen {
         }
     }
 
-    private static final ExecutorService FILE_DIALOG_EXECUTOR = Executors.newSingleThreadExecutor();
+    private static final ManagerResourceFolderWatcher FOLDER_WATCHER = new ManagerResourceFolderWatcher();
 
-    private static CompletableFuture<Optional<Path>> fileSelectDialog(String title, @org.jetbrains.annotations.Nullable Path origin, @org.jetbrains.annotations.Nullable String filterLabel, String... filters) {
-        CompletableFuture<Optional<Path>> future = new CompletableFuture<>();
-
-        FILE_DIALOG_EXECUTOR.submit(() -> {
-            String result = null;
-
-            PointerBuffer filterBuffer = MemoryUtil.memAllocPointer(filters.length);
-
-            for (String filter : filters) {
-                filterBuffer.put(MemoryUtil.memUTF8(filter));
-            }
-            filterBuffer.flip();
-
-            String path = origin != null ? origin.toAbsolutePath().toString() : null;
-
-            result = TinyFileDialogs.tinyfd_openFileDialog(title, path, filterBuffer, filterLabel, false);
-
-            future.complete(Optional.ofNullable(result).map(Paths::get));
-        });
-
-        return future;
-    }
-
-    static String lastPath;
-
-    private static CompletableFuture<Optional<Path>> folderSelectDialog(String title, @org.jetbrains.annotations.Nullable Path origin) {
-        CompletableFuture<Optional<Path>> future = new CompletableFuture<>();
-
-        FILE_DIALOG_EXECUTOR.submit(() -> {
-            String path = lastPath != null ? lastPath : (origin != null ? origin.toAbsolutePath().toString() : "");
-
-            String result = TinyFileDialogs.tinyfd_selectFolderDialog(title, path);
-            lastPath = result;
-
-            future.complete(Optional.ofNullable(result).map(Paths::get));
-        });
-
-        return future;
-    }
-
-    @RequiredArgsConstructor
     static class EntityButton {
         final String key;
         final Component name;
         final ResourceLocation icon;
         final GuiAnimator animator = new GuiAnimator(5);
+
+        EntityButton(String key, Component name, ResourceLocation icon) {
+            this.key = key;
+            this.name = name;
+            this.icon = icon;
+        }
     }
 
     public static void renderEntityButton(GuiGraphics guiGraphics, int x, int y, int s, float a, EntityButton entityButton) {
@@ -181,12 +104,7 @@ public class EyelibManagerScreen extends Screen {
     private static DragTargetWidget json(int x, int y, int w, int h, Component title, ResourceLocation icon, Consumer<JsonObject> onDragEnter) {
         return new DragTargetWidget(x, y, w, h, new GuiAnimator(5), icon, title, (mx, my, b) -> {
             if (hover(x, y, w, h, mx, my)) {
-                fileSelectDialog(
-                        "读取文件",
-                        Path.of("/"),
-                        "读取 json",
-                        "*.json"
-                ).whenComplete((path, throwable) -> {
+                FileDialogService.selectJsonFile("读取文件", Path.of("/")).whenComplete((path, throwable) -> {
                     path.ifPresent(p -> {
                         if (p.toString().endsWith(".json")) {
                             try {
@@ -205,211 +123,16 @@ public class EyelibManagerScreen extends Screen {
         });
     }
 
+    @Nullable
     private List<DragTargetWidget> widgets;
-
-    private static final Gson gson = new Gson();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EyelibManagerScreen.class);
 
     // 选中的资源路径与监控器
+    @Nullable
     private static Path monitoredFolderPath;
+    @Nullable
     private static String monitoredFolderPathText;
-    private static FileAlterationMonitor fileMonitor;
-    private static FileAlterationObserver fileObserver;
-
-    static void loadResourceFolder(Path basePath) {
-        loadJsonFiles(basePath, "models", jo -> {
-            var model = BrModel.parse(jo);
-
-            for (BrModelEntry brModelEntry : model.models()) {
-                Eyelib.getModelManager().put(brModelEntry.name(), brModelEntry.createModel());
-            }
-        });
-
-        loadJsonFiles(basePath, "animations", jo -> {
-            var animation = BrAnimation.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-            animation.animations().forEach((k, v) -> Eyelib.getAnimationManager().put(k, v));
-        });
-
-        loadJsonFiles(basePath, "animation_controllers", jo -> {
-            var animation = BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-            animation.animationControllers().forEach((k, v) -> Eyelib.getAnimationManager().put(k, v));
-        });
-
-        loadJsonFiles(basePath, "render_controllers", jo -> {
-            var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-            controller.render_controllers().forEach((k, v) -> Eyelib.getRenderControllerManager().put(k, v));
-        });
-
-        loadJsonFiles(basePath, "entity", jo -> {
-            var entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-            Eyelib.getClientEntityLoader().put(new ResourceLocation(entity.identifier()), entity);
-        });
-
-        loadJsonFiles(basePath, "particles", jo -> {
-            var particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-            Eyelib.getParticleManager().put(particle.particleEffect().description().identifier(), particle);
-        });
-
-        Path texturePath = basePath.resolve("textures");
-        if (Files.exists(texturePath) && Files.isDirectory(texturePath)) {
-            List<Path> pngFiles = new ArrayList<>();
-
-            try {
-                Files.walkFileTree(texturePath, new SimpleFileVisitor<>() {
-                    @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                        if (file.getFileName().toString().endsWith(".png")) {
-                            pngFiles.add(file);
-                        }
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    @Override
-                    public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                        System.err.println("无法访问文件: " + file + "，错误: " + exc);
-                        return FileVisitResult.CONTINUE;
-                    }
-                });
-            } catch (IOException e) {
-                log.error("can't load files.", e);
-            }
-
-            pngFiles.forEach(pngFile -> {
-                try {
-                    NativeImage nativeImage = NativeImages.loadImage(new FileInputStream(pngFile.toFile()));
-                    ResourceLocation texture = new ResourceLocation(pngFile.toString().replace(basePath.toString(), "").replace("\\", "/").substring(1).toLowerCase(Locale.ROOT));
-                    NativeImages.uploadImage(texture, nativeImage);
-                } catch (IOException e) {
-                    log.error("can't load file.", e);
-                }
-            });
-
-            if (!pngFiles.isEmpty()) {
-                MinecraftForge.EVENT_BUS.post(new TextureChangedEvent());
-            }
-        }
-    }
-
-    /**
-     * 增量加载单个文件
-     */
-    static void loadSingleFile(Path basePath, Path file) {
-        String relative = basePath.relativize(file).toString().replace("\\", "/");
-
-        try {
-            if (relative.endsWith(".json")) {
-                JsonObject jo = gson.fromJson(IOUtils.toString(new FileInputStream(file.toFile()), StandardCharsets.UTF_8), JsonObject.class);
-
-                if (relative.startsWith("models/")) {
-                    var model = BrModel.parse(jo);
-                    for (BrModelEntry brModelEntry : model.models()) {
-                        Eyelib.getModelManager().put(brModelEntry.name(), brModelEntry.createModel());
-                    }
-                } else if (relative.startsWith("animations/")) {
-                    var animation = BrAnimation.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-                    animation.animations().forEach((k, v) -> Eyelib.getAnimationManager().put(k, v));
-                } else if (relative.startsWith("animation_controllers/")) {
-                    var animation = BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-                    animation.animationControllers().forEach((k, v) -> Eyelib.getAnimationManager().put(k, v));
-                } else if (relative.startsWith("render_controllers/")) {
-                    var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-                    controller.render_controllers().forEach((k, v) -> Eyelib.getRenderControllerManager().put(k, v));
-                } else if (relative.startsWith("entity/")) {
-                    var entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-                    Eyelib.getClientEntityLoader().put(new ResourceLocation(entity.identifier()), entity);
-                } else if (relative.startsWith("particles/")) {
-                    var particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-                    Eyelib.getParticleManager().put(particle.particleEffect().description().identifier(), particle);
-                }
-            } else if (relative.endsWith(".png") && relative.startsWith("textures/")) {
-                NativeImage nativeImage = NativeImages.loadImage(new FileInputStream(file.toFile()));
-                ResourceLocation texture = new ResourceLocation(file.toString().replace(basePath.toString(), "").replace("\\", "/").substring(1).toLowerCase(Locale.ROOT));
-                NativeImages.uploadImage(texture, nativeImage);
-                MinecraftForge.EVENT_BUS.post(new TextureChangedEvent());
-            }
-        } catch (Exception e) {
-            log.error("can't load single file.", e);
-        }
-    }
-
-    private void startFolderMonitor(Path basePath) {
-        stopFolderMonitor();
-
-        fileObserver = new FileAlterationObserver(basePath.toFile());
-        fileObserver.addListener(new FileAlterationListenerAdaptor() {
-            @Override
-            public void onFileCreate(File file) {
-                Path p = file.toPath();
-                RenderSystem.recordRenderCall(() -> loadSingleFile(basePath, p));
-            }
-
-            @Override
-            public void onFileChange(File file) {
-                Path p = file.toPath();
-                RenderSystem.recordRenderCall(() -> loadSingleFile(basePath, p));
-            }
-
-            @Override
-            public void onFileDelete(File file) {
-                log.info("file deleted: {}", file.getAbsolutePath());
-            }
-        });
-
-        fileMonitor = new FileAlterationMonitor(1000L, fileObserver);
-        try {
-            fileMonitor.start();
-        } catch (Exception e) {
-            log.error("Failed to start file monitor.", e);
-        }
-    }
-
-    private void stopFolderMonitor() {
-        if (fileMonitor != null) {
-            try {
-                fileMonitor.stop();
-            } catch (Exception e) {
-                log.error("Failed to stop file monitor.", e);
-            }
-            fileMonitor = null;
-        }
-        fileObserver = null;
-    }
-
-    static void loadJsonFiles(Path basePath, String subFolder, Consumer<JsonObject> jsonProcessor) {
-        Path subPath = basePath.resolve(subFolder);
-        if (Files.exists(subPath) && Files.isDirectory(subPath)) {
-            List<Path> jsonFiles = new ArrayList<>();
-
-            try {
-                Files.walkFileTree(subPath, new SimpleFileVisitor<>() {
-                    @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                        if (file.getFileName().toString().endsWith(".json")) {
-                            jsonFiles.add(file);
-                        }
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    @Override
-                    public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                        System.err.println("无法访问文件: " + file + "，错误: " + exc);
-                        return FileVisitResult.CONTINUE;
-                    }
-                });
-            } catch (IOException e) {
-                log.error("can't load files.", e);
-            }
-
-            jsonFiles.forEach(jsonFile -> {
-                try {
-                    jsonProcessor.accept(gson.fromJson(IOUtils.toString(new FileInputStream(jsonFile.toFile()), StandardCharsets.UTF_8), JsonObject.class));
-                } catch (Exception e) {
-                    log.error("can't load file.", e);
-                }
-            });
-        }
-    }
 
     @Override
     protected void init() {
@@ -425,40 +148,38 @@ public class EyelibManagerScreen extends Screen {
         int y3 = Math.round(board + padding * 2 + h * 2);
 
         widgets = List.of(
-                json(x1, y1, w, h, Component.literal("模型"), new ResourceLocation(Eyelib.MOD_ID, "icons/model"),
-                        jo -> {
-                            var model = BrModel.parse(jo);
-
-                            for (BrModelEntry brModelEntry : model.models()) {
-                                Eyelib.getModelManager().put(brModelEntry.name(), brModelEntry.createModel());
-                            }
-                        }),
-                json(x1, y2, w, h, Component.literal("动画"), new ResourceLocation(Eyelib.MOD_ID, "icons/animation"),
+                json(x1, y1, w, h, Component.literal("动画"), new ResourceLocation(Eyelib.MOD_ID, "icons/animation"),
                         jo -> {
                             var animation = BrAnimation.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-                            animation.animations().forEach((k, v) -> Eyelib.getAnimationManager().put(k, v));
+                            ClientAssetRegistry.publishAnimation(animation);
                         }),
-                json(x1, y3, w, h, Component.literal("动画控制器"), new ResourceLocation(Eyelib.MOD_ID, "icons/animation_controller"),
+                json(x1, y2, w, h, Component.literal("动画控制器"), new ResourceLocation(Eyelib.MOD_ID, "icons/animation_controller"),
                         jo -> {
                             var animation = BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-                            animation.animationControllers().forEach((k, v) -> Eyelib.getAnimationManager().put(k, v));
+                            ClientAssetRegistry.publishAnimationController(animation);
                         }),
                 new DragTargetWidget(x2, y1, w, h, new GuiAnimator(5), new ResourceLocation(Eyelib.MOD_ID, "icons/folder"), Component.literal("监控资源文件夹"),
                         (mx, my, b) -> {
                             if (hover(x2, y1, w, h, mx, my)) {
-                                folderSelectDialog("打开资源包文件夹", Path.of("/"))
+                                FileDialogService.selectFolder("打开资源包文件夹", Path.of("/"))
                                         .whenComplete((path, throwable) ->
                                                 RenderSystem.recordRenderCall(() ->
                                                         path.ifPresent(p -> {
-                                                            if (!p.toAbsolutePath().equals(monitoredFolderPath)) {
+                                                            Path absolutePath = p.toAbsolutePath();
+                                                            if (!absolutePath.equals(monitoredFolderPath)) {
                                                                 if (monitoredFolderPath != null) {
-                                                                    stopFolderMonitor();
+                                                                    FOLDER_WATCHER.stop();
                                                                 }
 
-                                                                monitoredFolderPath = p.toAbsolutePath();
+                                                                monitoredFolderPath = absolutePath;
                                                                 monitoredFolderPathText = monitoredFolderPath.toString();
-                                                                loadResourceFolder(monitoredFolderPath);
-                                                                startFolderMonitor(monitoredFolderPath);
+                                                                ManagerResourceImportPlanner.loadResourceFolder(monitoredFolderPath, LOGGER);
+                                                                FOLDER_WATCHER.start(monitoredFolderPath,
+                                                                        changedPath -> RenderSystem.recordRenderCall(() -> {
+                                                                            if (monitoredFolderPath != null) {
+                                                                                ManagerResourceImportPlanner.loadSingleFile(monitoredFolderPath, changedPath, LOGGER);
+                                                                            }
+                                                                        }));
                                                             }
                                                         })));
                                 return true;
@@ -469,7 +190,7 @@ public class EyelibManagerScreen extends Screen {
                 json(x2, y2, w, h, Component.literal("渲染控制器"), new ResourceLocation(Eyelib.MOD_ID, "icons/render_controller"),
                         jo -> {
                             var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-                            controller.render_controllers().forEach((k, v) -> Eyelib.getRenderControllerManager().put(k, v));
+                            ClientAssetRegistry.publishRenderController(controller);
                         }),
                 new DragTargetWidget(x2, y3, w, h, new GuiAnimator(5),
                         new ResourceLocation(Eyelib.MOD_ID, "icons/entity"),

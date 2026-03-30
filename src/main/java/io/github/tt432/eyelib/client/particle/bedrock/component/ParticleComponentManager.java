@@ -22,6 +22,7 @@ import java.util.*;
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Mod.EventBusSubscriber
+@SuppressWarnings("NullAway")
 public class ParticleComponentManager {
     public record ParticleComponentInfo(
             ResourceLocation name,

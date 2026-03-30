@@ -3,7 +3,9 @@ package io.github.tt432.eyelib.client.manager;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import net.minecraftforge.common.MinecraftForge;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.LinkedHashMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,5 +31,14 @@ public abstract class Manager<T> {
 
     public Map<String, T> getAllData() {
         return new HashMap<>(data);
+    }
+
+    public void replaceAll(Map<String, ? extends T> replacement) {
+        data.clear();
+        data.putAll(new LinkedHashMap<>(replacement));
+    }
+
+    public void clear() {
+        data.clear();
     }
 }

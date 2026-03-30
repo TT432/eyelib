@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.client.gui.manager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.ClientTickHandler;
-import lombok.RequiredArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -16,13 +15,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.lang3.function.TriFunction;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
  * @author TT432
  */
-@RequiredArgsConstructor
 final class DragTargetWidget extends AbstractContainerEventHandler implements Renderable, NarratableEntry {
     private final int x;
     private final int y;
@@ -33,6 +31,18 @@ final class DragTargetWidget extends AbstractContainerEventHandler implements Re
     private final ResourceLocation icon;
     private final Component title;
     private final TriFunction<Double, Double, Integer, Boolean> onClicked;
+
+    DragTargetWidget(int x, int y, int w, int h, EyelibManagerScreen.GuiAnimator animator, @Nullable ResourceLocation icon,
+                     Component title, TriFunction<Double, Double, Integer, Boolean> onClicked) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.animator = animator;
+        this.icon = icon;
+        this.title = title;
+        this.onClicked = onClicked;
+    }
 
     public boolean hover(double mouseX, double mouseY) {
         return mouseX > x && mouseX < x + w && mouseY > y && mouseY < y + h;

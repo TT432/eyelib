@@ -52,6 +52,7 @@ public class BrParticleEmitter {
     @Getter
     private final FixedTimer timer;
 
+    @Nullable
     private final Direction direction;
 
     private int lifetime;
@@ -78,7 +79,9 @@ public class BrParticleEmitter {
         timer = new FixedTimer();
         timer.start();
 
-        molangScope.setParent(parentScope);
+        if (parentScope != null) {
+            molangScope.setParent(parentScope);
+        }
         molangScope.setOwner(this);
         particle.particleEffect().curves().forEach((k, v) -> molangScope.set(k, () -> v.calculate(molangScope)));
         molangScope.set("variable.emitter_age", this::getAge);

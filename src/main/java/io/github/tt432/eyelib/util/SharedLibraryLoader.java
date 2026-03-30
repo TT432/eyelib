@@ -2,6 +2,8 @@ package io.github.tt432.eyelib.util;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.*;
 import java.lang.reflect.Method;
 import java.util.HashSet;
@@ -15,6 +17,7 @@ import java.util.zip.ZipFile;
  * @author DustW
  */
 @Slf4j
+@SuppressWarnings("NullAway")
 public class SharedLibraryLoader {
     private static final boolean isWindows = System.getProperty("os.name").contains("Windows");
     private static final boolean isLinux = System.getProperty("os.name").contains("Linux");
@@ -25,7 +28,7 @@ public class SharedLibraryLoader {
     private static final HashSet<String> loadedLibraries = new HashSet<>();
     private static final Random random = new Random();
 
-    private String nativesJar;
+    private @Nullable String nativesJar;
 
     public SharedLibraryLoader() {
     }
@@ -155,7 +158,7 @@ public class SharedLibraryLoader {
      *
      * @return null if a writable path could not be found.
      */
-    private File getExtractedFile(String dirName, String fileName) {
+    private @Nullable File getExtractedFile(String dirName, String fileName) {
         // Temp directory with username in path.
         File idealFile = new File(
                 System.getProperty("java.io.tmpdir") + "/libgdx" + System.getProperty("user.name") + "/" + dirName, fileName);
@@ -281,7 +284,7 @@ public class SharedLibraryLoader {
     /**
      * @return null if the file was extracted and loaded.
      */
-    private Throwable loadFile(String sourcePath, String sourceCrc, File extractedFile) {
+    private @Nullable Throwable loadFile(String sourcePath, String sourceCrc, File extractedFile) {
         try {
             System.load(extractFile(sourcePath, sourceCrc, extractedFile).getAbsolutePath());
             return null;
@@ -301,7 +304,7 @@ public class SharedLibraryLoader {
         return loadedLibraries.contains(libraryName);
     }
 
-    public static void closeQuietly(Closeable c) {
+    public static void closeQuietly(@Nullable Closeable c) {
         if (c != null) {
             try {
                 c.close();

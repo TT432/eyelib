@@ -2,10 +2,8 @@ package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import io.github.tt432.eyelib.client.registry.ClientAssetRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -14,6 +12,7 @@ import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +22,6 @@ import java.util.Map;
 /**
  * @author TT432
  */
-@Getter
-@Slf4j
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class BrAnimationLoader extends BrResourcesLoader {
     public static final BrAnimationLoader INSTANCE = new BrAnimationLoader();
@@ -42,8 +39,13 @@ public class BrAnimationLoader extends BrResourcesLoader {
         super("animations", "json");
     }
 
+    @Nullable
     public static BrAnimation getAnimation(ResourceLocation resourceLocation) {
         return INSTANCE.animations.get(resourceLocation);
+    }
+
+    public static Map<ResourceLocation, BrAnimation> getAnimations() {
+        return INSTANCE.animations;
     }
 
     @Override
@@ -54,12 +56,9 @@ public class BrAnimationLoader extends BrResourcesLoader {
             try {
                 animations.put(rl, BrAnimation.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow(false, LOGGER::warn));
             } catch (Exception e) {
-                log.error("can't load animation {}", rl, e);
+                LOGGER.error("can't load animation {}", rl, e);
             }
         });
-
-        for (BrAnimation value : animations.values()) {
-            value.animations().forEach((s, a) -> Eyelib.getAnimationManager().put(s, a));
-        }
+        ClientAssetRegistry.replaceAnimationAssets(animations, BrAnimationControllerLoader.getAnimationControllers());
     }
 }

@@ -2,19 +2,20 @@ package io.github.tt432.eyelib.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
+import io.github.tt432.eyelib.client.entity.ClientEntityLookup;
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.SimpleRenderAction;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
+import io.github.tt432.eyelib.client.render.controller.RenderControllerLookup;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelib.molang.MolangScope;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -93,7 +94,7 @@ public class EntityRenderSystem {
                 .filter(entity -> entity.shouldRender(camX, camY, camZ))
                 .map(entity -> setupClientEntity(entity, RenderData.getComponent(entity)))
                 .flatMap(Collection::stream)
-                .sequential()
+                .toList()
                 .forEach(Runnable::run);
 
         float partialTick = event.getPartialTick();
@@ -107,6 +108,9 @@ public class EntityRenderSystem {
                 }
 
                 MolangScope scope = cap.getScope();
+                if (scope == null) {
+                    return;
+                }
                 ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
 
                 AnimationEffects effects = new AnimationEffects();
@@ -159,12 +163,18 @@ public class EntityRenderSystem {
 
     public static <T> boolean renderEntity(SimpleRenderAction<T> data) {
         var entity = data.entity();
+        if (entity == null) {
+            return false;
+        }
         var cap = data.renderData();
 
         if (cap.getOwner() != entity) {
             ((RenderData) cap).init(entity);
         }
 
+        if (cap.getScope() == null) {
+            return false;
+        }
         setupExtraMolang(entity, cap.getScope(), data.partialTick());
 
         return data.animationNotNull() && renderComponents(data);
@@ -216,6 +226,9 @@ public class EntityRenderSystem {
                 .filter(ModelComponent::readyForRendering)
                 .mapToLong(modelComponent -> {
                     var model = modelComponent.getModel();
+                    if (model == null) {
+                        return 0;
+                    }
 
                     var poseStack = data.poseStack();
                     poseStack.pushPose();
@@ -223,24 +236,36 @@ public class EntityRenderSystem {
                     RenderParams renderParams = data.renderParams(modelComponent);
 
                     var tickedInfos = data.tickedInfos();
+                    if (tickedInfos == null) {
+                        tickedInfos = ModelRuntimeData.EMPTY;
+                    }
+                    var effects = data.effects();
+                    if (effects == null) {
+                        effects = new AnimationEffects();
+                    }
+                    var entity = data.entity();
+                    if (entity == null) {
+                        poseStack.popPose();
+                        return 0;
+                    }
                     MultiBufferSource multiBufferSource = data.multiBufferSource();
 
                     setupEntityClientEntityData(data);
 
-                    RenderHelper renderHelper = Eyelib.getRenderHelper()
+                    RenderHelper renderHelper = RenderHelper.start()
                             .render(renderParams, model, cast(tickedInfos))
                             .collectLocators(model, tickedInfos);
 
-                    setParticlesPosition(renderHelper, data.effects(), data.entity());
+                    setParticlesPosition(renderHelper, effects, entity);
 
                     data.extraRender().render(renderHelper, data);
 
                     RenderParams emissiveRenderParams = renderParams.asEmissive(multiBufferSource, modelComponent);
 
-                    if (!emissiveRenderParams.textureMissing()) {
-                        Eyelib.getRenderHelper()
-                                .render(emissiveRenderParams, model, cast(tickedInfos));
-                    }
+//                    if (!emissiveRenderParams.textureMissing()) {
+//                        RenderHelper.start()
+//                                .render(emissiveRenderParams, model, cast(tickedInfos));
+//                    }
 
                     poseStack.popPose();
 
@@ -268,6 +293,9 @@ public class EntityRenderSystem {
 
         clientEntity.scripts().ifPresent(s -> {
             var scope = cap.getScope();
+            if (scope == null) {
+                return;
+            }
             poseStack.scale(s.getScaleX(scope), s.getScaleY(scope), s.getScaleZ(scope));
         });
 
@@ -310,7 +338,14 @@ public class EntityRenderSystem {
     }
 
     public static @NotNull List<Runnable> setupClientEntity(ResourceLocation entityId, RenderData<?> cap) {
-        return setupClientEntity(Eyelib.getClientEntityLoader().get(entityId), cap);
+        BrClientEntity currCE = cap.getClientEntityComponent().getClientEntity();
+        BrClientEntity clientEntity = ClientEntityLookup.get(entityId);
+        if (clientEntity != null) {
+            return setupClientEntity(clientEntity, cap);
+        } else if (currCE != null) {
+            return setupClientEntity(currCE, cap);
+        }
+        return List.of();
     }
 
     public static @NotNull List<Runnable> setupClientEntity(BrClientEntity clientEntity, RenderData<?> cap) {
@@ -323,8 +358,10 @@ public class EntityRenderSystem {
                 clientEntityComponent.setClientEntity(clientEntity);
 
                 clientEntity.scripts().ifPresent(s -> {
-                    s.initialize().eval(cap.getScope());
-                    s.pre_animation().eval(cap.getScope());
+                    if (cap.getScope() != null) {
+                        s.initialize().eval(cap.getScope());
+                        s.pre_animation().eval(cap.getScope());
+                    }
                 });
             }
         }
@@ -336,16 +373,20 @@ public class EntityRenderSystem {
             BrClientEntity ce = clientEntityComponent.getClientEntity();
 
             for (String renderController : ce.render_controllers()) {
-                RenderControllerEntry renderControllerEntry = Eyelib.getRenderControllerManager().get(renderController);
-                if (renderControllerEntry != null)
+                RenderControllerEntry renderControllerEntry = RenderControllerLookup.get(renderController);
+                if (renderControllerEntry != null && cap.getScope() != null)
                     components.add(renderControllerEntry.setupModel(cap.getScope(), clientEntityComponent.getClientEntity(), syncedActions));
             }
 
             ce.scripts().ifPresent(s -> cap.getAnimationComponent().setup(ce.animations(), s.animate()));
 
-            cap.getScope().getOwner().replace(BrClientEntity.class, ce);
+            if (cap.getScope() != null) {
+                cap.getScope().getOwner().replace(BrClientEntity.class, ce);
+            }
         } else {
-            cap.getScope().getOwner().remove(BrClientEntity.class);
+            if (cap.getScope() != null) {
+                cap.getScope().getOwner().remove(BrClientEntity.class);
+            }
         }
 
         return syncedActions;

@@ -16,6 +16,9 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.client.event.RenderLivingEvent;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author TT432
@@ -28,13 +31,13 @@ public record SimpleRenderAction<T>(
         float partialTick,
         int packedLight,
         int overlay,
-        Entity entity,
-        ModelRuntimeData tickedInfos,
-        AnimationEffects effects,
+        @Nullable Entity entity,
+        @Nullable ModelRuntimeData tickedInfos,
+        @Nullable AnimationEffects effects,
         Builder.ExtraRender<T> extraRender
 ) {
     public static <T extends LivingEntity> Builder<T> builder(RenderLivingEvent<T, ?> event) {
-        LivingEntity entity = event.getEntity();
+        LivingEntity entity = Objects.requireNonNull(event.getEntity());
 
         return SimpleRenderAction.<T>builder(event.getMultiBufferSource(), event.getPoseStack(), RenderData.getComponent(entity), event.getPartialTick())
                 .entity(entity)
@@ -73,9 +76,9 @@ public record SimpleRenderAction<T>(
         // optional
         private int light = LightTexture.FULL_BRIGHT;
         private int overlay = OverlayTexture.NO_OVERLAY;
-        Entity entity;
-        ModelRuntimeData tickedInfos = ModelRuntimeData.EMPTY;
-        AnimationEffects effects = new AnimationEffects();
+        @Nullable Entity entity;
+        @Nullable ModelRuntimeData tickedInfos = ModelRuntimeData.EMPTY;
+        @Nullable AnimationEffects effects = new AnimationEffects();
         ExtraRender<T> extraRender = (helper, action) -> {
         };
 
@@ -86,7 +89,7 @@ public record SimpleRenderAction<T>(
             this.renderData = renderData;
         }
 
-        public Builder<T> entity(Entity entity) {
+        public Builder<T> entity(@Nullable Entity entity) {
             this.entity = entity;
             return this;
         }
@@ -101,9 +104,9 @@ public record SimpleRenderAction<T>(
             return this;
         }
 
-        public Builder<T> animation(ModelRuntimeData tickedInfos, AnimationEffects effects) {
-            this.tickedInfos = tickedInfos;
-            this.effects = effects;
+        public Builder<T> animation(@Nullable ModelRuntimeData tickedInfos, @Nullable AnimationEffects effects) {
+            this.tickedInfos = tickedInfos != null ? tickedInfos : ModelRuntimeData.EMPTY;
+            this.effects = effects != null ? effects : new AnimationEffects();
             return this;
         }
 

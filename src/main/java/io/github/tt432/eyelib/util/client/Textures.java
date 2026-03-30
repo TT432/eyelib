@@ -5,6 +5,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.bbmodel.Texture;
+import io.github.tt432.eyelib.util.client.texture.TexturePathHelper;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.experimental.UtilityClass;
@@ -25,7 +26,7 @@ import org.lwjgl.stb.STBRPNode;
 import org.lwjgl.stb.STBRPRect;
 import org.lwjgl.stb.STBRectPack;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import java.nio.IntBuffer;
 import java.util.*;
 
@@ -39,6 +40,7 @@ import static org.lwjgl.opengl.GL43.glDispatchCompute;
  * @author TT432
  */
 @UtilityClass
+@SuppressWarnings("NullAway")
 public class Textures {
     private static final String BLENDING_SHADER_SOURCE = """
             #version 430 core
@@ -107,14 +109,7 @@ public class Textures {
      * @return 发光纹理的路径
      */
     public static String getEmissiveTexturePath(String baseTexture) {
-        int lastIndexOfDot = baseTexture.lastIndexOf(".png");
-
-        if (lastIndexOfDot != -1) {
-            String beforeDot = baseTexture.substring(0, lastIndexOfDot);
-            return beforeDot + ".emissive.png";
-        } else {
-            return baseTexture;
-        }
+        return TexturePathHelper.getEmissiveTexturePath(baseTexture);
     }
 
     /**
@@ -338,7 +333,7 @@ public class Textures {
                     newBones.put(i, bones.get(i).withChildren(new Int2ObjectOpenHashMap<>()));
                 }
             });
-            result.add(new Model(model.name(), newBones, model.locator()));
+            result.add(new Model(model.name(), newBones, model.locator(), model.visibleBox()));
         }
 
         return result;

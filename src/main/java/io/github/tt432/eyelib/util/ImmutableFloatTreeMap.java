@@ -8,6 +8,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,16 +34,19 @@ public sealed class ImmutableFloatTreeMap<V> {
         }
 
         @Override
+        @Nullable
         public V floorEntry(float currentTick) {
             return null;
         }
 
         @Override
+        @Nullable
         public V lowerEntry(float tick) {
             return null;
         }
 
         @Override
+        @Nullable
         public V higherEntry(float currentTick) {
             return null;
         }
@@ -96,6 +100,7 @@ public sealed class ImmutableFloatTreeMap<V> {
         return new ImmutableFloatTreeMap<>(new float[]{0}, new Float2ObjectOpenHashMap<>(Map.of(0F, value)));
     }
 
+    @Nullable
     public V floorEntry(float currentTick) {
         int index = Arrays.binarySearch(sortedKeys, currentTick);
 
@@ -112,6 +117,7 @@ public sealed class ImmutableFloatTreeMap<V> {
         return null;
     }
 
+    @Nullable
     public V lowerEntry(float tick) {
         int index = Arrays.binarySearch(sortedKeys, tick);
 
@@ -129,6 +135,7 @@ public sealed class ImmutableFloatTreeMap<V> {
         return null;
     }
 
+    @Nullable
     public V higherEntry(float currentTick) {
         int index = Arrays.binarySearch(sortedKeys, currentTick);
 

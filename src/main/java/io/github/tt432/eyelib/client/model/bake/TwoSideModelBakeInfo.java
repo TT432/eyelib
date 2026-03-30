@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.client.model.bake;
 
-import com.google.common.collect.Lists;
 import io.github.tt432.eyelib.client.model.Model;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -106,14 +105,16 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     }
 
     private static void bake(Model.Cube cube, List<Vector3fc> vertexes, List<Vector3fc> normals, List<Vector2fc> uvs, boolean twoSide) {
-        for (Model.Face face : cube.faces()) {
+        for (int faceIdx = 0; faceIdx < cube.faces().size(); faceIdx++) {
+            Model.Face face = cube.faces().get(faceIdx);
             for (Model.Vertex vertex : face.vertexes()) {
                 vertexes.add(new Vector3f(vertex.position()));
                 uvs.add(new Vector2f(vertex.uv()));
                 normals.add(new Vector3f(vertex.normal()));
             }
             if (twoSide) {
-                for (var vertex : Lists.reverse(face.vertexes())) {
+                for (int reverseIdx = face.vertexes().size() - 1; reverseIdx >= 0; reverseIdx--) {
+                    var vertex = face.vertexes().get(reverseIdx);
                     vertexes.add(new Vector3f(vertex.position()));
                     uvs.add(new Vector2f(vertex.uv()));
                     normals.add(new Vector3f(vertex.normal()));

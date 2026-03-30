@@ -14,9 +14,13 @@ import io.github.tt432.eyelib.util.codec.EyelibCodec;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.With;
+import net.minecraft.world.phys.AABB;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.joml.Vector2fc;
 import org.joml.Vector3fc;
+import net.minecraft.util.ExtraCodecs;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -28,16 +32,20 @@ public record Model(
         String name,
         Int2ObjectMap<Bone> toplevelBones,
         Int2ObjectMap<Bone> allBones,
-        ModelLocator locator
+        ModelLocator locator,
+        AABB visibleBox
 ) {
+    public static final AABB EMPTY_VISIBLE_BOX = new AABB(0, 0, 0, 0, 0, 0);
+
     public static final Codec<Model> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.STRING.fieldOf("name").forGetter(Model::name),
             EyelibCodec.int2ObjectMap(Bone.CODEC).fieldOf("all_bones").forGetter(Model::allBones),
-            ModelLocator.CODEC.fieldOf("locator").forGetter(Model::locator)
-    ).apply(ins, Model::new));
+            ModelLocator.CODEC.fieldOf("locator").forGetter(Model::locator),
+            EyelibCodec.AABB_CODEC.optionalFieldOf("visible_box", EMPTY_VISIBLE_BOX).forGetter(Model::visibleBox)
+    ).apply(ins, (name, allBones, locator, visibleBox) -> new Model(name, allBones, locator, visibleBox)));
 
-    public Model(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator) {
-        this(name, new Int2ObjectOpenHashMap<>(), allBones, locator);
+    public Model(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator, AABB visibleBox) {
+        this(name, new Int2ObjectOpenHashMap<>(), allBones, locator, visibleBox);
 
         allBones.forEach((integer, bone) -> {
             if (bone.parent == -1) {
@@ -48,8 +56,12 @@ public record Model(
         });
     }
 
-    public Model(String name, Int2ObjectMap<Bone> allBones) {
-        this(name, new Int2ObjectOpenHashMap<>(), allBones, new ModelLocator(new Int2ObjectOpenHashMap<>()));
+    public Model(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator) {
+        this(name, allBones, locator, EMPTY_VISIBLE_BOX);
+    }
+
+    public Model(String name, Int2ObjectMap<Bone> allBones, AABB visibleBox) {
+        this(name, new Int2ObjectOpenHashMap<>(), allBones, new ModelLocator(new Int2ObjectOpenHashMap<>()), visibleBox);
 
         allBones.forEach((integer, bone) -> {
             if (bone.parent == -1) {
@@ -60,8 +72,13 @@ public record Model(
         });
 
         for (Int2ObjectMap.Entry<Bone> entry : toplevelBones.int2ObjectEntrySet()) {
+            locator.groupLocatorMap().put(entry.getIntKey(), entry.getValue().locator());
             initLocator(entry.getValue());
         }
+    }
+
+    public Model(String name, Int2ObjectMap<Bone> allBones) {
+        this(name, allBones, EMPTY_VISIBLE_BOX);
     }
 
     private static void initLocator(Bone bone) {
@@ -105,8 +122,26 @@ public record Model(
             MolangValue binding,
             Int2ObjectMap<Bone> children,
             List<Model.Cube> cubes,
-            GroupLocator locator
+            GroupLocator locator,
+            boolean reset,
+            @Nullable String material,
+            List<TextureMesh> textureMeshes
     ) {
+        public Bone(
+                int id,
+                int parent,
+                Vector3fc pivot,
+                Vector3fc rotation,
+                Vector3fc position,
+                Vector3fc scale,
+                MolangValue binding,
+                Int2ObjectMap<Bone> children,
+                List<Model.Cube> cubes,
+                GroupLocator locator
+        ) {
+            this(id, parent, pivot, rotation, position, scale, binding, children, cubes, locator, false, null, List.of());
+        }
+
         public static final Codec<Bone> CODEC = EyelibCodec.recursive("bone", self ->
                 RecordCodecBuilder.create(ins -> ins.group(
                         Codec.INT.fieldOf("id").forGetter(Bone::id),
@@ -118,7 +153,10 @@ public record Model(
                         MolangValue.CODEC.fieldOf("binding").forGetter(Bone::binding),
                         EyelibCodec.int2ObjectMap(self).fieldOf("children").forGetter(Bone::children),
                         Cube.CODEC.listOf().fieldOf("cubes").forGetter(Bone::cubes),
-                        GroupLocator.CODEC.fieldOf("locator").forGetter(Bone::locator)
+                        GroupLocator.CODEC.fieldOf("locator").forGetter(Bone::locator),
+                        Codec.BOOL.optionalFieldOf("reset", false).forGetter(Bone::reset),
+                        Codec.STRING.optionalFieldOf("material", "").xmap(s -> s.isBlank() ? null : s, s -> s == null ? "" : s).forGetter(Bone::material),
+                        TextureMesh.CODEC.listOf().optionalFieldOf("texture_meshes", List.of()).forGetter(Bone::textureMeshes)
                 ).apply(ins, Bone::new)));
 
         public void accept(RenderParams params, ModelVisitContext context, ModelRuntimeData data, ModelVisitor visitor) {
@@ -174,8 +212,13 @@ public record Model(
     @With
     public record Face(
             List<Vertex> vertexes,
-            Vector3fc normal
+            Vector3fc normal,
+            @Nullable String materialInstance
     ) {
+        public Face(List<Vertex> vertexes, Vector3fc normal) {
+            this(vertexes, normal, null);
+        }
+
         public record Rect(
                 float u0,
                 float v0,
@@ -202,7 +245,8 @@ public record Model(
 
         public static final Codec<Face> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 Vertex.CODEC.listOf().fieldOf("vertexes").forGetter(Face::vertexes),
-                EyelibCodec.VEC3FC.fieldOf("normal").forGetter(Face::normal)
+                EyelibCodec.VEC3FC.fieldOf("normal").forGetter(Face::normal),
+                Codec.STRING.optionalFieldOf("material_instance", "").xmap(s -> s.isBlank() ? null : s, s -> s == null ? "" : s).forGetter(Face::materialInstance)
         ).apply(ins, Face::new));
     }
 
@@ -217,5 +261,21 @@ public record Model(
                 EyelibCodec.VEC2FC.fieldOf("uv").forGetter(Vertex::uv),
                 EyelibCodec.VEC3FC.fieldOf("normal").forGetter(Vertex::normal)
         ).apply(ins, Vertex::new));
+    }
+
+    public record TextureMesh(
+            String texture,
+            Vector3f position,
+            Vector3f rotation,
+            Vector3f localPivot,
+            Vector3f scale
+    ) {
+        public static final Codec<TextureMesh> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+                Codec.STRING.fieldOf("texture").forGetter(TextureMesh::texture),
+                ExtraCodecs.VECTOR3F.optionalFieldOf("position", new Vector3f()).forGetter(TextureMesh::position),
+                ExtraCodecs.VECTOR3F.optionalFieldOf("rotation", new Vector3f()).forGetter(TextureMesh::rotation),
+                ExtraCodecs.VECTOR3F.optionalFieldOf("local_pivot", new Vector3f()).forGetter(TextureMesh::localPivot),
+                ExtraCodecs.VECTOR3F.optionalFieldOf("scale", new Vector3f(1)).forGetter(TextureMesh::scale)
+        ).apply(ins, TextureMesh::new));
     }
 }

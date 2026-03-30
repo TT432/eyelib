@@ -5,6 +5,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.util.codec.EyelibCodec;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -122,6 +124,7 @@ public record Texture(
         this(name, path, folder, namespace, id, group, width, height, uvWidth, uvHeight, particle, useAsDefault, layersEnabled, syncToProject, renderMode, renderSides, pbrChannel, frameTime, frameOrderType, frameOrder, frameInterpolate, visible, internal, saved, uuid, source, NativeImage.read(new ByteArrayInputStream(getBytes(source))));
     }
 
+    @Nullable
     private static byte[] getBytes(String source) {
         if (source != null && !source.isEmpty()) {
             try {

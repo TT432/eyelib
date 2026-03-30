@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.List;
  * @author TT432
  */
 public class Models {
-    public static Model merge(List<Model> models) {
+    public static @Nullable Model merge(List<Model> models) {
         if (models.isEmpty()) return null;
 
         Model result = models.get(0);
@@ -38,7 +39,7 @@ public class Models {
             processBoneAdd(rootBone, -1, bonesMap, idRemap);
         }
 
-        return new Model(modelA.name(), bonesMap, modelA.locator());
+        return new Model(modelA.name(), bonesMap, modelA.locator(), modelA.visibleBox());
     }
 
     private static void processBoneAdd(Model.Bone boneB, int parentId, Int2ObjectMap<Model.Bone> bonesMap, Int2IntMap idRemap) {
@@ -94,6 +95,6 @@ public class Models {
             }
         });
 
-        return new Model(modelA.name(), newBones, modelA.locator());
+        return new Model(modelA.name(), newBones, modelA.locator(), modelA.visibleBox());
     }
 }
