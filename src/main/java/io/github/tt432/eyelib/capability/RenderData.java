@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +49,9 @@ public class RenderData<T> {
         return (RenderData<T>) DataAttachmentHelper.getOrCreate(EyelibAttachableData.RENDER_DATA.get(), entity);
     }
 
+    @Nullable
     private T owner;
+    @Nullable
     private MolangScope scope;
     @Setter
     private boolean useBuiltInRenderSystem = true;
@@ -74,8 +77,11 @@ public class RenderData<T> {
                 new ModelComponentSyncPacket(e.getId(), components)));
 
         if (animationComponent.serializable()) {
-            ownerAs(Entity.class).ifPresent(e -> EyelibNetworkManager.sendToTrackedAndSelf(e,
-                    new AnimationComponentSyncPacket(e.getId(), animationComponent.getSerializableInfo())));
+            var serializableInfo = animationComponent.getSerializableInfo();
+            if (serializableInfo != null) {
+                ownerAs(Entity.class).ifPresent(e -> EyelibNetworkManager.sendToTrackedAndSelf(e,
+                        new AnimationComponentSyncPacket(e.getId(), serializableInfo)));
+            }
         }
     }
 

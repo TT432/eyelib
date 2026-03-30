@@ -2,8 +2,8 @@ package io.github.tt432.eyelib.capability.component;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelib.client.model.ModelLookup;
 import io.github.tt432.eyelib.util.client.RenderTypeSerializations;
 import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
 import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
@@ -13,6 +13,7 @@ import lombok.With;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -51,6 +52,7 @@ public class ModelComponent {
         };
     }
 
+    @Nullable
     SerializableInfo serializableInfo;
 
     public boolean serializable() {
@@ -70,16 +72,19 @@ public class ModelComponent {
         return getModel() != null && getTexture() != null;
     }
 
-    public  Model getModel() {
+    @Nullable
+    public Model getModel() {
         if (serializableInfo == null) return null;
-        return Eyelib.getModelManager().get(serializableInfo.model);
+        return ModelLookup.get(serializableInfo.model);
     }
 
+    @Nullable
     public ResourceLocation getTexture() {
         if (serializableInfo == null) return null;
         return serializableInfo.texture;
     }
 
+    @Nullable
     public RenderType getRenderType(ResourceLocation texture) {
         if (serializableInfo == null) return null;
         return RenderTypeSerializations.getFactory(serializableInfo.renderType).factory().apply(texture);

@@ -2,9 +2,9 @@ package io.github.tt432.eyelib.capability.component;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
+import io.github.tt432.eyelib.client.animation.AnimationLookup;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import io.github.tt432.eyelib.molang.MolangValue;
@@ -15,7 +15,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.EventPriority;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,8 +56,10 @@ public class AnimationComponent {
     }
 
     public Object getAnimationData(String controllerName) {
-        return animationData.computeIfAbsent(controllerName,
-                s -> Eyelib.getAnimationManager().get(s).createData());
+        return animationData.computeIfAbsent(controllerName, name -> {
+            Animation<?> animation = AnimationLookup.get(name);
+            return animation != null ? animation.createData() : new Object();
+        });
     }
 
     public boolean serializable() {
@@ -69,7 +71,9 @@ public class AnimationComponent {
     private final Map<Animation<?>, MolangValue> animate = new HashMap<>();
     private final Map<String, Object> animationData = new HashMap<>();
 
+    @Nullable
     public ModelRuntimeData tickedInfos;
+    @Nullable
     public AnimationEffects effects;
 
     public void setInfo(SerializableInfo info) {
@@ -78,7 +82,7 @@ public class AnimationComponent {
 
     {
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ManagerEntryChangedEvent.class, e -> {
-            if (e.getManagerName().equals(Eyelib.getAnimationManager().getManagerName())) {
+            if (e.getManagerName().equals(AnimationLookup.managerName())) {
                 AtomicBoolean changed = new AtomicBoolean(false);
                 animate.forEach((k, v) -> {
                     if (k.name().equals(e.getEntryName())) {
@@ -102,8 +106,16 @@ public class AnimationComponent {
         this.animate.clear();
         animationData.clear();
 
-        animate.forEach((s, v) ->
-                this.animate.put(Eyelib.getAnimationManager().get(animations.get(s)), v));
+        animate.forEach((name, value) -> {
+            String animationName = animations.get(name);
+            if (animationName == null) {
+                return;
+            }
+            Animation<?> animation = AnimationLookup.get(animationName);
+            if (animation != null) {
+                this.animate.put(animation, value);
+            }
+        });
 
         new HashMap<>();
         for (var s : this.animate.keySet()) {

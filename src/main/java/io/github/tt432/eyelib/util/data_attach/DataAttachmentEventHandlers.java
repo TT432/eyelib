@@ -1,8 +1,7 @@
 package io.github.tt432.eyelib.util.data_attach;
 
 import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.network.DataAttachmentSyncPacket;
-import io.github.tt432.eyelib.network.EyelibNetworkManager;
+import io.github.tt432.eyelib.network.dataattach.DataAttachmentSyncService;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -20,7 +19,7 @@ public class DataAttachmentEventHandlers {
         var container = entity.getCapability(DataAttachmentContainerCapability.INSTANCE);
         container.ifPresent(c -> {
             var data = c.serializeNBT();
-            EyelibNetworkManager.sendToTrackedAndSelf(entity, new DataAttachmentSyncPacket(entity.getId(), data));
+            DataAttachmentSyncService.syncContainer(entity, data);
         });
     }
 }

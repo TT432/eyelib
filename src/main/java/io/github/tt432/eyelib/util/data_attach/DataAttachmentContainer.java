@@ -21,7 +21,8 @@ public class DataAttachmentContainer implements IDataAttachmentContainer {
     @SuppressWarnings("unchecked")
     @Override
     public <T> @Nullable T get(DataAttachmentType<T> attachment) {
-        return ((DataAttachment<T>) attachments.get(attachment.id())).getData();
+        DataAttachment<T> data = (DataAttachment<T>) attachments.get(attachment.id());
+        return data != null ? data.getData() : null;
     }
 
     @Override

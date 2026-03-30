@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.common.behavior.component.group.ComponentGroup;
 import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
 import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
 import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -49,6 +50,7 @@ public class EntityBehaviorData {
     }
 
     @SuppressWarnings("unchecked")
+    @Nullable
     public <T extends Component> T component(Class<T> componentClass) {
         return (T) components.get(componentClass);
     }

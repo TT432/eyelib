@@ -25,13 +25,17 @@ public record ItemInHandRenderData(
     public void init(LivingEntity entity, RenderData<?> parents) {
         if (entity.getMainHandItem() != leftHandData.getOwner()) {
             leftHandData.init(entity.getMainHandItem());
-            leftHandData.getScope().setParent(parents.getScope());
-            leftHandData.getScope().set("context.item_slot", MolangString.valueOf("off_hand"));
+            if (leftHandData.getScope() != null && parents.getScope() != null) {
+                leftHandData.getScope().setParent(parents.getScope());
+                leftHandData.getScope().set("context.item_slot", MolangString.valueOf("off_hand"));
+            }
         }
         if (entity.getOffhandItem() != rightHandData.getOwner()) {
             rightHandData.init(entity.getOffhandItem());
-            rightHandData.getScope().setParent(parents.getScope());
-            leftHandData.getScope().set("context.item_slot", MolangString.valueOf("main_hand"));
+            if (rightHandData.getScope() != null && parents.getScope() != null) {
+                rightHandData.getScope().setParent(parents.getScope());
+                rightHandData.getScope().set("context.item_slot", MolangString.valueOf("main_hand"));
+            }
         }
     }
 }
