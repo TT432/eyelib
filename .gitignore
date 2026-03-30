@@ -22,8 +22,23 @@ eclipse
 run
 runs
 run-data
+logs/
+*.log
 
 repo
+.worktrees/
+
+# local tooling and editor state
+.vscode/
+.factorypath
+.cache/
+.sisyphus/
+.tools/
+
+# local scratch data
+*.duckdb
+*.duckdb.wal
+NUL
 
 文档
 .extrasrc
