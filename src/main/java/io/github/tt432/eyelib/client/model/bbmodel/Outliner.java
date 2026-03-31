@@ -13,14 +13,14 @@ import java.util.Optional;
  * @author TT432
  */
 @SuppressWarnings("NullAway")
-record Outliner(
+public record Outliner(
         String uuid,
         Optional<Group> group,
         boolean isOpen,
         List<String> cubes,
         List<Outliner> children
 ) {
-    record CubeOrOutliner(
+    public record CubeOrOutliner(
             @Nullable Outliner outliner,
             @Nullable String uuid
     ) {

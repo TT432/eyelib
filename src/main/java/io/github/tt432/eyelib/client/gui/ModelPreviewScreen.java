@@ -16,6 +16,8 @@ import io.github.tt432.eyelib.client.model.bake.BakedModel;
 import io.github.tt432.eyelib.client.model.bake.TwoSideModelBakeInfo;
 import io.github.tt432.eyelib.client.model.bbmodel.BBModel;
 import io.github.tt432.eyelib.client.model.bbmodel.BBModelLoader;
+import io.github.tt432.eyelib.client.model.bbmodel.Texture;
+import io.github.tt432.eyelib.client.model.importer.ModelImporter;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
@@ -297,7 +299,7 @@ public class ModelPreviewScreen extends Screen {
         if (path.toString().endsWith(".bbmodel")) {
             try {
                 BBModel model = new BBModelLoader().load(path);
-                this.currentModel = model.mergedModel();
+                this.currentModel = previewModel(model, ModelImporter.importBlockbench(model));
                 var model1 = currentModel.model();
                 var info = TwoSideModelBakeInfo.INSTANCE.getBakeInfo(model1, true, new ResourceLocation(currentModel.atlasTexture().id()));
                 bakedModel = TwoSideModelBakeInfo.INSTANCE.bake(model1, info);
@@ -317,15 +319,37 @@ public class ModelPreviewScreen extends Screen {
         }
     }
 
-    public void onEvent(ModBridgeModelUpdateEvent event) {
-        JsonObject jsonObject = new Gson().fromJson(event.json, JsonObject.class);
-        BBModel model = BBModel.CODEC.parse(JsonOps.INSTANCE, new Gson().fromJson(jsonObject.get("data").getAsString(), JsonObject.class)).getOrThrow(false, IllegalArgumentException::new);
+    private void onEvent(ModBridgeModelUpdateEvent event) {
+        try {
+            JsonObject jsonObject = new Gson().fromJson(event.json, JsonObject.class);
+            BBModel model = BBModel.CODEC.parse(JsonOps.INSTANCE, new Gson().fromJson(jsonObject.get("data").getAsString(), JsonObject.class)).getOrThrow(false, IllegalArgumentException::new);
 
-        this.currentModel = model.mergedModel();
-        var model1 = currentModel.model();
-        var info = TwoSideModelBakeInfo.INSTANCE.getBakeInfo(model1, true, new ResourceLocation(currentModel.atlasTexture().id()));
-        bakedModel = TwoSideModelBakeInfo.INSTANCE.bake(model1, info);
-        dfsModel = DFSModel.create(model1);
+            this.currentModel = previewModel(model, ModelImporter.importBlockbench(model));
+            var model1 = currentModel.model();
+            var info = TwoSideModelBakeInfo.INSTANCE.getBakeInfo(model1, true, new ResourceLocation(currentModel.atlasTexture().id()));
+            bakedModel = TwoSideModelBakeInfo.INSTANCE.bake(model1, info);
+            dfsModel = DFSModel.create(model1);
+            this.statusMessage = "";
+        } catch (Exception e) {
+            this.statusMessage = "Failed to update .bbmodel: " + e.getMessage();
+        }
+    }
+
+    private static Textures.ModelWithTexture previewModel(BBModel source, ModelImporter.ImportResult result) {
+        if (result.atlasNativeImage() != null) {
+            Texture repackedAtlas = new Texture(
+                    "preview_atlas", null, null, null, "preview_atlas", null,
+                    result.atlasNativeImage().getWidth(), result.atlasNativeImage().getHeight(),
+                    result.atlasNativeImage().getWidth(), result.atlasNativeImage().getHeight(),
+                    false, true, false, false, null, null, null, 0, null, null, false, true, true, false, "preview_atlas", null, result.atlasNativeImage()
+            );
+            return new Textures.ModelWithTexture(result.model(), repackedAtlas);
+        }
+
+        if (source.textures().isEmpty()) {
+            throw new IllegalArgumentException("Blockbench preview requires at least one texture");
+        }
+        return new Textures.ModelWithTexture(result.model(), source.textures().get(0));
     }
 
     @Override

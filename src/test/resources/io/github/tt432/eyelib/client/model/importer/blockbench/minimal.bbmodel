@@ -1,0 +1,80 @@
+{
+  "meta": {
+    "format_version": "4.9",
+    "model_format": "free",
+    "box_uv": false
+  },
+  "name": "minimal",
+  "model_identifier": "geometry.test",
+  "visible_box": [2.0, 2.0, 2.0],
+  "resolution": {
+    "width": 16,
+    "height": 16
+  },
+  "elements": [
+    {
+      "name": "cube",
+      "box_uv": false,
+      "render_order": "default",
+      "locked": false,
+      "allow_mirror_modeling": true,
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "autouv": 0,
+      "color": 0,
+      "origin": [8, 8, 8],
+      "uv_offset": [0, 0],
+      "inflate": 0,
+      "faces": {
+        "north": {"uv": [0, 0, 16, 16], "texture": 0, "rotation": 0},
+        "east": {"uv": [0, 0, 16, 16], "texture": 0, "rotation": 0},
+        "south": {"uv": [0, 0, 16, 16], "texture": 0, "rotation": 0},
+        "west": {"uv": [0, 0, 16, 16], "texture": 0, "rotation": 0},
+        "up": {"uv": [0, 0, 16, 16], "texture": 0, "rotation": 0},
+        "down": {"uv": [0, 0, 16, 16], "texture": 0, "rotation": 0}
+      },
+      "type": "cube",
+      "uuid": "cube-1",
+      "rotation": [0, 0, 0]
+    }
+  ],
+  "outliner": [
+    {
+      "name": "root",
+      "origin": [8, 8, 8],
+      "rotation": [0, 0, 0],
+      "uuid": "root-1",
+      "export": true,
+      "isOpen": true,
+      "locked": false,
+      "visibility": true,
+      "mirror_uv": false,
+      "color": 0,
+      "autouv": 0,
+      "shade": false,
+      "children": ["cube-1"]
+    }
+  ],
+  "textures": [
+    {
+      "path": "test.png",
+      "name": "test",
+      "folder": "",
+      "namespace": "eyelib",
+      "id": "0",
+      "group": "",
+      "width": 16,
+      "height": 16,
+      "uv_width": 16,
+      "uv_height": 16,
+      "particle": false,
+      "use_as_default": false,
+      "layers_enabled": false,
+      "sync_to_project": "",
+      "render_mode": "default",
+      "render_sides": "auto",
+      "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAcSURBVDhPY/hPIWBAFyAVjBowagAIjBowGAwAAF14/C6S1TgxAAAAAElFTkSuQmCC"
+    }
+  ],
+  "groups": []
+}

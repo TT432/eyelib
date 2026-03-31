@@ -15,6 +15,7 @@
 - `BrParticleLoader.java`
 - `BrMaterialLoader.java`
 - `BrRenderControllerLoader.java`
+- `BrModelLoader.java`
 
 ## Current Boundary Concern
 - Some loader paths currently blend parsing/reload work with publication side effects into runtime managers.

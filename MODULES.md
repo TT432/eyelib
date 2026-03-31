@@ -55,7 +55,8 @@
 | Client entity lookup seam | narrow runtime read access to client entities | `src/main/java/io/github/tt432/eyelib/client/entity/ClientEntityLookup.java` | used by render/runtime setup |
 | Client render pipeline | render parameters, visitors, targets, render helpers | `src/main/java/io/github/tt432/eyelib/client/render/` | depends on models, materials, util client helpers |
 | Client render sync seam | applies model/animation sync packets into render state | `src/main/java/io/github/tt432/eyelib/client/render/sync/ClientRenderSyncService.java` | called from network client handlers |
-| Client model domain | model structures, bake/runtime data, locators, and Bedrock→intermediate-model conversion | `src/main/java/io/github/tt432/eyelib/client/model/` | used by render pipeline, loaders, and manager import flow |
+| Client model domain | model structures, bake/runtime data, locators, and source-format parsers for model inputs | `src/main/java/io/github/tt432/eyelib/client/model/` | used by render pipeline, loaders, and importer seam |
+| Model importer seam | importer entrypoints and source-to-runtime model conversion | `src/main/java/io/github/tt432/eyelib/client/model/importer/` | consumes `client/model/bbmodel` and later `client/model/bedrock`, produces runtime `Model` instances |
 | Model lookup seam | narrow runtime read access to models | `src/main/java/io/github/tt432/eyelib/client/model/ModelLookup.java` | used by components and runtime setup |
 | Client material domain | material definitions and entries | `src/main/java/io/github/tt432/eyelib/client/material/` | used by render controllers and material manager |
 | Client particle runtime | particle definitions, emitters, render manager, and spawn/remove services | `src/main/java/io/github/tt432/eyelib/client/particle/`, `src/main/java/io/github/tt432/eyelib/client/particle/README.md` | depends on render level scope, network packet handlers, and service-routed emitter control |

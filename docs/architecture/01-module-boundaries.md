@@ -27,6 +27,7 @@
 |---|---|---|
 | `Eyelib.java` | `bootstrap` + temporary compatibility facade | Keep startup/composition here, reduce the remaining direct singleton exposure over time |
 | `client/loader/` | `client.asset` | Parse and reload resources, but avoid owning runtime publication |
+| `client/model/importer/` | `client.model.importer` | Convert parsed source models into runtime `Model` instances without leaking source-format behavior into render runtime or tooling |
 | `client/manager/` | `client.registry` | Keep runtime lookup and event-backed storage centralized, including client entities |
 | `client/gui/manager/` | `client.tools` | Development/debug UI only; move import/watch/IO into helpers/services |
 | `client/registry/` | `client.registry` | Centralize loader-to-manager publication seams |

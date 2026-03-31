@@ -8,7 +8,7 @@ import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.model.Model;
-import io.github.tt432.eyelib.client.model.bedrock.BedrockModelLoader;
+import io.github.tt432.eyelib.client.model.importer.ModelImporter;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.registry.ClientAssetRegistry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
@@ -40,7 +40,6 @@ import java.util.Map;
 public final class ManagerResourceImportPlanner {
     private static final Gson GSON = new Gson();
     private static final Logger LOGGER = LoggerFactory.getLogger(ManagerResourceImportPlanner.class);
-    private static final BedrockModelLoader BEDROCK_MODEL_LOADER = new BedrockModelLoader();
 
     public static void loadResourceFolder(Path basePath, Logger logger) {
         Map<String, BrAnimation> animations = loadJsonFiles(basePath, "animations",
@@ -67,8 +66,7 @@ public final class ManagerResourceImportPlanner {
         }
         ClientAssetRegistry.replaceClientEntities(entities);
 
-        Map<String, Map<String, Model>> parsedModels = loadJsonFiles(basePath, "models",
-                BEDROCK_MODEL_LOADER::load);
+        Map<String, Map<String, Model>> parsedModels = loadModelFiles(basePath);
         LinkedHashMap<String, Model> models = new LinkedHashMap<>();
         parsedModels.values().forEach(models::putAll);
         ClientAssetRegistry.replaceModels(models);
@@ -99,8 +97,10 @@ public final class ManagerResourceImportPlanner {
                     var particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
                     ClientAssetRegistry.publishParticle(particle);
                 } else if (relative.startsWith("models/")) {
-                    ClientAssetRegistry.publishModels(BEDROCK_MODEL_LOADER.load(jo));
+                    ClientAssetRegistry.publishModels(ModelImporter.importFile(file));
                 }
+            } else if (relative.startsWith("models/") && relative.endsWith(".bbmodel")) {
+                ClientAssetRegistry.publishModels(ModelImporter.importFile(file));
             } else if (isTextureFile(relative)) {
                 NativeImage nativeImage = NativeImages.loadImage(new FileInputStream(file.toFile()));
                 NativeImages.uploadImage(toTextureLocation(basePath, file), nativeImage);
@@ -167,6 +167,47 @@ public final class ManagerResourceImportPlanner {
 
     private interface JsonFileParser<T> {
         T parse(JsonObject jsonObject) throws Exception;
+    }
+
+    private static LinkedHashMap<String, Map<String, Model>> loadModelFiles(Path basePath) {
+        Path subPath = basePath.resolve("models");
+        if (!Files.exists(subPath) || !Files.isDirectory(subPath)) {
+            return new LinkedHashMap<>();
+        }
+
+        List<Path> modelFiles = new ArrayList<>();
+        LinkedHashMap<String, Map<String, Model>> result = new LinkedHashMap<>();
+
+        try {
+            Files.walkFileTree(subPath, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                    String fileName = file.getFileName().toString();
+                    if (fileName.endsWith(".bbmodel") || fileName.endsWith(".json")) {
+                        modelFiles.add(file);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                    System.err.println("无法访问文件: " + file + "，错误: " + exc);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            LOGGER.error("can't load model files.", e);
+        }
+
+        modelFiles.forEach(modelFile -> {
+            try {
+                result.put(modelFile.toString(), ModelImporter.importFile(modelFile));
+            } catch (Exception e) {
+                LOGGER.error("can't load model file.", e);
+            }
+        });
+
+        return result;
     }
 
     private static <T> LinkedHashMap<String, T> loadJsonFiles(Path basePath, String subFolder, JsonFileParser<T> parser) {
