@@ -26,12 +26,39 @@ public record BedrockGeometryModel(
     ) {
     }
 
+    /**
+     * Parsed Bedrock bone locator: name is the JSON key (without _null_ handling — use {@link #nullObject()}).
+     */
+    public record BoneLocatorEntry(
+            String name,
+            Vector3f offset,
+            @Nullable Vector3f rotation,
+            boolean ignoreInheritedScale,
+            boolean nullObject
+    ) {
+    }
+
+    public record TextureMeshDef(
+            String texture,
+            Vector3f position,
+            Vector3f rotation,
+            Vector3f localPivot,
+            Vector3f scale
+    ) {
+    }
+
     public record Bone(
             String name,
             @Nullable String parent,
             Vector3f pivot,
             Vector3f rotation,
-            List<Cube> cubes
+            List<Cube> cubes,
+            @Nullable String material,
+            @Nullable String binding,
+            boolean reset,
+            boolean mirror,
+            List<BoneLocatorEntry> locators,
+            List<TextureMeshDef> textureMeshes
     ) {
     }
 
@@ -40,6 +67,8 @@ public record BedrockGeometryModel(
             Vector3f size,
             @Nullable Vector3f pivot,
             Vector3f rotation,
+            float inflate,
+            @Nullable Boolean mirror,
             @Nullable Vector2f boxUv,
             Map<String, FaceUv> faceUvs
     ) {
@@ -48,7 +77,8 @@ public record BedrockGeometryModel(
     public record FaceUv(
             Vector2f uv,
             Vector2f uvSize,
-            int uvRotation
+            int uvRotation,
+            @Nullable String materialInstance
     ) {
     }
 }

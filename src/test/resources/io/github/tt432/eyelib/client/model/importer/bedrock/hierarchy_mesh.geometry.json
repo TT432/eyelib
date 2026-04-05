@@ -1,0 +1,112 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.hierarchy_mesh",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 6,
+        "visible_bounds_height": 8,
+        "visible_bounds_offset": [0, 4, 0]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [0, 0, 0],
+          "rotation": [0, 10, 0],
+          "locators": {
+            "root_hand": [1, 2, 3],
+            "root_aim": {
+              "offset": [4, 5, 6],
+              "rotation": [7, 8, 9],
+              "ignore_inherited_scale": true
+            }
+          },
+          "texture_meshes": [
+            {
+              "texture": "mesh_default",
+              "position": [0, 0, 0]
+            },
+            {
+              "texture": "mesh_rot_scale",
+              "position": [2, 18, 4],
+              "rotation": [10, 20, 30],
+              "local_pivot": [1, 2, 3],
+              "scale": [2, 1, 0.5]
+            },
+            {
+              "texture": "mesh_zero",
+              "position": [-2, 16, 0],
+              "scale": [0, 0, 0]
+            }
+          ],
+          "cubes": [
+            {
+              "origin": [-2, 0, -2],
+              "size": [4, 4, 4],
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "name": "child_a",
+          "parent": "root",
+          "pivot": [2, 4, 0],
+          "rotation": [15, 0, 5],
+          "locators": {
+            "child_a_hit": [0, 8, 0],
+            "_null_child_a_scope": {
+              "offset": [2, 10, 1],
+              "rotation": [0, 90, 0]
+            }
+          },
+          "texture_meshes": [
+            {
+              "texture": "mesh_child_a",
+              "position": [1, 14, -2],
+              "rotation": [0, 45, 0]
+            }
+          ],
+          "cubes": [
+            {
+              "origin": [-1, 4, -1],
+              "size": [2, 2, 2],
+              "uv": [16, 0]
+            }
+          ]
+        },
+        {
+          "name": "child_b",
+          "parent": "child_a",
+          "pivot": [0, 2, 3],
+          "rotation": [0, 25, 0],
+          "locators": {
+            "child_b_socket": {
+              "offset": [0, 3, 1],
+              "rotation": [15, 0, 0],
+              "ignore_inherited_scale": true
+            },
+            "child_b_tip": [1, 4, 0]
+          }
+        },
+        {
+          "name": "child_c",
+          "parent": "child_b",
+          "pivot": [-1, 1, 1],
+          "rotation": [5, 0, 35],
+          "cubes": [
+            {
+              "origin": [-0.5, 6, 1],
+              "size": [1, 2, 1],
+              "uv": {
+                "north": {"uv": [32, 0], "uv_size": [2, 4], "material_instance": "mesh_leaf_n"},
+                "south": {"uv": [34, 0], "uv_size": [2, 4], "material_instance": "mesh_leaf_s"}
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

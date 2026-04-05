@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,7 @@ public final class BedrockModelLoader {
             throw new ModelImportException("Bedrock model is missing minecraft:geometry");
         }
 
-        List<BedrockGeometryModel.Geometry> geometries = new java.util.ArrayList<>();
+        List<BedrockGeometryModel.Geometry> geometries = new ArrayList<>();
         for (JsonElement geometry : geometriesJson) {
             geometries.add(parseGeometry(geometry.getAsJsonObject()));
         }
@@ -54,7 +55,7 @@ public final class BedrockModelLoader {
         );
 
         JsonArray bonesJson = json.getAsJsonArray("bones");
-        List<BedrockGeometryModel.Bone> bones = new java.util.ArrayList<>();
+        List<BedrockGeometryModel.Bone> bones = new ArrayList<>();
         if (bonesJson != null) {
             for (JsonElement bone : bonesJson) {
                 bones.add(parseBone(bone.getAsJsonObject()));
@@ -65,19 +66,80 @@ public final class BedrockModelLoader {
 
     private BedrockGeometryModel.Bone parseBone(JsonObject json) {
         JsonArray cubesJson = json.getAsJsonArray("cubes");
-        List<BedrockGeometryModel.Cube> cubes = new java.util.ArrayList<>();
+        List<BedrockGeometryModel.Cube> cubes = new ArrayList<>();
         if (cubesJson != null) {
             for (JsonElement cube : cubesJson) {
                 cubes.add(parseCube(cube.getAsJsonObject()));
             }
         }
+
+        List<BedrockGeometryModel.BoneLocatorEntry> locators = parseLocators(json.get("locators"));
+        List<BedrockGeometryModel.TextureMeshDef> textureMeshes = parseTextureMeshes(json.getAsJsonArray("texture_meshes"));
+
         return new BedrockGeometryModel.Bone(
                 requiredString(json, "name"),
                 optionalString(json, "parent"),
                 getVector3(json, "pivot", new Vector3f()),
                 getVector3(json, "rotation", new Vector3f()),
-                cubes
+                cubes,
+                optionalString(json, "material"),
+                optionalString(json, "binding"),
+                getBool(json, "reset", false),
+                getBool(json, "mirror", false),
+                locators,
+                textureMeshes
         );
+    }
+
+    private static List<BedrockGeometryModel.BoneLocatorEntry> parseLocators(@Nullable JsonElement locatorsJson) {
+        if (locatorsJson == null || !locatorsJson.isJsonObject()) {
+            return List.of();
+        }
+        JsonObject obj = locatorsJson.getAsJsonObject();
+        List<BedrockGeometryModel.BoneLocatorEntry> out = new ArrayList<>();
+        for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
+            String key = e.getKey();
+            boolean nullObject = key.startsWith("_null_");
+            String name = nullObject ? key.substring(6) : key;
+            JsonElement value = e.getValue();
+            Vector3f offset;
+            @Nullable Vector3f rotation = null;
+            boolean ignoreInheritedScale = false;
+            if (value.isJsonArray()) {
+                offset = getVector3FromArray(value.getAsJsonArray(), new Vector3f());
+            } else if (value.isJsonObject()) {
+                JsonObject o = value.getAsJsonObject();
+                offset = getVector3(o, "offset", new Vector3f());
+                if (o.has("rotation")) {
+                    rotation = getVector3(o, "rotation", new Vector3f());
+                }
+                ignoreInheritedScale = getBool(o, "ignore_inherited_scale", false);
+            } else {
+                continue;
+            }
+            out.add(new BedrockGeometryModel.BoneLocatorEntry(name, offset, rotation, ignoreInheritedScale, nullObject));
+        }
+        return out;
+    }
+
+    private static List<BedrockGeometryModel.TextureMeshDef> parseTextureMeshes(@Nullable JsonArray arr) {
+        if (arr == null) {
+            return List.of();
+        }
+        List<BedrockGeometryModel.TextureMeshDef> out = new ArrayList<>();
+        for (JsonElement el : arr) {
+            if (!el.isJsonObject()) {
+                continue;
+            }
+            JsonObject o = el.getAsJsonObject();
+            String texture = requiredString(o, "texture");
+            Vector3f position = getVector3(o, "position", new Vector3f());
+            Vector3f rotation = getVector3(o, "rotation", new Vector3f());
+            Vector3f localPivot = getVector3(o, "local_pivot", new Vector3f());
+            Vector3f scale = getVector3(o, "scale", new Vector3f(1, 1, 1));
+            out.add(new BedrockGeometryModel.TextureMeshDef(texture, position, rotation, localPivot, scale));
+        }
+        return out;
     }
 
     private BedrockGeometryModel.Cube parseCube(JsonObject json) {
@@ -91,9 +153,15 @@ public final class BedrockModelLoader {
                 faceUvs.put(entry.getKey(), new BedrockGeometryModel.FaceUv(
                         getVector2(face, "uv", new Vector2f()),
                         getVector2(face, "uv_size", new Vector2f()),
-                        getInt(face, "uv_rotation", 0)
+                        getInt(face, "uv_rotation", 0),
+                        optionalString(face, "material_instance")
                 ));
             }
+        }
+
+        @Nullable Boolean mirror = null;
+        if (json.has("mirror") && !json.get("mirror").isJsonNull()) {
+            mirror = json.get("mirror").getAsBoolean();
         }
 
         return new BedrockGeometryModel.Cube(
@@ -101,6 +169,8 @@ public final class BedrockModelLoader {
                 getVector3(json, "size", new Vector3f()),
                 json.has("pivot") ? getVector3(json, "pivot", new Vector3f()) : null,
                 getVector3(json, "rotation", new Vector3f()),
+                getFloat(json, "inflate", 0),
+                mirror,
                 boxUv,
                 faceUvs
         );
@@ -117,7 +187,7 @@ public final class BedrockModelLoader {
     @Nullable
     private static String optionalString(JsonObject json, String key) {
         JsonElement value = json.get(key);
-        return value == null ? null : value.getAsString();
+        return value == null || value.isJsonNull() ? null : value.getAsString();
     }
 
     private static int getInt(JsonObject json, String key, int fallback) {
@@ -128,6 +198,11 @@ public final class BedrockModelLoader {
     private static float getFloat(JsonObject json, String key, float fallback) {
         JsonElement value = json.get(key);
         return value == null ? fallback : value.getAsFloat();
+    }
+
+    private static boolean getBool(JsonObject json, String key, boolean fallback) {
+        JsonElement value = json.get(key);
+        return value == null ? fallback : value.getAsBoolean();
     }
 
     private static Vector2f getVector2(JsonObject json, String key, Vector2f fallback) {
@@ -150,6 +225,14 @@ public final class BedrockModelLoader {
         }
 
         JsonArray array = value.getAsJsonArray();
+        return new Vector3f(
+                array.size() > 0 ? array.get(0).getAsFloat() : fallback.x,
+                array.size() > 1 ? array.get(1).getAsFloat() : fallback.y,
+                array.size() > 2 ? array.get(2).getAsFloat() : fallback.z
+        );
+    }
+
+    private static Vector3f getVector3FromArray(JsonArray array, Vector3f fallback) {
         return new Vector3f(
                 array.size() > 0 ? array.get(0).getAsFloat() : fallback.x,
                 array.size() > 1 ? array.get(1).getAsFloat() : fallback.y,

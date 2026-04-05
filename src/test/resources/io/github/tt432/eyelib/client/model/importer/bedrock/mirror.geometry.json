@@ -1,0 +1,31 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.mirror",
+        "texture_width": 32,
+        "texture_height": 32
+      },
+      "bones": [
+        {
+          "name": "mirror_root",
+          "mirror": true,
+          "cubes": [
+            {
+              "origin": [-4, 0, -4],
+              "size": [4, 4, 4],
+              "uv": [0, 0]
+            },
+            {
+              "origin": [0, 0, -4],
+              "size": [4, 4, 4],
+              "uv": [0, 0],
+              "mirror": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

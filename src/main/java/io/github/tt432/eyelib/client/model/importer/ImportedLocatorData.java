@@ -5,6 +5,8 @@ import org.joml.Vector3f;
 record ImportedLocatorData(
         String name,
         Vector3f offset,
-        Vector3f rotation
+        Vector3f rotation,
+        boolean ignoreInheritedScale,
+        boolean isNullObject
 ) {
 }

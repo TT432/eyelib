@@ -1,0 +1,90 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.alignment_plus",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 4,
+        "visible_bounds_height": 4,
+        "visible_bounds_offset": [0, 2, 0]
+      },
+      "bones": [
+        {
+          "name": "uv_rotation_cases",
+          "cubes": [
+            {
+              "origin": [-2, 0, -2],
+              "size": [4, 4, 4],
+              "uv": {
+                "north": {"uv": [4, 8], "uv_size": [8, 4], "uv_rotation": 270, "material_instance": "mat_n270"},
+                "east": {"uv": [14, 8], "uv_size": [4, 8], "uv_rotation": 90, "material_instance": "mat_e90"},
+                "south": {"uv": [20, 8], "uv_size": [8, 4], "uv_rotation": 180, "material_instance": "mat_s180"},
+                "west": {"uv": [30, 8], "uv_size": [4, 8], "material_instance": "mat_w0"},
+                "up": {"uv": [36, 8], "uv_size": [8, 8], "uv_rotation": 270, "material_instance": "mat_u270"},
+                "down": {"uv": [48, 16], "uv_size": [8, -8], "uv_rotation": 270, "material_instance": "mat_d270_neg"}
+              }
+            }
+          ]
+        },
+        {
+          "name": "negative_uv_size_cases",
+          "cubes": [
+            {
+              "origin": [2, 0, -2],
+              "size": [4, 4, 4],
+              "uv": {
+                "north": {"uv": [0, 0], "uv_size": [-8, 4], "material_instance": "mat_neg_n"},
+                "up": {"uv": [16, 16], "uv_size": [8, -4], "material_instance": "mat_neg_up"},
+                "down": {"uv": [24, 24], "uv_size": [-8, -4], "material_instance": "mat_neg_down"}
+              }
+            }
+          ]
+        },
+        {
+          "name": "zero_dimension_x",
+          "cubes": [
+            {
+              "origin": [0, 0, -2],
+              "size": [0, 4, 2],
+              "uv": [0, 32]
+            }
+          ]
+        },
+        {
+          "name": "zero_dimension_y",
+          "cubes": [
+            {
+              "origin": [-4, 0, 2],
+              "size": [2, 0, 4],
+              "uv": [16, 32]
+            }
+          ]
+        },
+        {
+          "name": "mirror_rotated",
+          "mirror": true,
+          "pivot": [0, 8, 0],
+          "rotation": [0, 30, 0],
+          "cubes": [
+            {
+              "origin": [-2, 4, -2],
+              "size": [4, 2, 4],
+              "pivot": [0, 8, 0],
+              "rotation": [0, 45, 0],
+              "uv": {
+                "north": {"uv": [0, 40], "uv_size": [8, 4], "uv_rotation": 90, "material_instance": "mat_m_n90"},
+                "east": {"uv": [8, 40], "uv_size": [8, 4], "material_instance": "mat_m_e0"},
+                "south": {"uv": [16, 40], "uv_size": [8, 4], "uv_rotation": 180, "material_instance": "mat_m_s180"},
+                "west": {"uv": [24, 40], "uv_size": [8, 4], "material_instance": "mat_m_w0"},
+                "up": {"uv": [32, 40], "uv_size": [8, 8], "uv_rotation": 270, "material_instance": "mat_m_u270"},
+                "down": {"uv": [40, 48], "uv_size": [8, -8], "uv_rotation": 90, "material_instance": "mat_m_d90_neg"}
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -91,14 +91,23 @@ public abstract class ModelBakeInfo<Info> {
     protected boolean pixelAnyMatch(NativeImage buffer,
                                     float uv0u, float uv0v, float uv1u, float uv1v,
                                     Int2BooleanFunction f) {
-        int x = Math.round(uv0u * (buffer.getWidth() - 1));
-        int y = Math.round(uv0v * (buffer.getHeight() - 1));
-        int width = Math.round((uv1u - uv0u) * (buffer.getWidth() - 1));
-        int height = Math.round((uv1v - uv0v) * (buffer.getHeight() - 1));
+        int bufW = buffer.getWidth() - 1;
+        int bufH = buffer.getHeight() - 1;
 
-        for (int j = 0; j < height; j++) {
-            for (int k = 0; k < width; k++) {
-                if (f.get(buffer.getPixelRGBA(x + k, y + j))) {
+        int x0 = Math.round(uv0u * bufW);
+        int y0 = Math.round(uv0v * bufH);
+        int x1 = Math.round(uv1u * bufW);
+        int y1 = Math.round(uv1v * bufH);
+
+        // Handle inverted UV rectangles (negative uv_size)
+        int minX = Math.min(x0, x1);
+        int maxX = Math.max(x0, x1);
+        int minY = Math.min(y0, y1);
+        int maxY = Math.max(y0, y1);
+
+        for (int j = minY; j < maxY; j++) {
+            for (int k = minX; k < maxX; k++) {
+                if (f.get(buffer.getPixelRGBA(k, j))) {
                     return true;
                 }
             }

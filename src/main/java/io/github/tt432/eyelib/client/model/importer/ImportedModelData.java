@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 record ImportedModelData(
         String name,
@@ -61,8 +62,9 @@ record ImportedModelData(
 
         for (BedrockGeometryModel.Bone bone : source.bones()) {
             Integer parentId = bone.parent() == null ? null : boneIds.get(bone.parent());
+            boolean boneMirror = bone.mirror();
             List<ImportedCubeData> cubes = bone.cubes().stream()
-                    .map(cube -> importedCube(cube, source.description()))
+                    .map(cube -> importedCube(cube, source.description(), cube.mirror() != null ? cube.mirror() : boneMirror))
                     .filter(cube -> cube != null)
                     .toList();
 
@@ -73,12 +75,17 @@ record ImportedModelData(
             bedrockRotation.y *= -1;
 
             bones.add(new ImportedBoneData(
-                    boneIds.get(bone.name()),
+                    Objects.requireNonNull(boneIds.get(bone.name()), "Missing bone id for " + bone.name()),
                     parentId == null ? -1 : parentId,
                     bedrockPivot,
                     bedrockRotation,
                     cubes,
-                    List.of()
+                    importedBedrockLocators(bone),
+                    bone.material(),
+                    bone.reset(),
+                    boneMirror,
+                    bone.binding(),
+                    bone.textureMeshes().stream().map(tm -> importedTextureMesh(tm, bone.pivot())).toList()
             ));
         }
 
@@ -146,7 +153,12 @@ record ImportedModelData(
                 new Vector3f(bone.pivot()),
                 new Vector3f(bone.rotation()),
                 repackedCubes,
-                bone.locators()
+                bone.locators(),
+                bone.material(),
+                bone.reset(),
+                bone.mirrorUv(),
+                bone.binding(),
+                bone.textureMeshes()
         );
     }
 
@@ -159,7 +171,13 @@ record ImportedModelData(
     private ImportedFaceData repackFace(ImportedFaceData face, int atlasWidth, int atlasHeight, int[] textureOffsets) {
         int textureIndex = face.textureIndex();
         if (textureIndex < 0 || textureIndex >= textures.size()) {
-            return face;
+            return new ImportedFaceData(
+                    face.positions(),
+                    face.uvs(),
+                    face.normal(),
+                    face.textureIndex(),
+                    face.materialInstance()
+            );
         }
 
         ImportedModelTexture texture = textures.get(textureIndex);
@@ -179,7 +197,8 @@ record ImportedModelData(
                 face.positions(),
                 remappedUvs,
                 face.normal(),
-                0
+                0,
+                face.materialInstance()
         );
     }
 
@@ -232,7 +251,12 @@ record ImportedModelData(
                 group.origin() == null ? new Vector3f() : new Vector3f(group.origin()).div(16),
                 group.rotation() == null ? new Vector3f() : new Vector3f(group.rotation()).mul(EyeMath.DEGREES_TO_RADIANS),
                 cubes,
-                importedLocators(entry, group)
+                importedLocators(entry, group),
+                null,
+                false,
+                group.mirror_uv(),
+                null,
+                List.of()
         );
         bones.add(bone);
 
@@ -281,7 +305,7 @@ record ImportedModelData(
 
             List<Vector3f> facePositions = positions.get(i).stream().map(Vector3f::new).toList();
             List<Vector2f> faceUvs = uvs.get(i).stream().map(Vector2f::new).toList();
-            faces.add(new ImportedFaceData(facePositions, faceUvs, new Vector3f(normals.get(i)), textureIndex(element.faces(), i)));
+            faces.add(new ImportedFaceData(facePositions, faceUvs, new Vector3f(normals.get(i)), textureIndex(element.faces(), i), null));
         }
 
         return faces.isEmpty() ? null : new ImportedCubeData(faces);
@@ -342,7 +366,7 @@ record ImportedModelData(
     }
 
     @Nullable
-    private static ImportedCubeData importedCube(BedrockGeometryModel.Cube cube, BedrockGeometryModel.Description description) {
+    private static ImportedCubeData importedCube(BedrockGeometryModel.Cube cube, BedrockGeometryModel.Description description, boolean mirrorUv) {
         Vector3f[] corners = corners(cube);
         applyRotation(cube, corners);
 
@@ -366,22 +390,29 @@ record ImportedModelData(
 
         List<ImportedFaceData> faces = new ArrayList<>();
         if (cube.boxUv() != null) {
-            addFace(faces, positions, "north", bedrockBoxUv(cube, description, "north"));
-            addFace(faces, positions, "east", bedrockBoxUv(cube, description, "east"));
-            addFace(faces, positions, "south", bedrockBoxUv(cube, description, "south"));
-            addFace(faces, positions, "west", bedrockBoxUv(cube, description, "west"));
-            addFace(faces, positions, "up", bedrockBoxUv(cube, description, "up"));
-            addFace(faces, positions, "down", bedrockBoxUv(cube, description, "down"));
+            addFace(faces, positions, "north", bedrockBoxUv(cube, description, "north"), null, mirrorUv);
+            addFace(faces, positions, "east", bedrockBoxUv(cube, description, "east"), null, mirrorUv);
+            addFace(faces, positions, "south", bedrockBoxUv(cube, description, "south"), null, mirrorUv);
+            addFace(faces, positions, "west", bedrockBoxUv(cube, description, "west"), null, mirrorUv);
+            addFace(faces, positions, "up", bedrockBoxUv(cube, description, "up"), null, mirrorUv);
+            addFace(faces, positions, "down", bedrockBoxUv(cube, description, "down"), null, mirrorUv);
         } else {
             for (Map.Entry<String, BedrockGeometryModel.FaceUv> entry : cube.faceUvs().entrySet()) {
-                addFace(faces, positions, entry.getKey(), bedrockFaceUv(entry.getValue(), description));
+                addFace(faces, positions, entry.getKey(), bedrockFaceUv(entry.getValue(), description), entry.getValue().materialInstance(), mirrorUv);
             }
         }
 
         return faces.isEmpty() ? null : new ImportedCubeData(faces);
     }
 
-    private static void addFace(List<ImportedFaceData> faces, Map<String, List<Vector3f>> positions, String faceName, @Nullable List<Vector2f> uvs) {
+    private static void addFace(
+            List<ImportedFaceData> faces,
+            Map<String, List<Vector3f>> positions,
+            String faceName,
+            @Nullable List<Vector2f> uvs,
+            @Nullable String materialInstance,
+            boolean mirrorUv
+    ) {
         List<Vector3f> facePositions = positions.get(faceName);
         if (facePositions == null || uvs == null) {
             return;
@@ -391,45 +422,100 @@ record ImportedModelData(
             return;
         }
 
+        List<Vector2f> uvsWork = mirrorUv ? mirrorUvsHorizontally(uvs) : uvs;
+
         // Align with Blockbench Bedrock parser behavior:
         // parseCube() flips up/down UV rectangles (face.uv = [u1,v1,u0,v0]).
         List<Vector2f> sourceUvs = ("up".equals(faceName) || "down".equals(faceName))
-                ? List.of(uvs.get(2), uvs.get(3), uvs.get(0), uvs.get(1))
-                : uvs;
+                ? List.of(uvsWork.get(2), uvsWork.get(3), uvsWork.get(0), uvsWork.get(1))
+                : uvsWork;
 
-        // Bedrock faces use opposite winding from current runtime expectation.
-        // Keep UV-vertex pairing while flipping winding.
-        List<Vector3f> windingFixedPositions = List.of(
-                facePositions.get(0),
-                facePositions.get(3),
-                facePositions.get(2),
-                facePositions.get(1)
-        );
-        List<Vector2f> windingFixedUvs = List.of(
-                sourceUvs.get(0),
-                sourceUvs.get(3),
-                sourceUvs.get(2),
-                sourceUvs.get(1)
-        );
-
-        List<Vector3f> copiedPositions = windingFixedPositions.stream().map(Vector3f::new).toList();
-        List<Vector2f> copiedUvs = windingFixedUvs.stream().map(Vector2f::new).toList();
+        // The face position order above already matches Blockbench CubeFace.UVToLocal()
+        // corner mapping for Bedrock cubes. Reordering here breaks UV-to-vertex pairing.
+        List<Vector3f> copiedPositions = facePositions.stream().map(Vector3f::new).toList();
+        List<Vector2f> copiedUvs = sourceUvs.stream().map(Vector2f::new).toList();
         faces.add(new ImportedFaceData(copiedPositions, copiedUvs, normal(
                 copiedPositions.get(0),
                 copiedPositions.get(1),
                 copiedPositions.get(2)
-        ), 0));
+        ), 0, materialInstance));
+    }
+
+    private static List<Vector2f> mirrorUvsHorizontally(List<Vector2f> uvs) {
+        float minU = Float.POSITIVE_INFINITY;
+        float maxU = Float.NEGATIVE_INFINITY;
+        for (Vector2f uv : uvs) {
+            minU = Math.min(minU, uv.x);
+            maxU = Math.max(maxU, uv.x);
+        }
+        float sum = minU + maxU;
+        List<Vector2f> out = new ArrayList<>(uvs.size());
+        for (Vector2f uv : uvs) {
+            out.add(new Vector2f(sum - uv.x, uv.y));
+        }
+        return out;
+    }
+
+    private static List<ImportedLocatorData> importedBedrockLocators(BedrockGeometryModel.Bone bone) {
+        List<ImportedLocatorData> list = new ArrayList<>();
+        for (BedrockGeometryModel.BoneLocatorEntry le : bone.locators()) {
+            Vector3f offset = new Vector3f(le.offset()).div(16);
+            offset.x *= -1;
+            Vector3f rotRad = le.rotation() == null
+                    ? new Vector3f()
+                    : new Vector3f(le.rotation()).mul(EyeMath.DEGREES_TO_RADIANS);
+            if (le.rotation() != null) {
+                rotRad.x *= -1;
+                rotRad.y *= -1;
+            }
+            list.add(new ImportedLocatorData(le.name(), offset, rotRad, le.ignoreInheritedScale(), le.nullObject()));
+        }
+        return list;
+    }
+
+    private static ImportedTextureMeshData importedTextureMesh(BedrockGeometryModel.TextureMeshDef tm, Vector3f bonePivotPixels) {
+        Vector3f localPivot = new Vector3f(tm.localPivot());
+        localPivot.z *= -1;
+
+        Vector3f position = new Vector3f(tm.position());
+        position.y *= -1;
+        position.y += bonePivotPixels.y;
+        position.x *= -1;
+
+        Vector3f rotationDeg = new Vector3f(tm.rotation());
+        rotationDeg.x *= -1;
+        rotationDeg.y *= -1;
+
+        Vector3f posBlock = new Vector3f(-position.x / 16f, position.y / 16f, position.z / 16f);
+        Vector3f lpBlock = new Vector3f(-localPivot.x / 16f, localPivot.y / 16f, localPivot.z / 16f);
+
+        Vector3f rotRad = new Vector3f(rotationDeg).mul(EyeMath.DEGREES_TO_RADIANS);
+        rotRad.x *= -1;
+        rotRad.y *= -1;
+
+        Vector3f scale = new Vector3f(tm.scale());
+        if (scale.lengthSquared() == 0) {
+            scale.set(1, 1, 1);
+        }
+        return new ImportedTextureMeshData(tm.texture(), posBlock, rotRad, lpBlock, scale);
     }
 
     private static Vector3f[] corners(BedrockGeometryModel.Cube cube) {
         final float scalar = 1F / 16F;
-        // Match Blockbench Bedrock parseCube: from.x = -(origin.x + size.x)
-        float minX = (-(cube.origin().x + cube.size().x)) * scalar;
-        float minY = cube.origin().y * scalar;
-        float minZ = cube.origin().z * scalar;
-        float maxX = minX + cube.size().x * scalar;
-        float maxY = (cube.origin().y + cube.size().y) * scalar;
-        float maxZ = (cube.origin().z + cube.size().z) * scalar;
+        float inf = cube.inflate();
+        float ox = cube.origin().x;
+        float oy = cube.origin().y;
+        float oz = cube.origin().z;
+        float sx = cube.size().x;
+        float sy = cube.size().y;
+        float sz = cube.size().z;
+        // Match Blockbench Bedrock parseCube: from.x = -(origin.x + size.x), with inflate expanding the box
+        float minX = (-(ox + sx + inf)) * scalar;
+        float minY = (oy - inf) * scalar;
+        float minZ = (oz - inf) * scalar;
+        float maxX = minX + (sx + 2 * inf) * scalar;
+        float maxY = minY + (sy + 2 * inf) * scalar;
+        float maxZ = minZ + (sz + 2 * inf) * scalar;
 
         return new Vector3f[]{
                 new Vector3f(minX, maxY, minZ),
@@ -482,14 +568,18 @@ record ImportedModelData(
 
     private static List<Vector2f> bedrockBoxUv(BedrockGeometryModel.Cube cube, BedrockGeometryModel.Description description, String faceName) {
         Vector2f uv = cube.boxUv();
+        if (uv == null) {
+            return List.of();
+        }
         float dx = cube.size().x;
         float dy = cube.size().y;
         float dz = cube.size().z;
+        // Match Blockbench Bedrock parseCube box-uv side strip order: east, north, west, south.
         Vector2f start = switch (faceName) {
             case "north" -> new Vector2f(uv.x + dz, uv.y + dz);
             case "east" -> new Vector2f(uv.x, uv.y + dz);
-            case "south" -> new Vector2f(uv.x + dz + dx, uv.y + dz);
-            case "west" -> new Vector2f(uv.x + dz + dx + dz, uv.y + dz);
+            case "west" -> new Vector2f(uv.x + dz + dx, uv.y + dz);
+            case "south" -> new Vector2f(uv.x + dz + dx + dz, uv.y + dz);
             case "up" -> new Vector2f(uv.x + dz, uv.y);
             case "down" -> new Vector2f(uv.x + dz + dx, uv.y);
             default -> null;
@@ -501,9 +591,9 @@ record ImportedModelData(
             default -> null;
         };
         if (start == null || size == null) {
-            return null;
+            return List.of();
         }
-        return bedrockFaceUv(new BedrockGeometryModel.FaceUv(start, size, 0), description);
+        return bedrockFaceUv(new BedrockGeometryModel.FaceUv(start, size, 0, null), description);
     }
 
     @Nullable
