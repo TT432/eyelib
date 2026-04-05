@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.cursor;
 
-import io.github.tt432.eyelib.util.client.NativeImages;
+import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFWImage;
@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
 public class CursorManager {
     @Nullable
     public static Cursor load(ResourceLocation location, int xhot, int yhot) {
-        return NativeImages.downloadImage(location,
+        return NativeImageIO.download(location,
                 image -> {
                     ByteBuffer copy = MemoryUtil.memAlloc((int) image.size);
                     MemoryUtil.memCopy(image.pixels, MemoryUtil.memAddress(copy), image.size);

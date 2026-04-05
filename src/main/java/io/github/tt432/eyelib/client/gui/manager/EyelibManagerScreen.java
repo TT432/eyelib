@@ -1,34 +1,21 @@
 package io.github.tt432.eyelib.client.gui.manager;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
-import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
-import io.github.tt432.eyelib.client.gui.manager.io.FileDialogService;
+import io.github.tt432.eyelib.client.gui.manager.reload.ManagerFolderSession;
+import io.github.tt432.eyelib.client.gui.manager.reload.ManagerImportActions;
 import io.github.tt432.eyelib.client.gui.manager.reload.ManagerResourceFolderWatcher;
-import io.github.tt432.eyelib.client.gui.manager.reload.ManagerResourceImportPlanner;
-import io.github.tt432.eyelib.client.registry.ClientAssetRegistry;
-import io.github.tt432.eyelib.client.render.controller.RenderControllers;
 import io.github.tt432.eyelib.util.math.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * @author TT432
@@ -71,8 +58,6 @@ public class EyelibManagerScreen extends Screen {
         }
     }
 
-    private static final ManagerResourceFolderWatcher FOLDER_WATCHER = new ManagerResourceFolderWatcher();
-
     static class EntityButton {
         final String key;
         final Component name;
@@ -101,25 +86,13 @@ public class EyelibManagerScreen extends Screen {
         return mouseX > x && mouseX < x + w && mouseY > y && mouseY < y + h;
     }
 
-    private static DragTargetWidget json(int x, int y, int w, int h, Component title, ResourceLocation icon, Consumer<JsonObject> onDragEnter) {
+    private static DragTargetWidget action(int x, int y, int w, int h, Component title, ResourceLocation icon, Runnable onClick) {
         return new DragTargetWidget(x, y, w, h, new GuiAnimator(5), icon, title, (mx, my, b) -> {
-            if (hover(x, y, w, h, mx, my)) {
-                FileDialogService.selectJsonFile("读取文件", Path.of("/")).whenComplete((path, throwable) -> {
-                    path.ifPresent(p -> {
-                        if (p.toString().endsWith(".json")) {
-                            try {
-                                var fileContent = IOUtils.toString(new FileInputStream(p.toFile()), StandardCharsets.UTF_8);
-                                onDragEnter.accept(new Gson().fromJson(fileContent, JsonObject.class));
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-                    });
-                });
-                return true;
+            if (!hover(x, y, w, h, mx, my)) {
+                return false;
             }
-            return false;
-
+            onClick.run();
+            return true;
         });
     }
 
@@ -128,11 +101,7 @@ public class EyelibManagerScreen extends Screen {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EyelibManagerScreen.class);
 
-    // 选中的资源路径与监控器
-    @Nullable
-    private static Path monitoredFolderPath;
-    @Nullable
-    private static String monitoredFolderPathText;
+    private final ManagerFolderSession folderSession = new ManagerFolderSession();
 
     @Override
     protected void init() {
@@ -148,50 +117,21 @@ public class EyelibManagerScreen extends Screen {
         int y3 = Math.round(board + padding * 2 + h * 2);
 
         widgets = List.of(
-                json(x1, y1, w, h, Component.literal("动画"), new ResourceLocation(Eyelib.MOD_ID, "icons/animation"),
-                        jo -> {
-                            var animation = BrAnimation.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-                            ClientAssetRegistry.publishAnimation(animation);
-                        }),
-                json(x1, y2, w, h, Component.literal("动画控制器"), new ResourceLocation(Eyelib.MOD_ID, "icons/animation_controller"),
-                        jo -> {
-                            var animation = BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-                            ClientAssetRegistry.publishAnimationController(animation);
-                        }),
+                action(x1, y1, w, h, Component.literal("动画"), new ResourceLocation(Eyelib.MOD_ID, "icons/animation"),
+                        () -> ManagerImportActions.importAnimation(LOGGER)),
+                action(x1, y2, w, h, Component.literal("动画控制器"), new ResourceLocation(Eyelib.MOD_ID, "icons/animation_controller"),
+                        () -> ManagerImportActions.importAnimationController(LOGGER)),
                 new DragTargetWidget(x2, y1, w, h, new GuiAnimator(5), new ResourceLocation(Eyelib.MOD_ID, "icons/folder"), Component.literal("监控资源文件夹"),
                         (mx, my, b) -> {
                             if (hover(x2, y1, w, h, mx, my)) {
-                                FileDialogService.selectFolder("打开资源包文件夹", Path.of("/"))
-                                        .whenComplete((path, throwable) ->
-                                                RenderSystem.recordRenderCall(() ->
-                                                        path.ifPresent(p -> {
-                                                            Path absolutePath = p.toAbsolutePath();
-                                                            if (!absolutePath.equals(monitoredFolderPath)) {
-                                                                if (monitoredFolderPath != null) {
-                                                                    FOLDER_WATCHER.stop();
-                                                                }
-
-                                                                monitoredFolderPath = absolutePath;
-                                                                monitoredFolderPathText = monitoredFolderPath.toString();
-                                                                ManagerResourceImportPlanner.loadResourceFolder(monitoredFolderPath, LOGGER);
-                                                                FOLDER_WATCHER.start(monitoredFolderPath,
-                                                                        changedPath -> RenderSystem.recordRenderCall(() -> {
-                                                                            if (monitoredFolderPath != null) {
-                                                                                ManagerResourceImportPlanner.loadSingleFile(monitoredFolderPath, changedPath, LOGGER);
-                                                                            }
-                                                                        }));
-                                                            }
-                                                        })));
+                                folderSession.chooseFolder(LOGGER);
                                 return true;
                             }
 
                             return false;
                         }),
-                json(x2, y2, w, h, Component.literal("渲染控制器"), new ResourceLocation(Eyelib.MOD_ID, "icons/render_controller"),
-                        jo -> {
-                            var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, LOGGER::warn);
-                            ClientAssetRegistry.publishRenderController(controller);
-                        }),
+                action(x2, y2, w, h, Component.literal("渲染控制器"), new ResourceLocation(Eyelib.MOD_ID, "icons/render_controller"),
+                        () -> ManagerImportActions.importRenderController(LOGGER)),
                 new DragTargetWidget(x2, y3, w, h, new GuiAnimator(5),
                         new ResourceLocation(Eyelib.MOD_ID, "icons/entity"),
                         Component.literal("客户端实体"),
@@ -209,9 +149,9 @@ public class EyelibManagerScreen extends Screen {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
-        if (monitoredFolderPathText != null && !monitoredFolderPathText.isEmpty()) {
+        if (folderSession.getMonitoredFolderPathText() != null && !folderSession.getMonitoredFolderPathText().isEmpty()) {
             var font = Minecraft.getInstance().font;
-            String display = "监控路径: " + monitoredFolderPathText;
+            String display = "监控路径: " + folderSession.getMonitoredFolderPathText();
             int px = Math.round(width * 0.05F);
             int py = Math.round(height * 0.05F);
             guiGraphics.drawString(font, display, px, py, 0xFFFFFFFF);
@@ -221,5 +161,11 @@ public class EyelibManagerScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    @Override
+    public void onClose() {
+        folderSession.stop();
+        super.onClose();
     }
 }

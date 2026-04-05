@@ -10,10 +10,14 @@ import io.github.tt432.eyelib.client.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.importer.ModelImporter;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
-import io.github.tt432.eyelib.client.registry.ClientAssetRegistry;
+import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
+import io.github.tt432.eyelib.client.registry.ClientEntityAssetRegistry;
+import io.github.tt432.eyelib.client.registry.ModelAssetRegistry;
+import io.github.tt432.eyelib.client.registry.ParticleAssetRegistry;
+import io.github.tt432.eyelib.client.registry.RenderControllerAssetRegistry;
+import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
 import io.github.tt432.eyelib.event.TextureChangedEvent;
-import io.github.tt432.eyelib.util.client.NativeImages;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.resources.ResourceLocation;
@@ -47,15 +51,15 @@ public final class ManagerResourceImportPlanner {
 
         Map<String, BrAnimationControllers> animationControllers = loadJsonFiles(basePath, "animation_controllers",
                 jo -> BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn));
-        ClientAssetRegistry.replaceAnimationAssets(animations, animationControllers);
+        AnimationAssetRegistry.replaceAssets(animations, animationControllers);
 
         Map<String, RenderControllers> renderControllers = loadJsonFiles(basePath, "render_controllers",
                 jo -> RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn));
-        ClientAssetRegistry.replaceRenderControllers(renderControllers);
+        RenderControllerAssetRegistry.replaceRenderControllers(renderControllers);
 
         Map<String, BrParticle> particles = loadJsonFiles(basePath, "particles",
                 jo -> BrParticle.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn));
-        ClientAssetRegistry.replaceParticles(particles);
+        ParticleAssetRegistry.replaceParticles(particles);
 
         Map<String, BrClientEntity> parsedEntities = loadJsonFiles(basePath, "entity",
                 jo -> BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn));
@@ -64,12 +68,12 @@ public final class ManagerResourceImportPlanner {
         for (BrClientEntity entity : parsedEntities.values()) {
             entities.put(new ResourceLocation("eyelib", "manager_import_" + index++), entity);
         }
-        ClientAssetRegistry.replaceClientEntities(entities);
+        ClientEntityAssetRegistry.replaceClientEntities(entities);
 
         Map<String, Map<String, Model>> parsedModels = loadModelFiles(basePath);
         LinkedHashMap<String, Model> models = new LinkedHashMap<>();
         parsedModels.values().forEach(models::putAll);
-        ClientAssetRegistry.replaceModels(models);
+        ModelAssetRegistry.replaceModels(models);
 
         loadTextures(basePath);
     }
@@ -83,27 +87,27 @@ public final class ManagerResourceImportPlanner {
 
                 if (relative.startsWith("animations/")) {
                     var animation = BrAnimation.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
-                    ClientAssetRegistry.publishAnimation(animation);
+                    AnimationAssetRegistry.publishAnimation(animation);
                 } else if (relative.startsWith("animation_controllers/")) {
                     var animation = BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
-                    ClientAssetRegistry.publishAnimationController(animation);
+                    AnimationAssetRegistry.publishAnimationController(animation);
                 } else if (relative.startsWith("render_controllers/")) {
                     var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
-                    ClientAssetRegistry.publishRenderController(controller);
+                    RenderControllerAssetRegistry.publishRenderController(controller);
                 } else if (relative.startsWith("entity/")) {
                     var entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
-                    ClientAssetRegistry.publishClientEntity(entity);
+                    ClientEntityAssetRegistry.publishClientEntity(entity);
                 } else if (relative.startsWith("particles/")) {
                     var particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
-                    ClientAssetRegistry.publishParticle(particle);
+                    ParticleAssetRegistry.publishParticle(particle);
                 } else if (relative.startsWith("models/")) {
-                    ClientAssetRegistry.publishModels(ModelImporter.importFile(file));
+                    ModelAssetRegistry.publishModels(ModelImporter.importFile(file));
                 }
             } else if (relative.startsWith("models/") && relative.endsWith(".bbmodel")) {
-                ClientAssetRegistry.publishModels(ModelImporter.importFile(file));
+                ModelAssetRegistry.publishModels(ModelImporter.importFile(file));
             } else if (isTextureFile(relative)) {
-                NativeImage nativeImage = NativeImages.loadImage(new FileInputStream(file.toFile()));
-                NativeImages.uploadImage(toTextureLocation(basePath, file), nativeImage);
+                NativeImage nativeImage = NativeImageIO.load(new FileInputStream(file.toFile()));
+                NativeImageIO.upload(toTextureLocation(basePath, file), nativeImage);
                 MinecraftForge.EVENT_BUS.post(new TextureChangedEvent());
             }
         } catch (Exception e) {
@@ -153,8 +157,8 @@ public final class ManagerResourceImportPlanner {
 
         pngFiles.forEach(pngFile -> {
             try {
-                NativeImage nativeImage = NativeImages.loadImage(new FileInputStream(pngFile.toFile()));
-                NativeImages.uploadImage(toTextureLocation(basePath, pngFile), nativeImage);
+                NativeImage nativeImage = NativeImageIO.load(new FileInputStream(pngFile.toFile()));
+                NativeImageIO.upload(toTextureLocation(basePath, pngFile), nativeImage);
             } catch (IOException e) {
                 LOGGER.error("can't load file.", e);
             }
