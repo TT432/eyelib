@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.Eyelib;
+import io.github.tt432.eyelib.client.animation.AnimationLookup;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
@@ -200,7 +201,7 @@ public class AnimationView extends Screen {
 
         @Override
         protected int getContentHeight() {
-            return Eyelib.getAnimationManager().getAllData().size() * buttonHeight;
+            return AnimationLookup.size() * buttonHeight;
         }
 
         @Override
@@ -224,7 +225,7 @@ public class AnimationView extends Screen {
 
     private Stream<String> bones() {
         if (selectedAnimationName != null) {
-            if (Eyelib.getAnimationManager().get(selectedAnimationName) instanceof BrAnimationEntry bae) {
+            if (AnimationLookup.get(selectedAnimationName) instanceof BrAnimationEntry bae) {
                 return bae.bones().keySet().intStream().mapToObj(GlobalBoneIdHandler::get);
             }
         }
@@ -239,7 +240,7 @@ public class AnimationView extends Screen {
         selectedBoneName = null;
 
         int buttonHeight = 20;
-        addRenderableWidget(new StringsScrollPanel(() -> Eyelib.getAnimationManager().getAllData().keySet().stream(),
+        addRenderableWidget(new StringsScrollPanel(() -> AnimationLookup.names().stream(),
                 100, height - 10 - 30, 30, 10, 1, (name, button) -> {
             selectedAnimationName = name;
             if (boneNameScrollPanel != null) {
@@ -301,7 +302,7 @@ public class AnimationView extends Screen {
                             throw new IllegalStateException("Unexpected value: " + animationChanelButtonGroup.selectedButtonName);
                 };
 
-                if (selectedAnimationName != null && selectedBoneName != null && Eyelib.getAnimationManager().get(selectedAnimationName) instanceof BrAnimationEntry bae) {
+                if (selectedAnimationName != null && selectedBoneName != null && AnimationLookup.get(selectedAnimationName) instanceof BrAnimationEntry bae) {
                     int top = initPosY + interval * 3;
                     int down = height - 10;
                     int left = rightPanelStartY + 100 + 5;
