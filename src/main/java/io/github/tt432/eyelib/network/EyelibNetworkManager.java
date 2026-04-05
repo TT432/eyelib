@@ -198,7 +198,7 @@ public class EyelibNetworkManager {
 
         if (data.is_dig() != packet.dig()) {
             data = data.with_dig(packet.dig());
-            DataAttachmentHelper.set(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), player, data);
+            DataAttachmentHelper.setLocal(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), player, data);
             sendToTrackedAndSelf(player, new ExtraEntityDataPacket(player.getId(), data));
         }
     }

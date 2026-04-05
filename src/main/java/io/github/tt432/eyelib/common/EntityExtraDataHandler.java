@@ -65,7 +65,7 @@ public class EntityExtraDataHandler {
                 if (data.is_avoid() != is_avoid)
                     data = data.with_avoid(is_avoid);
 
-                DataAttachmentHelper.set(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), event.getEntity(), data);
+                DataAttachmentHelper.setLocal(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), event.getEntity(), data);
 
                 if (oldData != data)
                     EyelibNetworkManager.sendToTrackedAndSelf(r,

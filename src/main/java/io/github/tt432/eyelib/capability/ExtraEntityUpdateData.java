@@ -116,7 +116,7 @@ public record ExtraEntityUpdateData(
                         .withLastHurtZ(depos.z() - epos.z());
 
                 if (data != updated) {
-                    DataAttachmentHelper.set(key, entity, updated);
+                    DataAttachmentHelper.setLocal(key, entity, updated);
                     EyelibNetworkManager.sendToTrackedAndSelf(entity, new ExtraEntityUpdateDataPacket(entity.getId(), updated));
                 }
             }
@@ -130,7 +130,7 @@ public record ExtraEntityUpdateData(
             ExtraEntityUpdateData updated = data.update(entity);
 
             if (!entity.level().isClientSide && data != updated) {
-                DataAttachmentHelper.set(key, entity, updated);
+                DataAttachmentHelper.setLocal(key, entity, updated);
                 EyelibNetworkManager.sendToTrackedAndSelf(entity, new ExtraEntityUpdateDataPacket(entity.getId(), updated));
             }
         }

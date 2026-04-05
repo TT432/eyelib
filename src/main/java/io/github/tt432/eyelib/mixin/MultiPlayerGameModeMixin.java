@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.mixin;
 
 import io.github.tt432.eyelib.network.EyelibNetworkManager;
 import io.github.tt432.eyelib.network.UpdateDestroyInfoPacket;
-import io.github.tt432.eyelib.util.client.ClientScheduler;
+import io.github.tt432.eyelib.client.ClientTaskScheduler;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -42,7 +42,7 @@ public class MultiPlayerGameModeMixin {
     private void startDestroyBlock2(BlockPos loc, Direction face, CallbackInfoReturnable<Boolean> cir) {
         EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(true));
 
-        ClientScheduler.scheduleNextTick(() -> EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(false)));
+        ClientTaskScheduler.scheduleNextTick(() -> EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(false)));
     }
 
     @Inject(method = "stopDestroyBlock", at = @At("HEAD"))
@@ -67,7 +67,7 @@ public class MultiPlayerGameModeMixin {
     private void continueDestroyBlock2(BlockPos posBlock, Direction directionFacing, CallbackInfoReturnable<Boolean> cir) {
         EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(true));
 
-        ClientScheduler.scheduleNextTick(() -> EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(false)));
+        ClientTaskScheduler.scheduleNextTick(() -> EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(false)));
     }
 
     @Inject(method = "continueDestroyBlock", at = {

@@ -10,9 +10,10 @@
 3. `DataAttachmentHelper.java`
 
 ## Key Files
-- `DataAttachmentHelper.java`: current helper that both mutates attachments and publishes sync packets
+- `DataAttachmentHelper.java`: local attachment read/mutation helper only; no longer triggers sync implicitly
 - `DataAttachmentEventHandlers.java`: event-driven attachment behavior
 - `DataAttachmentContainer*.java`: attachment storage infrastructure
+- `../../network/dataattach/DataAttachmentSyncService.java`: explicit packet send/apply owner for attachment sync
 
 ## Boundary Reminder
 - Attachment state ownership belongs here, but packet routing belongs in `../../network/`.
