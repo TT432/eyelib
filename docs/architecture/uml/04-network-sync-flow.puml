@@ -1,0 +1,101 @@
+@startuml network-sync-flow
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam classAttributeIconSize 0
+
+title Eyelib - Network & Data Attachment Sync Flow
+
+package "Network Layer" as net #FFF9C4 {
+    class EyelibNetworkManager <<channel>> {
+        -{static} INSTANCE: SimpleChannel
+        +{static} register()
+        +{static} sendToServer(packet)
+        +{static} sendToTrackedAndSelf(entity, packet)
+        +{static} sendToPlayer(player, packet)
+    }
+
+    class NetClientHandlers <<dispatcher>> {
+        +{static} onModelComponentSyncPacket(...)
+        +{static} onAnimationComponentSyncPacket(...)
+        +{static} onRemoveParticlePacket(...)
+        +{static} onSpawnParticlePacket(...)
+        +{static} onDataAttachmentUpdatePacket(...)
+        +{static} onDataAttachmentSyncPacket(...)
+        +{static} onExtraEntityDataPacket(...)
+        +{static} onExtraEntityUpdateDataPacket(...)
+    }
+
+    class ModelComponentSyncPacket
+    class AnimationComponentSyncPacket
+    class SpawnParticlePacket
+    class RemoveParticlePacket
+    class DataAttachmentUpdatePacket <<generic>> {
+        entityId: int
+        attachment: DataAttachmentType<C>
+        value: C
+    }
+    class DataAttachmentSyncPacket {
+        entityId: int
+        data: CompoundTag
+    }
+    class ExtraEntityDataPacket
+    class ExtraEntityUpdateDataPacket
+    class UniDataUpdatePacket <<generic>>
+    class UpdateDestroyInfoPacket
+}
+
+package "Sync Services" as sync #E8F5E9 {
+    class DataAttachmentSyncService <<service>> {
+        +{static} syncTrackedAndSelf(attachment, entity, value)
+        +{static} syncContainer(entity, data)
+        +{static} applyUpdate(DataAttachmentUpdatePacket)
+        +{static} applySync(DataAttachmentSyncPacket)
+        +{static} applyUpdate(UniDataUpdatePacket)
+        +{static} applyExtraEntityData(ExtraEntityDataPacket)
+    }
+
+    class ClientRenderSyncService <<service>> {
+        +{static} apply(ModelComponentSyncPacket)
+        +{static} apply(AnimationComponentSyncPacket)
+    }
+
+    class ParticleSpawnService <<service>> {
+        +{static} spawnFromPacket(SpawnParticlePacket)
+        +{static} spawnEmitter(spawnId, emitter)
+        +{static} removeEmitter(removeId)
+    }
+}
+
+package "Data Attachment" as da #F1F8E9 {
+    class DataAttachmentHelper {
+        +{static} getOrCreate(attachment, entity)
+        +{static} set(attachment, entity, value)
+        +{static} setLocal(attachment, entity, value)
+    }
+
+    class DataAttachmentType<C> <<type>>
+    class DataAttachmentContainer <<storage>>
+    class DataAttachmentContainerCapability <<capability>>
+    class DataAttachmentEventHandlers <<event>> {
+        +onTrackStart()
+    }
+}
+
+EyelibNetworkManager --> NetClientHandlers : "side-gated\ndispatch"
+NetClientHandlers --> ClientRenderSyncService : "model/animation\nsync"
+NetClientHandlers --> ParticleSpawnService : "particle\nspawn/remove"
+NetClientHandlers --> DataAttachmentSyncService : "attachment\nupdate/sync"
+
+DataAttachmentSyncService --> EyelibNetworkManager : "send packets\n(server side)"
+DataAttachmentSyncService --> DataAttachmentHelper : "apply on client\n(setLocal)"
+DataAttachmentSyncService --> DataAttachmentContainerCapability : "deserialize\nNBT container"
+
+DataAttachmentEventHandlers --> DataAttachmentSyncService : "on track start\n(full snapshot)"
+
+ClientRenderSyncService ..> DataAttachmentSyncService : "applies into\nRenderData"
+
+ParticleSpawnService --> ParticleLookup : "resolve particle\nfrom packet"
+ParticleSpawnService --> DataAttachmentHelper : "get RenderData\nfor scope"
+
+@enduml

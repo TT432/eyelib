@@ -1,0 +1,88 @@
+@startuml lookup-seams
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam classAttributeIconSize 0
+
+title Eyelib - Domain Lookup Seams (Narrow Runtime Read Access)
+
+class AnimationLookup <<lookup>> {
+    +{static} get(name: String): Animation<?>
+    +{static} managerName(): String
+}
+
+class ModelLookup <<lookup>> {
+    +{static} get(name: String): Model
+}
+
+class ClientEntityLookup <<lookup>> {
+    +{static} get(id: ResourceLocation): BrClientEntity
+    +{static} managerName(): String
+}
+
+class RenderControllerLookup <<lookup>> {
+    +{static} get(name: String): RenderControllerEntry
+}
+
+class ParticleLookup <<lookup>> {
+    +{static} get(id: String): BrParticle
+}
+
+class AnimationManager {
+    +{static} INSTANCE
+    +get(name: String): Animation<?>
+}
+
+class ModelManager {
+    +{static} INSTANCE
+    +get(name: String): Model
+}
+
+class ClientEntityManager {
+    +{static} INSTANCE
+    +get(id: String): BrClientEntity
+}
+
+class RenderControllerManager {
+    +{static} INSTANCE
+    +get(name: String): RenderControllerEntry
+}
+
+class ParticleManager {
+    +{static} INSTANCE
+    +get(name: String): BrParticle
+}
+
+AnimationLookup --> AnimationManager : "delegates to INSTANCE.get()"
+ModelLookup --> ModelManager : "delegates to INSTANCE.get()"
+ClientEntityLookup --> ClientEntityManager : "delegates to INSTANCE.get()"
+RenderControllerLookup --> RenderControllerManager : "delegates to INSTANCE.get()"
+ParticleLookup --> ParticleManager : "delegates to INSTANCE.get()"
+
+class Eyelib <<bootstrap>> {
+    +{static} getAnimationManager()
+    +{static} getModelManager()
+    +{static} getRenderControllerManager()
+    +{static} getParticleManager()
+    +{static} getMaterialManager()
+}
+
+Eyelib ..> AnimationManager : "direct singleton\n(transitional)"
+Eyelib ..> ModelManager : "direct singleton\n(transitional)"
+Eyelib ..> RenderControllerManager : "direct singleton\n(transitional)"
+Eyelib ..> ParticleManager : "direct singleton\n(transitional)"
+Eyelib ..> MaterialManager : "direct singleton\n(transitional)"
+
+note right of AnimationLookup
+  Preferred runtime access pattern.
+  Shields consumers from
+  bootstrap reach-through.
+end note
+
+note right of Eyelib
+  Legacy singleton access.
+  Do NOT add new reach-through
+  methods. Prefer lookup seams.
+end note
+
+@enduml

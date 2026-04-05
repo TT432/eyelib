@@ -1,0 +1,124 @@
+@startuml overall-package-dependency
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam packageStyle rectangle
+skinparam defaultFontSize 12
+skinparam packageFontSize 14
+skinparam arrowFontSize 10
+
+title Eyelib - Overall Package Dependency Diagram
+
+package "eyelib" as root #E8F0FE {
+    package "bootstrap" as bootstrap #FFF3E0 {
+        [Eyelib.java] as eyelib
+    }
+
+    package "client" as client #E8F5E9 {
+        package "client.animation" as anim #C8E6C9
+        package "client.entity" as entity #C8E6C9
+        package "client.model" as model #C8E6C9
+        package "client.render" as render #C8E6C9
+        package "client.material" as material #C8E6C9
+        package "client.particle" as particle #C8E6C9
+        package "client.loader" as loader #C8E6C9
+        package "client.manager" as manager #C8E6C9
+        package "client.registry" as registry #C8E6C9
+        package "client.gui" as gui #C8E6C9
+        package "client.compat" as compat #C8E6C9
+        package "client.cursor" as cursor #C8E6C9
+        package "client.gl" as gl #C8E6C9
+    }
+
+    package "molang" as molang #F3E5F5 {
+        package "molang.core" as molang_core #E1BEE7
+        package "molang.compiler" as molang_compiler #E1BEE7
+        package "molang.generated" as molang_generated #E1BEE7
+        package "molang.mapping" as molang_mapping #E1BEE7
+        package "molang.type" as molang_type #E1BEE7
+    }
+
+    package "network" as network #FFF9C4 {
+        package "network.dataattach" as net_dataattach #FFF9C4
+    }
+
+    package "capability" as capability #FCE4EC {
+        package "capability.component" as cap_component #F8BBD0
+    }
+
+    package "common" as common #E0F7FA {
+        package "common.behavior" as behavior #B2EBF2
+    }
+
+    package "util" as util #F1F8E9 {
+        package "util.data_attach" as data_attach #DCEDC8
+        package "util.codec" as codec #DCEDC8
+        package "util.math" as math #DCEDC8
+        package "util.search" as search #DCEDC8
+        package "util.client" as util_client #DCEDC8
+        package "util.modbridge" as modbridge #DCEDC8
+    }
+
+    package "event" as event #FBE9E7
+    package "command" as command #FBE9E7
+    package "mixin" as mixin #FBE9E7
+}
+
+eyelib --> capability : "registers\nattachments"
+eyelib --> network : "registers\npackets"
+eyelib --> manager : "singleton\naccess (transitional)"
+eyelib --> render : "getRenderHelper()"
+
+loader --> registry : "publishes parsed\nassets"
+registry --> manager : "puts into\nManager stores"
+
+manager --> event : "fires\nManagerEntryChangedEvent"
+
+anim --> molang_core : "evaluates\nMolangValue"
+anim --> manager : "AnimationLookup\nreads AnimationManager"
+
+model --> molang_core : "model expressions\nuse MolangScope"
+model --> manager : "ModelLookup\nreads ModelManager"
+
+render --> model : "renders\nModel instances"
+render --> material : "material\nbinding"
+render --> manager : "RenderControllerLookup"
+
+particle --> manager : "ParticleLookup"
+particle --> molang_core : "emitter\nevaluations"
+
+entity --> model : "entity definitions\nreference models"
+entity --> anim : "entity definitions\nreference animations"
+entity --> render : "entity definitions\nreference controllers"
+entity --> manager : "ClientEntityLookup"
+
+molang_compiler --> molang_generated : "uses generated\nparser/lexer"
+molang_compiler --> molang_mapping : "named mappings"
+molang_core --> molang_type : "MolangObject,\nMolangFloat..."
+
+network --> net_dataattach : "delegates\nattachment sync"
+network --> capability : "packet types\nuse component models"
+net_dataattach --> data_attach : "reads/writes\nattachment state"
+net_dataattach --> network : "uses\nEyelibNetworkManager"
+
+capability --> cap_component : "defines\ncomponent types"
+cap_component --> network : "synced via\npackets"
+cap_component --> render : "consumed by\nclient renderers"
+
+common --> data_attach : "entity state\nvia attachments"
+common --> network : "sends\npackets"
+
+command --> network : "sends particle\npackets"
+event --> manager : "entry changed\nevents"
+event --> gui : "manager screen\nevents"
+
+gui --> loader : "import planner\ntriggers reload"
+gui --> registry : "publishes via\nClientAssetRegistry"
+gui --> model : "model preview"
+
+mixin --> capability : "runtime\nintegration"
+
+util_client --> render : "texture helpers,\npose copies"
+data_attach --> capability : "typed storage\nfor attachments"
+codec --> network : "packet\nserialization"
+
+@enduml

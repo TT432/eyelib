@@ -1,0 +1,94 @@
+@startuml side-boundaries
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 12
+skinparam packageStyle rectangle
+
+title Eyelib - Side Boundary Rules
+
+skinparam rectangleFontSize 13
+
+rectangle "Common / Shared" as common #E0F7FA {
+    note as common_note
+        **May depend on:**
+        codecs, math, immutable data,
+        pure helpers
+
+        **Must NOT depend on:**
+        client GUI, rendering,
+        client-only runtime classes
+    end note
+
+    rectangle "util.codec" as codec
+    rectangle "util.math" as math
+    rectangle "util.search" as search
+    rectangle "util (root helpers)" as util_root
+}
+
+rectangle "Client Only" as client #E8F5E9 {
+    note as client_note
+        **May depend on:**
+        render/model/animation/particle/tooling
+        and client handlers
+
+        **Must NOT depend on:**
+        server-only execution paths
+    end note
+
+    rectangle "client.render" as render
+    rectangle "client.model" as model
+    rectangle "client.animation" as anim
+    rectangle "client.particle" as particle
+    rectangle "client.gui" as gui
+    rectangle "client.loader" as loader
+    rectangle "client.manager" as manager
+    rectangle "client.registry" as registry
+    rectangle "util.client" as util_client
+}
+
+rectangle "Sync / Network" as sync #FFF9C4 {
+    note as sync_note
+        **May depend on:**
+        packet codecs, side gates,
+        narrow apply services
+
+        **Must NOT depend on:**
+        direct GUI code,
+        loader implementation details
+    end note
+
+    rectangle "network (packets)" as network
+    rectangle "network.dataattach" as net_da
+}
+
+rectangle "Data Attachment" as dataattach #F1F8E9 {
+    note as da_note
+        **May depend on:**
+        typed attachment helpers,
+        mutation flow
+
+        **Must NOT depend on:**
+        rendering or screen logic
+    end note
+
+    rectangle "util.data_attach" as da_util
+    rectangle "capability" as cap
+}
+
+client --> common : "uses shared\nutilities"
+sync --> common : "uses codecs"
+sync --> dataattach : "sync seam"
+dataattach --> common : "uses types"
+sync --> client : "client handlers\n(side-gated)"
+
+net_da -[hidden]--> da_util
+
+legend right
+  |= Color |= Side |
+  |<back:#E0F7FA>    </back>| Common / Shared |
+  |<back:#E8F5E9>    </back>| Client Only |
+  |<back:#FFF9C4>    </back>| Sync / Network |
+  |<back:#F1F8E9>    </back>| Data Attachment |
+endlegend
+
+@enduml

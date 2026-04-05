@@ -15,7 +15,7 @@
 - `src/main/java/io/github/tt432/eyelib/client/gui/manager/EyelibManagerScreen.java`
 - `src/main/java/io/github/tt432/eyelib/client/loader/`
 - `src/main/java/io/github/tt432/eyelib/client/manager/`
-- `src/main/java/io/github/tt432/eyelib/client/registry/ClientAssetRegistry.java`
+- `src/main/java/io/github/tt432/eyelib/client/registry/`
 
 ## Read Only If Needed
 - Enter `client/gui/manager/` only for dev tooling and screen extraction work.

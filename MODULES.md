@@ -8,7 +8,7 @@
 ## Summary
 - Eyelib is a single-module `Gradle + Java 17 + Forge` repository with one runtime codebase and a growing documentation layer.
 - The repository currently centers on six large code domains: `bootstrap`, `client`, `molang`, `network/sync`, `dataattach/capability`, and `shared util/common`.
-- Recent refactor work introduced several narrow seam modules to reduce context leakage: `client/registry`, `client/gui/manager/io`, `client/gui/manager/reload`, `client/gui/manager/hotkey`, `client/particle` lookup/spawn seams, `network/dataattach`, and destination-driven helpers under `util/client/*`.
+- Recent refactor work introduced several narrow seam modules to reduce context leakage: domain-specific `client/registry` writers, `client/gui/manager/io`, `client/gui/manager/reload`, `client/gui/manager/hotkey`, `client/particle` lookup/spawn seams, `network/dataattach`, and named client helper owners under `client/render/*`, `client/gui/preview/*`, and `client/*`.
 - Documentation is also modularized: root guidance, architecture docs, index docs, plan docs, and package-local README files all act as maintained repository modules.
 
 ## Inventory
@@ -24,6 +24,7 @@
 | Side boundaries doc | client/common/sync/dataattach side rules | `docs/architecture/02-side-boundaries.md` | governs packet/runtime edits |
 | Generated code policy | generated-vs-handwritten Molang rule set | `docs/architecture/03-generated-code-policy.md` | governs parser regeneration/isolation |
 | Architecture blueprint | target communication model and execution priorities | `ARCHITECTURE-BLUEPRINT.md` | governs communication-lane refactor work |
+| Blockbench export reference | reference notes for Blockbench-exported Bedrock geometry fields and constraints | `docs/blockbench/bedrock-geometry-export-fields-reference.md` | supports Bedrock importer/render debugging and schema comparisons |
 | Client index | navigation for client runtime/tooling modules | `docs/index/client.md` | points to client package READMEs |
 | Molang index | navigation for compiler/runtime/generated parser modules | `docs/index/molang.md` | points to `molang/` subareas |
 | Network index | navigation for packets and sync modules | `docs/index/network.md` | points to `network/`, `util/data_attach/`, `network/dataattach/` |
@@ -33,7 +34,7 @@
 ### Bootstrap And API Surface Modules
 | Module | Responsibility | Main paths | Interactions |
 |---|---|---|---|
-| Bootstrap entrypoint | mod startup, capability registration, network registration, compatibility bridge | `src/main/java/io/github/tt432/eyelib/Eyelib.java`, `src/main/java/io/github/tt432/eyelib/package-info.java` | touches capabilities, network, and a reduced compatibility surface |
+| Bootstrap entrypoint | mod startup, capability registration, network registration | `src/main/java/io/github/tt432/eyelib/Eyelib.java`, `src/main/java/io/github/tt432/eyelib/package-info.java` | touches capabilities, network, and render bootstrap only |
 | API marker | future stable external API landing zone | `src/main/java/io/github/tt432/eyelib/api/README.md` | documents intended public surface |
 | Internal marker | explicit default-internal policy | `src/main/java/io/github/tt432/eyelib/internal/README.md` | marks implementation packages as internal |
 
@@ -53,7 +54,7 @@
 | Animation lookup seam | narrow runtime read access to animations | `src/main/java/io/github/tt432/eyelib/client/animation/AnimationLookup.java` | shields consumers from bootstrap reach-through |
 | Client entity runtime | client entity definitions and runtime helpers | `src/main/java/io/github/tt432/eyelib/client/entity/` | interacts with loader parsing, client-entity manager store, render controllers, and particles |
 | Client entity lookup seam | narrow runtime read access to client entities | `src/main/java/io/github/tt432/eyelib/client/entity/ClientEntityLookup.java` | used by render/runtime setup |
-| Client render pipeline | render parameters, visitors, targets, render helpers | `src/main/java/io/github/tt432/eyelib/client/render/` | depends on models, materials, util client helpers |
+| Client render pipeline | render parameters, visitors, targets, render helpers, render type resolution, texture IO/merging | `src/main/java/io/github/tt432/eyelib/client/render/` | depends on models, materials, and render-owned helper classes |
 | Client render sync seam | applies model/animation sync packets into render state | `src/main/java/io/github/tt432/eyelib/client/render/sync/ClientRenderSyncService.java` | called from network client handlers |
 | Client model domain | model structures, bake/runtime data, locators, and source-format parsers for model inputs | `src/main/java/io/github/tt432/eyelib/client/model/` | used by render pipeline, loaders, and importer seam |
 | Model importer seam | importer entrypoints and source-to-runtime model conversion | `src/main/java/io/github/tt432/eyelib/client/model/importer/` | consumes `client/model/bbmodel` and later `client/model/bedrock`, produces runtime `Model` instances |
@@ -63,18 +64,18 @@
 | Render-controller lookup seam | narrow runtime read access to render controllers | `src/main/java/io/github/tt432/eyelib/client/render/controller/RenderControllerLookup.java` | used by entity render setup |
 | Client compatibility adapters | external client compatibility integrations | `src/main/java/io/github/tt432/eyelib/client/compat/` | bridges to surrounding mod/client systems |
 | Client cursor/gl helpers | cursor and GL-specific client support | `src/main/java/io/github/tt432/eyelib/client/cursor/`, `src/main/java/io/github/tt432/eyelib/client/gl/` | low-level client support for rendering/tooling |
-| Client tick/runtime hooks | client-side periodic runtime orchestration | `src/main/java/io/github/tt432/eyelib/client/ClientTickHandler.java`, `src/main/java/io/github/tt432/eyelib/client/EntityRenderSystem.java` | feeds render/tooling animation loops |
+| Client tick/runtime hooks | client-side periodic runtime orchestration and deferred task scheduling | `src/main/java/io/github/tt432/eyelib/client/ClientTickHandler.java`, `src/main/java/io/github/tt432/eyelib/client/EntityRenderSystem.java`, `src/main/java/io/github/tt432/eyelib/client/ClientTaskScheduler.java` | feeds render/tooling animation loops and next-tick actions |
 
 ### Client Loader, Manager, Registry, And Tooling Modules
 | Module | Responsibility | Main paths | Interactions |
 |---|---|---|---|
 | Resource loader base | common reload-listener base and resource loading pattern | `src/main/java/io/github/tt432/eyelib/client/loader/BrResourcesLoader.java` | base for all JSON/suffix loaders |
-| Asset loaders | parse/reload animations, materials, particles, entities, attachables, and render controllers | `src/main/java/io/github/tt432/eyelib/client/loader/`, `src/main/java/io/github/tt432/eyelib/client/loader/README.md` | publish into registry seam and some legacy loaders |
-| Runtime managers | singleton manager stores for animations, models, materials, particles, render controllers, and client entities | `src/main/java/io/github/tt432/eyelib/client/manager/` | partially exposed via `Eyelib.java` transitional bridge |
-| Client registry seam | centralized loader/tooling→store publication boundary for non-model client assets | `src/main/java/io/github/tt432/eyelib/client/registry/`, `src/main/java/io/github/tt432/eyelib/client/registry/README.md` | used by loaders, manager import planner, and client-entity publication into manager/store |
-| Manager screen UI | developer/debug UI for importing and watching non-model client resources | `src/main/java/io/github/tt432/eyelib/client/gui/manager/`, `src/main/java/io/github/tt432/eyelib/client/gui/manager/README.md` | interacts with entities screen, import planner, folder watcher |
+| Asset loaders | parse/reload animations, materials, particles, entities, attachables, and render controllers | `src/main/java/io/github/tt432/eyelib/client/loader/`, `src/main/java/io/github/tt432/eyelib/client/loader/README.md` | publish into domain-specific registry writers |
+| Runtime managers | singleton manager stores for animations, models, materials, particles, render controllers, and client entities | `src/main/java/io/github/tt432/eyelib/client/manager/` | consumed through lookup seams and domain-specific writer classes |
+| Client registry seam | domain-specific loader/tooling→store publication boundaries | `src/main/java/io/github/tt432/eyelib/client/registry/`, `src/main/java/io/github/tt432/eyelib/client/registry/README.md` | used by loaders, manager import planner, and manager import actions |
+| Manager screen UI | developer/debug UI for importing and watching non-model client resources | `src/main/java/io/github/tt432/eyelib/client/gui/manager/`, `src/main/java/io/github/tt432/eyelib/client/gui/manager/README.md` | interacts with entities screen, import actions, and folder session helpers |
 | Manager screen IO seam | async file/folder dialog handling | `src/main/java/io/github/tt432/eyelib/client/gui/manager/io/` | used only by manager screen UI |
-| Manager screen reload seam | resource-folder import and file watch lifecycle for animations, controllers, particles, entities, Bedrock models, and textures | `src/main/java/io/github/tt432/eyelib/client/gui/manager/reload/` | publishes through client registry seam |
+| Manager screen reload seam | resource-folder import and file watch lifecycle for animations, controllers, particles, entities, Bedrock models, and textures | `src/main/java/io/github/tt432/eyelib/client/gui/manager/reload/` | publishes through domain-specific registry seams and holds monitored folder session state |
 | Manager screen hotkey seam | keybind registration and open-screen tick event | `src/main/java/io/github/tt432/eyelib/client/gui/manager/hotkey/` | opens `EyelibManagerScreen` without embedding event logic in UI class |
 | Auxiliary client screens | extra screen tooling outside manager screen | `src/main/java/io/github/tt432/eyelib/client/gui/` | uses client/model/util helpers |
 
@@ -112,12 +113,14 @@
 | Module | Responsibility | Main paths | Interactions |
 |---|---|---|---|
 | Util root | local index and rules for utility code | `src/main/java/io/github/tt432/eyelib/util/README.md` | routes into client/data_attach/codec/math/search |
-| Util client facade layer | legacy/transitional client helper area | `src/main/java/io/github/tt432/eyelib/util/client/` | some callers still use compatibility facades |
+| Util client deterministic helpers | remaining narrow client-only helpers such as texture paths, pose copies, and inventory model resource locations | `src/main/java/io/github/tt432/eyelib/util/client/` | consumed by render/model code that still shares these small deterministic helpers |
 | Texture path helper | deterministic texture path transformation | `src/main/java/io/github/tt432/eyelib/util/client/texture/TexturePathHelper.java` | used by rendering and texture composition |
 | Pose copy helper | `PoseStack.Pose` copy helper | `src/main/java/io/github/tt432/eyelib/util/client/render/PoseCopies.java` | used by render params and visitors |
 | Inventory model resource helper | inventory `ModelResourceLocation` helper | `src/main/java/io/github/tt432/eyelib/util/client/model/InventoryModelResourceLocations.java` | used by image/model preview flow |
-| Native image utilities | image load/upload helpers | `src/main/java/io/github/tt432/eyelib/util/client/NativeImages.java` | used by render controller textures and manager import planner |
-| Texture composition facade | texture layer merging and emissive path facade | `src/main/java/io/github/tt432/eyelib/util/client/Textures.java` | still used by render controller texture composition |
+| Native image IO | image load/upload helpers | `src/main/java/io/github/tt432/eyelib/client/render/texture/NativeImageIO.java` | used by render controller textures, cursor loading, and manager import planner |
+| Texture layer merger | merged texture atlas generation for layered render-controller textures | `src/main/java/io/github/tt432/eyelib/client/render/texture/TextureLayerMerger.java` | used by render controller texture composition |
+| Render type resolver | render-type id to runtime factory resolution | `src/main/java/io/github/tt432/eyelib/client/render/RenderTypeResolver.java` | used by materials, model components, and particles |
+| Model preview asset | preview-only model/atlas pair for GUI preview flow | `src/main/java/io/github/tt432/eyelib/client/gui/preview/ModelPreviewAsset.java` | used by `ModelPreviewScreen` |
 | Codec utilities | custom stream/codec helpers | `src/main/java/io/github/tt432/eyelib/util/codec/` | used by network packets and serialization |
 | Math utilities | math and transform helpers | `src/main/java/io/github/tt432/eyelib/util/math/` | used by render/model/UI helpers |
 | Search utilities | search/index result helpers | `src/main/java/io/github/tt432/eyelib/util/search/` | used by loaders and tooling UI |

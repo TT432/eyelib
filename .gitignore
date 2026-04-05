@@ -34,6 +34,12 @@ repo
 .cache/
 .sisyphus/
 .tools/
+.AddCompLib/
+.bloop/
+.metals/
+__pycache__/
+*.pyc
+tmp-mc/
 
 # local scratch data
 *.duckdb

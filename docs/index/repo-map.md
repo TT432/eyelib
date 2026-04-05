@@ -19,6 +19,7 @@
 - Molang: start in `src/main/java/io/github/tt432/eyelib/molang/`, but treat `molang/generated/` as generated/read-only
 - Sync and packets: start in `src/main/java/io/github/tt432/eyelib/network/`
 - Data attachment flow: start in `src/main/java/io/github/tt432/eyelib/util/data_attach/` and `src/main/java/io/github/tt432/eyelib/capability/`
+- Blockbench Bedrock export reference: `docs/blockbench/bedrock-geometry-export-fields-reference.md`
 
 ## Read In This Order
 1. This file

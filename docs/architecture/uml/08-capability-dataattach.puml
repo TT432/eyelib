@@ -1,0 +1,97 @@
+@startuml capability-dataattach
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam classAttributeIconSize 0
+
+title Eyelib - Capability & Data Attachment System
+
+package "capability" as cap #FCE4EC {
+    class RenderData <<data>> {
+        +getModelComponents(): List<ModelComponent>
+        +getAnimationComponent(): AnimationComponent
+        +getScope(): MolangScope
+        +{static} getComponent(entity): RenderData<?>
+    }
+
+    class EntityStatistics <<data>>
+    class ExtraEntityData <<data>>
+    class ExtraEntityUpdateData <<data>>
+    class EyelibAttachableData <<registry>> {
+        +{static} DATA_ATTACHMENTS: DeferredRegister
+        +{static} RENDER_DATA
+        +{static} EXTRA_ENTITY_DATA
+        +{static} EXTRA_ENTITY_UPDATE
+    }
+
+    class EntityBehaviorData <<data>>
+    class ItemInHandRenderData <<data>>
+
+    package "component" as comp #F8BBD0 {
+        class ModelComponent {
+            +setInfo(info: SerializableInfo)
+        }
+        class AnimationComponent {
+            +setInfo(info: SerializableInfo)
+        }
+        class ClientEntityComponent
+        class RenderControllerComponent
+    }
+}
+
+package "util.data_attach" as da #F1F8E9 {
+    interface IDataAttachmentContainer <<interface>>
+
+    class DataAttachmentContainer <<storage>> {
+        +get(attachment): C
+        +set(attachment, value: C)
+        +deserializeNBT(tag: CompoundTag)
+    }
+
+    class DataAttachmentHelper <<helper>> {
+        +{static} getOrCreate(attachment, entity): C
+        +{static} set(attachment, entity, value)
+        +{static} setLocal(attachment, entity, value)
+    }
+
+    class DataAttachmentType<C> <<type>> {
+        +factory: Supplier<C>
+        +serializer: Function<C, CompoundTag>
+        +deserializer: Function<CompoundTag, C>
+    }
+
+    class DataAttachmentContainerCapability <<bridge>> {
+        +{static} INSTANCE
+    }
+
+    class DataAttachmentEventHandlers <<events>> {
+        +onPlayerTickStart()
+        +onEntityTrackStart()
+    }
+
+    class DataAttachment <<annotation>>
+}
+
+RenderData --> ModelComponent : "contains list"
+RenderData --> AnimationComponent : "contains single"
+RenderData --> MolangScope : "holds evaluation\nscope"
+
+DataAttachmentContainer ..|> IDataAttachmentContainer
+DataAttachmentContainerCapability ..|> IDataAttachmentContainer
+
+DataAttachmentHelper --> DataAttachmentContainerCapability : "accesses\ncapability"
+DataAttachmentHelper --> DataAttachmentType : "typed\nget/set"
+
+DataAttachmentEventHandlers --> DataAttachmentSyncService : "sends snapshot\non track start"
+DataAttachmentEventHandlers --> DataAttachmentHelper : "reads\nattachments"
+
+RenderData --> DataAttachmentHelper : "obtained via"
+
+EyelibAttachableData --> DataAttachmentType : "registers"
+
+note right of DataAttachmentHelper
+    set() = local mutation + tracked sync
+    setLocal() = local mutation only (client-side apply)
+end note
+
+@enduml

@@ -23,15 +23,16 @@
 - Preserve existing manager, loader, visitor, and codec patterns unless a stage explicitly replaces one usage with a clearer local boundary.
 
 ## Temporary Shims Allowed
-- Compatibility facades in `Eyelib.java` while public/internal boundaries are being declared.
-- Thin wrapper classes while callers migrate away from mixed-responsibility files.
-- Transitional package-local delegators for runtime-sensitive code.
+- Thin wrapper classes are allowed only when they are part of an actively executing migration stage and have an explicit deletion point in the current plan.
+- Transitional package-local delegators are allowed for runtime-sensitive code only when they reduce risk during the same stage that removes the old caller path.
+- Long-lived compatibility facades are not a goal for the current breaking refactor.
 
 ## Forbidden Moves
 - Editing unrelated in-flight Java changes.
 - Mixing behavior changes with large package moves in one step.
 - Treating generated code as a normal handwritten subsystem.
 - Growing `Eyelib.java` with new singleton reach-through accessors.
+- Keeping obsolete compatibility shells after all internal callers have been migrated away from them.
 
 ## Rollback Strategy
 - If a stage introduces unclear ownership or breaks compile verification, revert that stage’s local changes before proceeding.

@@ -1,0 +1,98 @@
+@startuml loader-manager-registry
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam classAttributeIconSize 0
+
+title Eyelib - Asset Loader / Manager / Registry Flow
+
+class Manager<T> as Manager <<abstract>> {
+    -Map<String, T> data
+    +put(name: String, value: T)
+    +get(name: String): T
+    +getAllData(): Map<String, T>
+    +replaceAll(replacement: Map<String, ? extends T>)
+    +clear()
+    +getManagerName(): String
+}
+
+class AnimationManager {
+    {static} INSTANCE: AnimationManager
+}
+
+class ModelManager {
+    {static} INSTANCE: ModelManager
+}
+
+class MaterialManager {
+    {static} INSTANCE: MaterialManager
+}
+
+class RenderControllerManager {
+    {static} INSTANCE: RenderControllerManager
+}
+
+class ParticleManager {
+    {static} INSTANCE: ParticleManager
+}
+
+class ClientEntityManager {
+    {static} INSTANCE: ClientEntityManager
+}
+
+Manager <|-- AnimationManager
+Manager <|-- ModelManager
+Manager <|-- MaterialManager
+Manager <|-- RenderControllerManager
+Manager <|-- ParticleManager
+Manager <|-- ClientEntityManager
+
+abstract class BrResourcesLoader <<abstract>> {
+    #BrResourcesLoader(directory: String, suffix: String)
+}
+
+class BrAnimationLoader
+class BrAnimationControllerLoader
+class BrModelLoader
+class BrMaterialLoader
+class BrParticleLoader
+class BrRenderControllerLoader
+class BrClientEntityLoader
+class BrAttachableLoader
+
+BrResourcesLoader <|-- BrAnimationLoader
+BrResourcesLoader <|-- BrAnimationControllerLoader
+BrResourcesLoader <|-- BrModelLoader
+BrResourcesLoader <|-- BrMaterialLoader
+BrResourcesLoader <|-- BrParticleLoader
+BrResourcesLoader <|-- BrRenderControllerLoader
+BrResourcesLoader <|-- BrClientEntityLoader
+BrResourcesLoader <|-- BrAttachableLoader
+
+class AnimationAssetRegistry <<writer>>
+class MaterialAssetRegistry <<writer>>
+class ParticleAssetRegistry <<writer>>
+class RenderControllerAssetRegistry <<writer>>
+class ClientEntityAssetRegistry <<writer>>
+class ModelAssetRegistry <<writer>>
+
+BrAnimationLoader ..> AnimationAssetRegistry : "parsed data"
+BrAnimationControllerLoader ..> AnimationAssetRegistry : "parsed data"
+BrMaterialLoader ..> MaterialAssetRegistry : "parsed data"
+BrParticleLoader ..> ParticleAssetRegistry : "parsed data"
+BrRenderControllerLoader ..> RenderControllerAssetRegistry : "parsed data"
+BrClientEntityLoader ..> ClientEntityAssetRegistry : "parsed data"
+BrModelLoader ..> ModelAssetRegistry : "parsed data"
+
+AnimationAssetRegistry --> AnimationManager : "put / replaceAll"
+MaterialAssetRegistry --> MaterialManager : "put / replaceAll"
+ParticleAssetRegistry --> ParticleManager : "put / replaceAll"
+RenderControllerAssetRegistry --> RenderControllerManager : "put / replaceAll"
+ClientEntityAssetRegistry --> ClientEntityManager : "put / replaceAll"
+ModelAssetRegistry --> ModelManager : "put / replaceAll"
+
+class "ManagerEntryChangedEvent" as Event
+
+Manager --> Event : "posts on put()"
+
+@enduml

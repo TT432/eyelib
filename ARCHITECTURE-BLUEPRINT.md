@@ -11,7 +11,7 @@
 - **Notification lane**: `MinecraftForge.EVENT_BUS` stays for coarse invalidation and lifecycle changes only.
 
 ## Target Roles
-- `bootstrap`: composition root and compatibility facade only.
+- `bootstrap`: composition root only.
 - `client/loader`: parse-only resource loading pipeline.
 - `client/registry`: publication boundary from parsed data into runtime stores.
 - `client/manager`: observable runtime stores.
@@ -30,3 +30,4 @@
 - New cross-module reads should prefer lookup facades inside the target domain.
 - New packet handlers should route immediately into a domain apply service.
 - If a module adds a new communication seam, update `MODULES.md` and the relevant package README in the same change.
+- During the current breaking refactor, once a legacy read/write path is replaced, delete the old path in the same stage instead of keeping it as a compatibility shim.

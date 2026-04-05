@@ -1,0 +1,108 @@
+@startuml molang-architecture
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam classAttributeIconSize 0
+
+title Eyelib - Molang Expression System Architecture
+
+package "molang.core" as core #E1BEE7 {
+    class MolangScope <<runtime>> {
+        -MolangOwnerSet owner
+        -MolangScope parent
+        -Map<String, MolangObject> cache
+        +set(name: String, value: float)
+        +set(name: String, object: MolangObject)
+        +get(name: String): MolangObject
+        +contains(name: String): boolean
+        +setOwner(owner: Object)
+    }
+
+    class MolangValue <<expression>> {
+        +eval(scope: MolangScope): float
+    }
+
+    class MolangValue2 <<expression>> {
+        +eval(scope: MolangScope): float
+    }
+
+    class MolangValue3 <<expression>> {
+        +eval(scope: MolangScope): float
+    }
+
+    class MolangValue4 <<expression>> {
+        +eval(scope: MolangScope): float
+    }
+
+    class MolangOwnerSet {
+        +add(owner: Object)
+    }
+}
+
+package "molang.type" as type #E1BEE7 {
+    interface MolangObject <<interface>>
+    class MolangFloat
+    class MolangNull
+    class MolangFloatSupplierObject
+    class MolangArray
+}
+
+package "molang.compiler" as compiler #F3E5F5 {
+    class MolangCompileCache <<cache>> {
+        +get(expr: String): MolangValue
+    }
+    class MolangCompileHandler <<handler>>
+    class MolangCompileVisitor <<visitor>>
+    class MolangClassDescs <<descriptors>>
+    class MolangCompilorCacheHandler <<cache_policy>>
+}
+
+package "molang.generated" as generated #FFCDD2 {
+    note as generated_note
+        **Read-only generated code**
+        - Lexer
+        - Parser
+        - Visitor base classes
+
+        Do NOT hand-edit.
+        See 03-generated-code-policy.md
+    end note
+}
+
+package "molang.mapping" as mapping #E1BEE7 {
+    class MolangMapping <<support>>
+}
+
+MolangScope --> MolangOwnerSet
+MolangScope --> MolangObject : "stores"
+
+MolangValue --> MolangScope : "evaluates with"
+MolangValue2 --> MolangScope
+MolangValue3 --> MolangScope
+MolangValue4 --> MolangScope
+
+MolangFloat ..|> MolangObject
+MolangNull ..|> MolangObject
+MolangFloatSupplierObject ..|> MolangObject
+MolangArray ..|> MolangObject
+
+MolangCompileHandler --> MolangCompileVisitor : "uses"
+MolangCompileHandler --> MolangCompileCache : "caches results"
+MolangCompileVisitor --> generated : "extends generated\nvisitor"
+MolangCompileCache --> MolangCompilorCacheHandler : "cache policy"
+
+MolangCompileHandler --> mapping : "named mappings"
+
+note bottom of MolangScope
+    Central runtime state holder.
+    Used by animation, particle,
+    and render controller evaluation.
+end note
+
+note bottom of MolangCompileCache
+    Compiles expression strings into
+    MolangValue instances. Cache avoids
+    recompilation on repeated expressions.
+end note
+
+@enduml

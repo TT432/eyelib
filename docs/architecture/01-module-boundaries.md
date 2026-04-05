@@ -15,22 +15,22 @@
 - Codec-heavy serialization approach across model, animation, particle, and Molang-related types.
 
 ## Current Boundary Problems
-- `src/main/java/io/github/tt432/eyelib/client/gui/manager/EyelibManagerScreen.java` is still a hotspot, but file dialogs, folder watching, import orchestration, and hotkey wiring now have dedicated helper seams.
+- `src/main/java/io/github/tt432/eyelib/client/gui/manager/EyelibManagerScreen.java` is now narrowed to UI composition and action delegation, with folder session state and import actions extracted into dedicated helpers.
 - `src/main/java/io/github/tt432/eyelib/molang/grammer/` is a legacy name that historically made generated parser artifacts look like normal source files.
-- `src/main/java/io/github/tt432/eyelib/client/loader/` now parses non-model assets into local maps first, and client-entity publication now also lands in manager/store semantics through `client/registry/`.
-- `src/main/java/io/github/tt432/eyelib/util/client/` is no longer the only home for deterministic helpers; named destinations now exist for texture path, pose copy, and inventory model resource helpers.
-- `src/main/java/io/github/tt432/eyelib/network/` and `src/main/java/io/github/tt432/eyelib/util/data_attach/` now share a narrower sync seam via `network/dataattach/DataAttachmentSyncService.java`, but the packet surface is still broad.
+- `src/main/java/io/github/tt432/eyelib/client/loader/` now parses non-model assets into local maps first, then hands publication to domain-specific registry owners in `client/registry/`.
+- `src/main/java/io/github/tt432/eyelib/util/client/` has been drained of its major historical shims; render type resolution, native image IO, texture merging, preview assets, and client tick scheduling now live under named client owners.
+- `src/main/java/io/github/tt432/eyelib/network/` and `src/main/java/io/github/tt432/eyelib/util/data_attach/` now share a narrower sync seam via `network/dataattach/DataAttachmentSyncService.java`, and attachment writes no longer auto-trigger sync implicitly through `DataAttachmentHelper`.
 - Core runtime reads are starting to move away from `Eyelib.java` reach-through and into domain lookup seams such as `client/animation/AnimationLookup.java`, `client/model/ModelLookup.java`, `client/entity/ClientEntityLookup.java`, and `client/render/controller/RenderControllerLookup.java`.
 
 ## Current To Target Ownership Map
 | Current area | Target owner | Boundary intent |
 |---|---|---|
-| `Eyelib.java` | `bootstrap` + temporary compatibility facade | Keep startup/composition here, reduce the remaining direct singleton exposure over time |
+| `Eyelib.java` | `bootstrap` | Keep startup/composition here and remove remaining direct singleton exposure during the current breaking refactor |
 | `client/loader/` | `client.asset` | Parse and reload resources, but avoid owning runtime publication |
 | `client/model/importer/` | `client.model.importer` | Convert parsed source models into runtime `Model` instances without leaking source-format behavior into render runtime or tooling |
 | `client/manager/` | `client.registry` | Keep runtime lookup and event-backed storage centralized, including client entities |
 | `client/gui/manager/` | `client.tools` | Development/debug UI only; move import/watch/IO into helpers/services |
-| `client/registry/` | `client.registry` | Centralize loader-to-manager publication seams |
+| `client/registry/` | `client.registry` | Hold domain-specific loader/tooling-to-manager publication seams |
 | `client/* lookup seams` | domain-local read ports | Narrow runtime queries instead of bootstrap reach-through |
 | `molang/generated/` | `molang.generated` | Treat as generated and isolate from normal handwritten work |
 | `network/` | `sync` | Own packet registration and side-aware routing |
@@ -40,7 +40,7 @@
 
 ## Public vs Internal Bias
 - Default assumption: most packages are internal unless intentionally surfaced through a stable facade.
-- `Eyelib.java` is currently the main compatibility entrypoint and should shrink, not grow.
+- `Eyelib.java` should end this refactor as bootstrap-only, not as a compatibility gateway into runtime managers.
 - Generated zones, tooling zones, and runtime implementation details should not be treated as public API.
 
 ## Current `Eyelib.java` Surface Inventory
@@ -49,12 +49,12 @@
 | `MOD_ID` | mod identifier constant | public bootstrap constant |
 | constructor `Eyelib()` | startup wiring for capability registration and network registration | bootstrap-only |
 | `getRenderHelper()` | entrypoint into current render helper runtime | transitional bridge |
-| `getAnimationManager()` | direct singleton access to animation storage/runtime | internal leak to be reduced later |
-| `getMaterialManager()` | direct singleton access to material storage/runtime | internal leak to be reduced later |
-| `getModelManager()` | direct singleton access to model storage/runtime | internal leak to be reduced later |
-| `getRenderControllerManager()` | direct singleton access to render-controller storage/runtime | internal leak to be reduced later |
-| `getParticleManager()` | direct singleton access to particle storage/runtime | internal leak to be reduced later |
 
-## Stage 3 Rule
+## Current Breaking-Refactor State
+- Direct manager reach-through accessors have been removed from `Eyelib.java`.
+- Runtime reads now go through lookup seams such as `AnimationLookup`, `ModelLookup`, and `ParticleLookup`.
+- Loader/tooling publication now routes through domain-specific registry owners instead of `ClientAssetRegistry`.
+
+## Breaking Refactor Rule
 - Do not add new singleton reach-through methods to `Eyelib.java`.
-- Prefer documenting or introducing narrower facades before exposing more runtime internals.
+- Migrate remaining callers to domain-local read seams, then delete the legacy reach-through methods instead of preserving them for compatibility.

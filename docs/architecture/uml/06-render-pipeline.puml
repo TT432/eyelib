@@ -1,0 +1,104 @@
+@startuml render-pipeline
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam defaultFontSize 11
+skinparam classAttributeIconSize 0
+
+title Eyelib - Render Pipeline
+
+package "render pipeline" as rp #E8F5E9 {
+
+    class RenderHelper <<entry>> {
+        -RenderParams params
+        -ModelVisitContext context
+        +{static} start(): RenderHelper
+        +params(params: RenderParams): RenderHelper
+        +render(params, model, infos): RenderHelper
+        +collectLocators(model, infos): RenderHelper
+        +renderOnLocator(params, visitorName, model, infos): RenderHelper
+    }
+
+    class RenderParams <<data>> {
+        +poseStack(): PoseStack
+        +consumer(): VertexConsumer
+        +texture(): ResourceLocation
+        +overlay(): int
+        +light(): int
+        +isSolid(): boolean
+    }
+
+    class ModelVisitContext <<context>> {
+        +put(key: String, value: Object)
+        +get(key: String): T
+        +contains(key: String): boolean
+    }
+
+    class DFSModel <<compiled>> {
+        +{static} create(model: Model): DFSModel
+        +visit(params, context, visitor, infos, stateMachine)
+    }
+
+    abstract class ModelVisitor <<visitor>> {
+        +visitVertex(params, context, cube, vertex, uv, normal)
+    }
+
+    class RenderModelVisitor <<visitor>> {
+        +visitVertex(params, context, cube, vertex, uv, normal)
+    }
+
+    class CollectLocatorModelVisitor <<visitor>>
+    class HighSpeedRenderModelVisitor <<visitor>>
+
+    class BuiltInBrModelRenderVisitors <<factory>> {
+        +{static} HIGH_SPEED_RENDER
+        +{static} COLLECT_LOCATOR
+    }
+
+    class Model <<model>> {
+        +name(): String
+        +cubes(): List<Cube>
+        +locators(): Map<String, Locator>
+    }
+
+    class ModelRuntimeData <<runtime>>
+    class TwoSideModelBakeInfo <<bake>>
+}
+
+RenderHelper --> RenderParams : "uses"
+RenderHelper --> ModelVisitContext : "holds"
+RenderHelper --> DFSModel : "creates & caches"
+RenderHelper --> BuiltInBrModelRenderVisitors : "selects visitor"
+RenderHelper --> Model : "operates on"
+RenderHelper --> TwoSideModelBakeInfo : "bakes two-sided"
+RenderHelper --> ModelManager : "listens for model changes"
+
+DFSModel --> ModelVisitor : "visits with"
+DFSModel --> RenderParams : "passes through"
+
+ModelVisitor <|-- RenderModelVisitor
+ModelVisitor <|-- CollectLocatorModelVisitor
+ModelVisitor <|-- HighSpeedRenderModelVisitor
+
+BuiltInBrModelRenderVisitors ..> HighSpeedRenderModelVisitor : "provides"
+BuiltInBrModelRenderVisitors ..> CollectLocatorModelVisitor : "provides"
+
+Model ..> ModelRuntimeData : "paired with"
+
+class "RenderControllerEntry" as RCE
+class "RenderControllers" as RC
+
+RCE ..> RenderHelper : "orchestrates\nrender calls"
+RC ..> RCE : "contains"
+
+note right of RenderHelper
+    Fluent API: start().params(p).render(p,m,d)
+    Called per-frame from entity renderers.
+end note
+
+note left of DFSModel
+    Compiled depth-first traversal
+    of the model cube tree.
+    Cached by model name.
+end note
+
+@enduml
