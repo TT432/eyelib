@@ -6,8 +6,8 @@
 
 ## Pattern To Preserve
 - Loader classes in this package follow the existing resource loader pattern rooted in `BrResourcesLoader.java`.
-- Future refactor work should keep parsing/reload flow here while pushing runtime publication responsibility toward a narrower registry/manager boundary.
-- Current publication seam: parsed asset maps are now handed to `../registry/ClientAssetRegistry.java` instead of each loader writing directly into managers inline.
+- Future refactor work should keep parsing/reload flow here while pushing runtime publication responsibility toward narrow domain registry owners.
+- Current publication seam: parsed asset maps are now handed to domain-specific classes under `../registry/` instead of each loader writing directly into managers inline.
 
 ## Key Files
 - `BrResourcesLoader.java`
@@ -21,7 +21,7 @@
 - Some loader paths currently blend parsing/reload work with publication side effects into runtime managers.
 
 ## Current Boundary Improvement
-- Manager publication for animations, materials, particles, render controllers, and client entities is now centralized behind `client/registry/ClientAssetRegistry.java`.
+- Manager publication for animations, materials, particles, render controllers, client entities, and models is now split across domain-specific classes in `client/registry/`.
 
 ## Read Only If Needed
 - If the task is only about runtime asset lookup or events, do not stay in this package longer than necessary.

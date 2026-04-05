@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.loader;
 import com.google.gson.JsonElement;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.importer.BedrockGeometryImporter;
-import io.github.tt432.eyelib.client.registry.ClientAssetRegistry;
+import io.github.tt432.eyelib.client.registry.ModelAssetRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -49,6 +49,6 @@ public class BrModelLoader extends BrResourcesLoader {
             }
         });
 
-        ClientAssetRegistry.replaceModels(loadedModels);
+        ModelAssetRegistry.replaceModels(loadedModels);
     }
 }

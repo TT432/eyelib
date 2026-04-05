@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.loader;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
-import io.github.tt432.eyelib.client.registry.ClientAssetRegistry;
+import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -59,6 +59,6 @@ public class BrAnimationLoader extends BrResourcesLoader {
                 LOGGER.error("can't load animation {}", rl, e);
             }
         });
-        ClientAssetRegistry.replaceAnimationAssets(animations, BrAnimationControllerLoader.getAnimationControllers());
+        AnimationAssetRegistry.replaceAssets(animations, BrAnimationControllerLoader.getAnimationControllers());
     }
 }

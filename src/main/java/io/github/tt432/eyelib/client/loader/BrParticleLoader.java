@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.loader;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
-import io.github.tt432.eyelib.client.registry.ClientAssetRegistry;
+import io.github.tt432.eyelib.client.registry.ParticleAssetRegistry;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -55,9 +55,9 @@ public class BrParticleLoader extends BrResourcesLoader {
             try {
                 particles.put(key, BrParticle.CODEC.parse(JsonOps.INSTANCE, entry.getValue().getAsJsonObject()).getOrThrow(false, LOGGER::warn));
             } catch (Exception e) {
-                log.error("Failed to load particle {}", key, e);
+                LOGGER.error("Failed to load particle {}", key, e);
             }
         }
-        ClientAssetRegistry.replaceParticles(particles);
+        ParticleAssetRegistry.replaceParticles(particles);
     }
 }

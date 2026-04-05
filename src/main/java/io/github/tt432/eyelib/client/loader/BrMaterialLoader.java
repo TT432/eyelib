@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.loader;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.material.BrMaterial;
-import io.github.tt432.eyelib.client.registry.ClientAssetRegistry;
+import io.github.tt432.eyelib.client.registry.MaterialAssetRegistry;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
@@ -51,9 +51,9 @@ public class BrMaterialLoader extends BrResourcesLoader {
             try {
                 materials.put(key, BrMaterial.CODEC.parse(JsonOps.INSTANCE, entry.getValue().getAsJsonObject()).getOrThrow(false, LOGGER::warn));
             } catch (Exception e) {
-                log.error("can't load material {}", key, e);
+                LOGGER.error("can't load material {}", key, e);
             }
         }
-        ClientAssetRegistry.replaceMaterials(materials);
+        MaterialAssetRegistry.replaceMaterials(materials);
     }
 }

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class ClientAssetRegistryTest {
@@ -43,9 +44,10 @@ class ClientAssetRegistryTest {
                 }
                 """)).getOrThrow(false, AssertionError::new);
 
-        ClientAssetRegistry.replaceAnimationAssets(Map.of("animations", animation), Map.of("controllers", controllers));
+        AnimationAssetRegistry.replaceAssets(Map.of("animations", animation), Map.of("controllers", controllers));
 
         assertNotNull(AnimationLookup.get("animation.test.idle"));
         assertNotNull(AnimationLookup.get("controller.animation.test"));
+        assertEquals(2, AnimationLookup.size());
     }
 }

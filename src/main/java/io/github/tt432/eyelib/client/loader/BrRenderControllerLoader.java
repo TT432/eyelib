@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelib.client.registry.ClientAssetRegistry;
+import io.github.tt432.eyelib.client.registry.RenderControllerAssetRegistry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -56,9 +56,9 @@ public class BrRenderControllerLoader extends BrResourcesLoader {
             try {
                 controllers.put(id, RenderControllers.CODEC.parse(JsonOps.INSTANCE, obj).getOrThrow(false, LOGGER::warn));
             } catch (Exception e) {
-                log.error("Failed to parse render controller {}: {}", id, obj.toString(), e);
+                LOGGER.error("Failed to parse render controller {}: {}", id, obj.toString(), e);
             }
         });
-        ClientAssetRegistry.replaceRenderControllers(controllers);
+        RenderControllerAssetRegistry.replaceRenderControllers(controllers);
     }
 }

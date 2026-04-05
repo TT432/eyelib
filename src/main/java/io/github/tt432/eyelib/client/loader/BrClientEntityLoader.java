@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.loader;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
-import io.github.tt432.eyelib.client.registry.ClientAssetRegistry;
+import io.github.tt432.eyelib.client.registry.ClientEntityAssetRegistry;
 import io.github.tt432.eyelib.util.search.Searchable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -50,10 +50,10 @@ public class BrClientEntityLoader extends BrResourcesLoader {
                 BrClientEntity entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, entry.getValue().getAsJsonObject()).getOrThrow(false, LOGGER::warn);
                 parsedEntities.put(new ResourceLocation(entity.identifier()), entity);
             } catch (Exception e) {
-                log.error("can't load entity {}", key, e);
+                LOGGER.error("can't load entity {}", key, e);
             }
         }
 
-        ClientAssetRegistry.replaceClientEntities(parsedEntities);
+        ClientEntityAssetRegistry.replaceClientEntities(parsedEntities);
     }
 }
