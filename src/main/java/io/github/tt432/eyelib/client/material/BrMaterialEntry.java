@@ -8,7 +8,7 @@ import io.github.tt432.eyelib.client.gl.BlendFactor;
 import io.github.tt432.eyelib.client.gl.DepthFunc;
 import io.github.tt432.eyelib.client.gl.GLStates;
 import io.github.tt432.eyelib.client.gl.stencil.Face;
-import io.github.tt432.eyelib.util.client.RenderTypeSerializations;
+import io.github.tt432.eyelib.client.render.RenderTypeResolver;
 import io.github.tt432.eyelib.util.codec.CodecHelper;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
@@ -318,6 +318,6 @@ public record BrMaterialEntry(
 //                );
 
         // 临时使用
-        return RenderTypeSerializations.getFactory(new ResourceLocation(name)).factory().apply(texture);
+        return RenderTypeResolver.resolve(new ResourceLocation(name)).factory().apply(texture);
     }
 }

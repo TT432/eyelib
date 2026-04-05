@@ -9,8 +9,8 @@ import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.type.*;
-import io.github.tt432.eyelib.util.client.NativeImages;
-import io.github.tt432.eyelib.util.client.Textures;
+import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
+import io.github.tt432.eyelib.client.render.texture.TextureLayerMerger;
 import io.github.tt432.eyelib.util.client.texture.TexturePathHelper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
@@ -130,10 +130,10 @@ public record RenderControllerEntry(
 
             if (needReloadTexture) {
                 List<ResourceLocation> textureLayers = toResourceLocations(textureLayerPaths);
-                syncedActions.add(() -> NativeImages.uploadImage(texture, Textures.layerMerging(textureLayers)));
+                syncedActions.add(() -> NativeImageIO.upload(texture, TextureLayerMerger.merge(textureLayers)));
 
                 List<ResourceLocation> emissiveTextureLayers = toResourceLocations(toEmissiveTextureLayerPaths(textureLayerPaths));
-                syncedActions.add(() -> NativeImages.uploadImage(emissiveTexture, Textures.layerMerging(emissiveTextureLayers)));
+                syncedActions.add(() -> NativeImageIO.upload(emissiveTexture, TextureLayerMerger.merge(emissiveTextureLayers)));
             }
 
             this.needReloadTexture.set(false);

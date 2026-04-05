@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.particle.bedrock;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelib.util.client.RenderTypeSerializations;
+import io.github.tt432.eyelib.client.render.RenderTypeResolver;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -77,7 +77,7 @@ public class BrParticleRenderManager {
                 PoseStack poseStack = event.getPoseStack();
                 particles.forEach(particle -> {
                     String material = particle.getEmitter().getParticle().particleEffect().description().basicRenderParameters().material();
-                    RenderTypeSerializations.EntityRenderTypeData factory = RenderTypeSerializations.getFactory(new ResourceLocation(material));
+                    RenderTypeResolver.EntityRenderTypeData factory = RenderTypeResolver.resolve(new ResourceLocation(material));
                     var buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(
                             factory.factory().apply(particle.getTexture().withSuffix(".png"))
                     );

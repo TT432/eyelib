@@ -1,17 +1,14 @@
-package io.github.tt432.eyelib.util.client;
+package io.github.tt432.eyelib.client.render;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.function.Function;
 
-/**
- * @author TT432
- */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class RenderTypeSerializations {
+public final class RenderTypeResolver {
+    private RenderTypeResolver() {
+    }
+
     public record EntityRenderTypeData(
             ResourceLocation id,
             boolean isSolid,
@@ -19,12 +16,7 @@ public class RenderTypeSerializations {
     ) {
     }
 
-    /**
-     * TODO: 设置更多的解析
-     * @param id id
-     * @return EntityRenderTypeData
-     */
-    public static EntityRenderTypeData getFactory(ResourceLocation id) {
+    public static EntityRenderTypeData resolve(ResourceLocation id) {
         return switch (id.toString()) {
             case "minecraft:cutout" -> new EntityRenderTypeData(id, false, RenderType::entityCutout);
             case "minecraft:translucent", "minecraft:particles_blend" -> new EntityRenderTypeData(id, false, RenderType::entityTranslucent);

@@ -8,20 +8,20 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelib.client.model.ModelLookup;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.bake.BakedModel;
 import io.github.tt432.eyelib.client.model.bake.TwoSideModelBakeInfo;
 import io.github.tt432.eyelib.client.model.bbmodel.BBModel;
 import io.github.tt432.eyelib.client.model.bbmodel.BBModelLoader;
 import io.github.tt432.eyelib.client.model.bbmodel.Texture;
+import io.github.tt432.eyelib.client.gui.preview.ModelPreviewAsset;
 import io.github.tt432.eyelib.client.model.importer.ModelImporter;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
-import io.github.tt432.eyelib.util.client.Textures;
 import io.github.tt432.eyelib.util.modbridge.ModBridgeModelUpdateEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -66,7 +66,7 @@ public class ModelPreviewScreen extends Screen {
     @Nullable
     private EditBox searchBox;
     @Nullable
-    private Textures.ModelWithTexture currentModel;
+    private ModelPreviewAsset currentModel;
     @Nullable
     private DFSModel dfsModel;
     @Nullable
@@ -228,7 +228,7 @@ public class ModelPreviewScreen extends Screen {
         }
 
         String lowerQuery = query.toLowerCase();
-        Map<String, Model> allModels = ModelManager.INSTANCE.getAllData();
+        Map<String, Model> allModels = ModelLookup.all();
 
         Model found = null;
 
@@ -335,21 +335,21 @@ public class ModelPreviewScreen extends Screen {
         }
     }
 
-    private static Textures.ModelWithTexture previewModel(BBModel source, ModelImporter.ImportResult result) {
+    private static ModelPreviewAsset previewModel(BBModel source, ModelImporter.ImportResult result) {
         if (result.atlasNativeImage() != null) {
             Texture repackedAtlas = new Texture(
-                    "preview_atlas", null, null, null, "preview_atlas", null,
+                    "preview_atlas", "", "", "", "preview_atlas", "",
                     result.atlasNativeImage().getWidth(), result.atlasNativeImage().getHeight(),
                     result.atlasNativeImage().getWidth(), result.atlasNativeImage().getHeight(),
-                    false, true, false, false, null, null, null, 0, null, null, false, true, true, false, "preview_atlas", null, result.atlasNativeImage()
+                    false, true, false, false, "", "", "", 0, "", "", false, true, true, false, "preview_atlas", "", result.atlasNativeImage()
             );
-            return new Textures.ModelWithTexture(result.model(), repackedAtlas);
+            return new ModelPreviewAsset(result.model(), repackedAtlas);
         }
 
         if (source.textures().isEmpty()) {
             throw new IllegalArgumentException("Blockbench preview requires at least one texture");
         }
-        return new Textures.ModelWithTexture(result.model(), source.textures().get(0));
+        return new ModelPreviewAsset(result.model(), source.textures().get(0));
     }
 
     @Override

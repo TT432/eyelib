@@ -4,7 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.client.model.ModelLookup;
-import io.github.tt432.eyelib.util.client.RenderTypeSerializations;
+import io.github.tt432.eyelib.client.render.RenderTypeResolver;
 import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
 import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
@@ -87,12 +87,12 @@ public class ModelComponent {
     @Nullable
     public RenderType getRenderType(ResourceLocation texture) {
         if (serializableInfo == null) return null;
-        return RenderTypeSerializations.getFactory(serializableInfo.renderType).factory().apply(texture);
+        return RenderTypeResolver.resolve(serializableInfo.renderType).factory().apply(texture);
     }
 
     public boolean isSolid() {
         if (serializableInfo == null) return true;
-        return RenderTypeSerializations.getFactory(serializableInfo.renderType).isSolid();
+        return RenderTypeResolver.resolve(serializableInfo.renderType).isSolid();
     }
 
     final Int2BooleanOpenHashMap partVisibility = new Int2BooleanOpenHashMap();

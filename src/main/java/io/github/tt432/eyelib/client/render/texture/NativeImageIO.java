@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.util.client;
+package io.github.tt432.eyelib.client.render.texture;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import io.github.tt432.eyelib.util.math.FastColorHelper;
@@ -13,20 +13,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Function;
 
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_HEIGHT;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_WIDTH;
+import static org.lwjgl.opengl.GL11.glGetTexLevelParameteriv;
 
-/**
- * @author TT432
- */
 @UtilityClass
-public class NativeImages {
-    public void uploadImage(ResourceLocation texture, NativeImage image) {
+public class NativeImageIO {
+    public void upload(ResourceLocation texture, NativeImage image) {
         DynamicTexture dynamicTexture = new DynamicTexture(image);
         Minecraft.getInstance().getTextureManager().register(texture, dynamicTexture);
     }
 
     @Nullable
-    public <R> R downloadImage(ResourceLocation texture, Function<NativeImage, R> imageFunction) {
+    public <R> R download(ResourceLocation texture, Function<NativeImage, R> imageFunction) {
         Minecraft.getInstance().getTextureManager().getTexture(texture).bind();
 
         int[] width = new int[1];
@@ -35,18 +35,17 @@ public class NativeImages {
         glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, height);
 
         if (width[0] != 0 && height[0] != 0) {
-            try (NativeImage nativeimage = new NativeImage(width[0], height[0], false)) {
-                nativeimage.downloadTexture(0, false);
-                return imageFunction.apply(nativeimage);
+            try (NativeImage nativeImage = new NativeImage(width[0], height[0], false)) {
+                nativeImage.downloadTexture(0, false);
+                return imageFunction.apply(nativeImage);
             }
         }
 
         return null;
     }
 
-    public NativeImage loadImage(InputStream inputStream) throws IOException {
+    public NativeImage load(InputStream inputStream) throws IOException {
         var bufferedImage = ImageIO.read(inputStream);
-
         if (bufferedImage == null) {
             throw new IllegalArgumentException("Invalid buffer");
         }
