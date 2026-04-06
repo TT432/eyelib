@@ -42,7 +42,7 @@
 | Module | Responsibility | Main paths | Interactions |
 |---|---|---|---|
 | Capability registry/data types | defines attachable data types and render-related data holders | `src/main/java/io/github/tt432/eyelib/capability/` | used by rendering, network, data attachment helpers |
-| Capability component models | render/model component payload types | `src/main/java/io/github/tt432/eyelib/capability/component/` | synced by network packets, consumed by client renderers |
+| Capability component models | render/model component payload types plus RenderData-owned client/runtime component state | `src/main/java/io/github/tt432/eyelib/capability/component/` | synced by network packets, consumed by client renderers and client runtime orchestration |
 | Data attachment container layer | typed attachment storage, providers, local mutation helpers | `src/main/java/io/github/tt432/eyelib/util/data_attach/`, `src/main/java/io/github/tt432/eyelib/util/data_attach/README.md`, `src/main/java/io/github/tt432/eyelib/util/data_attach/package-info.java` | used by entity state, network sync service, event handlers |
 | Data attachment event sync | sends full attachment snapshots when tracking begins | `src/main/java/io/github/tt432/eyelib/util/data_attach/DataAttachmentEventHandlers.java` | now calls `network/dataattach` service |
 
@@ -52,7 +52,7 @@
 | Client root | root index for all client-only runtime code | `src/main/java/io/github/tt432/eyelib/client/README.md`, `src/main/java/io/github/tt432/eyelib/client/package-info.java` | routes into render/model/loader/tooling submodules |
 | Client animation runtime | animation definitions, runtime state, controller handling | `src/main/java/io/github/tt432/eyelib/client/animation/` | depends on Molang, managers, render pipeline |
 | Animation lookup seam | narrow runtime read access to animations | `src/main/java/io/github/tt432/eyelib/client/animation/AnimationLookup.java` | shields consumers from bootstrap reach-through |
-| Client entity runtime | client entity definitions and runtime helpers | `src/main/java/io/github/tt432/eyelib/client/entity/` | interacts with loader parsing, client-entity manager store, render controllers, and particles |
+| Client entity runtime | client entity definitions, lookup seam, and runtime helpers used by RenderData-side client-entity components | `src/main/java/io/github/tt432/eyelib/client/entity/` | interacts with loader parsing, client-entity manager store, RenderData capability components, render controllers, and particles |
 | Client entity lookup seam | narrow runtime read access to client entities | `src/main/java/io/github/tt432/eyelib/client/entity/ClientEntityLookup.java` | used by render/runtime setup |
 | Client render pipeline | render parameters, visitors, targets, render helpers, render type resolution, texture IO/merging | `src/main/java/io/github/tt432/eyelib/client/render/` | depends on models, materials, and render-owned helper classes |
 | Client render sync seam | applies model/animation sync packets into render state | `src/main/java/io/github/tt432/eyelib/client/render/sync/ClientRenderSyncService.java` | called from network client handlers |

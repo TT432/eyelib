@@ -38,6 +38,12 @@
 | `capability/` + `util/data_attach/` | `dataattach` | Own attachment state and mutation rules |
 | selected `util/` classes | `shared` | Keep only truly cross-cutting helpers here |
 
+## Boundary Notes For Client Entity And Render Controller Runtime
+- `BrClientEntity` is a parsed client-entity definition, not a runtime-state owner.
+- Per-entity client-entity runtime belongs on `RenderData`-owned capability components, with `ClientEntityComponent` as the owner for the currently applied client-entity reference and its derived runtime caches.
+- `RenderControllerEntry` stays definition-only. Render-controller runtime may cache controller-local derived state, but it must not own or bootstrap client-entity runtime.
+- `EntityRenderSystem` is the composition seam that applies client-entity context to render-controller definitions and produces render/model components.
+
 ## Public vs Internal Bias
 - Default assumption: most packages are internal unless intentionally surfaced through a stable facade.
 - `Eyelib.java` should end this refactor as bootstrap-only, not as a compatibility gateway into runtime managers.
