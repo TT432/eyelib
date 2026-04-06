@@ -5,6 +5,7 @@ import com.mojang.math.Axis;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
+import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
@@ -48,6 +49,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
 import java.util.ArrayList;
@@ -338,26 +340,34 @@ public class EntityRenderSystem {
     }
 
     public static @NotNull List<Runnable> setupClientEntity(ResourceLocation entityId, RenderData<?> cap) {
-        BrClientEntity currCE = cap.getClientEntityComponent().getClientEntity();
-        BrClientEntity clientEntity = ClientEntityLookup.get(entityId);
-        if (clientEntity != null) {
-            return setupClientEntity(clientEntity, cap);
-        } else if (currCE != null) {
-            return setupClientEntity(currCE, cap);
+        ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
+        BrClientEntity clientEntity = clientEntityComponent.getClientEntity();
+
+        if (clientEntity == null) {
+            clientEntity = ClientEntityLookup.get(entityId);
+            if (clientEntity != null) {
+                clientEntityComponent.setClientEntity(clientEntity);
+            }
         }
-        return List.of();
+
+        return setupClientEntity(clientEntity, cap);
     }
 
-    public static @NotNull List<Runnable> setupClientEntity(BrClientEntity clientEntity, RenderData<?> cap) {
+    public static @NotNull List<Runnable> setupClientEntity(@Nullable BrClientEntity clientEntity, RenderData<?> cap) {
         ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
-        BrClientEntity oldEntity = clientEntityComponent.getClientEntity();
+        RenderControllerComponent renderControllerComponent = cap.getRenderControllerComponent();
         List<Runnable> syncedActions = new ArrayList<>();
+        if (clientEntityComponent.getClientEntity() == null && clientEntity != null) {
+            clientEntityComponent.setClientEntity(clientEntity);
+        }
 
-        if (clientEntity != null) {
-            if (oldEntity == null || !oldEntity.identifier().equals(clientEntity.identifier())) {
-                clientEntityComponent.setClientEntity(clientEntity);
+        boolean clientEntityChanged = clientEntityComponent.consumeChanged();
+        BrClientEntity appliedClientEntity = clientEntityComponent.getClientEntity();
 
-                clientEntity.scripts().ifPresent(s -> {
+        if (appliedClientEntity != null) {
+            if (clientEntityChanged) {
+                renderControllerComponent.clear();
+                appliedClientEntity.scripts().ifPresent(s -> {
                     if (cap.getScope() != null) {
                         s.initialize().eval(cap.getScope());
                         s.pre_animation().eval(cap.getScope());
@@ -368,15 +378,18 @@ public class EntityRenderSystem {
 
         List<ModelComponent> components = cap.getModelComponents();
 
-        if (clientEntityComponent.getClientEntity() != null) {
+        if (appliedClientEntity != null) {
             components.clear();
-            BrClientEntity ce = clientEntityComponent.getClientEntity();
+            BrClientEntity ce = appliedClientEntity;
 
-            for (String renderController : ce.render_controllers()) {
+            for (int i = 0; i < ce.render_controllers().size(); i++) {
+                String renderController = ce.render_controllers().get(i);
                 RenderControllerEntry renderControllerEntry = RenderControllerLookup.get(renderController);
+                RenderControllerComponent.Slot renderControllerSlot = renderControllerComponent.syncSlot(i, renderControllerEntry);
                 if (renderControllerEntry != null && cap.getScope() != null)
-                    components.add(renderControllerEntry.setupModel(cap.getScope(), clientEntityComponent.getClientEntity(), syncedActions));
+                    components.add(renderControllerEntry.setupModel(cap.getScope(), appliedClientEntity, clientEntityComponent.getModels(), renderControllerSlot, syncedActions));
             }
+            renderControllerComponent.trim(ce.render_controllers().size());
 
             ce.scripts().ifPresent(s -> cap.getAnimationComponent().setup(ce.animations(), s.animate()));
 
@@ -384,6 +397,8 @@ public class EntityRenderSystem {
                 cap.getScope().getOwner().replace(BrClientEntity.class, ce);
             }
         } else {
+            components.clear();
+            renderControllerComponent.clear();
             if (cap.getScope() != null) {
                 cap.getScope().getOwner().remove(BrClientEntity.class);
             }
