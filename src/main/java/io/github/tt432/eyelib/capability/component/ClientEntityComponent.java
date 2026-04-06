@@ -1,30 +1,44 @@
 package io.github.tt432.eyelib.capability.component;
 
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
-import io.github.tt432.eyelib.client.entity.ClientEntityLookup;
-import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
-import lombok.Getter;
-import lombok.Setter;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.EventPriority;
+import io.github.tt432.eyelib.client.entity.ClientEntityRuntimeData;
+import io.github.tt432.eyelib.client.model.Model;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author TT432
  */
-@Getter
-@Setter
 public class ClientEntityComponent {
     @Nullable
     private BrClientEntity clientEntity;
+    private final ClientEntityRuntimeData runtimeData = new ClientEntityRuntimeData();
+    private long clientEntityVersion;
+    private long appliedClientEntityVersion;
 
-    {
-        MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ManagerEntryChangedEvent.class, event -> {
-            if (event.getManagerName().equals(ClientEntityLookup.managerName())
-                    && clientEntity != null
-                    && event.getEntryName().equals(clientEntity.identifier())) {
-                clientEntity = (BrClientEntity) event.getEntryData();
-            }
-        });
+    public void setClientEntity(@Nullable BrClientEntity clientEntity) {
+        this.clientEntity = clientEntity;
+        if (runtimeData.sync(clientEntity)) {
+            clientEntityVersion++;
+        }
+    }
+
+    public boolean consumeChanged() {
+        if (appliedClientEntityVersion == clientEntityVersion) {
+            return false;
+        }
+
+        appliedClientEntityVersion = clientEntityVersion;
+        return true;
+    }
+
+    @Nullable
+    public BrClientEntity getClientEntity() {
+        return clientEntity;
+    }
+
+    public Collection<Model> getModels() {
+        return runtimeData.models();
     }
 }
