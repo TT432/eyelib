@@ -5,11 +5,11 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
+import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.network.AnimationComponentSyncPacket;
 import io.github.tt432.eyelib.network.EyelibNetworkManager;
 import io.github.tt432.eyelib.network.ModelComponentSyncPacket;
-import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
 import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
 import lombok.Getter;
 import lombok.Setter;
@@ -63,6 +63,8 @@ public class RenderData<T> {
     private final AnimationComponent animationComponent = new AnimationComponent();
 
     private final ClientEntityComponent clientEntityComponent = new ClientEntityComponent();
+
+    private final RenderControllerComponent renderControllerComponent = new RenderControllerComponent();
 
     public void sync() {
         List<ModelComponent.SerializableInfo> components = new ArrayList<>();

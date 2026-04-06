@@ -3,9 +3,9 @@ package io.github.tt432.eyelib.client.render.controller;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
+import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.entity.BrClientEntity;
-import io.github.tt432.eyelib.client.entity.RenderControllerRuntime;
-import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
+import io.github.tt432.eyelib.client.model.Model;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.type.*;
@@ -15,10 +15,9 @@ import io.github.tt432.eyelib.util.client.texture.TexturePathHelper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.common.MinecraftForge;
 
+import java.util.Collection;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author TT432
@@ -28,20 +27,8 @@ public record RenderControllerEntry(
         List<MolangValue> textures,
         Map<String, Map<String, List<String>>> arrays,
         Map<String, MolangValue> materials,
-        Map<String, MolangValue> part_visibility,
-        AtomicBoolean needReloadTexture,
-        RenderControllerRuntime renderControllerRuntime
+        Map<String, MolangValue> part_visibility
 ) {
-    public RenderControllerEntry(
-            MolangValue geometry,
-            List<MolangValue> textures,
-            Map<String, Map<String, List<String>>> arrays,
-            Map<String, MolangValue> materials,
-            Map<String, MolangValue> part_visibility
-    ) {
-        this(geometry, textures, arrays, materials, part_visibility, new AtomicBoolean(true), new RenderControllerRuntime());
-    }
-
     public static final Codec<RenderControllerEntry> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             MolangValue.CODEC.optionalFieldOf("geometry", MolangValue.ZERO).forGetter(RenderControllerEntry::geometry),
             MolangValue.CODEC.listOf().optionalFieldOf("textures", List.of()).forGetter(RenderControllerEntry::textures),
@@ -108,15 +95,10 @@ public record RenderControllerEntry(
         return composeTextureLocation(resolveTextureLayerPaths(scope, entity), ".emissive.png");
     }
 
-    public RenderControllerEntry {
-        MinecraftForge.EVENT_BUS.<ManagerEntryChangedEvent>addListener(e -> {
-            if (e.getManagerName().equals("Texture")) {
-                needReloadTexture.set(true);
-            }
-        });
-    }
-
-    public ModelComponent setupModel(MolangScope scope, BrClientEntity entity, List<Runnable> syncedActions) {
+    public ModelComponent setupModel(MolangScope scope, BrClientEntity entity,
+                                     Collection<Model> models,
+                                     RenderControllerComponent.Slot renderControllerSlot,
+                                     List<Runnable> syncedActions) {
         initArrays(scope, entity);
         ResourceLocation texture;
 
@@ -126,7 +108,7 @@ public record RenderControllerEntry(
 
             ResourceLocation emissiveTexture = getEmissiveTexture(scope, entity);
 
-            boolean needReloadTexture = this.needReloadTexture.get();
+            boolean needReloadTexture = renderControllerSlot.needsTextureReload();
 
             if (needReloadTexture) {
                 List<ResourceLocation> textureLayers = toResourceLocations(textureLayerPaths);
@@ -136,7 +118,7 @@ public record RenderControllerEntry(
                 syncedActions.add(() -> NativeImageIO.upload(emissiveTexture, TextureLayerMerger.merge(emissiveTextureLayers)));
             }
 
-            this.needReloadTexture.set(false);
+            renderControllerSlot.markTextureUploaded();
         } else {
             texture = MissingTextureAtlasSprite.getLocation();
         }
@@ -150,7 +132,7 @@ public record RenderControllerEntry(
         ));
 
         var partVisibility = component.getPartVisibility();
-        renderControllerRuntime.evalPartVisibility(entity, this, partVisibility, scope);
+        renderControllerSlot.runtime().evalPartVisibility(models, this, partVisibility, scope);
 
         return component;
     }
