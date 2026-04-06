@@ -1,0 +1,106 @@
+{
+  "meta": {
+    "format_version": "5.0",
+    "model_format": "free",
+    "box_uv": false
+  },
+  "name": "mixed_root_outliner",
+  "model_identifier": "geometry.mixed_root",
+  "visible_box": [2.0, 2.0, 2.0],
+  "resolution": {
+    "width": 16,
+    "height": 16
+  },
+  "elements": [
+    {
+      "name": "group_cube",
+      "box_uv": false,
+      "render_order": "default",
+      "locked": false,
+      "allow_mirror_modeling": true,
+      "from": [0, 0, 0],
+      "to": [8, 8, 8],
+      "autouv": 0,
+      "color": 0,
+      "origin": [4, 4, 4],
+      "uv_offset": [0, 0],
+      "inflate": 0,
+      "faces": {
+        "north": {"uv": [0, 0, 8, 8], "texture": 0, "rotation": 0},
+        "east": {"uv": [0, 0, 8, 8], "texture": 0, "rotation": 0},
+        "south": {"uv": [0, 0, 8, 8], "texture": 0, "rotation": 0},
+        "west": {"uv": [0, 0, 8, 8], "texture": 0, "rotation": 0},
+        "up": {"uv": [0, 0, 8, 8], "texture": 0, "rotation": 0},
+        "down": {"uv": [0, 0, 8, 8], "texture": 0, "rotation": 0}
+      },
+      "type": "cube",
+      "uuid": "cube-group",
+      "rotation": [0, 0, 0]
+    },
+    {
+      "name": "root_cube",
+      "box_uv": false,
+      "render_order": "default",
+      "locked": false,
+      "allow_mirror_modeling": true,
+      "from": [8, 8, 8],
+      "to": [16, 16, 16],
+      "autouv": 0,
+      "color": 0,
+      "origin": [12, 12, 12],
+      "uv_offset": [0, 0],
+      "inflate": 0,
+      "faces": {
+        "north": {"uv": [0, 0, 8, 8], "texture": 0, "rotation": 0},
+        "east": {"uv": [0, 0, 8, 8], "texture": 0, "rotation": 0},
+        "south": {"uv": [0, 0, 8, 8], "texture": 0, "rotation": 0},
+        "west": {"uv": [0, 0, 8, 8], "texture": 0, "rotation": 0},
+        "up": {"uv": [0, 0, 8, 8], "texture": 0, "rotation": 0},
+        "down": {"uv": [0, 0, 8, 8], "texture": 0, "rotation": 0}
+      },
+      "type": "cube",
+      "uuid": "cube-root",
+      "rotation": [0, 0, 0]
+    }
+  ],
+  "outliner": [
+    {
+      "name": "group_root",
+      "origin": [8, 8, 8],
+      "rotation": [0, 0, 0],
+      "uuid": "group-root",
+      "export": true,
+      "isOpen": true,
+      "locked": false,
+      "visibility": true,
+      "mirror_uv": false,
+      "color": 0,
+      "autouv": 0,
+      "shade": false,
+      "children": ["cube-group"]
+    },
+    "cube-root"
+  ],
+  "textures": [
+    {
+      "path": "test.png",
+      "name": "test",
+      "folder": "",
+      "namespace": "eyelib",
+      "id": "0",
+      "group": "",
+      "width": 16,
+      "height": 16,
+      "uv_width": 16,
+      "uv_height": 16,
+      "particle": false,
+      "use_as_default": false,
+      "layers_enabled": false,
+      "sync_to_project": "",
+      "render_mode": "default",
+      "render_sides": "auto",
+      "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAcSURBVDhPY/hPIWBAFyAVjBowagAIjBowGAwAAF14/C6S1TgxAAAAAElFTkSuQmCC"
+    }
+  ],
+  "groups": []
+}

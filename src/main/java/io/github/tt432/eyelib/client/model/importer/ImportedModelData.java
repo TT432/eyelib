@@ -33,6 +33,8 @@ record ImportedModelData(
         List<ImportedModelTexture> textures,
         List<ImportedBoneData> bones
 ) {
+    private static final String SYNTHETIC_ROOT_BONE_NAME = "__bbmodel_root__";
+
     record ImportedModelTexture(int width, int height, @Nullable NativeImage nativeImage) {
     }
 
@@ -46,11 +48,59 @@ record ImportedModelData(
         }
 
         List<ImportedBoneData> bones = new ArrayList<>();
-        for (Outliner entry : source.outliner()) {
-            processOutlinerEntry(entry, null, elementMap, groupMap, source.textures(), bones);
+        List<String> rootCubeIds = new ArrayList<>();
+        for (Outliner.CubeOrOutliner entry : source.outliner()) {
+            if (entry.outliner() != null) {
+                processOutlinerEntry(entry.outliner(), null, elementMap, groupMap, source.textures(), bones);
+            } else if (entry.uuid() != null) {
+                rootCubeIds.add(entry.uuid());
+            }
+        }
+
+        ImportedBoneData syntheticRoot = importedRootCubeBone(rootCubeIds, elementMap, source.textures());
+        if (syntheticRoot != null) {
+            bones.add(syntheticRoot);
         }
 
         return new ImportedModelData(source.modelIdentifier(), visibleBox(source.visibleBox()), importedTextures(source.textures()), bones);
+    }
+
+    @Nullable
+    private static ImportedBoneData importedRootCubeBone(List<String> cubeIds, Map<String, Element> elementMap, List<Texture> textures) {
+        if (cubeIds.isEmpty()) {
+            return null;
+        }
+
+        List<ImportedCubeData> cubes = new ArrayList<>();
+        for (String cubeId : cubeIds) {
+            Element element = elementMap.get(cubeId);
+            if (element == null) {
+                continue;
+            }
+
+            ImportedCubeData cube = importedCube(element, textures);
+            if (cube != null) {
+                cubes.add(cube);
+            }
+        }
+
+        if (cubes.isEmpty()) {
+            return null;
+        }
+
+        return new ImportedBoneData(
+                GlobalBoneIdHandler.get(SYNTHETIC_ROOT_BONE_NAME),
+                -1,
+                new Vector3f(),
+                new Vector3f(),
+                cubes,
+                List.of(),
+                null,
+                false,
+                false,
+                null,
+                List.of()
+        );
     }
 
     public static ImportedModelData fromBedrock(BedrockGeometryModel.Geometry source) {

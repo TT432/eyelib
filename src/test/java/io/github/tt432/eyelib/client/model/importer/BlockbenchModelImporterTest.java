@@ -25,6 +25,21 @@ class BlockbenchModelImporterTest {
         assertEquals(1, rootBone.cubes().size());
     }
 
+    @Test
+    void importsMixedRootOutlinerFixtureIntoRuntimeModel() throws Exception {
+        Map<String, Model> imported = ModelImporter.importFile(fixturePath("blockbench/mixed_root_outliner.bbmodel"));
+
+        assertEquals(1, imported.size());
+        Model model = imported.get("geometry.mixed_root");
+        assertNotNull(model);
+        assertEquals(2, model.toplevelBones().size());
+        assertEquals(2, model.allBones().size());
+        int totalCubeCount = model.toplevelBones().values().stream()
+                .mapToInt(bone -> bone.cubes().size())
+                .sum();
+        assertEquals(2, totalCubeCount);
+    }
+
     private static Path fixturePath(String relativePath) throws URISyntaxException {
         return Path.of(BlockbenchModelImporterTest.class.getResource(relativePath).toURI());
     }
