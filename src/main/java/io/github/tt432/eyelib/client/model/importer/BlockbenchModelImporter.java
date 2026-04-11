@@ -1,12 +1,13 @@
 package io.github.tt432.eyelib.client.model.importer;
 
-import com.mojang.blaze3d.platform.NativeImage;
-import io.github.tt432.eyelib.client.model.Model;
-import io.github.tt432.eyelib.client.model.bbmodel.BBModel;
-import io.github.tt432.eyelib.client.model.bbmodel.BBModelLoader;
-import io.github.tt432.eyelib.client.model.importer.ModelImporter.ImportResult;
-import org.jetbrains.annotations.Nullable;
+import io.github.tt432.eyelibimporter.model.importer.ImportedModelData;
+import io.github.tt432.eyelibimporter.model.importer.ImportedModelTextureRepacker;
 
+
+import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibimporter.model.bbmodel.BBModel;
+import io.github.tt432.eyelibimporter.model.bbmodel.BBModelLoader;
+import io.github.tt432.eyelib.client.model.importer.ModelImporter.ImportResult;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
@@ -30,7 +31,7 @@ public final class BlockbenchModelImporter {
         ImportedModelData imported = ImportedModelTextureRepacker.repack(ImportedModelData.fromBlockbench(source));
         return new ImportResult(
                 ImportedModelBuilder.build(imported),
-                imported.textures().isEmpty() ? null : imported.textures().get(0).nativeImage()
+                imported.textures().isEmpty() ? null : imported.textures().get(0).imageData()
         );
     }
 

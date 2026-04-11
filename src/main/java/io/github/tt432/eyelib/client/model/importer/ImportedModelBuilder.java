@@ -1,9 +1,15 @@
 package io.github.tt432.eyelib.client.model.importer;
 
-import io.github.tt432.eyelib.client.model.Model;
-import io.github.tt432.eyelib.client.model.locator.GroupLocator;
-import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
-import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelibimporter.model.importer.ImportedBoneData;
+import io.github.tt432.eyelibimporter.model.importer.ImportedCubeData;
+import io.github.tt432.eyelibimporter.model.importer.ImportedFaceData;
+import io.github.tt432.eyelibimporter.model.importer.ImportedLocatorData;
+import io.github.tt432.eyelibimporter.model.importer.ImportedModelData;
+
+
+import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibimporter.model.locator.GroupLocator;
+import io.github.tt432.eyelibimporter.model.locator.LocatorEntry;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.joml.Vector3f;
@@ -24,9 +30,6 @@ final class ImportedModelBuilder {
     }
 
     private static Model.Bone buildBone(ImportedBoneData bone) {
-        MolangValue binding = bone.binding() == null || bone.binding().isBlank()
-                ? MolangValue.FALSE_VALUE
-                : new MolangValue(bone.binding());
         List<Model.TextureMesh> textureMeshes = bone.textureMeshes().stream()
                 .map(tm -> new Model.TextureMesh(
                         tm.texture(),
@@ -43,7 +46,7 @@ final class ImportedModelBuilder {
                 new Vector3f(bone.rotation()),
                 new Vector3f(),
                 new Vector3f(1),
-                binding,
+                bone.binding(),
                 new Int2ObjectOpenHashMap<>(),
                 bone.cubes().stream().map(ImportedModelBuilder::buildCube).toList(),
                 new GroupLocator(new Int2ObjectOpenHashMap<>(), locatorEntries(bone.locators())),

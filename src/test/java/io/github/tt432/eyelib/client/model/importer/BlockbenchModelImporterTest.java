@@ -1,9 +1,8 @@
 package io.github.tt432.eyelib.client.model.importer;
 
-import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelibimporter.model.Model;
 import org.junit.jupiter.api.Test;
 
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -40,7 +39,8 @@ class BlockbenchModelImporterTest {
         assertEquals(2, totalCubeCount);
     }
 
-    private static Path fixturePath(String relativePath) throws URISyntaxException {
-        return Path.of(BlockbenchModelImporterTest.class.getResource(relativePath).toURI());
+    private static Path fixturePath(String relativePath) {
+        return Path.of("eyelib-importer", "src", "test", "resources",
+                "io", "github", "tt432", "eyelib", "client", "model", "importer", relativePath);
     }
 }

@@ -1,5 +1,8 @@
 package io.github.tt432.eyelib.client.model;
 
+import io.github.tt432.eyelibimporter.model.Model;
+
+
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -11,10 +14,10 @@ import java.util.Map;
 public final class ModelLookup {
     @Nullable
     public static Model get(String name) {
-        return ModelManager.INSTANCE.get(name);
+        return ModelManager.readPort().get(name);
     }
 
     public static Map<String, Model> all() {
-        return ModelManager.INSTANCE.getAllData();
+        return ModelManager.readPort().getAllData();
     }
 }

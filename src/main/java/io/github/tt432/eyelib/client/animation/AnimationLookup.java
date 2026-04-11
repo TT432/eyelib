@@ -11,18 +11,18 @@ import java.util.Collection;
 public final class AnimationLookup {
     @Nullable
     public static Animation<?> get(String name) {
-        return AnimationManager.INSTANCE.get(name);
+        return AnimationManager.readPort().get(name);
     }
 
     public static Collection<String> names() {
-        return AnimationManager.INSTANCE.getAllData().keySet();
+        return AnimationManager.readPort().getAllData().keySet();
     }
 
     public static int size() {
-        return AnimationManager.INSTANCE.getAllData().size();
+        return AnimationManager.readPort().getAllData().size();
     }
 
     public static String managerName() {
-        return AnimationManager.INSTANCE.getManagerName();
+        return AnimationManager.readPort().getManagerName();
     }
 }

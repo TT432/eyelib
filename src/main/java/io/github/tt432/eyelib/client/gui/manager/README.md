@@ -23,6 +23,7 @@
 - `reload/ManagerImportActions.java`: UI-triggered import actions for animations, controllers, and render controllers
 - `reload/ManagerResourceFolderWatcher.java`: file monitor lifecycle
 - `reload/ManagerResourceImportPlanner.java`: folder import and single-file reload orchestration for animations, controllers, particles, entities, Bedrock models, and textures
+- `reload/ManagerResourceReloadPlan.java`: platform-free single-file routing and texture-key planning helper used by import planner runtime wiring
 - `hotkey/ManagerScreenKeybinds.java`: dedicated keybind registration
 - `hotkey/ManagerScreenOpenEvents.java`: dedicated screen-open tick handling
 

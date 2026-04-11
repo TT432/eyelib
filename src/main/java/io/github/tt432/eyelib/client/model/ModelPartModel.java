@@ -1,7 +1,11 @@
 package io.github.tt432.eyelib.client.model;
 
-import io.github.tt432.eyelib.client.model.locator.GroupLocator;
-import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
+
+import io.github.tt432.eyelibimporter.model.Model;
+
+
+import io.github.tt432.eyelibimporter.model.locator.GroupLocator;
 import io.github.tt432.eyelib.util.EntryStreams;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -131,7 +135,7 @@ public record ModelPartModel(
                     new Vector3f(),
                     new Vector3f(),
                     new Vector3f(1),
-                    MolangValue.FALSE_VALUE,
+                    null,
                     children.int2ObjectEntrySet().stream().map(e -> Map.entry(e.getIntKey(), e.getValue().createBone())).collect(EntryStreams.collect(Int2ObjectOpenHashMap::new)),
                     cubes,
                     new GroupLocator(new Int2ObjectOpenHashMap<>(), new ArrayList<>())

@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.client.model.bake;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import io.github.tt432.eyelib.client.manager.ModelManager;
-import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import it.unimi.dsi.fastutil.ints.Int2BooleanFunction;
 import net.minecraft.client.Minecraft;

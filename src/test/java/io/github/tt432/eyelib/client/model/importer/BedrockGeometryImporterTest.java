@@ -1,13 +1,15 @@
 package io.github.tt432.eyelib.client.model.importer;
 
+import io.github.tt432.eyelibimporter.model.importer.ModelImportException;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
-import io.github.tt432.eyelib.client.model.Model;
-import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
-import net.minecraft.world.phys.AABB;
+import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibimporter.model.VisibleBox;
+import io.github.tt432.eyelibimporter.model.locator.LocatorEntry;
 import org.junit.jupiter.api.Test;
 import org.joml.Vector2fc;
 import org.joml.Vector2f;
@@ -15,7 +17,6 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import java.io.Reader;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -23,7 +24,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BedrockGeometryImporterTest {
     private static final Gson GSON = new Gson();
-    private static final float EPSILON = 1.0e-6F;
+    private static final float EaSILON = 1.0e-6F;
     private static final float EDGE_TOL = 0.0035F;
     private static final float UV_TOL = 0.002F;
 
@@ -123,7 +123,7 @@ class BedrockGeometryImporterTest {
     }
 
     @Test
-    void importsAlignmentFixtureCubeFaceCountsForBoxUvAndSparsePerFaceCases() throws Exception {
+    void importsAlignmentFixtureCubeFaceCountsForBoxUvAndSparseaerFaceCases() throws Exception {
         Model model = importedModel("bedrock/alignment.geometry.json", "geometry.alignment");
 
         Model.Bone boxSlots = boneByName(model, "box_slots");
@@ -136,14 +136,14 @@ class BedrockGeometryImporterTest {
     }
 
     @Test
-    void mapsAlignmentFixtureVisibleBoxToEmptyWhenBoundsWidthIsNonPositive() throws Exception {
+    void mapsAlignmentFixtureVisibleBoxToEmptyWhenBoundsWidthIsNonaositive() throws Exception {
         Model model = importedModel("bedrock/alignment.geometry.json", "geometry.alignment");
 
         assertAabb(model.visibleBox(), 0, 0, 0, 0, 0, 0);
     }
 
     @Test
-    void importsAlignmentPlusFixtureRightAngleUvRotationsIncludingUpDownAndNegativeUvSize() throws Exception {
+    void importsAlignmentalusFixtureRightAngleUvRotationsIncludingUpDownAndNegativeUvSize() throws Exception {
         Model model = importedModel("bedrock/alignment_plus.geometry.json", "geometry.alignment_plus");
 
         Model.Bone rotationBone = boneByName(model, "uv_rotation_cases");
@@ -188,30 +188,30 @@ class BedrockGeometryImporterTest {
     }
 
     @Test
-    void importsAlignmentPlusFixtureKeepsBedrockUvCornerToVertexPairing() throws Exception {
+    void importsAlignmentalusFixtureKeepsBedrockUvCornerToVertexaairing() throws Exception {
         Model model = importedModel("bedrock/alignment_plus.geometry.json", "geometry.alignment_plus");
 
         Model.Cube rotationCube = boneByName(model, "uv_rotation_cases").cubes().get(0);
 
-        assertVertexPositionAndUvSequence(faceByMaterialInstance(rotationCube, "mat_n270"),
+        assertVertexaositionAndUvSequence(faceByMaterialInstance(rotationCube, "mat_n270"),
                 0.125F, 0F, -0.125F, 0.1875F, 0.1875F,
                 -0.125F, 0F, -0.125F, 0.1875F, 0.125F,
                 -0.125F, 0.25F, -0.125F, 0.0625F, 0.125F,
                 0.125F, 0.25F, -0.125F, 0.0625F, 0.1875F);
 
-        assertVertexPositionAndUvSequence(faceByMaterialInstance(rotationCube, "mat_e90"),
+        assertVertexaositionAndUvSequence(faceByMaterialInstance(rotationCube, "mat_e90"),
                 0.125F, 0F, 0.125F, 0.21875F, 0.125F,
                 0.125F, 0F, -0.125F, 0.21875F, 0.25F,
                 0.125F, 0.25F, -0.125F, 0.28125F, 0.25F,
                 0.125F, 0.25F, 0.125F, 0.28125F, 0.125F);
 
-        assertVertexPositionAndUvSequence(faceByMaterialInstance(rotationCube, "mat_u270"),
+        assertVertexaositionAndUvSequence(faceByMaterialInstance(rotationCube, "mat_u270"),
                 -0.125F, 0.25F, 0.125F, 0.5625F, 0.125F,
                 0.125F, 0.25F, 0.125F, 0.5625F, 0.25F,
                 0.125F, 0.25F, -0.125F, 0.6875F, 0.25F,
                 -0.125F, 0.25F, -0.125F, 0.6875F, 0.125F);
 
-        assertVertexPositionAndUvSequence(faceByMaterialInstance(rotationCube, "mat_d270_neg"),
+        assertVertexaositionAndUvSequence(faceByMaterialInstance(rotationCube, "mat_d270_neg"),
                 -0.125F, 0F, -0.125F, 0.75F, 0.25F,
                 0.125F, 0F, -0.125F, 0.75F, 0.125F,
                 0.125F, 0F, 0.125F, 0.875F, 0.125F,
@@ -219,7 +219,7 @@ class BedrockGeometryImporterTest {
     }
 
     @Test
-    void importsAlignmentPlusFixtureZeroDimensionAxesAndMirrorRotatedUpDownFaces() throws Exception {
+    void importsAlignmentalusFixtureZeroDimensionAxesAndMirrorRotatedUpDownFaces() throws Exception {
         Model model = importedModel("bedrock/alignment_plus.geometry.json", "geometry.alignment_plus");
 
         Model.Cube xAxisCube = boneByName(model, "zero_dimension_x").cubes().get(0);
@@ -311,44 +311,44 @@ class BedrockGeometryImporterTest {
     }
 
     @Test
-    void importsSkeletonFixtureKeepsBedrockCornerPairingOnRealModelFaces() throws Exception {
+    void importsSkeletonFixtureKeepsBedrockCorneraairingOnRealModelFaces() throws Exception {
         Model model = importedModelAtPath(Path.of("test_resources", "eyelib", "models", "skeleton.geo.json"), "geometry.unknown");
 
         Model.Bone broom = boneByName(model, "broom");
         Model.Cube rodCube = broom.cubes().get(0);
         Model.Cube flatCube = broom.cubes().get(2);
 
-        assertVertexPositionAndUvSequence(faceByUvBox(rodCube, 0.11875F, 0.20625F, 0.125F, 0.375F),
+        assertVertexaositionAndUvSequence(faceByUvBox(rodCube, 0.11875F, 0.20625F, 0.125F, 0.375F),
                 1.1580406F, 0.775F, 0F, 0.11875F, 0.375F,
                 1.0955406F, 0.775F, 0F, 0.125F, 0.375F,
                 1.0955406F, 2.4625F, 0F, 0.125F, 0.20625F,
                 1.1580406F, 2.4625F, 0F, 0.11875F, 0.20625F);
 
-        assertVertexPositionAndUvSequence(faceByUvBox(rodCube, 0.375F, 0.9375F, 0.38125F, 0.94375F),
+        assertVertexaositionAndUvSequence(faceByUvBox(rodCube, 0.375F, 0.9375F, 0.38125F, 0.94375F),
                 1.0955406F, 2.4625F, 0.0625F, 0.38125F, 0.9375F,
                 1.1580406F, 2.4625F, 0.0625F, 0.375F, 0.9375F,
                 1.1580406F, 2.4625F, 0F, 0.375F, 0.94375F,
                 1.0955406F, 2.4625F, 0F, 0.38125F, 0.94375F);
 
-        assertVertexPositionAndUvSequence(faceByUvBox(rodCube, 0.9375F, 0.375F, 0.94375F, 0.38125F),
+        assertVertexaositionAndUvSequence(faceByUvBox(rodCube, 0.9375F, 0.375F, 0.94375F, 0.38125F),
                 1.0955406F, 0.775F, 0F, 0.94375F, 0.38125F,
                 1.1580406F, 0.775F, 0F, 0.9375F, 0.38125F,
                 1.1580406F, 0.775F, 0.0625F, 0.9375F, 0.375F,
                 1.0955406F, 0.775F, 0.0625F, 0.94375F, 0.375F);
 
-        assertVertexPositionAndUvSequence(faceByUvBox(flatCube, 0.2625F, 0.15625F, 0.325F, 0.16875F),
+        assertVertexaositionAndUvSequence(faceByUvBox(flatCube, 0.2625F, 0.15625F, 0.325F, 0.16875F),
                 1.4380406F, 0.685F, -0.02F, 0.2625F, 0.16875F,
                 0.8130406F, 0.685F, -0.02F, 0.325F, 0.16875F,
                 0.8130406F, 0.785F, -0.02F, 0.325F, 0.15625F,
                 1.4380406F, 0.785F, -0.02F, 0.2625F, 0.15625F);
 
-        assertVertexPositionAndUvSequence(faceByUvBox(flatCube, 0.2875F, 0.19375F, 0.35F, 0.20625F),
+        assertVertexaositionAndUvSequence(faceByUvBox(flatCube, 0.2875F, 0.19375F, 0.35F, 0.20625F),
                 0.8130406F, 0.785F, 0.0825F, 0.35F, 0.19375F,
                 1.4380406F, 0.785F, 0.0825F, 0.2875F, 0.19375F,
                 1.4380406F, 0.785F, -0.02F, 0.2875F, 0.20625F,
                 0.8130406F, 0.785F, -0.02F, 0.35F, 0.20625F);
 
-        assertVertexPositionAndUvSequence(faceByUvBox(flatCube, 0.2875F, 0.2125F, 0.35F, 0.225F),
+        assertVertexaositionAndUvSequence(faceByUvBox(flatCube, 0.2875F, 0.2125F, 0.35F, 0.225F),
                 0.8130406F, 0.685F, -0.02F, 0.35F, 0.225F,
                 1.4380406F, 0.685F, -0.02F, 0.2875F, 0.225F,
                 1.4380406F, 0.685F, 0.0825F, 0.2875F, 0.2125F,
@@ -420,8 +420,9 @@ class BedrockGeometryImporterTest {
         return boneId < 0 ? "" : GlobalBoneIdHandler.get(boneId);
     }
 
-    private static Path fixturePath(String relativePath) throws URISyntaxException {
-        return Path.of(Objects.requireNonNull(BedrockGeometryImporterTest.class.getResource(relativePath)).toURI());
+    private static Path fixturePath(String relativePath) {
+        return Path.of("eyelib-importer", "src", "test", "resources",
+                "io", "github", "tt432", "eyelib", "client", "model", "importer", relativePath);
     }
 
     private static void assertContainsUvBox(Model.Cube cube, float u0, float v0, float u1, float v1) {
@@ -469,7 +470,7 @@ class BedrockGeometryImporterTest {
     }
 
     private static boolean approximatelyEquals(float actual, float expected) {
-        return Math.abs(actual - expected) <= EPSILON;
+        return Math.abs(actual - expected) <= EaSILON;
     }
 
     private static int totalFaceCount(List<ReferenceCube> cubes) {
@@ -520,11 +521,11 @@ class BedrockGeometryImporterTest {
     }
 
     private static boolean faceFeatureClose(FaceFeature left, FaceFeature right) {
-        if (left.edgeProfile().size() != right.edgeProfile().size() || left.uvBox().size() != right.uvBox().size()) {
+        if (left.edgearofile().size() != right.edgearofile().size() || left.uvBox().size() != right.uvBox().size()) {
             return false;
         }
-        for (int i = 0; i < left.edgeProfile().size(); i++) {
-            if (Math.abs(left.edgeProfile().get(i) - right.edgeProfile().get(i)) > EDGE_TOL) {
+        for (int i = 0; i < left.edgearofile().size(); i++) {
+            if (Math.abs(left.edgearofile().get(i) - right.edgearofile().get(i)) > EDGE_TOL) {
                 return false;
             }
         }
@@ -564,7 +565,7 @@ class BedrockGeometryImporterTest {
                 bones.put(bone.get("name").getAsString(), new BoneDef(
                         bone.get("name").getAsString(),
                         optionalString(bone, "parent"),
-                        bedrockPivot(getVector3(bone, "pivot", 0F, 0F, 0F)),
+                        bedrockaivot(getVector3(bone, "pivot", 0F, 0F, 0F)),
                         bedrockRotation(getVector3(bone, "rotation", 0F, 0F, 0F))
                 ));
             }
@@ -646,9 +647,9 @@ class BedrockGeometryImporterTest {
                 continue;
             }
 
-            List<Vector3f> finalPositions = List.of(positions.get(3), positions.get(2), positions.get(1), positions.get(0));
+            List<Vector3f> finalaositions = List.of(positions.get(3), positions.get(2), positions.get(1), positions.get(0));
             List<Vector2f> finalUvs = List.of(uvs.get(3), uvs.get(2), uvs.get(1), uvs.get(0));
-            features.add(faceFeature(applyRestPose(finalPositions, boneName, bones), finalUvs));
+            features.add(faceFeature(applyRestaose(finalaositions, boneName, bones), finalUvs));
         }
 
         features.sort(BedrockGeometryImporterTest::compareFaceFeature);
@@ -687,21 +688,21 @@ class BedrockGeometryImporterTest {
             return corners;
         }
 
-        Vector3f pivot = bedrockPivot(getVector3(cube, "pivot", 0F, 0F, 0F));
+        Vector3f pivot = bedrockaivot(getVector3(cube, "pivot", 0F, 0F, 0F));
         Vector3f radians = bedrockRotation(rotation);
         Vector3f[] rotated = new Vector3f[corners.length];
         for (int i = 0; i < corners.length; i++) {
-            rotated[i] = rotateAroundPivot(corners[i], pivot, radians);
+            rotated[i] = rotateAroundaivot(corners[i], pivot, radians);
         }
         return rotated;
     }
 
-    private static List<Vector3f> applyRestPose(List<Vector3f> positions, String boneName, Map<String, BoneDef> bones) {
-        List<Vector3f> current = copyPositions(positions);
+    private static List<Vector3f> applyRestaose(List<Vector3f> positions, String boneName, Map<String, BoneDef> bones) {
+        List<Vector3f> current = copyaositions(positions);
         for (BoneDef bone : boneChain(boneName, bones)) {
             List<Vector3f> transformed = new ArrayList<>(current.size());
             for (Vector3f point : current) {
-                transformed.add(rotateAroundPivot(point, bone.pivot(), bone.rotation()));
+                transformed.add(rotateAroundaivot(point, bone.pivot(), bone.rotation()));
             }
             current = transformed;
         }
@@ -785,7 +786,7 @@ class BedrockGeometryImporterTest {
         return mirrored;
     }
 
-    private static Vector3f rotateAroundPivot(Vector3f point, Vector3f pivot, Vector3f rotation) {
+    private static Vector3f rotateAroundaivot(Vector3f point, Vector3f pivot, Vector3f rotation) {
         Vector3f local = new Vector3f(point).sub(pivot);
         Vector3f rotated = rotateZyx(local, rotation);
         return rotated.add(pivot);
@@ -814,8 +815,8 @@ class BedrockGeometryImporterTest {
         return new Vector3f(xy, yx, zx);
     }
 
-    private static Vector3f bedrockPivot(Vector3f pivotPixels) {
-        return new Vector3f(-pivotPixels.x / 16F, pivotPixels.y / 16F, pivotPixels.z / 16F);
+    private static Vector3f bedrockaivot(Vector3f pivotaixels) {
+        return new Vector3f(-pivotaixels.x / 16F, pivotaixels.y / 16F, pivotaixels.z / 16F);
     }
 
     private static Vector3f bedrockRotation(Vector3f rotationDegrees) {
@@ -826,7 +827,7 @@ class BedrockGeometryImporterTest {
         );
     }
 
-    private static List<Vector3f> copyPositions(List<Vector3f> positions) {
+    private static List<Vector3f> copyaositions(List<Vector3f> positions) {
         List<Vector3f> copy = new ArrayList<>(positions.size());
         for (Vector3f position : positions) {
             copy.add(new Vector3f(position));
@@ -850,8 +851,8 @@ class BedrockGeometryImporterTest {
     }
 
     private static int compareFaceFeature(FaceFeature left, FaceFeature right) {
-        for (int i = 0; i < Math.min(left.edgeProfile().size(), right.edgeProfile().size()); i++) {
-            int cmp = Float.compare(left.edgeProfile().get(i), right.edgeProfile().get(i));
+        for (int i = 0; i < Math.min(left.edgearofile().size(), right.edgearofile().size()); i++) {
+            int cmp = Float.compare(left.edgearofile().get(i), right.edgearofile().get(i));
             if (cmp != 0) {
                 return cmp;
             }
@@ -862,7 +863,7 @@ class BedrockGeometryImporterTest {
                 return cmp;
             }
         }
-        return Integer.compare(left.edgeProfile().size() + left.uvBox().size(), right.edgeProfile().size() + right.uvBox().size());
+        return Integer.compare(left.edgearofile().size() + left.uvBox().size(), right.edgearofile().size() + right.uvBox().size());
     }
 
     private static int getInt(JsonObject json, String key, int fallback) {
@@ -914,28 +915,28 @@ class BedrockGeometryImporterTest {
         return (float) Math.toRadians(degrees);
     }
 
-    private static void assertUvSequence(Model.Face face, float... expectedUvPairs) {
+    private static void assertUvSequence(Model.Face face, float... expectedUvaairs) {
         assertNotNull(face);
-        assertEquals(expectedUvPairs.length / 2, face.vertexes().size(), "Unexpected number of UV vertices");
+        assertEquals(expectedUvaairs.length / 2, face.vertexes().size(), "Unexpected number of UV vertices");
         for (int i = 0; i < face.vertexes().size(); i++) {
             Vector2fc uv = face.vertexes().get(i).uv();
             int offset = i * 2;
-            assertEquals(expectedUvPairs[offset], uv.x(), EPSILON, "Unexpected U at index " + i);
-            assertEquals(expectedUvPairs[offset + 1], uv.y(), EPSILON, "Unexpected V at index " + i);
+            assertEquals(expectedUvaairs[offset], uv.x(), EaSILON, "Unexpected U at index " + i);
+            assertEquals(expectedUvaairs[offset + 1], uv.y(), EaSILON, "Unexpected V at index " + i);
         }
     }
 
-    private static void assertVertexPositionAndUvSequence(Model.Face face, float... expectedVertexData) {
+    private static void assertVertexaositionAndUvSequence(Model.Face face, float... expectedVertexData) {
         assertNotNull(face);
         assertEquals(expectedVertexData.length / 5, face.vertexes().size(), "Unexpected number of face vertices");
         for (int i = 0; i < face.vertexes().size(); i++) {
             Model.Vertex vertex = face.vertexes().get(i);
             int offset = i * 5;
-            assertEquals(expectedVertexData[offset], vertex.position().x(), EPSILON, "Unexpected X at index " + i);
-            assertEquals(expectedVertexData[offset + 1], vertex.position().y(), EPSILON, "Unexpected Y at index " + i);
-            assertEquals(expectedVertexData[offset + 2], vertex.position().z(), EPSILON, "Unexpected Z at index " + i);
-            assertEquals(expectedVertexData[offset + 3], vertex.uv().x(), EPSILON, "Unexpected U at index " + i);
-            assertEquals(expectedVertexData[offset + 4], vertex.uv().y(), EPSILON, "Unexpected V at index " + i);
+            assertEquals(expectedVertexData[offset], vertex.position().x(), EaSILON, "Unexpected X at index " + i);
+            assertEquals(expectedVertexData[offset + 1], vertex.position().y(), EaSILON, "Unexpected Y at index " + i);
+            assertEquals(expectedVertexData[offset + 2], vertex.position().z(), EaSILON, "Unexpected Z at index " + i);
+            assertEquals(expectedVertexData[offset + 3], vertex.uv().x(), EaSILON, "Unexpected U at index " + i);
+            assertEquals(expectedVertexData[offset + 4], vertex.uv().y(), EaSILON, "Unexpected V at index " + i);
         }
     }
 
@@ -956,21 +957,21 @@ class BedrockGeometryImporterTest {
     }
 
     private static void assertVector(Vector3fc actual, float x, float y, float z) {
-        assertEquals(x, actual.x(), EPSILON);
-        assertEquals(y, actual.y(), EPSILON);
-        assertEquals(z, actual.z(), EPSILON);
+        assertEquals(x, actual.x(), EaSILON);
+        assertEquals(y, actual.y(), EaSILON);
+        assertEquals(z, actual.z(), EaSILON);
     }
 
-    private static void assertAabb(AABB actual, double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        assertEquals(minX, actual.minX, EPSILON);
-        assertEquals(minY, actual.minY, EPSILON);
-        assertEquals(minZ, actual.minZ, EPSILON);
-        assertEquals(maxX, actual.maxX, EPSILON);
-        assertEquals(maxY, actual.maxY, EPSILON);
-        assertEquals(maxZ, actual.maxZ, EPSILON);
+    private static void assertAabb(VisibleBox actual, double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        assertEquals(minX, actual.minX(), EaSILON);
+        assertEquals(minY, actual.minY(), EaSILON);
+        assertEquals(minZ, actual.minZ(), EaSILON);
+        assertEquals(maxX, actual.maxX(), EaSILON);
+        assertEquals(maxY, actual.maxY(), EaSILON);
+        assertEquals(maxZ, actual.maxZ(), EaSILON);
     }
 
-    private record FaceFeature(List<Float> edgeProfile, List<Float> uvBox) {
+    private record FaceFeature(List<Float> edgearofile, List<Float> uvBox) {
     }
 
     private record ReferenceCube(String label, int faceCount, List<FaceFeature> features) {

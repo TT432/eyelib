@@ -1,9 +1,10 @@
 package io.github.tt432.eyelib.client.model.importer;
 
-import com.mojang.blaze3d.platform.NativeImage;
-import io.github.tt432.eyelib.client.model.Model;
-import io.github.tt432.eyelib.client.model.bbmodel.BBModel;
+import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibimporter.model.bbmodel.BBModel;
 import org.jetbrains.annotations.Nullable;
+import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
+import io.github.tt432.eyelibimporter.model.importer.ModelImportException;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -30,6 +31,6 @@ public final class ModelImporter {
         return BlockbenchModelImporter.importResult(source);
     }
 
-    public record ImportResult(Model model, @Nullable NativeImage atlasNativeImage) {
+    public record ImportResult(Model model, @Nullable ImportedImageData atlasImageData) {
     }
 }

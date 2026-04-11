@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
-import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.registry.RenderControllerAssetRegistry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
 import lombok.Getter;
@@ -9,10 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -26,16 +21,10 @@ import java.util.Map;
  */
 @Getter
 @Slf4j
-@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class BrRenderControllerLoader extends BrResourcesLoader {
     public static final BrRenderControllerLoader INSTANCE = new BrRenderControllerLoader();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BrRenderControllerLoader.class);
-
-    @SubscribeEvent
-    public static void onEvent(RegisterClientReloadListenersEvent event) {
-        event.registerReloadListener(INSTANCE);
-    }
 
     private final Map<ResourceLocation, RenderControllers> controllers = new HashMap<>();
 
@@ -50,15 +39,10 @@ public class BrRenderControllerLoader extends BrResourcesLoader {
 
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> pObject, @NotNull ResourceManager pResourceManager, @NotNull ProfilerFiller pProfiler) {
+        Map<ResourceLocation, RenderControllers> parsedRenderControllers =
+                LoaderParsingOps.parseBySourceKey(pObject, RenderControllers.CODEC, LOGGER, "render controller");
         controllers.clear();
-
-        pObject.forEach((id, obj) -> {
-            try {
-                controllers.put(id, RenderControllers.CODEC.parse(JsonOps.INSTANCE, obj).getOrThrow(false, LOGGER::warn));
-            } catch (Exception e) {
-                LOGGER.error("Failed to parse render controller {}: {}", id, obj.toString(), e);
-            }
-        });
+        controllers.putAll(parsedRenderControllers);
         RenderControllerAssetRegistry.replaceRenderControllers(controllers);
     }
 }

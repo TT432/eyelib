@@ -1,8 +1,7 @@
 package io.github.tt432.eyelib.client.model.bbmodel;
 
-import io.github.tt432.eyelib.client.model.Model;
-import io.github.tt432.eyelib.client.model.locator.GroupLocator;
-import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibimporter.model.locator.GroupLocator;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.With;
 import org.joml.Vector3f;
@@ -28,7 +27,7 @@ public record BBBone(
     }
 
     public Model.Bone createBone() {
-        return new Model.Bone(id, parent, origin, rotation, new Vector3f(), new Vector3f(1), MolangValue.FALSE_VALUE,
+        return new Model.Bone(id, parent, origin, rotation, new Vector3f(), new Vector3f(1), null,
                 new Int2ObjectOpenHashMap<>(), cubes, locator);
     }
 }

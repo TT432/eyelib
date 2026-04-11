@@ -9,20 +9,20 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.model.DFSModel;
-import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelib.client.model.ModelLookup;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.bake.BakedModel;
 import io.github.tt432.eyelib.client.model.bake.TwoSideModelBakeInfo;
-import io.github.tt432.eyelib.client.model.bbmodel.BBModel;
-import io.github.tt432.eyelib.client.model.bbmodel.BBModelLoader;
-import io.github.tt432.eyelib.client.model.bbmodel.Texture;
+import io.github.tt432.eyelibimporter.model.bbmodel.BBModel;
+import io.github.tt432.eyelibimporter.model.bbmodel.BBModelLoader;
+import io.github.tt432.eyelibimporter.model.bbmodel.Texture;
 import io.github.tt432.eyelib.client.gui.preview.ModelPreviewAsset;
 import io.github.tt432.eyelib.client.model.importer.ModelImporter;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
-import io.github.tt432.eyelib.util.modbridge.ModBridgeModelUpdateEvent;
+import io.github.tt432.eyelib.mc.impl.modbridge.ModBridgeModelUpdateEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -336,12 +336,12 @@ public class ModelPreviewScreen extends Screen {
     }
 
     private static ModelPreviewAsset previewModel(BBModel source, ModelImporter.ImportResult result) {
-        if (result.atlasNativeImage() != null) {
+        if (result.atlasImageData() != null) {
             Texture repackedAtlas = new Texture(
                     "preview_atlas", "", "", "", "preview_atlas", "",
-                    result.atlasNativeImage().getWidth(), result.atlasNativeImage().getHeight(),
-                    result.atlasNativeImage().getWidth(), result.atlasNativeImage().getHeight(),
-                    false, true, false, false, "", "", "", 0, "", "", false, true, true, false, "preview_atlas", "", result.atlasNativeImage()
+                    result.atlasImageData().width(), result.atlasImageData().height(),
+                    result.atlasImageData().width(), result.atlasImageData().height(),
+                    false, true, false, false, "", "", "", 0, "", "", false, true, true, false, "preview_atlas", "", result.atlasImageData()
             );
             return new ModelPreviewAsset(result.model(), repackedAtlas);
         }

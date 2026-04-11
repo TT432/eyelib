@@ -20,14 +20,14 @@ public final class AnimationAssetRegistry {
         for (BrAnimationControllers value : controllers.values()) {
             value.animationControllers().forEach(flattened::put);
         }
-        AnimationManager.INSTANCE.replaceAll(flattened);
+        AnimationManager.writePort().replaceAll(flattened);
     }
 
     public static void publishAnimation(BrAnimation animation) {
-        animation.animations().forEach(AnimationManager.INSTANCE::put);
+        animation.animations().forEach(AnimationManager.writePort()::put);
     }
 
     public static void publishAnimationController(BrAnimationControllers controller) {
-        controller.animationControllers().forEach(AnimationManager.INSTANCE::put);
+        controller.animationControllers().forEach(AnimationManager.writePort()::put);
     }
 }

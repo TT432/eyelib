@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.gui.manager;
 
-import io.github.tt432.eyelib.client.entity.BrClientEntity;
+import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
