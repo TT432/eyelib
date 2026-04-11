@@ -138,6 +138,11 @@ obfuscation {
 }
 
 dependencies {
+    modImplementation project(':eyelib-importer')
+    jarJar project(':eyelib-importer')
+    modImplementation project(':eyelib-molang')
+    jarJar project(':eyelib-molang')
+
     compileOnly("maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha")
 
     jarJar additionalRuntimeClasspath(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))

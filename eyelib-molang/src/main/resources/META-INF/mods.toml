@@ -1,0 +1,24 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+
+[[mods]]
+modId="eyelibmolang"
+version="${mod_version}"
+displayName="Eyelib Molang"
+authors="${mod_authors}"
+description='''${mod_description}'''
+
+[[dependencies.eyelibmolang]]
+modId="forge"
+mandatory=true
+versionRange="${forge_version_range}"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.eyelibmolang]]
+modId="minecraft"
+mandatory=true
+versionRange="${minecraft_version_range}"
+ordering="NONE"
+side="BOTH"

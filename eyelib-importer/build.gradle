@@ -1,0 +1,94 @@
+plugins {
+    id 'java-library'
+    id 'io.freefair.lombok' version '8.6'
+    id 'net.neoforged.moddev.legacyforge' version '2.0.91'
+    id 'maven-publish'
+}
+
+version = rootProject.version
+group = rootProject.group
+
+base {
+    archivesName = 'eyelib-importer'
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+sourceSets {
+    test {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+legacyForge {
+    version = project.minecraft_version + '-' + project.forge_version
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    mods {
+        eyelibimporter {
+            sourceSet(sourceSets.main)
+        }
+    }
+
+}
+
+dependencies {
+    implementation project(':eyelib-molang')
+    compileOnly 'org.jetbrains:annotations:26.0.2'
+    testImplementation 'org.joml:joml:1.10.5'
+
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+java {
+    withSourcesJar()
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    def replaceProperties = [
+            minecraft_version_range: minecraft_version_range,
+            forge_version_range    : forge_version_range,
+            loader_version_range   : loader_version_range,
+            mod_version            : mod_version,
+            mod_license            : mod_license,
+            mod_authors            : mod_authors,
+            mod_description        : 'Importer-owned schemas, codecs, normalization, and model/entity/animation import support for Eyelib.'
+    ]
+    inputs.properties(replaceProperties)
+    filesMatching('META-INF/mods.toml') {
+        expand(replaceProperties)
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+
+    repositories {
+        mavenLocal()
+    }
+}
+
+
+tasks.named('test').configure {
+    useJUnitPlatform()
+}
