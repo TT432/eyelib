@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.EntityRenderSystem;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
-import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
+import io.github.tt432.eyelib.mc.impl.mixin.LivingEntityRendererAccessor;
 import lombok.With;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;

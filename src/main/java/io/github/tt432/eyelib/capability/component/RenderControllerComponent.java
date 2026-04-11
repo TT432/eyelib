@@ -2,8 +2,6 @@ package io.github.tt432.eyelib.capability.component;
 
 import io.github.tt432.eyelib.client.entity.RenderControllerRuntime;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
-import io.github.tt432.eyelib.event.TextureChangedEvent;
-import net.minecraftforge.common.MinecraftForge;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -16,8 +14,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RenderControllerComponent {
     private static final AtomicInteger TEXTURE_STATE_VERSION = new AtomicInteger();
 
-    static {
-        MinecraftForge.EVENT_BUS.addListener((TextureChangedEvent event) -> TEXTURE_STATE_VERSION.incrementAndGet());
+    public static void onTextureStateChanged() {
+        TEXTURE_STATE_VERSION.incrementAndGet();
     }
 
     private final List<Slot> slots = new ArrayList<>();

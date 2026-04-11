@@ -2,7 +2,7 @@
 
 ## Scope
 - Path: `src/main/java/io/github/tt432/eyelib/network/`
-- Packet registration, packet types, and side-aware client/server routing.
+- Minimal network entrypoint and context-free handler delegation for sync routing.
 
 ## Start Reading Here
 1. `docs/index/network.md`
@@ -10,9 +10,11 @@
 3. `EyelibNetworkManager.java`
 
 ## Key Files
-- `EyelibNetworkManager.java`: packet registration and side-aware dispatch
-- `NetClientHandlers.java`: client application path
-- `UniDataUpdatePacket.java`, `DataAttachmentUpdatePacket.java`, `DataAttachmentSyncPacket.java`: sync-related packet types
+- `EyelibNetworkManager.java`: minimal network entrypoint delegating transport to `mc/impl/network/`
+- `NetClientHandlers.java`: context-free client apply delegation
+- Packet contract classes now live under `../mc/impl/network/packet/`
 
 ## Boundary Reminder
-- Packet routing belongs here; data-attachment state ownership is shared with `../util/data_attach/` and should be read together when sync work is involved.
+- Packet transport/context ownership lives under `../mc/impl/network/`; this package should stay transport-agnostic.
+- Packet codec/DTO ownership now also lives under `../mc/impl/network/packet/`; do not grow new `FriendlyByteBuf` / NBT-backed packet contracts here.
+- Data-attachment state ownership is shared with `../util/data_attach/` and should be read together when sync work is involved.

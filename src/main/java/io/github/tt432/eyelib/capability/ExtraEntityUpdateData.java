@@ -2,11 +2,11 @@ package io.github.tt432.eyelib.capability;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.network.ExtraEntityUpdateDataPacket;
-import io.github.tt432.eyelib.network.EyelibNetworkManager;
+import io.github.tt432.eyelib.mc.impl.network.EyelibNetworkTransport;
+import io.github.tt432.eyelib.mc.impl.network.packet.ExtraEntityUpdateDataPacket;
 import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
 import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
-import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
+import io.github.tt432.eyelib.mc.impl.data_attach.DataAttachmentHelper;
 import lombok.With;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
@@ -117,7 +117,7 @@ public record ExtraEntityUpdateData(
 
                 if (data != updated) {
                     DataAttachmentHelper.setLocal(key, entity, updated);
-                    EyelibNetworkManager.sendToTrackedAndSelf(entity, new ExtraEntityUpdateDataPacket(entity.getId(), updated));
+                    EyelibNetworkTransport.sendToTrackedAndSelf(entity, new ExtraEntityUpdateDataPacket(entity.getId(), updated));
                 }
             }
         }
@@ -131,7 +131,7 @@ public record ExtraEntityUpdateData(
 
             if (!entity.level().isClientSide && data != updated) {
                 DataAttachmentHelper.setLocal(key, entity, updated);
-                EyelibNetworkManager.sendToTrackedAndSelf(entity, new ExtraEntityUpdateDataPacket(entity.getId(), updated));
+                EyelibNetworkTransport.sendToTrackedAndSelf(entity, new ExtraEntityUpdateDataPacket(entity.getId(), updated));
             }
         }
     }

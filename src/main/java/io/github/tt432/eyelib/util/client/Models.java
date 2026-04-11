@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.util.client;
 
-import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
-import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelibimporter.model.Model;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;

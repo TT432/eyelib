@@ -1,7 +1,8 @@
 package io.github.tt432.eyelib.client.render.texture;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import io.github.tt432.eyelib.util.math.FastColorHelper;
+import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
+import io.github.tt432.eyelib.core.util.color.ColorEncodings;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -23,6 +24,10 @@ public class NativeImageIO {
     public void upload(ResourceLocation texture, NativeImage image) {
         DynamicTexture dynamicTexture = new DynamicTexture(image);
         Minecraft.getInstance().getTextureManager().register(texture, dynamicTexture);
+    }
+
+    public void upload(String texture, NativeImage image) {
+        upload(new ResourceLocation(texture), image);
     }
 
     @Nullable
@@ -57,10 +62,20 @@ public class NativeImageIO {
 
         for (int x = 0; x < w; x++) {
             for (int y = 0; y < h; y++) {
-                image.setPixelRGBA(x, y, FastColorHelper.argbToAbgr(bufferedImage.getRGB(x, y)));
+                image.setPixelRGBA(x, y, ColorEncodings.argbToAbgr(bufferedImage.getRGB(x, y)));
             }
         }
 
+        return image;
+    }
+
+    public NativeImage fromImportedImageData(ImportedImageData imageData) {
+        NativeImage image = new NativeImage(NativeImage.Format.RGBA, imageData.width(), imageData.height(), false);
+        for (int x = 0; x < imageData.width(); x++) {
+            for (int y = 0; y < imageData.height(); y++) {
+                image.setPixelRGBA(x, y, ColorEncodings.argbToAbgr(imageData.getPixelArgb(x, y)));
+            }
+        }
         return image;
     }
 }

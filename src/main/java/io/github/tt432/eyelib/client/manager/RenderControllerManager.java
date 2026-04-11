@@ -10,4 +10,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RenderControllerManager extends Manager<RenderControllerEntry> {
     public static final RenderControllerManager INSTANCE = new RenderControllerManager();
+
+    public static ManagerReadPort<RenderControllerEntry> readPort() {
+        return INSTANCE;
+    }
+
+    public static ManagerWritePort<RenderControllerEntry> writePort() {
+        return INSTANCE;
+    }
 }

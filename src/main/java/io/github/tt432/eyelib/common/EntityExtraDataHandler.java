@@ -2,9 +2,10 @@ package io.github.tt432.eyelib.common;
 
 import io.github.tt432.eyelib.capability.ExtraEntityData;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
-import io.github.tt432.eyelib.network.EyelibNetworkManager;
-import io.github.tt432.eyelib.network.UniDataUpdatePacket;
-import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
+import io.github.tt432.eyelib.common.runtime.ExtraEntityDataUpdater;
+import io.github.tt432.eyelib.mc.impl.network.EyelibNetworkTransport;
+import io.github.tt432.eyelib.mc.impl.network.packet.UniDataUpdatePacket;
+import io.github.tt432.eyelib.mc.impl.data_attach.DataAttachmentHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.*;
@@ -22,8 +23,9 @@ public class EntityExtraDataHandler {
     @SubscribeEvent
     public static void onEvent(PlayerEvent.StartTracking event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
-            EyelibNetworkManager.sendToPlayer(sp,
-                    UniDataUpdatePacket.crate(event.getTarget(), EyelibAttachableData.EXTRA_ENTITY_DATA));
+            var attachment = EyelibAttachableData.EXTRA_ENTITY_DATA.get();
+            var data = DataAttachmentHelper.getOrCreate(attachment, event.getTarget());
+            EyelibNetworkTransport.sendToPlayer(sp, UniDataUpdatePacket.crate(event.getTarget().getId(), attachment, data));
         }
     }
 
@@ -56,20 +58,21 @@ public class EntityExtraDataHandler {
                     }
                 }
 
-                if (data.facing_target_to_range_attack() != facing_target_to_range_attack)
-                    data = data.withFacing_target_to_range_attack(facing_target_to_range_attack);
-                if (data.is_avoiding_mobs() != is_avoiding_mobs)
-                    data = data.with_avoiding_mobs(is_avoiding_mobs);
-                if (data.is_grazing() != is_grazing)
-                    data = data.with_grazing(is_grazing);
-                if (data.is_avoid() != is_avoid)
-                    data = data.with_avoid(is_avoid);
+                data = ExtraEntityDataUpdater.update(
+                        data,
+                        new ExtraEntityDataUpdater.ObservedGoalFlags(
+                                facing_target_to_range_attack,
+                                is_avoiding_mobs,
+                                is_grazing,
+                                is_avoid
+                        )
+                );
 
                 DataAttachmentHelper.setLocal(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), event.getEntity(), data);
 
                 if (oldData != data)
-                    EyelibNetworkManager.sendToTrackedAndSelf(r,
-                            UniDataUpdatePacket.crate(r, EyelibAttachableData.EXTRA_ENTITY_DATA));
+                    EyelibNetworkTransport.sendToTrackedAndSelf(r,
+                            UniDataUpdatePacket.crate(r.getId(), EyelibAttachableData.EXTRA_ENTITY_DATA.get(), data));
             }
         }
     }

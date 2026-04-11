@@ -12,14 +12,14 @@ import java.util.Collection;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ParticleLookup {
     public static @Nullable BrParticle get(ResourceLocation id) {
-        return ParticleManager.INSTANCE.get(id.toString());
+        return ParticleManager.readPort().get(id.toString());
     }
 
     public static @Nullable BrParticle get(String id) {
-        return ParticleManager.INSTANCE.get(id);
+        return ParticleManager.readPort().get(id);
     }
 
     public static Collection<String> names() {
-        return ParticleManager.INSTANCE.getAllData().keySet();
+        return ParticleManager.readPort().getAllData().keySet();
     }
 }

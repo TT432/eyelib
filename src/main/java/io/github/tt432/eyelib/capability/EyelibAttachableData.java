@@ -41,12 +41,12 @@ public class EyelibAttachableData {
     // <editor-fold desc="Data Attachments">
 
     // tt432: All attachments are only for LivingEntity now.
-    public static final RegistryObject<DataAttachmentType<RenderData<Object>>> RENDER_DATA = DATA_ATTACHMENTS.register(RENDER_DATA_ID.getPath(), () -> new DataAttachmentType<>(RENDER_DATA_ID, RenderData::new, RenderData.codec(), null));
-    public static final RegistryObject<DataAttachmentType<EntityStatistics>> ENTITY_STATISTICS = DATA_ATTACHMENTS.register(ENTITY_STATISTICS_ID.getPath(), () -> new DataAttachmentType<>(ENTITY_STATISTICS_ID, EntityStatistics::empty, EntityStatistics.CODEC, EntityStatistics.STREAM_CODEC));
-    public static final RegistryObject<DataAttachmentType<ExtraEntityUpdateData>> EXTRA_ENTITY_UPDATE = DATA_ATTACHMENTS.register(EXTRA_ENTITY_UPDATE_ID.getPath(), () -> new DataAttachmentType<>(EXTRA_ENTITY_UPDATE_ID, ExtraEntityUpdateData::empty, ExtraEntityUpdateData.CODEC, ExtraEntityUpdateData.STREAM_CODEC));
-    public static final RegistryObject<DataAttachmentType<ExtraEntityData>> EXTRA_ENTITY_DATA = DATA_ATTACHMENTS.register(EXTRA_ENTITY_DATA_ID.getPath(), () -> new DataAttachmentType<>(EXTRA_ENTITY_DATA_ID, ExtraEntityData::empty, ExtraEntityData.CODEC, ExtraEntityData.STREAM_CODEC));
-    public static final RegistryObject<DataAttachmentType<ItemInHandRenderData>> ITEM_IN_HAND_RENDER_DATA = DATA_ATTACHMENTS.register(ITEM_IN_HAND_RENDER_DATA_ID.getPath(), () -> new DataAttachmentType<>(ITEM_IN_HAND_RENDER_DATA_ID, ItemInHandRenderData::empty, ItemInHandRenderData.CODEC, null));
-    public static final RegistryObject<DataAttachmentType<EntityBehaviorData>> ENTITY_BEHAVIOR_DATA = DATA_ATTACHMENTS.register(ENTITY_BEHAVIOR_DATA_ID.getPath(), () -> new DataAttachmentType<>(ENTITY_BEHAVIOR_DATA_ID, EntityBehaviorData::new, EntityBehaviorData.CODEC, EntityBehaviorData.STREAM_CODEC));
+    public static final RegistryObject<DataAttachmentType<RenderData<Object>>> RENDER_DATA = DATA_ATTACHMENTS.register(RENDER_DATA_ID.getPath(), () -> new DataAttachmentType<RenderData<Object>>(RENDER_DATA_ID.toString(), RenderData::new, RenderData.codec(), null));
+    public static final RegistryObject<DataAttachmentType<EntityStatistics>> ENTITY_STATISTICS = DATA_ATTACHMENTS.register(ENTITY_STATISTICS_ID.getPath(), () -> new DataAttachmentType<EntityStatistics>(ENTITY_STATISTICS_ID.toString(), EntityStatistics::empty, EntityStatistics.CODEC, EntityStatistics.STREAM_CODEC));
+    public static final RegistryObject<DataAttachmentType<ExtraEntityUpdateData>> EXTRA_ENTITY_UPDATE = DATA_ATTACHMENTS.register(EXTRA_ENTITY_UPDATE_ID.getPath(), () -> new DataAttachmentType<ExtraEntityUpdateData>(EXTRA_ENTITY_UPDATE_ID.toString(), ExtraEntityUpdateData::empty, ExtraEntityUpdateData.CODEC, ExtraEntityUpdateData.STREAM_CODEC));
+    public static final RegistryObject<DataAttachmentType<ExtraEntityData>> EXTRA_ENTITY_DATA = DATA_ATTACHMENTS.register(EXTRA_ENTITY_DATA_ID.getPath(), () -> new DataAttachmentType<ExtraEntityData>(EXTRA_ENTITY_DATA_ID.toString(), ExtraEntityData::empty, ExtraEntityData.CODEC, ExtraEntityData.STREAM_CODEC));
+    public static final RegistryObject<DataAttachmentType<ItemInHandRenderData>> ITEM_IN_HAND_RENDER_DATA = DATA_ATTACHMENTS.register(ITEM_IN_HAND_RENDER_DATA_ID.getPath(), () -> new DataAttachmentType<ItemInHandRenderData>(ITEM_IN_HAND_RENDER_DATA_ID.toString(), ItemInHandRenderData::empty, ItemInHandRenderData.CODEC, null));
+    public static final RegistryObject<DataAttachmentType<EntityBehaviorData>> ENTITY_BEHAVIOR_DATA = DATA_ATTACHMENTS.register(ENTITY_BEHAVIOR_DATA_ID.getPath(), () -> new DataAttachmentType<EntityBehaviorData>(ENTITY_BEHAVIOR_DATA_ID.toString(), EntityBehaviorData::new, EntityBehaviorData.CODEC, EntityBehaviorData.STREAM_CODEC));
 
     // </editor-fold>
 
@@ -54,8 +54,8 @@ public class EyelibAttachableData {
         return new ResourceLocation(Eyelib.MOD_ID, path);
     }
 
-    public static DataAttachmentType<?> getById(ResourceLocation id) {
-        var optional = REGISTRY.get().getValue(id);
+    public static DataAttachmentType<?> getById(String id) {
+        var optional = REGISTRY.get().getValue(new ResourceLocation(id));
         if (optional != null) {
             return optional;
         } else {

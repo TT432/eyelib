@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.client;
 
 import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
@@ -15,8 +14,11 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ClientTickHandler {
-    @Getter
     static int tick;
+
+    public static int getTick() {
+        return tick;
+    }
 
     @SubscribeEvent
     public static void onEvent(TickEvent.ClientTickEvent event) {

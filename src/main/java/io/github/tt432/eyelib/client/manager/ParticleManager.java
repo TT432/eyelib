@@ -10,4 +10,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ParticleManager extends Manager<BrParticle> {
     public static final ParticleManager INSTANCE = new ParticleManager();
+
+    public static ManagerReadPort<BrParticle> readPort() {
+        return INSTANCE;
+    }
+
+    public static ManagerWritePort<BrParticle> writePort() {
+        return INSTANCE;
+    }
 }

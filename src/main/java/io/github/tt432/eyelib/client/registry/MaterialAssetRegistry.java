@@ -16,10 +16,10 @@ public final class MaterialAssetRegistry {
         for (BrMaterial value : materials.values()) {
             value.materials().forEach(flattened::put);
         }
-        MaterialManager.INSTANCE.replaceAll(flattened);
+        MaterialManager.writePort().replaceAll(flattened);
     }
 
     public static void publishMaterial(BrMaterial material) {
-        material.materials().forEach(MaterialManager.INSTANCE::put);
+        material.materials().forEach(MaterialManager.writePort()::put);
     }
 }

@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.model.DFSModel;
-import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.bake.TwoSideModelBakeInfo;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;

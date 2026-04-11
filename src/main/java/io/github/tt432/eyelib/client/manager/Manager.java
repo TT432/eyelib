@@ -1,28 +1,23 @@
 package io.github.tt432.eyelib.client.manager;
 
-import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
-import net.minecraftforge.common.MinecraftForge;
-
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashMap;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author TT432
  */
-public abstract class Manager<T> {
-    private final Map<String, T> data = new HashMap<>();
+public abstract class Manager<T> implements ManagerReadPort<T>, ManagerWritePort<T> {
+    private final ManagerStorage<T> storage = new ManagerStorage<>();
 
     public void put(String name, T value) {
-        data.put(name, value);
-        MinecraftForge.EVENT_BUS.post(new ManagerEntryChangedEvent(getManagerName(), name, value));
+        storage.put(name, value);
+        ManagerEventPublishBridge.publishManagerEntryChanged(getManagerName(), name, value);
     }
 
     @Nullable
     public T get(String name) {
-        return data.get(name);
+        return storage.get(name);
     }
 
     public String getManagerName() {
@@ -30,15 +25,14 @@ public abstract class Manager<T> {
     }
 
     public Map<String, T> getAllData() {
-        return new HashMap<>(data);
+        return storage.getAllData();
     }
 
     public void replaceAll(Map<String, ? extends T> replacement) {
-        data.clear();
-        data.putAll(new LinkedHashMap<>(replacement));
+        storage.replaceAll(replacement);
     }
 
     public void clear() {
-        data.clear();
+        storage.clear();
     }
 }

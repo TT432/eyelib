@@ -9,6 +9,6 @@ import org.jetbrains.annotations.Nullable;
 public final class RenderControllerLookup {
     @Nullable
     public static RenderControllerEntry get(String name) {
-        return RenderControllerManager.INSTANCE.get(name);
+        return RenderControllerManager.readPort().get(name);
     }
 }

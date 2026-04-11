@@ -16,10 +16,10 @@ public final class RenderControllerAssetRegistry {
         for (RenderControllers value : controllers.values()) {
             value.render_controllers().forEach(flattened::put);
         }
-        RenderControllerManager.INSTANCE.replaceAll(flattened);
+        RenderControllerManager.writePort().replaceAll(flattened);
     }
 
     public static void publishRenderController(RenderControllers controller) {
-        controller.render_controllers().forEach(RenderControllerManager.INSTANCE::put);
+        controller.render_controllers().forEach(RenderControllerManager.writePort()::put);
     }
 }

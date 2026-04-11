@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.util.client;
 
-import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import lombok.experimental.UtilityClass;
 import org.joml.Vector3f;

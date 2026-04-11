@@ -1,11 +1,11 @@
 package io.github.tt432.eyelib.client.render.visitor;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
-import io.github.tt432.eyelib.client.model.locator.LocatorEntry;
+import io.github.tt432.eyelibimporter.model.locator.LocatorEntry;
+import io.github.tt432.eyelib.client.render.PoseCopies;
 import io.github.tt432.eyelib.client.render.RenderParams;
-import io.github.tt432.eyelib.util.client.render.PoseCopies;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -29,7 +29,48 @@ public class ModelVisitor {
     }
 
     public void visitModel(RenderParams params, ModelVisitContext context, ModelRuntimeData infos, Model model) {
-        model.accept(params, context, infos, this);
+        visitPreModel(params, context, infos, model);
+
+        for (Model.Bone toplevelBone : model.toplevelBones().values()) {
+            visitBone(params, context, infos, toplevelBone);
+        }
+
+        visitPostModel(params, context, infos, model);
+    }
+
+    private void visitBone(RenderParams params, ModelVisitContext context, ModelRuntimeData data, Model.Bone bone) {
+        visitPreBone(params, context, bone, data);
+
+        List<LocatorEntry> cubes = bone.locator().cubes();
+        if (cubes != null) {
+            PoseStack poseStack = params.poseStack();
+
+            cubes.forEach(locator -> {
+                poseStack.pushPose();
+
+                PoseStack.Pose last = poseStack.last();
+                Matrix4f pose = last.pose();
+                pose.translate(locator.offset());
+                pose.rotateZYX(locator.rotation());
+                last.normal().rotateZYX(locator.rotation());
+
+                visitLocator(params, context, bone, locator, data);
+
+                poseStack.popPose();
+            });
+        }
+
+        if (params.partVisibility().getOrDefault(bone.id(), true)) {
+            for (Model.Cube cube : bone.cubes()) {
+                visitCube(params, context, cube);
+            }
+        }
+
+        for (Model.Bone child : bone.children().values()) {
+            visitBone(params, context, data, child);
+        }
+
+        visitPostBone(params, context, bone, data);
     }
 
     public void visitPreModel(RenderParams params, ModelVisitContext context, ModelRuntimeData infos, Model model) {

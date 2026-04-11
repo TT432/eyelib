@@ -10,4 +10,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MaterialManager extends Manager<BrMaterialEntry> {
     public static final MaterialManager INSTANCE = new MaterialManager();
+
+    public static ManagerReadPort<BrMaterialEntry> readPort() {
+        return INSTANCE;
+    }
+
+    public static ManagerWritePort<BrMaterialEntry> writePort() {
+        return INSTANCE;
+    }
 }

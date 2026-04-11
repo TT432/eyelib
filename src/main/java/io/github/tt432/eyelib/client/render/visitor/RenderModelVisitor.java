@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.client.render.visitor;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;

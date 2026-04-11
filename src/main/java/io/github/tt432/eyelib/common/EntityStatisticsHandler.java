@@ -2,8 +2,9 @@ package io.github.tt432.eyelib.common;
 
 import io.github.tt432.eyelib.capability.EntityStatistics;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
-import io.github.tt432.eyelib.network.dataattach.DataAttachmentSyncService;
-import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
+import io.github.tt432.eyelib.common.runtime.EntityStatisticsUpdater;
+import io.github.tt432.eyelib.mc.impl.network.dataattach.DataAttachmentSyncRuntime;
+import io.github.tt432.eyelib.mc.impl.data_attach.DataAttachmentHelper;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.living.LivingEvent;
@@ -22,10 +23,10 @@ public class EntityStatisticsHandler {
         var x = pos.x - entity.xo;
         var z = pos.z - entity.zo;
         EntityStatistics data = DataAttachmentHelper.getOrCreate(EyelibAttachableData.ENTITY_STATISTICS.get(), entity);
-        EntityStatistics updated = data.withDistanceWalked(data.distanceWalked() + (float) Math.sqrt(x * x + z * z));
+        EntityStatistics updated = EntityStatisticsUpdater.updateDistanceWalked(data, x, z);
         DataAttachmentHelper.setLocal(EyelibAttachableData.ENTITY_STATISTICS.get(), entity, updated);
         if (!entity.level().isClientSide()) {
-            DataAttachmentSyncService.syncTrackedAndSelf(EyelibAttachableData.ENTITY_STATISTICS.get(), entity, updated);
+            DataAttachmentSyncRuntime.syncTrackedAndSelf(EyelibAttachableData.ENTITY_STATISTICS.get(), entity, updated);
         }
     }
 }
