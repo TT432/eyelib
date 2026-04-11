@@ -31,4 +31,4 @@ dependencies {
 - Module boundaries: [docs/architecture/01-module-boundaries.md](docs/architecture/01-module-boundaries.md)
 - Side boundaries: [docs/architecture/02-side-boundaries.md](docs/architecture/02-side-boundaries.md)
 - Generated code policy: [docs/architecture/03-generated-code-policy.md](docs/architecture/03-generated-code-policy.md)
-- Refactor plan: [docs/superpowers/plans/2026-03-24-eyelib-repo-review-refactor-plan.md](docs/superpowers/plans/2026-03-24-eyelib-repo-review-refactor-plan.md)
+- Refactor tracker: [work/main.md](work/main.md)

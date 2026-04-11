@@ -7,12 +7,9 @@ skinparam classAttributeIconSize 0
 title Eyelib - Network & Data Attachment Sync Flow
 
 package "Network Layer" as net #FFF9C4 {
-    class EyelibNetworkManager <<channel>> {
-        -{static} INSTANCE: SimpleChannel
+    class EyelibNetworkManager <<entrypoint>> {
         +{static} register()
         +{static} sendToServer(packet)
-        +{static} sendToTrackedAndSelf(entity, packet)
-        +{static} sendToPlayer(player, packet)
     }
 
     class NetClientHandlers <<dispatcher>> {
@@ -45,16 +42,25 @@ package "Network Layer" as net #FFF9C4 {
     class UpdateDestroyInfoPacket
 }
 
-package "Sync Services" as sync #E8F5E9 {
-    class DataAttachmentSyncService <<service>> {
-        +{static} syncTrackedAndSelf(attachment, entity, value)
-        +{static} syncContainer(entity, data)
-        +{static} applyUpdate(DataAttachmentUpdatePacket)
-        +{static} applySync(DataAttachmentSyncPacket)
-        +{static} applyUpdate(UniDataUpdatePacket)
-        +{static} applyExtraEntityData(ExtraEntityDataPacket)
+package "MC Impl Network" as mc_net #FFF3E0 {
+    class EyelibNetworkTransport <<channel>> {
+        -{static} INSTANCE: SimpleChannel
+        +{static} register()
+        +{static} sendToServer(packet)
+        +{static} sendToTrackedAndSelf(entity, packet)
+        +{static} sendToPlayer(player, packet)
     }
 
+    class DataAttachmentSyncRuntime <<runtime>> {
+        +{static} syncTrackedAndSelf(...)
+        +{static} syncContainer(...)
+        +{static} applyUpdate(...)
+        +{static} applySync(...)
+        +{static} handleDestroyInfoUpdate(...)
+    }
+}
+
+package "Sync Services" as sync #E8F5E9 {
     class ClientRenderSyncService <<service>> {
         +{static} apply(ModelComponentSyncPacket)
         +{static} apply(AnimationComponentSyncPacket)
@@ -82,18 +88,19 @@ package "Data Attachment" as da #F1F8E9 {
     }
 }
 
-EyelibNetworkManager --> NetClientHandlers : "side-gated\ndispatch"
+EyelibNetworkManager --> EyelibNetworkTransport : "delegates\ntransport"
+EyelibNetworkTransport --> NetClientHandlers : "side-gated\ndispatch"
 NetClientHandlers --> ClientRenderSyncService : "model/animation\nsync"
 NetClientHandlers --> ParticleSpawnService : "particle\nspawn/remove"
-NetClientHandlers --> DataAttachmentSyncService : "attachment\nupdate/sync"
+NetClientHandlers --> DataAttachmentSyncRuntime : "attachment\nupdate/sync"
 
-DataAttachmentSyncService --> EyelibNetworkManager : "send packets\n(server side)"
-DataAttachmentSyncService --> DataAttachmentHelper : "apply on client\n(setLocal)"
-DataAttachmentSyncService --> DataAttachmentContainerCapability : "deserialize\nNBT container"
+DataAttachmentSyncRuntime --> EyelibNetworkTransport : "send packets\n(server side)"
+DataAttachmentSyncRuntime --> DataAttachmentHelper : "apply on client\n(setLocal)"
+DataAttachmentSyncRuntime --> DataAttachmentContainerCapability : "deserialize\nNBT container"
 
-DataAttachmentEventHandlers --> DataAttachmentSyncService : "on track start\n(full snapshot)"
+DataAttachmentEventHandlers --> DataAttachmentSyncRuntime : "on track start\n(full snapshot)"
 
-ClientRenderSyncService ..> DataAttachmentSyncService : "applies into\nRenderData"
+ClientRenderSyncService ..> DataAttachmentSyncRuntime : "applies into\nRenderData"
 
 ParticleSpawnService --> ParticleLookup : "resolve particle\nfrom packet"
 ParticleSpawnService --> DataAttachmentHelper : "get RenderData\nfor scope"

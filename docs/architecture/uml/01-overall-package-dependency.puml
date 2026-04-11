@@ -41,6 +41,8 @@ package "eyelib" as root #E8F0FE {
         package "network.dataattach" as net_dataattach #FFF9C4
     }
 
+    package "mc.impl" as mc_impl #FFF3E0
+
     package "capability" as capability #FCE4EC {
         package "capability.component" as cap_component #F8BBD0
     }
@@ -98,7 +100,7 @@ molang_core --> molang_type : "MolangObject,\nMolangFloat..."
 network --> net_dataattach : "delegates\nattachment sync"
 network --> capability : "packet types\nuse component models"
 net_dataattach --> data_attach : "reads/writes\nattachment state"
-net_dataattach --> network : "uses\nEyelibNetworkManager"
+net_dataattach --> mc_impl : "runtime apply/sync\nvia mc/impl/network"
 
 capability --> cap_component : "defines\ncomponent types"
 cap_component --> network : "synced via\npackets"

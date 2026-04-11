@@ -1,8 +1,8 @@
 # Eyelib Refactor Control Spec
 
 ## Scope
-- Apply the staged repository review and refactor plan in `docs/superpowers/plans/2026-03-24-eyelib-repo-review-refactor-plan.md`.
-- Keep Eyelib as a single-module Forge project.
+- Apply the actively maintained refactor tracker in `work/main.md`.
+- Keep Eyelib as a bounded multi-project Forge project with one runtime root module and the focused `eyelib-importer` subproject.
 - Improve navigability, boundary clarity, and maintainability for both humans and AI.
 
 ## Stage Goals
@@ -12,7 +12,7 @@
 
 ## Non-Goals
 - No full architecture rewrite.
-- No module split in Gradle.
+- No further Gradle module split beyond the current `eyelib-importer` extraction unless a human explicitly asks for it.
 - No opportunistic renaming of broad package areas without a documented destination.
 - No test-harness invention beyond targeted helper tests when pure Java seams appear.
 

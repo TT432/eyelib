@@ -31,4 +31,4 @@ dependencies {
 - 模块边界： [docs/architecture/01-module-boundaries.md](docs/architecture/01-module-boundaries.md)
 - Side 边界： [docs/architecture/02-side-boundaries.md](docs/architecture/02-side-boundaries.md)
 - 生成代码策略： [docs/architecture/03-generated-code-policy.md](docs/architecture/03-generated-code-policy.md)
-- 重构计划： [docs/superpowers/plans/2026-03-24-eyelib-repo-review-refactor-plan.md](docs/superpowers/plans/2026-03-24-eyelib-repo-review-refactor-plan.md)
+- 重构追踪： [work/main.md](work/main.md)

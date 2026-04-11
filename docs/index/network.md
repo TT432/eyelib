@@ -13,8 +13,9 @@
 ## Hotspots
 - `src/main/java/io/github/tt432/eyelib/network/EyelibNetworkManager.java`
 - `src/main/java/io/github/tt432/eyelib/network/NetClientHandlers.java`
-- `src/main/java/io/github/tt432/eyelib/util/data_attach/DataAttachmentHelper.java`
-- `src/main/java/io/github/tt432/eyelib/network/dataattach/DataAttachmentSyncService.java`
+- `src/main/java/io/github/tt432/eyelib/mc/impl/data_attach/DataAttachmentHelper.java`
+- `src/main/java/io/github/tt432/eyelib/mc/impl/network/EyelibNetworkTransport.java`
+- `src/main/java/io/github/tt432/eyelib/mc/impl/network/dataattach/DataAttachmentSyncRuntime.java`
 
 ## Read Only If Needed
 - Do not enter client rendering/tooling packages when the task is only about packet routing or attachment sync.

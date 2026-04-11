@@ -16,8 +16,12 @@
 
 ## Current Split Targets
 - `src/main/java/io/github/tt432/eyelib/util/client/texture/TexturePathHelper.java`
-- `src/main/java/io/github/tt432/eyelib/util/client/render/PoseCopies.java`
-- `src/main/java/io/github/tt432/eyelib/util/client/model/InventoryModelResourceLocations.java`
+- `src/main/java/io/github/tt432/eyelib/client/render/PoseCopies.java`
+- `src/main/java/io/github/tt432/eyelib/mc/impl/util/model/InventoryModelResourceLocations.java`
+- `src/main/java/io/github/tt432/eyelib/core/util/`
+- `src/main/java/io/github/tt432/eyelib/core/util/time/FixedStepTimerState.java`
+- `src/main/java/io/github/tt432/eyelib/mc/impl/util/time/FixedTimer.java`
+- `src/main/java/io/github/tt432/eyelib/mc/impl/modbridge/ModBridgeModelUpdateEvent.java`
 
 ## Boundary Reminder
 - `util/client/` is not a default destination for new code during the refactor.

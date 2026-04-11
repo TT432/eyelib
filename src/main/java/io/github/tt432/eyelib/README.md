@@ -7,17 +7,19 @@
 ## Start Reading Here
 1. `AGENTS.md`
 2. `docs/index/repo-map.md`
-3. `Eyelib.java`
+3. `mc/impl/bootstrap/EyelibMod.java`
 
 ## Main Entry Points
-- `Eyelib.java` is the current mod bootstrap and compatibility entrypoint.
+- `mc/impl/bootstrap/EyelibMod.java` is the Forge mod bootstrap composition root.
+- `Eyelib.java` is a lightweight mod-id constant holder used by legacy call sites.
 - Most concrete behavior lives in child packages, not in this root package itself.
 
 ## Child Areas
 - `client/`: rendering, animation, particles, tooling, loaders, managers
-- `molang/`: Molang runtime/compiler plus generated grammar artifacts
+- `molang/`: legacy Molang marker docs; active Molang runtime/compiler/generated code now lives in `eyelib-molang/`
 - `network/`: packet registration and handler routing
 - `util/`: helpers, including mixed client and data-attachment utility code
+- `core/`: platform-free utility seams and extracted pure helpers
 - `capability/`: attachment-related capability registration/data
 
 ## Read Only If Needed

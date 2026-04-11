@@ -82,7 +82,7 @@ DataAttachmentContainerCapability ..|> IDataAttachmentContainer
 DataAttachmentHelper --> DataAttachmentContainerCapability : "accesses\ncapability"
 DataAttachmentHelper --> DataAttachmentType : "typed\nget/set"
 
-DataAttachmentEventHandlers --> DataAttachmentSyncService : "sends snapshot\non track start"
+DataAttachmentEventHandlers --> DataAttachmentSyncRuntime : "sends snapshot\non track start"
 DataAttachmentEventHandlers --> DataAttachmentHelper : "reads\nattachments"
 
 RenderData --> DataAttachmentHelper : "obtained via"

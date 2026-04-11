@@ -1,7 +1,7 @@
 # Eyelib Generated Code Policy
 
 ## Current Generated Zone
-- Generated Molang parser artifacts now live under `src/main/java/io/github/tt432/eyelib/molang/generated/`.
+- Generated Molang parser artifacts now live under `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/`.
 - The legacy `src/main/java/io/github/tt432/eyelib/molang/grammer/` path remains a documentation marker and is not the place for new handwritten logic.
 
 ## Rules
