@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
-import io.github.tt432.eyelib.client.model.Model;
+import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.importer.ModelImporter;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
@@ -138,13 +138,13 @@ class RenderGeometryDumpParityTest {
 
     private static List<SourceCube> collectSourceCubes(Model model) {
         SourceCubeVisitor visitor = new SourceCubeVisitor();
-        model.accept(RenderParams.noRender(new PoseStack()), new ModelVisitContext(), ModelRuntimeData.EMPTY, visitor);
+        visitor.visitModel(RenderParams.noRender(new PoseStack()), new ModelVisitContext(), ModelRuntimeData.EMPTY, model);
         return visitor.finish();
     }
 
     private static List<FaceChunk> captureGpuReadyFaces(Model model) {
         CaptureVisitor visitor = new CaptureVisitor();
-        model.accept(RenderParams.noRender(new PoseStack()), new ModelVisitContext(), ModelRuntimeData.EMPTY, visitor);
+        visitor.visitModel(RenderParams.noRender(new PoseStack()), new ModelVisitContext(), ModelRuntimeData.EMPTY, model);
         return visitor.finish();
     }
 
