@@ -6,11 +6,9 @@ import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
-import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.network.AnimationComponentSyncPacket;
-import io.github.tt432.eyelib.network.EyelibNetworkManager;
-import io.github.tt432.eyelib.network.ModelComponentSyncPacket;
-import io.github.tt432.eyelib.util.data_attach.DataAttachmentHelper;
+import io.github.tt432.eyelib.client.render.sync.ClientRenderSyncService;
+import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelib.mc.impl.data_attach.DataAttachmentHelper;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.world.entity.Entity;
@@ -67,24 +65,7 @@ public class RenderData<T> {
     private final RenderControllerComponent renderControllerComponent = new RenderControllerComponent();
 
     public void sync() {
-        List<ModelComponent.SerializableInfo> components = new ArrayList<>();
-
-        for (ModelComponent modelComponent : modelComponents) {
-            if (modelComponent.serializable()) {
-                components.add(modelComponent.getSerializableInfo());
-            }
-        }
-
-        ownerAs(Entity.class).ifPresent(e -> EyelibNetworkManager.sendToTrackedAndSelf(e,
-                new ModelComponentSyncPacket(e.getId(), components)));
-
-        if (animationComponent.serializable()) {
-            var serializableInfo = animationComponent.getSerializableInfo();
-            if (serializableInfo != null) {
-                ownerAs(Entity.class).ifPresent(e -> EyelibNetworkManager.sendToTrackedAndSelf(e,
-                        new AnimationComponentSyncPacket(e.getId(), serializableInfo)));
-            }
-        }
+        ClientRenderSyncService.sync(this);
     }
 
     @SuppressWarnings("unchecked")

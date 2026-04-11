@@ -1,20 +1,25 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
+import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
+import io.github.tt432.eyelibimporter.animation.bedrock.BrEffectsKeyFrame;
+import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
+
+
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.AnimationEffect;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
-import io.github.tt432.eyelib.client.entity.BrClientEntity;
-import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelibimporter.entity.BrClientEntity;
+import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
 import io.github.tt432.eyelib.client.particle.ParticleLookup;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
-import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelib.util.ResourceLocations;
 import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.util.codec.CodecHelper;
@@ -54,6 +59,56 @@ public record BrAnimationEntry(
         AnimationEffect<MolangValue> timeline,
         Int2ObjectMap<BrBoneAnimation> bones
 ) implements Animation<BrAnimationEntry.Data> {
+    public static BrAnimationEntry fromSchema(String name, BrAnimationEntrySchema schema) {
+        TreeMap<Float, List<BrEffectsKeyFrame>> soundEffectsData = new TreeMap<>(schema.soundEffects());
+        TreeMap<Float, List<BrEffectsKeyFrame>> particleEffectsData = new TreeMap<>(schema.particleEffects());
+        TreeMap<Float, List<MolangValue>> timelineData = new TreeMap<>(schema.timeline());
+        Int2ObjectMap<BrBoneAnimation> boneAnimations = new Int2ObjectOpenHashMap<>();
+        schema.bones().forEach((boneName, boneSchema) -> boneAnimations.put(GlobalBoneIdHandler.get(boneName), BrBoneAnimation.fromSchema(boneSchema)));
+
+        return new BrAnimationEntry(
+                name,
+                schema.loop(),
+                schema.animationLength(),
+                schema.overridePreviousAnimation(),
+                schema.animTimeUpdate(),
+                schema.blendWeight(),
+                schema.startDelay(),
+                schema.loopDelay(),
+                new AnimationEffect<>(soundEffectsData, (scope, ticks, frame) ->
+                        scope.getOwner().onHiveOwners(Entity.class, BrClientEntity.class, (e, clientEntity) -> {
+                            String s = clientEntity.sound_effects().get(frame.effect());
+
+                            if (s != null) {
+                                SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(ResourceLocations.of(s));
+
+                                if (!e.isSilent()) {
+                                    e.level().playSound(Minecraft.getInstance().player,
+                                            e.getX(), e.getY(), e.getZ(), soundEvent, e.getSoundSource(), 1, 1);
+                                }
+                            }
+                            return Boolean.TRUE;
+                        })),
+                new AnimationEffect<>(particleEffectsData, (scope, ticks, frame) ->
+                        scope.getOwner().onHiveOwners(Entity.class, Data.class, BrClientEntity.class, (entity, data, clientEntity) -> {
+                            String s = clientEntity.particle_effects().get(frame.effect());
+
+                            if (s != null) {
+                                BrParticle brParticle = ParticleLookup.get(ResourceLocations.of(s));
+                                if (brParticle != null) {
+                                    String uuid = UUID.randomUUID().toString();
+                                    BrParticleEmitter emitter = new BrParticleEmitter(brParticle, scope, entity.level(), new Vector3f());
+                                    data.particles.add(new RuntimeParticlePlayData(uuid, emitter, frame.locator().orElse(null), ticks));
+                                    ParticleSpawnService.spawnEmitter(uuid, emitter);
+                                }
+                            }
+                            return Boolean.TRUE;
+                        })),
+                new AnimationEffect<>(timelineData, (scope, ticks, mv) -> mv.eval(scope)),
+                boneAnimations
+        );
+    }
+
     // Helper to return null from lambdas with proper NullAway suppression
     @SuppressWarnings("NullAway")
     @Nullable
@@ -152,11 +207,12 @@ public record BrAnimationEntry(
     });
 
     public final class Data {
-        int loopedTimes;
+        private final BrAnimationPlaybackState playbackState = new BrAnimationPlaybackState();
         private final List<AnimationEffect.Runtime<?>> effects = new ArrayList<>();
 
         private final List<RuntimeParticlePlayData> particles = new ArrayList<>();
 
+        public int loopedTimes;
         public float lastTicks;
         public float animTime;
         public float deltaTime;
@@ -168,13 +224,19 @@ public record BrAnimationEntry(
             effects.add(timeline.runtime());
             return this;
         }
+
+        private void syncStateFields() {
+            loopedTimes = playbackState.loopedTimes();
+            lastTicks = playbackState.lastTicks();
+            animTime = playbackState.animTime();
+            deltaTime = playbackState.deltaTime();
+        }
     }
 
     @Override
     public void onFinish(Data data) {
-        data.lastTicks = 0;
-        data.animTime = 0;
-        data.deltaTime = 0;
+        data.playbackState.reset();
+        data.syncStateFields();
         data.resetEffects();
 
         for (var particle : data.particles) {
@@ -186,7 +248,7 @@ public record BrAnimationEntry(
 
     @Override
     public boolean anyAnimationFinished(Data data) {
-        return data.loopedTimes > 0 || data.animTime > animationLength;
+        return data.playbackState.anyAnimationFinished(animationLength);
     }
 
     @Override
@@ -210,32 +272,16 @@ public record BrAnimationEntry(
         }
 
         scope.getOwner().replace(Data.class, data);
-        if (data.lastTicks == 0) data.lastTicks = ticks;
-        data.deltaTime = ticks - data.lastTicks;
-        data.lastTicks = ticks;
         var animTimeUpdate = anim_time_update().eval(scope);
-        data.animTime = animTimeUpdate;
+        BrAnimationPlaybackState.TickResult tickResult = data.playbackState.tick(loop(), animationLength(), ticks, animTimeUpdate);
+        data.syncStateFields();
 
-        float animTick;
-
-        if (animationLength() > 0) {
-            animTick = switch (loop()) {
-                case LOOP -> {
-                    int loopedTimes = (int) (animTimeUpdate / animationLength());
-                    if (loopedTimes > data.loopedTimes) {
-                        data.loopedTimes = loopedTimes;
-                        data.resetEffects();
-
-                        animationStartFeedback.run();
-                    }
-                    yield animTimeUpdate % animationLength();
-                }
-                case ONCE -> animTimeUpdate;
-                default -> Math.min(animTimeUpdate, animationLength());
-            };
-        } else {
-            animTick = animTimeUpdate;
+        if (tickResult.loopRestarted()) {
+            data.resetEffects();
+            animationStartFeedback.run();
         }
+
+        float animTick = tickResult.animTick();
 
         for (int i = 0; i < data.effects.size(); i++) {
             AnimationEffect.Runtime<?> r = data.effects.get(i);

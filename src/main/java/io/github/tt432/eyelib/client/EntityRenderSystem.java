@@ -8,9 +8,9 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
-import io.github.tt432.eyelib.client.entity.BrClientEntity;
+import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.entity.ClientEntityLookup;
-import io.github.tt432.eyelib.client.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.client.render.RenderParams;
@@ -18,7 +18,7 @@ import io.github.tt432.eyelib.client.render.SimpleRenderAction;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerLookup;
 import io.github.tt432.eyelib.event.InitComponentEvent;
-import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelibmolang.MolangScope;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.AccessLevel;
@@ -344,7 +344,7 @@ public class EntityRenderSystem {
         BrClientEntity clientEntity = clientEntityComponent.getClientEntity();
 
         if (clientEntity == null) {
-            clientEntity = ClientEntityLookup.get(entityId);
+            clientEntity = ClientEntityLookup.get(entityId.toString());
             if (clientEntity != null) {
                 clientEntityComponent.setClientEntity(clientEntity);
             }

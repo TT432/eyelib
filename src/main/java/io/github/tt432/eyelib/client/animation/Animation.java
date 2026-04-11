@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.client.animation;
 
 import io.github.tt432.eyelib.client.manager.AnimationManager;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
-import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelibmolang.MolangScope;
 
 import java.util.Map;
 

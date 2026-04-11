@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.client.particle.bedrock.component.emitter.shape;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.molang.MolangValue3;
+import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelibmolang.MolangValue3;
 import io.github.tt432.eyelib.util.codec.CodecHelper;
 import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;

@@ -2,7 +2,8 @@
 
 ## Scope
 - Path: `src/main/java/io/github/tt432/eyelib/molang/`
-- Molang values, compiler/runtime flow, mappings, types, and generated grammar artifacts.
+- Legacy Molang marker/handoff path only.
+- Handwritten Molang value/runtime wrappers, mappings, scope/compiler/type, and generated parser ownership now live in `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/`.
 
 ## Start Reading Here
 1. `docs/index/molang.md`
@@ -10,11 +11,8 @@
 3. Specific compiler/runtime code needed by the task
 
 ## Key Areas
-- `compiler/`: compile/cache/class generation flow
-- `mapping/`: mapping layer
-- `type/`: Molang typing support
-- `generated/`: generated parser artifacts
 - `grammer/`: legacy grammar marker and documentation handoff
+- `README.md`: redirect into `:eyelib-molang` plus boundary notes for the legacy path
 
 ## Critical Rule
-- Treat `generated/` as the active generated/read-only zone for normal work.
+- Treat `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/` as the active generated/read-only zone for normal work.

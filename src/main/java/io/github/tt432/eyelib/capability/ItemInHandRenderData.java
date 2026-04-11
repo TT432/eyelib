@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.capability;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.molang.type.MolangString;
+import io.github.tt432.eyelibmolang.type.MolangString;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 

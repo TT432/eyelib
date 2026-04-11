@@ -1,20 +1,24 @@
 package io.github.tt432.eyelib.client.animation.bedrock.controller;
 
+import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcParticleEffect;
+import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcState;
+import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
+
+
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.AnimationLookup;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
-import io.github.tt432.eyelib.client.entity.BrClientEntity;
+import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
 import io.github.tt432.eyelib.client.particle.ParticleLookup;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
-import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelibmolang.MolangValue;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.Getter;
 import lombok.Setter;
@@ -44,11 +48,33 @@ public record BrAnimationController(
         return result;
     }
 
-    public static final Codec<BrAnimationController> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            Codec.STRING.fieldOf("name").forGetter(BrAnimationController::name),
-            BrAcState.CODEC.fieldOf("initialState").forGetter(BrAnimationController::initialState),
-            Codec.unboundedMap(Codec.STRING, BrAcState.CODEC).fieldOf("states").forGetter(BrAnimationController::states)
-    ).apply(ins, BrAnimationController::new));
+    public static final Codec<BrAnimationController> CODEC = Codec.STRING.dispatchStable(
+            BrAnimationController::name,
+            name -> BrAnimationControllerSchema.CODEC.xmap(
+                    schema -> fromSchema(name, schema),
+                    BrAnimationController::toSchema
+            )
+    );
+
+    public static BrAnimationController fromSchema(String name, BrAnimationControllerSchema schema) {
+        BrAcState initial = schema.states().get(schema.initialState());
+        if (initial == null) {
+            initial = schema.states().get("default");
+        }
+        if (initial == null) {
+            initial = new BrAcState(Map.of(), MolangValue.ZERO, MolangValue.ZERO, List.of(), List.of(), Map.of(), 0F, false);
+        }
+        return new BrAnimationController(name, initial, schema.states());
+    }
+
+    public BrAnimationControllerSchema toSchema() {
+        for (Map.Entry<String, BrAcState> entry : states.entrySet()) {
+            if (entry.getValue().equals(initialState)) {
+                return new BrAnimationControllerSchema(entry.getKey(), states);
+            }
+        }
+        return new BrAnimationControllerSchema("default", states);
+    }
 
     @Override
     public void onFinish(Data data) {
@@ -248,32 +274,4 @@ public record BrAnimationController(
                 multiplier * blendValue, infos, effects, animationStartFeedback);
     }
 
-    record Factory(
-            String initialState,
-            Map<String, BrAcState> states
-    ) {
-        public static final Codec<Factory> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-                Codec.STRING.optionalFieldOf("initial_state", "default").forGetter(o -> o.initialState),
-                Codec.unboundedMap(Codec.STRING, BrAcState.CODEC).fieldOf("states").forGetter(o -> o.states)
-        ).apply(ins, Factory::new));
-
-        public static Factory from(BrAnimationController controller) {
-            for (Map.Entry<String, BrAcState> e : controller.states.entrySet()) {
-                if (e.getValue().equals(controller.initialState)) {
-                    return new Factory(e.getKey(), controller.states);
-                }
-            }
-
-            return new Factory("default", controller.states);
-        }
-
-        public BrAnimationController create(String name) {
-            BrAcState initial = states.get(initialState);
-            if (initial == null) initial = states.get("default");
-            if (initial == null) {
-                initial = new BrAcState(Map.of(), MolangValue.ZERO, MolangValue.ZERO, List.of(), List.of(), Map.of(), 0F, false);
-            }
-            return new BrAnimationController(name, initial, states);
-        }
-    }
 }

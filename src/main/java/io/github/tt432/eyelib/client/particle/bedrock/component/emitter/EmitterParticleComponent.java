@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.particle.bedrock.component.emitter;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.shape.Direction;
-import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelibmolang.MolangScope;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 

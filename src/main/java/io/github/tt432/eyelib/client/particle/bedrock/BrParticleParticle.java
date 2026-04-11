@@ -7,9 +7,9 @@ import io.github.tt432.eyelib.client.particle.bedrock.component.particle.Particl
 import io.github.tt432.eyelib.client.particle.bedrock.component.particle.appearance.ParticleAppearanceBillboard;
 import io.github.tt432.eyelib.client.particle.bedrock.component.particle.appearance.ParticleAppearanceLighting;
 import io.github.tt432.eyelib.client.particle.bedrock.component.particle.appearance.ParticleAppearanceTinting;
-import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.mc.impl.util.time.FixedTimer;
+import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelib.util.Blackboard;
-import io.github.tt432.eyelib.util.FixedTimer;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.Getter;
 import lombok.Setter;

@@ -1,12 +1,15 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
+import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneKeyFrameSchema;
+
+
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.molang.MolangValue;
-import io.github.tt432.eyelib.molang.MolangValue3;
+import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelibmolang.MolangValue;
+import io.github.tt432.eyelibmolang.MolangValue3;
 import io.github.tt432.eyelib.util.ListHelper;
 import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.util.codec.CodecHelper;
@@ -29,6 +32,10 @@ public record BrBoneKeyFrame(
         List<MolangValue3> dataPoints,
         BrBoneKeyFrame.LerpMode lerpMode
 ) {
+    public static BrBoneKeyFrame fromSchema(float timestamp, BrBoneKeyFrameSchema schema) {
+        return new BrBoneKeyFrame(timestamp, schema.dataPoints(), LerpMode.valueOf(schema.lerpMode().name()));
+    }
+
     public enum LerpMode implements StringRepresentable {
         LINEAR,
         CATMULLROM;

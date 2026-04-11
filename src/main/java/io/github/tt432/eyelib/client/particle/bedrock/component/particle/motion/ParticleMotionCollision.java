@@ -5,7 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ComponentTarget;
 import io.github.tt432.eyelib.client.particle.bedrock.component.RegisterParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.particle.ParticleParticleComponent;
-import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
 
 import java.util.List;

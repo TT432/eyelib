@@ -1,13 +1,20 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
+import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneAnimationSchema;
+import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneKeyFrameSchema;
+
+
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelib.util.ImmutableFloatTreeMap;
 import io.github.tt432.eyelib.util.codec.CodecHelper;
 import io.github.tt432.eyelib.util.math.EyeMath;
+import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
+
+import java.util.TreeMap;
 
 /**
  * if rotation_global
@@ -24,6 +31,28 @@ public record BrBoneAnimation(
         ImmutableFloatTreeMap<BrBoneKeyFrame> position,
         ImmutableFloatTreeMap<BrBoneKeyFrame> scale
 ) {
+    public static BrBoneAnimation fromSchema(BrBoneAnimationSchema schema) {
+        return new BrBoneAnimation(
+                toImmutableMap(schema.rotation()),
+                toImmutableMap(schema.position()),
+                toImmutableMap(schema.scale())
+        );
+    }
+
+    private static ImmutableFloatTreeMap<BrBoneKeyFrame> toImmutableMap(TreeMap<Float, BrBoneKeyFrameSchema> schemaMap) {
+        if (schemaMap.isEmpty()) {
+            return ImmutableFloatTreeMap.empty();
+        }
+        float[] sortedKeys = new float[schemaMap.size()];
+        Float2ObjectOpenHashMap<BrBoneKeyFrame> data = new Float2ObjectOpenHashMap<>();
+        int index = 0;
+        for (var entry : schemaMap.entrySet()) {
+            sortedKeys[index++] = entry.getKey();
+            data.put(entry.getKey(), BrBoneKeyFrame.fromSchema(entry.getKey(), entry.getValue()));
+        }
+        return ImmutableFloatTreeMap.of(sortedKeys, data);
+    }
+
     private static final Codec<ImmutableFloatTreeMap<BrBoneKeyFrame>> KEY_FRAME_LIST_CODEC = CodecHelper.withAlternative(
             ImmutableFloatTreeMap.dispatched(f -> BrBoneKeyFrame.Factory.CODEC.xmap(
                     factory -> factory.create(f),

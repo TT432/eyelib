@@ -4,9 +4,9 @@ import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponen
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterLocalSpace;
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.shape.Direction;
-import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.mc.impl.util.time.FixedTimer;
+import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelib.util.Blackboard;
-import io.github.tt432.eyelib.util.FixedTimer;
 import io.github.tt432.eyelib.util.ResourceLocations;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import lombok.Getter;

@@ -2,8 +2,8 @@ package io.github.tt432.eyelib.client.animation;
 
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
-import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelibmolang.MolangValue;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 

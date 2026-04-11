@@ -6,26 +6,33 @@ import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.AnimationLookup;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
-import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
-import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
 import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
 import lombok.Getter;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.EventPriority;
 
 import org.jetbrains.annotations.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 /**
  * @author TT432
  */
 @Getter
 public class AnimationComponent {
+    private static final Set<AnimationComponent> INSTANCES = java.util.Collections.newSetFromMap(new WeakHashMap<>());
+
+    public AnimationComponent() {
+        synchronized (INSTANCES) {
+            INSTANCES.add(this);
+        }
+    }
+
     @ParametersAreNonnullByDefault
     public record SerializableInfo(
             Map<String, String> animations,
@@ -36,9 +43,11 @@ public class AnimationComponent {
                 Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).fieldOf("animate").forGetter(SerializableInfo::animate)
         ).apply(ins, SerializableInfo::new));
 
+        private static final StreamCodec<MolangValue> MOLANG_VALUE_STREAM_CODEC = EyelibStreamCodecs.fromCodec(MolangValue.CODEC);
+
         public static final StreamCodec<SerializableInfo> STREAM_CODEC = new StreamCodec<>() {
             private final StreamCodec<Map<String, String>> animationsCodec = EyelibStreamCodecs.map(HashMap::new, EyelibStreamCodecs.STRING, EyelibStreamCodecs.STRING);
-            private final StreamCodec<Map<String, MolangValue>> animateCodec = EyelibStreamCodecs.map(HashMap::new, EyelibStreamCodecs.STRING, MolangValue.STREAM_CODEC);
+            private final StreamCodec<Map<String, MolangValue>> animateCodec = EyelibStreamCodecs.map(HashMap::new, EyelibStreamCodecs.STRING, MOLANG_VALUE_STREAM_CODEC);
 
             @Override
             public void encode(SerializableInfo obj, FriendlyByteBuf buf) {
@@ -80,20 +89,30 @@ public class AnimationComponent {
         setup(info.animations, info.animate);
     }
 
-    {
-        MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, ManagerEntryChangedEvent.class, e -> {
-            if (e.getManagerName().equals(AnimationLookup.managerName())) {
-                AtomicBoolean changed = new AtomicBoolean(false);
-                animate.forEach((k, v) -> {
-                    if (k.name().equals(e.getEntryName())) {
-                        changed.set(true);
-                    }
-                });
-                if (changed.get()) {
-                    serializableInfo = null;
-                }
+    public static void onManagerEntryChanged(String managerName, String entryName) {
+        if (!AnimationLookup.managerName().equals(managerName)) {
+            return;
+        }
+
+        Set<AnimationComponent> snapshot;
+        synchronized (INSTANCES) {
+            snapshot = new HashSet<>(INSTANCES);
+        }
+
+        for (AnimationComponent component : snapshot) {
+            if (component != null) {
+                component.invalidateSerializableInfoIfUsingAnimation(entryName);
             }
-        });
+        }
+    }
+
+    private void invalidateSerializableInfoIfUsingAnimation(String animationName) {
+        for (Animation<?> animation : animate.keySet()) {
+            if (animation.name().equals(animationName)) {
+                serializableInfo = null;
+                return;
+            }
+        }
     }
 
     public void setup(Map<String, String> animations, Map<String, MolangValue> animate) {

@@ -6,7 +6,7 @@ import io.github.tt432.eyelib.client.particle.bedrock.component.ComponentTarget;
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.client.particle.bedrock.component.RegisterParticleComponent;
-import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelibmolang.MolangValue;
 
 /**
  * 只在被游戏告知应当发射时发射。多被用在旧版粒子效果

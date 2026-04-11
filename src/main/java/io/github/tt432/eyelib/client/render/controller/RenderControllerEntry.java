@@ -4,14 +4,14 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
-import io.github.tt432.eyelib.client.entity.BrClientEntity;
-import io.github.tt432.eyelib.client.model.Model;
-import io.github.tt432.eyelib.molang.MolangScope;
-import io.github.tt432.eyelib.molang.MolangValue;
-import io.github.tt432.eyelib.molang.type.*;
+import io.github.tt432.eyelibimporter.entity.BrClientEntity;
+import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelibmolang.MolangValue;
+import io.github.tt432.eyelibmolang.type.*;
+import io.github.tt432.eyelib.core.util.texture.TexturePaths;
 import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
 import io.github.tt432.eyelib.client.render.texture.TextureLayerMerger;
-import io.github.tt432.eyelib.util.client.texture.TexturePathHelper;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
@@ -172,7 +172,7 @@ public record RenderControllerEntry(
     private List<String> toEmissiveTextureLayerPaths(List<String> layerPaths) {
         List<String> emissiveLayerPaths = new ArrayList<>(layerPaths.size());
         for (String layerPath : layerPaths) {
-            emissiveLayerPaths.add(TexturePathHelper.getEmissiveTexturePath(layerPath));
+            emissiveLayerPaths.add(TexturePaths.emissivePath(layerPath));
         }
         return emissiveLayerPaths;
     }

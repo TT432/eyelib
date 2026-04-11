@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.animation;
 
-import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelibmolang.MolangScope;
 import org.apache.logging.log4j.util.TriConsumer;
 
 import java.util.List;

@@ -6,7 +6,7 @@ import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ComponentTarget;
 import io.github.tt432.eyelib.client.particle.bedrock.component.RegisterParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.EmitterParticleComponent;
-import io.github.tt432.eyelib.molang.MolangValue3;
+import io.github.tt432.eyelibmolang.MolangValue3;
 
 /**
  * 所有粒子基于指定的一组 Molang 表达式发射
