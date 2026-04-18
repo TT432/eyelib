@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
+import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
@@ -46,7 +47,9 @@ public final class ManagerResourceImportPlanner {
 
     public static void loadResourceFolder(Path basePath, Logger logger) {
         Map<String, BrAnimation> animations = loadJsonFiles(basePath, "animations",
-                jo -> BrAnimation.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn));
+                jo -> BrAnimation.fromSchemaSet(
+                        BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)
+                ));
 
         Map<String, BrAnimationControllers> animationControllers = loadJsonFiles(basePath, "animation_controllers",
                 jo -> BrAnimationControllers.fromSchemaSet(
@@ -88,7 +91,9 @@ public final class ManagerResourceImportPlanner {
                     JsonObject jo = GSON.fromJson(IOUtils.toString(new FileInputStream(file.toFile()), StandardCharsets.UTF_8), JsonObject.class);
                     switch (target) {
                         case ANIMATION_JSON -> {
-                            var animation = BrAnimation.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
+                            var animation = BrAnimation.fromSchemaSet(
+                                    BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)
+                            );
                             AnimationAssetRegistry.publishAnimation(animation);
                         }
                         case ANIMATION_CONTROLLER_JSON -> {

@@ -16,7 +16,6 @@ import io.github.tt432.eyelib.util.codec.CodecHelper;
 import io.github.tt432.eyelib.util.math.Curves;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import net.minecraft.util.StringRepresentable;
-import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -30,8 +29,24 @@ import java.util.Optional;
 public record BrBoneKeyFrame(
         float timestamp,
         List<MolangValue3> dataPoints,
-        BrBoneKeyFrame.LerpMode lerpMode
+        BrBoneKeyFrame.LerpMode lerpMode,
+        BrBoneKeyFrameDefinition compiledDefinition
 ) {
+    public BrBoneKeyFrame {
+        dataPoints = List.copyOf(dataPoints);
+        compiledDefinition = compiledDefinition != null
+                ? compiledDefinition
+                : new BrBoneKeyFrameDefinition(timestamp, dataPoints, lerpMode);
+    }
+
+    public BrBoneKeyFrame(float timestamp, List<MolangValue3> dataPoints, BrBoneKeyFrame.LerpMode lerpMode) {
+        this(timestamp, dataPoints, lerpMode, new BrBoneKeyFrameDefinition(timestamp, dataPoints, lerpMode));
+    }
+
+    public BrBoneKeyFrameDefinition definition() {
+        return compiledDefinition;
+    }
+
     public static BrBoneKeyFrame fromSchema(float timestamp, BrBoneKeyFrameSchema schema) {
         return new BrBoneKeyFrame(timestamp, schema.dataPoints(), LerpMode.valueOf(schema.lerpMode().name()));
     }
@@ -42,7 +57,6 @@ public record BrBoneKeyFrame(
         public static final Codec<LerpMode> CODEC = StringRepresentable.fromEnum(LerpMode::values);
 
         @Override
-        @NotNull
         public String getSerializedName() {
             return name().toLowerCase();
         }
@@ -64,8 +78,17 @@ public record BrBoneKeyFrame(
                                           BrBoneKeyFrame after,
                                           BrBoneKeyFrame afterPlus,
                                           float weight) {
-        boolean firstPointPredicate = beforePlus != null && before.dataPoints.size() == 1;
-        boolean lastPointPredicate = afterPlus != null && after.dataPoints.size() == 1;
+        return catmullromLerp(scope, beforePlus.definition(), before.definition(), after.definition(), afterPlus.definition(), weight);
+    }
+
+    public static Vector3f catmullromLerp(MolangScope scope,
+                                          BrBoneKeyFrameDefinition beforePlus,
+                                          BrBoneKeyFrameDefinition before,
+                                          BrBoneKeyFrameDefinition after,
+                                          BrBoneKeyFrameDefinition afterPlus,
+                                          float weight) {
+        boolean firstPointPredicate = beforePlus != null && before.dataPoints().size() == 1;
+        boolean lastPointPredicate = afterPlus != null && after.dataPoints().size() == 1;
         weight = weight + (beforePlus != null ? 1 : 0);
 
         var xArray = setupCurvePoints(scope, beforePlus, before, after, afterPlus,
@@ -109,6 +132,26 @@ public record BrBoneKeyFrame(
         return points;
     }
 
+    private static ArrayList<Vector2f> setupCurvePoints(MolangScope scope,
+                                                        BrBoneKeyFrameDefinition beforePlus, BrBoneKeyFrameDefinition before,
+                                                        BrBoneKeyFrameDefinition after, BrBoneKeyFrameDefinition afterPlus,
+                                                        boolean firstPointPredicate, boolean lastPointPredicate,
+                                                        MolangValue3AxisFunction function) {
+        ArrayList<Vector2f> points = new ArrayList<>();
+
+        if (firstPointPredicate)
+            points.add(new Vector2f(beforePlus.timestamp(), function.apply(getValue(beforePlus, false), scope)));
+
+        points.add(new Vector2f(before.timestamp(), function.apply(getValue(before, false), scope)));
+
+        points.add(new Vector2f(after.timestamp(), function.apply(getValue(after, true), scope)));
+
+        if (lastPointPredicate)
+            points.add(new Vector2f(afterPlus.timestamp(), function.apply(getValue(afterPlus, true), scope)));
+
+        return points;
+    }
+
     /**
      * 线性插值
      *
@@ -117,8 +160,13 @@ public record BrBoneKeyFrame(
      * @return 值
      */
     public Vector3f linearLerp(MolangScope scope, BrBoneKeyFrame other, float weight) {
-        var am3 = this.dataPoints.size() > 1 && this.timestamp() < other.timestamp() ? getPost() : getPre();
-        var bm3 = other.dataPoints.size() > 1 && this.timestamp() > other.timestamp() ? other.getPost() : other.getPre();
+        return linearLerp(scope, definition(), other.definition(), weight);
+    }
+
+    public static Vector3f linearLerp(MolangScope scope, BrBoneKeyFrameDefinition current,
+                                      BrBoneKeyFrameDefinition other, float weight) {
+        var am3 = current.dataPoints().size() > 1 && current.timestamp() < other.timestamp() ? getValue(current, false) : getValue(current, true);
+        var bm3 = other.dataPoints().size() > 1 && current.timestamp() > other.timestamp() ? getValue(other, false) : getValue(other, true);
 
         float ax = am3.getX(scope);
         float bx = bm3.getX(scope);
@@ -138,6 +186,10 @@ public record BrBoneKeyFrame(
 
     public MolangValue3 get(boolean isPre) {
         return isPre ? getPre() : getPost();
+    }
+
+    public static MolangValue3 getValue(BrBoneKeyFrameDefinition keyFrame, boolean isPre) {
+        return isPre ? ListHelper.getFirst(keyFrame.dataPoints()) : ListHelper.getLast(keyFrame.dataPoints());
     }
 
     public MolangValue3 getPre() {
@@ -191,3 +243,4 @@ public record BrBoneKeyFrame(
         }
     }
 }
+

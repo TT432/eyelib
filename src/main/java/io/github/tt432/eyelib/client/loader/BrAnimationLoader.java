@@ -2,12 +2,12 @@ package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
+import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,11 +38,14 @@ public class BrAnimationLoader extends BrResourcesLoader {
     }
 
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> pObject, @NotNull ResourceManager pResourceManager, @NotNull ProfilerFiller pProfiler) {
-        Map<ResourceLocation, BrAnimation> parsedAnimations =
-                LoaderParsingOps.parseBySourceKey(pObject, BrAnimation.CODEC, LOGGER, "animation");
+    protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
+        Map<ResourceLocation, BrAnimationSet> parsedSchemaSets =
+                LoaderParsingOps.parseBySourceKey(pObject, BrAnimationSet.CODEC, LOGGER, "animation");
+        Map<ResourceLocation, BrAnimation> parsedAnimations = new HashMap<>();
+        parsedSchemaSets.forEach((location, schemaSet) -> parsedAnimations.put(location, BrAnimation.fromSchemaSet(schemaSet)));
         animations.clear();
         animations.putAll(parsedAnimations);
         AnimationAssetRegistry.replaceAssets(animations, BrAnimationControllerLoader.getAnimationControllers());
     }
 }
+

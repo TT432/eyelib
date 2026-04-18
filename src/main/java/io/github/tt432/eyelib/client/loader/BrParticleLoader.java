@@ -7,8 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +35,7 @@ public class BrParticleLoader extends BrResourcesLoader {
     }
 
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> pObject, @NotNull ResourceManager pResourceManager, @NotNull ProfilerFiller pProfiler) {
+    protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
         Map<ResourceLocation, BrParticle> parsedParticles =
                 LoaderParsingOps.parseBySourceKey(pObject, BrParticle.CODEC, LOGGER, "particle");
         particles.clear();
@@ -44,3 +43,4 @@ public class BrParticleLoader extends BrResourcesLoader {
         ParticleAssetRegistry.replaceParticles(particles);
     }
 }
+

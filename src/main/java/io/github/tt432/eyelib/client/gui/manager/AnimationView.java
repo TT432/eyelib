@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.animation.AnimationLookup;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
+import io.github.tt432.eyelib.client.gui.ModalWorksurfaceScreen;
 import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelibmolang.MolangScope;
@@ -20,17 +21,15 @@ import net.minecraft.client.gui.components.events.AbstractContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.client.gui.widget.ScrollPanel;
 import net.minecraftforge.event.TickEvent;
-import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 import org.lwjgl.glfw.GLFW;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +41,7 @@ import java.util.stream.Stream;
  * @author TT432
  */
 //@Mod.EventBusSubscriber(Dist.CLIENT)
-public class AnimationView extends Screen {
+public class AnimationView extends ModalWorksurfaceScreen {
     @Nullable
     private String selectedAnimationName = null;
     @Nullable
@@ -288,7 +287,7 @@ public class AnimationView extends Screen {
         ));
     }
 
-    private @NotNull RenderableEventListener curvePanel(int initPosY, int interval, int rightPanelStartY, Axis axis) {
+    private RenderableEventListener curvePanel(int initPosY, int interval, int rightPanelStartY, Axis axis) {
         return new RenderableEventListener() {
             @Override
             public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
@@ -516,3 +515,4 @@ public class AnimationView extends Screen {
         );
     }
 }
+

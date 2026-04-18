@@ -3,14 +3,14 @@ package io.github.tt432.eyelib.client.gui.manager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.Screen;
+import io.github.tt432.eyelib.client.gui.ModalWorksurfaceScreen;
 import net.minecraft.network.chat.Component;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author TT432
  */
-public class EntitiesScreen extends Screen {
+public class EntitiesScreen extends ModalWorksurfaceScreen {
     protected EntitiesScreen() {
         super(Component.empty());
     }
@@ -54,3 +54,4 @@ public class EntitiesScreen extends Screen {
         return false;
     }
 }
+

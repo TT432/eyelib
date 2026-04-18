@@ -6,7 +6,7 @@ import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ClientEntityLookup {
@@ -19,3 +19,4 @@ public final class ClientEntityLookup {
         return ClientEntityManager.readPort().getManagerName();
     }
 }
+

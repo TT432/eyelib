@@ -7,8 +7,7 @@ import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +38,7 @@ public class BrAnimationControllerLoader extends BrResourcesLoader {
     }
 
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> pObject, @NotNull ResourceManager pResourceManager, @NotNull ProfilerFiller pProfiler) {
+    protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
         Map<ResourceLocation, BrAnimationControllerSet> parsedSchemaSets =
                 LoaderParsingOps.parseBySourceKey(pObject, BrAnimationControllerSet.CODEC, LOGGER, "animation controller");
         LinkedHashMap<ResourceLocation, BrAnimationControllers> parsedControllers = new LinkedHashMap<>();
@@ -49,3 +48,4 @@ public class BrAnimationControllerLoader extends BrResourcesLoader {
         AnimationAssetRegistry.replaceAssets(BrAnimationLoader.getAnimations(), animationControllers);
     }
 }
+

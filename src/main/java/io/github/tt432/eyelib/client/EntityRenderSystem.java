@@ -48,8 +48,7 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.joml.Matrix4f;
 
 import java.util.ArrayList;
@@ -331,7 +330,7 @@ public class EntityRenderSystem {
             scope.set("variable.attack_time", ((float) livingEntity.swingTime) / livingEntity.getCurrentSwingDuration());
     }
 
-    public static <T extends Entity> @NotNull List<Runnable> setupClientEntity(T entity, RenderData<T> cap) {
+    public static <T extends Entity> List<Runnable> setupClientEntity(T entity, RenderData<T> cap) {
         if (cap.getOwner() != entity) {
             cap.init(entity);
         }
@@ -339,7 +338,7 @@ public class EntityRenderSystem {
         return setupClientEntity(ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()), cap);
     }
 
-    public static @NotNull List<Runnable> setupClientEntity(ResourceLocation entityId, RenderData<?> cap) {
+    public static List<Runnable> setupClientEntity(ResourceLocation entityId, RenderData<?> cap) {
         ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
         BrClientEntity clientEntity = clientEntityComponent.getClientEntity();
 
@@ -353,7 +352,7 @@ public class EntityRenderSystem {
         return setupClientEntity(clientEntity, cap);
     }
 
-    public static @NotNull List<Runnable> setupClientEntity(@Nullable BrClientEntity clientEntity, RenderData<?> cap) {
+    public static List<Runnable> setupClientEntity(@Nullable BrClientEntity clientEntity, RenderData<?> cap) {
         ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
         RenderControllerComponent renderControllerComponent = cap.getRenderControllerComponent();
         List<Runnable> syncedActions = new ArrayList<>();
@@ -407,3 +406,4 @@ public class EntityRenderSystem {
         return syncedActions;
     }
 }
+

@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.animation;
 
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author TT432
@@ -13,3 +13,4 @@ public record RuntimeParticlePlayData(
         float startTicks
 ) {
 }
+

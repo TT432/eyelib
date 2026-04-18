@@ -7,7 +7,7 @@ import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelib.client.model.ModelLookup;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Collection;
@@ -52,3 +52,4 @@ public class ClientEntityRuntimeData {
         return Collections.unmodifiableCollection(models.values());
     }
 }
+

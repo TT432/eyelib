@@ -5,6 +5,8 @@ import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
+import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
+import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
 import io.github.tt432.eyelib.client.gui.manager.io.FileDialogService;
 import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
 import io.github.tt432.eyelib.client.registry.RenderControllerAssetRegistry;
@@ -26,12 +28,12 @@ public final class ManagerImportActions {
 
     public static void importAnimation(Logger logger) {
         importJson("读取文件", json -> AnimationAssetRegistry.publishAnimation(
-                BrAnimation.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow(false, logger::warn)));
+                BrAnimation.fromSchemaSet(BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow(false, logger::warn))));
     }
 
     public static void importAnimationController(Logger logger) {
         importJson("读取文件", json -> AnimationAssetRegistry.publishAnimationController(
-                BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow(false, logger::warn)));
+                BrAnimationControllers.fromSchemaSet(BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow(false, logger::warn))));
     }
 
     public static void importRenderController(Logger logger) {

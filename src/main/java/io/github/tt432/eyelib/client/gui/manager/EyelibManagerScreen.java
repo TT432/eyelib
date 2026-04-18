@@ -2,16 +2,15 @@ package io.github.tt432.eyelib.client.gui.manager;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.tt432.eyelib.Eyelib;
+import io.github.tt432.eyelib.client.gui.ModalWorksurfaceScreen;
 import io.github.tt432.eyelib.client.gui.manager.reload.ManagerFolderSession;
 import io.github.tt432.eyelib.client.gui.manager.reload.ManagerImportActions;
-import io.github.tt432.eyelib.client.gui.manager.reload.ManagerResourceFolderWatcher;
 import io.github.tt432.eyelib.util.math.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +19,7 @@ import java.util.List;
 /**
  * @author TT432
  */
-public class EyelibManagerScreen extends Screen {
+public class EyelibManagerScreen extends ModalWorksurfaceScreen {
     protected EyelibManagerScreen() {
         super(Component.empty());
     }
@@ -169,3 +168,4 @@ public class EyelibManagerScreen extends Screen {
         super.onClose();
     }
 }
+
