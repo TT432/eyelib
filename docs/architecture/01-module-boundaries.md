@@ -50,7 +50,7 @@
 | `client/loader/` | `client.asset` | Parse and reload resources, avoid owning runtime publication, and keep parser seams free of platform identifier types |
 | `mc/impl/client/loader/` | platform integration zone | Own Forge reload-listener lifecycle registration for client loader listeners |
 | `mc/impl/common/command/` | platform integration zone | Own Forge command registration and Brigadier runtime wiring |
-| `:eyelib-importer/**` | `client.model.importer.core` | Own model definitions plus source-format parsing/normalization/import support without runtime manager/event/upload ownership |
+| `:eyelib-importer/**` | `client.model.importer.core` | Own model definitions plus source-format parsing/normalization/import support, addon/pack discovery, and raw resource-side aggregation without runtime manager/event/upload ownership |
 | importer-owned client-entity / animation-controller schema under `:eyelib-importer/**` | `client.importer.schema` | Own codec trees, parsed definitions, importer-only normalization, and platform-free image/data representations for import flows; must not own runtime execution, manager publication, texture upload, or Forge/Minecraft lifecycle wiring |
 | `client/model/importer/` | `client.model.importer` | Adapt `eyelib-importer` outputs into root runtime flows without leaking source-format behavior into tooling, managers, or render execution |
 | `client/animation/` | `client.animation.runtime` | Keep runtime animation/controller execution, playback state, runtime lookups, and schema-to-runtime adapter/build logic in root even as parsed schema moves into `eyelib-importer` |
@@ -79,9 +79,12 @@
 ## Boundary Notes For Importer Expansion
 - `:eyelib-importer` now uses its own importer namespace (`io.github.tt432.eyelibimporter.*`) so it can be consumed as an independent mod/artifact without split packages against root runtime packages.
 - Client-entity/attachable schema ownership has already moved to `:eyelib-importer`, and controller reload/planner paths now parse importer-owned controller schema before adapting to root runtime controllers.
+- Bedrock addon container handling (`manifest.json`, folder/archive pack discovery, texture decode, and importer-owned aggregate loading) belongs in `:eyelib-importer`; root should consume importer results instead of re-implementing pack traversal.
 - Runtime executors such as `Animation<?>`, playback state owners, particle spawning, and entity/model runtime integration remain root-owned even when their source JSON codecs/definitions move out.
 - Importer-owned image handling is now platform-free via `ImportedImageData`. `NativeImage` creation, upload, and other Minecraft/Blaze3D runtime wiring stay root-owned.
 - Root loaders and manager tooling may call importer parsers, but they should not duplicate importer normalization logic once migration completes.
+- The current animation save/sync boundary is intentionally binding-only: `AnimationComponent.SerializableInfo` carries selected animation names and Molang inputs, while per-instance playback/controller/effect state stays runtime-local and should be characterized before any refactor widens or relocates it.
+- Runtime state extraction stays root-owned even after internal splits: owner/executor seams such as `BrClipStateOwner`/`BrClipExecutor` and `BrControllerStateOwner`/`BrControllerExecutor` are runtime implementation details, not importer concerns and not sync payload types.
 
 ## Public vs Internal Bias
 - Default assumption: most packages are internal unless intentionally surfaced through a stable facade.

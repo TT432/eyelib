@@ -23,6 +23,7 @@
 - Data attachment flow: start in `src/main/java/io/github/tt432/eyelib/util/data_attach/` and `src/main/java/io/github/tt432/eyelib/capability/`
 - Platform-free utility seams: start in `src/main/java/io/github/tt432/eyelib/core/`
 - Blockbench Bedrock export reference: `docs/blockbench/bedrock-geometry-export-fields-reference.md`
+- External Bedrock reference docs: `docs/ref/`
 
 ## Read In This Order
 1. This file
