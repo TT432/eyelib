@@ -6,7 +6,6 @@ import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +19,7 @@ import java.util.stream.Stream;
  */
 public record KeyDispatchMapCodec<K, V>(
         Codec<K> keyCodec,
-        Function<K, @NotNull Codec<? extends V>> elementCodec
+        Function<K, Codec<? extends V>> elementCodec
 ) implements Codec<Map<K, V>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyDispatchMapCodec.class);
@@ -83,4 +82,5 @@ public record KeyDispatchMapCodec<K, V>(
         return prefix;
     }
 }
+
 

@@ -2,12 +2,11 @@ package io.github.tt432.eyelib.mc.impl.data_attach;
 
 import io.github.tt432.eyelib.util.data_attach.DataAttachmentType;
 import io.github.tt432.eyelib.util.data_attach.IDataAttachmentContainer;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import net.minecraft.world.entity.Entity;
 
 public class DataAttachmentHelper {
-    private static @NotNull IDataAttachmentContainer get(Entity entity) {
+    private static IDataAttachmentContainer get(Entity entity) {
         return entity.getCapability(DataAttachmentContainerCapability.INSTANCE).orElseGet(McDataAttachmentContainer::new);
     }
 
@@ -20,8 +19,9 @@ public class DataAttachmentHelper {
         return container.get(attachment);
     }
 
-    public static <C> void setLocal(DataAttachmentType<C> attachment, Entity entity, @NotNull C value) {
+    public static <C> void setLocal(DataAttachmentType<C> attachment, Entity entity, C value) {
         var container = get(entity);
         container.set(attachment, value);
     }
 }
+

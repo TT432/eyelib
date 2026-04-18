@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.client.render.visitor;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import java.util.Map;
 
 /**
@@ -35,3 +35,4 @@ public final class ModelVisitContext {
         data.clear();
     }
 }
+

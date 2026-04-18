@@ -16,7 +16,6 @@ import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.floats.FloatList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.StringRepresentable;
-import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 
 import java.util.*;
@@ -147,7 +146,6 @@ public record BrParticle(
                 public static final Codec<Type> CODEC = StringRepresentable.fromEnum(Type::values);
 
                 @Override
-                @NotNull
                 public String getSerializedName() {
                     return name().toLowerCase();
                 }
@@ -243,3 +241,4 @@ public record BrParticle(
         }
     }
 }
+

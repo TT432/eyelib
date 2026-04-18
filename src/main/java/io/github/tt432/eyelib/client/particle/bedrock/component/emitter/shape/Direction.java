@@ -5,8 +5,7 @@ import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.MolangValue3;
 import io.github.tt432.eyelib.util.codec.CodecHelper;
 import net.minecraft.util.StringRepresentable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.Objects;
@@ -49,9 +48,9 @@ public record Direction(
         public static final Codec<Type> CODEC = StringRepresentable.fromEnum(Type::values);
 
         @Override
-        @NotNull
         public String getSerializedName() {
             return name().toLowerCase();
         }
     }
 }
+

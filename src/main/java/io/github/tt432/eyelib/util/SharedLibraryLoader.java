@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.util;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -313,4 +313,5 @@ public class SharedLibraryLoader {
         }
     }
 }
+
 

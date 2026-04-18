@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.util;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,3 +31,4 @@ public final class Blackboard {
         return (T) data.computeIfAbsent(key, k -> defaultValue);
     }
 }
+

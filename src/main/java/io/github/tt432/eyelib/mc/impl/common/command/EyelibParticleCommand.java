@@ -20,7 +20,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.UUID;
@@ -91,3 +91,4 @@ public final class EyelibParticleCommand {
         return 1;
     }
 }
+

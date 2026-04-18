@@ -11,7 +11,7 @@ import io.github.tt432.eyelibimporter.model.bbmodel.Group;
 import io.github.tt432.eyelibimporter.model.bbmodel.Outliner;
 import io.github.tt432.eyelibimporter.model.bbmodel.Texture;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -712,3 +712,4 @@ public record ImportedModelData(
     }
 
 }
+

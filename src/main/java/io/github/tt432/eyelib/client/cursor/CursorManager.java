@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.client.cursor;
 
 import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.system.MemoryUtil;
 
@@ -29,3 +29,4 @@ public class CursorManager {
                 });
     }
 }
+

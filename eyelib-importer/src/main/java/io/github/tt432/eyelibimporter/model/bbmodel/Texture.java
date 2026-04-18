@@ -4,7 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -147,3 +147,4 @@ public record Texture(
         return imageData == null ? Math.max(uvHeight, Math.max(height, 1)) : imageData.height();
     }
 }
+

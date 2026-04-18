@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.util.data_attach;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -86,7 +85,7 @@ class DataAttachmentStorageTest {
 
         @SuppressWarnings("unchecked")
         @Override
-        public <T> void set(DataAttachmentType<T> attachment, @NotNull T value) {
+        public <T> void set(DataAttachmentType<T> attachment, T value) {
             stored = (Integer) value;
         }
 
@@ -96,3 +95,4 @@ class DataAttachmentStorageTest {
         }
     }
 }
+

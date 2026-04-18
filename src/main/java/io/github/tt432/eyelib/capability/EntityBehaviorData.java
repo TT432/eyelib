@@ -8,7 +8,7 @@ import io.github.tt432.eyelib.common.behavior.component.group.ComponentGroup;
 import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
 import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
 import lombok.Getter;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -59,3 +59,4 @@ public class EntityBehaviorData {
         components.put(componentClass, component);
     }
 }
+

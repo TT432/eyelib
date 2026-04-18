@@ -6,7 +6,7 @@ import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 
@@ -21,3 +21,4 @@ public final class ModelLookup {
         return ModelManager.readPort().getAllData();
     }
 }
+

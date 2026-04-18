@@ -17,7 +17,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.lang.constant.ClassDesc;
@@ -564,3 +564,4 @@ public class MolangCompileVisitor extends MolangBaseVisitor<MolangCompileVisitor
         return CompileContext.UNKNOWN;
     }
 }
+

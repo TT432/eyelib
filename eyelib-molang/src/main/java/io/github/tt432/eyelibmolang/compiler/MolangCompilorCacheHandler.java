@@ -4,7 +4,7 @@ import io.github.tt432.eyelibmolang.MolangCompiledFunction;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -518,3 +518,4 @@ public final class MolangCompilorCacheHandler implements MolangCompileCache {
     }
 
 }
+

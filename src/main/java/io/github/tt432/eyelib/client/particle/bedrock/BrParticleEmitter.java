@@ -16,7 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -191,3 +191,4 @@ public class BrParticleEmitter {
         emitCount--;
     }
 }
+

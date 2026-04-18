@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -59,3 +59,4 @@ public final class ManagerResourceFolderWatcher {
         fileObserver = null;
     }
 }
+

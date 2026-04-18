@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.client.gl;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.util.StringRepresentable;
-import org.jetbrains.annotations.NotNull;
 import org.lwjgl.opengl.GL11;
 
 /**
@@ -26,7 +25,8 @@ public enum DepthFunc implements StringRepresentable {
     }
 
     @Override
-    public @NotNull String getSerializedName() {
+    public String getSerializedName() {
         return name();
     }
 }
+

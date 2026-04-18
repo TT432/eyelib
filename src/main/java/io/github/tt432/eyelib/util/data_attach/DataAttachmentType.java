@@ -2,8 +2,7 @@ package io.github.tt432.eyelib.util.data_attach;
 
 import com.mojang.serialization.Codec;
 import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -21,10 +20,11 @@ public record DataAttachmentType<C>(String id,
                                      @Nullable Codec<C> codec,
                                      @Nullable StreamCodec<C> streamCodec) {
 
-    public @NotNull StreamCodec<C> getStreamCodec() {
+    public StreamCodec<C> getStreamCodec() {
         if (streamCodec == null) {
             throw new IllegalStateException(id + " has no StreamCodec");
         }
         return streamCodec;
     }
 }
+

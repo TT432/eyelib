@@ -6,7 +6,6 @@ import io.github.tt432.eyelibmolang.type.MolangNull;
 import io.github.tt432.eyelibmolang.type.MolangObject;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import lombok.AllArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +16,8 @@ import java.util.Objects;
  * @author TT432
  */
 public record MolangValue(
-        @NotNull String context,
-        @NotNull MolangFunction method
+        String context,
+        MolangFunction method
 ) {
     private static final Logger log = LoggerFactory.getLogger(MolangValue.class);
 
@@ -26,7 +25,7 @@ public record MolangValue(
     public interface MolangFunction {
         MolangFunction NULL = s -> MolangNull.INSTANCE;
 
-        MolangObject apply(@NotNull MolangScope scope);
+        MolangObject apply(MolangScope scope);
     }
 
     @AllArgsConstructor
@@ -34,20 +33,20 @@ public record MolangValue(
         MolangObject molangObject;
 
         @Override
-        public MolangObject apply(@NotNull MolangScope scope) {
+        public MolangObject apply(MolangScope scope) {
             return molangObject;
         }
     }
 
-    public MolangValue(@NotNull String context, @NotNull MolangCompiledFunction method) {
+    public MolangValue(String context, MolangCompiledFunction method) {
         this(context, wrap(method));
     }
 
-    public MolangValue(@NotNull String context) {
+    public MolangValue(String context) {
         this(context, wrap(MolangCompileHandler.compile(context)));
     }
 
-    private static MolangFunction wrap(@NotNull MolangCompiledFunction method) {
+    private static MolangFunction wrap(MolangCompiledFunction method) {
         return method::apply;
     }
 
@@ -101,3 +100,4 @@ public record MolangValue(
         return obj == this || (obj instanceof MolangValue mv && mv.context.equals(context));
     }
 }
+

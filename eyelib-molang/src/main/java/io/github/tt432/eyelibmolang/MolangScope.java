@@ -5,7 +5,7 @@ import io.github.tt432.eyelibmolang.type.MolangFloatSupplierObject;
 import io.github.tt432.eyelibmolang.type.MolangNull;
 import io.github.tt432.eyelibmolang.type.MolangObject;
 import lombok.Getter;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -73,3 +73,4 @@ public final class MolangScope {
         this.owner.add(owner);
     }
 }
+

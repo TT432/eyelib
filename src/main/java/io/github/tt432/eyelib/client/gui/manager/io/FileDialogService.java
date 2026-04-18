@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.client.gui.manager.io;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
@@ -68,3 +68,4 @@ public final class FileDialogService {
         return future;
     }
 }
+

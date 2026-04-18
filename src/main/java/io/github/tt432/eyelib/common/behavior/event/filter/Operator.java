@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.common.behavior.event.filter;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.util.StringRepresentable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author TT432
@@ -27,7 +26,8 @@ public enum Operator implements StringRepresentable {
     }
 
     @Override
-    public @NotNull String getSerializedName() {
+    public String getSerializedName() {
         return realString;
     }
 }
+

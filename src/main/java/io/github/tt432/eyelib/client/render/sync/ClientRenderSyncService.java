@@ -10,7 +10,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ClientRenderSyncService {
@@ -67,3 +67,4 @@ public final class ClientRenderSyncService {
         );
     }
 }
+

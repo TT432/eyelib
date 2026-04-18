@@ -44,7 +44,7 @@ legacyForge {
 
 dependencies {
     implementation project(':eyelib-molang')
-    compileOnly 'org.jetbrains:annotations:26.0.2'
+    compileOnly 'org.jspecify:jspecify:1.0.0'
     testImplementation 'org.joml:joml:1.10.5'
 
     testImplementation platform('org.junit:junit-bom:5.10.2')

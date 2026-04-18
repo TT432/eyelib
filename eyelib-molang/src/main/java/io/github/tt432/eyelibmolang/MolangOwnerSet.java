@@ -1,6 +1,6 @@
 package io.github.tt432.eyelibmolang;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -129,3 +129,4 @@ public class MolangOwnerSet {
         R apply(A a, B b, C c, D d);
     }
 }
+

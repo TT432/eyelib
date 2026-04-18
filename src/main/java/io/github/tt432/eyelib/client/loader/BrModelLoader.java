@@ -7,7 +7,6 @@ import io.github.tt432.eyelib.client.registry.ModelAssetRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +23,7 @@ public class BrModelLoader extends BrResourcesLoader {
     }
 
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> pObject, @NotNull ResourceManager pResourceManager, @NotNull ProfilerFiller pProfiler) {
+    protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
         LinkedHashMap<String, Model> loadedModels = parseLoadedModels(pObject);
         ModelAssetRegistry.replaceModels(loadedModels);
     }
@@ -46,3 +45,4 @@ public class BrModelLoader extends BrResourcesLoader {
         return loadedModels;
     }
 }
+

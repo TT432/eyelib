@@ -1,14 +1,13 @@
 package io.github.tt432.eyelib.util.data_attach;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public interface DataAttachmentStorage {
     <T> boolean has(DataAttachmentType<T> attachment);
 
     <T> @Nullable T get(DataAttachmentType<T> attachment);
 
-    default <T> @NotNull T getOrCreate(DataAttachmentType<T> attachment) {
+    default <T> T getOrCreate(DataAttachmentType<T> attachment) {
         if (has(attachment)) {
             @Nullable T value = get(attachment);
             if (value != null) {
@@ -20,7 +19,8 @@ public interface DataAttachmentStorage {
         return result;
     }
 
-    <T> void set(DataAttachmentType<T> attachment, @NotNull T value);
+    <T> void set(DataAttachmentType<T> attachment, T value);
 
     <T> void remove(DataAttachmentType<T> attachment);
 }
+

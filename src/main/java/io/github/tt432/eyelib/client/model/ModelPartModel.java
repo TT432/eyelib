@@ -11,7 +11,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
-import org.jetbrains.annotations.NotNull;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -55,7 +54,7 @@ public record ModelPartModel(
             }
         }
 
-        public @NotNull ModelPart getData(int id) {
+        public ModelPart getData(int id) {
             return parts.get(id);
         }
 
@@ -160,3 +159,4 @@ public record ModelPartModel(
         return new Model.Cube(faces);
     }
 }
+

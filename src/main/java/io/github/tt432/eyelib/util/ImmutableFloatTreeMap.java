@@ -8,7 +8,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -152,3 +152,4 @@ public sealed class ImmutableFloatTreeMap<V> {
         return null;
     }
 }
+

@@ -19,7 +19,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class DataAttachmentSyncRuntime {
@@ -88,3 +88,4 @@ public final class DataAttachmentSyncRuntime {
         return level.getEntity(entityId);
     }
 }
+

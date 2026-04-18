@@ -1,6 +1,6 @@
 package io.github.tt432.eyelibimporter.model.importer;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -14,3 +14,4 @@ public record ImportedFaceData(
         @Nullable String materialInstance
 ) {
 }
+

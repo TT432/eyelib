@@ -1,6 +1,6 @@
 package io.github.tt432.eyelibimporter.model.tree;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public interface ModelGroupNode<C extends ModelCubeNode> {
     @Nullable
@@ -9,3 +9,4 @@ public interface ModelGroupNode<C extends ModelCubeNode> {
     @Nullable
     C getCubeNode(int index);
 }
+

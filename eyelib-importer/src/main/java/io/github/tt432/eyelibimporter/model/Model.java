@@ -8,7 +8,7 @@ import io.github.tt432.eyelibimporter.model.locator.ModelLocator;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.With;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -174,3 +174,4 @@ public record Model(
         ).apply(ins, TextureMesh::new));
     }
 }
+

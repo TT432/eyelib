@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.render.controller;
 import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class RenderControllerLookup {
@@ -12,3 +12,4 @@ public final class RenderControllerLookup {
         return RenderControllerManager.readPort().get(name);
     }
 }
+

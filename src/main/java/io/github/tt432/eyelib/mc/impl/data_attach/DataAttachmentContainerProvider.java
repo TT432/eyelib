@@ -7,8 +7,7 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class DataAttachmentContainerProvider implements ICapabilitySerializable<CompoundTag>, ICapabilityProvider {
     private final McDataAttachmentContainer container;
@@ -18,7 +17,7 @@ public class DataAttachmentContainerProvider implements ICapabilitySerializable<
     }
 
     @Override
-    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
+    public <T> LazyOptional<T> getCapability(Capability<T> cap, @Nullable Direction side) {
         return DataAttachmentContainerCapability.INSTANCE.orEmpty(cap, LazyOptional.of(() -> (IDataAttachmentContainer) container));
     }
 
@@ -32,3 +31,4 @@ public class DataAttachmentContainerProvider implements ICapabilitySerializable<
         container.deserializeNBT(nbt);
     }
 }
+

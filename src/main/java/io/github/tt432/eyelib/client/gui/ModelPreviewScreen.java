@@ -26,7 +26,6 @@ import io.github.tt432.eyelib.mc.impl.modbridge.ModBridgeModelUpdateEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -35,7 +34,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.nio.file.Path;
@@ -51,7 +50,7 @@ import java.util.function.Consumer;
  *
  * @author TT432
  */
-public class ModelPreviewScreen extends Screen {
+public class ModelPreviewScreen extends ModalWorksurfaceScreen {
 //    @Mod.EventBusSubscriber(Dist.CLIENT)
     public static final class Events {
 //        @SubscribeEvent
@@ -358,3 +357,4 @@ public class ModelPreviewScreen extends Screen {
         MinecraftForge.EVENT_BUS.unregister(ON_MODEL_UPDATE);
     }
 }
+

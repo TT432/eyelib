@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -23,3 +23,4 @@ public final class ParticleLookup {
         return ParticleManager.readPort().getAllData().keySet();
     }
 }
+

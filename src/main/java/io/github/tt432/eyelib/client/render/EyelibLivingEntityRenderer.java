@@ -10,7 +10,6 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import org.jetbrains.annotations.NotNull;
 
 import static io.github.tt432.eyelib.client.EntityRenderSystem.renderItemInHand;
 
@@ -24,7 +23,7 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
     }
 
     @Override
-    public @NotNull ResourceLocation getTextureLocation(@NotNull T entity) {
+    public ResourceLocation getTextureLocation(T entity) {
         return new ResourceLocation("eyelib", "empty");
     }
 
@@ -58,3 +57,4 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
         }
     }
 }
+

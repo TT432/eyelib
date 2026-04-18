@@ -303,12 +303,12 @@ public final class MolangQuery {
 
     @MolangFunction(value = "delta_time", description = "距离上一帧的秒数")
     public static float deltaTime(MolangScope scope) {
-        return scope.getOwner().ownerAs(BrAnimationEntry.Data.class).map(data -> data.deltaTime).orElse(0F);
+        return scope.getOwner().ownerAs(BrAnimationEntry.Data.class).map(BrAnimationEntry.Data::deltaTime).orElse(0F);
     }
 
     @MolangFunction(value = "anim_time", alias = "life_time", description = "动画播放秒数")
     public static float animTime(MolangScope scope) {
-        return scope.getOwner().ownerAs(BrAnimationEntry.Data.class).map(data -> data.animTime).orElse(0F);
+        return scope.getOwner().ownerAs(BrAnimationEntry.Data.class).map(BrAnimationEntry.Data::animTime).orElse(0F);
     }
 
     @MolangFunction(value = "is_sniffing", description = "正在嗅")

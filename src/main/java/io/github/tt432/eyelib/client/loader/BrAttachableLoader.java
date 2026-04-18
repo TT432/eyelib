@@ -9,7 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,3 +58,4 @@ public class BrAttachableLoader extends BrResourcesLoader implements Searchable<
                 .map(entry -> Map.entry(entry.getKey().toString(), entry.getValue()));
     }
 }
+

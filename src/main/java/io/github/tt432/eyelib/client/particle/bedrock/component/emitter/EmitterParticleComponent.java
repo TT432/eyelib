@@ -4,7 +4,7 @@ import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.client.particle.bedrock.component.ParticleComponent;
 import io.github.tt432.eyelib.client.particle.bedrock.component.emitter.shape.Direction;
 import io.github.tt432.eyelibmolang.MolangScope;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.joml.Vector3f;
 
 /**
@@ -41,3 +41,4 @@ public interface EmitterParticleComponent extends ParticleComponent {
         return Direction.EMPTY;
     }
 }
+

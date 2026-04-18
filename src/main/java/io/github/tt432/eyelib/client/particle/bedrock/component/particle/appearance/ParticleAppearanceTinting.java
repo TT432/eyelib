@@ -12,7 +12,7 @@ import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelibmolang.MolangValue4;
 import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
 import io.github.tt432.eyelib.util.codec.EyelibCodec;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.joml.Vector4f;
 
 import java.util.Comparator;
@@ -94,3 +94,4 @@ public record ParticleAppearanceTinting(
         }
     }
 }
+

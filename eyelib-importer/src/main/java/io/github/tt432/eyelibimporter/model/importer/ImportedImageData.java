@@ -1,6 +1,6 @@
 package io.github.tt432.eyelibimporter.model.importer;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -82,3 +82,4 @@ public final class ImportedImageData {
         return y * width + x;
     }
 }
+

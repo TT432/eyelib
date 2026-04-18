@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.manager;
 
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -31,3 +31,4 @@ final class ManagerStorage<T> {
         data.clear();
     }
 }
+

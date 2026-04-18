@@ -1,13 +1,13 @@
 package io.github.tt432.eyelibimporter.model.locator;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
-import io.github.tt432.eyelibimporter.model.tree.ModelGroupNode;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import org.jetbrains.annotations.Nullable;
+import com.mojang.serialization.*;
+import com.mojang.serialization.codecs.*;
+import io.github.tt432.eyelibimporter.model.*;
+import io.github.tt432.eyelibimporter.model.tree.*;
+import it.unimi.dsi.fastutil.ints.*;
+import org.jspecify.annotations.*;
 
-import java.util.List;
+import java.util.*;
 
 public record GroupLocator(
         Int2ObjectMap<GroupLocator> children,
@@ -30,3 +30,4 @@ public record GroupLocator(
         return cubes.get(index);
     }
 }
+

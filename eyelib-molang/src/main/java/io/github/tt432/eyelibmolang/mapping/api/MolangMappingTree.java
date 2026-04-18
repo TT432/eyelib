@@ -3,7 +3,7 @@ package io.github.tt432.eyelibmolang.mapping.api;
 import io.github.tt432.eyelibmolang.mapping.MolangBuiltInMappings;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -185,3 +185,4 @@ public class MolangMappingTree {
         return node != null ? node.actualClasses : List.of();
     }
 }
+

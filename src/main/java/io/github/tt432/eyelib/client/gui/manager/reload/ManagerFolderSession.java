@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.gui.manager.reload;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.tt432.eyelib.client.gui.manager.io.FileDialogService;
 import lombok.Getter;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
@@ -45,3 +45,4 @@ public final class ManagerFolderSession {
         folderWatcher.stop();
     }
 }
+

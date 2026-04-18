@@ -148,7 +148,7 @@ dependencies {
     jarJar additionalRuntimeClasspath(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))
 // https://mvnrepository.com/artifact/com.h2database/h2
     jarJar additionalRuntimeClasspath(implementation('com.h2database:h2:2.4.240'))
-    compileOnly 'org.jetbrains:annotations:26.0.2'
+    compileOnly 'org.jspecify:jspecify:1.0.0'
     errorprone 'com.google.errorprone:error_prone_core:2.42.0'
     errorprone 'com.uber.nullaway:nullaway:0.12.10'
     nullawayProcessor 'org.projectlombok:lombok:1.18.30'
@@ -283,8 +283,6 @@ tasks.register('nullawayMain', JavaCompile) {
     options.errorprone.check('NullAway', net.ltgt.gradle.errorprone.CheckSeverity.ERROR)
     options.errorprone.option('NullAway:AnnotatedPackages', 'io.github.tt432.eyelib')
     options.errorprone.option('NullAway:CheckOptionalEmptiness', 'true')
-    options.errorprone.option('NullAway:CustomNullableAnnotations', 'org.jetbrains.annotations.Nullable')
-    options.errorprone.option('NullAway:CustomNonnullAnnotations', 'org.jetbrains.annotations.NotNull')
     options.errorprone.errorproneArgs.add('-XepDisableAllChecks')
     options.errorprone.errorproneArgs.add('-Xep:NullAway:ERROR')
 }

@@ -7,7 +7,7 @@ import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.model.importer.ModelImporter;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -386,3 +386,4 @@ class RenderGeometryDumpParityTest {
         }
     }
 }
+

@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.phys.AABB;
 import org.joml.*;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -192,3 +192,4 @@ public class EyelibCodec {
         }
     }
 }
+

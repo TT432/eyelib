@@ -16,7 +16,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.client.event.RenderLivingEvent;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -128,3 +128,4 @@ public record SimpleRenderAction<T>(
         }
     }
 }
+

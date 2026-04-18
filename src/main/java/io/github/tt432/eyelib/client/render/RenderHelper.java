@@ -11,18 +11,18 @@ import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import lombok.Getter;
 import net.minecraftforge.common.MinecraftForge;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
-import javax.annotation.ParametersAreNonnullByDefault;
+import org.jspecify.annotations.NullMarked;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author TT432
  */
-@ParametersAreNonnullByDefault
+@NullMarked
 public class RenderHelper {
     @Getter
     private final ModelVisitContext context = new ModelVisitContext();
@@ -104,3 +104,4 @@ public class RenderHelper {
         });
     }
 }
+

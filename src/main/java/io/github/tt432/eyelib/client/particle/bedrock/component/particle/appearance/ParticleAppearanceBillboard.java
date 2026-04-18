@@ -17,8 +17,7 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.util.StringRepresentable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.joml.*;
 
 import java.lang.Math;
@@ -302,7 +301,6 @@ public record ParticleAppearanceBillboard(
         public static final Codec<FaceCameraMode> CODEC = StringRepresentable.fromEnum(FaceCameraMode::values);
 
         @Override
-        @NotNull
         public String getSerializedName() {
             return name().toLowerCase();
         }
@@ -344,10 +342,10 @@ public record ParticleAppearanceBillboard(
             public static final Codec<Mode> CODEC = StringRepresentable.fromEnum(Mode::values);
 
             @Override
-            @NotNull
             public String getSerializedName() {
                 return name().toLowerCase();
             }
         }
     }
 }
+

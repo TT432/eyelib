@@ -7,7 +7,7 @@ import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import java.io.IOException;
@@ -79,3 +79,4 @@ public class NativeImageIO {
         return image;
     }
 }
+
