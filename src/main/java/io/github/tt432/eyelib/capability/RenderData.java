@@ -12,8 +12,7 @@ import io.github.tt432.eyelib.mc.impl.data_attach.DataAttachmentHelper;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.world.entity.Entity;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,10 +53,8 @@ public class RenderData<T> {
     @Setter
     private boolean useBuiltInRenderSystem = true;
 
-    @NotNull
     private final List<ModelComponent> modelComponents = new ArrayList<>();
 
-    @NotNull
     private final AnimationComponent animationComponent = new AnimationComponent();
 
     private final ClientEntityComponent clientEntityComponent = new ClientEntityComponent();
@@ -86,3 +83,4 @@ public class RenderData<T> {
         scope.set("variable.scale", 1);
     }
 }
+

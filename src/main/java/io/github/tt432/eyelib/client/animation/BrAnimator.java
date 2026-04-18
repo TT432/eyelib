@@ -14,11 +14,6 @@ import java.util.Map;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class BrAnimator {
-    @SuppressWarnings("unchecked")
-    private static <T> T cast(Object o) {
-        return (T) o;
-    }
-
     public static ModelRuntimeData tickAnimation(AnimationComponent component, MolangScope scope, AnimationEffects effects,
                                                  float ticks, Runnable animationStartFeedback) {
         ModelRuntimeData infos = new ModelRuntimeData();
@@ -32,7 +27,7 @@ public final class BrAnimator {
             MolangValue multiplier = entry.getValue();
             if (animation == null) continue;
 
-            animation.tickAnimation(cast(component.getAnimationData(animation.name())),
+            animation.tickAnimationUntyped(component.getAnimationData(animation.identityPort().name()),
                     serializableInfo.animations(), scope, ticks, multiplier.eval(scope),
                     infos, effects, animationStartFeedback);
         }

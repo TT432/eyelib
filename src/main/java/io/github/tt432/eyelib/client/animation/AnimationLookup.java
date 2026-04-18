@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.animation;
 import io.github.tt432.eyelib.client.manager.AnimationManager;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -26,3 +26,4 @@ public final class AnimationLookup {
         return AnimationManager.readPort().getManagerName();
     }
 }
+

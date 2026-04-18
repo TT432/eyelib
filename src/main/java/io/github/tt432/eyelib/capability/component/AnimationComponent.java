@@ -12,8 +12,8 @@ import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
 import lombok.Getter;
 import net.minecraft.network.FriendlyByteBuf;
 
-import org.jetbrains.annotations.Nullable;
-import javax.annotation.ParametersAreNonnullByDefault;
+import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -33,7 +33,7 @@ public class AnimationComponent {
         }
     }
 
-    @ParametersAreNonnullByDefault
+    @NullMarked
     public record SerializableInfo(
             Map<String, String> animations,
             Map<String, MolangValue> animate
@@ -67,7 +67,7 @@ public class AnimationComponent {
     public Object getAnimationData(String controllerName) {
         return animationData.computeIfAbsent(controllerName, name -> {
             Animation<?> animation = AnimationLookup.get(name);
-            return animation != null ? animation.createData() : new Object();
+            return animation != null ? animation.createDataUntyped() : new Object();
         });
     }
 
@@ -108,7 +108,7 @@ public class AnimationComponent {
 
     private void invalidateSerializableInfoIfUsingAnimation(String animationName) {
         for (Animation<?> animation : animate.keySet()) {
-            if (animation.name().equals(animationName)) {
+            if (animation.identityPort().name().equals(animationName)) {
                 serializableInfo = null;
                 return;
             }
@@ -139,8 +139,9 @@ public class AnimationComponent {
         new HashMap<>();
         for (var s : this.animate.keySet()) {
             if (s == null) continue;
-            var data = s.createData();
-            animationData.put(s.name(), data);
+            var data = s.createDataUntyped();
+            animationData.put(s.identityPort().name(), data);
         }
     }
 }
+
