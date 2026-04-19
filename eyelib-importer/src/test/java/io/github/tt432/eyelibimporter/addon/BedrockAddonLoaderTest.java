@@ -30,10 +30,14 @@ class BedrockAddonLoaderTest {
         writeBehaviorPack(addonRoot.resolve("behavior_pack"), resourcePack);
 
         BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
+        BedrockAddonPack resourcePackView = addon.resourcePacks().get(0);
 
         assertEquals(2, addon.packs().size());
         assertEquals(1, addon.resourcePacks().size());
         assertEquals(1, addon.dataPacks().size());
+        assertTrue(resourcePackView.modelFiles().containsKey("models/entity/test.geo.json"));
+        assertTrue(resourcePackView.clientEntityFiles().containsKey("entity/test.entity.json"));
+        assertTrue(resourcePackView.animationFiles().containsKey("animations/test.animation.json"));
         assertTrue(addon.aggregate().models().containsKey("geometry.test"));
         assertTrue(addon.aggregate().clientEntities().containsKey("eyelib:test_entity"));
         assertTrue(addon.aggregate().attachables().containsKey("eyelib:test_attachable"));

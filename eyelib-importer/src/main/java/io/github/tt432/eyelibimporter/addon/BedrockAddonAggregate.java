@@ -1,7 +1,9 @@
 package io.github.tt432.eyelibimporter.addon;
 
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
+import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
+import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibimporter.material.BrMaterial;
 import io.github.tt432.eyelibimporter.material.BrMaterialEntry;
@@ -71,12 +73,12 @@ public record BedrockAddonAggregate(
         LinkedHashMap<String, BrMaterial> materialFiles = new LinkedHashMap<>();
 
         for (BedrockAddonPack pack : packs) {
-            mergeWithWarnings(animations, pack.animations(), pack.sourceName(), warnings, BedrockResourceFamily.ANIMATION);
-            mergeWithWarnings(animationControllers, pack.animationControllers(), pack.sourceName(), warnings, BedrockResourceFamily.ANIMATION_CONTROLLER);
-            mergeWithWarnings(clientEntities, pack.clientEntities(), pack.sourceName(), warnings, BedrockResourceFamily.CLIENT_ENTITY);
-            mergeWithWarnings(attachables, pack.attachables(), pack.sourceName(), warnings, BedrockResourceFamily.ATTACHABLE);
-            mergeWithWarnings(behaviorEntities, pack.behaviorEntities(), pack.sourceName(), warnings, BedrockResourceFamily.BEHAVIOR_ENTITY);
-            mergeWithWarnings(models, pack.modelsView(), pack.sourceName(), warnings, BedrockResourceFamily.MODEL);
+            mergeWithWarnings(animations, flattenAnimations(pack.animationFiles()), pack.sourceName(), warnings, BedrockResourceFamily.ANIMATION);
+            mergeWithWarnings(animationControllers, flattenAnimationControllers(pack.animationControllerFiles()), pack.sourceName(), warnings, BedrockResourceFamily.ANIMATION_CONTROLLER);
+            mergeWithWarnings(clientEntities, flattenClientEntities(pack.clientEntityFiles()), pack.sourceName(), warnings, BedrockResourceFamily.CLIENT_ENTITY);
+            mergeWithWarnings(attachables, flattenClientEntities(pack.attachableFiles()), pack.sourceName(), warnings, BedrockResourceFamily.ATTACHABLE);
+            mergeWithWarnings(behaviorEntities, flattenBehaviorEntities(pack.behaviorEntityFiles()), pack.sourceName(), warnings, BedrockResourceFamily.BEHAVIOR_ENTITY);
+            mergeWithWarnings(models, flattenModels(pack.modelFiles()), pack.sourceName(), warnings, BedrockResourceFamily.MODEL);
             textures.putAll(pack.textures());
             soundIndexFiles.putAll(pack.soundIndexFiles());
             soundDefinitionFiles.putAll(pack.soundDefinitionFiles());
@@ -123,6 +125,36 @@ public record BedrockAddonAggregate(
             }
             target.put(key, value);
         });
+    }
+
+    private static Map<String, BrAnimationEntrySchema> flattenAnimations(Map<String, BrAnimationSet> animationFiles) {
+        LinkedHashMap<String, BrAnimationEntrySchema> flattened = new LinkedHashMap<>();
+        animationFiles.forEach((path, set) -> flattened.putAll(set.animations()));
+        return flattened;
+    }
+
+    private static Map<String, BrAnimationControllerSchema> flattenAnimationControllers(Map<String, BrAnimationControllerSet> animationControllerFiles) {
+        LinkedHashMap<String, BrAnimationControllerSchema> flattened = new LinkedHashMap<>();
+        animationControllerFiles.forEach((path, set) -> flattened.putAll(set.animationControllers()));
+        return flattened;
+    }
+
+    private static Map<String, BrClientEntity> flattenClientEntities(Map<String, BrClientEntity> clientEntityFiles) {
+        LinkedHashMap<String, BrClientEntity> flattened = new LinkedHashMap<>();
+        clientEntityFiles.forEach((path, entity) -> flattened.put(entity.identifier(), entity));
+        return flattened;
+    }
+
+    private static Map<String, BrBehaviorEntityFile> flattenBehaviorEntities(Map<String, BrBehaviorEntityFile> behaviorEntityFiles) {
+        LinkedHashMap<String, BrBehaviorEntityFile> flattened = new LinkedHashMap<>();
+        behaviorEntityFiles.forEach((path, entity) -> flattened.put(entity.identifier(), entity));
+        return flattened;
+    }
+
+    private static Map<String, Model> flattenModels(Map<String, BedrockImportedModels> modelFiles) {
+        LinkedHashMap<String, Model> flattened = new LinkedHashMap<>();
+        modelFiles.forEach((path, models) -> flattened.putAll(models.models()));
+        return flattened;
     }
 
     public Map<String, Model> modelsView() {
