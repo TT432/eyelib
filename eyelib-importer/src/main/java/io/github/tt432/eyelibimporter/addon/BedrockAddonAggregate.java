@@ -5,72 +5,43 @@ import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-import io.github.tt432.eyelibimporter.material.BrMaterial;
 import io.github.tt432.eyelibimporter.material.BrMaterialEntry;
 import io.github.tt432.eyelibimporter.model.Model;
-import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
 import io.github.tt432.eyelibimporter.particle.BrParticle;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllerEntry;
-import io.github.tt432.eyelibimporter.render.controller.BrRenderControllers;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public record BedrockAddonAggregate(
-        LinkedHashMap<String, BrAnimationEntrySchema> animations,
-        LinkedHashMap<String, BrAnimationControllerSchema> animationControllers,
-        LinkedHashMap<String, BrClientEntity> clientEntities,
-        LinkedHashMap<String, BrClientEntity> attachables,
-        LinkedHashMap<String, BrBehaviorEntityFile> behaviorEntities,
-        LinkedHashMap<String, Model> models,
-        LinkedHashMap<String, ImportedImageData> textures,
-        LinkedHashMap<String, BrSoundIndex> soundIndexFiles,
-        LinkedHashMap<String, BrSoundDefinitions> soundDefinitionFiles,
-        LinkedHashMap<String, BrLanguageFile> languageFiles,
-        LinkedHashMap<String, BedrockBinaryAsset> soundFiles,
-        LinkedHashMap<String, BrTextureIndexFile> textureIndexFiles,
-        LinkedHashMap<String, BrTextureMetadataFile> textureMetadataFiles,
-        LinkedHashMap<String, BrRenderControllers> renderControllerFiles,
-        LinkedHashMap<String, BrParticle> particleFiles,
-        LinkedHashMap<String, BrMaterial> materialFiles
+        BedrockAddonSideAggregate resourcePack,
+        BedrockAddonSideAggregate behaviorPack
 ) {
-    public BedrockAddonAggregate {
-        animations = new LinkedHashMap<>(animations);
-        animationControllers = new LinkedHashMap<>(animationControllers);
-        clientEntities = new LinkedHashMap<>(clientEntities);
-        attachables = new LinkedHashMap<>(attachables);
-        behaviorEntities = new LinkedHashMap<>(behaviorEntities);
-        models = new LinkedHashMap<>(models);
-        textures = new LinkedHashMap<>(textures);
-        soundIndexFiles = new LinkedHashMap<>(soundIndexFiles);
-        soundDefinitionFiles = new LinkedHashMap<>(soundDefinitionFiles);
-        languageFiles = new LinkedHashMap<>(languageFiles);
-        soundFiles = new LinkedHashMap<>(soundFiles);
-        textureIndexFiles = new LinkedHashMap<>(textureIndexFiles);
-        textureMetadataFiles = new LinkedHashMap<>(textureMetadataFiles);
-        renderControllerFiles = new LinkedHashMap<>(renderControllerFiles);
-        particleFiles = new LinkedHashMap<>(particleFiles);
-        materialFiles = new LinkedHashMap<>(materialFiles);
+    public static BedrockAddonAggregate fromPacks(List<BedrockAddonPack> packs, List<BedrockAddonWarning> warnings) {
+        return new BedrockAddonAggregate(
+                fromSidePacks(packs.stream().filter(BedrockAddonPack::isResourcePack).toList(), warnings),
+                fromSidePacks(packs.stream().filter(BedrockAddonPack::isDataPack).toList(), warnings)
+        );
     }
 
-    public static BedrockAddonAggregate fromPacks(List<BedrockAddonPack> packs, List<BedrockAddonWarning> warnings) {
-        LinkedHashMap<String, BrAnimationEntrySchema> animations = new LinkedHashMap<>();
-        LinkedHashMap<String, BrAnimationControllerSchema> animationControllers = new LinkedHashMap<>();
-        LinkedHashMap<String, BrClientEntity> clientEntities = new LinkedHashMap<>();
-        LinkedHashMap<String, BrClientEntity> attachables = new LinkedHashMap<>();
-        LinkedHashMap<String, BrBehaviorEntityFile> behaviorEntities = new LinkedHashMap<>();
-        LinkedHashMap<String, Model> models = new LinkedHashMap<>();
-        LinkedHashMap<String, ImportedImageData> textures = new LinkedHashMap<>();
-        LinkedHashMap<String, BrSoundIndex> soundIndexFiles = new LinkedHashMap<>();
-        LinkedHashMap<String, BrSoundDefinitions> soundDefinitionFiles = new LinkedHashMap<>();
-        LinkedHashMap<String, BrLanguageFile> languageFiles = new LinkedHashMap<>();
-        LinkedHashMap<String, BedrockBinaryAsset> soundFiles = new LinkedHashMap<>();
-        LinkedHashMap<String, BrTextureIndexFile> textureIndexFiles = new LinkedHashMap<>();
-        LinkedHashMap<String, BrTextureMetadataFile> textureMetadataFiles = new LinkedHashMap<>();
-        LinkedHashMap<String, BrRenderControllers> renderControllerFiles = new LinkedHashMap<>();
-        LinkedHashMap<String, BrParticle> particleFiles = new LinkedHashMap<>();
-        LinkedHashMap<String, BrMaterial> materialFiles = new LinkedHashMap<>();
+    private static BedrockAddonSideAggregate fromSidePacks(List<BedrockAddonPack> packs, List<BedrockAddonWarning> warnings) {
+        var animations = new java.util.LinkedHashMap<String, BrAnimationEntrySchema>();
+        var animationControllers = new java.util.LinkedHashMap<String, BrAnimationControllerSchema>();
+        var clientEntities = new java.util.LinkedHashMap<String, BrClientEntity>();
+        var attachables = new java.util.LinkedHashMap<String, BrClientEntity>();
+        var behaviorEntities = new java.util.LinkedHashMap<String, BrBehaviorEntityFile>();
+        var models = new java.util.LinkedHashMap<String, Model>();
+        var textures = new java.util.LinkedHashMap<String, io.github.tt432.eyelibimporter.model.importer.ImportedImageData>();
+        var soundIndexFiles = new java.util.LinkedHashMap<String, BrSoundIndex>();
+        var soundDefinitionFiles = new java.util.LinkedHashMap<String, BrSoundDefinitions>();
+        var languageFiles = new java.util.LinkedHashMap<String, BrLanguageFile>();
+        var soundFiles = new java.util.LinkedHashMap<String, BedrockBinaryAsset>();
+        var textureIndexFiles = new java.util.LinkedHashMap<String, BrTextureIndexFile>();
+        var textureMetadataFiles = new java.util.LinkedHashMap<String, BrTextureMetadataFile>();
+        var renderControllerFiles = new java.util.LinkedHashMap<String, io.github.tt432.eyelibimporter.render.controller.BrRenderControllers>();
+        var particleFiles = new java.util.LinkedHashMap<String, BrParticle>();
+        var materialFiles = new java.util.LinkedHashMap<String, io.github.tt432.eyelibimporter.material.BrMaterial>();
 
         for (BedrockAddonPack pack : packs) {
             mergeWithWarnings(animations, flattenAnimations(pack.animationFiles()), pack.sourceName(), warnings, BedrockResourceFamily.ANIMATION);
@@ -91,7 +62,7 @@ public record BedrockAddonAggregate(
             materialFiles.putAll(pack.materialFiles());
         }
 
-        return new BedrockAddonAggregate(
+        return new BedrockAddonSideAggregate(
                 animations,
                 animationControllers,
                 clientEntities,
@@ -157,25 +128,83 @@ public record BedrockAddonAggregate(
         return flattened;
     }
 
+    public Map<String, BrAnimationEntrySchema> animations() {
+        return resourcePack.animations();
+    }
+
+    public Map<String, BrAnimationControllerSchema> animationControllers() {
+        return resourcePack.animationControllers();
+    }
+
+    public Map<String, BrClientEntity> clientEntities() {
+        return resourcePack.clientEntities();
+    }
+
+    public Map<String, BrClientEntity> attachables() {
+        return resourcePack.attachables();
+    }
+
+    public Map<String, BrBehaviorEntityFile> behaviorEntities() {
+        return behaviorPack.behaviorEntities();
+    }
+
+    public Map<String, Model> models() {
+        return resourcePack.models();
+    }
+
+    public Map<String, io.github.tt432.eyelibimporter.model.importer.ImportedImageData> textures() {
+        return resourcePack.textures();
+    }
+
+    public Map<String, BrSoundIndex> soundIndexFiles() {
+        return resourcePack.soundIndexFiles();
+    }
+
+    public Map<String, BrSoundDefinitions> soundDefinitionFiles() {
+        return resourcePack.soundDefinitionFiles();
+    }
+
+    public Map<String, BrLanguageFile> languageFiles() {
+        return resourcePack.languageFiles();
+    }
+
+    public Map<String, BedrockBinaryAsset> soundFiles() {
+        return resourcePack.soundFiles();
+    }
+
+    public Map<String, BrTextureIndexFile> textureIndexFiles() {
+        return resourcePack.textureIndexFiles();
+    }
+
+    public Map<String, BrTextureMetadataFile> textureMetadataFiles() {
+        return resourcePack.textureMetadataFiles();
+    }
+
+    public Map<String, io.github.tt432.eyelibimporter.render.controller.BrRenderControllers> renderControllerFiles() {
+        return resourcePack.renderControllerFiles();
+    }
+
+    public Map<String, BrParticle> particleFiles() {
+        return resourcePack.particleFiles();
+    }
+
+    public Map<String, io.github.tt432.eyelibimporter.material.BrMaterial> materialFiles() {
+        return resourcePack.materialFiles();
+    }
+
     public Map<String, Model> modelsView() {
-        return Map.copyOf(models);
+        return resourcePack.modelsView();
     }
 
     public Map<String, BrRenderControllerEntry> flattenedRenderControllers() {
-        LinkedHashMap<String, BrRenderControllerEntry> flattened = new LinkedHashMap<>();
-        renderControllerFiles.forEach((path, controllers) -> flattened.putAll(controllers.renderControllers()));
-        return Map.copyOf(flattened);
+        return resourcePack.flattenedRenderControllers();
     }
 
     public Map<String, BrParticle> particlesByIdentifier() {
-        LinkedHashMap<String, BrParticle> flattened = new LinkedHashMap<>();
-        particleFiles.forEach((path, particle) -> flattened.put(particle.particleEffect().description().identifier(), particle));
-        return Map.copyOf(flattened);
+        return resourcePack.particlesByIdentifier();
     }
 
     public Map<String, BrMaterialEntry> flattenedMaterialEntries() {
-        LinkedHashMap<String, BrMaterialEntry> flattened = new LinkedHashMap<>();
-        materialFiles.forEach((path, material) -> flattened.putAll(material.materials()));
-        return Map.copyOf(flattened);
+        return resourcePack.flattenedMaterialEntries();
     }
 }
