@@ -105,44 +105,49 @@ public record BedrockPackManifest(
             String name,
             String description,
             String uuid,
-            List<Integer> version,
-            List<Integer> minEngineVersion
+            BedrockVersionValue version,
+            BedrockVersionValue minEngineVersion
     ) {
         public static final Codec<Header> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.optionalFieldOf("name", "").forGetter(Header::name),
                 Codec.STRING.optionalFieldOf("description", "").forGetter(Header::description),
                 Codec.STRING.fieldOf("uuid").forGetter(Header::uuid),
-                Codec.INT.listOf().optionalFieldOf("version", List.of()).forGetter(Header::version),
-                Codec.INT.listOf().optionalFieldOf("min_engine_version", List.of()).forGetter(Header::minEngineVersion)
+                BedrockVersionValue.CODEC.optionalFieldOf("version", BedrockVersionValue.numeric(List.of())).forGetter(Header::version),
+                BedrockVersionValue.CODEC.optionalFieldOf("min_engine_version", BedrockVersionValue.numeric(List.of())).forGetter(Header::minEngineVersion)
         ).apply(instance, Header::new));
     }
 
     public record Module(
             String type,
             String uuid,
-            List<Integer> version,
-            @Nullable String description
+            BedrockVersionValue version,
+            @Nullable String description,
+            @Nullable String language,
+            @Nullable String entry
     ) {
         public static final Codec<Module> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.xmap(value -> value.toLowerCase(Locale.ROOT), value -> value).fieldOf("type").forGetter(Module::type),
                 Codec.STRING.fieldOf("uuid").forGetter(Module::uuid),
-                Codec.INT.listOf().optionalFieldOf("version", List.of()).forGetter(Module::version),
-                Codec.STRING.optionalFieldOf("description").forGetter(module -> java.util.Optional.ofNullable(module.description()))
-        ).apply(instance, (type, uuid, version, description) -> new Module(type, uuid, version, description.orElse(null))));
+                BedrockVersionValue.CODEC.optionalFieldOf("version", BedrockVersionValue.numeric(List.of())).forGetter(Module::version),
+                Codec.STRING.optionalFieldOf("description").forGetter(module -> java.util.Optional.ofNullable(module.description())),
+                Codec.STRING.optionalFieldOf("language").forGetter(module -> java.util.Optional.ofNullable(module.language())),
+                Codec.STRING.optionalFieldOf("entry").forGetter(module -> java.util.Optional.ofNullable(module.entry()))
+        ).apply(instance, (type, uuid, version, description, language, entry) ->
+                new Module(type, uuid, version, description.orElse(null), language.orElse(null), entry.orElse(null))));
     }
 
     public record Dependency(
             @Nullable String uuid,
             @Nullable String moduleName,
-            List<Integer> version
+            BedrockVersionValue version
     ) {
         public static Dependency parse(com.google.gson.JsonObject root) {
             return new Dependency(
                     root.has("uuid") ? root.get("uuid").getAsString() : null,
                     root.has("module_name") ? root.get("module_name").getAsString() : null,
                     root.has("version")
-                            ? Codec.INT.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, root.get("version")).getOrThrow(false, IllegalArgumentException::new)
-                            : List.of()
+                            ? BedrockVersionValue.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, root.get("version")).getOrThrow(false, IllegalArgumentException::new)
+                            : BedrockVersionValue.numeric(List.of())
             );
         }
 

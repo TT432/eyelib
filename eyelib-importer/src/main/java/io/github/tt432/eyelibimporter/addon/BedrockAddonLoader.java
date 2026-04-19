@@ -7,7 +7,6 @@ import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibimporter.material.BrMaterial;
-import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
 import io.github.tt432.eyelibimporter.model.importer.ModelImporter;
 import io.github.tt432.eyelibimporter.particle.BrParticle;
@@ -43,20 +42,6 @@ public final class BedrockAddonLoader {
             List<BedrockAddonPack> unsortedPacks = new ArrayList<>();
             List<BedrockAddonWarning> warnings = new ArrayList<>();
             LinkedHashMap<String, BedrockUnmanagedResource> unmanagedResources = new LinkedHashMap<>();
-            LinkedHashMap<String, io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema> animations = new LinkedHashMap<>();
-            LinkedHashMap<String, io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema> animationControllers = new LinkedHashMap<>();
-            LinkedHashMap<String, BrClientEntity> clientEntities = new LinkedHashMap<>();
-            LinkedHashMap<String, BrClientEntity> attachables = new LinkedHashMap<>();
-            LinkedHashMap<String, BrBehaviorEntityFile> behaviorEntities = new LinkedHashMap<>();
-            LinkedHashMap<String, Model> models = new LinkedHashMap<>();
-            LinkedHashMap<String, ImportedImageData> textures = new LinkedHashMap<>();
-            LinkedHashMap<String, BrSoundIndex> soundIndexFiles = new LinkedHashMap<>();
-            LinkedHashMap<String, BrSoundDefinitions> soundDefinitionFiles = new LinkedHashMap<>();
-            LinkedHashMap<String, BrLanguageFile> languageFiles = new LinkedHashMap<>();
-            LinkedHashMap<String, BedrockBinaryAsset> soundFiles = new LinkedHashMap<>();
-            LinkedHashMap<String, BrRenderControllers> renderControllerFiles = new LinkedHashMap<>();
-            LinkedHashMap<String, BrParticle> particleFiles = new LinkedHashMap<>();
-            LinkedHashMap<String, BrMaterial> materialFiles = new LinkedHashMap<>();
 
             for (Path packRoot : packRoots) {
                 BedrockAddonPack pack = loadPack(packRoot);
@@ -68,40 +53,15 @@ public final class BedrockAddonLoader {
             for (BedrockAddonPack pack : packs) {
                 warnings.addAll(pack.warnings());
                 pack.unmanagedResources().forEach((path, resource) -> unmanagedResources.put(pack.sourceName() + ":" + path, resource));
-                mergeWithWarnings(animations, pack.animations(), pack.sourceName(), warnings, BedrockResourceFamily.ANIMATION);
-                mergeWithWarnings(animationControllers, pack.animationControllers(), pack.sourceName(), warnings, BedrockResourceFamily.ANIMATION_CONTROLLER);
-                mergeWithWarnings(clientEntities, pack.clientEntities(), pack.sourceName(), warnings, BedrockResourceFamily.CLIENT_ENTITY);
-                mergeWithWarnings(attachables, pack.attachables(), pack.sourceName(), warnings, BedrockResourceFamily.ATTACHABLE);
-                mergeWithWarnings(behaviorEntities, pack.behaviorEntities(), pack.sourceName(), warnings, BedrockResourceFamily.BEHAVIOR_ENTITY);
-                mergeWithWarnings(models, pack.modelsView(), pack.sourceName(), warnings, BedrockResourceFamily.MODEL);
-                textures.putAll(pack.textures());
-                soundIndexFiles.putAll(pack.soundIndexFiles());
-                soundDefinitionFiles.putAll(pack.soundDefinitionFiles());
-                languageFiles.putAll(pack.languageFiles());
-                soundFiles.putAll(pack.soundFiles());
-                renderControllerFiles.putAll(pack.renderControllerFiles());
-                particleFiles.putAll(pack.particleFiles());
-                materialFiles.putAll(pack.materialFiles());
             }
+
+            BedrockAddonAggregate aggregate = BedrockAddonAggregate.fromPacks(packs, warnings);
 
             return new BedrockAddon(
                     packs,
                     warnings,
                     unmanagedResources,
-                    animations,
-                    animationControllers,
-                    clientEntities,
-                    attachables,
-                    behaviorEntities,
-                    models,
-                    textures,
-                    soundIndexFiles,
-                    soundDefinitionFiles,
-                    languageFiles,
-                    soundFiles,
-                    renderControllerFiles,
-                    particleFiles,
-                    materialFiles
+                    aggregate
             );
         } finally {
             for (Path temporaryDirectory : temporaryDirectories) {
@@ -119,15 +79,14 @@ public final class BedrockAddonLoader {
 
         for (BedrockAddonPack pack : packs) {
             for (BedrockPackManifest.Dependency dependency : pack.manifest().dependencies()) {
-                boolean resolved = dependency.uuid() != null && providedByUuid.containsKey(dependency.uuid())
-                        || dependency.moduleName() != null && pack.manifest().modules().stream().anyMatch(module -> module.type().equals(dependency.moduleName()));
-                if (!resolved && dependency.hasReference()) {
+                boolean resolved = dependency.uuid() != null && providedByUuid.containsKey(dependency.uuid());
+                if (!resolved && dependency.uuid() != null) {
                     warnings.add(new BedrockAddonWarning(
                             BedrockAddonWarningSeverity.WARNING,
                             BedrockAddonWarningCode.DEPENDENCY_NOT_RESOLVED,
                             pack.sourceName(),
                             "manifest.json",
-                            "Dependency is not resolved inside addon: uuid=" + dependency.uuid() + ", module_name=" + dependency.moduleName()
+                            "Dependency is not resolved inside addon: uuid=" + dependency.uuid()
                     ));
                 }
             }
@@ -191,6 +150,8 @@ public final class BedrockAddonLoader {
         LinkedHashMap<String, BrSoundDefinitions> soundDefinitionFiles = new LinkedHashMap<>();
         LinkedHashMap<String, BrLanguageFile> languageFiles = new LinkedHashMap<>();
         LinkedHashMap<String, BedrockBinaryAsset> soundFiles = new LinkedHashMap<>();
+        LinkedHashMap<String, BrTextureIndexFile> textureIndexFiles = new LinkedHashMap<>();
+        LinkedHashMap<String, BrTextureMetadataFile> textureMetadataFiles = new LinkedHashMap<>();
         LinkedHashMap<String, BrRenderControllers> renderControllerFiles = new LinkedHashMap<>();
         LinkedHashMap<String, BrParticle> particleFiles = new LinkedHashMap<>();
         LinkedHashMap<String, BrMaterial> materialFiles = new LinkedHashMap<>();
@@ -246,6 +207,10 @@ public final class BedrockAddonLoader {
                     case LOCALIZATION -> languageFiles.put(relativePath, BrLanguageFile.parse(Files.readString(file, StandardCharsets.UTF_8)));
                     case BEHAVIOR_ENTITY -> behaviorEntityFiles.put(relativePath, BrBehaviorEntityFile.parse(parseJson(file)));
                     case SOUND_FILE -> soundFiles.put(relativePath, new BedrockBinaryAsset(extensionOf(relativePath), Files.readAllBytes(file)));
+                    case TEXTURE_INDEX -> textureIndexFiles.put(relativePath,
+                            new BrTextureIndexFile(BedrockResourceValue.fromJsonElement(parseJsonElement(file))));
+                    case TEXTURE_METADATA -> textureMetadataFiles.put(relativePath,
+                            new BrTextureMetadataFile((BedrockResourceValue.ObjectValue) BedrockResourceValue.fromJsonElement(parseJson(file))));
                     case RENDER_CONTROLLER -> {
                         BrRenderControllers controllers = BrRenderControllers.CODEC.parse(JsonOps.INSTANCE, parseJson(file)).getOrThrow(false, IllegalArgumentException::new);
                         renderControllerFiles.put(relativePath, controllers);
@@ -275,6 +240,8 @@ public final class BedrockAddonLoader {
                 languageFiles,
                 behaviorEntityFiles,
                 soundFiles,
+                textureIndexFiles,
+                textureMetadataFiles,
                 renderControllerFiles,
                 particleFiles,
                 materialFiles,
@@ -287,7 +254,6 @@ public final class BedrockAddonLoader {
     private static BedrockUnmanagedReason unmanagedReasonFor(BedrockResourceFamily family) {
         return switch (family) {
             case ITEM, BLOCK, RECIPE, LOOT_TABLE, SPAWN_RULE, TRADING, FEATURE, FEATURE_RULE, STRUCTURE, SCRIPT, BIOME -> BedrockUnmanagedReason.OUTSIDE_IMPORTER_SCOPE;
-            case TEXTURE_METADATA -> BedrockUnmanagedReason.TEXTURE_SIDE_METADATA;
             case UI, FOG, UNKNOWN_JSON, UNKNOWN_TEXT, UNKNOWN_BINARY -> BedrockUnmanagedReason.NO_TYPED_SCHEMA_YET;
             default -> BedrockUnmanagedReason.UNKNOWN_LAYOUT;
         };
@@ -332,27 +298,11 @@ public final class BedrockAddonLoader {
     private static BedrockResourceContent readContent(Path file, BedrockResourceFamily family) throws IOException {
         return switch (family) {
             case SOUND_INDEX, SOUND_DEFINITION, BEHAVIOR_ENTITY, ITEM, BLOCK, RECIPE, LOOT_TABLE, SPAWN_RULE, TRADING,
-                    FEATURE, FEATURE_RULE, STRUCTURE, SCRIPT, UI, FOG, BIOME, TEXTURE_METADATA, UNKNOWN_JSON ->
+                    FEATURE, FEATURE_RULE, STRUCTURE, SCRIPT, UI, FOG, BIOME, TEXTURE_INDEX, TEXTURE_METADATA, UNKNOWN_JSON ->
                     new BedrockResourceContent.StructuredContent(BedrockResourceValue.fromJsonElement(parseJson(file)));
             case LOCALIZATION, UNKNOWN_TEXT -> new BedrockResourceContent.TextContent(Files.readString(file, StandardCharsets.UTF_8));
             default -> new BedrockResourceContent.BinaryContent(Files.readAllBytes(file));
         };
-    }
-
-    private static <T> void mergeWithWarnings(Map<String, T> target, Map<String, T> incoming, String packSource,
-                                              List<BedrockAddonWarning> warnings, BedrockResourceFamily family) {
-        incoming.forEach((key, value) -> {
-            if (target.containsKey(key)) {
-                warnings.add(new BedrockAddonWarning(
-                        BedrockAddonWarningSeverity.WARNING,
-                        BedrockAddonWarningCode.DUPLICATE_OVERRIDE,
-                        packSource,
-                        key,
-                        "Flattened resource key was overridden for family " + family + ": " + key
-                ));
-            }
-            target.put(key, value);
-        });
     }
 
     private static String extensionOf(String relativePath) {
@@ -363,6 +313,12 @@ public final class BedrockAddonLoader {
     private static JsonObject parseJson(Path path) throws IOException {
         try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             return JsonParser.parseReader(reader).getAsJsonObject();
+        }
+    }
+
+    private static com.google.gson.JsonElement parseJsonElement(Path path) throws IOException {
+        try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+            return JsonParser.parseReader(reader);
         }
     }
 

@@ -34,18 +34,26 @@ class BedrockAddonLoaderTest {
         assertEquals(2, addon.packs().size());
         assertEquals(1, addon.resourcePacks().size());
         assertEquals(1, addon.dataPacks().size());
-        assertTrue(addon.models().containsKey("geometry.test"));
-        assertTrue(addon.clientEntities().containsKey("eyelib:test_entity"));
-        assertTrue(addon.attachables().containsKey("eyelib:test_attachable"));
-        assertTrue(addon.animations().containsKey("animation.test.idle"));
-        assertTrue(addon.animationControllers().containsKey("controller.animation.test"));
-        assertTrue(addon.renderControllerFiles().containsKey("render_controllers/test.render_controllers.json"));
-        assertTrue(addon.flattenedRenderControllers().containsKey("controller.render.test"));
-        assertTrue(addon.particleFiles().containsKey("particles/test.particle.json"));
-        assertTrue(addon.particlesByIdentifier().containsKey("eyelib:test_particle"));
-        assertTrue(addon.textures().containsKey("textures/entity/test.png"));
-        assertTrue(addon.materialFiles().containsKey("materials/test.material"));
-        assertTrue(addon.flattenedMaterialEntries().containsKey("entity_alphatest"));
+        assertTrue(addon.aggregate().models().containsKey("geometry.test"));
+        assertTrue(addon.aggregate().clientEntities().containsKey("eyelib:test_entity"));
+        assertTrue(addon.aggregate().attachables().containsKey("eyelib:test_attachable"));
+        assertTrue(addon.aggregate().animations().containsKey("animation.test.idle"));
+        assertTrue(addon.aggregate().animationControllers().containsKey("controller.animation.test"));
+        assertTrue(addon.aggregate().renderControllerFiles().containsKey("render_controllers/test.render_controllers.json"));
+        assertTrue(addon.aggregate().flattenedRenderControllers().containsKey("controller.render.test"));
+        assertTrue(addon.aggregate().particleFiles().containsKey("particles/test.particle.json"));
+        assertTrue(addon.aggregate().particlesByIdentifier().containsKey("eyelib:test_particle"));
+        assertTrue(addon.aggregate().textures().containsKey("textures/entity/test.png"));
+        assertTrue(addon.aggregate().materialFiles().containsKey("materials/test.material"));
+        assertTrue(addon.aggregate().flattenedMaterialEntries().containsKey("entity_alphatest"));
+        assertTrue(addon.aggregate().textureIndexFiles().containsKey("textures/item_texture.json"));
+        assertTrue(addon.aggregate().textureIndexFiles().containsKey("textures/terrain_texture.json"));
+        assertTrue(addon.aggregate().textureIndexFiles().containsKey("textures/flipbook_textures.json"));
+        assertTrue(addon.aggregate().textureIndexFiles().containsKey("textures/texture_list.json"));
+        assertTrue(addon.aggregate().textureIndexFiles().containsKey("blocks.json"));
+        assertTrue(addon.aggregate().textureIndexFiles().containsKey("biomes_client.json"));
+        assertTrue(addon.aggregate().textureIndexFiles().get("textures/flipbook_textures.json").root() instanceof BedrockResourceValue.ArrayValue);
+        assertTrue(addon.aggregate().textureIndexFiles().get("textures/texture_list.json").root() instanceof BedrockResourceValue.ArrayValue);
         assertNotNull(addon.resourcePacks().get(0).packIcon());
     }
 
@@ -59,8 +67,8 @@ class BedrockAddonLoaderTest {
 
         assertEquals(1, addon.packs().size());
         assertEquals(1, addon.resourcePacks().size());
-        assertTrue(addon.models().containsKey("geometry.test"));
-        assertFalse(addon.particleFiles().isEmpty());
+        assertTrue(addon.aggregate().models().containsKey("geometry.test"));
+        assertFalse(addon.aggregate().particleFiles().isEmpty());
     }
 
     @Test
@@ -84,8 +92,8 @@ class BedrockAddonLoaderTest {
         assertEquals(2, addon.packs().size());
         assertEquals(1, addon.resourcePacks().size());
         assertEquals(1, addon.dataPacks().size());
-        assertTrue(addon.attachables().containsKey("eyelib:test_attachable"));
-        assertTrue(addon.clientEntities().containsKey("eyelib:test_entity"));
+        assertTrue(addon.aggregate().attachables().containsKey("eyelib:test_attachable"));
+        assertTrue(addon.aggregate().clientEntities().containsKey("eyelib:test_entity"));
     }
 
     @Test
@@ -118,6 +126,27 @@ class BedrockAddonLoaderTest {
     }
 
     @Test
+    void parsesManifestSemverFieldsAndDoesNotMisresolveModuleNameDependencies() throws Exception {
+        Path addonRoot = tempDir.resolve("manifest-semver-addon");
+        Path packDir = addonRoot.resolve("resource_pack");
+        Files.createDirectories(packDir);
+        writeString(packDir.resolve("manifest.json"), manifestJsonWithSemverAndModuleDependency(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+
+        BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
+        BedrockPackManifest manifest = addon.packs().get(0).manifest();
+
+        assertEquals("1.20.80", manifest.header().version().semanticString());
+        assertEquals("1.20.70", manifest.header().minEngineVersion().semanticString());
+        assertEquals("1.20.80", manifest.modules().get(0).version().semanticString());
+        assertEquals("javascript", manifest.modules().get(0).language());
+        assertEquals("scripts/main.js", manifest.modules().get(0).entry());
+        assertEquals("@minecraft/server", manifest.dependencies().get(0).moduleName());
+        assertEquals("1.13.0", manifest.dependencies().get(0).version().semanticString());
+        assertFalse(addon.warnings().stream().anyMatch(warning ->
+                warning.code() == BedrockAddonWarningCode.DEPENDENCY_NOT_RESOLVED));
+    }
+
+    @Test
     void warnsWhenFlattenedResourceOverridesEarlierPack() throws Exception {
         Path addonRoot = tempDir.resolve("duplicate-animation-addon");
         Path packA = writeResourcePack(addonRoot.resolve("resource_pack_a"));
@@ -127,27 +156,46 @@ class BedrockAddonLoaderTest {
 
         BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
 
-        assertTrue(addon.animations().containsKey("animation.test.shared"));
+        assertTrue(addon.aggregate().animations().containsKey("animation.test.shared"));
         assertTrue(addon.warnings().stream().anyMatch(warning ->
                 warning.code() == BedrockAddonWarningCode.DUPLICATE_OVERRIDE
                         && "animation.test.shared".equals(warning.relativePath())));
     }
 
     @Test
-    void fallsBackToUnmanagedWhenManagedFamilyParseFails() throws Exception {
-        Path addonRoot = tempDir.resolve("parse-failure-addon");
+    void loadsManagedParticleWithoutUnmanagedFallback() throws Exception {
+        Path addonRoot = tempDir.resolve("managed-particle-addon");
         Path resourcePack = writeResourcePack(addonRoot.resolve("resource_pack"));
-        writeString(resourcePack.resolve("particles/test.particle.json"), "{\"format_version\":\"1.10.0\",\"particle_effect\":{}}\n");
 
         BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
 
-        assertTrue(addon.models().containsKey("geometry.test"));
-        assertTrue(addon.unmanagedResources().containsKey("resource_pack:particles/test.particle.json"));
-        assertEquals(BedrockUnmanagedReason.SCHEMA_PARSE_FAILED,
-                addon.unmanagedResources().get("resource_pack:particles/test.particle.json").reason());
-        assertTrue(addon.warnings().stream().anyMatch(warning ->
-                warning.code() == BedrockAddonWarningCode.SCHEMA_PARSE_FAILED
-                        && "particles/test.particle.json".equals(warning.relativePath())));
+        assertTrue(addon.aggregate().particleFiles().containsKey("particles/test.particle.json"));
+        assertTrue(addon.aggregate().particlesByIdentifier().containsKey("eyelib:test_particle"));
+        assertEquals("eyelib:test_particle", addon.aggregate().particleFiles().get("particles/test.particle.json")
+                .particleEffect().description().basicRenderParameters().texture());
+        assertTrue(addon.aggregate().particleFiles().get("particles/test.particle.json")
+                .particleEffect().components().containsKey("particle_appearance_billboard"));
+        assertTrue(addon.unmanagedResources().isEmpty());
+    }
+
+    @Test
+    void keepsTextureIndexFilesManagedInsteadOfUnmanaged() throws Exception {
+        Path addonRoot = tempDir.resolve("texture-index-addon");
+        writeResourcePack(addonRoot.resolve("resource_pack"));
+
+        BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
+
+        assertEquals(6, addon.aggregate().textureIndexFiles().size());
+        assertTrue(addon.aggregate().textureIndexFiles().containsKey("blocks.json"));
+        assertTrue(addon.aggregate().textureIndexFiles().containsKey("textures/item_texture.json"));
+        assertTrue(addon.aggregate().textureIndexFiles().containsKey("textures/terrain_texture.json"));
+        assertTrue(addon.aggregate().textureIndexFiles().containsKey("textures/flipbook_textures.json"));
+        assertTrue(addon.aggregate().textureIndexFiles().containsKey("textures/texture_list.json"));
+        assertTrue(addon.aggregate().textureIndexFiles().containsKey("biomes_client.json"));
+        assertTrue(addon.aggregate().textureIndexFiles().get("textures/flipbook_textures.json").root() instanceof BedrockResourceValue.ArrayValue);
+        assertTrue(addon.aggregate().textureIndexFiles().get("textures/texture_list.json").root() instanceof BedrockResourceValue.ArrayValue);
+        assertFalse(addon.unmanagedResources().containsKey("resource_pack:textures/item_texture.json"));
+        assertFalse(addon.unmanagedResources().containsKey("resource_pack:blocks.json"));
     }
 
     private Path writeResourcePack(Path packDir) throws Exception {
@@ -164,6 +212,12 @@ class BedrockAddonLoaderTest {
         writeString(packDir.resolve("render_controllers/test.render_controllers.json"), renderControllerJson());
         writeString(packDir.resolve("particles/test.particle.json"), particleJson());
         writeString(packDir.resolve("materials/test.material"), materialJson());
+        writeString(packDir.resolve("textures/item_texture.json"), itemTextureIndexJson());
+        writeString(packDir.resolve("textures/terrain_texture.json"), terrainTextureIndexJson());
+        writeString(packDir.resolve("textures/flipbook_textures.json"), flipbookTexturesJson());
+        writeString(packDir.resolve("textures/texture_list.json"), textureListJson());
+        writeString(packDir.resolve("blocks.json"), blocksTextureIndexJson());
+        writeString(packDir.resolve("biomes_client.json"), biomesClientJson());
         writePng(packDir.resolve("textures/entity/test.png"), 0xFFFFCC00);
         return packDir;
     }
@@ -360,6 +414,7 @@ class BedrockAddonLoaderTest {
                   "minecraft:client_entity": {
                     "description": {
                       "identifier": "eyelib:test_entity",
+                      "min_engine_version": "1.20.80",
                       "materials": { "default": "material.default" },
                       "textures": { "default": "textures/entity/test" },
                       "geometry": { "default": "geometry.test" },
@@ -367,7 +422,14 @@ class BedrockAddonLoaderTest {
                         "idle": "animation.test.idle",
                         "controller.main": "controller.animation.test"
                       },
+                      "animation_controllers": [
+                        { "controller.main": "controller.animation.test" }
+                      ],
                       "render_controllers": ["controller.render.test"],
+                      "spawn_egg": {
+                        "base_color": "#ffffff",
+                        "overlay_color": "#000000"
+                      },
                       "scripts": {
                         "animate": ["controller.main"]
                       }
@@ -462,10 +524,115 @@ class BedrockAddonLoaderTest {
                         "material": "particles_alpha",
                         "texture": "eyelib:test_particle"
                       }
+                    },
+                    "components": {
+                      "particle_appearance_billboard": {
+                        "size": [1, 1],
+                        "facing_camera_mode": "rotate_xyz"
+                      }
                     }
                   }
                 }
                 """;
+    }
+
+    private static String itemTextureIndexJson() {
+        return """
+                {
+                  "resource_pack_name": "test",
+                  "texture_data": {
+                    "test_item": {
+                      "textures": "textures/items/test_item"
+                    }
+                  }
+                }
+                """;
+    }
+
+    private static String terrainTextureIndexJson() {
+        return """
+                {
+                  "resource_pack_name": "test",
+                  "texture_name": "atlas.terrain",
+                  "texture_data": {
+                    "test_block": {
+                      "textures": "textures/blocks/test_block"
+                    }
+                  }
+                }
+                """;
+    }
+
+    private static String flipbookTexturesJson() {
+        return """
+                [
+                  {
+                    "atlas_tile": "test",
+                    "ticks_per_frame": 1
+                  }
+                ]
+                """;
+    }
+
+    private static String textureListJson() {
+        return """
+                [
+                  "textures/entity/test"
+                ]
+                """;
+    }
+
+    private static String blocksTextureIndexJson() {
+        return """
+                {
+                  "format_version": "1.21.0",
+                  "test:block": {
+                    "sound": "stone"
+                  }
+                }
+                """;
+    }
+
+    private static String biomesClientJson() {
+        return """
+                {
+                  "biomes": {
+                    "test:plains": {
+                      "water_surface_color": "#3366ff"
+                    }
+                  }
+                }
+                """;
+    }
+
+    private static String manifestJsonWithSemverAndModuleDependency(String uuid, String moduleUuid) {
+        return """
+                {
+                  "format_version": 3,
+                  "header": {
+                    "name": "Script Resource Pack",
+                    "description": "fixture",
+                    "uuid": "%s",
+                    "version": "1.20.80",
+                    "min_engine_version": "1.20.70"
+                  },
+                  "modules": [
+                    {
+                      "type": "script",
+                      "uuid": "%s",
+                      "version": "1.20.80",
+                      "language": "javascript",
+                      "entry": "scripts/main.js"
+                    }
+                  ],
+                  "dependencies": [
+                    {
+                      "module_name": "@minecraft/server",
+                      "version": "1.13.0"
+                    }
+                  ]
+                }
+                """.formatted(uuid, moduleUuid);
     }
 
     private static String materialJson() {

@@ -32,6 +32,7 @@ public enum BedrockResourceFamily {
     UI,
     FOG,
     BIOME,
+    TEXTURE_INDEX,
     TEXTURE_METADATA,
     UNKNOWN_JSON,
     UNKNOWN_TEXT,
@@ -66,6 +67,14 @@ public enum BedrockResourceFamily {
         if (path.startsWith("scripts/")) return SCRIPT;
         if (path.startsWith("ui/")) return UI;
         if (path.startsWith("fogs/")) return FOG;
+        if (path.equals("blocks.json")
+            || path.equals("biomes_client.json")
+            || path.equals("textures/item_texture.json")
+            || path.equals("textures/terrain_texture.json")
+            || path.equals("textures/flipbook_textures.json")
+            || path.equals("textures/texture_list.json")) {
+            return TEXTURE_INDEX;
+        }
         if (path.startsWith("biomes/")) return BIOME;
         if (path.startsWith("textures/") && path.endsWith(".json")) return TEXTURE_METADATA;
         if (path.endsWith(".json") || path.endsWith(".material") || path.endsWith(".bbmodel")) return UNKNOWN_JSON;

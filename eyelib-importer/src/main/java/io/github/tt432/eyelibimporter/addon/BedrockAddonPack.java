@@ -30,6 +30,8 @@ public record BedrockAddonPack(
         LinkedHashMap<String, BrLanguageFile> languageFiles,
         LinkedHashMap<String, BrBehaviorEntityFile> behaviorEntityFiles,
         LinkedHashMap<String, BedrockBinaryAsset> soundFiles,
+        LinkedHashMap<String, BrTextureIndexFile> textureIndexFiles,
+        LinkedHashMap<String, BrTextureMetadataFile> textureMetadataFiles,
         LinkedHashMap<String, BrRenderControllers> renderControllerFiles,
         LinkedHashMap<String, BrParticle> particleFiles,
         LinkedHashMap<String, BrMaterial> materialFiles,
@@ -49,6 +51,8 @@ public record BedrockAddonPack(
         languageFiles = new LinkedHashMap<>(languageFiles);
         behaviorEntityFiles = new LinkedHashMap<>(behaviorEntityFiles);
         soundFiles = new LinkedHashMap<>(soundFiles);
+        textureIndexFiles = new LinkedHashMap<>(textureIndexFiles);
+        textureMetadataFiles = new LinkedHashMap<>(textureMetadataFiles);
         renderControllerFiles = new LinkedHashMap<>(renderControllerFiles);
         particleFiles = new LinkedHashMap<>(particleFiles);
         materialFiles = new LinkedHashMap<>(materialFiles);

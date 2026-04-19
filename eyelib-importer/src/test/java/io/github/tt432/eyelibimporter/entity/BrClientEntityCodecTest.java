@@ -33,6 +33,9 @@ class BrClientEntityCodecTest {
         assertEquals("geometry.test", entity.geometry().get("default"));
         assertEquals("textures/test.png", entity.textures().get("default"));
         assertEquals("animation.test.idle", entity.animations().get("idle"));
+        assertTrue(entity.min_engine_version().isEmpty());
+        assertTrue(entity.animation_controllers().isEmpty());
+        assertTrue(entity.spawn_egg().isEmpty());
         assertTrue(entity.scripts().isEmpty());
     }
 
@@ -64,5 +67,36 @@ class BrClientEntityCodecTest {
         assertEquals("textures/attachable.png", entity.textures().get("default"));
         assertEquals(1, entity.scripts().orElseThrow().animate().size());
         assertTrue(entity.scripts().orElseThrow().animate().containsKey("animation.attachable.idle"));
+    }
+
+    @Test
+    void parsesDocumentedClientEntityFieldsFromImporterOwnedCodec() {
+        String json = """
+                {
+                  \"minecraft:client_entity\": {
+                    \"description\": {
+                      \"identifier\": \"eyelib:test_entity\",
+                      \"min_engine_version\": \"1.20.80\",
+                      \"animation_controllers\": [
+                        { \"idle\": \"controller.animation.test\" }
+                      ],
+                      \"spawn_egg\": {
+                        \"base_color\": \"#ffffff\",
+                        \"overlay_color\": \"#000000\"
+                      }
+                    }
+                  }
+                }
+                """;
+
+        BrClientEntity entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
+                .getOrThrow(false, message -> {
+                    throw new AssertionError(message);
+                });
+
+        assertEquals("1.20.80", entity.min_engine_version().orElseThrow().semanticString());
+        assertEquals("controller.animation.test", entity.animation_controllers().get(0).get("idle"));
+        assertEquals("#ffffff", ((io.github.tt432.eyelibimporter.addon.BedrockResourceValue.StringValue) entity.spawn_egg().orElseThrow().values().get("base_color")).value());
+        assertEquals("#000000", ((io.github.tt432.eyelibimporter.addon.BedrockResourceValue.StringValue) entity.spawn_egg().orElseThrow().values().get("overlay_color")).value());
     }
 }

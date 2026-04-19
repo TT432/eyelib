@@ -8,8 +8,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibimporter.addon.BedrockResourceValue;
 import io.github.tt432.eyelibimporter.util.ImporterCodecUtil;
 import io.github.tt432.eyelibmolang.MolangValue;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.StringRepresentable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -33,13 +31,13 @@ public record BrParticle(
             Description description,
             Map<String, Curve> curves,
             Events events,
-            Map<ResourceLocation, BedrockResourceValue> components
+            Map<String, BedrockResourceValue> components
     ) {
         public static final Codec<ParticleEffect> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Description.CODEC.fieldOf("description").forGetter(ParticleEffect::description),
                 Codec.unboundedMap(Codec.STRING, Curve.CODEC).optionalFieldOf("curves", Map.of()).forGetter(ParticleEffect::curves),
                 Events.CODEC.optionalFieldOf("events", new Events()).forGetter(ParticleEffect::events),
-                Codec.unboundedMap(ResourceLocation.CODEC, JSON_ELEMENT_CODEC.xmap(BedrockResourceValue::fromJsonElement, value -> {
+                Codec.unboundedMap(Codec.STRING, JSON_ELEMENT_CODEC.xmap(BedrockResourceValue::fromJsonElement, value -> {
                     throw new UnsupportedOperationException("Particle component encoding is not supported");
                 })).optionalFieldOf("components", Map.of()).forGetter(ParticleEffect::components)
         ).apply(instance, ParticleEffect::new));
@@ -57,11 +55,11 @@ public record BrParticle(
 
     public record BasicRenderParameters(
             String material,
-            ResourceLocation texture
+            String texture
     ) {
         public static final Codec<BasicRenderParameters> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.fieldOf("material").forGetter(BasicRenderParameters::material),
-                ResourceLocation.CODEC.fieldOf("texture").forGetter(BasicRenderParameters::texture)
+                Codec.STRING.fieldOf("texture").forGetter(BasicRenderParameters::texture)
         ).apply(instance, BasicRenderParameters::new));
     }
 
@@ -187,15 +185,23 @@ public record BrParticle(
             return result;
         }
 
-        public enum Type implements StringRepresentable {
+        public enum Type {
             LINEAR,
             BEZIER,
             BEZIER_CHAIN,
             CATMULL_ROM;
 
-            public static final Codec<Type> CODEC = StringRepresentable.fromEnum(Type::values);
+            public static final Codec<Type> CODEC = Codec.STRING.comapFlatMap(Type::fromSerializedName, Type::getSerializedName);
 
-            @Override
+            private static DataResult<Type> fromSerializedName(String name) {
+                for (Type value : values()) {
+                    if (value.getSerializedName().equals(name)) {
+                        return DataResult.success(value);
+                    }
+                }
+                return DataResult.error(() -> "Unknown particle curve type: " + name);
+            }
+
             public String getSerializedName() {
                 return name().toLowerCase();
             }

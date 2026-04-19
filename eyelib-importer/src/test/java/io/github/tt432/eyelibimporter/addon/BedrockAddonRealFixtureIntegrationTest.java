@@ -13,6 +13,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -44,28 +45,30 @@ class BedrockAddonRealFixtureIntegrationTest {
         assertEquals(1, addon.resourcePacks().size());
         assertEquals(1, addon.dataPacks().size());
 
-        assertTrue(addon.clientEntities().containsKey("sample:shapeshifter"));
-        assertTrue(addon.attachables().isEmpty());
-        assertTrue(addon.animationControllers().containsKey("controller.animation.shapeshifter.phase_change"));
-        assertTrue(addon.renderControllerFiles().containsKey("render_controllers/shapeshifter.render_controllers.json"));
-        assertTrue(addon.flattenedRenderControllers().containsKey("controller.render.shapeshifter"));
-        assertTrue(addon.animations().containsKey("animation.shapeshifter.phase_change"));
-        assertTrue(addon.models().containsKey("geometry.shapeshifter"));
-        assertTrue(addon.particleFiles().containsKey("particles/witchspell.json"));
-        assertTrue(addon.particlesByIdentifier().containsKey("sample:witchspell_emitter"));
-        assertTrue(addon.textures().containsKey("textures/entity/shapeshifter.png"));
-        assertTrue(addon.soundIndexFiles().containsKey("sounds.json"));
-        assertTrue(addon.soundDefinitionFiles().containsKey("sounds/sound_definitions.json"));
-        assertTrue(addon.languageFiles().containsKey("texts/en_US.lang"));
-        assertTrue(addon.behaviorEntities().containsKey("sample:shapeshifter"));
-        assertTrue(addon.soundFiles().containsKey("sounds/shapeshifter/phase_change.ogg"));
-        assertEquals(1, addon.unmanagedResources().size());
-        assertTrue(addon.unmanagedResources().containsKey("shapeshifter:textures/render_controllers/shapeshifter.render_controllers.json"));
-        assertEquals(BedrockUnmanagedReason.TEXTURE_SIDE_METADATA,
-                addon.unmanagedResources().get("shapeshifter:textures/render_controllers/shapeshifter.render_controllers.json").reason());
-        assertTrue(addon.warnings().stream().anyMatch(warning ->
-                warning.code() == BedrockAddonWarningCode.UNMANAGED_RESOURCE
-                        && "textures/render_controllers/shapeshifter.render_controllers.json".equals(warning.relativePath())));
+        assertTrue(addon.aggregate().clientEntities().containsKey("sample:shapeshifter"));
+        var shapeshifter = addon.aggregate().clientEntities().get("sample:shapeshifter");
+        assertTrue(addon.aggregate().attachables().isEmpty());
+        assertTrue(addon.aggregate().animationControllers().containsKey("controller.animation.shapeshifter.phase_change"));
+        assertTrue(addon.aggregate().renderControllerFiles().containsKey("render_controllers/shapeshifter.render_controllers.json"));
+        assertTrue(addon.aggregate().flattenedRenderControllers().containsKey("controller.render.shapeshifter"));
+        assertTrue(addon.aggregate().animations().containsKey("animation.shapeshifter.phase_change"));
+        assertTrue(addon.aggregate().models().containsKey("geometry.shapeshifter"));
+        assertTrue(addon.aggregate().particleFiles().containsKey("particles/witchspell.json"));
+        assertTrue(addon.aggregate().particlesByIdentifier().containsKey("sample:witchspell_emitter"));
+        assertTrue(addon.aggregate().textures().containsKey("textures/entity/shapeshifter.png"));
+        assertTrue(addon.aggregate().soundIndexFiles().containsKey("sounds.json"));
+        assertTrue(addon.aggregate().soundDefinitionFiles().containsKey("sounds/sound_definitions.json"));
+        assertTrue(addon.aggregate().languageFiles().containsKey("texts/en_US.lang"));
+        assertTrue(addon.aggregate().behaviorEntities().containsKey("sample:shapeshifter"));
+        assertTrue(addon.aggregate().soundFiles().containsKey("sounds/shapeshifter/phase_change.ogg"));
+        assertTrue(addon.aggregate().textureMetadataFiles().containsKey("textures/render_controllers/shapeshifter.render_controllers.json"));
+        assertEquals("1.8.0", shapeshifter.min_engine_version().orElseThrow().semanticString());
+        assertEquals(7, shapeshifter.animation_controllers().size());
+        assertEquals("#a8d89b", ((BedrockResourceValue.StringValue) shapeshifter.spawn_egg().orElseThrow().values().get("base_color")).value());
+        assertEquals("#ddeb61", ((BedrockResourceValue.StringValue) shapeshifter.spawn_egg().orElseThrow().values().get("overlay_color")).value());
+        assertTrue(addon.unmanagedResources().isEmpty());
+        assertFalse(addon.warnings().stream().anyMatch(warning ->
+                warning.code() == BedrockAddonWarningCode.UNMANAGED_RESOURCE));
         assertNotNull(addon.resourcePacks().get(0).packIcon());
     }
 
