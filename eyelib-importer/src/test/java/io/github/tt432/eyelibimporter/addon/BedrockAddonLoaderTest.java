@@ -38,6 +38,9 @@ class BedrockAddonLoaderTest {
         assertTrue(resourcePackView.modelFiles().containsKey("models/entity/test.geo.json"));
         assertTrue(resourcePackView.clientEntityFiles().containsKey("entity/test.entity.json"));
         assertTrue(resourcePackView.animationFiles().containsKey("animations/test.animation.json"));
+        assertTrue(addon.aggregate().resourcePack().models().containsKey("geometry.test"));
+        assertTrue(addon.aggregate().resourcePack().clientEntities().containsKey("eyelib:test_entity"));
+        assertTrue(addon.aggregate().behaviorPack().behaviorEntities().isEmpty());
         assertTrue(addon.aggregate().models().containsKey("geometry.test"));
         assertTrue(addon.aggregate().clientEntities().containsKey("eyelib:test_entity"));
         assertTrue(addon.aggregate().attachables().containsKey("eyelib:test_attachable"));
@@ -96,6 +99,8 @@ class BedrockAddonLoaderTest {
         assertEquals(2, addon.packs().size());
         assertEquals(1, addon.resourcePacks().size());
         assertEquals(1, addon.dataPacks().size());
+        assertTrue(addon.aggregate().resourcePack().attachables().containsKey("eyelib:test_attachable"));
+        assertTrue(addon.aggregate().behaviorPack().behaviorEntities().isEmpty());
         assertTrue(addon.aggregate().attachables().containsKey("eyelib:test_attachable"));
         assertTrue(addon.aggregate().clientEntities().containsKey("eyelib:test_entity"));
     }

@@ -45,6 +45,8 @@ class BedrockAddonRealFixtureIntegrationTest {
         assertEquals(1, addon.resourcePacks().size());
         assertEquals(1, addon.dataPacks().size());
 
+        assertTrue(addon.aggregate().resourcePack().clientEntities().containsKey("sample:shapeshifter"));
+        assertTrue(addon.aggregate().behaviorPack().behaviorEntities().containsKey("sample:shapeshifter"));
         assertTrue(addon.aggregate().clientEntities().containsKey("sample:shapeshifter"));
         var shapeshifter = addon.aggregate().clientEntities().get("sample:shapeshifter");
         assertTrue(addon.aggregate().attachables().isEmpty());
