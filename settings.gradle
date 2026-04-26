@@ -15,3 +15,4 @@ rootProject.name = "eyelib"
 
 include("eyelib-importer")
 include("eyelib-molang")
+include("eyelib-processor")

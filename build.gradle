@@ -138,6 +138,10 @@ obfuscation {
 }
 
 dependencies {
+    implementation project(':eyelib-processor')
+    modImplementation project(':eyelib-processor')
+    jarJar project(':eyelib-processor')
+    implementation project(':eyelib-importer')
     modImplementation project(':eyelib-importer')
     jarJar project(':eyelib-importer')
     modImplementation project(':eyelib-molang')
