@@ -184,6 +184,8 @@ class BedrockAddonLoaderTest {
                 .particleEffect().description().basicRenderParameters().texture());
         assertTrue(addon.aggregate().particleFiles().get("particles/test.particle.json")
                 .particleEffect().components().containsKey("particle_appearance_billboard"));
+        assertTrue(addon.aggregate().particleFiles().get("particles/test.particle.json")
+                .particleEffect().billboardFlipbook().isPresent());
         assertTrue(addon.unmanagedResources().isEmpty());
     }
 
@@ -537,7 +539,20 @@ class BedrockAddonLoaderTest {
                     "components": {
                       "particle_appearance_billboard": {
                         "size": [1, 1],
-                        "facing_camera_mode": "rotate_xyz"
+                        "facing_camera_mode": "rotate_xyz",
+                        "uv": {
+                          "texture_width": 128,
+                          "texture_height": 128,
+                          "flipbook": {
+                            "base_UV": [64, 72],
+                            "size_UV": [8, 8],
+                            "step_UV": [-8, 0],
+                            "frames_per_second": 10,
+                            "max_frame": 8,
+                            "stretch_to_lifetime": true,
+                            "loop": false
+                          }
+                        }
                       }
                     }
                   }

@@ -10,6 +10,7 @@ import java.nio.file.Path;
 
 public final class ManagerFolderSession {
     private final ManagerResourceFolderWatcher folderWatcher = new ManagerResourceFolderWatcher();
+    private boolean monitoredFolderUsesAddonBridge;
 
     @Getter
     @Nullable
@@ -33,16 +34,21 @@ public final class ManagerFolderSession {
 
         monitoredFolderPath = absolutePath;
         monitoredFolderPathText = absolutePath.toString();
-        ManagerResourceImportPlanner.loadResourceFolder(absolutePath, logger);
+        monitoredFolderUsesAddonBridge = ManagerResourceImportPlanner.loadResourceFolder(absolutePath, logger);
         folderWatcher.start(absolutePath, changedPath -> RenderSystem.recordRenderCall(() -> {
             if (monitoredFolderPath != null) {
-                ManagerResourceImportPlanner.loadSingleFile(monitoredFolderPath, changedPath, logger);
+                if (monitoredFolderUsesAddonBridge) {
+                    monitoredFolderUsesAddonBridge = ManagerResourceImportPlanner.loadResourceFolder(monitoredFolderPath, logger);
+                } else {
+                    ManagerResourceImportPlanner.loadSingleFile(monitoredFolderPath, changedPath, logger);
+                }
             }
         }));
     }
 
     public void stop() {
         folderWatcher.stop();
+        monitoredFolderUsesAddonBridge = false;
     }
 }
 

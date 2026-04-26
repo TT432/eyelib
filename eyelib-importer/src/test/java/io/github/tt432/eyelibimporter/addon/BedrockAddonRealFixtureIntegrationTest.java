@@ -57,6 +57,8 @@ class BedrockAddonRealFixtureIntegrationTest {
         assertTrue(addon.aggregate().models().containsKey("geometry.shapeshifter"));
         assertTrue(addon.aggregate().particleFiles().containsKey("particles/witchspell.json"));
         assertTrue(addon.aggregate().particlesByIdentifier().containsKey("sample:witchspell_emitter"));
+        var witchspellFlipbook = addon.aggregate().particleFiles().get("particles/witchspell.json")
+                .particleEffect().billboardFlipbook().orElseThrow();
         assertTrue(addon.aggregate().textures().containsKey("textures/entity/shapeshifter.png"));
         assertTrue(addon.aggregate().soundIndexFiles().containsKey("sounds.json"));
         assertTrue(addon.aggregate().soundDefinitionFiles().containsKey("sounds/sound_definitions.json"));
@@ -66,6 +68,18 @@ class BedrockAddonRealFixtureIntegrationTest {
         assertTrue(addon.aggregate().textureMetadataFiles().containsKey("textures/render_controllers/shapeshifter.render_controllers.json"));
         assertEquals("1.8.0", shapeshifter.min_engine_version().orElseThrow().semanticString());
         assertEquals(7, shapeshifter.animation_controllers().size());
+        assertEquals(128, witchspellFlipbook.textureWidth());
+        assertEquals(128, witchspellFlipbook.textureHeight());
+        assertEquals("64", witchspellFlipbook.baseUV().x());
+        assertEquals("72", witchspellFlipbook.baseUV().y());
+        assertEquals("8", witchspellFlipbook.sizeUV().x());
+        assertEquals("8", witchspellFlipbook.sizeUV().y());
+        assertEquals("-8", witchspellFlipbook.stepUV().x());
+        assertEquals("0", witchspellFlipbook.stepUV().y());
+        assertEquals("10", witchspellFlipbook.framesPerSecond());
+        assertEquals("8", witchspellFlipbook.maxFrame());
+        assertTrue(witchspellFlipbook.stretchToLifetime());
+        assertFalse(witchspellFlipbook.loop());
         assertEquals("#a8d89b", ((BedrockResourceValue.StringValue) shapeshifter.spawn_egg().orElseThrow().values().get("base_color")).value());
         assertEquals("#ddeb61", ((BedrockResourceValue.StringValue) shapeshifter.spawn_egg().orElseThrow().values().get("overlay_color")).value());
         assertTrue(addon.unmanagedResources().isEmpty());

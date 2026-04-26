@@ -47,6 +47,7 @@ class BrAnimationCodecTest {
         assertEquals("animation.test.idle", entry.name());
         assertEquals(1.5F, entry.animationLength());
         assertEquals(BrLoopType.LOOP, entry.loop());
+        assertEquals("query.anim_time + query.delta_time", entry.anim_time_update().toString());
         assertEquals(1, entry.timeline().data().size());
         assertTrue(!entry.bones().isEmpty());
         BrBoneAnimation boneAnimation = entry.bones().values().iterator().next();

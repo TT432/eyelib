@@ -9,7 +9,7 @@
 - Only narrow planning/classification helpers that are fully platform-type-free should remain outside `mc/impl`.
 
 ## Current split
-- `manager/reload/ManagerResourceReloadPlan` is the clearest existing platform-free seam (single-file route classification + texture key shaping).
+- `:eyelib-processor` now owns the platform-free reload planning seam (`io.github.tt432.eyelibprocessor.manager.reload.ManagerResourceReloadPlan` + batch helpers).
 - `ModelPreviewScreen`, hotkey wiring, and resource import tooling remain transitional MC-facing runtime owners.
 
 ## Editing rules

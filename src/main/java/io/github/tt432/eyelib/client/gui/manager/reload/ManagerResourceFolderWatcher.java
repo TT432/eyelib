@@ -5,6 +5,8 @@ import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -12,6 +14,8 @@ import java.util.function.Consumer;
 
 @Slf4j
 public final class ManagerResourceFolderWatcher {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ManagerResourceFolderWatcher.class);
+
     @Nullable
     private FileAlterationMonitor fileMonitor;
     @Nullable
@@ -34,7 +38,7 @@ public final class ManagerResourceFolderWatcher {
 
             @Override
             public void onFileDelete(File file) {
-                log.info("file deleted: {}", file.getAbsolutePath());
+                onFileUpsert.accept(file.toPath());
             }
         });
 
@@ -42,7 +46,7 @@ public final class ManagerResourceFolderWatcher {
         try {
             fileMonitor.start();
         } catch (Exception e) {
-            log.error("Failed to start file monitor.", e);
+            LOGGER.error("Failed to start file monitor.", e);
         }
     }
 
@@ -51,7 +55,7 @@ public final class ManagerResourceFolderWatcher {
             try {
                 fileMonitor.stop();
             } catch (Exception e) {
-                log.error("Failed to stop file monitor.", e);
+                LOGGER.error("Failed to stop file monitor.", e);
             }
             fileMonitor = null;
         }

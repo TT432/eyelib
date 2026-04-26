@@ -23,7 +23,7 @@
 
 ## Current Boundary Improvement
 - Manager publication for animations, materials, particles, render controllers, client entities, and models is now split across domain-specific classes in `client/registry/`.
-- `LoaderParsingOps` parsing/translation seams no longer require `ResourceLocation` in method signatures.
+- `:eyelib-processor` now owns `io.github.tt432.eyelibprocessor.loader.LoaderParsingOps`; parsing/translation seams there do not require `ResourceLocation` in method signatures.
 - Concrete Forge reload listener registration (`RegisterClientReloadListenersEvent`) has moved out of concrete `Br*Loader` classes and into `mc/impl/client/loader/ClientLoaderLifecycleHooks.java`.
 - Client-entity and attachable codecs now come from `:eyelib-importer`, and animation-controller reload paths now parse importer-owned controller schema before adapting into root runtime controllers.
 - Target end state: loaders invoke importer-owned parsers/codecs, adapt results into runtime objects where necessary, then publish through `client/registry/`.

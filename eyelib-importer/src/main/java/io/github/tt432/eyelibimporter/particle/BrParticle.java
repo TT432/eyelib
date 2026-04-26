@@ -9,6 +9,7 @@ import io.github.tt432.eyelibimporter.addon.BedrockResourceValue;
 import io.github.tt432.eyelibimporter.util.ImporterCodecUtil;
 import io.github.tt432.eyelibmolang.MolangValue;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -41,6 +42,124 @@ public record BrParticle(
                     throw new UnsupportedOperationException("Particle component encoding is not supported");
                 })).optionalFieldOf("components", Map.of()).forGetter(ParticleEffect::components)
         ).apply(instance, ParticleEffect::new));
+
+        public Optional<BillboardFlipbook> billboardFlipbook() {
+            BedrockResourceValue appearance = Optional.ofNullable(components.get("minecraft:particle_appearance_billboard"))
+                    .orElse(components.get("particle_appearance_billboard"));
+            if (!(appearance instanceof BedrockResourceValue.ObjectValue appearanceObject)) {
+                return Optional.empty();
+            }
+
+            BedrockResourceValue uvValue = appearanceObject.values().get("uv");
+            if (!(uvValue instanceof BedrockResourceValue.ObjectValue uvObject)) {
+                return Optional.empty();
+            }
+
+            BedrockResourceValue flipbookValue = uvObject.values().get("flipbook");
+            if (!(flipbookValue instanceof BedrockResourceValue.ObjectValue flipbookObject)) {
+                return Optional.empty();
+            }
+
+            Optional<VectorExpression2> baseUV = getVectorExpression2(flipbookObject, "base_UV");
+            Optional<VectorExpression2> sizeUV = getVectorExpression2(flipbookObject, "size_UV");
+            Optional<VectorExpression2> stepUV = getVectorExpression2(flipbookObject, "step_UV");
+            Optional<String> maxFrame = getScalarExpression(flipbookObject, "max_frame");
+            if (baseUV.isEmpty() || sizeUV.isEmpty() || stepUV.isEmpty() || maxFrame.isEmpty()) {
+                return Optional.empty();
+            }
+
+            return Optional.of(new BillboardFlipbook(
+                    getInt(uvObject, "texture_width").orElse(1),
+                    getInt(uvObject, "texture_height").orElse(1),
+                    baseUV.orElseThrow(),
+                    sizeUV.orElseThrow(),
+                    stepUV.orElseThrow(),
+                    getScalarExpression(flipbookObject, "frames_per_second").orElse("0"),
+                    maxFrame.orElseThrow(),
+                    getBoolean(flipbookObject, "stretch_to_lifetime").orElse(false),
+                    getBoolean(flipbookObject, "loop").orElse(false)
+            ));
+        }
+
+        private static Optional<VectorExpression2> getVectorExpression2(BedrockResourceValue.ObjectValue objectValue, String key) {
+            BedrockResourceValue value = objectValue.values().get(key);
+            if (!(value instanceof BedrockResourceValue.ArrayValue arrayValue) || arrayValue.values().size() != 2) {
+                return Optional.empty();
+            }
+
+            Optional<String> x = toScalarExpression(arrayValue.values().get(0));
+            Optional<String> y = toScalarExpression(arrayValue.values().get(1));
+            if (x.isEmpty() || y.isEmpty()) {
+                return Optional.empty();
+            }
+
+            return Optional.of(new VectorExpression2(x.orElseThrow(), y.orElseThrow()));
+        }
+
+        private static Optional<String> getScalarExpression(BedrockResourceValue.ObjectValue objectValue, String key) {
+            return Optional.ofNullable(objectValue.values().get(key)).flatMap(ParticleEffect::toScalarExpression);
+        }
+
+        private static Optional<Integer> getInt(BedrockResourceValue.ObjectValue objectValue, String key) {
+            return getScalarExpression(objectValue, key).flatMap(value -> {
+                try {
+                    return Optional.of(new BigDecimal(value).intValueExact());
+                } catch (ArithmeticException | NumberFormatException ignored) {
+                    return Optional.empty();
+                }
+            });
+        }
+
+        private static Optional<Boolean> getBoolean(BedrockResourceValue.ObjectValue objectValue, String key) {
+            BedrockResourceValue value = objectValue.values().get(key);
+            if (value instanceof BedrockResourceValue.BooleanValue booleanValue) {
+                return Optional.of(booleanValue.value());
+            }
+            if (value instanceof BedrockResourceValue.NumberValue numberValue) {
+                return Optional.of(numberValue.value().compareTo(BigDecimal.ZERO) != 0);
+            }
+            if (value instanceof BedrockResourceValue.StringValue stringValue) {
+                if ("true".equalsIgnoreCase(stringValue.value())) {
+                    return Optional.of(true);
+                }
+                if ("false".equalsIgnoreCase(stringValue.value())) {
+                    return Optional.of(false);
+                }
+            }
+            return Optional.empty();
+        }
+
+        private static Optional<String> toScalarExpression(BedrockResourceValue value) {
+            if (value instanceof BedrockResourceValue.NumberValue numberValue) {
+                return Optional.of(numberValue.value().stripTrailingZeros().toPlainString());
+            }
+            if (value instanceof BedrockResourceValue.StringValue stringValue) {
+                return Optional.of(stringValue.value());
+            }
+            if (value instanceof BedrockResourceValue.BooleanValue booleanValue) {
+                return Optional.of(booleanValue.value() ? "1" : "0");
+            }
+            return Optional.empty();
+        }
+    }
+
+    public record VectorExpression2(
+            String x,
+            String y
+    ) {
+    }
+
+    public record BillboardFlipbook(
+            int textureWidth,
+            int textureHeight,
+            VectorExpression2 baseUV,
+            VectorExpression2 sizeUV,
+            VectorExpression2 stepUV,
+            String framesPerSecond,
+            String maxFrame,
+            boolean stretchToLifetime,
+            boolean loop
+    ) {
     }
 
     public record Description(

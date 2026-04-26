@@ -8,12 +8,21 @@ import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
+import io.github.tt432.eyelibprocessor.manager.reload.ManagerResourceBatchPlanner;
+import io.github.tt432.eyelibprocessor.manager.reload.ManagerResourceReloadPlan;
+import io.github.tt432.eyelibimporter.addon.BedrockAddon;
+import io.github.tt432.eyelibimporter.addon.BedrockAddonLoader;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
+import io.github.tt432.eyelib.client.loader.BedrockAddonRuntimeBridge;
+import io.github.tt432.eyelib.client.material.BrMaterial;
 import io.github.tt432.eyelib.client.model.importer.ModelImporter;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
+import io.github.tt432.eyelib.client.registry.AttachableAssetRegistry;
 import io.github.tt432.eyelib.client.registry.ClientEntityAssetRegistry;
+import io.github.tt432.eyelib.client.registry.MaterialAssetRegistry;
 import io.github.tt432.eyelib.client.registry.ModelAssetRegistry;
 import io.github.tt432.eyelib.client.registry.ParticleAssetRegistry;
 import io.github.tt432.eyelib.client.registry.RenderControllerAssetRegistry;
@@ -27,54 +36,144 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ManagerResourceImportPlanner {
     private static final Gson GSON = new Gson();
     private static final Logger LOGGER = LoggerFactory.getLogger(ManagerResourceImportPlanner.class);
 
-    public static void loadResourceFolder(Path basePath, Logger logger) {
-        Map<String, BrAnimation> animations = loadJsonFiles(basePath, "animations",
-                jo -> BrAnimation.fromSchemaSet(
-                        BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)
-                ));
+    public static boolean loadResourceFolder(Path basePath, Logger logger) {
+        Optional<BedrockAddon> addon = tryLoadAddon(basePath, logger);
+        if (addon.isPresent()) {
+            BedrockAddonRuntimeBridge.replaceFromAddon(addon.get());
+            if (!addon.get().aggregate().particleFiles().isEmpty()) {
+                logger.debug("Bedrock addon particle bridge is currently skipped because importer particle components are plain-data only.");
+            }
+            ParticleAssetRegistry.replaceParticles(Map.of());
+            loadAddonTextures(addon.get().aggregate().textures());
+            return true;
+        }
 
-        Map<String, BrAnimationControllers> animationControllers = loadJsonFiles(basePath, "animation_controllers",
-                jo -> BrAnimationControllers.fromSchemaSet(
+        loadLegacyResourceFolder(basePath, logger);
+        return false;
+    }
+
+    private static Optional<BedrockAddon> tryLoadAddon(Path basePath, Logger logger) {
+        try {
+            BedrockAddon addon = BedrockAddonLoader.load(basePath);
+            if (!addon.packs().isEmpty()) {
+                return Optional.of(addon);
+            }
+        } catch (Exception exception) {
+            logger.warn("can't load addon source {}, fallback to plain folder mode.", basePath, exception);
+        }
+        return Optional.empty();
+    }
+
+    private static void loadLegacyResourceFolder(Path basePath, Logger logger) {
+        Map<String, BrAnimation> animations = ManagerResourceBatchPlanner.loadStructuredFiles(
+                basePath,
+                "animations",
+                ".json",
+                jsonFile -> parseJsonFile(jsonFile, jo -> BrAnimation.fromSchemaSet(
+                        BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)
+                )),
+                LOGGER
+        );
+
+        Map<String, BrAnimationControllers> animationControllers = ManagerResourceBatchPlanner.loadStructuredFiles(
+                basePath,
+                "animation_controllers",
+                ".json",
+                jsonFile -> parseJsonFile(jsonFile, jo -> BrAnimationControllers.fromSchemaSet(
                         BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)
-                ));
+                )),
+                LOGGER
+        );
         AnimationAssetRegistry.replaceAssets(animations, animationControllers);
 
-        Map<String, RenderControllers> renderControllers = loadJsonFiles(basePath, "render_controllers",
-                jo -> RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn));
+        Map<String, RenderControllers> renderControllers = ManagerResourceBatchPlanner.loadStructuredFiles(
+                basePath,
+                "render_controllers",
+                ".json",
+                jsonFile -> parseJsonFile(jsonFile,
+                        jo -> RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)),
+                LOGGER
+        );
         RenderControllerAssetRegistry.replaceRenderControllers(renderControllers);
 
-        Map<String, BrParticle> particles = loadJsonFiles(basePath, "particles",
-                jo -> BrParticle.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn));
+        Map<String, BrParticle> particles = ManagerResourceBatchPlanner.loadStructuredFiles(
+                basePath,
+                "particles",
+                ".json",
+                jsonFile -> parseJsonFile(jsonFile,
+                        jo -> BrParticle.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)),
+                LOGGER
+        );
         ParticleAssetRegistry.replaceParticles(particles);
 
-        Map<String, BrClientEntity> parsedEntities = loadJsonFiles(basePath, "entity",
-                jo -> BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn));
+        Map<String, BrClientEntity> parsedEntities = ManagerResourceBatchPlanner.loadStructuredFiles(
+                basePath,
+                "entity",
+                ".json",
+                jsonFile -> parseJsonFile(jsonFile,
+                        jo -> BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)),
+                LOGGER
+        );
         ClientEntityAssetRegistry.replaceClientEntities(parsedEntities.values());
 
-        Map<String, Map<String, Model>> parsedModels = loadModelFiles(basePath);
+        Map<String, BrClientEntity> parsedAttachables = ManagerResourceBatchPlanner.loadStructuredFiles(
+                basePath,
+                "attachables",
+                ".json",
+                jsonFile -> parseJsonFile(jsonFile,
+                        jo -> BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)),
+                LOGGER
+        );
+        AttachableAssetRegistry.replaceAttachables(parsedAttachables.values());
+
+        Map<String, Map<String, Model>> parsedModels = ManagerResourceBatchPlanner.loadModelFiles(basePath, ModelImporter::importFile, LOGGER);
         LinkedHashMap<String, Model> models = new LinkedHashMap<>();
         parsedModels.values().forEach(models::putAll);
         ModelAssetRegistry.replaceModels(models);
 
+        Map<String, BrMaterial> parsedMaterials = ManagerResourceBatchPlanner.loadStructuredFiles(
+                basePath,
+                "materials",
+                ".material",
+                jsonFile -> parseJsonFile(jsonFile,
+                        jo -> BrMaterial.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)),
+                LOGGER
+        );
+        MaterialAssetRegistry.replaceMaterials(parsedMaterials);
+
         loadTextures(basePath);
+    }
+
+    private static void loadAddonTextures(Map<String, ImportedImageData> textures) {
+        if (textures.isEmpty()) {
+            return;
+        }
+
+        textures.forEach((relativePath, imageData) -> {
+            try {
+                NativeImageIO.upload(relativePath.toLowerCase(Locale.ROOT), NativeImageIO.fromImportedImageData(imageData));
+            } catch (RuntimeException exception) {
+                LOGGER.error("can't upload addon texture {}.", relativePath, exception);
+            }
+        });
+
+        MinecraftForge.EVENT_BUS.post(new TextureChangedEvent());
     }
 
     public static void loadSingleFile(Path basePath, Path file, Logger logger) {
@@ -86,9 +185,13 @@ public final class ManagerResourceImportPlanner {
                      ANIMATION_CONTROLLER_JSON,
                      RENDER_CONTROLLER_JSON,
                      ENTITY_JSON,
+                     ATTACHABLE_JSON,
                      PARTICLE_JSON,
-                     MODEL_JSON -> {
-                    JsonObject jo = GSON.fromJson(IOUtils.toString(new FileInputStream(file.toFile()), StandardCharsets.UTF_8), JsonObject.class);
+                      MODEL_JSON -> {
+                    JsonObject jo;
+                    try (InputStream inputStream = Files.newInputStream(file)) {
+                        jo = GSON.fromJson(IOUtils.toString(inputStream, StandardCharsets.UTF_8), JsonObject.class);
+                    }
                     switch (target) {
                         case ANIMATION_JSON -> {
                             var animation = BrAnimation.fromSchemaSet(
@@ -110,23 +213,32 @@ public final class ManagerResourceImportPlanner {
                             var entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
                             ClientEntityAssetRegistry.publishClientEntity(entity);
                         }
+                        case ATTACHABLE_JSON -> {
+                            var attachable = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
+                            AttachableAssetRegistry.publishAttachable(attachable);
+                        }
                         case PARTICLE_JSON -> {
                             var particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
                             ParticleAssetRegistry.publishParticle(particle);
                         }
-                        case MODEL_JSON -> {
-                            ModelAssetRegistry.publishModels(ModelImporter.importFile(file));
-                        }
+                        case MODEL_JSON -> ModelAssetRegistry.publishModels(ModelImporter.importFile(file));
                         default -> {
                         }
                     }
                 }
-                case MODEL_BBMODEL -> {
-                    ModelAssetRegistry.publishModels(ModelImporter.importFile(file));
+                case MODEL_BBMODEL -> ModelAssetRegistry.publishModels(ModelImporter.importFile(file));
+                case MATERIAL_FILE -> {
+                    try (InputStream inputStream = Files.newInputStream(file)) {
+                        JsonObject jo = GSON.fromJson(IOUtils.toString(inputStream, StandardCharsets.UTF_8), JsonObject.class);
+                        var material = BrMaterial.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
+                        MaterialAssetRegistry.publishMaterial(material);
+                    }
                 }
                 case TEXTURE_PNG -> {
-                    NativeImage nativeImage = NativeImageIO.load(new FileInputStream(file.toFile()));
-                    NativeImageIO.upload(ManagerResourceReloadPlan.toTextureKey(basePath, file), nativeImage);
+                    try (InputStream inputStream = Files.newInputStream(file)) {
+                        NativeImage nativeImage = NativeImageIO.load(inputStream);
+                        NativeImageIO.upload(ManagerResourceReloadPlan.toTextureKey(basePath, file), nativeImage);
+                    }
                     MinecraftForge.EVENT_BUS.post(new TextureChangedEvent());
                 }
                 case UNSUPPORTED -> {
@@ -138,36 +250,11 @@ public final class ManagerResourceImportPlanner {
     }
 
     private static void loadTextures(Path basePath) {
-        Path texturePath = basePath.resolve("textures");
-        if (!Files.exists(texturePath) || !Files.isDirectory(texturePath)) {
-            return;
-        }
-
-        List<Path> pngFiles = new ArrayList<>();
-
-        try {
-            Files.walkFileTree(texturePath, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                    if (file.getFileName().toString().endsWith(".png")) {
-                        pngFiles.add(file);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    System.err.println("无法访问文件: " + file + "，错误: " + exc);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            LOGGER.error("can't load files.", e);
-        }
+        List<Path> pngFiles = ManagerResourceBatchPlanner.collectTexturePngFiles(basePath, LOGGER);
 
         pngFiles.forEach(pngFile -> {
-            try {
-                NativeImage nativeImage = NativeImageIO.load(new FileInputStream(pngFile.toFile()));
+            try (InputStream inputStream = Files.newInputStream(pngFile)) {
+                NativeImage nativeImage = NativeImageIO.load(inputStream);
                 NativeImageIO.upload(ManagerResourceReloadPlan.toTextureKey(basePath, pngFile), nativeImage);
             } catch (IOException e) {
                 LOGGER.error("can't load file.", e);
@@ -183,86 +270,10 @@ public final class ManagerResourceImportPlanner {
         T parse(JsonObject jsonObject) throws Exception;
     }
 
-    private static LinkedHashMap<String, Map<String, Model>> loadModelFiles(Path basePath) {
-        Path subPath = basePath.resolve("models");
-        if (!Files.exists(subPath) || !Files.isDirectory(subPath)) {
-            return new LinkedHashMap<>();
+    private static <T> T parseJsonFile(Path file, JsonFileParser<T> parser) throws Exception {
+        try (InputStream inputStream = Files.newInputStream(file)) {
+            JsonObject json = GSON.fromJson(IOUtils.toString(inputStream, StandardCharsets.UTF_8), JsonObject.class);
+            return parser.parse(json);
         }
-
-        List<Path> modelFiles = new ArrayList<>();
-        LinkedHashMap<String, Map<String, Model>> result = new LinkedHashMap<>();
-
-        try {
-            Files.walkFileTree(subPath, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                    String fileName = file.getFileName().toString();
-                    if (fileName.endsWith(".bbmodel") || fileName.endsWith(".json")) {
-                        modelFiles.add(file);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    System.err.println("无法访问文件: " + file + "，错误: " + exc);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            LOGGER.error("can't load model files.", e);
-        }
-
-        modelFiles.forEach(modelFile -> {
-            try {
-                result.put(modelFile.toString(), ModelImporter.importFile(modelFile));
-            } catch (Exception e) {
-                LOGGER.error("can't load model file.", e);
-            }
-        });
-
-        return result;
-    }
-
-    private static <T> LinkedHashMap<String, T> loadJsonFiles(Path basePath, String subFolder, JsonFileParser<T> parser) {
-        Path subPath = basePath.resolve(subFolder);
-        if (!Files.exists(subPath) || !Files.isDirectory(subPath)) {
-            return new LinkedHashMap<>();
-        }
-
-        List<Path> jsonFiles = new ArrayList<>();
-        LinkedHashMap<String, T> result = new LinkedHashMap<>();
-
-        try {
-            Files.walkFileTree(subPath, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                    if (file.getFileName().toString().endsWith(".json")) {
-                        jsonFiles.add(file);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    System.err.println("无法访问文件: " + file + "，错误: " + exc);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (IOException e) {
-            LOGGER.error("can't load files.", e);
-        }
-
-        jsonFiles.forEach(jsonFile -> {
-            try {
-                JsonObject json = GSON.fromJson(IOUtils.toString(new FileInputStream(jsonFile.toFile()), StandardCharsets.UTF_8), JsonObject.class);
-                T parsed = parser.parse(json);
-                result.put(jsonFile.toString(), parsed);
-            } catch (Exception e) {
-                LOGGER.error("can't load file.", e);
-            }
-        });
-
-        return result;
     }
 }

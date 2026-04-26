@@ -11,7 +11,7 @@
 ## Current split
 - Canonical `BrClientEntity` / `BrClientEntityScripts` schema and codecs now live in `:eyelib-importer`.
 - `ClientEntityRuntimeData` remains root-owned runtime state.
-- `ClientEntityLookup` is the narrow runtime read seam and should stay separate from importer parsing.
+- `ClientEntityLookup` and `AttachableLookup` are the narrow runtime read seams and should stay separate from importer parsing.
 
 ## Editing rules
 - Treat `client/entity` as the lowest-risk early sub-slice within the broader `client-model-animation-entity` module.

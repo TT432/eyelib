@@ -6,7 +6,7 @@
 
 ## Current Role
 - This package now contains domain-specific publication seams instead of one central static facade.
-- `AnimationAssetRegistry.java`, `MaterialAssetRegistry.java`, `ParticleAssetRegistry.java`, `RenderControllerAssetRegistry.java`, `ClientEntityAssetRegistry.java`, and `ModelAssetRegistry.java` each own one write-side publication lane into manager-backed runtime storage.
+- `AnimationAssetRegistry.java`, `MaterialAssetRegistry.java`, `ParticleAssetRegistry.java`, `RenderControllerAssetRegistry.java`, `ClientEntityAssetRegistry.java`, `AttachableAssetRegistry.java`, and `ModelAssetRegistry.java` each own one write-side publication lane into manager-backed runtime storage.
 - Loaders and tooling should call importer parsers and runtime adapters as needed, then hand publication off to the matching domain registry instead of pushing directly into managers or a shared god-facade.
 - `ClientEntityAssetRegistry` publishes by `BrClientEntity.identifier()` and keeps its replacement seam free of `ResourceLocation`/Forge types.
 
