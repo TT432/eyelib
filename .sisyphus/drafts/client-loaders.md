@@ -17,13 +17,13 @@
 - Preserve existing loader pattern.
 
 ## Implemented seam design
-- Added `client/loader/LoaderParsingOps` as a pure decode/translation helper for codec-based loader parsing.
+- Added `eyelib-processor/src/main/java/io/github/tt432/eyelibprocessor/loader/LoaderParsingOps.java` as a pure decode/translation helper for codec-based loader parsing.
 - Moved Forge reload-listener lifecycle wiring into `mc/impl` via `mc/impl/client/loader/ClientLoaderLifecycleHooks`.
 - Kept publication wiring in loader `apply(...)` methods routed to existing domain registry seams (`client/registry/*`), with parsing now delegated.
 - Reused first-wave manager/registry seams by not introducing any competing abstraction layer.
 
 ## Implementation summary
-- Refactored codec-based loaders to call `LoaderParsingOps` for parsing/translation:
+- Refactored codec-based loaders to call processor-owned `LoaderParsingOps` for parsing/translation:
   - `BrAnimationLoader`
   - `BrAnimationControllerLoader`
   - `BrParticleLoader`
@@ -34,10 +34,10 @@
 - Extracted model parsing within `BrModelLoader` into `parseLoadedModels(...)` so parse/translation is distinct from publication (`ModelAssetRegistry.replaceModels(...)`).
 - Removed per-loader Forge event annotations/imports from concrete `Br*Loader` classes; registration now happens only in `ClientLoaderLifecycleHooks` under `mc/impl`.
 - Updated `LoaderParsingOps` contract from `ResourceLocation`-keyed methods to source-key-generic methods (`parseBySourceKey`, generic `parseAndTranslate`) so parsing/translation seams outside `mc/impl` no longer expose Minecraft identifier types.
-- Added targeted seam test: `src/test/java/io/github/tt432/eyelib/client/loader/LoaderParsingOpsTest.java`.
+- Added targeted seam test: `eyelib-processor/src/test/java/io/github/tt432/eyelibprocessor/loader/LoaderParsingOpsTest.java`.
 
 ## JetBrains MCP verification results
-- Targeted test run (`jetbrain_run_gradle_tasks`, `test --tests io.github.tt432.eyelib.client.loader.LoaderParsingOpsTest`): **PASS** (`exitCode=0`).
+- Targeted test run (`./gradlew :eyelib-processor:test --tests io.github.tt432.eyelibprocessor.loader.LoaderParsingOpsTest`): **PASS**.
 - Full build verification (`jetbrain_execute_run_configuration`, `qylEyelib [build]`): **PASS** (`exitCode=0`, `BUILD SUCCESSFUL`).
 - Current hard-import slice verification attempt: **PARTIAL (JetBrains MCP run-config path available, some MCP operations unavailable)**.
   - `jetbrain_execute_run_configuration` (`qylEyelib [build]`): **FAIL (unrelated repository-wide tests)** — `FixedStepTimerStateTest` failures in `core/util/time`, outside `client-loaders` scope.
@@ -74,5 +74,5 @@
 ## Re-baseline notes for final isolation
 - Forge reload-listener registration ownership is now under `mc/impl` (`ClientLoaderLifecycleHooks`); concrete `Br*Loader` classes no longer own `RegisterClientReloadListenersEvent` lifecycle wiring.
 - `SimpleJsonWithSuffixResourceReloadListener` remains a Minecraft-backed reload abstraction (`FileToIdConverter`, `ResourceManager`, `SimplePreparableReloadListener`) in `client/loader` and still needs relocation/isolation for full final state.
-- `LoaderParsingOps` and its tests are now platform-type-free for key translation contracts (no `ResourceLocation` in method signatures).
+- `LoaderParsingOps` and its tests are now platform-type-free for key translation contracts (no `ResourceLocation` in method signatures) and now live in `:eyelib-processor`.
 - `BrClientEntityLoader` and `BrAttachableLoader` still materialize `ResourceLocation` when translating parsed identifiers for current publication flow; follow-up is needed if these loaders are further decomposed toward full module quarantine.

@@ -30,6 +30,7 @@ repo
 
 # local tooling and editor state
 .vscode/
+.eclipse/
 .factorypath
 .cache/
 .sisyphus/
@@ -41,6 +42,8 @@ __pycache__/
 *.pyc
 tmp-mc/
 eyelib_generatedClasses/
+debug.log
+test.geo.json
 
 # local scratch data
 *.duckdb
