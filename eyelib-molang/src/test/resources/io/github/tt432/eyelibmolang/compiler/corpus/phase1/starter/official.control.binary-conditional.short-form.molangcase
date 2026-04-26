@@ -1,0 +1,11 @@
+---
+id: official.control.binary-conditional.short-form
+layer: starter
+evidence: official
+mode: NORMAL
+policy-pack: default-v1
+assertions:
+  - parse-accept
+  - bind-normalize
+---
+query.is_baby ? 1;

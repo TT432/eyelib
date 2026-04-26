@@ -1,0 +1,7 @@
+root: OneExpr
+contains:
+  - ParenthesesPrecedence
+  - MulOrDiv
+  - AddOrSub
+  - Variable
+  - Number

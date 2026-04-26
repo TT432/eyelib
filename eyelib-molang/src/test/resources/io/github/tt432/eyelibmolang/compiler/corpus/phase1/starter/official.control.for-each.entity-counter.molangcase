@@ -1,0 +1,11 @@
+---
+id: official.control.for-each.entity-counter
+layer: starter
+evidence: official
+mode: NORMAL
+policy-pack: default-v1
+assertions:
+  - parse-accept
+  - bind-normalize
+---
+for_each(t.pig, query.get_nearby_entities(4, 'minecraft:pig'), { v.count = v.count + 1; });

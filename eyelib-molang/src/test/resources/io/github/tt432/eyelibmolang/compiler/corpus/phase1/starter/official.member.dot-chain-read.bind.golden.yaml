@@ -1,0 +1,4 @@
+root: BoundMemberAccessExpr
+contains:
+  - access:dot
+  - id:variable

@@ -1,0 +1,11 @@
+---
+id: official.grouping.nested-precedence
+layer: starter
+evidence: official
+mode: NORMAL
+policy-pack: default-v1
+assertions:
+  - parse-accept
+  - bind-normalize
+---
+((query.anim_time + 1.0) * (query.delta_time - 2.0)) / 3.0

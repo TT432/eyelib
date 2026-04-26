@@ -1,0 +1,15 @@
+---
+id: reject.array-literal.inline
+layer: starter
+evidence: internal
+mode: NORMAL
+policy-pack: default-v1
+assertions:
+  - parse-reject
+expected-diagnostics:
+  - phase: PARSER
+    severity: ERROR
+    code: PARSER_SYNTAX_ERROR
+    message-type: SUBSET
+---
+[1, 2, 3]

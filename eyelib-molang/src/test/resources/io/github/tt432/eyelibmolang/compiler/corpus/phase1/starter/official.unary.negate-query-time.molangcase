@@ -1,0 +1,10 @@
+---
+id: official.unary.negate-query-time
+layer: starter
+evidence: official
+mode: NORMAL
+policy-pack: default-v1
+assertions:
+  - parse-accept
+---
+-query.anim_time

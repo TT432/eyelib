@@ -1,0 +1,10 @@
+root: BoundBlockExpr
+contains:
+  - BoundForEachExpr
+  - BoundAssignmentExpr
+  - assign-root:variable
+  - assign-writable:true
+  - BoundQueryAccessExpr
+  - query:EXPLICIT_CALL
+  - access:dot
+  - id:query

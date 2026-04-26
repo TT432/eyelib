@@ -1,0 +1,10 @@
+---
+id: official.strings.ternary-literals
+layer: starter
+evidence: official
+mode: NORMAL
+policy-pack: default-v1
+assertions:
+  - parse-accept
+---
+query.get_name == 'Toast' ? 'toast_skin' : 'default_skin'

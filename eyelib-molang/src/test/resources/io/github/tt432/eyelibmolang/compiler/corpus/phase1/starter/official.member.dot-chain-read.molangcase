@@ -1,0 +1,11 @@
+---
+id: official.member.dot-chain-read
+layer: starter
+evidence: official
+mode: NORMAL
+policy-pack: default-v1
+assertions:
+  - parse-accept
+  - bind-normalize
+---
+variable.avatar.head.pitch

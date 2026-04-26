@@ -1,0 +1,10 @@
+---
+id: official.comparison.range-window
+layer: starter
+evidence: official
+mode: NORMAL
+policy-pack: default-v1
+assertions:
+  - parse-accept
+---
+(query.anim_time >= 1.0) && (query.anim_time <= 5.0)

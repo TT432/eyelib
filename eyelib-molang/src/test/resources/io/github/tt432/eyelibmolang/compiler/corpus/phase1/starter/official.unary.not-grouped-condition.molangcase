@@ -1,0 +1,10 @@
+---
+id: official.unary.not-grouped-condition
+layer: starter
+evidence: official
+mode: NORMAL
+policy-pack: default-v1
+assertions:
+  - parse-accept
+---
+!(query.is_invisible || query.is_sleeping)

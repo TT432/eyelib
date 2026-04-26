@@ -1,0 +1,11 @@
+---
+id: official.return.grouped-sum
+layer: starter
+evidence: official
+mode: NORMAL
+policy-pack: default-v1
+assertions:
+  - parse-accept
+  - bind-normalize
+---
+variable.seed = query.anim_time; return (variable.seed + 1.0);

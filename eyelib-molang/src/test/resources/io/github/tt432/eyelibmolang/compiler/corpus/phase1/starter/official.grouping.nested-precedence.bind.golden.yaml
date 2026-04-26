@@ -1,0 +1,8 @@
+root: BoundBinaryExpr
+contains:
+  - BoundGroupingExpr
+  - BoundBinaryExpr
+  - BoundQueryAccessExpr
+  - query:PROPERTY
+  - access:dot
+  - id:query
