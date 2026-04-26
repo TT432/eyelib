@@ -8,22 +8,23 @@
 - Active refactor tracker: `work/main.md`
 
 ## What This Repository Is
-- Eyelib is a multi-project `Gradle + Java 17 + Forge` rendering library for Minecraft (`:` root runtime + `:eyelib-importer` importer/model core + `:eyelib-molang` engine Molang core).
+- Eyelib is a multi-project `Gradle + Java 17 + Forge` rendering library for Minecraft (`:` root runtime + `:eyelib-processor` processing/batching core + `:eyelib-importer` importer/model core + `:eyelib-molang` engine Molang core).
 - Forge bootstrap entrypoint: `src/main/java/io/github/tt432/eyelib/mc/impl/bootstrap/EyelibMod.java`
 - Compatibility constant holder: `src/main/java/io/github/tt432/eyelib/Eyelib.java`
 - Current codebase pressure points are client tooling, generated Molang grammar files, loader/publication flow, and sync/data-attachment boundaries.
 
 ## Where To Read By Topic
 - Client rendering/runtime: start in `src/main/java/io/github/tt432/eyelib/client/`
-- Loader and resource ingestion: start in `src/main/java/io/github/tt432/eyelib/client/loader/` for root-side reload orchestration and runtime adaptation flow; importer-only parsing/normalization should move into `:eyelib-importer`
+- Loader and resource ingestion: start in `src/main/java/io/github/tt432/eyelib/client/loader/` for root-side reload orchestration and runtime adaptation flow; platform-free parsing/planning helpers should move into `:eyelib-processor`, and importer-only parsing/normalization should move into `:eyelib-importer`
 - Importer/model/schema core data and fixtures: start in `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/model/` and nearby importer-owned schema packages as client-entity/animation-controller parsing expands into the subproject; importer fixtures live under `eyelib-importer/src/test/resources/io/github/tt432/eyelib/client/model/importer/`
 - Runtime asset storage: start in `src/main/java/io/github/tt432/eyelib/client/manager/`
 - Molang: start in `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/` for value/runtime wrappers, scope/compiler/type/generated code; root `src/main/java/io/github/tt432/eyelib/molang/` is now a legacy marker/handoff path only
+- Molang rewrite planning: read `eyelib-molang/ROADMAP.md` first for current progress and update rules, then use `eyelib-molang/refactor-plan/README.md` when the task is about rewrite sequencing, entry gates, or cutover parity
 - Sync and packets: start in `src/main/java/io/github/tt432/eyelib/network/`
 - Data attachment flow: start in `src/main/java/io/github/tt432/eyelib/util/data_attach/` and `src/main/java/io/github/tt432/eyelib/capability/`
 - Platform-free utility seams: start in `src/main/java/io/github/tt432/eyelib/core/`
 - Blockbench Bedrock export reference: `docs/blockbench/bedrock-geometry-export-fields-reference.md`
-- External Bedrock reference docs: `docs/ref/`
+- External Bedrock reference docs: `docs/reference/`
 
 ## Read In This Order
 1. This file

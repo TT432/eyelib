@@ -58,8 +58,9 @@
   - 但深层 payload 仍保留 raw object
 - `partial` particles
   - 已建：`description.basic_render_parameters`、`curves`
+  - 已建：`minecraft:particle_appearance_billboard.uv.flipbook` 的窄 typed 提取口（仅 billboard/uv/flipbook 子结构）
   - `events` 当前只保留占位语义节点，未保留事件 payload
-  - `components` 仍是 raw `BedrockResourceValue`
+  - `components` 主体仍是 raw `BedrockResourceValue`，只有 flipbook 子结构被单独抽出
 - `partial` sounds
   - `sounds.json`：已分 `entity_sounds` / `block_sounds` / `interactive_block_sounds` / `individual_event_sounds`
   - 但内部树仍是 raw object

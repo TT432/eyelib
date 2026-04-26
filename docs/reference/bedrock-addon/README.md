@@ -34,6 +34,7 @@
 - `递归字段索引-rp-media.md`：RP 粒子、声音、材质、纹理索引、fogs、UI 递归字段索引。
 - `递归字段索引-bp-entity-table.md`：BP 实体、spawn_rules、blocks/items/recipes/loot_tables/trading 等递归字段索引。
 - `递归字段索引-importer-support.md`：Eyelib importer 当前 typed/partial/raw/unmanaged 支持面。
+- `implementation-effect-tracker.ai.yaml`：面向 AI 维护的 BedrockAddon“实际生效/缺口/桥接机会”追踪文件。
 - `来源清单.md`：列出官方文档、社区文档和真实样例仓库来源。
 
 ## 阅读顺序

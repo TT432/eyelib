@@ -1,0 +1,647 @@
+schema_version: 1
+kind: bedrock_addon_effect_tracker
+scope: strict_bedrock_addon_pipeline
+updated_at: 2026-04-19
+owner_module: eyelib-importer
+decision_rules:
+  implemented_end_to_end:
+    requires:
+      - importer-side field/resource family has observable semantic effect
+      - root runtime directly consumes `io.github.tt432.eyelibimporter.addon.BedrockAddon*` output, or a dedicated bridge from `BedrockAddon.aggregate()` into runtime publication exists
+  effective_importer_only:
+    means:
+      - importer uses the field/resource family for ordering, warning emission, aggregation, flattening, indexing, or typed parsing
+      - no direct BedrockAddon -> root runtime consumer found
+  retained_only:
+    means:
+      - importer retains raw structure only
+      - no semantic importer logic beyond storage/wrapping
+  not_implemented:
+    means:
+      - field/resource family is absent from importer schema/logic or routed to unmanaged scope
+  important_non_goal:
+    - root-side loaders that parse the same resource family directly from `ResourceManager` do not count as BedrockAddon end-to-end support
+  bridge_api_present_but_not_wired:
+    means:
+      - root has an explicit `BedrockAddon` runtime bridge API
+      - no lifecycle or production caller invokes it yet
+evidence_summary:
+  no_root_runtime_consumer_of_bedrock_addon:
+    verified_by_search:
+      - src/main/java contains no `BedrockAddon`, `BedrockAddonAggregate`, or `io.github.tt432.eyelibimporter.addon` references
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonLoader.java
+      - eyelib-importer/src/test/java/io/github/tt432/eyelibimporter/addon/BedrockAddonLoaderTest.java
+      - eyelib-importer/src/test/java/io/github/tt432/eyelibimporter/addon/BedrockAddonRealFixtureIntegrationTest.java
+  explicit_root_bridge_api:
+    code_refs:
+      - src/main/java/io/github/tt432/eyelib/client/loader/BedrockAddonRuntimeBridge.java
+      - src/main/java/io/github/tt432/eyelib/client/registry/AttachableAssetRegistry.java
+      - src/main/java/io/github/tt432/eyelib/client/manager/AttachableManager.java
+queries:
+  bridge_ready_items:
+    where:
+      overall_status: effective_importer_only
+      runtime_bridge.kind: analogous_runtime_path_exists
+  explicit_bridge_api_items:
+    where:
+      overall_status: bridge_api_present_but_not_wired
+  schema_gap_items:
+    where:
+      overall_status:
+        - retained_only
+        - not_implemented
+  warning_only_items:
+    where:
+      effect_kind:
+        - warning_emission
+items:
+  - id: addon.packs
+    layer: addon_root
+    path: BedrockAddon.packs
+    effect_kind: pack_discovery
+    overall_status: effective_importer_only
+    importer_effect: ordered pack set is produced by addon loading
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddon.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonLoader.java
+    next_actions:
+      - keep as root container; do not treat as runtime asset until a bridge exists
+
+  - id: addon.resource_data_pack_split
+    layer: addon_root
+    path:
+      - BedrockAddon.resourcePacks()
+      - BedrockAddon.dataPacks()
+    effect_kind: pack_partition
+    overall_status: effective_importer_only
+    importer_effect: manifest module types split RP/BP views
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddon.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockPackManifest.java
+
+  - id: addon.warnings
+    layer: addon_root
+    path: BedrockAddon.warnings
+    effect_kind: warning_emission
+    overall_status: effective_importer_only
+    importer_effect: dependency, duplicate override, and unmanaged-manifest warnings emitted
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonLoader.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonWarning.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonWarningCode.java
+
+  - id: addon.unmanaged_resources
+    layer: addon_root
+    path: BedrockAddon.unmanagedResources
+    effect_kind: fallback_capture
+    overall_status: effective_importer_only
+    importer_effect: out-of-scope and unknown files preserved with reason codes
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddon.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonLoader.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockUnmanagedReason.java
+
+  - id: container.folder_mcpack_mcaddon
+    layer: container
+    path:
+      - folder
+      - .mcpack
+      - .mcaddon
+    effect_kind: pack_root_discovery
+    overall_status: effective_importer_only
+    importer_effect: loader discovers pack roots from directory/archive container forms
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonLoader.java
+
+  - id: manifest.modules.type
+    layer: manifest
+    path: modules[*].type
+    effect_kind: pack_partition
+    overall_status: effective_importer_only
+    importer_effect: drives `isResourcePack()` and `isDataPack()`
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockPackManifest.java
+
+  - id: manifest.header_uuid_and_module_uuid
+    layer: manifest
+    path:
+      - header.uuid
+      - modules[*].uuid
+    effect_kind: dependency_resolution
+    overall_status: effective_importer_only
+    importer_effect: used to build provided UUID set and resolve manifest dependencies
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonLoader.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockPackManifest.java
+
+  - id: manifest.dependencies
+    layer: manifest
+    path:
+      - dependencies[*].uuid
+      - dependencies[*].module_name
+      - dependencies[*].version
+    effect_kind: dependency_resolution
+    overall_status: effective_importer_only
+    importer_effect: ordering and missing-dependency warnings
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonLoader.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockPackManifest.java
+
+  - id: manifest.extra_fields
+    layer: manifest
+    path:
+      - extraFields
+      - metadata.extraFields
+    effect_kind: warning_emission
+    overall_status: effective_importer_only
+    importer_effect: unmodeled fields retained and surfaced as manifest unmanaged warnings
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonLoader.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockPackManifest.java
+
+  - id: manifest.parse_only_fields
+    layer: manifest
+    path:
+      - format_version
+      - header.name
+      - header.description
+      - header.version
+      - header.min_engine_version
+      - metadata.authors
+      - metadata.generated_with
+      - metadata.license
+      - metadata.url
+      - metadata.product_type
+      - capabilities[*]
+    effect_kind: parse_only
+    overall_status: retained_only
+    importer_effect: parsed into typed records but no importer behavior beyond storage found
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockPackManifest.java
+    next_actions:
+      - promote individual fields only when a concrete importer or runtime decision uses them
+
+  - id: manifest.settings
+    layer: manifest
+    path: settings[*]
+    effect_kind: raw_retention
+    overall_status: retained_only
+    importer_effect: stored as raw object list only
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockPackManifest.java
+
+  - id: manifest.preview_extra_top_level
+    layer: manifest
+    path:
+      - subpacks
+      - has_education_metadata
+      - pack_optimization_version
+      - platform_locked
+    effect_kind: raw_retention
+    overall_status: retained_only
+    importer_effect: retained only through `extraFields`
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockPackManifest.java
+
+  - id: client_entity.core_description_fields
+    layer: resource_family
+    family: CLIENT_ENTITY
+    path:
+      - description.identifier
+      - description.materials
+      - description.textures
+      - description.geometry
+      - description.animations
+      - description.animation_controllers
+      - description.render_controllers
+      - description.particle_effects
+      - description.sound_effects
+      - description.scripts
+    effect_kind: typed_parse_and_aggregate_keying
+    overall_status: bridge_api_present_but_not_wired
+    importer_effect: typed parse plus aggregate flattening by identifier
+    runtime_bridge:
+      kind: analogous_runtime_path_exists
+      code_refs:
+        - src/main/java/io/github/tt432/eyelib/client/loader/BrClientEntityLoader.java
+        - src/main/java/io/github/tt432/eyelib/client/registry/ClientEntityAssetRegistry.java
+        - src/main/java/io/github/tt432/eyelib/client/loader/BedrockAddonRuntimeBridge.java
+      note: explicit BedrockAddon bridge API can publish addon client entities, but no production caller invokes it yet
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/entity/BrClientEntity.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonAggregate.java
+    next_actions:
+      - create explicit BedrockAddon -> ClientEntityAssetRegistry bridge or a shared publication seam
+
+  - id: client_entity.min_engine_version
+    layer: resource_family
+    family: CLIENT_ENTITY
+    path: description.min_engine_version
+    effect_kind: typed_parse_only
+    overall_status: retained_only
+    importer_effect: typed field exists but no importer behavior beyond storage found
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/entity/BrClientEntity.java
+
+  - id: client_entity.spawn_egg
+    layer: resource_family
+    family: CLIENT_ENTITY
+    path: description.spawn_egg
+    effect_kind: typed_parse_only
+    overall_status: retained_only
+    importer_effect: stored as object value but no importer behavior beyond storage found
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/entity/BrClientEntity.java
+
+  - id: client_entity.unmodeled_enhancements
+    layer: resource_family
+    family: CLIENT_ENTITY
+    path:
+      - description.locators
+      - description.enable_attachables
+      - description.held_item_ignores_lighting
+      - description.hide_armor
+    effect_kind: missing_schema
+    overall_status: not_implemented
+    importer_effect: no explicit model or logic
+    runtime_bridge:
+      kind: no_consumer
+    doc_refs:
+      - docs/reference/bedrock-addon/资源文件层-client_entity.md
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/entity/BrClientEntity.java
+
+  - id: attachable.core_fields
+    layer: resource_family
+    family: ATTACHABLE
+    path:
+      - description.identifier
+      - description.textures
+      - description.geometry
+      - description.animations
+      - description.render_controllers
+      - description.scripts.animate
+    effect_kind: typed_parse_and_aggregate_keying
+    overall_status: bridge_api_present_but_not_wired
+    importer_effect: parsed through `ATTACHABLE_CODEC`, indexed in addon aggregate
+    runtime_bridge:
+      kind: analogous_runtime_path_exists
+      code_refs:
+        - src/main/java/io/github/tt432/eyelib/client/loader/BrAttachableLoader.java
+        - src/main/java/io/github/tt432/eyelib/client/registry/AttachableAssetRegistry.java
+        - src/main/java/io/github/tt432/eyelib/client/manager/AttachableManager.java
+      note: BedrockAddon bridge API and dedicated attachable runtime lane now exist, but no production caller wires addon data into that bridge yet
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/entity/BrClientEntity.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonAggregate.java
+
+  - id: attachable.item_condition_mapping
+    layer: resource_family
+    family: ATTACHABLE
+    path: description.item
+    effect_kind: missing_schema
+    overall_status: not_implemented
+    importer_effect: attachable-specific field is not modeled by shared `BrClientEntity`
+    runtime_bridge:
+      kind: no_consumer
+    doc_refs:
+      - docs/reference/bedrock-addon/资源文件层-attachables.md
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/entity/BrClientEntity.java
+
+  - id: animations.family
+    layer: resource_family
+    family: ANIMATION
+    path: animations/*
+    effect_kind: typed_parse_and_aggregate_flattening
+    overall_status: bridge_api_present_but_not_wired
+    importer_effect: animation files parsed and flattened into aggregate animation map
+    runtime_bridge:
+      kind: analogous_runtime_path_exists
+      code_refs:
+        - src/main/java/io/github/tt432/eyelib/client/loader/BrAnimationLoader.java
+        - src/main/java/io/github/tt432/eyelib/client/loader/BedrockAddonRuntimeBridge.java
+      note: explicit BedrockAddon bridge API can publish addon animations, but no production caller invokes it yet
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonAggregate.java
+
+  - id: animation_controllers.family
+    layer: resource_family
+    family: ANIMATION_CONTROLLER
+    path: animation_controllers/*
+    effect_kind: typed_parse_and_aggregate_flattening
+    overall_status: bridge_api_present_but_not_wired
+    importer_effect: controller files parsed and flattened into aggregate controller map
+    runtime_bridge:
+      kind: analogous_runtime_path_exists
+      code_refs:
+        - src/main/java/io/github/tt432/eyelib/client/loader/BrAnimationControllerLoader.java
+        - src/main/java/io/github/tt432/eyelib/client/registry/AnimationAssetRegistry.java
+        - src/main/java/io/github/tt432/eyelib/client/loader/BedrockAddonRuntimeBridge.java
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonAggregate.java
+
+  - id: models.family
+    layer: resource_family
+    family: MODEL
+    path: models/**/*
+    effect_kind: typed_parse_and_aggregate_flattening
+    overall_status: bridge_api_present_but_not_wired
+    importer_effect: geometry/model files parsed and flattened into aggregate model map
+    runtime_bridge:
+      kind: analogous_runtime_path_exists
+      code_refs:
+        - src/main/java/io/github/tt432/eyelib/client/loader/BrModelLoader.java
+        - src/main/java/io/github/tt432/eyelib/client/registry/ModelAssetRegistry.java
+        - src/main/java/io/github/tt432/eyelib/client/loader/BedrockAddonRuntimeBridge.java
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonAggregate.java
+
+  - id: textures_png.family
+    layer: resource_family
+    family: TEXTURE
+    path: textures/**/*.png
+    effect_kind: binary_capture
+    overall_status: effective_importer_only
+    importer_effect: decoded image payload retained in aggregate texture map
+    runtime_bridge:
+      kind: analogous_runtime_path_exists
+      code_refs:
+        - src/main/java/io/github/tt432/eyelib/client/loader/BrModelLoader.java
+      note: root uses texture references through model/render paths, but no BedrockAddon texture publication path exists
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonAggregate.java
+
+  - id: materials.family
+    layer: resource_family
+    family: MATERIAL
+    path: materials/*.material
+    effect_kind: typed_parse_and_aggregate_flattening
+    overall_status: bridge_api_present_but_not_wired
+    importer_effect: material files parsed and material entries flattened
+    runtime_bridge:
+      kind: analogous_runtime_path_exists
+      code_refs:
+        - src/main/java/io/github/tt432/eyelib/client/loader/BrMaterialLoader.java
+        - src/main/java/io/github/tt432/eyelib/client/loader/BedrockAddonRuntimeBridge.java
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonAggregate.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/material/BrMaterial.java
+
+  - id: render_controllers.family
+    layer: resource_family
+    family: RENDER_CONTROLLER
+    path: render_controllers/*.json
+    effect_kind: typed_parse_and_aggregate_flattening
+    overall_status: bridge_api_present_but_not_wired
+    importer_effect: render controller files parsed and flattened
+    runtime_bridge:
+      kind: analogous_runtime_path_exists
+      code_refs:
+        - src/main/java/io/github/tt432/eyelib/client/loader/BrRenderControllerLoader.java
+        - src/main/java/io/github/tt432/eyelib/client/loader/BedrockAddonRuntimeBridge.java
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonAggregate.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/render/controller/BrRenderControllers.java
+
+  - id: particles.core_fields
+    layer: resource_family
+    family: PARTICLE
+    path:
+      - particle_effect.description.identifier
+      - particle_effect.description.basic_render_parameters.material
+      - particle_effect.description.basic_render_parameters.texture
+      - particle_effect.curves
+    effect_kind: partial_typed_parse_and_identifier_index
+    overall_status: retained_only
+    importer_effect: typed parse plus aggregate `particlesByIdentifier()` index
+    runtime_bridge:
+      kind: blocked_by_partial_schema
+      code_refs:
+        - src/main/java/io/github/tt432/eyelib/client/loader/BrParticleLoader.java
+      note: importer particle schema still preserves `components` as raw BedrockResourceValue; root runtime expects parsed ParticleComponent payloads
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/particle/BrParticle.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonSideAggregate.java
+
+  - id: particles.components
+    layer: resource_family
+    family: PARTICLE
+    path: particle_effect.components
+    effect_kind: raw_retained_inside_partial_schema
+    overall_status: retained_only
+    importer_effect: raw component map is preserved only
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/particle/BrParticle.java
+
+  - id: particles.events
+    layer: resource_family
+    family: PARTICLE
+    path: particle_effect.events
+    effect_kind: placeholder_schema
+    overall_status: not_implemented
+    importer_effect: placeholder `Events` node exists without event payload modeling
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/particle/BrParticle.java
+
+  - id: localization.family
+    layer: resource_family
+    family: LOCALIZATION
+    path: texts/*.lang
+    effect_kind: parsed_entry_map
+    overall_status: effective_importer_only
+    importer_effect: `.lang` entries parsed into key/value map
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BrLanguageFile.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonAggregate.java
+
+  - id: sounds.index_and_definitions
+    layer: resource_family
+    family:
+      - SOUND_INDEX
+      - SOUND_DEFINITION
+    path:
+      - sounds.json
+      - sounds/sound_definitions.json
+    effect_kind: partial_schema_capture
+    overall_status: effective_importer_only
+    importer_effect: top-level groups/definitions parsed and retained
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BrSoundIndex.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BrSoundDefinitions.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonAggregate.java
+
+  - id: sounds.binary_files
+    layer: resource_family
+    family: SOUND_FILE
+    path: sounds/**/*
+    effect_kind: binary_capture
+    overall_status: effective_importer_only
+    importer_effect: sound binary assets retained in aggregate map
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockBinaryAsset.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonAggregate.java
+
+  - id: texture_indices.family
+    layer: resource_family
+    family: TEXTURE_INDEX
+    path:
+      - textures/item_texture.json
+      - textures/terrain_texture.json
+      - textures/flipbook_textures.json
+      - textures/texture_list.json
+      - blocks.json
+      - biomes_client.json
+    effect_kind: raw_wrapper_storage
+    overall_status: retained_only
+    importer_effect: family is managed and wrapped, but no semantic importer logic found
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BrTextureIndexFile.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonAggregate.java
+
+  - id: texture_metadata.family
+    layer: resource_family
+    family: TEXTURE_METADATA
+    path: textures/**/*.json
+    effect_kind: raw_wrapper_storage
+    overall_status: retained_only
+    importer_effect: family is managed and wrapped, but no semantic importer logic found
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BrTextureMetadataFile.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonAggregate.java
+
+  - id: behavior_entities.family
+    layer: resource_family
+    family: BEHAVIOR_ENTITY
+    path:
+      - minecraft:entity.description.identifier
+      - component_groups
+      - components
+      - events
+    effect_kind: partial_schema_capture_and_identifier_index
+    overall_status: effective_importer_only
+    importer_effect: identifier extracted and files indexed; deep payload remains raw
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BrBehaviorEntityFile.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonAggregate.java
+
+  - id: unmanaged_bp_table_families
+    layer: resource_family
+    family:
+      - ITEM
+      - BLOCK
+      - RECIPE
+      - LOOT_TABLE
+      - SPAWN_RULE
+      - TRADING
+      - FEATURE
+      - FEATURE_RULE
+      - STRUCTURE
+      - SCRIPT
+      - BIOME
+    path: out_of_scope_behavior_families
+    effect_kind: unmanaged_capture
+    overall_status: not_implemented
+    importer_effect: routed to unmanaged resources with outside-scope reason
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockResourceFamily.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonLoader.java
+
+  - id: unmanaged_rp_ui_and_fog
+    layer: resource_family
+    family:
+      - UI
+      - FOG
+      - UNKNOWN_JSON
+      - UNKNOWN_TEXT
+      - UNKNOWN_BINARY
+    path: not_yet_typed_resource_families
+    effect_kind: unmanaged_capture
+    overall_status: not_implemented
+    importer_effect: routed to unmanaged resources with no-typed-schema-yet reason
+    runtime_bridge:
+      kind: no_consumer
+    code_refs:
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockResourceFamily.java
+      - eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BedrockAddonLoader.java
+work_buckets:
+  phase_1_runtime_bridge_existing_root_paths:
+    - client_entity.core_description_fields
+    - attachable.core_fields
+    - animations.family
+    - animation_controllers.family
+    - models.family
+    - materials.family
+    - render_controllers.family
+  phase_1_explicit_bridge_api_done:
+    - client_entity.core_description_fields
+    - attachable.core_fields
+    - animations.family
+    - animation_controllers.family
+    - models.family
+    - materials.family
+    - render_controllers.family
+  phase_2_schema_completion_before_runtime_bridge:
+    - attachable.item_condition_mapping
+    - client_entity.unmodeled_enhancements
+    - textures_png.family
+    - particles.components
+    - particles.events
+    - particles.core_fields
+    - behavior_entities.family
+  phase_3_low_priority_or_warning_only:
+    - manifest.parse_only_fields
+    - manifest.settings
+    - manifest.preview_extra_top_level
+    - localization.family
+    - sounds.index_and_definitions
+    - sounds.binary_files
+    - texture_indices.family
+    - texture_metadata.family

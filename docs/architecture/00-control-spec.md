@@ -2,7 +2,7 @@
 
 ## Scope
 - Apply the actively maintained refactor tracker in `work/main.md`.
-- Keep Eyelib as a bounded multi-project Forge project with one runtime root module and the focused `eyelib-importer` subproject.
+- Keep Eyelib as a bounded multi-project Forge project with one runtime root module plus the focused `eyelib-processor`, `eyelib-importer`, and `eyelib-molang` subprojects.
 - Improve navigability, boundary clarity, and maintainability for both humans and AI.
 
 ## Stage Goals
@@ -12,7 +12,7 @@
 
 ## Non-Goals
 - No full architecture rewrite.
-- No further Gradle module split beyond the current `eyelib-importer` extraction unless a human explicitly asks for it.
+- No further Gradle module split beyond the current `eyelib-processor` / `eyelib-importer` / `eyelib-molang` extraction unless a human explicitly asks for it.
 - No opportunistic renaming of broad package areas without a documented destination.
 - No test-harness invention beyond targeted helper tests when pure Java seams appear.
 
