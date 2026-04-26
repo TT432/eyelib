@@ -1,0 +1,5 @@
+diagnostics:
+  - phase: binder
+    severity: info
+    code: BIND_DEBUG_DEFERRED_NOTE
+    message-contains: ForEachExpr

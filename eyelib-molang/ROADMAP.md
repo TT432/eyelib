@@ -46,8 +46,8 @@ Evidence from the current tree:
 - Current compile path exists: `compiler/MolangCompileHandler.java`, `compiler/MolangCompileVisitor.java`, `compiler/MolangCompileCache.java`, and `compiler/MolangCompilorCacheHandler.java`.
 - Generated parser path exists and remains active: `generated/` plus `compiler/frontend/GeneratedMolangParserFrontend.java`.
 - Additive AST frontend work exists: `compiler/frontend/ast/`, `GeneratedParserBackedAstMolangParserFrontend.java`, and `HandwrittenMolangAstParserFrontend.java`.
-- Corpus/harness work exists in tests: `src/test/java/io/github/tt432/eyelibmolang/compiler/corpus/` and `src/test/resources/io/github/tt432/eyelibmolang/compiler/corpus/phase1/`.
-- Binder work exists: `compiler/binding/` with alias normalization, query projection, invalid-write diagnostics, typed deferred loop break/continue nodes, deferred notes, and normal/strict/debug diagnostic modes.
+- Corpus/harness work exists in tests: `src/test/java/io/github/tt432/eyelibmolang/compiler/corpus/` and `src/test/resources/io/github/tt432/eyelibmolang/compiler/corpus/phase1/`. Phase1 starter corpus now has 33 expression rows (≥30 KR met), covering unary, comparison, for_each, return, member dot-chain, grouping, strings, array-literal reject, and binary-conditional syntax baseline families.
+- Binder work exists: `compiler/binding/` with alias normalization, query projection, invalid-write diagnostics, typed deferred loop break/continue nodes, deferred notes, and normal/strict/debug diagnostic modes. Deferred reason taxonomy now has 5 distinct types: `UNSUPPORTED_IN_THIS_SLICE`, `HOST_SHAPE_DEPENDENT`, `QUERY_VARIANT_SELECTION_DEPENDENT`, `COMPATIBILITY_POLICY_DEPENDENT`, and `DIAGNOSTICS_OVERLAY_OWNED_FOLLOWUP` (≥3 distinct reason types KR met).
 - Mapping ports exist: `mapping/api/` plus built-in mappings in `mapping/MolangMath.java` and `mapping/MolangToplevel.java`.
 
 Known current deferred compatibility fallback:
@@ -63,7 +63,7 @@ Known current deferred compatibility fallback:
 | Phase 0 - Overview and boundaries | `Done / maintain` | `refactor-plan/00-overview-and-boundaries.md`, `docs/index/molang.md`, generated-code policy | Keep boundary docs aligned when ownership changes. |
 | Phase 1 - Corpus and harness | `Current / partial` | corpus loader, linter, harness, parse runner, phase1 resources, corpus tests | Continue using `./gradlew :eyelib-molang:test`; add dedicated runner command only when it exists. |
 | Phase 2 - Parser and AST | `Current / partial` | `compiler/frontend/ast/`, generated-backed AST frontend, handwritten frontend, frontend tests | Keep generated parser path active; parser work must be additive and corpus-backed. |
-| Phase 3 - Binder and diagnostics | `Current / minimal slice implemented` | `compiler/binding/`, `src/test/java/io/github/tt432/eyelibmolang/compiler/binding/MolangBinderTest.java` for typed deferred loop break/continue coverage in normal/strict/debug modes, bind-shape/diagnostics/debug-trace corpus support | Widen binder families through tests; keep unsupported semantics explicit via deferred notes, and keep the typed deferred break/continue lane narrow until broader Phase 3 widening is separately planned. |
+| Phase 3 - Binder and diagnostics | `Current / partial` | `compiler/binding/`, `src/test/java/io/github/tt432/eyelibmolang/compiler/binding/MolangBinderTest.java` for typed deferred loop break/continue coverage in normal/strict/debug modes, alias canonicalization coverage for all four roots (`q/t/v/c`), bind-shape/diagnostics/debug-trace corpus support, 5 deferred reason types (`UNSUPPORTED_IN_THIS_SLICE`, `HOST_SHAPE_DEPENDENT`, `QUERY_VARIANT_SELECTION_DEPENDENT`, `COMPATIBILITY_POLICY_DEPENDENT`, `DIAGNOSTICS_OVERLAY_OWNED_FOLLOWUP`) | Widen binder families through tests; keep unsupported semantics explicit via deferred notes, and keep the typed deferred break/continue lane narrow until broader Phase 3 widening is separately planned. |
 | Phase 4 - Host and query bridge | `Blocked by recorded decisions, contract test slices green` | current `mapping/api/` ports exist, the Phase 4 decision set is recorded, `mapping/MolangHostPublicationDeterminismConflictTest.java` covers host publication determinism plus equal-tie conflict failure, `mapping/MolangCallableDiscoveryRoleContractTest.java` covers callable discovery roles with bounded receiver inference and loud ambiguity failure, `mapping/MolangQueryVariantSelectionMatrixContractTest.java` covers query-variant matrix ordering including explicit default-variant fallback plus equal-specificity/equal-priority loud ambiguity failure, `mapping/MolangQueryBindLinkContractTest.java` and `mapping/MolangCallableBindLinkContractTest.java` cover query and callable bind-link contracts (surface/call-shape preservation, stable ref exposure, required host-role exposure, loud unresolved/invalid failures, and explicit no-winner behavior), and `mapping/MolangAnimationClockTransitionalParityContractTest.java` plus root runtime assertions in `src/test/java/io/github/tt432/eyelib/mc/impl/molang/mapping/MolangQueryAnimationClockRuntimeParityTest.java` + `src/test/java/io/github/tt432/eyelib/client/animation/bedrock/BrAnimationCodecTest.java` cover the animation-clock transitional parity subset (`query.anim_time`, alias `query.life_time`, `query.delta_time`, and default expression path). | Keep broad implementation blocked while winner-selection/specialization and later-phase runtime replacement remain deferred. |
 | Phase 5 - Execution and runtime semantics | `Blocked by Phase 3/4 readiness` | current bytecode compile path exists, replacement execution owner not introduced | Do not let execution semantics hide in cache/cutover work; define required v1 execution rows first. |
 | Phase 6 - Policy, specialization, cache, reporting, cutover | `Blocked / future` | phase plan exists, no cutover evidence yet | Do not remove old compile path before policy, specialization, cache, reporting, downstream parity, and rollback evidence are green. |
@@ -73,7 +73,7 @@ Known current deferred compatibility fallback:
 ### M1 - Keep phase 1 corpus harness reliable
 
 - Preserve stable corpus case IDs, lint errors, result classes, effective diagnostics mode, and effective policy-pack reporting.
-- Keep phase1 corpus resources valid and runnable through `./gradlew :eyelib-molang:test`.
+- Keep phase1 corpus resources valid and runnable through `jetbrain_run_gradle_tasks :eyelib-molang:test`. Starter corpus: 33 rows (≥30 KR ✅), covering unary, comparison, for_each, return, member dot-chain, grouping, strings, array-literal reject, and binary-conditional.
 - Do not promote corpus rows to cutover evidence unless they reference the V1 compatibility matrix in `eyelib-molang/refactor-plan/README.md`.
 
 ### M2 - Widen parser/AST only with corpus-backed slices
@@ -135,29 +135,29 @@ Target thresholds establish what "done" means before phase promotion.
 
 | KR | Threshold | Status |
 |---|---|---|
-| Stable corpus case IDs | 100% phase1 cases have fixed IDs | 🔶 |
-| Corpus linter zero errors | 0 lint errors on phase1 resources | ⬜ |
+| Stable corpus case IDs | 100% phase1 cases have fixed IDs | ✅ |
+| Corpus linter zero errors | 0 lint errors on phase1 resources (valid corpus only; invalid*/ intentional test fixtures excluded) | ✅ |
 | Corpus parse runner | 100% phase1 cases pass parse | ⬜ |
-| Phase1 corpus rows | ≥30 expression rows covering syntax baseline | 🔶 |
+| Phase1 corpus rows | ≥30 expression rows covering syntax baseline | ✅ |
 
 ### Phase 2 — Parser and AST
 
 | KR | Threshold | Status |
 |---|---|---|
 | AST node coverage | All syntax-baseline checklist nodes have explicit AST types | 🔶 |
-| ForEachExpr binder branch | Explicit handler in MolangBinder (not generic else) | ⬜ |
+| ForEachExpr binder branch | Explicit handler in MolangBinder (not generic else) | ✅ |
 | Generated parser parity | 0 regression failures on old compile path | 🔶 |
-| Handwritten frontend coverage | ≥20 acceptance/rejection tests | 🔶 |
+| Handwritten frontend coverage | ≥20 acceptance/rejection tests | ✅ |
 
 ### Phase 3 — Binder and Diagnostics
 
 | KR | Threshold | Status |
 |---|---|---|
-| Alias canonicalization coverage | All 4 alias roots (q/t/v/c) → canonical tested | 🔶 |
-| Deferred reason granularity | ≥3 distinct reason types beyond UNSUPPORTED_IN_THIS_SLICE | ⬜ |
+| Alias canonicalization coverage | All 4 alias roots (q/t/v/c) → canonical tested | ✅ |
+| Deferred reason granularity | ≥3 distinct reason types beyond UNSUPPORTED_IN_THIS_SLICE | ✅ |
 | Invalid-write diagnostics | All write-target errors tested (query/context/unknown) | 🔶 |
-| Strict/debug mode coverage | ≥5 distinct binder families tested per mode | ⬜ |
-| Alias logic deduplication | ≤1 implementation location (shared module) | ⬜ |
+| Strict/debug mode coverage | ≥5 distinct binder families tested per mode | ✅ |
+| Alias logic deduplication | ≤1 implementation location (shared module) | ✅ |
 
 ### Phase 4 — Host and Query Bridge
 

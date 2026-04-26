@@ -37,8 +37,8 @@ class MolangCorpusHarnessTest {
         Path corpusPath = starterCorpusPath();
 
         MolangRunReport report = new MolangCorpusHarness().run(corpusPath);
-        assertEquals(22, report.summary().totalCases());
-        assertEquals(22, report.summary().passCount());
+        assertEquals(36, report.summary().totalCases());
+        assertEquals(36, report.summary().passCount());
         assertEquals(0, report.summary().corpusErrorCount());
         assertEquals(0, report.summary().engineFailureCount());
         assertEquals(0, report.summary().assertionFailureCount());
@@ -53,6 +53,17 @@ class MolangCorpusHarnessTest {
                 "official.ternary.array-index",
                 "official.null-coalesce",
                 "official.struct.arrow",
+                "official.unary.negate-query-time",
+                "official.unary.not-grouped-condition",
+                "official.comparison.range-window",
+                "official.comparison.not-equals-string",
+                "official.return.grouped-sum",
+                "official.control.for-each.entity-counter",
+                "official.member.dot-chain-read",
+                "official.grouping.nested-precedence",
+                "official.strings.ternary-literals",
+                "reject.array-literal.inline",
+                "official.control.binary-conditional.short-form",
                 "reject.unterminated-string",
                 "reject.dangling-dot",
                 "bind.alias.normalize",
@@ -61,11 +72,14 @@ class MolangCorpusHarnessTest {
                 "bind.arrow.preserve",
                 "bind.query.projection",
                 "bind.query.projection.explicit-call",
+                "bind.alias.normalize.t",
                 "bind.invalid-write.context",
                 "bind.invalid-write.context.strict",
                 "bind.deferred.ternary",
                 "bind.loop.deferred.strict",
                 "bind.loop.deferred.debug",
+                "bind.foreach.deferred.strict",
+                "bind.foreach.deferred.debug",
                 "bind.deferred.ternary.strict",
                 "bind.deferred.ternary.debug"
         ), ids);
@@ -77,6 +91,8 @@ class MolangCorpusHarnessTest {
                 .collect(Collectors.toMap(MolangCaseReport::caseId, item -> item));
         assertEquals(MolangDiagnosticsMode.STRICT, casesById.get("bind.loop.deferred.strict").diagnosticsMode());
         assertEquals(MolangDiagnosticsMode.DEBUG, casesById.get("bind.loop.deferred.debug").diagnosticsMode());
+        assertEquals(MolangDiagnosticsMode.STRICT, casesById.get("bind.foreach.deferred.strict").diagnosticsMode());
+        assertEquals(MolangDiagnosticsMode.DEBUG, casesById.get("bind.foreach.deferred.debug").diagnosticsMode());
         assertEquals(MolangDiagnosticsMode.STRICT, casesById.get("bind.deferred.ternary.strict").diagnosticsMode());
         assertEquals(MolangDiagnosticsMode.DEBUG, casesById.get("bind.deferred.ternary.debug").diagnosticsMode());
         assertEquals(MolangDiagnosticsMode.STRICT, casesById.get("bind.alias.normalize.strict").diagnosticsMode());
@@ -86,6 +102,8 @@ class MolangCorpusHarnessTest {
                 .filter(entry -> !Set.of(
                         "bind.loop.deferred.strict",
                         "bind.loop.deferred.debug",
+                        "bind.foreach.deferred.strict",
+                        "bind.foreach.deferred.debug",
                         "bind.deferred.ternary.strict",
                         "bind.deferred.ternary.debug",
                         "bind.alias.normalize.strict",

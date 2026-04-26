@@ -1,5 +1,6 @@
 package io.github.tt432.eyelibmolang.compiler;
 
+import io.github.tt432.eyelibmolang.compiler.common.MolangRootAliasCanonicalizer;
 import io.github.tt432.eyelibmolang.generated.MolangBaseVisitor;
 import io.github.tt432.eyelibmolang.generated.MolangParser;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
@@ -333,21 +334,21 @@ final class MolangExpressionAnalysisVisitor extends MolangBaseVisitor<MolangExpr
     }
 
     private static String rename(String name) {
-        int index = name.indexOf('.');
-        if (index != -1) {
-            return (alias(name.substring(0, index)) + name.substring(index)).toLowerCase(Locale.ROOT);
+        int separator = name.indexOf('.');
+        if (separator != -1) {
+            String canonicalized = MolangRootAliasCanonicalizer.canonicalizeQualifiedNameRoot(name);
+            int canonicalSeparator = canonicalized.indexOf('.');
+            return (alias(canonicalized.substring(0, canonicalSeparator))
+                    + canonicalized.substring(canonicalSeparator)).toLowerCase(Locale.ROOT);
         }
         return name.toLowerCase(Locale.ROOT);
     }
 
     private static String alias(String sourceName) {
-        return switch (sourceName.toLowerCase(Locale.ROOT)) {
-            case "c" -> "context";
-            case "m" -> "math";
-            case "t" -> "temp";
-            case "q" -> "query";
-            case "v" -> "variable";
-            default -> sourceName;
-        };
+        String normalized = sourceName.toLowerCase(Locale.ROOT);
+        if ("m".equals(normalized)) {
+            return "math";
+        }
+        return MolangRootAliasCanonicalizer.canonicalizeRoot(sourceName);
     }
 }

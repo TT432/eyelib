@@ -7,10 +7,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HandwrittenMolangAstParserFrontendTest {
     private static final String SIMPLE_EXPRESSION_CASE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/starter/simple-expression.molangcase";
@@ -142,6 +144,130 @@ class HandwrittenMolangAstParserFrontendTest {
     @Test
     void activeFrontendRemainsGeneratedParserBacked() {
         assertSame(GeneratedParserBackedAstMolangParserFrontend.INSTANCE, MolangParserFrontends.active());
+    }
+
+    @Test
+    void parsesBareIdentifierIntoIdentifierExpr() {
+        var result = parse("variable_name");
+        assertTrue(result.isPresent());
+        MolangAst.ExprSet exprSet = result.orElseThrow();
+        assertInstanceOf(MolangAst.IdentifierExpr.class, exprSet.root());
+        assertEquals("variable_name", ((MolangAst.IdentifierExpr) exprSet.root()).name());
+    }
+
+    @Test
+    void parsesSingleQuotedStringIntoStringLiteralExpr() {
+        var result = parse("'minecraft:pig'");
+        assertTrue(result.isPresent());
+        MolangAst.ExprSet exprSet = result.orElseThrow();
+        assertInstanceOf(MolangAst.StringLiteralExpr.class, exprSet.root());
+        assertEquals("'minecraft:pig'", ((MolangAst.StringLiteralExpr) exprSet.root()).rawText());
+    }
+
+    @Test
+    void parsesCallThenMemberAccessAsPostfixChain() {
+        var result = parse("query.foo(1, 2).bar");
+        assertTrue(result.isPresent());
+        MolangAst.ExprSet exprSet = result.orElseThrow();
+        assertInstanceOf(MolangAst.MemberAccessExpr.class, exprSet.root());
+        var memberAccess = (MolangAst.MemberAccessExpr) exprSet.root();
+        assertEquals("bar", memberAccess.memberName());
+        assertInstanceOf(MolangAst.CallExpr.class, memberAccess.owner());
+    }
+
+    @Test
+    void parsesTwoTopLevelAssignmentsIntoBlockExpr() {
+        var result = parse("a = 1; b = 2;");
+        assertTrue(result.isPresent());
+        MolangAst.ExprSet exprSet = result.orElseThrow();
+        assertInstanceOf(MolangAst.BlockExpr.class, exprSet.root());
+        assertEquals(2, ((MolangAst.BlockExpr) exprSet.root()).statements().size());
+    }
+
+    @Test
+    void parsesAssignmentRightAssociatively() {
+        var result = parse("a = b = 1");
+        assertTrue(result.isPresent());
+        MolangAst.ExprSet exprSet = result.orElseThrow();
+        assertInstanceOf(MolangAst.AssignmentExpr.class, exprSet.root());
+        var outer = (MolangAst.AssignmentExpr) exprSet.root();
+        assertInstanceOf(MolangAst.IdentifierExpr.class, outer.target());
+        assertInstanceOf(MolangAst.AssignmentExpr.class, outer.value());
+    }
+
+    @Test
+    void parsesComparisonWithAddMultiplyPrecedence() {
+        var result = parse("1 + 2 * 3 > 4");
+        assertTrue(result.isPresent());
+        MolangAst.ExprSet exprSet = result.orElseThrow();
+        assertInstanceOf(MolangAst.BinaryExpr.class, exprSet.root());
+        var bin = (MolangAst.BinaryExpr) exprSet.root();
+        assertEquals(">", bin.operator());
+    }
+
+    @Test
+    void parsesNullCoalesceLeftAssociatively() {
+        var result = parse("a ?? b ?? c");
+        assertTrue(result.isPresent());
+        MolangAst.ExprSet exprSet = result.orElseThrow();
+        assertInstanceOf(MolangAst.NullCoalesceExpr.class, exprSet.root());
+        var nc = (MolangAst.NullCoalesceExpr) exprSet.root();
+        assertInstanceOf(MolangAst.NullCoalesceExpr.class, nc.left());
+        assertInstanceOf(MolangAst.IdentifierExpr.class, nc.right());
+    }
+
+    @Test
+    void parsesGroupingInsideMultiply() {
+        var result = parse("(1 + 2) * 3");
+        assertTrue(result.isPresent());
+        MolangAst.ExprSet exprSet = result.orElseThrow();
+        assertInstanceOf(MolangAst.BinaryExpr.class, exprSet.root());
+        var bin = (MolangAst.BinaryExpr) exprSet.root();
+        assertEquals("*", bin.operator());
+        assertInstanceOf(MolangAst.GroupingExpr.class, bin.left());
+    }
+
+    @Test
+    void parsesTopLevelReturnAsBlockExprWithReturnStmt() {
+        var result = parse("return 1");
+        assertTrue(result.isPresent());
+        MolangAst.ExprSet exprSet = result.orElseThrow();
+        assertInstanceOf(MolangAst.BlockExpr.class, exprSet.root());
+        var block = (MolangAst.BlockExpr) exprSet.root();
+        assertEquals(1, block.statements().size());
+        assertInstanceOf(MolangAst.ReturnStmt.class, block.statements().get(0));
+    }
+
+    @Test
+    void parsesForEachWithReturnInBody() {
+        var result = parse("for_each(t.e, query.list(), {return t.e;})");
+        assertTrue(result.isPresent());
+        MolangAst.ExprSet exprSet = result.orElseThrow();
+        assertInstanceOf(MolangAst.ForEachExpr.class, exprSet.root());
+        var forEach = (MolangAst.ForEachExpr) exprSet.root();
+        assertTrue(forEach.body().statements().stream().anyMatch(s -> s instanceof MolangAst.ReturnStmt));
+    }
+
+    @Test
+    void rejectsMissingSemicolonBetweenTopLevelStatements() {
+        var result = parse("a = 1 b = 2");
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void rejectsLoopMissingClosingParenthesis() {
+        var result = parse("loop(2, {a = 1;}");
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void rejectsUnterminatedStringLiteral() {
+        var result = parse("'abc");
+        assertTrue(result.isEmpty());
+    }
+
+    private Optional<MolangAst.ExprSet> parse(String source) {
+        return HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source);
     }
 
     private String loadCaseSource(String resourcePath) throws IOException {

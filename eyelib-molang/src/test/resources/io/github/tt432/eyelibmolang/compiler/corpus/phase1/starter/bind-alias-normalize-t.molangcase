@@ -1,0 +1,9 @@
+---
+id: bind.alias.normalize.t
+layer: bind
+evidence: internal
+assertions:
+  - parse-accept
+  - bind-normalize
+---
+t.foo = 1;

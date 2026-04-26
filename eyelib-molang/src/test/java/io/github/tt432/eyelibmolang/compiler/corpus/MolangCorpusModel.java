@@ -27,8 +27,10 @@ final class MolangCorpusModel {
         PARSE_ACCEPT("parse-accept"),
         PARSE_REJECT("parse-reject"),
         BIND_NORMALIZE("bind-normalize"),
+        BIND_DIAGNOSTICS("bind-diagnostics"),
         COMPAT_BEHAVIOR("compat-behavior"),
-        DEFERRED_NOTE("deferred-note");
+        DEFERRED_NOTE("deferred-note"),
+        DEBUG_TRACE("debug-trace");
 
         private final String serialized;
 
@@ -51,6 +53,7 @@ final class MolangCorpusModel {
     }
 
     enum MolangCorpusLayer {
+        STARTER,
         OFFICIAL,
         COMMUNITY,
         INTERNAL,
@@ -63,6 +66,7 @@ final class MolangCorpusModel {
                 return Optional.empty();
             }
             return switch (value.trim().toLowerCase(Locale.ROOT)) {
+                case "starter" -> Optional.of(STARTER);
                 case "official" -> Optional.of(OFFICIAL);
                 case "community" -> Optional.of(COMMUNITY);
                 case "internal" -> Optional.of(INTERNAL);
@@ -206,6 +210,9 @@ final class MolangCorpusModel {
                     case BIND_NORMALIZE -> {
                         phases.add(MolangPhase.PARSE);
                         phases.add(MolangPhase.BIND);
+                    }
+                    case BIND_DIAGNOSTICS, DEBUG_TRACE -> {
+                        // marker-only assertions
                     }
                     case COMPAT_BEHAVIOR -> {
                         phases.add(MolangPhase.PARSE);

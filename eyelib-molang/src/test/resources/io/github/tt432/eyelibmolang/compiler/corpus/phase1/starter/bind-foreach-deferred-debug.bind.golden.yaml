@@ -1,0 +1,13 @@
+root: BoundBlockExpr
+contains:
+  - BoundForEachExpr
+  - foreach:deferred-reason:UNSUPPORTED_IN_THIS_SLICE
+  - BoundMemberAccessExpr
+  - id:temp
+  - BoundQueryAccessExpr
+  - query:PROPERTY
+  - BoundBlockExpr
+  - BoundAssignmentExpr
+  - assign-root:variable
+  - assign-writable:true
+  - access:dot

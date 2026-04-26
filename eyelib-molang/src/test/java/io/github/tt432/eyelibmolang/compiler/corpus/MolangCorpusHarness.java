@@ -950,6 +950,13 @@ final class MolangCorpusHarness {
             collectBindTokens(loopExpr.body(), contains);
             return;
         }
+        if (expression instanceof BoundMolang.BoundForEachExpr forEachExpr) {
+            contains.add("foreach:deferred-reason:" + forEachExpr.deferredReason().name());
+            collectBindTokens(forEachExpr.variable(), contains);
+            collectBindTokens(forEachExpr.collection(), contains);
+            collectBindTokens(forEachExpr.body(), contains);
+            return;
+        }
         if (expression instanceof BoundMolang.BoundUnaryExpr unaryExpr) {
             collectBindTokens(unaryExpr.expression(), contains);
             return;

@@ -36,7 +36,7 @@ final class GeneratedMolangAstBuilder {
 
         for (int i = 0; i < expressions.size() - 1; i++) {
             MolangAst.Expr expression = visitExpr(expressions.get(i));
-            statements.add(new MolangAst.ExprStmt(expression.span(), expression));
+            statements.add(coerceStatement(expression));
         }
 
         MolangAst.Expr trailingExpression = visitExpr(expressions.get(expressions.size() - 1));
@@ -44,7 +44,7 @@ final class GeneratedMolangAstBuilder {
             SourceSpan returnSpan = SourceSpan.covering(span(context.RETURN().getSymbol()), trailingExpression.span());
             statements.add(new MolangAst.ReturnStmt(returnSpan, trailingExpression));
         } else {
-            statements.add(new MolangAst.ExprStmt(trailingExpression.span(), trailingExpression));
+            statements.add(coerceStatement(trailingExpression));
         }
 
         return new MolangAst.BlockExpr(span(context), statements);
@@ -171,7 +171,20 @@ final class GeneratedMolangAstBuilder {
         if (expression instanceof MolangAst.BlockExpr blockExpr) {
             return new MolangAst.BlockExpr(span, blockExpr.statements());
         }
-        return new MolangAst.BlockExpr(span, List.of(new MolangAst.ExprStmt(expression.span(), expression)));
+        return new MolangAst.BlockExpr(span, List.of(coerceStatement(expression)));
+    }
+
+    private MolangAst.Stmt coerceStatement(MolangAst.Expr expression) {
+        if (expression instanceof MolangAst.IdentifierExpr identifierExpr) {
+            if ("break".equals(identifierExpr.name())) {
+                return new MolangAst.BreakStmt(identifierExpr.span());
+            }
+            if ("continue".equals(identifierExpr.name())) {
+                return new MolangAst.ContinueStmt(identifierExpr.span());
+            }
+        }
+
+        return new MolangAst.ExprStmt(expression.span(), expression);
     }
 
     private MolangAst.Expr visitSignedAtom(MolangParser.SignedAtomContext context) {
@@ -210,8 +223,20 @@ final class GeneratedMolangAstBuilder {
             return parseIdentifierChain(variableContext.ID().getSymbol());
         }
         if (context instanceof MolangParser.FunctionContext functionContext) {
+            String functionName = functionContext.ID().getText();
+            List<MolangParser.ExprContext> functionArguments = functionContext.expr();
+            if ("for_each".equals(functionName) && functionArguments.size() == 3) {
+                MolangParser.ExprContext bodyArgument = functionArguments.get(2);
+                return new MolangAst.ForEachExpr(
+                        span(functionContext),
+                        visitExpr(functionArguments.get(0)),
+                        visitExpr(functionArguments.get(1)),
+                        coerceBlockExpr(visitExpr(bodyArgument), span(bodyArgument))
+                );
+            }
+
             List<MolangAst.Expr> arguments = new ArrayList<>();
-            for (MolangParser.ExprContext expressionContext : functionContext.expr()) {
+            for (MolangParser.ExprContext expressionContext : functionArguments) {
                 arguments.add(visitExpr(expressionContext));
             }
             return new MolangAst.CallExpr(

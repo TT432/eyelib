@@ -8,6 +8,10 @@ public record BindDeferredNote(
         String sourceFamily
 ) {
     public enum Reason {
-        UNSUPPORTED_IN_THIS_SLICE
+        UNSUPPORTED_IN_THIS_SLICE,
+        HOST_SHAPE_DEPENDENT,
+        QUERY_VARIANT_SELECTION_DEPENDENT,
+        COMPATIBILITY_POLICY_DEPENDENT,
+        DIAGNOSTICS_OVERLAY_OWNED_FOLLOWUP
     }
 }

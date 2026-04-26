@@ -6,6 +6,7 @@ import io.github.dmlloyd.classfile.Label;
 import io.github.dmlloyd.classfile.TypeKind;
 import io.github.dmlloyd.classfile.extras.constant.ConstantUtils;
 import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelibmolang.compiler.common.MolangRootAliasCanonicalizer;
 import io.github.tt432.eyelibmolang.generated.MolangBaseVisitor;
 import io.github.tt432.eyelibmolang.generated.MolangParser;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
@@ -53,21 +54,21 @@ public class MolangCompileVisitor extends MolangBaseVisitor<MolangCompileVisitor
     }
 
     private static String alias(String sourceName) {
-        return switch (sourceName.toLowerCase(Locale.ROOT)) {
-            case "c" -> "context";
-            case "m" -> "math";
-            case "t" -> "temp";
-            case "q" -> "query";
-            case "v" -> "variable";
-            default -> sourceName;
-        };
+        String normalized = sourceName.toLowerCase(Locale.ROOT);
+        if ("m".equals(normalized)) {
+            return "math";
+        }
+        return MolangRootAliasCanonicalizer.canonicalizeRoot(sourceName);
     }
 
     private static String rename(String name) {
-        int i = name.indexOf(".");
+        int separator = name.indexOf('.');
 
-        if (i != -1) {
-            return (alias(name.substring(0, i)) + name.substring(i)).toLowerCase(Locale.ROOT);
+        if (separator != -1) {
+            String canonicalized = MolangRootAliasCanonicalizer.canonicalizeQualifiedNameRoot(name);
+            int canonicalSeparator = canonicalized.indexOf('.');
+            return (alias(canonicalized.substring(0, canonicalSeparator))
+                    + canonicalized.substring(canonicalSeparator)).toLowerCase(Locale.ROOT);
         }
 
         return name.toLowerCase(Locale.ROOT);

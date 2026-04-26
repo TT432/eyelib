@@ -1,0 +1,5 @@
+diagnostics:
+  - phase: binder
+    severity: warning
+    code: BIND_STRICT_UNSUPPORTED_DEFERRED
+    message-contains: ForEachExpr

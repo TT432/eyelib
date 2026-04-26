@@ -2,6 +2,7 @@ package io.github.tt432.eyelibmolang.compiler.binding;
 
 import io.github.tt432.eyelibmolang.compiler.binding.link.MolangQueryBindLinkContract;
 import io.github.tt432.eyelibmolang.compiler.binding.link.MolangCallableBindLinkContract;
+import io.github.tt432.eyelibmolang.compiler.common.MolangRootAliasCanonicalizer;
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.SourceSpan;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
@@ -10,17 +11,9 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 
 public final class MolangBinder {
-    private static final Map<String, String> ROOT_ALIASES = Map.of(
-            "q", "query",
-            "t", "temp",
-            "v", "variable",
-            "c", "context"
-    );
-
     public BindResult bind(MolangAst.ExprSet ast) {
         return bind(ast, BindDiagnosticsMode.NORMAL);
     }
@@ -130,6 +123,8 @@ public final class MolangBinder {
             boundExpr = new BoundMolang.BoundBlockExpr(blockExpr.span(), statements);
         } else if (expr instanceof MolangAst.LoopExpr loopExpr) {
             boundExpr = bindLoopExpr(loopExpr, state);
+        } else if (expr instanceof MolangAst.ForEachExpr forEachExpr) {
+            boundExpr = bindForEachExpr(forEachExpr, state);
         } else if (expr instanceof MolangAst.TernaryConditionalExpr ternaryConditionalExpr) {
             boundExpr = deferUnsupportedExpr(state, ternaryConditionalExpr, "TernaryConditionalExpr");
         } else if (expr instanceof MolangAst.BinaryConditionalExpr binaryConditionalExpr) {
@@ -192,6 +187,26 @@ public final class MolangBinder {
                 loopExpr.span(),
                 loopExpr.iterationCountRawText(),
                 new BoundMolang.BoundBlockExpr(loopExpr.body().span(), statements),
+                BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
+        );
+    }
+
+    private BoundMolang.BoundExpr bindForEachExpr(MolangAst.ForEachExpr forEachExpr, BindingState state) {
+        addDeferredNote(state, forEachExpr.span(), BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, "ForEachExpr");
+
+        BoundMolang.BoundExpr variable = bindExpr(forEachExpr.variable(), state, true);
+        BoundMolang.BoundExpr collection = bindExpr(forEachExpr.collection(), state, true);
+
+        List<BoundMolang.BoundStmt> statements = new ArrayList<>();
+        for (MolangAst.Stmt statement : forEachExpr.body().statements()) {
+            statements.add(bindStmt(statement, state));
+        }
+
+        return new BoundMolang.BoundForEachExpr(
+                forEachExpr.span(),
+                variable,
+                collection,
+                new BoundMolang.BoundBlockExpr(forEachExpr.body().span(), statements),
                 BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
         );
     }
@@ -357,7 +372,7 @@ public final class MolangBinder {
 
     private String normalizeIdentifier(String name, SourceSpan span, BindingState state) {
         String normalized = name.toLowerCase(Locale.ROOT);
-        String canonical = ROOT_ALIASES.getOrDefault(normalized, normalized);
+        String canonical = MolangRootAliasCanonicalizer.canonicalizeRoot(name);
         if (state.diagnosticsMode == BindDiagnosticsMode.DEBUG && !canonical.equals(normalized)) {
             state.diagnostics.add(new BindDiagnostic(
                     span,

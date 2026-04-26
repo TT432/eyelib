@@ -108,6 +108,15 @@ public final class BoundMolang {
     ) implements BoundExpr {
     }
 
+    public record BoundForEachExpr(
+            SourceSpan span,
+            BoundExpr variable,
+            BoundExpr collection,
+            BoundBlockExpr body,
+            BindDeferredNote.Reason deferredReason
+    ) implements BoundExpr {
+    }
+
     public record BoundExprStmt(SourceSpan span, BoundExpr expression) implements BoundStmt {
     }
 
