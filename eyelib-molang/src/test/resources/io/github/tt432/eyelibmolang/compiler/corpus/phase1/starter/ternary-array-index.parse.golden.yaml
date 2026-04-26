@@ -1,0 +1,5 @@
+root: OneExpr
+contains:
+  - TernaryConditionalOperator
+  - EqualsOperator
+  - AccessArray

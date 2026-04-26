@@ -1,0 +1,10 @@
+---
+id: bind.invalid-write.context.strict
+layer: bind
+evidence: internal
+mode: strict
+assertions:
+  - parse-accept
+  - bind-normalize
+---
+c.foo = 1

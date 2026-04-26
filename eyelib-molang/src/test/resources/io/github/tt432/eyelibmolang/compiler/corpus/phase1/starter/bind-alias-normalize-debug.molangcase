@@ -1,0 +1,10 @@
+---
+id: bind.alias.normalize.debug
+layer: bind
+evidence: internal
+mode: debug
+assertions:
+  - parse-accept
+  - bind-normalize
+---
+v.buff_timer = (v.buff_timer ?? 0) + q.delta_time;

@@ -1,0 +1,5 @@
+root: BoundQueryAccessExpr
+contains:
+  - query:PROPERTY
+  - id:query
+  - access:dot

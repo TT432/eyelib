@@ -1,0 +1,12 @@
+---
+id: reject.dangling-dot
+layer: reject
+evidence: internal
+assertions:
+  - parse-reject
+expected-diagnostics:
+  - phase: LEXER
+    severity: ERROR
+    code: LEXER_SYNTAX_ERROR
+---
+variable.

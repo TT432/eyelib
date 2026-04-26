@@ -1,0 +1,10 @@
+---
+id: invalid.debug-trace.malformed
+layer: bind
+evidence: internal
+mode: debug
+assertions:
+  - parse-accept
+  - bind-normalize
+---
+loop(3, {variable.counter = variable.counter + 1;})

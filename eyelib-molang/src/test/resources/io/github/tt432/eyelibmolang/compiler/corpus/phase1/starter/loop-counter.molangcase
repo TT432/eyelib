@@ -1,0 +1,10 @@
+---
+id: official.control.loop-counter
+layer: official
+evidence: official
+assertions:
+  - parse-accept
+  - bind-normalize
+  - deferred-note
+---
+loop(3, {variable.counter = variable.counter + 1;})

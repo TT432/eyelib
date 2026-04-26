@@ -1,0 +1,8 @@
+---
+id: invalid.parse-golden.malformed
+layer: internal
+evidence: internal
+assertions:
+  - parse-accept
+---
+math.sin(query.anim_time)

@@ -1,0 +1,8 @@
+root: BoundBlockExpr
+contains:
+  - assign-root:variable
+  - assign-writable:true
+  - id:variable
+  - id:query
+  - query:PROPERTY
+  - access:dot

@@ -1,0 +1,11 @@
+---
+id: bind.loop.deferred.debug
+layer: bind
+evidence: internal
+mode: debug
+assertions:
+  - parse-accept
+  - bind-normalize
+  - deferred-note
+---
+loop(3, {variable.counter = variable.counter + 1;})

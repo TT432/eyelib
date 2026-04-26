@@ -1,0 +1,9 @@
+---
+id: bind.arrow.preserve
+layer: bind
+evidence: internal
+assertions:
+  - parse-accept
+  - bind-normalize
+---
+v.out = v.another_mob_set_elsewhere->v.location;

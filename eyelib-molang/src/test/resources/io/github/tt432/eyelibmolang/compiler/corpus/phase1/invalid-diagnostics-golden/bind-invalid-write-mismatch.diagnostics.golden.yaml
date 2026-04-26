@@ -1,0 +1,4 @@
+diagnostics:
+  - phase: binder
+    severity: error
+    code: BIND_INVALID_WRITE_TARGET

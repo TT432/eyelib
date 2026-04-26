@@ -1,0 +1,8 @@
+---
+id: community.aliases.delta-time
+layer: community
+evidence: community
+assertions:
+  - parse-accept
+---
+v.buff_timer = (v.buff_timer ?? 0) + q.delta_time;

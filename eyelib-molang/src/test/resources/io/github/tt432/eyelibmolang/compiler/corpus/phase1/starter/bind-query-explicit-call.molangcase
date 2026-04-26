@@ -1,0 +1,9 @@
+---
+id: bind.query.projection.explicit-call
+layer: bind
+evidence: internal
+assertions:
+  - parse-accept
+  - bind-normalize
+---
+q.foo(1)

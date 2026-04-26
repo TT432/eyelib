@@ -1,0 +1,12 @@
+---
+id: invalid.parse-golden.without-parse-accept
+layer: reject
+evidence: internal
+assertions:
+  - parse-reject
+expected-diagnostics:
+  - phase: LEXER
+    severity: ERROR
+    code: LEXER_SYNTAX_ERROR
+---
+variable.

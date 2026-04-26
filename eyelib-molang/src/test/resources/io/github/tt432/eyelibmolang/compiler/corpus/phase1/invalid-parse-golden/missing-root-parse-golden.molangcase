@@ -1,0 +1,8 @@
+---
+id: invalid.parse-golden.missing-root
+layer: internal
+evidence: internal
+assertions:
+  - parse-accept
+---
+q.delta_time

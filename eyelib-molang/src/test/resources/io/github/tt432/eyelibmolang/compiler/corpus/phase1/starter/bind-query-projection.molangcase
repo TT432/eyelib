@@ -1,0 +1,9 @@
+---
+id: bind.query.projection
+layer: bind
+evidence: internal
+assertions:
+  - parse-accept
+  - bind-normalize
+---
+q.life_time

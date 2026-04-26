@@ -1,0 +1,7 @@
+diagnostics:
+  - phase: binder
+    severity: info
+    code: BIND_DEBUG_ALIAS_NORMALIZED
+  - phase: binder
+    severity: info
+    code: BIND_DEBUG_QUERY_PROJECTION

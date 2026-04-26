@@ -1,11 +1,12 @@
 package io.github.tt432.eyelibmolang;
 
 import com.mojang.serialization.Codec;
+import io.github.tt432.eyelibmolang.compiler.MolangConstantExpressionEvaluator;
 import io.github.tt432.eyelibmolang.compiler.MolangCompileHandler;
+import io.github.tt432.eyelibmolang.type.MolangFloat;
 import io.github.tt432.eyelibmolang.type.MolangNull;
 import io.github.tt432.eyelibmolang.type.MolangObject;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
-import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,9 +29,12 @@ public record MolangValue(
         MolangObject apply(MolangScope scope);
     }
 
-    @AllArgsConstructor
     public static class ConstMolangFunction implements MolangFunction {
-        MolangObject molangObject;
+        private final MolangObject molangObject;
+
+        public ConstMolangFunction(MolangObject molangObject) {
+            this.molangObject = molangObject;
+        }
 
         @Override
         public MolangObject apply(MolangScope scope) {
@@ -43,11 +47,21 @@ public record MolangValue(
     }
 
     public MolangValue(String context) {
-        this(context, wrap(MolangCompileHandler.compile(context)));
+        this(context, resolveFunction(context));
+    }
+
+    public static MolangValue constant(String context, MolangObject molangObject) {
+        return new MolangValue(context, new ConstMolangFunction(molangObject));
     }
 
     private static MolangFunction wrap(MolangCompiledFunction method) {
         return method::apply;
+    }
+
+    private static MolangFunction resolveFunction(String context) {
+        return MolangConstantExpressionEvaluator.tryEvaluate(context)
+                .<MolangFunction>map(ConstMolangFunction::new)
+                .orElseGet(() -> wrap(MolangCompileHandler.compile(context)));
     }
 
     public static final float TRUE = 1;
@@ -61,7 +75,7 @@ public record MolangValue(
     public static final MolangValue FALSE_VALUE = ZERO;
 
     public static MolangValue getConstant(float value) {
-        return MOLANG_VALUE_CONSTANT_POOL.computeIfAbsent(value, k -> new MolangValue(String.valueOf(k)));
+        return MOLANG_VALUE_CONSTANT_POOL.computeIfAbsent(value, k -> constant(String.valueOf(k), MolangFloat.valueOf(k)));
     }
 
     public static final Codec<MolangValue> CODEC = MolangCodecs.singleOrListStrings()

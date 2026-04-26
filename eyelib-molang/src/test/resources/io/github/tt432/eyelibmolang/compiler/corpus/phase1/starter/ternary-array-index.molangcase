@@ -1,0 +1,8 @@
+---
+id: official.ternary.array-index
+layer: official
+evidence: official
+assertions:
+  - parse-accept
+---
+query.get_name == 'Toast' ? Texture.toast : Array.skins[query.variant]

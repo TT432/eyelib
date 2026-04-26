@@ -1,0 +1,5 @@
+root: BoundQueryAccessExpr
+contains:
+  - query:EXPLICIT_CALL
+  - id:query
+  - access:dot

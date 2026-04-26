@@ -7,9 +7,8 @@ import io.github.dmlloyd.classfile.extras.reflect.AccessFlag;
 import io.github.dmlloyd.classfile.extras.reflect.ClassFileFormatVersion;
 import io.github.tt432.eyelibmolang.MolangCompiledFunction;
 import io.github.tt432.eyelibmolang.MolangUncompilableException;
-import io.github.tt432.eyelibmolang.generated.MolangLexer;
-import io.github.tt432.eyelibmolang.generated.MolangParser;
-import io.github.tt432.eyelibmolang.type.MolangFloat;
+import io.github.tt432.eyelibmolang.compiler.frontend.MolangParserFrontendResult;
+import io.github.tt432.eyelibmolang.compiler.frontend.MolangParserFrontends;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.antlr.v4.runtime.*;
@@ -79,11 +78,6 @@ public class MolangCompileHandler {
         String normalizedContent = content.trim();
 
         if (normalizedContent.isBlank()) return MolangCompiledFunction.NULL;
-        try {
-            MolangFloat constant = MolangFloat.valueOf(Float.parseFloat(normalizedContent));
-            return scope -> constant;
-        } catch (NumberFormatException ignored) {
-        }
 
         MolangCompiledFunction cached = cache.getCachedFunction(normalizedContent);
         if (cached != null) {
@@ -211,18 +205,19 @@ public class MolangCompileHandler {
                                         methodBuilder -> methodBuilder.withCode(codeBuilder -> {
                                             visitor.startVisitor(codeBuilder);
 
-                                            MolangParser molangParser = new MolangParser(
-                                                    new CommonTokenStream(
-                                                            new MolangLexer(CharStreams.fromString(molangString)))
+                                            MolangParserFrontendResult parseResult = MolangParserFrontends.active().parseExprSet(
+                                                    molangString,
+                                                    lexer -> {
+                                                    },
+                                                    parser -> parser.addErrorListener(new BaseErrorListener() {
+                                                        @Override
+                                                        public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+                                                            LOGGER.error("parsing: {} with error:{}", molangString, e.getMessage());
+                                                        }
+                                                    })
                                             );
-                                            molangParser.addErrorListener(new BaseErrorListener() {
-                                                @Override
-                                                public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-                                                    LOGGER.error("parsing: {} with error:{}", molangString, e.getMessage());
-                                                }
-                                            });
 
-                                            visitor.visit(molangParser.exprSet());
+                                            visitor.visit(parseResult.exprSet());
 
                                             codeBuilder.return_(TypeKind.REFERENCE);
                                         })));

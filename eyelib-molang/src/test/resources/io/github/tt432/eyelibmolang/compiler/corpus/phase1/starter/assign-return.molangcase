@@ -1,0 +1,8 @@
+---
+id: official.complex.assign-return
+layer: official
+evidence: official
+assertions:
+  - parse-accept
+---
+variable.is_blinking = 1; variable.return_from_blink = query.life_time; return query.all_animations_finished && (query.life_time > (variable.return_from_blink ?? 0.2));

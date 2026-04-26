@@ -1,0 +1,161 @@
+package io.github.tt432.eyelibmolang.compiler.frontend;
+
+import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
+
+class HandwrittenMolangAstParserFrontendTest {
+    private static final String SIMPLE_EXPRESSION_CASE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/starter/simple-expression.molangcase";
+    private static final String ASSIGN_RETURN_CASE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/starter/assign-return.molangcase";
+    private static final String LOOP_COUNTER_CASE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/starter/loop-counter.molangcase";
+
+    @Test
+    void parsesSimpleExpressionCaseIntoCallWithMultiplyArgument() throws IOException {
+        String source = loadCaseSource(SIMPLE_EXPRESSION_CASE);
+
+        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+
+        MolangAst.CallExpr functionCall = assertInstanceOf(MolangAst.CallExpr.class, ast.root());
+        MolangAst.MemberAccessExpr callee = assertInstanceOf(MolangAst.MemberAccessExpr.class, functionCall.callee());
+        assertEquals("sin", callee.memberName());
+        assertEquals(1, functionCall.arguments().size());
+
+        MolangAst.BinaryExpr multiply = assertInstanceOf(MolangAst.BinaryExpr.class, functionCall.arguments().get(0));
+        assertEquals("*", multiply.operator());
+        assertInstanceOf(MolangAst.MemberAccessExpr.class, multiply.left());
+
+        MolangAst.NumberLiteralExpr number = assertInstanceOf(MolangAst.NumberLiteralExpr.class, multiply.right());
+        assertEquals("1.23", number.rawText());
+    }
+
+    @Test
+    void parsesAssignReturnCaseIntoBlockWithReturnAndGroupedNullCoalesce() throws IOException {
+        String source = loadCaseSource(ASSIGN_RETURN_CASE);
+
+        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+
+        MolangAst.BlockExpr block = assertInstanceOf(MolangAst.BlockExpr.class, ast.root());
+        assertEquals(3, block.statements().size());
+
+        MolangAst.ExprStmt firstStatement = assertInstanceOf(MolangAst.ExprStmt.class, block.statements().get(0));
+        MolangAst.AssignmentExpr firstAssignment = assertInstanceOf(MolangAst.AssignmentExpr.class, firstStatement.expression());
+        MolangAst.MemberAccessExpr firstTarget = assertInstanceOf(MolangAst.MemberAccessExpr.class, firstAssignment.target());
+        assertEquals("is_blinking", firstTarget.memberName());
+
+        MolangAst.ExprStmt secondStatement = assertInstanceOf(MolangAst.ExprStmt.class, block.statements().get(1));
+        MolangAst.AssignmentExpr secondAssignment = assertInstanceOf(MolangAst.AssignmentExpr.class, secondStatement.expression());
+        MolangAst.MemberAccessExpr secondTarget = assertInstanceOf(MolangAst.MemberAccessExpr.class, secondAssignment.target());
+        assertEquals("return_from_blink", secondTarget.memberName());
+
+        MolangAst.ReturnStmt returnStmt = assertInstanceOf(MolangAst.ReturnStmt.class, block.statements().get(2));
+        MolangAst.BinaryExpr andExpr = assertInstanceOf(MolangAst.BinaryExpr.class, returnStmt.expression());
+        assertEquals("&&", andExpr.operator());
+
+        MolangAst.GroupingExpr groupedComparison = assertInstanceOf(MolangAst.GroupingExpr.class, andExpr.right());
+        MolangAst.BinaryExpr comparison = assertInstanceOf(MolangAst.BinaryExpr.class, groupedComparison.expression());
+        assertEquals(">", comparison.operator());
+
+        MolangAst.GroupingExpr groupedNullCoalesce = assertInstanceOf(MolangAst.GroupingExpr.class, comparison.right());
+        MolangAst.NullCoalesceExpr nullCoalesce = assertInstanceOf(MolangAst.NullCoalesceExpr.class, groupedNullCoalesce.expression());
+        assertInstanceOf(MolangAst.MemberAccessExpr.class, nullCoalesce.left());
+        MolangAst.NumberLiteralExpr fallback = assertInstanceOf(MolangAst.NumberLiteralExpr.class, nullCoalesce.right());
+        assertEquals("0.2", fallback.rawText());
+    }
+
+    @Test
+    void parsesLoopCaseIntoLoopExprWithCounterAssignmentBody() throws IOException {
+        String source = loadCaseSource(LOOP_COUNTER_CASE);
+
+        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+
+        MolangAst.LoopExpr loop = assertInstanceOf(MolangAst.LoopExpr.class, ast.root());
+        assertEquals("3", loop.iterationCountRawText());
+        assertEquals(1, loop.body().statements().size());
+
+        MolangAst.ExprStmt bodyStatement = assertInstanceOf(MolangAst.ExprStmt.class, loop.body().statements().get(0));
+        MolangAst.AssignmentExpr assignment = assertInstanceOf(MolangAst.AssignmentExpr.class, bodyStatement.expression());
+        MolangAst.MemberAccessExpr target = assertInstanceOf(MolangAst.MemberAccessExpr.class, assignment.target());
+        assertEquals("counter", target.memberName());
+
+        MolangAst.BinaryExpr increment = assertInstanceOf(MolangAst.BinaryExpr.class, assignment.value());
+        assertEquals("+", increment.operator());
+    }
+
+    @Test
+    void parsesForEachAsDedicatedControlForm() {
+        String source = "for_each(t.pig, query.get_nearby_entities(4, 'minecraft:pig'), {v.x = v.x + 1;})";
+
+        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+
+        MolangAst.ForEachExpr forEach = assertInstanceOf(MolangAst.ForEachExpr.class, ast.root());
+        MolangAst.MemberAccessExpr variable = assertInstanceOf(MolangAst.MemberAccessExpr.class, forEach.variable());
+        assertEquals("pig", variable.memberName());
+        MolangAst.CallExpr collection = assertInstanceOf(MolangAst.CallExpr.class, forEach.collection());
+        assertEquals(2, collection.arguments().size());
+        assertEquals(1, forEach.body().statements().size());
+    }
+
+    @Test
+    void parsesBreakAndContinueAsControlFlowStatements() {
+        String source = "loop(2, {break; continue;})";
+
+        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+
+        MolangAst.LoopExpr loop = assertInstanceOf(MolangAst.LoopExpr.class, ast.root());
+        assertEquals(2, loop.body().statements().size());
+        assertInstanceOf(MolangAst.BreakStmt.class, loop.body().statements().get(0));
+        assertInstanceOf(MolangAst.ContinueStmt.class, loop.body().statements().get(1));
+    }
+
+    @Test
+    void parsesLogicalAndWithHigherPrecedenceThanNullCoalesce() {
+        String source = "query.a && query.b ?? query.c";
+
+        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+
+        MolangAst.NullCoalesceExpr nullCoalesce = assertInstanceOf(MolangAst.NullCoalesceExpr.class, ast.root());
+        MolangAst.BinaryExpr andExpr = assertInstanceOf(MolangAst.BinaryExpr.class, nullCoalesce.left());
+        assertEquals("&&", andExpr.operator());
+        assertInstanceOf(MolangAst.MemberAccessExpr.class, nullCoalesce.right());
+    }
+
+    @Test
+    void parsesControlKeywordsCaseInsensitively() {
+        String source = "LOOP(2, {BREAK; Continue;})";
+
+        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+
+        MolangAst.LoopExpr loop = assertInstanceOf(MolangAst.LoopExpr.class, ast.root());
+        assertEquals(2, loop.body().statements().size());
+        assertInstanceOf(MolangAst.BreakStmt.class, loop.body().statements().get(0));
+        assertInstanceOf(MolangAst.ContinueStmt.class, loop.body().statements().get(1));
+    }
+
+    @Test
+    void activeFrontendRemainsGeneratedParserBacked() {
+        assertSame(GeneratedParserBackedAstMolangParserFrontend.INSTANCE, MolangParserFrontends.active());
+    }
+
+    private String loadCaseSource(String resourcePath) throws IOException {
+        String fileText;
+        try (InputStream stream = Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream(resourcePath), resourcePath)) {
+            fileText = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+        }
+
+        int firstMarker = fileText.indexOf("---");
+        int secondMarker = fileText.indexOf("---", firstMarker + 3);
+        if (firstMarker < 0 || secondMarker < 0) {
+            throw new IOException("Malformed corpus case file: " + resourcePath);
+        }
+
+        return fileText.substring(secondMarker + 3).trim();
+    }
+}

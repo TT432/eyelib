@@ -1,0 +1,8 @@
+---
+id: invalid.reject-missing-diagnostics
+layer: reject
+evidence: internal
+assertions:
+  - parse-reject
+---
+variable.

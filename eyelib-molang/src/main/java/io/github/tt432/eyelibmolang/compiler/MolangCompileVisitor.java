@@ -102,8 +102,8 @@ public class MolangCompileVisitor extends MolangBaseVisitor<MolangCompileVisitor
 
     @Override
     public CompileContext visitThis(MolangParser.ThisContext ctx) {
-        // todo
-//        return valueOf("0F");
+        // Phase 5 execution semantics for `this` are intentionally deferred.
+        // Keep the current compile-path compatibility fallback explicit: lower `this` to zero.
         floatZero();
         return CompileContext.FLOAT;
     }

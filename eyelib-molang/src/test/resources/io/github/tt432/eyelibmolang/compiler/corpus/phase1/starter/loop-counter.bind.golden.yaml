@@ -1,0 +1,8 @@
+root: BoundLoopExpr
+contains:
+  - loop-iteration-count-raw:3
+  - BoundBlockExpr
+  - BoundAssignmentExpr
+  - assign-root:variable
+  - assign-writable:true
+  - deferred-note-reason:UNSUPPORTED_IN_THIS_SLICE

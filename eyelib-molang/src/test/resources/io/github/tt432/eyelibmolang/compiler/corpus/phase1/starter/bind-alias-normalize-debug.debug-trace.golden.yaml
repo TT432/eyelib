@@ -1,0 +1,4 @@
+trace:
+  - diagnostic-code:BIND_DEBUG_ALIAS_NORMALIZED
+  - diagnostic-code:BIND_DEBUG_QUERY_PROJECTION
+  - diagnostic-severity:INFO

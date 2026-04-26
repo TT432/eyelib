@@ -1,0 +1,6 @@
+root: BoundBlockExpr
+contains:
+  - assign-root:variable
+  - assign-writable:true
+  - access:arrow
+  - access:dot

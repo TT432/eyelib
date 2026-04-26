@@ -1,0 +1,7 @@
+root: BoundAssignmentExpr
+contains:
+  - assign-root:context
+  - assign-writable:false
+  - id:context
+diagnostic-codes:
+  - BIND_INVALID_WRITE_TARGET_ROOT

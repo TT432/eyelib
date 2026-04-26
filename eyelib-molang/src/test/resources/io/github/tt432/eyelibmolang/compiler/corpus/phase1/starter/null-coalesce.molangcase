@@ -1,0 +1,8 @@
+---
+id: official.null-coalesce
+layer: official
+evidence: official
+assertions:
+  - parse-accept
+---
+variable.rolled_up_time = variable.is_rolled_up ? ((variable.rolled_up_time ?? 0.0) + query.delta_time) : 0.0;

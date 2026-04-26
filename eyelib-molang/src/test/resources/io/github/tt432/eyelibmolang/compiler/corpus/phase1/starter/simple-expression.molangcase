@@ -1,0 +1,8 @@
+---
+id: official.simple-expression.sin
+layer: official
+evidence: official
+assertions:
+  - parse-accept
+---
+math.sin(query.anim_time * 1.23)

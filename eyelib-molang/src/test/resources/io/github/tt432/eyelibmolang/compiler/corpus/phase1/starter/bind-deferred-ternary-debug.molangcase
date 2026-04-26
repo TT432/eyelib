@@ -1,0 +1,11 @@
+---
+id: bind.deferred.ternary.debug
+layer: bind
+evidence: internal
+mode: debug
+assertions:
+  - parse-accept
+  - bind-normalize
+  - deferred-note
+---
+query.get_name == 'Toast' ? Texture.toast : Array.skins[query.variant]

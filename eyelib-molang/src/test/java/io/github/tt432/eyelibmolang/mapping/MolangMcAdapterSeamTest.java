@@ -71,7 +71,7 @@ class MolangMcAdapterSeamTest {
         public static final float COUNTER = 3;
 
         @MolangFunction(value = "sample", alias = "sample_alias")
-        public static float sample(MolangScope scope) {
+        public static float sample(@MolangFunction.Role(MolangFunction.ParameterRole.SPECIAL_ENGINE_ARG) MolangScope scope) {
             return COUNTER;
         }
     }

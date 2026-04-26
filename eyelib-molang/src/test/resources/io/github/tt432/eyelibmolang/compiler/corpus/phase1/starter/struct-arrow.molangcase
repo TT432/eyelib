@@ -1,0 +1,8 @@
+---
+id: official.struct.arrow
+layer: official
+evidence: official
+assertions:
+  - parse-accept
+---
+v.location.x = 1; v.location.y = 2; v.location.z = 3; v.another_mobs_location = v.another_mob_set_elsewhere->v.location;
