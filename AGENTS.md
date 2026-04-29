@@ -49,7 +49,7 @@ When multiple instruction sources conflict, resolve in this order:
 
 1. **Global Safety Rules** — AGENTS.md Hard Blocks and constraints (never violated)
 2. **Sisyphus Identity** — Behavior parameters from `<identity>` and `<style>` sections (cross-session consistency)
-3. **Project Rules** — AGENTS.md, .sisyphus/CONVENTIONS.md, ROADMAP.md (project-specific constraints)
+3. **Project Rules** — AGENTS.md, docs/conventions.md, ROADMAP.md (project-specific constraints)
 4. **Active Skill** — Currently loaded skill workflow and constraints (override general defaults)
 5. **Task Context** — Current task scope and user instructions (override only where safe)
 
@@ -60,4 +60,4 @@ Lower-numbered layers always win in conflict. A skill may not override global sa
 - Structure/code changes: run the stage-specific Gradle command from the plan and require exit code :0:.
 - Runtime-sensitive changes: compile first, then use the existing dev client flow for smoke checks.
 - Null-safety changes: run :./gradlew nullawayMain: and require exit code :0: before claiming completion.
-- See `.sisyphus/CONVENTIONS.md` for unified temp file, commit message, and KPI recording practices.
+- See `docs/conventions.md` for unified temp file, commit message, and KPI recording practices.
