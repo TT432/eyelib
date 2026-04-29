@@ -6,6 +6,7 @@ import io.github.tt432.eyelibmolang.compiler.binding.BindResult;
 import io.github.tt432.eyelibmolang.compiler.binding.MolangBinder;
 import io.github.tt432.eyelibmolang.compiler.cache.MolangCompileCache;
 import io.github.tt432.eyelibmolang.compiler.frontend.HandwrittenMolangAstParserFrontend;
+import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelibmolang.type.MolangFloat;
 import io.github.tt432.eyelibmolang.type.MolangNull;
 import io.github.tt432.eyelibmolang.type.MolangObject;
@@ -13,6 +14,7 @@ import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -26,8 +28,19 @@ public record MolangValue(
 ) {
     private static final Logger log = LoggerFactory.getLogger(MolangValue.class);
 
-    private static final MolangCompileCache compileCache = new MolangCompileCache();
+    private static final MolangCompileCache compileCache = new MolangCompileCache(
+            MolangMappingTree.INSTANCE,
+            resolveCacheDirectory()
+    );
     private static final MolangBinder binder = new MolangBinder();
+
+    private static Path resolveCacheDirectory() {
+        String prop = System.getProperty("eyelib.molang.cache.dir");
+        if (prop != null && !prop.isEmpty()) {
+            return Path.of(prop);
+        }
+        return Path.of(".cache", "eyelib", "compile");
+    }
 
     @FunctionalInterface
     public interface MolangFunction {
