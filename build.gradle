@@ -138,20 +138,19 @@ obfuscation {
 }
 
 dependencies {
-    implementation project(':eyelib-processor')
+    api project(':eyelib-processor')
     modImplementation project(':eyelib-processor')
     jarJar project(':eyelib-processor')
-    implementation project(':eyelib-importer')
+    api project(':eyelib-importer')
     modImplementation project(':eyelib-importer')
     jarJar project(':eyelib-importer')
+    api project(':eyelib-molang')
     modImplementation project(':eyelib-molang')
     jarJar project(':eyelib-molang')
 
     compileOnly("maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha")
 
     jarJar additionalRuntimeClasspath(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))
-// https://mvnrepository.com/artifact/com.h2database/h2
-    jarJar additionalRuntimeClasspath(implementation('com.h2database:h2:2.4.240'))
     compileOnly 'org.jspecify:jspecify:1.0.0'
     errorprone 'com.google.errorprone:error_prone_core:2.42.0'
     errorprone 'com.uber.nullaway:nullaway:0.12.10'

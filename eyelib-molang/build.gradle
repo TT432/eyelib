@@ -43,7 +43,6 @@ legacyForge {
 
 dependencies {
     implementation 'io.github.dmlloyd:jdk-classfile-backport:24.0'
-    implementation 'com.h2database:h2:2.4.240'
 
     compileOnly 'org.jspecify:jspecify:1.0.0'
 
