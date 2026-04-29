@@ -23,7 +23,7 @@ final class BrClipExecutor {
             animationStartFeedback.run();
         }
 
-        scope.getOwner().replace(BrAnimationEntry.Data.class, data);
+        scope.getHostContext().put(BrAnimationEntry.Data.class, data);
         var animTimeUpdate = entry.anim_time_update().eval(scope);
         BrAnimationPlaybackState.TickResult tickResult = data.owner().playbackState().tick(entry.loop(), entry.animationLength(), ticks, animTimeUpdate);
         data.owner().syncStateFields();

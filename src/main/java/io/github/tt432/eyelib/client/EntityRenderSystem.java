@@ -393,13 +393,13 @@ public class EntityRenderSystem {
             ce.scripts().ifPresent(s -> cap.getAnimationComponent().setup(ce.animations(), s.animate()));
 
             if (cap.getScope() != null) {
-                cap.getScope().getOwner().replace(BrClientEntity.class, ce);
+                cap.getScope().getHostContext().put(BrClientEntity.class, ce);
             }
         } else {
             components.clear();
             renderControllerComponent.clear();
             if (cap.getScope() != null) {
-                cap.getScope().getOwner().remove(BrClientEntity.class);
+                cap.getScope().getHostContext().remove(BrClientEntity.class);
             }
         }
 

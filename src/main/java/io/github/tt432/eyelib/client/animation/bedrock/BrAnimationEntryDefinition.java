@@ -69,8 +69,9 @@ public record BrAnimationEntryDefinition(
     }
 
     public static AnimationEffect<BrEffectsKeyFrameDefinition> soundEffect(TreeMap<Float, List<BrEffectsKeyFrameDefinition>> data) {
-        return new AnimationEffect<>(data, (scope, ticks, frame) ->
-                scope.getOwner().onHiveOwners(Entity.class, BrClientEntity.class, (e, clientEntity) -> {
+        return new AnimationEffect<>(data, (scope, ticks, frame) -> {
+            scope.getHostContext().get(Entity.class).ifPresent(e ->
+                scope.getHostContext().get(BrClientEntity.class).ifPresent(clientEntity -> {
                     String s = clientEntity.sound_effects().get(frame.effect());
 
                     if (s != null) {
@@ -81,27 +82,31 @@ public record BrAnimationEntryDefinition(
                                     e.getX(), e.getY(), e.getZ(), soundEvent, e.getSoundSource(), 1, 1);
                         }
                     }
-                    return Boolean.TRUE;
-                }));
+                })
+            );
+        });
     }
 
     public static AnimationEffect<BrEffectsKeyFrameDefinition> particleEffect(TreeMap<Float, List<BrEffectsKeyFrameDefinition>> data) {
-        return new AnimationEffect<>(data, (scope, ticks, frame) ->
-                scope.getOwner().onHiveOwners(Entity.class, BrAnimationEntry.Data.class, BrClientEntity.class,
-                        (entity, animationData, clientEntity) -> {
-                            String s = clientEntity.particle_effects().get(frame.effect());
+        return new AnimationEffect<>(data, (scope, ticks, frame) -> {
+            scope.getHostContext().get(Entity.class).ifPresent(entity ->
+                scope.getHostContext().get(BrAnimationEntry.Data.class).ifPresent(animationData ->
+                    scope.getHostContext().get(BrClientEntity.class).ifPresent(clientEntity -> {
+                        String s = clientEntity.particle_effects().get(frame.effect());
 
-                            if (s != null) {
-                                BrParticle brParticle = ParticleLookup.get(ResourceLocations.of(s));
-                                if (brParticle != null) {
-                                    String uuid = UUID.randomUUID().toString();
-                                    BrParticleEmitter emitter = new BrParticleEmitter(brParticle, scope, entity.level(), new Vector3f());
-                                    animationData.owner().particles().add(new RuntimeParticlePlayData(uuid, emitter, frame.locator().orElse(null), ticks));
-                                    ParticleSpawnService.spawnEmitter(uuid, emitter);
-                                }
+                        if (s != null) {
+                            BrParticle brParticle = ParticleLookup.get(ResourceLocations.of(s));
+                            if (brParticle != null) {
+                                String uuid = UUID.randomUUID().toString();
+                                BrParticleEmitter emitter = new BrParticleEmitter(brParticle, scope, entity.level(), new Vector3f());
+                                animationData.owner().particles().add(new RuntimeParticlePlayData(uuid, emitter, frame.locator().orElse(null), ticks));
+                                ParticleSpawnService.spawnEmitter(uuid, emitter);
                             }
-                            return Boolean.TRUE;
-                        }));
+                        }
+                    })
+                )
+            );
+        });
     }
 
     public static AnimationEffect<MolangValue> timelineEffect(TreeMap<Float, List<MolangValue>> data) {

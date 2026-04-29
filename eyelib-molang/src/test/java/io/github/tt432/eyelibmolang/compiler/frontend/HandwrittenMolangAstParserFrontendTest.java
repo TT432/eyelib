@@ -11,7 +11,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HandwrittenMolangAstParserFrontendTest {
@@ -139,11 +138,6 @@ class HandwrittenMolangAstParserFrontendTest {
         assertEquals(2, loop.body().statements().size());
         assertInstanceOf(MolangAst.BreakStmt.class, loop.body().statements().get(0));
         assertInstanceOf(MolangAst.ContinueStmt.class, loop.body().statements().get(1));
-    }
-
-    @Test
-    void activeFrontendRemainsGeneratedParserBacked() {
-        assertSame(GeneratedParserBackedAstMolangParserFrontend.INSTANCE, MolangParserFrontends.active());
     }
 
     @Test

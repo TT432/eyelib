@@ -2,18 +2,29 @@ package io.github.tt432.eyelibmolang.compiler.frontend;
 
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.SourceSpan;
+import io.github.tt432.eyelibmolang.generated.MolangLexer;
+import io.github.tt432.eyelibmolang.generated.MolangParser;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Small handwritten AST frontend used for phase-scoped coverage while the generated parser remains active.
  */
-public final class HandwrittenMolangAstParserFrontend {
+public final class HandwrittenMolangAstParserFrontend implements MolangParserFrontend {
     public static final HandwrittenMolangAstParserFrontend INSTANCE = new HandwrittenMolangAstParserFrontend();
 
     private HandwrittenMolangAstParserFrontend() {
+    }
+
+    @Override
+    public MolangParserFrontendResult parseExprSet(
+            String source,
+            Consumer<MolangLexer> lexerConfigurator,
+            Consumer<MolangParser> parserConfigurator) {
+        return new MolangParserFrontendResult(null, null, parseExprSetAst(source));
     }
 
     public Optional<MolangAst.ExprSet> parseExprSetAst(String source) {
@@ -89,13 +100,37 @@ public final class HandwrittenMolangAstParserFrontend {
         }
 
         private MolangAst.Expr parseAssignment() {
-            MolangAst.Expr left = parseNullCoalesce();
+            MolangAst.Expr left = parseTernary();
             if (!match(TokenKind.EQUAL)) {
                 return left;
             }
 
             MolangAst.Expr right = parseAssignment();
             return new MolangAst.AssignmentExpr(SourceSpan.covering(left.span(), right.span()), left, right);
+        }
+
+        private MolangAst.Expr parseTernary() {
+            MolangAst.Expr condition = parseNullCoalesce();
+            if (!match(TokenKind.QUESTION)) {
+                return condition;
+            }
+
+            MolangAst.Expr whenTrue = parseExpression();
+            if (match(TokenKind.COLON)) {
+                MolangAst.Expr whenFalse = parseExpression();
+                return new MolangAst.TernaryConditionalExpr(
+                        SourceSpan.covering(condition.span(), whenFalse.span()),
+                        condition,
+                        whenTrue,
+                        whenFalse
+                );
+            }
+
+            return new MolangAst.BinaryConditionalExpr(
+                    SourceSpan.covering(condition.span(), whenTrue.span()),
+                    condition,
+                    whenTrue
+            );
         }
 
         private MolangAst.Expr parseNullCoalesce() {
@@ -119,7 +154,7 @@ public final class HandwrittenMolangAstParserFrontend {
 
         private MolangAst.Expr parseComparison() {
             MolangAst.Expr expression = parseAdd();
-            while (match(TokenKind.GREATER)) {
+            while (match(TokenKind.GREATER, TokenKind.EQUAL_EQUAL, TokenKind.BANG_EQUAL)) {
                 Token operator = previous();
                 MolangAst.Expr right = parseAdd();
                 expression = new MolangAst.BinaryExpr(SourceSpan.covering(expression.span(), right.span()), operator.lexeme, expression, right);
@@ -129,7 +164,7 @@ public final class HandwrittenMolangAstParserFrontend {
 
         private MolangAst.Expr parseAdd() {
             MolangAst.Expr expression = parseMultiply();
-            while (match(TokenKind.PLUS)) {
+            while (match(TokenKind.PLUS, TokenKind.MINUS)) {
                 Token operator = previous();
                 MolangAst.Expr right = parseMultiply();
                 expression = new MolangAst.BinaryExpr(SourceSpan.covering(expression.span(), right.span()), operator.lexeme, expression, right);
@@ -138,13 +173,22 @@ public final class HandwrittenMolangAstParserFrontend {
         }
 
         private MolangAst.Expr parseMultiply() {
-            MolangAst.Expr expression = parsePostfix();
-            while (match(TokenKind.STAR)) {
+            MolangAst.Expr expression = parseUnary();
+            while (match(TokenKind.STAR, TokenKind.SLASH)) {
                 Token operator = previous();
-                MolangAst.Expr right = parsePostfix();
+                MolangAst.Expr right = parseUnary();
                 expression = new MolangAst.BinaryExpr(SourceSpan.covering(expression.span(), right.span()), operator.lexeme, expression, right);
             }
             return expression;
+        }
+
+        private MolangAst.Expr parseUnary() {
+            if (match(TokenKind.MINUS, TokenKind.BANG)) {
+                Token operator = previous();
+                MolangAst.Expr expression = parseUnary();
+                return new MolangAst.UnaryExpr(SourceSpan.covering(span(operator), expression.span()), operator.lexeme, expression);
+            }
+            return parsePostfix();
         }
 
         private MolangAst.Expr parsePostfix() {
@@ -154,6 +198,19 @@ public final class HandwrittenMolangAstParserFrontend {
                 if (match(TokenKind.DOT)) {
                     Token member = consume(TokenKind.IDENTIFIER, "Expected member name after '.'.");
                     expression = new MolangAst.MemberAccessExpr(SourceSpan.covering(expression.span(), span(member)), expression, member.lexeme);
+                    continue;
+                }
+
+                if (match(TokenKind.ARROW)) {
+                    Token owner = consume(TokenKind.IDENTIFIER, "Expected owner root after '->'.");
+                    consume(TokenKind.DOT, "Expected '.' after arrow owner.");
+                    Token member = consume(TokenKind.IDENTIFIER, "Expected member name after arrow owner.");
+                    MolangAst.MemberAccessExpr right = new MolangAst.MemberAccessExpr(
+                            SourceSpan.covering(span(owner), span(member)),
+                            new MolangAst.IdentifierExpr(span(owner), owner.lexeme),
+                            member.lexeme
+                    );
+                    expression = new MolangAst.ArrowAccessExpr(SourceSpan.covering(expression.span(), span(member)), expression, right);
                     continue;
                 }
 
@@ -168,6 +225,13 @@ public final class HandwrittenMolangAstParserFrontend {
 
                     SourceSpan callSpan = SourceSpan.covering(expression.span(), span(rightParen));
                     expression = new MolangAst.CallExpr(callSpan, expression, arguments);
+                    continue;
+                }
+
+                if (match(TokenKind.LEFT_BRACKET)) {
+                    MolangAst.Expr index = parseExpression();
+                    Token rightBracket = consume(TokenKind.RIGHT_BRACKET, "Expected ']' after index expression.");
+                    expression = new MolangAst.IndexExpr(SourceSpan.covering(expression.span(), span(rightBracket)), expression, index);
                     continue;
                 }
 
@@ -186,6 +250,9 @@ public final class HandwrittenMolangAstParserFrontend {
             if (match(TokenKind.IDENTIFIER)) {
                 Token identifier = previous();
                 String normalizedIdentifier = identifier.lexeme.toLowerCase(java.util.Locale.ROOT);
+                if ("this".equals(normalizedIdentifier)) {
+                    return new MolangAst.ThisExpr(span(identifier));
+                }
                 if ("loop".equals(normalizedIdentifier) && check(TokenKind.LEFT_PAREN)) {
                     return parseLoopControlForm(identifier);
                 }
@@ -251,12 +318,14 @@ public final class HandwrittenMolangAstParserFrontend {
             throw error(message);
         }
 
-        private boolean match(TokenKind kind) {
-            if (!check(kind)) {
-                return false;
+        private boolean match(TokenKind... kinds) {
+            for (TokenKind kind : kinds) {
+                if (check(kind)) {
+                    advance();
+                    return true;
+                }
             }
-            advance();
-            return true;
+            return false;
         }
 
         private boolean check(TokenKind kind) {
@@ -421,6 +490,15 @@ public final class HandwrittenMolangAstParserFrontend {
             if (match("??")) {
                 return token(TokenKind.QUESTION_QUESTION, "??", startIndex, startLine, startColumn, 2);
             }
+            if (match("->")) {
+                return token(TokenKind.ARROW, "->", startIndex, startLine, startColumn, 2);
+            }
+            if (match("==")) {
+                return token(TokenKind.EQUAL_EQUAL, "==", startIndex, startLine, startColumn, 2);
+            }
+            if (match("!=")) {
+                return token(TokenKind.BANG_EQUAL, "!=", startIndex, startLine, startColumn, 2);
+            }
 
             char c = source.charAt(index);
             return switch (c) {
@@ -428,13 +506,20 @@ public final class HandwrittenMolangAstParserFrontend {
                 case ')' -> token(TokenKind.RIGHT_PAREN, ")", startIndex, startLine, startColumn, 1);
                 case '{' -> token(TokenKind.LEFT_BRACE, "{", startIndex, startLine, startColumn, 1);
                 case '}' -> token(TokenKind.RIGHT_BRACE, "}", startIndex, startLine, startColumn, 1);
+                case '[' -> token(TokenKind.LEFT_BRACKET, "[", startIndex, startLine, startColumn, 1);
+                case ']' -> token(TokenKind.RIGHT_BRACKET, "]", startIndex, startLine, startColumn, 1);
                 case ',' -> token(TokenKind.COMMA, ",", startIndex, startLine, startColumn, 1);
                 case ';' -> token(TokenKind.SEMICOLON, ";", startIndex, startLine, startColumn, 1);
                 case '.' -> token(TokenKind.DOT, ".", startIndex, startLine, startColumn, 1);
                 case '+' -> token(TokenKind.PLUS, "+", startIndex, startLine, startColumn, 1);
+                case '-' -> token(TokenKind.MINUS, "-", startIndex, startLine, startColumn, 1);
                 case '*' -> token(TokenKind.STAR, "*", startIndex, startLine, startColumn, 1);
+                case '/' -> token(TokenKind.SLASH, "/", startIndex, startLine, startColumn, 1);
                 case '>' -> token(TokenKind.GREATER, ">", startIndex, startLine, startColumn, 1);
                 case '=' -> token(TokenKind.EQUAL, "=", startIndex, startLine, startColumn, 1);
+                case '!' -> token(TokenKind.BANG, "!", startIndex, startLine, startColumn, 1);
+                case '?' -> token(TokenKind.QUESTION, "?", startIndex, startLine, startColumn, 1);
+                case ':' -> token(TokenKind.COLON, ":", startIndex, startLine, startColumn, 1);
                 default -> throw new ParseException("Unsupported character: '" + c + "' at index " + index);
             };
         }
@@ -499,15 +584,25 @@ public final class HandwrittenMolangAstParserFrontend {
         RIGHT_PAREN,
         LEFT_BRACE,
         RIGHT_BRACE,
+        LEFT_BRACKET,
+        RIGHT_BRACKET,
         COMMA,
         SEMICOLON,
         DOT,
         PLUS,
+        MINUS,
         STAR,
+        SLASH,
         GREATER,
         EQUAL,
+        EQUAL_EQUAL,
+        BANG,
+        BANG_EQUAL,
         AND_AND,
+        QUESTION,
         QUESTION_QUESTION,
+        COLON,
+        ARROW,
         EOF
     }
 

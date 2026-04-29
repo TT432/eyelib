@@ -32,8 +32,8 @@ final class BrControllerExecutor {
         if (currState == null) currState = switchState(controller, ticks, scope, data, animations, controller.initialState());
         if (currState == null) return;
 
-        scope.getOwner().replace(BrAnimationController.Data.class, data);
-        scope.getOwner().replace(BrAnimationController.class, controller);
+        scope.getHostContext().put(BrAnimationController.Data.class, data);
+        scope.getHostContext().put(BrAnimationController.class, controller);
 
         for (Map.Entry<String, io.github.tt432.eyelibmolang.MolangValue> entry : currState.transitions().entrySet()) {
             if (entry.getValue().evalAsBool(scope)) {
@@ -47,7 +47,7 @@ final class BrControllerExecutor {
             }
         }
 
-        scope.getOwner().replace(BrAcStateDefinition.class, currState);
+        scope.getHostContext().put(BrAcStateDefinition.class, currState);
         blend(animations, infos, data, scope, data.getLastState(), currState, multiplier,
                 ticks - data.getStartTick(), effects, animationStartFeedback);
         effects.particles.add(data.owner().particles());
@@ -71,20 +71,21 @@ final class BrControllerExecutor {
         }
 
         currState.onEntry().eval(scope);
-        scope.getOwner().onHiveOwners(Entity.class, BrClientEntity.class, (entity, clientEntity) -> {
-            for (BrAcParticleEffectDefinition particleEffect : currState.particleEffects()) {
-                String uuid = UUID.randomUUID().toString();
-                particleEffect.effect().map(clientEntity.particle_effects()::get).ifPresent(effect -> {
-                    BrParticle particle = ParticleLookup.get(effect);
-                    if (particle != null) {
-                        BrParticleEmitter emitter = new BrParticleEmitter(particle, scope, entity.level(), entity.position().toVector3f());
-                        ParticleSpawnService.spawnEmitter(uuid, emitter);
-                        data.owner().particles().add(new RuntimeParticlePlayData(uuid, emitter, particleEffect.locator().orElse(null), ticks));
-                    }
-                });
-            }
-            return Boolean.TRUE;
-        });
+        scope.getHostContext().get(Entity.class).ifPresent(entity ->
+            scope.getHostContext().get(BrClientEntity.class).ifPresent(clientEntity -> {
+                for (BrAcParticleEffectDefinition particleEffect : currState.particleEffects()) {
+                    String uuid = UUID.randomUUID().toString();
+                    particleEffect.effect().map(clientEntity.particle_effects()::get).ifPresent(effect -> {
+                        BrParticle particle = ParticleLookup.get(effect);
+                        if (particle != null) {
+                            BrParticleEmitter emitter = new BrParticleEmitter(particle, scope, entity.level(), entity.position().toVector3f());
+                            ParticleSpawnService.spawnEmitter(uuid, emitter);
+                            data.owner().particles().add(new RuntimeParticlePlayData(uuid, emitter, particleEffect.locator().orElse(null), ticks));
+                        }
+                    });
+                }
+            })
+        );
 
         data.setCurrState(currState);
         data.setStartTick(ticks);

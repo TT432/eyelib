@@ -74,11 +74,14 @@ public class RenderData<T> {
         return Optional.empty();
     }
 
+    @SuppressWarnings("unchecked")
     public void init(T owner) {
         this.owner = owner;
         scope = new MolangScope();
-        scope.setOwner(this);
-        scope.setOwner(this.owner);
+        scope.getHostContext().put(RenderData.class, this);
+        if (owner != null) {
+            scope.getHostContext().put((Class<T>) owner.getClass(), owner);
+        }
 
         scope.set("variable.scale", 1);
     }

@@ -28,7 +28,7 @@ public record EmitterShapeEntityAABB(
 
     @Override
     public EvalVector3f getEmitPosition(BrParticleEmitter emitter) {
-        return scope -> scope.getOwner().ownerAs(Entity.class).map(e -> {
+        return scope -> scope.getHostContext().get(Entity.class).map(e -> {
             AABB aabb = e.getBoundingBox();
             return Shapes.getRandomPointInAABB(emitter.getRandom(), surfaceOnly,
                     aabb.getCenter().toVector3f(),

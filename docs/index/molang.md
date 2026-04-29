@@ -21,3 +21,7 @@
 ## Hotspots
 - `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/`
 - `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/compiler/`
+- `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/compiler/cache/`
+- `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/compiler/diagnostic/`
+- `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/MolangCompilerImpl.java`
+- `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/MolangBytecodeEmitter.java`

@@ -39,7 +39,7 @@ class MolangQueryAnimationClockRuntimeParityTest {
         });
         entry.tickAnimation(data, Map.of(), scope, 9F, 1F, ModelRuntimeData.EMPTY, new AnimationEffects(), () -> {
         });
-        scope.setOwner(data);
+        scope.getHostContext().put(BrAnimationEntry.Data.class, data);
 
         float animTime = evaluateRuntimeQuery("query.anim_time", scope);
         float lifeTime = evaluateRuntimeQuery("query.life_time", scope);

@@ -1,13 +1,8 @@
 package io.github.tt432.eyelibmolang.compiler.binding;
 
-import io.github.tt432.eyelibmolang.compiler.binding.link.MolangQueryBindLinkContract;
-import io.github.tt432.eyelibmolang.compiler.binding.link.MolangCallableBindLinkContract;
 import io.github.tt432.eyelibmolang.compiler.common.MolangRootAliasCanonicalizer;
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.SourceSpan;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
-import org.jspecify.annotations.Nullable;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -17,22 +12,17 @@ public final class MolangBinder {
     public BindResult bind(MolangAst.ExprSet ast) {
         return bind(ast, BindDiagnosticsMode.NORMAL);
     }
-
     public BindResult bind(MolangAst.ExprSet ast, BindDiagnosticsMode diagnosticsMode) {
         BindingState state = new BindingState(diagnosticsMode);
         BoundMolang.BoundExpr root = bindExpr(ast.root(), state, true);
         return new BindResult(
                 new BoundMolang.BoundExprSet(ast.span(), root),
                 state.diagnostics,
-                state.deferredNotes,
-                state.queryBindLinkRequests,
-                state.callableBindLinkRequests
+                state.deferredNotes
         );
     }
-
     private BoundMolang.BoundExpr bindExpr(MolangAst.Expr expr, BindingState state, boolean allowQueryProjection) {
         BoundMolang.BoundExpr boundExpr;
-
         if (expr instanceof MolangAst.UnknownExpr unknownExpr) {
             boundExpr = new BoundMolang.BoundUnknownExpr(unknownExpr.span(), unknownExpr.text());
         } else if (expr instanceof MolangAst.IdentifierExpr identifierExpr) {
@@ -86,7 +76,6 @@ public final class MolangBinder {
                     bindExpr(callExpr.callee(), state, false),
                     arguments
             );
-            maybeAddCallableBindLinkRequest(callBoundExpr, state);
             boundExpr = callBoundExpr;
         } else if (expr instanceof MolangAst.IndexExpr indexExpr) {
             boundExpr = new BoundMolang.BoundIndexExpr(
@@ -103,10 +92,10 @@ public final class MolangBinder {
         } else if (expr instanceof MolangAst.AssignmentExpr assignmentExpr) {
             BoundMolang.BoundExpr target = bindExpr(assignmentExpr.target(), state, true);
             BoundMolang.BoundExpr value = bindExpr(assignmentExpr.value(), state, true);
-            String targetRoot = leftMostRoot(unwrapQueryAccess(target)).orElse(null);
-            boolean writableTarget = isWritableTarget(targetRoot, target);
+            String targetRoot = AssignmentValidator.leftMostRoot(AssignmentValidator.unwrapQueryAccess(target)).orElse(null);
+            boolean writableTarget = AssignmentValidator.isWritableTarget(targetRoot, target);
             if (!writableTarget) {
-                reportInvalidWriteTarget(state, assignmentExpr, targetRoot, target);
+                AssignmentValidator.reportInvalidWriteTarget(state, assignmentExpr, targetRoot, target);
             }
             boundExpr = new BoundMolang.BoundAssignmentExpr(
                     assignmentExpr.span(),
@@ -132,11 +121,10 @@ public final class MolangBinder {
         } else {
             boundExpr = deferUnsupportedExpr(state, expr, expr.getClass().getSimpleName());
         }
-
         if (!allowQueryProjection) {
             return boundExpr;
         }
-        return projectQueryAccess(boundExpr, state);
+        return QueryProjector.projectQueryAccess(boundExpr, state);
     }
 
     private BoundMolang.BoundStmt bindStmt(MolangAst.Stmt statement, BindingState state) {
@@ -177,12 +165,10 @@ public final class MolangBinder {
 
     private BoundMolang.BoundExpr bindLoopExpr(MolangAst.LoopExpr loopExpr, BindingState state) {
         addDeferredNote(state, loopExpr.span(), BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, "LoopExpr");
-
         List<BoundMolang.BoundStmt> statements = new ArrayList<>();
         for (MolangAst.Stmt statement : loopExpr.body().statements()) {
             statements.add(bindStmt(statement, state));
         }
-
         return new BoundMolang.BoundLoopExpr(
                 loopExpr.span(),
                 loopExpr.iterationCountRawText(),
@@ -193,15 +179,12 @@ public final class MolangBinder {
 
     private BoundMolang.BoundExpr bindForEachExpr(MolangAst.ForEachExpr forEachExpr, BindingState state) {
         addDeferredNote(state, forEachExpr.span(), BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, "ForEachExpr");
-
         BoundMolang.BoundExpr variable = bindExpr(forEachExpr.variable(), state, true);
         BoundMolang.BoundExpr collection = bindExpr(forEachExpr.collection(), state, true);
-
         List<BoundMolang.BoundStmt> statements = new ArrayList<>();
         for (MolangAst.Stmt statement : forEachExpr.body().statements()) {
             statements.add(bindStmt(statement, state));
         }
-
         return new BoundMolang.BoundForEachExpr(
                 forEachExpr.span(),
                 variable,
@@ -209,165 +192,6 @@ public final class MolangBinder {
                 new BoundMolang.BoundBlockExpr(forEachExpr.body().span(), statements),
                 BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
         );
-    }
-
-    private BoundMolang.BoundExpr projectQueryAccess(BoundMolang.BoundExpr expression, BindingState state) {
-        if (expression instanceof BoundMolang.BoundQueryAccessExpr) {
-            return expression;
-        }
-
-        Optional<String> root = leftMostRoot(expression);
-        if (root.isEmpty() || !"query".equals(root.get())) {
-            return expression;
-        }
-
-        BoundMolang.BoundQueryAccessExpr.QueryProjectionKind projectionKind = BoundMolang.BoundQueryAccessExpr.QueryProjectionKind.PROPERTY;
-        if (expression instanceof BoundMolang.BoundCallExpr callExpr
-            && leftMostRoot(callExpr.callee()).filter("query"::equals).isPresent()) {
-            projectionKind = BoundMolang.BoundQueryAccessExpr.QueryProjectionKind.EXPLICIT_CALL;
-        }
-
-        if (state.diagnosticsMode == BindDiagnosticsMode.DEBUG) {
-            state.diagnostics.add(new BindDiagnostic(
-                    expression.span(),
-                    BindDiagnostic.Severity.INFO,
-                    "BIND_DEBUG_QUERY_PROJECTION",
-                    "Projected query-rooted access to BoundQueryAccessExpr with kind '" + projectionKind + "'."
-            ));
-        }
-
-        BoundMolang.BoundQueryAccessExpr queryAccessExpr = new BoundMolang.BoundQueryAccessExpr(
-                expression.span(),
-                expression,
-                projectionKind
-        );
-        state.queryBindLinkRequests.add(toQueryBindLinkRequest(queryAccessExpr));
-        return queryAccessExpr;
-    }
-
-    private MolangQueryBindLinkContract.QueryBindLinkRequest toQueryBindLinkRequest(BoundMolang.BoundQueryAccessExpr queryAccessExpr) {
-        return new MolangQueryBindLinkContract.QueryBindLinkRequest(
-                symbolicQueryName(queryAccessExpr.access()),
-                queryAccessExpr.projectionKind(),
-                visibleCallShape(queryAccessExpr)
-        );
-    }
-
-    private void maybeAddCallableBindLinkRequest(BoundMolang.BoundCallExpr callExpr, BindingState state) {
-        String symbolicCallableName = symbolicCallableName(callExpr.callee());
-        if (symbolicCallableName.isBlank()) {
-            return;
-        }
-
-        if (leftMostRoot(callExpr.callee()).filter("query"::equals).isPresent()) {
-            return;
-        }
-
-        state.callableBindLinkRequests.add(new MolangCallableBindLinkContract.CallableBindLinkRequest(
-                symbolicCallableName,
-                visibleCallShape(callExpr)
-        ));
-    }
-
-    private String symbolicQueryName(BoundMolang.BoundExpr queryAccess) {
-        BoundMolang.BoundExpr symbolicSource = queryAccess;
-        if (queryAccess instanceof BoundMolang.BoundCallExpr callExpr) {
-            symbolicSource = callExpr.callee();
-        }
-
-        List<String> queryMemberSegments = new ArrayList<>();
-        if (!collectQueryMemberSegments(symbolicSource, queryMemberSegments) || queryMemberSegments.isEmpty()) {
-            return "query";
-        }
-
-        return "query." + String.join(".", queryMemberSegments);
-    }
-
-    private boolean collectQueryMemberSegments(BoundMolang.BoundExpr expression, List<String> queryMemberSegments) {
-        if (expression instanceof BoundMolang.BoundMemberAccessExpr memberAccessExpr) {
-            if (!collectQueryMemberSegments(memberAccessExpr.owner(), queryMemberSegments)) {
-                return false;
-            }
-            queryMemberSegments.add(memberAccessExpr.memberName());
-            return true;
-        }
-
-        if (expression instanceof BoundMolang.BoundIdentifierExpr identifierExpr) {
-            return "query".equals(identifierExpr.name());
-        }
-
-        return false;
-    }
-
-    private List<MolangMappingTree.VisibleArgumentKind> visibleCallShape(BoundMolang.BoundQueryAccessExpr queryAccessExpr) {
-        if (queryAccessExpr.projectionKind() == BoundMolang.BoundQueryAccessExpr.QueryProjectionKind.PROPERTY) {
-            return List.of();
-        }
-
-        if (!(queryAccessExpr.access() instanceof BoundMolang.BoundCallExpr callExpr)) {
-            List<MolangMappingTree.VisibleArgumentKind> invalidShape = new ArrayList<>(1);
-            invalidShape.add(null);
-            return invalidShape;
-        }
-
-        return visibleCallShape(callExpr);
-    }
-
-    private List<MolangMappingTree.VisibleArgumentKind> visibleCallShape(BoundMolang.BoundCallExpr callExpr) {
-        List<MolangMappingTree.VisibleArgumentKind> visibleCallShape = new ArrayList<>(callExpr.arguments().size());
-        for (BoundMolang.BoundExpr argument : callExpr.arguments()) {
-            visibleCallShape.add(inferVisibleArgumentKind(argument));
-        }
-
-        return visibleCallShape;
-    }
-
-    private String symbolicCallableName(BoundMolang.BoundExpr callee) {
-        List<String> callableSegments = new ArrayList<>();
-        if (!collectCallableSymbolicNameSegments(callee, callableSegments) || callableSegments.isEmpty()) {
-            return "";
-        }
-
-        return String.join(".", callableSegments);
-    }
-
-    private boolean collectCallableSymbolicNameSegments(BoundMolang.BoundExpr expression, List<String> callableSegments) {
-        if (expression instanceof BoundMolang.BoundMemberAccessExpr memberAccessExpr) {
-            if (!collectCallableSymbolicNameSegments(memberAccessExpr.owner(), callableSegments)) {
-                return false;
-            }
-            callableSegments.add(memberAccessExpr.memberName());
-            return true;
-        }
-
-        if (expression instanceof BoundMolang.BoundIdentifierExpr identifierExpr) {
-            callableSegments.add(identifierExpr.name());
-            return true;
-        }
-
-        return false;
-    }
-
-    private MolangMappingTree.@Nullable VisibleArgumentKind inferVisibleArgumentKind(BoundMolang.BoundExpr argument) {
-        if (argument instanceof BoundMolang.BoundNumberLiteralExpr) {
-            return MolangMappingTree.VisibleArgumentKind.NUMBER;
-        }
-
-        if (argument instanceof BoundMolang.BoundStringLiteralExpr) {
-            return MolangMappingTree.VisibleArgumentKind.STRING;
-        }
-
-        if (argument instanceof BoundMolang.BoundIdentifierExpr identifierExpr) {
-            if ("true".equals(identifierExpr.name()) || "false".equals(identifierExpr.name())) {
-                return MolangMappingTree.VisibleArgumentKind.BOOLEAN;
-            }
-        }
-
-        if (argument instanceof BoundMolang.BoundGroupingExpr groupingExpr) {
-            return inferVisibleArgumentKind(groupingExpr.expression());
-        }
-
-        return null;
     }
 
     private String normalizeIdentifier(String name, SourceSpan span, BindingState state) {
@@ -384,12 +208,8 @@ public final class MolangBinder {
         return canonical;
     }
 
-    private void addDeferredNote(BindingState state,
-                                 SourceSpan span,
-                                 BindDeferredNote.Reason reason,
-                                 String sourceFamily) {
+    private void addDeferredNote(BindingState state, SourceSpan span, BindDeferredNote.Reason reason, String sourceFamily) {
         state.deferredNotes.add(new BindDeferredNote(span, reason, sourceFamily));
-
         if (state.diagnosticsMode == BindDiagnosticsMode.STRICT) {
             state.diagnostics.add(new BindDiagnostic(
                     span,
@@ -399,7 +219,6 @@ public final class MolangBinder {
             ));
             return;
         }
-
         if (state.diagnosticsMode == BindDiagnosticsMode.DEBUG) {
             state.diagnostics.add(new BindDiagnostic(
                     span,
@@ -410,96 +229,12 @@ public final class MolangBinder {
         }
     }
 
-    private BoundMolang.BoundExpr unwrapQueryAccess(BoundMolang.BoundExpr target) {
-        BoundMolang.BoundExpr current = target;
-        while (current instanceof BoundMolang.BoundQueryAccessExpr queryAccessExpr) {
-            current = queryAccessExpr.access();
-        }
-        return current;
-    }
+    static final class BindingState {
+        final BindDiagnosticsMode diagnosticsMode;
+        final List<BindDiagnostic> diagnostics = new ArrayList<>();
+        final List<BindDeferredNote> deferredNotes = new ArrayList<>();
 
-    private Optional<String> leftMostRoot(BoundMolang.BoundExpr expression) {
-        if (expression instanceof BoundMolang.BoundIdentifierExpr identifierExpr) {
-            return Optional.of(identifierExpr.name());
-        }
-        if (expression instanceof BoundMolang.BoundMemberAccessExpr memberAccessExpr) {
-            return leftMostRoot(memberAccessExpr.owner());
-        }
-        if (expression instanceof BoundMolang.BoundIndexExpr indexExpr) {
-            return leftMostRoot(indexExpr.owner());
-        }
-        if (expression instanceof BoundMolang.BoundCallExpr callExpr) {
-            return leftMostRoot(callExpr.callee());
-        }
-        if (expression instanceof BoundMolang.BoundArrowAccessExpr arrowAccessExpr) {
-            return leftMostRoot(arrowAccessExpr.left());
-        }
-        if (expression instanceof BoundMolang.BoundGroupingExpr groupingExpr) {
-            return leftMostRoot(groupingExpr.expression());
-        }
-        if (expression instanceof BoundMolang.BoundQueryAccessExpr queryAccessExpr) {
-            return leftMostRoot(queryAccessExpr.access());
-        }
-        return Optional.empty();
-    }
-
-    private boolean isWritableTarget(@Nullable String root, BoundMolang.BoundExpr target) {
-        if (isInvalidAssignmentShape(unwrapQueryAccess(target))) {
-            return false;
-        }
-        return root != null && isWritableRoot(root);
-    }
-
-    private boolean isInvalidAssignmentShape(BoundMolang.BoundExpr target) {
-        return !(target instanceof BoundMolang.BoundIdentifierExpr
-                 || target instanceof BoundMolang.BoundMemberAccessExpr
-                 || target instanceof BoundMolang.BoundIndexExpr);
-    }
-
-    private boolean isWritableRoot(String root) {
-        return "variable".equals(root) || "temp".equals(root);
-    }
-
-    private void reportInvalidWriteTarget(BindingState state,
-                                          MolangAst.AssignmentExpr assignmentExpr,
-                                          @Nullable String targetRoot,
-                                          BoundMolang.BoundExpr target) {
-        if ("query".equals(targetRoot) || "context".equals(targetRoot)) {
-            state.diagnostics.add(new BindDiagnostic(
-                    assignmentExpr.target().span(),
-                    BindDiagnostic.Severity.ERROR,
-                    "BIND_INVALID_WRITE_TARGET_ROOT",
-                    "Assignment target root '" + targetRoot + "' is read-only; only 'variable' and 'temp' are writable in this slice."
-            ));
-            return;
-        }
-
-        if (isInvalidAssignmentShape(unwrapQueryAccess(target))) {
-            state.diagnostics.add(new BindDiagnostic(
-                    assignmentExpr.target().span(),
-                    BindDiagnostic.Severity.ERROR,
-                    "BIND_INVALID_WRITE_TARGET",
-                    "Assignment target must be an identifier/member/index access rooted at writable storage."
-            ));
-            return;
-        }
-
-        state.diagnostics.add(new BindDiagnostic(
-                assignmentExpr.target().span(),
-                BindDiagnostic.Severity.ERROR,
-                "BIND_INVALID_WRITE_TARGET_ROOT",
-                "Assignment target root must normalize to 'variable' or 'temp'."
-        ));
-    }
-
-    private static final class BindingState {
-        private final BindDiagnosticsMode diagnosticsMode;
-        private final List<BindDiagnostic> diagnostics = new ArrayList<>();
-        private final List<BindDeferredNote> deferredNotes = new ArrayList<>();
-        private final List<MolangQueryBindLinkContract.QueryBindLinkRequest> queryBindLinkRequests = new ArrayList<>();
-        private final List<MolangCallableBindLinkContract.CallableBindLinkRequest> callableBindLinkRequests = new ArrayList<>();
-
-        private BindingState(BindDiagnosticsMode diagnosticsMode) {
+        BindingState(BindDiagnosticsMode diagnosticsMode) {
             this.diagnosticsMode = diagnosticsMode;
         }
     }

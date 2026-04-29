@@ -95,7 +95,7 @@ public class BrParticleParticle {
         random4 = emitter.getRandom().nextFloat();
 
         molangScope.setParent(emitter.molangScope);
-        molangScope.setOwner(this);
+        molangScope.getHostContext().put(BrParticleParticle.class, this);
         emitter.getParticle().particleEffect().curves().forEach((k, v) -> molangScope.set(k, () -> v.calculate(molangScope)));
         molangScope.set("variable.particle_age", this::getAge);
         molangScope.set("variable.particle_lifetime", this::getLifetime);

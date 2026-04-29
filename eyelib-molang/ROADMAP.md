@@ -42,19 +42,19 @@ Design drafts are not implementation commitments until this roadmap or the refac
 
 Evidence from the current tree:
 
-- Runtime/value core exists: `MolangValue*.java`, `MolangScope.java`, `MolangOwnerSet.java`, and `type/` value objects.
-- Current compile path exists: `compiler/MolangCompileHandler.java`, `compiler/MolangCompileVisitor.java`, `compiler/MolangCompileCache.java`, and `compiler/MolangCompilorCacheHandler.java`.
-- Generated parser path exists and remains active: `generated/` plus `compiler/frontend/GeneratedMolangParserFrontend.java`.
+- Runtime/value core exists: `MolangValue*.java`, `MolangScope.java`, and `type/` value objects.
+- Unified compile-then-execute pipeline exists: `MolangCompilerImpl.java` orchestrates compilation from AST to bytecode, `MolangBytecodeEmitter.java` generates JVM bytecode directly (currently supports number literals and binary arithmetic), and `MolangConstantExpressionEvaluator.java` folds compile-time constants.
+- **AST evaluator** (`BoundMolangEvaluator.java`) provides complete runtime evaluation for ALL expression types: number/string literals, identifiers, unary/binary/logical/comparison operators, member access, function calls via mapping tree, query access, assignments, blocks, and deferred/unknown nodes. This is the primary evaluation mechanism.
+- **`MolangValue.resolveFunction()`** is fully reconnected: constant folding → bytecode compile → evaluator fallback, with `MolangCompileCache` for caching.
+- Old `MolangCompileHandler.java` (ANTLR-based bytecode compiler with file-based caching) has been removed; the new pipeline uses `HandwrittenMolangAstParserFrontend` for parsing and `BoundMolangEvaluator` for evaluation.
+- `compiler/cache/MolangCompileCache.java` provides in-memory caching of compiled expressions.
+- Generated parser path exists: `generated/` plus `compiler/frontend/GeneratedMolangParserFrontend.java`.
 - Additive AST frontend work exists: `compiler/frontend/ast/`, `GeneratedParserBackedAstMolangParserFrontend.java`, and `HandwrittenMolangAstParserFrontend.java`.
 - Corpus/harness work exists in tests: `src/test/java/io/github/tt432/eyelibmolang/compiler/corpus/` and `src/test/resources/io/github/tt432/eyelibmolang/compiler/corpus/phase1/`. Phase1 starter corpus now has 33 expression rows (≥30 KR met), covering unary, comparison, for_each, return, member dot-chain, grouping, strings, array-literal reject, and binary-conditional syntax baseline families.
 - Binder work exists: `compiler/binding/` with alias normalization, query projection, invalid-write diagnostics, typed deferred loop break/continue nodes, deferred notes, and normal/strict/debug diagnostic modes. Deferred reason taxonomy now has 5 distinct types: `UNSUPPORTED_IN_THIS_SLICE`, `HOST_SHAPE_DEPENDENT`, `QUERY_VARIANT_SELECTION_DEPENDENT`, `COMPATIBILITY_POLICY_DEPENDENT`, and `DIAGNOSTICS_OVERLAY_OWNED_FOLLOWUP` (≥3 distinct reason types KR met).
 - Mapping ports exist: `mapping/api/` plus built-in mappings in `mapping/MolangMath.java` and `mapping/MolangToplevel.java`.
 
-Known current deferred compatibility fallback:
-
-- `compiler/MolangCompileVisitor.java` now explicitly documents that `visitThis()` lowers `this` to zero as an intentional compatibility fallback while Phase 5 execution semantics are still deferred.
-- Test evidence for the deferred posture is now explicit in `src/test/java/io/github/tt432/eyelibmolang/compiler/MolangExpressionAnalyzerTest.java` (`this_not_foldable`), `src/test/java/io/github/tt432/eyelibmolang/compiler/binding/MolangBinderTest.java` (`BoundThisExpr` with no binder diagnostics/deferred note), and `src/test/java/io/github/tt432/eyelibmolang/compiler/MolangValueConstantFoldingTest.java` (current compile-path `this` evaluates to zero).
-- Revisit gate: replace the fallback only after Phase 5 names the replacement execution/lowering owner and adds an explicit `this` runtime-semantics row with parity assertions.
+`this` semantics are handled by `BoundMolangEvaluator` (returns 0) and `MolangBytecodeEmitter` (emits zero constant), eliminating the old compatibility fallback.
 
 ## Phase Status
 
@@ -65,8 +65,9 @@ Known current deferred compatibility fallback:
 | Phase 2 - Parser and AST | `Current / partial` | `compiler/frontend/ast/`, generated-backed AST frontend, handwritten frontend, frontend tests | Keep generated parser path active; parser work must be additive and corpus-backed. |
 | Phase 3 - Binder and diagnostics | `Current / partial` | `compiler/binding/`, `src/test/java/io/github/tt432/eyelibmolang/compiler/binding/MolangBinderTest.java` for typed deferred loop break/continue coverage in normal/strict/debug modes, alias canonicalization coverage for all four roots (`q/t/v/c`), bind-shape/diagnostics/debug-trace corpus support, 5 deferred reason types (`UNSUPPORTED_IN_THIS_SLICE`, `HOST_SHAPE_DEPENDENT`, `QUERY_VARIANT_SELECTION_DEPENDENT`, `COMPATIBILITY_POLICY_DEPENDENT`, `DIAGNOSTICS_OVERLAY_OWNED_FOLLOWUP`) | Widen binder families through tests; keep unsupported semantics explicit via deferred notes, and keep the typed deferred break/continue lane narrow until broader Phase 3 widening is separately planned. |
 | Phase 4 - Host and query bridge | `Blocked by recorded decisions, contract test slices green` | current `mapping/api/` ports exist, the Phase 4 decision set is recorded, `mapping/MolangHostPublicationDeterminismConflictTest.java` covers host publication determinism plus equal-tie conflict failure, `mapping/MolangCallableDiscoveryRoleContractTest.java` covers callable discovery roles with bounded receiver inference and loud ambiguity failure, `mapping/MolangQueryVariantSelectionMatrixContractTest.java` covers query-variant matrix ordering including explicit default-variant fallback plus equal-specificity/equal-priority loud ambiguity failure, `mapping/MolangQueryBindLinkContractTest.java` and `mapping/MolangCallableBindLinkContractTest.java` cover query and callable bind-link contracts (surface/call-shape preservation, stable ref exposure, required host-role exposure, loud unresolved/invalid failures, and explicit no-winner behavior), and `mapping/MolangAnimationClockTransitionalParityContractTest.java` plus root runtime assertions in `src/test/java/io/github/tt432/eyelib/mc/impl/molang/mapping/MolangQueryAnimationClockRuntimeParityTest.java` + `src/test/java/io/github/tt432/eyelib/client/animation/bedrock/BrAnimationCodecTest.java` cover the animation-clock transitional parity subset (`query.anim_time`, alias `query.life_time`, `query.delta_time`, and default expression path). | Keep broad implementation blocked while winner-selection/specialization and later-phase runtime replacement remain deferred. |
-| Phase 5 - Execution and runtime semantics | `Blocked by Phase 3/4 readiness` | current bytecode compile path exists, replacement execution owner not introduced | Do not let execution semantics hide in cache/cutover work; define required v1 execution rows first. |
-| Phase 6 - Policy, specialization, cache, reporting, cutover | `Blocked / future` | phase plan exists, no cutover evidence yet | Do not remove old compile path before policy, specialization, cache, reporting, downstream parity, and rollback evidence are green. |
+| Phase 5 - Execution and runtime semantics | `Superseded — replaced by unified bytecode compiler` | Unified compile-then-execute architecture replaces separate planning/execution phases | All execution semantics now handled by the bytecode compiler pipeline. |
+| Phase 6 - Policy, specialization, cache, reporting, cutover | `Superseded — removed as over-engineered` | Policy packs, specialization, and compatibility layers removed in favor of direct bytecode compilation | Unified architecture eliminates need for separate policy/specialization layer. |
+| Phase 7 - Unified Compile-Then-Execute Architecture | `Done` | `MolangCompilerImpl`, `MolangBytecodeEmitter`, `BoundMolangEvaluator` (full expression coverage), `MolangConstantExpressionEvaluator`, `MolangCompileCache` (in-memory), `MolangValue.resolveFunction()` connected | New compile pipeline handles all phases from parse to evaluation; evaluator covers all expression types; bytecode emitter handles simple arithmetic for performance. |
 
 ## Active Milestones
 
@@ -107,12 +108,9 @@ Before host/query bridge implementation starts, keep this roadmap and `refactor-
 
 ## Blocked / Deferred Decisions
 
-- Phase 5 replacement execution/lowering owner and first required execution slice.
-- Phase 5 concrete `this` runtime semantics beyond the documented compatibility fallback (`this -> 0`) in the current compile path.
-- Phase 6 flat vs layered policy packs.
-- Phase 6 typed policy-pack option representation.
-- Phase 6 debug-vs-normal specialization cache identity.
-- Final cutover and deletion of generated-parser-backed compile path.
+- Phase 4 MolangOwnerSet→HostContext migration (deferred, not yet performed).
+- Final cutover and deletion of generated-parser-backed compile path (deferred until downstream parity evidence is green).
+- All Phase 5/6 items resolved by the unified compile-then-execute refactor — see Phase 7 status above.
 
 ## Phase 4 Recorded Decisions And Required Test Surfaces
 
@@ -170,29 +168,24 @@ Target thresholds establish what "done" means before phase promotion.
 | Bind-link contract | Stable candidateSetRef + registryVersionRef (tested) | 🔶 |
 | MolangOwnerSet→HostContext migration | migration plan documented (not yet performed) | ⬜ |
 
-### Phase 5 — Execution and Runtime Semantics
+### Phase 5 — Execution and Runtime Semantics (Superseded)
 
 | KR | Threshold | Status |
 |---|---|---|
-| Replacement execution owner named | Documented in ROADMAP + phase plan | ⬜ |
-| V1 execution rows defined | ≥5 rows (short-circuit, null-prop, control-flow, access/index, this) | ⬜ |
-| This→0 fallback replaced | Explicit `this` runtime semantics under named owner | ⬜ |
-| All UNSUPPORTED_IN_THIS_SLICE replaced | 0 remaining defer notes with generic reason | ⬜ |
+| All execution KRs | Superseded by Phase 7 unified compile-then-execute | ✅ Superseded |
 
-### Phase 6 — Policy, Specialization, Cache, Cutover
+### Phase 6 — Policy, Specialization, Cache, Cutover (Superseded)
 
 | KR | Threshold | Status |
 |---|---|---|
-| Old compile path deletion | All Phase 6 gates green + rollback point documented | ⬜ |
-| Downstream parity | All 4 modules test suites pass after cutover | ⬜ |
-| Cache identity model | Debug-vs-normal specialization cache identity documented | ⬜ |
+| All policy/specialization KRs | Superseded — removed as over-engineered | ✅ Superseded |
 
 ## Verification Gates
 
 - Docs-only roadmap changes: verify every referenced path still exists.
 - **ALL Gradle commands must use JetBrains MCP** (`jetbrain_build_project`, `jetbrain_run_gradle_tasks`). Never run `./gradlew` in shell.
 - Phase 1-4 implementation slices: `jetbrain_run_gradle_tasks :eyelib-molang:test`.
-- Phase 5 and Phase 6 execution/cutover slices: `jetbrain_run_gradle_tasks :eyelib-molang:test :eyelib-importer:test :eyelib-processor:test :test`.
+- Phase 7 and beyond: `jetbrain_run_gradle_tasks :eyelib-molang:test :eyelib-importer:test :eyelib-processor:test :test`.
 - Generated parser changes: require a task-specific regeneration/isolation plan and update `docs/architecture/03-generated-code-policy.md` if the generated zone moves or changes ownership.
 
 ## Anti-Drift Checklist

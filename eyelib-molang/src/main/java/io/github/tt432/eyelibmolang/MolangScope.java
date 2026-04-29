@@ -1,5 +1,6 @@
 package io.github.tt432.eyelibmolang;
 
+import io.github.tt432.eyelibmolang.mapping.api.HostContext;
 import io.github.tt432.eyelibmolang.type.MolangFloat;
 import io.github.tt432.eyelibmolang.type.MolangFloatSupplierObject;
 import io.github.tt432.eyelibmolang.type.MolangNull;
@@ -8,6 +9,7 @@ import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -15,14 +17,49 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class MolangScope {
     @Getter
-    private final MolangOwnerSet owner = new MolangOwnerSet();
+    @Deprecated(forRemoval = true)
+    private final MolangObject owner = MolangNull.INSTANCE;
+
+    private final Map<Class<?>, Object> hostContextStore = new ConcurrentHashMap<>();
+
+    private final HostContext hostContext = new HostContext() {
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> Optional<T> get(Class<T> clazz) {
+            // 1. Try exact match first
+            Object exact = hostContextStore.get(clazz);
+            if (exact != null) {
+                return Optional.of((T) exact);
+            }
+            // 2. Fall back to superclass/interface match (isInstance)
+            for (var entry : hostContextStore.entrySet()) {
+                if (clazz.isInstance(entry.getValue())) {
+                    return Optional.of((T) entry.getValue());
+                }
+            }
+            return Optional.empty();
+        }
+
+        @Override
+        public <T> void put(Class<T> clazz, T value) {
+            hostContextStore.put(clazz, value);
+        }
+
+        @Override
+        public <T> void remove(Class<T> clazz) {
+            hostContextStore.remove(clazz);
+        }
+    };
+
+    public HostContext getHostContext() {
+        return hostContext;
+    }
 
     @Nullable
     private MolangScope parent;
 
     public void setParent(MolangScope parent) {
         this.parent = parent;
-        if (parent != null) owner.setParent(parent.owner);
     }
 
     @FunctionalInterface
@@ -69,8 +106,8 @@ public final class MolangScope {
         cache.remove(name);
     }
 
+    @Deprecated(forRemoval = true)
     public void setOwner(Object owner) {
-        this.owner.add(owner);
     }
 }
 

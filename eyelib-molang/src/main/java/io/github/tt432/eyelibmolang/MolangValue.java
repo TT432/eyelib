@@ -1,8 +1,11 @@
 package io.github.tt432.eyelibmolang;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelibmolang.compiler.MolangConstantExpressionEvaluator;
-import io.github.tt432.eyelibmolang.compiler.MolangCompileHandler;
+import io.github.tt432.eyelibmolang.compiler.*;
+import io.github.tt432.eyelibmolang.compiler.binding.BindResult;
+import io.github.tt432.eyelibmolang.compiler.binding.MolangBinder;
+import io.github.tt432.eyelibmolang.compiler.cache.MolangCompileCache;
+import io.github.tt432.eyelibmolang.compiler.frontend.HandwrittenMolangAstParserFrontend;
 import io.github.tt432.eyelibmolang.type.MolangFloat;
 import io.github.tt432.eyelibmolang.type.MolangNull;
 import io.github.tt432.eyelibmolang.type.MolangObject;
@@ -12,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author TT432
@@ -21,6 +25,9 @@ public record MolangValue(
         MolangFunction method
 ) {
     private static final Logger log = LoggerFactory.getLogger(MolangValue.class);
+
+    private static final MolangCompileCache compileCache = new MolangCompileCache();
+    private static final MolangBinder binder = new MolangBinder();
 
     @FunctionalInterface
     public interface MolangFunction {
@@ -58,11 +65,80 @@ public record MolangValue(
         return method::apply;
     }
 
+    /**
+     * Resolves a Molang expression string to an evaluable function.
+     * <p>
+     * Pipeline:
+     * 1. Try constant folding via {@link MolangConstantExpressionEvaluator#tryEvaluate}
+     * 2. Parse → Bind → Compile via {@link MolangCompilerImpl}, falling back to
+     * {@link BoundMolangEvaluator} for unsupported expression types
+     * 3. Cache the compiled result via {@link MolangCompileCache}
+     */
     private static MolangFunction resolveFunction(String context) {
         return MolangConstantExpressionEvaluator.tryEvaluate(context)
-                .<MolangFunction>map(ConstMolangFunction::new)
-                .orElseGet(() -> wrap(MolangCompileHandler.compile(context)));
+                                                .<MolangFunction>map(ConstMolangFunction::new)
+                                                .orElseGet(() -> {
+                                                    CompiledMolangExpression compiled = compileCache.getOrCompile(context, () -> {
+                                                        try {
+                                                            return new MolangCompilerImpl().compile(context, CompileContext.defaults());
+                                                        } catch (ExpressionCompileException compileEx) {
+                                                            // Fall back to AST evaluator for expressions the bytecode
+                                                            // emitter doesn't handle yet (variables, queries, calls, etc.)
+                                                            return createEvaluator(context);
+                                                        } catch (Throwable t) {
+                                                            log.error("Unexpected molang compile error for: {}", context, t);
+                                                            return createEvaluatorFallback(context);
+                                                        }
+                                                    });
+                                                    return wrap(compiled);
+                                                });
     }
+
+    /**
+     * Creates a {@link BoundMolangEvaluator} by parsing and binding the expression.
+     */
+    private static CompiledMolangExpression createEvaluator(String context) {
+        var astOpt = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(context);
+        if (astOpt.isEmpty()) {
+            return NULL_COMPILED;
+        }
+        BindResult bindResult = binder.bind(astOpt.get());
+        return new BoundMolangEvaluator(
+                context,
+                bindResult.root(),
+                CompileContext.defaults().mappingTree()
+        );
+    }
+
+    /**
+     * Last-resort fallback when even parser/binder fail.
+     */
+    private static CompiledMolangExpression createEvaluatorFallback(String context) {
+        try {
+            return createEvaluator(context);
+        } catch (Throwable t) {
+            log.error("Failed to create evaluator for: {}", context, t);
+            return NULL_COMPILED;
+        }
+    }
+
+    /** A no-op CompiledMolangExpression that always returns MolangNull. */
+    private static final CompiledMolangExpression NULL_COMPILED = new CompiledMolangExpression() {
+        @Override
+        public MolangObject evaluate(MolangScope scope) {
+            return MolangNull.INSTANCE;
+        }
+
+        @Override
+        public String sourceExpression() {
+            return "";
+        }
+
+        @Override
+        public Set<String> requiredHostRoles() {
+            return Set.of();
+        }
+    };
 
     public static final float TRUE = 1;
     public static final float FALSE = 0;
@@ -79,19 +155,13 @@ public record MolangValue(
     }
 
     public static final Codec<MolangValue> CODEC = MolangCodecs.singleOrListStrings()
-            .xmap(parts -> new MolangValue(String.join("", parts)), value -> List.of(value.toString()));
+                                                               .xmap(parts -> new MolangValue(String.join("", parts)), value -> List.of(value.toString()));
 
     public MolangObject getObject(MolangScope scope) {
         try {
             return Objects.requireNonNullElse(method.apply(scope), MolangNull.INSTANCE);
         } catch (Throwable e) {
             log.error("molang: {}", context, e);
-            String name = method.getClass().getSimpleName();
-            var classInfo = MolangCompileHandler.cache.getClassInfoByClassName(name);
-            if (classInfo != null && classInfo.bytecode() != null) {
-                MolangCompileHandler.exportClass(name, classInfo.bytecode());
-            }
-
             return MolangNull.INSTANCE;
         }
     }
