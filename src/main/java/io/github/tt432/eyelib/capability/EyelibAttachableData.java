@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.capability;
 
 import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.util.data_attach.DataAttachmentType;
+import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.core.Registry;

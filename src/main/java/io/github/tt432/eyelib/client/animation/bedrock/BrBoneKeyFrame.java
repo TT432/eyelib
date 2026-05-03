@@ -1,6 +1,8 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
 import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneKeyFrameSchema;
+import io.github.tt432.eyelibprocessor.animation.baked.BakedBoneKeyFrame;
+import io.github.tt432.eyelibprocessor.animation.baked.BoneAnimationBaker;
 
 
 import com.google.common.collect.ImmutableList;
@@ -48,7 +50,8 @@ public record BrBoneKeyFrame(
     }
 
     public static BrBoneKeyFrame fromSchema(float timestamp, BrBoneKeyFrameSchema schema) {
-        return new BrBoneKeyFrame(timestamp, schema.dataPoints(), LerpMode.valueOf(schema.lerpMode().name()));
+        BakedBoneKeyFrame baked = BoneAnimationBaker.bakeKeyFrame(timestamp, schema);
+        return new BrBoneKeyFrame(baked.timestamp(), baked.dataPoints(), LerpMode.valueOf(baked.lerpMode().name()));
     }
 
     public enum LerpMode implements StringRepresentable {

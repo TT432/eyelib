@@ -12,7 +12,7 @@ import io.github.tt432.eyelib.mc.impl.network.packet.ExtraEntityUpdateDataPacket
 import io.github.tt432.eyelib.mc.impl.network.packet.UniDataUpdatePacket;
 import io.github.tt432.eyelib.mc.impl.network.packet.UpdateDestroyInfoPacket;
 import io.github.tt432.eyelib.network.dataattach.DataAttachmentSyncPayloadOps;
-import io.github.tt432.eyelib.util.data_attach.DataAttachmentType;
+import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;

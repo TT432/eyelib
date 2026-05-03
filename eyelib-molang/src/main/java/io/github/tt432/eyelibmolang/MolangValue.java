@@ -2,10 +2,7 @@ package io.github.tt432.eyelibmolang;
 
 import com.mojang.serialization.Codec;
 import io.github.tt432.eyelibmolang.compiler.*;
-import io.github.tt432.eyelibmolang.compiler.binding.BindResult;
-import io.github.tt432.eyelibmolang.compiler.binding.MolangBinder;
 import io.github.tt432.eyelibmolang.compiler.cache.MolangCompileCache;
-import io.github.tt432.eyelibmolang.compiler.frontend.HandwrittenMolangAstParserFrontend;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelibmolang.type.MolangFloat;
 import io.github.tt432.eyelibmolang.type.MolangNull;
@@ -17,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * @author TT432
@@ -32,7 +28,6 @@ public record MolangValue(
             MolangMappingTree.INSTANCE,
             resolveCacheDirectory()
     );
-    private static final MolangBinder binder = new MolangBinder();
 
     private static Path resolveCacheDirectory() {
         String prop = System.getProperty("eyelib.molang.cache.dir");
@@ -83,75 +78,20 @@ public record MolangValue(
      * <p>
      * Pipeline:
      * 1. Try constant folding via {@link MolangConstantExpressionEvaluator#tryEvaluate}
-     * 2. Parse → Bind → Compile via {@link MolangCompilerImpl}, falling back to
-     * {@link BoundMolangEvaluator} for unsupported expression types
+     * 2. Compile via {@link MolangCompilerImpl}
      * 3. Cache the compiled result via {@link MolangCompileCache}
      */
     private static MolangFunction resolveFunction(String context) {
         return MolangConstantExpressionEvaluator.tryEvaluate(context)
                                                 .<MolangFunction>map(ConstMolangFunction::new)
                                                 .orElseGet(() -> {
-                                                    CompiledMolangExpression compiled = compileCache.getOrCompile(context, () -> {
-                                                        try {
-                                                            return new MolangCompilerImpl().compile(context, CompileContext.defaults());
-                                                        } catch (ExpressionCompileException compileEx) {
-                                                            // Fall back to AST evaluator for expressions the bytecode
-                                                            // emitter doesn't handle yet (variables, queries, calls, etc.)
-                                                            return createEvaluator(context);
-                                                        } catch (Throwable t) {
-                                                            log.error("Unexpected molang compile error for: {}", context, t);
-                                                            return createEvaluatorFallback(context);
-                                                        }
-                                                    });
+                                                    CompiledMolangExpression compiled = compileCache.getOrCompile(
+                                                            context,
+                                                            () -> new MolangCompilerImpl().compile(context, CompileContext.defaults())
+                                                    );
                                                     return wrap(compiled);
                                                 });
     }
-
-    /**
-     * Creates a {@link BoundMolangEvaluator} by parsing and binding the expression.
-     */
-    private static CompiledMolangExpression createEvaluator(String context) {
-        var astOpt = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(context);
-        if (astOpt.isEmpty()) {
-            return NULL_COMPILED;
-        }
-        BindResult bindResult = binder.bind(astOpt.get());
-        return new BoundMolangEvaluator(
-                context,
-                bindResult.root(),
-                CompileContext.defaults().mappingTree()
-        );
-    }
-
-    /**
-     * Last-resort fallback when even parser/binder fail.
-     */
-    private static CompiledMolangExpression createEvaluatorFallback(String context) {
-        try {
-            return createEvaluator(context);
-        } catch (Throwable t) {
-            log.error("Failed to create evaluator for: {}", context, t);
-            return NULL_COMPILED;
-        }
-    }
-
-    /** A no-op CompiledMolangExpression that always returns MolangNull. */
-    private static final CompiledMolangExpression NULL_COMPILED = new CompiledMolangExpression() {
-        @Override
-        public MolangObject evaluate(MolangScope scope) {
-            return MolangNull.INSTANCE;
-        }
-
-        @Override
-        public String sourceExpression() {
-            return "";
-        }
-
-        @Override
-        public Set<String> requiredHostRoles() {
-            return Set.of();
-        }
-    };
 
     public static final float TRUE = 1;
     public static final float FALSE = 0;
@@ -165,6 +105,13 @@ public record MolangValue(
 
     public static MolangValue getConstant(float value) {
         return MOLANG_VALUE_CONSTANT_POOL.computeIfAbsent(value, k -> constant(String.valueOf(k), MolangFloat.valueOf(k)));
+    }
+
+    /**
+     * Returns the size of the constant pool for telemetry.
+     */
+    public static int getConstantPoolSize() {
+        return MOLANG_VALUE_CONSTANT_POOL.size();
     }
 
     public static final Codec<MolangValue> CODEC = MolangCodecs.singleOrListStrings()

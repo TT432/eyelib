@@ -2,6 +2,8 @@ package io.github.tt432.eyelibmolang.compiler.frontend;
 
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -258,6 +260,23 @@ class HandwrittenMolangAstParserFrontendTest {
     void rejectsUnterminatedStringLiteral() {
         var result = parse("'abc");
         assertTrue(result.isEmpty());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "1 < 2, <",
+            "1 <= 2, <=",
+            "1 > 2, >",
+            "1 >= 2, >=",
+            "1 == 2, ==",
+            "1 != 2, !="
+    })
+    void parsesAllSixComparisonOperatorsIntoBinaryExpr(String source, String expectedOperator) {
+        var result = parse(source);
+        assertTrue(result.isPresent());
+        MolangAst.ExprSet exprSet = result.orElseThrow();
+        var bin = assertInstanceOf(MolangAst.BinaryExpr.class, exprSet.root());
+        assertEquals(expectedOperator, bin.operator());
     }
 
     private Optional<MolangAst.ExprSet> parse(String source) {

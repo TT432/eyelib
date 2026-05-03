@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.mc.impl.data_attach;
 
-import io.github.tt432.eyelib.util.data_attach.DataAttachmentType;
-import io.github.tt432.eyelib.util.data_attach.IDataAttachmentContainer;
+import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
+import io.github.tt432.eyelibattachment.dataattach.IDataAttachmentContainer;
 import org.jspecify.annotations.Nullable;
 import net.minecraft.world.entity.Entity;
 

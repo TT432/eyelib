@@ -115,7 +115,22 @@ class MolangBinderTest {
                 note.reason() == BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
                 && note.sourceFamily().equals("TernaryConditionalExpr")
         ));
-        assertTrue(bindResult.diagnostics().isEmpty());
+        assertDeferredUnsupportedWarning(bindResult, "TernaryConditionalExpr");
+    }
+
+    @Test
+    void bindsDeferredBinaryConditionalWithNormalWarning() {
+        BindResult bindResult = bind("a ? b");
+
+        BoundMolang.BoundDeferredExpr deferredExpr = assertInstanceOf(BoundMolang.BoundDeferredExpr.class, bindResult.root().root());
+        assertEquals(BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, deferredExpr.reason());
+        assertEquals("BinaryConditionalExpr", deferredExpr.sourceFamily());
+
+        assertTrue(bindResult.deferredNotes().stream().anyMatch(note ->
+                note.reason() == BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
+                && note.sourceFamily().equals("BinaryConditionalExpr")
+        ));
+        assertDeferredUnsupportedWarning(bindResult, "BinaryConditionalExpr");
     }
 
     @Test
@@ -157,7 +172,7 @@ class MolangBinderTest {
                 note.reason() == BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
                 && note.sourceFamily().equals("LoopExpr")
         ));
-        assertTrue(bindResult.diagnostics().isEmpty());
+        assertDeferredUnsupportedWarning(bindResult, "LoopExpr");
     }
 
     @Test
@@ -207,7 +222,7 @@ class MolangBinderTest {
                 note.reason() == BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
                 && note.sourceFamily().equals("ForEachExpr")
         ));
-        assertTrue(bindResult.diagnostics().isEmpty());
+        assertDeferredUnsupportedWarning(bindResult, "ForEachExpr");
     }
 
     @Test
@@ -236,7 +251,9 @@ class MolangBinderTest {
                 note.reason() == BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
                 && note.sourceFamily().equals("ContinueStmt")
         ));
-        assertTrue(bindResult.diagnostics().isEmpty());
+        assertDeferredUnsupportedWarning(bindResult, "LoopExpr");
+        assertDeferredUnsupportedWarning(bindResult, "BreakStmt");
+        assertDeferredUnsupportedWarning(bindResult, "ContinueStmt");
     }
 
     @Test
@@ -297,5 +314,13 @@ class MolangBinderTest {
     private BindResult bindFromHandwrittenFrontend(String source, BindDiagnosticsMode diagnosticsMode) {
         MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
         return binder.bind(ast, diagnosticsMode);
+    }
+
+    private static void assertDeferredUnsupportedWarning(BindResult bindResult, String sourceFamily) {
+        assertTrue(bindResult.diagnostics().stream().anyMatch(diagnostic ->
+                diagnostic.severity() == BindDiagnostic.Severity.WARNING
+                && diagnostic.code().equals("BIND_DEFERRED_UNSUPPORTED")
+                && diagnostic.message().contains(sourceFamily)
+        ));
     }
 }

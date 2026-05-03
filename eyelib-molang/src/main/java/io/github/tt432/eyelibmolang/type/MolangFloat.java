@@ -14,6 +14,8 @@ public record MolangFloat(
     }
 
     public static MolangFloat valueOf(float value) {
+        if (value == 0f) return ZERO;
+        if (value == 1f) return ONE;
         return new MolangFloat(value);
     }
 

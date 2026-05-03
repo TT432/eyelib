@@ -210,6 +210,12 @@ public final class MolangBinder {
 
     private void addDeferredNote(BindingState state, SourceSpan span, BindDeferredNote.Reason reason, String sourceFamily) {
         state.deferredNotes.add(new BindDeferredNote(span, reason, sourceFamily));
+        state.diagnostics.add(new BindDiagnostic(
+                span,
+                BindDiagnostic.Severity.WARNING,
+                "BIND_DEFERRED_UNSUPPORTED",
+                "Deferred unsupported binder node '" + sourceFamily + "' with reason '" + reason + "'."
+        ));
         if (state.diagnosticsMode == BindDiagnosticsMode.STRICT) {
             state.diagnostics.add(new BindDiagnostic(
                     span,

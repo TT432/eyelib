@@ -29,6 +29,14 @@ public class BrParticleRenderManager {
     private static final Object2ObjectMap<String, BrParticleEmitter> emitters = new Object2ObjectOpenHashMap<>();
     private static final ObjectList<BrParticleParticle> particles = new ObjectArrayList<>();
 
+    public static int getEmitterCount() {
+        return emitters.size();
+    }
+
+    public static int getParticleCount() {
+        return particles.size();
+    }
+
     public static void spawnEmitter(final String id, final BrParticleEmitter emitter) {
         Minecraft.getInstance().submit(() -> {
             if (emitters.containsKey(id)) return;

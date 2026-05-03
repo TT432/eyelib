@@ -40,6 +40,10 @@ public class RenderHelper {
 
     private static final Map<String, DFSModel> dfsModels = new HashMap<>();
 
+    public static int getDfsModelsSize() {
+        return dfsModels.size();
+    }
+
     public DFSModel dfsModel(Model model) {
         return dfsModels.computeIfAbsent(model.name(), m -> DFSModel.create(model));
     }

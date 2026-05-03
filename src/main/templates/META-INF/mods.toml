@@ -82,13 +82,6 @@ ordering="NONE"
 side="BOTH"
 
 [[dependencies.${mod_id}]]
-modId="eyelibmolang"
-mandatory=true
-versionRange="[${mod_version},)"
-ordering="AFTER"
-side="BOTH"
-
-[[dependencies.${mod_id}]]
 modId="eyelibimporter"
 mandatory=true
 versionRange="[${mod_version},)"

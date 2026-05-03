@@ -134,9 +134,9 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
         }
 
         private MolangAst.Expr parseNullCoalesce() {
-            MolangAst.Expr expression = parseAnd();
+            MolangAst.Expr expression = parseOr();
             while (match(TokenKind.QUESTION_QUESTION)) {
-                MolangAst.Expr right = parseAnd();
+                MolangAst.Expr right = parseOr();
                 expression = new MolangAst.NullCoalesceExpr(SourceSpan.covering(expression.span(), right.span()), expression, right);
             }
             return expression;
@@ -152,9 +152,18 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
             return expression;
         }
 
+        private MolangAst.Expr parseOr() {
+            MolangAst.Expr expression = parseAnd();
+            while (match(TokenKind.OR_OR)) {
+                Token operator = previous();
+                MolangAst.Expr right = parseAnd();
+                expression = new MolangAst.BinaryExpr(SourceSpan.covering(expression.span(), right.span()), operator.lexeme, expression, right);
+            }
+            return expression;
+        }
         private MolangAst.Expr parseComparison() {
             MolangAst.Expr expression = parseAdd();
-            while (match(TokenKind.GREATER, TokenKind.EQUAL_EQUAL, TokenKind.BANG_EQUAL)) {
+            while (match(TokenKind.GREATER, TokenKind.GREATER_EQUAL, TokenKind.LESS, TokenKind.LESS_EQUAL, TokenKind.EQUAL_EQUAL, TokenKind.BANG_EQUAL)) {
                 Token operator = previous();
                 MolangAst.Expr right = parseAdd();
                 expression = new MolangAst.BinaryExpr(SourceSpan.covering(expression.span(), right.span()), operator.lexeme, expression, right);
@@ -479,13 +488,30 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
                 }
             }
 
+            // Scientific notation: 1.8e-4, 1.8E+4, etc.
+            if (hasRemaining() && (source.charAt(index) == 'e' || source.charAt(index) == 'E')) {
+                index++;
+                column++;
+                if (hasRemaining() && (source.charAt(index) == '+' || source.charAt(index) == '-')) {
+                    index++;
+                    column++;
+                }
+                while (hasRemaining() && isDigit(source.charAt(index))) {
+                    index++;
+                    column++;
+                }
+            }
+
             String text = source.substring(start, index);
             return new Token(TokenKind.NUMBER, text, startIndex, index - 1, startLine, startColumn, line, column);
         }
 
         private Token readPunctuationOrOperator(int startIndex, int startLine, int startColumn) {
-            if (match("&&")) {
+        if (match("&&")) {
                 return token(TokenKind.AND_AND, "&&", startIndex, startLine, startColumn, 2);
+            }
+            if (match("||")) {
+                return token(TokenKind.OR_OR, "||", startIndex, startLine, startColumn, 2);
             }
             if (match("??")) {
                 return token(TokenKind.QUESTION_QUESTION, "??", startIndex, startLine, startColumn, 2);
@@ -498,6 +524,12 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
             }
             if (match("!=")) {
                 return token(TokenKind.BANG_EQUAL, "!=", startIndex, startLine, startColumn, 2);
+            }
+            if (match("<=")) {
+                return token(TokenKind.LESS_EQUAL, "<=", startIndex, startLine, startColumn, 2);
+            }
+            if (match(">=")) {
+                return token(TokenKind.GREATER_EQUAL, ">=", startIndex, startLine, startColumn, 2);
             }
 
             char c = source.charAt(index);
@@ -516,6 +548,7 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
                 case '*' -> token(TokenKind.STAR, "*", startIndex, startLine, startColumn, 1);
                 case '/' -> token(TokenKind.SLASH, "/", startIndex, startLine, startColumn, 1);
                 case '>' -> token(TokenKind.GREATER, ">", startIndex, startLine, startColumn, 1);
+                case '<' -> token(TokenKind.LESS, "<", startIndex, startLine, startColumn, 1);
                 case '=' -> token(TokenKind.EQUAL, "=", startIndex, startLine, startColumn, 1);
                 case '!' -> token(TokenKind.BANG, "!", startIndex, startLine, startColumn, 1);
                 case '?' -> token(TokenKind.QUESTION, "?", startIndex, startLine, startColumn, 1);
@@ -594,11 +627,15 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
         STAR,
         SLASH,
         GREATER,
+        GREATER_EQUAL,
+        LESS,
+        LESS_EQUAL,
         EQUAL,
         EQUAL_EQUAL,
         BANG,
         BANG_EQUAL,
         AND_AND,
+        OR_OR,
         QUESTION,
         QUESTION_QUESTION,
         COLON,

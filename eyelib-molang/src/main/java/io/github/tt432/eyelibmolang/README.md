@@ -14,9 +14,9 @@
 - `MolangScope.java`: shared evaluation scope state
 - `MolangValue*.java`: canonical Molang value/runtime wrappers used by root consumers via the subproject dependency
 - `MolangCompiledFunction.java`: engine seam type consumed by `MolangValue`
-- `compiler/`: compile/cache/diagnostic/bytecode emission flow plus `MolangCompilerImpl`, `MolangBytecodeEmitter`, shared expression analysis, and compile-time constant folding helpers consumed by plain-JVM processor code
+- `compiler/`: compile/cache/binding/bytecode emission flow plus `MolangCompilerImpl`, `MolangBytecodeEmitter`, shared expression analysis, and compile-time constant folding helpers consumed by plain-JVM processor code
 - `compiler/cache/`: compiler cache layer
-- `compiler/diagnostic/`: compiler diagnostic infrastructure
+- `compiler/binding/`: compiler binding and diagnostic infrastructure
 - `mapping/`: built-in mappings and plain-JVM mapping support
 - `mapping/api/`: mapping annotations/discovery/query runtime bridge
 - `type/`: Molang typing support

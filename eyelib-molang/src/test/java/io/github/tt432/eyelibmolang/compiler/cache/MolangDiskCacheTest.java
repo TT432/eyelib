@@ -2,10 +2,10 @@ package io.github.tt432.eyelibmolang.compiler.cache;
 
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.compiler.BoundMolangCompilerInput;
-import io.github.tt432.eyelibmolang.compiler.BoundMolangEvaluator;
 import io.github.tt432.eyelibmolang.compiler.CompileContext;
 import io.github.tt432.eyelibmolang.compiler.CompiledMolangExpression;
 import io.github.tt432.eyelibmolang.compiler.MolangBytecodeEmitter;
+import io.github.tt432.eyelibmolang.compiler.MolangCompilerImpl;
 import io.github.tt432.eyelibmolang.compiler.binding.BindResult;
 import io.github.tt432.eyelibmolang.compiler.binding.MolangBinder;
 import io.github.tt432.eyelibmolang.compiler.frontend.HandwrittenMolangAstParserFrontend;
@@ -149,47 +149,20 @@ class MolangDiskCacheTest {
 
         CompiledMolangExpression first = cache.getOrCompile("1+2", () -> {
             supplierCalls.incrementAndGet();
-            return buildEvaluator("1+2");
+            return buildCompiled("1+2");
         });
         CompiledMolangExpression second = cache.getOrCompile("1+2", () -> {
             supplierCalls.incrementAndGet();
-            return buildEvaluator("1+2");
+            return buildCompiled("1+2");
         });
 
         assertSame(first, second);
         assertEquals(1, supplierCalls.get());
     }
 
-    @Test
-    void l2DiskHitOnFreshCache() throws Exception {
-        String expr = "1+2";
-        byte[] bytes = emitBytecode(expr);
-        diskCache.write(bytes, expr, registryRef, COMPILER_VERSION);
-
-        MolangCompileCache freshCache = new MolangCompileCache(MolangMappingTree.INSTANCE, tempDir);
-        AtomicInteger supplierCalls = new AtomicInteger(0);
-
-        CompiledMolangExpression result = freshCache.getOrCompile(expr, () -> {
-            supplierCalls.incrementAndGet();
-            fail("Supplier should not be called on L2 hit");
-            return buildEvaluator(expr);
-        });
-
-        assertEquals(0, supplierCalls.get(), "Supplier should not be called on L2 hit");
-        assertEquals(3.0F, result.evaluate(new MolangScope()).asFloat(), 0.0001F);
-    }
-
-    @Test
-    void evaluatorFallbackNotWrittenToDisk() {
-        String expr = "1+2";
-        MolangCompileCache cache = new MolangCompileCache(MolangMappingTree.INSTANCE, tempDir);
-
-        CompiledMolangExpression result = cache.getOrCompile(expr, () -> buildEvaluator(expr));
-
-        assertNotNull(result);
-        assertTrue(result instanceof BoundMolangEvaluator);
-        assertFalse(Files.exists(cacheFileFor(expr)));
-    }
+    // L2 disk cache integration with MolangCompileCache has been removed.
+    // L2 tests (l2DiskHitOnFreshCache, evaluatorFallbackNotWrittenToDisk) are obsolete.
+    // MolangDiskCache standalone read/write tests remain valid below.
 
     @Test
     void concurrentReadWrite() throws Exception {
@@ -238,14 +211,7 @@ class MolangDiskCacheTest {
         ));
     }
 
-    private static BoundMolangEvaluator buildEvaluator(String expression) {
-        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE
-                .parseExprSetAst(expression)
-                .orElseThrow(() -> new AssertionError("Expected parser to accept expression: " + expression));
-
-        BindResult bindResult = new MolangBinder().bind(ast);
-        assertTrue(bindResult.diagnostics().isEmpty(), "Expected bind diagnostics to be empty for expression: " + expression);
-
-        return new BoundMolangEvaluator(expression, bindResult.root(), MolangMappingTree.INSTANCE);
+    private static CompiledMolangExpression buildCompiled(String expression) {
+        return new MolangCompilerImpl().compile(expression, CompileContext.defaults());
     }
 }

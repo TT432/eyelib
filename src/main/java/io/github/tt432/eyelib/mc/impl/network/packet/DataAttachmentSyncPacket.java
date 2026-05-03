@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.mc.impl.network.packet;
 
-import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
-import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
+import io.github.tt432.eyelibattachment.codec.stream.EyelibStreamCodecs;
+import io.github.tt432.eyelibattachment.codec.stream.StreamCodec;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 

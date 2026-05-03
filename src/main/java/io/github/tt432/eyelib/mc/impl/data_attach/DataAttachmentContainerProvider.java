@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.mc.impl.data_attach;
 
-import io.github.tt432.eyelib.util.data_attach.IDataAttachmentContainer;
+import io.github.tt432.eyelibattachment.dataattach.IDataAttachmentContainer;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.capabilities.Capability;

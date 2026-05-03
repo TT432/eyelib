@@ -1,6 +1,7 @@
 package io.github.tt432.eyelibmolang;
 
 import io.github.tt432.eyelibmolang.mapping.api.HostContext;
+import io.github.tt432.eyelibmolang.mapping.api.HostRole;
 import io.github.tt432.eyelibmolang.type.MolangFloat;
 import io.github.tt432.eyelibmolang.type.MolangFloatSupplierObject;
 import io.github.tt432.eyelibmolang.type.MolangNull;
@@ -21,8 +22,37 @@ public final class MolangScope {
     private final MolangObject owner = MolangNull.INSTANCE;
 
     private final Map<Class<?>, Object> hostContextStore = new ConcurrentHashMap<>();
+    private final Map<HostRole<?>, Object> hostRoleStore = new ConcurrentHashMap<>();
 
     private final HostContext hostContext = new HostContext() {
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> Optional<T> get(HostRole<T> role) {
+            // 1. Try exact key match
+            Object exact = hostRoleStore.get(role);
+            if (exact != null && role.type().isInstance(exact)) {
+                return Optional.of((T) exact);
+            }
+            // 2. Fall back to isInstance match across role store
+            for (var entry : hostRoleStore.entrySet()) {
+                if (role.type().isInstance(entry.getValue())) {
+                    return Optional.of((T) entry.getValue());
+                }
+            }
+            // 3. Fall back to class-based store for backward compat
+            return get(role.type());
+        }
+
+        @Override
+        public <T> void put(HostRole<T> role, T value) {
+            hostRoleStore.put(role, value);
+        }
+
+        @Override
+        public <T> void remove(HostRole<T> role) {
+            hostRoleStore.remove(role);
+        }
+
         @Override
         @SuppressWarnings("unchecked")
         public <T> Optional<T> get(Class<T> clazz) {
@@ -56,7 +86,7 @@ public final class MolangScope {
     }
 
     @Nullable
-    private MolangScope parent;
+    private volatile MolangScope parent;
 
     public void setParent(MolangScope parent) {
         this.parent = parent;
@@ -74,9 +104,10 @@ public final class MolangScope {
     }
 
     public MolangObject get(String name) {
-        return cache.getOrDefault(name, parent != null
-                ? parent.cache.getOrDefault(name, MolangNull.INSTANCE)
-                : MolangNull.INSTANCE);
+        MolangObject result = cache.get(name);
+        if (result != null) return result;
+        if (parent != null) return parent.get(name);
+        return MolangNull.INSTANCE;
     }
 
     public MolangObject set(String name, float value) {
@@ -104,6 +135,13 @@ public final class MolangScope {
 
     public void remove(String name) {
         cache.remove(name);
+    }
+
+    /**
+     * Returns the number of entries in the scope cache for telemetry.
+     */
+    public int getCacheSize() {
+        return cache.size();
     }
 
     @Deprecated(forRemoval = true)

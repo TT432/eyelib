@@ -1,7 +1,8 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
 import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneAnimationSchema;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneKeyFrameSchema;
+import io.github.tt432.eyelibprocessor.animation.baked.BakedBoneKeyFrame;
+import io.github.tt432.eyelibprocessor.animation.baked.BoneAnimationBaker;
 
 
 import com.mojang.serialization.Codec;
@@ -54,9 +55,9 @@ public record BrBoneAnimation(
 
     public static BrBoneAnimation fromSchema(BrBoneAnimationSchema schema) {
         return new BrBoneAnimation(
-                toImmutableMap(schema.rotation()),
-                toImmutableMap(schema.position()),
-                toImmutableMap(schema.scale())
+                toImmutableMap(BoneAnimationBaker.bakeBoneAnimation(schema.rotation())),
+                toImmutableMap(BoneAnimationBaker.bakeBoneAnimation(schema.position())),
+                toImmutableMap(BoneAnimationBaker.bakeBoneAnimation(schema.scale()))
         );
     }
 
@@ -86,17 +87,18 @@ public record BrBoneAnimation(
         return channels;
     }
 
-    private static ImmutableFloatTreeMap<BrBoneKeyFrame> toImmutableMap(TreeMap<Float, BrBoneKeyFrameSchema> schemaMap) {
-        if (schemaMap.isEmpty()) {
+    private static ImmutableFloatTreeMap<BrBoneKeyFrame> toImmutableMap(TreeMap<Float, BakedBoneKeyFrame> bakedMap) {
+        if (bakedMap.isEmpty()) {
             return ImmutableFloatTreeMap.empty();
         }
-        float[] sortedKeys = new float[schemaMap.size()];
+        float[] sortedKeys = new float[bakedMap.size()];
         Float2ObjectOpenHashMap<BrBoneKeyFrame> data = new Float2ObjectOpenHashMap<>();
         int index = 0;
-        for (var entry : schemaMap.entrySet()) {
+        for (var entry : bakedMap.entrySet()) {
             float key = entry.getKey();
             sortedKeys[index++] = key;
-            data.put(key, BrBoneKeyFrame.fromSchema(key, entry.getValue()));
+            BakedBoneKeyFrame baked = entry.getValue();
+            data.put(key, new BrBoneKeyFrame(baked.timestamp(), baked.dataPoints(), BrBoneKeyFrame.LerpMode.valueOf(baked.lerpMode().name())));
         }
         return ImmutableFloatTreeMap.of(sortedKeys, data);
     }

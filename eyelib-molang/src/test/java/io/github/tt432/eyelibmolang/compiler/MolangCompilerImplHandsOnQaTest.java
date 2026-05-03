@@ -26,16 +26,13 @@ class MolangCompilerImplHandsOnQaTest {
     }
 
     @Test
-    void compileUnknownFunctionThrowsExpressionCompileExceptionWithMessage() {
+    void compileUnknownFunctionCompilesSuccessfully() {
+        // With full bytecode emitter coverage, all expressions compile successfully.
+        // Unknown functions resolve to MolangNull at runtime via MolangRuntimeSupport.
         MolangCompilerImpl compiler = new MolangCompilerImpl();
-
-        ExpressionCompileException exception = assertThrows(
-                ExpressionCompileException.class,
-                () -> compiler.compile("1+nonexistent()", CompileContext.defaults())
-        );
-
-        assertNotNull(exception.getMessage());
-        assertFalse(exception.getMessage().isBlank());
+        CompiledMolangExpression compiled = compiler.compile("1+nonexistent()", CompileContext.defaults());
+        assertNotNull(compiled);
+        assertNotNull(compiled.evaluate(new MolangScope()));
     }
 
     @Test

@@ -5,8 +5,8 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.common.behavior.BehaviorEntity;
 import io.github.tt432.eyelib.common.behavior.component.Component;
 import io.github.tt432.eyelib.common.behavior.component.group.ComponentGroup;
-import io.github.tt432.eyelib.util.codec.stream.StreamCodec;
-import io.github.tt432.eyelib.util.codec.stream.EyelibStreamCodecs;
+import io.github.tt432.eyelibattachment.codec.stream.StreamCodec;
+import io.github.tt432.eyelibattachment.codec.stream.EyelibStreamCodecs;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 

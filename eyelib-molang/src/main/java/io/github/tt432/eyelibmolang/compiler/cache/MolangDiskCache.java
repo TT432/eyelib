@@ -14,6 +14,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -49,6 +52,10 @@ public final class MolangDiskCache {
 
     public MolangDiskCache(Path cacheDirectory) {
         this.cacheDirectory = Objects.requireNonNull(cacheDirectory, "cacheDirectory");
+    }
+
+    public Path getCacheDirectory() {
+        return cacheDirectory;
     }
 
     public void write(byte[] classBytes, String sourceExpression, String registryVersionRef, int compilerVersion) throws IOException {
@@ -210,8 +217,14 @@ public final class MolangDiskCache {
             }
         }
 
-        String hashSuffix = String.format("%08x", sourceExpression.hashCode());
-        return prefix + "-" + hashSuffix;
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] digest = md.digest(sourceExpression.getBytes(StandardCharsets.UTF_8));
+            String hashSuffix = HexFormat.of().formatHex(digest, 0, 8);
+            return prefix + "-" + hashSuffix;
+        } catch (NoSuchAlgorithmException e) {
+            throw new AssertionError("SHA-256 not available", e);
+        }
     }
 
     private static int computeCrc32ForPrefix(Path file, long length) throws IOException {

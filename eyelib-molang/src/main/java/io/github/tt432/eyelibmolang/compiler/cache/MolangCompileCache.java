@@ -1,33 +1,21 @@
 package io.github.tt432.eyelibmolang.compiler.cache;
 
-import io.github.tt432.eyelibmolang.compiler.BoundMolangEvaluator;
 import io.github.tt432.eyelibmolang.compiler.CompiledMolangExpression;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Constructor;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public final class MolangCompileCache {
-    private static final Logger LOG = Logger.getLogger(MolangCompileCache.class.getName());
     private static final int COMPILER_VERSION = 1;
+    private static final int MAX_L1_SIZE = 1000;
 
     private final Map<String, CompiledMolangExpression> cache = new ConcurrentHashMap<>();
 
-    // L2 disk cache — null when disk cache is disabled
-    private volatile MolangDiskCache diskCache;
     // Required for staleness detection at lookup time
     private volatile MolangMappingTree mappingTree;
-
-    // ByteArrayClassLoader for loading classes from disk cache bytes
-    private final ByteArrayClassLoader byteArrayClassLoader =
-            new ByteArrayClassLoader(MolangCompileCache.class.getClassLoader());
 
     /** No-arg constructor: disk cache disabled (backward compatible). */
     public MolangCompileCache() {
@@ -35,104 +23,42 @@ public final class MolangCompileCache {
     }
 
     /**
-     * Full constructor with L2 disk cache support.
+     * Constructor keeping historical cacheDirectory parameter for compatibility.
      *
      * @param mappingTree    the Molang mapping tree for staleness detection; may be null
-     * @param cacheDirectory directory for disk cache; null disables disk cache
+     * @param cacheDirectory unused
      */
     public MolangCompileCache(MolangMappingTree mappingTree, Path cacheDirectory) {
         this.mappingTree = mappingTree;
-        if (cacheDirectory != null) {
-            this.diskCache = new MolangDiskCache(cacheDirectory);
-        }
+    }
+
+    /**
+     * Returns the number of cached expressions in L1 memory cache.
+     * For telemetry only, not for cache control.
+     */
+    public int size() {
+        return cache.size();
     }
 
     public CompiledMolangExpression getOrCompile(String key, Supplier<CompiledMolangExpression> supplier) {
-        // L1: Check memory cache first
-        CompiledMolangExpression cached = cache.get(key);
-        if (cached != null) {
-            return cached;
-        }
+        // Build composite key incorporating registry version ref for staleness detection
+        String currentRegistryRef = mappingTree != null
+                ? mappingTree.registryVersionRef().value()
+                : null;
+        String cacheKey = currentRegistryRef != null
+                ? key + "#" + currentRegistryRef
+                : key;
 
-        // L2: Check disk cache (if enabled)
-        if (diskCache != null && mappingTree != null) {
-            String currentRegistryRef = mappingTree.registryVersionRef().value();
-            try {
-                byte[] diskBytes = diskCache.read(key, currentRegistryRef, COMPILER_VERSION);
-                if (diskBytes != null) {
-                    try {
-                        CompiledMolangExpression fromDisk = byteArrayClassLoader.instantiate(diskBytes);
-                        cache.put(key, fromDisk);
-                        return fromDisk;
-                    } catch (Exception e) {
-                        LOG.log(Level.WARNING, "Failed to instantiate cached bytecode for: " + key, e);
-                        // Fall through to fresh compile
-                    }
-                }
-            } catch (IOException e) {
-                LOG.log(Level.WARNING, "Disk cache read failed for: " + key, e);
-                // Fall through to fresh compile
+        // Size-bound eviction: remove ~25% of entries when threshold is exceeded
+        if (cache.size() >= MAX_L1_SIZE) {
+            int toRemove = MAX_L1_SIZE / 4;
+            var it = cache.keySet().iterator();
+            for (int i = 0; i < toRemove && it.hasNext(); i++) {
+                it.next();
+                it.remove();
             }
         }
 
-        // Fresh compile
-        CompiledMolangExpression result = supplier.get();
-        cache.put(key, result);
-
-        // Best-effort store to L2 disk cache (only for bytecode-backed expressions)
-        if (diskCache != null && mappingTree != null && !(result instanceof BoundMolangEvaluator)) {
-            byte[] classBytes = extractClassBytes(result);
-            if (classBytes != null) {
-                String currentRegistryRef = mappingTree.registryVersionRef().value();
-                try {
-                    diskCache.write(classBytes, key, currentRegistryRef, COMPILER_VERSION);
-                } catch (IOException e) {
-                    LOG.log(Level.WARNING, "Failed to write to disk cache for: " + key, e);
-                }
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * Attempts to extract raw JVM class bytes from a bytecode-backed
-     * {@link CompiledMolangExpression} via {@link Class#getResourceAsStream}.
-     * <p>
-     * This is a best-effort operation: it works for classes where the defining
-     * {@link ClassLoader} makes generated bytecode available as resources.
-     * For classes loaded by anonymous {@code ByteArrayClassLoader} instances
-     * (e.g., via {@code MolangCompilerImpl}), the class bytes are not available
-     * as resources and this method returns {@code null}.
-     */
-    private static byte[] extractClassBytes(CompiledMolangExpression expr) {
-        Class<?> clazz = expr.getClass();
-        String className = clazz.getName();
-        String resourcePath = "/" + className.replace('.', '/') + ".class";
-        try (InputStream is = clazz.getResourceAsStream(resourcePath)) {
-            if (is != null) {
-                return is.readAllBytes();
-            }
-        } catch (IOException e) {
-            LOG.log(Level.WARNING, "Failed to extract class bytes for: " + className, e);
-        }
-        return null;
-    }
-
-    /**
-     * Internal ClassLoader that can define classes from byte arrays,
-     * following the same pattern used by {@code MolangCompilerImpl}.
-     */
-    private static final class ByteArrayClassLoader extends ClassLoader {
-        private ByteArrayClassLoader(ClassLoader parent) {
-            super(parent);
-        }
-
-        private CompiledMolangExpression instantiate(byte[] classBytes) throws Exception {
-            Class<?> clazz = defineClass(null, classBytes, 0, classBytes.length);
-            Constructor<?> constructor = clazz.getDeclaredConstructor();
-            Object instance = constructor.newInstance();
-            return (CompiledMolangExpression) instance;
-        }
+        return cache.computeIfAbsent(cacheKey, k -> supplier.get());
     }
 }
