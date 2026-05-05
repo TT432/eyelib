@@ -114,8 +114,8 @@ Deferred to future release. Tracked but not in current roadmap.
 | RPT-02 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 22 total
-- Mapped to phases: 22
+- v1 requirements: 23 total
+- Mapped to phases: 23
 - Unmapped: 0 ✓
 
 ---
