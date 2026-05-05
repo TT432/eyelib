@@ -23,7 +23,14 @@ Build a standalone NeoForge 1.20.1 mod that automates client-side smoke testing 
   3. Placing the annotation JAR on a test mod's `compileOnly` classpath allows `@ClientSmoke`-annotated classes to compile successfully; removing the annotation JAR from the runtime classpath leaves the annotation absent but prevents no class-loading errors.
   4. `ModFileScanData`-based scanning discovers `@ClientSmoke`-annotated classes from any JAR on the classpath (including third-party mods) without triggering JVM class initialization — verifiable by placing a test class with an intentionally broken static initializer (`static { throw new RuntimeException("loaded!"); }`) and confirming the scan completes without that error surfacing.
   5. Toggling `clientsmoke-common.toml`'s `enabled=false` silences the entire framework (no scanning, no state machine, no events); setting `enabled=true` triggers annotation scanning and config parsing at mod construction time with visible log output.
-**Plans**: TBD
+**Plans**: 5 plans in 4 waves
+
+Plans:
+- [ ] 01-01-PLAN.md — Gradle Build Configuration: both subprojects, root wiring (MOD-01, MOD-02, MOD-03)
+- [ ] 01-02-PLAN.md — @ClientSmoke Annotation Definition (ANN-01, MOD-01)
+- [ ] 01-03-PLAN.md — Runtime Mod Entrypoint + Forge Metadata (MOD-02)
+- [ ] 01-04-PLAN.md — Config System: ForgeConfigSpec with 4 entries (CFG-01, CFG-02, CFG-03)
+- [ ] 01-05-PLAN.md — Scanner: ModFileScanData zero-class-loading discovery (ANN-02, ANN-03)
 
 ### Phase 2: State Machine + World Lifecycle + Stabilization
 **Goal**: Runtime backbone operational — a single `@EventBusSubscriber` handler on `TickEvent.ClientTickEvent` drives the full state machine through all states (INIT → CONFIG_LOAD → SCAN → WORLD_CREATE → WORLD_WAIT → STABILIZE → ...), automatically creates a creative flat world without user interaction, and multi-stage readiness checks confirm the world is fully loaded and the player is spawned before proceeding to test execution.
@@ -64,7 +71,7 @@ Build a standalone NeoForge 1.20.1 mod that automates client-side smoke testing 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Module Scaffolding + Config + Annotation Discovery | 0/9 | Not started | - |
+| 1. Module Scaffolding + Config + Annotation Discovery | 0/5 | Planned | - |
 | 2. State Machine + World Lifecycle + Stabilization | 0/4 | Not started | - |
 | 3. Screenshot Capture + Auto-Exit | 0/5 | Not started | - |
 | 4. Test Execution + Report Generation | 0/5 | Not started | - |
