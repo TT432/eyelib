@@ -1,6 +1,7 @@
 package io.github.tt432.clientsmoke;
 
 import io.github.tt432.clientsmoke.config.ClientSmokeConfig;
+import io.github.tt432.clientsmoke.runtime.ClientSmokeStateMachine;
 import io.github.tt432.clientsmoke.scanner.ClientSmokeScanner;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -20,7 +21,8 @@ import org.slf4j.LoggerFactory;
  * <ol>
  *   <li><strong>Phase 1 (Plan 04):</strong> Register {@code ForgeConfigSpec} (config)</li>
  *   <li><strong>Phase 1 (Plan 05):</strong> Initialize scanner (annotation discovery)</li>
- *   <li><strong>Phase 2:</strong> Register {@code @EventBusSubscriber} for state machine</li>
+ *   <li><strong>Phase 2 (Plan 01):</strong> State machine created — scanner results passed to {@code ClientSmokeStateMachine}</li>
+ *   <li><strong>Phase 2 (Plan 02):</strong> World creation + stabilization implementation</li>
  * </ol>
  *
  * <p>Per D-09: Scanning happens in the constructor body — not in a static block or
@@ -50,11 +52,12 @@ public class ClientSmokeMod {
 
             // Phase 1 (Plan 05): Annotation discovery via bytecode scanning (no class loading)
             var discoveredTests = ClientSmokeScanner.scan();
+
+            // Phase 2 (Plan 01): Pass discovered tests to state machine
+            ClientSmokeStateMachine.setDiscoveredTests(discoveredTests);
+            LOGGER.info("[ClientSmoke] Phase 2 ready — state machine will activate on first client tick");
         } else {
             LOGGER.info("[ClientSmoke] Smoke testing DISABLED — framework is silent. Set enabled=true in config/clientsmoke-common.toml to activate");
         }
-
-        // Phase 2: EventBusSubscriber registration point
-        //   bus.register(ClientSmokeStateMachine.class);
     }
 }
