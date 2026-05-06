@@ -1,6 +1,7 @@
 package io.github.tt432.clientsmoke;
 
 import io.github.tt432.clientsmoke.config.ClientSmokeConfig;
+import io.github.tt432.clientsmoke.scanner.ClientSmokeScanner;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -46,12 +47,12 @@ public class ClientSmokeMod {
 
         if (ClientSmokeConfig.ENABLED.get()) {
             LOGGER.info("[ClientSmoke] Smoke testing ENABLED — config loaded, scanning will proceed");
+
+            // Phase 1 (Plan 05): Annotation discovery via bytecode scanning (no class loading)
+            var discoveredTests = ClientSmokeScanner.scan();
         } else {
             LOGGER.info("[ClientSmoke] Smoke testing DISABLED — framework is silent. Set enabled=true in config/clientsmoke-common.toml to activate");
         }
-
-        // Phase 1 (Plan 05): Scanner initialization point
-        //   ClientSmokeScanner.scan();
 
         // Phase 2: EventBusSubscriber registration point
         //   bus.register(ClientSmokeStateMachine.class);
