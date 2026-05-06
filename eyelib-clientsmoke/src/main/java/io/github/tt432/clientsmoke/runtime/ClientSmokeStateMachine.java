@@ -4,6 +4,17 @@ import io.github.tt432.clientsmoke.ClientSmokeMod;
 import io.github.tt432.clientsmoke.config.ClientSmokeConfig;
 import io.github.tt432.clientsmoke.scanner.ClientSmokeScanner;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.Difficulty;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.LevelSettings;
+import net.minecraft.world.level.WorldDataConfiguration;
+import net.minecraft.world.level.dimension.WorldDimensions;
+import net.minecraft.world.level.levelgen.WorldOptions;
+import net.minecraft.world.level.levelgen.presets.WorldPresets;
+
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -44,6 +55,15 @@ public final class ClientSmokeStateMachine {
     private static ClientSmokeState state = ClientSmokeState.INIT;
 
     private static List<ClientSmokeScanner.DiscoveredTest> discoveredTests = Collections.emptyList();
+
+    /** Game time at which world stabilization began. {@code -1L} = not yet started. */
+    private static long stabilizeStartTick = -1L;
+
+    /** World name for the test world. Hardcoded for v1. */
+    private static final String WORLD_NAME = "ClientSmokeTest";
+
+    /** Fixed seed for deterministic world generation. */
+    private static final long WORLD_SEED = 12345L;
 
     public static void setDiscoveredTests(List<ClientSmokeScanner.DiscoveredTest> tests) {
         discoveredTests = List.copyOf(tests);
@@ -103,8 +123,66 @@ public final class ClientSmokeStateMachine {
     }
 
     private static void handleWorldCreate() {
-        LOGGER.info("[ClientSmoke] World creation pending (Plan 02-02)");
-        transitionTo(ClientSmokeState.WORLD_WAIT, "World creation requested (placeholder)");
+        Minecraft mc = Minecraft.getInstance();
+
+        try {
+            if (mc.getLevelSource().levelExists(WORLD_NAME)) {
+                // World already exists — reuse it
+                LOGGER.info("[ClientSmoke] World '{}' already exists — reusing", WORLD_NAME);
+                mc.createWorldOpenFlows().loadLevel(null, WORLD_NAME);
+            } else {
+                // Create a fresh creative superflat world
+                LOGGER.info("[ClientSmoke] Creating new world '{}' (creative flat, seed={})",
+                        WORLD_NAME, WORLD_SEED);
+
+                LevelSettings levelSettings = new LevelSettings(
+                        WORLD_NAME,
+                        GameType.CREATIVE,
+                        false,                          // hardcore = false
+                        Difficulty.NORMAL,
+                        true,                           // allowCommands = true
+                        new net.minecraft.world.level.GameRules(),
+                        WorldDataConfiguration.DEFAULT
+                );
+
+                WorldOptions worldOptions = new WorldOptions(
+                        WORLD_SEED,
+                        true,   // generateStructures = true
+                        false   // bonusChest = false
+                );
+
+                // Forge 1.20.1 API: createFreshLevel(String, LevelSettings, WorldOptions, Function<RegistryAccess, WorldDimensions>)
+                // Uses FLAT world preset to produce a superflat creative world with fixed seed
+                mc.createWorldOpenFlows().createFreshLevel(
+                        WORLD_NAME,
+                        levelSettings,
+                        worldOptions,
+                        ClientSmokeStateMachine::createFlatWorldDimensions
+                );
+            }
+
+            transitionTo(ClientSmokeState.WORLD_WAIT, "World load initiated — waiting for player spawn");
+        } catch (Exception e) {
+            LOGGER.error("[ClientSmoke] Failed to create/load world '{}': {}", WORLD_NAME, e.getMessage(), e);
+            transitionTo(ClientSmokeState.ERROR, "World creation failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Creates flat world dimensions for the test world using the {@link WorldPresets#FLAT}
+     * preset from the world preset registry.
+     *
+     * <p>Method reference compatible with
+     * {@code WorldOpenFlows.createFreshLevel}'s {@code Function<RegistryAccess, WorldDimensions>} parameter.</p>
+     *
+     * @param registry the registry access from the world creation datapack context
+     * @return the flat world dimensions produced by the FLAT preset
+     */
+    private static WorldDimensions createFlatWorldDimensions(RegistryAccess registry) {
+        return registry.registryOrThrow(Registries.WORLD_PRESET)
+                .getHolderOrThrow(WorldPresets.FLAT)
+                .value()
+                .createWorldDimensions();
     }
 
     private static void handleWorldWait() {
