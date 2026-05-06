@@ -7,7 +7,7 @@ Build a standalone NeoForge 1.20.1 mod that automates client-side smoke testing 
 ## Phases
 
 - [ ] **Phase 1: Module Scaffolding + Config + Annotation Discovery** — Foundation: two Gradle subprojects, @ClientSmoke annotation, ModFileScanData scanning, ModConfigSpec configuration, root module wiring
-- [ ] **Phase 2: State Machine + World Lifecycle + Stabilization** — Runtime backbone: tick-driven state machine, automatic world creation, multi-stage readiness checks
+- [x] **Phase 2: State Machine + World Lifecycle + Stabilization** — Runtime backbone: tick-driven state machine, automatic world creation, multi-stage readiness checks
 - [ ] **Phase 3: Screenshot Capture + Auto-Exit** — Output pipeline: render-thread screenshot capture with HUD hiding, timestamped file output, graceful two-phase JVM exit
 - [ ] **Phase 4: Test Execution + Report Generation** — Close the loop: safe test class loading and invocation, failure isolation, priority ordering, JSON report output
 
@@ -44,8 +44,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 02-01-PLAN.md — State Machine Core: enum, @EventBusSubscriber, state transitions, scanner wiring (ENG-01, ENG-02)
-- [ ] 02-02-PLAN.md — World Creation + Stabilization: auto-join creative flat world, multi-stage readiness, stabilization timer (ENG-03, ENG-04)
+- [x] 02-01-PLAN.md — State Machine Core: enum, @EventBusSubscriber, state transitions, scanner wiring (ENG-01, ENG-02)
+- [x] 02-02-PLAN.md — World Creation + Stabilization: auto-join creative flat world, multi-stage readiness, stabilization timer (ENG-03, ENG-04)
 
 ### Phase 3: Screenshot Capture + Auto-Exit
 **Goal**: Output pipeline works reliably — screenshots are captured on the render thread via `RenderLevelStageEvent.AFTER_LEVEL`, HUD is automatically hidden (F1) one frame before capture and restored afterward, output PNG files are saved with test-class + timestamp naming under a consistent directory, and the client auto-exits after all tests complete using a graceful two-phase shutdown.
@@ -76,6 +76,6 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Module Scaffolding + Config + Annotation Discovery | 5/5 | Complete | 2026-05-06 |
-| 2. State Machine + World Lifecycle + Stabilization | 0/2 | Planned | - |
+| 2. State Machine + World Lifecycle + Stabilization | 2/2 | Complete | 2026-05-06 |
 | 3. Screenshot Capture + Auto-Exit | 0/5 | Not started | - |
 | 4. Test Execution + Report Generation | 0/5 | Not started | - |
