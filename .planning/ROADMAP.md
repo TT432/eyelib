@@ -29,8 +29,8 @@ Plans:
 - [x] 01-01-PLAN.md — Gradle Build Configuration: both subprojects, root wiring (MOD-01, MOD-02, MOD-03)
 - [x] 01-02-PLAN.md — @ClientSmoke Annotation Definition (ANN-01, MOD-01)
 - [x] 01-03-PLAN.md — Runtime Mod Entrypoint + Forge Metadata (MOD-02)
-- [ ] 01-04-PLAN.md — Config System: ForgeConfigSpec with 4 entries (CFG-01, CFG-02, CFG-03)
-- [ ] 01-05-PLAN.md — Scanner: ModFileScanData zero-class-loading discovery (ANN-02, ANN-03)
+- [x] 01-04-PLAN.md — Config System: ForgeConfigSpec with 4 entries (CFG-01, CFG-02, CFG-03)
+- [x] 01-05-PLAN.md — Scanner: ModFileScanData zero-class-loading discovery (ANN-02, ANN-03)
 
 ### Phase 2: State Machine + World Lifecycle + Stabilization
 **Goal**: Runtime backbone operational — a single `@EventBusSubscriber` handler on `TickEvent.ClientTickEvent` drives the full state machine through all states (INIT → CONFIG_LOAD → SCAN → WORLD_CREATE → WORLD_WAIT → STABILIZE → ...), automatically creates a creative flat world without user interaction, and multi-stage readiness checks confirm the world is fully loaded and the player is spawned before proceeding to test execution.
@@ -71,7 +71,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Module Scaffolding + Config + Annotation Discovery | 3/5 | In Progress | 2026-05-06 |
+| 1. Module Scaffolding + Config + Annotation Discovery | 5/5 | Complete | 2026-05-06 |
 | 2. State Machine + World Lifecycle + Stabilization | 0/4 | Not started | - |
 | 3. Screenshot Capture + Auto-Exit | 0/5 | Not started | - |
 | 4. Test Execution + Report Generation | 0/5 | Not started | - |
