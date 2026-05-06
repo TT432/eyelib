@@ -41,7 +41,11 @@ Plans:
   2. The state machine passes through all defined states in the correct order (INIT → CONFIG_LOAD → SCAN → WORLD_CREATE → WORLD_WAIT → STABILIZE), with each transition logged at INFO level and no mandatory state ever bypassed.
   3. The stabilization phase waits a configurable number of ticks (`reloadStabilizeTicks`, default 40) after player spawn before declaring readiness; at stabilization completion, the player entity is non-null and the world's chunk rendering is complete.
   4. If world creation fails (e.g., incompatible world data), the state machine transitions to a safe error state with a clear log message rather than hanging or crashing silently.
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 02-01-PLAN.md — State Machine Core: enum, @EventBusSubscriber, state transitions, scanner wiring (ENG-01, ENG-02)
+- [ ] 02-02-PLAN.md — World Creation + Stabilization: auto-join creative flat world, multi-stage readiness, stabilization timer (ENG-03, ENG-04)
 
 ### Phase 3: Screenshot Capture + Auto-Exit
 **Goal**: Output pipeline works reliably — screenshots are captured on the render thread via `RenderLevelStageEvent.AFTER_LEVEL`, HUD is automatically hidden (F1) one frame before capture and restored afterward, output PNG files are saved with test-class + timestamp naming under a consistent directory, and the client auto-exits after all tests complete using a graceful two-phase shutdown.
@@ -72,6 +76,6 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Module Scaffolding + Config + Annotation Discovery | 5/5 | Complete | 2026-05-06 |
-| 2. State Machine + World Lifecycle + Stabilization | 0/4 | Not started | - |
+| 2. State Machine + World Lifecycle + Stabilization | 0/2 | Planned | - |
 | 3. Screenshot Capture + Auto-Exit | 0/5 | Not started | - |
 | 4. Test Execution + Report Generation | 0/5 | Not started | - |
