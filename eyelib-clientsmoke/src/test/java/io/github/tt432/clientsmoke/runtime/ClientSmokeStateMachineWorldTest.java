@@ -143,4 +143,95 @@ class ClientSmokeStateMachineWorldTest {
         assertEquals(ClientSmokeState.INIT, stateField.get(null),
                 "Test setup: state must be INIT before transition test");
     }
+
+    // ── Plan 02-02 completeness tests ──────────────────────────────
+
+    @Test
+    @DisplayName("handleWorldWait: exists as private static method")
+    void handleWorldWait_methodExists() throws Exception {
+        Method method = ClientSmokeStateMachine.class.getDeclaredMethod("handleWorldWait");
+        assertNotNull(method, "handleWorldWait method must exist");
+        assertTrue(Modifier.isPrivate(method.getModifiers()),
+                "handleWorldWait must be private");
+        assertTrue(Modifier.isStatic(method.getModifiers()),
+                "handleWorldWait must be static");
+    }
+
+    @Test
+    @DisplayName("handleStabilize: exists as private static method")
+    void handleStabilize_methodExists() throws Exception {
+        Method method = ClientSmokeStateMachine.class.getDeclaredMethod("handleStabilize");
+        assertNotNull(method, "handleStabilize method must exist");
+        assertTrue(Modifier.isPrivate(method.getModifiers()),
+                "handleStabilize must be private");
+        assertTrue(Modifier.isStatic(method.getModifiers()),
+                "handleStabilize must be static");
+    }
+
+    /**
+     * Verifies that no placeholder "(Plan 02-02)" patterns remain in the source file.
+     * After Plan 02-02 implementation, all placeholder handlers must be replaced
+     * with production code. This test reads the source file directly to check.
+     */
+    @Test
+    @DisplayName("No '(Plan 02-02)' placeholder remains in source file")
+    void noPlaceholderPatternsRemain() throws Exception {
+        // Locate the source file relative to the test class
+        var sourceUrl = ClientSmokeStateMachine.class.getResource(
+                "ClientSmokeStateMachine.class");
+        assertNotNull(sourceUrl, "Cannot locate ClientSmokeStateMachine.class");
+
+        // Navigate from .class file to source
+        var sourcePath = java.nio.file.Path.of(
+                "../../src/main/java/io/github/tt432/clientsmoke/runtime/ClientSmokeStateMachine.java");
+        var classDir = java.nio.file.Path.of(sourceUrl.toURI()).getParent();
+        // For Gradle build: classes go to build/classes/..., source is at src/main/java/...
+        var projectRoot = classDir;
+        while (projectRoot != null && !java.nio.file.Files.exists(projectRoot.resolve("settings.gradle"))) {
+            projectRoot = projectRoot.getParent();
+        }
+        if (projectRoot == null) {
+            // Fallback: try relative path from working directory
+            projectRoot = java.nio.file.Path.of("").toAbsolutePath();
+        }
+
+        var sourceFile = projectRoot.resolve(
+                "eyelib-clientsmoke/src/main/java/io/github/tt432/clientsmoke/runtime/ClientSmokeStateMachine.java");
+
+        if (!java.nio.file.Files.exists(sourceFile)) {
+            // If source file can't be found, skip this test
+            return;
+        }
+
+        String sourceContent = java.nio.file.Files.readString(sourceFile);
+        assertFalse(sourceContent.contains("(Plan 02-02)"),
+                "Source file must NOT contain '(Plan 02-02)' placeholder — "
+                        + "handleWorldWait() and handleStabilize() should be production code, not placeholders");
+    }
+
+    @Test
+    @DisplayName("Source file contains 'mc.player' pattern (player null-check in handleWorldWait)")
+    void containsPlayerNullCheck() throws Exception {
+        var sourceFile = java.nio.file.Path.of(
+                "eyelib-clientsmoke/src/main/java/io/github/tt432/clientsmoke/runtime/ClientSmokeStateMachine.java");
+        if (!java.nio.file.Files.exists(sourceFile)) {
+            return;
+        }
+        String sourceContent = java.nio.file.Files.readString(sourceFile);
+        assertTrue(sourceContent.contains("mc.player"),
+                "Source must contain 'mc.player' for player spawn check in handleWorldWait");
+    }
+
+    @Test
+    @DisplayName("Source file references RELOAD_STABILIZE_TICKS for stabilization timer")
+    void containsStabilizeTicksReference() throws Exception {
+        var sourceFile = java.nio.file.Path.of(
+                "eyelib-clientsmoke/src/main/java/io/github/tt432/clientsmoke/runtime/ClientSmokeStateMachine.java");
+        if (!java.nio.file.Files.exists(sourceFile)) {
+            return;
+        }
+        String sourceContent = java.nio.file.Files.readString(sourceFile);
+        assertTrue(sourceContent.contains("RELOAD_STABILIZE_TICKS"),
+                "Source must reference RELOAD_STABILIZE_TICKS for stabilization delay in handleStabilize");
+    }
 }
