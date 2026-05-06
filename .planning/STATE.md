@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-05-06)
 ## Current Position
 
 Phase: 1 of 4 (Module Scaffolding + Config + Annotation Discovery)
-Plan: 5 written in current phase (1 complete, 4 pending)
-Status: In Progress — executing Wave 1 (01-01 complete)
-Last activity: 2026-05-06 — Plan 01-01 complete: Gradle build config (both subprojects build successfully)
+Plan: 5 written in current phase (3 complete, 2 pending)
+Status: In Progress — Wave 2 complete (01-02, 01-03 done). Moving to Wave 3.
+Last activity: 2026-05-06 — Plans 01-02, 01-03 complete: annotation + runtime entrypoint
 
-Progress: [██░░░░░░░░] 20%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 

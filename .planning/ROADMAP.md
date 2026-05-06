@@ -27,8 +27,8 @@ Build a standalone NeoForge 1.20.1 mod that automates client-side smoke testing 
 
 Plans:
 - [x] 01-01-PLAN.md — Gradle Build Configuration: both subprojects, root wiring (MOD-01, MOD-02, MOD-03)
-- [ ] 01-02-PLAN.md — @ClientSmoke Annotation Definition (ANN-01, MOD-01)
-- [ ] 01-03-PLAN.md — Runtime Mod Entrypoint + Forge Metadata (MOD-02)
+- [x] 01-02-PLAN.md — @ClientSmoke Annotation Definition (ANN-01, MOD-01)
+- [x] 01-03-PLAN.md — Runtime Mod Entrypoint + Forge Metadata (MOD-02)
 - [ ] 01-04-PLAN.md — Config System: ForgeConfigSpec with 4 entries (CFG-01, CFG-02, CFG-03)
 - [ ] 01-05-PLAN.md — Scanner: ModFileScanData zero-class-loading discovery (ANN-02, ANN-03)
 
@@ -71,7 +71,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Module Scaffolding + Config + Annotation Discovery | 1/5 | In Progress | 2026-05-06 |
+| 1. Module Scaffolding + Config + Annotation Discovery | 3/5 | In Progress | 2026-05-06 |
 | 2. State Machine + World Lifecycle + Stabilization | 0/4 | Not started | - |
 | 3. Screenshot Capture + Auto-Exit | 0/5 | Not started | - |
 | 4. Test Execution + Report Generation | 0/5 | Not started | - |
