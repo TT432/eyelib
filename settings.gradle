@@ -13,7 +13,10 @@ plugins {
 
 rootProject.name = "eyelib"
 
-include("eyelib-importer")
-include("eyelib-molang")
 include("eyelib-attachment")
+include("eyelib-importer")
+include("eyelib-material")
+include("eyelib-molang")
 include("eyelib-processor")
+include("eyelib-clientsmoke-annotation")
+include("eyelib-clientsmoke")
