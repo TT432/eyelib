@@ -1,0 +1,31 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+
+[[mods]]
+modId="clientsmoke"
+version="${mod_version}"
+displayName="Client Smoke Test"
+authors="${mod_authors}"
+description='''
+A standalone client-side smoke testing framework for Minecraft Forge mods.
+Tests are discovered via @ClientSmoke annotation using bytecode-level ASM scanning
+(zero class loading), executed inside an auto-created creative flat world, captured
+as clean screenshots, and reported as JSON — all config-driven.
+
+This mod is client-only and will not load on dedicated servers.
+'''
+
+[[dependencies.clientsmoke]]
+modId="forge"
+mandatory=true
+versionRange="${forge_version_range}"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies.clientsmoke]]
+modId="minecraft"
+mandatory=true
+versionRange="${minecraft_version_range}"
+ordering="NONE"
+side="CLIENT"
