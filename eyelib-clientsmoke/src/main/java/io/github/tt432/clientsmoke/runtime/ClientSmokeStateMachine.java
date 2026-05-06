@@ -65,6 +65,9 @@ public final class ClientSmokeStateMachine {
     /** Fixed seed for deterministic world generation. */
     private static final long WORLD_SEED = 12345L;
 
+    /** Guard to ensure stabilization-complete log fires exactly once. */
+    private static boolean stabilizeCompleteLogged = false;
+
     public static void setDiscoveredTests(List<ClientSmokeScanner.DiscoveredTest> tests) {
         discoveredTests = List.copyOf(tests);
         LOGGER.info("[ClientSmoke] State machine received {} discovered test(s)", discoveredTests.size());
@@ -186,13 +189,40 @@ public final class ClientSmokeStateMachine {
     }
 
     private static void handleWorldWait() {
-        LOGGER.info("[ClientSmoke] Waiting for world load (Plan 02-02)");
-        transitionTo(ClientSmokeState.STABILIZE, "World wait complete (placeholder)");
+        Minecraft mc = Minecraft.getInstance();
+
+        if (mc.player != null && mc.level != null) {
+            // Player has spawned in the world
+            stabilizeStartTick = mc.level.getGameTime();
+            LOGGER.info("[ClientSmoke] Player spawned in world '{}' — starting stabilization ({} ticks required)",
+                    WORLD_NAME, ClientSmokeConfig.RELOAD_STABILIZE_TICKS.get());
+            transitionTo(ClientSmokeState.STABILIZE, "Player spawned — stabilizing render");
+        }
+        // else: stay in WORLD_WAIT — no log spam, just wait for next tick
     }
 
     private static void handleStabilize() {
-        LOGGER.info("[ClientSmoke] Stabilization pending (Plan 02-02)");
-        transitionTo(ClientSmokeState.STABILIZE, "Stabilization complete (placeholder — Phase 2 end)");
+        Minecraft mc = Minecraft.getInstance();
+
+        if (mc.level == null) {
+            LOGGER.warn("[ClientSmoke] Level unexpectedly null during stabilization — returning to WORLD_WAIT");
+            state = ClientSmokeState.WORLD_WAIT;
+            return;
+        }
+
+        long waitedTicks = mc.level.getGameTime() - stabilizeStartTick;
+        long requiredTicks = ClientSmokeConfig.RELOAD_STABILIZE_TICKS.get();
+
+        if (waitedTicks >= requiredTicks && !stabilizeCompleteLogged) {
+            // Stabilization complete — Phase 2 endpoint reached (one-shot log)
+            stabilizeCompleteLogged = true;
+            LOGGER.info("[ClientSmoke] Stabilization complete — waited {} ticks (required: {}). Ready for test execution.",
+                    waitedTicks, requiredTicks);
+            LOGGER.info("[ClientSmoke] Phase 2 complete — {} test(s) queued. Phase 3 will execute tests.",
+                    discoveredTests.size());
+            // STAY in STABILIZE state — Phase 3 picks up from here
+        }
+        // else: stay in STABILIZE — no log spam, just wait for next tick
     }
 
     // ── Utils ─────────────────────────────────────────────────────
