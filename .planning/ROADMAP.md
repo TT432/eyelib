@@ -61,7 +61,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — Enum Extension + HUD_HIDE + Screenshot Capture Pipeline (CAP-01, CAP-02, CAP-03)
-- [ ] 03-02-PLAN.md — EXIT State Implementation + STABILIZE Handoff (EXIT-01, EXIT-02)
+- [x] 03-02-PLAN.md — EXIT State Implementation + STABILIZE Handoff (EXIT-01, EXIT-02)
 
 ### Phase 4: Test Execution + Report Generation
 **Goal**: End-to-end pipeline closes — `@ClientSmoke`-annotated test classes are loaded via `Class.forName()` only at the TEST_EXEC state (after world is fully stabilized), instantiated, and invoked; any exception is captured and recorded without interrupting subsequent tests; tests execute in priority order; and a JSON report summarizing all results is written before auto-exit triggers.
