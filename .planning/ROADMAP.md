@@ -60,7 +60,7 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 03-01-PLAN.md — Enum Extension + HUD_HIDE + Screenshot Capture Pipeline (CAP-01, CAP-02, CAP-03)
+- [x] 03-01-PLAN.md — Enum Extension + HUD_HIDE + Screenshot Capture Pipeline (CAP-01, CAP-02, CAP-03)
 - [ ] 03-02-PLAN.md — EXIT State Implementation + STABILIZE Handoff (EXIT-01, EXIT-02)
 
 ### Phase 4: Test Execution + Report Generation
