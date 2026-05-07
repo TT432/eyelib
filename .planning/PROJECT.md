@@ -1,8 +1,21 @@
 # client-smoke-test
 
+**Status:** v1.0 shipped (2026-05-07) | v1.1 planning
+
 ## What This Is
 
-A standalone NeoForge mod subproject that provides automated client-side smoke testing for Minecraft mods. Tests are discovered via a `@ClientSmoke` annotation, keeping test infrastructure decoupled from mod business code. The framework auto-starts Minecraft, loads a test world, executes annotated test methods, captures screenshots, and exits — all config-driven. While built within the eyelib repository, it is an independent module intended for use by any NeoForge mod.
+A standalone NeoForge mod subproject that provides automated client-side smoke testing for Minecraft mods. Tests are discovered via a `@ClientSmoke` annotation, keeping test infrastructure decoupled from mod business code. The framework auto-starts Minecraft, loads a test world, executes annotated test constructors, captures screenshots, generates JSON reports, and exits — all config-driven. While built within the eyelib repository, it is an independent module intended for use by any NeoForge mod.
+
+## Current Milestone: v1.1 ClientSmoke 全自动化
+
+**Goal:** 将 clientsmoke 从"需手动配置参数后启动"变为一个 Gradle 任务即可一键运行。
+
+**Target features:**
+- 注册 Gradle 任务（如 `runClientSmoke`），一行命令完成全流程
+- 基于现有 MDGL (`net.neoforged.moddev.legacyforge`) 机制扩展
+- Root 项目可直接调用
+- 自动注入启动参数（强制启用 clientsmoke、自动退出）
+- 不影响现有 `runClient` 的正常行为
 
 ## Core Value
 
@@ -12,17 +25,14 @@ A standalone NeoForge mod subproject that provides automated client-side smoke t
 
 ### Validated
 
-(None yet — ship to validate)
+All v1 requirements validated (2026-05-07). See `.planning/milestones/v1.0-REQUIREMENTS.md`.
 
 ### Active
 
-- [ ] 独立的 `client-smoke-test` Gradle 子项目，使用 NeoForge userdev 插件
-- [ ] `@ClientSmoke` 注解定义，标记测试方法或测试类
-- [ ] 注解扫描机制，在 NeoForge 类加载安全边界内发现被标记的测试
-- [ ] 参考 iris-tutorial-mod 的自动启动机制：配置驱动入口、ClientTickEvent.Pre 状态机、自动进世界截图退出
-- [ ] 配置系统（是否启用自动测试、截图延迟、世界名称等）
-- [ ] 截图输出与报告生成
-- [ ] 与 eyelib root 模块通过 `compileOnly` 或 `runtimeOnly` 依赖，不引入编译时耦合
+- [ ] Gradle 任务一键启动 clientsmoke（无需手动设 enableSmokeTest 和 config）
+- [ ] 任务自动注入 JVM 参数（强制启用、自动退出）
+- [ ] Root 项目可直接调用，不限于子项目
+- [ ] 不影响现有 runClient 行为
 
 ### Out of Scope
 
@@ -80,4 +90,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-06 after initialization*
+*Last updated: 2026-05-07 after v1.1 milestone start*

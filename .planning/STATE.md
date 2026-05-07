@@ -1,91 +1,54 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: executing
-stopped_at: Phase 2 complete — state machine + world lifecycle + stabilization operational
-last_updated: "2026-05-07T11:01:19.099Z"
-last_activity: 2026-05-07 -- Phase 03 execution started
+milestone: v1.1
+milestone_name: ClientSmoke 全自动化
+status: planning
+stopped_at: —
+last_updated: "2026-05-07T15:00:00.000Z"
+last_activity: 2026-05-07 -- Milestone v1.1 started
 progress:
-  total_phases: 4
-  completed_phases: 2
-  total_plans: 9
-  completed_plans: 7
-  percent: 78
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-06)
+See: .planning/PROJECT.md
 
 **Core value:** @ClientSmoke 注解驱动的客户端冒烟测试，通过编译时/类加载时的注解扫描分离测试基础设施与模组运行时，杜绝意外的类加载问题。
-**Current focus:** Phase 03 — screenshot-capture-auto-exit
+**Current focus:** Defining requirements for v1.1
+
+## Previous Milestones
+
+### v1.0 — client-smoke-test (complete)
+- 4 phases, 10 plans, 23/23 requirements, 54 tests
+- Archived: `.planning/milestones/v1.0-ROADMAP.md`, `.planning/milestones/v1.0-REQUIREMENTS.md`
 
 ## Current Position
 
-Phase: 03 (screenshot-capture-auto-exit) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 03
-Last activity: 2026-05-07 -- Phase 03 execution started
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-07 — Milestone v1.1 started
 
-Progress: ██████████ 100% (Phase 2), ██████░░░░ 50% (Overall: 7/12 plans)
+## Blockers/Concerns
 
-## Performance Metrics
-
-**Velocity:**
-
-- Total plans completed: 7
-- Average duration: ~15 min/plan
-- Total execution time: ~1.5 hours
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 1. Module Scaffolding | 5 | ~45 min | ~9 min |
-| 2. State Machine | 2 | ~50 min | ~25 min |
-
-**Recent Trend:**
-
-- Phase 1 (5 plans): ~9 min/plan — infrastructure and config
-- Phase 2 (2 plans): ~25 min/plan — runtime code with TDD cycles
-
-*Updated after each plan completion*
-
-## Accumulated Context
-
-### Decisions
-
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-- **Phase structure**: 4 phases derived from research — Foundation (Phase 1) → State Machine (Phase 2) → Screenshot/Exit (Phase 3) → Test Exec/Report (Phase 4). MOD-03 placed in Phase 1 for wiring coherence.
-- **Platform**: Forge 1.20.1 + legacyForge 2.0.91 + Java 17 — matches existing eyelib platform.
-- **Annotation scanning**: ModFileScanData (bytecode-level ASM), never reflection-based. Proven pattern in eyelib's `ForgeMolangMappingDiscovery`.
-- **Screenshot capture**: Must use `RenderLevelStageEvent.AFTER_LEVEL` (render thread), never `ClientTickEvent`.
-
-### Pending Todos
-
-None yet.
-
-### Blockers/Concerns
-
-- **Phase 2 — Forge 1.20.1 world creation API**: RESOLVED — `WorldOpenFlows.createFreshLevel()` with 4 params + `loadLevel(null, name)` confirmed working on Forge 1.20.1 + legacyForge 2.0.91
-- **Phase 3 — RenderLevelStageEvent availability on Forge 1.20.1**: Event exists but stage constants need verification (LOW risk, well-known event).
-- **Phase 1 — Annotation scan API**: RESOLVED — `ModFileScanData` scanning confirmed working in Phase 1.
+None — milestone starting.
 
 ## Deferred Items
 
-Items acknowledged and carried forward from previous milestone close:
-
-| Category | Item | Status | Deferred At |
-|----------|------|--------|-------------|
-| *(none)* | | | |
+| Category | Item | Status |
+|----------|------|--------|
+| Manual Test | Phase 3 HUD-free screenshot visual verification | Deferred (requires real client launch) |
+| Manual Test | Phase 3 JVM exit timing verification | Deferred (requires real client launch) |
+| Manual Test | Phase 3 exit log sequence verification | Deferred (requires real client launch) |
 
 ## Session Continuity
 
-Last session: 2026-05-06
-Stopped at: Phase 2 complete — state machine + world lifecycle + stabilization operational
-Resume file: .planning/phases/02-state-machine-world-lifecycle-stabilization/02-02-SUMMARY.md
+Last session: 2026-05-07
+Status: Milestone v1.1 planning started
