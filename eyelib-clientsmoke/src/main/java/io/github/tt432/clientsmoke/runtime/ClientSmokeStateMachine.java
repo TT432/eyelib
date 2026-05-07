@@ -4,6 +4,10 @@ import io.github.tt432.clientsmoke.ClientSmokeMod;
 import io.github.tt432.clientsmoke.config.ClientSmokeConfig;
 import io.github.tt432.clientsmoke.scanner.ClientSmokeScanner;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.systems.RenderSystem;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
@@ -16,13 +20,19 @@ import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
 
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.loading.FMLPaths;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 
@@ -111,6 +121,121 @@ public final class ClientSmokeStateMachine {
         } catch (Exception e) {
             LOGGER.error("[ClientSmoke] State machine error in state {}: {}", state, e.getMessage(), e);
             state = ClientSmokeState.ERROR;
+        }
+    }
+
+    /**
+     * Captures a screenshot on the render thread during
+     * {@link RenderLevelStageEvent.Stage#AFTER_LEVEL}.
+     *
+     * <p>Per D-06: Reads the main framebuffer into a {@link NativeImage},
+     * flips Y for image file orientation, and writes a PNG to
+     * {@code clientsmoke-reports/screenshots/} with a timestamped filename.</p>
+     *
+     * <p>Per D-07: Uses {@code AFTER_LEVEL} stage — all world content,
+     * entities, particles, and post-processing are complete.</p>
+     *
+     * <p>Per D-08: PNG encoding and file I/O are synchronous on the render
+     * thread — no async thread pool needed (&lt;10ms for typical framebuffer).</p>
+     *
+     * <p><strong>Per D-02 + D-12 flow:</strong>
+     * <ol>
+     *   <li>{@code handleHudHide()} sets {@code hideGui=true}, transitions to SCREENSHOT</li>
+     *   <li>Same frame: Minecraft renders without HUD</li>
+     *   <li>This handler fires, captures framebuffer, writes PNG</li>
+     *   <li>Restores {@code hideGui=false}</li>
+     *   <li>Increments testIndex; transitions to EXIT or next test</li>
+     * </ol></p>
+     *
+     * <p>Per D-10: {@code hideGui} is restored here immediately after capture.</p>
+     *
+     * @param event the render level stage event
+     */
+    @SubscribeEvent
+    public static void onRenderLevelStage(RenderLevelStageEvent event) {
+        // Only capture on AFTER_LEVEL stage
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
+            return;
+        }
+
+        // Only capture when state machine is in SCREENSHOT state
+        if (state != ClientSmokeState.SCREENSHOT) {
+            return;
+        }
+
+        // One-frame guard against duplicate captures (belt-and-suspenders with state check)
+        if (screenshotTakenThisFrame) {
+            return;
+        }
+        screenshotTakenThisFrame = true;
+
+        Minecraft mc = Minecraft.getInstance();
+        NativeImage nativeimage = null;
+
+        try {
+            // ── Step 1: Read framebuffer into NativeImage (per D-06 pattern) ──
+            // Verified from Forge 1.20.1-47.1.3 sources: RenderTarget.width/height are public int fields
+            RenderTarget framebuffer = mc.getMainRenderTarget();
+            int width = framebuffer.width;
+            int height = framebuffer.height;
+
+            // Per RESEARCH.md Code Examples: create NativeImage, bind color texture, download, flip
+            nativeimage = new NativeImage(width, height, false);
+            RenderSystem.bindTexture(framebuffer.getColorTextureId());
+            nativeimage.downloadTexture(0, true);   // read GL texture into NativeImage
+            nativeimage.flipY();                     // OpenGL bottom-left → image top-left
+
+            // ── Step 2: Determine output filename (per D-14, D-15) ──
+            // Per D-15: className uses getSimpleName() (no package prefix)
+            String testClassName;
+            if (discoveredTests.isEmpty()) {
+                testClassName = "NoTests";
+            } else {
+                String fqcn = discoveredTests.get(testIndex).className();
+                testClassName = fqcn.substring(fqcn.lastIndexOf('.') + 1);
+            }
+
+            // Per D-14: {SimpleClassName}-{yyyyMMdd-HHmmss}.png
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+            String filename = testClassName + "-" + timestamp + ".png";
+
+            // ── Step 3: Create output directory (per D-13, D-16) ──
+            // Per D-13: ./clientsmoke-reports/screenshots/ relative to game dir
+            // Per D-16: Files.createDirectories() auto-creates tree
+            Path outputDir = FMLPaths.GAMEDIR.get().resolve("clientsmoke-reports").resolve("screenshots");
+            Files.createDirectories(outputDir);
+            Path outputFile = outputDir.resolve(filename);
+
+            // ── Step 4: Write PNG (per D-06: NativeImage.writeToFile) ──
+            nativeimage.writeToFile(outputFile);
+            LOGGER.info("[ClientSmoke] Screenshot saved: {}", outputFile.toAbsolutePath());
+
+            // ── Step 5: Restore HUD visibility (per D-02, D-10) ──
+            mc.options.hideGui = false;
+
+            // ── Step 6: Advance to next test or exit ──
+            testIndex++;
+            if (testIndex < discoveredTests.size()) {
+                // More tests remain — loop back (Phase 4 will insert TEST_EXEC here)
+                transitionTo(ClientSmokeState.HUD_HIDE, "Test " + testIndex + "/" + discoveredTests.size() + " — next screenshot");
+            } else {
+                transitionTo(ClientSmokeState.EXIT, "All " + discoveredTests.size() + " screenshot(s) captured — initiating exit");
+            }
+
+        } catch (Exception e) {
+            LOGGER.error("[ClientSmoke] Screenshot capture failed: {}", e.getMessage(), e);
+            // Per D-09/D-10: Always attempt to restore HUD on error
+            try {
+                mc.options.hideGui = false;
+            } catch (Exception restoreEx) {
+                LOGGER.warn("[ClientSmoke] Failed to restore hideGui after error: {}", restoreEx.getMessage());
+            }
+            transitionTo(ClientSmokeState.ERROR, "Screenshot capture failed: " + e.getMessage());
+        } finally {
+            // Per RESEARCH.md Common Pitfalls #2: NativeImage holds off-heap LWJGL memory — must close
+            if (nativeimage != null) {
+                nativeimage.close();
+            }
         }
     }
 
@@ -238,6 +363,49 @@ public final class ClientSmokeStateMachine {
             // STAY in STABILIZE state — Phase 3 picks up from here
         }
         // else: stay in STABILIZE — no log spam, just wait for next tick
+    }
+
+    /**
+     * Hides the HUD before screenshot capture.
+     *
+     * <p>Per D-02: Sets {@code options.hideGui = true} in the tick handler.
+     * The Minecraft render pipeline reads this value at the start of the next
+     * render pass (same frame), ensuring the HUD is hidden when the
+     * {@code RenderLevelStageEvent.AFTER_LEVEL} handler captures.</p>
+     *
+     * <p>Per D-12: Transitions to SCREENSHOT immediately after toggling hideGui.</p>
+     */
+    private static void handleHudHide() {
+        Minecraft mc = Minecraft.getInstance();
+        mc.options.hideGui = true;
+        transitionTo(ClientSmokeState.SCREENSHOT, "HUD hidden — awaiting screenshot capture on render thread");
+    }
+
+    /**
+     * Tick handler for SCREENSHOT state — resets the one-frame guard.
+     *
+     * <p>Actual framebuffer capture happens in
+     * {@link #onRenderLevelStage(RenderLevelStageEvent)} which fires on the
+     * render thread during the same frame.</p>
+     *
+     * <p>Per D-02: The render event handler transitions out of SCREENSHOT
+     * after capture, so this tick handler typically fires only once (the
+     * transition from HUD_HIDE sets state=SCREENSHOT; the render event
+     * captures and transitions out).</p>
+     */
+    private static void handleScreenshot() {
+        // Reset one-frame capture guard at start of each tick
+        screenshotTakenThisFrame = false;
+    }
+
+    /**
+     * Placeholder EXIT handler — transitions to IDLE for now.
+     *
+     * <p>Full two-phase shutdown (mc.stop() + halt(0)) is implemented in Plan 03-02.</p>
+     */
+    private static void handleExit() {
+        // Plan 03-02 will replace this with the real two-phase exit logic
+        transitionTo(ClientSmokeState.IDLE, "Exit placeholder — Plan 03-02");
     }
 
     // ── Utils ─────────────────────────────────────────────────────
