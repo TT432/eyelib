@@ -2,6 +2,7 @@ package io.github.tt432.clientsmoke.runtime;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.levelgen.WorldDimensions;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -92,7 +93,7 @@ class ClientSmokeStateMachineWorldTest {
                 "createFlatWorldDimensions must be private (internal helper)");
         assertTrue(Modifier.isStatic(method.getModifiers()),
                 "createFlatWorldDimensions must be static");
-        assertEquals(net.minecraft.world.level.dimension.WorldDimensions.class,
+        assertEquals(WorldDimensions.class,
                 method.getReturnType(),
                 "createFlatWorldDimensions must return WorldDimensions");
     }
