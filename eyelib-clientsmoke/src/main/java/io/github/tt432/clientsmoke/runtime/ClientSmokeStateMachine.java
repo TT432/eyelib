@@ -33,16 +33,17 @@ import java.util.List;
  * {@link Dist#CLIENT} side. On each {@link TickEvent.ClientTickEvent}
  * (Phase.START), the state machine processes exactly one state transition.</p>
  *
- * <p><strong>State flow (Phase 2):</strong></p>
+ * <p><strong>State flow (Phase 2-3):</strong></p>
  * <pre>
  *   INIT → IDLE                          (if enabled=false)
  *   INIT → CONFIG_LOAD → SCAN
  *     → WORLD_CREATE → WORLD_WAIT → STABILIZE   (if enabled=true)
+ *   STABILIZE → HUD_HIDE → SCREENSHOT → EXIT    (Phase 3: capture + exit)
  *   ANY  → ERROR                         (on unhandled exception)
  * </pre>
  *
- * <p>Lifecycle beyond STABILIZE (TEST_EXEC, SCREENSHOT, NEXT_TEST, REPORT, EXIT)
- * is Phase 3+4 scope.</p>
+ * <p>Lifecycle beyond SCREENSHOT (TEST_EXEC, NEXT_TEST, REPORT)
+ * is Phase 4 scope.</p>
  *
  * @see ClientSmokeState
  * @see ClientSmokeConfig
@@ -68,6 +69,15 @@ public final class ClientSmokeStateMachine {
     /** Guard to ensure stabilization-complete log fires exactly once. */
     private static boolean stabilizeCompleteLogged = false;
 
+    /** Index into {@link #discoveredTests} for the current test. Phase 4 manages this; Phase 3 reads className for file naming. */
+    private static int testIndex = 0;
+
+    /** One-frame guard preventing duplicate screenshot capture in a single render pass. Set true after capture, reset in tick handler. */
+    private static boolean screenshotTakenThisFrame = false;
+
+    /** Tick at which EXIT state was entered. {@code -1L} = EXIT not yet entered. D-04: tick-counted countdown. */
+    private static long exitStartTick = -1L;
+
     public static void setDiscoveredTests(List<ClientSmokeScanner.DiscoveredTest> tests) {
         discoveredTests = List.copyOf(tests);
         LOGGER.info("[ClientSmoke] State machine received {} discovered test(s)", discoveredTests.size());
@@ -79,6 +89,8 @@ public final class ClientSmokeStateMachine {
             return;
         }
 
+        // Terminal states: IDLE and ERROR halt processing.
+        // EXIT is NOT terminal — its handler must receive ticks for the countdown.
         if (state == ClientSmokeState.IDLE || state == ClientSmokeState.ERROR) {
             return;
         }
@@ -91,6 +103,9 @@ public final class ClientSmokeStateMachine {
                 case WORLD_CREATE -> handleWorldCreate();
                 case WORLD_WAIT -> handleWorldWait();
                 case STABILIZE -> handleStabilize();
+                case HUD_HIDE -> handleHudHide();
+                case SCREENSHOT -> handleScreenshot();
+                case EXIT -> handleExit();
                 default -> transitionTo(ClientSmokeState.ERROR, "Unknown state: " + state);
             }
         } catch (Exception e) {
