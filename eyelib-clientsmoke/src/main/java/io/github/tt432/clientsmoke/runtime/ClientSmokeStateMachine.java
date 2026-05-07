@@ -399,13 +399,77 @@ public final class ClientSmokeStateMachine {
     }
 
     /**
-     * Placeholder EXIT handler — transitions to IDLE for now.
+     * Two-phase JVM exit with graceful Forge shutdown followed by forced termination.
      *
-     * <p>Full two-phase shutdown (mc.stop() + halt(0)) is implemented in Plan 03-02.</p>
+     * <p><strong>Phase 1 — Graceful shutdown (tick 0 of EXIT):</strong>
+     * Calls {@code Minecraft.getInstance().stop()} which sets {@code running = false}
+     * and fires {@code GameShuttingDownEvent} for mod cleanup. Wrapped in try-catch
+     * per RESEARCH.md recommendation (the agent's discretion — safety against
+     * unexpected exceptions during shutdown).</p>
+     *
+     * <p><strong>Phase 2 — Countdown + forced halt:</strong>
+     * Each subsequent tick increments the countdown. When {@code elapsedTicks >= 60}
+     * (3 seconds at 20 TPS, per D-04), calls {@code Runtime.getRuntime().halt(0)}
+     * to force-terminate the JVM. {@code halt()} does NOT run shutdown hooks,
+     * avoiding the common modded-Minecraft hang where non-daemon render/network
+     * threads prevent clean {@code System.exit()}.</p>
+     *
+     * <p><strong>Config gating (per EXIT-01):</strong>
+     * When {@code exitAfterSmoke=false}, this method transitions to IDLE instead
+     * of shutting down — the client stays open for manual inspection.</p>
+     *
+     * <p><strong>One-shot log guard:</strong>
+     * The first call logs "Initiating exit", subsequent ticks silently count down.
+     * The final {@code halt()} call logs "Exit complete — halting JVM".</p>
+     *
+     * <p><strong>Time source (per D-04):</strong>
+     * Uses game tick counter ({@code mc.level.getGameTime()}) for the countdown.
+     * If {@code mc.level} is null (e.g., after {@code stop()} clears it), falls
+     * back to the elapsed wall-clock time since EXIT entry as a safety net.</p>
+     *
+     * <p>Per D-04: tick 0 calls mc.stop(); subsequent ticks check elapsed; >= 60 → halt(0).</p>
      */
     private static void handleExit() {
-        // Plan 03-02 will replace this with the real two-phase exit logic
-        transitionTo(ClientSmokeState.IDLE, "Exit placeholder — Plan 03-02");
+        // Per EXIT-01: check config gating
+        if (!ClientSmokeConfig.EXIT_AFTER_SMOKE.get()) {
+            transitionTo(ClientSmokeState.IDLE, "exitAfterSmoke=false — entering idle state for manual inspection");
+            return;
+        }
+
+        Minecraft mc = Minecraft.getInstance();
+
+        // Resolve current tick: use game time when available, otherwise fall back to wall clock
+        long currentTick;
+        if (mc.level != null) {
+            currentTick = mc.level.getGameTime();
+        } else {
+            // Level is null (likely after mc.stop() cleared it) — use wall-clock fallback
+            currentTick = System.currentTimeMillis() / 50;  // approximate tick count from wall time
+        }
+
+        // Phase 1: graceful shutdown (first EXIT tick only)
+        if (exitStartTick < 0) {
+            exitStartTick = currentTick;
+            LOGGER.info("[ClientSmoke] Initiating two-phase exit — calling mc.stop()");
+            try {
+                mc.stop();
+            } catch (Exception e) {
+                LOGGER.error("[ClientSmoke] mc.stop() threw exception: {}", e.getMessage(), e);
+                // Fall through to countdown — halt() will still fire as final guarantee
+            }
+            // Return this tick — countdown starts next tick (per D-04: tick 0 = mc.stop(), subsequent checks)
+            return;
+        }
+
+        // Phase 2: countdown + forced halt
+        long elapsedTicks = currentTick - exitStartTick;
+        if (elapsedTicks >= 60) {
+            // Per D-04: 60 ticks = 3 seconds at 20 TPS
+            LOGGER.info("[ClientSmoke] Exit complete after {} ticks — halting JVM via Runtime.getRuntime().halt(0)",
+                    elapsedTicks);
+            Runtime.getRuntime().halt(0);
+        }
+        // else: stay in EXIT state, silently count down each tick (no log spam)
     }
 
     // ── Utils ─────────────────────────────────────────────────────
