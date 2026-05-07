@@ -224,4 +224,98 @@ class ClientSmokeStatePhase3Test {
                 "Source file must NOT contain 'Screenshot.grab' — "
                         + "per D-06, custom framebuffer read is used instead of vanilla Screenshot.grab()");
     }
+
+    // ── Exit flow tests (Plan 03-02) ──────────────────────────────
+
+    @Test
+    @DisplayName("handleExit: method exists as private static with no parameters")
+    void handleExit_methodExists() throws Exception {
+        Method method = ClientSmokeStateMachine.class.getDeclaredMethod("handleExit");
+        assertNotNull(method, "handleExit method must exist");
+        assertTrue(Modifier.isPrivate(method.getModifiers()),
+                "handleExit must be private");
+        assertTrue(Modifier.isStatic(method.getModifiers()),
+                "handleExit must be static");
+        assertEquals(0, method.getParameterCount(),
+                "handleExit must have no parameters");
+    }
+
+    @Test
+    @DisplayName("handleExit: source file contains Runtime.getRuntime().halt(0)")
+    void handleExit_containsHalt0() throws Exception {
+        Path sourceFile = resolveSourceFile();
+        if (sourceFile == null) {
+            return; // Skip if source file cannot be resolved
+        }
+        String content = Files.readString(sourceFile);
+        assertTrue(content.contains("Runtime.getRuntime().halt(0)"),
+                "Source file must contain 'Runtime.getRuntime().halt(0)' — "
+                        + "the two-phase exit must call Runtime.halt(0) for forced JVM termination");
+    }
+
+    @Test
+    @DisplayName("handleExit: source file contains mc.stop() for graceful shutdown phase")
+    void handleExit_containsMcStop() throws Exception {
+        Path sourceFile = resolveSourceFile();
+        if (sourceFile == null) {
+            return; // Skip if source file cannot be resolved
+        }
+        String content = Files.readString(sourceFile);
+        assertTrue(content.contains("mc.stop()"),
+                "Source file must contain 'mc.stop()' — "
+                        + "Phase 1 of exit must call mc.stop() for graceful Forge shutdown");
+    }
+
+    @Test
+    @DisplayName("handleExit: source file contains EXIT_AFTER_SMOKE config gating check")
+    void handleExit_containsExitAfterSmokeCheck() throws Exception {
+        Path sourceFile = resolveSourceFile();
+        if (sourceFile == null) {
+            return; // Skip if source file cannot be resolved
+        }
+        String content = Files.readString(sourceFile);
+        assertTrue(content.contains("EXIT_AFTER_SMOKE"),
+                "Source file must contain 'EXIT_AFTER_SMOKE' — "
+                        + "per EXIT-01, the exit handler must check config before shutting down");
+    }
+
+    @Test
+    @DisplayName("handleStabilize: source file contains transitionTo(HUD_HIDE) after Phase 2 complete log")
+    void handleStabilize_transitionsToHudHide() throws Exception {
+        Path sourceFile = resolveSourceFile();
+        if (sourceFile == null) {
+            return; // Skip if source file cannot be resolved
+        }
+        String content = Files.readString(sourceFile);
+
+        // Verify transition to HUD_HIDE exists
+        assertTrue(content.contains("transitionTo(ClientSmokeState.HUD_HIDE"),
+                "Source file must contain 'transitionTo(ClientSmokeState.HUD_HIDE' — "
+                        + "handleStabilize() must transition to HUD_HIDE when stabilization completes");
+
+        // Verify it appears after the "Phase 2 complete" log line
+        int phase2CompleteIndex = content.indexOf("Phase 2 complete");
+        // Use lastIndexOf — the first HUD_HIDE transition is in onRenderLevelStage (before handleStabilize);
+        // the one in handleStabilize (after "Phase 2 complete") is the last occurrence in the file
+        int hudHideTransitionIndex = content.lastIndexOf("transitionTo(ClientSmokeState.HUD_HIDE");
+
+        assertTrue(phase2CompleteIndex >= 0,
+                "Source file must still contain 'Phase 2 complete' dialog");
+        assertTrue(hudHideTransitionIndex > phase2CompleteIndex,
+                "transitionTo(HUD_HIDE) must appear after 'Phase 2 complete' log line — "
+                        + "the transition happens after stabilization completes");
+    }
+
+    @Test
+    @DisplayName("Source file does NOT contain placeholder Exit remnants")
+    void sourceFile_noPlaceholderExit() throws Exception {
+        Path sourceFile = resolveSourceFile();
+        if (sourceFile == null) {
+            return; // Skip if source file cannot be resolved
+        }
+        String content = Files.readString(sourceFile);
+        assertFalse(content.contains("Exit placeholder"),
+                "Source file must NOT contain 'Exit placeholder' — "
+                        + "Plan 03-02 must replace the placeholder with real exit logic");
+    }
 }

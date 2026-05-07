@@ -360,7 +360,13 @@ public final class ClientSmokeStateMachine {
                     waitedTicks, requiredTicks);
             LOGGER.info("[ClientSmoke] Phase 2 complete — {} test(s) queued. Phase 3 will execute tests.",
                     discoveredTests.size());
-            // STAY in STABILIZE state — Phase 3 picks up from here
+            // Phase 3 handoff: transition to HUD_HIDE for screenshot pipeline
+            // When testIndex < discoveredTests.size(), Phase 4 will interleave TEST_EXEC before HUD_HIDE
+            if (testIndex >= discoveredTests.size()) {
+                // No Phase 4 tests — go directly to screenshot + exit for end-to-end verification
+                transitionTo(ClientSmokeState.HUD_HIDE, "Stabilization complete — entering screenshot pipeline (no Phase 4 tests in queue)");
+            }
+            // else: testIndex < discoveredTests.size() — stay in STABILIZE, Phase 4 will drive TEST_EXEC→HUD_HIDE loop
         }
         // else: stay in STABILIZE — no log spam, just wait for next tick
     }
