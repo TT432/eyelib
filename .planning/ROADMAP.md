@@ -57,7 +57,11 @@ Plans:
   3. After screenshot capture completes, the HUD visibility is restored to its pre-capture state — the F1 toggle is undone so subsequent frames render normally if tests continue.
   4. When `exitAfterSmoke=true`, after all tests complete, the Minecraft client window closes automatically within 5 seconds — the JVM process terminates and does not hang.
   5. The exit sequence logs confirm a graceful `mc.stop()` call followed by `Runtime.getRuntime().halt(0)` after a 3-second delay — no stuck shutdown hooks or deadlocked threads.
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 03-01-PLAN.md — Enum Extension + HUD_HIDE + Screenshot Capture Pipeline (CAP-01, CAP-02, CAP-03)
+- [ ] 03-02-PLAN.md — EXIT State Implementation + STABILIZE Handoff (EXIT-01, EXIT-02)
 
 ### Phase 4: Test Execution + Report Generation
 **Goal**: End-to-end pipeline closes — `@ClientSmoke`-annotated test classes are loaded via `Class.forName()` only at the TEST_EXEC state (after world is fully stabilized), instantiated, and invoked; any exception is captured and recorded without interrupting subsequent tests; tests execute in priority order; and a JSON report summarizing all results is written before auto-exit triggers.
@@ -77,5 +81,5 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Module Scaffolding + Config + Annotation Discovery | 5/5 | Complete | 2026-05-06 |
 | 2. State Machine + World Lifecycle + Stabilization | 2/2 | Complete | 2026-05-06 |
-| 3. Screenshot Capture + Auto-Exit | 0/5 | Not started | - |
+| 3. Screenshot Capture + Auto-Exit | 0/2 | Planned (2 waves) | 2026-05-07 |
 | 4. Test Execution + Report Generation | 0/5 | Not started | - |
