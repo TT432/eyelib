@@ -1,0 +1,18 @@
+package io.github.tt432.eyelibmaterial.shared;
+
+import com.mojang.serialization.Codec;
+import net.minecraft.util.StringRepresentable;
+
+/**
+ * @author TT432
+ */
+public enum MsaaSupport implements StringRepresentable {
+    Both, MSAA, NonMSAA;
+
+    public static final Codec<MsaaSupport> CODEC = StringRepresentable.fromEnum(MsaaSupport::values);
+
+    @Override
+    public String getSerializedName() {
+        return name();
+    }
+}
