@@ -80,6 +80,54 @@ public final class ClientSmokeConfig {
     /** The built {@link ForgeConfigSpec} — register this in the {@code @Mod} constructor. */
     public static final ForgeConfigSpec SPEC = BUILDER.build();
 
+    // ──────────────────────────────────────────────
+    // System property override bridge (per OVRD-01, OVRD-02)
+    // ──────────────────────────────────────────────
+
+    /**
+     * Returns whether the smoke test framework should be active.
+     *
+     * <p>Priority order (per OVRD-01):
+     * <ol>
+     *   <li>System property {@code clientsmoke.enabled} — set by Gradle run config</li>
+     *   <li>Fallback to {@link #ENABLED} ForgeConfigSpec value (default: {@code false})</li>
+     * </ol></p>
+     *
+     * <p>When the system property is set to any value, {@link Boolean#parseBoolean(String)}
+     * determines the result ({@code "true"} → true, anything else → false).
+     * When the system property is absent ({@code null}), falls back to TOML config.</p>
+     *
+     * @return true if smoke testing should be enabled
+     */
+    public static boolean isEnabled() {
+        String prop = System.getProperty("clientsmoke.enabled");
+        if (prop != null) {
+            return Boolean.parseBoolean(prop);
+        }
+        return ENABLED.get();
+    }
+
+    /**
+     * Returns whether the client should automatically exit after smoke tests complete.
+     *
+     * <p>Priority order (per OVRD-02):
+     * <ol>
+     *   <li>System property {@code clientsmoke.autoExit} — set by Gradle run config</li>
+     *   <li>Fallback to {@link #EXIT_AFTER_SMOKE} ForgeConfigSpec value (default: {@code true})</li>
+     * </ol></p>
+     *
+     * <p>Parse semantics identical to {@link #isEnabled()}.</p>
+     *
+     * @return true if the client should exit automatically after tests
+     */
+    public static boolean shouldExitAfterSmoke() {
+        String prop = System.getProperty("clientsmoke.autoExit");
+        if (prop != null) {
+            return Boolean.parseBoolean(prop);
+        }
+        return EXIT_AFTER_SMOKE.get();
+    }
+
     private ClientSmokeConfig() {
         // Utility class — no instantiation
     }
