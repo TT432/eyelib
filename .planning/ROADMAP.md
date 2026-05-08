@@ -68,7 +68,11 @@ Plans:
   1. Running `./gradlew runClient` behaves identically to pre-v1.1 — smoke mod present but idle, zero interference with normal development
   2. On Windows, `echo %ERRORLEVEL%` after `runClientSmoke` returns 0 for pass scenarios and 1 for fail scenarios
   3. All v1.1 success scenarios verified on real hardware (not just unit tests)
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Automated static verification tests (config bridge, build.gradle integrity, state machine idle path)
+- [ ] 07-02-PLAN.md — Exit code & JUnit XML verification tests + Windows hardware verification checklist
 
 ## Progress
 
@@ -80,4 +84,4 @@ Plans:
 | 4. Test Execution + Report Generation | v1.0 | 1/1 | Complete | 2026-05-07 |
 | 5. Gradle Run Configuration & Classpath | v1.1 | 0/- | Not started | - |
 | 6. Config Override Bridge & State Machine Fixes | v1.1 | 0/2 | Not started | - |
-| 7. Verification & Polish | v1.1 | 0/- | Not started | - |
+| 7. Verification & Polish | v1.1 | 0/2 | Not started | - |
