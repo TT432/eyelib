@@ -6,6 +6,7 @@
 - `src/main/java/io/github/tt432/eyelib/client/`: client rendering, animation, particles, GUI, loaders, managers, tooling.
 - `src/main/java/io/github/tt432/eyelib/molang/`: legacy Molang marker/docs handoff path.
 - `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/`: engine-owned Molang value/runtime wrappers, scope/compiler/type/mapping-api/built-in mappings, plus generated grammar artifacts.
+- `eyelib-material/src/main/java/io/github/tt432/eyelibmaterial/`: Bedrock material definitions, GL state management, shader pipeline, and shared pure-data types under `shared/` package.
 - `src/main/java/io/github/tt432/eyelib/network/`: packet registration and client/server packet handling.
 - `src/main/java/io/github/tt432/eyelib/capability/`: attachment-related capability registration and data holders.
 - `src/main/java/io/github/tt432/eyelib/common/`: shared behavior logic.
