@@ -73,10 +73,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PGRAD-01 | Phase 8: Boundary Contract & Gradle Module Skeleton | Pending |
-| PGRAD-02 | Phase 8: Boundary Contract & Gradle Module Skeleton | Pending |
+| PGRAD-01 | Phase 8: Boundary Contract & Gradle Module Skeleton | Complete |
+| PGRAD-02 | Phase 8: Boundary Contract & Gradle Module Skeleton | Complete |
 | PAPI-01 | Phase 9: Particle API & Store Seam | Pending |
-| PAPI-02 | Phase 8: Boundary Contract & Gradle Module Skeleton | Pending |
+| PAPI-02 | Phase 8: Boundary Contract & Gradle Module Skeleton | Complete |
 | PAPI-03 | Phase 9: Particle API & Store Seam | Pending |
 | PSCHEMA-01 | Phase 10: Schema/Runtime Ownership & Adapter | Pending |
 | PSCHEMA-02 | Phase 10: Schema/Runtime Ownership & Adapter | Pending |
@@ -101,4 +101,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-05-09*
-*Last updated: 2026-05-09 after roadmap creation*
+*Last updated: 2026-05-09 after Phase 8 verification*

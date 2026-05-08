@@ -4,7 +4,7 @@
 
 - ✅ **v1.0** — Phases 1-4 (shipped 2026-05-07)
 - ✅ **v1.1 ClientSmoke 全自动化** — Phases 5-7 (shipped 2026-05-08)
-- 🚧 **v1.2 真正实现 eyelib-particle 的模块分离** — Phases 8-14 (planned)
+- 🚧 **v1.2 真正实现 eyelib-particle 的模块分离** — Phases 8-14 (in progress)
 
 ## Phases
 
@@ -33,11 +33,11 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 
 </details>
 
-### 🚧 v1.2 真正实现 eyelib-particle 的模块分离 (Planned)
+### 🚧 v1.2 真正实现 eyelib-particle 的模块分离 (In Progress)
 
 **Milestone Goal:** 将粒子相关能力从 root runtime 的混合包结构中提升为清晰的 `:eyelib-particle` Gradle 模块边界，同时保持现有粒子加载、命令、网络 spawn/remove、渲染行为零回归。
 
-- [ ] **Phase 8: Boundary Contract & Gradle Module Skeleton** - `:eyelib-particle` 成为可构建、可消费、方向明确的 Gradle 模块。
+- [x] **Phase 8: Boundary Contract & Gradle Module Skeleton** - `:eyelib-particle` 成为可构建、可消费、方向明确的 Gradle 模块。 (2/2 plans) — completed 2026-05-09
 - [ ] **Phase 9: Particle API & Store Seam** - root 通过粒子模块的窄 API 使用 lookup、spawn/remove、store/publication 与初始化能力。
 - [ ] **Phase 10: Schema/Runtime Ownership & Adapter** - importer/raw schema 与 executable runtime definition 的所有权和转换契约被锁定。
 - [ ] **Phase 11: Runtime Client Core Extraction** - 粒子运行时、发射器、渲染管理与 client hook 迁入粒子模块且保持 side-safe。
@@ -56,7 +56,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
   2. Maintainer can read module documentation that states particle ownership, dependency direction, allowed integration layers, and the rule that pure particle core remains free of root/MC/Forge contamination.
   3. Root runtime can depend on the particle module, while `:eyelib-particle` has no dependency on root runtime packages, root managers, root registries, root packets, root capability helpers, or root `mc/impl` classes.
   4. Later verification is documented to use JetBrains MCP Gradle tasks only; no shell Gradle command is required or endorsed.
-**Plans**: TBD
+**Plans**: 2/2 complete — `.planning/phases/08-boundary-contract-gradle-module-skeleton/08-01-PLAN.md`, `.planning/phases/08-boundary-contract-gradle-module-skeleton/08-02-PLAN.md`
 
 ### Phase 9: Particle API & Store Seam
 **Goal**: Root runtime can use particle capabilities through narrow module-owned APIs instead of owning particle internals directly.
@@ -134,7 +134,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 5. Gradle Run Configuration & Classpath | v1.1 | 1/1 | Complete | 2026-05-08 |
 | 6. Config Override Bridge & State Machine Fixes | v1.1 | 2/2 | Complete | 2026-05-08 |
 | 7. Verification & Polish | v1.1 | 2/2 | Complete | 2026-05-08 |
-| 8. Boundary Contract & Gradle Module Skeleton | v1.2 | 0/TBD | Not started | - |
+| 8. Boundary Contract & Gradle Module Skeleton | v1.2 | 2/2 | Complete | 2026-05-09 |
 | 9. Particle API & Store Seam | v1.2 | 0/TBD | Not started | - |
 | 10. Schema/Runtime Ownership & Adapter | v1.2 | 0/TBD | Not started | - |
 | 11. Runtime Client Core Extraction | v1.2 | 0/TBD | Not started | - |
