@@ -46,18 +46,18 @@ v1.0 shipped — 23/23 complete. See `.planning/milestones/v1.0-REQUIREMENTS.md`
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GRAD-01 | Phase 1 | Pending |
-| GRAD-02 | Phase 1 | Pending |
-| GRAD-03 | Phase 1 | Pending |
-| GRAD-04 | Phase 1 | Pending |
-| OVRD-01 | Phase 2 | Pending |
-| OVRD-02 | Phase 2 | Pending |
-| OVRD-03 | Phase 2 | Pending |
-| OVRD-04 | Phase 2 | Pending |
-| CORR-01 | Phase 2 | Pending |
-| CORR-02 | Phase 2 | Pending |
-| CORR-03 | Phase 3 | Pending |
-| CORR-04 | Phase 3 | Pending |
+| GRAD-01 | Phase 5 | Pending |
+| GRAD-02 | Phase 5 | Pending |
+| GRAD-03 | Phase 5 | Pending |
+| GRAD-04 | Phase 5 | Pending |
+| OVRD-01 | Phase 6 | Pending |
+| OVRD-02 | Phase 6 | Pending |
+| OVRD-03 | Phase 6 | Pending |
+| OVRD-04 | Phase 6 | Pending |
+| CORR-01 | Phase 6 | Pending |
+| CORR-02 | Phase 6 | Pending |
+| CORR-03 | Phase 7 | Pending |
+| CORR-04 | Phase 7 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 12 total
