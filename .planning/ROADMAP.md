@@ -54,7 +54,11 @@ Plans:
   3. Normal `runClient` does NOT enable smoke testing — mod is present but idle by default
   4. When no `@ClientSmoke` tests are annotated, the state machine completes (generates empty report, then exits) instead of hanging
   5. A failing test causes Gradle `BUILD FAILED` (exit code 1); all-pass causes `BUILD SUCCESSFUL` (exit code 0); JUnit XML report is generated alongside JSON
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — System property override bridge (isEnabled/shouldExitAfterSmoke) + Gradle systemProperty injection
+- [ ] 06-02-PLAN.md — State machine fixes (config bridge wiring, empty test set, JUnit XML, exit code propagation)
 
 ### Phase 7: Verification & Polish
 **Goal**: 一键启动承诺在真实硬件上验证通过；正常开发流程零回归
@@ -75,5 +79,5 @@ Plans:
 | 3. Screenshot Capture + Auto-Exit | v1.0 | 2/2 | Complete | 2026-05-07 |
 | 4. Test Execution + Report Generation | v1.0 | 1/1 | Complete | 2026-05-07 |
 | 5. Gradle Run Configuration & Classpath | v1.1 | 0/- | Not started | - |
-| 6. Config Override Bridge & State Machine Fixes | v1.1 | 0/- | Not started | - |
+| 6. Config Override Bridge & State Machine Fixes | v1.1 | 0/2 | Not started | - |
 | 7. Verification & Polish | v1.1 | 0/- | Not started | - |
