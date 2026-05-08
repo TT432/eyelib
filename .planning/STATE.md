@@ -2,63 +2,84 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
-status: planning
-last_updated: "2026-05-08T19:48:34.580Z"
-last_activity: 2026-05-08
+status: ready_to_plan
+last_updated: "2026-05-09T00:00:00.000Z"
+last_activity: 2026-05-09
 progress:
-  total_phases: 0
-  completed_phases: 0
+  total_phases: 14
+  completed_phases: 7
   total_plans: 0
   completed_plans: 0
-  percent: 0
+  percent: 50
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md
+See: .planning/PROJECT.md (updated 2026-05-09)
 
-**Core value:** @ClientSmoke 注解驱动的客户端冒烟测试，通过编译时/类加载时的注解扫描分离测试基础设施与模组运行时，杜绝意外的类加载问题。
-**Current focus:** Phase 6 — Config Override Bridge & State Machine Fixes (v1.1)
-
-## Previous Milestones
-
-### v1.0 — client-smoke-test (complete)
-
-- 4 phases, 10 plans, 23/23 requirements, 54 tests
-- Archived: `.planning/milestones/v1.0-ROADMAP.md`, `.planning/milestones/v1.0-REQUIREMENTS.md`
-
-### Phase 5 — Gradle Run Configuration & Classpath (complete)
-
-- 1 plan, 4 requirements (GRAD-01 to GRAD-04)
-- deliverable: `runClientSmoke` Gradle task, unconditional localRuntime, .gitignore
+**Core value:** Eyelib 的功能模块必须能被独立理解、构建、验证和消费；粒子拆分必须形成清晰 Gradle 模块边界，同时保持现有加载、命令、网络同步、渲染行为零回归。
+**Current focus:** Phase 8 — Boundary Contract & Gradle Module Skeleton
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-05-08 — Milestone v1.2 started
+Phase: 8 of 14 (Boundary Contract & Gradle Module Skeleton)
+Plan: Not planned yet
+Status: Ready to plan
+Last activity: 2026-05-09 — v1.2 roadmap created with 7 phases and 18/18 requirements mapped.
 
-## Blockers/Concerns
+Progress: [█████░░░░░] 50% by completed historical phases; v1.2 execution not started.
 
-None — Phase 6 plans ready for execution via `/gsd-execute-phase 06`.
+## Performance Metrics
+
+**Velocity:**
+- Total plans completed: 15 historical plans (v1.0-v1.1)
+- Average duration: Not tracked in STATE
+- Total execution time: Not tracked in STATE
+
+**By Phase:**
+
+| Phase | Plans | Total | Avg/Plan |
+|-------|-------|-------|----------|
+| v1.0 Phases 1-4 | 10/10 | Not tracked | Not tracked |
+| v1.1 Phases 5-7 | 5/5 | Not tracked | Not tracked |
+| v1.2 Phases 8-14 | 0/TBD | Not started | - |
+
+## Accumulated Context
+
+### Decisions
+
+Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecting current work:
+
+- [v1.2]: `:eyelib-particle` must be a real Gradle module boundary, not a cosmetic package move.
+- [v1.2]: Root may depend on particle; particle must not depend back on root runtime packages or root platform wiring.
+- [v1.2]: Platform bindings may live in appropriate integration layers, but pure particle core/API/schema seams must stay root- and platform-clean.
+- [v1.2]: All Gradle verification must be run later through JetBrains MCP only, never shell Gradle.
+
+### Pending Todos
+
+None yet.
+
+### Blockers/Concerns
+
+- Phase 10 needs focused design for importer/raw schema ownership vs runtime executable definitions.
+- Phase 11 needs side/classloading review when moving client hooks and render code.
 
 ## Deferred Items
 
+Items acknowledged and carried forward from previous milestone close:
+
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| Manual Test | Phase 3 HUD-free screenshot visual verification | Deferred (requires real client launch) | v1.0 close |
-| Manual Test | Phase 3 JVM exit timing verification | Deferred (requires real client launch) | v1.0 close |
-| Manual Test | Phase 3 exit log sequence verification | Deferred (requires real client launch) | v1.0 close |
-| Manual Test | Windows Runtime.halt() exit code capture | To be verified in Phase 7 | v1.1 planning |
+| Hardware Check | Windows hardware/client verification items from v1.1 checklist | Deferred to hardware verification only where ClientSmoke/static checks cannot automatically assert runtime behavior | v1.1 close |
 
 ## Session Continuity
 
-Last session: 2026-05-08
-Status: v1.1 Phase 5 done, Phase 6 plans created — 2 plans ready for `/gsd-execute-phase 06`
+Last session: 2026-05-09
+Stopped at: v1.2 roadmap, STATE, and requirements traceability written.
+Resume file: None
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Start planning with `/gsd-plan-phase 8`.

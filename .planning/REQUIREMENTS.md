@@ -42,7 +42,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 - [ ] **PRENDER-01**: Existing client particle emitter, render manager, material/texture resolution, Molang scope, lifetime, remove semantics, tick/render lifecycle, and logout cleanup behavior are preserved.
 - [ ] **PRENDER-02**: Client-only hooks and platform integrations are side-safe after extraction and do not introduce dedicated-server classloading regressions.
 - [ ] **PVERIFY-01**: Existing particle-related tests are moved or adapted without weakening assertions, and new boundary/parity/regression tests cover the module split.
-- [ ] **PVERIFY-02**: Maintainer can verify the extracted module through the planned JetBrains MCP Gradle checks and documented client smoke/manual checks where runtime behavior requires a client launch.
+- [ ] **PVERIFY-02**: Maintainer can verify the extracted module through planned JetBrains MCP Gradle checks, automated ClientSmoke flow where applicable, and a separate hardware checklist only for runtime behavior that cannot be automatically asserted.
 
 ## Future Requirements
 
@@ -73,12 +73,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| PGRAD-01 | Phase 8: Boundary Contract & Gradle Module Skeleton | Pending |
+| PGRAD-02 | Phase 8: Boundary Contract & Gradle Module Skeleton | Pending |
+| PAPI-01 | Phase 9: Particle API & Store Seam | Pending |
+| PAPI-02 | Phase 8: Boundary Contract & Gradle Module Skeleton | Pending |
+| PAPI-03 | Phase 9: Particle API & Store Seam | Pending |
+| PSCHEMA-01 | Phase 10: Schema/Runtime Ownership & Adapter | Pending |
+| PSCHEMA-02 | Phase 10: Schema/Runtime Ownership & Adapter | Pending |
+| PSCHEMA-03 | Phase 10: Schema/Runtime Ownership & Adapter | Pending |
+| PLOAD-01 | Phase 12: Loading & Publication Rewire | Pending |
+| PLOAD-02 | Phase 12: Loading & Publication Rewire | Pending |
+| PLOAD-03 | Phase 12: Loading & Publication Rewire | Pending |
+| PNET-01 | Phase 13: Command & Network Integration Rewire | Pending |
+| PNET-02 | Phase 13: Command & Network Integration Rewire | Pending |
+| PNET-03 | Phase 13: Command & Network Integration Rewire | Pending |
+| PRENDER-01 | Phase 11: Runtime Client Core Extraction | Pending |
+| PRENDER-02 | Phase 11: Runtime Client Core Extraction | Pending |
+| PVERIFY-01 | Phase 14: Verification & Documentation Gate | Pending |
+| PVERIFY-02 | Phase 14: Verification & Documentation Gate | Pending |
 
 **Coverage:**
 - v1.2 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18 ⚠️
+- Mapped to phases: 18
+- Unmapped: 0 ✓
+- Duplicate mappings: 0 ✓
+- Coverage status: 100% mapped to exactly one phase ✓
 
 ---
 *Requirements defined: 2026-05-09*
-*Last updated: 2026-05-09 after initial definition*
+*Last updated: 2026-05-09 after roadmap creation*
