@@ -38,8 +38,11 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
   2. `eyelib-clientsmoke` mod is always on `runClientSmoke` classpath — no Gradle property required
   3. Smoke test `gameDirectory` (`run/clientsmoke/`) is fully isolated from normal `run/` directory
   4. IntelliJ auto-generates a "Run Client Smoke Tests" IDE run configuration usable from the IDE
-  5. `run/clientsmoke/` and `clientsmoke-reports/` directories are listed in `.gitignore`
-**Plans**: TBD
+   5. `run/clientsmoke/` and `clientsmoke-reports/` directories are listed in `.gitignore`
+**Plans**: 1 plan
+
+Plans:
+- [ ] 05-01-PLAN.md — Gradle run config (clientSmoke) + unconditional localRuntime + .gitignore
 
 ### Phase 6: Config Override Bridge & State Machine Fixes
 **Goal**: Smoke 测试通过 system property 自动启用并自动退出；状态机正确处理空测试集和 exit code
