@@ -69,7 +69,7 @@ public final class ClientSmokeScanner {
      * @return unmodifiable list of discovered tests, empty if disabled or none found
      */
     public static List<DiscoveredTest> scan() {
-        Type annotationType = Type.getType(ClientSmoke.class);
+        Type annotationType = Type.getType("Lio/github/tt432/clientsmokeannotation/ClientSmoke;");
         List<DiscoveredTest> discovered = new ArrayList<>();
 
         for (ModFileScanData scanData : ModList.get().getAllScanData()) {
