@@ -62,7 +62,7 @@ All Gradle commands via JetBrains MCP.
 3325 total lines across 33 static regression tests. Clean build (zero errors).
 
 Deferred hardware verification items (CORR-03, CORR-04) available via:
-`.planning/phases/07-verification-polish/07-02-HARDWARE-CHECKLIST.md`
+`.planning/milestones/v1.1-phases/07-verification-polish/07-02-HARDWARE-CHECKLIST.md`
 
 v1.2 starts from the current Eyelib module split:
 - Existing Gradle subprojects include `:eyelib-attachment`, `:eyelib-importer`, `:eyelib-material`, `:eyelib-molang`, and `:eyelib-processor`.
