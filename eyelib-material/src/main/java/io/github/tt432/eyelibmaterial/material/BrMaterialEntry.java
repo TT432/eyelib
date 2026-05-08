@@ -608,7 +608,7 @@ public record BrMaterialEntry(
 
     // ---- getRenderType ---------------------------------------------------
 
-    /** Shared shader program cache keyed by "vertPath|fragPath". */
+    /** Shared shader program cache keyed by shader paths plus direct material defines. */
     private static final Map<String, Integer> SHADER_PROGRAM_CACHE = new ConcurrentHashMap<>();
 
     /**
@@ -722,11 +722,11 @@ public record BrMaterialEntry(
     }
 
     private int getOrCompileShader() {
-        String key = vertexShader.get() + "|" + fragmentShader.get();
+        List<String> defineList = BrMaterialEntry.this.defines.base().orElse(List.of());
+        String key = vertexShader.get() + "|" + fragmentShader.get() + "|" + String.join(",", defineList);
         return SHADER_PROGRAM_CACHE.computeIfAbsent(key, k -> {
             String vertSrc = loadShaderSource(vertexShader.get());
             String fragSrc = loadShaderSource(fragmentShader.get());
-            List<String> defineList = BrMaterialEntry.this.defines.base().orElse(List.of());
             return ShaderManager.compileAndLink(vertSrc, fragSrc, defineList);
         });
     }
@@ -756,7 +756,8 @@ public record BrMaterialEntry(
         if (vertexShader.isEmpty() || fragmentShader.isEmpty()) {
             return 0;
         }
-        String key = vertexShader.get() + "|" + fragmentShader.get();
+        List<String> defineList = BrMaterialEntry.this.defines.base().orElse(List.of());
+        String key = vertexShader.get() + "|" + fragmentShader.get() + "|" + String.join(",", defineList);
         return SHADER_PROGRAM_CACHE.getOrDefault(key, 0);
     }
 }

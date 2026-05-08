@@ -115,7 +115,7 @@ class ShaderManagerIntegrationTest {
     }
 
     @Test
-    @DisplayName("injectDefines prepends #define directives before source")
+    @DisplayName("injectDefines prepends #define directives before source without #version")
     void injectDefines_withDefines_prependsDirectives() throws Exception {
         List<String> defines = List.of("USE_NORMAL_MAP", "MAX_LIGHTS 4");
         String result = (String) injectDefinesMethod.invoke(null, PASSTHROUGH_VERT, defines);
@@ -124,6 +124,16 @@ class ShaderManagerIntegrationTest {
                 "Should prepend #define lines: " + result);
         assertTrue(result.endsWith(PASSTHROUGH_VERT),
                 "Original source should appear after #define lines");
+    }
+
+    @Test
+    @DisplayName("injectDefines inserts directives after #version line")
+    void injectDefines_withVersion_insertsAfterVersion() throws Exception {
+        String source = "#version 150\nvoid main() {}\n";
+        String result = (String) injectDefinesMethod.invoke(null, source, List.of("USE_COLOR"));
+
+        assertTrue(result.startsWith("#version 150\n#define USE_COLOR\n"),
+                "Defines must appear after #version: " + result);
     }
 
     @Test

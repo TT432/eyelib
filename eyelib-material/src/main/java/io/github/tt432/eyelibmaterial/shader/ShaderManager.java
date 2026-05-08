@@ -133,8 +133,14 @@ public final class ShaderManager {
         for (String def : defines) {
             sb.append("#define ").append(def).append('\n');
         }
-        sb.append(source);
-        return sb.toString();
+        String defineBlock = sb.toString();
+        if (source.startsWith("#version")) {
+            int lineEnd = source.indexOf('\n');
+            if (lineEnd >= 0) {
+                return source.substring(0, lineEnd + 1) + defineBlock + source.substring(lineEnd + 1);
+            }
+        }
+        return defineBlock + source;
     }
 
     private static String buildCacheKey(String vertSource, String fragSource, List<String> defines) {
