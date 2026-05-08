@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.particle.bedrock;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelib.client.render.RenderTypeResolver;
+import io.github.tt432.eyelibmaterial.render.RenderTypeResolver;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;

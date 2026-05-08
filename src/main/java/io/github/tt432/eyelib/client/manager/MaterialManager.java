@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.manager;
 
-import io.github.tt432.eyelib.client.material.BrMaterialEntry;
+import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 

@@ -16,7 +16,7 @@ import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
 import io.github.tt432.eyelib.client.loader.BedrockAddonRuntimeBridge;
-import io.github.tt432.eyelib.client.material.BrMaterial;
+import io.github.tt432.eyelibmaterial.material.BrMaterial;
 import io.github.tt432.eyelib.client.model.importer.ModelImporter;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;

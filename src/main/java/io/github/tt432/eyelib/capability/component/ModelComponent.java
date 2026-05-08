@@ -4,7 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelib.client.model.ModelLookup;
-import io.github.tt432.eyelib.client.render.RenderTypeResolver;
+import io.github.tt432.eyelibmaterial.render.RenderTypeResolver;
 import io.github.tt432.eyelibattachment.codec.stream.EyelibStreamCodecs;
 import io.github.tt432.eyelibattachment.codec.stream.StreamCodec;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
