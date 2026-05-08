@@ -23,6 +23,64 @@
       "samplerStates": [],
       "states": [],
       "variants": []
+    },
+    "entity": {
+      "vertexShader": "eyelibmaterial:shaders/render.vert",
+      "fragmentShader": "eyelibmaterial:shaders/render.frag",
+      "defines": [],
+      "samplerStates": [
+        {"samplerIndex": 0, "textureFilter": "Point", "textureWrap": "Clamp"}
+      ],
+      "states": [],
+      "variants": []
+    },
+    "entity_alphatest:entity": {
+      "vertexShader": "eyelibmaterial:shaders/render.vert",
+      "fragmentShader": "eyelibmaterial:shaders/render.frag",
+      "+defines": ["ALPHA_TEST"],
+      "samplerStates": [],
+      "states": [],
+      "variants": []
+    },
+    "entity_alphablend:entity": {
+      "vertexShader": "eyelibmaterial:shaders/render.vert",
+      "fragmentShader": "eyelibmaterial:shaders/render.frag",
+      "defines": [],
+      "samplerStates": [],
+      "+states": ["Blending"],
+      "blendSrc": "SourceAlpha",
+      "blendDst": "OneMinusSrcAlpha",
+      "variants": []
+    },
+    "entity_nocull:entity": {
+      "vertexShader": "eyelibmaterial:shaders/render.vert",
+      "fragmentShader": "eyelibmaterial:shaders/render.frag",
+      "defines": [],
+      "samplerStates": [],
+      "+states": ["DisableCulling"],
+      "variants": []
+    },
+    "particles_blend": {
+      "vertexShader": "eyelibmaterial:shaders/particle.vert",
+      "fragmentShader": "eyelibmaterial:shaders/particle.frag",
+      "defines": [],
+      "samplerStates": [],
+      "states": ["Blending"],
+      "blendSrc": "SourceAlpha",
+      "blendDst": "OneMinusSrcAlpha",
+      "alphaSrc": "One",
+      "alphaDst": "OneMinusSrcAlpha",
+      "variants": []
+    },
+    "opaque_block": {
+      "vertexShader": "eyelibmaterial:shaders/block.vert",
+      "fragmentShader": "eyelibmaterial:shaders/block.frag",
+      "defines": [],
+      "samplerStates": [
+        {"samplerIndex": 0, "textureFilter": "Point", "textureWrap": "Clamp"}
+      ],
+      "states": ["DisableAlphaWrite"],
+      "variants": []
     }
   }
 }
