@@ -1,134 +1,92 @@
-# Project Research Summary
-
-**Project:** eyelib ClientSmoke v1.1 — One-Click Gradle Automation
-**Domain:** Gradle task automation for Minecraft mod client-side smoke testing
-**Researched:** 2026-05-08
-**Confidence:** HIGH
+# Research Summary — Milestone v1.2 `:eyelib-particle` Module Separation
 
 ## Executive Summary
 
-The v1.1 goal is to replace a 3-step manual process (set gradle property, edit TOML, run specific task) with a single `./gradlew runClientSmoke` command. Research across all four domains converges on the same core insight: **MDGL's `legacyForge.runs { }` DSL does the heavy lifting; we just declare a `clientSmoke` run config and bridge config values via JVM system properties.**
+v1.2 should create a real `:eyelib-particle` Gradle subproject, not a cosmetic package rename. The particle feature is currently spread across root runtime packages, loader/manager publication, command/network integration, Forge client events, Molang scope handling, material rendering, and importer schema concerns. The recommended implementation is a Forge-capable feature module using the existing Java 17 + Forge 1.20.1 + ModDevGradle LegacyForge pattern, consumed by the root project through normal project dependencies.
 
-The recommended approach introduces **zero new dependencies** — everything is MDGL built-in (`systemProperty()`, `ideName`, auto-generated tasks), JDK built-in (`System.getProperty()`, `javax.xml.stream`), or already in the project (Gson, SLF4J, ForgeConfigSpec). System properties (`-Dclientsmoke.enabled=true`) are the transport layer between Gradle and the Minecraft JVM process: they are temporary (die with the process), testable (settable in unit tests), and backward-compatible (fall back to existing TOML config when absent).
+The hard architectural rule is one-way dependency direction: root runtime may depend on `:eyelib-particle`, but `:eyelib-particle` must not depend back on root packages. Platform bindings do **not** always have to remain in root: particle-owned Forge/client hooks may live in an explicit particle integration layer such as `eyelib-particle/.../mc/impl`. However, pure particle core/API/schema seams must not be contaminated by Minecraft/Forge types, and shared command/network transport should remain in the appropriate root platform layer unless a phase deliberately proves a better integration boundary.
 
-The primary risk is bypassing the application-level override in favor of hacking Forge's internal `ForgeConfigSpec` state — this is the #1 critical pitfall identified across both ARCHITECTURE and PITFALLS research. Prevention is simple: add `isEnabled()` / `shouldExitAfterSmoke()` wrapper methods in `ClientSmokeConfig` that check `System.getProperty()` before falling back to `ForgeConfigSpec.get()`. Secondary risks include Windows exit code capture with `Runtime.halt()` (needs real hardware verification) and the "no tests found → IDLE → task hangs forever" edge case (requires force-exit mode to redirect to EXIT state).
+The biggest risks are circular dependencies, schema/runtime drift between importer and particle code, side/classloading regressions, and subtle behavior loss in reload keys, packet spawn semantics, Molang scope, defensive copies, or render-thread queuing. The roadmap should therefore move in vertical slices with compatibility tests and documentation updates in the same phases.
 
-## Key Findings
+## Stack Additions
 
-### Recommended Stack
+- Add `include("eyelib-particle")` and `eyelib-particle/build.gradle` as a first-class Gradle subproject.
+- Use the existing Forge-aware module stack: `java-library`, Java 17 toolchain, Lombok, `net.neoforged.moddev.legacyforge` 2.0.91, `maven-publish`, sources jar, resource expansion, and `META-INF/mods.toml`.
+- Use package root `io.github.tt432.eyelibparticle.*` to avoid split packages with root `io.github.tt432.eyelib.*`.
+- Expected module dependencies: `api project(':eyelib-molang')` where public particle APIs expose Molang types; `implementation project(':eyelib-material')` for rendering; optional `implementation project(':eyelib-importer')` only for an explicit schema-to-runtime adapter; no dependency on root `:`.
+- Root should initially consume the module in the established runtime-module style: `api`, `modImplementation`, and `jarJar project(':eyelib-particle')`, then narrow scopes only if API inventory proves safe.
 
-No new dependencies. The v1.1 automation layer uses exclusively technologies already present or JDK built-in:
+## Feature Table Stakes
 
-- **MDGL (LegacyForge) 2.0.91** — `legacyForge.runs { }` DSL provides `systemProperty()`, `ideName`, auto-generated Gradle tasks and IDE run configs. This is the project's existing build plugin; no alternative needed.
-- **JVM System Properties (`-D` flags)** — Simplest possible cross-process configuration bridge. Set by MDGL via `systemProperty()` in the run config; read by the mod via `System.getProperty()`. Process-scoped (no cleanup), transparent (visible in process listing), backward-compatible (fallback to TOML).
-- **`javax.xml.stream` (JDK 17 built-in)** — For JUnit XML report generation. No external dependency. Consumable by Jenkins, GitHub Actions, TeamCity.
-- **Runtime classpath change**: `eyelib-clientsmoke` moves from conditionally-gated `localRuntime` to always-on `localRuntime`. Runtime gating shifts to `ClientSmokeConfig.isEnabled()` returning `false` by default. This avoids the "class not found" pitfall and keeps the dependency graph unchanged.
+- A visible, buildable `:eyelib-particle` module with documented ownership and dependency direction.
+- Particle runtime definitions, emitters, render manager, lookup/spawn seams, and particle-local registry/publication APIs moved or exposed from the module.
+- Resource reload behavior preserved: `particles/*.json` parse, replacement, and publication by `particle_effect.description.identifier`.
+- `/eyelib particle` command behavior preserved: syntax, suggestions, validation, messages, spawn/remove effects.
+- Spawn/remove packet compatibility preserved with string-keyed ids and handler-to-service delegation.
+- Client emitter/render output preserved, including material/texture resolution, Molang scope, lifetime behavior, remove semantics, tick/render events, and logout cleanup.
+- Importer/runtime schema ownership decided explicitly; no silent duplicate `BrParticle` source of truth.
+- Tests moved/adapted and boundary verification added; existing behavior tests must not be weakened to make extraction compile.
 
-### Expected Features
+## Architecture Recommendation
 
-**Table stakes (must ship in v1.1):**
-- Single `./gradlew runClientSmoke` command launches all smoke tests — core deliverable
-- Auto-enable smoke testing (no manual TOML editing) — via system property override
-- Isolated game directory (`run-smoke/`) — don't pollute normal dev world
-- Auto-exit after tests complete — `Runtime.halt()` with correct pass/fail exit code
-- Zero impact on normal `runClient` — separate run config, smoke mod idle by default
+- Treat `:eyelib-particle` as a feature runtime module, not pure JVM-only. It may own particle runtime/client/render code and particle-specific Forge hooks when those hooks are isolated in integration packages.
+- Keep pure particle APIs and request seams platform-light: `ParticleSpawnRequest`, packet-facing DTOs, lookup names, and publication keys should remain string-keyed and root-independent.
+- Keep unified command registration and network channel ownership in root `mc/impl` / `network`; root adapters should convert platform packets, `ResourceLocation` validation, player/render data, and Molang scope into particle-module requests/context objects.
+- Move particle-specific manager/store ownership out of root. If temporary root facades are needed, they should delegate to module APIs and be documented as compatibility shims.
+- Preserve importer as raw/source schema owner. Particle owns runtime executable definitions and may add a named, tested adapter from importer schema to runtime definitions.
+- Update `MODULES.md`, `docs/architecture/01-module-boundaries.md`, `docs/architecture/02-side-boundaries.md`, `docs/index/repo-map.md`, and a new particle module README alongside implementation.
 
-**Differentiators (ships in v1.1):**
-- IDE run configuration auto-generated (`ideName = "Run Client Smoke Tests"`)
-- Config always fresh on each run (system properties, not persisted)
-- Isolated config scope (smoke config lives in `run-smoke/config/`, never touches `run/config/`)
-- Elevated logging for CI debugging
+## Watch Out For
 
-**Defer to v1.2+:**
-- CI timeout/cleanup handling
-- Multi-mod smoke testing (consumer mods)
-- Auto-enable of `enableSmokeTest` Gradle property (settings-level change)
+1. **Cosmetic module only:** adding Gradle scaffolding without moving ownership fails the milestone.
+2. **Root ↔ particle cycles:** any `:eyelib-particle` import of root manager, registry, packets, capability helpers, `mc/impl`, or root utilities is a red flag.
+3. **Platform contamination:** MC/Forge bindings may live in integration layers, but pure particle core must not import `ResourceLocation`, Forge events, or root platform wiring.
+4. **Schema drift:** importer `BrParticle` and runtime particle definitions need a declared contract plus adapter/parity tests if both remain.
+5. **Lookup key regression:** preserve publication under `particle_effect.description.identifier`, not JSON resource paths.
+6. **String-id regression:** do not convert request/packet/common seams back to `ResourceLocation`; command validation can adapt at the platform boundary.
+7. **Client/server side issues:** Forge event subscribers and client classes need `Dist.CLIENT` posture and classloading review.
+8. **Subtle runtime regressions:** preserve Molang parent scope, defensive `Vector3f` copies, and `Minecraft.getInstance().submit(...)` queued render-manager mutations.
+9. **Verification shortcuts:** Gradle verification must use JetBrains MCP only; do not run Gradle from shell.
 
-### Architecture Approach
+## Requirements Inputs
 
-Three patterns form the architecture backbone:
+- `GRAD-PARTICLE-01`: add `:eyelib-particle` as a real Gradle subproject with Forge-capable build metadata and root runtime consumption.
+- `BOUNDARY-PARTICLE-01`: document particle/runtime/importer/platform ownership and enforce one-way root → particle dependency direction.
+- `API-PARTICLE-01`: expose lookup, spawn/remove, manager publication, and module initialization through narrow particle-module ports/facades.
+- `SCHEMA-PARTICLE-01`: choose canonical importer/raw schema ownership and add named adapters/tests for runtime conversion.
+- `LOADER-PARTICLE-01`: preserve resource reload parsing and registry replacement by description identifier.
+- `COMMAND-PARTICLE-01`: preserve `/eyelib particle` user behavior while keeping Brigadier/validation in platform integration.
+- `NETWORK-PARTICLE-01`: preserve string-keyed spawn/remove packet semantics and handler delegation into particle services.
+- `RENDER-PARTICLE-01`: preserve visual output, material integration, Molang scope, tick/render lifecycle, and logout cleanup.
+- `QUARANTINE-PARTICLE-01`: forbid pure particle core imports of root/MC/Forge platform types except in explicitly named integration adapters.
+- `VERIFY-PARTICLE-01`: move/adapt tests, add boundary tests, and run planned Gradle/client verification through JetBrains MCP.
 
-1. **System Property Override (Config Resolution Chain)** — Application-level `isEnabled()` wrapper that checks `System.getProperty("clientsmoke.enabled")` first, falls back to `ForgeConfigSpec.ENABLED.get()`. This is the bridge between Gradle (which sets `-D` flags) and the Minecraft runtime (which reads them). No reflection, no Forge internals, no persistent file mutation.
+## Roadmap Inputs
 
-2. **MDGL Run Config Isolation** — Separate `legacyForge.runs.clientSmoke` entry with its own system properties, IDE name, and game directory. Shares MDGL infrastructure (classpath assembly, AT processing) but is independently configured. No cross-contamination with `runClient`.
+1. **Boundary contract and Gradle skeleton** — Add the module, build metadata, root dependencies, README/docs, and explicit dependency/side policy before moving behavior. Controls cosmetic-module and wrong-build-pattern risk.
+2. **Particle API/store seam** — Introduce module-owned lookup, spawn request/context, read/write store, and publication APIs; add temporary root delegating facades only if needed. Controls circular dependency risk before bulk moves.
+3. **Schema/runtime ownership decision** — Lock importer raw schema vs particle runtime contract, add adapter/parity tests, and prevent duplicate codec drift. Needs focused planning/research because current importer/runtime models differ.
+4. **Runtime/client move** — Move Bedrock runtime definitions, components, emitters, render manager, and particle-specific client hooks into `:eyelib-particle`, keeping pure core separate from `mc/impl`. Controls behavior and side-boundary risk.
+5. **Loader/manager publication rewire** — Move or adapt `BrParticleLoader`, `ParticleAssetRegistry`, and manager publication while preserving description-identifier keys and reload replacement semantics.
+6. **Command/network integration rewire** — Keep root command/channel ownership, convert packets/platform data into module requests, and preserve handler → service delegation without exposing render internals.
+7. **Regression and documentation gate** — Verify compile/tests/client smoke via JetBrains MCP, compare reload/command/packet/render behavior, remove or document compatibility facades, and ensure all architecture docs match the new boundary.
 
-3. **Immutable Result Accumulation → Exit Code** — `testResults` list is the single source of truth. `handleExit()` performs a single reduction (`allMatch`) to determine aggregate exit code. No mutable "hasFailures" boolean that can drift out of sync.
+**Research flags:** Phase 3 and Phase 4 need deeper phase-level design because schema ownership and loader/store migration have the highest ambiguity. Phase 6 can mostly use standard adapter patterns if Phase 2 APIs are clean. Phase 1 is well documented and should not need additional research.
 
-**Anti-patterns to actively avoid:** mutating persistent TOML files from Gradle, reflective hacking of `ForgeConfigSpec` internals, subclassing/shadowing MDGL-generated tasks.
-
-### Critical Pitfalls
-
-1. **Hacking Forge config internals instead of adding application-level override** — Use `System.getProperty()` wrapper in `ClientSmokeConfig`. Never touch `ForgeConfigSpec` internal `BitSet` or use reflection on Forge config. Detection: any reference to Forge internal config classes is a red flag.
-
-2. **Dependency classpath gate not removed** — Remove the `if (enableSmokeTest == 'true')` guard on `localRuntime project(':eyelib-clientsmoke')`. Smoke mod must always be on classpath. Runtime gating is via `isEnabled()` returning false by default. Detection: `runClientSmoke` must work after `clean` build with no manual config.
-
-3. **Exit code not propagated** — Current v1.0 calls `Runtime.halt(0)` unconditionally. Must aggregate `testResults` to compute pass/fail before `halt()`. Detection: deliberately failing test must produce `BUILD FAILED` in Gradle.
-
-4. **No tests found → IDLE → task hangs forever** — When in force-exit mode, empty scan results must transition to REPORT (generate empty report) → EXIT, not IDLE. Detection: `runClientSmoke` with no annotated tests must complete (not hang).
-
-5. **Windows `Runtime.halt()` exit code capture** — May not be reliably detected by Gradle on Windows. Mitigation: test on real Windows; have `System.exit()` fallback or exit code marker file ready. Detection: verify `%ERRORLEVEL%` on Windows CMD after both pass and fail scenarios.
-
-## Implications for Roadmap
-
-### Suggested Phase Structure
-
-**Phase 1: Gradle Run Configuration & Classpath**
-- **Rationale:** Everything depends on the `runClientSmoke` task existing and the smoke mod being on the classpath. This is the foundation — nothing else works without it.
-- **Delivers:** `legacyForge.runs.clientSmoke` block in root `build.gradle`, unconditional `localRuntime` dependency, `.gitignore` entries for smoke artifacts, IDE run configuration auto-generated.
-- **Implements:** MDGL Run Config Isolation pattern. Removes Pitfall #2 (classpath gate).
-- **Research flag:** Standard MDGL DSL — well-documented, skip research-phase.
-
-**Phase 2: Config Override Bridge & State Machine Fixes**
-- **Rationale:** Once the task launches Minecraft, the system property override must actually be read by the mod. Also fix the two correctness bugs blocking CI integration.
-- **Delivers:** `ClientSmokeConfig.isEnabled()` and `shouldExitAfterSmoke()` wrapper methods, all `ENABLED.get()` call sites updated, "no tests" IDLE→EXIT redirect, correct exit code aggregation in `handleExit()`, JUnit XML report generation.
-- **Implements:** System Property Override pattern and Immutable Result Accumulation pattern. Avoids Pitfalls #1, #3, #4, #6.
-- **Research flag:** Needs `/gsd-research-phase` — the no-tests IDLE fix requires understanding the full state machine transitions.
-
-**Phase 3: Verification & Polish**
-- **Rationale:** Validate the "one-click" promise on real hardware, especially Windows exit code capture. Verify edge cases. Add developer-facing documentation.
-- **Delivers:** Windows exit code verification (real hardware), deliberately-failing test CI workflow validation, elevated logging configuration, user-facing command documentation, smoke-only `runClient` verification (no regression).
-- **Implements:** Quality gates for Pitfall #5 (Windows). Table stakes verification.
-- **Research flag:** Standard QA — skip research-phase, use `/gsd-verify-work`.
-
-### Phase Ordering Rationale
-
-- Phase 1 is the hard prerequisite — the run config must exist before anything can be tested. It also addresses the most impactful pitfall (classpath gate, Pitfall #2) with a one-line change.
-- Phase 2 depends on Phase 1 for a working launch target but is otherwise independent. It packs the highest-risk changes (config override, state machine modifications) together so they can be tested as a unit.
-- Phase 3 is gated on Phase 2 for correctness but can proceed in parallel with documentation work. The Windows verification specifically needs Phase 2's exit code changes.
-
-## Confidence Assessment
+## Confidence
 
 | Area | Confidence | Notes |
-|------|------------|-------|
-| Stack | HIGH | MDGL 2.0.91 APIs verified against official README and existing project usage. JDK APIs are stable. No external dependencies to evaluate. |
-| Features | HIGH | Derived directly from v1.0 code analysis (ClientSmokeConfig, ClientSmokeStateMachine, root build.gradle). Table stakes are clear. |
-| Architecture | HIGH | All three research files independently converge on the same pattern: system property bridge + MDGL run isolation. Anti-patterns validated against real Forge 47.1.3 internals. |
-| Pitfalls | HIGH | Pitfalls #1-#4 validated against concrete code paths in v1.0. Pitfall #5 (Windows exit code) is MEDIUM — based on community reports, needs real hardware verification. |
+|---|---|---|
+| Stack | HIGH | Current multi-project Gradle and Forge-aware module patterns are well evidenced; exact dependency scopes should be finalized after compile/API inventory. |
+| Features | HIGH | Table stakes come directly from repository behavior and user constraints. |
+| Architecture | HIGH | Integration points are clear; exact phase sizing is MEDIUM until move/compile failures expose hidden coupling. |
+| Pitfalls | HIGH | Risks are based on inspected current particle loader/runtime/command/network/test seams. |
 
-**Overall confidence: HIGH** — All research files independently converge. The only uncertainty is Windows `Runtime.halt()` exit code capture on real hardware.
-
-### Gaps to Address
-
-- **Windows exit code reliability:** Research is based on community reports of Gradle + `Runtime.halt()` issues on Windows. During Phase 3 verification, test on real Windows hardware with both `cmd` and PowerShell. Have `System.exit()` fallback or exit code marker file ready if `halt()` exit codes are not captured.
-- **Empty test run UX decision:** When no `@ClientSmoke` tests exist, should the exit code be 0 (nothing to test, not a failure) or 1 (test run found nothing)? Research recommends 0 with clear logging, but this is a product decision to confirm during planning.
+**Open gaps for planning:** final `api` vs `implementation` scopes; exact placement of particle reload listener; whether packet contracts remain root-owned permanently; adapter shape between importer schema and particle runtime; dedicated-server classloading proof after moving client hooks.
 
 ## Sources
 
-### Primary (HIGH confidence)
-- **MDGL README** — https://github.com/neoforged/ModDevGradle/blob/main/README.md — verified `systemProperty()`, `ideName`, `legacyForge.runs` DSL against plugin v2.0.91
-- **Root `build.gradle`** — Existing run configs, dependency gating, and MDGL usage patterns — primary source, directly analyzed
-- **`ClientSmokeConfig.java`** (v1.0) — ForgeConfigSpec usage, `ENABLED`/`EXIT_AFTER_SMOKE` fields, all call sites — primary source
-- **`ClientSmokeStateMachine.java`** (v1.0) — `handleExit()`, `handleScan()`, state transitions — primary source
-- **Forge 1.20.1 ForgeConfigSpec** — Internal BitSet tracking, config resolution mechanism — verified via Forge 47.1.3 source analysis
-- **JDK 17 `Runtime.halt()` / `System.getProperty()` / `javax.xml.stream`** — Official JavaDoc — standard Java APIs
-
-### Secondary (MEDIUM confidence)
-- **Gradle `JavaExec` exit code handling on Windows** — Community discussions on StackOverflow/Gradle forums — needs local Windows verification
-- **Gradle User Guide** — `JavaExec` system properties documentation — well-established Gradle API
-
-### No LOW confidence sources used.
-
----
-*Research completed: 2026-05-08*
-*Ready for requirements: yes*
-*Next: Orchestrator proceeds to requirements definition via `/gsd-discuss-phase` or directly to plan-phase*
+- `.planning/research/STACK.md`
+- `.planning/research/FEATURES.md`
+- `.planning/research/ARCHITECTURE.md`
+- `.planning/research/PITFALLS.md`
