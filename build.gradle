@@ -69,6 +69,8 @@ legacyForge {
             client()
             gameDirectory = project.file('run/clientsmoke')
             systemProperty 'forge.enabledGameTestNamespaces', 'clientsmoke'
+            systemProperty 'clientsmoke.enabled', 'true'
+            systemProperty 'clientsmoke.autoExit', 'true'
         }
 
         server {
