@@ -69,11 +69,6 @@ public final class ClientSmokeScanner {
      * @return unmodifiable list of discovered tests, empty if disabled or none found
      */
     public static List<DiscoveredTest> scan() {
-        if (!ClientSmokeConfig.ENABLED.get()) {
-            LOGGER.debug("[ClientSmoke] Scanner skipped — framework is disabled");
-            return Collections.emptyList();
-        }
-
         Type annotationType = Type.getType(ClientSmoke.class);
         List<DiscoveredTest> discovered = new ArrayList<>();
 
