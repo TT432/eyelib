@@ -8,7 +8,7 @@
 - Active refactor tracker: `work/main.md`
 
 ## What This Repository Is
-- Eyelib is a multi-project `Gradle + Java 17 + Forge` rendering library for Minecraft (`:` root runtime + `:eyelib-processor` processing/batching core + `:eyelib-importer` importer/model core + `:eyelib-molang` engine Molang core).
+- Eyelib is a multi-project `Gradle + Java 17 + Forge` rendering library for Minecraft (`:` root runtime + `:eyelib-processor` processing/batching core + `:eyelib-importer` importer/model core + `:eyelib-molang` engine Molang core + `:eyelib-material` material core + composite-build `clientsmoke` submodule plus dedicated material smoke target).
 - Forge bootstrap entrypoint: `src/main/java/io/github/tt432/eyelib/mc/impl/bootstrap/EyelibMod.java`
 - Compatibility constant holder: `src/main/java/io/github/tt432/eyelib/Eyelib.java`
 - Current codebase pressure points are client tooling, generated Molang grammar files, loader/publication flow, and sync/data-attachment boundaries.
@@ -25,6 +25,7 @@
 - Platform-free utility seams: start in `src/main/java/io/github/tt432/eyelib/core/`
 - Blockbench Bedrock export reference: `docs/blockbench/bedrock-geometry-export-fields-reference.md`
 - External Bedrock reference docs: `docs/reference/`
+- Client smoke framework: start in the `clientsmoke/` Git submodule; material-specific smoke tests live in `eyelib-material-smoke/` so the framework does not depend on feature modules.
 
 ## Read In This Order
 1. This file

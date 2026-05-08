@@ -2,24 +2,16 @@ plugins {
     id 'java-library'
     id 'io.freefair.lombok' version '8.6'
     id 'net.neoforged.moddev.legacyforge' version '2.0.91'
-    id 'maven-publish'
 }
 
 version = rootProject.version
 group = rootProject.group
 
 base {
-    archivesName = 'eyelib-clientsmoke'
+    archivesName = 'eyelib-material-smoke'
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
-
-sourceSets {
-    test {
-        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
-        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
-    }
-}
 
 repositories {
     mavenCentral()
@@ -35,34 +27,20 @@ legacyForge {
     }
 
     mods {
-        clientsmoke {
+        eyelibmaterialsmoke {
             sourceSet(sourceSets.main)
-        }
-    }
-
-    runs {
-        client {
-            client()
-            systemProperty 'forge.enabledGameTestNamespaces', 'clientsmoke'
         }
     }
 }
 
 dependencies {
-    implementation project(':eyelib-clientsmoke-annotation')
+    implementation "io.github.tt432:clientsmoke:${project.version}"
+    implementation project(':eyelib-material')
     compileOnly 'org.jspecify:jspecify:1.0.0'
-
-    testImplementation platform('org.junit:junit-bom:5.10.2')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-}
-
-java {
-    withSourcesJar()
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -78,19 +56,4 @@ tasks.named('processResources', ProcessResources).configure {
     filesMatching('META-INF/mods.toml') {
         expand(replaceProperties)
     }
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-        }
-    }
-    repositories {
-        mavenLocal()
-    }
-}
-
-tasks.named('test').configure {
-    useJUnitPlatform()
 }

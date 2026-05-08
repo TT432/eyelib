@@ -1,0 +1,41 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+
+[[mods]]
+modId="eyelibmaterialsmoke"
+version="${mod_version}"
+displayName="Eyelib Material Smoke Tests"
+authors="${mod_authors}"
+description='''
+Client smoke tests for eyelib-material. Loaded only by the dedicated clientSmoke
+run configuration; production code must not depend on this module.
+'''
+
+[[dependencies.eyelibmaterialsmoke]]
+modId="forge"
+mandatory=true
+versionRange="${forge_version_range}"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies.eyelibmaterialsmoke]]
+modId="minecraft"
+mandatory=true
+versionRange="${minecraft_version_range}"
+ordering="NONE"
+side="CLIENT"
+
+[[dependencies.eyelibmaterialsmoke]]
+modId="clientsmoke"
+mandatory=true
+versionRange="[${mod_version},)"
+ordering="AFTER"
+side="CLIENT"
+
+[[dependencies.eyelibmaterialsmoke]]
+modId="eyelibmaterial"
+mandatory=true
+versionRange="[${mod_version},)"
+ordering="AFTER"
+side="CLIENT"

@@ -1,0 +1,3 @@
+[submodule "clientsmoke"]
+	path = clientsmoke
+	url = https://github.com/TT432/clientsmoke

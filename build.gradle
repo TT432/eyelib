@@ -164,10 +164,10 @@ dependencies {
 
     compileOnly("maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha")
 
-    // Client Smoke Test: annotation + mod always available at runtime (runtime control via isEnabled())
-    compileOnly project(':eyelib-clientsmoke-annotation')
-    localRuntime project(':eyelib-clientsmoke')
-    localRuntime project(':eyelib-clientsmoke-annotation')
+    // Client Smoke Test is supplied by the composite build in ./clientsmoke.
+    compileOnly "io.github.tt432:clientsmoke:${version}"
+    localRuntime "io.github.tt432:clientsmoke:${version}"
+    localRuntime project(':eyelib-material-smoke')
 
     jarJar additionalRuntimeClasspath(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))
     jarJar additionalRuntimeClasspath(implementation('com.h2database:h2:2.4.240'))

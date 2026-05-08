@@ -18,5 +18,6 @@ include("eyelib-importer")
 include("eyelib-material")
 include("eyelib-molang")
 include("eyelib-processor")
-include("eyelib-clientsmoke-annotation")
-include("eyelib-clientsmoke")
+include("eyelib-material-smoke")
+
+includeBuild("clientsmoke")
