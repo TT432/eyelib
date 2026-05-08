@@ -653,9 +653,11 @@ public final class ClientSmokeStateMachine {
         long elapsedTicks = currentTick - exitStartTick;
         if (elapsedTicks >= 60) {
             // Per D-04: 60 ticks = 3 seconds at 20 TPS
-            LOGGER.info("[ClientSmoke] Exit complete after {} ticks — halting JVM via Runtime.getRuntime().halt(0)",
-                    elapsedTicks);
-            Runtime.getRuntime().halt(0);
+            long failedCount = testResults.stream().filter(r -> "failed".equals(r.status())).count();
+            int exitCode = (failedCount > 0) ? 1 : 0;
+            LOGGER.info("[ClientSmoke] Exit complete after {} ticks — {} passed, {} failed — halting JVM with exit code {}",
+                    elapsedTicks, testResults.size() - failedCount, failedCount, exitCode);
+            Runtime.getRuntime().halt(exitCode);
         }
         // else: stay in EXIT state, silently count down each tick (no log spam)
     }
@@ -710,8 +712,15 @@ public final class ClientSmokeStateMachine {
             String json = new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(report);
             Files.writeString(outputFile, json);
 
-            LOGGER.info("[ClientSmoke] Report written: {} ({} tests, {} passed, {} failed)",
-                    outputFile.toAbsolutePath(), testResults.size(), passed, failed);
+            // ── JUnit XML report (OVRD-04) ──
+            String junitFilename = "junit-" + timestamp + ".xml";
+            Path junitFile = outputDir.resolve(junitFilename);
+            String junitXml = buildJUnitXml(testResults, timestamp);
+            Files.writeString(junitFile, junitXml);
+            LOGGER.info("[ClientSmoke] JUnit XML report written: {}", junitFile.toAbsolutePath());
+
+            LOGGER.info("[ClientSmoke] Reports written: JSON={}, XML={} ({} tests, {} passed, {} failed)",
+                    outputFile.toAbsolutePath(), junitFile.toAbsolutePath(), testResults.size(), passed, failed);
 
         } catch (Exception e) {
             LOGGER.error("[ClientSmoke] Failed to write report to {}: {}", outputFile, e.getMessage(), e);
@@ -737,6 +746,80 @@ public final class ClientSmokeStateMachine {
     ) {}
 
     // ── Utils ─────────────────────────────────────────────────────
+
+    /**
+     * Builds a JUnit XML report string from accumulated test results.
+     *
+     * <p>Format follows the JUnit XML schema consumed by CI systems
+     * (Jenkins, GitHub Actions, GitLab CI):
+     * <pre>
+     * {@code <?xml version="1.0" encoding="UTF-8"?>
+     * <testsuite name="ClientSmoke" tests="N" failures="F" errors="0"
+     *            skipped="0" time="T" timestamp="ISO8601">
+     *   <testcase classname="FQCN" name="description" time="seconds"/>
+     *   ...
+     * </testsuite>}
+     * </pre></p>
+     *
+     * <p>Per OVRD-04: Generated alongside the existing JSON report in
+     * {@code clientsmoke-reports/}.</p>
+     *
+     * @param results   accumulated test results (may be empty)
+     * @param timestamp ISO 8601 timestamp string for the {@code timestamp} attribute
+     * @return complete JUnit XML document as a string
+     */
+    private static String buildJUnitXml(List<TestResult> results, String timestamp) {
+        long failed = results.stream().filter(r -> "failed".equals(r.status())).count();
+        long totalTimeMs = results.stream().mapToLong(TestResult::durationMs).sum();
+        double totalTimeSec = totalTimeMs / 1000.0;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        sb.append("<testsuite name=\"ClientSmoke\" tests=\"")
+          .append(results.size()).append("\" failures=\"").append(failed)
+          .append("\" errors=\"0\" skipped=\"0\" time=\"")
+          .append(String.format("%.3f", totalTimeSec))
+          .append("\" timestamp=\"").append(escapeXml(timestamp)).append("\">\n");
+
+        for (TestResult r : results) {
+            double testTimeSec = r.durationMs() / 1000.0;
+            sb.append("  <testcase classname=\"")
+              .append(escapeXml(r.className()))
+              .append("\" name=\"")
+              .append(escapeXml(r.description()))
+              .append("\" time=\"")
+              .append(String.format("%.3f", testTimeSec))
+              .append("\"");
+
+            if ("failed".equals(r.status()) && r.error() != null) {
+                sb.append(">\n");
+                sb.append("    <failure message=\"")
+                  .append(escapeXml(r.error().message()))
+                  .append("\" type=\"java.lang.Exception\">")
+                  .append(escapeXml(r.error().stackTrace()))
+                  .append("</failure>\n");
+                sb.append("  </testcase>\n");
+            } else {
+                sb.append("/>\n");
+            }
+        }
+
+        sb.append("</testsuite>\n");
+        return sb.toString();
+    }
+
+    /**
+     * Escapes special XML characters in a string.
+     * Replaces {@code &}, {@code <}, {@code >}, {@code "}, and {@code '} with XML entities.
+     */
+    private static String escapeXml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&apos;");
+    }
 
     private static void transitionTo(ClientSmokeState newState, String reason) {
         LOGGER.info("[ClientSmoke] {} → {} — {}", state, newState, reason);
