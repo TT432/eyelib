@@ -7,6 +7,7 @@
 - `src/main/java/io/github/tt432/eyelib/molang/`: legacy Molang marker/docs handoff path.
 - `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/`: engine-owned Molang value/runtime wrappers, scope/compiler/type/mapping-api/built-in mappings, plus generated grammar artifacts.
 - `eyelib-material/src/main/java/io/github/tt432/eyelibmaterial/`: Bedrock material definitions, GL state management, shader pipeline, and shared pure-data types under `shared/` package.
+- `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/`: particle module API and core contract boundary skeleton; current root particle runtime stays in `src/main/java/io/github/tt432/eyelib/client/particle/` until later extraction phases.
 - `clientsmoke/`: external standalone client smoke framework and annotation API, consumed through a Gradle composite build and kept independent from feature modules.
 - `src/main/java/io/github/tt432/eyelib/network/`: packet registration and client/server packet handling.
 - `src/main/java/io/github/tt432/eyelib/capability/`: attachment-related capability registration and data holders.
@@ -67,6 +68,7 @@
 | `mc/impl/mixin/` + `eyelib.mixins.json` | platform integration zone | Own Minecraft mixin classes and mixin package/config wiring |
 | `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/` | `molang.generated` | Treat as generated and isolate from normal handwritten work |
 | `eyelib-molang/**` | `molang.engine` | Own Molang value/runtime, compile/type/scope/mapping-api, and built-in mappings without depending on root runtime packages |
+| `:eyelib-particle/**` | `particle.module` | Own the particle-module API/core contract boundary and future extraction seams; root may consume it, but it must not depend back on root runtime packages, managers, registries, packets, capability helpers, or `mc/impl` classes |
 | `network/` | `sync` | Own packet registration and side-aware routing |
 | `network/dataattach/` | `sync` + `dataattach` seam | Centralize attachment sync send/apply flow |
 | `capability/` + `util/data_attach/` | `dataattach` | Own attachment state, ids, and mutation rules without direct MC/Forge types |

@@ -8,7 +8,7 @@
 - Active refactor tracker: `work/main.md`
 
 ## What This Repository Is
-- Eyelib is a multi-project `Gradle + Java 17 + Forge` rendering library for Minecraft (`:` root runtime + `:eyelib-processor` processing/batching core + `:eyelib-importer` importer/model core + `:eyelib-molang` engine Molang core + `:eyelib-material` material core + composite-build `clientsmoke` submodule).
+- Eyelib is a multi-project `Gradle + Java 17 + Forge` rendering library for Minecraft (`:` root runtime + `:eyelib-processor` processing/batching core + `:eyelib-importer` importer/model core + `:eyelib-molang` engine Molang core + `:eyelib-material` material core + `:eyelib-particle` particle boundary core + composite-build `clientsmoke` submodule).
 - Forge bootstrap entrypoint: `src/main/java/io/github/tt432/eyelib/mc/impl/bootstrap/EyelibMod.java`
 - Compatibility constant holder: `src/main/java/io/github/tt432/eyelib/Eyelib.java`
 - Current codebase pressure points are client tooling, generated Molang grammar files, loader/publication flow, and sync/data-attachment boundaries.
@@ -20,6 +20,7 @@
 - Runtime asset storage: start in `src/main/java/io/github/tt432/eyelib/client/manager/`
 - Molang: start in `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/` for value/runtime wrappers, scope/compiler/type/generated code; root `src/main/java/io/github/tt432/eyelib/molang/` is now a legacy marker/handoff path only
 - Molang rewrite planning: read `eyelib-molang/ROADMAP.md` first for current progress and update rules, then use `eyelib-molang/refactor-plan/README.md` when the task is about rewrite sequencing, entry gates, or cutover parity
+- Particle module boundary: start in `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/` for the new module contract; current runtime remains in `src/main/java/io/github/tt432/eyelib/client/particle/` until later extraction phases move behavior through explicit seams
 - Sync and packets: start in `src/main/java/io/github/tt432/eyelib/network/`
 - Data attachment flow: start in `src/main/java/io/github/tt432/eyelib/util/data_attach/` and `src/main/java/io/github/tt432/eyelib/capability/`
 - Platform-free utility seams: start in `src/main/java/io/github/tt432/eyelib/core/`

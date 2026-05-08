@@ -20,12 +20,14 @@ Eyelib is a Forge codebase with client-only rendering/tooling paths and shared r
 - `src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnRequest.java` is now a platform-type-free client request seam (`String` ids + state), and `network/SpawnParticlePacket` now also uses a string-keyed particle id contract; Minecraft identifier validation/adaptation stays in `mc/impl` command/network runtime wiring.
 - `:eyelib-processor` is a processor zone for platform-free parsing/classification/batching seams (`io.github.tt432.eyelibprocessor.*`): it may depend on plain JVM/codec/importer modules and engine-side plain-JVM Molang analysis from `:eyelib-molang`, but it must not own runtime publication/upload/event/UI or other Minecraft/Forge lifecycle bindings.
 - `:eyelib-importer` is an importer/schema zone: it may own codecs, parsed definitions, Molang-compatible value types, normalization logic, and importer-only image/data representations, but it must not own GUI/runtime execution, `NativeImage` upload/download boundaries, or Forge/Minecraft lifecycle wiring.
+- `:eyelib-particle` is a particle module zone for API/core contract ownership: root may consume it, but it must not depend back on root runtime packages or `mc/impl`; pure particle core should remain platform-free unless future adapter documentation explicitly introduces a narrower integration boundary.
 
 ## Rules For This Refactor
 - Packet registration and routing belong in the sync layer, not in GUI/tooling or loader code.
 - Client-only smoke/test flows may depend on `runClient`; common/shared code must not.
 - Importer/schema code may depend on plain JVM data, codecs, and engine modules such as `:eyelib-molang`, but new Minecraft/Forge runtime dependencies require explicit boundary documentation before introduction.
 - Processor code may depend on plain JVM data and, when needed, importer/schema modules plus `:eyelib-molang` analysis helpers, but it must remain one-way with no dependency from `:eyelib-processor` back to root runtime packages; the current stage keeps root runtime explicit about any direct importer dependencies it still owns.
+- Particle module code may define particle API/core contracts, but new Minecraft/Forge lifecycle, command, network transport, or client-hook dependencies require explicit adapter documentation before they are introduced.
 - Data-attachment mutation rules must be written down before packet/data-attachment restructuring starts.
 - New cross-zone dependencies need a written reason in the relevant architecture doc before they are introduced.
 - Client packet handlers should prefer dedicated client runtime services such as `client/particle/ParticleSpawnService.java` over direct loader access.
