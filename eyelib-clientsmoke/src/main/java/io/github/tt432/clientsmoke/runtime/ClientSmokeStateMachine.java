@@ -29,11 +29,15 @@ import net.minecraftforge.fml.loading.FMLPaths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -63,6 +67,37 @@ public final class ClientSmokeStateMachine {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientSmokeStateMachine.class);
 
+    /**
+     * Accumulated result of a single test execution.
+     *
+     * <p>Per D-15: Contains className (FQCN), description, priority,
+     * status ("passed"/"failed"), durationMs (wall-clock timing), and
+     * error (null if passed; message + first 5 stack trace lines if failed).</p>
+     *
+     * @param className   fully qualified class name of the test
+     * @param description test description from {@code @ClientSmoke} annotation
+     * @param priority    execution priority from annotation
+     * @param status      "passed" or "failed"
+     * @param durationMs  wall-clock duration in milliseconds
+     * @param error       error details, or null if passed
+     */
+    record TestResult(
+            String className,
+            String description,
+            int priority,
+            String status,
+            long durationMs,
+            ErrorInfo error
+    ) {}
+
+    /**
+     * Error information for failed tests.
+     *
+     * <p>Per D-12: message is {@code e.toString() + ": " + e.getMessage()};
+     * stackTrace is the first 5 lines of the stack trace as a single string.</p>
+     */
+    record ErrorInfo(String message, String stackTrace) {}
+
     private static ClientSmokeState state = ClientSmokeState.INIT;
 
     private static List<ClientSmokeScanner.DiscoveredTest> discoveredTests = Collections.emptyList();
@@ -88,8 +123,17 @@ public final class ClientSmokeStateMachine {
     /** Tick at which EXIT state was entered. {@code -1L} = EXIT not yet entered. D-04: tick-counted countdown. */
     private static long exitStartTick = -1L;
 
+    /** Accumulated test results. Populated by handleTestExec(), serialized by handleReport(). */
+    private static final List<TestResult> testResults = new ArrayList<>();
+
+    /** Guard ensuring priority sort happens exactly once (on first TEST_EXEC entry). */
+    private static boolean testsSorted = false;
+
+    /** Guard ensuring report is written exactly once. */
+    private static boolean reportWritten = false;
+
     public static void setDiscoveredTests(List<ClientSmokeScanner.DiscoveredTest> tests) {
-        discoveredTests = List.copyOf(tests);
+        discoveredTests = new ArrayList<>(tests);
         LOGGER.info("[ClientSmoke] State machine received {} discovered test(s)", discoveredTests.size());
     }
 
@@ -115,6 +159,9 @@ public final class ClientSmokeStateMachine {
                 case STABILIZE -> handleStabilize();
                 case HUD_HIDE -> handleHudHide();
                 case SCREENSHOT -> handleScreenshot();
+                case TEST_EXEC -> handleTestExec();
+                case REPOSITION -> handleReposition();
+                case REPORT -> handleReport();
                 case EXIT -> handleExit();
                 default -> transitionTo(ClientSmokeState.ERROR, "Unknown state: " + state);
             }
@@ -216,10 +263,11 @@ public final class ClientSmokeStateMachine {
             // ── Step 6: Advance to next test or exit ──
             testIndex++;
             if (testIndex < discoveredTests.size()) {
-                // More tests remain — loop back (Phase 4 will insert TEST_EXEC here)
-                transitionTo(ClientSmokeState.HUD_HIDE, "Test " + testIndex + "/" + discoveredTests.size() + " — next screenshot");
+                // More tests remain — loop back to test execution
+                transitionTo(ClientSmokeState.TEST_EXEC, "Test " + testIndex + "/" + discoveredTests.size() + " — next test");
             } else {
-                transitionTo(ClientSmokeState.EXIT, "All " + discoveredTests.size() + " screenshot(s) captured — initiating exit");
+                // All tests complete — generate report before exit
+                transitionTo(ClientSmokeState.REPORT, "All " + discoveredTests.size() + " test(s) complete — generating report");
             }
 
         } catch (Exception e) {
@@ -242,7 +290,7 @@ public final class ClientSmokeStateMachine {
     // ── State handlers ────────────────────────────────────────────
 
     private static void handleInit() {
-        if (!ClientSmokeConfig.ENABLED.get()) {
+        if (!ClientSmokeConfig.isEnabled()) {
             transitionTo(ClientSmokeState.IDLE, "Framework disabled — entering idle state");
         } else {
             transitionTo(ClientSmokeState.CONFIG_LOAD, "Framework enabled — loading config");
@@ -251,15 +299,20 @@ public final class ClientSmokeStateMachine {
 
     private static void handleConfigLoad() {
         LOGGER.info("[ClientSmoke] Config verified — enabled={}, reloadStabilizeTicks={}",
-                ClientSmokeConfig.ENABLED.get(), ClientSmokeConfig.RELOAD_STABILIZE_TICKS.get());
+                ClientSmokeConfig.isEnabled(), ClientSmokeConfig.RELOAD_STABILIZE_TICKS.get());
         transitionTo(ClientSmokeState.SCAN, "Config loaded — proceeding to scan");
     }
 
     private static void handleScan() {
         LOGGER.info("[ClientSmoke] Scan complete — {} test(s) in queue", discoveredTests.size());
         if (discoveredTests.isEmpty()) {
-            LOGGER.info("[ClientSmoke] No tests found — entering idle state");
-            transitionTo(ClientSmokeState.IDLE, "No @ClientSmoke tests found");
+            if (ClientSmokeConfig.shouldExitAfterSmoke()) {
+                LOGGER.info("[ClientSmoke] No tests found — auto-exit enabled, generating empty report before exit");
+                transitionTo(ClientSmokeState.REPORT, "No @ClientSmoke tests found — generating empty report");
+            } else {
+                LOGGER.info("[ClientSmoke] No tests found — entering idle state");
+                transitionTo(ClientSmokeState.IDLE, "No @ClientSmoke tests found");
+            }
         } else {
             transitionTo(ClientSmokeState.WORLD_CREATE, "Tests found — creating test world");
         }
@@ -360,13 +413,17 @@ public final class ClientSmokeStateMachine {
                     waitedTicks, requiredTicks);
             LOGGER.info("[ClientSmoke] Phase 2 complete — {} test(s) queued. Phase 3 will execute tests.",
                     discoveredTests.size());
-            // Phase 3 handoff: transition to HUD_HIDE for screenshot pipeline
-            // When testIndex < discoveredTests.size(), Phase 4 will interleave TEST_EXEC before HUD_HIDE
-            if (testIndex >= discoveredTests.size()) {
-                // No Phase 4 tests — go directly to screenshot + exit for end-to-end verification
-                transitionTo(ClientSmokeState.HUD_HIDE, "Stabilization complete — entering screenshot pipeline (no Phase 4 tests in queue)");
+            // Phase 4 handoff: enter test execution loop or go to screenshot pipeline
+            if (discoveredTests.isEmpty()) {
+                if (ClientSmokeConfig.shouldExitAfterSmoke()) {
+                    transitionTo(ClientSmokeState.REPORT, "Stabilization complete — no tests, generating empty report before exit");
+                } else {
+                    transitionTo(ClientSmokeState.HUD_HIDE, "Stabilization complete — entering screenshot pipeline (no tests in queue)");
+                }
+            } else {
+                transitionTo(ClientSmokeState.TEST_EXEC,
+                        "Stabilization complete — entering test execution phase (" + discoveredTests.size() + " test(s))");
             }
-            // else: testIndex < discoveredTests.size() — stay in STABILIZE, Phase 4 will drive TEST_EXEC→HUD_HIDE loop
         }
         // else: stay in STABILIZE — no log spam, just wait for next tick
     }
@@ -405,6 +462,131 @@ public final class ClientSmokeStateMachine {
     }
 
     /**
+     * Loads, instantiates, and executes the test class at the current
+     * {@link #testIndex}.
+     *
+     * <p><strong>Per D-01:</strong> Constructor-as-test — the no-arg
+     * constructor body IS the test. No interface or method contract.</p>
+     *
+     * <p><strong>Per D-02:</strong> Tests access Minecraft via
+     * {@code Minecraft.getInstance()} — no injection.</p>
+     *
+     * <p><strong>Per D-09/D-10:</strong> Exceptions are captured,
+     * recorded as failures, and the state machine advances to
+     * {@link ClientSmokeState#REPOSITION}. Subsequent tests continue
+     * without interruption.</p>
+     *
+     * <p><strong>Per D-11:</strong> No timeout mechanism — if a test
+     * hangs, {@code Runtime.halt(0)} in the EXIT state is the ultimate
+     * guarantee.</p>
+     *
+     * <p><strong>Per D-12:</strong> On failure, error info contains
+     * {@code e.toString()} + ": " + e.getMessage() for the message,
+     * and the first 5 stack trace lines.</p>
+     *
+     * <p><strong>Per EXEC-03:</strong> Tests are sorted by priority
+     * on first TEST_EXEC entry (ascending; equal priority = discovery order).
+     * The sort is idempotent — {@code testsSorted} guard prevents re-sorting.</p>
+     *
+     * <p><strong>Thread safety:</strong> All state machine handlers run on
+     * the client tick thread (single-threaded). No concurrent access to
+     * {@link #testResults} or {@link #testIndex}.</p>
+     */
+    private static void handleTestExec() {
+        // Priority sort — once, on first entry
+        if (!testsSorted) {
+            discoveredTests.sort(Comparator.comparingInt(ClientSmokeScanner.DiscoveredTest::priority));
+            testsSorted = true;
+            LOGGER.info("[ClientSmoke] Tests sorted by priority — {} test(s) ready for execution", discoveredTests.size());
+        }
+
+        // Safety guard — bounds check
+        if (testIndex >= discoveredTests.size()) {
+            LOGGER.warn("[ClientSmoke] testIndex {} out of bounds ({} tests) — transitioning to REPORT",
+                    testIndex, discoveredTests.size());
+            transitionTo(ClientSmokeState.REPORT, "No more tests — generating report");
+            return;
+        }
+
+        ClientSmokeScanner.DiscoveredTest discovered = discoveredTests.get(testIndex);
+        String className = discovered.className();
+        long startMs = System.currentTimeMillis();
+
+        try {
+            // Per D-01: Class.forName() + getDeclaredConstructor().newInstance()
+            Class<?> testClass = Class.forName(className);
+            testClass.getDeclaredConstructor().newInstance();
+
+            long durationMs = System.currentTimeMillis() - startMs;
+            testResults.add(new TestResult(
+                    className,
+                    discovered.description(),
+                    discovered.priority(),
+                    "passed",
+                    durationMs,
+                    null
+            ));
+            LOGGER.info("[ClientSmoke] ✓ PASS — {} ({}) — {}ms",
+                    className, discovered.description(), durationMs);
+
+        } catch (ClassNotFoundException e) {
+            // Per D-10: class not found — record failure and continue
+            long durationMs = System.currentTimeMillis() - startMs;
+            ErrorInfo err = buildErrorInfo(e, "class not found: " + className);
+            testResults.add(new TestResult(className, discovered.description(),
+                    discovered.priority(), "failed", durationMs, err));
+            LOGGER.warn("[ClientSmoke] ✗ FAIL — {} — class not found (was the mod loaded?)", className);
+
+        } catch (Exception e) {
+            // Per D-09: any other exception — record failure and continue
+            long durationMs = System.currentTimeMillis() - startMs;
+            ErrorInfo err = buildErrorInfo(e, e.toString());
+            testResults.add(new TestResult(className, discovered.description(),
+                    discovered.priority(), "failed", durationMs, err));
+            LOGGER.warn("[ClientSmoke] ✗ FAIL — {} — {}", className, e.toString());
+        }
+
+        // Per D-08: advance to REPOSITION — pass-through to HUD_HIDE for screenshot
+        transitionTo(ClientSmokeState.REPOSITION,
+                "Test " + (testIndex + 1) + "/" + discoveredTests.size() + " executed — repositioning for screenshot");
+    }
+
+    /**
+     * Builds compact error info per D-12:
+     * message = {@code e.toString()} + ": " + e.getMessage(),
+     * stackTrace = first 5 lines of the stack trace.
+     */
+    private static ErrorInfo buildErrorInfo(Exception e, String message) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        pw.flush();
+        String fullTrace = sw.toString();
+        String[] lines = fullTrace.split("\\r?\\n");
+        StringBuilder top5 = new StringBuilder();
+        int count = 0;
+        for (String line : lines) {
+            top5.append(line).append('\n');
+            count++;
+            if (count >= 6) break;  // 1 header + 5 trace lines
+        }
+        return new ErrorInfo(message, top5.toString().stripTrailing());
+    }
+
+    /**
+     * Pass-through anchor between test execution and HUD hiding.
+     *
+     * <p>Per D-08: No state mutation — {@code testIndex} is already
+     * pointing at the correct test. This simply transitions to
+     * {@link ClientSmokeState#HUD_HIDE} to begin the screenshot cycle
+     * for the current test's screen state.</p>
+     */
+    private static void handleReposition() {
+        transitionTo(ClientSmokeState.HUD_HIDE,
+                "Repositioned — capturing screenshot for test " + (testIndex + 1) + "/" + discoveredTests.size());
+    }
+
+    /**
      * Two-phase JVM exit with graceful Forge shutdown followed by forced termination.
      *
      * <p><strong>Phase 1 — Graceful shutdown (tick 0 of EXIT):</strong>
@@ -437,7 +619,7 @@ public final class ClientSmokeStateMachine {
      */
     private static void handleExit() {
         // Per EXIT-01: check config gating
-        if (!ClientSmokeConfig.EXIT_AFTER_SMOKE.get()) {
+        if (!ClientSmokeConfig.shouldExitAfterSmoke()) {
             transitionTo(ClientSmokeState.IDLE, "exitAfterSmoke=false — entering idle state for manual inspection");
             return;
         }
@@ -477,6 +659,82 @@ public final class ClientSmokeStateMachine {
         }
         // else: stay in EXIT state, silently count down each tick (no log spam)
     }
+
+    /**
+     * Generates the JSON test report and writes it to disk.
+     *
+     * <p>Per D-13: Report is written synchronously before transitioning to
+     * {@link ClientSmokeState#EXIT}, guaranteeing the file is fully on disk
+     * before {@code Runtime.getRuntime().halt(0)} fires (Phase 4 success
+     * criterion #5).</p>
+     *
+     * <p>Per D-14: Filename format is {@code report-{yyyyMMdd-HHmmss}.json}.</p>
+     *
+     * <p>Per D-15: Report contains {@code totalTests}, {@code passed},
+     * {@code failed}, {@code timestamp}, and an {@code entries} array.
+     * Per D-16: Uses Gson for serialization.</p>
+     *
+     * <p><strong>One-shot guard:</strong> {@code reportWritten} ensures
+     * the report is generated exactly once.</p>
+     */
+    private static void handleReport() {
+        if (reportWritten) {
+            return;
+        }
+        reportWritten = true;
+
+        // Per D-14: timestamped filename
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+        String filename = "report-" + timestamp + ".json";
+
+        // Per D-13: output to clientsmoke-reports/
+        Path outputDir = FMLPaths.GAMEDIR.get().resolve("clientsmoke-reports");
+        Path outputFile = outputDir.resolve(filename);
+
+        try {
+            Files.createDirectories(outputDir);
+
+            long passed = testResults.stream().filter(r -> "passed".equals(r.status())).count();
+            long failed = testResults.size() - passed;
+
+            // Per D-15: build report structure
+            ReportData report = new ReportData(
+                    testResults.size(),
+                    (int) passed,
+                    (int) failed,
+                    timestamp,
+                    testResults
+            );
+
+            // Per D-16: Gson serialization
+            String json = new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(report);
+            Files.writeString(outputFile, json);
+
+            LOGGER.info("[ClientSmoke] Report written: {} ({} tests, {} passed, {} failed)",
+                    outputFile.toAbsolutePath(), testResults.size(), passed, failed);
+
+        } catch (Exception e) {
+            LOGGER.error("[ClientSmoke] Failed to write report to {}: {}", outputFile, e.getMessage(), e);
+            transitionTo(ClientSmokeState.ERROR, "Report generation failed: " + e.getMessage());
+            return;
+        }
+
+        // Report written — proceed to exit
+        transitionTo(ClientSmokeState.EXIT, "Report generated — initiating exit");
+    }
+
+    /**
+     * Report data structure for Gson serialization.
+     * Per D-15: Contains totalTests, passed, failed, timestamp, and entries.
+     */
+    @SuppressWarnings("unused")  // fields read by Gson reflection
+    private record ReportData(
+            int totalTests,
+            int passed,
+            int failed,
+            String timestamp,
+            List<TestResult> entries
+    ) {}
 
     // ── Utils ─────────────────────────────────────────────────────
 
