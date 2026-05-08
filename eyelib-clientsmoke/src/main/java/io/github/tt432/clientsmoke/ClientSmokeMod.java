@@ -44,20 +44,10 @@ public class ClientSmokeMod {
 
         LOGGER.info("[ClientSmoke] Mod constructing — MOD_ID={}", MOD_ID);
 
-        // Phase 1 (Plan 04): Config registration
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, ClientSmokeConfig.SPEC);
 
-        if (ClientSmokeConfig.ENABLED.get()) {
-            LOGGER.info("[ClientSmoke] Smoke testing ENABLED — config loaded, scanning will proceed");
-
-            // Phase 1 (Plan 05): Annotation discovery via bytecode scanning (no class loading)
-            var discoveredTests = ClientSmokeScanner.scan();
-
-            // Phase 2 (Plan 01): Pass discovered tests to state machine
-            ClientSmokeStateMachine.setDiscoveredTests(discoveredTests);
-            LOGGER.info("[ClientSmoke] Phase 2 ready — state machine will activate on first client tick");
-        } else {
-            LOGGER.info("[ClientSmoke] Smoke testing DISABLED — framework is silent. Set enabled=true in config/clientsmoke-common.toml to activate");
-        }
+        var discoveredTests = ClientSmokeScanner.scan();
+        ClientSmokeStateMachine.setDiscoveredTests(discoveredTests);
+        LOGGER.info("[ClientSmoke] Phase 2 ready — {} test(s) discovered, state machine will activate on first client tick", discoveredTests.size());
     }
 }
