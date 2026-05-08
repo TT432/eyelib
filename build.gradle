@@ -164,9 +164,10 @@ dependencies {
 
     compileOnly("maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha")
 
-    // Client Smoke Test: annotation visible at compile time, runtime mod gated
+    // Client Smoke Test: annotation + mod always available at runtime (runtime control via isEnabled())
     compileOnly project(':eyelib-clientsmoke-annotation')
     localRuntime project(':eyelib-clientsmoke')
+    localRuntime project(':eyelib-clientsmoke-annotation')
 
     jarJar additionalRuntimeClasspath(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))
     jarJar additionalRuntimeClasspath(implementation('com.h2database:h2:2.4.240'))
