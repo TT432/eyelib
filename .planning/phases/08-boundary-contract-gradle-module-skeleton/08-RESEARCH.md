@@ -308,17 +308,19 @@ Source basis: PGRAD-02/PAPI-02 and existing module README practices. [VERIFIED: 
 | A2 | Compile checks should be planned now, while deeper architecture tests can be deferred unless trivial. | Open Questions / Validation Architecture | If user expects boundary tests immediately, Phase 8 plan may under-specify automated PAPI-02 enforcement. |
 | A3 | Research validity estimate is 30 days for repository-local conventions and shorter for external plugin-version decisions. | Metadata | If external Gradle/ModDevGradle behavior changes sooner, planner may rely on stale docs. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should `:eyelib-particle` initially be Forge-visible or pure Java-only?**
    - What we know: Existing Forge-visible feature subprojects `:eyelib-material`, `:eyelib-attachment`, and `:eyelib-importer` use `legacyForge` and `mods.toml`; pure engine/processor modules do not. [VERIFIED: subproject build.gradle files]
    - What's unclear: Phase 8 does not explicitly say whether `:eyelib-particle` must load as its own mod during dev/runtime. [VERIFIED: .planning/ROADMAP.md]
    - Recommendation: Use Forge-visible skeleton if root runtime will jarJar/load it like material/attachment; otherwise document a pure-core-first decision before planning. [ASSUMED]
+   - RESOLVED: Use a Forge-visible skeleton now, matching the existing feature-module pattern used by `:eyelib-material`, `:eyelib-attachment`, and `:eyelib-importer`. This gives Phase 8 first-class Gradle/source/resource metadata while later phases can keep pure particle core packages free of root/MC/Forge contamination.
 
 2. **Should Phase 8 add automated dependency-boundary tests immediately?**
    - What we know: Phase 14 owns verification coverage broadly, while Phase 8 success criteria require boundary documentation and module skeleton. [VERIFIED: .planning/ROADMAP.md]
    - What's unclear: Whether a lightweight `:eyelib-particle:compileJava` plus root compile is enough for this phase gate. [VERIFIED: .planning/ROADMAP.md]
    - Recommendation: Plan compile checks now; defer deeper architecture tests unless they are trivial and do not require moving code. [ASSUMED]
+   - RESOLVED: Phase 8 must include compile/static checks for the skeleton and forbidden dependency/import absence. Deeper regression and parity tests remain Phase 14 unless a trivial boundary test naturally fits without moving runtime code.
 
 ## Environment Availability
 
