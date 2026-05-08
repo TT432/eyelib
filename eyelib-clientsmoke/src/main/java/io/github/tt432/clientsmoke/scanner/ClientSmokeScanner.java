@@ -1,7 +1,5 @@
 package io.github.tt432.clientsmoke.scanner;
 
-import io.github.tt432.clientsmoke.config.ClientSmokeConfig;
-import io.github.tt432.clientsmokeannotation.ClientSmoke;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.ModFileScanData;
 import org.objectweb.asm.Type;
@@ -55,7 +53,7 @@ public final class ClientSmokeScanner {
      *
      * <p>This method:</p>
      * <ol>
-     *   <li>Checks {@link ClientSmokeConfig#ENABLED} — returns empty list if disabled</li>
+     *   <li>Scans regardless of config — enable/disable controlled by state machine</li>
      *   <li>Iterates ALL {@link ModFileScanData} from {@link ModList#getAllScanData()}</li>
      *   <li>Filters for annotation type matching {@code @ClientSmoke}</li>
      *   <li>Extracts class name, description, priority, and modId from bytecode data</li>
@@ -69,7 +67,7 @@ public final class ClientSmokeScanner {
      * @return unmodifiable list of discovered tests, empty if disabled or none found
      */
     public static List<DiscoveredTest> scan() {
-        Type annotationType = Type.getType(ClientSmoke.class);
+        Type annotationType = Type.getType("Lio/github/tt432/clientsmokeannotation/ClientSmoke;");
         List<DiscoveredTest> discovered = new ArrayList<>();
 
         for (ModFileScanData scanData : ModList.get().getAllScanData()) {
