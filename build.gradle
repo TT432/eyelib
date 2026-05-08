@@ -65,6 +65,12 @@ legacyForge {
             systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
         }
 
+        clientSmoke {
+            client()
+            gameDirectory = project.file('run/clientsmoke')
+            systemProperty 'forge.enabledGameTestNamespaces', 'clientsmoke'
+        }
+
         server {
             server()
             programArgument '--nogui'
@@ -158,9 +164,7 @@ dependencies {
 
     // Client Smoke Test: annotation visible at compile time, runtime mod gated
     compileOnly project(':eyelib-clientsmoke-annotation')
-    if (project.findProperty('enableSmokeTest') == 'true') {
-        localRuntime project(':eyelib-clientsmoke')
-    }
+    localRuntime project(':eyelib-clientsmoke')
 
     jarJar additionalRuntimeClasspath(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))
     jarJar additionalRuntimeClasspath(implementation('com.h2database:h2:2.4.240'))
