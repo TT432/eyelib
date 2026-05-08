@@ -1,14 +1,24 @@
-# client-smoke-test
+# Eyelib Module Separation
 
-**Status:** v1.0 shipped (2026-05-07) | v1.1 shipped (2026-05-08)
+**Status:** v1.0 shipped (2026-05-07) | v1.1 shipped (2026-05-08) | v1.2 planning
 
 ## What This Is
 
-A standalone NeoForge mod subproject that provides automated client-side smoke testing for Minecraft mods. Tests are discovered via a `@ClientSmoke` annotation, keeping test infrastructure decoupled from mod business code. v1.1 delivers one-command execution: `./gradlew runClientSmoke` launches Minecraft with smoke testing auto-enabled and auto-exits after report generation. While built within the eyelib repository, it is an independent module intended for use by any NeoForge mod.
+Eyelib is a multi-project Forge rendering library whose runtime, importer, processor, Molang, material, attachment, and smoke-test seams are being separated into explicit Gradle modules. This milestone focuses on making the particle system a real module boundary instead of a root-runtime package cluster with mixed schema, runtime, registry, networking, and platform integration concerns.
 
 ## Core Value
 
-`./gradlew runClientSmoke` 一键启动全流程，零手动配置。`@ClientSmoke` 注解驱动的客户端冒烟测试，通过编译时/类加载时的注解扫描分离测试基础设施与模组运行时，杜绝意外的类加载问题。
+Eyelib 的功能模块必须能被独立理解、构建、验证和消费；粒子拆分必须形成清晰 Gradle 模块边界，同时保持现有加载、命令、网络同步、渲染行为零回归。
+
+## Current Milestone: v1.2 真正实现 eyelib-particle 的模块分离
+
+**Goal:** 将粒子相关能力从 root runtime 的混合包结构中提升为清晰的 `eyelib-particle` Gradle 模块边界，同时保持现有粒子加载、命令、网络 spawn/remove、渲染行为零回归。
+
+**Target features:**
+- 新增并接入 `:eyelib-particle` Gradle 模块，root 通过项目依赖消费粒子能力。
+- 梳理粒子 schema/importer/runtime 的职责边界，避免把纯粒子核心、导入模型、MC/Forge 绑定混在同一层。
+- 清理当前粒子路径中的边界泄漏：平台类型、loader/manager 直接耦合、packet/command/runtime 互相穿透。
+- 保持现有行为兼容：资源重载、粒子管理器、`/eyelib particle` 命令、Spawn/Remove packet、客户端发射器渲染不退化。
 
 ## Requirements
 
@@ -27,7 +37,10 @@ All v1.1 requirements validated (2026-05-08). See `.planning/milestones/v1.1-REQ
 
 ### Active
 
-None — all requirements shipped. Run `/gsd-new-milestone` to define next milestone.
+- [ ] `:eyelib-particle` exists as a Gradle module with documented responsibility and dependency direction.
+- [ ] Particle schema/importer-facing data, particle runtime, and platform integration boundaries are explicit and do not duplicate ownership silently.
+- [ ] Root runtime consumes particle capabilities through narrow module seams instead of owning particle internals directly.
+- [ ] Existing particle loading, manager publication, `/eyelib particle` command, spawn/remove packets, and client rendering behavior continue to work.
 
 ### Out of Scope
 
@@ -51,6 +64,12 @@ All Gradle commands via JetBrains MCP.
 Deferred hardware verification items (CORR-03, CORR-04) available via:
 `.planning/phases/07-verification-polish/07-02-HARDWARE-CHECKLIST.md`
 
+v1.2 starts from the current Eyelib module split:
+- Existing Gradle subprojects include `:eyelib-attachment`, `:eyelib-importer`, `:eyelib-material`, `:eyelib-molang`, and `:eyelib-processor`.
+- Current particle runtime lives under `src/main/java/io/github/tt432/eyelib/client/particle/` with lookup/spawn seams and Bedrock runtime classes.
+- Importer already owns a particle schema record at `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/particle/BrParticle.java`, creating a visible schema/runtime split pressure point.
+- Existing particle command and packet integration lives under `mc/impl` packages and must remain behavior-compatible while module ownership is clarified.
+
 ## Constraints
 
 - **Tech stack**: Java 17, Forge 1.20.1, MDGL (ModDevGradleLegacy)
@@ -58,6 +77,8 @@ Deferred hardware verification items (CORR-03, CORR-04) available via:
 - **Compatibility**: Must coexist with eyelib root module in same Gradle build
 - **Class loading safety**: Annotation scanning within safe boundaries
 - **Runtime**: Client only (no server components)
+- **Particle split**: Platform bindings may live in the most appropriate integration layer, but must not contaminate pure particle core ownership.
+- **Regression policy**: Existing particle resource reload, command, packet, spawn/remove, and rendering behavior must not regress during extraction.
 
 ## Key Decisions
 
@@ -71,6 +92,7 @@ Deferred hardware verification items (CORR-03, CORR-04) available via:
 | System property override bridge | isEnabled()/shouldExitAfterSmoke() check System.getProperty first, ForgeConfigSpec fallback | ✓ Validated — v1.1 |
 | JUnit XML alongside JSON | Standard CI integration format | ✓ Validated — v1.1 |
 | Conditional halt(0)/halt(1) | Gradle exit code propagation | ✓ Validated — v1.1 |
+| `eyelib-particle` as real module boundary | Particle responsibilities are currently spread across root runtime, importer schema, command/network integration, and manager publication | — Pending — v1.2 |
 
 ## Evolution
 
@@ -78,4 +100,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-05-08 after v1.1 milestone*
+*Last updated: 2026-05-09 after starting v1.2 milestone*

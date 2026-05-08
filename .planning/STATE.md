@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: ClientSmoke 全自动化
-status: Awaiting next milestone
-last_updated: "2026-05-08T08:23:01.725Z"
-last_activity: 2026-05-08 — Milestone v1.1 completed and archived
+milestone: v1.2
+milestone_name: 真正实现 eyelib-particle 的模块分离
+status: planning
+last_updated: "2026-05-08T19:48:34.580Z"
+last_activity: 2026-05-08
 progress:
-  total_phases: 3
-  completed_phases: 2
-  total_plans: 5
-  completed_plans: 4
-  percent: 80
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -36,10 +36,10 @@ See: .planning/PROJECT.md
 
 ## Current Position
 
-Phase: Milestone v1.1 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-05-08 — Milestone v1.1 completed and archived
+Status: Defining requirements
+Last activity: 2026-05-08 — Milestone v1.2 started
 
 ## Blockers/Concerns
 
