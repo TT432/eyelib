@@ -9,7 +9,8 @@ package io.github.tt432.clientsmoke.runtime;
  *
  * <p>Phase 3 states ({@link #HUD_HIDE}, {@link #SCREENSHOT}, {@link #EXIT}) implement
  * the HUD-hiding, framebuffer capture, and graceful JVM exit pipeline.
- * Phase 4 states (TEST_EXEC, NEXT_TEST, REPORT) are defined separately.</p>
+ * Phase 4 states ({@link #TEST_EXEC}, {@link #REPOSITION}, {@link #REPORT})
+ * implement the test execution loop and JSON report generation.</p>
  */
 public enum ClientSmokeState {
 
@@ -101,6 +102,46 @@ public enum ClientSmokeState {
      * NOT the vanilla {@code Screenshot.grab()} method.</p>
      */
     SCREENSHOT,
+
+    /**
+     * Test execution phase. Loads the test class via {@code Class.forName()},
+     * instantiates it via its no-arg constructor, times the execution, and
+     * records the result (pass/fail with duration and error details).
+     *
+     * <p>Per D-01: Constructor body IS the test — no interface or method
+     * contract required. The {@code @ClientSmoke}-annotated class only needs
+     * a public no-arg constructor.</p>
+     *
+     * <p>Per D-02: Tests access Minecraft resources via
+     * {@code Minecraft.getInstance()} — no injection or constructor parameters.</p>
+     *
+     * <p>Per D-09/D-10: Exceptions are captured, recorded as failures, and
+     * the state machine advances to {@link #REPOSITION} — subsequent tests
+     * continue executing without interruption.</p>
+     */
+    TEST_EXEC,
+
+    /**
+     * Loop-back anchor between screenshot capture and the next test.
+     * Transitions to {@link #HUD_HIDE} to begin the next screenshot cycle.
+     *
+     * <p>Per D-08: This is a pass-through state — no state mutation occurs.
+     * It exists as a semantic marker in the state flow graph, clarifying
+     * the boundary between "test completed + screenshot taken" and
+     * "capture next test's screenshot".</p>
+     */
+    REPOSITION,
+
+    /**
+     * Report generation. Serializes all accumulated {@code TestResult}
+     * entries via Gson and writes a JSON report to
+     * {@code clientsmoke-reports/report-{timestamp}.json}.
+     *
+     * <p>Per D-13: Report is written synchronously before transitioning
+     * to {@link #EXIT}, ensuring the file is fully on disk before
+     * {@code Runtime.getRuntime().halt(0)} fires.</p>
+     */
+    REPORT,
 
     /**
      * Graceful two-phase JVM exit. On entry, calls {@code mc.stop()} for
