@@ -45,6 +45,7 @@ legacyForge {
 dependencies {
     implementation 'org.slf4j:slf4j-api:2.0.7'
 
+    compileOnly "io.github.tt432:clientsmoke:${project.version}"
     compileOnly 'org.jspecify:jspecify:1.0.0'
 
     testImplementation platform('org.junit:junit-bom:5.10.2')

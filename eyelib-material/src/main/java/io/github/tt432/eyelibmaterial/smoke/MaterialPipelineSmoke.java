@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmaterialsmoke;
+package io.github.tt432.eyelibmaterial.smoke;
 
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -27,9 +27,8 @@ import java.util.Optional;
 /**
  * Runtime smoke test for the eyelib-material client pipeline.
  *
- * <p>This module is intentionally separate from the generic client smoke
- * framework. The framework owns discovery/reporting/screenshots; this target
- * module owns material-specific fixtures and visual assertions.</p>
+ * <p>The generic ClientSmoke framework owns discovery/reporting/screenshots;
+ * this class owns material-specific fixtures and visual assertions.</p>
  */
 @ClientSmoke(
         description = "Validates eyelib-material multi-material visual pipeline in a live client",
@@ -52,8 +51,8 @@ public class MaterialPipelineSmoke {
               "variants": []
             },
             "material_red": {
-              "vertexShader": "eyelibmaterialsmoke:shaders/smoke.vert",
-              "fragmentShader": "eyelibmaterialsmoke:shaders/smoke.frag",
+              "vertexShader": "eyelibmaterial:shaders/smoke.vert",
+              "fragmentShader": "eyelibmaterial:shaders/smoke.frag",
               "defines": ["MATERIAL_RED", "X_CENTER -0.55"],
               "samplerStates": [
                 {"samplerIndex": 0, "textureFilter": "Point", "textureWrap": "Clamp"}
@@ -62,8 +61,8 @@ public class MaterialPipelineSmoke {
               "variants": [
                 {
                   "blue_base": {
-                    "vertexShader": "eyelibmaterialsmoke:shaders/smoke.vert",
-                    "fragmentShader": "eyelibmaterialsmoke:shaders/smoke.frag",
+                    "vertexShader": "eyelibmaterial:shaders/smoke.vert",
+                    "fragmentShader": "eyelibmaterial:shaders/smoke.frag",
                     "defines": ["MATERIAL_BLUE", "X_CENTER 0.55"],
                     "samplerStates": [],
                     "states": [],
@@ -73,15 +72,15 @@ public class MaterialPipelineSmoke {
               ]
             },
             "material_green:material_red": {
-              "vertexShader": "eyelibmaterialsmoke:shaders/smoke.vert",
-              "fragmentShader": "eyelibmaterialsmoke:shaders/smoke.frag",
+              "vertexShader": "eyelibmaterial:shaders/smoke.vert",
+              "fragmentShader": "eyelibmaterial:shaders/smoke.frag",
               "defines": ["MATERIAL_GREEN", "X_CENTER 0.0"],
               "+states": ["DisableCulling"],
               "variants": []
             },
             "material_yellow_overlay": {
-              "vertexShader": "eyelibmaterialsmoke:shaders/smoke.vert",
-              "fragmentShader": "eyelibmaterialsmoke:shaders/smoke.frag",
+              "vertexShader": "eyelibmaterial:shaders/smoke.vert",
+              "fragmentShader": "eyelibmaterial:shaders/smoke.frag",
               "defines": ["MATERIAL_YELLOW", "MATERIAL_ALPHA_HALF", "X_CENTER 0.55"],
               "samplerStates": [],
               "states": ["Blending"],
@@ -156,8 +155,8 @@ public class MaterialPipelineSmoke {
     }
 
     private static void verifyShaderResourcesLoad() {
-        String vert = ShaderManager.loadFromResource("assets/eyelibmaterialsmoke/shaders/smoke.vert");
-        String frag = ShaderManager.loadFromResource("assets/eyelibmaterialsmoke/shaders/smoke.frag");
+        String vert = ShaderManager.loadFromResource("assets/eyelibmaterial/shaders/smoke.vert");
+        String frag = ShaderManager.loadFromResource("assets/eyelibmaterial/shaders/smoke.frag");
         if (vert.isBlank() || frag.isBlank()) {
             throw new AssertionError("[MaterialSmoke] smoke shader resources must not be blank");
         }
