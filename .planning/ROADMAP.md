@@ -88,7 +88,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
   2. Particle-specific client hooks and Forge bindings live in explicit particle integration layers when appropriate, not in pure particle core/API packages.
   3. Pure particle core remains clean of platform bindings, while platform-specific bindings are side-safe and do not introduce dedicated-server classloading regressions.
   4. Maintainer can follow dependency direction from root integration code into particle runtime without finding a reverse dependency back to root.
-**Plans**: TBD
+**Plans**: 6 plans — `.planning/phases/11-runtime-client-core-extraction/11-01-PLAN.md`, `.planning/phases/11-runtime-client-core-extraction/11-02-PLAN.md`, `.planning/phases/11-runtime-client-core-extraction/11-03-PLAN.md`, `.planning/phases/11-runtime-client-core-extraction/11-04-PLAN.md`, `.planning/phases/11-runtime-client-core-extraction/11-05-PLAN.md`, `.planning/phases/11-runtime-client-core-extraction/11-06-PLAN.md`
 
 ### Phase 12: Loading & Publication Rewire
 **Goal**: Particle resource reload and publication semantics move behind the module boundary without changing observable registry behavior.
@@ -137,7 +137,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 8. Boundary Contract & Gradle Module Skeleton | v1.2 | 2/2 | Complete | 2026-05-09 |
 | 9. Particle API & Store Seam | v1.2 | 3/3 | Complete | 2026-05-09 |
 | 10. Schema/Runtime Ownership & Adapter | v1.2 | 2/2 | Complete   | 2026-05-09 |
-| 11. Runtime Client Core Extraction | v1.2 | 0/TBD | Not started | - |
+| 11. Runtime Client Core Extraction | v1.2 | 0/6 | Planned | - |
 | 12. Loading & Publication Rewire | v1.2 | 0/TBD | Not started | - |
 | 13. Command & Network Integration Rewire | v1.2 | 0/TBD | Not started | - |
 | 14. Verification & Documentation Gate | v1.2 | 0/TBD | Not started | - |
