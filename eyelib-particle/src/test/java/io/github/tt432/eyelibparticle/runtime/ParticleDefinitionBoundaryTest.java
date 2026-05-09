@@ -29,12 +29,12 @@ class ParticleDefinitionBoundaryTest {
     @Test
     void particleModuleMainSourcesRemainFreeOfRootMinecraftAndForgeImports() throws IOException {
         List<String> forbiddenFragments = List.of(
-                "import io.github.tt432.eyelib.client.",
-                "import io.github.tt432.eyelib.network.",
-                "import io.github.tt432.eyelib.capability.",
-                "import io.github.tt432.eyelib.mc.impl.",
-                "import net.minecraft.",
-                "import net.minecraftforge."
+                "io.github.tt432.eyelib.client.",
+                "io.github.tt432.eyelib.network.",
+                "io.github.tt432.eyelib.capability.",
+                "io.github.tt432.eyelib.mc.impl.",
+                "net.minecraft.",
+                "net.minecraftforge."
         );
 
         try (var paths = Files.walk(projectRoot().resolve("eyelib-particle/src/main/java"))) {
@@ -44,7 +44,7 @@ class ParticleDefinitionBoundaryTest {
                     .map(projectRoot()::relativize)
                     .toList();
 
-            assertTrue(violatingFiles.isEmpty(), () -> "Forbidden particle module imports: " + violatingFiles);
+            assertTrue(violatingFiles.isEmpty(), () -> "Forbidden particle module references: " + violatingFiles);
         }
     }
 
