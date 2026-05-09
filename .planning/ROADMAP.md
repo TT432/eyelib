@@ -33,7 +33,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 
 </details>
 
-### 🚧 v1.2 真正实现 eyelib-particle 的模块分离 (In Progress)
+### ✅ v1.2 真正实现 eyelib-particle 的模块分离 (Complete)
 
 **Milestone Goal:** 将粒子相关能力从 root runtime 的混合包结构中提升为清晰的 `:eyelib-particle` Gradle 模块边界，同时保持现有粒子加载、命令、网络 spawn/remove、渲染行为零回归。
 

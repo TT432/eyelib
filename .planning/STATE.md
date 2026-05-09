@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
-status: verifying
-stopped_at: Completed 14-03-PLAN.md
-last_updated: "2026-05-09T15:21:20.630Z"
-last_activity: 2026-05-09
+status: milestone_complete
+stopped_at: v1.2 milestone complete; ready for milestone sign-off/archive if desired.
+last_updated: "2026-05-09T15:45:00Z"
+last_activity: 2026-05-09 -- Phase 14 verified and code-reviewed clean
 progress:
   total_phases: 7
   completed_phases: 7
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 
 Phase: 14 (verification-documentation-gate) — COMPLETE
 Plan: 3 of 3
-Status: Phase complete — final JetBrains MCP matrix and milestone closure evidence recorded.
-Last activity: 2026-05-09
+Status: v1.2 milestone complete — final JetBrains MCP matrix, milestone closure evidence, verification, and clean review recorded.
+Last activity: 2026-05-09 -- Phase 14 verified and code-reviewed clean
 
 Progress: [██████████] 100%
 
@@ -116,6 +116,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [Phase 14-verification-documentation-gate]: Plan 01 aligned stable ownership docs and created `14-HARDWARE-CHECKLIST.md` plus `14-FINAL-GATE-EVIDENCE.md`; Plan 03 must fill exact JetBrains MCP matrix results and manual/ClientSmoke status.
 - [Phase 14-verification-documentation-gate]: Plan 02 added final documentation, root split, and particle-module boundary tests that read stable docs/source files only and preserve adapter/publication parity assertions; PVERIFY-01 is complete.
 - [Phase 14-verification-documentation-gate]: Plan 03 recorded the final JetBrains MCP matrix, fixed a stale broad-suite lookup test, documented ClientSmoke/manual hardware status, and closed PVERIFY-02 with explicit PFUT/manual deferrals.
+- [v1.2 Phase 14]: Post-review fixes strengthened final documentation anchors per file, expanded particle-module forbidden-reference scanning, and corrected final evidence labels; Phase 14 review is clean.
 
 ### Pending Todos
 
@@ -135,10 +136,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09T15:21:20.618Z
-Stopped at: Completed 14-03-PLAN.md
+Last session: 2026-05-09T15:45:00Z
+Stopped at: v1.2 milestone complete; ready for milestone sign-off/archive if desired.
 Resume file: None
 
 ## Operator Next Steps
 
-- Run `/gsd-verify-work 14` or `/gsd-complete-milestone` to perform final milestone sign-off using `14-MCP-VERIFICATION-MATRIX.md` and `14-MILESTONE-CLOSURE.md`.
+- Optional: run `/gsd-complete-milestone` to archive the completed v1.2 milestone artifacts.
