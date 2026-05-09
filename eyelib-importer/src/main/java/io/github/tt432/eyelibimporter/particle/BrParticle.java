@@ -11,6 +11,7 @@ import io.github.tt432.eyelibmolang.MolangValue;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -327,7 +328,20 @@ public record BrParticle(
         }
     }
 
-    public record Events() {
-        public static final Codec<Events> CODEC = Codec.unit(new Events());
+    public record Events(Map<String, BedrockResourceValue> values) {
+        public Events() {
+            this(Map.of());
+        }
+
+        public Events {
+            values = Collections.unmodifiableMap(new LinkedHashMap<>(values));
+        }
+
+        public static final Codec<Events> CODEC = Codec.unboundedMap(
+                Codec.STRING,
+                JSON_ELEMENT_CODEC.xmap(BedrockResourceValue::fromJsonElement, value -> {
+                    throw new UnsupportedOperationException("Particle event encoding is not supported");
+                })
+        ).xmap(Events::new, Events::values);
     }
 }

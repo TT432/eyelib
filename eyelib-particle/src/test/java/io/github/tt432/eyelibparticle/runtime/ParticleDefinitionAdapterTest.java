@@ -23,6 +23,29 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ParticleDefinitionAdapterTest {
     private static final String WITCHSPELL_FIXTURE =
             "io/github/tt432/eyelibparticle/runtime/fixtures/witchspell.json";
+    private static final String PARTICLE_WITH_EVENTS_FIXTURE = """
+            {
+              "format_version": "1.10.0",
+              "particle_effect": {
+                "description": {
+                  "identifier": "sample:eventful_particle",
+                  "basic_render_parameters": {
+                    "material": "particles_alpha",
+                    "texture": "textures/particle/particles"
+                  }
+                },
+                "events": {
+                  "particle_expired": {
+                    "sequence": [
+                      {
+                        "event": "sample:spawn_child"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+            """;
 
     @Test
     void witchspellFixturePreservesParityCriticalSchemaFields() throws IOException {
@@ -75,6 +98,23 @@ class ParticleDefinitionAdapterTest {
     }
 
     @Test
+    void eventfulFixturePreservesRawEventDataThroughAdapter() {
+        BrParticle schema = decodeStringFixture(PARTICLE_WITH_EVENTS_FIXTURE);
+
+        ParticleDefinition definition = ParticleDefinitionAdapter.fromSchema(schema)
+                .getOrThrow(false, message -> {
+                    throw new AssertionError(message);
+                });
+
+        assertSame(schema.particleEffect().events(), definition.events());
+        BedrockResourceValue.ObjectValue event = assertObjectValue(definition.events().values().get("particle_expired"));
+        BedrockResourceValue.ArrayValue sequence = assertInstanceOf(
+                BedrockResourceValue.ArrayValue.class, event.values().get("sequence"));
+        assertEquals(1, sequence.values().size());
+        assertStringValue("sample:spawn_child", nestedValue(sequence.values().get(0), "event"));
+    }
+
+    @Test
     void adapterFailsLoudlyForNullSchema() {
         assertErrorContains(ParticleDefinitionAdapter.fromSchema(null), "Particle schema is required");
     }
@@ -100,8 +140,15 @@ class ParticleDefinitionAdapterTest {
             return BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseReader(reader))
                     .getOrThrow(false, message -> {
                         throw new AssertionError(message);
-                    });
+            });
         }
+    }
+
+    private static BrParticle decodeStringFixture(String json) {
+        return BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
+                .getOrThrow(false, message -> {
+                    throw new AssertionError(message);
+                });
     }
 
     private static BrParticle particle(String identifier, BrParticle.BasicRenderParameters renderParameters) {
