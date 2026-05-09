@@ -20,7 +20,7 @@
 - Pure particle core stays free of root, Minecraft, and Forge contamination.
 - Minecraft/Forge-facing integration must live in explicitly documented adapters before introduction.
 - Existing particle loading, command, and network behavior must not be moved into pure runtime packages; render adapter behavior belongs only in the documented `client/**` integration layer.
-- Phase 11 moves executable runtime core and client integration, Phase 12 rewires loading/publication, Phase 13 rewires command/network integration, and Phase 14 owns final broad/client verification evidence.
+- Phase 11 moved executable runtime core and client integration into this module; Phase 12 rewires loading/publication, Phase 13 rewires command/network integration, and Phase 14 owns final broad/client verification evidence.
 
 ## Current Consumers
 - Root runtime `:` consumes the module through Gradle project dependency wiring.

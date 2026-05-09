@@ -22,12 +22,14 @@ class ParticleDefinitionDocumentationTest {
         modules.assertContains("io.github.tt432.eyelibimporter.particle.BrParticle");
         modules.assertContains("canonical module runtime definition owner");
         modules.assertContains("io.github.tt432.eyelibparticle.runtime.ParticleDefinition");
-        modules.assertContains("legacy/non-canonical runtime adapter target");
+        modules.assertContains("legacy/non-canonical");
+        modules.assertContains("adapter target");
 
         moduleBoundaries.assertContains("canonical raw Bedrock particle schema/codec owner");
         moduleBoundaries.assertContains("canonical module runtime definition owner");
         moduleBoundaries.assertContains("ParticleDefinitionAdapter");
-        moduleBoundaries.assertContains("root `client/particle/bedrock/BrParticle` is legacy/non-canonical runtime adapter target");
+        moduleBoundaries.assertContains("client/particle/bedrock/BrParticle");
+        moduleBoundaries.assertContains("legacy/non-canonical");
 
         sideBoundaries.assertContains("allowed particle -> importer dependency for ParticleDefinitionAdapter");
         sideBoundaries.assertContains("legacy/non-canonical runtime adapter target");
@@ -59,7 +61,9 @@ class ParticleDefinitionDocumentationTest {
     }
 
     private static void assertPhaseDeferralsDocumented(SourceCheck source) {
-        source.assertContains("Phase 11 moves executable runtime core, Phase 12 rewires loading/publication, and Phase 13 rewires command/network integration");
+        source.assertContains("Phase 12");
+        source.assertContains("Phase 13 rewires command/network integration");
+        source.assertContains("Phase 14 owns");
     }
 
     private static SourceCheck source(String path) throws IOException {

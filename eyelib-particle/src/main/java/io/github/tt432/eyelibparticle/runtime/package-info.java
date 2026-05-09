@@ -10,8 +10,8 @@
  * legacy/non-canonical runtime adapter target, not the canonical raw schema.
  * <p>
  * The allowed particle -> importer dependency for ParticleDefinitionAdapter preserves mapped fields: identifier, format version, basic render material/texture, curves, events, raw components, billboard flipbook summary, and Molang value preservation.
- * Phase 11 moves executable runtime core, Phase 12 rewires loading/publication, and Phase 13 rewires
- * command/network integration; Phase 10 does not move those behaviors.
+ * Phase 11 moved executable runtime core into the particle module; Phase 12 rewires loading/publication,
+ * Phase 13 rewires command/network integration, and Phase 14 owns final broad/client verification evidence.
  * <p>
  * This package owns pure runtime state only. Minecraft and Forge-facing client integration belongs in an
  * explicitly documented particle client integration package outside {@code runtime/**}, where side-safe
