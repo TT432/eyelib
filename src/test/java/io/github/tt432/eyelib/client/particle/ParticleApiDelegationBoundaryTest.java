@@ -18,6 +18,7 @@ class ParticleApiDelegationBoundaryTest {
         SourceCheck registry = source("src/main/java/io/github/tt432/eyelib/client/registry/ParticleAssetRegistry.java");
         SourceCheck particleReadme = source("src/main/java/io/github/tt432/eyelib/client/particle/README.md");
         SourceCheck registryReadme = source("src/main/java/io/github/tt432/eyelib/client/registry/README.md");
+        Path obsoleteRootRequest = Path.of("src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnRequest.java");
 
         lookup.assertContains("import io.github.tt432.eyelibparticle.api.ParticleLookupApi;");
         lookup.assertContains("ParticleLookupApi<BrParticle> api()");
@@ -42,6 +43,8 @@ class ParticleApiDelegationBoundaryTest {
 
         particleReadme.assertContains("transitional root runtime adapter");
         particleReadme.assertContains("removal condition");
+        particleReadme.assertContains("do not add a duplicate root request type");
+        assertTrue(Files.notExists(obsoleteRootRequest), () -> obsoleteRootRequest + " should not be reintroduced");
         registryReadme.assertContains("transitional root facade");
         registryReadme.assertContains("should be removed after root loaders/tooling migrate");
     }

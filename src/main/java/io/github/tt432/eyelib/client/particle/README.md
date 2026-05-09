@@ -7,7 +7,7 @@
 ## Current Runtime Boundaries
 - `ParticleLookup.java`: transitional read-side root facade delegating to `io.github.tt432.eyelibparticle.api.ParticleLookupApi` through the root-backed `ParticleManager` store adapter; removal condition: delete after root callers migrate directly to particle API adapters/services.
 - `ParticleSpawnService.java`: transitional root runtime adapter delegating packet spawn/remove entrypoints to `io.github.tt432.eyelibparticle.api.ParticleSpawnApi` while keeping Minecraft/capability/render-manager internals in root; removal condition: delete after packet/runtime callers migrate directly to particle API adapters/services.
-- `ParticleSpawnRequest.java`: platform-type-free spawn request state (`String` ids + position) used by runtime spawn orchestration
+- Spawn request state is owned by `io.github.tt432.eyelibparticle.api.ParticleSpawnRequest`; do not add a duplicate root request type.
 
 ## Communication Rule
 - Runtime reads should use `ParticleLookup.java`; packet application should use `ParticleSpawnService.java`.

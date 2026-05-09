@@ -44,7 +44,7 @@
 ## Re-baseline notes for final isolation
 - `BrParticleRenderManager` still directly owns `Minecraft` client submission, Forge client events, `RenderLevelStageEvent`, and `RenderTypeResolver`-driven render-type binding in the legacy `client/particle/bedrock` package; this runtime/render wiring remains implementation-side work that must end up in allowed `mc/impl` ownership.
 - `ParticleSpawnService` still directly depends on `Minecraft`, player/level access, and attachment-backed render data lookup (`DataAttachmentHelper`, `EyelibAttachableData`, `RenderData`), so it cannot remain outside `mc/impl` in the final state.
-- The current seam isolates packet-to-request mapping with a platform-type-free request contract: `ParticleSpawnRequest` now stores `particleId` as `String`, and Minecraft identifier adaptation is kept inside `ParticleSpawnService`.
+- The current seam isolates packet-to-request mapping with the module-owned platform-type-free request contract: `io.github.tt432.eyelibparticle.api.ParticleSpawnRequest` stores `particleId` as `String`, and Minecraft identifier adaptation is kept inside `ParticleSpawnService`.
 - This module is therefore still downstream of `client-render`, `network-sync`, and `capability-dataattach`: the render payload seam is now narrower (`RenderModelSyncPayload` is string-keyed), but particle runtime still depends on heavier render owners (`RenderTypeResolver`, render runtime lookup) plus packet transport and attachment-backed scope access.
 
 ## Priority hotspot files for next slice
@@ -56,14 +56,14 @@
   - `client/particle/bedrock/component/particle/appearance/ParticleAppearanceBillboard.java`
 - Contract follow-up once upstream render/network seams settle:
   - `client/particle/ParticleSpawnService.java`
-  - `client/particle/ParticleSpawnRequest.java`
+  - `io.github.tt432.eyelibparticle.api.ParticleSpawnRequest`
 
 ## Progress notes
 - Minimal seam decision: keep `BrParticleRenderManager`, emitter/particle runtime, render hooks, level/camera access, and render-type binding fully MC-facing; do not introduce a new abstraction layer around runtime rendering.
-- Tightened `client/particle/ParticleSpawnRequest` into a platform-type-free seam (`String` spawn id + `String` particle id + defensive-copied `Vector3f`) by removing direct `ResourceLocation` and packet type coupling.
+- The obsolete root `client/particle/ParticleSpawnRequest` duplicate was removed; spawn request state now routes through the module API `io.github.tt432.eyelibparticle.api.ParticleSpawnRequest` (`String` spawn id + `String` particle id + defensive-copied `Vector3f`).
 - Updated `ParticleSpawnService` to adapt packet `ResourceLocation` to string at the runtime boundary (`packet.particleId().toString()`), then use string-keyed lookup while keeping emitter construction/spawn/remove logic in existing MC-facing services.
-- Updated targeted plain-JVM seam tests in `src/test/java/io/github/tt432/eyelib/client/particle/ParticleSpawnRequestTest.java` to cover request-state copy behavior without Minecraft type imports.
+- Request-state copy behavior is covered by module API tests under `eyelib-particle/src/test/java/io/github/tt432/eyelibparticle/api/`.
 
 ## JetBrains MCP verification results
-- Targeted test (`jetbrain_run_gradle_tasks`: `test --tests io.github.tt432.eyelib.client.particle.ParticleSpawnRequestTest`): **PASS** (`exitCode=0`).
+- Targeted module API request tests (`jetbrain_run_gradle_tasks`: `:eyelib-particle:test --tests io.github.tt432.eyelibparticle.api.ParticleSpawnRequestTest`): **PASS** in the Phase 9 verification baseline (`exitCode=0`).
 - Build verification (`jetbrain_build_project`): **PASS** (`isSuccess=true`).
