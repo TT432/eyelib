@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
-status: ready_to_plan
-stopped_at: Phase 9 complete; ready for Phase 10 planning.
-last_updated: "2026-05-09T00:00:00.000Z"
-last_activity: 2026-05-09 -- Phase 9 completed, reviewed, fixed, and re-verified
+status: executing
+stopped_at: Completed 10-01-PLAN.md; ready for 10-02-PLAN.md.
+last_updated: "2026-05-09T14:41:48Z"
+last_activity: 2026-05-09 -- Phase 10 Plan 01 completed
 progress:
   total_phases: 7
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
-  percent: 29
+  total_plans: 7
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-09)
 
 **Core value:** Eyelib 的功能模块必须能被独立理解、构建、验证和消费；粒子拆分必须形成清晰 Gradle 模块边界，同时保持现有加载、命令、网络同步、渲染行为零回归。
-**Current focus:** Phase 10 — Schema/Runtime Ownership & Adapter
+**Current focus:** Phase 10 — schema-runtime-ownership-adapter
 
 ## Current Position
 
-Phase: 10 of 14 (Schema/Runtime Ownership & Adapter)
-Plan: Not planned yet
-Status: Ready to plan
-Last activity: 2026-05-09 -- Phase 9 completed, review findings fixed, and targeted JetBrains MCP checks passed.
+Phase: 10 (schema-runtime-ownership-adapter) — EXECUTING
+Plan: 2 of 2
+Status: Executing Phase 10; Plan 01 complete
+Last activity: 2026-05-09 -- Phase 10 Plan 01 completed
 
-Progress: [██████░░░░] 64% by completed historical phases plus Phases 8-9; v1.2 progress 2/7 phases complete.
+Progress: [████████░░] 86% by completed v1.2 plans; Phase 10 is 1/2 plans complete.
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Progress: [██████░░░░] 64% by completed historical phases pl
 | Phase 09-particle-api-store-seam P02 | 37 min | 3 tasks | 12 files |
 | Phase 09-particle-api-store-seam P03 | 20 min | 2 tasks | 5 files |
 | v1.2 Phases 8-14 | 5/5 Phase 8-9 plans | Phases 8-9 complete | Not tracked |
+| Phase 10-schema-runtime-ownership-adapter P01 | 11 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [Phase 09-particle-api-store-seam]: Plan 03 kept validation-only tests/static checks for particle API/store and transitional facades. — No runtime behavior was moved; Phase 10 can use guarded seams.
 - [Phase 09-particle-api-store-seam]: Delegation documentation and forbidden-import boundaries are enforced by JUnit static source checks. — Keeps Phase 9 boundary regressions inside automated JetBrains MCP Gradle verification.
 - [v1.2 Phase 9]: Post-review fixes preserved particle store insertion order, expanded particle-module forbidden import scanning, and removed obsolete root `ParticleSpawnRequest` seam risk.
+- [Phase 10-schema-runtime-ownership-adapter]: `:eyelib-particle` now owns `ParticleDefinition` plus `ParticleDefinitionAdapter.fromSchema(BrParticle)` as the importer-schema to runtime-definition seam, preserving importer raw components, curves, events, render parameters, and billboard flipbook summary through `DataResult` validation.
 
 ### Pending Todos
 
@@ -90,11 +92,11 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-05-09
-Stopped at: Phase 9 complete; ready for Phase 10 planning.
+Stopped at: Completed 10-01-PLAN.md; ready for 10-02-PLAN.md.
 Resume file: None
 
 ## Operator Next Steps
 
-- Continue with `/gsd-plan-phase 10` or autonomous Phase 10 execution.
+- Continue with `.planning/phases/10-schema-runtime-ownership-adapter/10-02-PLAN.md`.
 
 - Continue with `/gsd-plan-phase 9` or autonomous Phase 9 execution.

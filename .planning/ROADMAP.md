@@ -77,7 +77,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
   2. Runtime particle definitions can be created from importer/raw schema through a named adapter or equivalent explicit conversion seam.
   3. Codec/schema behavior and runtime conversion expectations are covered by tests or documented invariants so duplicate `BrParticle` ownership cannot drift silently.
   4. The adapter preserves parity-critical particle fields needed by loading, rendering, Molang, lifetime, and remove behavior.
-**Plans**: TBD
+**Plans**: 1/2 complete — `.planning/phases/10-schema-runtime-ownership-adapter/10-01-PLAN.md`, `.planning/phases/10-schema-runtime-ownership-adapter/10-02-PLAN.md`
 
 ### Phase 11: Runtime Client Core Extraction
 **Goal**: Existing particle runtime and client rendering behavior lives under `:eyelib-particle` without weakening side boundaries or behavior.
@@ -136,7 +136,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 7. Verification & Polish | v1.1 | 2/2 | Complete | 2026-05-08 |
 | 8. Boundary Contract & Gradle Module Skeleton | v1.2 | 2/2 | Complete | 2026-05-09 |
 | 9. Particle API & Store Seam | v1.2 | 3/3 | Complete | 2026-05-09 |
-| 10. Schema/Runtime Ownership & Adapter | v1.2 | 0/TBD | Not started | - |
+| 10. Schema/Runtime Ownership & Adapter | v1.2 | 1/2 | In Progress | - |
 | 11. Runtime Client Core Extraction | v1.2 | 0/TBD | Not started | - |
 | 12. Loading & Publication Rewire | v1.2 | 0/TBD | Not started | - |
 | 13. Command & Network Integration Rewire | v1.2 | 0/TBD | Not started | - |
