@@ -20,7 +20,7 @@
 
 ## Current Consumers
 - Root runtime `:` consumes the module through Gradle project dependency wiring.
-- Transitional root facades such as `ParticleLookup` and `ParticleAssetRegistry` delegate to this module's API contracts; their removal condition is direct migration of root callers to `io.github.tt432.eyelibparticle.api` adapters/services.
+- Transitional root facades such as `ParticleLookup`, `ParticleAssetRegistry`, and `ParticleSpawnService` delegate to this module's API contracts; their removal condition is direct migration of root callers to `io.github.tt432.eyelibparticle.api` adapters/services.
 
 ## Verification Rule
 - Gradle verification for this repository must be executed through JetBrains MCP Gradle tools only, never through shell Gradle commands.
