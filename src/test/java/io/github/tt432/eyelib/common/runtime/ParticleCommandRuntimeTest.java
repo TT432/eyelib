@@ -20,6 +20,17 @@ class ParticleCommandRuntimeTest {
     }
 
     @Test
+    void suggestEffectIdsKeepsValidActiveIdsInCandidateOrder() {
+        List<String> suggestions = ParticleCommandRuntime.suggestEffectIds(
+                "",
+                List.of("eyelib:alpha", "bad id"),
+                id -> !id.contains(" ")
+        );
+
+        assertIterableEquals(List.of("eyelib:alpha"), suggestions);
+    }
+
+    @Test
     void buildSpawnParticleRequestUsesSupplierAndCopiesCoordinatesAsFloats() {
         ParticleCommandRuntime.SpawnParticleRequest request = ParticleCommandRuntime.buildSpawnParticleRequest(
                 "eyelib:particle",
