@@ -6,7 +6,6 @@ import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.client.particle.ParticleLookup;
 import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelib.util.ResourceLocations;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
@@ -20,6 +19,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
+import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
 
 import java.util.List;
 import java.util.TreeMap;
@@ -98,9 +98,10 @@ public record BrAnimationEntryDefinition(
                             BrParticle brParticle = ParticleLookup.get(ResourceLocations.of(s));
                             if (brParticle != null) {
                                 String uuid = UUID.randomUUID().toString();
-                                BrParticleEmitter emitter = new BrParticleEmitter(brParticle, scope, entity.level(), new Vector3f());
-                                animationData.owner().particles().add(new RuntimeParticlePlayData(uuid, emitter, frame.locator().orElse(null), ticks));
-                                ParticleSpawnService.spawnEmitter(uuid, emitter);
+                                BedrockParticleEmitter emitter = ParticleSpawnService.spawnEmitter(uuid, brParticle, scope, entity.level(), new Vector3f());
+                                if (emitter != null) {
+                                    animationData.owner().particles().add(new RuntimeParticlePlayData(uuid, emitter, frame.locator().orElse(null), ticks));
+                                }
                             }
                         }
                     })

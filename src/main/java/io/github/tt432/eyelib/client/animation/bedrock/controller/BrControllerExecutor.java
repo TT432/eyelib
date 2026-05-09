@@ -9,9 +9,9 @@ import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.particle.ParticleLookup;
 import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.Nullable;
@@ -78,9 +78,16 @@ final class BrControllerExecutor {
                     particleEffect.effect().map(clientEntity.particle_effects()::get).ifPresent(effect -> {
                         BrParticle particle = ParticleLookup.get(effect);
                         if (particle != null) {
-                            BrParticleEmitter emitter = new BrParticleEmitter(particle, scope, entity.level(), entity.position().toVector3f());
-                            ParticleSpawnService.spawnEmitter(uuid, emitter);
-                            data.owner().particles().add(new RuntimeParticlePlayData(uuid, emitter, particleEffect.locator().orElse(null), ticks));
+                            BedrockParticleEmitter emitter = ParticleSpawnService.spawnEmitter(
+                                    uuid,
+                                    particle,
+                                    scope,
+                                    entity.level(),
+                                    entity.position().toVector3f()
+                            );
+                            if (emitter != null) {
+                                data.owner().particles().add(new RuntimeParticlePlayData(uuid, emitter, particleEffect.locator().orElse(null), ticks));
+                            }
                         }
                     });
                 }

@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.animation;
 
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
+import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -8,7 +8,7 @@ import org.jspecify.annotations.Nullable;
  */
 public record RuntimeParticlePlayData(
         String particleUUID,
-        BrParticleEmitter emitter,
+        BedrockParticleEmitter emitter,
         @Nullable String locator,
         float startTicks
 ) {

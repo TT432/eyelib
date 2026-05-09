@@ -22,7 +22,7 @@ class ParticleSpawnServiceBoundaryTest {
         assertTrue(source.contains("api().spawn(new ParticleSpawnRequest("));
         assertTrue(source.contains("api().remove(removeId);"));
         assertTrue(source.contains("Minecraft.getInstance()"));
-        assertTrue(source.contains("BrParticleRenderManager"));
+        assertTrue(source.contains("ParticleRenderManager.INSTANCE"));
     }
 
     @Test

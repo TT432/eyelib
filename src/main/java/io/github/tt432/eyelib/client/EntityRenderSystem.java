@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.BrAnimator;
+import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.entity.ClientEntityLookup;
 import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
@@ -282,7 +283,7 @@ public class EntityRenderSystem {
 
         effects.particles.stream()
                 .flatMap(Collection::stream)
-                .forEach(data -> data.emitter().initPose(locators.get(data.locator()), entity));
+                .forEach(data -> ParticleSpawnService.initPose(data.emitter(), locators.get(data.locator()), entity));
     }
 
     public static <T> void setupEntityClientEntityData(SimpleRenderAction<T> data) {

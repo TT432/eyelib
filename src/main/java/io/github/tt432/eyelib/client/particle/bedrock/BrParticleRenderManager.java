@@ -1,103 +1,51 @@
 package io.github.tt432.eyelib.client.particle.bedrock;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelibmaterial.render.RenderTypeResolver;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
+import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
+import io.github.tt432.eyelibparticle.client.ParticleRenderManager;
+import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
+import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleInstance;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-
-import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 /**
- * @author TT432
+ * Transitional root render-manager adapter for callers that still reference the old root path.
+ * <p>
+ * Remove this adapter after root animation, packet, instrumentation, and runtime callers migrate directly to
+ * {@link ParticleRenderManager} or particle-module API services.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BrParticleRenderManager {
-    private static final Object2ObjectMap<String, BrParticleEmitter> emitters = new Object2ObjectOpenHashMap<>();
-    private static final ObjectList<BrParticleParticle> particles = new ObjectArrayList<>();
-
     public static int getEmitterCount() {
-        return emitters.size();
+        return ParticleRenderManager.INSTANCE.getEmitterCount();
     }
 
     public static int getParticleCount() {
-        return particles.size();
+        return ParticleRenderManager.INSTANCE.getParticleCount();
     }
 
+    public static void spawnEmitter(final String id, final BedrockParticleEmitter emitter) {
+        ParticleRenderManager.INSTANCE.spawnEmitter(id, emitter);
+    }
+
+    /**
+     * Compatibility bridge for legacy root emitters constructed before direct module binding.
+     */
     public static void spawnEmitter(final String id, final BrParticleEmitter emitter) {
-        Minecraft.getInstance().submit(() -> {
-            if (emitters.containsKey(id)) return;
-            emitters.put(id, emitter);
-        });
+        ParticleSpawnService.spawnEmitter(id, emitter);
     }
 
     public static void removeEmitter(final String id) {
-        Minecraft.getInstance().submit(() -> {
-            emitters.remove(id);
-        });
+        ParticleRenderManager.INSTANCE.removeEmitter(id);
     }
 
+    public static void spawnParticle(final BedrockParticleInstance particle) {
+        ParticleRenderManager.INSTANCE.spawnParticle(particle);
+    }
+
+    /**
+     * Legacy root particle instances are produced only by old root emitters. New registered emitters use module-owned
+     * {@link BedrockParticleInstance} objects, so this method is retained only to keep old sources compiling.
+     */
     public static void spawnParticle(final BrParticleParticle particle) {
-        Minecraft.getInstance().submit(() -> {
-            particles.add(particle);
-        });
-    }
-
-    private static final Predicate<Map.Entry<String, BrParticleEmitter>> removeEmitters = e -> e.getValue().isRemoved();
-    private static final Consumer<BrParticleEmitter> renderEmitters = BrParticleEmitter::onRenderFrame;
-    private static final Predicate<BrParticleParticle> removeParticles = BrParticleParticle::isRemoved;
-    private static final Consumer<BrParticleParticle> renderParticles = BrParticleParticle::onRenderFrame;
-
-    @Mod.EventBusSubscriber(value = Dist.CLIENT)
-    @NoArgsConstructor(access = AccessLevel.PRIVATE)
-    public static final class ForgeEvents {
-        @SubscribeEvent
-        public static void onEvent(TickEvent.RenderTickEvent event) {
-            if (event.phase != TickEvent.Phase.START) return;
-            emitters.object2ObjectEntrySet().removeIf(removeEmitters);
-            emitters.values().forEach(renderEmitters);
-            particles.removeIf(removeParticles);
-            particles.forEach(renderParticles);
-        }
-
-        @SubscribeEvent
-        public static void onEvent(TickEvent.ClientTickEvent event) {
-            if (event.phase != TickEvent.Phase.START) return;
-            emitters.values().forEach(BrParticleEmitter::onTick);
-        }
-
-        @SubscribeEvent
-        public static void onEvent(RenderLevelStageEvent event) {
-            if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
-                PoseStack poseStack = event.getPoseStack();
-                particles.forEach(particle -> {
-                    String material = particle.getEmitter().getParticle().particleEffect().description().basicRenderParameters().material();
-                    RenderTypeResolver.EntityRenderTypeData factory = RenderTypeResolver.resolve(new ResourceLocation(material));
-                    var buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(
-                            factory.factory().apply(particle.getTexture().withSuffix(".png"))
-                    );
-                    particle.render(poseStack, buffer);
-                });
-            }
-        }
-
-        @SubscribeEvent
-        public static void onEvent(ClientPlayerNetworkEvent.LoggingOut event) {
-            emitters.clear();
-            particles.clear();
-        }
     }
 }
