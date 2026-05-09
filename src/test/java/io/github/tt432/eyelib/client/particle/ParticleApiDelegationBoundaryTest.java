@@ -19,6 +19,10 @@ class ParticleApiDelegationBoundaryTest {
         SourceCheck loader = source("src/main/java/io/github/tt432/eyelib/client/loader/BrParticleLoader.java");
         SourceCheck particleReadme = source("src/main/java/io/github/tt432/eyelib/client/particle/README.md");
         SourceCheck registryReadme = source("src/main/java/io/github/tt432/eyelib/client/registry/README.md");
+        SourceCheck loaderReadme = source("src/main/java/io/github/tt432/eyelib/client/loader/README.md");
+        SourceCheck moduleReadme = source("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/README.md");
+        SourceCheck moduleBoundaries = source("docs/architecture/01-module-boundaries.md");
+        SourceCheck sideBoundaries = source("docs/architecture/02-side-boundaries.md");
         Path obsoleteRootRequest = Path.of("src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnRequest.java");
 
         lookup.assertContains("import io.github.tt432.eyelibparticle.api.ParticleLookupApi;");
@@ -58,6 +62,16 @@ class ParticleApiDelegationBoundaryTest {
         assertTrue(Files.notExists(obsoleteRootRequest), () -> obsoleteRootRequest + " should not be reintroduced");
         registryReadme.assertContains("transitional root facade");
         registryReadme.assertContains("should be removed after root loaders/tooling migrate");
+        registryReadme.assertContains("ParticleDefinitionRegistry");
+        loaderReadme.assertContains("delegates particle publication");
+        loaderReadme.assertContains("ParticleResourcePublication");
+        moduleReadme.assertContains("active loading/publication");
+        moduleReadme.assertContains("ParticleResourcePublication");
+        moduleReadme.assertContains("ParticleDefinition.identifier()");
+        moduleBoundaries.assertContains("ParticleDefinitionRegistry");
+        moduleBoundaries.assertContains("ParticleResourcePublication");
+        moduleBoundaries.assertContains("ParticleDefinition.identifier()");
+        sideBoundaries.assertContains("ResourceLocation adaptation for particle loading remains at root Forge/resource integration boundaries");
     }
 
     @Test

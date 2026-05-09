@@ -11,6 +11,8 @@
 - The allowed particle -> importer dependency for ParticleDefinitionAdapter preserves mapped fields: identifier, format version, basic render material/texture, curves, events, raw components, billboard flipbook summary, and Molang value preservation.
 - Phase 11 owns module-side executable component and lifecycle behavior under `runtime/bedrock/**`, including emitter components, particle appearance/lifetime/initial/motion semantics, and module-owned emitter/particle lifecycle classes.
 - Phase 11 also owns the explicit client integration layer under `client/**` for render-manager collections, render-buffer/material adapters, and `Dist.CLIENT` Forge hook delegation; root particle render-manager paths are transitional adapters only until later compatibility rewires complete.
+- Phase 12 owns active loading/publication: `ParticleDefinitionRegistry` is the module-owned active `ParticleStore<ParticleDefinition>` and `ParticleResourcePublication` parses canonical importer schema `io.github.tt432.eyelibimporter.particle.BrParticle`, converts through `ParticleDefinitionAdapter`, and publishes by `ParticleDefinition.identifier()`.
+- Source ids from Forge reload scanning are diagnostics/report metadata only; they must not become active store keys or replace description-identifier publication semantics.
 
 ## Dependency Direction
 - Root runtime may depend on :eyelib-particle, but :eyelib-particle must not depend on root runtime packages, root managers, root registries, root packets, root capability helpers, or root mc/impl classes.
@@ -20,11 +22,12 @@
 - Pure particle core stays free of root, Minecraft, and Forge contamination.
 - Minecraft/Forge-facing integration must live in explicitly documented adapters before introduction.
 - Existing particle loading, command, and network behavior must not be moved into pure runtime packages; render adapter behavior belongs only in the documented `client/**` integration layer.
-- Phase 11 moved executable runtime core and client integration into this module; Phase 12 rewires loading/publication, Phase 13 rewires command/network integration, and Phase 14 owns final broad/client verification evidence.
+- Phase 11 moved executable runtime core and client integration into this module; Phase 12 moved loading/publication ownership here through pure loading services, Phase 13 rewires command/network integration, and Phase 14 owns final broad/client verification evidence.
+- Root `ResourceLocation` adaptation remains outside pure particle packages; module loading/publication accepts platform-free source metadata and publishes active entries by `ParticleDefinition.identifier()`.
 
 ## Current Consumers
 - Root runtime `:` consumes the module through Gradle project dependency wiring.
-- Transitional root facades such as `ParticleLookup`, `ParticleAssetRegistry`, `ParticleSpawnService`, and root `BrParticleRenderManager` delegate to this module's API/client runtime services; their removal condition is direct migration of root callers to `io.github.tt432.eyelibparticle.api` and `io.github.tt432.eyelibparticle.client` adapters/services.
+- Transitional root facades such as `BrParticleLoader`, `ParticleLookup`, `ParticleAssetRegistry`, `ParticleManager`, `ParticleSpawnService`, and root `BrParticleRenderManager` delegate to this module's API/loading/client runtime services; their removal condition is direct migration of root callers to `io.github.tt432.eyelibparticle.api`, `io.github.tt432.eyelibparticle.loading`, and `io.github.tt432.eyelibparticle.client` adapters/services.
 - Root `src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticle.java` is a legacy/non-canonical runtime adapter target, not the canonical raw schema.
 
 ## Verification Rule
