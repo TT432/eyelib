@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
 status: executing
 stopped_at: Completed 11-01-PLAN.md
-last_updated: "2026-05-09T08:54:54.899Z"
+last_updated: "2026-05-09T09:16:39.553Z"
 last_activity: 2026-05-09
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 13
-  completed_plans: 10
-  percent: 77
+  completed_plans: 11
+  percent: 85
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 ## Current Position
 
 Phase: 11 (runtime-client-core-extraction) — IN PROGRESS
-Plan: 3 of 6 complete
+Plan: 4 of 6 complete
 Status: Ready to execute
 Last activity: 2026-05-09
 
-Progress: [████████░░] 77%
+Progress: [█████████░] 85%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [████████░░] 77%
 | Phase 11-runtime-client-core-extraction P01 | 9min | 2 tasks | 9 files |
 | Phase 11-runtime-client-core-extraction P02 | 17min | 2 tasks | 21 files |
 | Phase 11-runtime-client-core-extraction P03 | 36min | 2 tasks | 19 files |
+| Phase 11-runtime-client-core-extraction P04 | 52min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [Phase ?]: [Phase 11-runtime-client-core-extraction]: ParticleComponentManager now registers particle-side component codecs alongside emitter components and exposes particleComponents(ParticleDefinition). — Keeps component dispatch rooted in canonical ParticleDefinition.rawComponents().
 - [Phase ?]: [Phase 11-runtime-client-core-extraction]: Block-presence checks consume an optional string block-id port instead of Minecraft Level/BuiltInRegistries. — Keeps block checks platform-free until client integration binds the environment.
 - [Phase ?]: [Phase 11-runtime-client-core-extraction]: ParticleParticleComponent uses a module-owned ParticleAccess port so executable particle components stay root/MC/Forge-clean. — Preserves pure particle runtime boundary while moving behavior.
+- [Phase 11-runtime-client-core-extraction]: BedrockParticleRuntime creates module-owned emitters from canonical ParticleDefinition while keeping environment and spawn side effects behind pure ports. — Preserves Phase 10 canonical schema ownership and keeps runtime side effects behind pure ports for later client integration.
+- [Phase 11-runtime-client-core-extraction]: BedrockParticleInstance implements the particle component access port directly so component dispatch remains root/MC/Forge-clean. — Preserves Plan 03 component access boundaries while moving particle lifecycle state into the module.
+- [Phase 11-runtime-client-core-extraction]: BedrockParticleEmitter delegates particle creation through ParticleRuntimeSpawner instead of root BrParticleRenderManager. — Keeps pure lifecycle code decoupled from root render-manager singletons until Plan 05 binds the client adapter.
 
 ### Pending Todos
 
@@ -106,7 +110,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09T08:53:39.968Z
+Last session: 2026-05-09T09:15:33.140Z
 Stopped at: Completed 11-01-PLAN.md
 Resume file: None
 
