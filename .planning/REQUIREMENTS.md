@@ -10,13 +10,13 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Gradle Module
 
-- [ ] **PGRAD-01**: Maintainer can build and consume a real `:eyelib-particle` Gradle subproject with its own build metadata, source sets, resources, and root project dependency wiring.
-- [ ] **PGRAD-02**: Maintainer can read module documentation that states `:eyelib-particle` ownership, dependency direction, and allowed integration layers.
+- [x] **PGRAD-01**: Maintainer can build and consume a real `:eyelib-particle` Gradle subproject with its own build metadata, source sets, resources, and root project dependency wiring.
+- [x] **PGRAD-02**: Maintainer can read module documentation that states `:eyelib-particle` ownership, dependency direction, and allowed integration layers.
 
 ### Boundary API
 
 - [x] **PAPI-01**: Root runtime can access particle lookup, spawn/remove, store/publication, and initialization behavior through narrow particle-module APIs instead of owning particle internals directly.
-- [ ] **PAPI-02**: `:eyelib-particle` has no dependency on root runtime packages, root managers, root registries, root packets, root capability helpers, or root `mc/impl` classes.
+- [x] **PAPI-02**: `:eyelib-particle` has no dependency on root runtime packages, root managers, root registries, root packets, root capability helpers, or root `mc/impl` classes.
 - [x] **PAPI-03**: Any temporary root compatibility facade delegates to particle-module APIs and is documented as transitional.
 
 ### Schema And Runtime Ownership
@@ -42,7 +42,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 - [x] **PRENDER-01**: Existing client particle emitter, render manager, material/texture resolution, Molang scope, lifetime, remove semantics, tick/render lifecycle, and logout cleanup behavior are preserved.
 - [x] **PRENDER-02**: Client-only hooks and platform integrations are side-safe after extraction and do not introduce dedicated-server classloading regressions.
 - [x] **PVERIFY-01**: Existing particle-related tests are moved or adapted without weakening assertions, and new boundary/parity/regression tests cover the module split.
-- [ ] **PVERIFY-02**: Maintainer can verify the extracted module through planned JetBrains MCP Gradle checks, automated ClientSmoke flow where applicable, and a separate hardware checklist only for runtime behavior that cannot be automatically asserted.
+- [x] **PVERIFY-02**: Maintainer can verify the extracted module through planned JetBrains MCP Gradle checks, automated ClientSmoke flow where applicable, and a separate hardware checklist only for runtime behavior that cannot be automatically asserted.
 
 ## Future Requirements
 
@@ -90,7 +90,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRENDER-01 | Phase 11: Runtime Client Core Extraction | Complete |
 | PRENDER-02 | Phase 11: Runtime Client Core Extraction | Complete |
 | PVERIFY-01 | Phase 14: Verification & Documentation Gate | Complete |
-| PVERIFY-02 | Phase 14: Verification & Documentation Gate | Pending |
+| PVERIFY-02 | Phase 14: Verification & Documentation Gate | Complete |
 
 **Coverage:**
 - v1.2 requirements: 18 total
@@ -101,4 +101,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-05-09*
-*Last updated: 2026-05-09 after Phase 13 verification*
+*Last updated: 2026-05-09 after Phase 14 verification*

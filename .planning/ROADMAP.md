@@ -43,7 +43,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] **Phase 11: Runtime Client Core Extraction** - 粒子运行时、发射器、渲染管理与 client hook 迁入粒子模块且保持 side-safe。 (completed 2026-05-09)
 - [x] **Phase 12: Loading & Publication Rewire** - 资源重载、registry 替换、description identifier 发布语义在模块边界后保持不变。 (completed 2026-05-09)
 - [x] **Phase 13: Command & Network Integration Rewire** - `/eyelib particle` 与 spawn/remove packets 保持用户行为兼容，并通过显式平台适配层进入粒子服务。 (completed 2026-05-09)
-- [ ] **Phase 14: Verification & Documentation Gate** - 测试、JetBrains MCP Gradle 检查、适用的自动 ClientSmoke 流程与必要硬件检查清单证明模块拆分无回归。
+- [x] **Phase 14: Verification & Documentation Gate** - 测试、JetBrains MCP Gradle 检查、适用的自动 ClientSmoke 流程与必要硬件检查清单证明模块拆分无回归。 (completed 2026-05-09)
 
 ## Phase Details
 
@@ -137,7 +137,7 @@ Plans:
   2. New boundary, parity, and regression tests cover the module split, including dependency direction, schema/runtime conversion, reload keys, command/network delegation, and side boundaries.
   3. Maintainer can run the planned compile/test checks through JetBrains MCP Gradle tasks only, use automated ClientSmoke flow where applicable, and keep hardware/manual checks separate for runtime behavior that cannot be automatically asserted.
   4. Module, architecture, side-boundary, repo-map, and particle README documentation all match the final ownership and integration boundaries.
-**Plans**: 2/3 complete — `.planning/phases/14-verification-documentation-gate/14-01-PLAN.md`, `.planning/phases/14-verification-documentation-gate/14-02-PLAN.md`, `.planning/phases/14-verification-documentation-gate/14-03-PLAN.md`
+**Plans**: 3/3 complete — `.planning/phases/14-verification-documentation-gate/14-01-PLAN.md`, `.planning/phases/14-verification-documentation-gate/14-02-PLAN.md`, `.planning/phases/14-verification-documentation-gate/14-03-PLAN.md`
 Plans:
 **Wave 1**
 - [x] 14-01-PLAN.md — Converge final ownership documentation and create evidence/checklist shells.
@@ -146,7 +146,7 @@ Plans:
 - [x] 14-02-PLAN.md — Add final split documentation, root adapter, and particle module boundary tests.
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 14-03-PLAN.md — Run JetBrains MCP verification matrix and record milestone closure evidence.
+- [x] 14-03-PLAN.md — Run JetBrains MCP verification matrix and record milestone closure evidence.
 
 ## Progress
 
@@ -165,4 +165,4 @@ Plans:
 | 11. Runtime Client Core Extraction | v1.2 | 6/6 | Complete   | 2026-05-09 |
 | 12. Loading & Publication Rewire | v1.2 | 3/3 | Complete   | 2026-05-09 |
 | 13. Command & Network Integration Rewire | v1.2 | 3/3 | Complete   | 2026-05-09 |
-| 14. Verification & Documentation Gate | v1.2 | 2/3 | In Progress|  |
+| 14. Verification & Documentation Gate | v1.2 | 3/3 | Complete   | 2026-05-09 |

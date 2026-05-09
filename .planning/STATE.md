@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
-status: in_progress
-stopped_at: Completed 14-02-PLAN.md
-last_updated: "2026-05-09T15:03:42.312Z"
+status: verifying
+stopped_at: Completed 14-03-PLAN.md
+last_updated: "2026-05-09T15:21:20.630Z"
 last_activity: 2026-05-09
 progress:
   total_phases: 7
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 22
-  completed_plans: 21
-  percent: 95
+  completed_plans: 22
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 
 ## Current Position
 
-Phase: 14 (verification-documentation-gate) — IN PROGRESS
+Phase: 14 (verification-documentation-gate) — COMPLETE
 Plan: 3 of 3
-Status: Phase 14 Plan 02 complete; execute final verification matrix and closure evidence next.
+Status: Phase complete — final JetBrains MCP matrix and milestone closure evidence recorded.
 Last activity: 2026-05-09
 
-Progress: [██████████] 95%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ Progress: [██████████] 95%
 | Phase 13-command-network-integration-rewire P03 | 8min | 3 tasks | 14 files |
 | Phase 14-verification-documentation-gate P01 | 4min | 2 tasks | 9 files |
 | Phase 14-verification-documentation-gate P02 | 17min | 2 tasks | 4 files |
+| Phase 14-verification-documentation-gate P03 | 15min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [v1.2 Phase 13]: Post-review fixes removed `.planning/` dependencies from runtime documentation tests and added real spawn/remove `STREAM_CODEC` round-trip coverage; Phase 13 review is clean.
 - [Phase 14-verification-documentation-gate]: Plan 01 aligned stable ownership docs and created `14-HARDWARE-CHECKLIST.md` plus `14-FINAL-GATE-EVIDENCE.md`; Plan 03 must fill exact JetBrains MCP matrix results and manual/ClientSmoke status.
 - [Phase 14-verification-documentation-gate]: Plan 02 added final documentation, root split, and particle-module boundary tests that read stable docs/source files only and preserve adapter/publication parity assertions; PVERIFY-01 is complete.
+- [Phase 14-verification-documentation-gate]: Plan 03 recorded the final JetBrains MCP matrix, fixed a stale broad-suite lookup test, documented ClientSmoke/manual hardware status, and closed PVERIFY-02 with explicit PFUT/manual deferrals.
 
 ### Pending Todos
 
@@ -133,10 +135,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09T15:03:42.301Z
-Stopped at: Completed 14-02-PLAN.md
+Last session: 2026-05-09T15:21:20.618Z
+Stopped at: Completed 14-03-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
 
-- Continue with `/gsd-execute-phase 14` for `14-03-PLAN.md` final verification matrix and closure evidence.
+- Run `/gsd-verify-work 14` or `/gsd-complete-milestone` to perform final milestone sign-off using `14-MCP-VERIFICATION-MATRIX.md` and `14-MILESTONE-CLOSURE.md`.
