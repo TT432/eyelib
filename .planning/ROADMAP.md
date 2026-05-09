@@ -66,7 +66,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
   1. Root runtime can access particle lookup, spawn/remove, store/publication, and initialization behavior through particle-module API seams.
   2. Any root compatibility facade delegates to particle-module APIs instead of containing particle business logic.
   3. Maintainer can identify every temporary compatibility facade and read why it exists and when it can be removed.
-**Plans**: TBD
+**Plans**: 1/3 complete — `.planning/phases/09-particle-api-store-seam/09-01-PLAN.md`
 
 ### Phase 10: Schema/Runtime Ownership & Adapter
 **Goal**: Importer/raw particle schema and executable runtime particle definitions have explicit canonical owners and a tested conversion seam.
@@ -135,7 +135,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 6. Config Override Bridge & State Machine Fixes | v1.1 | 2/2 | Complete | 2026-05-08 |
 | 7. Verification & Polish | v1.1 | 2/2 | Complete | 2026-05-08 |
 | 8. Boundary Contract & Gradle Module Skeleton | v1.2 | 2/2 | Complete | 2026-05-09 |
-| 9. Particle API & Store Seam | v1.2 | 0/TBD | Not started | - |
+| 9. Particle API & Store Seam | v1.2 | 1/3 | In Progress | - |
 | 10. Schema/Runtime Ownership & Adapter | v1.2 | 0/TBD | Not started | - |
 | 11. Runtime Client Core Extraction | v1.2 | 0/TBD | Not started | - |
 | 12. Loading & Publication Rewire | v1.2 | 0/TBD | Not started | - |
