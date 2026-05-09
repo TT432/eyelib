@@ -18,4 +18,15 @@ public record ParticleLifetimeKillPlane(
     );
     public static final Codec<ParticleLifetimeKillPlane> CODEC =
             VECTOR4F.xmap(ParticleLifetimeKillPlane::new, ParticleLifetimeKillPlane::plane);
+
+    @Override
+    public void onFrame(ParticleAccess particle) {
+        float distance = plane.x() * particle.position().x()
+                + plane.y() * particle.position().y()
+                + plane.z() * particle.position().z()
+                + plane.w();
+        if (distance < 0) {
+            particle.remove();
+        }
+    }
 }

@@ -13,6 +13,7 @@ import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.initial
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.lifetime.ParticleExpireIfInBlocks;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.lifetime.ParticleExpireIfNotInBlocks;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.lifetime.ParticleLifetimeExpression;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.lifetime.ParticleLifetimeKillPlane;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.motion.ParticleMotionDynamic;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.motion.ParticleMotionParametric;
 import io.github.tt432.eyelibparticle.runtime.support.ParticleBlackboard;
@@ -90,6 +91,17 @@ class ParticleComponentRuntimeTest {
         new ParticleLifetimeExpression(MolangValue.FALSE_VALUE, MolangValue.FALSE_VALUE).onStart(omittedMaxLifetimeParticle);
         new ParticleLifetimeExpression(MolangValue.FALSE_VALUE, MolangValue.FALSE_VALUE).onFrame(omittedMaxLifetimeParticle);
         assertFalse(omittedMaxLifetimeParticle.removed);
+
+        ParticleLifetimeKillPlane killPlane = new ParticleLifetimeKillPlane(new Vector4f(0, 1, 0, 0));
+        FakeParticle aboveKillPlaneParticle = new FakeParticle();
+        aboveKillPlaneParticle.position.set(0, 1, 0);
+        killPlane.onFrame(aboveKillPlaneParticle);
+        assertFalse(aboveKillPlaneParticle.removed);
+
+        FakeParticle crossedKillPlaneParticle = new FakeParticle();
+        crossedKillPlaneParticle.position.set(0, -1, 0);
+        killPlane.onFrame(crossedKillPlaneParticle);
+        assertTrue(crossedKillPlaneParticle.removed);
 
         FakeParticle dynamicParticle = new FakeParticle();
         dynamicParticle.age = 0.5F;
