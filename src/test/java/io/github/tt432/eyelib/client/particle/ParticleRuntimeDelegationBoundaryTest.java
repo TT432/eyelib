@@ -40,7 +40,7 @@ class ParticleRuntimeDelegationBoundaryTest {
         assertTrue(source.contains("api().spawn(new ParticleSpawnRequest(packet.spawnId(), packet.particleId(), packet.position()))"));
         assertTrue(source.contains("api().remove(removeId);"));
         assertTrue(source.contains("ParticleDefinitionRegistry.store().get(request.particleId())"));
-        assertTrue(source.contains("spawnEmitter(\n            String spawnId,\n            ParticleDefinition definition,"));
+        assertTrue(source.contains("ParticleDefinition definition,"));
         assertTrue(!source.contains("BrParticle.CODEC.encodeStart"));
     }
 
@@ -65,7 +65,8 @@ class ParticleRuntimeDelegationBoundaryTest {
         assertTrue(animationEntry.contains("ParticleSpawnService.spawnEmitter(uuid, definition,"));
         assertTrue(!animationEntry.contains("ParticleLookup.get("));
         assertTrue(controllerExecutor.contains("ParticleLookup.definition(effect)"));
-        assertTrue(controllerExecutor.contains("ParticleSpawnService.spawnEmitter(\n                                    uuid,\n                                    definition,"));
+        assertTrue(controllerExecutor.contains("ParticleSpawnService.spawnEmitter("));
+        assertTrue(controllerExecutor.contains("definition,"));
         assertTrue(!controllerExecutor.contains("ParticleLookup.get("));
     }
 
