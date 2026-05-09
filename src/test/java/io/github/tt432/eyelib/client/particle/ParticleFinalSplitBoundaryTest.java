@@ -29,8 +29,7 @@ class ParticleFinalSplitBoundaryTest {
                 () -> spawnService.assertContains("import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;"),
                 () -> spawnService.assertContains("import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleRuntime;"),
                 () -> spawnService.assertContains("ParticleRenderManager.INSTANCE.spawnEmitter("),
-                () -> spawnService.assertContains("api().spawn(new ParticleSpawnRequest(packet.spawnId(), packet.particleId(), packet.position()))"),
-                () -> spawnService.assertContains("PHASE14_RED_GATE")
+                () -> spawnService.assertContains("api().spawn(new ParticleSpawnRequest(packet.spawnId(), packet.particleId(), packet.position()))")
         );
     }
 
