@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
-status: planning
-stopped_at: Phase 10 complete; ready to plan Phase 11.
-last_updated: "2026-05-09T07:20:00Z"
-last_activity: 2026-05-09 -- Phase 10 verified and code-reviewed clean
+status: executing
+stopped_at: Completed 11-01-PLAN.md; ready for Phase 11 Plan 02.
+last_updated: "2026-05-09T08:18:49.319Z"
+last_activity: 2026-05-09 -- Phase 11 Plan 01 runtime foundation verified
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
-  percent: 100
+  total_plans: 13
+  completed_plans: 8
+  percent: 62
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 
 ## Current Position
 
-Phase: 11 (runtime-client-core-extraction) — READY TO PLAN
-Plan: 0 of TBD
-Status: Phase 10 complete; next phase planning can begin.
-Last activity: 2026-05-09 -- Phase 10 verified and code-reviewed clean
+Phase: 11 (runtime-client-core-extraction) — IN PROGRESS
+Plan: 1 of 6 complete
+Status: Completed 11-01 runtime contracts/support/boundary guards; ready for Plan 02.
+Last activity: 2026-05-09 -- Phase 11 Plan 01 runtime foundation verified
 
-Progress: [██████████] 100%
+Progress: [██████░░░░] 62%
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Progress: [██████████] 100%
 | v1.2 Phases 8-14 | 5/5 Phase 8-9 plans | Phases 8-9 complete | Not tracked |
 | Phase 10-schema-runtime-ownership-adapter P01 | 11 min | 2 tasks | 6 files |
 | Phase 10-schema-runtime-ownership-adapter P02 | 6min | 2 tasks | 8 files |
+| Phase 11-runtime-client-core-extraction P01 | 9min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [Phase 10-schema-runtime-ownership-adapter]: Importer BrParticle is the canonical raw particle schema/codec owner, particle ParticleDefinition is the canonical module runtime definition owner, and root client particle bedrock BrParticle remains legacy/non-canonical until later migration. — Plan 10-02 locked docs and JUnit documentation invariants for Phase 10 ownership.
 - [Phase 10-schema-runtime-ownership-adapter]: ParticleDefinitionAdapter is the only documented Phase 10 particle -> importer dependency seam; boundary tests reject duplicate BrParticle and root/MC/Forge imports. — The adapter seam preserves mapped fields without moving runtime/loading/command/network behavior.
 - [v1.2 Phase 10]: Post-review fixes preserved raw particle event data in importer `BrParticle.Events`, strengthened forbidden-reference scanning, and covered adapter validation branches; Phase 10 review is clean.
+- [Phase 11-runtime-client-core-extraction]: Plan 01 established pure runtime contracts and support helpers under `:eyelib-particle`, with `ParticleRuntimeDefinition` wrapping canonical `ParticleDefinition` instead of introducing a duplicate `BrParticle` owner.
+- [Phase 11-runtime-client-core-extraction]: Particle runtime timing now uses a module-owned `TimeSource` port and `ParticleTimer`, keeping Minecraft tick/partial-tick access outside pure runtime until client integration binds it.
+- [Phase 11-runtime-client-core-extraction]: Runtime package docs and boundary tests require pure runtime cleanliness while reserving Minecraft/Forge bindings for documented client integration outside `runtime/**`.
 
 ### Pending Todos
 
@@ -94,8 +98,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09T07:20:00Z
-Stopped at: Phase 10 complete; ready to plan Phase 11.
+Last session: 2026-05-09T08:18:49.308Z
+Stopped at: Completed 11-01-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
