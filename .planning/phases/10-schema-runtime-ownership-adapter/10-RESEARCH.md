@@ -306,17 +306,19 @@ assertNoForbiddenImports(
 | A2 | Tests that only assert identifier/map size are too weak for parity. | Common Pitfalls | Medium — planner should define explicit parity field assertions. |
 | A3 | Adapter tests should cover both prefixed and unprefixed component keys. | Common Pitfalls | Medium — if Bedrock inputs never use one spelling, test may be less urgent; importer code suggests both are relevant. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should `ParticleDefinition` keep `BedrockResourceValue` in its public API or wrap it in particle-owned raw component records?**
    - What we know: raw preservation is required and importer already uses `BedrockResourceValue`. [VERIFIED: `10-CONTEXT.md`, importer `BrParticle.java`]
    - What's unclear: whether exposing importer raw value types from particle runtime definition is acceptable long-term API design. [ASSUMED]
    - Recommendation: for Phase 10, use importer raw value types to avoid hand-rolling; document that the dependency is intentional and reassess in Phase 11/12 if public API stability becomes a concern. [VERIFIED: allowed particle -> importer dependency in `10-CONTEXT.md`]
+   - RESOLVED: Keep `BedrockResourceValue` in `ParticleDefinition` for Phase 10. The particle -> importer dependency is intentional for the conversion seam, and future wrapping can be reassessed after runtime/loading ownership moves.
 
 2. **Should Phase 10 add a root legacy comparison adapter from `ParticleDefinition` to root `BrParticle`?**
    - What we know: Phase 10 may connect the seam only enough to prove conversion, but full loader/publication rewire is deferred. [VERIFIED: `10-CONTEXT.md`]
    - What's unclear: whether comparing against root `BrParticle.CODEC` for all real fixtures will be possible without component registry setup. [ASSUMED]
    - Recommendation: prioritize importer -> particle definition parity; add root comparison only for fields that do not require Forge annotation component registry. [VERIFIED: root component manager requires Forge scan]
+   - RESOLVED: Prioritize importer -> `ParticleDefinition` parity using large real fixtures. Add root legacy comparison only for safe fields that do not require Forge component registry setup; do not make root comparison a prerequisite for the adapter seam.
 
 ## Environment Availability
 
