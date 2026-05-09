@@ -10,11 +10,19 @@ import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.appeara
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.appearance.ParticleAppearanceTinting;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.initial.ParticleInitialSpeed;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.initial.ParticleInitialSpin;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.lifetime.ParticleExpireIfInBlocks;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.lifetime.ParticleExpireIfNotInBlocks;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.lifetime.ParticleLifetimeExpression;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.motion.ParticleMotionDynamic;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.motion.ParticleMotionParametric;
 import io.github.tt432.eyelibparticle.runtime.support.ParticleBlackboard;
 import org.joml.Vector2f;
+import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.TreeMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -68,6 +76,49 @@ class ParticleComponentRuntimeTest {
         assertEquals(90F, particle.rotationRate);
     }
 
+    @Test
+    void lifetimeAndMotionComponentsPreserveParticleFrameBehavior() {
+        FakeParticle lifetimeParticle = new FakeParticle();
+        lifetimeParticle.age = 1.1F;
+        new ParticleLifetimeExpression(MolangValue.FALSE_VALUE, MolangValue.getConstant(1)).onStart(lifetimeParticle);
+        new ParticleLifetimeExpression(MolangValue.FALSE_VALUE, MolangValue.getConstant(1)).onFrame(lifetimeParticle);
+        assertTrue(lifetimeParticle.removed);
+
+        FakeParticle dynamicParticle = new FakeParticle();
+        dynamicParticle.age = 0.5F;
+        dynamicParticle.velocity = new Vector3f(1, 0, 0);
+        new ParticleMotionDynamic(
+                new io.github.tt432.eyelibmolang.MolangValue3(MolangValue.getConstant(1), MolangValue.ZERO, MolangValue.ZERO),
+                MolangValue.ZERO,
+                MolangValue.getConstant(10),
+                MolangValue.ZERO
+        ).onFrame(dynamicParticle);
+        assertEquals(new Vector3f(0.046875F, 0F, 0F), dynamicParticle.position);
+        assertEquals(5F, dynamicParticle.rotationRate);
+        assertEquals(2.5F, dynamicParticle.rotation);
+
+        FakeParticle blockParticle = new FakeParticle();
+        blockParticle.blockId = "minecraft:water";
+        new ParticleExpireIfInBlocks(List.of("minecraft:water")).onFrame(blockParticle);
+        assertTrue(blockParticle.removed);
+
+        FakeParticle notInBlockParticle = new FakeParticle();
+        notInBlockParticle.blockId = "minecraft:air";
+        new ParticleExpireIfNotInBlocks(List.of("minecraft:water")).onFrame(notInBlockParticle);
+        assertTrue(notInBlockParticle.removed);
+
+        ParticleMotionParametric parametric = new ParticleMotionParametric(
+                new io.github.tt432.eyelibmolang.MolangValue3(MolangValue.getConstant(1), MolangValue.getConstant(2), MolangValue.getConstant(3)),
+                new io.github.tt432.eyelibmolang.MolangValue3(MolangValue.ZERO, MolangValue.ONE, MolangValue.ZERO),
+                MolangValue.getConstant(30)
+        );
+        FakeParticle parametricParticle = new FakeParticle();
+        parametric.onFrame(parametricParticle);
+        assertEquals(new Vector3f(1, 2, 3), parametricParticle.position);
+        assertEquals(new Vector3f(0, 1, 0), parametricParticle.velocity);
+        assertEquals(30F, parametricParticle.rotation);
+    }
+
     private static final class FakeParticle implements ParticleParticleComponent.ParticleAccess {
         final MolangScope scope = new MolangScope();
         final ParticleBlackboard blackboard = new ParticleBlackboard();
@@ -76,6 +127,10 @@ class ParticleComponentRuntimeTest {
         float speed;
         float rotation;
         float rotationRate;
+        Vector3f position = new Vector3f();
+        Vector3f velocity = new Vector3f();
+        boolean removed;
+        String blockId;
 
         @Override
         public MolangScope molangScope() {
@@ -104,6 +159,7 @@ class ParticleComponentRuntimeTest {
 
         @Override
         public void remove() {
+            removed = true;
         }
 
         @Override
@@ -119,6 +175,36 @@ class ParticleComponentRuntimeTest {
         @Override
         public void setRotationRate(float rotationRate) {
             this.rotationRate = rotationRate;
+        }
+
+        @Override
+        public float rotation() {
+            return rotation;
+        }
+
+        @Override
+        public float rotationRate() {
+            return rotationRate;
+        }
+
+        @Override
+        public Vector3f position() {
+            return position;
+        }
+
+        @Override
+        public Vector3f velocity() {
+            return velocity;
+        }
+
+        @Override
+        public void setVelocity(Vector3f velocity) {
+            this.velocity.set(velocity);
+        }
+
+        @Override
+        public Optional<String> blockAtPosition() {
+            return Optional.ofNullable(blockId);
         }
     }
 }
