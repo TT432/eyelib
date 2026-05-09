@@ -15,7 +15,7 @@
 
 PVERIFY-01 is green. Phase 14 Plan 02 added the final stable-doc, root split, and particle-module boundary tests; Phase 14 Plan 03 re-ran the required targeted JetBrains MCP matrix and fixed one stale broad-suite lookup invariant without changing runtime behavior.
 
-| Evidence Category | Required Artifact / Task | Plan 03 Result Placeholder |
+| Evidence Category | Required Artifact / Task | Plan 03 Result |
 |-------------------|--------------------------|----------------------------|
 | Existing particle assertions not weakened | Targeted root and `:eyelib-particle` JUnit tests adapted in Plan 02. | PASS — `jetbrain_run_gradle_tasks` row 2 taskNames=`[":eyelib-particle:test"]` external task id 46 exitCode 0; row 3 taskNames=`[":test"]` external task id 47 exitCode 0. |
 | Final documentation drift guard | Stable-doc tests must read repository docs only, not `.planning/` files. | PASS — row 3 includes `ParticleFinalDocumentationGateTest` and `ParticleCommandNetworkDocumentationTest`; exitCode 0. |
@@ -25,7 +25,7 @@ PVERIFY-01 is green. Phase 14 Plan 02 added the final stable-doc, root split, an
 
 PVERIFY-02 automated Gradle evidence is green. ClientSmoke/manual status remains separate and is recorded in `14-HARDWARE-CHECKLIST.md`; milestone closure is recorded in `14-MILESTONE-CLOSURE.md`.
 
-| Evidence Category | Required Artifact / Task | Plan 03 Result Placeholder |
+| Evidence Category | Required Artifact / Task | Plan 03 Result |
 |-------------------|--------------------------|----------------------------|
 | JetBrains MCP Gradle matrix | `:eyelib-particle:test`, `:eyelib-particle:compileJava`, `:compileJava`, and targeted root `:test` filters. | PASS — see `14-MCP-VERIFICATION-MATRIX.md`: rows 1-3 have task ids 45, 46, 47 and exitCode 0. |
 | ClientSmoke applicability | Existing ClientSmoke hook status recorded without creating a new smoke framework. | Recorded separately in `14-HARDWARE-CHECKLIST.md`: no existing particle-specific ClientSmoke hook found in Phase 14 evidence, so direct particle ClientSmoke is not applicable without new framework work. |
