@@ -29,7 +29,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 - [x] **PLOAD-01**: Resource reload still parses `particles/*.json` and replaces the active particle registry without changing observable reload behavior.
 - [x] **PLOAD-02**: Particle publication continues to key entries by `particle_effect.description.identifier`, not by JSON resource path or other incidental source keys.
-- [ ] **PLOAD-03**: Loader, registry, and manager responsibilities are owned by the particle module or by explicit root adapters without reintroducing root-owned particle internals.
+- [x] **PLOAD-03**: Loader, registry, and manager responsibilities are owned by the particle module or by explicit root adapters without reintroducing root-owned particle internals.
 
 ### Command And Network Integration
 
@@ -83,7 +83,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PSCHEMA-03 | Phase 10: Schema/Runtime Ownership & Adapter | Complete |
 | PLOAD-01 | Phase 12: Loading & Publication Rewire | Complete |
 | PLOAD-02 | Phase 12: Loading & Publication Rewire | Complete |
-| PLOAD-03 | Phase 12: Loading & Publication Rewire | Pending |
+| PLOAD-03 | Phase 12: Loading & Publication Rewire | Complete |
 | PNET-01 | Phase 13: Command & Network Integration Rewire | Pending |
 | PNET-02 | Phase 13: Command & Network Integration Rewire | Pending |
 | PNET-03 | Phase 13: Command & Network Integration Rewire | Pending |

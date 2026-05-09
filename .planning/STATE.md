@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
 status: executing
-stopped_at: Completed 12-01-PLAN.md
-last_updated: "2026-05-09T11:41:39.742Z"
+stopped_at: Completed 12-02-PLAN.md
+last_updated: "2026-05-09T11:54:05.265Z"
 last_activity: 2026-05-09
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 16
-  completed_plans: 14
-  percent: 88
+  completed_plans: 15
+  percent: 94
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 ## Current Position
 
 Phase: 12 (loading-publication-rewire) — IN PROGRESS
-Plan: 1 of 3 complete
-Status: Ready to execute next plan
+Plan: 2 of 3 complete
+Status: Ready to execute
 Last activity: 2026-05-09
 
-Progress: [█████████░] 88%
+Progress: [█████████░] 94%
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [█████████░] 88%
 | Phase 11-runtime-client-core-extraction P05 | 20min | 2 tasks | 14 files |
 | Phase 11-runtime-client-core-extraction P06 | 16min | 2 tasks | 14 files |
 | Phase 12-loading-publication-rewire P01 | 7min | 2 tasks | 5 files |
+| Phase 12-loading-publication-rewire P02 | 20min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [Phase 11-runtime-client-core-extraction]: Root ParticleSpawnService now constructs module BedrockParticleRuntime emitters and registers them with module ParticleRenderManager while preserving string-keyed packet entrypoints. — Completes Phase 11 root compatibility delegation while deferring loading/publication to Phase 12 and command/network rewires to Phase 13.
 - [Phase 12-loading-publication-rewire]: Module loading publication stores active entries by ParticleDefinition.identifier(), while source ids remain diagnostics/report metadata.
 - [Phase 12-loading-publication-rewire]: Invalid resource JSON/schema conversion failures are logged and reported without blocking valid replacement entries.
+- [Phase 12-loading-publication-rewire]: Root reload now converts ResourceLocation source ids to strings and delegates parse/convert/publish ownership to ParticleResourcePublication.
+- [Phase 12-loading-publication-rewire]: ParticleAssetRegistry remains only as a legacy root compatibility adapter while active publication uses ParticleDefinitionRegistry.publisher().
+- [Phase 12-loading-publication-rewire]: Packet-driven spawn now looks up ParticleDefinition from the module active registry directly; legacy BrParticle conversion remains only for current root compatibility callers.
 
 ### Pending Todos
 
@@ -118,10 +122,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09T11:41:22.017Z
-Stopped at: Completed 12-01-PLAN.md
+Last session: 2026-05-09T11:54:05.253Z
+Stopped at: Completed 12-02-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
 
-- Continue with `.planning/phases/12-loading-publication-rewire/12-02-PLAN.md`.
+- Continue with `.planning/phases/12-loading-publication-rewire/12-03-PLAN.md`.
