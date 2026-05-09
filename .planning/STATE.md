@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
 status: executing
-stopped_at: Completed 11-05-PLAN.md
-last_updated: "2026-05-09T09:39:11.966Z"
+stopped_at: Completed 11-06-PLAN.md
+last_updated: "2026-05-09T10:02:42.367Z"
 last_activity: 2026-05-09
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 13
-  completed_plans: 12
-  percent: 92
+  completed_plans: 13
+  percent: 100
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 ## Current Position
 
 Phase: 11 (runtime-client-core-extraction) — IN PROGRESS
-Plan: 5 of 6 complete
+Plan: 6 of 6 complete
 Status: Ready to execute
 Last activity: 2026-05-09
 
-Progress: [█████████░] 92%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Progress: [█████████░] 92%
 | Phase 11-runtime-client-core-extraction P03 | 36min | 2 tasks | 19 files |
 | Phase 11-runtime-client-core-extraction P04 | 52min | 2 tasks | 9 files |
 | Phase 11-runtime-client-core-extraction P05 | 20min | 2 tasks | 14 files |
+| Phase 11-runtime-client-core-extraction P06 | 16min | 2 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [Phase 11-runtime-client-core-extraction]: BedrockParticleEmitter delegates particle creation through ParticleRuntimeSpawner instead of root BrParticleRenderManager. — Keeps pure lifecycle code decoupled from root render-manager singletons until Plan 05 binds the client adapter.
 - [Phase ?]: [Phase 11-runtime-client-core-extraction]: ParticleRenderManager now owns module-side emitter and particle collections while Forge event subscription lives only in ParticleRenderHooks. — Keeps lifecycle behavior testable without Forge event loading.
 - [Phase ?]: [Phase 11-runtime-client-core-extraction]: Minecraft render types, ResourceLocation texture suffixing, render buffers, camera transforms, tint, billboard, and light output are quarantined in BedrockParticleRenderer under the particle client integration package. — Preserves render behavior while keeping runtime/** root/MC/Forge-clean.
+- [Phase 11-runtime-client-core-extraction]: Root ParticleSpawnService now constructs module BedrockParticleRuntime emitters and registers them with module ParticleRenderManager while preserving string-keyed packet entrypoints. — Completes Phase 11 root compatibility delegation while deferring loading/publication to Phase 12 and command/network rewires to Phase 13.
 
 ### Pending Todos
 
@@ -113,8 +115,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09T09:38:16.696Z
-Stopped at: Completed 11-05-PLAN.md
+Last session: 2026-05-09T10:01:44.775Z
+Stopped at: Completed 11-06-PLAN.md
 Resume file: None
 
 ## Operator Next Steps

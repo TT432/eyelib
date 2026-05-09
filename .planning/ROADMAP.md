@@ -40,7 +40,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] **Phase 8: Boundary Contract & Gradle Module Skeleton** - `:eyelib-particle` 成为可构建、可消费、方向明确的 Gradle 模块。 (2/2 plans) — completed 2026-05-09
 - [x] **Phase 9: Particle API & Store Seam** - root 通过粒子模块的窄 API 使用 lookup、spawn/remove、store/publication 与初始化能力。 (3/3 plans) — completed 2026-05-09
 - [x] **Phase 10: Schema/Runtime Ownership & Adapter** - importer/raw schema 与 executable runtime definition 的所有权和转换契约被锁定。 (completed 2026-05-09)
-- [ ] **Phase 11: Runtime Client Core Extraction** - 粒子运行时、发射器、渲染管理与 client hook 迁入粒子模块且保持 side-safe。
+- [x] **Phase 11: Runtime Client Core Extraction** - 粒子运行时、发射器、渲染管理与 client hook 迁入粒子模块且保持 side-safe。 (completed 2026-05-09)
 - [ ] **Phase 12: Loading & Publication Rewire** - 资源重载、registry 替换、description identifier 发布语义在模块边界后保持不变。
 - [ ] **Phase 13: Command & Network Integration Rewire** - `/eyelib particle` 与 spawn/remove packets 保持用户行为兼容，并通过显式平台适配层进入粒子服务。
 - [ ] **Phase 14: Verification & Documentation Gate** - 测试、JetBrains MCP Gradle 检查、适用的自动 ClientSmoke 流程与必要硬件检查清单证明模块拆分无回归。
@@ -137,7 +137,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 8. Boundary Contract & Gradle Module Skeleton | v1.2 | 2/2 | Complete | 2026-05-09 |
 | 9. Particle API & Store Seam | v1.2 | 3/3 | Complete | 2026-05-09 |
 | 10. Schema/Runtime Ownership & Adapter | v1.2 | 2/2 | Complete   | 2026-05-09 |
-| 11. Runtime Client Core Extraction | v1.2 | 5/6 | In Progress|  |
+| 11. Runtime Client Core Extraction | v1.2 | 6/6 | Complete   | 2026-05-09 |
 | 12. Loading & Publication Rewire | v1.2 | 0/TBD | Not started | - |
 | 13. Command & Network Integration Rewire | v1.2 | 0/TBD | Not started | - |
 | 14. Verification & Documentation Gate | v1.2 | 0/TBD | Not started | - |
