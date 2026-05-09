@@ -21,7 +21,8 @@ public record ParticleLifetimeExpression(
 
     @Override
     public void onFrame(ParticleAccess particle) {
-        if (particle.age() >= particle.lifetime() || expirationExpression.evalAsBool(particle.molangScope())) {
+        boolean maxLifetimeExpired = particle.lifetime() > 0 && particle.age() >= particle.lifetime();
+        if (maxLifetimeExpired || expirationExpression.evalAsBool(particle.molangScope())) {
             particle.remove();
         }
     }

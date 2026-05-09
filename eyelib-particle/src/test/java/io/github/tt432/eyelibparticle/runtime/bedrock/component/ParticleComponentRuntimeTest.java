@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -83,6 +84,12 @@ class ParticleComponentRuntimeTest {
         new ParticleLifetimeExpression(MolangValue.FALSE_VALUE, MolangValue.getConstant(1)).onStart(lifetimeParticle);
         new ParticleLifetimeExpression(MolangValue.FALSE_VALUE, MolangValue.getConstant(1)).onFrame(lifetimeParticle);
         assertTrue(lifetimeParticle.removed);
+
+        FakeParticle omittedMaxLifetimeParticle = new FakeParticle();
+        omittedMaxLifetimeParticle.age = 1.1F;
+        new ParticleLifetimeExpression(MolangValue.FALSE_VALUE, MolangValue.FALSE_VALUE).onStart(omittedMaxLifetimeParticle);
+        new ParticleLifetimeExpression(MolangValue.FALSE_VALUE, MolangValue.FALSE_VALUE).onFrame(omittedMaxLifetimeParticle);
+        assertFalse(omittedMaxLifetimeParticle.removed);
 
         FakeParticle dynamicParticle = new FakeParticle();
         dynamicParticle.age = 0.5F;
