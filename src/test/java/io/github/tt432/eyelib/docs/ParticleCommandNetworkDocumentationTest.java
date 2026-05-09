@@ -41,7 +41,6 @@ class ParticleCommandNetworkDocumentationTest {
     @Test
     void phase13DocsPreserveDeferredScopeBoundaries() throws IOException {
         String docs = readDocs(
-                ".planning/phases/13-command-network-integration-rewire/13-VALIDATION.md",
                 "MODULES.md",
                 "docs/index/repo-map.md",
                 "docs/architecture/01-module-boundaries.md",
