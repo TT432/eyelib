@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
 status: executing
 stopped_at: Completed 11-01-PLAN.md
-last_updated: "2026-05-09T08:34:09.737Z"
+last_updated: "2026-05-09T08:54:54.899Z"
 last_activity: 2026-05-09
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 13
-  completed_plans: 9
-  percent: 69
+  completed_plans: 10
+  percent: 77
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 ## Current Position
 
 Phase: 11 (runtime-client-core-extraction) — IN PROGRESS
-Plan: 2 of 6 complete
+Plan: 3 of 6 complete
 Status: Ready to execute
 Last activity: 2026-05-09
 
-Progress: [███████░░░] 69%
+Progress: [████████░░] 77%
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Progress: [███████░░░] 69%
 | Phase 10-schema-runtime-ownership-adapter P02 | 6min | 2 tasks | 8 files |
 | Phase 11-runtime-client-core-extraction P01 | 9min | 2 tasks | 9 files |
 | Phase 11-runtime-client-core-extraction P02 | 17min | 2 tasks | 21 files |
+| Phase 11-runtime-client-core-extraction P03 | 36min | 2 tasks | 19 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [Phase 11-runtime-client-core-extraction]: ParticleComponentManager decodes executable components from ParticleDefinition.rawComponents() instead of introducing a particle-module BrParticle schema owner. — Preserves Phase 10 canonical schema ownership while moving executable component behavior.
 - [Phase 11-runtime-client-core-extraction]: Entity-AABB shape data is routed through an optional bounds port, leaving Minecraft entity adaptation for later client integration. — Preserves shape behavior without violating pure runtime boundary rules.
 - [Phase 11-runtime-client-core-extraction]: Emitter components operate on a module-owned EmitterAccess port so pure runtime code does not import root particle runtime, Minecraft, or Forge types. — Keeps runtime component behavior pure until later lifecycle and client integration plans bind platform state.
+- [Phase ?]: [Phase 11-runtime-client-core-extraction]: ParticleComponentManager now registers particle-side component codecs alongside emitter components and exposes particleComponents(ParticleDefinition). — Keeps component dispatch rooted in canonical ParticleDefinition.rawComponents().
+- [Phase ?]: [Phase 11-runtime-client-core-extraction]: Block-presence checks consume an optional string block-id port instead of Minecraft Level/BuiltInRegistries. — Keeps block checks platform-free until client integration binds the environment.
+- [Phase ?]: [Phase 11-runtime-client-core-extraction]: ParticleParticleComponent uses a module-owned ParticleAccess port so executable particle components stay root/MC/Forge-clean. — Preserves pure particle runtime boundary while moving behavior.
 
 ### Pending Todos
 
@@ -102,7 +106,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09T08:32:36.720Z
+Last session: 2026-05-09T08:53:39.968Z
 Stopped at: Completed 11-01-PLAN.md
 Resume file: None
 

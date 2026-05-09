@@ -9,7 +9,7 @@
 - `io.github.tt432.eyelibparticle.runtime.ParticleDefinition` is the canonical module runtime definition owner, produced through `ParticleDefinitionAdapter` using the allowed particle -> importer dependency for ParticleDefinitionAdapter.
 - `src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticle.java` is a legacy/non-canonical runtime adapter target kept for compatibility until later extraction phases.
 - The adapter-owned mapped fields: identifier, format version, basic render material/texture, curves, events, raw components, billboard flipbook summary, and Molang value preservation.
-- Phase 11 moves executable runtime core, Phase 12 rewires loading/publication, and Phase 13 rewires command/network integration; Phase 10 does not move loading, runtime, command, or network behavior.
+- Phase 11 is moving executable runtime core in stages: emitter and particle component execution now lives in `:eyelib-particle`, while concrete lifecycle/render-manager/client integration remains transitional here until the later Phase 11 plans complete.
 
 ## Current Runtime Boundaries
 - `ParticleLookup.java`: transitional read-side root facade delegating to `io.github.tt432.eyelibparticle.api.ParticleLookupApi` through the root-backed `ParticleManager` store adapter; removal condition: delete after root callers migrate directly to particle API adapters/services.
