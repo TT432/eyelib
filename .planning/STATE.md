@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
 status: executing
-stopped_at: Completed 11-06-PLAN.md
-last_updated: "2026-05-09T10:02:42.367Z"
+stopped_at: Phase 12 context gathered
+last_updated: "2026-05-09T11:19:23.950Z"
 last_activity: 2026-05-09
 progress:
   total_phases: 7
@@ -115,9 +115,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09T10:01:44.775Z
-Stopped at: Completed 11-06-PLAN.md
-Resume file: None
+Last session: 2026-05-09T11:19:23.938Z
+Stopped at: Phase 12 context gathered
+Resume file: .planning/phases/12-loading-publication-rewire/12-CONTEXT.md
 
 ## Operator Next Steps
 
