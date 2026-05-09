@@ -38,10 +38,10 @@ created: 2026-05-09
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 09-01-01 | 01 | 1 | PAPI-01 | T-09-01 | N/A | compile/static | Verify new `eyelibparticle.api` surfaces compile and are consumed by root adapters | W0 | pending |
-| 09-01-02 | 01 | 1 | PAPI-03 | T-09-02 | N/A | file/content | Verify retained root facades document transitional delegation and removal conditions | W0 | pending |
-| 09-02-01 | 02 | 2 | PAPI-01 | T-09-03 | N/A | behavior/unit/static | Verify lookup/store/publication/spawn/remove seams preserve existing string-keyed behavior | W0 | pending |
-| 09-02-02 | 02 | 2 | PAPI-03 | T-09-04 | N/A | static | Verify root facades delegate to particle API and do not duplicate particle business logic | W0 | pending |
+| 09-01-01 | 01 | 1 | PAPI-01 | T-09-01 | N/A | compile/static | `ParticlePublisherTest`, `ParticleSpawnRequestTest`, and JetBrains MCP `:eyelib-particle:test` / `:eyelib-particle:compileJava` verify `eyelibparticle.api` contracts compile and preserve string-keyed behavior. | Yes | green |
+| 09-01-02 | 01 | 1 | PAPI-03 | T-09-02 | N/A | file/content | `ParticleApiDelegationBoundaryTest.retainedRootFacadesDelegateToParticleModuleApiAndDocumentTransition` checks retained root facade Javadocs/READMEs for transitional delegation and removal conditions. | Yes | green |
+| 09-02-01 | 02 | 2 | PAPI-01 | T-09-03 | N/A | behavior/unit/static | `ParticleAssetRegistryTest.replaceParticlesPublishesByDescriptionIdentifierNotSourceKey`, `ParticlePublisherTest`, and existing adapter tests verify lookup/store/publication/spawn/remove seams preserve string-keyed behavior. | Yes | green |
+| 09-02-02 | 02 | 2 | PAPI-03 | T-09-04 | N/A | static | `ParticleApiDelegationBoundaryTest` verifies root facades import/delegate to particle API and `:eyelib-particle` API sources avoid forbidden root/MC/Forge imports. | Yes | green |
 
 *Status: pending · green · red · flaky*
 
