@@ -11,7 +11,9 @@ import io.github.tt432.eyelib.client.model.ModelLookup;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.particle.ParticleLookup;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
+import io.github.tt432.eyelib.client.registry.ParticleAssetRegistry;
 import io.github.tt432.eyelibparticle.api.ParticleLookupApi;
+import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
 import io.github.tt432.eyelibmolang.MolangScope;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.junit.jupiter.api.AfterEach;
@@ -29,6 +31,7 @@ class ClientLookupFacadeTest {
         AnimationManager.INSTANCE.clear();
         ModelManager.INSTANCE.clear();
         ParticleManager.INSTANCE.clear();
+        ParticleDefinitionRegistry.store().clear();
     }
 
     @Test
@@ -68,7 +71,7 @@ class ClientLookupFacadeTest {
                   }
                 }
                 """)).getOrThrow(false, AssertionError::new);
-        ParticleManager.INSTANCE.put("eyelib:test_particle", particle);
+        ParticleAssetRegistry.publishParticle(particle);
 
         assertEquals(Set.of("eyelib:test_particle"), Set.copyOf(ParticleLookup.names()));
         assertSame(particle, ParticleLookup.get("eyelib:test_particle"));
