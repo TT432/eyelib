@@ -38,7 +38,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 **Milestone Goal:** 将粒子相关能力从 root runtime 的混合包结构中提升为清晰的 `:eyelib-particle` Gradle 模块边界，同时保持现有粒子加载、命令、网络 spawn/remove、渲染行为零回归。
 
 - [x] **Phase 8: Boundary Contract & Gradle Module Skeleton** - `:eyelib-particle` 成为可构建、可消费、方向明确的 Gradle 模块。 (2/2 plans) — completed 2026-05-09
-- [ ] **Phase 9: Particle API & Store Seam** - root 通过粒子模块的窄 API 使用 lookup、spawn/remove、store/publication 与初始化能力。
+- [x] **Phase 9: Particle API & Store Seam** - root 通过粒子模块的窄 API 使用 lookup、spawn/remove、store/publication 与初始化能力。 (3/3 plans) — completed 2026-05-09
 - [ ] **Phase 10: Schema/Runtime Ownership & Adapter** - importer/raw schema 与 executable runtime definition 的所有权和转换契约被锁定。
 - [ ] **Phase 11: Runtime Client Core Extraction** - 粒子运行时、发射器、渲染管理与 client hook 迁入粒子模块且保持 side-safe。
 - [ ] **Phase 12: Loading & Publication Rewire** - 资源重载、registry 替换、description identifier 发布语义在模块边界后保持不变。
@@ -66,7 +66,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
   1. Root runtime can access particle lookup, spawn/remove, store/publication, and initialization behavior through particle-module API seams.
   2. Any root compatibility facade delegates to particle-module APIs instead of containing particle business logic.
   3. Maintainer can identify every temporary compatibility facade and read why it exists and when it can be removed.
-**Plans**: 1/3 complete — `.planning/phases/09-particle-api-store-seam/09-01-PLAN.md`
+**Plans**: 3/3 complete — `.planning/phases/09-particle-api-store-seam/09-01-PLAN.md`, `.planning/phases/09-particle-api-store-seam/09-02-PLAN.md`, `.planning/phases/09-particle-api-store-seam/09-03-PLAN.md`
 
 ### Phase 10: Schema/Runtime Ownership & Adapter
 **Goal**: Importer/raw particle schema and executable runtime particle definitions have explicit canonical owners and a tested conversion seam.
@@ -135,7 +135,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 6. Config Override Bridge & State Machine Fixes | v1.1 | 2/2 | Complete | 2026-05-08 |
 | 7. Verification & Polish | v1.1 | 2/2 | Complete | 2026-05-08 |
 | 8. Boundary Contract & Gradle Module Skeleton | v1.2 | 2/2 | Complete | 2026-05-09 |
-| 9. Particle API & Store Seam | v1.2 | 1/3 | In Progress | - |
+| 9. Particle API & Store Seam | v1.2 | 3/3 | Complete | 2026-05-09 |
 | 10. Schema/Runtime Ownership & Adapter | v1.2 | 0/TBD | Not started | - |
 | 11. Runtime Client Core Extraction | v1.2 | 0/TBD | Not started | - |
 | 12. Loading & Publication Rewire | v1.2 | 0/TBD | Not started | - |

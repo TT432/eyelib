@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
-status: verifying
-stopped_at: Completed 09-03-PLAN.md
-last_updated: "2026-05-09T05:13:59.655Z"
-last_activity: 2026-05-09
+status: ready_to_plan
+stopped_at: Phase 9 complete; ready for Phase 10 planning.
+last_updated: "2026-05-09T00:00:00.000Z"
+last_activity: 2026-05-09 -- Phase 9 completed, reviewed, fixed, and re-verified
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 5
   completed_plans: 5
-  percent: 100
+  percent: 29
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-09)
 
 **Core value:** Eyelib 的功能模块必须能被独立理解、构建、验证和消费；粒子拆分必须形成清晰 Gradle 模块边界，同时保持现有加载、命令、网络同步、渲染行为零回归。
-**Current focus:** Phase 09 — particle-api-store-seam
+**Current focus:** Phase 10 — Schema/Runtime Ownership & Adapter
 
 ## Current Position
 
-Phase: 09 (particle-api-store-seam) — EXECUTING
-Plan: 3 of 3
-Status: Phase complete — ready for verification
-Last activity: 2026-05-09
+Phase: 10 of 14 (Schema/Runtime Ownership & Adapter)
+Plan: Not planned yet
+Status: Ready to plan
+Last activity: 2026-05-09 -- Phase 9 completed, review findings fixed, and targeted JetBrains MCP checks passed.
 
-Progress: [██████████] 100%
+Progress: [██████░░░░] 64% by completed historical phases plus Phases 8-9; v1.2 progress 2/7 phases complete.
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Progress: [██████████] 100%
 | Phase 09-particle-api-store-seam P01 | 4 min | 2 tasks | 10 files |
 | Phase 09-particle-api-store-seam P02 | 37 min | 3 tasks | 12 files |
 | Phase 09-particle-api-store-seam P03 | 20 min | 2 tasks | 5 files |
+| v1.2 Phases 8-14 | 5/5 Phase 8-9 plans | Phases 8-9 complete | Not tracked |
 
 ## Accumulated Context
 
@@ -67,6 +68,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [Phase 09-particle-api-store-seam]: Root particle compatibility facades now delegate to module-owned ParticleStore, ParticleLookupApi, ParticlePublisher, and ParticleSpawnApi while remaining transitional. — Preserves one-way root-to-particle dependency direction and gives later phases documented removal conditions for root facades.
 - [Phase 09-particle-api-store-seam]: Plan 03 kept validation-only tests/static checks for particle API/store and transitional facades. — No runtime behavior was moved; Phase 10 can use guarded seams.
 - [Phase 09-particle-api-store-seam]: Delegation documentation and forbidden-import boundaries are enforced by JUnit static source checks. — Keeps Phase 9 boundary regressions inside automated JetBrains MCP Gradle verification.
+- [v1.2 Phase 9]: Post-review fixes preserved particle store insertion order, expanded particle-module forbidden import scanning, and removed obsolete root `ParticleSpawnRequest` seam risk.
 
 ### Pending Todos
 
@@ -87,10 +89,12 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09T05:13:29.653Z
-Stopped at: Completed 09-03-PLAN.md
+Last session: 2026-05-09
+Stopped at: Phase 9 complete; ready for Phase 10 planning.
 Resume file: None
 
 ## Operator Next Steps
+
+- Continue with `/gsd-plan-phase 10` or autonomous Phase 10 execution.
 
 - Continue with `/gsd-plan-phase 9` or autonomous Phase 9 execution.
