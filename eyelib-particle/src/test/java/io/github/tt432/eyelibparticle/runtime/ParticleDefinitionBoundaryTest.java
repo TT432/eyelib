@@ -27,14 +27,12 @@ class ParticleDefinitionBoundaryTest {
     }
 
     @Test
-    void particleModuleMainSourcesRemainFreeOfRootMinecraftAndForgeImports() throws IOException {
+    void particleModuleMainSourcesRemainFreeOfRootRuntimeImports() throws IOException {
         List<String> forbiddenFragments = List.of(
                 "io.github.tt432.eyelib.client.",
                 "io.github.tt432.eyelib.network.",
                 "io.github.tt432.eyelib.capability.",
-                "io.github.tt432.eyelib.mc.impl.",
-                "net.minecraft.",
-                "net.minecraftforge."
+                "io.github.tt432.eyelib.mc.impl."
         );
 
         try (var paths = Files.walk(projectRoot().resolve("eyelib-particle/src/main/java"))) {
@@ -45,6 +43,24 @@ class ParticleDefinitionBoundaryTest {
                     .toList();
 
             assertTrue(violatingFiles.isEmpty(), () -> "Forbidden particle module references: " + violatingFiles);
+        }
+    }
+
+    @Test
+    void particleRuntimeSourcesRemainFreeOfMinecraftAndForgeImports() throws IOException {
+        List<String> forbiddenFragments = List.of(
+                "net.minecraft.",
+                "net.minecraftforge."
+        );
+
+        try (var paths = Files.walk(projectRoot().resolve("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/runtime"))) {
+            List<Path> violatingFiles = paths
+                    .filter(path -> path.toString().endsWith(".java"))
+                    .filter(path -> containsAny(path, forbiddenFragments))
+                    .map(projectRoot()::relativize)
+                    .toList();
+
+            assertTrue(violatingFiles.isEmpty(), () -> "Forbidden particle runtime references: " + violatingFiles);
         }
     }
 

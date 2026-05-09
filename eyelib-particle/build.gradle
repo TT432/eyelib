@@ -45,6 +45,7 @@ legacyForge {
 dependencies {
     implementation project(':eyelib-importer')
     implementation project(':eyelib-molang')
+    implementation project(':eyelib-material')
 
     compileOnly 'org.jspecify:jspecify:1.0.0'
 
