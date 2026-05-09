@@ -22,8 +22,8 @@ class ParticleDefinitionDocumentationTest {
         modules.assertContains("io.github.tt432.eyelibimporter.particle.BrParticle");
         modules.assertContains("canonical module runtime definition owner");
         modules.assertContains("io.github.tt432.eyelibparticle.runtime.ParticleDefinition");
-        modules.assertContains("legacy/non-canonical");
-        modules.assertContains("adapter target");
+        modules.assertContains("root `client/particle/bedrock/BrParticle`");
+        modules.assertContains("transitional compatibility adapters only");
 
         moduleBoundaries.assertContains("canonical raw Bedrock particle schema/codec owner");
         moduleBoundaries.assertContains("canonical module runtime definition owner");
