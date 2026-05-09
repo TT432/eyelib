@@ -137,7 +137,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 8. Boundary Contract & Gradle Module Skeleton | v1.2 | 2/2 | Complete | 2026-05-09 |
 | 9. Particle API & Store Seam | v1.2 | 3/3 | Complete | 2026-05-09 |
 | 10. Schema/Runtime Ownership & Adapter | v1.2 | 2/2 | Complete   | 2026-05-09 |
-| 11. Runtime Client Core Extraction | v1.2 | 4/6 | In Progress|  |
+| 11. Runtime Client Core Extraction | v1.2 | 5/6 | In Progress|  |
 | 12. Loading & Publication Rewire | v1.2 | 0/TBD | Not started | - |
 | 13. Command & Network Integration Rewire | v1.2 | 0/TBD | Not started | - |
 | 14. Verification & Documentation Gate | v1.2 | 0/TBD | Not started | - |
