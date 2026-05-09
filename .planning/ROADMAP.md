@@ -119,7 +119,14 @@ Plans:
   2. Spawn/remove packet behavior remains string-keyed and delegates from network handlers into particle services without exposing render internals.
   3. Platform-specific command, player, packet channel, and identifier validation concerns stay in explicit integration adapters.
   4. Pure particle core APIs remain root-independent and platform-light even though platform bindings may live in an appropriate particle or root integration layer.
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+**Wave 1**
+- [ ] 13-01-PLAN.md — Preserve `/eyelib particle` command compatibility and command adapter boundaries.
+- [ ] 13-02-PLAN.md — Preserve string-keyed spawn/remove packets and network handler delegation.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 13-03-PLAN.md — Update command/network ownership docs and run final JetBrains MCP verification.
 
 ### Phase 14: Verification & Documentation Gate
 **Goal**: Maintainer can prove the particle module split preserves behavior and leaves the documented architecture consistent.
@@ -148,5 +155,5 @@ Plans:
 | 10. Schema/Runtime Ownership & Adapter | v1.2 | 2/2 | Complete   | 2026-05-09 |
 | 11. Runtime Client Core Extraction | v1.2 | 6/6 | Complete   | 2026-05-09 |
 | 12. Loading & Publication Rewire | v1.2 | 3/3 | Complete   | 2026-05-09 |
-| 13. Command & Network Integration Rewire | v1.2 | 0/TBD | Not started | - |
+| 13. Command & Network Integration Rewire | v1.2 | 0/3 | Planned | - |
 | 14. Verification & Documentation Gate | v1.2 | 0/TBD | Not started | - |

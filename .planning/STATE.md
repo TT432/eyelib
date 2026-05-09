@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
-status: planning
-stopped_at: Phase 12 complete; ready to plan Phase 13.
-last_updated: "2026-05-09T12:35:00Z"
-last_activity: 2026-05-09 -- Phase 12 verified and code-reviewed clean
+status: ready_to_execute
+stopped_at: Phase 13 planned; ready to execute Wave 1.
+last_updated: "2026-05-09T13:30:00Z"
+last_activity: 2026-05-09 -- Phase 13 planned with 3 executable plans
 progress:
   total_phases: 7
   completed_phases: 5
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 
 ## Current Position
 
-Phase: 13 (command-network-integration-rewire) — READY TO PLAN
-Plan: 0 of TBD
-Status: Phase 12 complete; next phase planning can begin.
-Last activity: 2026-05-09 -- Phase 12 verified and code-reviewed clean
+Phase: 13 (command-network-integration-rewire) — READY TO EXECUTE
+Plan: 0 of 3
+Status: Phase 13 planned; execute Wave 1 plans next.
+Last activity: 2026-05-09 -- Phase 13 planned with 3 executable plans
 
 Progress: [██████████] 100%
 
@@ -105,6 +105,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [Phase 12-loading-publication-rewire]: ParticleAssetRegistry remains only as a legacy root compatibility adapter while active publication uses ParticleDefinitionRegistry.publisher().
 - [Phase 12-loading-publication-rewire]: Packet-driven spawn now looks up ParticleDefinition from the module active registry directly; legacy BrParticle conversion remains only for current root compatibility callers.
 - [v1.2 Phase 12]: Post-review fixes publish addon particle files into the module active registry, route animation/controller particle effects through module ParticleDefinition lookup, and keep legacy root maps as compatibility-only. Phase 12 review is clean.
+- [Phase 13-command-network-integration-rewire]: Planning locked command compatibility, string-keyed packet/delegation checks, documentation drift tests, and JetBrains MCP-only verification across 3 plans.
 
 ### Pending Todos
 
@@ -130,4 +131,4 @@ Resume file: None
 
 ## Operator Next Steps
 
-- Continue with `/gsd-plan-phase 13` or autonomous Phase 13 planning/execution.
+- Continue with `/gsd-execute-phase 13` to execute the planned Wave 1 command/network adapter work.
