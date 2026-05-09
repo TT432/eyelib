@@ -21,9 +21,9 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Schema And Runtime Ownership
 
-- [ ] **PSCHEMA-01**: Maintainer can identify the canonical owner for importer/raw particle schema and the canonical owner for executable runtime particle definitions.
-- [ ] **PSCHEMA-02**: Runtime particle definitions are created from importer/raw schema through a named adapter or equivalent explicit conversion seam with parity coverage.
-- [ ] **PSCHEMA-03**: Duplicate `BrParticle` ownership cannot drift silently because codec/schema behavior and runtime conversion expectations are covered by tests or documented invariants.
+- [x] **PSCHEMA-01**: Maintainer can identify the canonical owner for importer/raw particle schema and the canonical owner for executable runtime particle definitions.
+- [x] **PSCHEMA-02**: Runtime particle definitions are created from importer/raw schema through a named adapter or equivalent explicit conversion seam with parity coverage.
+- [x] **PSCHEMA-03**: Duplicate `BrParticle` ownership cannot drift silently because codec/schema behavior and runtime conversion expectations are covered by tests or documented invariants.
 
 ### Loading And Publication
 
@@ -78,9 +78,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PAPI-01 | Phase 9: Particle API & Store Seam | Complete |
 | PAPI-02 | Phase 8: Boundary Contract & Gradle Module Skeleton | Complete |
 | PAPI-03 | Phase 9: Particle API & Store Seam | Complete |
-| PSCHEMA-01 | Phase 10: Schema/Runtime Ownership & Adapter | Pending |
-| PSCHEMA-02 | Phase 10: Schema/Runtime Ownership & Adapter | Pending |
-| PSCHEMA-03 | Phase 10: Schema/Runtime Ownership & Adapter | Pending |
+| PSCHEMA-01 | Phase 10: Schema/Runtime Ownership & Adapter | Complete |
+| PSCHEMA-02 | Phase 10: Schema/Runtime Ownership & Adapter | Complete |
+| PSCHEMA-03 | Phase 10: Schema/Runtime Ownership & Adapter | Complete |
 | PLOAD-01 | Phase 12: Loading & Publication Rewire | Pending |
 | PLOAD-02 | Phase 12: Loading & Publication Rewire | Pending |
 | PLOAD-03 | Phase 12: Loading & Publication Rewire | Pending |

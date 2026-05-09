@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
-status: executing
-stopped_at: Completed 10-01-PLAN.md; ready for 10-02-PLAN.md.
-last_updated: "2026-05-09T14:41:48Z"
-last_activity: 2026-05-09 -- Phase 10 Plan 01 completed
+status: planning
+stopped_at: Phase 10 complete; ready to plan Phase 11.
+last_updated: "2026-05-09T07:20:00Z"
+last_activity: 2026-05-09 -- Phase 10 verified and code-reviewed clean
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 6
-  percent: 86
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-09)
 
 **Core value:** Eyelib 的功能模块必须能被独立理解、构建、验证和消费；粒子拆分必须形成清晰 Gradle 模块边界，同时保持现有加载、命令、网络同步、渲染行为零回归。
-**Current focus:** Phase 10 — schema-runtime-ownership-adapter
+**Current focus:** Phase 11 — Runtime Client Core Extraction
 
 ## Current Position
 
-Phase: 10 (schema-runtime-ownership-adapter) — EXECUTING
-Plan: 2 of 2
-Status: Executing Phase 10; Plan 01 complete
-Last activity: 2026-05-09 -- Phase 10 Plan 01 completed
+Phase: 11 (runtime-client-core-extraction) — READY TO PLAN
+Plan: 0 of TBD
+Status: Phase 10 complete; next phase planning can begin.
+Last activity: 2026-05-09 -- Phase 10 verified and code-reviewed clean
 
-Progress: [████████░░] 86% by completed v1.2 plans; Phase 10 is 1/2 plans complete.
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Progress: [████████░░] 86% by completed v1.2 plans; Phase 10
 | Phase 09-particle-api-store-seam P03 | 20 min | 2 tasks | 5 files |
 | v1.2 Phases 8-14 | 5/5 Phase 8-9 plans | Phases 8-9 complete | Not tracked |
 | Phase 10-schema-runtime-ownership-adapter P01 | 11 min | 2 tasks | 6 files |
+| Phase 10-schema-runtime-ownership-adapter P02 | 6min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [Phase 09-particle-api-store-seam]: Delegation documentation and forbidden-import boundaries are enforced by JUnit static source checks. — Keeps Phase 9 boundary regressions inside automated JetBrains MCP Gradle verification.
 - [v1.2 Phase 9]: Post-review fixes preserved particle store insertion order, expanded particle-module forbidden import scanning, and removed obsolete root `ParticleSpawnRequest` seam risk.
 - [Phase 10-schema-runtime-ownership-adapter]: `:eyelib-particle` now owns `ParticleDefinition` plus `ParticleDefinitionAdapter.fromSchema(BrParticle)` as the importer-schema to runtime-definition seam, preserving importer raw components, curves, events, render parameters, and billboard flipbook summary through `DataResult` validation.
+- [Phase 10-schema-runtime-ownership-adapter]: Importer BrParticle is the canonical raw particle schema/codec owner, particle ParticleDefinition is the canonical module runtime definition owner, and root client particle bedrock BrParticle remains legacy/non-canonical until later migration. — Plan 10-02 locked docs and JUnit documentation invariants for Phase 10 ownership.
+- [Phase 10-schema-runtime-ownership-adapter]: ParticleDefinitionAdapter is the only documented Phase 10 particle -> importer dependency seam; boundary tests reject duplicate BrParticle and root/MC/Forge imports. — The adapter seam preserves mapped fields without moving runtime/loading/command/network behavior.
+- [v1.2 Phase 10]: Post-review fixes preserved raw particle event data in importer `BrParticle.Events`, strengthened forbidden-reference scanning, and covered adapter validation branches; Phase 10 review is clean.
 
 ### Pending Todos
 
@@ -78,7 +82,6 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 10 needs focused design for importer/raw schema ownership vs runtime executable definitions.
 - Phase 11 needs side/classloading review when moving client hooks and render code.
 
 ## Deferred Items
@@ -91,12 +94,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09
-Stopped at: Completed 10-01-PLAN.md; ready for 10-02-PLAN.md.
+Last session: 2026-05-09T07:20:00Z
+Stopped at: Phase 10 complete; ready to plan Phase 11.
 Resume file: None
 
 ## Operator Next Steps
 
-- Continue with `.planning/phases/10-schema-runtime-ownership-adapter/10-02-PLAN.md`.
-
-- Continue with `/gsd-plan-phase 9` or autonomous Phase 9 execution.
+- Continue with `/gsd-plan-phase 11` or autonomous Phase 11 planning/execution.
