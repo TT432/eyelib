@@ -9,8 +9,8 @@
 - Phase 9 owns root-consumed API/store/publication contracts under `io.github.tt432.eyelibparticle.api`; retained root facades are transitional and must delegate here.
 - Phase 10 owns `ParticleDefinition` and `ParticleDefinitionAdapter`; `io.github.tt432.eyelibimporter.particle.BrParticle` remains the canonical raw Bedrock particle schema/codec owner.
 - The allowed particle -> importer dependency for ParticleDefinitionAdapter preserves mapped fields: identifier, format version, basic render material/texture, curves, events, raw components, billboard flipbook summary, and Molang value preservation.
-- Phase 11 owns module-side executable component behavior under `runtime/bedrock/component/**`, including emitter components plus particle appearance, lifetime, initial, and motion semantics.
-- Remaining concrete particle lifecycle/render-manager/client integration runtime stays in `src/main/java/io/github/tt432/eyelib/client/particle/` until later Phase 11 plans move it through explicit seams.
+- Phase 11 owns module-side executable component and lifecycle behavior under `runtime/bedrock/**`, including emitter components, particle appearance/lifetime/initial/motion semantics, and module-owned emitter/particle lifecycle classes.
+- Remaining render-manager/client integration runtime stays in `src/main/java/io/github/tt432/eyelib/client/particle/` until later Phase 11 plans move it through explicit seams.
 
 ## Dependency Direction
 - Root runtime may depend on :eyelib-particle, but :eyelib-particle must not depend on root runtime packages, root managers, root registries, root packets, root capability helpers, or root mc/impl classes.
@@ -20,7 +20,7 @@
 - Pure particle core stays free of root, Minecraft, and Forge contamination.
 - Minecraft/Forge-facing integration must live in explicitly documented adapters before introduction.
 - Existing particle loading, command, network, and render adapter behavior must not be moved into pure runtime packages.
-- Phase 11 moves executable runtime core through pure runtime and explicit client-integration seams, Phase 12 rewires loading/publication, and Phase 13 rewires command/network integration.
+- Phase 11 moves executable runtime core, Phase 12 rewires loading/publication, and Phase 13 rewires command/network integration.
 
 ## Current Consumers
 - Root runtime `:` consumes the module through Gradle project dependency wiring.
