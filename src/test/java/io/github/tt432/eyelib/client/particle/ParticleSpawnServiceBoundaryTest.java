@@ -32,7 +32,23 @@ class ParticleSpawnServiceBoundaryTest {
                 "import io.github.tt432.eyelib.client.",
                 "import io.github.tt432.eyelib.network.",
                 "import io.github.tt432.eyelib.capability.",
-                "import io.github.tt432.eyelib.mc.impl.",
+                "import io.github.tt432.eyelib.mc.impl."
+        );
+
+        try (var paths = Files.walk(sourceRoot)) {
+            List<Path> violatingFiles = paths
+                    .filter(path -> path.toString().endsWith(".java"))
+                    .filter(path -> containsAnyForbiddenImport(path, forbiddenFragments))
+                    .toList();
+
+            assertTrue(violatingFiles.isEmpty(), () -> "Forbidden particle module root imports: " + violatingFiles);
+        }
+    }
+
+    @Test
+    void particleModuleRuntimeSourcesStayFreeOfMinecraftAndForgeImports() throws IOException {
+        Path sourceRoot = Path.of("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/runtime");
+        List<String> forbiddenFragments = List.of(
                 "import net.minecraft.",
                 "import net.minecraftforge."
         );
