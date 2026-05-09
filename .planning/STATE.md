@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
 status: executing
 stopped_at: Phase 8 complete; ready for Phase 9 planning.
-last_updated: "2026-05-09T04:53:15.597Z"
+last_updated: "2026-05-09T05:05:37.396Z"
 last_activity: 2026-05-09
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 5
-  completed_plans: 3
-  percent: 60
+  completed_plans: 4
+  percent: 80
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 ## Current Position
 
 Phase: 09 (particle-api-store-seam) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-05-09
 
-Progress: [██████░░░░] 60%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Progress: [██████░░░░] 60%
 | v1.1 Phases 5-7 | 5/5 | Not tracked | Not tracked |
 | v1.2 Phases 8-14 | 2/2 Phase 8 plans | Phase 8 complete | Not tracked |
 | Phase 09-particle-api-store-seam P01 | 4 min | 2 tasks | 10 files |
+| Phase 09-particle-api-store-seam P02 | 37 min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [v1.2 Phase 8]: `:eyelib-particle` starts as a Forge-visible Gradle subproject skeleton with root → particle consumption and no reverse dependency on root runtime packages.
 - [v1.2 Phase 8]: Phase 8 verification used JetBrains MCP `:eyelib-particle:compileJava` and root `:compileJava`; deeper particle behavior verification remains owned by later phases.
 - [Phase 09-particle-api-store-seam]: Kept particle API additive inside io.github.tt432.eyelibparticle.api with generic T contracts so :eyelib-particle remains root-clean. — Preserves Phase 8 one-way dependency boundary while providing Phase 9 API/store seams.
+- [Phase 09-particle-api-store-seam]: Root particle compatibility facades now delegate to module-owned ParticleStore, ParticleLookupApi, ParticlePublisher, and ParticleSpawnApi while remaining transitional. — Preserves one-way root-to-particle dependency direction and gives later phases documented removal conditions for root facades.
 
 ### Pending Todos
 
@@ -82,7 +84,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09T04:52:59.213Z
+Last session: 2026-05-09T05:05:19.177Z
 Stopped at: Phase 8 complete; ready for Phase 9 planning.
 Resume file: None
 

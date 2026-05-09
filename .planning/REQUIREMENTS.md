@@ -17,7 +17,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 - [x] **PAPI-01**: Root runtime can access particle lookup, spawn/remove, store/publication, and initialization behavior through narrow particle-module APIs instead of owning particle internals directly.
 - [ ] **PAPI-02**: `:eyelib-particle` has no dependency on root runtime packages, root managers, root registries, root packets, root capability helpers, or root `mc/impl` classes.
-- [ ] **PAPI-03**: Any temporary root compatibility facade delegates to particle-module APIs and is documented as transitional.
+- [x] **PAPI-03**: Any temporary root compatibility facade delegates to particle-module APIs and is documented as transitional.
 
 ### Schema And Runtime Ownership
 
@@ -77,7 +77,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PGRAD-02 | Phase 8: Boundary Contract & Gradle Module Skeleton | Complete |
 | PAPI-01 | Phase 9: Particle API & Store Seam | Complete |
 | PAPI-02 | Phase 8: Boundary Contract & Gradle Module Skeleton | Complete |
-| PAPI-03 | Phase 9: Particle API & Store Seam | Pending |
+| PAPI-03 | Phase 9: Particle API & Store Seam | Complete |
 | PSCHEMA-01 | Phase 10: Schema/Runtime Ownership & Adapter | Pending |
 | PSCHEMA-02 | Phase 10: Schema/Runtime Ownership & Adapter | Pending |
 | PSCHEMA-03 | Phase 10: Schema/Runtime Ownership & Adapter | Pending |
