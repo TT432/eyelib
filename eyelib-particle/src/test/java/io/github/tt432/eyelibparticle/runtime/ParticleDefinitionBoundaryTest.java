@@ -67,11 +67,108 @@ class ParticleDefinitionBoundaryTest {
 
     private static boolean containsAny(Path path, List<String> fragments) {
         try {
-            String source = Files.readString(path);
+            String source = stripCommentsAndStringLiterals(Files.readString(path));
             return fragments.stream().anyMatch(source::contains);
         } catch (IOException exception) {
             throw new IllegalStateException(exception);
         }
+    }
+
+    private static String stripCommentsAndStringLiterals(String source) {
+        StringBuilder result = new StringBuilder(source.length());
+        boolean lineComment = false;
+        boolean blockComment = false;
+        boolean stringLiteral = false;
+        boolean charLiteral = false;
+        boolean textBlock = false;
+
+        for (int i = 0; i < source.length(); i++) {
+            char current = source.charAt(i);
+            char next = i + 1 < source.length() ? source.charAt(i + 1) : '\0';
+            char nextNext = i + 2 < source.length() ? source.charAt(i + 2) : '\0';
+
+            if (lineComment) {
+                if (current == '\n') {
+                    lineComment = false;
+                    result.append(current);
+                } else {
+                    result.append(' ');
+                }
+                continue;
+            }
+
+            if (blockComment) {
+                if (current == '*' && next == '/') {
+                    blockComment = false;
+                    result.append("  ");
+                    i++;
+                } else {
+                    result.append(current == '\n' ? '\n' : ' ');
+                }
+                continue;
+            }
+
+            if (textBlock) {
+                if (current == '"' && next == '"' && nextNext == '"') {
+                    textBlock = false;
+                    result.append("   ");
+                    i += 2;
+                } else {
+                    result.append(current == '\n' ? '\n' : ' ');
+                }
+                continue;
+            }
+
+            if (stringLiteral) {
+                if (current == '\\' && next != '\0') {
+                    result.append("  ");
+                    i++;
+                } else if (current == '"') {
+                    stringLiteral = false;
+                    result.append(' ');
+                } else {
+                    result.append(current == '\n' ? '\n' : ' ');
+                }
+                continue;
+            }
+
+            if (charLiteral) {
+                if (current == '\\' && next != '\0') {
+                    result.append("  ");
+                    i++;
+                } else if (current == '\'') {
+                    charLiteral = false;
+                    result.append(' ');
+                } else {
+                    result.append(current == '\n' ? '\n' : ' ');
+                }
+                continue;
+            }
+
+            if (current == '/' && next == '/') {
+                lineComment = true;
+                result.append("  ");
+                i++;
+            } else if (current == '/' && next == '*') {
+                blockComment = true;
+                result.append("  ");
+                i++;
+            } else if (current == '"' && next == '"' && nextNext == '"') {
+                textBlock = true;
+                result.append("   ");
+                i += 2;
+            } else if (current == '"') {
+                stringLiteral = true;
+                result.append(' ');
+            } else if (current == '\'') {
+                charLiteral = true;
+                result.append(' ');
+            } else {
+                result.append(current);
+            }
+        }
+
+        return result.toString();
     }
 
     private static SourceCheck source(String path) throws IOException {
