@@ -102,7 +102,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 **Plans**: 3 plans
 Plans:
 **Wave 1**
-- [ ] 12-01-PLAN.md — Create module-owned particle definition registry and JSON resource publication seam.
+- [x] 12-01-PLAN.md — Create module-owned particle definition registry and JSON resource publication seam.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 12-02-PLAN.md — Rewire root reload, registry, lookup, tooling, and spawn compatibility adapters to module publication.
@@ -147,6 +147,6 @@ Plans:
 | 9. Particle API & Store Seam | v1.2 | 3/3 | Complete | 2026-05-09 |
 | 10. Schema/Runtime Ownership & Adapter | v1.2 | 2/2 | Complete   | 2026-05-09 |
 | 11. Runtime Client Core Extraction | v1.2 | 6/6 | Complete   | 2026-05-09 |
-| 12. Loading & Publication Rewire | v1.2 | 0/3 | Planned | - |
+| 12. Loading & Publication Rewire | v1.2 | 1/3 | In Progress | - |
 | 13. Command & Network Integration Rewire | v1.2 | 0/TBD | Not started | - |
 | 14. Verification & Documentation Gate | v1.2 | 0/TBD | Not started | - |

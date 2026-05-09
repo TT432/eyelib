@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
 status: executing
-stopped_at: Phase 12 context gathered
-last_updated: "2026-05-09T11:30:19.105Z"
-last_activity: 2026-05-09 -- Phase 12 planning complete
+stopped_at: Completed 12-01-PLAN.md
+last_updated: "2026-05-09T11:41:39.742Z"
+last_activity: 2026-05-09
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 16
-  completed_plans: 13
-  percent: 81
+  completed_plans: 14
+  percent: 88
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-09)
 
 **Core value:** Eyelib 的功能模块必须能被独立理解、构建、验证和消费；粒子拆分必须形成清晰 Gradle 模块边界，同时保持现有加载、命令、网络同步、渲染行为零回归。
-**Current focus:** Phase 11 — Runtime Client Core Extraction
+**Current focus:** Phase 12 — Loading & Publication Rewire
 
 ## Current Position
 
-Phase: 11 (runtime-client-core-extraction) — IN PROGRESS
-Plan: 6 of 6 complete
-Status: Ready to execute
-Last activity: 2026-05-09 -- Phase 12 planning complete
+Phase: 12 (loading-publication-rewire) — IN PROGRESS
+Plan: 1 of 3 complete
+Status: Ready to execute next plan
+Last activity: 2026-05-09
 
-Progress: [██████████] 100%
+Progress: [█████████░] 88%
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Progress: [██████████] 100%
 | Phase 11-runtime-client-core-extraction P04 | 52min | 2 tasks | 9 files |
 | Phase 11-runtime-client-core-extraction P05 | 20min | 2 tasks | 14 files |
 | Phase 11-runtime-client-core-extraction P06 | 16min | 2 tasks | 14 files |
+| Phase 12-loading-publication-rewire P01 | 7min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,8 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [Phase ?]: [Phase 11-runtime-client-core-extraction]: ParticleRenderManager now owns module-side emitter and particle collections while Forge event subscription lives only in ParticleRenderHooks. — Keeps lifecycle behavior testable without Forge event loading.
 - [Phase ?]: [Phase 11-runtime-client-core-extraction]: Minecraft render types, ResourceLocation texture suffixing, render buffers, camera transforms, tint, billboard, and light output are quarantined in BedrockParticleRenderer under the particle client integration package. — Preserves render behavior while keeping runtime/** root/MC/Forge-clean.
 - [Phase 11-runtime-client-core-extraction]: Root ParticleSpawnService now constructs module BedrockParticleRuntime emitters and registers them with module ParticleRenderManager while preserving string-keyed packet entrypoints. — Completes Phase 11 root compatibility delegation while deferring loading/publication to Phase 12 and command/network rewires to Phase 13.
+- [Phase 12-loading-publication-rewire]: Module loading publication stores active entries by ParticleDefinition.identifier(), while source ids remain diagnostics/report metadata.
+- [Phase 12-loading-publication-rewire]: Invalid resource JSON/schema conversion failures are logged and reported without blocking valid replacement entries.
 
 ### Pending Todos
 
@@ -115,10 +118,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09T11:19:23.938Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-loading-publication-rewire/12-CONTEXT.md
+Last session: 2026-05-09T11:41:22.017Z
+Stopped at: Completed 12-01-PLAN.md
+Resume file: None
 
 ## Operator Next Steps
 
-- Continue with `/gsd-plan-phase 11` or autonomous Phase 11 planning/execution.
+- Continue with `.planning/phases/12-loading-publication-rewire/12-02-PLAN.md`.
