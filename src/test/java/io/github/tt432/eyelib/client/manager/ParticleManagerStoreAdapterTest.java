@@ -6,6 +6,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,6 +46,21 @@ class ParticleManagerStoreAdapterTest {
 
         store.clear();
         assertEquals(Map.of(), ParticleManager.readPort().getAllData());
+    }
+
+    @Test
+    void storeAccessorPreservesPublishedReplacementOrder() {
+        ParticleStore<BrParticle> store = ParticleManager.store();
+
+        LinkedHashMap<String, BrParticle> particles = new LinkedHashMap<>();
+        particles.put("eyelib:hash_collision_fb", testParticle("eyelib:hash_collision_fb"));
+        particles.put("eyelib:hash_collision_ea", testParticle("eyelib:hash_collision_ea"));
+        particles.put("eyelib:hash_collision_long_tail", testParticle("eyelib:hash_collision_long_tail"));
+
+        store.replaceAll(particles);
+
+        assertEquals(List.copyOf(particles.keySet()), List.copyOf(store.all().keySet()));
+        assertEquals(List.copyOf(particles.keySet()), List.copyOf(store.names()));
     }
 
     private static BrParticle testParticle(String identifier) {

@@ -2,12 +2,11 @@ package io.github.tt432.eyelib.client.manager;
 
 import org.jspecify.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 final class ManagerStorage<T> {
-    private final Map<String, T> data = new HashMap<>();
+    private final Map<String, T> data = new LinkedHashMap<>();
 
     void put(String name, T value) {
         data.put(name, value);
@@ -19,12 +18,12 @@ final class ManagerStorage<T> {
     }
 
     Map<String, T> getAllData() {
-        return new HashMap<>(data);
+        return new LinkedHashMap<>(data);
     }
 
     void replaceAll(Map<String, ? extends T> replacement) {
         data.clear();
-        data.putAll(new LinkedHashMap<>(replacement));
+        data.putAll(replacement);
     }
 
     void clear() {
