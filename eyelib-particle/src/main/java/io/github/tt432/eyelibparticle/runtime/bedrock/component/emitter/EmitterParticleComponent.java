@@ -2,9 +2,14 @@ package io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter;
 
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.ParticleComponent;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.shape.Direction;
 import io.github.tt432.eyelibparticle.runtime.support.ParticleBlackboard;
 import org.jspecify.annotations.Nullable;
 import org.joml.Vector3f;
+
+import java.util.Optional;
+import java.util.random.RandomGenerator;
+import java.util.concurrent.ThreadLocalRandom;
 
 public interface EmitterParticleComponent extends ParticleComponent {
     default void onStart(EmitterAccess emitter) {
@@ -33,28 +38,8 @@ public interface EmitterParticleComponent extends ParticleComponent {
         return null;
     }
 
-    default DirectionAccess direction() {
-        return DirectionAccess.EMPTY;
-    }
-
-    interface DirectionAccess {
-        DirectionAccess EMPTY = new DirectionAccess() {
-            @Override
-            public boolean isEmpty() {
-                return true;
-            }
-
-            @Override
-            public Vector3f getVec(MolangScope scope, Vector3f entityCenter, Vector3f emitPosition) {
-                return new Vector3f();
-            }
-        };
-
-        default boolean isEmpty() {
-            return false;
-        }
-
-        Vector3f getVec(MolangScope scope, Vector3f entityCenter, Vector3f emitPosition);
+    default Direction direction() {
+        return Direction.EMPTY;
     }
 
     interface EmitterAccess {
@@ -73,5 +58,20 @@ public interface EmitterParticleComponent extends ParticleComponent {
         void setEnabled(boolean enabled);
 
         void remove();
+
+        default RandomGenerator random() {
+            return ThreadLocalRandom.current();
+        }
+
+        default Optional<Bounds> entityBounds() {
+            return Optional.empty();
+        }
+
+        record Bounds(Vector3f center, Vector3f halfDimensions) {
+            public Bounds {
+                center = new Vector3f(center);
+                halfDimensions = new Vector3f(halfDimensions);
+            }
+        }
     }
 }

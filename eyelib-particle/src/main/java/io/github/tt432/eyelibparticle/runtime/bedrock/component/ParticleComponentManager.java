@@ -10,11 +10,18 @@ import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelibimporter.addon.BedrockResourceValue;
 import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterInitialization;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterLocalSpace;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterParticleComponent;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.lifetime.EmitterLifetimeEvents;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.lifetime.EmitterLifetimeExpression;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.lifetime.EmitterLifetimeLooping;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.lifetime.EmitterLifetimeOnce;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.shape.EmitterDisc;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.shape.EmitterShapeBox;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.shape.EmitterShapeCustom;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.shape.EmitterShapeEntityAABB;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.shape.EmitterShapePoint;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.shape.EmitterShapeSphere;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.rate.EmitterRateInstant;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.rate.EmitterRateManual;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.rate.EmitterRateSteady;
@@ -38,6 +45,13 @@ public final class ParticleComponentManager {
         register("emitter_lifetime_looping", "emitter_lifetime", ComponentTarget.EMITTER, EmitterLifetimeLooping.CODEC);
         register("emitter_lifetime_once", "emitter_lifetime", ComponentTarget.EMITTER, EmitterLifetimeOnce.CODEC);
         register("emitter_lifetime_events", "emitter_lifetime_events", ComponentTarget.EMITTER, EmitterLifetimeEvents.CODEC);
+        register("emitter_local_space", "emitter_local_space", ComponentTarget.EMITTER, EmitterLocalSpace.CODEC);
+        register("emitter_shape_point", "emitter_shape", ComponentTarget.EMITTER, EmitterShapePoint.CODEC);
+        register("emitter_shape_box", "emitter_shape", ComponentTarget.EMITTER, EmitterShapeBox.CODEC);
+        register("emitter_shape_sphere", "emitter_shape", ComponentTarget.EMITTER, EmitterShapeSphere.CODEC);
+        register("emitter_shape_disc", "emitter_shape", ComponentTarget.EMITTER, EmitterDisc.CODEC);
+        register("emitter_shape_custom", "emitter_shape", ComponentTarget.EMITTER, EmitterShapeCustom.CODEC);
+        register("emitter_shape_entity_aabb", "emitter_shape", ComponentTarget.EMITTER, EmitterShapeEntityAABB.CODEC);
     }
 
     private ParticleComponentManager() {

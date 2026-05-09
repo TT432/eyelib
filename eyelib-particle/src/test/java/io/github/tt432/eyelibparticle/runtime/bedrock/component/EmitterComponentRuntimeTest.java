@@ -109,7 +109,7 @@ class EmitterComponentRuntimeTest {
 
         FakeEmitter emitter = new FakeEmitter();
         EmitterShapePoint point = new EmitterShapePoint(
-                MolangValue3.create(MolangValue.getConstant(1), MolangValue.getConstant(2), MolangValue.getConstant(3)),
+                new MolangValue3(MolangValue.getConstant(1), MolangValue.getConstant(2), MolangValue.getConstant(3)),
                 Direction.EMPTY
         );
         Vector3f pointPosition = point.getEmitPosition(emitter).eval(emitter.scope);
@@ -117,7 +117,7 @@ class EmitterComponentRuntimeTest {
 
         EmitterShapeBox box = new EmitterShapeBox(
                 MolangValue3.ZERO,
-                MolangValue3.create(MolangValue.getConstant(1), MolangValue.getConstant(1), MolangValue.getConstant(1)),
+                new MolangValue3(MolangValue.getConstant(1), MolangValue.getConstant(1), MolangValue.getConstant(1)),
                 false,
                 Direction.EMPTY
         );
