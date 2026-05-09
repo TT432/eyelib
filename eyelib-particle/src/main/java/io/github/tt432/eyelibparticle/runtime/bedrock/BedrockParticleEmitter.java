@@ -237,7 +237,7 @@ public final class BedrockParticleEmitter implements EmitterParticleComponent.Em
         return environment.entityBounds();
     }
 
-    private static float calculateCurve(BrParticle.Curve curve, MolangScope scope) {
+    static float calculateCurve(BrParticle.Curve curve, MolangScope scope) {
         float horizontalRange = curve.horizontalRange().eval(scope);
         float time = horizontalRange == 0 ? 0 : curve.input().eval(scope) / horizontalRange;
         return switch (curve.type()) {
