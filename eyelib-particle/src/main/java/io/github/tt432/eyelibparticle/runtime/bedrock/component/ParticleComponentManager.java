@@ -25,6 +25,12 @@ import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.shape.Em
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.rate.EmitterRateInstant;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.rate.EmitterRateManual;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.rate.EmitterRateSteady;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.ParticleParticleComponent;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.appearance.ParticleAppearanceBillboard;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.appearance.ParticleAppearanceLighting;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.appearance.ParticleAppearanceTinting;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.initial.ParticleInitialSpeed;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.initial.ParticleInitialSpin;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -52,6 +58,11 @@ public final class ParticleComponentManager {
         register("emitter_shape_disc", "emitter_shape", ComponentTarget.EMITTER, EmitterDisc.CODEC);
         register("emitter_shape_custom", "emitter_shape", ComponentTarget.EMITTER, EmitterShapeCustom.CODEC);
         register("emitter_shape_entity_aabb", "emitter_shape", ComponentTarget.EMITTER, EmitterShapeEntityAABB.CODEC);
+        register("particle_appearance_billboard", "particle_appearance_billboard", ComponentTarget.PARTICLE, ParticleAppearanceBillboard.CODEC);
+        register("particle_appearance_lighting", "particle_appearance_lighting", ComponentTarget.PARTICLE, ParticleAppearanceLighting.CODEC);
+        register("particle_appearance_tinting", "particle_appearance_tinting", ComponentTarget.PARTICLE, ParticleAppearanceTinting.CODEC);
+        register("particle_initial_speed", "particle_initial_speed", ComponentTarget.PARTICLE, ParticleInitialSpeed.CODEC);
+        register("particle_initial_spin", "particle_initial_spin", ComponentTarget.PARTICLE, ParticleInitialSpin.CODEC);
     }
 
     private ParticleComponentManager() {
@@ -62,6 +73,15 @@ public final class ParticleComponentManager {
         definition.rawComponents().forEach((key, value) -> decode(key, value)
                 .filter(EmitterParticleComponent.class::isInstance)
                 .map(EmitterParticleComponent.class::cast)
+                .ifPresent(components::add));
+        return List.copyOf(components);
+    }
+
+    public static List<ParticleParticleComponent> particleComponents(ParticleDefinition definition) {
+        List<ParticleParticleComponent> components = new ArrayList<>();
+        definition.rawComponents().forEach((key, value) -> decode(key, value)
+                .filter(ParticleParticleComponent.class::isInstance)
+                .map(ParticleParticleComponent.class::cast)
                 .ifPresent(components::add));
         return List.copyOf(components);
     }
