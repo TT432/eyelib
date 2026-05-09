@@ -54,9 +54,10 @@ public final class ManagerResourceImportPlanner {
     public static boolean loadResourceFolder(Path basePath, Logger logger) {
         Optional<BedrockAddon> addon = tryLoadAddon(basePath, logger);
         if (addon.isPresent()) {
-            BedrockAddonRuntimeBridge.replaceFromAddon(addon.get());
-            ParticleResourcePublication.replaceFromJsonResources(Map.of(), logger);
-            loadAddonTextures(addon.get().aggregate().textures());
+            BedrockAddon addonValue = addon.get();
+            BedrockAddonRuntimeBridge.replaceFromAddon(addonValue);
+            ParticleResourcePublication.replaceFromSchemas(addonValue.aggregate().resourcePack().particleFiles(), logger);
+            loadAddonTextures(addonValue.aggregate().textures());
             return true;
         }
 

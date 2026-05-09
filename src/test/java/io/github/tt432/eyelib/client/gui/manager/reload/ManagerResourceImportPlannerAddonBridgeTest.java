@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.manager.ParticleManager;
 import io.github.tt432.eyelib.client.manager.RenderControllerManager;
+import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -39,6 +40,7 @@ class ManagerResourceImportPlannerAddonBridgeTest {
         AttachableManager.writePort().clear();
         ModelManager.writePort().clear();
         ParticleManager.writePort().clear();
+        ParticleDefinitionRegistry.store().clear();
         MaterialManager.writePort().clear();
     }
 
@@ -56,6 +58,8 @@ class ManagerResourceImportPlannerAddonBridgeTest {
         assertNotNull(AttachableManager.readPort().get("eyelib:test_attachable"));
         assertNotNull(ModelManager.readPort().get("geometry.test"));
         assertNotNull(MaterialManager.readPort().get("entity_alphatest"));
+        assertNotNull(ParticleDefinitionRegistry.store().get("eyelib:addon_particle"));
+        assertNull(ParticleDefinitionRegistry.store().get("particles/test.particle"));
         assertTrue(ParticleManager.readPort().getAllData().isEmpty());
     }
 
@@ -112,6 +116,7 @@ class ManagerResourceImportPlannerAddonBridgeTest {
         writeString(packDir.resolve("animations/test.animation.json"), animationJson(animationName));
         writeString(packDir.resolve("animation_controllers/test.animation_controllers.json"), animationControllerJson());
         writeString(packDir.resolve("render_controllers/test.render_controllers.json"), renderControllerJson());
+        writeString(packDir.resolve("particles/test.particle.json"), particleJson("eyelib:addon_particle"));
         writeString(packDir.resolve("materials/test.material"), materialJson());
         return packDir;
     }
@@ -289,5 +294,22 @@ class ManagerResourceImportPlannerAddonBridgeTest {
                   }
                 }
                 """;
+    }
+
+    private static String particleJson(String identifier) {
+        return """
+                {
+                  "format_version": "1.10.0",
+                  "particle_effect": {
+                    "description": {
+                      "identifier": "%s",
+                      "basic_render_parameters": {
+                        "material": "particles_alpha",
+                        "texture": "textures/particle/particles"
+                      }
+                    }
+                  }
+                }
+                """.formatted(identifier);
     }
 }

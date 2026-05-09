@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * Parses source-keyed Bedrock particle JSON resources and publishes valid runtime definitions.
@@ -25,6 +26,31 @@ public final class ParticleResourcePublication {
         Objects.requireNonNull(resources, "resources");
         Objects.requireNonNull(logger, "logger");
 
+        return replaceFromResources(
+                resources,
+                json -> BrParticle.CODEC.parse(JsonOps.INSTANCE, Objects.requireNonNull(json, "json"))
+                        .flatMap(ParticleDefinitionAdapter::fromSchema),
+                logger
+        );
+    }
+
+    public static ParticleLoadReport replaceFromSchemas(Map<String, BrParticle> resources, Logger logger) {
+        Objects.requireNonNull(resources, "resources");
+        Objects.requireNonNull(logger, "logger");
+
+        return replaceFromResources(
+                resources,
+                schema -> ParticleDefinitionAdapter.fromSchema(Objects.requireNonNull(schema, "schema")),
+                logger
+        );
+    }
+
+    private static <T> ParticleLoadReport replaceFromResources(
+            Map<String, T> resources,
+            Function<T, DataResult<ParticleDefinition>> parser,
+            Logger logger
+    ) {
+
         List<String> processedSourceIds = new ArrayList<>();
         List<ParticleLoadReport.Failure> failures = new ArrayList<>();
         List<String> duplicateIdentifiers = new ArrayList<>();
@@ -34,8 +60,7 @@ public final class ParticleResourcePublication {
             String checkedSourceId = Objects.requireNonNull(sourceId, "sourceId");
             processedSourceIds.add(checkedSourceId);
 
-            DataResult<ParticleDefinition> result = BrParticle.CODEC.parse(JsonOps.INSTANCE, json)
-                    .flatMap(ParticleDefinitionAdapter::fromSchema);
+            DataResult<ParticleDefinition> result = parser.apply(json);
             result.result().ifPresentOrElse(definition -> {
                 if (definitions.containsKey(definition.identifier())
                         && !duplicateIdentifiers.contains(definition.identifier())) {
