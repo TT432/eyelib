@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.manager;
 
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelibparticle.api.ParticleStore;
+import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,10 +18,11 @@ class ParticleManagerStoreAdapterTest {
     @AfterEach
     void tearDown() {
         ParticleManager.writePort().clear();
+        ParticleDefinitionRegistry.store().clear();
     }
 
     @Test
-    void storeAccessorExposesModuleParticleStoreBackedByManagerStorage() {
+    void storeAccessorIsNamedLegacyCompatibilityMapNotActiveModuleStore() {
         BrParticle particle = testParticle("eyelib:test_particle");
 
         ParticleStore<BrParticle> store = ParticleManager.store();
@@ -29,6 +31,7 @@ class ParticleManagerStoreAdapterTest {
         assertSame(particle, ParticleManager.readPort().get("eyelib:test_particle"));
         assertSame(particle, store.get("eyelib:test_particle"));
         assertEquals(Map.of("eyelib:test_particle", particle), store.all());
+        assertEquals(Map.of(), ParticleDefinitionRegistry.store().all());
     }
 
     @Test

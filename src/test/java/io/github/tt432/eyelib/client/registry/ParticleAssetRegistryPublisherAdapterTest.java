@@ -3,6 +3,8 @@ package io.github.tt432.eyelib.client.registry;
 import io.github.tt432.eyelib.client.manager.ParticleManager;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelibparticle.api.ParticlePublisher;
+import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
+import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -18,21 +20,22 @@ class ParticleAssetRegistryPublisherAdapterTest {
     @AfterEach
     void tearDown() {
         ParticleManager.writePort().clear();
+        ParticleDefinitionRegistry.store().clear();
     }
 
     @Test
-    void publisherAccessorPublishesThroughModulePublisherSeam() {
-        BrParticle particle = testParticle("eyelib:published_particle");
+    void publisherAccessorPublishesThroughModuleDefinitionPublisherSeam() {
+        ParticleDefinition particle = moduleDefinition("eyelib:published_particle");
 
-        ParticlePublisher<BrParticle> publisher = ParticleAssetRegistry.publisher();
+        ParticlePublisher<ParticleDefinition> publisher = ParticleAssetRegistry.publisher();
         publisher.publishParticle(particle);
 
-        assertSame(particle, ParticleManager.store().get("eyelib:published_particle"));
+        assertSame(particle, ParticleDefinitionRegistry.store().get("eyelib:published_particle"));
     }
 
     @Test
     void replaceParticlesStillUsesDescriptionIdentifierInsteadOfSourceKeys() {
-        ParticleManager.store().put("eyelib:stale", testParticle("eyelib:stale"));
+        ParticleDefinitionRegistry.store().put("eyelib:stale", moduleDefinition("eyelib:stale"));
         BrParticle first = testParticle("eyelib:first_description");
         BrParticle second = testParticle("eyelib:second_description");
 
@@ -42,13 +45,18 @@ class ParticleAssetRegistryPublisherAdapterTest {
 
         ParticleAssetRegistry.replaceParticles(sourceKeyed);
 
-        assertNull(ParticleManager.store().get("eyelib:stale"));
-        assertNull(ParticleManager.store().get("eyelib:source_first"));
-        assertNull(ParticleManager.store().get("eyelib:source_second"));
+        assertNull(ParticleDefinitionRegistry.store().get("eyelib:stale"));
+        assertNull(ParticleDefinitionRegistry.store().get("eyelib:source_first"));
+        assertNull(ParticleDefinitionRegistry.store().get("eyelib:source_second"));
         assertEquals(List.of("eyelib:first_description", "eyelib:second_description"),
-                List.copyOf(ParticleManager.store().all().keySet()));
+                List.copyOf(ParticleDefinitionRegistry.store().all().keySet()));
         assertSame(first, ParticleManager.store().get("eyelib:first_description"));
         assertSame(second, ParticleManager.store().get("eyelib:second_description"));
+    }
+
+    private static ParticleDefinition moduleDefinition(String identifier) {
+        ParticleAssetRegistry.replaceParticles(Map.of(identifier, testParticle(identifier)));
+        return ParticleDefinitionRegistry.store().get(identifier);
     }
 
     private static BrParticle testParticle(String identifier) {

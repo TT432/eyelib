@@ -18,6 +18,7 @@ class ParticleRuntimeDelegationBoundaryTest {
 
         assertTrue(source.contains("import io.github.tt432.eyelibparticle.api.ParticleSpawnRequest;"));
         assertTrue(source.contains("import io.github.tt432.eyelibparticle.client.ParticleRenderManager;"));
+        assertTrue(source.contains("import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;"));
         assertTrue(source.contains("import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleRuntime;"));
         assertTrue(source.contains("new BedrockParticleRuntime("));
         assertTrue(source.contains("ParticleRenderManager.INSTANCE::spawnParticle"));
@@ -25,6 +26,8 @@ class ParticleRuntimeDelegationBoundaryTest {
         assertTrue(source.contains("ParticleRenderManager.INSTANCE.removeEmitter("));
         assertTrue(source.contains("api().spawn(new ParticleSpawnRequest(packet.spawnId(), packet.particleId(), packet.position()))"));
         assertTrue(source.contains("api().remove(removeId);"));
+        assertTrue(source.contains("ParticleDefinitionRegistry.store().get(request.particleId())"));
+        assertTrue(!source.contains("BrParticle.CODEC.encodeStart"));
     }
 
     @Test

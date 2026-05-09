@@ -16,30 +16,41 @@ class ParticleApiDelegationBoundaryTest {
         SourceCheck lookup = source("src/main/java/io/github/tt432/eyelib/client/particle/ParticleLookup.java");
         SourceCheck spawnService = source("src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java");
         SourceCheck registry = source("src/main/java/io/github/tt432/eyelib/client/registry/ParticleAssetRegistry.java");
+        SourceCheck loader = source("src/main/java/io/github/tt432/eyelib/client/loader/BrParticleLoader.java");
         SourceCheck particleReadme = source("src/main/java/io/github/tt432/eyelib/client/particle/README.md");
         SourceCheck registryReadme = source("src/main/java/io/github/tt432/eyelib/client/registry/README.md");
         Path obsoleteRootRequest = Path.of("src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnRequest.java");
 
         lookup.assertContains("import io.github.tt432.eyelibparticle.api.ParticleLookupApi;");
+        lookup.assertContains("import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;");
         lookup.assertContains("ParticleLookupApi<BrParticle> api()");
-        lookup.assertContains("api().get(id.toString())");
+        lookup.assertContains("ParticleDefinitionRegistry.store().names()");
+        lookup.assertContains("compatibility");
         lookup.assertContains("Transitional");
         lookup.assertContains("Remove this facade after root callers");
 
         spawnService.assertContains("import io.github.tt432.eyelibparticle.api.ParticleSpawnApi;");
         spawnService.assertContains("import io.github.tt432.eyelibparticle.api.ParticleSpawnRequest;");
+        spawnService.assertContains("import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;");
+        spawnService.assertContains("import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;");
         spawnService.assertContains("ParticleSpawnApi api()");
         spawnService.assertContains("api().spawn(new ParticleSpawnRequest(");
         spawnService.assertContains("api().remove(removeId);");
+        spawnService.assertNotContains("BrParticle.CODEC.encodeStart");
         spawnService.assertContains("Transitional");
         spawnService.assertContains("Remove this facade after packet/runtime callers");
 
         registry.assertContains("import io.github.tt432.eyelibparticle.api.ParticlePublisher;");
-        registry.assertContains("ParticlePublisher<BrParticle> publisher()");
-        registry.assertContains("publisher().replaceParticles(particles.values())");
-        registry.assertContains("particle.particleEffect().description().identifier()");
+        registry.assertContains("import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;");
+        registry.assertContains("import io.github.tt432.eyelibparticle.runtime.ParticleDefinitionAdapter;");
+        registry.assertContains("ParticlePublisher<ParticleDefinition> publisher()");
+        registry.assertContains("ParticleDefinitionRegistry.publisher()");
+        registry.assertContains("ParticleDefinitionRegistry.publisher().replaceParticles");
         registry.assertContains("Transitional");
         registry.assertContains("Remove this facade after root");
+
+        loader.assertContains("ParticleResourcePublication.replaceFromJsonResources");
+        loader.assertContains("entry.getKey().toString()");
 
         particleReadme.assertContains("transitional root runtime adapter");
         particleReadme.assertContains("removal condition");
