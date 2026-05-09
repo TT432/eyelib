@@ -1,17 +1,29 @@
 ---
 phase: 09-particle-api-store-seam
-verified: 2026-05-09T05:20:46Z
+verified: 2026-05-09T05:49:44Z
 status: passed
 score: 8/8 must-haves verified
 overrides_applied: 0
+re_verification:
+  previous_status: passed
+  previous_score: 8/8
+  gaps_closed: []
+  gaps_remaining: []
+  regressions: []
+  post_review_fix_validation:
+    review_fix_status: all_fixed
+    review_status_after_fixes: clean
+    gradle:
+      - ":eyelib-particle:test :eyelib-particle:compileJava :compileJava — exitCode 0"
+      - ":test --tests ParticleManagerStoreAdapterTest --tests ParticleApiDelegationBoundaryTest --tests ParticleSpawnServiceBoundaryTest --tests ParticleAssetRegistryPublisherAdapterTest — exitCode 0"
 ---
 
 # Phase 9: Particle API & Store Seam Verification Report
 
 **Phase Goal:** Root runtime can use particle capabilities through narrow module-owned APIs instead of owning particle internals directly.
-**Verified:** 2026-05-09T05:20:46Z
+**Verified:** 2026-05-09T05:49:44Z
 **Status:** passed
-**Re-verification:** No — initial verification
+**Re-verification:** Yes — post-review-fix validation after `09-REVIEW-FIX.md`; previous verification had already passed, so this pass focused on review-fix regressions and quick sanity checks of previously verified must-haves.
 
 ## Goal Achievement
 
@@ -19,13 +31,13 @@ overrides_applied: 0
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | Root runtime can access particle lookup, spawn/remove, store/publication, and initialization behavior through particle-module API seams. | ✓ VERIFIED | `ParticleManager` implements `ParticleStore<BrParticle>` and exposes `store()` (`ParticleManager.java:18-23`); `ParticleLookup` returns `ParticleLookupApi<BrParticle>` via `ParticleManager.store()` (`ParticleLookup.java:21-35`); `ParticleAssetRegistry` delegates publish/replace through `ParticlePublisher` (`ParticleAssetRegistry.java:19-34`); `ParticleSpawnService` delegates packet spawn/remove through `ParticleSpawnApi` + module `ParticleSpawnRequest` (`ParticleSpawnService.java:24-40`). Lifecycle/reset is the `ParticleLifecycle.clear()` contract implemented via `ParticleStore`/`Manager.clear()` inheritance. |
+| 1 | Root runtime can access particle lookup, spawn/remove, store/publication, and initialization behavior through particle-module API seams. | ✓ VERIFIED | `ParticleManager` implements `ParticleStore<BrParticle>` and exposes `store()` (`ParticleManager.java:18-23`); `ParticleLookup` returns `ParticleLookupApi<BrParticle>` via `ParticleManager.store()` (`ParticleLookup.java:21-35`); `ParticleAssetRegistry` delegates publish/replace through `ParticlePublisher` (`ParticleAssetRegistry.java:19-34`); `ParticleSpawnService` delegates packet spawn/remove through `ParticleSpawnApi` + module `ParticleSpawnRequest` (`ParticleSpawnService.java:24-40`). Post-review fix preserved `ManagerStorage` order via `LinkedHashMap` (`ManagerStorage.java:5-26`). Lifecycle/reset is the `ParticleLifecycle.clear()` contract implemented via `ParticleStore`/`Manager.clear()` inheritance. |
 | 2 | Any root compatibility facade delegates to particle-module APIs instead of containing particle business logic. | ✓ VERIFIED | Retained facades are narrow: `ParticleLookup` delegates all reads through `api().get`/`api().names`; `ParticleAssetRegistry` delegates to `publisher().replaceParticles`/`publishParticle`; `ParticleSpawnService.spawnFromPacket/removeEmitter` delegate to `api().spawn/remove`. Runtime emitter construction remains in the root adapter implementation, not in module API. |
 | 3 | Maintainer can identify every temporary compatibility facade and read why it exists and when it can be removed. | ✓ VERIFIED | Javadocs on `ParticleManager`, `ParticleLookup`, `ParticleAssetRegistry`, and `ParticleSpawnService` state transitional/removal conditions. Local docs list `ParticleLookup`, `ParticleSpawnService`, and `ParticleAssetRegistry` as transitional and name `io.github.tt432.eyelibparticle.api` delegation/removal conditions (`client/particle/README.md:7-19`, `client/registry/README.md:12-17`, `eyelibparticle/README.md:21-23`). |
-| 4 | New particle API contracts are string-keyed and root/MC/Forge-clean. | ✓ VERIFIED | API package uses `String` IDs in `ParticleLookupApi.get`, `ParticleStore.put/replaceAll`, `ParticleIdentifier.identify`, `ParticleSpawnRequest(String spawnId, String particleId, Vector3f)`, and `ParticleSpawnApi.spawn/remove`. Forbidden-import scan over `eyelib-particle/src/main/java` found no root runtime, network, capability, `mc.impl`, Minecraft, or Forge imports. |
+| 4 | New particle API contracts are string-keyed and root/MC/Forge-clean. | ✓ VERIFIED | API package uses `String` IDs in `ParticleLookupApi.get`, `ParticleStore.put/replaceAll`, `ParticleIdentifier.identify`, `ParticleSpawnRequest(String spawnId, String particleId, Vector3f)`, and `ParticleSpawnApi.spawn/remove`. Post-review boundary tests now scan all `eyelib-particle/src/main/java` Java sources for root runtime, network, capability, `mc.impl`, Minecraft, and Forge imports; verification scan also found no forbidden imports. |
 | 5 | Particle publication still keys entries by `particle_effect.description.identifier`, not source/resource keys. | ✓ VERIFIED | `ParticleAssetRegistry` constructs `ParticlePublisher` with extractor `particle -> particle.particleEffect().description().identifier()` and passes `particles.values()` so source keys are ignored (`ParticleAssetRegistry.java:19-30`). `ParticleAssetRegistryTest` and `ParticleAssetRegistryPublisherAdapterTest` use mismatched source keys and assert only description identifiers are stored. |
-| 6 | Spawn/remove request seam exists without moving runtime/render internals into `:eyelib-particle`. | ✓ VERIFIED | `ParticleSpawnApi` is a pure request port (`ParticleSpawnApi.java:6-20`). `ParticleSpawnRequest` carries string ids and defensive-copy `Vector3f` (`ParticleSpawnRequest.java:14-27`). `ParticleSpawnService` keeps `Minecraft`, `DataAttachmentHelper`, `BrParticleEmitter`, and `BrParticleRenderManager` imports in root (`ParticleSpawnService.java:3-14, 42-67`). |
-| 7 | Automated tests prove publication identifiers, spawn request semantics, delegation docs, and root-clean API boundaries. | ✓ VERIFIED | Tests exist and are substantive: `ParticlePublisherTest`, `ParticleSpawnRequestTest`, `ParticleAssetRegistryTest`, `ParticleApiDelegationBoundaryTest`, plus adapter tests from earlier plans. Orchestrator evidence: `:eyelib-particle:test`, `:eyelib-particle:compileJava`, `:compileJava`, and targeted root tests exited 0. |
+| 6 | Spawn/remove request seam exists without moving runtime/render internals into `:eyelib-particle`. | ✓ VERIFIED | `ParticleSpawnApi` is a pure request port (`ParticleSpawnApi.java:6-20`). `ParticleSpawnRequest` carries string ids and defensive-copy `Vector3f` (`ParticleSpawnRequest.java:14-27`). `ParticleSpawnService` imports the module-owned request (`ParticleSpawnService.java:10-11`) and keeps `Minecraft`, `DataAttachmentHelper`, `BrParticleEmitter`, and `BrParticleRenderManager` imports in root (`ParticleSpawnService.java:3-14, 42-67`). The obsolete root `client/particle/ParticleSpawnRequest.java` is absent. |
+| 7 | Automated tests prove publication identifiers, spawn request semantics, delegation docs, and root-clean API boundaries. | ✓ VERIFIED | Tests exist and are substantive: `ParticlePublisherTest`, `ParticleSpawnRequestTest`, `ParticleAssetRegistryTest`, `ParticleApiDelegationBoundaryTest`, plus adapter tests from earlier plans. Final post-review-fix JetBrains MCP validation was rerun by this verifier: `:eyelib-particle:test :eyelib-particle:compileJava :compileJava` exited 0, and targeted root `:test` with `ParticleManagerStoreAdapterTest`, `ParticleApiDelegationBoundaryTest`, `ParticleSpawnServiceBoundaryTest`, and `ParticleAssetRegistryPublisherAdapterTest` exited 0. |
 | 8 | No broad compatibility layer or runtime move occurred in Phase 9. | ✓ VERIFIED | Search found no new `ParticleCompatibility`/catch-all compatibility package. Runtime classes remain in root (`src/main/java/.../client/particle/`), while `:eyelib-particle` contains API contracts only. Later runtime/schema/loading/command moves remain explicitly deferred to Phases 10-13 in `ROADMAP.md`. |
 
 **Score:** 8/8 truths verified
@@ -48,6 +60,7 @@ overrides_applied: 0
 | `src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java` | Transitional spawn/remove adapter through `ParticleSpawnApi` | ✓ VERIFIED | Public methods delegate to module API; root runtime implementation stays nested/root-local. |
 | `src/main/java/io/github/tt432/eyelib/client/particle/README.md` | Transitional facade documentation | ✓ VERIFIED | Names `ParticleLookup` and `ParticleSpawnService`, their delegation targets, and removal conditions. |
 | `src/main/java/io/github/tt432/eyelib/client/registry/README.md` | Transitional registry documentation | ✓ VERIFIED | Names `ParticleAssetRegistry` as transitional facade and its removal condition. |
+| `src/main/java/io/github/tt432/eyelib/client/manager/ManagerStorage.java` | Store backing order preservation after review fix | ✓ VERIFIED | Uses `LinkedHashMap` for backing data and snapshots; `ParticleManagerStoreAdapterTest.storeAccessorPreservesPublishedReplacementOrder` verifies `replaceAll`, `all().keySet()`, and `names()` retain insertion order. |
 
 ### Key Link Verification
 
@@ -59,6 +72,7 @@ overrides_applied: 0
 | `ParticlePublisher` | `ParticleStore.replaceAll` | `LinkedHashMap` replacement keyed by `identifier.identify` | ✓ WIRED | `ParticlePublisher.java:43-50` builds replacement and calls `store.replaceAll(replacement)`. |
 | `NetClientHandlers` | `ParticleSpawnService` | packet handlers call service methods | ✓ WIRED | `NetClientHandlers.java:30-35` calls `removeEmitter(packet.removeId())` and `spawnFromPacket(packet)`. |
 | `ParticleSpawnService` | `ParticleSpawnApi` | `api().spawn(new ParticleSpawnRequest(...))`, `api().remove(...)` | ✓ WIRED | Packet data is converted to module request before root runtime adapter work. |
+| `ParticleSpawnService` | module-owned `ParticleSpawnRequest` | import from `io.github.tt432.eyelibparticle.api` | ✓ WIRED | Review fix removed the obsolete root request type; static boundary test asserts it is not reintroduced. |
 
 ### Data-Flow Trace (Level 4)
 
@@ -72,10 +86,9 @@ overrides_applied: 0
 
 | Behavior | Command | Result | Status |
 |---|---|---|---|
-| Particle module API contracts compile and tests pass | JetBrains MCP `:eyelib-particle:test`, `:eyelib-particle:compileJava` | Orchestrator evidence: exitCode 0 | ✓ PASS |
-| Root adapters compile | JetBrains MCP `:compileJava` | Orchestrator evidence: exitCode 0 | ✓ PASS |
-| Root identifier/delegation boundary tests pass | JetBrains MCP `:test --tests io.github.tt432.eyelib.client.registry.ParticleAssetRegistryTest --tests io.github.tt432.eyelib.client.particle.ParticleApiDelegationBoundaryTest` | Orchestrator evidence: exitCode 0 | ✓ PASS |
-| Broad root `:test` | JetBrains MCP `:test` | Failed in unrelated Bedrock/geometry fixture tests with `NoSuchFileException`; no evidence links this to Phase 9 particle API/store changes | ℹ️ RESIDUAL RISK, not a Phase 9 gap |
+| Particle module API contracts compile and tests pass | JetBrains MCP `:eyelib-particle:test :eyelib-particle:compileJava :compileJava` | Re-run during this post-review-fix verification; exitCode 0 | ✓ PASS |
+| Review-fix root boundary/store regressions pass | JetBrains MCP `:test --tests io.github.tt432.eyelib.client.manager.ParticleManagerStoreAdapterTest --tests io.github.tt432.eyelib.client.particle.ParticleApiDelegationBoundaryTest --tests io.github.tt432.eyelib.client.particle.ParticleSpawnServiceBoundaryTest --tests io.github.tt432.eyelib.client.registry.ParticleAssetRegistryPublisherAdapterTest` | Re-run during this post-review-fix verification; exitCode 0 | ✓ PASS |
+| Review status after fixes | Read `09-REVIEW.md` and `09-REVIEW-FIX.md` | `09-REVIEW-FIX.md` status `all_fixed`; follow-up review status `clean` with CR-01, WR-01, WR-02 resolved | ✓ PASS |
 
 ### Requirements Coverage
 
@@ -83,6 +96,15 @@ overrides_applied: 0
 |---|---|---|---|---|
 | PAPI-01 | 09-01, 09-02, 09-03 | Root runtime can access particle lookup, spawn/remove, store/publication, and initialization behavior through narrow particle-module APIs instead of owning particle internals directly. | ✓ SATISFIED | Module APIs exist; `ParticleManager`, `ParticleLookup`, `ParticleAssetRegistry`, and `ParticleSpawnService` consume/delegate through them; tests and compile checks pass. |
 | PAPI-03 | 09-02, 09-03 | Any temporary root compatibility facade delegates to particle-module APIs and is documented as transitional. | ✓ SATISFIED | Javadocs/READMEs document transitional status/removal conditions; `ParticleApiDelegationBoundaryTest` checks API imports and documentation wording. |
+
+### Post-Review-Fix Validation
+
+| Review Finding | Fix Evidence | Verification Status |
+|---|---|---|
+| CR-01: Root particle store discarded publication order | `ManagerStorage` now uses `LinkedHashMap`; `ParticleManagerStoreAdapterTest` asserts `replaceAll`, `all().keySet()`, and `names()` preserve insertion order. | ✓ VERIFIED |
+| WR-01: Boundary tests did not guard all `:eyelib-particle` main sources | `ParticleApiDelegationBoundaryTest` and `ParticleSpawnServiceBoundaryTest` walk `eyelib-particle/src/main/java` and reject root/Minecraft/Forge import fragments. | ✓ VERIFIED |
+| WR-02: Root duplicate `ParticleSpawnRequest` remained | Root `src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnRequest.java` is absent; `ParticleSpawnService` imports module request; README says not to add a duplicate root request type. | ✓ VERIFIED |
+| Final automated validation | JetBrains MCP `:eyelib-particle:test :eyelib-particle:compileJava :compileJava` and targeted root `:test` for the review-fix tests both exited 0 during this verifier pass. | ✓ VERIFIED |
 
 ### Anti-Patterns Found
 
@@ -97,9 +119,9 @@ None. Phase 9 is API/store/documentation/test-boundary work; no visual, hardware
 
 ### Gaps Summary
 
-No blocking gaps found. The phase goal is achieved: root particle lookup, store/publication, lifecycle/reset, and spawn/remove entrypoints now pass through narrow `io.github.tt432.eyelibparticle.api` seams; retained root facades are specific, documented transitional adapters; no broad compatibility layer or premature runtime move was found.
+No blocking gaps found. The phase goal remains achieved after code review fixes: root particle lookup, store/publication, lifecycle/reset, and spawn/remove entrypoints pass through narrow `io.github.tt432.eyelibparticle.api` seams; retained root facades are specific, documented transitional adapters; no broad compatibility layer or premature runtime move was found. Post-review fixes closed the order-preservation, boundary-test coverage, and duplicate request-type concerns, and final JetBrains MCP Gradle validation passed.
 
 ---
 
-_Verified: 2026-05-09T05:20:46Z_
+_Verified: 2026-05-09T05:49:44Z_
 _Verifier: the agent (gsd-verifier)_
