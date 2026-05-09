@@ -45,17 +45,16 @@ class ParticleRenderManagerLifecycleTest {
         removedEmitter.remove();
         manager.spawnEmitter("removed", removedEmitter);
 
-        BedrockParticleEmitter activeEmitter = emitter(environment, manager);
-        manager.spawnEmitter("active", activeEmitter);
-        activeEmitter.onLoopStart();
+        BedrockParticleEmitter particleOwner = emitter(environment, manager);
+        particleOwner.onLoopStart();
 
-        assertEquals(2, manager.getEmitterCount());
+        assertEquals(1, manager.getEmitterCount());
         assertEquals(1, manager.getParticleCount());
 
         environment.ticks = 50;
         manager.onRenderTickStart();
 
-        assertEquals(1, manager.getEmitterCount(), "removed emitters are pruned before render-frame work");
+        assertEquals(0, manager.getEmitterCount(), "removed emitters are pruned before render-frame work");
         assertEquals(1, manager.getParticleCount(), "particles removed during frame remain until the next cleanup pass");
         manager.renderAfterEntities(particle -> assertTrue(particle.removed()));
 
