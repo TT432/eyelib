@@ -119,7 +119,7 @@ Plans:
   2. Spawn/remove packet behavior remains string-keyed and delegates from network handlers into particle services without exposing render internals.
   3. Platform-specific command, player, packet channel, and identifier validation concerns stay in explicit integration adapters.
   4. Pure particle core APIs remain root-independent and platform-light even though platform bindings may live in an appropriate particle or root integration layer.
-**Plans**: 3 plans
+**Plans**: 3/3 complete — `.planning/phases/13-command-network-integration-rewire/13-01-PLAN.md`, `.planning/phases/13-command-network-integration-rewire/13-02-PLAN.md`, `.planning/phases/13-command-network-integration-rewire/13-03-PLAN.md`
 Plans:
 **Wave 1**
 - [x] 13-01-PLAN.md — Preserve `/eyelib particle` command compatibility and command adapter boundaries.

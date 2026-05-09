@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
 status: ready_to_plan
-stopped_at: Completed 13-03-PLAN.md
-last_updated: "2026-05-09T13:52:03.907Z"
-last_activity: 2026-05-09
+stopped_at: Phase 13 complete; ready to plan Phase 14.
+last_updated: "2026-05-09T14:10:00Z"
+last_activity: 2026-05-09 -- Phase 13 verified and code-reviewed clean
 progress:
   total_phases: 7
   completed_phases: 6
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 
 Phase: 14 (verification-documentation-gate) — READY TO PLAN
 Plan: 0 of TBD
-Status: Phase 13 complete; ready to plan Phase 14.
-Last activity: 2026-05-09
+Status: Phase 13 complete; next phase planning can begin.
+Last activity: 2026-05-09 -- Phase 13 verified and code-reviewed clean
 
 Progress: [██████████] 100%
 
@@ -109,6 +109,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [Phase 13-command-network-integration-rewire]: Planning locked command compatibility, string-keyed packet/delegation checks, documentation drift tests, and JetBrains MCP-only verification across 3 plans.
 - [Phase 13-command-network-integration-rewire]: Final docs lock command/network ownership as root/MC adapter work: `ParticleCommandRuntime` shapes platform-free requests, `mc/impl/common/command` owns Brigadier/ResourceLocation conversion, `mc/impl/network/packet` owns packet DTO/codecs, and `NetClientHandlers` delegates through `ParticleSpawnService`.
 - [Phase 13-command-network-integration-rewire]: PFUT-02 packet-contract relocation and broad ClientSmoke/hardware visual evidence remain deferred outside Phase 13; final Phase 13 evidence used JetBrains MCP Gradle tasks only.
+- [v1.2 Phase 13]: Post-review fixes removed `.planning/` dependencies from runtime documentation tests and added real spawn/remove `STREAM_CODEC` round-trip coverage; Phase 13 review is clean.
 
 ### Pending Todos
 
@@ -128,8 +129,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09T13:52:03.646Z
-Stopped at: Completed 13-03-PLAN.md
+Last session: 2026-05-09T14:10:00Z
+Stopped at: Phase 13 complete; ready to plan Phase 14.
 Resume file: None
 
 ## Operator Next Steps
