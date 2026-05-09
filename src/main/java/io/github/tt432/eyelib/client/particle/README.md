@@ -5,7 +5,7 @@
 - Client particle runtime, emitters, render manager, and lookup/spawn boundaries.
 
 ## Current Runtime Boundaries
-- `ParticleLookup.java`: read-side access to particle definitions through the runtime manager boundary
+- `ParticleLookup.java`: transitional read-side root facade delegating to `io.github.tt432.eyelibparticle.api.ParticleLookupApi` through the root-backed `ParticleManager` store adapter; removal condition: delete after root callers migrate directly to particle API adapters/services.
 - `ParticleSpawnService.java`: packet-driven spawn/remove orchestration on the client side
 - `ParticleSpawnRequest.java`: platform-type-free spawn request state (`String` ids + position) used by runtime spawn orchestration
 
@@ -15,3 +15,4 @@
 
 ## Boundary Reminder
 - Networking code should call particle lookup/spawn services here instead of reading loader internals directly.
+- Retained root facades are transitional compatibility adapters only; new particle API/store consumers should prefer `io.github.tt432.eyelibparticle.api` contracts where practical.
