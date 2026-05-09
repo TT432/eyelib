@@ -1,6 +1,7 @@
 package io.github.tt432.eyelibparticle.runtime;
 
-import io.github.tt432.eyelibimporter.particle.BrParticle;
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibparticle.runtime.support.ParticleBlackboard;
 import io.github.tt432.eyelibparticle.runtime.support.ParticleMath;
@@ -17,17 +18,24 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ParticleRuntimeSupportTest {
+    private static final String MINIMAL_PARTICLE_FIXTURE = """
+            {
+              "format_version": "1.10.0",
+              "particle_effect": {
+                "description": {
+                  "identifier": "eyelib:test_particle",
+                  "basic_render_parameters": {
+                    "material": "particles_alpha",
+                    "texture": "textures/particle/test"
+                  }
+                }
+              }
+            }
+            """;
+
     @Test
     void runtimeDefinitionExposesCanonicalParticleDefinitionFields() {
-        ParticleDefinition definition = new ParticleDefinition(
-                "1.10.0",
-                "eyelib:test_particle",
-                new ParticleDefinition.BasicRenderParameters("particles_alpha", "textures/particle/test"),
-                Map.of(),
-                new BrParticle.Events(),
-                Map.of(),
-                Optional.empty()
-        );
+        ParticleDefinition definition = minimalDefinition();
 
         ParticleRuntimeDefinition runtimeDefinition = ParticleRuntimeDefinition.of(definition);
 
@@ -50,8 +58,8 @@ class ParticleRuntimeSupportTest {
         assertEquals(1 / 30F, timer.seconds(), 0.0001F);
         assertFalse(timer.canNextStep());
 
-        timeSource.set(1, 0.0F);
-        assertEquals(0.05F, timer.realSec(), 0.0001F);
+        timeSource.set(2, 0.0F);
+        assertEquals(0.1F, timer.realSec(), 0.0001F);
         assertTrue(timer.canNextStep());
         assertEquals(2 / 30F, timer.seconds(), 0.0001F);
     }
@@ -70,15 +78,7 @@ class ParticleRuntimeSupportTest {
     @Test
     void contextCarriesParentScopeDefinitionAndServicePorts() {
         MolangScope scope = new MolangScope();
-        ParticleDefinition definition = new ParticleDefinition(
-                "1.10.0",
-                "eyelib:test_particle",
-                new ParticleDefinition.BasicRenderParameters("particles_alpha", "textures/particle/test"),
-                Map.of(),
-                new BrParticle.Events(),
-                Map.of(),
-                Optional.empty()
-        );
+        ParticleDefinition definition = minimalDefinition();
         ParticleRuntimeDefinition runtimeDefinition = ParticleRuntimeDefinition.of(definition);
         ParticleRuntimeServices services = new ParticleRuntimeServices(
                 new FakeTimeSource(),
@@ -101,6 +101,19 @@ class ParticleRuntimeSupportTest {
         assertEquals(7F, ParticleMath.notZero(0F, 7F), 0.0001F);
         assertTrue(ParticleMath.epsilon(1F, 1.01F, 0.02F));
         assertEquals(-170F, ParticleMath.wrapDegrees(190F), 0.0001F);
+    }
+
+    private static ParticleDefinition minimalDefinition() {
+        return ParticleDefinitionAdapter.fromSchema(
+                io.github.tt432.eyelibimporter.particle.BrParticle.CODEC.parse(
+                        JsonOps.INSTANCE,
+                        JsonParser.parseString(MINIMAL_PARTICLE_FIXTURE)
+                ).getOrThrow(false, message -> {
+                    throw new AssertionError(message);
+                })
+        ).getOrThrow(false, message -> {
+            throw new AssertionError(message);
+        });
     }
 
     private static final class FakeTimeSource implements ParticleRuntimeServices.TimeSource {
