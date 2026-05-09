@@ -99,7 +99,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
   2. Particle publication continues to key entries by `particle_effect.description.identifier`, not by JSON resource path or other incidental source keys.
   3. Loader, registry, and manager responsibilities are owned by the particle module or by explicit root adapters without reintroducing root-owned particle internals.
   4. Maintainer can trace the reload path from root/Forge integration into particle-module registry publication without hidden ownership duplication.
-**Plans**: 3 plans
+**Plans**: 3/3 complete — `.planning/phases/12-loading-publication-rewire/12-01-PLAN.md`, `.planning/phases/12-loading-publication-rewire/12-02-PLAN.md`, `.planning/phases/12-loading-publication-rewire/12-03-PLAN.md`
 Plans:
 **Wave 1**
 - [x] 12-01-PLAN.md — Create module-owned particle definition registry and JSON resource publication seam.

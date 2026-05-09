@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
-status: executing
-stopped_at: Completed 12-02-PLAN.md
-last_updated: "2026-05-09T12:01:54.288Z"
-last_activity: 2026-05-09
+status: planning
+stopped_at: Phase 12 complete; ready to plan Phase 13.
+last_updated: "2026-05-09T12:35:00Z"
+last_activity: 2026-05-09 -- Phase 12 verified and code-reviewed clean
 progress:
   total_phases: 7
   completed_phases: 5
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-09)
 
 **Core value:** Eyelib 的功能模块必须能被独立理解、构建、验证和消费；粒子拆分必须形成清晰 Gradle 模块边界，同时保持现有加载、命令、网络同步、渲染行为零回归。
-**Current focus:** Phase 12 — Loading & Publication Rewire
+**Current focus:** Phase 13 — Command & Network Integration Rewire
 
 ## Current Position
 
-Phase: 12 (loading-publication-rewire) — IN PROGRESS
-Plan: 3 of 3 complete
-Status: Ready to execute
-Last activity: 2026-05-09
+Phase: 13 (command-network-integration-rewire) — READY TO PLAN
+Plan: 0 of TBD
+Status: Phase 12 complete; next phase planning can begin.
+Last activity: 2026-05-09 -- Phase 12 verified and code-reviewed clean
 
 Progress: [██████████] 100%
 
@@ -104,6 +104,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [Phase 12-loading-publication-rewire]: Root reload now converts ResourceLocation source ids to strings and delegates parse/convert/publish ownership to ParticleResourcePublication.
 - [Phase 12-loading-publication-rewire]: ParticleAssetRegistry remains only as a legacy root compatibility adapter while active publication uses ParticleDefinitionRegistry.publisher().
 - [Phase 12-loading-publication-rewire]: Packet-driven spawn now looks up ParticleDefinition from the module active registry directly; legacy BrParticle conversion remains only for current root compatibility callers.
+- [v1.2 Phase 12]: Post-review fixes publish addon particle files into the module active registry, route animation/controller particle effects through module ParticleDefinition lookup, and keep legacy root maps as compatibility-only. Phase 12 review is clean.
 
 ### Pending Todos
 
@@ -111,7 +112,7 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 11 needs side/classloading review when moving client hooks and render code.
+None currently.
 
 ## Deferred Items
 
@@ -123,10 +124,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09T12:01:39.809Z
-Stopped at: Completed 12-02-PLAN.md
+Last session: 2026-05-09T12:35:00Z
+Stopped at: Phase 12 complete; ready to plan Phase 13.
 Resume file: None
 
 ## Operator Next Steps
 
-- Continue with `.planning/phases/12-loading-publication-rewire/12-03-PLAN.md`.
+- Continue with `/gsd-plan-phase 13` or autonomous Phase 13 planning/execution.
