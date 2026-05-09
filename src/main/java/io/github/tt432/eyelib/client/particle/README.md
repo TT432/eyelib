@@ -24,9 +24,11 @@
 - Runtime reads should use `ParticleLookup.java`; packet application should use `ParticleSpawnService.java`.
 - Packet/runtime adaptation may decode Minecraft identifiers at the service boundary, but request/state seams should stay platform-type-free.
 - Spawn/remove packet application must preserve string-keyed request intent and route executable runtime/render work through the particle module runtime/client services without changing packet payloads.
+- Phase 13 command/network integration keeps `NetClientHandlers` context-free: `SpawnParticlePacket(String spawnId, String particleId, Vector3f position)` and `RemoveParticlePacket(String removeId)` reach this package only through `ParticleSpawnService`, which converts packet fields into module `ParticleSpawnRequest` and delegates runtime work into module APIs/client services.
 - `ResourceLocation` adaptation for particle reload belongs in root Forge/resource integration (`BrParticleLoader`) only. Active lookup/spawn names remain strings from `ParticleDefinition.identifier()`.
 
 ## Boundary Reminder
 - Networking code should call particle lookup/spawn services here instead of reading loader internals directly.
 - Retained root facades are transitional compatibility adapters only; new particle API/store consumers should prefer `io.github.tt432.eyelibparticle.api` contracts where practical.
 - Root facades must not reintroduce root-owned particle loading/publication internals. Canonical loading publication lives in `io.github.tt432.eyelibparticle.loading`.
+- PFUT-02 packet-contract relocation and broad ClientSmoke/hardware visual evidence remain deferred outside Phase 13; JetBrains MCP Gradle tasks provide the Phase 13 verification path.

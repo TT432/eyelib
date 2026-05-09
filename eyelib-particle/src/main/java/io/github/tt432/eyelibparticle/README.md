@@ -13,6 +13,7 @@
 - Phase 11 also owns the explicit client integration layer under `client/**` for render-manager collections, render-buffer/material adapters, and `Dist.CLIENT` Forge hook delegation; root particle render-manager paths are transitional adapters only until later compatibility rewires complete.
 - Phase 12 owns active loading/publication: `ParticleDefinitionRegistry` is the module-owned active `ParticleStore<ParticleDefinition>` and `ParticleResourcePublication` parses canonical importer schema `io.github.tt432.eyelibimporter.particle.BrParticle`, converts through `ParticleDefinitionAdapter`, and publishes by `ParticleDefinition.identifier()`.
 - Source ids from Forge reload scanning are diagnostics/report metadata only; they must not become active store keys or replace description-identifier publication semantics.
+- Phase 13 command/network integration remains outside pure particle APIs: `ParticleCommandRuntime` owns platform-free command shaping in root, `mc/impl/common/command` owns Brigadier and `ResourceLocation` conversion, `mc/impl/network/packet` owns `SpawnParticlePacket(String spawnId, String particleId, Vector3f position)` and `RemoveParticlePacket(String removeId)` codecs, and root `ParticleSpawnService` converts packets into module `ParticleSpawnRequest` before delegating into module APIs/client services.
 
 ## Dependency Direction
 - Root runtime may depend on :eyelib-particle, but :eyelib-particle must not depend on root runtime packages, root managers, root registries, root packets, root capability helpers, or root mc/impl classes.
@@ -23,6 +24,7 @@
 - Minecraft/Forge-facing integration must live in explicitly documented adapters before introduction.
 - Existing particle loading, command, and network behavior must not be moved into pure runtime packages; render adapter behavior belongs only in the documented `client/**` integration layer.
 - Phase 11 moved executable runtime core and client integration into this module; Phase 12 moved loading/publication ownership here through pure loading services, Phase 13 rewires command/network integration, and Phase 14 owns final broad/client verification evidence.
+- Phase 13 does not relocate packet contracts into this module; PFUT-02 packet-contract relocation remains deferred, and broad ClientSmoke/hardware evidence remains Phase 14 scope.
 - Root `ResourceLocation` adaptation remains outside pure particle packages; module loading/publication accepts platform-free source metadata and publishes active entries by `ParticleDefinition.identifier()`.
 
 ## Current Consumers
