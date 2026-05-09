@@ -5,6 +5,7 @@ import io.github.tt432.eyelib.client.animation.AnimationEffect;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.client.particle.ParticleLookup;
 import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
+import io.github.tt432.eyelib.util.ResourceLocations;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
