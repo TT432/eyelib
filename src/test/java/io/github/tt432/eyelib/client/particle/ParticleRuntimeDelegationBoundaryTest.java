@@ -39,6 +39,8 @@ class ParticleRuntimeDelegationBoundaryTest {
         assertTrue(source.contains("ParticleRenderManager.INSTANCE.spawnEmitter("));
         assertTrue(source.contains("ParticleRenderManager.INSTANCE.removeEmitter("));
         assertTrue(source.contains("ParticleRenderManager.INSTANCE.spawnParticle("));
+        assertTrue(source.contains("throw new UnsupportedOperationException("));
+        assertTrue(source.contains("Legacy root BrParticleParticle cannot be registered"));
         assertTrue(source.contains("Remove this adapter"));
     }
 
