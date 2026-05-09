@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
-status: ready_to_plan
-stopped_at: Phase 13 complete; ready to plan Phase 14.
+status: ready_to_execute
+stopped_at: Phase 14 planned; ready to execute verification/documentation gate.
 last_updated: "2026-05-09T14:10:00Z"
 last_activity: 2026-05-09 -- Phase 13 verified and code-reviewed clean
 progress:
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 
 ## Current Position
 
-Phase: 14 (verification-documentation-gate) — READY TO PLAN
-Plan: 0 of TBD
-Status: Phase 13 complete; next phase planning can begin.
+Phase: 14 (verification-documentation-gate) — READY TO EXECUTE
+Plan: 0 of 3
+Status: Phase 14 planning complete; execute the verification/documentation gate plans.
 Last activity: 2026-05-09 -- Phase 13 verified and code-reviewed clean
 
 Progress: [██████████] 100%
@@ -135,4 +135,4 @@ Resume file: None
 
 ## Operator Next Steps
 
-- Continue with `/gsd-plan-phase 14` for the verification and documentation gate.
+- Continue with `/gsd-execute-phase 14` for the verification and documentation gate.
