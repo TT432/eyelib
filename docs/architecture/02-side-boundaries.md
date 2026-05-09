@@ -39,6 +39,7 @@ Eyelib is a Forge codebase with client-only rendering/tooling paths and shared r
 - Client packet handlers should also route render-state application through dedicated apply services such as `client/render/sync/ClientRenderSyncService.java`.
 - Client packet handlers should not call `BrParticleRenderManager` directly; emitter spawn/remove stays inside `ParticleSpawnService.java`.
 - JetBrains MCP Gradle tasks are the only approved verification path for command/network checks; broad ClientSmoke/hardware visual evidence remains Phase 14 scope, and PFUT-02 packet-contract relocation remains deferred.
+- Phase 14 final gate evidence must keep automated JetBrains MCP Gradle checks separate from ClientSmoke/manual/hardware status. Windows hardware exit-code capture and purely manual visual proof are manual/deferred evidence, PFUT-02 packet-contract relocation and PFUT-03 independent particle artifact publication are future scope, and normal source tests must not read `.planning/` artifacts.
 
 ## Reading Guidance
 - If a task involves packets or network handlers, read this file before editing `network/` or `util/data_attach/`.

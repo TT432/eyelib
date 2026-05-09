@@ -2,7 +2,7 @@
 
 ## Scope
 - Path: `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/`
-- Owns the particle module boundary for particle-module APIs, `io.github.tt432.eyelibparticle.runtime.ParticleDefinition` as the canonical module runtime definition owner, and explicit integration seams.
+- Owns the particle module boundary for particle-module APIs, `io.github.tt432.eyelibparticle.runtime.ParticleDefinition` as the canonical module runtime definition owner, `ParticleDefinitionAdapter`, executable runtime, client integration, render manager, and loading/publication through `ParticleDefinitionRegistry` plus `ParticleResourcePublication`.
 
 ## Current Responsibilities
 - Phase 8 owns build metadata, source/resource layout, and boundary documentation for `:eyelib-particle`.
@@ -34,3 +34,4 @@
 
 ## Verification Rule
 - Gradle verification for this repository must be executed through JetBrains MCP Gradle tools only, never through shell Gradle commands.
+- Normal source tests must not read `.planning/` files. ClientSmoke and hardware/manual visual evidence are recorded separately from automated Gradle gates; PFUT-02 packet-contract relocation, PFUT-03 independent particle artifact publication, unrelated fixture cleanup, and manual visual proof are non-blocking scope boundaries for the v1.2 final gate.
