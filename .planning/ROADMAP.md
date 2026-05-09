@@ -137,13 +137,13 @@ Plans:
   2. New boundary, parity, and regression tests cover the module split, including dependency direction, schema/runtime conversion, reload keys, command/network delegation, and side boundaries.
   3. Maintainer can run the planned compile/test checks through JetBrains MCP Gradle tasks only, use automated ClientSmoke flow where applicable, and keep hardware/manual checks separate for runtime behavior that cannot be automatically asserted.
   4. Module, architecture, side-boundary, repo-map, and particle README documentation all match the final ownership and integration boundaries.
-**Plans**: 1/3 complete — `.planning/phases/14-verification-documentation-gate/14-01-PLAN.md`, `.planning/phases/14-verification-documentation-gate/14-02-PLAN.md`, `.planning/phases/14-verification-documentation-gate/14-03-PLAN.md`
+**Plans**: 2/3 complete — `.planning/phases/14-verification-documentation-gate/14-01-PLAN.md`, `.planning/phases/14-verification-documentation-gate/14-02-PLAN.md`, `.planning/phases/14-verification-documentation-gate/14-03-PLAN.md`
 Plans:
 **Wave 1**
 - [x] 14-01-PLAN.md — Converge final ownership documentation and create evidence/checklist shells.
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 14-02-PLAN.md — Add final split documentation, root adapter, and particle module boundary tests.
+- [x] 14-02-PLAN.md — Add final split documentation, root adapter, and particle module boundary tests.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 14-03-PLAN.md — Run JetBrains MCP verification matrix and record milestone closure evidence.
@@ -165,4 +165,4 @@ Plans:
 | 11. Runtime Client Core Extraction | v1.2 | 6/6 | Complete   | 2026-05-09 |
 | 12. Loading & Publication Rewire | v1.2 | 3/3 | Complete   | 2026-05-09 |
 | 13. Command & Network Integration Rewire | v1.2 | 3/3 | Complete   | 2026-05-09 |
-| 14. Verification & Documentation Gate | v1.2 | 1/3 | In Progress | - |
+| 14. Verification & Documentation Gate | v1.2 | 2/3 | In Progress|  |
