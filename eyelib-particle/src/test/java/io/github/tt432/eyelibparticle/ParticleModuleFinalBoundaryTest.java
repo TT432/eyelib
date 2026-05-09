@@ -28,11 +28,11 @@ class ParticleModuleFinalBoundaryTest {
                     .filter(path -> path.toString().endsWith(".java"))
                     .filter(path -> !path.toString().contains("/client/"))
                     .filter(path -> !path.toString().contains("\\client\\"))
-                    .filter(path -> importsIn(path).stream().anyMatch(importLine -> forbiddenImports.stream().anyMatch(importLine::startsWith)))
+                    .filter(path -> hasForbiddenPureParticleReference(path, forbiddenImports))
                     .map(projectRoot()::relativize)
                     .toList();
 
-            assertTrue(violatingFiles.isEmpty(), () -> "Forbidden pure particle imports: " + violatingFiles);
+            assertTrue(violatingFiles.isEmpty(), () -> "Forbidden pure particle references: " + violatingFiles);
         }
     }
 
@@ -90,10 +90,107 @@ class ParticleModuleFinalBoundaryTest {
                     .map(String::trim)
                     .filter(line -> line.startsWith("import "))
                     .map(line -> line.substring("import ".length(), line.length() - 1))
+                    .map(line -> line.startsWith("static ") ? line.substring("static ".length()) : line)
                     .toList();
         } catch (IOException exception) {
             throw new AssertionError("Unable to scan imports in " + path, exception);
         }
+    }
+
+    private static boolean hasForbiddenPureParticleReference(Path path, List<String> forbiddenPrefixes) {
+        return importsIn(path).stream().anyMatch(importLine -> forbiddenPrefixes.stream().anyMatch(importLine::startsWith))
+                || forbiddenPrefixes.stream().anyMatch(forbiddenPrefix -> strippedSourceIn(path).contains(forbiddenPrefix));
+    }
+
+    private static String strippedSourceIn(Path path) {
+        try {
+            return stripCommentsAndStrings(Files.readString(path));
+        } catch (IOException exception) {
+            throw new AssertionError("Unable to scan source in " + path, exception);
+        }
+    }
+
+    private static String stripCommentsAndStrings(String source) {
+        StringBuilder stripped = new StringBuilder(source.length());
+
+        for (int index = 0; index < source.length(); index++) {
+            char current = source.charAt(index);
+            char next = index + 1 < source.length() ? source.charAt(index + 1) : '\0';
+
+            if (current == '/' && next == '/') {
+                index = appendSpacesUntilLineEnd(source, stripped, index);
+            } else if (current == '/' && next == '*') {
+                index = appendSpacesUntilBlockCommentEnd(source, stripped, index);
+            } else if (source.startsWith("\"\"\"", index)) {
+                index = appendSpacesUntilTextBlockEnd(source, stripped, index);
+            } else if (current == '"' || current == '\'') {
+                index = appendSpacesUntilLiteralEnd(source, stripped, index, current);
+            } else {
+                stripped.append(current);
+            }
+        }
+
+        return stripped.toString();
+    }
+
+    private static int appendSpacesUntilLineEnd(String source, StringBuilder stripped, int index) {
+        while (index < source.length() && source.charAt(index) != '\n') {
+            stripped.append(' ');
+            index++;
+        }
+        if (index < source.length()) {
+            stripped.append(source.charAt(index));
+        }
+        return index;
+    }
+
+    private static int appendSpacesUntilBlockCommentEnd(String source, StringBuilder stripped, int index) {
+        stripped.append("  ");
+        index += 2;
+        while (index < source.length()) {
+            char current = source.charAt(index);
+            char next = index + 1 < source.length() ? source.charAt(index + 1) : '\0';
+            if (current == '*' && next == '/') {
+                stripped.append("  ");
+                return index + 1;
+            }
+            stripped.append(current == '\n' ? '\n' : ' ');
+            index++;
+        }
+        return source.length() - 1;
+    }
+
+    private static int appendSpacesUntilTextBlockEnd(String source, StringBuilder stripped, int index) {
+        stripped.append("   ");
+        index += 3;
+        while (index < source.length()) {
+            if (source.startsWith("\"\"\"", index)) {
+                stripped.append("   ");
+                return index + 2;
+            }
+            stripped.append(source.charAt(index) == '\n' ? '\n' : ' ');
+            index++;
+        }
+        return source.length() - 1;
+    }
+
+    private static int appendSpacesUntilLiteralEnd(String source, StringBuilder stripped, int index, char delimiter) {
+        stripped.append(' ');
+        index++;
+        boolean escaped = false;
+        while (index < source.length()) {
+            char current = source.charAt(index);
+            stripped.append(current == '\n' ? '\n' : ' ');
+            if (!escaped && current == delimiter) {
+                return index;
+            }
+            escaped = !escaped && current == '\\';
+            if (current != '\\') {
+                escaped = false;
+            }
+            index++;
+        }
+        return source.length() - 1;
     }
 
     private static SourceCheck source(String path) throws IOException {
