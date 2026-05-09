@@ -5,13 +5,13 @@ import io.github.tt432.eyelib.client.animation.AnimationEffect;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.client.particle.ParticleLookup;
 import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
-import io.github.tt432.eyelib.util.ResourceLocations;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelibmolang.MolangValue;
+import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
+import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
@@ -19,7 +19,6 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
-import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
 
 import java.util.List;
 import java.util.TreeMap;
@@ -95,10 +94,10 @@ public record BrAnimationEntryDefinition(
                         String s = clientEntity.particle_effects().get(frame.effect());
 
                         if (s != null) {
-                            BrParticle brParticle = ParticleLookup.get(ResourceLocations.of(s));
-                            if (brParticle != null) {
+                            ParticleDefinition definition = ParticleLookup.definition(s);
+                            if (definition != null) {
                                 String uuid = UUID.randomUUID().toString();
-                                BedrockParticleEmitter emitter = ParticleSpawnService.spawnEmitter(uuid, brParticle, scope, entity.level(), new Vector3f());
+                                BedrockParticleEmitter emitter = ParticleSpawnService.spawnEmitter(uuid, definition, scope, entity.level(), new Vector3f());
                                 if (emitter != null) {
                                     animationData.owner().particles().add(new RuntimeParticlePlayData(uuid, emitter, frame.locator().orElse(null), ticks));
                                 }

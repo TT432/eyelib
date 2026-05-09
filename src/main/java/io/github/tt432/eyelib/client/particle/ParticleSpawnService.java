@@ -68,6 +68,18 @@ public final class ParticleSpawnService {
         return emitter;
     }
 
+    public static @Nullable BedrockParticleEmitter spawnEmitter(
+            String spawnId,
+            ParticleDefinition definition,
+            @Nullable MolangScope parentScope,
+            Level level,
+            Vector3f position
+    ) {
+        BedrockParticleEmitter emitter = createEmitter(definition, parentScope, level, position);
+        ParticleRenderManager.INSTANCE.spawnEmitter(spawnId, emitter);
+        return emitter;
+    }
+
     public static void removeEmitter(String removeId) {
         api().remove(removeId);
     }

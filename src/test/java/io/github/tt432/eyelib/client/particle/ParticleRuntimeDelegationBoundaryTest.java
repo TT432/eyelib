@@ -1,15 +1,28 @@
 package io.github.tt432.eyelib.client.particle;
 
+import com.google.gson.JsonParser;
+import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
+import io.github.tt432.eyelibparticle.loading.ParticleResourcePublication;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.regex.Pattern;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ParticleRuntimeDelegationBoundaryTest {
+    @AfterEach
+    void clearParticles() {
+        ParticleDefinitionRegistry.store().clear();
+    }
+
     @Test
     void spawnServiceBuildsModuleRuntimeAndDelegatesToModuleRenderManager() throws IOException {
         String source = Files.readString(Path.of(
@@ -27,7 +40,33 @@ class ParticleRuntimeDelegationBoundaryTest {
         assertTrue(source.contains("api().spawn(new ParticleSpawnRequest(packet.spawnId(), packet.particleId(), packet.position()))"));
         assertTrue(source.contains("api().remove(removeId);"));
         assertTrue(source.contains("ParticleDefinitionRegistry.store().get(request.particleId())"));
+        assertTrue(source.contains("spawnEmitter(\n            String spawnId,\n            ParticleDefinition definition,"));
         assertTrue(!source.contains("BrParticle.CODEC.encodeStart"));
+    }
+
+    @Test
+    void animationParticleEffectsResolvePublishedModuleDefinitions() throws IOException {
+        ParticleResourcePublication.replaceFromJsonResources(
+                Map.of("particles/runtime.particle", JsonParser.parseString(particleJson("eyelib:runtime_particle"))),
+                LoggerFactory.getLogger(ParticleRuntimeDelegationBoundaryTest.class)
+        );
+
+        assertNotNull(ParticleLookup.definition("eyelib:runtime_particle"));
+        assertNull(ParticleLookup.definition("particles/runtime.particle"));
+
+        String animationEntry = Files.readString(Path.of(
+                "src/main/java/io/github/tt432/eyelib/client/animation/bedrock/BrAnimationEntryDefinition.java"
+        ));
+        String controllerExecutor = Files.readString(Path.of(
+                "src/main/java/io/github/tt432/eyelib/client/animation/bedrock/controller/BrControllerExecutor.java"
+        ));
+
+        assertTrue(animationEntry.contains("ParticleLookup.definition(s)"));
+        assertTrue(animationEntry.contains("ParticleSpawnService.spawnEmitter(uuid, definition,"));
+        assertTrue(!animationEntry.contains("ParticleLookup.get("));
+        assertTrue(controllerExecutor.contains("ParticleLookup.definition(effect)"));
+        assertTrue(controllerExecutor.contains("ParticleSpawnService.spawnEmitter(\n                                    uuid,\n                                    definition,"));
+        assertTrue(!controllerExecutor.contains("ParticleLookup.get("));
     }
 
     @Test
@@ -67,5 +106,22 @@ class ParticleRuntimeDelegationBoundaryTest {
                 .matcher(removePacket)
                 .find());
         assertTrue(removePacket.contains("EyelibStreamCodecs.STRING.encode(obj.removeId, buf);"));
+    }
+
+    private static String particleJson(String identifier) {
+        return """
+                {
+                  "format_version": "1.10.0",
+                  "particle_effect": {
+                    "description": {
+                      "identifier": "%s",
+                      "basic_render_parameters": {
+                        "material": "particles_alpha",
+                        "texture": "textures/particle/particles"
+                      }
+                    }
+                  }
+                }
+                """.formatted(identifier);
     }
 }

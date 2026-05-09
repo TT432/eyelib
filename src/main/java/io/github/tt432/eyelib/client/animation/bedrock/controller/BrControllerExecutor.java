@@ -8,9 +8,9 @@ import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.particle.ParticleLookup;
 import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
 import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -76,11 +76,11 @@ final class BrControllerExecutor {
                 for (BrAcParticleEffectDefinition particleEffect : currState.particleEffects()) {
                     String uuid = UUID.randomUUID().toString();
                     particleEffect.effect().map(clientEntity.particle_effects()::get).ifPresent(effect -> {
-                        BrParticle particle = ParticleLookup.get(effect);
-                        if (particle != null) {
+                        ParticleDefinition definition = ParticleLookup.definition(effect);
+                        if (definition != null) {
                             BedrockParticleEmitter emitter = ParticleSpawnService.spawnEmitter(
                                     uuid,
-                                    particle,
+                                    definition,
                                     scope,
                                     entity.level(),
                                     entity.position().toVector3f()
