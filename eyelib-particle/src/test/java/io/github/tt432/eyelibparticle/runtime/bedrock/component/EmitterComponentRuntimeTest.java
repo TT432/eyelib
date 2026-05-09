@@ -7,12 +7,18 @@ import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
 import io.github.tt432.eyelibparticle.runtime.ParticleDefinitionAdapter;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterParticleComponent;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterLocalSpace;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.lifetime.EmitterLifetimeExpression;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.lifetime.EmitterLifetimeLooping;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.lifetime.EmitterLifetimeOnce;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.shape.EmitterShapeBox;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.shape.EmitterShapePoint;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.shape.Direction;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.rate.EmitterRateInstant;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.rate.EmitterRateManual;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.rate.EmitterRateSteady;
+import io.github.tt432.eyelibmolang.MolangValue3;
+import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -93,6 +99,31 @@ class EmitterComponentRuntimeTest {
         expression.onTick(expressionEmitter);
         assertTrue(expressionEmitter.enabled);
         assertEquals(1, expressionEmitter.loopStarts);
+    }
+
+    @Test
+    void localSpaceAndShapeComponentsPreservePositionEvaluationAndDirection() {
+        assertFalse(EmitterLocalSpace.EMPTY.position());
+        assertFalse(EmitterLocalSpace.EMPTY.rotation());
+        assertFalse(EmitterLocalSpace.EMPTY.velocity());
+
+        FakeEmitter emitter = new FakeEmitter();
+        EmitterShapePoint point = new EmitterShapePoint(
+                MolangValue3.create(MolangValue.getConstant(1), MolangValue.getConstant(2), MolangValue.getConstant(3)),
+                Direction.EMPTY
+        );
+        Vector3f pointPosition = point.getEmitPosition(emitter).eval(emitter.scope);
+        assertEquals(new Vector3f(1, 2, 3), pointPosition);
+
+        EmitterShapeBox box = new EmitterShapeBox(
+                MolangValue3.ZERO,
+                MolangValue3.create(MolangValue.getConstant(1), MolangValue.getConstant(1), MolangValue.getConstant(1)),
+                false,
+                Direction.EMPTY
+        );
+        assertTrue(box.getEmitPosition(emitter).eval(emitter.scope).isFinite());
+        assertTrue(new Direction(Direction.Type.OUTWARDS, null)
+                .getVec(emitter.scope, new Vector3f(), new Vector3f(1, 0, 0)).x() > 0);
     }
 
     private static ParticleDefinition definitionWithComponents() {
