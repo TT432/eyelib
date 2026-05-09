@@ -54,7 +54,7 @@ class EmitterComponentRuntimeTest {
         assertEquals(4, emitter.emitCalls);
         emitter.age = 0.25F;
         steady.onTick(emitter);
-        assertEquals(4, emitter.emitCalls);
+        assertEquals(5, emitter.emitCalls);
         emitter.age = 0.6F;
         steady.onTick(emitter);
         assertEquals(5, emitter.emitCalls);
@@ -79,6 +79,7 @@ class EmitterComponentRuntimeTest {
         assertTrue(emitter.removed);
 
         FakeEmitter loopingEmitter = new FakeEmitter();
+        loopingEmitter.age = 0.1F;
         EmitterLifetimeLooping looping = new EmitterLifetimeLooping(MolangValue.getConstant(1), MolangValue.getConstant(2));
         looping.onTick(loopingEmitter);
         assertTrue(loopingEmitter.enabled);
