@@ -74,7 +74,7 @@ Each task was committed atomically:
 3. **Task 2 RED: Define publication and spawn/remove API seams** - `d70523d` (test)
 4. **Task 2 GREEN: Define publication and spawn/remove API seams** - `95c04a2` (feat)
 
-**Plan metadata:** pending final docs commit
+**Plan metadata:** `be5f7aa` (docs: complete plan)
 
 ## Files Created/Modified
 
