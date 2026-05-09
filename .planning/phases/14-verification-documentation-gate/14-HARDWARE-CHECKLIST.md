@@ -14,11 +14,11 @@ Record observations from a real client session or existing smoke flow when avail
 
 | Check | Expected Behavior | Status | Evidence / Notes |
 |-------|-------------------|--------|------------------|
-| Particle resource reload | `particles/*.json` definitions load and publish by `ParticleDefinition.identifier()` rather than source `ResourceLocation`. | ⬜ Not run | Fill during Plan 03 or manual session. |
-| `/eyelib particle` spawn | Command suggestions, validation, position fallback, and success message remain compatible. | ⬜ Not run | Fill during Plan 03 or manual session. |
-| Spawn packet visual result | String-keyed spawn path produces the expected emitter/render behavior through `ParticleSpawnService`. | ⬜ Not run | Fill during Plan 03 or manual session. |
-| Remove packet visual result | String-keyed remove path removes the intended emitter without exposing render internals in handlers. | ⬜ Not run | Fill during Plan 03 or manual session. |
-| Logout / cleanup | Module `ParticleRenderManager` cleanup leaves no stale emitters after client logout. | ⬜ Not run | Fill during Plan 03 or manual session. |
+| Particle resource reload | `particles/*.json` definitions load and publish by `ParticleDefinition.identifier()` rather than source `ResourceLocation`. | Manual/deferred | Automated evidence exists in `14-MCP-VERIFICATION-MATRIX.md` rows 1-3 for loader/publication tests; real client resource reload observation was not run in this automation-only session. |
+| `/eyelib particle` spawn | Command suggestions, validation, position fallback, and success message remain compatible. | Manual/deferred | Automated evidence exists in row 3 for command/runtime/boundary tests; real in-game command use was not run in this automation-only session. |
+| Spawn packet visual result | String-keyed spawn path produces the expected emitter/render behavior through `ParticleSpawnService`. | Manual/deferred | Automated packet/delegation tests passed in row 3; visual render proof remains hardware/manual evidence. |
+| Remove packet visual result | String-keyed remove path removes the intended emitter without exposing render internals in handlers. | Manual/deferred | Automated remove packet and network delegation tests passed in row 3; visual remove behavior remains hardware/manual evidence. |
+| Logout / cleanup | Module `ParticleRenderManager` cleanup leaves no stale emitters after client logout. | Manual/deferred | Module lifecycle/client integration tests passed in rows 1-2; real logout observation remains hardware/manual evidence. |
 
 ## ClientSmoke Applicability
 
@@ -26,8 +26,8 @@ Phase 14 may use automated ClientSmoke only where existing hooks provide meaning
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Existing particle-specific ClientSmoke hook | ⬜ To be determined in Plan 03 | If none exists, record `not applicable because no existing particle-specific hook exists`. |
-| Existing material/client smoke hook relevant to particle render path | ⬜ To be determined in Plan 03 | Use only as supporting evidence, not as direct proof unless it exercises particle behavior. |
+| Existing particle-specific ClientSmoke hook | not applicable because no existing particle-specific hook exists | Repository search found ClientSmoke framework code and `eyelib-material` material smoke coverage, but no particle-specific `@ClientSmoke` hook. Adding one would be new smoke framework/feature work, outside Plan 03. |
+| Existing material/client smoke hook relevant to particle render path | supporting-only, not direct proof | `eyelib-material/src/main/java/io/github/tt432/eyelibmaterial/smoke/MaterialPipelineSmoke.java` exercises material/client smoke plumbing but does not directly prove particle spawn/remove/render behavior. |
 | New broad smoke framework work | Not in scope | Do not expand Phase 14 into feature work. |
 
 ## Windows Hardware Exit-Code Capture
@@ -36,14 +36,14 @@ Windows hardware exit-code capture is manual/deferred per D-15 and the project-l
 
 | Capture | Status | Notes |
 |---------|--------|-------|
-| Windows hardware exit code | Manual/deferred | Capture manually if available; absence does not block automated JetBrains MCP gates. |
-| Manual screenshot/log archive | ⬜ Optional | Link screenshots/log paths if collected. |
+| Windows hardware exit code | Manual/deferred | Not captured in Plan 03; absence does not block automated JetBrains MCP rows 1-3. |
+| Manual screenshot/log archive | Optional / not collected | No screenshot or hardware log archive was produced in this automation-only session. |
 
 ## Result Log
 
 | Date/Time | Operator | Environment | Result | Evidence |
 |-----------|----------|-------------|--------|----------|
-| ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 2026-05-09 | gsd-executor | JetBrains MCP Gradle automation on Windows; no live Minecraft client hardware session | Automated matrix passed rows 1-3; ClientSmoke direct particle hook not applicable; manual visual/hardware evidence deferred | `14-MCP-VERIFICATION-MATRIX.md`, `14-FINAL-GATE-EVIDENCE.md`, `14-MILESTONE-CLOSURE.md` |
 
 ## Non-Blocking Deferrals
 
