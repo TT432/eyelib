@@ -53,6 +53,42 @@ class ParticleRuntimeLifecycleTest {
         assertTrue(emitter.removed());
     }
 
+    @Test
+    void particleRegistersMolangStateDispatchesComponentsAndRemovesIdempotently() {
+        FakeEnvironment environment = new FakeEnvironment();
+        RecordingSpawner spawner = new RecordingSpawner();
+        ParticleDefinition definition = definitionWithComponents("""
+                "minecraft:emitter_rate_instant": { "num_particles": 1 },
+                "minecraft:emitter_lifetime_once": { "active_time": 1 },
+                "minecraft:emitter_shape_point": { "offset": [0, 0, 0] },
+                "minecraft:particle_initial_speed": 3,
+                "minecraft:particle_lifetime_expression": { "max_lifetime": 2 }
+                """);
+        BedrockParticleEmitter emitter = new BedrockParticleRuntime(definition, environment, spawner)
+                .createEmitter(Optional.empty(), new Vector3f());
+
+        emitter.onLoopStart();
+        BedrockParticleInstance particle = spawner.spawned.get(0);
+
+        assertTrue(particle.molangScope().contains("variable.particle_age"));
+        assertTrue(particle.molangScope().contains("variable.particle_lifetime"));
+        assertTrue(particle.molangScope().contains("variable.particle_random_4"));
+        assertEquals(3F, particle.speed());
+        assertEquals(2F, particle.lifetime());
+
+        environment.ticks = 10;
+        particle.onRenderFrame();
+        assertFalse(particle.removed());
+
+        environment.ticks = 50;
+        particle.onRenderFrame();
+        assertTrue(particle.removed());
+        assertEquals(0, emitter.emitCount());
+
+        particle.remove();
+        assertEquals(0, emitter.emitCount(), "double remove must not decrement emitter twice");
+    }
+
     private static ParticleDefinition definitionWithComponents(String componentsJson) {
         String json = """
                 {
