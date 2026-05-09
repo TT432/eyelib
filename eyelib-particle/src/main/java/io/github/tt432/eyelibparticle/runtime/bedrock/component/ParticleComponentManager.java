@@ -31,6 +31,14 @@ import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.appeara
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.appearance.ParticleAppearanceTinting;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.initial.ParticleInitialSpeed;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.initial.ParticleInitialSpin;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.lifetime.ParticleExpireIfInBlocks;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.lifetime.ParticleExpireIfNotInBlocks;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.lifetime.ParticleLifetimeEvents;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.lifetime.ParticleLifetimeExpression;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.lifetime.ParticleLifetimeKillPlane;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.motion.ParticleMotionCollision;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.motion.ParticleMotionDynamic;
+import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.motion.ParticleMotionParametric;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -63,6 +71,14 @@ public final class ParticleComponentManager {
         register("particle_appearance_tinting", "particle_appearance_tinting", ComponentTarget.PARTICLE, ParticleAppearanceTinting.CODEC);
         register("particle_initial_speed", "particle_initial_speed", ComponentTarget.PARTICLE, ParticleInitialSpeed.CODEC);
         register("particle_initial_spin", "particle_initial_spin", ComponentTarget.PARTICLE, ParticleInitialSpin.CODEC);
+        register("particle_lifetime_expression", "particle_lifetime", ComponentTarget.PARTICLE, ParticleLifetimeExpression.CODEC);
+        register("particle_lifetime_events", "particle_lifetime_events", ComponentTarget.PARTICLE, ParticleLifetimeEvents.CODEC);
+        register("particle_kill_plane", "particle_lifetime", ComponentTarget.PARTICLE, ParticleLifetimeKillPlane.CODEC);
+        register("particle_expire_if_in_blocks", "particle_lifetime", ComponentTarget.PARTICLE, ParticleExpireIfInBlocks.CODEC);
+        register("particle_expire_if_not_in_blocks", "particle_lifetime", ComponentTarget.PARTICLE, ParticleExpireIfNotInBlocks.CODEC);
+        register("particle_motion_collision", "particle_motion", ComponentTarget.PARTICLE, ParticleMotionCollision.CODEC);
+        register("particle_motion_dynamic", "particle_motion", ComponentTarget.PARTICLE, ParticleMotionDynamic.CODEC);
+        register("particle_motion_parametric", "particle_motion", ComponentTarget.PARTICLE, ParticleMotionParametric.CODEC);
     }
 
     private ParticleComponentManager() {
