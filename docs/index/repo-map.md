@@ -20,7 +20,7 @@
 - Runtime asset storage: start in `src/main/java/io/github/tt432/eyelib/client/manager/`
 - Molang: start in `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/` for value/runtime wrappers, scope/compiler/type/generated code; root `src/main/java/io/github/tt432/eyelib/molang/` is now a legacy marker/handoff path only
 - Molang rewrite planning: read `eyelib-molang/ROADMAP.md` first for current progress and update rules, then use `eyelib-molang/refactor-plan/README.md` when the task is about rewrite sequencing, entry gates, or cutover parity
-- Particle module boundary: start in `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/` for the `:eyelib-particle` module contract; current executable runtime remains in `src/main/java/io/github/tt432/eyelib/client/particle/` until the particle API/store/schema/runtime phases move it through explicit seams.
+- Particle module boundary: start in `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/` for the `:eyelib-particle` module contract, executable particle runtime, lifecycle, render-manager behavior, and `Dist.CLIENT` client integration; retained root `src/main/java/io/github/tt432/eyelib/client/particle/` classes are transitional adapters until Phase 12 loading/publication and Phase 13 command/network rewires complete, with broad/client verification evidence deferred to Phase 14.
 - Sync and packets: start in `src/main/java/io/github/tt432/eyelib/network/`
 - Data attachment flow: start in `src/main/java/io/github/tt432/eyelib/util/data_attach/` and `src/main/java/io/github/tt432/eyelib/capability/`
 - Platform-free utility seams: start in `src/main/java/io/github/tt432/eyelib/core/`
