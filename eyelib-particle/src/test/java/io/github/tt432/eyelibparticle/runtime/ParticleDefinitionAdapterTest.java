@@ -120,6 +120,21 @@ class ParticleDefinitionAdapterTest {
     }
 
     @Test
+    void adapterFailsLoudlyForNullParticleEffect() {
+        assertErrorContains(ParticleDefinitionAdapter.fromSchema(new BrParticle("1.10.0", null)),
+                "Particle effect is required");
+    }
+
+    @Test
+    void adapterFailsLoudlyForNullDescription() {
+        assertErrorContains(ParticleDefinitionAdapter.fromSchema(new BrParticle(
+                        "1.10.0",
+                        new BrParticle.ParticleEffect(null, Map.of(), new BrParticle.Events(), Map.of())
+                )),
+                "Particle description is required");
+    }
+
+    @Test
     void adapterFailsLoudlyForBlankIdentifier() {
         assertErrorContains(ParticleDefinitionAdapter.fromSchema(particle(" ", renderParameters())),
                 "Particle identifier is required");
@@ -129,6 +144,20 @@ class ParticleDefinitionAdapterTest {
     void adapterFailsLoudlyForMissingRenderParameters() {
         assertErrorContains(ParticleDefinitionAdapter.fromSchema(particle("sample:missing_render", null)),
                 "Particle basic render parameters are required");
+    }
+
+    @Test
+    void adapterFailsLoudlyForBlankMaterial() {
+        BrParticle.BasicRenderParameters params = new BrParticle.BasicRenderParameters(" ", "textures/particle/particles");
+        assertErrorContains(ParticleDefinitionAdapter.fromSchema(particle("sample:blank_material", params)),
+                "Particle render material is required");
+    }
+
+    @Test
+    void adapterFailsLoudlyForBlankTexture() {
+        BrParticle.BasicRenderParameters params = new BrParticle.BasicRenderParameters("particles_alpha", " ");
+        assertErrorContains(ParticleDefinitionAdapter.fromSchema(particle("sample:blank_texture", params)),
+                "Particle render texture is required");
     }
 
     private static BrParticle decodeImporterFixture(String path) throws IOException {
