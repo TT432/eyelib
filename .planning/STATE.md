@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
 status: executing
-stopped_at: Completed 11-01-PLAN.md; ready for Phase 11 Plan 02.
-last_updated: "2026-05-09T08:18:49.319Z"
-last_activity: 2026-05-09 -- Phase 11 Plan 01 runtime foundation verified
+stopped_at: Completed 11-01-PLAN.md
+last_updated: "2026-05-09T08:34:09.737Z"
+last_activity: 2026-05-09
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 13
-  completed_plans: 8
-  percent: 62
+  completed_plans: 9
+  percent: 69
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 ## Current Position
 
 Phase: 11 (runtime-client-core-extraction) — IN PROGRESS
-Plan: 1 of 6 complete
-Status: Completed 11-01 runtime contracts/support/boundary guards; ready for Plan 02.
-Last activity: 2026-05-09 -- Phase 11 Plan 01 runtime foundation verified
+Plan: 2 of 6 complete
+Status: Ready to execute
+Last activity: 2026-05-09
 
-Progress: [██████░░░░] 62%
+Progress: [███████░░░] 69%
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Progress: [██████░░░░] 62%
 | Phase 10-schema-runtime-ownership-adapter P01 | 11 min | 2 tasks | 6 files |
 | Phase 10-schema-runtime-ownership-adapter P02 | 6min | 2 tasks | 8 files |
 | Phase 11-runtime-client-core-extraction P01 | 9min | 2 tasks | 9 files |
+| Phase 11-runtime-client-core-extraction P02 | 17min | 2 tasks | 21 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,9 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [Phase 11-runtime-client-core-extraction]: Plan 01 established pure runtime contracts and support helpers under `:eyelib-particle`, with `ParticleRuntimeDefinition` wrapping canonical `ParticleDefinition` instead of introducing a duplicate `BrParticle` owner.
 - [Phase 11-runtime-client-core-extraction]: Particle runtime timing now uses a module-owned `TimeSource` port and `ParticleTimer`, keeping Minecraft tick/partial-tick access outside pure runtime until client integration binds it.
 - [Phase 11-runtime-client-core-extraction]: Runtime package docs and boundary tests require pure runtime cleanliness while reserving Minecraft/Forge bindings for documented client integration outside `runtime/**`.
+- [Phase 11-runtime-client-core-extraction]: ParticleComponentManager decodes executable components from ParticleDefinition.rawComponents() instead of introducing a particle-module BrParticle schema owner. — Preserves Phase 10 canonical schema ownership while moving executable component behavior.
+- [Phase 11-runtime-client-core-extraction]: Entity-AABB shape data is routed through an optional bounds port, leaving Minecraft entity adaptation for later client integration. — Preserves shape behavior without violating pure runtime boundary rules.
+- [Phase 11-runtime-client-core-extraction]: Emitter components operate on a module-owned EmitterAccess port so pure runtime code does not import root particle runtime, Minecraft, or Forge types. — Keeps runtime component behavior pure until later lifecycle and client integration plans bind platform state.
 
 ### Pending Todos
 
@@ -98,7 +102,7 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09T08:18:49.308Z
+Last session: 2026-05-09T08:32:36.720Z
 Stopped at: Completed 11-01-PLAN.md
 Resume file: None
 

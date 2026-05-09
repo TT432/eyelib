@@ -39,8 +39,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Rendering And Verification
 
-- [ ] **PRENDER-01**: Existing client particle emitter, render manager, material/texture resolution, Molang scope, lifetime, remove semantics, tick/render lifecycle, and logout cleanup behavior are preserved.
-- [ ] **PRENDER-02**: Client-only hooks and platform integrations are side-safe after extraction and do not introduce dedicated-server classloading regressions.
+- [x] **PRENDER-01**: Existing client particle emitter, render manager, material/texture resolution, Molang scope, lifetime, remove semantics, tick/render lifecycle, and logout cleanup behavior are preserved.
+- [x] **PRENDER-02**: Client-only hooks and platform integrations are side-safe after extraction and do not introduce dedicated-server classloading regressions.
 - [ ] **PVERIFY-01**: Existing particle-related tests are moved or adapted without weakening assertions, and new boundary/parity/regression tests cover the module split.
 - [ ] **PVERIFY-02**: Maintainer can verify the extracted module through planned JetBrains MCP Gradle checks, automated ClientSmoke flow where applicable, and a separate hardware checklist only for runtime behavior that cannot be automatically asserted.
 
@@ -87,8 +87,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PNET-01 | Phase 13: Command & Network Integration Rewire | Pending |
 | PNET-02 | Phase 13: Command & Network Integration Rewire | Pending |
 | PNET-03 | Phase 13: Command & Network Integration Rewire | Pending |
-| PRENDER-01 | Phase 11: Runtime Client Core Extraction | Pending |
-| PRENDER-02 | Phase 11: Runtime Client Core Extraction | Pending |
+| PRENDER-01 | Phase 11: Runtime Client Core Extraction | Complete |
+| PRENDER-02 | Phase 11: Runtime Client Core Extraction | Complete |
 | PVERIFY-01 | Phase 14: Verification & Documentation Gate | Pending |
 | PVERIFY-02 | Phase 14: Verification & Documentation Gate | Pending |
 
