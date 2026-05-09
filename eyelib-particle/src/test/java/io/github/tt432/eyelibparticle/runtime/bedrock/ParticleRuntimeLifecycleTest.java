@@ -89,6 +89,34 @@ class ParticleRuntimeLifecycleTest {
         assertEquals(0, emitter.emitCount(), "double remove must not decrement emitter twice");
     }
 
+    @Test
+    void particleWithoutMaxLifetimeAdvancesAgeUntilExpirationExpressionRemovesIt() {
+        FakeEnvironment environment = new FakeEnvironment();
+        RecordingSpawner spawner = new RecordingSpawner();
+        ParticleDefinition definition = definitionWithComponents("""
+                "minecraft:emitter_rate_instant": { "num_particles": 1 },
+                "minecraft:emitter_lifetime_once": { "active_time": 1 },
+                "minecraft:emitter_shape_point": { "offset": [0, 0, 0] },
+                "minecraft:particle_lifetime_expression": { "expiration_expression": "variable.particle_age > 1" }
+                """);
+        BedrockParticleEmitter emitter = new BedrockParticleRuntime(definition, environment, spawner)
+                .createEmitter(Optional.empty(), new Vector3f());
+
+        emitter.onLoopStart();
+        BedrockParticleInstance particle = spawner.spawned.get(0);
+
+        assertEquals(0F, particle.lifetime());
+
+        environment.ticks = 10;
+        particle.onRenderFrame();
+        assertTrue(particle.age() > 0F);
+        assertFalse(particle.removed());
+
+        environment.ticks = 25;
+        particle.onRenderFrame();
+        assertTrue(particle.removed());
+    }
+
     private static ParticleDefinition definitionWithComponents(String componentsJson) {
         String json = """
                 {

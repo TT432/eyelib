@@ -99,7 +99,8 @@ public final class BedrockParticleInstance implements ParticleParticleComponent.
 
     @Override
     public float age() {
-        return Math.min(lifetime, timer.realSec());
+        float realAge = timer.realSec();
+        return lifetime > 0 ? Math.min(lifetime, realAge) : realAge;
     }
 
     public float speed() {
