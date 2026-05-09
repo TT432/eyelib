@@ -99,7 +99,16 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
   2. Particle publication continues to key entries by `particle_effect.description.identifier`, not by JSON resource path or other incidental source keys.
   3. Loader, registry, and manager responsibilities are owned by the particle module or by explicit root adapters without reintroducing root-owned particle internals.
   4. Maintainer can trace the reload path from root/Forge integration into particle-module registry publication without hidden ownership duplication.
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+**Wave 1**
+- [ ] 12-01-PLAN.md — Create module-owned particle definition registry and JSON resource publication seam.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 12-02-PLAN.md — Rewire root reload, registry, lookup, tooling, and spawn compatibility adapters to module publication.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 12-03-PLAN.md — Update ownership documentation and run final targeted JetBrains MCP verification.
 
 ### Phase 13: Command & Network Integration Rewire
 **Goal**: User-facing particle command and network spawn/remove behavior remain compatible while platform concerns stay in explicit adapters.
@@ -138,6 +147,6 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 9. Particle API & Store Seam | v1.2 | 3/3 | Complete | 2026-05-09 |
 | 10. Schema/Runtime Ownership & Adapter | v1.2 | 2/2 | Complete   | 2026-05-09 |
 | 11. Runtime Client Core Extraction | v1.2 | 6/6 | Complete   | 2026-05-09 |
-| 12. Loading & Publication Rewire | v1.2 | 0/TBD | Not started | - |
+| 12. Loading & Publication Rewire | v1.2 | 0/3 | Planned | - |
 | 13. Command & Network Integration Rewire | v1.2 | 0/TBD | Not started | - |
 | 14. Verification & Documentation Gate | v1.2 | 0/TBD | Not started | - |

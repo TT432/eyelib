@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
 status: executing
 stopped_at: Phase 12 context gathered
-last_updated: "2026-05-09T11:19:23.950Z"
-last_activity: 2026-05-09
+last_updated: "2026-05-09T11:30:19.105Z"
+last_activity: 2026-05-09 -- Phase 12 planning complete
 progress:
   total_phases: 7
   completed_phases: 4
-  total_plans: 13
+  total_plans: 16
   completed_plans: 13
-  percent: 100
+  percent: 81
 ---
 
 # Project State
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 Phase: 11 (runtime-client-core-extraction) — IN PROGRESS
 Plan: 6 of 6 complete
 Status: Ready to execute
-Last activity: 2026-05-09
+Last activity: 2026-05-09 -- Phase 12 planning complete
 
 Progress: [██████████] 100%
 
