@@ -18,16 +18,15 @@ import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
 import io.github.tt432.eyelib.client.loader.BedrockAddonRuntimeBridge;
 import io.github.tt432.eyelibmaterial.material.BrMaterial;
 import io.github.tt432.eyelib.client.model.importer.ModelImporter;
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
 import io.github.tt432.eyelib.client.registry.AttachableAssetRegistry;
 import io.github.tt432.eyelib.client.registry.ClientEntityAssetRegistry;
 import io.github.tt432.eyelib.client.registry.MaterialAssetRegistry;
 import io.github.tt432.eyelib.client.registry.ModelAssetRegistry;
-import io.github.tt432.eyelib.client.registry.ParticleAssetRegistry;
 import io.github.tt432.eyelib.client.registry.RenderControllerAssetRegistry;
 import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
+import io.github.tt432.eyelibparticle.loading.ParticleResourcePublication;
 import io.github.tt432.eyelib.event.TextureChangedEvent;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -56,10 +55,7 @@ public final class ManagerResourceImportPlanner {
         Optional<BedrockAddon> addon = tryLoadAddon(basePath, logger);
         if (addon.isPresent()) {
             BedrockAddonRuntimeBridge.replaceFromAddon(addon.get());
-            if (!addon.get().aggregate().particleFiles().isEmpty()) {
-                logger.debug("Bedrock addon particle bridge is currently skipped because importer particle components are plain-data only.");
-            }
-            ParticleAssetRegistry.replaceParticles(Map.of());
+            ParticleResourcePublication.replaceFromJsonResources(Map.of(), logger);
             loadAddonTextures(addon.get().aggregate().textures());
             return true;
         }
@@ -112,15 +108,16 @@ public final class ManagerResourceImportPlanner {
         );
         RenderControllerAssetRegistry.replaceRenderControllers(renderControllers);
 
-        Map<String, BrParticle> particles = ManagerResourceBatchPlanner.loadStructuredFiles(
+        Map<String, JsonObject> particles = ManagerResourceBatchPlanner.loadStructuredFiles(
                 basePath,
                 "particles",
                 ".json",
-                jsonFile -> parseJsonFile(jsonFile,
-                        jo -> BrParticle.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)),
+                jsonFile -> parseJsonFile(jsonFile, jo -> jo),
                 LOGGER
         );
-        ParticleAssetRegistry.replaceParticles(particles);
+        LinkedHashMap<String, com.google.gson.JsonElement> particleResources = new LinkedHashMap<>();
+        particleResources.putAll(particles);
+        ParticleResourcePublication.replaceFromJsonResources(particleResources, logger);
 
         Map<String, BrClientEntity> parsedEntities = ManagerResourceBatchPlanner.loadStructuredFiles(
                 basePath,
@@ -218,8 +215,7 @@ public final class ManagerResourceImportPlanner {
                             AttachableAssetRegistry.publishAttachable(attachable);
                         }
                         case PARTICLE_JSON -> {
-                            var particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
-                            ParticleAssetRegistry.publishParticle(particle);
+                            ParticleResourcePublication.publishFromJsonResource(file.toString(), jo, logger);
                         }
                         case MODEL_JSON -> ModelAssetRegistry.publishModels(ModelImporter.importFile(file));
                         default -> {

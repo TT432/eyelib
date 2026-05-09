@@ -54,6 +54,28 @@ public final class ParticleResourcePublication {
         );
     }
 
+    public static ParticleLoadReport publishFromJsonResource(String sourceId, JsonElement resource, Logger logger) {
+        Objects.requireNonNull(sourceId, "sourceId");
+        Objects.requireNonNull(resource, "resource");
+        Objects.requireNonNull(logger, "logger");
+
+        List<ParticleLoadReport.Failure> failures = new ArrayList<>();
+        DataResult<ParticleDefinition> result = BrParticle.CODEC.parse(JsonOps.INSTANCE, resource)
+                .flatMap(ParticleDefinitionAdapter::fromSchema);
+        return result.result().map(definition -> {
+            ParticleDefinitionRegistry.publisher().publishParticle(definition);
+            return new ParticleLoadReport(
+                    List.of(sourceId),
+                    List.of(definition.identifier()),
+                    List.of(),
+                    List.of()
+            );
+        }).orElseGet(() -> {
+            recordFailure(sourceId, result, logger, failures);
+            return new ParticleLoadReport(List.of(sourceId), List.of(), failures, List.of());
+        });
+    }
+
     private static void recordFailure(String sourceId, DataResult<?> result, Logger logger,
             List<ParticleLoadReport.Failure> failures) {
         String message = result.error()

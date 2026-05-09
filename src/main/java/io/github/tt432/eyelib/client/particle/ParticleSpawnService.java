@@ -5,14 +5,15 @@ import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.client.ClientTickHandler;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
 import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;
+import io.github.tt432.eyelib.client.registry.ParticleAssetRegistry;
 import io.github.tt432.eyelib.mc.impl.data_attach.DataAttachmentHelper;
 import io.github.tt432.eyelib.mc.impl.network.packet.SpawnParticlePacket;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibparticle.api.ParticleSpawnApi;
 import io.github.tt432.eyelibparticle.api.ParticleSpawnRequest;
 import io.github.tt432.eyelibparticle.client.ParticleRenderManager;
+import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
 import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
-import io.github.tt432.eyelibparticle.runtime.ParticleDefinitionAdapter;
 import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
 import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleRuntime;
 import io.github.tt432.eyelibparticle.runtime.bedrock.ParticleRuntimeEnvironment;
@@ -28,8 +29,6 @@ import net.minecraft.world.phys.AABB;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
-
-import com.mojang.serialization.JsonOps;
 
 import java.util.Optional;
 
@@ -108,35 +107,44 @@ public final class ParticleSpawnService {
             Level level,
             Vector3f position
     ) {
-        Optional<ParticleDefinition> definition = toModuleDefinition(particle);
-        if (definition.isEmpty()) {
+        ParticleAssetRegistry.publishParticle(particle);
+        ParticleDefinition definition = ParticleDefinitionRegistry.store().get(
+                particle.particleEffect().description().identifier()
+        );
+        if (definition == null) {
             return null;
         }
         return new BedrockParticleRuntime(
-                definition.orElseThrow(),
+                definition,
                 new MinecraftParticleRuntimeEnvironment(level),
                 ParticleRenderManager.INSTANCE::spawnParticle
         ).createEmitter(Optional.ofNullable(parentScope), position);
     }
 
-    private static Optional<ParticleDefinition> toModuleDefinition(BrParticle particle) {
-        return BrParticle.CODEC.encodeStart(JsonOps.INSTANCE, particle)
-                .flatMap(json -> io.github.tt432.eyelibimporter.particle.BrParticle.CODEC.parse(JsonOps.INSTANCE, json))
-                .flatMap(ParticleDefinitionAdapter::fromSchema)
-                .result();
+    private static BedrockParticleEmitter createEmitter(
+            ParticleDefinition definition,
+            @Nullable MolangScope parentScope,
+            Level level,
+            Vector3f position
+    ) {
+        return new BedrockParticleRuntime(
+                definition,
+                new MinecraftParticleRuntimeEnvironment(level),
+                ParticleRenderManager.INSTANCE::spawnParticle
+        ).createEmitter(Optional.ofNullable(parentScope), position);
     }
 
     private static final class RootParticleSpawnApi implements ParticleSpawnApi {
         @Override
         public void spawn(ParticleSpawnRequest request) {
-            BrParticle particle = ParticleLookup.get(request.particleId());
-            if (particle == null || Minecraft.getInstance().player == null || Minecraft.getInstance().level == null) {
+            ParticleDefinition definition = ParticleDefinitionRegistry.store().get(request.particleId());
+            if (definition == null || Minecraft.getInstance().player == null || Minecraft.getInstance().level == null) {
                 return;
             }
 
             RenderData<?> data = DataAttachmentHelper.getOrCreate(EyelibAttachableData.RENDER_DATA.get(), Minecraft.getInstance().player);
             BedrockParticleEmitter emitter = createEmitter(
-                    particle,
+                    definition,
                     data.getScope(),
                     Minecraft.getInstance().level,
                     request.position()

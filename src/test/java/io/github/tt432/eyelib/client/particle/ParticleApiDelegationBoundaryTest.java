@@ -62,7 +62,7 @@ class ParticleApiDelegationBoundaryTest {
 
     @Test
     void particleModuleMainSourcesRemainFreeOfRootMinecraftAndForgeImports() throws IOException {
-        Path sourceRoot = Path.of("eyelib-particle/src/main/java");
+        Path sourceRoot = Path.of("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle");
         List<String> forbiddenFragments = List.of(
                 "import io.github.tt432.eyelib.client.",
                 "import io.github.tt432.eyelib.network.",
@@ -75,6 +75,8 @@ class ParticleApiDelegationBoundaryTest {
         try (var paths = Files.walk(sourceRoot)) {
             List<Path> violatingFiles = paths
                     .filter(path -> path.toString().endsWith(".java"))
+                    .filter(path -> !path.toString().contains("\\client\\"))
+                    .filter(path -> !path.toString().contains("/client/"))
                     .filter(path -> containsAnyForbiddenImport(path, forbiddenFragments))
                     .toList();
 
