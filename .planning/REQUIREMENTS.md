@@ -33,9 +33,9 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Command And Network Integration
 
-- [ ] **PNET-01**: User can run `/eyelib particle` with the same syntax, suggestions, validation, spawn position behavior, and success message as before extraction.
-- [ ] **PNET-02**: Spawn/remove packet behavior remains string-keyed and continues to delegate from network handlers into particle services without exposing render internals.
-- [ ] **PNET-03**: Platform-specific command, player, packet channel, and identifier validation concerns stay in explicit integration adapters and do not contaminate pure particle core APIs.
+- [x] **PNET-01**: User can run `/eyelib particle` with the same syntax, suggestions, validation, spawn position behavior, and success message as before extraction.
+- [x] **PNET-02**: Spawn/remove packet behavior remains string-keyed and continues to delegate from network handlers into particle services without exposing render internals.
+- [x] **PNET-03**: Platform-specific command, player, packet channel, and identifier validation concerns stay in explicit integration adapters and do not contaminate pure particle core APIs.
 
 ### Rendering And Verification
 
@@ -84,9 +84,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLOAD-01 | Phase 12: Loading & Publication Rewire | Complete |
 | PLOAD-02 | Phase 12: Loading & Publication Rewire | Complete |
 | PLOAD-03 | Phase 12: Loading & Publication Rewire | Complete |
-| PNET-01 | Phase 13: Command & Network Integration Rewire | Pending |
-| PNET-02 | Phase 13: Command & Network Integration Rewire | Pending |
-| PNET-03 | Phase 13: Command & Network Integration Rewire | Pending |
+| PNET-01 | Phase 13: Command & Network Integration Rewire | Complete |
+| PNET-02 | Phase 13: Command & Network Integration Rewire | Complete |
+| PNET-03 | Phase 13: Command & Network Integration Rewire | Complete |
 | PRENDER-01 | Phase 11: Runtime Client Core Extraction | Complete |
 | PRENDER-02 | Phase 11: Runtime Client Core Extraction | Complete |
 | PVERIFY-01 | Phase 14: Verification & Documentation Gate | Pending |
@@ -101,4 +101,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-05-09*
-*Last updated: 2026-05-09 after Phase 9 verification*
+*Last updated: 2026-05-09 after Phase 13 verification*

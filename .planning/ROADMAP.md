@@ -42,7 +42,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] **Phase 10: Schema/Runtime Ownership & Adapter** - importer/raw schema 与 executable runtime definition 的所有权和转换契约被锁定。 (completed 2026-05-09)
 - [x] **Phase 11: Runtime Client Core Extraction** - 粒子运行时、发射器、渲染管理与 client hook 迁入粒子模块且保持 side-safe。 (completed 2026-05-09)
 - [x] **Phase 12: Loading & Publication Rewire** - 资源重载、registry 替换、description identifier 发布语义在模块边界后保持不变。 (completed 2026-05-09)
-- [ ] **Phase 13: Command & Network Integration Rewire** - `/eyelib particle` 与 spawn/remove packets 保持用户行为兼容，并通过显式平台适配层进入粒子服务。
+- [x] **Phase 13: Command & Network Integration Rewire** - `/eyelib particle` 与 spawn/remove packets 保持用户行为兼容，并通过显式平台适配层进入粒子服务。 (completed 2026-05-09)
 - [ ] **Phase 14: Verification & Documentation Gate** - 测试、JetBrains MCP Gradle 检查、适用的自动 ClientSmoke 流程与必要硬件检查清单证明模块拆分无回归。
 
 ## Phase Details
@@ -122,11 +122,11 @@ Plans:
 **Plans**: 3 plans
 Plans:
 **Wave 1**
-- [ ] 13-01-PLAN.md — Preserve `/eyelib particle` command compatibility and command adapter boundaries.
-- [ ] 13-02-PLAN.md — Preserve string-keyed spawn/remove packets and network handler delegation.
+- [x] 13-01-PLAN.md — Preserve `/eyelib particle` command compatibility and command adapter boundaries.
+- [x] 13-02-PLAN.md — Preserve string-keyed spawn/remove packets and network handler delegation.
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 13-03-PLAN.md — Update command/network ownership docs and run final JetBrains MCP verification.
+- [x] 13-03-PLAN.md — Update command/network ownership docs and run final JetBrains MCP verification.
 
 ### Phase 14: Verification & Documentation Gate
 **Goal**: Maintainer can prove the particle module split preserves behavior and leaves the documented architecture consistent.
@@ -155,5 +155,5 @@ Plans:
 | 10. Schema/Runtime Ownership & Adapter | v1.2 | 2/2 | Complete   | 2026-05-09 |
 | 11. Runtime Client Core Extraction | v1.2 | 6/6 | Complete   | 2026-05-09 |
 | 12. Loading & Publication Rewire | v1.2 | 3/3 | Complete   | 2026-05-09 |
-| 13. Command & Network Integration Rewire | v1.2 | 0/3 | Planned | - |
+| 13. Command & Network Integration Rewire | v1.2 | 3/3 | Complete   | 2026-05-09 |
 | 14. Verification & Documentation Gate | v1.2 | 0/TBD | Not started | - |
