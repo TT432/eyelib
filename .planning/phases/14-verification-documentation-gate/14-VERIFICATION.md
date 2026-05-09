@@ -1,9 +1,15 @@
 ---
 phase: 14-verification-documentation-gate
-verified: 2026-05-09T23:30:42Z
+verified: 2026-05-09T15:55:48Z
 status: passed
 score: 10/10 must-haves verified
 overrides_applied: 0
+re_verification:
+  previous_status: passed
+  previous_score: 10/10
+  gaps_closed: []
+  gaps_remaining: []
+  regressions: []
 deferred:
   - truth: "PFUT-02 packet-contract relocation is not part of v1.2 closure."
     addressed_in: "Future requirement PFUT-02"
@@ -22,9 +28,9 @@ deferred:
 # Phase 14: Verification & Documentation Gate Verification Report
 
 **Phase Goal:** Maintainer can prove the particle module split preserves behavior and leaves the documented architecture consistent.  
-**Verified:** 2026-05-09T23:30:42Z  
+**Verified:** 2026-05-09T15:55:48Z  
 **Status:** passed  
-**Re-verification:** No — initial verification; no previous `14-VERIFICATION.md` existed.
+**Re-verification:** Yes — after review-fix commits `fb325cd`, `954c569`, and `539db1a`; previous verification already passed and no regressions were found.
 
 ## Goal Achievement
 
@@ -32,16 +38,16 @@ deferred:
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | Existing particle-related tests are moved/adapted without weakening assertions. | ✓ VERIFIED | Final targeted JetBrains MCP run `:eyelib-particle:test :test` with final boundary/parity/adapter/command/network filters exited 0 (external task id 53). `ClientLookupFacadeTest` now publishes through `ParticleAssetRegistry.publishParticle` before asserting active names, matching final module registry behavior. |
-| 2 | New boundary, parity, and regression tests cover dependency direction, schema/runtime conversion, reload keys, command/network delegation, and side boundaries. | ✓ VERIFIED | `ParticleFinalDocumentationGateTest`, `ParticleFinalSplitBoundaryTest`, and `ParticleModuleFinalBoundaryTest` exist and assert stable docs, root delegation, packet/command ownership, pure module forbidden imports, client `Dist.CLIENT` gating, adapter parity source, and publication key tests. |
-| 3 | Maintainer can run planned compile/test checks through JetBrains MCP Gradle tasks only. | ✓ VERIFIED | Re-ran JetBrains MCP `jetbrain_run_gradle_tasks` with `taskNames=[":eyelib-particle:test", ":eyelib-particle:compileJava", ":compileJava"]`; exitCode 0, `BUILD SUCCESSFUL` (external task id 54). Matrix file records all Gradle evidence as JetBrains MCP invocations. |
+| 1 | Existing particle-related tests are moved/adapted without weakening assertions. | ✓ VERIFIED | Re-verification targeted JetBrains MCP run `:eyelib-particle:test :test` with final boundary/parity/adapter/command/network filters exited 0 (external task id 67). `ClientLookupFacadeTest` now publishes through `ParticleAssetRegistry.publishParticle` before asserting active names, matching final module registry behavior. |
+| 2 | New boundary, parity, and regression tests cover dependency direction, schema/runtime conversion, reload keys, command/network delegation, and side boundaries. | ✓ VERIFIED | `ParticleFinalDocumentationGateTest`, `ParticleFinalSplitBoundaryTest`, and `ParticleModuleFinalBoundaryTest` exist and assert stable docs per file, root delegation, packet/command ownership, pure module forbidden imports through import/static-import plus stripped-source scans, client `Dist.CLIENT` gating, adapter parity source, and publication key tests. Review-fix commits `fb325cd` and `954c569` are present in current source. |
+| 3 | Maintainer can run planned compile/test checks through JetBrains MCP Gradle tasks only. | ✓ VERIFIED | Re-ran JetBrains MCP `jetbrain_run_gradle_tasks` with `taskNames=[":eyelib-particle:test", ":eyelib-particle:compileJava", ":compileJava"]`; exitCode 0, `BUILD SUCCESSFUL` (external task id 66). Re-ran targeted offline gate with `taskNames=[":eyelib-particle:test", ":test"]`; exitCode 0, `BUILD SUCCESSFUL` (external task id 67). Matrix file records all Gradle evidence as JetBrains MCP invocations. |
 | 4 | Automated ClientSmoke is used only where applicable and hardware/manual checks stay separate. | ✓ VERIFIED | `14-HARDWARE-CHECKLIST.md` records no particle-specific `@ClientSmoke` hook exists; manual visual proof and Windows hardware exit-code capture are manual/deferred and not represented as automated Gradle proof. |
 | 5 | Module, architecture, side-boundary, repo-map, and particle README documentation match final ownership boundaries. | ✓ VERIFIED | `MODULES.md`, repo map, `01-module-boundaries.md`, `02-side-boundaries.md`, `eyelib-particle` README, root particle README, and network README all contain the same owner map: particle module owns APIs/runtime/client/loading; root owns Forge/resource/command/network adapters; importer owns raw `BrParticle`. |
 | 6 | Stable documentation tests do not depend on `.planning` artifacts. | ✓ VERIFIED | Grep over root and `eyelib-particle` Java tests found no `.planning/`, `14-FINAL-GATE-EVIDENCE.md`, `14-RESEARCH.md`, or `VALIDATION.md` dependencies; final test sources include self-checks for those forbidden input paths. |
 | 7 | Particle module pure packages remain root/MC/Forge-clean, with client integration isolated. | ✓ VERIFIED | Grep over `eyelib-particle` `api`, `runtime`, and `loading` packages found no root runtime, `net.minecraft`, or Forge imports. Client-only matches are confined to `eyelibparticle/client/**`; `ParticleRenderHooks` is `@Mod.EventBusSubscriber(value = Dist.CLIENT)`. |
 | 8 | Loading/publication behavior is still description-identifier keyed, not source-keyed. | ✓ VERIFIED | `ParticleResourcePublication` parses importer `BrParticle`, converts through `ParticleDefinitionAdapter`, publishes via `ParticleDefinitionRegistry.publisher().replaceParticles(definitions.values())`, and keys definitions by `definition.identifier()`; publication tests are included in the passing matrix. |
 | 9 | Command/network behavior remains string-keyed and delegates into particle services. | ✓ VERIFIED | `SpawnParticlePacket(String spawnId, String particleId, Vector3f position)` and `RemoveParticlePacket(String removeId)` live under `mc/impl/network/packet`; `NetClientHandlers` delegates spawn/remove only to `ParticleSpawnService`, and `ParticleSpawnService.spawnFromPacket` creates `ParticleSpawnRequest`. |
-| 10 | Closure evidence proves PVERIFY-01/PVERIFY-02 and summarizes Phase 8-13 verified truths. | ✓ VERIFIED | `14-FINAL-GATE-EVIDENCE.md`, `14-MCP-VERIFICATION-MATRIX.md`, and `14-MILESTONE-CLOSURE.md` contain PVERIFY rows, exact task names/exit codes, all v1.2 requirement IDs, explicit deferrals, residual risks, and closure rationale. |
+| 10 | Closure evidence proves PVERIFY-01/PVERIFY-02 and summarizes Phase 8-13 verified truths. | ✓ VERIFIED | `14-FINAL-GATE-EVIDENCE.md`, `14-MCP-VERIFICATION-MATRIX.md`, and `14-MILESTONE-CLOSURE.md` contain PVERIFY rows, exact task names/exit codes, all v1.2 requirement IDs, explicit deferrals, residual risks, and closure rationale. Review-fix commit `539db1a` relabeled evidence columns from placeholder wording to recorded Plan 03 results. |
 
 **Score:** 10/10 truths verified
 
@@ -101,8 +107,8 @@ Items not yet met but explicitly future/manual/non-blocking in the milestone con
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| Required compile/module test gate passes through JetBrains MCP. | `jetbrain_run_gradle_tasks` taskNames=`[":eyelib-particle:test", ":eyelib-particle:compileJava", ":compileJava"]` | exitCode 0; `BUILD SUCCESSFUL` (external task id 54). | ✓ PASS |
-| Final targeted particle/root gate passes through JetBrains MCP. | `jetbrain_run_gradle_tasks` taskNames=`[":eyelib-particle:test", ":test"]` with final boundary/parity/adapter/command/network filters | exitCode 0; `BUILD SUCCESSFUL` (external task id 53). | ✓ PASS |
+| Required compile/module test gate passes through JetBrains MCP. | `jetbrain_run_gradle_tasks` taskNames=`[":eyelib-particle:test", ":eyelib-particle:compileJava", ":compileJava"]` | exitCode 0; `BUILD SUCCESSFUL` (external task id 66). | ✓ PASS |
+| Final targeted particle/root gate passes through JetBrains MCP. | `jetbrain_run_gradle_tasks` taskNames=`[":eyelib-particle:test", ":test"]` with offline final boundary/parity/adapter/command/network filters | exitCode 0; `BUILD SUCCESSFUL` (external task id 67). | ✓ PASS |
 | Optional broad root suite triage is recorded. | Recorded matrix row 4a-4c in `14-MCP-VERIFICATION-MATRIX.md` | Required particle rows passed; optional broad row remains red only for unrelated geometry/importer fixture `NoSuchFileException` residuals. | ✓ PASS (triaged non-blocking) |
 
 ### Requirements Coverage
@@ -127,9 +133,9 @@ None for Phase 14 automated gate status. Real in-game visual particle proof, Win
 
 ### Gaps Summary
 
-No blocking gaps found. The phase goal is achieved: maintainers have source-backed tests, stable documentation, exact JetBrains MCP matrix evidence, explicit broad-suite triage, and separated manual/hardware evidence for proving the particle module split and documentation consistency.
+No blocking gaps found. The phase goal remains achieved after review fixes: maintainers have source-backed tests, stable documentation, exact JetBrains MCP matrix evidence, explicit broad-suite triage, and separated manual/hardware evidence for proving the particle module split and documentation consistency. The re-verification specifically checked the three review-fix themes: per-file documentation anchors, stricter particle boundary reference scanning, and recorded Plan 03 evidence labels.
 
 ---
 
-_Verified: 2026-05-09T23:30:42Z_  
+_Verified: 2026-05-09T15:55:48Z_  
 _Verifier: the agent (gsd-verifier)_
