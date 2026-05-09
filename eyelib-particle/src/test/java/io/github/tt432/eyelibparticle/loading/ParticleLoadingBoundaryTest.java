@@ -10,7 +10,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ParticleLoadingBoundaryTest {
-    private static final Path LOADING_SOURCE_ROOT = Path.of(
+    private static final Path LOADING_SOURCE_ROOT = projectRoot().resolve(
             "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/loading");
     private static final List<String> FORBIDDEN_IMPORT_PREFIXES = List.of(
             "io.github.tt432.eyelib.client",
@@ -46,5 +46,16 @@ class ParticleLoadingBoundaryTest {
         } catch (IOException exception) {
             throw new AssertionError("Unable to scan imports in " + path, exception);
         }
+    }
+
+    private static Path projectRoot() {
+        Path current = Path.of(System.getProperty("user.dir")).toAbsolutePath();
+        while (current != null) {
+            if (Files.exists(current.resolve("MODULES.md"))) {
+                return current;
+            }
+            current = current.getParent();
+        }
+        throw new IllegalStateException("Could not locate project root from user.dir");
     }
 }

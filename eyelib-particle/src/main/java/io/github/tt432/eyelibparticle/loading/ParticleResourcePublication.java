@@ -1,0 +1,65 @@
+package io.github.tt432.eyelibparticle.loading;
+
+import com.google.gson.JsonElement;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelibimporter.particle.BrParticle;
+import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
+import io.github.tt432.eyelibparticle.runtime.ParticleDefinitionAdapter;
+import org.slf4j.Logger;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ * Parses source-keyed Bedrock particle JSON resources and publishes valid runtime definitions.
+ */
+public final class ParticleResourcePublication {
+    private ParticleResourcePublication() {
+    }
+
+    public static ParticleLoadReport replaceFromJsonResources(Map<String, JsonElement> resources, Logger logger) {
+        Objects.requireNonNull(resources, "resources");
+        Objects.requireNonNull(logger, "logger");
+
+        List<String> processedSourceIds = new ArrayList<>();
+        List<ParticleLoadReport.Failure> failures = new ArrayList<>();
+        List<String> duplicateIdentifiers = new ArrayList<>();
+        LinkedHashMap<String, ParticleDefinition> definitions = new LinkedHashMap<>();
+
+        resources.forEach((sourceId, json) -> {
+            String checkedSourceId = Objects.requireNonNull(sourceId, "sourceId");
+            processedSourceIds.add(checkedSourceId);
+
+            DataResult<ParticleDefinition> result = BrParticle.CODEC.parse(JsonOps.INSTANCE, json)
+                    .flatMap(ParticleDefinitionAdapter::fromSchema);
+            result.result().ifPresentOrElse(definition -> {
+                if (definitions.containsKey(definition.identifier())
+                        && !duplicateIdentifiers.contains(definition.identifier())) {
+                    duplicateIdentifiers.add(definition.identifier());
+                }
+                definitions.put(definition.identifier(), definition);
+            }, () -> recordFailure(checkedSourceId, result, logger, failures));
+        });
+
+        ParticleDefinitionRegistry.publisher().replaceParticles(definitions.values());
+        return new ParticleLoadReport(
+                processedSourceIds,
+                List.copyOf(definitions.keySet()),
+                failures,
+                duplicateIdentifiers
+        );
+    }
+
+    private static void recordFailure(String sourceId, DataResult<?> result, Logger logger,
+            List<ParticleLoadReport.Failure> failures) {
+        String message = result.error()
+                .map(error -> error.message())
+                .orElse("Unknown particle loading failure");
+        logger.error("Couldn't parse particle data file {}: {}", sourceId, message);
+        failures.add(new ParticleLoadReport.Failure(sourceId, message));
+    }
+}
