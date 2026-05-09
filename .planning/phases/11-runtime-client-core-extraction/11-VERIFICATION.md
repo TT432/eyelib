@@ -1,9 +1,15 @@
 ---
 phase: 11-runtime-client-core-extraction
-verified: 2026-05-09T10:19:50Z
+verified: 2026-05-09T11:09:47Z
 status: passed
 score: 10/10 must-haves verified
 overrides_applied: 0
+re_verification:
+  previous_status: passed
+  previous_score: 10/10
+  gaps_closed: []
+  gaps_remaining: []
+  regressions: []
 deferred:
   - truth: "Final visual/client smoke or hardware proof of real Minecraft particle rendering"
     addressed_in: "Phase 14"
@@ -16,9 +22,9 @@ deferred:
 # Phase 11: Runtime Client Core Extraction Verification Report
 
 **Phase Goal:** Existing particle runtime and client rendering behavior lives under `:eyelib-particle` without weakening side boundaries or behavior.
-**Verified:** 2026-05-09T10:19:50Z
+**Verified:** 2026-05-09T11:09:47Z
 **Status:** passed
-**Re-verification:** No — initial verification
+**Re-verification:** Yes — after code review fixes
 
 ## Goal Achievement
 
@@ -26,7 +32,7 @@ deferred:
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | Existing client particle emitter, render manager, material/texture resolution, Molang scope, lifetime, remove semantics, tick/render lifecycle, and logout cleanup behavior are preserved after extraction. | ✓ VERIFIED | Runtime now exists under `eyelib-particle/runtime/bedrock`: `BedrockParticleEmitter` registers emitter Molang variables/curves/randoms and delegates particles via `ParticleRuntimeSpawner`; `BedrockParticleInstance` registers particle variables, dispatches components, and guards idempotent removal; `ParticleRenderManager` owns collections, render/client tick lifecycle, render delegation, and `clear()`. Targeted tests and compile gates pass. |
+| 1 | Existing client particle emitter, render manager, material/texture resolution, Molang scope, lifetime, remove semantics, tick/render lifecycle, and logout cleanup behavior are preserved after extraction. | ✓ VERIFIED | Runtime now exists under `eyelib-particle/runtime/bedrock`: `BedrockParticleEmitter` registers emitter Molang variables/curves/randoms and delegates particles via `ParticleRuntimeSpawner`; `BedrockParticleInstance` registers particle variables, dispatches components, guards idempotent removal, and now advances unbounded particle age when `max_lifetime` is omitted (`age()` returns real runtime age unless lifetime is positive). `ParticleLifetimeExpression` only expires on positive lifetime or expiration expression; `ParticleLifetimeKillPlane` removes particles crossing the negative plane side; `ParticleRenderManager` owns collections, render/client tick lifecycle, render delegation, and `clear()`. Targeted tests and compile gates pass. |
 | 2 | Particle-specific client hooks and Forge bindings live in explicit particle integration layers, not pure particle core/API packages. | ✓ VERIFIED | `ParticleRenderHooks` and `BedrockParticleRenderer` live under `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/client/`; `ParticleRenderManager` has no `@SubscribeEvent`; client boundary test asserts hook delegation and renderer ownership. |
 | 3 | Pure particle core remains clean of platform bindings, while platform-specific bindings are side-safe and do not introduce dedicated-server classloading regressions. | ✓ VERIFIED | Source scan found no root/Minecraft/Forge imports in `eyelibparticle/runtime/**` except a stripped-comment documentation mention; `ParticleRenderHooks` is `@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)` and client-only imports are confined to `client/**`. |
 | 4 | Maintainer can follow dependency direction from root integration code into particle runtime without finding a reverse dependency back to root. | ✓ VERIFIED | `ParticleSpawnService` imports module APIs/client/runtime and constructs `BedrockParticleRuntime`; `ParticleRenderManager` is module-owned; scans/tests reject particle-module imports from `io.github.tt432.eyelib.client`, `network`, `capability`, and `mc.impl`. |
@@ -66,7 +72,7 @@ Items not yet met but explicitly addressed in later milestone phases.
 | `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/client/ParticleRenderHooks.java` | `Dist.CLIENT` Forge event subscription wrapper | ✓ VERIFIED | Side-gated hook delegates render tick, client tick, render stage, and logout cleanup to manager. |
 | `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/client/BedrockParticleRenderer.java` | Minecraft render buffer/material/texture adapter | ✓ VERIFIED | Owns `PoseStack`, `VertexConsumer`, `ResourceLocation`, material resolution, `.png` texture suffixing, camera, tint, billboard, and light output. |
 | `src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java` | Transitional root packet/runtime compatibility facade | ✓ VERIFIED | Converts legacy root particle definition at spawn boundary, constructs `BedrockParticleRuntime`, delegates spawn/remove through module `ParticleRenderManager`, and preserves packet request shape. |
-| `src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticleRenderManager.java` | Thin compatibility adapter | ✓ VERIFIED | Counts/spawn/remove delegate to module `ParticleRenderManager`; retained legacy `spawnParticle(BrParticleParticle)` is empty but no active construction path for legacy root emitters was found. |
+| `src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticleRenderManager.java` | Thin compatibility adapter | ✓ VERIFIED | Counts/spawn/remove delegate to module `ParticleRenderManager`; retained legacy `spawnParticle(BrParticleParticle)` now fails loudly with `UnsupportedOperationException` instead of silently dropping legacy root particles. |
 | `src/test/java/io/github/tt432/eyelib/client/particle/ParticleRuntimeDelegationBoundaryTest.java` | Root-to-module delegation and packet-shape guard | ✓ VERIFIED | Asserts module runtime delegation, adapter shape, and unchanged string-keyed spawn/remove packet fields. |
 
 ### Key Link Verification
@@ -89,7 +95,7 @@ Items not yet met but explicitly addressed in later milestone phases.
 |---|---|---|---|---|
 | `ParticleSpawnService` | `ParticleDefinition` / `BedrockParticleEmitter` | `ParticleLookup.get(request.particleId())` → legacy `BrParticle.CODEC` encode → importer `BrParticle.CODEC` parse → `ParticleDefinitionAdapter.fromSchema` → `BedrockParticleRuntime.createEmitter` | Yes | ✓ FLOWING |
 | `BedrockParticleEmitter` | emitter components and curves | `ParticleDefinition.rawComponents()` and `definition.curves()` | Yes | ✓ FLOWING |
-| `BedrockParticleInstance` | particle components and runtime state | Emitter definition + `ParticleComponentManager.particleComponents` + environment time/block ports | Yes | ✓ FLOWING |
+| `BedrockParticleInstance` | particle components and runtime state | Emitter definition + `ParticleComponentManager.particleComponents` + environment time/block ports; age flows from `ParticleTimer.realSec()` and is clamped only when `lifetime > 0` | Yes | ✓ FLOWING |
 | `ParticleRenderManager` | emitters/particles collections | `ParticleSpawnService` and `BedrockParticleEmitter.emit()` via `ParticleRuntimeSpawner` | Yes | ✓ FLOWING |
 | `BedrockParticleRenderer` | material/texture/billboard/tint/light data | `particle.emitter().definition()` + `ParticleComponentManager.particleComponents` + Minecraft render buffers | Yes | ✓ FLOWING |
 
@@ -97,8 +103,8 @@ Items not yet met but explicitly addressed in later milestone phases.
 
 | Behavior | Command | Result | Status |
 |---|---|---|---|
-| Phase 11 particle module compile/test/root compile gate | JetBrains MCP `jetbrain_run_gradle_tasks taskNames=[":eyelib-particle:test", ":eyelib-particle:compileJava", ":compileJava"]` | Exit code 0 | ✓ PASS |
-| Targeted Phase 11 regression/boundary suite | JetBrains MCP `jetbrain_run_gradle_tasks taskNames=[":eyelib-particle:test", ":test"] scriptParameters="--tests ParticleRuntimeSupportTest --tests ParticleRuntimeBoundaryTest --tests EmitterComponentRuntimeTest --tests ParticleComponentRuntimeTest --tests ParticleRuntimeLifecycleTest --tests ParticleRenderManagerLifecycleTest --tests ParticleClientIntegrationBoundaryTest --tests ParticleSpawnServiceBoundaryTest --tests ParticleRuntimeDelegationBoundaryTest --tests ParticleDefinitionDocumentationTest"` | Exit code 0 | ✓ PASS |
+| Phase 11 particle module compile/test/root compile gate | JetBrains MCP `jetbrain_run_gradle_tasks taskNames=[":eyelib-particle:test", ":eyelib-particle:compileJava", ":compileJava"]` | Exit code 0 (External task id 304) | ✓ PASS |
+| Targeted Phase 11 regression/boundary suite | JetBrains MCP `jetbrain_run_gradle_tasks taskNames=[":eyelib-particle:test", ":test"] scriptParameters="--tests ParticleRuntimeSupportTest --tests ParticleRuntimeBoundaryTest --tests EmitterComponentRuntimeTest --tests ParticleComponentRuntimeTest --tests ParticleRuntimeLifecycleTest --tests ParticleRenderManagerLifecycleTest --tests ParticleClientIntegrationBoundaryTest --tests ParticleSpawnServiceBoundaryTest --tests ParticleRuntimeDelegationBoundaryTest --tests ParticleDefinitionDocumentationTest"` | Exit code 0 (External task id 305) | ✓ PASS |
 | Broad root `:test` exploratory check | JetBrains MCP `jetbrain_run_gradle_tasks taskNames=[":test"]` | Exit code 1; unrelated fixture `NoSuchFileException` failures plus stale `ParticleApiDelegationBoundaryTest` old all-module Minecraft/Forge ban | ? DEFERRED |
 
 ### Requirements Coverage
@@ -112,8 +118,17 @@ Items not yet met but explicitly addressed in later milestone phases.
 
 | File | Line | Pattern | Severity | Impact |
 |---|---:|---|---|---|
-| `src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticleRenderManager.java` | 49 | Empty legacy `spawnParticle(BrParticleParticle)` compatibility method | ℹ️ Info | Not a blocker: search found no active `new BrParticleEmitter` construction path; retained root spawn entrypoints convert to module emitters. Keep visible for Phase 12/13/14 cleanup. |
 | `src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java` | 113 | `return null` when legacy particle cannot convert to module definition | ℹ️ Info | Intentional nullable failure path; caller checks null before spawning. |
+| `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/runtime/bedrock/component/emitter/EmitterParticleComponent.java` | 38 | Nullable default `getEmitPosition()` returns null | ℹ️ Info | Intentional component extension default; emitter skips components without an emit position and concrete shape components provide positions. Not user-visible stub behavior. |
+
+### Review Fix Re-Verification
+
+| Fix | Evidence | Status |
+|---|---|---|
+| Preserve particles without `max_lifetime` | `ParticleLifetimeExpression.onFrame()` now requires `particle.lifetime() > 0` before max-lifetime expiry; `ParticleComponentRuntimeTest` asserts omitted max lifetime does not remove; `ParticleRuntimeLifecycleTest` uses a real `BedrockParticleInstance` with omitted `max_lifetime` and `variable.particle_age > 1`. | ✓ VERIFIED |
+| Enforce `particle_kill_plane` | `ParticleLifetimeKillPlane.onFrame()` computes signed plane distance and removes only when distance `< 0`; `ParticleComponentRuntimeTest` covers above-plane retained and crossed-plane removed. | ✓ VERIFIED |
+| Fail loudly for legacy root particles | `BrParticleRenderManager.spawnParticle(BrParticleParticle)` throws `UnsupportedOperationException` with a migration message; `ParticleRuntimeDelegationBoundaryTest` asserts the throw and message remain present. | ✓ VERIFIED |
+| Advance unbounded particle age | `BedrockParticleInstance.age()` returns `timer.realSec()` when `lifetime <= 0`; regression test advances environment ticks and verifies expiration expression eventually removes the particle. | ✓ VERIFIED |
 
 ### Human Verification Required
 
@@ -121,11 +136,11 @@ None for Phase 11 gate. Real visual Minecraft rendering/client smoke evidence is
 
 ### Gaps Summary
 
-No Phase 11 blocking gaps found. The runtime core, executable components, lifecycle, render manager, side-safe client hooks, root compatibility delegation, and PRENDER-01/PRENDER-02 requirements are implemented and verified by source inspection plus JetBrains MCP compile/test gates.
+No Phase 11 blocking gaps found after review-fix re-verification. The runtime core, executable components, lifecycle, render manager, side-safe client hooks, root compatibility delegation, and PRENDER-01/PRENDER-02 requirements are implemented and verified by source inspection plus JetBrains MCP compile/test gates. The stale initial-verification note about an empty legacy root particle overload is closed: that overload now fails loudly.
 
 Deferred observations are intentionally later-phase items: final visual/client evidence and broad root test-suite cleanup belong to Phase 14, while loading/publication and command/network rewires remain Phase 12 and Phase 13 scope respectively.
 
 ---
 
-_Verified: 2026-05-09T10:19:50Z_
+_Verified: 2026-05-09T11:09:47Z_
 _Verifier: the agent (gsd-verifier)_
