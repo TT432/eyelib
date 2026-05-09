@@ -6,6 +6,12 @@
  * is the canonical module runtime definition owner for data that later runtime/loading phases consume.
  * The root {@code io.github.tt432.eyelib.client.particle.bedrock.BrParticle} type is legacy and
  * non-canonical until Phase 11/12 migrate executable runtime and loading behavior through explicit seams.
+ * Root {@code src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticle.java} is a
+ * legacy/non-canonical runtime adapter target, not the canonical raw schema.
+ * <p>
+ * The allowed particle -> importer dependency for ParticleDefinitionAdapter preserves mapped fields: identifier, format version, basic render material/texture, curves, events, raw components, billboard flipbook summary, and Molang value preservation.
+ * Phase 11 moves executable runtime core, Phase 12 rewires loading/publication, and Phase 13 rewires
+ * command/network integration; Phase 10 does not move those behaviors.
  * <p>
  * This package may depend on importer schema data for the adapter boundary, but it must not depend back
  * on root runtime packages, root managers, root registries, root packets, root capability helpers,

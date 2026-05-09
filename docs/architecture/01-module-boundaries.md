@@ -7,7 +7,7 @@
 - `src/main/java/io/github/tt432/eyelib/molang/`: legacy Molang marker/docs handoff path.
 - `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/`: engine-owned Molang value/runtime wrappers, scope/compiler/type/mapping-api/built-in mappings, plus generated grammar artifacts.
 - `eyelib-material/src/main/java/io/github/tt432/eyelibmaterial/`: Bedrock material definitions, GL state management, shader pipeline, and shared pure-data types under `shared/` package.
-- `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/`: first-class particle module boundary, build/package contract, and future module-owned particle APIs/core/runtime definitions without root runtime reverse dependency.
+- `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/`: first-class particle module boundary, build/package contract, module-owned particle APIs, `io.github.tt432.eyelibparticle.runtime.ParticleDefinition` as the canonical module runtime definition owner, and `ParticleDefinitionAdapter` as the explicit adapter seam without root runtime reverse dependency.
 - `clientsmoke/`: external standalone client smoke framework and annotation API, consumed through a Gradle composite build and kept independent from feature modules.
 - `src/main/java/io/github/tt432/eyelib/network/`: packet registration and client/server packet handling.
 - `src/main/java/io/github/tt432/eyelib/capability/`: attachment-related capability registration and data holders.
@@ -68,7 +68,7 @@
 | `mc/impl/mixin/` + `eyelib.mixins.json` | platform integration zone | Own Minecraft mixin classes and mixin package/config wiring |
 | `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/` | `molang.generated` | Treat as generated and isolate from normal handwritten work |
 | `eyelib-molang/**` | `molang.engine` | Own Molang value/runtime, compile/type/scope/mapping-api, and built-in mappings without depending on root runtime packages |
-| `:eyelib-particle/**` | `client.particle.module` | Own particle module contracts and future particle-module APIs/core/runtime definitions; root may consume it, but it must not depend on root runtime packages, root managers, root registries, root packets, root capability helpers, or root mc/impl; Phase 8 is skeleton/boundary only and current executable runtime remains in root client particle packages until later phase plans move it through explicit seams |
+| `:eyelib-particle/**` | `client.particle.module` | Own particle module contracts, `io.github.tt432.eyelibparticle.runtime.ParticleDefinition` as the canonical module runtime definition owner, and `ParticleDefinitionAdapter` as the named conversion seam from importer-owned schema; root may consume it, but it must not depend on root runtime packages, root managers, root registries, root packets, root capability helpers, or root mc/impl; `io.github.tt432.eyelibimporter.particle.BrParticle` is the canonical raw Bedrock particle schema/codec owner, the allowed particle -> importer dependency for ParticleDefinitionAdapter is the only Phase 10 schema dependency direction, and root `client/particle/bedrock/BrParticle` is legacy/non-canonical runtime adapter target until Phase 11 moves executable runtime core, Phase 12 rewires loading/publication, and Phase 13 rewires command/network integration |
 | `network/` | `sync` | Own packet registration and side-aware routing |
 | `network/dataattach/` | `sync` + `dataattach` seam | Centralize attachment sync send/apply flow |
 | `capability/` + `util/data_attach/` | `dataattach` | Own attachment state, ids, and mutation rules without direct MC/Forge types |
@@ -83,6 +83,9 @@
 - `EntityRenderSystem` is the composition seam that applies client-entity context to render-controller definitions and produces render/model components.
 
 ## Boundary Notes For Importer Expansion
+- `io.github.tt432.eyelibimporter.particle.BrParticle` is the canonical raw Bedrock particle schema/codec owner; do not introduce a second particle-module `BrParticle`.
+- `io.github.tt432.eyelibparticle.runtime.ParticleDefinition` is the canonical module runtime definition owner produced through `ParticleDefinitionAdapter`, with mapped fields: identifier, format version, basic render material/texture, curves, events, raw components, billboard flipbook summary, and Molang value preservation.
+- Root `src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticle.java` is a legacy/non-canonical runtime adapter target for compatibility until later phase rewires, not the Phase 10 canonical schema.
 - `:eyelib-importer` now uses its own importer namespace (`io.github.tt432.eyelibimporter.*`) so it can be consumed as an independent mod/artifact without split packages against root runtime packages.
 - Client-entity/attachable schema ownership has already moved to `:eyelib-importer`, and controller reload/planner paths now parse importer-owned controller schema before adapting to root runtime controllers.
 - Bedrock addon container handling (`manifest.json`, folder/archive pack discovery, texture decode, and importer-owned aggregate loading) belongs in `:eyelib-importer`; root should consume importer results instead of re-implementing pack traversal.

@@ -4,6 +4,13 @@
 - Path: `src/main/java/io/github/tt432/eyelib/client/particle/`
 - Client particle runtime, emitters, render manager, and lookup/spawn boundaries.
 
+## Phase 10 Ownership Status
+- `io.github.tt432.eyelibimporter.particle.BrParticle` is the canonical raw Bedrock particle schema/codec owner.
+- `io.github.tt432.eyelibparticle.runtime.ParticleDefinition` is the canonical module runtime definition owner, produced through `ParticleDefinitionAdapter` using the allowed particle -> importer dependency for ParticleDefinitionAdapter.
+- `src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticle.java` is a legacy/non-canonical runtime adapter target kept for compatibility until later extraction phases.
+- The adapter-owned mapped fields: identifier, format version, basic render material/texture, curves, events, raw components, billboard flipbook summary, and Molang value preservation.
+- Phase 11 moves executable runtime core, Phase 12 rewires loading/publication, and Phase 13 rewires command/network integration; Phase 10 does not move loading, runtime, command, or network behavior.
+
 ## Current Runtime Boundaries
 - `ParticleLookup.java`: transitional read-side root facade delegating to `io.github.tt432.eyelibparticle.api.ParticleLookupApi` through the root-backed `ParticleManager` store adapter; removal condition: delete after root callers migrate directly to particle API adapters/services.
 - `ParticleSpawnService.java`: transitional root runtime adapter delegating packet spawn/remove entrypoints to `io.github.tt432.eyelibparticle.api.ParticleSpawnApi` while keeping Minecraft/capability/render-manager internals in root; removal condition: delete after packet/runtime callers migrate directly to particle API adapters/services.
