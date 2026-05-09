@@ -52,4 +52,30 @@ class ParticleNetworkDelegationBoundaryTest {
         assertTrue(source.contains("onClientHandle(NetClientHandlers::onRemoveParticlePacket)"));
         assertTrue(source.contains("onClientHandle(NetClientHandlers::onSpawnParticlePacket)"));
     }
+
+    @Test
+    void clientHandlersDelegateParticlePacketsOnlyToSpawnService() throws IOException {
+        String source = Files.readString(Path.of(
+                "src/main/java/io/github/tt432/eyelib/network/NetClientHandlers.java"
+        ));
+
+        assertTrue(source.contains("ParticleSpawnService.removeEmitter(packet.removeId());"));
+        assertTrue(source.contains("ParticleSpawnService.spawnFromPacket(packet);"));
+        assertTrue(!source.contains("ParticleRenderManager"));
+        assertTrue(!source.contains("ParticleDefinitionRegistry"));
+        assertTrue(!source.contains("BrParticleLoader"));
+        assertTrue(!source.contains("BrParticleRenderManager"));
+    }
+
+    @Test
+    void spawnServiceBuildsModuleRequestAndNoOpsMissingRuntimeState() throws IOException {
+        String source = Files.readString(Path.of(
+                "src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java"
+        ));
+
+        assertTrue(source.contains("new ParticleSpawnRequest(packet.spawnId(), packet.particleId(), packet.position())"));
+        assertTrue(source.contains("ParticleDefinitionRegistry.store().get(request.particleId())"));
+        assertTrue(source.contains("definition == null || Minecraft.getInstance().player == null || Minecraft.getInstance().level == null"));
+        assertTrue(source.contains("return;"));
+    }
 }
