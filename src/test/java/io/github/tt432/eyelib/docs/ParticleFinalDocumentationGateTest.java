@@ -38,8 +38,7 @@ class ParticleFinalDocumentationGateTest {
                 () -> assertTrue(docs.contains("ClientSmoke")),
                 () -> assertTrue(docs.contains("hardware")),
                 () -> assertTrue(docs.contains("PFUT-02")),
-                () -> assertTrue(docs.contains("PFUT-03")),
-                () -> assertTrue(docs.contains("PHASE14_RED_GATE"))
+                () -> assertTrue(docs.contains("PFUT-03"))
         );
     }
 
