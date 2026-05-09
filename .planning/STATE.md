@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 真正实现 eyelib-particle 的模块分离
-status: ready_to_execute
-stopped_at: Phase 14 planned; ready to execute verification/documentation gate.
-last_updated: "2026-05-09T14:10:00Z"
-last_activity: 2026-05-09 -- Phase 13 verified and code-reviewed clean
+status: in_progress
+stopped_at: Phase 14 Plan 01 complete; ready for final split boundary tests.
+last_updated: "2026-05-09T14:44:51Z"
+last_activity: 2026-05-09 -- Phase 14 Plan 01 completed docs and evidence shells
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 19
-  completed_plans: 19
-  percent: 100
+  total_plans: 22
+  completed_plans: 20
+  percent: 91
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 
 ## Current Position
 
-Phase: 14 (verification-documentation-gate) — READY TO EXECUTE
-Plan: 0 of 3
-Status: Phase 14 planning complete; execute the verification/documentation gate plans.
-Last activity: 2026-05-09 -- Phase 13 verified and code-reviewed clean
+Phase: 14 (verification-documentation-gate) — IN PROGRESS
+Plan: 1 of 3
+Status: Phase 14 Plan 01 complete; execute final split boundary tests next.
+Last activity: 2026-05-09 -- Phase 14 Plan 01 completed docs and evidence shells
 
-Progress: [██████████] 100%
+Progress: [█████████░] 91%
 
 ## Performance Metrics
 
@@ -63,6 +63,7 @@ Progress: [██████████] 100%
 | Phase 12-loading-publication-rewire P02 | 20min | 2 tasks | 13 files |
 | Phase 12-loading-publication-rewire P03 | 8min | 2 tasks | 10 files |
 | Phase 13-command-network-integration-rewire P03 | 8min | 3 tasks | 14 files |
+| Phase 14-verification-documentation-gate P01 | 4min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,7 @@ Decisions are logged in PROJECT.md Key Decisions table. Recent decisions affecti
 - [Phase 13-command-network-integration-rewire]: Final docs lock command/network ownership as root/MC adapter work: `ParticleCommandRuntime` shapes platform-free requests, `mc/impl/common/command` owns Brigadier/ResourceLocation conversion, `mc/impl/network/packet` owns packet DTO/codecs, and `NetClientHandlers` delegates through `ParticleSpawnService`.
 - [Phase 13-command-network-integration-rewire]: PFUT-02 packet-contract relocation and broad ClientSmoke/hardware visual evidence remain deferred outside Phase 13; final Phase 13 evidence used JetBrains MCP Gradle tasks only.
 - [v1.2 Phase 13]: Post-review fixes removed `.planning/` dependencies from runtime documentation tests and added real spawn/remove `STREAM_CODEC` round-trip coverage; Phase 13 review is clean.
+- [Phase 14-verification-documentation-gate]: Plan 01 aligned stable ownership docs and created `14-HARDWARE-CHECKLIST.md` plus `14-FINAL-GATE-EVIDENCE.md`; Plan 03 must fill exact JetBrains MCP matrix results and manual/ClientSmoke status.
 
 ### Pending Todos
 
@@ -129,10 +131,10 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-09T14:10:00Z
-Stopped at: Phase 13 complete; ready to plan Phase 14.
+Last session: 2026-05-09T14:44:51Z
+Stopped at: Completed 14-01-PLAN.md
 Resume file: None
 
 ## Operator Next Steps
 
-- Continue with `/gsd-execute-phase 14` for the verification and documentation gate.
+- Continue with `/gsd-execute-phase 14` for `14-02-PLAN.md` final split boundary tests.
