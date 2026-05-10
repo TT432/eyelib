@@ -1,133 +1,418 @@
-# Architecture Research — `eyelib-particle` Module Separation
+# Architecture: `:eyelib-util` Module Extraction
 
-**Project:** Eyelib v1.2 particle module split  
-**Researched:** 2026-05-09  
-**Confidence:** HIGH for current-code integration points; MEDIUM for exact phase sizing until implementation inventory/test failures are known.
+**Domain:** Forge mod multi-project utility extraction
+**Researched:** 2026-05-10
+**Confidence:** HIGH
 
-## Current Architecture
+## Executive Summary
 
-- Particle runtime is currently root-owned under `src/main/java/io/github/tt432/eyelib/client/particle/`.
-  - `ParticleLookup` reads through root `client/manager/ParticleManager`.
-  - `ParticleSpawnService` applies packet-driven spawns and directly reaches root capability/data-attach state plus `SpawnParticlePacket`.
-  - `BrParticleRenderManager` owns emitter/particle stores and Forge client events for render tick, client tick, level render, and logout cleanup.
-  - Bedrock runtime component classes mix data codecs, Molang evaluation, Minecraft rendering/world types, and Forge annotation scanning.
-- Importer already has a separate particle schema at `eyelib-importer/.../eyelibimporter/particle/BrParticle`; it is raw/importer-facing and keeps component bodies as `BedrockResourceValue`, not runtime components.
-- Root integration points already route through seams:
-  - `/eyelib particle` command: `mc/impl/common/command/EyelibParticleCommand` validates `ResourceLocation`, suggests via `ParticleLookup.names()`, sends `SpawnParticlePacket`.
-  - Network: `EyelibNetworkTransport` registers spawn/remove packets; `NetClientHandlers` delegates to `ParticleSpawnService`.
-  - Reload: `ClientLoaderLifecycleHooks` registers `BrParticleLoader`; loader publishes through `ParticleAssetRegistry`.
-  - Tooling: `ManagerResourceImportPlanner` parses/publishes particles and currently skips addon particle bridge because importer particle components are plain-data only.
-  - Animation/controller runtime calls `ParticleLookup` and `ParticleSpawnService` for effect spawning/removal.
+The extraction of `:eyelib-util` is significantly simpler than initial estimates suggested. A critical finding: **none of the 6 existing submodules (attachment, importer, molang, material, particle, processor) currently import from `io.github.tt432.eyelib.util.*`**. The identity tests in `eyelib-*/*/IdentityTest.java` actively enforce this boundary. All 32+ util imports exist solely within the root (:) module itself. This means the migration impacts root internals only — zero submodule import changes are required unless submodules opt into the new shared utility module for optional centralized code (e.g., attachment's streamcodec).
 
-## Target Boundary
+The 34 root/util/* files plus 5 core/util/* files consolidate into `:eyelib-util` under a new namespace `io.github.tt432.eyelibutil`. The root build.gradle adds a one-way dependency on `:eyelib-util`, and ~38 root import statements are mechanically updated. The dependency direction is strictly leaf-to-root: `:eyelib-util` may depend on MC/Forge and external libraries (DFU, JOML, SLF4J) but MUST NOT depend on any other Eyelib module.
 
-Recommended shape: create `:eyelib-particle` as a feature runtime module with a clean internal split, not as a pure-JVM-only module.
+## Dependency Direction Diagram
 
-| Boundary | Target owner | Rationale |
-|---|---|---|
-| Particle runtime API/store | `:eyelib-particle` under `io.github.tt432.eyelibparticle.*` | This is the actual reusable particle capability. Root should consume it, not own it. Use a new namespace to avoid split packages. |
-| Pure-ish particle model/request seams | `:eyelib-particle` core/runtime packages | `ParticleSpawnRequest`, read/write ports, definition ids, and non-Forge request shaping should be root-independent. |
-| Bedrock runtime components/emitter/particle renderer | `:eyelib-particle` runtime/client packages | They are particle-owned even when they depend on Minecraft client/render classes. Keeping them in the module makes root depend on the feature, not the inverse. |
-| Particle-owned platform hooks | `:eyelib-particle/.../mc/impl` | Render tick, client tick, logout cleanup, component annotation scanning, and particle reload-listener registration are particle-specific platform bindings. Keeping them next to the module is acceptable as long as pure core packages do not import them. |
-| Shared command/network transport | root `mc/impl` / `network` | The root already owns the unified `/eyelib` command and Forge channel. Keep transport registration centralized, but make it call particle module APIs only. |
-| Importer particle schema | `:eyelib-importer` | Do not duplicate ownership. Importer schema remains raw/source-facing; particle module may consume it through an adapter when addon particle support is enabled. |
-| Root manager/registry publication | move particle-specific store to `:eyelib-particle`; root tooling calls module write port | Avoid `:eyelib-particle -> root` dependency through `ParticleManager extends Manager`. If necessary, keep temporary root facade adapters that forward into the module while callers migrate. |
-
-Dependency direction should be:
-
-```text
-:eyelib-importer ─┐
-:eyelib-molang   ├──> :eyelib-particle ───> root runtime (:)
-:eyelib-material ┘                         (root consumes particle APIs)
-
-Forbidden: :eyelib-particle -> root (:)
-Forbidden: :eyelib-importer -> :eyelib-particle
-Forbidden: pure particle core -> :eyelib-particle/mc/impl
+### Before Extraction (Current State)
+```
+root (:) — owns io.github.tt432.eyelib.util.* and core/util/* internally
+  ├── eyelib-attachment  ──X── (NO import from root util)
+  ├── eyelib-importer    ──X── (NO import from root util)
+  ├── eyelib-material    ──X── (NO import from root util)
+  ├── eyelib-molang      ──X── (NO import from root util, pure java-library)
+  ├── eyelib-particle    ──X── (NO import from root util)
+  └── eyelib-processor   ──X── (NO import from root util, pure java-library)
 ```
 
-Practical dependency note: `:eyelib-particle` should depend on `:eyelib-molang` for expressions/scopes and on `:eyelib-material` for render type resolution. It should only depend on `:eyelib-importer` if/when a source-schema-to-runtime adapter is introduced. Root should add `api/modImplementation/jarJar project(':eyelib-particle')` in the same style as `:eyelib-material`.
+### After Extraction (Target State)
+```
+eyelib-util (Forge module, leaf — no Eyelib dependencies)
+  │  depends on: MC/Forge, com.mojang:datafixerupper, org.joml:joml, org.slf4j:slf4j-api
+  │  owns: io.github.tt432.eyelibutil.*
+  │
+  ├── root (:) ── depends on eyelib-util ── imports io.github.tt432.eyelibutil.*
+  │     ├── eyelib-attachment  (no util imports, may optionally add eyelib-util dependency)
+  │     ├── eyelib-importer    (no util imports, may optionally add eyelib-util dependency)
+  │     ├── eyelib-material    (no util imports, may optionally add eyelib-util dependency)
+  │     ├── eyelib-molang      (no util imports, may optionally add eyelib-util dependency)
+  │     ├── eyelib-particle    (no util imports, may optionally add eyelib-util dependency)
+  │     └── eyelib-processor   (no util imports, may optionally add eyelib-util dependency)
+  │
+  └── (optional consumers)
+        └── eyelib-attachment ── if streamcodec centralized into eyelib-util
+```
+
+### Dependency Direction Rules
+
+| Rule | Description | Enforcement |
+|------|-------------|-------------|
+| **D-1** | `:eyelib-util` MUST NOT depend on root or any submodule | Build-time: no `project(':')` or `project(':eyelib-*')` in eyelib-util/build.gradle |
+| **D-2** | `:eyelib-util` MAY depend on MC/Forge, DFU, JOML, SLF4J | Allowed: `legacyForge` plugin, `com.mojang:datafixerupper`, `org.joml:joml`, `org.slf4j:slf4j-api` |
+| **D-3** | Root MUST add `implementation project(':eyelib-util')` | Build-time: in root build.gradle dependencies block |
+| **D-4** | Submodules OPTIONALLY add `implementation project(':eyelib-util')` | Per submodule build.gradle |
+| **D-5** | eyelib-util namespace: `io.github.tt432.eyelibutil.*` | No split packages with root (`io.github.tt432.eyelib.util.*`) |
+| **D-6** | root/util/* directory MUST be empty after extraction | Verification: `glob("src/main/java/io/github/tt432/eyelib/util/**/*.java")` returns empty |
+| **D-7** | core/util/* directory MUST be empty after extraction | Verification: `glob("src/main/java/io/github/tt432/eyelib/core/util/**/*.java")` returns empty |
+
+---
 
 ## Integration Points
 
-### New components
+### Current Import Site Map (root module only)
 
-| New component | Location | Purpose |
+| Root Package | Files | Util Imports Used | Purpose |
+|---|---|---|---|
+| `client/animation/bedrock/` | 8 files | `ImmutableFloatTreeMap`, `CodecHelper`, `EyeMath`, `Curves`, `MathHelper`, `ChinExtraCodecs`, `ListHelper`, `ResourceLocations`, wildcard imports (`util.*`, `codec.*`) | Animation codec definitions, floating-point keyframe interpolation, bone math |
+| `client/animation/bedrock/controller/` | 1 file | `CodecHelper` | Controller codec serialization |
+| `client/render/` | 2 files | `TexturePathHelper`, `ResourceLocations` | Render params texture path, render sync service |
+| `client/render/visitor/` | 1 file | `EyeMath` | Model rendering transforms |
+| `client/model/` | 1 file | `EntryStreams` | Model-part iteration |
+| `client/loader/` | 1 file | `Searchable` | Attachable resource search |
+| `client/gui/manager/` | 2 files | `EyeMath`, `MathHelper` | GUI animation rendering, transform math |
+| `common/behavior/` | 3 files | `EyelibCodec`, `KeyDispatchMapCodec` | Entity behavior codec serialization |
+| `mc/impl/molang/mapping/` | 1 file | `ResourceLocations` | Molang MC-side query implementation |
+| `util/*` (internal) | 6 files | `ListAccessors`, `Eithers`, `ColorEncodings`, `TexturePaths`, `CodecHelper`, `Tuple.*` | Internal utility cross-references within util subtree |
+
+### Submodule Integration Points (post-extraction candidates)
+
+| Submodule | Current State | Post-Extraction | Rationale |
+|---|---|---|---|
+| **eyelib-attachment** | Zero util imports. Owns StreamCodec/StreamEncoder/StreamDecoder/EyelibStreamCodecs with MC dependencies | **HIGH priority**: move streamcodec to eyelib-util, add eyelib-util dependency | StreamCodec is a general-purpose FriendlyByteBuf abstraction needed by network code across modules; currently siloed in attachment |
+| **eyelib-importer** | Zero util imports. Has identity test enforcing boundary | Optional: add eyelib-util for generic helpers | Only if importer code needs shared collection/math helpers |
+| **eyelib-material** | Zero util imports | Optional: add eyelib-util for generic helpers | Low urgency; material has few external dependencies |
+| **eyelib-molang** | Zero util imports. Pure java-library | Optional: add eyelib-util for generic helpers | Currently depends only on DFU, JOML, SLF4J, ANTLR, jdk-classfile-backport |
+| **eyelib-particle** | Zero util imports. Has boundary test for client.* | Optional: add eyelib-util for generic helpers | May benefit from shared codec/math helpers |
+| **eyelib-processor** | Zero util imports. Pure java-library | Optional: add eyelib-util if it needs platform-free helpers | Currently compileOnly-depends on importer and implementation-depends on molang |
+
+---
+
+## Package Namespace Strategy
+
+**Decision:** `io.github.tt432.eyelibutil` — new namespace, no split packages.
+
+**Rationale:**
+- Java classpath model: two Gradle modules sharing `io.github.tt432.eyelib.util` creates an unreliable split package (first-on-classpath wins, non-deterministic in multi-module builds)
+- Java module system (jpms): split packages across modules are a hard error
+- The existing submodules already use distinct namespaces (`eyelibattachment`, `eyelibimporter`, `eyelibmolang`, `eyelibmaterial`, `eyelibparticle`, `eyelibprocessor`) — `eyelibutil` follows the same convention
+- Mechanical import rewriting is straightforward: `s/\bio\.github\.tt432\.eyelib\.util\./io.github.tt432.eyelibutil./g` across root source
+
+**Migration mapping:**
+
+| Source Package | → | Target Package (eyelib-util) |
 |---|---|---|
-| Particle Gradle subproject | `eyelib-particle/build.gradle`, `settings.gradle` | Forge-capable feature module; no dependency back to root. |
-| Particle module namespace | `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/` | Runtime definitions, emitters, particles, components, lookup/spawn APIs, store/write ports. |
-| Particle platform hooks | `eyelib-particle/.../mc/impl/` | Particle-owned Forge client events, reload listener registration, component scanning if retained. |
-| Packet apply adapter | root `mc/impl/network` or `network` | Converts root `SpawnParticlePacket`/`RemoveParticlePacket` into module requests; owns root capability lookup and Minecraft player context. |
-| Importer-to-runtime adapter | preferably `:eyelib-particle` adapter package | Converts `eyelibimporter.particle.BrParticle` into runtime `BrParticle` only when raw addon/importer flow is ready. |
+| `io.github.tt432.eyelib.util` | → | `io.github.tt432.eyelibutil` |
+| `io.github.tt432.eyelib.util.codec` | → | `io.github.tt432.eyelibutil.codec` |
+| `io.github.tt432.eyelib.util.math` | → | `io.github.tt432.eyelibutil.math` |
+| `io.github.tt432.eyelib.util.client` | → | `io.github.tt432.eyelibutil.client` |
+| `io.github.tt432.eyelib.util.client.texture` | → | `io.github.tt432.eyelibutil.client.texture` |
+| `io.github.tt432.eyelib.util.search` | → | `io.github.tt432.eyelibutil.search` |
+| `io.github.tt432.eyelib.util.modbridge` | → | `io.github.tt432.eyelibutil.modbridge` |
+| `io.github.tt432.eyelib.core.util.collection` | → | `io.github.tt432.eyelibutil.collection` |
+| `io.github.tt432.eyelib.core.util.texture` | → | `io.github.tt432.eyelibutil.texture` |
+| `io.github.tt432.eyelib.core.util.color` | → | `io.github.tt432.eyelibutil.color` |
+| `io.github.tt432.eyelib.core.util.codec` | → | `io.github.tt432.eyelibutil.codec` |
+| `io.github.tt432.eyelib.core.util.time` | → | `io.github.tt432.eyelibutil.time` |
+| (new) attachment streamcodec | → | `io.github.tt432.eyelibutil.streamcodec` |
 
-### Modified components
+---
 
-| Existing component | Change needed | Why |
+## New vs Modified Components
+
+### New Components (Created)
+
+| Component | Location | Type | Description |
+|---|---|---|---|
+| `eyelib-util/` | Workspace root | Gradle subproject | New Forge module, `java-library` + `legacyForge` plugins |
+| `eyelib-util/build.gradle` | `eyelib-util/` | Build file | Dependencies: Forge, DFU, JOML, SLF4J, jdk-classfile-backport; NO project dependencies |
+| `eyelib-util/src/main/java/io/github/tt432/eyelibutil/` | Source root | Package tree | ~39 files from root/util/* + core/util/*, package-declared to `eyelibutil` |
+| `eyelib-util/src/main/resources/META-INF/mods.toml` | Resource | Forge metadata | Mod ID: `eyelibutil`, description identifying it as shared utility module |
+| `eyelib-util/src/test/` | Test root | Test infrastructure | JUnit 5 platform tests, one identity test verifying no reverse deps |
+| `settings.gradle` | Workspace root | Modified | Add: `include("eyelib-util")` |
+
+### Modified Components (Updated)
+
+| Component | File/Metric | Change |
 |---|---|---|
-| `settings.gradle` | include `eyelib-particle` | Establish module identity before moves. |
-| root `build.gradle` | depend on and jarJar `:eyelib-particle` | Root consumes particle runtime. |
-| `client/particle/**` | move/rename into `io.github.tt432.eyelibparticle.*` | Remove root ownership of particle internals. |
-| `ParticleSpawnService` | stop accepting `SpawnParticlePacket`; accept `ParticleSpawnRequest` plus context/scope inputs | Prevent module from importing root packet classes and root capability helpers. |
-| `NetClientHandlers` | convert packet payloads to particle module requests | Network remains central; particle module remains packet-agnostic. |
-| `EyelibParticleCommand` | import particle API only for suggestions; keep Brigadier/transport in root `mc/impl` | Command is platform integration and unified under `/eyelib`. |
-| `BrParticleLoader` / reload lifecycle | move loader or replace with module-owned reload listener | Avoid root loader lifecycle importing concrete particle internals long-term. |
-| `ParticleManager` / `ParticleAssetRegistry` | replace root manager with module-owned store/write port or temporary forwarding facades | Prevent circular dependency through root generic manager. |
-| `ManagerResourceImportPlanner` | publish through particle module write API; later use importer adapter for addon particles | Keeps tooling root-owned but particle storage module-owned. |
-| Animation/controller runtime | update imports to particle module lookup/spawn API | Root animation may consume particle feature; no reverse dependency. |
-| `BrParticleRenderManager` | split static store/render loop from Forge subscriber shell if needed | Pure store operations should be testable without event annotations; event class belongs in platform hook package. |
+| Root build.gradle | `E:\_ideaProjects\qylEyelib\build.gradle` | Add `implementation project(':eyelib-util')` + `jarJar project(':eyelib-util')` |
+| Root source files | ~32 files | Update `import io.github.tt432.eyelib.util.*` → `io.github.tt432.eyelibutil.*` |
+| Root source files | ~6 files | Update `import io.github.tt432.eyelib.core.util.*` → `io.github.tt432.eyelibutil.*` |
+| util internal cross-refs | ~6 files (within util) | Package declaration + cross-import updates during file move |
 
-## Proposed Build Order
+### Deleted Components
 
-1. **Boundary contract and module scaffold**
-   - Add `include("eyelib-particle")`, module `build.gradle`, `mods.toml`, package README.
-   - Add root dependency wiring but move no behavior yet.
-   - Document dependency rule: root may depend on particle; particle must not depend on root.
+| Component | Location | Rationale |
+|---|---|---|
+| `src/main/java/io/github/tt432/eyelib/util/` | Entire directory | All 34 files moved to eyelib-util |
+| `src/main/java/io/github/tt432/eyelib/core/util/` | Entire directory | All 5 files merged into eyelib-util |
+| Root `util/README.md` | `src/main/java/io/github/tt432/eyelib/util/README.md` | Replaced by eyelib-util/README.md |
+| Root `core/README.md` util section | `src/main/java/io/github/tt432/eyelib/core/README.md` | Updated to remove util references |
 
-2. **Create particle-owned API/store seam**
-   - Introduce module-local read/write ports, `ParticleLookup`, `ParticleSpawnRequest`, and publication API.
-   - Keep root facades temporarily if needed, but make them delegate into module APIs.
-   - This breaks the `ParticleManager extends root Manager` dependency before bulk runtime movement.
+### Unchanged Components
 
-3. **Move runtime definitions/components/emitter/render manager**
-   - Move `client/particle/bedrock/**` into `:eyelib-particle` namespace.
-   - Keep behavior intact first; do not simultaneously redesign component semantics.
-   - Split pure request/store classes from `mc/impl` event subscribers where direct Forge annotations exist.
+| Component | Rationale |
+|---|---|
+| All 6 submodule build.gradle files | Only modified if submodule opts into eyelib-util dependency |
+| Submodule source files | Zero util imports = no changes needed |
+| `MODULES.md` | Updated in same change per Module Update Rule #3 |
+| `docs/architecture/01-module-boundaries.md` | Updated in same change per Module Update Rule #4 |
+| `docs/architecture/ARCHITECTURE-BLUEPRINT.md` | Updated to add eyelib-util node |
 
-4. **Rewire packet and command integration**
-   - Keep `SpawnParticlePacket`/`RemoveParticlePacket` and channel registration in root transport.
-   - Root packet handler builds `ParticleSpawnRequest`, obtains root-owned `RenderData`/Molang scope/Minecraft context, then calls particle API.
-   - Command continues to own Brigadier/ResourceLocation validation and only asks particle lookup for names.
+---
 
-5. **Rewire reload/tooling publication**
-   - Move or replace `BrParticleLoader` so particle reload registration is module-owned, or keep a short-lived root adapter with a documented removal task.
-   - Change manager tooling to publish through the particle module write port.
-   - Preserve legacy folder particle loading before enabling addon particle bridge.
+## Recommended Build Order
 
-6. **Clarify importer schema bridge**
-   - Keep `eyelib-importer` particle schema as source/raw schema.
-   - Add an explicit adapter from importer schema to runtime particle definitions only after runtime move is stable.
-   - Then remove the current addon skip in `ManagerResourceImportPlanner` with targeted tests/verification.
+### Phase 1: Module Scaffold (no consumer changes)
+**Rationale:** eyelib-util has zero dependencies on other Eyelib modules — it can be built and compiled independently from day one.
 
-7. **Compatibility cleanup and verification**
-   - Remove root `client/particle` implementation classes or leave only documented compatibility facades.
-   - Run stage-specific Gradle verification through JetBrains MCP only.
-   - Smoke-check resource reload, `/eyelib particle`, spawn/remove packets, animation-triggered particles, logout cleanup, and render counts.
+1. Create `eyelib-util/` directory structure
+2. Write `eyelib-util/build.gradle` (Forge module, depends on MC/Forge + DFU + JOML + SLF4J)
+3. Write `eyelib-util/src/main/resources/META-INF/mods.toml`
+4. Add `include("eyelib-util")` to `settings.gradle`
+5. Update root `settings.gradle` to include new module
+6. Build-only verification: `jetbrain_build_project` with `filesToRebuild` scoped to new module
 
-## Documentation Impact
+### Phase 2: Code Migration (mechanical)
+**Rationale:** Move code first, update imports second, verify third. Keep each wave atomic.
 
-Update these files in the same implementation phases that change ownership:
+7. Move all 34 root/util/* files to eyelib-util with updated package declarations (`io.github.tt432.eyelibutil.*`)
+8. Merge all 5 core/util/* files into eyelib-util with consolidated package hierarchy
+9. Fix internal cross-references within eyelib-util (util classes that import from other util classes)
+10. Write eyelib-util identity test: verify no imports from `io.github.tt432.eyelib.`
 
-- `MODULES.md`: add `eyelib-particle` row; update Client particle runtime, Runtime managers, Asset loaders, Command module, Network particle packet layer, MC impl utility bridge interactions.
-- `docs/architecture/01-module-boundaries.md`: add `:eyelib-particle/**` to current major areas and target ownership map; record the dependency direction and platform-hook exception.
-- `docs/architecture/02-side-boundaries.md`: add particle module side rules: pure particle core vs particle `mc/impl`; packet handlers convert payloads at root integration boundary.
-- `docs/index/repo-map.md`: add particle module as the start point for particle runtime; root `client/particle` should no longer be the primary entry once moved.
-- New `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/README.md`: document module-local packages, allowed dependencies, and public vs internal APIs.
-- Root `src/main/java/io/github/tt432/eyelib/client/particle/README.md`: delete or convert to a compatibility/handoff note if facades remain.
-- `settings.gradle` and root/subproject `build.gradle`: document Gradle module inclusion/dependency intent if not obvious from existing patterns.
+### Phase 3: Root Rewire
+**Rationale:** Root is the ONLY consumer that needs import updates.
 
-## Requirement Inputs
+11. Add `implementation project(':eyelib-util')` and `jarJar project(':eyelib-util')` to root build.gradle
+12. Update all ~32 import statements in root from `io.github.tt432.eyelib.util.*` → `io.github.tt432.eyelibutil.*`
+13. Update all ~6 import statements in root from `io.github.tt432.eyelib.core.util.*` → `io.github.tt432.eyelibutil.*`
+14. Build verification: `jetbrain_build_project` full build (root + eyelib-util + all submodules)
 
-- Active milestone requirement: `:eyelib-particle` must exist as a documented Gradle module with explicit responsibility and dependency direction.
-- Active milestone requirement: schema/importer-facing data, particle runtime, and platform integration boundaries must be explicit and not silently duplicate ownership.
-- Active milestone requirement: root consumes particle through narrow seams instead of owning particle internals.
-- Active milestone requirement: resource reload, manager publication, `/eyelib particle`, spawn/remove packets, and client rendering must remain behavior-compatible.
-- User clarification: platform bindings may live in the most appropriate integration layer. Recommendation: keep shared command/network transport in root `mc/impl`, but move particle-owned lifecycle hooks into `:eyelib-particle/.../mc/impl`; never allow these hooks to contaminate pure particle core packages.
+### Phase 4: Submodule Centralization (opportunistic)
+**Rationale:** Centralize code currently siloed in individual submodules that other modules could benefit from.
+
+15. Move attachment `StreamCodec`, `StreamEncoder`, `StreamDecoder`, `EyelibStreamCodecs` → `eyelib-util/src/main/java/io/github/tt432/eyelibutil/streamcodec/`
+16. Add `implementation project(':eyelib-util')` to attachment's build.gradle
+17. Update attachment imports to use `io.github.tt432.eyelibutil.streamcodec.*`
+18. (Optional) Add eyelib-util as dependency to other submodules that benefit from shared helpers
+
+### Phase 5: Cleanup & Documentation
+19. Delete empty `src/main/java/io/github/tt432/eyelib/util/` directory
+20. Delete empty `src/main/java/io/github/tt432/eyelib/core/util/` directory
+21. Write `eyelib-util/src/main/java/io/github/tt432/eyelibutil/README.md`
+22. Update `MODULES.md` — add eyelib-util entry, update root util rows, update count
+23. Update `docs/architecture/01-module-boundaries.md` — add eyelib-util boundary rules
+24. Update `docs/architecture/ARCHITECTURE-BLUEPRINT.md` — add eyelib-util to diagram
+25. Final build + test verification: all modules compile, nullawayMain passes, submodule identity tests pass
+
+---
+
+## Patterns to Follow
+
+### Pattern: One-Way Dependency Leaf Module
+**What:** eyelib-util is a leaf in the dependency graph — it is depended upon but depends on nothing from the project.
+**When:** Any shared code module that serves multiple consumers.
+**Example (build.gradle):**
+```groovy
+plugins {
+    id 'java-library'
+    id 'io.freefair.lombok' version '8.6'
+    id 'net.neoforged.moddev.legacyforge' version '2.0.91'
+    id 'maven-publish'
+}
+
+dependencies {
+    // External only — NO project(':...') dependencies allowed
+    implementation 'com.mojang:datafixerupper:6.0.8'
+    implementation 'org.joml:joml:1.10.5'
+    implementation 'org.slf4j:slf4j-api:2.0.7'
+    compileOnly 'org.jspecify:jspecify:1.0.0'
+}
+```
+
+### Pattern: Mechanical Import Rewriting
+**What:** All root import changes are `s/eyelib.util./eyelibutil./g` and `s/eyelib.core.util./eyelibutil./g` transformations.
+**When:** Moving an entire package tree from one module to another with namespace change.
+**Verification:** After rewriting, search for any remaining `import io.github.tt432.eyelib.util.` in root source — count must be zero.
+
+### Pattern: Identity Test
+**What:** Each subproject has a test that verifies it does not import from root packages.
+**When:** Adding a new subproject.
+**Example (eyelib-util/IdentityTest.java):**
+```java
+@Test
+void eyutilModule_mustNotImportRoot() {
+    // All source files under eyelib-util/src/main/java/
+    for (Path p : sourceFiles) {
+        String content = Files.readString(p);
+        assertFalse(content.contains("import io.github.tt432.eyelib."),
+            p + " must not import root runtime packages");
+    }
+}
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+### Anti-Pattern 1: Split Packages
+**What:** Keeping `io.github.tt432.eyelib.util` as the package name in both root and eyelib-util.
+**Why bad:** Non-deterministic class resolution on classpath; hard error in jpms; breaks IDE tooling.
+**Instead:** Use `io.github.tt432.eyelibutil` — clean namespace for eyelib-util module.
+
+### Anti-Pattern 2: Circular Dependencies
+**What:** eyelib-util importing from root or any submodule.
+**Why bad:** Defeats the purpose of extraction; creates build cycle.
+**Instead:** All types needed by eyelib-util come from MC/Forge or external libraries.
+
+### Anti-Pattern 3: Partial Migration
+**What:** Moving some util files but leaving others in root.
+**Why bad:** Creates confusion about where to find/utilize utility code; two sources of truth.
+**Instead:** All-or-nothing: every root/util/* file moves; root/util/* directory is deleted.
+
+### Anti-Pattern 4: API Without Contract
+**What:** Exposing all eyelib-util classes as public API without documenting which are internal vs stable.
+**Why bad:** Callers outside the project could depend on unstable internal helpers.
+**Instead:** Default internal bias; document any intentionally stable public utility APIs in README.
+
+---
+
+## Util File Inventory & Classification
+
+### Category: Platform-Free (no MC/Forge/DFU imports)
+**Destination:** eyelib-util, can be used by any consumer.
+
+| File | Dependencies | Consumers (root) |
+|---|---|---|
+| `Blackboard.java` | java.util.* | None found (utility class) |
+| `Collectors.java` | java.util.stream.* | None found directly |
+| `EntryStreams.java` | java.util.* | `client/model/ModelPartModel.java` |
+| `Lists.java` | java.util.* | Internal |
+| `ListHelper.java` | core/util/collection/ListAccessors | `client/animation/bedrock/BrBoneKeyFrame.java` |
+| `SimpleTimer.java` | System.currentTimeMillis | None found directly |
+| `Tuple.java` | Java records | Internal (TupleCodec) |
+| `Curves.java` | org.joml.Vector3f | `client/animation/bedrock/BrBoneKeyFrame.java` |
+| `EyeMath.java` | org.joml.Vector3f, java.lang.Math | `client/animation/bedrock/BrClipExecutor.java`, `BrBoneAnimation.java`, `BrBoneKeyFrame.java`, `BrBoneAnimationSampler.java`, `client/render/visitor/ModelVisitor.java`, `client/gui/manager/AnimationView.java` |
+| `MathHelper.java` | java.lang.Math | `client/animation/bedrock/BrClipExecutor.java`, `client/gui/manager/EyelibManagerScreen.java` |
+| `FastColorHelper.java` | core/util/color/ColorEncodings | Internal |
+| `AnimationApplier.java` | com.mojang.datafixers.util.Either (DFU) | None found |
+| `Models.java` | None external | None found |
+| `TexturePathHelper.java` | core/util/texture/TexturePaths | `client/render/RenderParams.java` |
+| `Searchable.java` | Interface only | `client/loader/BrAttachableLoader.java` |
+| `SearchResults.java` | java.util.* | None found directly |
+| `BBModelSink.java` | Interface only | Bridge |
+| `ModBridgeServer.java` | com.google.gson.*, java.net.* | Bridge |
+| `SharedLibraryLoader.java` | java.io.*, java.util.zip.* | None found directly |
+
+### Category: DFU-Dependent (com.mojang.serialization.*)
+**Destination:** eyelib-util (DFU is already a dependency of eyelib-util)
+
+| File | Dependencies | Consumers (root) |
+|---|---|---|
+| `ImmutableFloatTreeMap.java` | com.mojang.serialization.Codec | `client/animation/bedrock/BrBoneAnimation.java`, `BrBoneAnimationSampler.java`, `BrBoneAnimationDefinition.java`, `BrAnimationChannel.java`, `client/animation/AnimationChannelDefinition.java` |
+| `ChinExtraCodecs.java` | com.mojang.serialization.Codec, DataResult, MapCodec | `client/animation/bedrock/BrBoneKeyFrame.java` |
+| `CodecHelper.java` | com.mojang.datafixers.util.Either, com.mojang.serialization.Codec | `client/animation/bedrock/BrBoneAnimation.java`, `BrBoneKeyFrame.java`, `client/animation/bedrock/controller/BrAnimationControllers.java` |
+| `DispatchedMapCodec.java` | com.mojang.serialization.* | None found directly |
+| `EitherHelper.java` | com.mojang.datafixers.util.Either, core/util/codec/Eithers | Internal |
+| `KeyDispatchMapCodec.java` | com.mojang.serialization.* | `common/behavior/component/group/ComponentGroup.java` |
+| `TupleCodec.java` | com.mojang.serialization.* | Internal |
+
+### Category: MC + DFU Dependent
+**Destination:** eyelib-util (MC/Forge are allowed dependencies)
+
+| File | Dependencies | Consumers (root) |
+|---|---|---|
+| `EyelibCodec.java` | net.minecraft.util.ExtraCodecs, net.minecraft.world.phys.AABB, com.mojang.serialization.* | `common/behavior/event/logic/LogicNode.java`, `common/behavior/event/filter/ComplexFilter.java` |
+| `ResourceLocations.java` | net.minecraft.resources.ResourceLocation | `client/animation/bedrock/BrAnimationEntryDefinition.java`, `mc/impl/molang/mapping/MolangQuery.java`, `client/render/sync/ClientRenderSyncService.java` |
+| `Shapes.java` | net.minecraft.util.RandomSource | None found directly (utility class) |
+
+### Category: core/util/* — Platform-Free (merge into eyelib-util)
+
+| File | Consumers in root |
+|---|---|
+| `collection/ListAccessors.java` | `util/ListHelper.java` (internal chain) |
+| `texture/TexturePaths.java` | `util/client/texture/TexturePathHelper.java`, `client/render/controller/RenderControllerEntry.java` |
+| `color/ColorEncodings.java` | `util/math/FastColorHelper.java`, `client/render/texture/NativeImageIO.java` |
+| `codec/Eithers.java` | `util/codec/EitherHelper.java` (internal chain) |
+| `time/FixedStepTimerState.java` | None found directly |
+
+---
+
+## Submodule Shared Code Centralization Candidates
+
+### eyelib-attachment → eyelib-util: StreamCodec Suite
+**Files:** `StreamCodec.java`, `StreamEncoder.java`, `StreamDecoder.java`, `EyelibStreamCodecs.java`
+**Why centralize:** StreamCodec is a generic `FriendlyByteBuf` serialization abstraction. It is currently siloed in the attachment module but is needed by any module that sends/receives network data (particle packets, render sync, etc.). Centralizing it into eyelib-util makes it available to all modules without forcing them to depend on attachment.
+**Dependencies:** `net.minecraft.network.FriendlyByteBuf`, `net.minecraft.nbt.*`, `net.minecraft.resources.ResourceLocation`, `com.mojang.serialization.Codec`, `com.mojang.logging.LogUtils`, `org.joml.Vector3f`
+**Impact:** Attachment adds `implementation project(':eyelib-util')` and updates its own StreamCodec imports to use eyelib-util. Root's attachment network processing also updates imports.
+
+### Other Submodules: No Identified Candidates
+eyelib-importer, eyelib-material, eyelib-molang, eyelib-particle, and eyelib-processor have no siloed utility code that other modules need. Their current architecture is clean — they define domain-specific types consumed through their own module boundaries. No forced centralization needed.
+
+---
+
+## Scalability Considerations
+
+| Concern | At Project Scale (7 modules) | Future (15+ modules) |
+|---|---|---|
+| Import churn | 38 root import changes (manageable) | N/A — root split reduces future import churn |
+| eyelib-util build time | Instant (leaf, no project deps) | Grows with util code volume, not module count |
+| eyelib-util scope creep | Controlled by single-consumer rule (D-6) | Single-consumer code must move to functional owner, NOT stay in eyelib-util |
+| Identity test coverage | 1 test in eyelib-util + existing tests in attachment/importer | Each future module gets identity test verifying no new reverse deps |
+| Cross-module dependency web | eyelib-util is leaf, all modules depend on it | eyelib-util stays leaf; no module depends on another through eyelib-util |
+
+---
+
+## Verification Strategy
+
+### Build Gates
+| Gate | Command | Expected |
+|---|---|---|
+| eyelib-util solo build | `jetbrain_build_project` scoped to `eyelib-util/` | exit code 0 |
+| Full project build after migration | `jetbrain_build_project` (full) | exit code 0, no errors |
+| NullAway on root | `jetbrain_run_gradle_tasks` task `:nullawayMain` | exit code 0 |
+| All tests | `jetbrain_run_gradle_tasks` task `test` | exit code 0 |
+
+### Code Quality Gates
+| Gate | Verification |
+|---|---|
+| No residual util imports | `grep -r "import io.github.tt432.eyelib.util\." src/main/java/` returns zero (except within eyelib-util itself during migration) |
+| No residual core/util imports | `grep -r "import io.github.tt432.eyelib.core.util\." src/main/java/` returns zero |
+| root/util/* empty | `glob("src/main/java/io/github/tt432/eyelib/util/**/*.java")` returns empty |
+| core/util/* empty | `glob("src/main/java/io/github/tt432/eyelib/core/util/**/*.java")` returns empty |
+| eyelib-util no root imports | Identity test passes: zero files contain `import io.github.tt432.eyelib.` |
+| Submodule boundary intact | Existing identity tests (attachment/ImporterModuleIdentityTest, particle/ParticleDefinitionBoundaryTest) continue to pass |
+| jarJar packaging | Root jar contains eyelib-util classes (verified in JAR manifest) |
+
+---
+
+## Sources
+
+| Source | Type | Confidence |
+|---|---|---|
+| Root build.gradle (353 lines, analyzed in full) | Project code | HIGH |
+| settings.gradle (6 includes + clientsmoke) | Project code | HIGH |
+| All 6 submodule build.gradle (analyzed for existing dependencies) | Project code | HIGH |
+| grep across all submodules for `import io.github.tt432.eyelib.util.` — zero results | Verification | HIGH |
+| grep across root `src/main/java/` for `import io.github.tt432.eyelib.util.` — 32 results | Verification | HIGH |
+| grep across root `src/main/java/` for `import io.github.tt432.eyelib.core.util.` — 6 results | Verification | HIGH |
+| Attachment identity test: `AttachmentModuleIdentityTest.java` | Code enforcement | HIGH |
+| Importer identity test: `ImporterModuleIdentityTest.java` | Code enforcement | HIGH |
+| Particle boundary test: `ParticleDefinitionBoundaryTest.java` | Code enforcement | HIGH |
+| PROJECT.md v1.3 milestone definition | Requirements | HIGH |
+| MODULES.md full inventory | Documentation | HIGH |
+| 01-module-boundaries.md (137 lines) | Architecture docs | HIGH |
+| ARCHITECTURE-BLUEPRINT.md (102 lines) | Architecture docs | HIGH |
+| All 34 util Java files (analyzed for MC/DFU dependencies) | Project code | HIGH |
+| All 5 core/util Java files (analyzed for purity) | Project code | HIGH |
+| Attachment StreamCodec suite (4 files, analyzed) | Project code | HIGH |
+
+---
+
+## Open Questions
+
+1. **StreamCodec dependency chain:** If StreamCodec moves to eyelib-util, does attachment still need to own `DataAttachmentSyncPacket` and `UpdateDestroyInfoPacket` directly, or should they also use the centralized StreamCodec? These packets currently live in the attachment subproject and use attachment's own StreamCodec — moving StreamCodec means attachment's own packet codecs would import from eyelib-util.
+
+2. **jarJar strategy:** Root currently uses `jarJar project(':eyelib-*')` for all submodules. Should eyelib-util follow the same pattern (jarJar for runtime bundling) or be a compile-time-only dependency? The PROJECT.md mentions "May depend on MC/Forge" but doesn't specify jarJar vs implementation.
+
+3. **`ImmutableFloatTreeMap` scope:** This is the single most-imported util class (5 animation files + 2 definition files). It depends on `com.mojang.serialization.Codec`. Should it stay in eyelib-util or move closer to the animated-values domain? Current analysis suggests eyelib-util is appropriate since its sole dependency (DFU) is already a shared dependency.
+
+4. **`Searchable` interface:** This is a single-method interface used only by `BrAttachableLoader`. Per the single-consumer rule, it could move to the loader's functional owner instead of eyelib-util. Verdict: keep in eyelib-util since it's a general-purpose search contract that other loaders may adopt.
