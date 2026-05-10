@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.network;
 
-import io.github.tt432.eyelib.mc.impl.network.packet.SpawnParticlePacket;
+import io.github.tt432.eyelibparticle.network.SpawnParticlePacket;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import org.joml.Vector3f;
@@ -50,18 +50,18 @@ class SpawnParticlePacketTest {
     }
 
     @Test
-    void packetCodecOwnershipStaysInMcNetworkPacketLayer() throws IOException {
+    void packetCodecOwnershipStaysInParticleModule() throws IOException {
         String source = Files.readString(Path.of(
-                "src/main/java/io/github/tt432/eyelib/mc/impl/network/packet/SpawnParticlePacket.java"
+                "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/network/SpawnParticlePacket.java"
         ));
 
         assertTrue(Pattern.compile("record\\s+SpawnParticlePacket\\s*\\(\\s*String\\s+spawnId,\\s*String\\s+particleId,\\s*Vector3f\\s+position", Pattern.DOTALL)
                 .matcher(source)
                 .find());
-        assertTrue(source.contains("EyelibStreamCodecs.STRING.encode(obj.spawnId, buf);"));
-        assertTrue(source.contains("EyelibStreamCodecs.STRING.encode(obj.particleId, buf);"));
-        assertTrue(source.contains("var spawnId = EyelibStreamCodecs.STRING.decode(buf);"));
-        assertTrue(source.contains("var particleId = EyelibStreamCodecs.STRING.decode(buf);"));
+        assertTrue(source.contains("buf.writeUtf(packet.spawnId);"));
+        assertTrue(source.contains("buf.writeUtf(packet.particleId);"));
+        assertTrue(source.contains("String spawnId = buf.readUtf();"));
+        assertTrue(source.contains("String particleId = buf.readUtf();"));
         assertTrue(source.contains("import net.minecraft.network.FriendlyByteBuf;"));
     }
 }

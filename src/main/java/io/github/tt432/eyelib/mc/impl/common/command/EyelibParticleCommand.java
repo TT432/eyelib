@@ -5,10 +5,10 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import io.github.tt432.eyelib.client.particle.ParticleLookup;
 import io.github.tt432.eyelib.common.runtime.ParticleCommandRuntime;
 import io.github.tt432.eyelib.mc.impl.network.EyelibNetworkTransport;
-import io.github.tt432.eyelib.mc.impl.network.packet.SpawnParticlePacket;
+import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
+import io.github.tt432.eyelibparticle.network.SpawnParticlePacket;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
@@ -50,7 +50,7 @@ public final class EyelibParticleCommand {
     }
 
     private static CompletableFuture<Suggestions> suggestEffects(CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
-        ParticleCommandRuntime.suggestEffectIds(builder.getRemaining(), ParticleLookup.names(), EyelibParticleCommand::isValidResourceLocation)
+        ParticleCommandRuntime.suggestEffectIds(builder.getRemaining(), ParticleDefinitionRegistry.store().names(), EyelibParticleCommand::isValidResourceLocation)
                 .forEach(builder::suggest);
         return builder.buildFuture();
     }

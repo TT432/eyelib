@@ -6,7 +6,7 @@ import io.github.tt432.eyelibimporter.model.Model;
 
 
 import io.github.tt432.eyelibimporter.model.locator.GroupLocator;
-import io.github.tt432.eyelib.util.EntryStreams;
+import io.github.tt432.eyelibutil.collection.EntryStreams;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.model.geom.ModelPart;

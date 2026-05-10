@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.render.sync;
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelib.util.ResourceLocations;
+import io.github.tt432.eyelibutil.resource.ResourceLocations;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

@@ -1,5 +1,21 @@
 # Milestones
 
+## v1.3 分离 eyelib-util 模块 (Shipped: 2026-05-10)
+
+**Phases completed:** 7 phases, 24 plans, 15 requirements
+
+**Key accomplishments:**
+
+- Created the `:eyelib-util` Forge leaf module with `eyelibutil` identity, `io.github.tt432.eyelibutil` namespace, and zero project-internal dependencies.
+- Migrated time, color, loader, math, search, collection, resource, texture, codec, and streamcodec utility ownership out of root/core or duplicated submodule paths.
+- Routed single-consumer helpers to functional owners instead of the shared util module.
+- Centralized attachment stream codec helpers and material `DispatchedMapCodec` duplication through explicit `:eyelib-util` dependency edges.
+- Verified root/core util Java sources and old `io.github.tt432.eyelib.util.*` imports are gone, with v1.3 milestone audit passing 15/15 requirements and 4/4 E2E flows.
+
+**Archive:** `.planning/milestones/v1.3-ROADMAP.md`, `.planning/milestones/v1.3-REQUIREMENTS.md`, `.planning/milestones/v1.3-MILESTONE-AUDIT.md`
+
+---
+
 ## v1.2 真正实现 eyelib-particle 的模块分离 (Shipped: 2026-05-09)
 
 **Phases completed:** 7 phases, 22 plans, 18 requirements

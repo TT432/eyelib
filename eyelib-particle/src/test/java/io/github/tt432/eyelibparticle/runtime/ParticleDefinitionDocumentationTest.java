@@ -22,28 +22,29 @@ class ParticleDefinitionDocumentationTest {
         modules.assertContains("io.github.tt432.eyelibimporter.particle.BrParticle");
         modules.assertContains("canonical module runtime definition owner");
         modules.assertContains("io.github.tt432.eyelibparticle.runtime.ParticleDefinition");
-        modules.assertContains("root `client/particle/bedrock/BrParticle`");
-        modules.assertContains("transitional compatibility adapters only");
+        modules.assertContains("root legacy `client/particle/bedrock/**`");
+        modules.assertContains("have been deleted");
 
         moduleBoundaries.assertContains("canonical raw Bedrock particle schema/codec owner");
         moduleBoundaries.assertContains("canonical module runtime definition owner");
         moduleBoundaries.assertContains("ParticleDefinitionAdapter");
         moduleBoundaries.assertContains("client/particle/bedrock/BrParticle");
-        moduleBoundaries.assertContains("legacy/non-canonical");
+        moduleBoundaries.assertContains("has been deleted");
 
         sideBoundaries.assertContains("allowed particle -> importer dependency for ParticleDefinitionAdapter");
-        sideBoundaries.assertContains("legacy/non-canonical runtime adapter target");
+        sideBoundaries.assertContains("root `client/particle/bedrock/BrParticle` has been deleted");
 
         particleReadme.assertContains("canonical raw Bedrock particle schema/codec owner");
         particleReadme.assertContains("canonical module runtime definition owner");
         particleReadme.assertContains("allowed particle -> importer dependency for ParticleDefinitionAdapter");
 
-        runtimePackageInfo.assertContains("legacy/non-canonical runtime adapter target");
+        runtimePackageInfo.assertContains("compatibility type has");
+        runtimePackageInfo.assertContains("been deleted");
         runtimePackageInfo.assertContains("allowed particle -> importer dependency for ParticleDefinitionAdapter");
 
         rootParticleReadme.assertContains("canonical raw Bedrock particle schema/codec owner");
         rootParticleReadme.assertContains("canonical module runtime definition owner");
-        rootParticleReadme.assertContains("legacy/non-canonical runtime adapter target");
+        rootParticleReadme.assertContains("has been deleted");
 
         assertMappedFieldsDocumented(moduleBoundaries);
         assertMappedFieldsDocumented(sideBoundaries);

@@ -28,20 +28,28 @@ class ParticleRuntimeDelegationBoundaryTest {
         String source = Files.readString(Path.of(
                 "src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java"
         ));
+        String adapter = Files.readString(Path.of(
+                "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/client/ParticleSpawnRuntimeAdapter.java"
+        ));
 
         assertTrue(source.contains("import io.github.tt432.eyelibparticle.api.ParticleSpawnRequest;"));
-        assertTrue(source.contains("import io.github.tt432.eyelibparticle.client.ParticleRenderManager;"));
+        assertTrue(source.contains("import io.github.tt432.eyelibparticle.client.ParticleSpawnRuntimeAdapter;"));
         assertTrue(source.contains("import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;"));
-        assertTrue(source.contains("import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleRuntime;"));
-        assertTrue(source.contains("new BedrockParticleRuntime("));
-        assertTrue(source.contains("ParticleRenderManager.INSTANCE::spawnParticle"));
-        assertTrue(source.contains("ParticleRenderManager.INSTANCE.spawnEmitter("));
-        assertTrue(source.contains("ParticleRenderManager.INSTANCE.removeEmitter("));
+        assertTrue(source.contains("ParticleSpawnRuntimeAdapter ADAPTER"));
+        assertTrue(source.contains("ParticleSpawnService::currentEnvironment"));
+        assertTrue(adapter.contains("import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleRuntime;"));
+        assertTrue(adapter.contains("new BedrockParticleRuntime("));
+        assertTrue(adapter.contains("renderManager::spawnParticle"));
+        assertTrue(adapter.contains("renderManager.spawnEmitter("));
+        assertTrue(adapter.contains("renderManager.removeEmitter("));
         assertTrue(source.contains("api().spawn(new ParticleSpawnRequest(packet.spawnId(), packet.particleId(), packet.position()))"));
         assertTrue(source.contains("api().remove(removeId);"));
-        assertTrue(source.contains("ParticleDefinitionRegistry.store().get(request.particleId())"));
+        assertTrue(adapter.contains("definitions.get(request.particleId())"));
         assertTrue(source.contains("ParticleDefinition definition,"));
         assertTrue(!source.contains("BrParticle.CODEC.encodeStart"));
+        assertTrue(!source.contains("import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;"));
+        assertTrue(!source.contains("import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;"));
+        assertTrue(!source.contains("publishLegacyParticle"));
     }
 
     @Test
@@ -51,8 +59,8 @@ class ParticleRuntimeDelegationBoundaryTest {
                 LoggerFactory.getLogger(ParticleRuntimeDelegationBoundaryTest.class)
         );
 
-        assertNotNull(ParticleLookup.definition("eyelib:runtime_particle"));
-        assertNull(ParticleLookup.definition("particles/runtime.particle"));
+        assertNotNull(ParticleDefinitionRegistry.store().get("eyelib:runtime_particle"));
+        assertNull(ParticleDefinitionRegistry.store().get("particles/runtime.particle"));
 
         String animationEntry = Files.readString(Path.of(
                 "src/main/java/io/github/tt432/eyelib/client/animation/bedrock/BrAnimationEntryDefinition.java"
@@ -60,53 +68,68 @@ class ParticleRuntimeDelegationBoundaryTest {
         String controllerExecutor = Files.readString(Path.of(
                 "src/main/java/io/github/tt432/eyelib/client/animation/bedrock/controller/BrControllerExecutor.java"
         ));
+        String command = Files.readString(Path.of(
+                "src/main/java/io/github/tt432/eyelib/mc/impl/common/command/EyelibParticleCommand.java"
+        ));
 
-        assertTrue(animationEntry.contains("ParticleLookup.definition(s)"));
+        assertTrue(animationEntry.contains("ParticleDefinitionRegistry.store().get(s)"));
         assertTrue(animationEntry.contains("ParticleSpawnService.spawnEmitter(uuid, definition,"));
         assertTrue(!animationEntry.contains("ParticleLookup.get("));
-        assertTrue(controllerExecutor.contains("ParticleLookup.definition(effect)"));
+        assertTrue(controllerExecutor.contains("ParticleDefinitionRegistry.store().get(effect)"));
         assertTrue(controllerExecutor.contains("ParticleSpawnService.spawnEmitter("));
         assertTrue(controllerExecutor.contains("definition,"));
         assertTrue(!controllerExecutor.contains("ParticleLookup.get("));
+        assertTrue(command.contains("ParticleDefinitionRegistry.store().names()"));
+        assertTrue(!command.contains("ParticleLookup.names()"));
     }
 
     @Test
-    void rootRenderManagerIsThinAdapterToModuleRenderManager() throws IOException {
-        String source = Files.readString(Path.of(
-                "src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticleRenderManager.java"
+    void rootRenderManagerFacadeIsDeletedAndInstrumentationReadsModuleRenderManager() throws IOException {
+        String observer = Files.readString(Path.of(
+                "src/main/java/io/github/tt432/eyelib/client/instrument/collector/BrParticleObserver.java"
+        ));
+        String hooks = Files.readString(Path.of(
+                "src/main/java/io/github/tt432/eyelib/client/instrument/InstrumentLifecycleHooks.java"
         ));
 
-        assertTrue(source.contains("import io.github.tt432.eyelibparticle.client.ParticleRenderManager;"));
-        assertTrue(source.contains("ParticleRenderManager.INSTANCE.getEmitterCount()"));
-        assertTrue(source.contains("ParticleRenderManager.INSTANCE.getParticleCount()"));
-        assertTrue(source.contains("ParticleRenderManager.INSTANCE.spawnEmitter("));
-        assertTrue(source.contains("ParticleRenderManager.INSTANCE.removeEmitter("));
-        assertTrue(source.contains("ParticleRenderManager.INSTANCE.spawnParticle("));
-        assertTrue(source.contains("throw new UnsupportedOperationException("));
-        assertTrue(source.contains("Legacy root BrParticleParticle cannot be registered"));
-        assertTrue(source.contains("Remove this adapter"));
+        assertTrue(Files.notExists(Path.of(
+                "src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticleRenderManager.java")));
+        assertTrue(observer.contains("import io.github.tt432.eyelibparticle.client.ParticleRenderManager;"));
+        assertTrue(observer.contains("ParticleRenderManager.INSTANCE.getEmitterCount()"));
+        assertTrue(!observer.contains("BrParticleRenderManager.get"));
+        assertTrue(hooks.contains("import io.github.tt432.eyelibparticle.client.ParticleRenderManager;"));
+        assertTrue(hooks.contains("ParticleRenderManager.INSTANCE.getEmitterCount()"));
+        assertTrue(!hooks.contains("BrParticleRenderManager.get"));
+    }
+
+    @Test
+    void legacyRootEmitterRuntimeAndSchemaTreeAreDeleted() throws IOException {
+        assertTrue(Files.notExists(Path.of("src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticle.java")));
+        assertTrue(Files.notExists(Path.of("src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticleEmitter.java")));
+        assertTrue(Files.notExists(Path.of("src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticleParticle.java")));
+        assertTrue(noJavaSources(Path.of("src/main/java/io/github/tt432/eyelib/client/particle/bedrock/component")));
     }
 
     @Test
     void spawnAndRemovePacketShapesRemainStringKeyed() throws IOException {
         String spawnPacket = Files.readString(Path.of(
-                "src/main/java/io/github/tt432/eyelib/mc/impl/network/packet/SpawnParticlePacket.java"
+                "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/network/SpawnParticlePacket.java"
         ));
         String removePacket = Files.readString(Path.of(
-                "src/main/java/io/github/tt432/eyelib/mc/impl/network/packet/RemoveParticlePacket.java"
+                "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/network/RemoveParticlePacket.java"
         ));
 
         assertTrue(Pattern.compile("record\\s+SpawnParticlePacket\\s*\\(\\s*String\\s+spawnId,\\s*String\\s+particleId,\\s*Vector3f\\s+position", Pattern.DOTALL)
                 .matcher(spawnPacket)
                 .find());
-        assertTrue(spawnPacket.contains("EyelibStreamCodecs.STRING.encode(obj.spawnId, buf);"));
-        assertTrue(spawnPacket.contains("EyelibStreamCodecs.STRING.encode(obj.particleId, buf);"));
-        assertTrue(spawnPacket.contains("EyelibStreamCodecs.VECTOR_3_F.encode(obj.position, buf);"));
+        assertTrue(spawnPacket.contains("buf.writeUtf(packet.spawnId);"));
+        assertTrue(spawnPacket.contains("buf.writeUtf(packet.particleId);"));
+        assertTrue(spawnPacket.contains("buf.writeFloat(packet.position.x());"));
 
         assertTrue(Pattern.compile("record\\s+RemoveParticlePacket\\s*\\(\\s*String\\s+removeId", Pattern.DOTALL)
                 .matcher(removePacket)
                 .find());
-        assertTrue(removePacket.contains("EyelibStreamCodecs.STRING.encode(obj.removeId, buf);"));
+        assertTrue(removePacket.contains("buf.writeUtf(packet.removeId);"));
     }
 
     private static String particleJson(String identifier) {
@@ -124,5 +147,15 @@ class ParticleRuntimeDelegationBoundaryTest {
                   }
                 }
                 """.formatted(identifier);
+    }
+
+    private static boolean noJavaSources(Path path) throws IOException {
+        if (Files.notExists(path)) {
+            return true;
+        }
+
+        try (var files = Files.walk(path)) {
+            return files.noneMatch(source -> source.toString().endsWith(".java"));
+        }
     }
 }

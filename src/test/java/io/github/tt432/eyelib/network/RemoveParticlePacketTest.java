@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.network;
 
-import io.github.tt432.eyelib.mc.impl.network.packet.RemoveParticlePacket;
+import io.github.tt432.eyelibparticle.network.RemoveParticlePacket;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import org.junit.jupiter.api.Test;
@@ -37,16 +37,16 @@ class RemoveParticlePacketTest {
     }
 
     @Test
-    void packetCodecOwnershipStaysInMcNetworkPacketLayer() throws IOException {
+    void packetCodecOwnershipStaysInParticleModule() throws IOException {
         String source = Files.readString(Path.of(
-                "src/main/java/io/github/tt432/eyelib/mc/impl/network/packet/RemoveParticlePacket.java"
+                "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/network/RemoveParticlePacket.java"
         ));
 
         assertTrue(Pattern.compile("record\\s+RemoveParticlePacket\\s*\\(\\s*String\\s+removeId", Pattern.DOTALL)
                 .matcher(source)
                 .find());
-        assertTrue(source.contains("EyelibStreamCodecs.STRING.encode(obj.removeId, buf);"));
-        assertTrue(source.contains("var removeId = EyelibStreamCodecs.STRING.decode(buf);"));
+        assertTrue(source.contains("buf.writeUtf(packet.removeId);"));
+        assertTrue(source.contains("String removeId = buf.readUtf();"));
         assertTrue(source.contains("import net.minecraft.network.FriendlyByteBuf;"));
     }
 }

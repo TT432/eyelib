@@ -2,16 +2,12 @@
 
 ## Scope
 - Path: `src/main/java/io/github/tt432/eyelib/core/`
-- Platform-free helpers and logic intended to remain independent from Minecraft/Forge runtime classes.
+- Historical platform-free helper seam drained by the v1.3 `:eyelib-util` migration.
 
 ## Boundary Rules
-- `core` must not depend on `net.minecraft.*` or `net.minecraftforge.*`.
-- Minecraft-facing adapters remain in existing `util/*` or domain-specific MC packages.
-- During migration waves, prefer additive extraction into `core` plus compatibility adapters over broad callsite churn.
+- Do not add new utility code here; shared helpers belong in `:eyelib-util` or a functional owner package.
+- Minecraft-facing adapters belong in domain-specific runtime packages, not in this historical seam.
 
-## First-Wave Utility Seams
-- `core/util/collection/ListAccessors.java`
-- `core/util/texture/TexturePaths.java`
-- `core/util/color/ColorEncodings.java`
-- `core/util/codec/Eithers.java`
-- `core/util/time/FixedStepTimerState.java`
+## v1.3 Outcome
+- No Java source remains under `core/util/` after Phase 19.
+- Former first-wave helpers now live under `eyelib-util/src/main/java/io/github/tt432/eyelibutil/` in `collection`, `texture`, `color`, `codec`, and `time` packages.

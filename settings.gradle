@@ -19,5 +19,6 @@ include("eyelib-material")
 include("eyelib-molang")
 include("eyelib-particle")
 include("eyelib-processor")
+include("eyelib-util")
 
 includeBuild("clientsmoke")

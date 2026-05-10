@@ -7,8 +7,8 @@ import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.AnimationLookup;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibattachment.codec.stream.StreamCodec;
-import io.github.tt432.eyelibattachment.codec.stream.EyelibStreamCodecs;
+import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
+import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
 import lombok.Getter;
 import net.minecraft.network.FriendlyByteBuf;
 

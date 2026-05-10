@@ -2,7 +2,7 @@
 
 ## Scope
 - Path: `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/`
-- Owns the particle module boundary for particle-module APIs, `io.github.tt432.eyelibparticle.runtime.ParticleDefinition` as the canonical module runtime definition owner, `ParticleDefinitionAdapter`, executable runtime, client integration, render manager, and loading/publication through `ParticleDefinitionRegistry` plus `ParticleResourcePublication`.
+- Owns the particle module boundary for particle-module APIs, `io.github.tt432.eyelibparticle.runtime.ParticleDefinition` as the canonical module runtime definition owner, `ParticleDefinitionAdapter`, executable runtime, client integration, spawn/runtime adapters, render manager, and loading/publication through `ParticleDefinitionRegistry` plus `ParticleResourcePublication`.
 
 ## Current Responsibilities
 - Phase 8 owns build metadata, source/resource layout, and boundary documentation for `:eyelib-particle`.
@@ -13,7 +13,7 @@
 - Phase 11 also owns the explicit client integration layer under `client/**` for render-manager collections, render-buffer/material adapters, and `Dist.CLIENT` Forge hook delegation; root particle render-manager paths are transitional adapters only until later compatibility rewires complete.
 - Phase 12 owns active loading/publication: `ParticleDefinitionRegistry` is the module-owned active `ParticleStore<ParticleDefinition>` and `ParticleResourcePublication` parses canonical importer schema `io.github.tt432.eyelibimporter.particle.BrParticle`, converts through `ParticleDefinitionAdapter`, and publishes by `ParticleDefinition.identifier()`.
 - Source ids from Forge reload scanning are diagnostics/report metadata only; they must not become active store keys or replace description-identifier publication semantics.
-- Phase 13 command/network integration remains outside pure particle APIs: `ParticleCommandRuntime` owns platform-free command shaping in root, `mc/impl/common/command` owns Brigadier and `ResourceLocation` conversion, `mc/impl/network/packet` owns `SpawnParticlePacket(String spawnId, String particleId, Vector3f position)` and `RemoveParticlePacket(String removeId)` codecs, and root `ParticleSpawnService` converts packets into module `ParticleSpawnRequest` before delegating into module APIs/client services.
+- Particle packet contracts live under `io.github.tt432.eyelibparticle.network`: `SpawnParticlePacket(String spawnId, String particleId, Vector3f position)` and `RemoveParticlePacket(String removeId)` own their codecs here, while `ParticleCommandRuntime` owns platform-free command shaping in root, `mc/impl/common/command` owns Brigadier and `ResourceLocation` conversion, root transport registers the packets, root `ParticleSpawnService` converts packets into module `ParticleSpawnRequest`, and `ParticleSpawnRuntimeAdapter` owns particle-only definition lookup, emitter creation, spawn, and remove delegation.
 
 ## Dependency Direction
 - Root runtime may depend on :eyelib-particle, but :eyelib-particle must not depend on root runtime packages, root managers, root registries, root packets, root capability helpers, or root mc/impl classes.
@@ -21,17 +21,17 @@
 
 ## Integration Rule
 - Pure particle core stays free of root, Minecraft, and Forge contamination.
-- Minecraft/Forge-facing integration must live in explicitly documented adapters before introduction.
-- Existing particle loading, command, and network behavior must not be moved into pure runtime packages; render adapter behavior belongs only in the documented `client/**` integration layer.
+- Minecraft/Forge-facing integration must live in explicitly documented adapters before introduction; particle-owned packet codecs are allowed in `network/**` because they are particle protocol contracts.
+- Existing particle loading, command, and network behavior must not be moved into pure runtime packages; spawn/runtime and render adapter behavior belongs only in the documented `client/**` integration layer.
 - Phase 11 moved executable runtime core and client integration into this module; Phase 12 moved loading/publication ownership here through pure loading services, Phase 13 rewires command/network integration, and Phase 14 owns final broad/client verification evidence.
-- Phase 13 does not relocate packet contracts into this module; PFUT-02 packet-contract relocation remains deferred, and broad ClientSmoke/hardware evidence remains Phase 14 scope.
+- Particle packet contracts have been relocated into this module; broad ClientSmoke/hardware evidence remains Phase 14 scope.
 - Root `ResourceLocation` adaptation remains outside pure particle packages; module loading/publication accepts platform-free source metadata and publishes active entries by `ParticleDefinition.identifier()`.
 
 ## Current Consumers
 - Root runtime `:` consumes the module through Gradle project dependency wiring.
-- Transitional root facades such as `BrParticleLoader`, `ParticleLookup`, `ParticleAssetRegistry`, `ParticleManager`, `ParticleSpawnService`, and root `BrParticleRenderManager` delegate to this module's API/loading/client runtime services; their removal condition is direct migration of root callers to `io.github.tt432.eyelibparticle.api`, `io.github.tt432.eyelibparticle.loading`, and `io.github.tt432.eyelibparticle.client` adapters/services.
-- Root `src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticle.java` is a legacy/non-canonical runtime adapter target, not the canonical raw schema.
+- Root runtime still consumes this module through `BrParticleLoader`, `ParticleSpawnService`, command/network transport adapters, and instrumentation. Legacy root `ParticleLookup`, `ParticleAssetRegistry`, `ParticleManager`, `BrParticleRenderManager`, and `src/main/java/io/github/tt432/eyelib/client/particle/bedrock/**` have been deleted after production callers moved to module definitions/publication/runtime services.
+- `ParticleSpawnService` remains only to adapt root packet callers, module-definition runtime callers, and root Minecraft/capability context into `ParticleSpawnRuntimeAdapter`; delete it after callers bind directly to `io.github.tt432.eyelibparticle.api` and `io.github.tt432.eyelibparticle.client` adapters/services.
 
 ## Verification Rule
 - Gradle verification for this repository must be executed through JetBrains MCP Gradle tools only, never through shell Gradle commands.
-- Normal source tests must not read `.planning/` files. ClientSmoke and hardware/manual visual evidence are recorded separately from automated Gradle gates; PFUT-02 packet-contract relocation, PFUT-03 independent particle artifact publication, unrelated fixture cleanup, and manual visual proof are non-blocking scope boundaries for the v1.2 final gate.
+- Normal source tests must not read `.planning/` files. ClientSmoke and hardware/manual visual evidence are recorded separately from automated Gradle gates; PFUT-03 independent particle artifact publication, unrelated fixture cleanup, and manual visual proof are non-blocking scope boundaries for the v1.2 final gate.

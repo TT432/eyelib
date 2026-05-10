@@ -12,7 +12,7 @@ import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.mapping.api.MolangFunction;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMapping;
 import io.github.tt432.eyelibmolang.mapping.api.MolangQueryRuntimeBridge;
-import io.github.tt432.eyelib.util.ResourceLocations;
+import io.github.tt432.eyelibutil.resource.ResourceLocations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.core.registries.BuiltInRegistries;

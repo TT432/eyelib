@@ -20,7 +20,6 @@
 - `src/main/java/io/github/tt432/eyelib/mc/impl/util/model/InventoryModelResourceLocations.java`
 - `src/main/java/io/github/tt432/eyelib/core/util/`
 - `src/main/java/io/github/tt432/eyelib/core/util/time/FixedStepTimerState.java`
-- `src/main/java/io/github/tt432/eyelib/mc/impl/util/time/FixedTimer.java`
 - `src/main/java/io/github/tt432/eyelib/mc/impl/modbridge/ModBridgeModelUpdateEvent.java`
 
 ## Boundary Reminder

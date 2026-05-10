@@ -28,6 +28,8 @@ class ParticleModuleFinalBoundaryTest {
                     .filter(path -> path.toString().endsWith(".java"))
                     .filter(path -> !path.toString().contains("/client/"))
                     .filter(path -> !path.toString().contains("\\client\\"))
+                    .filter(path -> !path.toString().contains("/network/"))
+                    .filter(path -> !path.toString().contains("\\network\\"))
                     .filter(path -> hasForbiddenPureParticleReference(path, forbiddenImports))
                     .map(projectRoot()::relativize)
                     .toList();
@@ -44,6 +46,8 @@ class ParticleModuleFinalBoundaryTest {
 
         assertAll(
                 () -> moduleReadme.assertContains("client integration"),
+                () -> moduleReadme.assertContains("particle-owned packet codecs"),
+                () -> sideBoundaries.assertContains("io.github.tt432.eyelibparticle.network"),
                 () -> moduleReadme.assertContains("Dist.CLIENT"),
                 () -> moduleReadme.assertContains("render manager"),
                 () -> sideBoundaries.assertContains("Dist.CLIENT"),
@@ -87,19 +91,21 @@ class ParticleModuleFinalBoundaryTest {
     private static List<String> importsIn(Path path) {
         try {
             return Files.readAllLines(path).stream()
-                    .map(String::trim)
-                    .filter(line -> line.startsWith("import "))
-                    .map(line -> line.substring("import ".length(), line.length() - 1))
-                    .map(line -> line.startsWith("static ") ? line.substring("static ".length()) : line)
-                    .toList();
+                        .map(String::trim)
+                        .filter(line -> line.startsWith("import "))
+                        .map(line -> line.substring("import ".length(), line.length() - 1))
+                        .map(line -> line.startsWith("static ") ? line.substring("static ".length()) : line)
+                        .toList();
         } catch (IOException exception) {
             throw new AssertionError("Unable to scan imports in " + path, exception);
         }
     }
 
     private static boolean hasForbiddenPureParticleReference(Path path, List<String> forbiddenPrefixes) {
-        return importsIn(path).stream().anyMatch(importLine -> forbiddenPrefixes.stream().anyMatch(importLine::startsWith))
-                || forbiddenPrefixes.stream().anyMatch(forbiddenPrefix -> strippedSourceIn(path).contains(forbiddenPrefix));
+        return importsIn(path).stream()
+                              .anyMatch(importLine -> forbiddenPrefixes.stream().anyMatch(importLine::startsWith))
+                || forbiddenPrefixes.stream()
+                                    .anyMatch(forbiddenPrefix -> strippedSourceIn(path).contains(forbiddenPrefix));
     }
 
     private static String strippedSourceIn(Path path) {
@@ -208,7 +214,10 @@ class ParticleModuleFinalBoundaryTest {
         throw new IllegalStateException("Could not locate project root from user.dir");
     }
 
-    private record SourceCheck(String path, String content) {
+    private record SourceCheck(
+            String path,
+            String content
+    ) {
         void assertContains(String expected) {
             assertTrue(content.contains(expected), () -> path + " should contain: " + expected);
         }

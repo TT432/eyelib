@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.mc.impl.mixin;
 
 import io.github.tt432.eyelib.network.EyelibNetworkManager;
-import io.github.tt432.eyelib.mc.impl.network.packet.UpdateDestroyInfoPacket;
 import io.github.tt432.eyelib.client.ClientTaskScheduler;
+import io.github.tt432.eyelibattachment.network.UpdateDestroyInfoPacket;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

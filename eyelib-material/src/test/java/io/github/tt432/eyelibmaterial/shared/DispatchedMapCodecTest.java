@@ -3,7 +3,7 @@ package io.github.tt432.eyelibmaterial.shared;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.PrimitiveCodec;
-import io.github.tt432.eyelibmaterial.shared.util.DispatchedMapCodec;
+import io.github.tt432.eyelibutil.codec.DispatchedMapCodec;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

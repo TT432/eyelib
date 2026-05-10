@@ -35,14 +35,15 @@ class EyelibParticleCommandBoundaryTest {
     }
 
     @Test
-    void commandDoesNotAddDeferredParticleFeaturesOrDirectModuleInternals() throws IOException {
+    void commandDoesNotAddDeferredParticleFeaturesOrParticleRuntimeInternals() throws IOException {
         String source = Files.readString(SOURCE);
 
         assertAll(
                 () -> assertFalse(source.contains("Commands.literal(\"particles\")")),
                 () -> assertFalse(source.contains("Commands.literal(\"remove\")")),
                 () -> assertFalse(source.contains("Commands.literal(\"batch\")")),
-                () -> assertFalse(source.contains("import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry")),
+                () -> assertTrue(source.contains("import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry")),
+                () -> assertTrue(source.contains("ParticleDefinitionRegistry.store().names()")),
                 () -> assertFalse(source.contains("import io.github.tt432.eyelibparticle.client.ParticleRenderManager"))
         );
     }

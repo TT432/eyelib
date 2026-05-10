@@ -4,10 +4,8 @@
  * Importer {@code io.github.tt432.eyelibimporter.particle.BrParticle} is the canonical raw Bedrock
  * particle schema and codec owner. Particle {@link io.github.tt432.eyelibparticle.runtime.ParticleDefinition}
  * is the canonical module runtime definition owner for data that later runtime/loading phases consume.
- * The root {@code io.github.tt432.eyelib.client.particle.bedrock.BrParticle} type is legacy and
- * non-canonical until Phase 11/12 migrate executable runtime and loading behavior through explicit seams.
- * Root {@code src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticle.java} is a
- * legacy/non-canonical runtime adapter target, not the canonical raw schema.
+ * The old root {@code io.github.tt432.eyelib.client.particle.bedrock.BrParticle} compatibility type has
+ * been deleted; importer schema plus this module definition are the remaining particle definition owners.
  * <p>
  * The allowed particle -> importer dependency for ParticleDefinitionAdapter preserves mapped fields: identifier, format version, basic render material/texture, curves, events, raw components, billboard flipbook summary, and Molang value preservation.
  * Phase 11 moved executable runtime core into the particle module; Phase 12 rewires loading/publication,

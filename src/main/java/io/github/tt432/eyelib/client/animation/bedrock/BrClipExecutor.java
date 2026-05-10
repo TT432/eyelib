@@ -3,8 +3,8 @@ package io.github.tt432.eyelib.client.animation.bedrock;
 import io.github.tt432.eyelib.client.animation.AnimationEffect;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
-import io.github.tt432.eyelib.util.math.EyeMath;
-import io.github.tt432.eyelib.util.math.MathHelper;
+import io.github.tt432.eyelibutil.math.EyeMath;
+import io.github.tt432.eyelibutil.math.MathHelper;
 import io.github.tt432.eyelibmolang.MolangScope;
 import org.joml.Vector3f;
 

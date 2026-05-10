@@ -1,34 +1,46 @@
 package io.github.tt432.eyelib.client.registry;
 
-import io.github.tt432.eyelib.client.manager.ParticleManager;
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
+import com.google.gson.JsonParser;
 import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
+import io.github.tt432.eyelibparticle.loading.ParticleResourcePublication;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class ParticleAssetRegistryTest {
     @AfterEach
     void tearDown() {
-        ParticleManager.writePort().clear();
         ParticleDefinitionRegistry.store().clear();
     }
 
     @Test
-    void replaceParticlesPublishesByDescriptionIdentifierNotSourceKey() {
+    void rootParticleAssetRegistryFacadeHasBeenRemoved() {
+        assertFalse(Files.exists(Path.of("src/main/java/io/github/tt432/eyelib/client/registry/ParticleAssetRegistry.java")));
+    }
+
+    @Test
+    void modulePublicationReplacesLegacyRegistryPublicationByDescriptionIdentifier() {
         ParticleDefinitionRegistry.store().put("eyelib:stale", moduleDefinition("eyelib:stale"));
-        BrParticle particle = testParticle("eyelib:description_identifier");
 
-        LinkedHashMap<String, BrParticle> sourceKeyedParticles = new LinkedHashMap<>();
-        sourceKeyedParticles.put("eyelib:loader_source_key", particle);
+        LinkedHashMap<String, com.google.gson.JsonElement> sourceKeyedParticles = new LinkedHashMap<>();
+        sourceKeyedParticles.put("eyelib:loader_source_key",
+                JsonParser.parseString(particleJson("eyelib:description_identifier")));
 
-        ParticleAssetRegistry.replaceParticles(sourceKeyedParticles);
+        ParticleResourcePublication.replaceFromJsonResources(
+                sourceKeyedParticles,
+                LoggerFactory.getLogger(ParticleAssetRegistryTest.class)
+        );
 
         assertNull(ParticleDefinitionRegistry.store().get("eyelib:stale"));
         assertNull(ParticleDefinitionRegistry.store().get("eyelib:loader_source_key"));
@@ -37,13 +49,24 @@ class ParticleAssetRegistryTest {
                 ParticleDefinitionRegistry.store().get("eyelib:description_identifier").identifier());
     }
 
+    @Test
+    void modulePublisherReplacesPublisherFacadeForDirectDefinitionPublication() {
+        ParticleDefinitionRegistry.publisher().publishParticle(moduleDefinition("eyelib:published_definition"));
+
+        assertEquals(List.of("eyelib:published_definition"),
+                List.copyOf(ParticleDefinitionRegistry.store().all().keySet()));
+    }
+
     private static io.github.tt432.eyelibparticle.runtime.ParticleDefinition moduleDefinition(String identifier) {
-        ParticleAssetRegistry.replaceParticles(Map.of(identifier, testParticle(identifier)));
+        ParticleResourcePublication.replaceFromJsonResources(
+                Map.of(identifier, JsonParser.parseString(particleJson(identifier))),
+                LoggerFactory.getLogger(ParticleAssetRegistryTest.class)
+        );
         return ParticleDefinitionRegistry.store().get(identifier);
     }
 
-    private static BrParticle testParticle(String identifier) {
-        return BrParticle.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, com.google.gson.JsonParser.parseString("""
+    private static String particleJson(String identifier) {
+        return """
                 {
                   "format_version": "1.10.0",
                   "particle_effect": {
@@ -56,6 +79,6 @@ class ParticleAssetRegistryTest {
                     }
                   }
                 }
-                """.formatted(identifier, identifier))).getOrThrow(false, AssertionError::new);
+                """.formatted(identifier, identifier);
     }
 }

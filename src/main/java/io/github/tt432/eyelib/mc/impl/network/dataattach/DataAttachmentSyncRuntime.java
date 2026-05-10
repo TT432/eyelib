@@ -5,14 +5,14 @@ import io.github.tt432.eyelib.mc.impl.data_attach.DataAttachmentContainerCapabil
 import io.github.tt432.eyelib.mc.impl.data_attach.DataAttachmentHelper;
 import io.github.tt432.eyelib.mc.impl.data_attach.McDataAttachmentContainer;
 import io.github.tt432.eyelib.mc.impl.network.EyelibNetworkTransport;
-import io.github.tt432.eyelib.mc.impl.network.packet.DataAttachmentSyncPacket;
 import io.github.tt432.eyelib.mc.impl.network.packet.DataAttachmentUpdatePacket;
 import io.github.tt432.eyelib.mc.impl.network.packet.ExtraEntityDataPacket;
 import io.github.tt432.eyelib.mc.impl.network.packet.ExtraEntityUpdateDataPacket;
 import io.github.tt432.eyelib.mc.impl.network.packet.UniDataUpdatePacket;
-import io.github.tt432.eyelib.mc.impl.network.packet.UpdateDestroyInfoPacket;
 import io.github.tt432.eyelib.network.dataattach.DataAttachmentSyncPayloadOps;
 import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
+import io.github.tt432.eyelibattachment.network.DataAttachmentSyncPacket;
+import io.github.tt432.eyelibattachment.network.UpdateDestroyInfoPacket;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
@@ -25,6 +25,10 @@ import org.jspecify.annotations.Nullable;
 public final class DataAttachmentSyncRuntime {
     public static <C> void syncTrackedAndSelf(DataAttachmentType<C> attachment, Entity entity, C value) {
         EyelibNetworkTransport.sendToTrackedAndSelf(entity, new DataAttachmentUpdatePacket<>(entity.getId(), attachment, value));
+    }
+
+    public static <C> void syncToPlayer(DataAttachmentType<C> attachment, Entity entity, C value, ServerPlayer player) {
+        EyelibNetworkTransport.sendToPlayer(player, UniDataUpdatePacket.crate(entity.getId(), attachment, value));
     }
 
     public static void syncContainer(Entity entity, CompoundTag data) {

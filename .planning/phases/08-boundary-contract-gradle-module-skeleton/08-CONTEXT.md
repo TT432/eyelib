@@ -1,12 +1,12 @@
 # Phase 8: Boundary Contract & Gradle Module Skeleton - Context
 
-**Gathered:** 2026-05-09
+**Gathered:** 2026-05-10
 **Status:** Ready for planning
 
 <domain>
 ## Phase Boundary
 
-This phase establishes `:eyelib-particle` as a real Gradle module boundary with explicit build metadata, source/resource layout, root dependency wiring, and ownership documentation. It must prove the one-way dependency direction: root runtime may consume the particle module, but `:eyelib-particle` must not depend on root runtime packages, root managers, root registries, root packets, root capability helpers, or root `mc/impl` classes.
+This phase establishes `:eyelib-particle` as a first-class Gradle module boundary with explicit ownership, documented one-way root-to-particle dependency direction, module build metadata, source/resource layout, and verification guidance that uses JetBrains MCP Gradle execution only.
 
 </domain>
 
@@ -14,7 +14,7 @@ This phase establishes `:eyelib-particle` as a real Gradle module boundary with 
 ## Implementation Decisions
 
 ### the agent's Discretion
-All implementation choices are at the agent's discretion because this is a pure infrastructure phase. Use the ROADMAP goal, requirements PGRAD-01/PGRAD-02/PAPI-02, existing Gradle subproject conventions, and repository module-boundary documentation rules to guide decisions.
+All implementation choices are at the agent's discretion because this is a pure infrastructure phase. Preserve repository module-boundary rules, avoid root runtime dependencies from `:eyelib-particle`, and do not endorse shell Gradle commands.
 
 </decisions>
 
@@ -22,32 +22,29 @@ All implementation choices are at the agent's discretion because this is a pure 
 ## Existing Code Insights
 
 ### Reusable Assets
-- Existing subprojects `:eyelib-attachment`, `:eyelib-importer`, `:eyelib-material`, `:eyelib-molang`, and `:eyelib-processor` provide the reference pattern for build script structure, source/resource layout, package naming, and module metadata.
-- `settings.gradle`, root `build.gradle`, `gradle.properties`, `MODULES.md`, and docs under `docs/architecture/` are the main integration and documentation points for a new Gradle module.
-- Current particle code starts in `src/main/java/io/github/tt432/eyelib/client/particle/`, while importer schema pressure already exists at `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/particle/BrParticle.java`.
+- `MODULES.md` is the canonical module inventory and already documents particle/module ownership expectations.
+- `docs/index/repo-map.md` and architecture docs provide navigation and boundary constraints for module split work.
 
 ### Established Patterns
-- Subprojects use Java 17, Groovy Gradle DSL, Forge/MDGL-compatible metadata, Lombok, JUnit 5, and package roots like `io.github.tt432.eyelibmolang`, `io.github.tt432.eyelibimporter`, and `io.github.tt432.eyelibattachment`.
-- Significant package/module areas have README documentation and are listed in `MODULES.md` with responsibility, main paths, and interactions.
-- Platform-free code must stay outside root `mc/impl`; direct Minecraft/Forge imports belong in explicit integration/adapters.
+- The repository uses multi-project Gradle modules with module-local README files and `META-INF/mods.toml` metadata.
+- Gradle verification must be run through JetBrains MCP, not shell commands.
 
 ### Integration Points
-- `settings.gradle` must include the new subproject.
-- Root build wiring must allow root runtime to depend on `:eyelib-particle` without introducing a reverse dependency.
-- Documentation must state particle ownership, allowed integration layers, and JetBrains MCP-only Gradle verification expectations.
+- Root build settings and module documentation define the visible boundary for `:eyelib-particle`.
+- Root runtime may depend on `:eyelib-particle`; the particle module must not depend back on root runtime packages or root `mc/impl` implementation classes.
 
 </code_context>
 
 <specifics>
 ## Specific Ideas
 
-No specific requirements beyond ROADMAP and requirement traceability; prefer the smallest correct module skeleton that future phases can fill without broad compatibility shims.
+No specific requirements - infrastructure phase.
 
 </specifics>
 
 <deferred>
 ## Deferred Ideas
 
-Moving particle APIs, schema/runtime adapters, loader publication, command/network integration, and verification coverage is deferred to Phases 9-14.
+None.
 
 </deferred>

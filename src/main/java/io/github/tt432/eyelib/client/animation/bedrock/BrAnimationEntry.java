@@ -1,18 +1,28 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
-import com.mojang.serialization.*;
-import com.mojang.serialization.codecs.*;
-import io.github.tt432.eyelib.client.animation.*;
-import io.github.tt432.eyelib.client.model.*;
-import io.github.tt432.eyelib.util.*;
-import io.github.tt432.eyelib.util.codec.*;
-import io.github.tt432.eyelibimporter.animation.bedrock.*;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.client.animation.Animation;
+import io.github.tt432.eyelib.client.animation.AnimationEffect;
+import io.github.tt432.eyelib.client.animation.AnimationEffects;
+import io.github.tt432.eyelib.client.model.ModelRuntimeData;
+import io.github.tt432.eyelibutil.codec.ChinExtraCodecs;
+import io.github.tt432.eyelibutil.codec.CodecHelper;
+import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
+import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
 import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
-import io.github.tt432.eyelibmolang.*;
-import it.unimi.dsi.fastutil.ints.*;
-import org.jspecify.annotations.*;
+import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelibmolang.MolangValue;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jspecify.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @param override_previous_animation TODO 不确定

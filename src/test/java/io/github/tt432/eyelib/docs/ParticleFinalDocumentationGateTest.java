@@ -23,10 +23,9 @@ class ParticleFinalDocumentationGateTest {
                     "ParticleDefinitionAdapter",
                     "io.github.tt432.eyelibimporter.particle.BrParticle",
                     "mc/impl/common/command",
-                    "mc/impl/network/packet",
+                    "io.github.tt432.eyelibparticle.network",
                     "ClientSmoke",
                     "hardware",
-                    "PFUT-02",
                     "PFUT-03")),
             entry("docs/index/repo-map.md", List.of(
                     ":eyelib-particle",
@@ -35,10 +34,9 @@ class ParticleFinalDocumentationGateTest {
                     "ParticleDefinition.identifier()",
                     "ParticleDefinitionAdapter",
                     "io.github.tt432.eyelibimporter.particle.BrParticle",
-                    "mc/impl/network/packet",
+                    "io.github.tt432.eyelibparticle.network",
                     "ClientSmoke",
                     "hardware",
-                    "PFUT-02",
                     "PFUT-03")),
             entry("docs/architecture/01-module-boundaries.md", List.of(
                     ":eyelib-particle",
@@ -48,9 +46,8 @@ class ParticleFinalDocumentationGateTest {
                     "ParticleDefinitionAdapter",
                     "io.github.tt432.eyelibimporter.particle.BrParticle",
                     "mc/impl/common/command",
-                    "mc/impl/network/packet",
+                    "io.github.tt432.eyelibparticle.network",
                     "ClientSmoke",
-                    "PFUT-02",
                     "PFUT-03")),
             entry("docs/architecture/02-side-boundaries.md", List.of(
                     ":eyelib-particle",
@@ -59,10 +56,9 @@ class ParticleFinalDocumentationGateTest {
                     "ParticleDefinition.identifier()",
                     "ParticleDefinitionAdapter",
                     "io.github.tt432.eyelibimporter.particle.BrParticle",
-                    "mc/impl/network/packet",
+                    "io.github.tt432.eyelibparticle.network",
                     "ClientSmoke",
                     "hardware",
-                    "PFUT-02",
                     "PFUT-03")),
             entry("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/README.md", List.of(
                     ":eyelib-particle",
@@ -71,9 +67,8 @@ class ParticleFinalDocumentationGateTest {
                     "ParticleDefinition.identifier()",
                     "ParticleDefinitionAdapter",
                     "io.github.tt432.eyelibimporter.particle.BrParticle",
-                    "mc/impl/network/packet",
+                    "io.github.tt432.eyelibparticle.network",
                     "ClientSmoke",
-                    "PFUT-02",
                     "PFUT-03")),
             entry("src/main/java/io/github/tt432/eyelib/client/particle/README.md", List.of(
                     ":eyelib-particle",
@@ -83,37 +78,34 @@ class ParticleFinalDocumentationGateTest {
                     "ParticleDefinitionAdapter",
                     "io.github.tt432.eyelibimporter.particle.BrParticle",
                     "mc/impl/common/command",
-                    "mc/impl/network/packet",
+                    "io.github.tt432.eyelibparticle.network",
                     "ClientSmoke",
-                    "PFUT-02",
                     "PFUT-03")),
             entry("src/main/java/io/github/tt432/eyelib/network/README.md", List.of(
                     ":eyelib-particle",
                     "ParticleDefinitionRegistry",
                     "ParticleResourcePublication",
                     "io.github.tt432.eyelibimporter.particle.BrParticle",
-                    "mc/impl/network/packet",
+                    "io.github.tt432.eyelibparticle.network",
                     "SpawnParticlePacket(String spawnId, String particleId, Vector3f position)",
                     "RemoveParticlePacket(String removeId)",
                     "ClientSmoke",
-                    "PFUT-02",
                     "PFUT-03")),
             entry("src/main/java/io/github/tt432/eyelib/mc/impl/common/command/README.md", List.of(
                     "mc/impl/common/command",
                     "SpawnParticlePacket(String spawnId, String particleId, Vector3f position)",
                     "RemoveParticlePacket(String removeId)",
-                    "PFUT-02")),
+                    "io.github.tt432.eyelibparticle.network")),
             entry("src/main/java/io/github/tt432/eyelib/mc/impl/network/README.md", List.of(
-                    "mc/impl/network/packet",
+                    "io.github.tt432.eyelibparticle.network",
                     "SpawnParticlePacket(String spawnId, String particleId, Vector3f position)",
-                    "RemoveParticlePacket(String removeId)",
-                    "PFUT-02"))
+                    "RemoveParticlePacket(String removeId)"))
     );
 
     @Test
     void finalDocsDescribeParticleSplitClosureWithoutPlanningDependencies() throws IOException {
         assertAll(REQUIRED_STABLE_DOC_ANCHORS.entrySet().stream()
-                .map(entry -> () -> assertDocumentContains(entry.getKey(), entry.getValue())));
+                                             .map(entry -> () -> assertDocumentContains(entry.getKey(), entry.getValue())));
     }
 
     @Test
@@ -133,6 +125,6 @@ class ParticleFinalDocumentationGateTest {
         String doc = Files.readString(Path.of(path));
 
         assertAll(path, anchors.stream()
-                .map(anchor -> () -> assertTrue(doc.contains(anchor), path + " should contain: " + anchor)));
+                               .map(anchor -> () -> assertTrue(doc.contains(anchor), path + " should contain: " + anchor)));
     }
 }

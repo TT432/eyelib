@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v1.3
+milestone_name: 分离 eyelib-util 模块
+status: Awaiting next milestone
+stopped_at: v1.3 complete; ready for milestone audit/completion cleanup if desired
+last_updated: "2026-05-10T15:23:23.699Z"
+last_activity: 2026-05-10 — Milestone v1.3 completed and archived
+progress:
+  total_phases: 7
+  completed_phases: 7
+  total_plans: 24
+  completed_plans: 24
+  percent: 100
+---
+
 # Project State
 
 ## Project Reference
@@ -5,21 +21,20 @@
 See: .planning/PROJECT.md (updated 2026-05-10)
 
 **Core value:** Eyelib 的功能模块必须能被独立理解、构建、验证和消费；工具代码共享必须形成清晰 Gradle 模块边界，消除 root util 包集群和子模块间重复的共享代码。
-**Current focus:** Phase 15 — Pre-Migration Audit & Routing (v1.3)
+**Current focus:** v1.3 shipped — `:eyelib-util` module separation complete
 
 ## Current Position
 
-Phase: 15 of 21 (v1.3 分离 eyelib-util 模块)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-05-10 — Roadmap created; v1.2 shipped; v1.3 milestones defined
-
-Progress: [████████████░░░░] 67% (14/21 phases complete)
+Phase: Milestone v1.3 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-05-10 — Milestone v1.3 completed and archived
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 40 across v1.0–v1.2
+
+- Total plans completed: 61 across v1.0–v1.3
 - Average duration: N/A (not tracked)
 - Total execution time: N/A (not tracked)
 
@@ -27,7 +42,8 @@ Progress: [████████████░░░░] 67% (14/21 phases c
 *(See ROADMAP.md progress table for per-phase plan counts)*
 
 **Recent Trend:**
-- v1.2 shipped 7 phases (22 plans) in ~1 day
+
+- v1.3 shipped 7 phases (24 plans) in ~1 day
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -37,10 +53,20 @@ Progress: [████████████░░░░] 67% (14/21 phases c
 ### Decisions
 
 Recent decisions affecting current work:
+
 - v1.2 Phase 8: `eyelib-particle` as real module boundary with Forge-aware Gradle skeleton
 - v1.3 Key Decision: `eyelib-util` as Forge module — may depend on MC/Forge, not artificially constrained to be pure Java
 - v1.3 Key Decision: Package namespace `io.github.tt432.eyelibutil` — no split packages with root
 - v1.3 Key Decision: Single-consumer code moves to functional owner, not eyelib-util
+- v1.3 Phase 15: `AnimationApplier`, `Models`, `ModBridgeServer`, and `BBModelSink` were moved to functional owner packages rather than deleted, even where consumer evidence was zero.
+- v1.3 Phase 15: `docs/architecture/migration/utility-routing-manifest.md` is the routing contract for remaining util/core-util migrations.
+- v1.3 Phase 16: `:eyelib-util` exists as a Forge leaf module with namespace `io.github.tt432.eyelibutil`, mod id `eyelibutil`, zero `project(...)` dependencies, and no root consumer dependency yet.
+- v1.3 Phase 17: root now consumes `:eyelib-util`; time, color, loader, math, search, and collection utility categories live in `io.github.tt432.eyelibutil`, with `ListHelper` deleted and FastUtil/JOML exposed as public API dependencies where needed.
+- v1.3 Phase 18: `ResourceLocations` moved to `io.github.tt432.eyelibutil.resource` without the unused root-coupled `mod(String)` method; `TexturePaths` moved to `io.github.tt432.eyelibutil.texture`; root `TexturePathHelper` and core texture wrapper were deleted.
+- v1.3 Phase 19: codec infrastructure moved to `io.github.tt432.eyelibutil.codec`, `ImmutableFloatTreeMap` moved to `io.github.tt432.eyelibutil.collection`, `EitherHelper` was deleted, and root/core util Java sources are empty.
+- v1.3 Phase 20: stream codec helpers moved to `io.github.tt432.eyelibutil.streamcodec`; `eyelib-attachment` and `eyelib-material` now consume `:eyelib-util`; material duplicate `DispatchedMapCodec` copies were deleted.
+- v1.3 Phase 21: final static checks proved root/core util Java sources and old imports are gone; `:eyelib-util` remains leaf-only; JetBrains MCP `build` and full project rebuild passed.
+- v1.3 Phase 21: obsolete root tests depending on missing local-only `test_resources/eyelib/models/skeleton.geo.json` were removed with maintainer approval.
 
 ### Pending Todos
 
@@ -48,9 +74,7 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 19 (Codec Infrastructure): 20+ consumer import sites across animation, behavior, particle domains require careful IDE refactoring strategy
-- Phase 20 (Submodule Centralization): StreamCodec relocation requires coordinating eyelib-attachment packet codecs
-- Phase 15 (Pre-Migration Audit): ResourceLocations.mod() caller verification must confirm whether any of 4 known callers use `.mod()` before deciding delete vs. parameterize
+- None.
 
 ## Deferred Items
 
@@ -63,5 +87,9 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-05-10
-Stopped at: Roadmap creation complete for v1.3; ready for `/gsd-plan-phase 15`
+Stopped at: v1.3 complete; ready for milestone audit/completion cleanup if desired
 Resume file: None
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

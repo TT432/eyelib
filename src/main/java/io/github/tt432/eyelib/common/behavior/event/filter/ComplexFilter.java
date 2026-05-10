@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.common.behavior.event.filter;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
-import io.github.tt432.eyelib.util.codec.EyelibCodec;
+import io.github.tt432.eyelibutil.codec.EyelibCodec;
 import lombok.AllArgsConstructor;
 
 import java.util.List;

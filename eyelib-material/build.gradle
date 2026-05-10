@@ -43,6 +43,8 @@ legacyForge {
 }
 
 dependencies {
+    implementation project(':eyelib-util')
+
     implementation 'org.slf4j:slf4j-api:2.0.7'
 
     compileOnly "io.github.tt432:clientsmoke:${project.version}"

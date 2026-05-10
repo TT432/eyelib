@@ -51,12 +51,11 @@
   - `ManagerWritePort<T>` for publication/storage mutation (`put`, `replaceAll`, `clear`).
 - Added pure storage owner `ManagerStorage<T>` (package-private) to hold map semantics without Forge coupling.
 - Updated `Manager<T>` to implement both ports and delegate storage to `ManagerStorage<T>`.
-- Moved manager event publication behind `mc/api` contract:
-  - `mc/api/client/manager/ManagerEventPublisher`
-- Kept the publication interface in `mc/api` and moved the concrete bridge holder to `client/manager/ManagerEventPublishBridge` so `mc/api` remains interface-only.
-- Bound Forge event publication in `mc/impl`:
-  - `mc/impl/client/manager/ForgeManagerEventPublisher`
-  - `mc/impl/client/manager/ManagerEventLifecycleHooks`
+- Moved manager event publication into the `client/manager` functional owner:
+  - `client/manager/ManagerEventPublisher`
+  - `client/manager/ManagerEventPublishBridge`
+  - `client/manager/ForgeManagerEventPublisher`
+  - `client/manager/ManagerEventLifecycleHooks`
 - Exposed typed role ports from each concrete manager via `readPort()` / `writePort()` helpers.
 
 ## Implementation Changes (completed)
@@ -73,7 +72,7 @@
   - `client/registry/RenderControllerAssetRegistry.java`
   - `client/registry/ClientEntityAssetRegistry.java`
   - `client/registry/ModelAssetRegistry.java`
-- `client/manager/Manager.java` no longer imports `MinecraftForge`; it publishes entry changes through `client/manager/ManagerEventPublishBridge` while the publisher interface remains in `mc/api`.
+- `client/manager/Manager.java` no longer imports `MinecraftForge`; it publishes entry changes through the manager-owned `client/manager/ManagerEventPublishBridge`.
 - `client/registry/ClientEntityAssetRegistry.java` no longer imports `ResourceLocation`; bulk replacement now accepts `Iterable<BrClientEntity>` and keys by `identifier()`.
 - Updated callers (`BrClientEntityLoader`, `ManagerResourceImportPlanner`) to publish client entities through identifier-based replacement without platform identifiers in the registry seam.
 

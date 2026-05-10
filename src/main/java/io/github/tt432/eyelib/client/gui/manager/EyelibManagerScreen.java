@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.gui.ModalWorksurfaceScreen;
 import io.github.tt432.eyelib.client.gui.manager.reload.ManagerFolderSession;
 import io.github.tt432.eyelib.client.gui.manager.reload.ManagerImportActions;
-import io.github.tt432.eyelib.util.math.MathHelper;
+import io.github.tt432.eyelibutil.math.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;

@@ -1,18 +1,18 @@
 # Eyelib Refactor Control Spec
 
 ## Scope
-- Apply the actively maintained refactor tracker in `work/main.md`.
-- Keep Eyelib as a bounded multi-project Forge project with one runtime root module plus the focused `eyelib-processor`, `eyelib-importer`, and `eyelib-molang` subprojects.
+- Apply the actively maintained functional debt ledger in `docs/architecture/04-mc-debt-ledger.md`.
+- Keep Eyelib as a bounded multi-project Forge project with one runtime root module plus focused functional subprojects such as `eyelib-attachment`, `eyelib-processor`, `eyelib-importer`, `eyelib-molang`, `eyelib-material`, and `eyelib-particle`.
 - Improve navigability, boundary clarity, and maintainability for both humans and AI.
 
 ## Stage Goals
 - Stage 0-1: establish root guidance, boundary docs, and navigation indexes.
 - Stage 2-3: declare ownership seams and isolate generated Molang code.
-- Stage 4-10: extract hotspots behind narrower services, then tighten runtime boundaries and clean up.
+- Stage 4-10: extract hotspots behind narrower services, then tighten functional ownership and clean up.
 
 ## Non-Goals
 - No full architecture rewrite.
-- No further Gradle module split beyond the current `eyelib-processor` / `eyelib-importer` / `eyelib-molang` extraction unless a human explicitly asks for it.
+- No further Gradle module split beyond current functional needs unless a human explicitly asks for it.
 - No opportunistic renaming of broad package areas without a documented destination.
 - No test-harness invention beyond targeted helper tests when pure Java seams appear.
 

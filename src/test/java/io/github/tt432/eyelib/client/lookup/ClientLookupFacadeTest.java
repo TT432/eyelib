@@ -5,15 +5,9 @@ import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.AnimationLookup;
 import io.github.tt432.eyelib.client.manager.AnimationManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
-import io.github.tt432.eyelib.client.manager.ParticleManager;
 import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelib.client.model.ModelLookup;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
-import io.github.tt432.eyelib.client.particle.ParticleLookup;
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;
-import io.github.tt432.eyelib.client.registry.ParticleAssetRegistry;
-import io.github.tt432.eyelibparticle.api.ParticleLookupApi;
-import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
 import io.github.tt432.eyelibmolang.MolangScope;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.junit.jupiter.api.AfterEach;
@@ -30,8 +24,6 @@ class ClientLookupFacadeTest {
     void tearDown() {
         AnimationManager.INSTANCE.clear();
         ModelManager.INSTANCE.clear();
-        ParticleManager.INSTANCE.clear();
-        ParticleDefinitionRegistry.store().clear();
     }
 
     @Test
@@ -53,52 +45,6 @@ class ClientLookupFacadeTest {
 
         assertEquals(Set.of("geometry.test"), snapshot.keySet());
         assertSame(model, snapshot.get("geometry.test"));
-    }
-
-    @Test
-    void particleLookupExposesNamesAndGetThroughLookupSeam() {
-        BrParticle particle = BrParticle.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, com.google.gson.JsonParser.parseString("""
-                {
-                  "format_version": "1.10.0",
-                  "particle_effect": {
-                    "description": {
-                      "identifier": "eyelib:test_particle",
-                      "basic_render_parameters": {
-                        "material": "particles_alpha",
-                        "texture": "eyelib:test_particle"
-                      }
-                    }
-                  }
-                }
-                """)).getOrThrow(false, AssertionError::new);
-        ParticleAssetRegistry.publishParticle(particle);
-
-        assertEquals(Set.of("eyelib:test_particle"), Set.copyOf(ParticleLookup.names()));
-        assertSame(particle, ParticleLookup.get("eyelib:test_particle"));
-    }
-
-    @Test
-    void particleLookupExposesModuleLookupApiAdapter() {
-        BrParticle particle = BrParticle.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, com.google.gson.JsonParser.parseString("""
-                {
-                  "format_version": "1.10.0",
-                  "particle_effect": {
-                    "description": {
-                      "identifier": "eyelib:api_particle",
-                      "basic_render_parameters": {
-                        "material": "particles_alpha",
-                        "texture": "eyelib:api_particle"
-                      }
-                    }
-                  }
-                }
-                """)).getOrThrow(false, AssertionError::new);
-        ParticleManager.store().put("eyelib:api_particle", particle);
-
-        ParticleLookupApi<BrParticle> api = ParticleLookup.api();
-
-        assertEquals(Set.of("eyelib:api_particle"), Set.copyOf(api.names()));
-        assertSame(particle, api.get("eyelib:api_particle"));
     }
 
     private record StubAnimation(String name) implements Animation<Void> {

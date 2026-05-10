@@ -1,10 +1,10 @@
 package io.github.tt432.eyelib.core.util;
 
 import com.mojang.datafixers.util.Either;
-import io.github.tt432.eyelib.core.util.codec.Eithers;
-import io.github.tt432.eyelib.core.util.collection.ListAccessors;
-import io.github.tt432.eyelib.core.util.color.ColorEncodings;
-import io.github.tt432.eyelib.core.util.texture.TexturePaths;
+import io.github.tt432.eyelibutil.codec.Eithers;
+import io.github.tt432.eyelibutil.color.ColorEncodings;
+import io.github.tt432.eyelibutil.collection.ListAccessors;
+import io.github.tt432.eyelibutil.texture.TexturePaths;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

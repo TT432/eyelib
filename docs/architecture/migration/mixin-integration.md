@@ -8,12 +8,13 @@
 ## Why it is MC-facing
 - All mixins target Minecraft classes directly with `@Mixin`, `@Inject`, or `@Invoker`.
 - All mixin classes are registered in the `client` section of `eyelib.mixins.json`.
-- Mixin dependencies are Minecraft/Forge-facing runtime types and must stay in `mc/impl`.
+- Mixin dependencies are Minecraft/Forge-facing runtime types and currently share the `mc/impl/mixin` technical wiring package because `eyelib.mixins.json` has one package root.
+- FM-015 supersedes package-name ownership for accessors: `LivingEntityRendererAccessor` is feature-owned by client-render even though it remains physically hosted in this technical wiring package.
 
 ## Final isolation status
 - First-wave seam status: complete.
 - Final `mc/api + mc/impl` isolation status: hard-import relocation slice advanced.
-- Expected final state for this module: mixin classes/config stay under `mc/impl` ownership and do not introduce new non-`mc/impl` MC runtime leakage.
+- Expected final state for this module: mixin classes/config stay under technical mixin wiring unless a future mixin configuration change safely supports feature-local packages; feature ownership remains documented at the consumer/behavior level.
 
 ## Inventory
 

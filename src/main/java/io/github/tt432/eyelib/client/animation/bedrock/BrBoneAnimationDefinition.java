@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
 import io.github.tt432.eyelib.client.animation.AnimationDefinition;
-import io.github.tt432.eyelib.util.ImmutableFloatTreeMap;
+import io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;

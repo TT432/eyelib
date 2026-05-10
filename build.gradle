@@ -164,6 +164,9 @@ dependencies {
     api project(':eyelib-molang')
     additionalRuntimeClasspath project(':eyelib-molang')
     jarJar project(':eyelib-molang')
+    api project(':eyelib-util')
+    modImplementation project(':eyelib-util')
+    jarJar project(':eyelib-util')
 
     compileOnly("maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha")
 

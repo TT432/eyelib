@@ -43,6 +43,8 @@ legacyForge {
 }
 
 dependencies {
+    implementation project(':eyelib-util')
+
     // com.mojang.serialization.* — standalone DataFixerUpper library
     implementation 'com.mojang:datafixerupper:6.0.8'
 

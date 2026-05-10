@@ -3,14 +3,14 @@ package io.github.tt432.eyelib.client.animation.bedrock;
 import io.github.tt432.eyelib.client.animation.AnimationClipDefinition;
 import io.github.tt432.eyelib.client.animation.AnimationEffect;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
-import io.github.tt432.eyelib.client.particle.ParticleLookup;
 import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
-import io.github.tt432.eyelib.util.ResourceLocations;
+import io.github.tt432.eyelibutil.resource.ResourceLocations;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelibmolang.MolangValue;
+import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
 import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
 import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -95,7 +95,7 @@ public record BrAnimationEntryDefinition(
                         String s = clientEntity.particle_effects().get(frame.effect());
 
                         if (s != null) {
-                            ParticleDefinition definition = ParticleLookup.definition(s);
+                            ParticleDefinition definition = ParticleDefinitionRegistry.store().get(s);
                             if (definition != null) {
                                 String uuid = UUID.randomUUID().toString();
                                 BedrockParticleEmitter emitter = ParticleSpawnService.spawnEmitter(uuid, definition, scope, entity.level(), new Vector3f());
@@ -122,9 +122,9 @@ public record BrAnimationEntryDefinition(
     @Override
     public BrBoneAnimation emptyTrack(Integer key) {
         return new BrBoneAnimation(
-                io.github.tt432.eyelib.util.ImmutableFloatTreeMap.empty(),
-                io.github.tt432.eyelib.util.ImmutableFloatTreeMap.empty(),
-                io.github.tt432.eyelib.util.ImmutableFloatTreeMap.empty()
+                io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap.empty(),
+                io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap.empty(),
+                io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap.empty()
         );
     }
 

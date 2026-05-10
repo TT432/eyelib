@@ -1,12 +1,12 @@
 package io.github.tt432.eyelib.client.instrument.collector;
 
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticleRenderManager;
+import io.github.tt432.eyelibparticle.client.ParticleRenderManager;
 
 /**
- * Observes the total number of particles and emitters in {@link BrParticleRenderManager}.
+ * Observes the total number of particles and emitters in {@link ParticleRenderManager}.
  * <p>
- * Reports the sum of {@link BrParticleRenderManager#getEmitterCount()} and
- * {@link BrParticleRenderManager#getParticleCount()} as the current cache size.
+ * Reports the sum of {@link ParticleRenderManager#getEmitterCount()} and
+ * {@link ParticleRenderManager#getParticleCount()} as the current cache size.
  */
 public final class BrParticleObserver implements CacheSizeObserver {
     @Override
@@ -21,7 +21,7 @@ public final class BrParticleObserver implements CacheSizeObserver {
 
     @Override
     public int currentSize() {
-        return BrParticleRenderManager.getEmitterCount() + BrParticleRenderManager.getParticleCount();
+        return ParticleRenderManager.INSTANCE.getEmitterCount() + ParticleRenderManager.INSTANCE.getParticleCount();
     }
 
     @Override

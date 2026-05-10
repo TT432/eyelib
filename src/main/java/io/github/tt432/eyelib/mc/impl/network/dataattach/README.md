@@ -9,4 +9,5 @@
 
 ## Boundary Reminder
 - Keep runtime-side attachment apply/sync transport logic in this package.
+- Root-independent packet contracts such as full-container sync and destroy-info live in `io.github.tt432.eyelibattachment.network`.
 - Keep `network/dataattach/DataAttachmentSyncPayloadOps.java` limited to platform-type-free payload/state mapping helpers.

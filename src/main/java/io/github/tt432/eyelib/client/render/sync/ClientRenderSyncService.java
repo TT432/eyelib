@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.mc.impl.network.EyelibNetworkTransport;
 import io.github.tt432.eyelib.mc.impl.network.packet.AnimationComponentSyncPacket;
 import io.github.tt432.eyelib.mc.impl.network.packet.ModelComponentSyncPacket;
-import io.github.tt432.eyelib.util.ResourceLocations;
+import io.github.tt432.eyelibutil.resource.ResourceLocations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;

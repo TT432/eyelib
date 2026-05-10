@@ -2,8 +2,8 @@ package io.github.tt432.eyelib.capability;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibattachment.codec.stream.EyelibStreamCodecs;
-import io.github.tt432.eyelibattachment.codec.stream.StreamCodec;
+import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
+import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
 import lombok.With;
 import net.minecraft.network.FriendlyByteBuf;
 

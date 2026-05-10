@@ -6,7 +6,7 @@ import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationCo
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.util.codec.CodecHelper;
+import io.github.tt432.eyelibutil.codec.CodecHelper;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

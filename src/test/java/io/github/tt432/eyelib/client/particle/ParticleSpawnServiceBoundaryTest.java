@@ -18,11 +18,17 @@ class ParticleSpawnServiceBoundaryTest {
 
         assertTrue(source.contains("import io.github.tt432.eyelibparticle.api.ParticleSpawnApi;"));
         assertTrue(source.contains("import io.github.tt432.eyelibparticle.api.ParticleSpawnRequest;"));
+        assertTrue(source.contains("import io.github.tt432.eyelibparticle.client.ParticleSpawnRuntimeAdapter;"));
         assertTrue(source.contains("ParticleSpawnApi api()"));
         assertTrue(source.contains("api().spawn(new ParticleSpawnRequest("));
         assertTrue(source.contains("api().remove(removeId);"));
         assertTrue(source.contains("Minecraft.getInstance()"));
-        assertTrue(source.contains("ParticleRenderManager.INSTANCE"));
+        assertTrue(source.contains("ParticleSpawnService::currentEnvironment"));
+        assertTrue(source.contains("ParticleSpawnService::currentParentScope"));
+        assertTrue(!source.contains("import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;"));
+        assertTrue(!source.contains("import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;"));
+        assertTrue(!source.contains("import io.github.tt432.eyelib.client.registry.ParticleAssetRegistry;"));
+        assertTrue(!source.contains("publishLegacyParticle"));
     }
 
     @Test

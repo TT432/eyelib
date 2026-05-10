@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
 import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelib.util.ImmutableFloatTreeMap;
-import io.github.tt432.eyelib.util.math.EyeMath;
+import io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap;
+import io.github.tt432.eyelibutil.math.EyeMath;
 import org.jspecify.annotations.Nullable;
 import org.joml.Vector3f;
 

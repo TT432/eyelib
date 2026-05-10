@@ -6,7 +6,7 @@ import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelibimporter.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.render.PoseCopies;
 import io.github.tt432.eyelib.client.render.RenderParams;
-import io.github.tt432.eyelib.util.math.EyeMath;
+import io.github.tt432.eyelibutil.math.EyeMath;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.joml.Matrix3f;

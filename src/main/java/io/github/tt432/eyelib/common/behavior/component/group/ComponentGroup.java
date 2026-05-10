@@ -8,7 +8,7 @@ import io.github.tt432.eyelib.common.behavior.component.Component;
 import io.github.tt432.eyelib.common.behavior.component.EmptyComponent;
 import io.github.tt432.eyelib.common.behavior.component.MarkVariant;
 import io.github.tt432.eyelib.common.behavior.component.Variant;
-import io.github.tt432.eyelib.util.codec.KeyDispatchMapCodec;
+import io.github.tt432.eyelibutil.codec.KeyDispatchMapCodec;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 

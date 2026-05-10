@@ -2,7 +2,7 @@ package io.github.tt432.eyelibmaterial.shared;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibmaterial.shared.util.DispatchedMapCodec;
+import io.github.tt432.eyelibutil.codec.DispatchedMapCodec;
 
 import java.util.Map;
 

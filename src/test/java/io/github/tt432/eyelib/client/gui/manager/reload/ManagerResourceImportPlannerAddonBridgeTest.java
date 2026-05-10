@@ -6,7 +6,6 @@ import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
-import io.github.tt432.eyelib.client.manager.ParticleManager;
 import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
 import org.junit.jupiter.api.AfterEach;
@@ -39,7 +38,6 @@ class ManagerResourceImportPlannerAddonBridgeTest {
         ClientEntityManager.writePort().clear();
         AttachableManager.writePort().clear();
         ModelManager.writePort().clear();
-        ParticleManager.writePort().clear();
         ParticleDefinitionRegistry.store().clear();
         MaterialManager.writePort().clear();
     }
@@ -60,7 +58,6 @@ class ManagerResourceImportPlannerAddonBridgeTest {
         assertNotNull(MaterialManager.readPort().get("entity_alphatest"));
         assertNotNull(ParticleDefinitionRegistry.store().get("eyelib:addon_particle"));
         assertNull(ParticleDefinitionRegistry.store().get("particles/test.particle"));
-        assertTrue(ParticleManager.readPort().getAllData().isEmpty());
     }
 
     @Test

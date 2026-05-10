@@ -2,16 +2,12 @@
 
 ## Scope
 - Path: `src/main/java/io/github/tt432/eyelib/util/`
-- Shared helpers, data-attachment support, codec/math utilities, search/modbridge helpers, and a reduced set of deterministic client-side utility code.
+- Historical utility package drained by the `:eyelib-util` migration.
 
 ## Important Areas
-- `data_attach/`: typed data-attachment helpers and containers
-- `codec/`: shared codec utilities
-- `math/`: math helpers
-- `client/`: reduced deterministic helper area, not a default destination for new work
+- No Java source remains under this package after Phase 19.
 
 ## Current Named Destinations
-- `client/texture/TexturePathHelper.java`: deterministic texture-path helpers
 - `../client/render/PoseCopies.java`: `PoseStack.Pose` copy helper now owned by the render domain
 - `../mc/impl/util/model/InventoryModelResourceLocations.java`: inventory `ModelResourceLocation` helper now quarantined under `mc/impl`
 - `../client/render/RenderTypeResolver.java`: render-type resolution now owned by the render domain
@@ -20,21 +16,23 @@
 - `../client/ClientTaskScheduler.java`: next-tick client scheduling now owned by the client runtime
 - `../client/gui/preview/ModelPreviewAsset.java`: preview-only model/atlas pairing now owned by GUI preview flow
 
-## First-Wave Core Extractions
-- `../core/util/texture/TexturePaths.java`: platform-free texture-path derivation
-- `../core/util/color/ColorEncodings.java`: platform-free color channel transforms
-- `../core/util/collection/ListAccessors.java`: platform-free list edge accessors
-- `../core/util/codec/Eithers.java`: platform-free `Either` unwrap helper
-- `../core/util/time/FixedStepTimerState.java`: platform-free fixed-step timer state math
-- Existing `util/*` classes remain as compatibility adapters while callers migrate incrementally.
+## v1.3 Utility Module Destinations
+- `io.github.tt432.eyelibutil.color.ColorEncodings`: platform-free color channel transforms.
+- `io.github.tt432.eyelibutil.collection.ListAccessors`: platform-free list edge accessors.
+- `io.github.tt432.eyelibutil.codec.Eithers`: platform-free `Either` unwrap helper.
+- `io.github.tt432.eyelibutil.time.FixedStepTimerState`: platform-free fixed-step timer state math.
+- `io.github.tt432.eyelibutil.resource.ResourceLocations` and `io.github.tt432.eyelibutil.texture.TexturePaths`: resource and texture helpers moved during Phase 18.
+- `io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap` and `io.github.tt432.eyelibutil.codec.*`: codec infrastructure moved during Phase 19.
 
 ## Historical Note
 - The old `client/Textures.java`, `client/NativeImages.java`, `client/RenderTypeSerializations.java`, and `client/ClientScheduler.java` shims have been removed.
 - The legacy `client/PoseHelper.java` and `client/ModelResourceLocationHelper.java` facade shims have been removed; callers should use owned destinations directly.
 - Unused legacy runtime-heavy utility shims `client/BakedModels.java`, `client/BlitCall.java`, and `client/BufferBuilders.java` have been removed from `util/client`.
-- Minecraft-backed fixed timer runtime access moved to `../mc/impl/util/time/FixedTimer.java`.
+- The unused Minecraft-backed fixed timer adapter was removed after particle runtime moved to module-owned timing support.
 - Forge `modbridge` model update event ownership moved to `../mc/impl/modbridge/ModBridgeModelUpdateEvent.java`.
+- `ResourceLocations`, `client/texture/TexturePathHelper`, and `core/util/texture/TexturePaths` moved to `:eyelib-util` during Phase 18; callers should use `io.github.tt432.eyelibutil.resource.ResourceLocations` and `io.github.tt432.eyelibutil.texture.TexturePaths`.
+- `ImmutableFloatTreeMap`, codec helpers, and `Eithers` moved to `:eyelib-util` during Phase 19; callers should use `io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap` and `io.github.tt432.eyelibutil.codec.*`.
 
 ## Boundary Reminder
-- Keep only truly cross-cutting helpers in `util/`.
-- Do not add unrelated new code to `util/client/` without a documented destination responsibility.
+- Do not add new Java source under this drained package.
+- Use `:eyelib-util` for shared utility code, or move domain-specific helpers to the nearest functional owner.

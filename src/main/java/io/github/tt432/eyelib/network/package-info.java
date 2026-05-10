@@ -1,7 +1,8 @@
 /**
- * Packet contracts and sync handler delegation.
+ * Shared network entrypoints and sync handler delegation.
  * <p>
  * Networking code is internal by default and should expose behavior through narrow sync services.
+ * Feature-specific packet contracts belong to their feature modules when dependencies allow.
  * Minecraft/Forge transport wiring (channel/context/side-gating) is owned by {@code mc.impl.network}.
  */
 @NullMarked

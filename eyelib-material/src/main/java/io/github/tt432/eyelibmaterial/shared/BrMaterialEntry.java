@@ -3,7 +3,7 @@ package io.github.tt432.eyelibmaterial.shared;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibmaterial.shared.util.DispatchedMapCodec;
+import io.github.tt432.eyelibutil.codec.DispatchedMapCodec;
 
 import java.util.*;
 import java.util.function.Function;
@@ -14,8 +14,8 @@ import java.util.function.Function;
  * No GL/LWJGL/MC dependencies — no {@code ApplyAble}, no {@code getRenderType()},
  * no {@code DEFAULT_FRONT/DEFAULT_BACK}, no GL behavior in enums.
  * <p>
- * All enums, {@link BrSamplerState}, {@link Face}, and {@link DispatchedMapCodec}
- * are in this package or {@code shared.util}.
+ * All enums, {@link BrSamplerState}, and {@link Face} are in this package;
+ * shared dispatched-map codec support comes from {@code :eyelib-util}.
  *
  * @author TT432
  */

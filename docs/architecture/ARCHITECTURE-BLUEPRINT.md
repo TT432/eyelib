@@ -8,6 +8,9 @@ graph TB
         molang["eyelib-molang<br/>java-library<br/>Molang engine / compiler / type"]
         importer["eyelib-importer<br/>legacyForge<br/>Schema / CODEC / parse"]
         processor["eyelib-processor<br/>java-library<br/>IR types / Baker / conversion"]
+        utilmod["eyelib-util<br/>legacyForge<br/>Shared utility leaf"]
+        attachment["eyelib-attachment<br/>legacyForge<br/>Attachment contracts"]
+        material["eyelib-material<br/>legacyForge<br/>Material definitions"]
     end
 
     subgraph root["Root : (Forge mod)"]
@@ -25,7 +28,6 @@ graph TB
             network["network/<br/>packet route + register"]
             capability["capability/<br/>component / RenderData"]
             mc_impl["mc/impl/<br/>MC/Forge quarantine"]
-            util["util/<br/>shared helpers"]
         end
         common["common/<br/>shared behavior"]
     end
@@ -34,6 +36,11 @@ graph TB
     root -- "impl" --> molang
     root -- "impl" --> importer
     root -- "impl" --> processor
+    root -- "impl/api" --> utilmod
+    root -- "impl" --> attachment
+    root -- "impl" --> material
+    attachment -- "impl" --> utilmod
+    material -- "impl" --> utilmod
     importer -- "impl" --> molang
     processor -- "impl" --> molang
 
@@ -80,6 +87,9 @@ graph TB
 - `eyelib-molang`: Molang engine / compiler / type system (no MC/Forge deps)
 - `eyelib-importer`: schema definitions / CODECs / raw JSON parsing (no runtime execution)
 - `eyelib-processor`: pure-JVM IR types / format conversion / Baker classes (no MC/Forge deps)
+- `eyelib-util`: shared Forge-aware utility leaf module with no project-internal dependencies
+- `eyelib-attachment`: typed attachment contracts and attachment packet contracts; consumes `eyelib-util` stream codecs
+- `eyelib-material`: Bedrock material definitions; consumes `eyelib-util` codec infrastructure
 - `bootstrap`: composition root only
 - `client/loader`: parse-only resource loading pipeline
 - `client/registry`: publication boundary from parsed data into runtime stores
@@ -100,3 +110,4 @@ graph TB
 - New cross-module reads should prefer lookup facades inside the target domain
 - New packet handlers should route immediately into a domain apply service
 - Once a legacy read/write path is replaced, delete the old path in the same stage
+- `eyelib-util` must remain a dependency leaf: consumers may depend on it, but it must not depend on root or sibling Gradle projects

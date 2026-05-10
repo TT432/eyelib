@@ -5,8 +5,8 @@ import io.github.tt432.eyelib.client.instrument.collector.JvmMetricCollector;
 import io.github.tt432.eyelib.client.instrument.db.BackgroundFlushService;
 import io.github.tt432.eyelib.client.instrument.event.EventRingBuffer;
 import io.github.tt432.eyelib.client.instrument.event.InstrumentEvent;
-import io.github.tt432.eyelib.client.particle.bedrock.BrParticleRenderManager;
 import io.github.tt432.eyelib.client.render.RenderHelper;
+import io.github.tt432.eyelibparticle.client.ParticleRenderManager;
 import io.github.tt432.eyelibmolang.MolangValue;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -62,9 +62,9 @@ public final class InstrumentLifecycleHooks {
     }
 
     private static void collectStaticObservers(EventRingBuffer buffer) {
-        // BrParticleRenderManager — static fields accessible
-        int emitters = BrParticleRenderManager.getEmitterCount();
-        int particles = BrParticleRenderManager.getParticleCount();
+        // Keep the historical metric source name while reading the particle-owned render manager directly.
+        int emitters = ParticleRenderManager.INSTANCE.getEmitterCount();
+        int particles = ParticleRenderManager.INSTANCE.getParticleCount();
         buffer.offer(new InstrumentEvent("cache_size", "BrParticleRenderManager", "emitter_count", emitters, "count", null));
         buffer.offer(new InstrumentEvent("cache_size", "BrParticleRenderManager", "particle_count", particles, "count", null));
 

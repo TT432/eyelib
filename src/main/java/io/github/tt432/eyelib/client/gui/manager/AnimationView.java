@@ -11,7 +11,7 @@ import io.github.tt432.eyelib.client.gui.ModalWorksurfaceScreen;
 import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelib.util.math.EyeMath;
+import io.github.tt432.eyelibutil.math.EyeMath;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;

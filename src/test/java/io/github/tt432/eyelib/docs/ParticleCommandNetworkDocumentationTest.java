@@ -29,7 +29,7 @@ class ParticleCommandNetworkDocumentationTest {
                 () -> assertTrue(docs.contains("Phase 13")),
                 () -> assertTrue(docs.contains("command/network integration")),
                 () -> assertTrue(docs.contains("mc/impl/common/command")),
-                () -> assertTrue(docs.contains("mc/impl/network/packet")),
+                () -> assertTrue(docs.contains("io.github.tt432.eyelibparticle.network")),
                 () -> assertTrue(docs.contains("ParticleCommandRuntime")),
                 () -> assertTrue(docs.contains("SpawnParticlePacket(String spawnId, String particleId, Vector3f position)")),
                 () -> assertTrue(docs.contains("RemoveParticlePacket(String removeId)")),
@@ -54,8 +54,8 @@ class ParticleCommandNetworkDocumentationTest {
                 () -> assertTrue(docs.contains("Phase 14")),
                 () -> assertTrue(docs.contains("ClientSmoke")),
                 () -> assertTrue(docs.contains("hardware")),
-                () -> assertTrue(docs.contains("PFUT-02")),
-                () -> assertTrue(docs.contains("packet-contract relocation"))
+                () -> assertTrue(docs.contains("PFUT-03")),
+                () -> assertTrue(docs.contains("independent particle artifact publication"))
         );
     }
 

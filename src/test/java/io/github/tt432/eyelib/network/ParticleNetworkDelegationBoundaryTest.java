@@ -11,30 +11,30 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ParticleNetworkDelegationBoundaryTest {
     @Test
-    void packetRecordsStayStringKeyedAndCodecOwnedByMcNetworkLayer() throws IOException {
+    void packetRecordsStayStringKeyedAndCodecOwnedByParticleModule() throws IOException {
         String spawnPacket = Files.readString(Path.of(
-                "src/main/java/io/github/tt432/eyelib/mc/impl/network/packet/SpawnParticlePacket.java"
+                "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/network/SpawnParticlePacket.java"
         ));
         String removePacket = Files.readString(Path.of(
-                "src/main/java/io/github/tt432/eyelib/mc/impl/network/packet/RemoveParticlePacket.java"
+                "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/network/RemoveParticlePacket.java"
         ));
 
         assertTrue(Pattern.compile("record\\s+SpawnParticlePacket\\s*\\(\\s*String\\s+spawnId,\\s*String\\s+particleId,\\s*Vector3f\\s+position", Pattern.DOTALL)
                 .matcher(spawnPacket)
                 .find());
         assertTrue(spawnPacket.contains("String particleId"));
-        assertTrue(spawnPacket.contains("EyelibStreamCodecs.STRING.encode(obj.spawnId, buf);"));
-        assertTrue(spawnPacket.contains("EyelibStreamCodecs.STRING.encode(obj.particleId, buf);"));
-        assertTrue(spawnPacket.contains("var spawnId = EyelibStreamCodecs.STRING.decode(buf);"));
-        assertTrue(spawnPacket.contains("var particleId = EyelibStreamCodecs.STRING.decode(buf);"));
+        assertTrue(spawnPacket.contains("buf.writeUtf(packet.spawnId);"));
+        assertTrue(spawnPacket.contains("buf.writeUtf(packet.particleId);"));
+        assertTrue(spawnPacket.contains("String spawnId = buf.readUtf();"));
+        assertTrue(spawnPacket.contains("String particleId = buf.readUtf();"));
         assertTrue(spawnPacket.contains("import net.minecraft.network.FriendlyByteBuf;"));
 
         assertTrue(Pattern.compile("record\\s+RemoveParticlePacket\\s*\\(\\s*String\\s+removeId", Pattern.DOTALL)
                 .matcher(removePacket)
                 .find());
         assertTrue(removePacket.contains("String removeId"));
-        assertTrue(removePacket.contains("EyelibStreamCodecs.STRING.encode(obj.removeId, buf);"));
-        assertTrue(removePacket.contains("var removeId = EyelibStreamCodecs.STRING.decode(buf);"));
+        assertTrue(removePacket.contains("buf.writeUtf(packet.removeId);"));
+        assertTrue(removePacket.contains("String removeId = buf.readUtf();"));
         assertTrue(removePacket.contains("import net.minecraft.network.FriendlyByteBuf;"));
     }
 
@@ -72,10 +72,14 @@ class ParticleNetworkDelegationBoundaryTest {
         String source = Files.readString(Path.of(
                 "src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java"
         ));
+        String adapter = Files.readString(Path.of(
+                "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/client/ParticleSpawnRuntimeAdapter.java"
+        ));
 
         assertTrue(source.contains("new ParticleSpawnRequest(packet.spawnId(), packet.particleId(), packet.position())"));
-        assertTrue(source.contains("ParticleDefinitionRegistry.store().get(request.particleId())"));
-        assertTrue(source.contains("definition == null || Minecraft.getInstance().player == null || Minecraft.getInstance().level == null"));
-        assertTrue(source.contains("return;"));
+        assertTrue(adapter.contains("definitions.get(request.particleId())"));
+        assertTrue(source.contains("Minecraft.getInstance().player == null || Minecraft.getInstance().level == null"));
+        assertTrue(adapter.contains("if (definition == null)"));
+        assertTrue(adapter.contains("if (runtimeEnvironment.isEmpty())"));
     }
 }

@@ -46,8 +46,28 @@ class ParticleClientIntegrationBoundaryTest {
         SourceCheck packageInfo = source("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/client/package-info.java");
 
         packageInfo.assertContains("explicit client integration layer");
+        packageInfo.assertContains("particle spawn/runtime adapters");
         packageInfo.assertContains("Dist.CLIENT");
         packageInfo.assertContains("runtime/** remains root/MC/Forge-clean");
+    }
+
+    @Test
+    void spawnRuntimeAdapterOwnsParticleOnlySpawnAndRemoveDelegation() throws IOException {
+        SourceCheck adapter = source("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/client/ParticleSpawnRuntimeAdapter.java");
+        SourceCheck pose = source("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/client/ParticleEmitterPoseInitializer.java");
+
+        adapter.assertContains("implements ParticleSpawnApi");
+        adapter.assertContains("definitions.get(request.particleId())");
+        adapter.assertContains("new BedrockParticleRuntime(");
+        adapter.assertContains("renderManager::spawnParticle");
+        adapter.assertContains("renderManager.spawnEmitter(spawnId, emitter)");
+        adapter.assertContains("renderManager.removeEmitter(spawnId)");
+        adapter.assertNotContains("io.github.tt432.eyelib.client.");
+        adapter.assertNotContains("io.github.tt432.eyelib.capability.");
+
+        pose.assertContains("Particle-owned pose initialization");
+        pose.assertContains("Minecraft.getInstance().gameRenderer.getMainCamera()");
+        pose.assertNotContains("io.github.tt432.eyelib.client.");
     }
 
     private static SourceCheck source(String path) throws IOException {

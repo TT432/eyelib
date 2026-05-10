@@ -10,13 +10,13 @@
 ## Final isolation status
 - First-wave seam status: complete.
 - Hard-quarantine wave 2 status (timer + modbridge event): complete.
-- Final `mc/api + mc/impl` isolation status: in progress.
-- Expected final state for this module: only truly platform-free helpers remain in `core`; MC codecs, resource-location helpers, render helpers, bridge events, and other Minecraft/Forge-aware utility behavior must be moved or confined to allowed `mc/impl` packages.
+- Final functional-ownership cleanup status: in progress.
+- Expected final state for this module: only truly cross-cutting helpers remain in `util`/`core`; MC codecs, resource-location helpers, render helpers, bridge events, and other Minecraft/Forge-aware utility behavior should live with the feature that owns the behavior.
 
 ## Target seam
 - Move pure helpers toward `core`.
-- Keep MC codec primitives, render helpers, and bridge/event integration in `mc/impl` unless a real seam emerges.
-- Prior hard-import slice: isolate `FixedTimer` and Forge `modbridge` event ownership into `mc/impl`, while extracting fixed-step arithmetic into a plain-JVM `core` seam.
+- Keep MC codec primitives, render helpers, and bridge/event integration with their functional owners once identified.
+- Prior hard-import slice extracted fixed-step arithmetic into a plain-JVM `core` seam; the temporary root Minecraft-backed `FixedTimer` adapter was later removed after particle callers moved to module-owned `ParticleTimer`.
 - Current hard-import slice: drain legacy `util/client` helper shims by moving owned runtime helpers to their destination owners and deleting unused bridge facades that keep platform imports in `util/client`.
 
 ## First-wave ownership design (completed)
@@ -43,13 +43,13 @@
 
 ## Hard-quarantine wave 2 implementation (this change)
 - Added plain-JVM fixed-step seam: `src/main/java/io/github/tt432/eyelib/core/util/time/FixedStepTimerState.java`.
-- Added Minecraft-backed runtime adapter: `src/main/java/io/github/tt432/eyelib/mc/impl/util/time/FixedTimer.java`.
+- Added then later removed Minecraft-backed runtime adapter: `src/main/java/io/github/tt432/eyelib/mc/impl/util/time/FixedTimer.java`.
 - Moved Forge event ownership to quarantine zone: `src/main/java/io/github/tt432/eyelib/mc/impl/modbridge/ModBridgeModelUpdateEvent.java`.
 - Removed legacy MC-aware utility classes from non-`mc/impl` paths:
   - deleted `src/main/java/io/github/tt432/eyelib/util/FixedTimer.java`
   - deleted `src/main/java/io/github/tt432/eyelib/util/modbridge/ModBridgeModelUpdateEvent.java`
 - Updated callers:
-  - `client/particle/bedrock/BrParticleEmitter` and `BrParticleParticle` now import `mc/impl/util/time/FixedTimer`.
+  - The legacy `client/particle/bedrock` callers were deleted; active particle runtime now uses `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/runtime/support/ParticleTimer.java`.
   - `client/gui/ModelPreviewScreen` now imports `mc/impl/modbridge/ModBridgeModelUpdateEvent`.
   - `client/ClientTickHandler` now exposes explicit `getTick()` (manual method) to avoid lombok-only accessor dependence in the new adapter.
 

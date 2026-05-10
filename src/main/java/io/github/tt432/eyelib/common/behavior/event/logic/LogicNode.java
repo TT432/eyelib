@@ -2,11 +2,11 @@ package io.github.tt432.eyelib.common.behavior.event.logic;
 
 import com.mojang.serialization.MapCodec;
 import io.github.tt432.eyelib.capability.EntityBehaviorData;
-import io.github.tt432.eyelib.util.codec.EyelibCodec;
+import io.github.tt432.eyelibutil.codec.EyelibCodec;
 
 import java.util.Map;
 
-import static io.github.tt432.eyelib.util.codec.EyelibCodec.list;
+import static io.github.tt432.eyelibutil.codec.EyelibCodec.list;
 
 /**
  * @author TT432

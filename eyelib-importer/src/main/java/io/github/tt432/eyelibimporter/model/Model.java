@@ -1,7 +1,6 @@
 package io.github.tt432.eyelibimporter.model;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibimporter.model.locator.GroupLocator;
 import io.github.tt432.eyelibimporter.model.locator.ModelLocator;
@@ -24,12 +23,7 @@ public record Model(
         VisibleBox visibleBox
 ) {
     public static final VisibleBox EMPTY_VISIBLE_BOX = VisibleBox.EMPTY;
-    private static final Codec<Vector3f> VECTOR3F_CODEC = Codec.FLOAT.listOf().comapFlatMap(
-            values -> values.size() == 3
-                    ? DataResult.success(new Vector3f(values.get(0), values.get(1), values.get(2)))
-                    : DataResult.error(() -> "expected 3 values, got " + values.size()),
-            vector -> List.of(vector.x(), vector.y(), vector.z())
-    );
+    private static final Codec<Vector3f> VECTOR3F_CODEC = ImporterCodecs.VECTOR3F;
 
     public Model(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator, VisibleBox visibleBox) {
         this(name, new Int2ObjectOpenHashMap<>(), allBones, locator, visibleBox);

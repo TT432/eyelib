@@ -2,7 +2,7 @@
 
 ## Scope
 - Path: `src/main/java/io/github/tt432/eyelib/`
-- This is the top-level package for the library’s client, network, Molang, utility, capability, and behavior-related subsystems.
+- This is the top-level package for the library's root runtime, client, network, Molang adapters, capability, and behavior-related subsystems.
 
 ## Start Reading Here
 1. `AGENTS.md`
@@ -18,8 +18,8 @@
 - `client/`: rendering, animation, particles, tooling, loaders, managers
 - `molang/`: legacy Molang marker docs; active Molang runtime/compiler/generated code now lives in `eyelib-molang/`
 - `network/`: packet registration and handler routing
-- `util/`: helpers, including mixed client and data-attachment utility code
-- `core/`: platform-free utility seams and extracted pure helpers
+- `util/`: drained historical utility package; shared helpers now live in `:eyelib-util` under `io.github.tt432.eyelibutil`
+- `core/`: drained historical platform-free utility seam; no Java utility sources remain here after v1.3
 - `capability/`: attachment-related capability registration/data
 
 ## Read Only If Needed
