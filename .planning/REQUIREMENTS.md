@@ -73,26 +73,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MOD-01 | — | Pending |
-| MOD-02 | — | Pending |
-| AUDIT-01 | — | Pending |
-| AUDIT-02 | — | Pending |
-| ROUTE-01 | — | Pending |
-| ROUTE-02 | — | Pending |
-| MIGR-01 | — | Pending |
-| MIGR-02 | — | Pending |
-| MIGR-03 | — | Pending |
-| MIGR-04 | — | Pending |
-| CENT-01 | — | Pending |
-| CENT-02 | — | Pending |
-| VERIFY-01 | — | Pending |
-| VERIFY-02 | — | Pending |
-| VERIFY-03 | — | Pending |
+| AUDIT-01 | 15 | Pending |
+| AUDIT-02 | 15 | Pending |
+| ROUTE-01 | 15 | Pending |
+| ROUTE-02 | 15 | Pending |
+| MOD-01 | 16 | Pending |
+| MOD-02 | 16 | Pending |
+| MIGR-01 | 17 | Pending |
+| MIGR-02 | 17 | Pending |
+| MIGR-03 | 18 | Pending |
+| MIGR-04 | 19 | Pending |
+| CENT-01 | 20 | Pending |
+| CENT-02 | 20 | Pending |
+| VERIFY-01 | 21 | Pending |
+| VERIFY-02 | 21 | Pending |
+| VERIFY-03 | 21 | Pending |
 
 **Coverage:**
 - v1.3 requirements: 15 total
-- Mapped to phases: 0
-- Unmapped: 15 ⚠️
+- Mapped to phases: 15
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-10*

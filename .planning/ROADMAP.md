@@ -4,7 +4,8 @@
 
 - ✅ **v1.0** — Phases 1-4 (shipped 2026-05-07)
 - ✅ **v1.1 ClientSmoke 全自动化** — Phases 5-7 (shipped 2026-05-08)
-- 🚧 **v1.2 真正实现 eyelib-particle 的模块分离** — Phases 8-14 (in progress)
+- ✅ **v1.2 真正实现 eyelib-particle 的模块分离** — Phases 8-14 (shipped 2026-05-09)
+- 🚧 **v1.3 分离 eyelib-util 模块** — Phases 15-21 (planning)
 
 ## Phases
 
@@ -33,7 +34,8 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 
 </details>
 
-### ✅ v1.2 真正实现 eyelib-particle 的模块分离 (Complete)
+<details>
+<summary>✅ v1.2 真正实现 eyelib-particle 的模块分离 — Phases 8-14 (SHIPPED 2026-05-09)</summary>
 
 **Milestone Goal:** 将粒子相关能力从 root runtime 的混合包结构中提升为清晰的 `:eyelib-particle` Gradle 模块边界，同时保持现有粒子加载、命令、网络 spawn/remove、渲染行为零回归。
 
@@ -44,6 +46,20 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 - [x] **Phase 12: Loading & Publication Rewire** - 资源重载、registry 替换、description identifier 发布语义在模块边界后保持不变。 (completed 2026-05-09)
 - [x] **Phase 13: Command & Network Integration Rewire** - `/eyelib particle` 与 spawn/remove packets 保持用户行为兼容，并通过显式平台适配层进入粒子服务。 (completed 2026-05-09)
 - [x] **Phase 14: Verification & Documentation Gate** - 测试、JetBrains MCP Gradle 检查、适用的自动 ClientSmoke 流程与必要硬件检查清单证明模块拆分无回归。 (completed 2026-05-09)
+
+</details>
+
+### 🚧 v1.3 分离 eyelib-util 模块 (Planning)
+
+**Milestone Goal:** 将 root 和 core 下的工具代码及子模块中可中央化的共享代码提升为独立的 `:eyelib-util` Forge Gradle 模块，root/util/* 不留残留。
+
+- [ ] **Phase 15: Pre-Migration Audit & Routing** - 消费者审计、通配符导入清除、单消费者代码路由、路由清单产出。
+- [ ] **Phase 16: Module Scaffold & Build Infrastructure** - 创建 `:eyelib-util` Forge 模块骨架，含 build.gradle、mods.toml、settings.gradle。
+- [ ] **Phase 17: Tier-1 Category Migration** - 零依赖工具类（time、color、loader、math、search）和集合工具类迁入 `:eyelib-util`。
+- [ ] **Phase 18: Resource, Texture & MC-Dependent Migration** - 资源、纹理工具类迁移；解决 ResourceLocations.mod() 循环引用。
+- [ ] **Phase 19: Codec Infrastructure (Atomic Unit)** - 9 codec 文件 + ImmutableFloatTreeMap 原子迁移；EitherHelper shim 删除。
+- [ ] **Phase 20: Submodule Centralization** - attachment StreamCodec 套件集中化；material DispatchedMapCodec 去重。
+- [ ] **Phase 21: Verification, Cleanup & Documentation** - 全量验证、残留清理、文档更新；root/util/* 和 core/util/* 目录为空。
 
 ## Phase Details
 
@@ -148,6 +164,87 @@ Plans:
 **Wave 3** *(blocked on Wave 2 completion)*
 - [x] 14-03-PLAN.md — Run JetBrains MCP verification matrix and record milestone closure evidence.
 
+### Phase 15: Pre-Migration Audit & Routing
+**Goal**: Every root/util/* and core/util/* source file has a verified consumer count (0/1/N rule) and a committed destination routing decision; single-consumer utility classes are relocated to their functional owners; all wildcard imports to `eyelib.util.*` are replaced with explicit imports.
+**Depends on**: Phase 14 (v1.2 complete)
+**Requirements**: AUDIT-01, AUDIT-02, ROUTE-01, ROUTE-02
+**Success Criteria** (what must be TRUE):
+  1. Maintainer can inspect a routing manifest listing every root/util/* and core/util/* file with its verified consumer count (0/1/N) and target destination (eyelib-util / functional owner / delete).
+  2. `grep` for wildcard imports like `import io.github.tt432.eyelib.util.*` or `import io.github.tt432.eyelib.util.codec.*` across root source files returns zero results — all are replaced with explicit class-level imports.
+  3. Single-consumer utility classes (AnimationApplier → client/animation, Models → client/model, ModBridgeServer/BBModelSink → mc/impl/modbridge) reside in their functional owner packages and compile successfully with zero residual references to old util/ paths.
+  4. Identified compatibility shims (ListHelper, EitherHelper) are cataloged with consumer counts and a deletion plan tied to their respective migration phases.
+**Plans**: TBD
+
+### Phase 16: Module Scaffold & Build Infrastructure
+**Goal**: `:eyelib-util` exists as a buildable Forge Gradle module with documented ownership, dependency direction, and build metadata; solo compilation is verified.
+**Depends on**: Phase 15
+**Requirements**: MOD-01, MOD-02
+**Success Criteria** (what must be TRUE):
+  1. Maintainer can run a solo Gradle build of `:eyelib-util` that completes with exit code 0 (via JetBrains MCP), proving the module skeleton compiles cleanly before any code migration.
+  2. eyelib-util's build.gradle contains zero `project(...)` dependencies — only MC/Forge (legacyForge plugin) and external library (DFU, JOML, SLF4J) dependencies are declared.
+  3. A mods.toml exists with unique modId `eyelibutil` that does not collide with any of the 7 existing module modIds (eyelib, eyelibattachment, eyelibimporter, eyelibmaterial, eyelibmolang, eyelibparticle, eyelibprocessor).
+  4. A README in eyelib-util documents module ownership, dependency direction (leaf module, depends on nothing from the project), package namespace `io.github.tt432.eyelibutil`, and allowed integration layers (no project-internal dependencies, MC/Forge allowed).
+**Plans**: TBD
+
+### Phase 17: Tier-1 Category Migration
+**Goal**: Zero-dependency utility categories (time, color, loader, math, search — 11 files) and collection utilities (Blackboard, Lists, Collectors, EntryStreams) reside entirely in `:eyelib-util` with all root consumers compiling against the new module without regression.
+**Depends on**: Phase 16
+**Requirements**: MIGR-01, MIGR-02
+**Success Criteria** (what must be TRUE):
+  1. All 11 zero-dependency files (SimpleTimer, FixedStepTimerState, ColorEncodings, SharedLibraryLoader, EyeMath, Curves, MathHelper, FastColorHelper, Shapes, Searchable, SearchResults) exist in `:eyelib-util/src/main/java/io/github/tt432/eyelibutil/` and no longer exist as source files under root/src/.
+  2. All collection utility files (Blackboard, Lists, Collectors, EntryStreams) exist in `:eyelib-util` and no longer exist as source files under root/src/.
+  3. `jetbrain_build_project` on the full project (root + eyelib-util + all 6 submodules) completes with exit code 0 — all root import sites referencing migrated files resolve to eyelib-util.
+  4. `grep "import io.github.tt432.eyelib.util.(time|math|search|Blackboard|Lists|Collectors|EntryStreams|SharedLibraryLoader)"` across all root source files returns zero results.
+  5. ListHelper.java is deleted (if not already deleted in Phase 15) and all its former consumers compile using eyelib-util's ListAccessors directly.
+**Plans**: TBD
+
+### Phase 18: Resource, Texture & MC-Dependent Migration
+**Goal**: Resource and texture utilities are migrated to `:eyelib-util`; the ResourceLocations.mod() circular reference to root's Eyelib.MOD_ID is definitively resolved; core/util wrapper duplication (TexturePathHelper/TexturePaths) is merged into canonical implementations.
+**Depends on**: Phase 17
+**Requirements**: MIGR-03
+**Success Criteria** (what must be TRUE):
+  1. ResourceLocations.java exists in `:eyelib-util` and its former `mod()` method (which referenced root's `Eyelib.MOD_ID`) is either deleted or parameterized — all 4 known callers compile without error.
+  2. TexturePaths and TexturePathHelper exist in `:eyelib-util` with no duplicate wrapper maintained in root — callers of the former wrapper are redirected to the canonical implementation.
+  3. `jetbrain_build_project` on the full project completes with exit code 0 — all root import sites referencing migrated resource/texture files resolve to eyelib-util.
+  4. `grep "import io.github.tt432.eyelib.util.ResourceLocations"` and `grep "import io.github.tt432.eyelib.util.client.texture"` across all source files return zero results.
+**Plans**: TBD
+
+### Phase 19: Codec Infrastructure (Atomic Unit)
+**Goal**: All 9 codec files + ImmutableFloatTreeMap are migrated as one atomic unit into `:eyelib-util`; the 20+ consumer import sites across animation, behavior, and particle domains compile cleanly; EitherHelper shim is deleted after consumers migrate to canonical Eithers.
+**Depends on**: Phase 18
+**Requirements**: MIGR-04
+**Success Criteria** (what must be TRUE):
+  1. All 10 codec-infrastructure files (EyelibCodec, CodecHelper, TupleCodec, Tuple, ChinExtraCodecs, DispatchedMapCodec, KeyDispatchMapCodec, EitherHelper, core/util/codec/Eithers, ImmutableFloatTreeMap) exist in `:eyelib-util` and no longer exist as source files under root/src/.
+  2. `jetbrain_build_project` on the full project completes with exit code 0 — all 20+ root import sites across `client/animation/`, `common/behavior/`, and other packages resolve to eyelib-util.codec.
+  3. EitherHelper.java is deleted and its former consumers compile using eyelib-util's Eithers directly.
+  4. `grep "import io.github.tt432.eyelib.util.codec\."` across all source files returns zero results.
+  5. ImmutableFloatTreeMap's codec dependency chain (CodecHelper → com.mojang.serialization.Codec) resolves correctly within eyelib-util's Forge classpath.
+**Plans**: TBD
+
+### Phase 20: Submodule Centralization
+**Goal**: Submodule-siloed shared code (eyelib-attachment's StreamCodec suite, eyelib-material's duplicate DispatchedMapCodec) is centralized into `:eyelib-util`; both submodules add proper `implementation project(':eyelib-util')` dependencies.
+**Depends on**: Phase 19
+**Requirements**: CENT-01, CENT-02
+**Success Criteria** (what must be TRUE):
+  1. StreamCodec, StreamEncoder, StreamDecoder, EyelibStreamCodecs exist in `:eyelib-util/src/main/java/io/github/tt432/eyelibutil/streamcodec/` and no longer exist in eyelib-attachment/src/.
+  2. eyelib-material's duplicate DispatchedMapCodec is deleted and all material consumers compile against eyelib-util's canonical implementation.
+  3. Both eyelib-attachment and eyelib-material add `implementation project(':eyelib-util')` to their build.gradle files and their individual builds pass with exit code 0.
+  4. The full project builds with exit code 0 — `jetbrain_build_project` with `rebuild=true` covers root + eyelib-util + all 6 existing submodules.
+  5. eyelib-util remains a leaf module — its build.gradle still contains zero `project(...)` dependencies.
+**Plans**: TBD
+
+### Phase 21: Verification, Cleanup & Documentation
+**Goal**: All verification gates pass; root/util/* and core/util/* directories are empty; all documentation reflects the new module topology; the milestone is ready for declaration.
+**Depends on**: Phase 20
+**Requirements**: VERIFY-01, VERIFY-02, VERIFY-03
+**Success Criteria** (what must be TRUE):
+  1. `glob("src/main/java/io/github/tt432/eyelib/util/**/*.java")` and `glob("src/main/java/io/github/tt432/eyelib/core/util/**/*.java")` return empty — both directories contain zero .java files.
+  2. `jetbrain_build_project` with `rebuild=true` on the full project completes with exit code 0, and zero diagnostics reference `io.github.tt432.eyelib.util.` imports.
+  3. All existing submodule identity tests (AttachmentModuleIdentityTest, ImporterModuleIdentityTest, ParticleDefinitionBoundaryTest) continue to pass.
+  4. MODULES.md contains an eyelib-util entry documenting ownership, package namespace `io.github.tt432.eyelibutil`, dependency direction (leaf module), and purpose.
+  5. Architecture docs (01-module-boundaries.md, ARCHITECTURE-BLUEPRINT.md) reflect eyelib-util as a leaf node in the dependency graph.
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -165,4 +262,11 @@ Plans:
 | 11. Runtime Client Core Extraction | v1.2 | 6/6 | Complete   | 2026-05-09 |
 | 12. Loading & Publication Rewire | v1.2 | 3/3 | Complete   | 2026-05-09 |
 | 13. Command & Network Integration Rewire | v1.2 | 3/3 | Complete   | 2026-05-09 |
-| 14. Verification & Documentation Gate | v1.2 | 3/3 | Complete   | 2026-05-09 |
+| 14. Verification & Documentation Gate | v1.2 | 3/3 | Complete | 2026-05-09 |
+| 15. Pre-Migration Audit & Routing | v1.3 | 0/0 | Not started | - |
+| 16. Module Scaffold & Build Infrastructure | v1.3 | 0/0 | Not started | - |
+| 17. Tier-1 Category Migration | v1.3 | 0/0 | Not started | - |
+| 18. Resource, Texture & MC-Dependent Migration | v1.3 | 0/0 | Not started | - |
+| 19. Codec Infrastructure (Atomic Unit) | v1.3 | 0/0 | Not started | - |
+| 20. Submodule Centralization | v1.3 | 0/0 | Not started | - |
+| 21. Verification, Cleanup & Documentation | v1.3 | 0/0 | Not started | - |
