@@ -1,58 +1,58 @@
 # Requirements: Eyelib Module Separation
 
-**Defined:** 2026-05-09
-**Milestone:** v1.2 真正实现 eyelib-particle 的模块分离
-**Core Value:** Eyelib 的功能模块必须能被独立理解、构建、验证和消费；粒子拆分必须形成清晰 Gradle 模块边界，同时保持现有加载、命令、网络同步、渲染行为零回归。
+**Defined:** 2026-05-10
+**Milestone:** v1.3 分离 eyelib-util 模块
+**Core Value:** Eyelib 的功能模块必须能被独立理解、构建、验证和消费；工具代码共享必须形成清晰 Gradle 模块边界，消除 root util 包集群和子模块间重复的共享代码。
 
-## v1.2 Requirements
+## v1.3 Requirements
 
 Requirements for this milestone. Each maps to exactly one roadmap phase.
 
-### Gradle Module
+### Module Infrastructure
 
-- [x] **PGRAD-01**: Maintainer can build and consume a real `:eyelib-particle` Gradle subproject with its own build metadata, source sets, resources, and root project dependency wiring.
-- [x] **PGRAD-02**: Maintainer can read module documentation that states `:eyelib-particle` ownership, dependency direction, and allowed integration layers.
+- [ ] **MOD-01**: Maintainer can build `:eyelib-util` as a standalone Forge Gradle subproject (build.gradle + mods.toml + settings.gradle) with zero `project()` dependencies.
+- [ ] **MOD-02**: Module documentation states ownership, dependency direction, package namespace `io.github.tt432.eyelibutil`, and allowed integration layers.
 
-### Boundary API
+### Pre-Migration Audit
 
-- [x] **PAPI-01**: Root runtime can access particle lookup, spawn/remove, store/publication, and initialization behavior through narrow particle-module APIs instead of owning particle internals directly.
-- [x] **PAPI-02**: `:eyelib-particle` has no dependency on root runtime packages, root managers, root registries, root packets, root capability helpers, or root `mc/impl` classes.
-- [x] **PAPI-03**: Any temporary root compatibility facade delegates to particle-module APIs and is documented as transitional.
+- [ ] **AUDIT-01**: Every root/util/* and core/util/* file has a destination routing decision (eyelib-util / functional owner / delete) based on consumer count classification (0/1/N rule).
+- [ ] **AUDIT-02**: All wildcard imports (`import io.github.tt432.eyelib.util.*`) in root are replaced with explicit imports.
 
-### Schema And Runtime Ownership
+### Single-Consumer Routing
 
-- [x] **PSCHEMA-01**: Maintainer can identify the canonical owner for importer/raw particle schema and the canonical owner for executable runtime particle definitions.
-- [x] **PSCHEMA-02**: Runtime particle definitions are created from importer/raw schema through a named adapter or equivalent explicit conversion seam with parity coverage.
-- [x] **PSCHEMA-03**: Duplicate `BrParticle` ownership cannot drift silently because codec/schema behavior and runtime conversion expectations are covered by tests or documented invariants.
+- [ ] **ROUTE-01**: Single-consumer utility classes are moved to their functional owner (AnimationApplier → client/animation, Models → client/model, ModBridgeServer/BBModelSink → mc/impl/modbridge).
+- [ ] **ROUTE-02**: Compatibility shims (ListHelper, EitherHelper) are deleted after their consumers migrate to canonical implementations.
 
-### Loading And Publication
+### Code Migration
 
-- [x] **PLOAD-01**: Resource reload still parses `particles/*.json` and replaces the active particle registry without changing observable reload behavior.
-- [x] **PLOAD-02**: Particle publication continues to key entries by `particle_effect.description.identifier`, not by JSON resource path or other incidental source keys.
-- [x] **PLOAD-03**: Loader, registry, and manager responsibilities are owned by the particle module or by explicit root adapters without reintroducing root-owned particle internals.
+- [ ] **MIGR-01**: Zero-dependency utility categories (time, color, loader, math, search — 11 files) are migrated into `:eyelib-util` with updated root import sites.
+- [ ] **MIGR-02**: Collection utilities (Blackboard, Lists, Collectors, EntryStreams) are migrated into `:eyelib-util`.
+- [ ] **MIGR-03**: Resource and texture utilities (ResourceLocations, TexturePaths, TexturePathHelper) are migrated, with ResourceLocations.mod() circular reference resolved.
+- [ ] **MIGR-04**: Codec infrastructure (9 codec files + ImmutableFloatTreeMap) is migrated as an atomic unit into `:eyelib-util`.
 
-### Command And Network Integration
+### Submodule Centralization
 
-- [x] **PNET-01**: User can run `/eyelib particle` with the same syntax, suggestions, validation, spawn position behavior, and success message as before extraction.
-- [x] **PNET-02**: Spawn/remove packet behavior remains string-keyed and continues to delegate from network handlers into particle services without exposing render internals.
-- [x] **PNET-03**: Platform-specific command, player, packet channel, and identifier validation concerns stay in explicit integration adapters and do not contaminate pure particle core APIs.
+- [ ] **CENT-01**: eyelib-attachment's StreamCodec suite (5 files: DualStreamCodec, StreamCodec, StreamEncoder, StreamDecoder, EyelibStreamCodecs) is centralized into `:eyelib-util`.
+- [ ] **CENT-02**: eyelib-material's duplicate DispatchedMapCodec is deduplicated and consumers are redirected to the `:eyelib-util` canonical version.
 
-### Rendering And Verification
+### Verification
 
-- [x] **PRENDER-01**: Existing client particle emitter, render manager, material/texture resolution, Molang scope, lifetime, remove semantics, tick/render lifecycle, and logout cleanup behavior are preserved.
-- [x] **PRENDER-02**: Client-only hooks and platform integrations are side-safe after extraction and do not introduce dedicated-server classloading regressions.
-- [x] **PVERIFY-01**: Existing particle-related tests are moved or adapted without weakening assertions, and new boundary/parity/regression tests cover the module split.
-- [x] **PVERIFY-02**: Maintainer can verify the extracted module through planned JetBrains MCP Gradle checks, automated ClientSmoke flow where applicable, and a separate hardware checklist only for runtime behavior that cannot be automatically asserted.
+- [ ] **VERIFY-01**: root/util/* and core/util/* directories are empty after extraction.
+- [ ] **VERIFY-02**: All modules compile (JetBrains MCP Gradle) with zero residual `io.github.tt432.eyelib.util.*` imports and zero behavioral regression.
+- [ ] **VERIFY-03**: MODULES.md, architecture docs, and package README files reflect the new module topology.
 
 ## Future Requirements
 
-Deferred to future milestones; not required for v1.2 completion.
+Deferred to future milestones; not required for v1.3 completion.
 
-### Publication And Ownership Polish
+### Extended Submodule Centralization
 
-- **PFUT-01**: Maintainer can narrow root dependency scopes from broad `api`/`modImplementation`/`jarJar` wiring after API inventory proves which particle surfaces are public.
-- **PFUT-02**: Maintainer can decide whether packet contracts should permanently remain root-owned or move into a dedicated cross-module transport contract after the v1.2 adapter boundary is stable.
-- **PFUT-03**: Maintainer can publish `:eyelib-particle` as a separately documented external artifact if the broader Eyelib packaging strategy requires independent consumption.
+- **CENT-F01**: Additional submodule-duplicated code beyond StreamCodec and DispatchedMapCodec may be centralized after v1.3 baseline is stable.
+- **CENT-F02**: Dependency scope audit may narrow root connection from broad `api` wiring to `implementation` for internal-only consumers.
+
+### SharedLibraryLoader Audit
+
+- **AUDT-F01**: Native library loading path validation after class relocation; consumer count audit; decision on keep vs. delete vs. repackage.
 
 ## Out of Scope
 
@@ -60,12 +60,12 @@ Explicitly excluded from this milestone.
 
 | Feature | Reason |
 |---------|--------|
+| Rewriting or replacing utility implementations | Pure ownership transfer; no behavioral changes |
+| Adding new utility features | Scope is existing code, not new capabilities |
+| Removing MC/Forge dependency from eyelib-util | MC-dependent utilities (EyelibCodec, ResourceLocations, Shapes) are valid module members |
+| Build system innovation | Clone existing Forge subproject pattern; no new Gradle conventions |
 | Cosmetic package rename without ownership transfer | Fails the user's goal of true module separation |
-| New external particle engine/library | Not needed for boundary extraction and would add unnecessary risk |
-| Replacing Molang engine or material pipeline | Existing modules already own these concerns; v1.2 should integrate, not rewrite them |
-| Converting pure request/packet seams back to `ResourceLocation` | Would undo existing string-keyed boundary cleanup |
-| Deleting or weakening tests to make extraction compile | Violates zero behavior regression requirement |
-| Broad root compatibility layer with hidden long-term ownership | Would preserve root-owned particle internals under a new facade name |
+| Deleting or weakening tests to make migration compile | Violates zero behavior regression requirement |
 
 ## Traceability
 
@@ -73,32 +73,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PGRAD-01 | Phase 8: Boundary Contract & Gradle Module Skeleton | Complete |
-| PGRAD-02 | Phase 8: Boundary Contract & Gradle Module Skeleton | Complete |
-| PAPI-01 | Phase 9: Particle API & Store Seam | Complete |
-| PAPI-02 | Phase 8: Boundary Contract & Gradle Module Skeleton | Complete |
-| PAPI-03 | Phase 9: Particle API & Store Seam | Complete |
-| PSCHEMA-01 | Phase 10: Schema/Runtime Ownership & Adapter | Complete |
-| PSCHEMA-02 | Phase 10: Schema/Runtime Ownership & Adapter | Complete |
-| PSCHEMA-03 | Phase 10: Schema/Runtime Ownership & Adapter | Complete |
-| PLOAD-01 | Phase 12: Loading & Publication Rewire | Complete |
-| PLOAD-02 | Phase 12: Loading & Publication Rewire | Complete |
-| PLOAD-03 | Phase 12: Loading & Publication Rewire | Complete |
-| PNET-01 | Phase 13: Command & Network Integration Rewire | Complete |
-| PNET-02 | Phase 13: Command & Network Integration Rewire | Complete |
-| PNET-03 | Phase 13: Command & Network Integration Rewire | Complete |
-| PRENDER-01 | Phase 11: Runtime Client Core Extraction | Complete |
-| PRENDER-02 | Phase 11: Runtime Client Core Extraction | Complete |
-| PVERIFY-01 | Phase 14: Verification & Documentation Gate | Complete |
-| PVERIFY-02 | Phase 14: Verification & Documentation Gate | Complete |
+| MOD-01 | — | Pending |
+| MOD-02 | — | Pending |
+| AUDIT-01 | — | Pending |
+| AUDIT-02 | — | Pending |
+| ROUTE-01 | — | Pending |
+| ROUTE-02 | — | Pending |
+| MIGR-01 | — | Pending |
+| MIGR-02 | — | Pending |
+| MIGR-03 | — | Pending |
+| MIGR-04 | — | Pending |
+| CENT-01 | — | Pending |
+| CENT-02 | — | Pending |
+| VERIFY-01 | — | Pending |
+| VERIFY-02 | — | Pending |
+| VERIFY-03 | — | Pending |
 
 **Coverage:**
-- v1.2 requirements: 18 total
-- Mapped to phases: 18
-- Unmapped: 0 ✓
-- Duplicate mappings: 0 ✓
-- Coverage status: 100% mapped to exactly one phase ✓
+- v1.3 requirements: 15 total
+- Mapped to phases: 0
+- Unmapped: 15 ⚠️
 
 ---
-*Requirements defined: 2026-05-09*
-*Last updated: 2026-05-09 after Phase 14 verification*
+*Requirements defined: 2026-05-10*
+*Last updated: 2026-05-10 after initial definition*
