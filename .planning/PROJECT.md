@@ -28,7 +28,7 @@ All v1.0 requirements validated (2026-05-07). See `.planning/milestones/v1.0-REQ
 
 All v1.1 requirements validated (2026-05-08). See `.planning/milestones/v1.1-REQUIREMENTS.md`.
 
-All v1.2 requirements validated (2026-05-09). See `.planning/REQUIREMENTS.md` (v1.2 section, 18 requirements across 7 phases).
+All v1.2 requirements validated (2026-05-09). See `.planning/milestones/v1.2-REQUIREMENTS.md` and `.planning/milestones/v1.2-MILESTONE-AUDIT.md` (18 requirements across 7 phases).
 
 ### Active
 

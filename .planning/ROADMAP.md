@@ -37,6 +37,8 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 <details>
 <summary>✅ v1.2 真正实现 eyelib-particle 的模块分离 — Phases 8-14 (SHIPPED 2026-05-09)</summary>
 
+Full details: `.planning/milestones/v1.2-ROADMAP.md`
+
 **Milestone Goal:** 将粒子相关能力从 root runtime 的混合包结构中提升为清晰的 `:eyelib-particle` Gradle 模块边界，同时保持现有粒子加载、命令、网络 spawn/remove、渲染行为零回归。
 
 - [x] **Phase 8: Boundary Contract & Gradle Module Skeleton** - `:eyelib-particle` 成为可构建、可消费、方向明确的 Gradle 模块。 (2/2 plans) — completed 2026-05-09
@@ -62,107 +64,6 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 - [ ] **Phase 21: Verification, Cleanup & Documentation** - 全量验证、残留清理、文档更新；root/util/* 和 core/util/* 目录为空。
 
 ## Phase Details
-
-### Phase 8: Boundary Contract & Gradle Module Skeleton
-**Goal**: Maintainer can build and understand `:eyelib-particle` as a real Gradle module with explicit ownership and one-way root → particle dependency direction.
-**Depends on**: Phase 7
-**Requirements**: PGRAD-01, PGRAD-02, PAPI-02
-**Success Criteria** (what must be TRUE):
-  1. Maintainer can see `:eyelib-particle` included as a first-class Gradle subproject with its own build metadata, source sets, resources, and root dependency wiring.
-  2. Maintainer can read module documentation that states particle ownership, dependency direction, allowed integration layers, and the rule that pure particle core remains free of root/MC/Forge contamination.
-  3. Root runtime can depend on the particle module, while `:eyelib-particle` has no dependency on root runtime packages, root managers, root registries, root packets, root capability helpers, or root `mc/impl` classes.
-  4. Later verification is documented to use JetBrains MCP Gradle tasks only; no shell Gradle command is required or endorsed.
-**Plans**: 2/2 complete — `.planning/phases/08-boundary-contract-gradle-module-skeleton/08-01-PLAN.md`, `.planning/phases/08-boundary-contract-gradle-module-skeleton/08-02-PLAN.md`
-
-### Phase 9: Particle API & Store Seam
-**Goal**: Root runtime can use particle capabilities through narrow module-owned APIs instead of owning particle internals directly.
-**Depends on**: Phase 8
-**Requirements**: PAPI-01, PAPI-03
-**Success Criteria** (what must be TRUE):
-  1. Root runtime can access particle lookup, spawn/remove, store/publication, and initialization behavior through particle-module API seams.
-  2. Any root compatibility facade delegates to particle-module APIs instead of containing particle business logic.
-  3. Maintainer can identify every temporary compatibility facade and read why it exists and when it can be removed.
-**Plans**: 3/3 complete — `.planning/phases/09-particle-api-store-seam/09-01-PLAN.md`, `.planning/phases/09-particle-api-store-seam/09-02-PLAN.md`, `.planning/phases/09-particle-api-store-seam/09-03-PLAN.md`
-
-### Phase 10: Schema/Runtime Ownership & Adapter
-**Goal**: Importer/raw particle schema and executable runtime particle definitions have explicit canonical owners and a tested conversion seam.
-**Depends on**: Phase 9
-**Requirements**: PSCHEMA-01, PSCHEMA-02, PSCHEMA-03
-**Success Criteria** (what must be TRUE):
-  1. Maintainer can identify the canonical owner for importer/raw particle schema and the canonical owner for runtime executable particle definitions.
-  2. Runtime particle definitions can be created from importer/raw schema through a named adapter or equivalent explicit conversion seam.
-  3. Codec/schema behavior and runtime conversion expectations are covered by tests or documented invariants so duplicate `BrParticle` ownership cannot drift silently.
-  4. The adapter preserves parity-critical particle fields needed by loading, rendering, Molang, lifetime, and remove behavior.
-**Plans**: 1/2 complete — `.planning/phases/10-schema-runtime-ownership-adapter/10-01-PLAN.md`, `.planning/phases/10-schema-runtime-ownership-adapter/10-02-PLAN.md`
-
-### Phase 11: Runtime Client Core Extraction
-**Goal**: Existing particle runtime and client rendering behavior lives under `:eyelib-particle` without weakening side boundaries or behavior.
-**Depends on**: Phase 10
-**Requirements**: PRENDER-01, PRENDER-02
-**Success Criteria** (what must be TRUE):
-  1. Existing client particle emitter, render manager, material/texture resolution, Molang scope, lifetime, remove semantics, tick/render lifecycle, and logout cleanup behavior are preserved after extraction.
-  2. Particle-specific client hooks and Forge bindings live in explicit particle integration layers when appropriate, not in pure particle core/API packages.
-  3. Pure particle core remains clean of platform bindings, while platform-specific bindings are side-safe and do not introduce dedicated-server classloading regressions.
-  4. Maintainer can follow dependency direction from root integration code into particle runtime without finding a reverse dependency back to root.
-**Plans**: 1/6 complete — `.planning/phases/11-runtime-client-core-extraction/11-01-PLAN.md`, `.planning/phases/11-runtime-client-core-extraction/11-02-PLAN.md`, `.planning/phases/11-runtime-client-core-extraction/11-03-PLAN.md`, `.planning/phases/11-runtime-client-core-extraction/11-04-PLAN.md`, `.planning/phases/11-runtime-client-core-extraction/11-05-PLAN.md`, `.planning/phases/11-runtime-client-core-extraction/11-06-PLAN.md`
-
-### Phase 12: Loading & Publication Rewire
-**Goal**: Particle resource reload and publication semantics move behind the module boundary without changing observable registry behavior.
-**Depends on**: Phase 11
-**Requirements**: PLOAD-01, PLOAD-02, PLOAD-03
-**Success Criteria** (what must be TRUE):
-  1. Resource reload still parses `particles/*.json` and replaces the active particle registry with the same observable reload behavior.
-  2. Particle publication continues to key entries by `particle_effect.description.identifier`, not by JSON resource path or other incidental source keys.
-  3. Loader, registry, and manager responsibilities are owned by the particle module or by explicit root adapters without reintroducing root-owned particle internals.
-  4. Maintainer can trace the reload path from root/Forge integration into particle-module registry publication without hidden ownership duplication.
-**Plans**: 3/3 complete — `.planning/phases/12-loading-publication-rewire/12-01-PLAN.md`, `.planning/phases/12-loading-publication-rewire/12-02-PLAN.md`, `.planning/phases/12-loading-publication-rewire/12-03-PLAN.md`
-Plans:
-**Wave 1**
-- [x] 12-01-PLAN.md — Create module-owned particle definition registry and JSON resource publication seam.
-
-**Wave 2** *(blocked on Wave 1 completion)*
-- [x] 12-02-PLAN.md — Rewire root reload, registry, lookup, tooling, and spawn compatibility adapters to module publication.
-
-**Wave 3** *(blocked on Wave 2 completion)*
-- [x] 12-03-PLAN.md — Update ownership documentation and run final targeted JetBrains MCP verification.
-
-### Phase 13: Command & Network Integration Rewire
-**Goal**: User-facing particle command and network spawn/remove behavior remain compatible while platform concerns stay in explicit adapters.
-**Depends on**: Phase 12
-**Requirements**: PNET-01, PNET-02, PNET-03
-**Success Criteria** (what must be TRUE):
-  1. User can run `/eyelib particle` with the same syntax, suggestions, validation, spawn position behavior, and success message as before extraction.
-  2. Spawn/remove packet behavior remains string-keyed and delegates from network handlers into particle services without exposing render internals.
-  3. Platform-specific command, player, packet channel, and identifier validation concerns stay in explicit integration adapters.
-  4. Pure particle core APIs remain root-independent and platform-light even though platform bindings may live in an appropriate particle or root integration layer.
-**Plans**: 3/3 complete — `.planning/phases/13-command-network-integration-rewire/13-01-PLAN.md`, `.planning/phases/13-command-network-integration-rewire/13-02-PLAN.md`, `.planning/phases/13-command-network-integration-rewire/13-03-PLAN.md`
-Plans:
-**Wave 1**
-- [x] 13-01-PLAN.md — Preserve `/eyelib particle` command compatibility and command adapter boundaries.
-- [x] 13-02-PLAN.md — Preserve string-keyed spawn/remove packets and network handler delegation.
-
-**Wave 2** *(blocked on Wave 1 completion)*
-- [x] 13-03-PLAN.md — Update command/network ownership docs and run final JetBrains MCP verification.
-
-### Phase 14: Verification & Documentation Gate
-**Goal**: Maintainer can prove the particle module split preserves behavior and leaves the documented architecture consistent.
-**Depends on**: Phase 13
-**Requirements**: PVERIFY-01, PVERIFY-02
-**Success Criteria** (what must be TRUE):
-  1. Existing particle-related tests are moved or adapted without weakening assertions.
-  2. New boundary, parity, and regression tests cover the module split, including dependency direction, schema/runtime conversion, reload keys, command/network delegation, and side boundaries.
-  3. Maintainer can run the planned compile/test checks through JetBrains MCP Gradle tasks only, use automated ClientSmoke flow where applicable, and keep hardware/manual checks separate for runtime behavior that cannot be automatically asserted.
-  4. Module, architecture, side-boundary, repo-map, and particle README documentation all match the final ownership and integration boundaries.
-**Plans**: 3/3 complete — `.planning/phases/14-verification-documentation-gate/14-01-PLAN.md`, `.planning/phases/14-verification-documentation-gate/14-02-PLAN.md`, `.planning/phases/14-verification-documentation-gate/14-03-PLAN.md`
-Plans:
-**Wave 1**
-- [x] 14-01-PLAN.md — Converge final ownership documentation and create evidence/checklist shells.
-
-**Wave 2** *(blocked on Wave 1 completion)*
-- [x] 14-02-PLAN.md — Add final split documentation, root adapter, and particle module boundary tests.
-
-**Wave 3** *(blocked on Wave 2 completion)*
-- [x] 14-03-PLAN.md — Run JetBrains MCP verification matrix and record milestone closure evidence.
 
 ### Phase 15: Pre-Migration Audit & Routing
 **Goal**: Every root/util/* and core/util/* source file has a verified consumer count (0/1/N rule) and a committed destination routing decision; single-consumer utility classes are relocated to their functional owners; all wildcard imports to `eyelib.util.*` are replaced with explicit imports.
