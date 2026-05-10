@@ -1,24 +1,24 @@
 # Eyelib Module Separation
 
-**Status:** v1.0 shipped (2026-05-07) | v1.1 shipped (2026-05-08) | v1.2 planning
+**Status:** v1.0 shipped (2026-05-07) | v1.1 shipped (2026-05-08) | v1.2 shipped (2026-05-09) | v1.3 planning
 
 ## What This Is
 
-Eyelib is a multi-project Forge rendering library whose runtime, importer, processor, Molang, material, attachment, and smoke-test seams are being separated into explicit Gradle modules. This milestone focuses on making the particle system a real module boundary instead of a root-runtime package cluster with mixed schema, runtime, registry, networking, and platform integration concerns.
+Eyelib is a multi-project Forge rendering library whose runtime, importer, processor, Molang, material, attachment, particle, and smoke-test seams are being separated into explicit Gradle modules. This milestone focuses on extracting shared utility code into a dedicated `:eyelib-util` Forge Gradle module, while also discovering shareable code currently siloed in individual submodules that should be centrally available.
 
 ## Core Value
 
-Eyelib 的功能模块必须能被独立理解、构建、验证和消费；粒子拆分必须形成清晰 Gradle 模块边界，同时保持现有加载、命令、网络同步、渲染行为零回归。
+Eyelib 的功能模块必须能被独立理解、构建、验证和消费；工具代码共享必须形成清晰 Gradle 模块边界，消除 root util 包集群和子模块间重复的共享代码。
 
-## Current Milestone: v1.2 真正实现 eyelib-particle 的模块分离
+## Current Milestone: v1.3 分离 eyelib-util 模块
 
-**Goal:** 将粒子相关能力从 root runtime 的混合包结构中提升为清晰的 `eyelib-particle` Gradle 模块边界，同时保持现有粒子加载、命令、网络 spawn/remove、渲染行为零回归。
+**Goal:** 将 root 和 core 下的工具代码及子模块中可中央化的共享代码提升为独立的 `:eyelib-util` Forge Gradle 模块，root/util/* 不留残留。
 
 **Target features:**
-- 新增并接入 `:eyelib-particle` Gradle 模块，root 通过项目依赖消费粒子能力。
-- 梳理粒子 schema/importer/runtime 的职责边界，避免把纯粒子核心、导入模型、MC/Forge 绑定混在同一层。
-- 清理当前粒子路径中的边界泄漏：平台类型、loader/manager 直接耦合、packet/command/runtime 互相穿透。
-- 保持现有行为兼容：资源重载、粒子管理器、`/eyelib particle` 命令、Spawn/Remove packet、客户端发射器渲染不退化。
+- 创建 `:eyelib-util` Forge Gradle 子项目，含 build metadata、mods.toml、source sets。
+- root/util/* + core/util/* 全量并入 eyelib-util，root/util/* 不留——单一消费者工具代码移至对应功能 owner。
+- 主动扫描子模块（attachment/importer/molang/particle/material/processor），发现可中央化到 eyelib-util 的共享代码（如 attachment 的 streamcodec）。
+- 调研受影响模块，由易到难按 phase 推进消解 root 和各子模块对 util 的直接耦合。
 
 ## Requirements
 
@@ -28,57 +28,52 @@ All v1.0 requirements validated (2026-05-07). See `.planning/milestones/v1.0-REQ
 
 All v1.1 requirements validated (2026-05-08). See `.planning/milestones/v1.1-REQUIREMENTS.md`.
 
-- ✓ Gradle 任务一键启动 clientsmoke — v1.1 (GRAD-01)
-- ✓ 任务自动注入 JVM 参数（强制启用、自动退出） — v1.1 (OVRD-03)
-- ✓ System property override bridge with ForgeConfigSpec fallback — v1.1 (OVRD-01, OVRD-02)
-- ✓ State machine handles empty test sets + JUnit XML + conditional exit code — v1.1 (CORR-01, CORR-02, OVRD-04)
-- ✓ runClient zero regression, static verification — v1.1 (CORR-03, CORR-04)
-- ✓ Isolated game directory and unconditional classpath — v1.1 (GRAD-02, GRAD-03, GRAD-04)
+All v1.2 requirements validated (2026-05-09). See `.planning/REQUIREMENTS.md` (v1.2 section, 18 requirements across 7 phases).
 
 ### Active
 
-- [ ] `:eyelib-particle` exists as a Gradle module with documented responsibility and dependency direction.
-- [ ] Particle schema/importer-facing data, particle runtime, and platform integration boundaries are explicit and do not duplicate ownership silently.
-- [ ] Root runtime consumes particle capabilities through narrow module seams instead of owning particle internals directly.
-- [ ] Existing particle loading, manager publication, `/eyelib particle` command, spawn/remove packets, and client rendering behavior continue to work.
+- [ ] `:eyelib-util` exists as a Forge Gradle module with documented ownership, dependency direction, and build metadata.
+- [ ] root/util/* code fully migrated into `:eyelib-util` with compatibility facades where necessary.
+- [ ] core/util/* code merged into `:eyelib-util` without duplication.
+- [ ] Submodule shared code (e.g. attachment streamcodec) centralized into `:eyelib-util` where appropriate.
+- [ ] Single-consumer utility code moved to its functional owner instead of staying in eyelib-util.
+- [ ] root and affected submodules consume eyelib-util through explicit project dependencies.
+- [ ] root/util/* directory is empty after extraction (no residual code).
 
 ### Out of Scope
 
-- 服务端冒烟测试 — 专注于客户端场景
-- 自动断言/回归比对 — v1 仅截图，人工验证
-- CI 集成脚本 — v1 仅本地运行
-- Windows hardware exit code capture — deferred to manual verification (see `.planning/phases/07-verification-polish/07-02-HARDWARE-CHECKLIST.md`)
+- Replacing or rewriting existing utility implementations.
+- Adding new utility features beyond what already exists.
+- Removing MC/Forge dependency from eyelib-util — MC-dependent utilities are valid in this module.
 
 ## Context
 
-v1.1 shipped 2026-05-08 with 3 phases (5 plans, 8 tasks):
-- **Phase 5:** Gradle run config with unconditional localRuntime, isolated gameDirectory, .gitignore
-- **Phase 6:** System property override bridge, state machine fixes, JUnit XML, conditional exit code
-- **Phase 7:** 33 static verification tests, hardware checklist
+v1.2 shipped 2026-05-09 with 7 phases (22 plans, 18 requirements):
+- **Phase 8:** Boundary Contract & Gradle Module Skeleton for `:eyelib-particle`
+- **Phase 9:** Particle API & Store Seam
+- **Phase 10:** Schema/Runtime Ownership & Adapter
+- **Phase 11:** Runtime Client Core Extraction
+- **Phase 12:** Loading & Publication Rewire
+- **Phase 13:** Command & Network Integration Rewire
+- **Phase 14:** Verification & Documentation Gate
 
 Build system: Gradle + Java 17 + Forge 1.20.1 + MDGL (ModDevGradleLegacy).
 All Gradle commands via JetBrains MCP.
 
-3325 total lines across 33 static regression tests. Clean build (zero errors).
-
-Deferred hardware verification items (CORR-03, CORR-04) available via:
-`.planning/milestones/v1.1-phases/07-verification-polish/07-02-HARDWARE-CHECKLIST.md`
-
-v1.2 starts from the current Eyelib module split:
-- Existing Gradle subprojects include `:eyelib-attachment`, `:eyelib-importer`, `:eyelib-material`, `:eyelib-molang`, and `:eyelib-processor`.
-- Current particle runtime lives under `src/main/java/io/github/tt432/eyelib/client/particle/` with lookup/spawn seams and Bedrock runtime classes.
-- Importer already owns a particle schema record at `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/particle/BrParticle.java`, creating a visible schema/runtime split pressure point.
-- Existing particle command and packet integration lives under `mc/impl` packages and must remain behavior-compatible while module ownership is clarified.
+v1.3 starts from the current Eyelib module split:
+- Existing Gradle subprojects: `:eyelib-attachment`, `:eyelib-importer`, `:eyelib-material`, `:eyelib-molang`, `:eyelib-particle`, `:eyelib-processor`.
+- root/util/* contains 34 files across codec, math, search, modbridge, client subareas.
+- core/util/* contains 6 platform-free helpers (codec, collection, color, texture, time).
+- All submodules and root consume root/util/* directly — extraction requires changing every import site.
+- eyelib-attachment's streamcodec helpers are an identified candidate for centralization.
 
 ## Constraints
 
 - **Tech stack**: Java 17, Forge 1.20.1, MDGL (ModDevGradleLegacy)
-- **Module structure**: Standard Forge Gradle subproject alongside root and other modules
-- **Compatibility**: Must coexist with eyelib root module in same Gradle build
-- **Class loading safety**: Annotation scanning within safe boundaries
-- **Runtime**: Client only (no server components)
-- **Particle split**: Platform bindings may live in the most appropriate integration layer, but must not contaminate pure particle core ownership.
-- **Regression policy**: Existing particle resource reload, command, packet, spawn/remove, and rendering behavior must not regress during extraction.
+- **Module structure**: Forge Gradle subproject alongside root and other modules
+- **Compatibility**: Must coexist with eyelib root module and all submodules in same Gradle build
+- **Regression policy**: No functional behavior change — pure ownership transfer and import path rewiring
+- **eyelib-util scope**: May depend on MC/Forge; single-consumer code goes to functional owner, not util module
 
 ## Key Decisions
 
@@ -92,7 +87,8 @@ v1.2 starts from the current Eyelib module split:
 | System property override bridge | isEnabled()/shouldExitAfterSmoke() check System.getProperty first, ForgeConfigSpec fallback | ✓ Validated — v1.1 |
 | JUnit XML alongside JSON | Standard CI integration format | ✓ Validated — v1.1 |
 | Conditional halt(0)/halt(1) | Gradle exit code propagation | ✓ Validated — v1.1 |
-| `eyelib-particle` as real module boundary | Particle responsibilities are currently spread across root runtime, importer schema, command/network integration, and manager publication | — Pending — v1.2 |
+| `eyelib-particle` as real module boundary | Particle responsibilities spread across root runtime, importer schema, command/network integration, manager publication | ✓ Validated — v1.2 |
+| `eyelib-util` as Forge module | May depend on MC/Forge; not artificially constrained to be pure Java | — Pending — v1.3 |
 
 ## Evolution
 
@@ -100,4 +96,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-05-09 after starting v1.2 milestone*
+*Last updated: 2026-05-10 after starting v1.3 milestone*

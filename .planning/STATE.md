@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: 真正实现 eyelib-particle 的模块分离
-status: milestone_complete
-stopped_at: v1.2 milestone complete; ready for milestone sign-off/archive if desired.
-last_updated: "2026-05-09T15:45:00Z"
-last_activity: 2026-05-09 -- Phase 14 verified and code-reviewed clean
+milestone: v1.3
+milestone_name: 分离 eyelib-util 模块
+status: planning
+last_updated: "2026-05-10T05:02:42.554Z"
+last_activity: 2026-05-10
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 22
-  completed_plans: 22
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,12 +24,10 @@ See: .planning/PROJECT.md (updated 2026-05-09)
 
 ## Current Position
 
-Phase: 14 (verification-documentation-gate) — COMPLETE
-Plan: 3 of 3
-Status: v1.2 milestone complete — final JetBrains MCP matrix, milestone closure evidence, verification, and clean review recorded.
-Last activity: 2026-05-09 -- Phase 14 verified and code-reviewed clean
-
-Progress: [██████████] 100%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-10 — Milestone v1.3 started
 
 ## Performance Metrics
 
