@@ -1,15 +1,14 @@
 ---
 phase: 22-analysis-quick-wins
-reviewed: 2026-05-11T14:32:51Z
+reviewed: 2026-05-11T14:40:08Z
 depth: standard
-files_reviewed: 6
+files_reviewed: 5
 files_reviewed_list:
-  - src/main/java/io/github/tt432/eyelib/client/animation/KeyFrame.java
   - src/main/java/io/github/tt432/eyelib/client/instrument/InstrumentConfig.java
   - src/main/java/io/github/tt432/eyelib/client/instrument/db/InstrumentDatabase.java
-  - src/main/java/io/github/tt432/eyelib/client/instrument/db/BackgroundFlushService.java
+  - src/test/java/io/github/tt432/eyelib/client/instrument/InstrumentConfigTest.java
   - src/test/java/io/github/tt432/eyelib/client/instrument/InstrumentDisabledTest.java
-  - src/test/java/io/github/tt432/eyelib/client/instrument/db/InstrumentDatabaseTest.java
+  - src/test/java/io/github/tt432/eyelib/client/instrument/db/BackgroundFlushServiceTest.java
 findings:
   critical: 1
   warning: 1
@@ -20,14 +19,14 @@ status: issues_found
 
 # Phase 22: Code Review Report
 
-**Reviewed:** 2026-05-11T14:32:51Z
+**Reviewed:** 2026-05-11T14:40:08Z
 **Depth:** standard
-**Files Reviewed:** 6
+**Files Reviewed:** 5
 **Status:** issues_found
 
 ## Summary
 
-Reviewed the Phase 22 source changes identified by the phase summary: deletion of the zero-reference `KeyFrame` interface and the instrumentation database path move from the project root to `.cache/eyelib_instrument`. The broad fallback scope file listed 1094 existing files, but the machine-readable phase summary and targeted diff identify the actionable Phase 22 source surface above. No issue was found with the deleted zero-reference `KeyFrame` after checking for direct fully qualified references, but the instrumentation path change introduces one runtime robustness regression and one test isolation defect.
+Reviewed the explicitly scoped Phase 22 instrumentation files at standard depth, including the production `.cache/eyelib_instrument` path change and the updated tests around disabled instrumentation and background flushing. The path move introduces one runtime error-boundary regression, and the disabled-instrumentation assertion remains order-dependent on stale H2 files created by other instrumentation tests.
 
 ## Critical Issues
 
@@ -36,9 +35,9 @@ Reviewed the Phase 22 source changes identified by the phase summary: deletion o
 **File:** `src/main/java/io/github/tt432/eyelib/client/instrument/db/InstrumentDatabase.java:45-49`  
 **Also affected:** `src/main/java/io/github/tt432/eyelib/client/instrument/db/BackgroundFlushService.java:139-142`
 
-**Issue:** The new `.cache` directory creation wraps `IOException` in `UncheckedIOException`, but `BackgroundFlushService.flush()` only catches `SQLException`. If `.cache` cannot be created because a file already exists at that path, permissions deny creation, or the working directory is read-only, instrumentation no longer degrades gracefully; the unchecked exception can escape a manual flush/shutdown and can kill the scheduled flush task. This violates the class contract that DB failures must not crash the render path.
+**Issue:** The new `.cache` directory creation wraps `IOException` in `UncheckedIOException`, but the flush boundary only handles `SQLException`. If `.cache` cannot be created because a file already exists at that path, permissions deny creation, or the working directory is read-only, the unchecked exception can escape a manual flush/shutdown and can terminate the scheduled flush task instead of degrading through the existing logging path. That violates the instrumentation contract that database failures must not crash or kill the render-path instrumentation service.
 
-**Fix:** Keep `getConnection()` failures inside the existing checked `SQLException` path, or catch the unchecked failure at the flush boundary. Preferred fix:
+**Fix:** Keep `getConnection()` failures inside the checked `SQLException` path so existing callers' error handling still applies:
 
 ```java
 try {
@@ -56,9 +55,9 @@ Then the existing `catch (final SQLException ex)` in `BackgroundFlushService.flu
 
 **File:** `src/test/java/io/github/tt432/eyelib/client/instrument/InstrumentDisabledTest.java:153-164`
 
-**Issue:** `noDatabaseFilesCreated()` asserts that `.cache/eyelib_instrument.*.db` files do not exist, but cleanup runs only in `tearDown()`. Other instrumentation tests in the same suite intentionally create the shared H2 file and do not remove it. If `InstrumentDisabledTest` runs after those tests, or if a developer has a stale `.cache/eyelib_instrument.mv.db`, this assertion fails even though the disabled code path did not create a database during the test.
+**Issue:** `noDatabaseFilesCreated()` asserts that `.cache/eyelib_instrument.*.db` files do not exist, but the test does not establish that precondition before running. `BackgroundFlushServiceTest` intentionally opens the shared H2 database and only deletes rows, not the database files, so suite order or a developer's stale `.cache/eyelib_instrument.mv.db` can make this disabled-path test fail even when the disabled code did not create a database during the test.
 
-**Fix:** Make the test establish its own precondition before the assertion, preferably via a shared cleanup helper called from both `@BeforeEach` and `@AfterEach`:
+**Fix:** Delete the instrumentation database files before the assertion as well as after the test, or move the database tests to a per-test temporary DB location. For the current shared path, use a cleanup helper from both `@BeforeEach` and `@AfterEach`:
 
 ```java
 @BeforeEach
@@ -86,6 +85,6 @@ private static void deleteInstrumentationDatabaseFiles() {
 
 ---
 
-_Reviewed: 2026-05-11T14:32:51Z_  
+_Reviewed: 2026-05-11T14:40:08Z_  
 _Reviewer: the agent (gsd-code-reviewer)_  
 _Depth: standard_
