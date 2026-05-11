@@ -1,595 +1,463 @@
-# Domain Pitfalls
+# Domain Pitfalls: v1.4 结构清理
 
-**Domain:** Forge Multi-Module Util Code Extraction
-**Researched:** 2026-05-10
-**Confidence:** HIGH
-
----
-
-## Executive Summary
-
-Extracting shared utility code from a root module into a dedicated `:eyelib-util` Forge Gradle subproject presents four classes of risk: **compile-time** failures from import-fixup lag and package shadowing; **runtime** errors from classloader changes and mods.toml ID collision; **dependency** cycles introduced by cross-module relocation; and **ownership ambiguity** when single-consumer code lands in the wrong destination.
-
-The v1.2 particle extraction taught hard lessons: package name collisions between root and new module silently break imports, wildcard imports (`import ...util.codec.*`) resolve to the wrong package after relocation, and duplicate utility classes across submodules (`DispatchedMapCodec` in both root and eyelib-material) create post-extraction drift. The v1.3 util extraction inherits these risks and adds new ones: eyelib-util's Forge module identity (mods.toml), MC-dependent vs pure-Java code mixing, and the obligation to leave `root/util/*` completely empty.
-
-**Key insight:** Util extraction is an import-rewiring exercise whose risk is proportional to the number of import sites changed. With 34 files in `root/util/*` referenced by dozens of consumers across root and submodules, phased, verified migration is the only safe approach.
+**Domain:** Multi-module Gradle + Java 17 + Forge structural cleanup (brownfield refactoring)
+**Researched:** 2026-05-11
+**Confidence:** HIGH (based on 4 prior milestone post-mortems, build file inspection, IDE artifact analysis, and codebase survey)
 
 ---
 
-## PITFALL CATEGORY 1: Compile-Time Risks
+## 1. Lessons From Previous Milestones
 
-Mistakes that cause compilation failure, silent import resolution to the wrong class, or build breakage during or after migration.
+### v1.2 Particle Module Extraction (Phases 8-14)
 
-### Pitfall C1: Package Shadowing — Old Source Coexisting with New Module Source
+**What worked:**
+- Phase 8 established a buildable skeleton (`:eyelib-particle`) BEFORE any code moved — solo `jetbrain_build_project` passed on the empty module before migration began.
+- Phase 9 used narrow API seams (lookup, spawn/remove) to decouple root from particle internals before extraction.
+- Phase 10 locked schema/runtime ownership via explicit `ParticleDefinitionAdapter` — no ambiguous "who owns what."
+- Phase 13 preserved observable command behavior (`/eyelib particle`) through platform adaptation layer — user-visible contract unchanged.
+- Phase 14 final gate ran JetBrains MCP full build + ClientSmoke + hardware checklist.
 
-**What goes wrong:** After creating `:eyelib-util` with classes under `io.github.tt432.eyelibutil.*` (following the existing submodule naming convention), the old `io.github.tt432.eyelib.util.*` source files are not deleted from root simultaneously. Both packages coexist on the classpath during the transition. Import statements in root code may resolve to the old (root) or new (eyelib-util) location depending on classpath ordering, producing ambiguous resolution errors or silent compilation against stale code.
+**What broke / caused friction:**
+- **PFUT-02 deferred debt:** Packet contract relocation was left as future scope — current ownership documented but not fully extracted. Packets that logically belong to `:eyelib-particle` still transit through root transport registration. Lesson: be explicit about what IS and IS NOT moving.
+- **PFUT-03 deferred debt:** Independent `:eyelib-particle` artifact publication (maven publish) left as future scope — module exports but cannot be consumed standalone. Lesson: document artifact publication as a separate gate from code extraction.
+- **Nyquist validation partial for Phases 11-12:** Runtime extraction and loading rewires had incomplete validation coverage at the time; only Phase 14 final gate closed the functional risk. Lesson: verify each phase independently before declaring it done.
+- **Root legacy deletions were post-verified:** Root `client/particle/bedrock/**`, `ParticleLookup`, `ParticleManager`, `ParticleAssetRegistry`, and root `BrParticleRenderManager` were deleted during FM-005 but only confirmed gone in Phase 14. Lesson: run `glob` on deleted paths immediately after deletion, not at final gate.
 
-**Why it happens:** Migration executed as "add new module first, then gradually delete old sources" rather than atomic move-and-delete. The root module and `:eyelib-util` both appear in the Gradle build, and Gradle's classpath resolution does not guarantee which source wins.
+### v1.3 Utility Module Extraction (Phases 15-21)
 
-**Consequences:** 
-- `javac` error: "reference to X is ambiguous, both in module root and module eyelibutil"
-- IDE code intelligence shows stale definitions, leading developers to edit the wrong copy
-- Runtime behavior differs from compile-time behavior (old code ran, new code not properly wired)
+**What worked:**
+- Phase 15 pre-migration audit was CRITICAL: every source file had a verified consumer count (0/1/N rule) and a committed routing decision before any code moved.
+- Wildcard import elimination before migration: `import io.github.tt432.eyelib.util.*` → explicit class imports. This prevented silent import breakage during moves.
+- Phase 16 scaffold + solo build verification BEFORE any code migration: `:eyelib-util` compiled via JetBrains MCP with exit code 0 while still empty.
+- Phase 16 mods.toml with unique modId `eyelibutil` that didn't collide with 7 existing module modIds.
+- Phase 17 Tier-1 migration: zero-dependency files (time, color, loader, math, search) moved atomically — they had no back-references to resolve.
+- Using a separate package namespace `io.github.tt432.eyelibutil` (not `io.github.tt432.eyelib.util`) — eliminated split-package risk entirely.
+- Phase 21 final static checks: `glob` for .java files in old paths, `grep` for old import patterns — both verified zero.
 
-**Prevention in v1.3:**
-- **Atomic file operations:** For each util file being moved, in a single commit: (1) copy the file to `eyelib-util/src/main/java/`, updating the package declaration; (2) delete the file from `root/src/main/java/`; (3) update all import sites. Never leave both copies in the tree.
-- **per-phase verification:** After each phase's file moves, run `jetbrain_build_project` and check for zero errors with `ide_diagnostics`.
-- **Mechanical script rule:** A bash script that, for file X, confirms the old path no longer exists before proceeding to the next file.
+**What broke / caused friction:**
+- **ResourceLocations.mod() circular reference to root's MOD_ID:** Had to be deleted (not parameterized) because the callers didn't need it. Lesson: identify cycle-creating references BEFORE moving classes.
+- **Phase 18 Resource/texture migration had wrapper duplication:** `TexturePaths` existed in both `core/util/` and `:eyelib-util` simultaneously. Had to merge into canonical implementation and redirect callers. Lesson: don't create transitional duplicates; move atomically.
+- **Single-consumer routing by locked decision:** `AnimationApplier`, `Models`, and `ModBridgeServer` were moved to functional owners despite zero current consumer evidence. Lesson: if consumers are ambiguous, flag as tech debt and verify later.
+- **Deferred CENT-F01/CENT-F02:** Additional submodule duplicate centralization and root dependency-scope narrowing remain future scope — now in STATE.md deferred items.
 
-**Detection:** Grep for `io.github.tt432.eyelib.util.` in root source after deletions. Any remaining import is a stale reference or a missed file.
+### Cross-Milestone Patterns
 
-**Phase mapping:** Phases 2–4 (file movement phases)
-
----
-
-### Pitfall C2: Import Wildcard Collapse
-
-**What goes wrong:** Code in root uses wildcard imports like `import io.github.tt432.eyelib.util.codec.*;` (found in `BrAnimationEntry.java`). After codec classes move to `io.github.tt432.eyelibutil.codec`, the wildcard import still resolves the old package path, now empty or containing only compatibility facades. Imports fail silently or resolve to wrong classes if facades remain.
-
-**Why it happens:** Wildcard imports commit to a specific package name. Package rename during extraction breaks all wildcard resolution.
-
-**Consequences:** 
-- Missing imports at compile time
-- If compatibility facades are left as passthrough, wildcard still works — but facade classes become long-term maintenance debt
-- `BrAnimationEntry.java` currently uses `import io.github.tt432.eyelib.util.codec.*;` — this single file breaks at least 5-10 individual class references
-
-**Prevention:**
-- **Phase 0 pre-migration audit:** Scan all source files for `import io.github.tt432.eyelib.util.*` and `import io.github.tt432.eyelib.util.codec.*` and replace with explicit imports BEFORE any file movement begins.
-- **Automated pre-check:** Add a verification step to the first phase that fails if wildcard imports to any `eyelib.util` subpackage exist.
-- **Verified files:** `BrAnimationEntry.java` (line contains wildcard), verify no others exist in root or submodules.
-
-**Detection:** `jetbrain_search_in_files_by_regex` with regex `import io\.github\.tt432\.eyelib\.util\.\w+\.\*` in all `*.java` files.
-
-**Phase mapping:** Phase 1 (pre-migration audit, before file movement)
+| Pattern | Frequency | Severity |
+|---------|-----------|----------|
+| Incomplete import migration → compile failure on full build | 2/4 milestones | HIGH |
+| IDE project file staleness after Gradle module changes | Every milestone | MEDIUM |
+| Documentation drift (READMEs, MODULES.md not updated) | 3/4 milestones | MEDIUM |
+| Tests referencing moved code with stale imports | 2/4 milestones | HIGH |
+| Forgetting to update `settings.gradle` `include(...)` | 1/4 milestones | HIGH |
 
 ---
 
-### Pitfall C3: Intra-Util Self-Reference Breaking After Split
+## 2. Project-Specific Constraints (Must Not Violate)
 
-**What goes wrong:** `ImmutableFloatTreeMap` (in `root/util/`) imports `io.github.tt432.eyelib.util.codec.CodecHelper` and `io.github.tt432.eyelib.util.codec.DispatchMapCodec`. If these codec classes move to eyelib-util in a different phase than `ImmutableFloatTreeMap`, the internal dependency breaks. Worse, if codec classes end up in a different package prefix (`eyelibutil.codec` vs `eyelib.util.codec`), the import chain temporarily or permanently breaks.
+### Hard Blocks (No Exceptions)
 
-**Why it happens:** The `util/` family has internal coupling — codec helpers are consumed by util-level classes like `ImmutableFloatTreeMap`. Phased migration that separates co-dependent files causes intermediate breakage.
+| Constraint | Why | Violation Consequence |
+|-----------|-----|----------------------|
+| **No shell Gradle** — all Gradle commands via JetBrains MCP (`jetbrain_build_project`, `jetbrain_run_gradle_tasks`) | Project policy; shell Gradle may use wrong JDK, miss IDE integration | Build undefined behavior; possible JDK mismatch |
+| **No JDTLS / Eclipse artifacts** — `.vscode/`, `.eclipse/`, `.project`, `.classpath`, `.factorypath`, `.settings/`, `bin/` must never exist | Project policy; IntelliJ-only tooling | IDE conflict; rejected at PR review |
+| **No behavior changes during moves** — module extraction must be pure refactoring unless a requirement explicitly changes behavior | 00-control-spec.md Execution Rules | Regression risk; complicates verification |
+| **No touching unrelated uncommitted changes** | AGENTS.md Editing Rules | Merge conflicts; audit trail contamination |
+| **No growing `Eyelib.java` with new reach-through accessors** | 00-control-spec.md Forbidden Moves | Anti-pattern regression; breaks module boundaries |
+| **Generated code is read-only** — `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/` | AGENTS.md Generated Code | Parser regeneration will overwrite; merge conflicts |
+| **Preserve manager, loader, visitor, codec patterns** | 00-control-spec.md Execution Rules | Inconsistency with established architecture |
 
-**Consequences:** 
-- Compilation failure in intermediate phases
-- Friction if phases are split across codec vs. data-structure utility families
+### Soft Constraints (Must Justify Deviation)
 
-**Prevention:**
-- **Atomic codec family migration:** All classes in `root/util/codec/` and `ImmutableFloatTreeMap` (which depends on them) must move in the SAME phase. Identify transitive intra-util dependencies before planning phase boundaries.
-- **Dependency graph per phase:** For each move candidate, run `ide_ide_find_references` within the `util/` subtree. If A references B and both are in root/util, they must move together.
-
-**Detection:** Parse all `.java` files in `root/util/` for `import io.github.tt432.eyelib.util.*` references. Any self-references within root/util must be tracked.
-
-**Intra-util dependencies discovered:**
-| File | Depends on (in util) |
-|------|---------------------|
-| `ImmutableFloatTreeMap.java` | `util.codec.CodecHelper` |
-| `util.codec.*` (all) | `util.codec.Tuple`, `util.codec.EitherHelper`, `util.codec.ChinExtraCodecs` |
-
-All 9 codec files + `ImmutableFloatTreeMap` form an atomic migration unit.
-
-**Phase mapping:** Phase 2 (codec family must move as one unit)
+| Constraint | Why |
+|-----------|-----|
+| No further Gradle module split beyond current functional needs unless a human explicitly asks | 00-control-spec.md Non-Goals |
+| No opportunistic renaming of broad package areas without a documented destination | 00-control-spec.md Non-Goals |
+| Update MODULES.md on any module change | MODULES.md Update Rules |
+| Update docs/architecture/01-module-boundaries.md on boundary changes | MODULES.md Update Rules |
+| Update readers via AGENTS.md nav when index docs change | AGENTS.md |
 
 ---
 
-### Pitfall C4: Import-Heavy File Churn Exceeding IDE Auto-Fix Capacity
+## 3. Verification Gates (Must Pass)
 
-**What goes wrong:** 34 files in `root/util/*` are referenced by dozens of import sites across root (`client/animation/`, `client/loader/`, `common/`, `capability/`, `client/render/` etc.) and submodules. Manually fixing each import risks human error (wrong package name, missed file, stale import). IDE auto-refactor tools (`ide_refactor_move_file`) may not handle the cross-module + package-rename combination safely.
+Every cleanup operation must pass these gates in this order:
 
-**Why it happens:** The v1.2 particle extraction faced similar import-hell. The root module has ~60+ import sites referencing `io.github.tt432.eyelib.util.*` classes. Each must change to `io.github.tt432.eyelibutil.*`.
-
-**Consequences:** 
-- Missed import sites → compile errors
-- Incorrect package names (typos like `eyelibutil` vs `eyelib-util` in package) → permanent debt
-- Manual rename taking hours with high error rate
-
-**Prevention:**
-- **IDE refactoring per file:** For each util file, use `ide_ide_find_references` to discover ALL import sites, then use `ide_ide_refactor_move_file` to the new module directory after package rename.
-- **Package rename before move:** First rename the package declaration in the source file (edit), then move the file to the new module directory using IDE tools. IDE handles import-fixup automatically.
-- **Phase grouping:** Group files by consumer domain (codec family → one phase, math family → one phase, search/modbridge → one phase) so each phase is a tractable set of import fixes.
-- **Post-phase verification:** After each phase, `jetbrain_build_project` + `ide_diagnostics` to catch any missed imports.
-
-**Phase mapping:** Phases 2, 3, 4 (each phase = one util domain family)
+| Gate | Tool | What It Verifies | Failure Pattern |
+|------|------|-----------------|-----------------|
+| **G1: Solo Module Build** | `jetbrain_build_project` with `filesToRebuild` on the affected module | Module compiles independently | Missing dependencies, broken classpath |
+| **G2: Full Project Build** | `jetbrain_build_project` with `rebuild=true` | ALL modules + root compile with zero errors | Stale imports in other modules, transitive breakage |
+| **G3: NullAway** | `jetbrain_run_gradle_tasks` with `["nullawayMain"]` | Null safety invariants preserved | Moved code violates null contracts |
+| **G4: Test Suite** | `jetbrain_run_gradle_tasks` with `["test"]` | Existing tests still pass | Moved/deleted code breaks test assertions |
+| **G5: Import Purge** | `jetbrain_search_in_files_by_text` for old import patterns | Zero references to old paths | Missed import updates (especially in root, submodules) |
+| **G6: File Purge** | `jetbrain_find_files_by_glob` for old file paths | Old source locations are empty | Files left behind, split-package risk |
+| **G7: ClientSmoke (optional)** | `jetbrain_execute_run_configuration` with `"runClientSmoke"` | Runtime behavior preserved | Move breaks runtime wiring (not compilation) |
+| **G8: Docs Alignment** | Manual review or `jetbrain_search_text` | MODULES.md, boundary docs, READMEs match new topology | Documentation drift |
 
 ---
 
-### Pitfall C5: EyelibCodec MC Dependency — Unexpected Incompatibility
+## 4. Goal-by-Goal Risk Assessment
 
-**What goes wrong:** `EyelibCodec.java` imports `net.minecraft.util.ExtraCodecs` and `net.minecraft.world.phys.AABB`. If `:eyelib-util` is created but the Gradle dependency configuration does not include the Minecraft dependency that provides these classes, `EyelibCodec` fails to compile in the new module.
+### Goal 1: capability 包内容迁移至 eyelib-attachment
 
-**Why it happens:** Assumption that "most codec code is pure Mojang DataFixerUpper" — but `EyelibCodec` specifically depends on MC `ExtraCodecs.VECTOR3F` and `AABB`. MC classes are only available when the Forge/MDGL plugin provides the Minecraft dependency.
+**Current state:** The `capability/` package at root level contains:
+- `EyelibAttachableData.java` — typed attachment storage
+- `RenderData.java` — per-entity render data capability
+- `ExtraEntityData.java` / `ExtraEntityUpdateData.java` — data-only codec records
+- `EntityBehaviorData.java` — behavior state
+- `EntityStatistics.java` — statistics holder
+- `ItemInHandRenderData.java` — item rendering state
+- `component/ModelComponent.java`, `AnimationComponent.java`, `RenderControllerComponent.java`, `ClientEntityComponent.java` — runtime capability components with Forge event subscriptions
 
-**Consequences:** 
-- Compile failure in eyelib-util for any file that uses `EyelibCodec`
-- Surprise: a "codec" file is not datafixerupper-only
+**Risks:**
 
-**Prevention:**
-- **Forge module declaration confirmed:** eyelib-util MUST use the `net.neoforged.moddev.legacyforge` plugin (like all other modules) to get MC/Forge classpath.
-- **Pre-move audit:** For each file in `root/util/*`, run `jetbrain_search_in_files_by_regex` for `import net\.minecraft` and `import net\.minecraftforge`. Any file with MC/Forge imports is identified as requiring the Forge module dependency. Currently: `ResourceLocations.java` (ResourceLocation), `EyelibCodec.java` (ExtraCodecs, AABB), `Shapes.java` (RandomSource) — 3 files requiring MC.
-- **Design decision in STACK.md:** eyelib-util is declared as a Forge module (per Key Decision in PROJECT.md), so MC dependencies are valid. But files without MC imports remain pure Java.
+| # | Risk | Likelihood | Impact | Prevention |
+|---|------|-----------|--------|------------|
+| R1 | **Capability components have Forge event-bus subscriptions in root `mc/impl/capability/CapabilityComponentRuntimeHooks.java`** — moving capability code may break the event wiring | HIGH | HIGH | Audit `CapabilityComponentRuntimeHooks` before any move; ensure root MC event wiring stays in root |
+| R2 | **Network packets reference capability types** — `DataAttachmentUpdatePacket`, `UniDataUpdatePacket`, `ExtraEntityDataPacket` in `mc/impl/network/packet/` decode through capability types | HIGH | HIGH | Catalog all packet-codec dependencies on capability types BEFORE moving |
+| R3 | **Root `mc/impl/data_attach/` transitional wiring depends on capability types** — Forge capability/provider/event wiring in `mc/impl/data_attach/` binds to `EyelibAttachableData` | HIGH | MEDIUM | Document that MC wiring stays in root; only pure data/codec/contract types move to attachment |
+| R4 | **Split-package risk if capability code moves to `io.github.tt432.eyelibattachment` namespace** — current root capability is `io.github.tt432.eyelib.capability` | HIGH | HIGH | Follow v1.3 pattern: use distinct namespace (`io.github.tt432.eyelibattachment.capability`) for moved code |
+| R5 | **`EyelibAttachableData` has bidirectional runtime coupling** — it's both a data type AND a capability provider | MEDIUM | HIGH | Split definition from runtime wiring: move data/codec portion; keep Forge capability registration in root |
+| R6 | **Tests reference capability types directly** — `AnimationComponentSerializableInfoTest`, `RenderControllerComponentTextureStateTest`, `AnimationComponentRuntimeInvalidationTest`, `CommonRuntimeUpdaterTest` | HIGH | HIGH | Update test imports as part of the same commit; run G4 immediately after move |
 
-**Phase mapping:** Phase 1 (module skeleton creation, Gradle config)
-
----
-
-## PITFALL CATEGORY 2: Runtime Risks
-
-Mistakes that cause runtime failures after successful compilation, including classloading, Forge lifecycle, and mod identity issues.
-
-### Pitfall R1: mods.toml Identity Collision
-
-**What goes wrong:** `:eyelib-util` gets a `mods.toml` with `modId = "eyelib"` (accidentally matching root) or reusing an existing submodule ID. Forge discovers two `@Mod` annotations with the same ID during scan and rejects the mod at startup.
-
-**Why it happens:** The root module's modId is `eyelib`. Submodules use unique IDs: `eyelibattachment`, `eyelibimporter`, `eyelibmaterial`, `eyelibmolang`, `eyelibparticle`, `eyelibprocessor`. The new module must follow this pattern with `eyelibutil` (no hyphen — consistent with existing naming). Copy-paste from another module's mods.toml without changing the ID creates collision.
-
-**Consequences:** 
-- Forge startup crash: "Duplicate mod ID" or "Mod ID already registered"
-- Error only detectable at runtime, not at compile time
-
-**Prevention:**
-- **Template with guard:** Create `mods.toml` from scratch using `eyelibutil` as `modId`, not by copying another module's file.
-- **Unique ID verification:** Cross-reference all existing `mods.toml` files:
-  - root: `eyelib`
-  - eyelib-attachment: `eyelibattachment`
-  - eyelib-importer: `eyelibimporter`
-  - eyelib-material: `eyelibmaterial`
-  - eyelib-molang: `eyelibmolang`
-  - eyelib-particle: `eyelibparticle`
-  - eyelib-processor: `eyelibprocessor`
-  - eyelib-util (new): `eyelibutil`
-- **Mod annotation check:** If eyelib-util does NOT register a `@Mod` class (it's purely a library, no Forge bootstrap), the mods.toml `modId` only needs to not conflict. But if it has a `@Mod` entrypoint, the modId must be globally unique across ALL Forge mods in the environment.
-
-**Detection:** Grep all `mods.toml` files for `modId` values. Ensure `eyelibutil` is unique. Note: eyelib-util is a library module — it may NOT need `@Mod` or `mods.toml` at all, if it has no Forge lifecycle. Per PROJECT.md Key Decision: "eyelib-util as Forge module: May depend on MC/Forge." But dependency on MC/Forge ≠ needing a `@Mod` annotation. The build.gradle must use the legacyForge plugin, but a `mods.toml` may be optional if no `@Mod` class exists.
-
-**Phase mapping:** Phase 1 (module skeleton creation)
+**Verification gates for Goal 1:**
+- G2 (Full build): all modules + root compile
+- G5 (Import purge): zero `import io.github.tt432.eyelib.capability.` in eyelib-attachment source (the moved code should use new namespace)
+- G4 (Tests): all capability-related tests pass
 
 ---
 
-### Pitfall R2: ResourceLocations — MOD_ID Circular Dependency
+### Goal 2: 重命名 eyelib-processor → eyelib-preprocessing
 
-**What goes wrong:** `ResourceLocations.mod(String path)` calls `new ResourceLocation(Eyelib.MOD_ID, path)`. `Eyelib.MOD_ID` is defined in root (`Eyelib.java`). If `ResourceLocations.java` moves to `:eyelib-util`, and eyelib-util cannot depend on root (circular dependency violation), the `mod()` method fails to compile.
+**Current state:** `:eyelib-processor` is a plain-JVM (no Forge) subproject with 8 Java source files. It depends on `:eyelib-importer` (compileOnly) and `:eyelib-molang` (implementation).
 
-**Why it happens:** The `mod()` convenience method embeds a reference to the root module constant. Moving `ResourceLocations` to a submodule breaks this reference because submodules cannot depend upward on root.
+**Risks:**
 
-**Consequences:** 
-- Compile error in `ResourceLocations.mod()`
-- Either the method is deleted (breaking callers) or the MOD_ID must be duplicated (DRY violation)
+| # | Risk | Likelihood | Impact | Prevention |
+|---|------|-----------|--------|------------|
+| R7 | **settings.gradle `include("eyelib-processor")` must change** — forgetting this breaks the entire Gradle project resolution | HIGH | CRITICAL | This is step 1. Verify with `jetbrain_list_gradle_projects_detail` after rename. |
+| R8 | **Root `build.gradle` has 4 references to `eyelib-processor`:** `api project(':eyelib-processor')`, `additionalRuntimeClasspath project(':eyelib-processor')`, `jarJar project(':eyelib-processor')` | HIGH | HIGH | Grep for all occurrences first; update all 4 in one atomic edit |
+| R9 | **`.idea/modules.xml` references `eyelib-processor`** — 2 module entries with paths like `.idea/modules/eyelib-processor/eyelib.eyelib-processor.main.iml` | CERTAIN | HIGH | Delete old .iml files; IDE will regenerate on next sync |
+| R10 | **`.idea/gradle.xml` references `$PROJECT_DIR$/eyelib-processor`** — module must be re-imported in IDE | CERTAIN | HIGH | Update the path to `$PROJECT_DIR$/eyelib-preprocessing` |
+| R11 | **`.idea/compiler.xml` references `eyelib.eyelib-processor.main` and `eyelib.eyelib-processor.test`** — annotation processor profiles reference these module names | CERTAIN | HIGH | Update module names in annotation processing profiles |
+| R12 | **Module directory must be renamed:** `eyelib-processor/` → `eyelib-preprocessing/` | CERTAIN | HIGH | Use IDE rename (`ide_move_file`) for directory to preserve IDE tracking |
+| R13 | **`eyelib-importer` depends on `:eyelib-processor`** — its `build.gradle` has `compileOnly project(':eyelib-processor')` | HIGH | HIGH | Update `eyelib-importer/build.gradle` in same commit |
+| R14 | **`base.archivesName = 'eyelib-processor'`** in build.gradle — must update to `'eyelib-preprocessing'` | HIGH | MEDIUM | Update in same commit; affects published artifact name |
+| R15 | **IDE sync will fail between settings.gradle update and directory rename** — Gradle can't find the old directory | CERTAIN | HIGH | Do ALL changes (settings.gradle, all build.gradle files, directory rename) in one atomic operation, then run `jetbrain_sync_gradle_projects` |
+| R16 | **Run configurations might reference the old module name** — `jetbrain_get_run_configurations` | LOW | LOW | Check for any run configs that explicitly target `eyelib-processor` |
 
-**Prevention options (ranked):**
-1. **Remove `mod()` method, keep callers working:** Delete the `mod()` convenience method and make callers use `ResourceLocations.of(Eyelib.MOD_ID, path)` — the MOD_ID stays in root, ResourceLocations only provides the `of()` factory.
-2. **Parameterize:** Change `mod(String path)` to `mod(String modId, String path)`, making callers supply MOD_ID.
-3. **Move MOD_ID to eyelib-util:** Extract `Eyelib.MOD_ID` constant to eyelib-util. But this changes the package of a legacy constant holder, potentially breaking other reference sites.
+**Order of operations for safe rename (Goal 2):**
+1. `jetbrain_search_in_files_by_text` for `eyelib-processor` across ALL files (`.gradle`, `.xml`, `.iml`, `.java`, `.toml`)
+2. Update `settings.gradle`: `include("eyelib-preprocessing")`
+3. Update root `build.gradle`: all 4 `eyelib-processor` → `eyelib-preprocessing`
+4. Update `eyelib-importer/build.gradle`: `compileOnly project(':eyelib-preprocessing')`
+5. Update `eyelib-processor/build.gradle`: `archivesName = 'eyelib-preprocessing'`
+6. Update `.idea/gradle.xml`: path to `$PROJECT_DIR$/eyelib-preprocessing`
+7. Rename directory: `eyelib-processor/` → `eyelib-preprocessing/` via `ide_move_file`
+8. Run `jetbrain_sync_gradle_projects`
+9. Delete regenerated `.idea/modules/eyelib-processor/` directory if IDE creates stale entries
+10. Run G1 (solo build on `:eyelib-preprocessing`)
+11. Run G2 (full rebuild)
+12. Run G4 (tests)
 
-**Recommendation:** Option 1 (remove `mod()` method). 4 call sites currently use `ResourceLocations`: `BrAnimationEntryDefinition`, `MolangQuery`, `ClientRenderSyncService`, and `RenderSyncApplyOpsTest`. Audit whether any of them specifically use `ResourceLocations.mod()`. If none do after source analysis, deletion is safe.
-
-**Detection:** Run `ide_ide_find_references` on `ResourceLocations.mod()` to confirm call sites. If zero callers → safe deletion. If callers exist → rewrite them before moving.
-
-**Phase mapping:** Phase 2 (ResourceLocations migration)
-
----
-
-### Pitfall R3: SharedLibraryLoader Classpath Change
-
-**What goes wrong:** `SharedLibraryLoader` uses `getResourceAsStream("/" + path)` and `new ZipFile(nativesJar)` to load native libraries from JAR classpath. After moving to `:eyelib-util`, the classloader that loads SharedLibraryLoader belongs to the `eyelib-util` JAR, not the root Eyelib JAR. The `getResourceAsStream` path resolves relative to the eyelib-util JAR, potentially failing to find embedded native libraries.
-
-**Why it happens:** Classpath-relative resource loading depends on which JAR the class belongs to. After module extraction, the class moves to a different JAR with a different resource root.
-
-**Consequences:** 
-- `RuntimeException: "Unable to read file for extraction: ..."` at startup
-- Native library extraction fails quietly, downstream native-dependent features break
-
-**Prevention:**
-- **Audit resource dependencies:** Check if `SharedLibraryLoader` is currently used by root to load natives from the root JAR. If so, the natives must either stay in root (with a compatibility bridge) or move to eyelib-util alongside SharedLibraryLoader.
-- **Verification test:** After migration, run a test that invokes `SharedLibraryLoader.load()` with a known native and verifies success.
-- **Risk assessment:** SharedLibraryLoader is a libGDX-origin utility. It may only be used for loading specific native DLLs that ship in the root JAR. If true, keeping it in eyelib-util requires repackaging natives. If the native loading is unused in practice, consider removing SharedLibraryLoader entirely.
-
-**Detection:** Run `ide_ide_find_references` on `SharedLibraryLoader` to find all callers. If zero callers → safe to delete. If callers exist → test the native path after migration.
-
-**Phase mapping:** Phase 3 (after initial code movement, dedicated verification)
+**Verification gates for Goal 2:**
+- G2 (Full rebuild): must pass with exit code 0
+- G5 (Import purge): zero occurrences of `eyelib-processor` in any `.gradle`, `.xml`, or `.java` file
+- G4 (Tests): all existing tests pass
+- IDE module list shows `eyelib-preprocessing` not `eyelib-processor`
 
 ---
 
-### Pitfall R4: ModBridgeServer Lifecycle Timing
+### Goal 3: 纯数据类归位到正确模块
 
-**What goes wrong:** `ModBridgeServer` starts a TCP server using `new ServerSocket(port)` in `start()`. If this server's lifecycle was previously controlled by root Forge events (e.g., started during `FMLCommonSetupEvent`), after moving to eyelib-util, the startup trigger remains in root but the server class is in a different module. Classloading order or event timing may cause `start()` to be called before the class is loaded.
+**Current state examples:** `BrAcParticleEffectDefinition` (in root `client/animation/bedrock/controller/`) is a pure data record that wraps an importer schema type.
 
-**Why it happens:** Module classloading in Forge multi-module builds is not deterministic by default. The eyelib-util module may load after root attempts to call `ModBridgeServer.start()`.
+**Risks:**
 
-**Consequences:** 
-- `NoClassDefFoundError` or `ClassNotFoundException` at startup
-- Silent failure if timing-dependent
+| # | Risk | Likelihood | Impact | Prevention |
+|---|------|-----------|--------|------------|
+| R17 | **Ambiguous "纯数据类" definition** — what qualifies? Record types only? All DTOs? All codec-bearing records? | HIGH | MEDIUM | Define criteria BEFORE any moves: (a) Java `record`, (b) zero Forge/Minecraft runtime imports, (c) codec-only behavior, (d) no side effects |
+| R18 | **Moving a data class may break its consumer's compilation** — if the consumer is in a module that doesn't depend on the target module | MEDIUM | HIGH | Audit ALL consumers before moving. Use `ide_find_references` on each candidate. |
+| R19 | **`BrAcParticleEffectDefinition` depends on both `eyelib-importer` and `eyelib-molang`** — it imports `BrAcParticleEffect` (importer) and `MolangValue` (molang) | CERTAIN | HIGH | Target module must have both importer and molang as dependencies. If moving to `eyelib-importer`, molang may need to become a dependency. |
+| R20 | **Data class may be "pure" NOW but could grow runtime behavior** — a record with only `fromSchema()/toSchema()` might get new methods later | LOW | LOW | Document the "owns data/codec only" boundary in the target module's README |
+| R21 | **There may be more such data classes not yet identified** — the audit in Goal 3 needs to find ALL candidates | MEDIUM | MEDIUM | Run `ide_find_class` with pattern `*Definition` and manually classify each |
+| R22 | **Records with `fromSchema()` methods technically have behavior** — moving them means consumers need import updates | HIGH | MEDIUM | Verify via G2 (full build) and G5 (import purge) |
 
-**Prevention:**
-- **Dependency declaration ensures load order:** If root depends on `:eyelib-util` via `modImplementation project(':eyelib-util')`, the eyelib-util classes are guaranteed to be on the classpath when root initializes.
-- **Lazy initialization:** If `ModBridgeServer.start()` is called from a `@SubscribeEvent` handler in root, the class is loaded by the time Forge fires the event.
-- **Verification:** After migration, run a full Forge client startup and verify no ClassNotFound errors for eyelib-util classes.
-
-**Detection:** Search for `ModBridgeServer` in root event handlers. Confirm it's loaded through a Forge event, not a static initializer.
-
-**Phase mapping:** Phase 4 (runtime verification)
-
----
-
-## PITFALL CATEGORY 3: Dependency Risks
-
-Mistakes in Gradle dependency configuration that create circular dependencies, wrong scope choices, or transitive leakage.
-
-### Pitfall D1: Circular Dependency Through EyelibCodec
-
-**What goes wrong:** Root depends on `:eyelib-util` for codec utilities. But `EyelibCodec.list()` returns a `MapCodec` that root animation code (`BrAnimationEntry`, `BrBoneKeyFrame`) uses with domain-specific codec registries provided by root. If the domain-specific registries reference classes in eyelib-util AND eyelib-util references classes in root, a cycle forms.
-
-**Why it happens:** `EyelibCodec.list(Supplier<Map<String, CodecInfo<? extends S>>> codecs)` is a generic codec factory. Root callers pass root-owned CodecInfo suppliers. The signature itself is generic and doesn't introduce a cycle — but if eyelib-util were to import root classes for any reason, the cycle would manifest.
-
-**Consequences:** 
-- Gradle build failure: "Circular dependency detected"
-- Cannot build eyelib-util independently
-
-**Prevention:**
-- **Dependency direction enforcement:** eyelib-util MUST have zero `project(':eyelib-*')` or root dependencies in its `build.gradle`. It depends only on MC/Forge/Mojang DataFixerUpper/JOML.
-- **Dependency audit:** After each phase, run `jetbrain_get_project_dependencies` on eyelib-util and verify zero project dependencies.
-- **Generic code pattern:** Codec factories in eyelib-util must accept generic types (Supplier, Function, Codec) and never reference concrete root domain types.
-
-**Detection:** In eyelib-util `build.gradle`, confirm `dependencies { }` block contains no `project(...)` entries for eyelib submodules.
-
-**Phase mapping:** Phase 1 (Gradle config), verified in every subsequent phase
+**Verification gates for Goal 3:**
+- Pre-move: `ide_find_references` on each candidate — confirm zero root-runtime dependency
+- G2 (Full build): all consumers compile
+- G5 (Import purge): zero old imports remaining
 
 ---
 
-### Pitfall D2: Duplicate DispatchedMapCodec — Source of Truth Ambiguity
+### Goal 4: 清理 client/animation 下无效接口
 
-**What goes wrong:** `DispatchedMapCodec` exists in TWO locations:
-1. `root/src/main/java/io/github/tt432/eyelib/util/codec/DispatchedMapCodec.java`
-2. `eyelib-material/src/main/java/io/github/tt432/eyelibmaterial/util/codec/DispatchedMapCodec.java`
+**Current state:** `client/animation/` has 40+ Java files. The "无效接口" needs definition.
 
-Both are the same concept (dispatched map codec) with slightly different implementations. After extracting to `eyelib-util`, only ONE copy should exist. But if the consumer migration for the eyelib-material version is missed, two implementations drift independently.
+**Risks:**
 
-**Why it happens:** During v1.2 particle extraction, eyelib-material was created as an independent module and duplicated utility code rather than depending on root util. This is exactly the pattern v1.3 aims to fix.
+| # | Risk | Likelihood | Impact | Prevention |
+|---|------|-----------|--------|------------|
+| R23 | **"Invalid" needs concrete criteria** — unused? deprecated? empty? superseded by importer-owned schema? | HIGH | MEDIUM | Define criteria in plan BEFORE deletion. Candidates to audit: interfaces with zero implementations, interfaces with zero references outside their package, interfaces that duplicate importer schema. |
+| R24 | **Interface might be used via reflection** — Forge event systems, Mixin targeting, or annotation-based discovery | MEDIUM | HIGH | Use `ide_find_implementations` AND `ide_search_text` for the interface name in ALL file types (`.java`, `.json`, `.toml`). Check `eyelib.mixins.json` for interface references. |
+| R25 | **Deleting an interface that has a single implementation in `mc/impl/`** — the implementation is in a different package and might not be found by simple glob | MEDIUM | HIGH | Always run `ide_find_implementations` with scope `project_and_libraries` before deleting any interface |
+| R26 | **Importer-owned schema interfaces in `eyelib-importer` might be shadowed** — root has `BrAnimationControllerDefinition` but importer has `BrAnimationController` schema | LOW | MEDIUM | Check for name collisions before declaring something "invalid" |
+| R27 | **Legacy animation runtime ports** — `AnimationExecutionPort`, `AnimationStatePort`, `AnimationIdentityPort` in `AnimationRuntimePortSet` exist as part of a recent architecture change | LOW | HIGH | Do NOT delete recently-added port interfaces; they are NOT invalid |
 
-**Consequences:** 
-- Two implementations with different behavior → subtle bugs
-- Maintenance burden doubled
-- eyelib-material continues to use its own copy after centralization, defeating the purpose
-
-**Prevention:**
-- **Post-centralization verification:** After moving `DispatchedMapCodec` to eyelib-util, run `ide_ide_find_references` on both the new AND old locations. The old eyelib-material copy's usages should be zero or replaced.
-- **Delete atomically:** When the eyelib-util version is introduced, ADD the `project(':eyelib-util')` dependency to eyelib-material, UPDATE its imports, and DELETE the eyelib-material copy in the same commit.
-- **Duplicate detection:** Before starting, scan ALL submodules for `DispatchedMapCodec`, `CodecHelper`, `KeyDispatchMapCodec`, `ChinExtraCodecs`, `TupleCodec`, `EyelibCodec` — any codec class name that might be duplicated.
-
-**Duplicate candidates discovered:**
-| Class | Root Location | Duplicate Location | Action |
-|-------|---------------|-------------------|--------|
-| `DispatchedMapCodec` | `root/util/codec/` | `eyelib-material/util/codec/` | Centralize to eyelib-util, delete eyelib-material copy |
-| `KeyDispatchMapCodec` | `root/util/codec/` | Only in root | Move to eyelib-util |
-| `StreamCodec` family | `eyelib-attachment/codec/stream/` | Only in attachment | Centralize to eyelib-util |
-
-**Phase mapping:** Phase 3 (submodule shared code discovery and centralization)
+**Verification gates for Goal 4:**
+- Per candidate: `ide_find_implementations` with `scope=project_and_libraries`
+- Per candidate: `ide_find_references` with `scope=project_and_libraries`
+- Per candidate: `jetbrain_search_text` for interface name in `eyelib.mixins.json` and all `.toml` files
+- G2 (Full build): after deletions
+- G4 (Tests): after deletions
 
 ---
 
-### Pitfall D3: Attachment StreamCodec Relocation — Dependency Chain
+### Goal 5: 删除根目录数据库文件创建代码
 
-**What goes wrong:** `EyelibStreamCodecs` and `StreamCodec` live in `:eyelib-attachment`. They are MC-dependent (FriendlyByteBuf, ResourceLocation, NBT) but are generic stream codec utilities, not attachment-specific logic. If they move to `:eyelib-util`, eyelib-attachment must add a dependency on `:eyelib-util`. But eyelib-util must NOT depend on eyelib-attachment.
+**Current state:** `client/instrument/db/InstrumentDatabase.java` and `BackgroundFlushService.java` create an H2 database at `./eyelib_instrument`. The instrumentation subsystem has 19 Java files across `collector/`, `db/`, `event/`, plus `InstrumentConfig.java`, `InstrumentLifecycleHooks.java`.
 
-**Current dependency chain:**
-- root → `:eyelib-attachment`
-- root → `:eyelib-molang`
-- root → `:eyelib-importer`
-- `:eyelib-particle` → `:eyelib-importer`, `:eyelib-molang`, `:eyelib-material`
-- All submodules are independent of each other (except particle → importer/molang/material)
+**Risks:**
 
-**After centralization:**
-- `:eyelib-util` depends on nothing (MC/Forge only)
-- root → `:eyelib-util`, `:eyelib-attachment`, etc.
-- `:eyelib-attachment` → `:eyelib-util` (for stream codecs)
-- `:eyelib-material` → `:eyelib-util` (for DispatchedMapCodec)
+| # | Risk | Likelihood | Impact | Prevention |
+|---|------|-----------|--------|------------|
+| R28 | **The database code is part of a larger instrumentation subsystem** — deleting `InstrumentDatabase` alone leaves broken references in `BackgroundFlushService`, `InstrumentLifecycleHooks`, and all collectors | CERTAIN | HIGH | Assess: are we deleting JUST the database code, or the ENTIRE instrumentation subsystem? Clarify scope in plan. |
+| R29 | **Active tests exist** — `InstrumentDatabaseTest`, `BackgroundFlushServiceTest`, `EventRingBufferTest`, `InstrumentConfigTest`, `InstrumentDisabledTest`, `InstrumentMolangIntegrationTest`, and 3 collector tests | CERTAIN | HIGH | Tests must be deleted or updated in the same commit. Account for all 9 test files. |
+| R30 | **`InstrumentLifecycleHooks` registers with Forge event bus** — deleting this class may leave orphaned event registrations or cause runtime errors | MEDIUM | HIGH | If deleting the subsystem, also remove `InstrumentLifecycleHooks` registration from bootstrap. Check `EyelibMod.java` for `InstrumentLifecycleHooks` references. |
+| R31 | **H2 database dialect is a Gradle dependency** — `com.h2database:h2:2.4.240` in root `build.gradle` is used by tests AND by the instrumentation code | MEDIUM | LOW | If removing instrumentation, verify H2 is still needed by tests (`testImplementation 'com.h2database:h2:2.4.240'`). The `implementation('com.h2database:h2:2.4.240')` via `jarJar` can be removed if instrumentation is deleted. |
+| R32 | **Scope creep** — Goal 5 says "删除根目录数据库文件创建代码" which literally means "delete the database file creation code at root" but may also mean the subsystem that creates it | MEDIUM | MEDIUM | Clarify in plan: delete just `InstrumentDatabase.java` and `BackgroundFlushService.java`, or delete all of `client/instrument/`? |
 
-**Why it happens:** Failure to plan the dependency graph before moving code. Adding project dependencies without checking for cycles.
+**Verification gates for Goal 5:**
+- Pre-deletion: `ide_find_references` on `InstrumentDatabase`, `BackgroundFlushService`
+- Post-deletion: G2 (Full build), G4 (Tests — all existing non-instrument tests still pass)
+- Post-deletion: G6 (File purge) — confirm deleted files are gone
 
-**Consequences:** 
-- Circular dependency if eyelib-util depends back on any submodule
-- Gradle build failure
+---
 
-**Prevention:**
-- **Dependency graph diagram:** Before starting any code movement, draw the dependency graph and confirm eyelib-util is a LEAF node (nothing depends on it upward, it depends on none sideways).
-- **Incremental addition:** Add `project(':eyelib-util')` dependency to ONE submodule at a time, verify build after each addition.
-- **No back-reference rule:** eyelib-util's `build.gradle` dependencies block MUST NOT contain any `project(...)` entries. This is a hard gate checked by automated audit.
+### Goal 6: client/model/bake 移入 eyelib-preprocessing
 
-**Target dependency graph after v1.3:**
+**Current state:** `client/model/bake/` contains 5 files: `BakedModel.java`, `BakedModels.java`, `ModelBakeInfo.java`, `EmissiveModelBakeInfo.java`, `TwoSideModelBakeInfo.java`. These are in root runtime (Forge-dependent).
+
+**Target module:** `eyelib-preprocessing` (currently `eyelib-processor`) — which is PLAIN-JVM, no Forge plugin.
+
+**Risks:**
+
+| # | Risk | Likelihood | Impact | Prevention |
+|---|------|-----------|--------|------------|
+| R33 | **CRITICAL: eyelib-processor is plain-JVM; bake code uses Forge/Minecraft types** — `BakedModel` likely references `ModelPart`, `PoseStack`, or `com.mojang.blaze3d.vertex.*` | HIGH | CRITICAL | FIRST audit bake code for Minecraft imports. If Minecraft types exist, either: (a) make eyelib-preprocessing a Forge module (adds `legacyForge` plugin), OR (b) extract platform-free portions only |
+| R34 | **Making eyelib-preprocessing a Forge module changes its nature** — it was designed as a plain-JVM processing module | MEDIUM | HIGH | If going route (a), update `build.gradle` to add `legacyForge` plugin, `mods.toml`, and Forge dependency. This is a significant change. |
+| R35 | **Bake code consumers are in root runtime** — `BakedModels` is consumed by model rendering pipeline. Moving it to preprocessing creates a dependency direction: root → preprocessing (Forge) | MEDIUM | MEDIUM | This is fine IF preprocessing is a Forge module. Currently root already depends on `:eyelib-processor` via `api project(...)`. |
+| R36 | **The rename Goal 2 and this Goal 6 are coupled** — if the rename happens first, the target module is `:eyelib-preprocessing`; if bake moves first, it moves to `:eyelib-processor` which is later renamed | LOW | LOW | Always do Goal 2 (rename) before Goal 6 (bake migration) to avoid moving code twice |
+
+**Verification gates for Goal 6:**
+- Pre-move: audit each bake file for Minecraft/FORGE imports via `jetbrain_read_file`
+- Pre-move: `ide_find_references` on each bake file to catalog consumers
+- Post-move: G2 (Full build) — root consumers must resolve to new location
+- Post-move: G6 (File purge) — `client/model/bake/` empty after move
+
+---
+
+### Goal 7: render/controller 基岩版 controller 分析/拆分
+
+**Current state:** `client/render/controller/` contains 4 files: `RenderControllerEntry.java`, `RenderControllers.java`, `RenderControllerLookup.java`, `package-info.java`. These are runtime controller definitions and user-facing annotation-driven controllers.
+
+**Risks:**
+
+| # | Risk | Likelihood | Impact | Prevention |
+|---|------|-----------|--------|------------|
+| R37 | **"分析/拆分" is an analysis goal, not a move goal** — this needs a design phase BEFORE implementation, unlike Goals 1-6 | CERTAIN | HIGH | Treat Goal 7 as a two-part task: (Part A) analyze and document findings, (Part B) implement based on findings. Do NOT commit to a split direction before analysis. |
+| R38 | **Bedrock controller runtime code is spread across multiple packages** — `client/animation/bedrock/controller/` (schema adaptation, execution, state ownership) AND `client/render/controller/` (entry definition, lookup) AND `eyelib-importer` (raw schema) | HIGH | HIGH | Map ALL controller-related code before deciding what to split. At minimum: 22 files in `client/animation/bedrock/controller/` + 4 files in `client/render/controller/` + importer schema |
+| R39 | **`RenderControllers.java` uses annotation-based registration** — `@SubscribeEvent` and other Forge annotations make it a runtime concern | HIGH | MEDIUM | Controller entry definitions belong in root runtime; only analysis may move schema/codec portions |
+| R40 | **Over-splitting creates complexity** — a controller has schema (importer), definition (root), execution (root animation), and render (root render controller). Adding another module boundary may not help. | MEDIUM | HIGH | The analysis must justify ANY split. "Keep in place" is a valid outcome. |
+
+**Verification gates for Goal 7:**
+- Part A (analysis): produce a documented map of controller code locations, responsibilities, and dependencies
+- Part B (if split): G2 (Full build), G4 (Tests), G7 (ClientSmoke — verify animations/controllers still work)
+
+---
+
+### Goal 8: 重构过时的 README.md
+
+**Current state:** 45+ README.md files across the repository. Some may reference pre-v1.3 module topology.
+
+**Risks:**
+
+| # | Risk | Likelihood | Impact | Prevention |
+|---|------|-----------|--------|------------|
+| R41 | **README updates may reference modules that don't exist yet** — if Goals 1-7 change module topology, READMEs updated before Goals 1-7 will be stale | MEDIUM | MEDIUM | Do Goal 8 LAST in the milestone, after all structural changes are complete |
+| R42 | **Empty package directories may still have READMEs** — the PROJECT.md says "无内容的文件夹不保留 README" but determining "no content" requires checking for Java files | LOW | LOW | Use `glob` on each package directory; if only `package-info.java` + `README.md`, the README may be removable |
+| R43 | **READMEs reference module names that may change** — `eyelib-processor` → `eyelib-preprocessing` | HIGH | MEDIUM | Run `jetbrain_search_text` for old module names across ALL README.md files after renames |
+| R44 | **Root README.md documentation drift** — the root `README.md` may describe pre-v1.2 or pre-v1.3 module structure | MEDIUM | MEDIUM | Audit root README against current MODULES.md topology; rewrite if stale |
+| R45 | **Package READMEs reference moved classes** — e.g., `eyelib-util/README.md` lists packages that now need updates | LOW | LOW | Verify each README lists correct current packages after all Goal 1-7 changes |
+
+**Verification gates for Goal 8:**
+- G8 (Docs alignment): Every README path matches actual filesystem state
+- `jetbrain_search_text` for `eyelib-processor` in all `**/README.md` — zero results after rename
+- Manual review: top-level `README.md` describes v1.4 module topology
+
+---
+
+## 5. Recommended Safe Execution Order
+
+Based on dependency analysis, risk coupling, and the principle of "move before rename, simple before complex":
+
 ```
-eyelib-util (leaf — no project deps)
-    ↑
-    ├── root (was: direct util access; now: project(':eyelib-util'))
-    ├── eyelib-attachment (now: project(':eyelib-util') for streamcodecs)
-    ├── eyelib-material (now: project(':eyelib-util') for dispatched map codec)
-    ├── eyelib-molang (possibly: project(':eyelib-util') if any util code used)
-    ├── eyelib-importer (possibly: project(':eyelib-util') if any util code used)
-    ├── eyelib-particle (possibly: project(':eyelib-util') if any util code used)
-    └── eyelib-processor (possibly: project(':eyelib-util') if any util code used)
+Phase A: Analysis & Audit (GOALS 4, 7)
+├── Goal 4: Audit client/animation for invalid interfaces
+│   - Identify candidates, verify zero references
+│   - Run G4 (tests) after each deletion batch
+│
+└── Goal 7: Analyze render/controller bedrock controllers
+    - Map all controller code locations
+    - Document responsibility split (or decision NOT to split)
+    - Part B (if applicable): execute split
+
+Phase B: Module Rename (GOAL 2 first — unblocks Goal 6)
+└── Goal 2: Rename eyelib-processor → eyelib-preprocessing
+    - Atomic operation (settings.gradle + all build.gradle + IDE files + directory)
+    - Run G2 (full rebuild) immediately
+    - Run G5 (import purge) to verify zero old references
+
+Phase C: Code Relocation (GOALS 1, 3, 6)
+├── Goal 6: Move client/model/bake → eyelib-preprocessing
+│   - Depends on Goal 2 (rename) completion
+│   - Audit Minecraft imports before committing to move
+│
+├── Goal 3: Move pure data classes to correct modules
+│   - Define criteria first
+│   - Audit all candidates with ide_find_references
+│   - Move atomically per class
+│
+└── Goal 1: Move capability code → eyelib-attachment
+    - Most complex move (runtime coupling, network packets, tests)
+    - Must split data/codec from runtime wiring
+    - Keep Forge event wiring in root mc/impl
+
+Phase D: Deletion (GOAL 5)
+└── Goal 5: Delete instrumentation database code
+    - Clarify scope (just db/ or entire instrument/ subsystem?)
+    - Delete tests in same commit
+    - Run G2 + G4
+
+Phase E: Documentation (GOAL 8 — ALWAYS LAST)
+└── Goal 8: Rewrite stale READMEs
+    - After ALL structural changes are complete
+    - Verify every path reference resolves
+    - Update top-level README to v1.4 topology
+
+Phase F: Final Verification
+├── G2: Full project rebuild (jetbrain_build_project with rebuild=true)
+├── G3: NullAway (jetbrain_run_gradle_tasks ["nullawayMain"])
+├── G4: Full test suite
+└── G7: ClientSmoke (jetbrain_execute_run_configuration "runClientSmoke")
 ```
 
-**Phase mapping:** Phase 1 (dependency planning), Phase 3 (attachment/material dependency rewiring)
+### Rationale For This Order
+
+1. **Analysis first (Goals 4, 7):** Avoids deleting or splitting code prematurely. Goal 4 deletions and Goal 7 analysis have zero dependency on other goals.
+2. **Rename before moves (Goal 2 before Goals 6, 3):** Goal 6 (bake → preprocessing) target module depends on the rename. Renaming first avoids moving code into a module whose name will immediately change.
+3. **Simple moves before complex (Goal 3 before Goal 1, Goal 6 separately):** Goal 3 (data classes) has fewer runtime coupling risks. Goal 1 (capability) has the most runtime coupling — do it last among moves when more of the codebase is stable.
+4. **Deletion after moves (Goal 5):** Instrumentation subsystem may have references to capability code; deleting it after capability migration avoids orphaned references.
+5. **Documentation always last (Goal 8):** READMEs describe the final state. Updating them earlier guarantees staleness.
 
 ---
 
-### Pitfall D4: Gradle Dependency Scope Mismatch
+## 6. Common Failure Modes (Cross-Cutting)
 
-**What goes wrong:** Submodules use `implementation project(':eyelib-util')` but eyelib-util types appear in their public API signatures (method return types, constructor parameters). Gradle's `implementation` scope hides these types from transitive consumers, causing compile failures in downstream consumers of the submodule.
+These apply to ALL goals:
 
-**Why it happens:** Defaulting to `implementation` because "it's just a utility library." But if a submodule's public API exposes `ImmutableFloatTreeMap` or `EyelibCodec` types in its interface, downstream consumers cannot see those types.
+### F1: Stale IDE Project Files After Module Changes
+**Symptom:** IDE shows red errors for valid code, or Gradle sync fails silently.
+**Root cause:** `.idea/modules.xml`, `.idea/gradle.xml`, `.idea/compiler.xml` reference old module names.
+**Fix:** Run `jetbrain_sync_gradle_projects` after ANY settings.gradle change. If sync fails, manually update the 3 XML files.
+**Detection:** Check `ide_index_status` — if `isDumbMode: true`, IDE is reindexing; wait.
 
-**Consequences:** 
-- Root module compiles against `:eyelib-particle`, which exposes `ImmutableFloatTreeMap` in its public API, but `:eyelib-particle` uses `implementation project(':eyelib-util')` → root cannot resolve `ImmutableFloatTreeMap`
+### F2: Incomplete Import Migration
+**Symptom:** Full project build (G2) fails with "cannot find symbol" in a module you didn't touch.
+**Root cause:** Moving a class updates imports in the SAME module but forgets to update imports in dependent modules.
+**Fix:** Always run `ide_find_references` BEFORE moving any class. After move, run G2 (full rebuild) — NOT just solo module build.
+**Detection:** G2 failure in unexpected modules.
 
-**Prevention:**
-- **Scope audit rule:** For each submodule adding `:eyelib-util` dependency:
-  - Use `api project(':eyelib-util')` IF and ONLY IF eyelib-util types appear in the submodule's public API (return types, parameter types, thrown exceptions, superclass, implemented interfaces).
-  - Use `implementation project(':eyelib-util')` if eyelib-util types are only used internally.
-- **Root module special case:** Root consumed `util` code internally; after extraction, root → `:eyelib-util` should almost always be `implementation` because root is the top-level assembly module.
-- **Verification:** After configuring dependencies, build the full project and confirm no "cannot find symbol" errors for eyelibutil types in downstream modules.
+### F3: Gradle Dependency Edge Breakage
+**Symptom:** Module compiles solo (G1 passes) but full build (G2) fails with circular dependency or missing dependency.
+**Root cause:** Adding a `project(...)` dependency that creates a cycle, or forgetting to add a needed dependency when code moves.
+**Fix:** Document the dependency graph BEFORE adding any edge. Check: root → all modules (root depends on everything), modules consume only what they declare.
+**Detection:** `jetbrain_get_project_dependencies` to inspect the graph.
 
-**Phase mapping:** Phase 4 (submodule integration phase)
+### F4: Test Breakage Without Corresponding Source Fix
+**Symptom:** Tests fail after move because they reference old package paths.
+**Root cause:** Moving source code but forgetting to move/update test code.
+**Fix:** Use `ide_find_references` with scope `project_test_files` to find test references. Include test file updates in the same commit as the move.
+**Detection:** G4 (test suite) failure.
 
----
+### F5: Partial File Movement (Split Package)
+**Symptom:** Two modules have the same package with different classes — classloader picks wrong one at runtime.
+**Root cause:** Moving SOME but not ALL classes from a package to a new module, leaving others in the old package path.
+**Fix:** Move entire packages, not individual classes. If partial move is needed, use a new package name in the target module (v1.3 pattern: `io.github.tt432.eyelibutil` not `io.github.tt432.eyelib.util`).
+**Detection:** G6 (file purge) shows .java files remaining in old path. `ide_find_file` for the package name shows files in two locations.
 
-## PITFALL CATEGORY 4: Ownership Ambiguity Risks
+### F6: NullAway Regression
+**Symptom:** NullAway fails (G3) on code that wasn't changed.
+**Root cause:** Moving a class into a module that doesn't have NullAway configured, OR the `AnnotatedPackages` option in `nullawayMain` doesn't include the new module's package.
+**Fix:** After any move into a Forge module, verify that module's build.gradle has NullAway configuration. Currently only root has `nullawayMain` task — submodules may need it added.
+**Detection:** G3 (NullAway) failure.
 
-Mistakes in deciding WHAT goes to eyelib-util vs. functional owners vs. stays in root, causing maintenance confusion and degradation of the module boundary.
-
-### Pitfall O1: Single-Consumer Utility Ends Up in eyelib-util
-
-**What goes wrong:** `AnimationApplier` and `Models` in `util/client/` are used ONLY by the client animation domain (`BrBoneAnimation`, `BrBoneKeyFrame`). They have exactly one functional consumer. Per the milestone rules, "Single-consumer utility code moved to its functional owner instead of staying in eyelib-util." But during migration, the laziest path is "move everything in root/util/* to eyelib-util" — violating the boundary rule.
-
-**Why it happens:** Unfamiliarity with the consumer graph. Default assumption "if it's in util/, it must be shared." The `util/client/` directory name is misleading — some code there pre-dates the module extraction and was placed in util/ before the current boundary discipline existed.
-
-**Consequences:** 
-- eyelib-util becomes a dumping ground for animation-specific code, defeating the purpose
-- Animation module cannot be understood independently
-- Future animation refactoring must touch eyelib-util (violates separation of concerns)
-
-**Prevention:**
-- **Consumer count audit (Phase 1):** For every file in `root/util/*`, run `ide_ide_find_references`. If exactly ONE consuming module exists → move to that module, NOT eyelib-util.
-- **Apply the rule mechanically:** The "one consumer" rule is not negotiable. If a file has N consumers:
-  - N = 0: Delete it (unused code)
-  - N = 1: Move to consumer's module (not eyelib-util)
-  - N ≥ 2: Move to eyelib-util (truly shared)
-- **Per-file ownership decisions:**
-
-| File | Consumers | Decision |
-|------|-----------|----------|
-| `AnimationApplier.java` | Animation only (1 consumer) | → Move to `client/animation/` in root |
-| `Models.java` | Animation loading only (1 consumer) | → Move to `client/animation/` in root |
-| `ResourceLocations.java` | 4 consumers across root | → eyelib-util (after resolving MOD_ID) |
-| `ImmutableFloatTreeMap.java` | 5 animation consumers | → eyelib-util |
-| `EyelibCodec.java` | 10+ consumers across root and submodules | → eyelib-util |
-| `Lists.java` | 0 consumers (verified) | → DELETE or eyelib-util if core/util equivalent needed |
-| `Collectors.java` | 0 consumers | → DELETE or eyelib-util |
-| `EntryStreams.java` | Needs audit | → TBD |
-| `ListHelper.java` | Needs audit | → TBD |
-| `SimpleTimer.java` | Needs audit | → TBD |
-| `Blackboard.java` | 0 consumers | → DELETE or eyelib-util |
-| `BBModelSink.java` | ModBridgeServer only (1) | → eyelib-util (it's part of ModBridgeServer's interface) |
-| `ModBridgeServer.java` | Root GUI manager (1+) | → Needs consumer audit |
-| `Shapes.java` | Particle module (1?) | → If 1 consumer, move to eyelib-particle. If 2+, eyelib-util. |
-
-**Phase mapping:** Phase 1 (consumer audit), Phase 2 (per-file routing decisions)
+### F7: mods.toml modId Collision
+**Symptom:** Forge complains about duplicate modId at startup.
+**Root cause:** If a module is converted from plain-JVM to Forge (adding `legacyForge` plugin and `mods.toml`), its modId must be unique.
+**Fix:** Check ALL existing mods.toml files for modId values BEFORE creating a new one. Current known modIds: `eyelib` (root), `eyelibattachment`, `eyelibimporter`, `eyelibmaterial`, `eyelibmolang`, `eyelibparticle`, `eyelibutil`.
+**Detection:** G7 (ClientSmoke) or `jetbrain_execute_run_configuration` fails with modId conflict.
 
 ---
 
-### Pitfall O2: Core/Util Hybrid — The Two-Source Problem
+## 7. Checklist For Each Goal (Quick Reference)
 
-**What goes wrong:** `core/util/*` is a separate subtree of platform-free helpers extracted during an earlier utility split wave (v1.1 era). `root/util/*` has compatibility adapters that wrap core/util functionality (e.g., `TexturePathHelper` wrapping `TexturePaths`). After both merge into eyelib-util, the adapter double-layer becomes permanent technical debt.
+Before starting any goal, verify:
 
-**Why it happens:** The core/util extraction was an incremental migration that left compatibility facades in root/util. If these facades are simply moved to eyelib-util alongside the core code, the dual-layer persists.
+```
+[ ] All references to target code catalogued (ide_find_references)
+[ ] All import sites identified (not just own module)
+[ ] All test files that reference target code listed
+[ ] All IDE project files that reference target paths known
+[ ] Dependency graph updated (if adding/removing edges)
+[ ] Verification gate sequence planned (which gates in which order)
+[ ] Commit boundary defined (what's in one atomic commit)
+```
 
-**Consequences:** 
-- Two classes doing the same thing in the same module (e.g., eyelib-util has both `TexturePathHelper` and `TexturePaths`)
-- Future developers confused about which to use
-- Import sites reference the wrapper instead of the canonical implementation
+After completing any goal, verify:
 
-**Prevention:**
-- **Merge duplicates during extraction:** When core/util and root/util equivalents exist:
-  1. Identify the canonical version (core/util is platform-free, that's the source of truth)
-  2. AUDIT all callers of the root/util wrapper
-  3. Rewrite callers to use the core version directly
-  4. DELETE the root/util wrapper (do not move it to eyelib-util)
-  5. Move the core version to eyelib-util
-- **File pairs to merge:**
-  | Core/Util Canonical | Root/Util Wrapper | Action |
-  |---------------------|-------------------|--------|
-  | `core/util/texture/TexturePaths.java` | `util/client/texture/TexturePathHelper.java` | Audit TexturePathHelper callers, redirect to TexturePaths, delete TexturePathHelper |
-  | `core/util/collection/ListAccessors.java` | Possibly `util/Lists.java` or `util/ListHelper.java` | Needs audit; may be different interfaces |
-  | `core/util/codec/Eithers.java` | `util/codec/EitherHelper.java` | Compare APIs; if equivalent, unify |
-  | `core/util/time/FixedStepTimerState.java` | `util/SimpleTimer.java` | Different abstractions; audit consumer overlap |
-
-**Phase mapping:** Phase 2 (during root/util → eyelib-util migration)
-
----
-
-### Pitfall O3: Package Name Convention Violation
-
-**What goes wrong:** Existing submodules use the naming pattern `io.github.tt432.eyelib<modulename>.*`:
-- eyelib-particle → `io.github.tt432.eyelibparticle.*`
-- eyelib-attachment → `io.github.tt432.eyelibattachment.*`
-- eyelib-molang → `io.github.tt432.eyelibmolang.*`
-- eyelib-material → `io.github.tt432.eyelibmaterial.*`
-- eyelib-importer → `io.github.tt432.eyelibimporter.*`
-- eyelib-processor → `io.github.tt432.eyelibprocessor.*`
-
-If `:eyelib-util` uses a different pattern (e.g., `io.github.tt432.eyelib.util` or `io.github.tt432.eyelibutil.shared`), it breaks the convention and creates inconsistency.
-
-**Why it happens:** The hyphen in the module name `eyelib-util` does not map cleanly to Java package names. Natural inclination might be `eyelibutil` (consistent) or `eyelib.util` (ambiguous, overlaps with root package).
-
-**Consequences:** 
-- Inconsistency with 6 existing modules
-- IDE auto-import suggestions may conflict with root package if `eyelib.util` is reused
-- Mental tax for developers navigating packages
-
-**Prevention:**
-- **Use `io.github.tt432.eyelibutil`** (no hyphen, no dot separator — consistent with ALL existing submodule naming).
-- **Enforce with checkstyle or grep:** After Phase 1 module creation, verify ALL new source files in eyelib-util use `package io.github.tt432.eyelibutil.*`.
-- **Sub-package mapping:**
-  - `root/util/codec/` → `io.github.tt432.eyelibutil.codec`
-  - `root/util/math/` → `io.github.tt432.eyelibutil.math`
-  - `root/util/search/` → `io.github.tt432.eyelibutil.search`
-  - `root/util/modbridge/` → `io.github.tt432.eyelibutil.modbridge`
-  - `root/util/client/` → Not moving (single-consumer → functional owner)
-  - `core/util/*` → `io.github.tt432.eyelibutil.core` (or flatten — core distinction is about MC-free vs MC-dep, not a submodule boundary)
-
-**Phase mapping:** Phase 1 (package naming decision, module skeleton)
-
----
-
-### Pitfall O4: Legacy Eyelib.java MOD_ID Constant Relocation
-
-**What goes wrong:** `Eyelib.java` in root (`io.github.tt432.eyelib.Eyelib`) holds `MOD_ID = "eyelib"` used by `ResourceLocations.mod()`. If `ResourceLocations` moves to eyelib-util, and the `mod()` method is preserved, eyelib-util needs access to MOD_ID. Moving the entire `Eyelib` class to eyelib-util (or just MOD_ID) breaks root references to `Eyelib` itself.
-
-**Why it happens:** `Eyelib` is referenced by root bootstrap, packet registration, and various other root-level code. It cannot simply move to a submodule.
-
-**Consequences:** 
-- Root code referencing `Eyelib.MOD_ID` breaks
-- `Eyelib` is a legacy constant holder — moving it disrupts dozens of root call sites
-
-**Prevention:**
-- **Do NOT move `Eyelib.java`.** It stays in root.
-- **Resolve the ResourceLocations.mod() issue (see Pitfall R2):** Either delete `mod()` or parameterize it to accept `modId` from caller.
-- **Alternative:** Add `MOD_ID` as a duplicate constant in eyelib-util (worst option — DRY violation, versioning risk).
-- **Recommended:** Delete `ResourceLocations.mod()` method. Check its 4 callers (`BrAnimationEntryDefinition`, `MolangQuery`, `ClientRenderSyncService`, `RenderSyncApplyOpsTest`) — audit whether any of them use `.mod()`. If not, safe deletion. If yes, rewrite callers to use `ResourceLocations.of(Eyelib.MOD_ID, path)`.
-
-**Phase mapping:** Phase 2 (ResourceLocations migration)
-
----
-
-## v1.2 Particle Extraction Lessons Applied to v1.3
-
-The v1.2 particle extraction provides direct analogues for v1.3 util extraction. The following are lessons learned and how they apply:
-
-| v1.2 Issue | How It Manifested | v1.3 Analogue | Prevention |
-|-----------|-------------------|---------------|------------|
-| Package name collision | Root and particle module both had `BrParticle`-named classes in different packages; confusing imports | Root util classes moving to eyelib-util with new package names; old imports break | Atomic move+delete per file, package rename verified |
-| Wildcard import chaos | `import io.github.tt432.eyelib.client.particle.bedrock.*` broke when package moved | `import io.github.tt432.eyelib.util.codec.*` in BrAnimationEntry.java | Pre-migration wildcard audit (Pitfall C2) |
-| Circular dependency risk | Phase 8 detected eyelib-particle must not depend back on root | eyelib-util must not depend on any submodule | Hard gate: zero-`project()` deps rule (Pitfall D1) |
-| Duplicate code across modules | `BrParticle` existed in root (legacy) and particle module (new), two owners | `DispatchedMapCodec` in root and eyelib-material | Deduplicate during centralization (Pitfall D2) |
-| Import hell | 60+ import sites changed across 7 phases | 34 files × many consumers = potentially 100+ import fixes | IDE refactor per file, grouped by domain family (Pitfall C4) |
-| Boundary leakage | Root compatibility adapters survived as permanent facades | core/util wrappers in root/util could become permanent if moved to eyelib-util | Merge canonical + wrapper during extraction (Pitfall O2) |
-| Verification granularity | Phase 14 verification gate caught residual issues | Each phase in v1.3 should have its own verification gate | Per-phase `jetbrain_build_project` + diagnostics (all pitfalls) |
-
----
-
-## Phase-Specific Checklists
-
-### Phase 1: Module Skeleton & Audit
-
-- [ ] Create `eyelib-util/build.gradle` with `legacyForge` plugin, java-library, no `project()` deps
-- [ ] Confirm package prefix `io.github.tt432.eyelibutil` — no dot after eyelib, no hyphen
-- [ ] Create `mods.toml` with `modId = "eyelibutil"` (verify no collision with 7 existing modIds)
-- [ ] Register `:eyelib-util` in `settings.gradle` with `include("eyelib-util")`
-- [ ] Replace ALL wildcard imports to `io.github.tt432.eyelib.util.*` with explicit imports
-- [ ] Run consumer audit: for every file in `root/util/*`, run `ide_ide_find_references` and classify (0/1/N consumers)
-- [ ] For each file, assign destination: eyelib-util (N≥2), functional owner (1), delete (0)
-- [ ] Build project (`jetbrain_build_project`) — should succeed (module exists but is empty/not yet consumed)
-- [ ] Identify intra-util dependency clusters (files that import each other; all must move together)
-- [ ] Identify MC/Forge-dependent files → confirm eyelib-util Forge module provides MC classpath
-
-### Phase 2: Root Util → eyelib-util Migration
-
-- [ ] Move codec family (9 files + ImmutableFloatTreeMap) as atomic unit
-- [ ] Move math family (EyeMath, Curves, MathHelper, FastColorHelper, Shapes) as unit — but confirm Shapes consumer count first
-- [ ] Move search family (Searchable, SearchResults) after confirming consumer count > 1
-- [ ] Move modbridge family (BBModelSink, ModBridgeServer) — pure Java, safe to move together
-- [ ] Move top-level files (ResourceLocations, Lists, Collectors, EntryStreams, ListHelper, SimpleTimer, Blackboard) — each individually after consumer audit
-- [ ] Resolve ResourceLocations.mod() — delete method or parameterize
-- [ ] Resolve core/util + root/util wrapper duplication (TexturePathHelper → TexturePaths merge, etc.)
-- [ ] Delete single-consumer files (AnimationApplier, Models) → move to animation domain in root
-- [ ] After EACH file move: update imports, then `jetbrain_build_project` + verify zero errors
-- [ ] After ALL files moved: confirm `root/util/*` directory is EMPTY (grep for any remaining `.java` files)
-
-### Phase 3: Submodule Shared Code Centralization
-
-- [ ] Audit all 6 existing submodules for shared utility code candidates:
-  - [ ] eyelib-attachment: streamcodec family → move to eyelib-util
-  - [ ] eyelib-material: DispatchedMapCodec → verify it's the same class; if different, merge or rename
-  - [ ] eyelib-importer: check for duplicate codec/math helpers
-  - [ ] eyelib-molang: check for duplicate utility code
-  - [ ] eyelib-particle: check for duplicate utility code
-  - [ ] eyelib-processor: check for duplicate utility code
-- [ ] For each centralized piece: add `project(':eyelib-util')` dep to the submodule, update imports, delete local copy
-- [ ] After each submodule rewiring: `jetbrain_build_project` + verify zero errors
-- [ ] Add root `project(':eyelib-util')` dependency (root was the original util consumer)
-
-### Phase 4: Verification & Cleanup
-
-- [ ] Full project build: `jetbrain_build_project` with `rebuild = true`
-- [ ] IDE diagnostics on all modules: `ide_diagnostics` with `includeBuildErrors: true`
-- [ ] Grep for `io.github.tt432.eyelib.util.` in ALL source files — should return zero results
-- [ ] Grep for `root/util/*` directory — confirm empty
-- [ ] Verify eyelib-util build.gradle has zero `project(...)` deps
-- [ ] Verify no two modules have the same `modId`
-- [ ] Verify deprecation markers on any temporary facades (if any needed)
-- [ ] Run existing tests — confirm zero regression
-- [ ] Update MODULES.md with eyelib-util entry
-- [ ] Update PROJECT.md Key Decisions with v1.3 outcome
-- [ ] Run full ClientSmoke flow if available
+```
+[ ] G2: Full rebuild passes (jetbrain_build_project with rebuild=true)
+[ ] G4: Tests pass (if applicable)
+[ ] G5: Zero old import references (jetbrain_search_text)
+[ ] G6: Old paths empty (jetbrain_find_files_by_glob)
+[ ] MODULES.md updated (if module inventory changed)
+[ ] docs/architecture/01-module-boundaries.md updated (if boundary changed)
+[ ] No .idea file staleness (ide_index_status shows ready)
+```
 
 ---
 
 ## Sources
 
-| Source | Confidence | Relevance |
-|--------|------------|-----------|
-| PROJECT.md (v1.3 milestone context, Key Decisions) | HIGH | Defines eyelib-util as Forge module, single-consumer rule, root/util/* must be empty |
-| MODULES.md (complete module inventory, ownership boundaries) | HIGH | Documents existing module boundaries, package prefixes, dependency directions |
-| root/util/README.md (historical notes, boundary reminders) | HIGH | Documents prior util split, deleted shims, "no new code in util/client/" rule |
-| core/README.md (platform-free boundary rules) | HIGH | Defines core's MC-free constraint, first-wave extractions |
-| .planning/REQUIREMENTS.md (v1.2 18 requirements, traceability) | HIGH | Documents v1.2 particle extraction requirements and verification patterns |
-| Source code analysis: 34 files in root/util/*, 5 in core/util/*, 6 submodule build.gradle files | HIGH | Direct evidence of dependency patterns, import counts, duplicate code |
-| v1.2 particle extraction experience (Phase 8-14, 7 phases, 22 plans) | HIGH | Lessons on package collisions, circular deps, import-hell, boundary leakage |
-| eyelib-attachment build.gradle (legacyForge configuration) | HIGH | Template for eyelib-util Gradle configuration |
-| eyelib-material/DispatchedMapCodec (duplicate with root) | HIGH | Concrete evidence of submodule code duplication |
-| EyelibStreamCodecs.java (MC-dependent stream codec utilities in attachment) | HIGH | Candidate for centralization with documented MC dependencies |
-
----
-
-## Summary of Critical vs Moderate vs Minor Pitfalls
-
-### Critical (must prevent — rewrites required if missed):
-1. **C1: Package shadowing** — atomic move+delete only; two copies on classpath = broken build
-2. **D1: Circular dependency** — eyelib-util with project deps creates irreversible cycle
-3. **R1: mods.toml ID collision** — duplicate modId → Forge startup crash
-4. **O1: Single-consumer code in eyelib-util** — degrades module boundary, long-term maintenance cost
-5. **R2: ResourceLocations.mod() MOD_ID circular reference** — compile failure blocking Phase 2
-
-### Moderate (avoid if possible — workarounds exist):
-1. **C2: Wildcard import collapse** — fixable with pre-migration audit
-2. **D2: Duplicate DispatchedMapCodec** — fixable with careful centralization
-3. **C4: Import-heavy file churn** — manageable with phase grouping and IDE tools
-4. **O2: Core/util wrapper duplication** — fixable during merge
-5. **R4: ModBridgeServer lifecycle** — likely unaffected if root controls startup
-
-### Minor (low risk — easy to fix if noticed):
-1. **C3: Intra-util self-reference** — fixed by atomic codec family migration
-2. **C5: EyelibCodec MC dependency** — trivially resolved since eyelib-util IS a Forge module
-3. **D3: StreamCodec relocation dependency** — simple dependency addition
-4. **D4: Gradle scope mismatch** — `implementation` vs `api` is easy to flip
-5. **O3: Package name convention** — documented rule, easy to verify
-6. **O4: Legacy Eyelib MOD_ID** — resolved by deleting `mod()` method
-7. **R3: SharedLibraryLoader classpath** — only relevant if native loading is actually used
+| Source | Confidence | What It Provided |
+|--------|-----------|-----------------|
+| `.planning/milestones/v1.3-MILESTONE-AUDIT.md` | HIGH | v1.3 what broke, what worked, deferred items |
+| `.planning/milestones/v1.2-MILESTONE-AUDIT.md` | HIGH | v1.2 partial Nyquist, PFUT-02/03 deferred debt |
+| `.planning/milestones/v1.3-ROADMAP.md` | HIGH | Phase-by-phase success criteria, dependency chains, verification patterns |
+| `.planning/PROJECT.md` | HIGH | v1.4 8 cleanup goals, constraints, key decisions |
+| `MODULES.md` | HIGH | Current module inventory, ownership, interaction rules |
+| `docs/architecture/00-control-spec.md` | HIGH | Execution rules, forbidden moves, rollback strategy |
+| `settings.gradle` | HIGH | Current module includes (7 submodules + composite) |
+| `build.gradle` (root) | HIGH | All 7 submodule dependency declarations |
+| `.idea/modules.xml` | HIGH | IntelliJ module entries for all submodules |
+| `.idea/gradle.xml` | HIGH | Gradle-linked module paths |
+| `.idea/compiler.xml` | HIGH | Annotation processor module profiles |
+| `eyelib-processor/build.gradle` | HIGH | Plain-JVM nature (no Forge plugin) — critical for Goal 6 risk |
+| `src/main/java/io/github/tt432/eyelib/client/instrument/` | HIGH | Full instrumentation subsystem scope for Goal 5 |
+| `src/test/` directory listing | HIGH | All 54 test files, 9 instrumentation tests, capability-related tests |
+| `src/main/java/io/github/tt432/eyelib/capability/` | HIGH | 13 capability files with runtime coupling to Forge events |
+| `src/main/java/io/github/tt432/eyelib/client/animation/` | HIGH | 40+ animation files for Goal 4 audit |
+| `src/main/java/io/github/tt432/eyelib/client/model/bake/` | HIGH | 5 bake files for Goal 6 migration audit |
+| `src/main/java/io/github/tt432/eyelib/client/render/controller/` | HIGH | 4 render controller files for Goal 7 |
+| `src/main/java/io/github/tt432/eyelib/client/animation/bedrock/controller/` | HIGH | 10+ controller runtime files for Goal 7 analysis |
+| Deferred items in `.planning/STATE.md` | HIGH | CENT-F01, CENT-F02, AUDT-F01 still deferred — don't let scope creep |
