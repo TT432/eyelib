@@ -1,34 +1,34 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: 分离 eyelib-util 模块
-status: Awaiting next milestone
-stopped_at: v1.3 complete; ready for milestone audit/completion cleanup if desired
-last_updated: "2026-05-10T15:23:23.699Z"
-last_activity: 2026-05-10 — Milestone v1.3 completed and archived
+milestone: v1.4
+milestone_name: 结构清理
+status: planning
+stopped_at: —
+last_updated: "2026-05-11T00:00:00.000Z"
+last_activity: 2026-05-11 — Milestone v1.4 started
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 24
-  completed_plans: 24
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-10)
+See: .planning/PROJECT.md (updated 2026-05-11)
 
-**Core value:** Eyelib 的功能模块必须能被独立理解、构建、验证和消费；工具代码共享必须形成清晰 Gradle 模块边界，消除 root util 包集群和子模块间重复的共享代码。
-**Current focus:** v1.3 shipped — `:eyelib-util` module separation complete
+**Core value:** Eyelib 的功能模块必须能被独立理解、构建、验证和消费；共享能力必须形成清晰 Gradle 模块边界，避免 root runtime 成为跨功能代码集散地。
+**Current focus:** v1.4 结构清理 — 消除非模块化残留、纠正命名语义、清理无效接口和过时文档
 
 ## Current Position
 
-Phase: Milestone v1.3 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-05-10 — Milestone v1.3 completed and archived
+Status: Defining requirements
+Last activity: 2026-05-11 — Milestone v1.4 started
 
 ## Performance Metrics
 

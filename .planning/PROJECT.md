@@ -1,6 +1,6 @@
 # Eyelib Module Separation
 
-**Status:** v1.0 shipped (2026-05-07) | v1.1 shipped (2026-05-08) | v1.2 shipped (2026-05-09) | v1.3 shipped (2026-05-10) | awaiting next milestone
+**Status:** v1.0 shipped (2026-05-07) | v1.1 shipped (2026-05-08) | v1.2 shipped (2026-05-09) | v1.3 shipped (2026-05-10) | v1.4 planning
 
 ## What This Is
 
@@ -31,7 +31,14 @@ v1.3 shipped the `:eyelib-util` extraction on 2026-05-10.
 
 ### Active
 
-Fresh requirements should be defined by the next `/gsd-new-milestone` run.
+- [ ] capability 包内容迁移至 eyelib-attachment
+- [ ] 重命名 eyelib-processor → eyelib-preprocessing
+- [ ] 纯数据类归位到正确模块
+- [ ] 清理 client/animation 下无效接口
+- [ ] 删除根目录数据库文件创建代码
+- [ ] client/model/bake 移入 eyelib-preprocessing
+- [ ] render/controller 基岩版 controller 分析/拆分
+- [ ] 重构过时的 README.md 为现状描述
 
 ### Out of Scope
 
@@ -39,15 +46,19 @@ Fresh requirements should be defined by the next `/gsd-new-milestone` run.
 - Adding new utility features without a milestone requirement.
 - Collapsing extracted modules back into root runtime ownership.
 
-## Next Milestone Goals
+## Current Milestone: v1.4 结构清理
 
-Define the next milestone from current project state rather than continuing v1.3 requirements in place.
+**Goal:** 消除残留的非模块化代码放置、纠正命名语义、清理无效接口和过时文档，使模块边界与代码实际归属一致。
 
-Candidate inputs for `/gsd-new-milestone`:
-
-- Address deferred v1.3 scope if it becomes priority: CENT-F01, CENT-F02, AUDT-F01.
-- Continue module-boundary cleanup around remaining root-owned transitional adapters.
-- Choose a new product/runtime slice with explicit requirements before planning phases.
+**Target features:**
+- capability 包内容迁移至 eyelib-attachment
+- 重命名 eyelib-processor → eyelib-preprocessing
+- 纯数据类（如 BrAcParticleEffectDefinition）归位到正确模块
+- 清理 client/animation 下无效接口
+- 删除根目录数据库文件创建代码
+- client/model/bake 移入预处理模块
+- render/controller 基岩版独立控制器的结构分析/拆分
+- 重构过时的 README.md（改写为现状描述，无内容的文件夹不保留 README）
 
 ## Constraints
 
@@ -96,4 +107,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-05-10 after v1.3 milestone completion*
+*Last updated: 2026-05-11 after v1.4 milestone start*
