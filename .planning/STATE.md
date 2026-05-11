@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: 结构清理
-status: planning
+status: ready_to_plan
 stopped_at: —
 last_updated: "2026-05-11T00:00:00.000Z"
-last_activity: 2026-05-11 — Milestone v1.4 started
+last_activity: 2026-05-11 — ROADMAP.md created; Phase 22 ready to plan
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,19 +21,20 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-11)
 
 **Core value:** Eyelib 的功能模块必须能被独立理解、构建、验证和消费；共享能力必须形成清晰 Gradle 模块边界，避免 root runtime 成为跨功能代码集散地。
-**Current focus:** v1.4 结构清理 — 消除非模块化残留、纠正命名语义、清理无效接口和过时文档
+**Current focus:** v1.4 结构清理 — Phase 22 Analysis & Quick Wins
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-05-11 — Milestone v1.4 started
+Phase: 22 of 26 (Analysis & Quick Wins)
+Plan: — (not yet planned)
+Status: Ready to plan
+Last activity: 2026-05-11 — ROADMAP.md created for v1.4 milestone (5 phases, 9 requirements)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
-
 - Total plans completed: 61 across v1.0–v1.3
 - Average duration: N/A (not tracked)
 - Total execution time: N/A (not tracked)
@@ -42,7 +43,6 @@ Last activity: 2026-05-11 — Milestone v1.4 started
 *(See ROADMAP.md progress table for per-phase plan counts)*
 
 **Recent Trend:**
-
 - v1.3 shipped 7 phases (24 plans) in ~1 day
 - Trend: Stable
 
@@ -54,19 +54,13 @@ Last activity: 2026-05-11 — Milestone v1.4 started
 
 Recent decisions affecting current work:
 
-- v1.2 Phase 8: `eyelib-particle` as real module boundary with Forge-aware Gradle skeleton
-- v1.3 Key Decision: `eyelib-util` as Forge module — may depend on MC/Forge, not artificially constrained to be pure Java
-- v1.3 Key Decision: Package namespace `io.github.tt432.eyelibutil` — no split packages with root
-- v1.3 Key Decision: Single-consumer code moves to functional owner, not eyelib-util
-- v1.3 Phase 15: `AnimationApplier`, `Models`, `ModBridgeServer`, and `BBModelSink` were moved to functional owner packages rather than deleted, even where consumer evidence was zero.
-- v1.3 Phase 15: `docs/architecture/migration/utility-routing-manifest.md` is the routing contract for remaining util/core-util migrations.
-- v1.3 Phase 16: `:eyelib-util` exists as a Forge leaf module with namespace `io.github.tt432.eyelibutil`, mod id `eyelibutil`, zero `project(...)` dependencies, and no root consumer dependency yet.
-- v1.3 Phase 17: root now consumes `:eyelib-util`; time, color, loader, math, search, and collection utility categories live in `io.github.tt432.eyelibutil`, with `ListHelper` deleted and FastUtil/JOML exposed as public API dependencies where needed.
-- v1.3 Phase 18: `ResourceLocations` moved to `io.github.tt432.eyelibutil.resource` without the unused root-coupled `mod(String)` method; `TexturePaths` moved to `io.github.tt432.eyelibutil.texture`; root `TexturePathHelper` and core texture wrapper were deleted.
-- v1.3 Phase 19: codec infrastructure moved to `io.github.tt432.eyelibutil.codec`, `ImmutableFloatTreeMap` moved to `io.github.tt432.eyelibutil.collection`, `EitherHelper` was deleted, and root/core util Java sources are empty.
-- v1.3 Phase 20: stream codec helpers moved to `io.github.tt432.eyelibutil.streamcodec`; `eyelib-attachment` and `eyelib-material` now consume `:eyelib-util`; material duplicate `DispatchedMapCodec` copies were deleted.
-- v1.3 Phase 21: final static checks proved root/core util Java sources and old imports are gone; `:eyelib-util` remains leaf-only; JetBrains MCP `build` and full project rebuild passed.
-- v1.3 Phase 21: obsolete root tests depending on missing local-only `test_resources/eyelib/models/skeleton.geo.json` were removed with maintainer approval.
+- v1.4 Phase ordering: Analysis → Rename → Data Relocation → Capability Migration → Documentation & Final Verification (research-backed dependency chain)
+- v1.4 CODEQ-01: Interface deletion must verify zero references via ide_find_references + ide_find_implementations with project_and_libraries scope
+- v1.4 MOD-01: Module rename must be atomic — settings.gradle + all build.gradle + .idea/ XML + directory rename in one operation before Gradle sync
+- v1.4 MOD-02: eyelib-preprocessing must become Forge module (legacyForge plugin, mods.toml) before accepting bake code with Minecraft imports
+- v1.4 MOD-03: Capability migration must split data/codec from Forge runtime wiring; use distinct namespace io.github.tt432.eyelibattachment to prevent split packages
+- v1.4 Phase dependency: Phase 23 (rename) must precede Phase 24 (data relocation) because bake code targets the renamed module
+- v1.4 DOCS-01: Documentation always last — describes final state after all structural changes complete
 
 ### Pending Todos
 
@@ -74,7 +68,9 @@ None yet.
 
 ### Blockers/Concerns
 
-- None.
+- **MOD-03 Risk (HIGH):** Capability migration has bidirectional runtime coupling between EyelibAttachableData, Forge event wiring, and network packets. Per-class audit required before any move.
+- **DATA-01 Risk (HIGH):** Bake code must be audited for Minecraft/FORGE imports before deciding whether eyelib-preprocessing Forge conversion is sufficient or code must be split.
+- **CODEQ-02 Scope:** Confirmed — change only database path to .cache, do not delete entire instrument/ subsystem.
 
 ## Deferred Items
 
@@ -87,9 +83,9 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-05-10
-Stopped at: v1.3 complete; ready for milestone audit/completion cleanup if desired
+Stopped at: v1.3 complete; v1.4 requirements defined
 Resume file: None
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- `/gsd-plan-phase 22` — Plan Phase 22: Analysis & Quick Wins
