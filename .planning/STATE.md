@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.4
-milestone_name: 结构清理
-status: complete
+milestone: v1.5
+milestone_name: 深度结构清理
+status: planning
 stopped_at: —
-last_updated: "2026-05-12T06:00:00.000Z"
-last_activity: 2026-05-12 — v1.4 shipped after Phase 26 docs/verification and milestone audit
+last_updated: "2026-05-12T00:00:00.000Z"
+last_activity: 2026-05-12 — Milestone v1.5 started
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 5
-  completed_plans: 5
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-12)
 
 **Core value:** Eyelib 的功能模块必须能被独立理解、构建、验证和消费；共享能力必须形成清晰 Gradle 模块边界，避免 root runtime 成为跨功能代码集散地。
-**Current focus:** Planning next milestone
+**Current focus:** v1.5 深度结构清理
 
 ## Current Position
 
-Phase: 26 of 26 (Documentation & Final Verification)
-Plan: 26-01 complete
-Status: Complete
-Last activity: 2026-05-12 — v1.4 milestone shipped
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-12 — Milestone v1.5 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -73,9 +73,9 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-- **MOD-03 Risk (HIGH):** Capability migration has bidirectional runtime coupling between EyelibAttachableData, Forge event wiring, and network packets. Per-class audit required before any move.
-- **DATA-01 Risk (HIGH):** Bake code must be audited for Minecraft/FORGE imports before deciding whether eyelib-preprocessing Forge conversion is sufficient or code must be split.
-- **CODEQ-02 Scope:** Confirmed — change only database path to .cache, do not delete entire instrument/ subsystem.
+- **CAP-01 Risk (HIGH):** Root `capability/` 目录仍存在，需确认 v1.4 迁移后哪些内容应保留在 root、哪些应继续迁移。
+- **ANIM-01 Risk (MEDIUM):** `client/animation/` 下有 22 项文件（含 `bedrock/` 子目录），需逐项审计引用状态后删除。
+- **DOCS-01 Risk (LOW):** 部分 README.md 已过时或位于空目录，需按实际状态增删改查。
 
 ## Deferred Items
 
@@ -88,9 +88,9 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-05-12
-Stopped at: v1.4 shipped
+Stopped at: Milestone v1.5 initialization
 Resume file: None
 
 ## Operator Next Steps
 
-- Start next milestone when requirements are ready.
+- Define requirements and create roadmap for v1.5 深度结构清理

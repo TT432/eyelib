@@ -1,6 +1,6 @@
 # Eyelib Module Separation
 
-**Status:** v1.0 shipped (2026-05-07) | v1.1 shipped (2026-05-08) | v1.2 shipped (2026-05-09) | v1.3 shipped (2026-05-10) | v1.4 shipped (2026-05-12)
+**Status:** v1.0–v1.4 shipped | v1.5 in planning (2026-05-12)
 
 ## What This Is
 
@@ -10,7 +10,18 @@ Eyelib is a multi-project Forge rendering library whose runtime, importer, proce
 
 Eyelib 的功能模块必须能被独立理解、构建、验证和消费；共享能力必须形成清晰 Gradle 模块边界，避免 root runtime 成为跨功能代码集散地。
 
-## Current State
+## Current Milestone: v1.5 深度结构清理
+
+**Goal:** 完成上一轮未闭合的结构清理任务——capability 残留审计与终结迁移、animation 无效接口全量清除、preprocessing 归属扫描、重复代码排查、结构文档现代化。
+
+**Target features:**
+- capability 残留内容归属审计与最终迁移（root → eyelib-attachment）
+- 扫描确认哪些代码应移入 `:eyelib-preprocessing`
+- 排查重复职责或意外复制的类/方法
+- `client/animation` 下无效接口的彻底清理（含 `bedrock/` 子目录）
+- 结构文档（README.md 等）审视与增删改查
+
+## Historical State (v1.4)
 
 v1.4 shipped the 结构清理 milestone on 2026-05-12.
 
@@ -34,7 +45,11 @@ v1.4 shipped the 结构清理 milestone on 2026-05-12.
 
 ### Active
 
-*(Next milestone requirements to be defined)*
+- [ ] **CAP-01**: 审计 root `capability/` 目录残留内容，完成归属决策与最终迁移
+- [ ] **ANIM-01**: 清理 `client/animation/` 下无效接口（含 `bedrock/` 子目录）
+- [ ] **PREP-01**: 扫描确认哪些代码应移入 `:eyelib-preprocessing`
+- [ ] **DUP-01**: 排查重复职责或意外复制的类/方法
+- [ ] **DOCS-01**: 审视并更新所有结构文档（README.md 等），删除无效文档
 
 ### Out of Scope
 
@@ -113,4 +128,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-05-12 after v1.4 milestone shipped*
+*Last updated: 2026-05-12 after v1.5 milestone initialization*
