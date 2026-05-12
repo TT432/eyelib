@@ -71,25 +71,25 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DOCS-01 | Phase 1 | Pending |
-| DOCS-02 | Phase 1 | Pending |
-| DOCS-03 | Phase 1 | Pending |
-| DOCS-04 | Phase 1 | Pending |
-| DOCS-05 | Phase 1 | Pending |
-| ANIM-01 | Phase 2 | Pending |
-| ANIM-02 | Phase 2 | Pending |
-| ANIM-03 | Phase 2 | Pending |
-| ANIM-04 | Phase 2 | Pending |
-| ANIM-05 | Phase 2 | Pending |
-| PREP-01 | Phase 3 | Pending |
-| PREP-02 | Phase 3 | Pending |
-| DUP-01 | Phase 3 | Pending |
-| DUP-02 | Phase 3 | Pending |
-| DUP-03 | Phase 3 | Pending |
-| DUP-04 | Phase 3 | Pending |
-| CAP-01 | Phase 4 | Pending |
-| CAP-02 | Phase 4 | Pending |
-| CAP-03 | Phase 4 | Pending |
+| DOCS-01 | Phase 27 (DOCS) | Pending |
+| DOCS-02 | Phase 27 (DOCS) | Pending |
+| DOCS-03 | Phase 27 (DOCS) | Pending |
+| DOCS-04 | Phase 27 (DOCS) | Pending |
+| DOCS-05 | Phase 27 (DOCS) | Pending |
+| ANIM-01 | Phase 28 (ANIM) | Pending |
+| ANIM-02 | Phase 28 (ANIM) | Pending |
+| ANIM-03 | Phase 28 (ANIM) | Pending |
+| ANIM-04 | Phase 28 (ANIM) | Pending |
+| ANIM-05 | Phase 28 (ANIM) | Pending |
+| PREP-01 | Phase 29 (PREP+DUP) | Pending |
+| PREP-02 | Phase 29 (PREP+DUP) | Pending |
+| DUP-01 | Phase 29 (PREP+DUP) | Pending |
+| DUP-02 | Phase 29 (PREP+DUP) | Pending |
+| DUP-03 | Phase 29 (PREP+DUP) | Pending |
+| DUP-04 | Phase 29 (PREP+DUP) | Pending |
+| CAP-01 | Phase 30 (CAP) | Pending |
+| CAP-02 | Phase 30 (CAP) | Pending |
+| CAP-03 | Phase 30 (CAP) | Pending |
 
 **Coverage:**
 - v1.5 requirements: 19 total
