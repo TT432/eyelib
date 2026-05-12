@@ -1,75 +1,73 @@
 # Technology Stack
 
-**Project:** v1.4 结构清理 (multi-module Gradle structural cleanup)
-**Researched:** 2026-05-11
+**Project:** Eyelib v1.5 深度结构清理
+**Researched:** 2026-05-12
+**Overall confidence:** HIGH
 
 ## Recommended Stack
 
-This is a brownfield refactoring milestone — the technology stack is inherited from v1.3. No new technologies are introduced. The research focuses on the existing stack constraints that affect structural cleanups.
+本次清理工作不需要引入新的技术栈。所有操作在现有工具链内完成。
 
 ### Core Framework
+
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| Java | 17 | Compilation target | Mojang ships Java 17 to end users in 1.20.1 |
-| Forge (LegacyForge) | 1.20.1-50.1.32 | Mod platform | Project foundation; `net.neoforged.moddev.legacyforge` 2.0.91 |
-| Gradle | 8.x (via MDGL) | Build system | Managed by ModDevGradleLegacy plugin |
+| Java | 17 | 语言运行时 | 项目既定约束，Mojang 对 1.20.1 终端用户的要求 |
+| Forge | 1.20.1 | Mod 平台 | 项目既定约束 |
+| MDGL (ModDevGradleLegacy) | 2.0.91 | Gradle 构建系统 | 当前项目使用的构建插件，不可更改 |
 
-### Database
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| H2 Database | 2.4.240 | Instrumentation persistence (to be deleted in Goal 5) | Currently used by `client/instrument/db/InstrumentDatabase.java`; will be removed from `implementation` but may remain in `testImplementation` |
+### Existing Modules (Unchanged)
 
-### Infrastructure
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| JetBrains MCP | IDE plugin | Gradle task execution | **REQUIRED** — project policy prohibits shell Gradle. All builds use `jetbrain_build_project` and `jetbrain_run_gradle_tasks`. |
-| IntelliJ IDEA | Latest | Primary IDE | Only supported IDE; `.idea/` checked in, no JDTLS/VS Code/Eclipse artifacts allowed |
-| ClientSmoke | Git submodule | Automated visual testing | Composite build `includeBuild("clientsmoke")`; used as optional verification gate G7 |
-| GitHub Actions (implied) | N/A | CI | Build verification in CI must use JetBrains MCP-equivalent Gradle invocation |
+| Module | Gradle Path | Namespace | Role |
+|--------|------------|-----------|------|
+| Root | `:` | `io.github.tt432.eyelib` | 运行时消费中心、Forge 注册、manager/loader/render 协调 |
+| Attachment | `:eyelib-attachment` | `io.github.tt432.eyelibattachment` | 数据/codec 类型所有者、stream codec 工具 |
+| Preprocessing | `:eyelib-preprocessing` | `io.github.tt432.eyelibpreprocessing` | Bake helpers、loader parsing、reload planning |
+| Importer | `:eyelib-importer` | `io.github.tt432.eyelibimporter` | Bedrock schema/codec 定义、MoLang 兼容值类型 |
+| MoLang | `:eyelib-molang` | `io.github.tt432.eyelibmolang` | MoLang 编译/运行时/类型系统 |
+| Material | `:eyelib-material` | `io.github.tt432.eyelibmaterial` | Bedrock 材质定义、GL 状态管理 |
+| Particle | `:eyelib-particle` | `io.github.tt432.eyelibparticle` | Particle 模块 API、runtime、render manager |
+| Utility | `:eyelib-util` | `io.github.tt432.eyelibutil` | 共享工具（codec、streamcodec、collection、math 等） |
 
-### Static Analysis
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| NullAway | 0.12.10 | Null safety verification | Configured on root via `nullawayMain` task; checks `io.github.tt432.eyelib` packages |
-| Error Prone | 2.42.0 | Compile-time bug detection | Used with NullAway; `nullawayMain` task has isolated processor path |
-| JSpecify | 1.0.0 | Nullability annotations | `@Nullable` annotations used across codebase; NullAway reads them |
+### Tools for This Cleanup
 
-### Testing
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| JUnit | 5.10.2 (platform) | Unit testing | All 54 existing tests use JUnit Jupiter |
-| JUnit Platform Launcher | 5.x | Test runner | Configured via `tasks.named('test').configure { useJUnitPlatform() }` |
-
-## Module Build Profiles
-
-Each module has a distinct build profile affecting what cleanup operations are safe:
-
-| Module | Forge Plugin | Plain JVM? | Key Constraint |
-|--------|-------------|------------|----------------|
-| `:` (root) | YES (legacyForge) | No | Has NullAway, Mixin, ClientSmoke; depends on all submodules |
-| `:eyelib-attachment` | YES (legacyForge) | No | Has mods.toml (modId: `eyelibattachment`) |
-| `:eyelib-importer` | YES (legacyForge) | No | Has mods.toml (modId: `eyelibimporter`) |
-| `:eyelib-material` | YES (legacyForge) | No | Has mods.toml (modId: `eyelibmaterial`) |
-| `:eyelib-molang` | YES (legacyForge) | No | Generated code under `generated/` is read-only |
-| `:eyelib-particle` | YES (legacyForge) | No | Has mods.toml (modId: `eyelibparticle`) |
-| `:eyelib-processor` | **NO** | **YES** | **Plain JVM** — no Forge, no mods.toml. CRITICAL for Goal 6: if bake code has Minecraft imports, this module must become Forge. |
-| `:eyelib-util` | YES (legacyForge) | No | Leaf module (zero `project(...)` dependencies); has mods.toml (modId: `eyelibutil`) |
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| JetBrains MCP `ide_find_references` | 验证某类的所有引用 | ANIM-01 零引用检测 |
+| JetBrains MCP `jetbrain_build_project` | 编译验证 | 每阶段完成后 |
+| JetBrains MCP `jetbrain_run_gradle_tasks` | 运行 nullawayMain/test | 回归验证 |
+| IDE text search (`ide_search_text`) | 搜索字符串/引用 | DOCS-01 旧名引用检测 |
+| IDE glob search (`jetbrain_search_file`) | 文件模式搜索 | PREP-01 模式扫描 |
+| Context7 / WebSearch | 验证 Forge API 行为 | 仅在需要确认 Forge 契约时 |
 
 ## Alternatives Considered
 
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| Module rename approach | Atomic settings.gradle + all build.gradle + directory rename in one operation | Two-step (create new, migrate code, delete old) | Two-step risks having both modules in the project simultaneously, causing classpath conflicts and confusing IDE |
-| Directory rename tool | `ide_move_file` (IDE refactoring engine) | Shell `mv` or `ren` command | IDE refactoring preserves references; shell rename leaves IDE with stale paths |
-| Gradle execution | JetBrains MCP (`jetbrain_build_project`) | Shell `./gradlew build` | **PROHIBITED** by project policy |
-| Capability migration namespace | New namespace `io.github.tt432.eyelibattachment.capability` | Same namespace `io.github.tt432.eyelib.capability` | Split-package risk; follow v1.3 pattern of using distinct namespace |
+| Build tool | JetBrains MCP Gradle | Shell `./gradlew` | 项目规则禁止 shell gradle 命令 |
+| Code analysis | JetBrains IDE tools | GitNexus | GitNexus 未索引此仓库 |
+| Dependency injection | None (manual wiring) | Spring/Guice | 完全不适合 Forge mod 环境 |
+| New module creation | NONE (this cleanup) | 新 Gradle 子项目 | v1.5 目标是清理现有结构，不增加新模块 |
+
+## Installation
+
+本阶段不需要新的依赖安装。所有清理操作在现有代码基础上进行。
+
+```bash
+# 编译验证（通过 JetBrains MCP，非 shell）
+# jetbrain_build_project
+
+# Null-safety 验证
+# jetbrain_run_gradle_tasks taskNames: [":nullawayMain"]
+
+# 测试验证
+# jetbrain_run_gradle_tasks taskNames: [":test"]
+```
 
 ## Sources
 
-- `build.gradle` (root): All 356 lines inspected — dependency declarations, NullAway config, Mixin setup
-- `settings.gradle`: All 24 lines inspected — 7 includes + composite build
-- `eyelib-processor/build.gradle`: Confirmed plain-JVM (no `legacyForge` plugin)
-- `eyelib-attachment/build.gradle`: Confirmed Forge + mods.toml
-- `eyelib-importer/build.gradle`: Confirmed Forge + depends on `:eyelib-molang` and `:eyelib-material`
-- `.idea/compiler.xml`: Annotation processor profiles for all modules
-- Prior milestone build.gradle changes (v1.2, v1.3): Established patterns for adding module dependencies
+- `build.gradle` — Root dependency declarations (lines 148-170)
+- `settings.gradle` — Module inclusion (lines 16-22)
+- `MODULES.md` — 规范模块清单
+- `PROJECT.md` — 项目约束（Java 17, Forge 1.20.1, MDGL）
+- 所有 confidence: HIGH（来自源码检查）
