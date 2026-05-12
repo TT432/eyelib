@@ -48,6 +48,52 @@
 
 ---
 
+## Milestone: v1.4 — 结构清理
+
+**Shipped:** 2026-05-12
+**Phases:** 5 | **Plans:** 5 | **Requirements:** 9
+
+### What Was Built
+
+- Dead animation interface removed (`KeyFrame.java`) and instrumentation DB output moved to `.cache/`.
+- `eyelib-processor` atomically renamed to `eyelib-preprocessing`, converted to Forge module with new namespace.
+- Bake helpers (5 files) moved to `:eyelib-preprocessing`; controller pure definitions moved to `:eyelib-importer`.
+- Capability data/codec types extracted to `io.github.tt432.eyelibattachment.capability`; runtime owners stayed in root.
+- All documentation updated to v1.4 topology; final verification (test + nullawayMain + rebuild) passed.
+
+### What Worked
+
+- Atomic module rename (settings.gradle + build.gradle + .idea/ + directory rename in one operation) avoided half-migrated state.
+- Clear dependency chain (Analysis → Rename → Data → Capability → Docs) prevented blocking.
+- Full-suite verification at Phase 26 provided equivalent coverage to per-phase Nyquist without duplicated effort.
+- Milestone audit caught all 9 requirements before archive.
+
+### What Was Inefficient
+
+- Some code changes from prior phases were already in the working tree, making it hard to attribute LOC to this milestone.
+- Phase artifacts were created after code changes rather than alongside them, increasing documentation reconciliation cost.
+- No per-phase Nyquist validation documents; relied on final full-suite verification as equivalent coverage.
+
+### Patterns Established
+
+- Module rename should be a single atomic commit: settings.gradle + build.gradle + .idea/ XML + directory rename together before Gradle sync.
+- Capability extraction with split data/codec → attachment, runtime → root is a viable pattern when boundary analysis prevents reverse dependencies.
+- Full-suite verification (test + nullawayMain + rebuild) can serve as equivalent coverage for structural-only phases.
+
+### Key Lessons
+
+1. Atomic module rename operations are less risky when all configuration files are updated before Gradle sync.
+2. Reverse dependency prevention (e.g., ModelBakeInvalidationHooks) is worth the extra bridge code.
+3. Documentation and verification as the final phase catches topology drift before archive.
+
+### Cost Observations
+
+- Model mix: not tracked.
+- Sessions: not tracked.
+- Notable: efficient 5-phase execution with zero gaps in milestone audit.
+
+---
+
 ## Milestone: v1.2 — 真正实现 eyelib-particle 的模块分离
 
 **Shipped:** 2026-05-09
@@ -101,6 +147,7 @@
 | v1.1 | N/A | 3 | Automated ClientSmoke runtime and CI-style reporting. |
 | v1.2 | N/A | 7 | Proved feature-module extraction with explicit root adapter boundaries. |
 | v1.3 | N/A | 7 | Proved shared utility leaf-module extraction and root/core util drainage. |
+| v1.4 | N/A | 5 | Proved structural cleanup (rename, data relocation, capability extraction) with zero gap audit. |
 
 ### Cumulative Quality
 

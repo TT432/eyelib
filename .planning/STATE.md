@@ -2,40 +2,40 @@
 gsd_state_version: 1.0
 milestone: v1.4
 milestone_name: 结构清理
-status: ready_to_plan
+status: complete
 stopped_at: —
-last_updated: "2026-05-11T00:00:00.000Z"
-last_activity: 2026-05-11 — ROADMAP.md created; Phase 22 ready to plan
+last_updated: "2026-05-12T06:00:00.000Z"
+last_activity: 2026-05-12 — v1.4 shipped after Phase 26 docs/verification and milestone audit
 progress:
   total_phases: 5
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 5
+  total_plans: 5
+  completed_plans: 5
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-11)
+See: .planning/PROJECT.md (updated 2026-05-12)
 
 **Core value:** Eyelib 的功能模块必须能被独立理解、构建、验证和消费；共享能力必须形成清晰 Gradle 模块边界，避免 root runtime 成为跨功能代码集散地。
-**Current focus:** v1.4 结构清理 — Phase 22 Analysis & Quick Wins
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 22 of 26 (Analysis & Quick Wins)
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-05-11 — ROADMAP.md created for v1.4 milestone (5 phases, 9 requirements)
+Phase: 26 of 26 (Documentation & Final Verification)
+Plan: 26-01 complete
+Status: Complete
+Last activity: 2026-05-12 — v1.4 milestone shipped
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 61 across v1.0–v1.3
+- Total plans completed: 66 across v1.0–v1.4
 - Average duration: N/A (not tracked)
 - Total execution time: N/A (not tracked)
 
@@ -44,6 +44,11 @@ Progress: [░░░░░░░░░░] 0%
 
 **Recent Trend:**
 - v1.3 shipped 7 phases (24 plans) in ~1 day
+- v1.4 started with Phase 22 complete (1 plan)
+- v1.4 Phase 23 completed after atomic module rename + Forge conversion
+- v1.4 Phase 24 completed after bake relocation plus controller definition migration
+- v1.4 Phase 25 completed after attachment-side payload/data/codec extraction with runtime owners retained in root
+- v1.4 Phase 26 completed with docs alignment plus final `test` / `nullawayMain` / rebuild verification
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -64,7 +69,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+- None.
 
 ### Blockers/Concerns
 
@@ -82,10 +87,10 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-10
-Stopped at: v1.3 complete; v1.4 requirements defined
+Last session: 2026-05-12
+Stopped at: v1.4 shipped
 Resume file: None
 
 ## Operator Next Steps
 
-- `/gsd-plan-phase 22` — Plan Phase 22: Analysis & Quick Wins
+- Start next milestone when requirements are ready.

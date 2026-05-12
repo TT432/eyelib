@@ -1,0 +1,16 @@
+package io.github.tt432.eyelibimporter.animation.bedrock.controller;
+
+import io.github.tt432.eyelibmolang.MolangValue;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public record BrAcStateTransitionsTrackDefinition(
+        io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcStateTrackName name,
+        Map<String, MolangValue> transitions
+) implements io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcStateTrackDefinition {
+    public BrAcStateTransitionsTrackDefinition {
+        transitions = Collections.unmodifiableMap(new LinkedHashMap<>(transitions));
+    }
+}
