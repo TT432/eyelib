@@ -7,7 +7,7 @@
 - For boundary decisions, read :docs/architecture/01-module-boundaries.md: and :docs/architecture/02-side-boundaries.md:.
 
 ## Repository Shape
-- This repository is now a multi-project :Gradle + Java 17 + Forge: codebase with root runtime module :::, processor subproject ::eyelib-processor:, importer/model subproject ::eyelib-importer:, and engine Molang subproject ::eyelib-molang:.
+- This repository is now a multi-project :Gradle + Java 17 + Forge: codebase with root runtime module :::, processor subproject ::eyelib-preprocessing:, importer/model subproject ::eyelib-importer:, and engine Molang subproject ::eyelib-molang:.
 - The current module split exists because a human explicitly requested extraction of the resources importer/model seam; keep that shape unless a human asks to collapse it again.
 - Preserve existing core patterns already used in the codebase: manager, loader, visitor, and codec.
 

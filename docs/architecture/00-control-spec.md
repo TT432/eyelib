@@ -2,7 +2,7 @@
 
 ## Scope
 - Apply the actively maintained functional debt ledger in `docs/architecture/04-mc-debt-ledger.md`.
-- Keep Eyelib as a bounded multi-project Forge project with one runtime root module plus focused functional subprojects such as `eyelib-attachment`, `eyelib-processor`, `eyelib-importer`, `eyelib-molang`, `eyelib-material`, and `eyelib-particle`.
+- Keep Eyelib as a bounded multi-project Forge project with one runtime root module plus focused functional subprojects such as `eyelib-attachment`, `eyelib-preprocessing`, `eyelib-importer`, `eyelib-molang`, `eyelib-material`, and `eyelib-particle`.
 - Improve navigability, boundary clarity, and maintainability for both humans and AI.
 
 ## Stage Goals

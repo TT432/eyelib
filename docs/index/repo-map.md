@@ -8,14 +8,14 @@
 - MC debt ledger: `docs/architecture/04-mc-debt-ledger.md`
 
 ## What This Repository Is
-- Eyelib is a multi-project `Gradle + Java 17 + Forge` rendering library for Minecraft (`:` root runtime + `:eyelib-processor` processing/batching core + `:eyelib-importer` importer/schema Forge functional module + `:eyelib-molang` engine Molang core + `:eyelib-material` material core + `:eyelib-particle` particle module boundary + active leaf utility module `:eyelib-util` + composite-build `clientsmoke` submodule).
+- Eyelib is a multi-project `Gradle + Java 17 + Forge` rendering library for Minecraft (`:` root runtime + `:eyelib-preprocessing` processing/batching core + `:eyelib-importer` importer/schema Forge functional module + `:eyelib-molang` engine Molang core + `:eyelib-material` material core + `:eyelib-particle` particle module boundary + active leaf utility module `:eyelib-util` + composite-build `clientsmoke` submodule).
 - Forge bootstrap entrypoint: `src/main/java/io/github/tt432/eyelib/mc/impl/bootstrap/EyelibMod.java`
 - Compatibility constant holder: `src/main/java/io/github/tt432/eyelib/Eyelib.java`
 - Current codebase pressure points are client tooling, generated Molang grammar files, loader/publication flow, and sync/data-attachment boundaries.
 
 ## Where To Read By Topic
 - Client rendering/runtime: start in `src/main/java/io/github/tt432/eyelib/client/`
-- Loader and resource ingestion: start in `src/main/java/io/github/tt432/eyelib/client/loader/` for root-side reload orchestration and runtime adaptation flow; platform-free parsing/planning helpers should move into `:eyelib-processor`, and importer-only parsing/normalization should move into `:eyelib-importer`
+- Loader and resource ingestion: start in `src/main/java/io/github/tt432/eyelib/client/loader/` for root-side reload orchestration and runtime adaptation flow; platform-free parsing/planning helpers should move into `:eyelib-preprocessing`, and importer-only parsing/normalization should move into `:eyelib-importer`
 - Importer/model/schema functional module data and fixtures: start in `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/README.md`, then `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/model/` and nearby importer-owned schema packages; the current artifact is the `eyelibimporter` Forge mod, while a separate plain importer library remains future debt. Importer fixtures live under `eyelib-importer/src/test/resources/io/github/tt432/eyelib/client/model/importer/`
 - Runtime asset storage: start in `src/main/java/io/github/tt432/eyelib/client/manager/`
 - Molang: start in `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/` for value/runtime wrappers, scope/compiler/type/generated code; root `src/main/java/io/github/tt432/eyelib/molang/` is now a legacy marker/handoff path only
