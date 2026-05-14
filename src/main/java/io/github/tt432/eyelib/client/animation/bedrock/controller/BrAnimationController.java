@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.client.animation.bedrock.controller;
 
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcState;
+import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcStateDefinition;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
 
 import com.mojang.serialization.Codec;
@@ -18,10 +19,10 @@ import java.util.Map;
  * @author TT432
  */
 public record BrAnimationController(
-        BrAnimationControllerDefinition definition
+        io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerDefinition definition
 ) implements StateMachineAnimation<BrAnimationController.Data, BrAcStateDefinition> {
     public BrAnimationController(String name, BrAcState initialState, Map<String, BrAcState> states) {
-        this(new BrAnimationControllerDefinition(
+        this(new io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerDefinition(
                 name,
                 BrAcStateDefinition.fromSchema(initialState),
                 states.entrySet().stream().collect(java.util.stream.Collectors.toMap(
@@ -42,7 +43,7 @@ public record BrAnimationController(
     );
 
     public static BrAnimationController fromSchema(String name, BrAnimationControllerSchema schema) {
-        return new BrAnimationController(BrAnimationControllerDefinition.fromSchema(name, schema));
+        return new BrAnimationController(io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerDefinition.fromSchema(name, schema));
     }
 
     public BrAnimationControllerSchema toSchema() {

@@ -13,9 +13,11 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 class BrAnimationControllerStateOwnerTest {
     @AfterEach
@@ -53,6 +55,66 @@ class BrAnimationControllerStateOwnerTest {
         assertNotNull(data.getCurrState());
         assertEquals(child.name(), data.owner().currentAnimations().get("slot.main"));
         assertEquals(1, createdStates.get());
+    }
+
+    @Test
+    void getDataUsesDirectAnimationMethodsAndCachesResultViaComputeIfAbsent() {
+        AtomicInteger createDataCalls = new AtomicInteger();
+        AtomicInteger nameCalls = new AtomicInteger();
+        AtomicReference<Object> firstResult = new AtomicReference<>();
+        Object stateData = new Object();
+
+        Animation<Object> animation = new Animation<>() {
+            @Override
+            public String name() {
+                nameCalls.incrementAndGet();
+                return "animation.test.getdata";
+            }
+
+            @Override
+            public Object createData() {
+                createDataCalls.incrementAndGet();
+                return stateData;
+            }
+
+            @Override
+            public void onFinish(Object data) {
+            }
+
+            @Override
+            public boolean anyAnimationFinished(Object data) {
+                return false;
+            }
+
+            @Override
+            public boolean allAnimationFinished(Object data) {
+                return false;
+            }
+
+            @Override
+            public void tickAnimation(Object data, Map<String, String> animations, MolangScope scope,
+                                      float ticks, float multiplier, ModelRuntimeData renderInfos,
+                                      AnimationEffects effects, Runnable animationStartFeedback) {
+            }
+        };
+
+        BrControllerStateOwner owner = new BrControllerStateOwner();
+
+        // First call — should invoke createDataUntyped() → createData()
+        Object result1 = owner.getData(animation);
+        firstResult.set(result1);
+        assertNotNull(result1, "getData should return non-null data for a valid animation");
+        assertSame(stateData, result1, "getData should return the object created by createData()");
+        assertEquals(1, createDataCalls.get(), "createData should be called exactly once after first getData");
+        int nameCallsAfterFirst = nameCalls.get();
+
+        // Second call with same animation — should return cached result without calling createData again
+        Object result2 = owner.getData(animation);
+
+        assertSame(result1, result2, "Repeated getData must return the same cached object");
+        assertEquals(1, createDataCalls.get(), "createData must NOT be called again on second getData");
+        assertEquals(nameCallsAfterFirst + 1, nameCalls.get(),
+                "name() should be called on each getData invocation as the map key");
     }
 
     private record TestAnimation(String name, AtomicInteger createdStates) implements Animation<Object> {

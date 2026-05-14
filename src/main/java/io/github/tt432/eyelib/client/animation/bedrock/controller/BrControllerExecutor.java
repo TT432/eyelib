@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
 import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
+import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcStateDefinition;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
@@ -73,7 +74,7 @@ final class BrControllerExecutor {
         currState.onEntry().eval(scope);
         scope.getHostContext().get(Entity.class).ifPresent(entity ->
             scope.getHostContext().get(BrClientEntity.class).ifPresent(clientEntity -> {
-                for (BrAcParticleEffectDefinition particleEffect : currState.particleEffects()) {
+                for (io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcParticleEffectDefinition particleEffect : currState.particleEffects()) {
                     String uuid = UUID.randomUUID().toString();
                     particleEffect.effect().map(clientEntity.particle_effects()::get).ifPresent(effect -> {
                         ParticleDefinition definition = ParticleDefinitionRegistry.store().get(effect);

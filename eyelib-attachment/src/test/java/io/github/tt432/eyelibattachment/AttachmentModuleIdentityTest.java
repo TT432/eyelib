@@ -58,6 +58,7 @@ class AttachmentModuleIdentityTest {
 
     private static boolean isAllowedMinecraftFacingPath(String path) {
         return path.startsWith("network/")
+                || path.startsWith("capability/")
                 || path.startsWith("bootstrap/");
     }
 

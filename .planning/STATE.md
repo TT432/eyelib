@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.5
 milestone_name: 深度结构清理
 status: planning
-stopped_at: —
-last_updated: "2026-05-12T00:00:00.000Z"
-last_activity: 2026-05-12 — Roadmap created (Phases 27-30)
+stopped_at: Roadmap creation complete (Phases 27-30)
+last_updated: "2026-05-13T14:07:33.306Z"
+last_activity: 2026-05-12 — Roadmap created, phases 27-30 defined
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 0
-  total_plans: 0
+  total_plans: 1
   completed_plans: 0
   percent: 0
 ---
@@ -35,6 +35,7 @@ Progress: [░░░░░░░░░░] 0%
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 66 across v1.0–v1.4
 - Average duration: N/A (not tracked)
 - Total execution time: N/A (not tracked)
@@ -43,6 +44,7 @@ Progress: [░░░░░░░░░░] 0%
 *(See ROADMAP.md progress table for per-phase plan counts)*
 
 **Recent Trend:**
+
 - v1.4 shipped 5 phases (5 plans) in ~1 day
 - v1.4 audit passed with 9/9 requirements, 5/5 phases, 25/25 integration checks
 - Trend: Stable
@@ -50,6 +52,10 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 27.1 inserted after Phase 27: Close gap: DOCS — fix stale v1.5 structure docs (URGENT)
 
 ### Decisions
 

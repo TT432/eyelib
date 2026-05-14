@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.common.runtime;
 
-import io.github.tt432.eyelib.capability.EntityStatistics;
+import io.github.tt432.eyelibattachment.capability.EntityStatistics;
 
 public final class EntityStatisticsUpdater {
     private EntityStatisticsUpdater() {

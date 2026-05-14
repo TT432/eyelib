@@ -21,7 +21,7 @@ class AnimationRuntimePortsTest {
     }
 
     @Test
-    void legacyAnimationPortsDelegateToExistingInterfaceMethods() {
+    void animationUntypedMethodsDelegateToTypedInterfaceMethods() {
         AtomicInteger finished = new AtomicInteger();
         AtomicInteger anyChecks = new AtomicInteger();
         AtomicInteger allChecks = new AtomicInteger();
@@ -29,14 +29,12 @@ class AnimationRuntimePortsTest {
         Object state = new Object();
         TestAnimation animation = new TestAnimation("animation.test.idle", state, finished, anyChecks, allChecks, ticks);
 
-        AnimationRuntimePortSet<Object> ports = animation.ports();
-
-        assertEquals("animation.test.idle", ports.identity().name());
-        assertSame(state, ports.state().createData());
-        ports.state().onFinish(state);
-        ports.state().anyAnimationFinished(state);
-        ports.state().allAnimationFinished(state);
-        ports.execution().tickAnimation(state, Map.of(), new MolangScope(), 3F, 1F,
+        assertEquals("animation.test.idle", animation.name());
+        assertSame(state, animation.createDataUntyped());
+        animation.onFinishUntyped(state);
+        animation.anyAnimationFinishedUntyped(state);
+        animation.allAnimationFinishedUntyped(state);
+        animation.tickAnimationUntyped(state, Map.of(), new MolangScope(), 3F, 1F,
                 new ModelRuntimeData(), new AnimationEffects(), () -> {
                 });
 

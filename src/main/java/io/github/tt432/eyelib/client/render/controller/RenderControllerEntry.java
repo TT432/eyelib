@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.render.controller;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
+import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibimporter.model.Model;
@@ -125,7 +126,7 @@ public record RenderControllerEntry(
 
         ModelComponent component = new ModelComponent();
 
-        component.setInfo(new ModelComponent.SerializableInfo(
+        component.setInfo(new ModelComponentInfo(
                 get(scope, geometry, "geometry", entity.geometry()),
                 texture,
                 new ResourceLocation(materials.containsKey("*") ? get(scope, materials.get("*"), "material", entity.materials()) : "")

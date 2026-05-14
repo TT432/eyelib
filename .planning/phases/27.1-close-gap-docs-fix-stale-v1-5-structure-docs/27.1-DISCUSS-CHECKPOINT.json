@@ -1,0 +1,16 @@
+{
+  "phase": "27.1",
+  "phase_name": "close-gap-docs-fix-stale-v1-5-structure-docs",
+  "timestamp": "2026-05-13T22:15:00.000Z",
+  "areas_completed": ["陈旧引用修复范围"],
+  "areas_remaining": ["eyelib-molang 子项目文件", "生成的 codebase 地图", "已删除文件的引用"],
+  "decisions": {
+    "陈旧引用修复范围": [
+      {"question": "如何处理这 10 处活跃文档中的陈旧引用？", "answer": "修复全部 10 处", "options_presented": ["修复全部 10 处", "全部修复但跳过 molang", "仅修复最关键的"]},
+      {"question": "是否主动扫描类似情况（如包名 eyelibprocessor）？", "answer": "先搜索再全部修复", "options_presented": ["仅修复已发现的 10 处", "先搜索再全部修复"]},
+      {"question": "修复后如何验证质量？", "answer": "替换后做语义审计", "options_presented": ["替换后做语义审计", "仅做纯文本替换"]}
+    ]
+  },
+  "deferred_ideas": [],
+  "canonical_refs": []
+}

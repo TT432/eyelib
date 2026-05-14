@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.compat.ar;
 
-import io.github.tt432.eyelib.client.model.bake.BakedModel;
 import io.github.tt432.eyelib.client.render.RenderParams;
+import io.github.tt432.eyelibpreprocessing.model.bake.BakedModel;
 import net.minecraftforge.fml.loading.LoadingModList;
 
 public class ARCompat {

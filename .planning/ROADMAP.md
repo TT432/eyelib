@@ -7,7 +7,7 @@
 - ✅ **v1.2 真正实现 eyelib-particle 的模块分离** — Phases 8-14 (shipped 2026-05-09)
 - ✅ **v1.3 分离 eyelib-util 模块** — Phases 15-21 (shipped 2026-05-10)
 - ✅ **v1.4 结构清理** — Phases 22-26 (shipped 2026-05-12)
-- 🚧 **v1.5 深度结构清理** — Phases 27-30 (in planning)
+- ✅ **v1.5 深度结构清理** — Phases 27-30 (shipped 2026-05-12)
 
 ## Phases
 
@@ -65,45 +65,58 @@ Full details: `.planning/milestones/v1.4-ROADMAP.md`
 
 </details>
 
-### 🚧 v1.5 深度结构清理 (In Planning)
+### ✅ v1.5 深度结构清理 (SHIPPED 2026-05-12)
 
 **Milestone Goal:** 完成上一轮未闭合的结构清理任务——capability 残留审计与终结迁移、animation 无效接口全量清除、preprocessing 归属扫描、重复代码排查、结构文档现代化。
 
 #### Phase 27: DOCS — 文档审计与修正
 **Goal**: 项目结构文档准确反映当前模块拓扑，无过时引用，无无效文档，缺失模块有对应说明
 **Depends on**: Nothing (zero risk, starts immediately)
-**Requirements**: DOCS-01, DOCS-02, DOCS-03, DOCS-04, DOCS-05
+**Requirements**: DOCS-01, DOCS-02, DOCS-03, DOCS-04
 **Success Criteria** (what must be TRUE):
-  1. 全文搜索 `eyelib-processor`（不含 `eyelib-preprocessing` 的完整匹配）返回 0 条生产代码结果
-  2. 全部 48 个 README.md 均已审计，空目录下无残留无效 README
-  3. 所有缺失结构文档的模块均已补充准确说明
-  4. MODULES.md 和 docs/ 架构文档准确反映 v1.5 完成后的模块拓扑
-**Plans**: TBD
+  1. 全文搜索 `eyelib-processor`（不含 `eyelib-preprocessing` 的完整匹配）返回 0 条生产代码结果 ✅
+  2. 全部 50 个 README.md 均已审计，空目录下无残留无效 README ✅
+  3. 所有缺失结构文档的模块均已补充准确说明 ✅
+  4. MODULES.md 和 docs/ 架构文档准确反映 v1.5 完成后的模块拓扑 ✅
+**Plans**: 1/1 complete
+**Completed**: 2026-05-12
+
+### Phase 27.1: Close gap: DOCS — fix stale v1.5 structure docs (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 27
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 27.1 to break down)
 
 #### Phase 28: ANIM — 动画 Port 层删除与接口简化
 **Goal**: `client/animation/` 下无效的 Port 接口层全部清除，Animation 默认方法不经过 Port 环形委托，调用方直接使用 Animation 自身方法
 **Depends on**: Phase 27
 **Requirements**: ANIM-01, ANIM-02, ANIM-03, ANIM-04, ANIM-05
 **Success Criteria** (what must be TRUE):
-  1. `AnimationIdentityPort`、`AnimationStatePort`、`AnimationExecutionPort`、`AnimationRuntimePortSet` 四个接口文件已删除且编译通过
-  2. `LegacyAnimationRuntimeAdapter` 已删除且编译通过
-  3. `Animation.java` 默认方法（`name()`、`state()`、`tickAnimation()` 等）直接调用自身抽象方法，不再经过 `ports()` 环形委托链
-  4. `AnimationRuntimes` 静态工具类已删除，其原调用方直接使用替代方式
-  5. `BrAnimator` 等调用方使用 `animation.name()` 替代 `animation.identityPort().name()`，全量 `test` + `nullawayMain` 通过
-**Pre-step (mandatory):** `jetbrain_run_gradle_tasks taskNames: [":clean"]` → `jetbrain_build_project` 清除 stale .class 文件
-**Plans**: TBD
+  1. `AnimationIdentityPort`、`AnimationStatePort`、`AnimationExecutionPort`、`AnimationRuntimePortSet` 四个接口文件已删除且编译通过 ✅
+  2. `LegacyAnimationRuntimeAdapter` 已删除且编译通过 ✅
+  3. `Animation.java` 默认方法（`name()`、`state()`、`tickAnimation()` 等）直接调用自身抽象方法，不再经过 `ports()` 环形委托链 ✅
+  4. `AnimationRuntimes` 静态工具类已删除，其原调用方直接使用替代方式 ✅
+  5. `BrAnimator` 等调用方使用 `animation.name()` 替代 `animation.identityPort().name()`，全量 `test` + `nullawayMain` 通过 ✅
+**Pre-step (mandatory):** `jetbrain_run_gradle_tasks taskNames: [":clean"]` → `jetbrain_build_project` 清除 stale .class 文件 ✅
+**Plans**: 1/1 complete
+**Completed**: 2026-05-12
 
 #### Phase 29: PREP+DUP — 结构扫描（预处理归属 + 重复排查）
 **Goal**: 产出 PREP 归属扫描报告和 DUP 重复排查报告，两份只读分析为 CAP 阶段提供完整决策依据
 **Depends on**: Phase 28
 **Requirements**: PREP-01, PREP-02, DUP-01, DUP-02, DUP-03, DUP-04
 **Success Criteria** (what must be TRUE):
-  1. PREP 报告列出 root 中所有候选移入 `:eyelib-preprocessing` 的类，每项附带迁移/保留理由
-  2. PREP 报告中"保留"的类均附有 root runtime 依赖链说明（import root 包的证据）
-  3. DUP 报告列出所有疑似重复的类对，明确区分 intentional adaptation layer 与 genuine copy-paste
-  4. DUP 报告涵盖 capability 注册路径的重复职责审计结论和 `fromSchema()` 模式一致性分析
-  5. 两份报告为只读分析，未修改任何代码，不影响编译
-**Plans**: TBD
+  1. PREP 报告列出 root 中所有候选移入 `:eyelib-preprocessing` 的类，每项附带迁移/保留理由 ✅
+  2. PREP 报告中"保留"的类均附有 root runtime 依赖链说明（import root 包的证据） ✅
+  3. DUP 报告列出所有疑似重复的类对，明确区分 intentional adaptation layer 与 genuine copy-paste ✅
+  4. DUP 报告涵盖 capability 注册路径的重复职责审计结论和 `fromSchema()` 模式一致性分析 ✅
+  5. 两份报告为只读分析，未修改任何代码，不影响编译 ✅
+**Plans**: 1/1 complete
+**Completed**: 2026-05-12
 
 #### Phase 30: CAP — Capability 残留审计与最终迁移
 **Goal**: root `capability/` 下所有类型完成归属审计，安全可迁类迁移至 `eyelib-attachment`，高风险类出具推迟报告，确认 v1.4 已迁移类型位置正确
@@ -115,7 +128,8 @@ Full details: `.planning/milestones/v1.4-ROADMAP.md`
   3. `EntityBehaviorData` 等高耦合类型出具推迟迁移分析报告，注明 MolangQuery 耦合链和阻塞原因
   4. v1.4 已迁移的 5 个数据/codec 类型（ExtraEntityData, ExtraEntityUpdateData, EntityStatistics, AnimationComponentInfo, ModelComponentInfo）确认在 attachment 位置正确，无回归
   5. `EyelibAttachableData` 确认仍为 Forge registry hub 留在 root，未被错误迁移
-**Plans**: TBD
+**Plans**: 1/1 complete
+**Completed**: 2026-05-12
 
 ## Progress
 
@@ -130,7 +144,7 @@ Full details: `.planning/milestones/v1.4-ROADMAP.md`
 | 24. Data Relocation | v1.4 | 1/1 | Complete | 2026-05-12 |
 | 25. Capability Migration | v1.4 | 1/1 | Complete | 2026-05-12 |
 | 26. Documentation & Final Verification | v1.4 | 1/1 | Complete | 2026-05-12 |
-| 27. DOCS — 文档审计与修正 | v1.5 | 0/0 | Not started | - |
-| 28. ANIM — 动画 Port 层删除与接口简化 | v1.5 | 0/0 | Not started | - |
-| 29. PREP+DUP — 结构扫描 | v1.5 | 0/0 | Not started | - |
-| 30. CAP — Capability 残留审计与最终迁移 | v1.5 | 0/0 | Not started | - |
+| 27. DOCS — 文档审计与修正 | v1.5 | 1/1 | Complete | 2026-05-12 |
+| 28. ANIM — 动画 Port 层删除与接口简化 | v1.5 | 1/1 | Complete | 2026-05-12 |
+| 29. PREP+DUP — 结构扫描 | v1.5 | 1/1 | Complete | 2026-05-12 |
+| 30. CAP — Capability 残留审计与最终迁移 | v1.5 | 1/1 | Complete | 2026-05-12 |

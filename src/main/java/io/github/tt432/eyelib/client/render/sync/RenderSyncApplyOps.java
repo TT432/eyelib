@@ -2,6 +2,8 @@ package io.github.tt432.eyelib.client.render.sync;
 
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
+import io.github.tt432.eyelibattachment.capability.AnimationComponentInfo;
+import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +18,7 @@ public final class RenderSyncApplyOps {
         List<RenderModelSyncPayload> result = new ArrayList<>();
         for (ModelComponent component : modelComponents) {
             if (component.serializable()) {
-                ModelComponent.SerializableInfo serializableInfo = component.getSerializableInfo();
+                ModelComponentInfo serializableInfo = component.getSerializableInfo();
                 if (serializableInfo != null) {
                     result.add(RenderModelSyncPayload.from(serializableInfo));
                 }
@@ -27,7 +29,7 @@ public final class RenderSyncApplyOps {
 
     public static void replaceModelComponents(List<ModelComponent> modelComponents,
                                               List<RenderModelSyncPayload> modelInfo,
-                                              Function<RenderModelSyncPayload, ModelComponent.SerializableInfo> infoDecoder) {
+                                              Function<RenderModelSyncPayload, ModelComponentInfo> infoDecoder) {
         modelComponents.clear();
         for (RenderModelSyncPayload payload : modelInfo) {
             ModelComponent component = new ModelComponent();
@@ -36,8 +38,8 @@ public final class RenderSyncApplyOps {
         }
     }
 
-    public static void applyAnimationInfo(Consumer<AnimationComponent.SerializableInfo> animationInfoApplier,
-                                          AnimationComponent.SerializableInfo animationInfo) {
+    public static void applyAnimationInfo(Consumer<AnimationComponentInfo> animationInfoApplier,
+                                          AnimationComponentInfo animationInfo) {
         animationInfoApplier.accept(animationInfo);
     }
 }

@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.mc.impl.network.packet;
 
-import io.github.tt432.eyelib.capability.ExtraEntityData;
+import io.github.tt432.eyelibattachment.capability.ExtraEntityData;
 import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
 import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
 import net.minecraft.network.FriendlyByteBuf;

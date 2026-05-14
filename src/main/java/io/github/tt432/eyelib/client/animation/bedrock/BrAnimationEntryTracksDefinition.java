@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
 import io.github.tt432.eyelib.client.animation.AnimationEffect;
-import io.github.tt432.eyelib.client.animation.NamedTrackContainerDefinition;
+import io.github.tt432.eyelibimporter.animation.NamedTrackContainerDefinition;
 import io.github.tt432.eyelibmolang.MolangValue;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 

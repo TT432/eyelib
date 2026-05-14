@@ -2,10 +2,11 @@ package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.manager.ModelManager;
+import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
 import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
-import io.github.tt432.eyelib.client.model.bake.TwoSideModelBakeInfo;
+import io.github.tt432.eyelibpreprocessing.model.bake.TwoSideModelBakeInfo;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
@@ -30,6 +31,7 @@ public class RenderHelper {
     private RenderParams params;
 
     public static RenderHelper start() {
+        ModelBakeInvalidationHooks.install();
         return new RenderHelper();
     }
 

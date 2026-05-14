@@ -1,6 +1,5 @@
 package io.github.tt432.eyelibimporter.animation.bedrock.controller;
 
-import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAcStateTrackName;
 import io.github.tt432.eyelibmolang.MolangValue;
 
 import java.util.Collections;

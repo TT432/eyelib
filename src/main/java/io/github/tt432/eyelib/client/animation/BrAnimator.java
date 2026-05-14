@@ -27,7 +27,7 @@ public final class BrAnimator {
             MolangValue multiplier = entry.getValue();
             if (animation == null) continue;
 
-            animation.tickAnimationUntyped(component.getAnimationData(animation.identityPort().name()),
+            animation.tickAnimationUntyped(component.getAnimationData(animation.name()),
                     serializableInfo.animations(), scope, ticks, multiplier.eval(scope),
                     infos, effects, animationStartFeedback);
         }

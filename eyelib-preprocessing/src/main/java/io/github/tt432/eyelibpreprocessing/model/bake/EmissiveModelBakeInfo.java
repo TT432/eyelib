@@ -1,8 +1,6 @@
 package io.github.tt432.eyelibpreprocessing.model.bake;
 
 import com.google.common.collect.Lists;
-import io.github.tt432.eyelib.client.model.bake.BakedModel;
-import io.github.tt432.eyelib.client.model.bake.ModelBakeInfo;
 import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelibpreprocessing.model.bake.EmissiveModelBakeInfo.Info;
 import it.unimi.dsi.fastutil.booleans.BooleanList;

@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.animation.bedrock.controller;
 
 import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
+import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcStateDefinition;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jspecify.annotations.Nullable;
 
@@ -19,7 +20,7 @@ final class BrControllerStateOwner {
 
     @SuppressWarnings("unchecked")
     <D> D getData(Animation<?> animation) {
-        return (D) data.computeIfAbsent(animation.identityPort().name(), s -> animation.statePort().createData());
+        return (D) data.computeIfAbsent(animation.name(), s -> animation.createDataUntyped());
     }
 
     float startTick() { return startTick; }

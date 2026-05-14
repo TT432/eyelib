@@ -4,7 +4,7 @@ import com.google.gson.JsonElement;
 import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.client.registry.AttachableAssetRegistry;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-import io.github.tt432.eyelibprocessor.loader.LoaderParsingOps;
+import io.github.tt432.eyelibpreprocessing.loader.LoaderParsingOps;
 import io.github.tt432.eyelibutil.search.Searchable;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;

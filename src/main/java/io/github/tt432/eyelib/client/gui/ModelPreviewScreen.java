@@ -9,11 +9,12 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.model.DFSModel;
+import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
 import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelib.client.model.ModelLookup;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
-import io.github.tt432.eyelib.client.model.bake.BakedModel;
-import io.github.tt432.eyelib.client.model.bake.TwoSideModelBakeInfo;
+import io.github.tt432.eyelibpreprocessing.model.bake.BakedModel;
+import io.github.tt432.eyelibpreprocessing.model.bake.TwoSideModelBakeInfo;
 import io.github.tt432.eyelibimporter.model.bbmodel.BBModel;
 import io.github.tt432.eyelibimporter.model.bbmodel.BBModelLoader;
 import io.github.tt432.eyelibimporter.model.bbmodel.Texture;
@@ -93,6 +94,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
     @Override
     protected void init() {
         super.init();
+        ModelBakeInvalidationHooks.install();
 
         int searchBoxWidth = (int) (this.width * SEARCH_BOX_WIDTH_PERCENT);
         int searchBoxX = (this.width - searchBoxWidth) / 2;

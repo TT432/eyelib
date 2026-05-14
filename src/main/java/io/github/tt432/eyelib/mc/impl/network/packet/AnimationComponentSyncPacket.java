@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.mc.impl.network.packet;
 
-import io.github.tt432.eyelib.capability.component.AnimationComponent;
+import io.github.tt432.eyelibattachment.capability.AnimationComponentInfo;
 import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
 import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
 import net.minecraft.network.FriendlyByteBuf;
@@ -10,19 +10,19 @@ import net.minecraft.network.FriendlyByteBuf;
  */
 public record AnimationComponentSyncPacket(
         int entityId,
-        AnimationComponent.SerializableInfo animationInfo
+        AnimationComponentInfo animationInfo
 ) {
     public static final StreamCodec<AnimationComponentSyncPacket> STREAM_CODEC = new StreamCodec<>() {
         @Override
         public void encode(AnimationComponentSyncPacket obj, FriendlyByteBuf buf) {
             EyelibStreamCodecs.VAR_INT.encode(obj.entityId, buf);
-            AnimationComponent.SerializableInfo.STREAM_CODEC.encode(obj.animationInfo, buf);
+            AnimationComponentInfo.STREAM_CODEC.encode(obj.animationInfo, buf);
         }
 
         @Override
         public AnimationComponentSyncPacket decode(FriendlyByteBuf buf) {
             var entityId = EyelibStreamCodecs.VAR_INT.decode(buf);
-            var animationInfo = AnimationComponent.SerializableInfo.STREAM_CODEC.decode(buf);
+            var animationInfo = AnimationComponentInfo.STREAM_CODEC.decode(buf);
             return new AnimationComponentSyncPacket(entityId, animationInfo);
         }
     };

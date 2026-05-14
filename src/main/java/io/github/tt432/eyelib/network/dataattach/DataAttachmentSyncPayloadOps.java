@@ -1,12 +1,12 @@
 package io.github.tt432.eyelib.network.dataattach;
 
-import io.github.tt432.eyelib.capability.ExtraEntityData;
-import io.github.tt432.eyelib.capability.ExtraEntityUpdateData;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.mc.impl.network.packet.DataAttachmentUpdatePacket;
 import io.github.tt432.eyelib.mc.impl.network.packet.ExtraEntityDataPacket;
 import io.github.tt432.eyelib.mc.impl.network.packet.ExtraEntityUpdateDataPacket;
 import io.github.tt432.eyelib.mc.impl.network.packet.UniDataUpdatePacket;
+import io.github.tt432.eyelibattachment.capability.ExtraEntityData;
+import io.github.tt432.eyelibattachment.capability.ExtraEntityUpdateData;
 import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

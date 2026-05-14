@@ -1,7 +1,8 @@
 package io.github.tt432.eyelib.client.render.sync;
 
-import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
+import io.github.tt432.eyelibattachment.capability.AnimationComponentInfo;
+import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelibutil.resource.ResourceLocations;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 class RenderSyncApplyOpsTest {
     @Test
     void collectSerializableModelInfoFiltersOutNonSerializableEntries() {
-        ModelComponent.SerializableInfo info = new ModelComponent.SerializableInfo(
+        ModelComponentInfo info = new ModelComponentInfo(
                 "test:model",
                 ResourceLocations.of("eyelib", "textures/test"),
                 ResourceLocations.of("eyelib", "render/solid")
@@ -51,7 +52,7 @@ class RenderSyncApplyOpsTest {
         );
 
         ModelComponent old = new ModelComponent();
-        old.setInfo(new ModelComponent.SerializableInfo(
+        old.setInfo(new ModelComponentInfo(
                 firstInfo.model(),
                 ResourceLocations.of(firstInfo.texture()),
                 ResourceLocations.of(firstInfo.renderType())
@@ -59,14 +60,14 @@ class RenderSyncApplyOpsTest {
         List<ModelComponent> target = new ArrayList<>();
         target.add(old);
 
-        RenderSyncApplyOps.replaceModelComponents(target, List.of(firstInfo, secondInfo), payload -> new ModelComponent.SerializableInfo(
+        RenderSyncApplyOps.replaceModelComponents(target, List.of(firstInfo, secondInfo), payload -> new ModelComponentInfo(
                 payload.model(),
                 ResourceLocations.of(payload.texture()),
                 ResourceLocations.of(payload.renderType())
         ));
 
-        ModelComponent.SerializableInfo rebuiltFirst = target.get(0).getSerializableInfo();
-        ModelComponent.SerializableInfo rebuiltSecond = target.get(1).getSerializableInfo();
+        ModelComponentInfo rebuiltFirst = target.get(0).getSerializableInfo();
+        ModelComponentInfo rebuiltSecond = target.get(1).getSerializableInfo();
 
         assertNotNull(rebuiltFirst);
         assertNotNull(rebuiltSecond);
@@ -82,11 +83,11 @@ class RenderSyncApplyOpsTest {
 
     @Test
     void applyAnimationInfoForwardsPayloadToApplier() {
-        AnimationComponent.SerializableInfo info = new AnimationComponent.SerializableInfo(
+        AnimationComponentInfo info = new AnimationComponentInfo(
                 Map.of("controller.main", "animation.walk"),
                 Map.of("controller.main", MolangValue.ONE)
         );
-        AtomicReference<AnimationComponent.SerializableInfo> applied = new AtomicReference<>();
+        AtomicReference<AnimationComponentInfo> applied = new AtomicReference<>();
 
         RenderSyncApplyOps.applyAnimationInfo(applied::set, info);
 

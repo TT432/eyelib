@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
 import io.github.tt432.eyelib.client.animation.AnimationClipDefinition;
-import io.github.tt432.eyelib.client.animation.NamedTrackContainerDefinition;
+import io.github.tt432.eyelibimporter.animation.NamedTrackContainerDefinition;
 import io.github.tt432.eyelib.client.animation.TrackAnimationDefinition;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
 

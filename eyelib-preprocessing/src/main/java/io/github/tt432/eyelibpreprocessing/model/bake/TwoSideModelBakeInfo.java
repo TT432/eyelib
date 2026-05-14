@@ -1,6 +1,5 @@
 package io.github.tt432.eyelibpreprocessing.model.bake;
 
-import io.github.tt432.eyelib.client.model.bake.ModelBakeInfo;
 import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelibpreprocessing.model.bake.TwoSideModelBakeInfo.TwoSideInfoMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;

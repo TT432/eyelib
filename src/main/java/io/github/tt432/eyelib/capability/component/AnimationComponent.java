@@ -1,19 +1,14 @@
 package io.github.tt432.eyelib.capability.component;
 
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.AnimationLookup;
 import io.github.tt432.eyelib.client.model.ModelRuntimeData;
+import io.github.tt432.eyelibattachment.capability.AnimationComponentInfo;
 import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
-import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
 import lombok.Getter;
-import net.minecraft.network.FriendlyByteBuf;
 
 import org.jspecify.annotations.Nullable;
-import org.jspecify.annotations.NullMarked;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -33,37 +28,6 @@ public class AnimationComponent {
         }
     }
 
-    @NullMarked
-    public record SerializableInfo(
-            Map<String, String> animations,
-            Map<String, MolangValue> animate
-    ) {
-        public static final Codec<SerializableInfo> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-                Codec.unboundedMap(Codec.STRING, Codec.STRING).fieldOf("animations").forGetter(SerializableInfo::animations),
-                Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).fieldOf("animate").forGetter(SerializableInfo::animate)
-        ).apply(ins, SerializableInfo::new));
-
-        private static final StreamCodec<MolangValue> MOLANG_VALUE_STREAM_CODEC = EyelibStreamCodecs.fromCodec(MolangValue.CODEC);
-
-        public static final StreamCodec<SerializableInfo> STREAM_CODEC = new StreamCodec<>() {
-            private final StreamCodec<Map<String, String>> animationsCodec = EyelibStreamCodecs.map(HashMap::new, EyelibStreamCodecs.STRING, EyelibStreamCodecs.STRING);
-            private final StreamCodec<Map<String, MolangValue>> animateCodec = EyelibStreamCodecs.map(HashMap::new, EyelibStreamCodecs.STRING, MOLANG_VALUE_STREAM_CODEC);
-
-            @Override
-            public void encode(SerializableInfo obj, FriendlyByteBuf buf) {
-                animationsCodec.encode(obj.animations, buf);
-                animateCodec.encode(obj.animate, buf);
-            }
-
-            @Override
-            public SerializableInfo decode(FriendlyByteBuf buf) {
-                var animations = animationsCodec.decode(buf);
-                var animate = animateCodec.decode(buf);
-                return new SerializableInfo(animations, animate);
-            }
-        };
-    }
-
     public Object getAnimationData(String controllerName) {
         return animationData.computeIfAbsent(controllerName, name -> {
             Animation<?> animation = AnimationLookup.get(name);
@@ -76,7 +40,7 @@ public class AnimationComponent {
     }
 
     @Nullable
-    SerializableInfo serializableInfo;
+    AnimationComponentInfo serializableInfo;
     private final Map<Animation<?>, MolangValue> animate = new HashMap<>();
     private final Map<String, Object> animationData = new HashMap<>();
 
@@ -85,8 +49,8 @@ public class AnimationComponent {
     @Nullable
     public AnimationEffects effects;
 
-    public void setInfo(SerializableInfo info) {
-        setup(info.animations, info.animate);
+    public void setInfo(AnimationComponentInfo info) {
+        setup(info.animations(), info.animate());
     }
 
     public static void onManagerEntryChanged(String managerName, String entryName) {
@@ -108,7 +72,7 @@ public class AnimationComponent {
 
     private void invalidateSerializableInfoIfUsingAnimation(String animationName) {
         for (Animation<?> animation : animate.keySet()) {
-            if (animation.identityPort().name().equals(animationName)) {
+            if (animation.name().equals(animationName)) {
                 serializableInfo = null;
                 return;
             }
@@ -117,10 +81,10 @@ public class AnimationComponent {
 
     public void setup(Map<String, String> animations, Map<String, MolangValue> animate) {
         if (serializableInfo != null
-                && serializableInfo.animate.equals(animate)
-                && serializableInfo.animations.equals(animations)) return;
+                && serializableInfo.animate().equals(animate)
+                && serializableInfo.animations().equals(animations)) return;
 
-        serializableInfo = new SerializableInfo(animations, animate);
+        serializableInfo = new AnimationComponentInfo(animations, animate);
 
         this.animate.clear();
         animationData.clear();
@@ -140,8 +104,7 @@ public class AnimationComponent {
         for (var s : this.animate.keySet()) {
             if (s == null) continue;
             var data = s.createDataUntyped();
-            animationData.put(s.identityPort().name(), data);
+            animationData.put(s.name(), data);
         }
     }
 }
-

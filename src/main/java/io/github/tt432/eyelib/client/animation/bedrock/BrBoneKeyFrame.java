@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.client.animation.bedrock;
 
 import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneKeyFrameSchema;
-import io.github.tt432.eyelibprocessor.animation.baked.BakedBoneKeyFrame;
-import io.github.tt432.eyelibprocessor.animation.baked.BoneAnimationBaker;
+import io.github.tt432.eyelibpreprocessing.animation.baked.BakedBoneKeyFrame;
+import io.github.tt432.eyelibpreprocessing.animation.baked.BoneAnimationBaker;
 
 
 import com.google.common.collect.ImmutableList;

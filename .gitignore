@@ -48,12 +48,17 @@ test.geo.json
 # local scratch data
 *.duckdb
 *.duckdb.wal
+*.mv.db
+*.mv.db.trace.*
 NUL
 test_resources/
 
 # smoke test artifacts (generated at runtime, not source)
 run/clientsmoke/
 clientsmoke-reports/
+
+# temporary planning artifacts
+.planning/tmp-*
 
 文档
 .extrasrc

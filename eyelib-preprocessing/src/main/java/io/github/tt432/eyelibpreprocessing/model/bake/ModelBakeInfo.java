@@ -1,13 +1,10 @@
 package io.github.tt432.eyelibpreprocessing.model.bake;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelibimporter.model.Model;
-import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import it.unimi.dsi.fastutil.ints.Int2BooleanFunction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.common.MinecraftForge;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,16 +16,9 @@ import static org.lwjgl.opengl.GL11.*;
  * @author TT432
  */
 public abstract class ModelBakeInfo<Info> {
-    private final Map<String, HashMap<ResourceLocation, io.github.tt432.eyelibpreprocessing.model.bake.BakedModel>> modelCache = new HashMap<>();
+    private final Map<String, HashMap<ResourceLocation, BakedModel>> modelCache = new HashMap<>();
 
-    {
-        MinecraftForge.EVENT_BUS.<ManagerEntryChangedEvent>addListener(e -> {
-            if (e.getManagerName().equals(ModelManager.class.getSimpleName()))
-                modelCache.remove(e.getEntryName());
-        });
-    }
-
-    public io.github.tt432.eyelibpreprocessing.model.bake.BakedModel getBakedModel(Model model, boolean isSolid, ResourceLocation texture) {
+    public BakedModel getBakedModel(Model model, boolean isSolid, ResourceLocation texture) {
         return modelCache.computeIfAbsent(model.name(), s -> new HashMap<>())
                 .computeIfAbsent(texture, i -> {
                     Info bakeInfo = getBakeInfo(model, isSolid, texture);
@@ -36,9 +26,13 @@ public abstract class ModelBakeInfo<Info> {
                 });
     }
 
+    public void invalidateModel(String modelName) {
+        modelCache.remove(modelName);
+    }
+
     protected abstract Info getBakeInfo(Model model, boolean isSolid, ResourceLocation texture);
 
-    protected abstract io.github.tt432.eyelibpreprocessing.model.bake.BakedModel bake(Model model, Info info);
+    protected abstract BakedModel bake(Model model, Info info);
 
     @FunctionalInterface
     public interface BoneDataConsumer {

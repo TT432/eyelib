@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.common;
 
-import io.github.tt432.eyelib.capability.EntityStatistics;
+import io.github.tt432.eyelibattachment.capability.EntityStatistics;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.common.runtime.EntityStatisticsUpdater;
 import io.github.tt432.eyelib.mc.impl.network.dataattach.DataAttachmentSyncRuntime;

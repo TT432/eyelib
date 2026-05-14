@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.common.runtime;
 
-import io.github.tt432.eyelib.capability.EntityStatistics;
-import io.github.tt432.eyelib.capability.ExtraEntityData;
+import io.github.tt432.eyelibattachment.capability.EntityStatistics;
+import io.github.tt432.eyelibattachment.capability.ExtraEntityData;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.render.sync;
 
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
+import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelib.mc.impl.network.EyelibNetworkTransport;
 import io.github.tt432.eyelib.mc.impl.network.packet.AnimationComponentSyncPacket;
 import io.github.tt432.eyelib.mc.impl.network.packet.ModelComponentSyncPacket;
@@ -59,8 +60,8 @@ public final class ClientRenderSyncService {
         return Minecraft.getInstance().level.getEntity(entityId);
     }
 
-    private static ModelComponent.SerializableInfo decodeModelPayload(RenderModelSyncPayload payload) {
-        return new ModelComponent.SerializableInfo(
+    private static ModelComponentInfo decodeModelPayload(RenderModelSyncPayload payload) {
+        return new ModelComponentInfo(
                 payload.model(),
                 ResourceLocations.of(payload.texture()),
                 ResourceLocations.of(payload.renderType())

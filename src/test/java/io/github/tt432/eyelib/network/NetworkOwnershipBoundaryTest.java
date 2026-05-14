@@ -67,11 +67,11 @@ class NetworkOwnershipBoundaryTest {
     }
 
     @Test
-    void remainingRootPacketsAreBlockedByRootOwnedPayloads() throws IOException {
+    void remainingRootPacketsAreBlockedByRootCoupledPayloads() throws IOException {
         assertAll(
                 () -> assertSourceContains(
                         "src/main/java/io/github/tt432/eyelib/mc/impl/network/packet/AnimationComponentSyncPacket.java",
-                        "AnimationComponent.SerializableInfo"),
+                        "AnimationComponentInfo"),
                 () -> assertSourceContains(
                         "src/main/java/io/github/tt432/eyelib/mc/impl/network/packet/ModelComponentSyncPacket.java",
                         "RenderModelSyncPayload"),

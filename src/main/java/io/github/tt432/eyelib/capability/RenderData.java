@@ -2,6 +2,8 @@ package io.github.tt432.eyelib.capability;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelibattachment.capability.AnimationComponentInfo;
+import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
@@ -25,12 +27,12 @@ import java.util.Optional;
 public class RenderData<T> {
     public static <T> Codec<RenderData<T>> codec() {
         return RecordCodecBuilder.create(ins -> ins.group(
-                ModelComponent.SerializableInfo.CODEC.listOf().optionalFieldOf("model").forGetter(ac -> Optional.of(ac.modelComponents.stream().map(ModelComponent::getSerializableInfo).toList())),
-                AnimationComponent.SerializableInfo.CODEC.optionalFieldOf("animation").forGetter(ac -> Optional.ofNullable(ac.animationComponent.getSerializableInfo()))
+                ModelComponentInfo.CODEC.listOf().optionalFieldOf("model").forGetter(ac -> Optional.of(ac.modelComponents.stream().map(ModelComponent::getSerializableInfo).toList())),
+                AnimationComponentInfo.CODEC.optionalFieldOf("animation").forGetter(ac -> Optional.ofNullable(ac.animationComponent.getSerializableInfo()))
         ).apply(ins, (mcsi, acsi) -> {
             RenderData<T> result = new RenderData<>();
             mcsi.ifPresent(l -> {
-                for (ModelComponent.SerializableInfo serializableInfo : l) {
+                for (ModelComponentInfo serializableInfo : l) {
                     ModelComponent e = new ModelComponent();
                     e.setInfo(serializableInfo);
                     result.modelComponents.add(e);

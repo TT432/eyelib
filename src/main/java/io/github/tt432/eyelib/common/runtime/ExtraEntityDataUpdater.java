@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.common.runtime;
 
-import io.github.tt432.eyelib.capability.ExtraEntityData;
+import io.github.tt432.eyelibattachment.capability.ExtraEntityData;
 
 public final class ExtraEntityDataUpdater {
     private ExtraEntityDataUpdater() {
