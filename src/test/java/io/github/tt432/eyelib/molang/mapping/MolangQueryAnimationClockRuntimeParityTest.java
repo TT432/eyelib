@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mc.impl.molang.mapping;
+package io.github.tt432.eyelib.molang.mapping;
 
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;

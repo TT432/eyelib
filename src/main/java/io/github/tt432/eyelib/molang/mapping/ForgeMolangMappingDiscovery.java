@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mc.impl.molang.mapping;
+package io.github.tt432.eyelib.molang.mapping;
 
 import io.github.tt432.eyelibmolang.mapping.api.MolangMapping;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingDiscovery;

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mc.impl.molang.mapping;
+package io.github.tt432.eyelib.molang.mapping;
 
 import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
 
@@ -701,7 +701,7 @@ public final class MolangQuery {
 
             return ((float) Math.sqrt((x - xo) * (x - xo) + (z - zo) * (z - zo)))
                     / ((float) e.getAttributeBaseValue(Attributes.MOVEMENT_SPEED) *
-                    /* 疾跑乘数，原版没有，只能硬编码 */1.3F);
+                    /* 疾跑乘数，原版只能硬编码 */1.3F);
         });
     }
 
