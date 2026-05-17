@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.network.packet;
 
-import io.github.tt432.eyelib.client.render.sync.RenderModelSyncPayload;
+import io.github.tt432.eyelibattachment.sync.RenderModelSyncPayload;
 import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
 import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
 import net.minecraft.network.FriendlyByteBuf;

@@ -1,33 +1,32 @@
-package io.github.tt432.eyelib.client.manager;
+package io.github.tt432.eyelibutil.manager;
 
 import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-final class ManagerStorage<T> {
+public final class ManagerStorage<T> {
     private final Map<String, T> data = new LinkedHashMap<>();
 
-    void put(String name, T value) {
+    public void put(String name, T value) {
         data.put(name, value);
     }
 
     @Nullable
-    T get(String name) {
+    public T get(String name) {
         return data.get(name);
     }
 
-    Map<String, T> getAllData() {
+    public Map<String, T> getAllData() {
         return new LinkedHashMap<>(data);
     }
 
-    void replaceAll(Map<String, ? extends T> replacement) {
+    public void replaceAll(Map<String, ? extends T> replacement) {
         data.clear();
         data.putAll(replacement);
     }
 
-    void clear() {
+    public void clear() {
         data.clear();
     }
 }
-

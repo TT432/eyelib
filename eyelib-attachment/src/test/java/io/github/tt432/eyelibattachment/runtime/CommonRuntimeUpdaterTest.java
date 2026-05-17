@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.common.runtime;
+package io.github.tt432.eyelibattachment.runtime;
 
 import io.github.tt432.eyelibattachment.capability.EntityStatistics;
 import io.github.tt432.eyelibattachment.capability.ExtraEntityData;

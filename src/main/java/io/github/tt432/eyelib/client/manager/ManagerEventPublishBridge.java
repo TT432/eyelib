@@ -1,5 +1,7 @@
 package io.github.tt432.eyelib.client.manager;
 
+import io.github.tt432.eyelibutil.manager.ManagerEventPublisher;
+
 public final class ManagerEventPublishBridge {
     private static volatile ManagerEventPublisher publisher = ManagerEventPublisher.NOOP;
 

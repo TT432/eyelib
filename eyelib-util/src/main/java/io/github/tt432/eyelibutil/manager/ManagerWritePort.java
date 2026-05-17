@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.manager;
+package io.github.tt432.eyelibutil.manager;
 
 import java.util.Map;
 

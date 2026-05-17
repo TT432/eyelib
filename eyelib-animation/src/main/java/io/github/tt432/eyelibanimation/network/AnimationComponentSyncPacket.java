@@ -1,13 +1,10 @@
-package io.github.tt432.eyelib.network.packet;
+package io.github.tt432.eyelibanimation.network;
 
 import io.github.tt432.eyelibattachment.capability.AnimationComponentInfo;
 import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
 import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
 import net.minecraft.network.FriendlyByteBuf;
 
-/**
- * @author TT432
- */
 public record AnimationComponentSyncPacket(
         int entityId,
         AnimationComponentInfo animationInfo

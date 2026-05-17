@@ -1,12 +1,12 @@
 package io.github.tt432.eyelib.client.manager;
 
+import io.github.tt432.eyelibutil.manager.ManagerReadPort;
+import io.github.tt432.eyelibutil.manager.ManagerStorage;
+import io.github.tt432.eyelibutil.manager.ManagerWritePort;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * @author TT432
- */
 public abstract class Manager<T> implements ManagerReadPort<T>, ManagerWritePort<T> {
     private final ManagerStorage<T> storage = new ManagerStorage<>();
 

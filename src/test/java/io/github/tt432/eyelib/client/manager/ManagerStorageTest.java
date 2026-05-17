@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.manager;
 
+import io.github.tt432.eyelibutil.manager.ManagerStorage;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;

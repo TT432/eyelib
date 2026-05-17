@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.manager;
+package io.github.tt432.eyelibutil.manager;
 
 import org.jspecify.annotations.Nullable;
 
@@ -12,4 +12,3 @@ public interface ManagerReadPort<T> {
 
     String getManagerName();
 }
-

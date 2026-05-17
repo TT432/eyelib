@@ -1,10 +1,7 @@
-package io.github.tt432.eyelib.client.render.sync;
+package io.github.tt432.eyelibattachment.sync;
 
 import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 
-/**
- * Platform-type-free model sync payload used by the render apply seam.
- */
 public record RenderModelSyncPayload(
         String model,
         String texture,
