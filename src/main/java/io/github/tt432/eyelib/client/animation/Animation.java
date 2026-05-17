@@ -9,47 +9,21 @@ import java.util.Map;
 /**
  * @author TT432
  */
-public interface Animation<D> {
+public interface Animation {
     /**
      * @return name
      * @see AnimationManager
      */
     String name();
 
-    default Object createDataUntyped() {
-        return createData();
-    }
+    Object createData();
 
-    @SuppressWarnings("unchecked")
-    default void onFinishUntyped(Object data) {
-        onFinish((D) data);
-    }
+    void onFinish(Object data);
 
-    @SuppressWarnings("unchecked")
-    default boolean anyAnimationFinishedUntyped(Object data) {
-        return anyAnimationFinished((D) data);
-    }
+    boolean anyAnimationFinished(Object data);
 
-    @SuppressWarnings("unchecked")
-    default boolean allAnimationFinishedUntyped(Object data) {
-        return allAnimationFinished((D) data);
-    }
+    boolean allAnimationFinished(Object data);
 
-    @SuppressWarnings("unchecked")
-    default void tickAnimationUntyped(Object data, Map<String, String> animations, MolangScope scope, float ticks, float multiplier,
-                                      ModelRuntimeData renderInfos, AnimationEffects effects, Runnable animationStartFeedback) {
-        tickAnimation((D) data, animations, scope, ticks, multiplier,
-                renderInfos, effects, animationStartFeedback);
-    }
-
-    void onFinish(D data);
-
-    boolean anyAnimationFinished(D data);
-
-    boolean allAnimationFinished(D data);
-
-    D createData();
-
-    void tickAnimation(D data, Map<String, String> animations, MolangScope scope, float ticks, float multiplier,
+    void tickAnimation(Object data, Map<String, String> animations, MolangScope scope, float ticks, float multiplier,
                        ModelRuntimeData renderInfos, AnimationEffects effects, Runnable animationStartFeedback);
 }

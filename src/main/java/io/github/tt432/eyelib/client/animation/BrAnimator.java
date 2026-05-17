@@ -22,12 +22,12 @@ public final class BrAnimator {
             return infos;
         }
 
-        for (Map.Entry<Animation<?>, MolangValue> entry : component.getAnimate().entrySet()) {
-            Animation<?> animation = entry.getKey();
+        for (Map.Entry<Animation, MolangValue> entry : component.getAnimate().entrySet()) {
+            Animation animation = entry.getKey();
             MolangValue multiplier = entry.getValue();
             if (animation == null) continue;
 
-            animation.tickAnimationUntyped(component.getAnimationData(animation.name()),
+            animation.tickAnimation(component.getAnimationData(animation.name()),
                     serializableInfo.animations(), scope, ticks, multiplier.eval(scope),
                     infos, effects, animationStartFeedback);
         }

@@ -20,7 +20,7 @@ import java.util.Map;
  */
 public record BrAnimationController(
         io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerDefinition definition
-) implements StateMachineAnimation<BrAnimationController.Data, BrAcStateDefinition> {
+) implements StateMachineAnimation<BrAcStateDefinition> {
     public BrAnimationController(String name, BrAcState initialState, Map<String, BrAcState> states) {
         this(new io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerDefinition(
                 name,
@@ -64,35 +64,35 @@ public record BrAnimationController(
     }
 
     @Override
-    public void onFinish(Data data) {
+    public void onFinish(Object data) {
         // todo
     }
 
     @Override
-    public boolean anyAnimationFinished(Data data) {
-        if (data.getCurrState() == null) {
+    public boolean anyAnimationFinished(Object data) {
+        if (!(data instanceof Data d) || d.getCurrState() == null) {
             return true;
         }
-        return data.getCurrState().animations().keySet().stream().anyMatch(animationName -> {
-            String animName = data.owner().currentAnimations().get(animationName);
+        return d.getCurrState().animations().keySet().stream().anyMatch(animationName -> {
+            String animName = d.owner().currentAnimations().get(animationName);
             if (animName == null) return true;
-            Animation<?> animation = AnimationLookup.get(animName);
+            Animation animation = AnimationLookup.get(animName);
             if (animation == null) return true;
-            return animation.anyAnimationFinishedUntyped(data.getData(animation));
+            return animation.anyAnimationFinished(d.getData(animation));
         });
     }
 
     @Override
-    public boolean allAnimationFinished(Data data) {
-        if (data.getCurrState() == null) {
+    public boolean allAnimationFinished(Object data) {
+        if (!(data instanceof Data d) || d.getCurrState() == null) {
             return false;
         }
-        return data.getCurrState().animations().keySet().stream().allMatch(animationName -> {
-            String animName = data.owner().currentAnimations().get(animationName);
+        return d.getCurrState().animations().keySet().stream().allMatch(animationName -> {
+            String animName = d.owner().currentAnimations().get(animationName);
             if (animName == null) return false;
-            Animation<?> animation = AnimationLookup.get(animName);
+            Animation animation = AnimationLookup.get(animName);
             if (animation == null) return false;
-            return animation.anyAnimationFinishedUntyped(data.getData(animation));
+            return animation.allAnimationFinished(d.getData(animation));
         });
     }
 
@@ -134,17 +134,18 @@ public record BrAnimationController(
             owner.currState(currState);
         }
 
-        @SuppressWarnings("unchecked")
-        public <D> D getData(Animation<?> animation) {
+        public Object getData(Animation animation) {
             return owner.getData(animation);
         }
     }
 
     @Override
-    public void tickAnimation(Data data, Map<String, String> animations, MolangScope scope,
+    public void tickAnimation(Object data, Map<String, String> animations, MolangScope scope,
                               float ticks, float multiplier, ModelRuntimeData infos, AnimationEffects effects,
                               Runnable animationStartFeedback) {
-        BrControllerExecutor.tick(this, data, animations, scope, ticks, multiplier, infos, effects, animationStartFeedback);
+        if (data instanceof Data d) {
+            BrControllerExecutor.tick(this, d, animations, scope, ticks, multiplier, infos, effects, animationStartFeedback);
+        }
     }
 }
 

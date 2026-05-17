@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BrAnimationControllerBehaviorTest {
@@ -44,7 +45,7 @@ class BrAnimationControllerBehaviorTest {
     }
 
     @Test
-    void allAnimationFinishedCurrentlyUsesChildAnyAnimationFinishedSemantics() {
+    void allAnimationFinishedDelegatesToChildAllAnimationFinished() {
         TestAnimation child = new TestAnimation("animation.test.idle", true, false);
         AnimationManager.writePort().put(child.name(), child);
 
@@ -65,16 +66,17 @@ class BrAnimationControllerBehaviorTest {
                 });
 
         assertTrue(controller.anyAnimationFinished(data));
-        assertTrue(controller.allAnimationFinished(data));
-        assertEquals(2, child.finishedChecks);
+        assertFalse(controller.allAnimationFinished(data));
+        assertEquals(1, child.anyFinishedChecks);
+        assertEquals(1, child.allFinishedChecks);
     }
 
-    private static final class TestAnimation implements Animation<Object> {
+    private static final class TestAnimation implements Animation {
         private final String name;
         private final boolean anyFinished;
-        @SuppressWarnings("unused")
         private final boolean allFinished;
-        private int finishedChecks;
+        private int anyFinishedChecks;
+        private int allFinishedChecks;
 
         private TestAnimation(String name, boolean anyFinished, boolean allFinished) {
             this.name = name;
@@ -93,13 +95,14 @@ class BrAnimationControllerBehaviorTest {
 
         @Override
         public boolean anyAnimationFinished(Object data) {
-            finishedChecks++;
+            anyFinishedChecks++;
             return anyFinished;
         }
 
         @Override
         public boolean allAnimationFinished(Object data) {
-            throw new AssertionError("Controller currently delegates to child anyAnimationFinished().");
+            allFinishedChecks++;
+            return allFinished;
         }
 
         @Override

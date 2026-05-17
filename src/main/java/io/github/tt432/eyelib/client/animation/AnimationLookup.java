@@ -10,7 +10,7 @@ import java.util.Collection;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class AnimationLookup {
     @Nullable
-    public static Animation<?> get(String name) {
+    public static Animation get(String name) {
         return AnimationManager.readPort().get(name);
     }
 

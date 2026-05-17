@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.client.animation.bedrock.controller;
 
 import io.github.tt432.eyelib.client.animation.Animation;
+import io.github.tt432.eyelib.client.animation.Animation;
 import io.github.tt432.eyelib.client.animation.AnimationEffects;
 import io.github.tt432.eyelib.client.animation.AnimationLookup;
 import io.github.tt432.eyelib.client.animation.RuntimeParticlePlayData;
@@ -100,9 +101,9 @@ final class BrControllerExecutor {
         currState.animations().keySet().forEach(animName -> {
             String anim = animations.get(animName);
             if (anim == null) return;
-            Animation<?> animation = AnimationLookup.get(anim);
+            Animation animation = AnimationLookup.get(anim);
             if (animation == null) return;
-            animation.onFinishUntyped(data.getData(animation));
+            animation.onFinish(data.getData(animation));
         });
 
         return currState;
@@ -125,10 +126,10 @@ final class BrControllerExecutor {
                 lastState.animations().forEach((animationName, blendValue) -> {
                     String anim = animations.get(animationName);
                     if (anim == null) return;
-                    Animation<?> animation = AnimationLookup.get(anim);
+                    Animation animation = AnimationLookup.get(anim);
                     if (animation == null) return;
                     if (data.getData(animation) instanceof BrAnimationEntry.Data d) {
-                        animation.tickAnimationUntyped(data.getData(animation), animations, scope, d.lastTicks(),
+                        animation.tickAnimation(data.getData(animation), animations, scope, d.lastTicks(),
                                 multiplier * (1 - blendProgress) * blendValue.eval(scope), infos, effects, animationStartFeedback);
                     }
                 });
@@ -136,9 +137,9 @@ final class BrControllerExecutor {
                 lastState.animations().forEach((name, blendValue) -> {
                     String anim = animations.get(name);
                     if (anim == null) return;
-                    Animation<?> animation = AnimationLookup.get(anim);
+                    Animation animation = AnimationLookup.get(anim);
                     if (animation == null) return;
-                    animation.onFinishUntyped(data.getData(animation));
+                    animation.onFinish(data.getData(animation));
                 });
             }
         }
@@ -150,9 +151,9 @@ final class BrControllerExecutor {
                                          Runnable animationStartFeedback) {
         String anim = animations.get(animName);
         if (anim == null) return;
-        Animation<?> animation = AnimationLookup.get(anim);
+        Animation animation = AnimationLookup.get(anim);
         if (animation == null) return;
-        animation.tickAnimationUntyped(data.getData(animation), animations, scope, startedTime,
+        animation.tickAnimation(data.getData(animation), animations, scope, startedTime,
                 multiplier * blendValue, infos, effects, animationStartFeedback);
     }
 }

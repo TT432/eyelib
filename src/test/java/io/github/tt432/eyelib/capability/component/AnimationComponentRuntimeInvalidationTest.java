@@ -43,7 +43,7 @@ class AnimationComponentRuntimeInvalidationTest {
         assertNull(component.getSerializableInfo());
     }
 
-    private record TestAnimation(String name) implements Animation<Object> {
+    private record TestAnimation(String name) implements Animation {
         @Override
         public void onFinish(Object data) {
         }

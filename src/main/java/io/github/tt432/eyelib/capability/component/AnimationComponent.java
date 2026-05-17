@@ -30,8 +30,8 @@ public class AnimationComponent {
 
     public Object getAnimationData(String controllerName) {
         return animationData.computeIfAbsent(controllerName, name -> {
-            Animation<?> animation = AnimationLookup.get(name);
-            return animation != null ? animation.createDataUntyped() : new Object();
+            Animation animation = AnimationLookup.get(name);
+            return animation != null ? animation.createData() : new Object();
         });
     }
 
@@ -41,7 +41,7 @@ public class AnimationComponent {
 
     @Nullable
     AnimationComponentInfo serializableInfo;
-    private final Map<Animation<?>, MolangValue> animate = new HashMap<>();
+    private final Map<Animation, MolangValue> animate = new HashMap<>();
     private final Map<String, Object> animationData = new HashMap<>();
 
     @Nullable
@@ -71,7 +71,7 @@ public class AnimationComponent {
     }
 
     private void invalidateSerializableInfoIfUsingAnimation(String animationName) {
-        for (Animation<?> animation : animate.keySet()) {
+        for (Animation animation : animate.keySet()) {
             if (animation.name().equals(animationName)) {
                 serializableInfo = null;
                 return;
@@ -94,7 +94,7 @@ public class AnimationComponent {
             if (animationName == null) {
                 return;
             }
-            Animation<?> animation = AnimationLookup.get(animationName);
+            Animation animation = AnimationLookup.get(animationName);
             if (animation != null) {
                 this.animate.put(animation, value);
             }
@@ -103,7 +103,7 @@ public class AnimationComponent {
         new HashMap<>();
         for (var s : this.animate.keySet()) {
             if (s == null) continue;
-            var data = s.createDataUntyped();
+            var data = s.createData();
             animationData.put(s.name(), data);
         }
     }

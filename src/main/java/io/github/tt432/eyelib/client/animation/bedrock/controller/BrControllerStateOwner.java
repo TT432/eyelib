@@ -18,9 +18,8 @@ final class BrControllerStateOwner {
     private Map<String, String> currentAnimations = new Object2ObjectOpenHashMap<>();
     private final List<RuntimeParticlePlayData> particles = new ArrayList<>();
 
-    @SuppressWarnings("unchecked")
-    <D> D getData(Animation<?> animation) {
-        return (D) data.computeIfAbsent(animation.name(), s -> animation.createDataUntyped());
+    Object getData(Animation animation) {
+        return data.computeIfAbsent(animation.name(), s -> animation.createData());
     }
 
     float startTick() { return startTick; }

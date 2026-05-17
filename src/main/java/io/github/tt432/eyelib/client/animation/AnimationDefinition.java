@@ -5,23 +5,13 @@ import java.util.Map;
 /**
  * Immutable animation definition composed from named channels.
  */
-public interface AnimationDefinition<K, C extends AnimationChannelDefinition<K>>
-        extends TrackAnimationDefinition<String, C> {
+public interface AnimationDefinition<K, C extends AnimationChannelDefinition<K>> {
     Map<String, C> channels();
 
     C emptyChannel(String name);
 
-    @Override
-    default Map<String, C> tracks() {
-        return channels();
-    }
-
-    @Override
-    default C emptyTrack(String key) {
-        return emptyChannel(key);
-    }
-
     default C channel(String name) {
-        return track(name);
+        C channel = channels().get(name);
+        return channel != null ? channel : emptyChannel(name);
     }
 }

@@ -33,7 +33,7 @@ import java.util.TreeMap;
  *
  * @author TT432
  */
-public final class BrAnimationEntry implements Animation<BrAnimationEntry.Data> {
+public final class BrAnimationEntry implements Animation {
     private final BrAnimationEntryDefinition definition;
 
     public BrAnimationEntry(
@@ -218,17 +218,19 @@ public final class BrAnimationEntry implements Animation<BrAnimationEntry.Data> 
     }
 
     @Override
-    public void onFinish(Data data) {
-        data.owner().finish(soundEffects(), particleEffects(), timeline());
+    public void onFinish(Object data) {
+        if (data instanceof Data d) {
+            d.owner().finish(soundEffects(), particleEffects(), timeline());
+        }
     }
 
     @Override
-    public boolean anyAnimationFinished(Data data) {
-        return data.owner().playbackState().anyAnimationFinished(animationLength());
+    public boolean anyAnimationFinished(Object data) {
+        return data instanceof Data d && d.owner().playbackState().anyAnimationFinished(animationLength());
     }
 
     @Override
-    public boolean allAnimationFinished(Data data) {
+    public boolean allAnimationFinished(Object data) {
         return anyAnimationFinished(data);
     }
 
@@ -240,10 +242,12 @@ public final class BrAnimationEntry implements Animation<BrAnimationEntry.Data> 
     }
 
     @Override
-    public void tickAnimation(Data data, Map<String, String> animations, MolangScope scope,
+    public void tickAnimation(Object data, Map<String, String> animations, MolangScope scope,
                               float ticks, float multiplier, ModelRuntimeData infos, AnimationEffects effects,
                               Runnable animationStartFeedback) {
-        BrClipExecutor.tick(this, data, animations, scope, ticks, multiplier, infos, effects, animationStartFeedback);
+        if (data instanceof Data d) {
+            BrClipExecutor.tick(this, d, animations, scope, ticks, multiplier, infos, effects, animationStartFeedback);
+        }
     }
 }
 

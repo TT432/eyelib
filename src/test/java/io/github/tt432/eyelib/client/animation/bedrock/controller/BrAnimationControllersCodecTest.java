@@ -51,7 +51,7 @@ class BrAnimationControllersCodecTest {
         assertEquals(controller.initialState(), definition.initialState());
         assertEquals(controller.states().get("default"), definition.state("default"));
 
-        StateMachineAnimation<BrAnimationController.Data, BrAcStateDefinition> animation = controller;
+        StateMachineAnimation<BrAcStateDefinition> animation = controller;
         assertEquals(controller.initialState(), animation.initialState());
         assertEquals(controller.states().get("default"), animation.state("default"));
     }

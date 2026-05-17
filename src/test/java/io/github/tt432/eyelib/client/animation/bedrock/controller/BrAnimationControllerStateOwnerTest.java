@@ -64,7 +64,7 @@ class BrAnimationControllerStateOwnerTest {
         AtomicReference<Object> firstResult = new AtomicReference<>();
         Object stateData = new Object();
 
-        Animation<Object> animation = new Animation<>() {
+        Animation animation = new Animation() {
             @Override
             public String name() {
                 nameCalls.incrementAndGet();
@@ -100,7 +100,7 @@ class BrAnimationControllerStateOwnerTest {
 
         BrControllerStateOwner owner = new BrControllerStateOwner();
 
-        // First call — should invoke createDataUntyped() → createData()
+        // First call — should invoke createData()
         Object result1 = owner.getData(animation);
         firstResult.set(result1);
         assertNotNull(result1, "getData should return non-null data for a valid animation");
@@ -117,7 +117,7 @@ class BrAnimationControllerStateOwnerTest {
                 "name() should be called on each getData invocation as the map key");
     }
 
-    private record TestAnimation(String name, AtomicInteger createdStates) implements Animation<Object> {
+    private record TestAnimation(String name, AtomicInteger createdStates) implements Animation {
         @Override
         public void onFinish(Object data) {
         }

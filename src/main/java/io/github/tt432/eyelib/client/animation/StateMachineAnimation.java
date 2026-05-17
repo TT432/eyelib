@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * Animation whose runtime behavior selects and advances named states.
  */
-public interface StateMachineAnimation<D, S> extends Animation<D> {
+public interface StateMachineAnimation<S> extends Animation {
     S initialState();
 
     Map<String, S> states();

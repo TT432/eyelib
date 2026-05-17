@@ -47,28 +47,28 @@ class ClientLookupFacadeTest {
         assertSame(model, snapshot.get("geometry.test"));
     }
 
-    private record StubAnimation(String name) implements Animation<Void> {
+    private record StubAnimation(String name) implements Animation {
         @Override
-        public void onFinish(Void data) {
+        public void onFinish(Object data) {
         }
 
         @Override
-        public boolean anyAnimationFinished(Void data) {
+        public boolean anyAnimationFinished(Object data) {
             return false;
         }
 
         @Override
-        public boolean allAnimationFinished(Void data) {
+        public boolean allAnimationFinished(Object data) {
             return false;
         }
 
         @Override
-        public Void createData() {
+        public Object createData() {
             return null;
         }
 
         @Override
-        public void tickAnimation(Void data, Map<String, String> animations, MolangScope scope, float ticks,
+        public void tickAnimation(Object data, Map<String, String> animations, MolangScope scope, float ticks,
                                   float multiplier, ModelRuntimeData renderInfos, AnimationEffects effects,
                                   Runnable animationStartFeedback) {
         }

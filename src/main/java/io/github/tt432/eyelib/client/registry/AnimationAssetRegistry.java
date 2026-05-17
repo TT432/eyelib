@@ -13,7 +13,7 @@ import java.util.Map;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class AnimationAssetRegistry {
     public static void replaceAssets(Map<?, BrAnimation> animations, Map<?, BrAnimationControllers> controllers) {
-        LinkedHashMap<String, Animation<?>> flattened = new LinkedHashMap<>();
+        LinkedHashMap<String, Animation> flattened = new LinkedHashMap<>();
         for (BrAnimation value : animations.values()) {
             value.animations().forEach(flattened::put);
         }

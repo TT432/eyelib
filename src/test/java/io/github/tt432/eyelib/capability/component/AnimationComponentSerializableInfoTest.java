@@ -42,7 +42,7 @@ class AnimationComponentSerializableInfoTest {
         assertEquals(2, animation.createdStates);
     }
 
-    private static final class TestAnimation implements Animation<Object> {
+    private static final class TestAnimation implements Animation {
         private final String name;
         private int createdStates;
 

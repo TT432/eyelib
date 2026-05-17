@@ -21,7 +21,7 @@ class AnimationRuntimePortsTest {
     }
 
     @Test
-    void animationUntypedMethodsDelegateToTypedInterfaceMethods() {
+    void animationDirectMethodsWorkWithoutBridgeLayer() {
         AtomicInteger finished = new AtomicInteger();
         AtomicInteger anyChecks = new AtomicInteger();
         AtomicInteger allChecks = new AtomicInteger();
@@ -30,11 +30,11 @@ class AnimationRuntimePortsTest {
         TestAnimation animation = new TestAnimation("animation.test.idle", state, finished, anyChecks, allChecks, ticks);
 
         assertEquals("animation.test.idle", animation.name());
-        assertSame(state, animation.createDataUntyped());
-        animation.onFinishUntyped(state);
-        animation.anyAnimationFinishedUntyped(state);
-        animation.allAnimationFinishedUntyped(state);
-        animation.tickAnimationUntyped(state, Map.of(), new MolangScope(), 3F, 1F,
+        assertSame(state, animation.createData());
+        animation.onFinish(state);
+        animation.anyAnimationFinished(state);
+        animation.allAnimationFinished(state);
+        animation.tickAnimation(state, Map.of(), new MolangScope(), 3F, 1F,
                 new ModelRuntimeData(), new AnimationEffects(), () -> {
                 });
 
@@ -45,7 +45,7 @@ class AnimationRuntimePortsTest {
     }
 
     @Test
-    void brAnimatorUsesRuntimePortsWithoutChangingLegacyAnimationExecution() {
+    void brAnimatorDispatchesThroughDirectAnimationMethods() {
         AtomicInteger tickCalls = new AtomicInteger();
         Object[] seenData = new Object[1];
         TestAnimation animation = new TestAnimation("animation.test.walk", new Object(), new AtomicInteger(),
@@ -70,7 +70,7 @@ class AnimationRuntimePortsTest {
         assertEquals(1, tickCalls.get());
     }
 
-    private static class TestAnimation implements Animation<Object> {
+    private static class TestAnimation implements Animation {
         private final String name;
         private final Object state;
         private final AtomicInteger finished;
