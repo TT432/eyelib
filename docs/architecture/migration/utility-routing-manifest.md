@@ -11,7 +11,7 @@
 ## Inventory baseline
 - Pre-move Phase 15 audit baseline on 2026-05-10 found **32 root util Java files** and **5 core util Java files**.
 - Current post-Plan-03 inventory after moving `AnimationApplier`, `Models`, `ModBridgeServer`, and `BBModelSink` is **28 root util Java files** and **5 core util Java files**.
-- The four moved-class rows remain below only as historical Phase 15 routing evidence and are not current util/core-util source paths.
+- The four moved-class rows remain below only as historical Phase 15 routing evidence and are not current util/core-util source paths. **Note**: `ModBridgeServer` and `BBModelSink` were deleted entirely (dead code, zero callers).
 - Current coverage checks must use the post-move 28 root util + 5 core util inventory; historical moved-class evidence must be checked against the functional-owner destination paths.
 - Semantic reference collection note: IDE Index MCP was available and not indexing, but `ide_ide_find_references` rejected both position-based and symbol-based calls in this environment with `Cannot specify both language+symbol and file+line+column`; the manifest therefore records JetBrains indexed class/text searches plus import/reference scans as supporting evidence. Plan 03 re-ran this check immediately before moving the roadmap-named classes.
 
@@ -22,11 +22,11 @@
 - `N-internal` means multiple uses are inside the same future migration unit, so the migration should remain atomic.
 - Route values are intentionally limited to `eyelib-util`, `functional owner`, `delete`, or `package cleanup`.
 - Package metadata rows use `package cleanup` and should be removed only when their package has no remaining source peers.
-- The locked Phase 15 decision routes `AnimationApplier`, `Models`, `ModBridgeServer`, and `BBModelSink` to functional owners even when consumer evidence is zero or internal-only.
+- The locked Phase 15 decision routes `AnimationApplier`, `Models`, `ModBridgeServer`, and `BBModelSink` to functional owners even when consumer evidence is zero or internal-only. **Note**: `ModBridgeServer` and `BBModelSink` were later deleted (dead code).
 
 ## Route table
 
-Rows whose source paths begin with `src/main/java/io/github/tt432/eyelib/util/client/AnimationApplier.java`, `src/main/java/io/github/tt432/eyelib/util/client/Models.java`, or `src/main/java/io/github/tt432/eyelib/util/modbridge/` are historical pre-move route records. Their current source ownership is `src/main/java/io/github/tt432/eyelib/client/animation/AnimationApplier.java`, `src/main/java/io/github/tt432/eyelib/client/model/Models.java`, and `src/main/java/io/github/tt432/eyelib/mc/impl/modbridge/` respectively.
+Rows whose source paths begin with `src/main/java/io/github/tt432/eyelib/util/client/AnimationApplier.java`, `src/main/java/io/github/tt432/eyelib/util/client/Models.java`, or `src/main/java/io/github/tt432/eyelib/util/modbridge/` are historical pre-move route records. Their current source ownership is `src/main/java/io/github/tt432/eyelib/client/animation/AnimationApplier.java`, `src/main/java/io/github/tt432/eyelib/client/model/Models.java`, and (for the modbridge rows) deleted entirely.
 
 | Source | Symbol | Consumers | Class | Route | Target phase | Evidence |
 |--------|--------|-----------|-------|-------|--------------|----------|
@@ -57,8 +57,8 @@ Rows whose source paths begin with `src/main/java/io/github/tt432/eyelib/util/cl
 | `src/main/java/io/github/tt432/eyelib/util/math/FastColorHelper.java` | `FastColorHelper` | No production source consumers found; delegates to `ColorEncodings` | `0` | `eyelib-util` | Phase 17 color/math migration | IDE indexed text search 2026-05-10 found declaration/internal backend only; retained as adapter until color migration resolves wrappers. |
 | `src/main/java/io/github/tt432/eyelib/util/math/MathHelper.java` | `MathHelper` | `BrClipExecutor`, `EyelibManagerScreen` | `N` | `eyelib-util` | Phase 17 math migration | IDE indexed text search 2026-05-10 found two production consumer files. |
 | `src/main/java/io/github/tt432/eyelib/util/math/Shapes.java` | `Shapes` | No production source consumers found | `0` | `eyelib-util` | Phase 17 math migration | IDE indexed text search 2026-05-10 found declaration/docs only; MC `RandomSource` dependency remains allowed for Forge-aware util module. |
-| `src/main/java/io/github/tt432/eyelib/util/modbridge/BBModelSink.java` | `BBModelSink` | `ModBridgeServer` only | `1` | `functional owner` | Phase 15 Plan 03 to `mc/impl/modbridge` | Plan 03 evidence 2026-05-10: `ide_ide_find_class` resolved only `io.github.tt432.eyelib.util.modbridge.BBModelSink`; `ide_ide_find_references` was attempted but rejected by the MCP parameter bug; JetBrains indexed source text search found only the interface declaration plus the `ModBridgeServer` field and constructor parameter. Locked Phase 15 decision forbids deletion. |
-| `src/main/java/io/github/tt432/eyelib/util/modbridge/ModBridgeServer.java` | `ModBridgeServer` | No production construction/startup caller found; uses `BBModelSink` internally | `0` | `functional owner` | Phase 15 Plan 03 to `mc/impl/modbridge` | Plan 03 evidence 2026-05-10: `ide_ide_find_class` resolved only `io.github.tt432.eyelib.util.modbridge.ModBridgeServer`; `ide_ide_find_references` was attempted but rejected by the MCP parameter bug; JetBrains indexed source text search found only declaration/constructor occurrences and no `new ModBridgeServer` source call. Locked Phase 15 decision forbids deletion. |
+| `src/main/java/io/github/tt432/eyelib/util/modbridge/BBModelSink.java` | `BBModelSink` | `ModBridgeServer` only (deleted) | `1` | `delete` | 2026-05-16 | Deleted as dead code: `ModBridgeServer` had zero callers, `BBModelSink` had no implementors. |
+| `src/main/java/io/github/tt432/eyelib/util/modbridge/ModBridgeServer.java` | `ModBridgeServer` | No production construction/startup caller found; uses `BBModelSink` internally | `0` | `delete` | 2026-05-16 | Deleted as dead code: zero `new ModBridgeServer`, `.start()`, or `.stop()` calls found. |
 | `src/main/java/io/github/tt432/eyelib/util/package-info.java` | `util package metadata` | Package metadata for root utility family | `N` | `package cleanup` | Phase 19 cleanup | Completed 2026-05-10: deleted after root util package drained. |
 | `src/main/java/io/github/tt432/eyelib/util/search/SearchResults.java` | `SearchResults` | `Searchable` default method only | `1` | `eyelib-util` | Phase 17 search migration | IDE indexed text search 2026-05-10 found internal construction from `Searchable`. |
 | `src/main/java/io/github/tt432/eyelib/util/search/Searchable.java` | `Searchable` | `client/loader/BrAttachableLoader`, `SearchResults` | `N` | `eyelib-util` | Phase 17 search migration | JetBrains import scan + IDE indexed text search 2026-05-10 found loader implementation and internal results method. |
@@ -72,11 +72,12 @@ Rows whose source paths begin with `src/main/java/io/github/tt432/eyelib/util/cl
 - `ListHelper` is a compatibility shim over `ListAccessors.first/last`; delete it after Phase 17 migrates its `BrBoneKeyFrame` caller to `core/util/collection/ListAccessors` or the future `eyelibutil` equivalent.
 - `EitherHelper` was deleted during Phase 19 after codec callers switched to `io.github.tt432.eyelibutil.codec.Eithers`.
 - `ResourceLocations.mod()` had zero source caller evidence and was deleted during Phase 18 to remove the root `Eyelib.MOD_ID` dependency cycle.
-- `AnimationApplier`, `Models`, `ModBridgeServer`, and `BBModelSink` are not deletion candidates in Phase 15; their rows intentionally route to functional owners per the locked decision.
+- `AnimationApplier` and `Models` are not deletion candidates in Phase 15; their rows intentionally route to functional owners per the locked decision.
+- `ModBridgeServer` and `BBModelSink` were deleted as dead code (zero callers, zero implementors).
 
 ## Verification commands
 - Use file glob checks for current root utility Java files and core utility Java files; expected final v1.3 counts are **0** and **0** respectively.
-- Check the four historical moved-class rows separately against their functional-owner destination paths: `client/animation/AnimationApplier.java`, `client/model/Models.java`, and `mc/impl/modbridge/{ModBridgeServer,BBModelSink}.java`.
+- Check the two remaining historical moved-class rows separately against their functional-owner destination paths: `client/animation/AnimationApplier.java` and `client/model/Models.java`. `ModBridgeServer` and `BBModelSink` were deleted as dead code.
 - Use IDE indexed text/search evidence for individual symbols, and re-run semantic references with IDE Index MCP when the reference tool accepts a non-conflicting position or symbol target.
 - Use `jetbrain_search_regex` over Java sources for util wildcard imports during Plan 02: `import\s+io\.github\.tt432\.eyelib\.util(?:\.[A-Za-z0-9_]+)*\.\*;`.
 - Do not run Gradle from shell. Build or Gradle verification for later source moves must use JetBrains MCP only.

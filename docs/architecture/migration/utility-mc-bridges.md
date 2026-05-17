@@ -2,7 +2,7 @@
 
 ## Scope
 - Utilities that currently mix pure helpers with Minecraft-facing helpers.
-- Main paths: `util/client/`, `util/codec/`, `util/modbridge/`, selected `util/math/`, selected top-level `util/*.java`
+- Main paths: `util/client/`, `util/codec/`, selected `util/math/`, selected top-level `util/*.java`
 
 ## Why it is MC-facing
 - Contains MC codecs, render helpers, resource-location helpers, and bridge events alongside pure helpers.
@@ -27,7 +27,7 @@
   - `core/util/collection/ListAccessors` (first/last list access)
   - `core/util/codec/Eithers` (`Either` unwrap helper)
 - Kept Minecraft/Forge-facing ownership in-place:
-  - `util/client/*`, `util/modbridge/*`, and `util/codec/stream/*` remain MC-oriented.
+   - `util/client/*` and `util/codec/stream/*` remain MC-oriented.
   - Existing `util/*` entrypoints now act as compatibility adapters where extraction happened.
 
 ## Implementation changes
@@ -52,6 +52,7 @@
   - The legacy `client/particle/bedrock` callers were deleted; active particle runtime now uses `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/runtime/support/ParticleTimer.java`.
   - `client/gui/ModelPreviewScreen` now imports `mc/impl/modbridge/ModBridgeModelUpdateEvent`.
   - `client/ClientTickHandler` now exposes explicit `getTick()` (manual method) to avoid lombok-only accessor dependence in the new adapter.
+- **Note**: The entire modbridge module (`BBModelSink`, `ModBridgeServer`, `ModBridgeModelUpdateEvent`) was later deleted as dead code. `ModelPreviewScreen` no longer listens for `ModBridgeModelUpdateEvent`.
 
 ## Hard-quarantine wave 3 implementation (this change)
 - Moved active pose-copy helper out of legacy util bridge surface into its render owner:
@@ -125,7 +126,7 @@
 - [x] JetBrains MCP verification
 
 ## Final isolation checklist
-- [x] Re-baseline remaining Minecraft/Forge references for this slice (`util/modbridge/*`, selected top-level `util/*`).
+- [x] Re-baseline remaining Minecraft/Forge references for this slice (selected top-level `util/*`). `util/modbridge/*` was deleted.
 - [x] Move or confine this slice’s bridge/event and timer runtime ownership to allowed `mc/impl` packages.
 - [x] Keep surviving `core` helpers in this slice fully free of Minecraft/Forge types.
 - [x] Re-run JetBrains MCP verification for the final package layout.

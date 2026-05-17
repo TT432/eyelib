@@ -1,13 +1,10 @@
 package io.github.tt432.eyelib.client.gui;
 
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
 import io.github.tt432.eyelibmodel.Model;
@@ -23,7 +20,6 @@ import io.github.tt432.eyelibimporter.model.importer.ModelImporter;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
-import io.github.tt432.eyelib.modbridge.ModBridgeModelUpdateEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -33,7 +29,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -41,7 +36,6 @@ import org.lwjgl.glfw.GLFW;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * A screen for previewing models from the ModelManager.
@@ -85,8 +79,6 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
     private float translateY = 0;
     private boolean isDragging = false;
 
-    private final Consumer<ModBridgeModelUpdateEvent> ON_MODEL_UPDATE = this::onEvent;
-
     public ModelPreviewScreen() {
         super(Component.literal("Model Preview"));
     }
@@ -109,7 +101,6 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         // Set initial focus to search box
         this.setInitialFocus(this.searchBox);
 
-        MinecraftForge.EVENT_BUS.addListener(ON_MODEL_UPDATE);
     }
 
     @Override
@@ -320,22 +311,6 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         }
     }
 
-    private void onEvent(ModBridgeModelUpdateEvent event) {
-        try {
-            JsonObject jsonObject = new Gson().fromJson(event.json, JsonObject.class);
-            BBModel model = BBModel.CODEC.parse(JsonOps.INSTANCE, new Gson().fromJson(jsonObject.get("data").getAsString(), JsonObject.class)).getOrThrow(false, IllegalArgumentException::new);
-
-            this.currentModel = previewModel(model, ModelImporter.importBlockbench(model));
-            var model1 = currentModel.model();
-            var info = TwoSideModelBakeInfo.INSTANCE.getBakeInfo(model1, true, new ResourceLocation(currentModel.atlasTexture().id()));
-            bakedModel = TwoSideModelBakeInfo.INSTANCE.bake(model1, info);
-            dfsModel = DFSModel.create(model1);
-            this.statusMessage = "";
-        } catch (Exception e) {
-            this.statusMessage = "Failed to update .bbmodel: " + e.getMessage();
-        }
-    }
-
     private static ModelPreviewAsset previewModel(BBModel source, ModelImporter.ImportResult result) {
         if (result.atlasImageData() != null) {
             Texture repackedAtlas = new Texture(
@@ -356,7 +331,6 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
     @Override
     public void onClose() {
         super.onClose();
-        MinecraftForge.EVENT_BUS.unregister(ON_MODEL_UPDATE);
     }
 }
 
