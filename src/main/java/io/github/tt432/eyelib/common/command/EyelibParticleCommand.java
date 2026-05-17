@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mc.impl.common.command;
+package io.github.tt432.eyelib.common.command;
 
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -91,4 +91,3 @@ public final class EyelibParticleCommand {
         return 1;
     }
 }
-

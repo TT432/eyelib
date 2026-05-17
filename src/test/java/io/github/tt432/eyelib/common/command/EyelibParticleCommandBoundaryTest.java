@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mc.impl.common.command;
+package io.github.tt432.eyelib.common.command;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EyelibParticleCommandBoundaryTest {
     private static final Path SOURCE = Path.of(
-            "src/main/java/io/github/tt432/eyelib/mc/impl/common/command/EyelibParticleCommand.java"
+            "src/main/java/io/github/tt432/eyelib/common/command/EyelibParticleCommand.java"
     );
 
     @Test
