@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.molang.mapping;
+package io.github.tt432.eyelibmolang.platform.mapping;
 
 import io.github.tt432.eyelibmolang.mapping.api.MolangQueryRuntime;
 import net.minecraft.client.Minecraft;
@@ -31,7 +31,7 @@ public final class MinecraftMolangQueryRuntime implements MolangQueryRuntime {
 
     @Override
     public float partialTick() {
-        return Minecraft.getInstance().timer.partialTick;
+        return Minecraft.getInstance().getFrameTime();
     }
 
     @Override

@@ -22,7 +22,7 @@
 
 ## Generated Code
 - Treat :eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/: as generated/read-only during normal work.
-- Treat :src/main/java/io/github/tt432/eyelib/molang/grammer/: as a legacy marker, not a destination for new handwritten logic.
+- Root `src/main/java/io/github/tt432/eyelib/molang/mapping/MolangQuery.java` is the only file remaining in the root `molang/` path — it holds root-coupled query functions (animation controller, variant, DataAttachment) that cannot move to `eyelib-molang`.
 - Do not hand-edit generated parser files unless the current task is explicitly about generated-code isolation or regeneration.
 
 ## Tooling Restrictions

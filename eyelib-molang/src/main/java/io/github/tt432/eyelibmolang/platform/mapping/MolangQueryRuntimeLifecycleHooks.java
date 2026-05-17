@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.molang.mapping;
+package io.github.tt432.eyelibmolang.platform.mapping;
 
 import io.github.tt432.eyelibmolang.mapping.api.MolangQueryRuntimeBridge;
 import net.minecraftforge.api.distmarker.Dist;

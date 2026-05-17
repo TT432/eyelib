@@ -165,7 +165,7 @@ dependencies {
     modImplementation project(':eyelib-importer')
     jarJar project(':eyelib-importer')
     api project(':eyelib-molang')
-    additionalRuntimeClasspath project(':eyelib-molang')
+    modImplementation project(':eyelib-molang')
     jarJar project(':eyelib-molang')
     api project(':eyelib-util')
     modImplementation project(':eyelib-util')

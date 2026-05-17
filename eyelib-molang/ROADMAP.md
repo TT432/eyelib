@@ -34,8 +34,8 @@ Design drafts are not implementation commitments until this roadmap or the refac
 
 - Engine-owned code lives under `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/`.
 - Generated parser artifacts live under `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/` and are read-only during normal work.
-- Root `src/main/java/io/github/tt432/eyelib/molang/` is a legacy marker/handoff path only.
-- Root `src/main/java/io/github/tt432/eyelib/mc/impl/molang/**` owns Minecraft/Forge platform bindings and lifecycle hooks.
+- Root `src/main/java/io/github/tt432/eyelib/molang/mapping/MolangQuery.java` is the only file remaining in the root `molang/` path — it holds root-coupled query functions (animation controller, variant) that cannot move to `eyelib-molang`.
+- `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/platform/**` owns Minecraft/Forge platform bindings and lifecycle hooks.
 - The old generated-parser-backed compile path must remain available until a cutover checklist and rollback point are documented.
 
 ## Current Implementation Snapshot

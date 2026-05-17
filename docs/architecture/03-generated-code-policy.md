@@ -2,7 +2,7 @@
 
 ## Current Generated Zone
 - Generated Molang parser artifacts now live under `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/`.
-- The legacy `src/main/java/io/github/tt432/eyelib/molang/grammer/` path remains a documentation marker and is not the place for new handwritten logic.
+- Root `src/main/java/io/github/tt432/eyelib/molang/mapping/MolangQuery.java` is the only file remaining in the root `molang/` path — it holds root-coupled query functions that cannot move to `eyelib-molang`.
 
 ## Rules
 - Do not hand-edit generated parser files during normal feature or refactor work.

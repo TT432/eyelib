@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.molang.mapping;
+package io.github.tt432.eyelibmolang.platform.mapping;
 
 import io.github.tt432.eyelibmolang.mapping.api.MolangMapping;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingDiscovery;
@@ -13,9 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * Forge-backed mapping discovery for {@link MolangMappingTreeLifecycleHooks}.
- */
 public final class ForgeMolangMappingDiscovery implements MolangMappingDiscovery {
     private static final Logger LOGGER = LoggerFactory.getLogger(ForgeMolangMappingDiscovery.class);
 
