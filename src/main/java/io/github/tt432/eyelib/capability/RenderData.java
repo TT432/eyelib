@@ -4,7 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibattachment.capability.AnimationComponentInfo;
 import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
-import io.github.tt432.eyelib.capability.component.AnimationComponent;
+import io.github.tt432.eyelibanimation.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;

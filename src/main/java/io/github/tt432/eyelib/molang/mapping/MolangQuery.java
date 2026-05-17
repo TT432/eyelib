@@ -1,14 +1,14 @@
 package io.github.tt432.eyelib.molang.mapping;
 
-import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationController;
+import io.github.tt432.eyelibanimation.bedrock.controller.BrAnimationController;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.mapping.api.MolangFunction;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMapping;
-import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
-import io.github.tt432.eyelib.common.behavior.component.MarkVariant;
-import io.github.tt432.eyelib.common.behavior.component.Variant;
+import io.github.tt432.eyelibanimation.bedrock.BrAnimationEntry;
+import io.github.tt432.eyelibbehavior.component.MarkVariant;
+import io.github.tt432.eyelibbehavior.component.Variant;
 import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
 import io.github.tt432.eyelibutil.resource.ResourceLocations;
 import lombok.AccessLevel;

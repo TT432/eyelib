@@ -1,10 +1,11 @@
 package io.github.tt432.eyelib.capability.component;
 
-import io.github.tt432.eyelib.client.animation.Animation;
-import io.github.tt432.eyelib.client.animation.AnimationEffects;
-import io.github.tt432.eyelib.client.animation.AnimationLookup;
-import io.github.tt432.eyelib.client.manager.AnimationManager;
-import io.github.tt432.eyelib.client.model.ModelRuntimeData;
+import io.github.tt432.eyelibanimation.Animation;
+import io.github.tt432.eyelibanimation.AnimationComponent;
+import io.github.tt432.eyelibanimation.AnimationEffects;
+import io.github.tt432.eyelibanimation.AnimationLookup;
+import io.github.tt432.eyelibanimation.AnimationManager;
+import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.MolangValue;
 import org.junit.jupiter.api.AfterEach;
@@ -18,12 +19,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class AnimationComponentRuntimeInvalidationTest {
     @AfterEach
     void tearDown() {
-        AnimationManager.writePort().clear();
+        AnimationManager.INSTANCE.clear();
     }
 
     @Test
     void managerEventInvalidatesSerializableInfoOnlyForMatchingAnimationEntry() {
-        AnimationManager.writePort().put("animation.walk", new TestAnimation("animation.walk"));
+        AnimationManager.INSTANCE.put("animation.walk", new TestAnimation("animation.walk"));
 
         AnimationComponent component = new AnimationComponent();
         component.setup(

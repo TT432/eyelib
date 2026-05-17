@@ -12,7 +12,7 @@ import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
 import io.github.tt432.eyelibimporter.model.Model;
 import io.github.tt432.eyelib.client.model.ModelLookup;
-import io.github.tt432.eyelib.client.model.ModelRuntimeData;
+import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibpreprocessing.model.bake.BakedModel;
 import io.github.tt432.eyelibpreprocessing.model.bake.TwoSideModelBakeInfo;
 import io.github.tt432.eyelibimporter.model.bbmodel.BBModel;

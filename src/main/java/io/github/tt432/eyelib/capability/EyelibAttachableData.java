@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.capability;
 
+import io.github.tt432.eyelibbehavior.EntityBehaviorData;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
 import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;

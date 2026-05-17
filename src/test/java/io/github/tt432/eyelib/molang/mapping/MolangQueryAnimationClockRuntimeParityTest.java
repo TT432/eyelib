@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.molang.mapping;
 
-import io.github.tt432.eyelib.client.animation.AnimationEffects;
-import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
-import io.github.tt432.eyelib.client.model.ModelRuntimeData;
+import io.github.tt432.eyelibanimation.AnimationEffects;
+import io.github.tt432.eyelibanimation.bedrock.BrAnimationEntry;
+import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.MolangValue;
@@ -75,9 +75,9 @@ class MolangQueryAnimationClockRuntimeParityTest {
                 MolangValue.ONE,
                 MolangValue.ZERO,
                 MolangValue.ZERO,
-                io.github.tt432.eyelib.client.animation.AnimationEffect.empty(),
-                io.github.tt432.eyelib.client.animation.AnimationEffect.empty(),
-                io.github.tt432.eyelib.client.animation.AnimationEffect.empty(),
+                io.github.tt432.eyelibanimation.AnimationEffect.empty(),
+                io.github.tt432.eyelibanimation.AnimationEffect.empty(),
+                io.github.tt432.eyelibanimation.AnimationEffect.empty(),
                 new Int2ObjectOpenHashMap<>()
         );
     }

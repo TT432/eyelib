@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.loader;
 
-import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
-import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
+import io.github.tt432.eyelibanimation.bedrock.BrAnimation;
+import io.github.tt432.eyelibanimation.bedrock.controller.BrAnimationControllers;
 import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
 import io.github.tt432.eyelib.client.registry.AttachableAssetRegistry;
 import io.github.tt432.eyelib.client.registry.ClientEntityAssetRegistry;

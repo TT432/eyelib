@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
-import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
+import io.github.tt432.eyelibanimation.bedrock.BrAnimation;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
 import io.github.tt432.eyelibpreprocessing.loader.LoaderParsingOps;

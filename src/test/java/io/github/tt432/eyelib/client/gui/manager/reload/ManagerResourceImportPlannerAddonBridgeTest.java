@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.gui.manager.reload;
 
-import io.github.tt432.eyelib.client.animation.AnimationLookup;
-import io.github.tt432.eyelib.client.manager.AnimationManager;
+import io.github.tt432.eyelibanimation.AnimationLookup;
+import io.github.tt432.eyelibanimation.AnimationManager;
 import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
@@ -33,7 +33,7 @@ class ManagerResourceImportPlannerAddonBridgeTest {
 
     @AfterEach
     void tearDown() {
-        AnimationManager.writePort().clear();
+        AnimationManager.INSTANCE.clear();
         RenderControllerManager.writePort().clear();
         ClientEntityManager.writePort().clear();
         AttachableManager.writePort().clear();

@@ -1,0 +1,19 @@
+plugins {
+    id 'java-library'
+    id 'io.freefair.lombok' version '8.6'
+    id 'net.neoforged.moddev.legacyforge' version '2.0.91'
+    id 'maven-publish'
+}
+version = rootProject.version
+group = rootProject.group
+base { archivesName = 'eyelib-behavior' }
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+sourceSets { test { compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath; runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath } }
+repositories { mavenCentral(); mavenLocal(); maven { url 'https://libraries.minecraft.net/' } }
+legacyForge { version = project.minecraft_version + '-' + project.forge_version; parchment { mappingsVersion = project.parchment_mappings_version; minecraftVersion = project.parchment_minecraft_version }; mods { eyelibbehavior { sourceSet(sourceSets.main) } } }
+dependencies { implementation project(':eyelib-util'); implementation 'com.mojang:datafixerupper:6.0.8'; implementation 'org.slf4j:slf4j-api:2.0.7'; compileOnly 'org.jspecify:jspecify:1.0.0'; testImplementation platform('org.junit:junit-bom:5.10.2'); testImplementation 'org.junit.jupiter:junit-jupiter'; testRuntimeOnly 'org.junit.platform:junit-platform-launcher' }
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+tasks.named('test').configure { useJUnitPlatform() }
+java { withSourcesJar() }
+tasks.named('processResources', ProcessResources).configure { def replaceProperties = [minecraft_version_range: minecraft_version_range, forge_version_range: forge_version_range, loader_version_range: loader_version_range, mod_version: mod_version, mod_license: mod_license, mod_authors: mod_authors, mod_description: 'Bedrock entity behavior component model and runtime for Eyelib.']; inputs.properties(replaceProperties); filesMatching('META-INF/mods.toml') { expand(replaceProperties) } }
+publishing { publications { mavenJava(MavenPublication) { from components.java } }; repositories { mavenLocal() } }

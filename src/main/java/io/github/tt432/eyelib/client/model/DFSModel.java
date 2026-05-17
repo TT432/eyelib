@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.model;
 
+import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibimporter.model.Model;
 
 

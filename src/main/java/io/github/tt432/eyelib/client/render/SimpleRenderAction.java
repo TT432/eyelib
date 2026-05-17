@@ -2,11 +2,11 @@ package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.capability.RenderData;
-import io.github.tt432.eyelib.capability.component.AnimationComponent;
+import io.github.tt432.eyelibanimation.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.EntityRenderSystem;
-import io.github.tt432.eyelib.client.animation.AnimationEffects;
-import io.github.tt432.eyelib.client.model.ModelRuntimeData;
+import io.github.tt432.eyelibanimation.AnimationEffects;
+import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
 import lombok.With;
 import net.minecraft.client.renderer.LightTexture;

@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.capability;
 
-import io.github.tt432.eyelib.capability.component.AnimationComponent;
+import io.github.tt432.eyelibanimation.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import io.github.tt432.eyelib.event.TextureChangedEvent;

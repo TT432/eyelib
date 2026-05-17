@@ -2,10 +2,10 @@ package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelib.client.animation.AnimationLookup;
+import io.github.tt432.eyelibanimation.AnimationLookup;
 import io.github.tt432.eyelib.client.entity.AttachableLookup;
 import io.github.tt432.eyelib.client.entity.ClientEntityLookup;
-import io.github.tt432.eyelib.client.manager.AnimationManager;
+import io.github.tt432.eyelibanimation.AnimationManager;
 import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class BedrockAddonRuntimeBridgeTest {
     @AfterEach
     void tearDown() {
-        AnimationManager.writePort().clear();
+        AnimationManager.INSTANCE.clear();
         ClientEntityManager.writePort().clear();
         AttachableManager.writePort().clear();
         ModelManager.writePort().clear();

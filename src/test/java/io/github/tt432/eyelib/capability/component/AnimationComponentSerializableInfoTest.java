@@ -1,9 +1,10 @@
 package io.github.tt432.eyelib.capability.component;
 
-import io.github.tt432.eyelib.client.animation.Animation;
-import io.github.tt432.eyelib.client.animation.AnimationEffects;
-import io.github.tt432.eyelib.client.manager.AnimationManager;
-import io.github.tt432.eyelib.client.model.ModelRuntimeData;
+import io.github.tt432.eyelibanimation.Animation;
+import io.github.tt432.eyelibanimation.AnimationComponent;
+import io.github.tt432.eyelibanimation.AnimationEffects;
+import io.github.tt432.eyelibanimation.AnimationManager;
+import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.MolangValue;
 import org.junit.jupiter.api.AfterEach;
@@ -18,13 +19,13 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 class AnimationComponentSerializableInfoTest {
     @AfterEach
     void tearDown() {
-        AnimationManager.writePort().clear();
+        AnimationManager.INSTANCE.clear();
     }
 
     @Test
     void setInfoCarriesBindingsButRecreatesRuntimeAnimationState() {
         TestAnimation animation = new TestAnimation("animation.test.walk");
-        AnimationManager.writePort().put(animation.name(), animation);
+        AnimationManager.INSTANCE.put(animation.name(), animation);
 
         AnimationComponent source = new AnimationComponent();
         source.setup(
@@ -34,10 +35,10 @@ class AnimationComponentSerializableInfoTest {
         Object sourceRuntimeState = source.getAnimationData(animation.name());
 
         AnimationComponent target = new AnimationComponent();
-        target.setInfo(source.serializableInfo);
+        target.setInfo(source.getSerializableInfo());
         Object targetRuntimeState = target.getAnimationData(animation.name());
 
-        assertEquals(source.serializableInfo, target.serializableInfo);
+        assertEquals(source.getSerializableInfo(), target.getSerializableInfo());
         assertNotSame(sourceRuntimeState, targetRuntimeState);
         assertEquals(2, animation.createdStates);
     }

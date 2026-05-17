@@ -30,7 +30,7 @@ Lessons learned from the module separation milestones. These patterns were disco
 
 **Why:** `EyelibAttachableData` is a Forge `@Mod.EventBusSubscriber` registry hub with `DeferredRegister` and `RegistryObject<DataAttachmentType<...>>` constants.
 
-**Consequences:** Moving it would break Forge bootstrap—it depends on root's `Eyelib.MOD_ID`, registers to the MOD event bus, and is wired via `mc/impl/bootstrap/EyelibMod`.
+**Consequences:** Moving it would break Forge bootstrap—it depends on root's `Eyelib.MOD_ID`, registers to the MOD event bus, and is wired via `Eyelib.java`.
 
 **Detection:** Contains `@Mod.EventBusSubscriber`, `DeferredRegister`, `RegistryObject`, `IForgeRegistry` → root-only concerns.
 
@@ -48,7 +48,7 @@ Lessons learned from the module separation milestones. These patterns were disco
 
 **Symptom:** PREP-01 finds parse/bake patterns in root and moves them to preprocessing unconditionally.
 
-**Prevention:** Verify imports. If the file imports `io.github.tt432.eyelib.capability`, `io.github.tt432.eyelib.client.animation`, or `io.github.tt432.eyelib.mc.impl` → cannot move to preprocessing.
+**Prevention:** Verify imports. If the file imports `io.github.tt432.eyelib.capability` → cannot move to preprocessing.
 
 ### 6. Stale `.class` Files from Deleted Sources
 

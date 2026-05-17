@@ -1,9 +1,9 @@
 package io.github.tt432.eyelib.client.registry;
 
-import io.github.tt432.eyelib.client.animation.Animation;
-import io.github.tt432.eyelib.client.animation.bedrock.BrAnimation;
-import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationControllers;
-import io.github.tt432.eyelib.client.manager.AnimationManager;
+import io.github.tt432.eyelibanimation.Animation;
+import io.github.tt432.eyelibanimation.bedrock.BrAnimation;
+import io.github.tt432.eyelibanimation.bedrock.controller.BrAnimationControllers;
+import io.github.tt432.eyelibanimation.AnimationManager;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -20,14 +20,14 @@ public final class AnimationAssetRegistry {
         for (BrAnimationControllers value : controllers.values()) {
             value.animationControllers().forEach(flattened::put);
         }
-        AnimationManager.writePort().replaceAll(flattened);
+        AnimationManager.INSTANCE.replaceAll(flattened);
     }
 
     public static void publishAnimation(BrAnimation animation) {
-        animation.animations().forEach(AnimationManager.writePort()::put);
+        animation.animations().forEach(AnimationManager.INSTANCE::put);
     }
 
     public static void publishAnimationController(BrAnimationControllers controller) {
-        controller.animationControllers().forEach(AnimationManager.writePort()::put);
+        controller.animationControllers().forEach(AnimationManager.INSTANCE::put);
     }
 }

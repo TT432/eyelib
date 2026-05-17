@@ -13,9 +13,7 @@
 - `src/main/java/io/github/tt432/eyelib/util/data_attach/`
 
 ## Current Utility Ownership
-- Shared utility code lives in `:eyelib-util` under `io.github.tt432.eyelibutil` (packages: `time`, `color`, `loader`, `math`, `search`, `collection`, `resource`, `texture`, `codec`, `streamcodec`).
-- Platform-free render helpers (`PoseCopies`) live in `client/render/`.
-- Minecraft-facing adapter helpers live in `mc/impl/util/`.
+- Shared utility code lives in `:eyelib-util` under `io.github.tt432.eyelibutil`.
 - Root `util/` is drained: no Java source remains.
 - Root `core/util/` is drained: no Java source remains.
 

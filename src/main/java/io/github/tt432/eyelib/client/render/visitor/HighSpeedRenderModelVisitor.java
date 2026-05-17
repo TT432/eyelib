@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.client.compat.ar.ARCompat;
 import io.github.tt432.eyelibimporter.model.Model;
-import io.github.tt432.eyelib.client.model.ModelRuntimeData;
+import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibpreprocessing.model.bake.BakedModel;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import lombok.Setter;

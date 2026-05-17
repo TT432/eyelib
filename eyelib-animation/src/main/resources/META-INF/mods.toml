@@ -1,0 +1,9 @@
+modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+[[mods]]
+modId="eyelibanimation"
+version="${mod_version}"
+displayName="Eyelib Animation"
+description="${mod_description}"
+authors="${mod_authors}"
