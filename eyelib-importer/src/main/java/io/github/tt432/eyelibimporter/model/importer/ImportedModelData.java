@@ -1,7 +1,7 @@
 package io.github.tt432.eyelibimporter.model.importer;
 
-import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
-import io.github.tt432.eyelibimporter.model.VisibleBox;
+import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
+import io.github.tt432.eyelibmodel.VisibleBox;
 import io.github.tt432.eyelibimporter.model.bedrock.BedrockGeometryModel;
 import io.github.tt432.eyelibimporter.model.bbmodel.BBModel;
 import io.github.tt432.eyelibimporter.model.bbmodel.Element;

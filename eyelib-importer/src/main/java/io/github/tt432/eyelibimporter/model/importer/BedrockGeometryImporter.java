@@ -1,7 +1,7 @@
 package io.github.tt432.eyelibimporter.model.importer;
 
 import com.google.gson.JsonObject;
-import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibimporter.model.bedrock.BedrockGeometryModel;
 import io.github.tt432.eyelibimporter.model.bedrock.BedrockModelLoader;
 

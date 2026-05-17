@@ -11,7 +11,7 @@ import io.github.tt432.eyelibanimation.BrAnimator;
 import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.entity.ClientEntityLookup;
-import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.client.render.RenderParams;

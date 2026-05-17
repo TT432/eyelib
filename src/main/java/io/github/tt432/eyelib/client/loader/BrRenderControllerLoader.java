@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.loader;
 import com.google.gson.JsonElement;
 import io.github.tt432.eyelib.client.registry.RenderControllerAssetRegistry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
-import io.github.tt432.eyelibpreprocessing.loader.LoaderParsingOps;
+import io.github.tt432.eyelib.client.loader.LoaderParsingOps;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;

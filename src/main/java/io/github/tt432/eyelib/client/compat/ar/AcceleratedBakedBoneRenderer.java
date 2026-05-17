@@ -7,7 +7,7 @@ import com.github.argon4w.acceleratedrendering.core.meshes.IMesh;
 import com.github.argon4w.acceleratedrendering.core.meshes.collectors.CulledMeshCollector;
 import com.github.argon4w.acceleratedrendering.features.entities.AcceleratedEntityRenderingFeature;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.tt432.eyelibpreprocessing.model.bake.BakedModel;
+import io.github.tt432.eyelib.client.render.bake.BakedModel;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import lombok.experimental.ExtensionMethod;

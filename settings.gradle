@@ -15,13 +15,13 @@ rootProject.name = "eyelib"
 
 include("eyelib-animation")
 include("eyelib-behavior")
+include("eyelib-model")
 include("eyelib-network")
 include("eyelib-attachment")
 include("eyelib-importer")
 include("eyelib-material")
 include("eyelib-molang")
 include("eyelib-particle")
-include("eyelib-preprocessing")
 include("eyelib-util")
 
 includeBuild("clientsmoke")

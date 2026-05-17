@@ -1,6 +1,6 @@
 package io.github.tt432.eyelibanimation;
 
-import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import lombok.experimental.UtilityClass;
 import org.joml.Vector3f;

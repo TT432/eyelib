@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.entity;
 
-import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
-import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
+import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.MolangValue;

@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.model.importer;
 
 import io.github.tt432.eyelibimporter.model.importer.ImportedModelData;
-import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibimporter.model.bbmodel.BBModel;
 import io.github.tt432.eyelib.client.model.importer.ModelImporter.ImportResult;
 

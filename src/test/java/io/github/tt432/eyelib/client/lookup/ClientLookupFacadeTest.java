@@ -5,7 +5,7 @@ import io.github.tt432.eyelibanimation.AnimationEffects;
 import io.github.tt432.eyelibanimation.AnimationLookup;
 import io.github.tt432.eyelibanimation.AnimationManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
-import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelib.client.model.ModelLookup;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibmolang.MolangScope;

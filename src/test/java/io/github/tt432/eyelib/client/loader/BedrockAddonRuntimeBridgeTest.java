@@ -20,7 +20,7 @@ import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibimporter.material.BrMaterial;
-import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllers;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.junit.jupiter.api.AfterEach;

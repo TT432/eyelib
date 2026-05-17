@@ -21,3 +21,5 @@ Historical architectural decisions from the module separation milestones.
 | Capability split strategy | Data/codec types move to attachment; runtime owners stay in root with distinct namespace | v1.4 |
 | ModelBakeInvalidationHooks bridge | Prevents preprocessing→root reverse dependency | v1.4 |
 | Full-suite verification | test + nullawayMain + rebuild replaces standalone Nyquist per phase | v1.4 |
+| eyelib-model as canonical model data module | Extract Model, GlobalBoneIdHandler, VisibleBox, locator tree, and model tree interfaces from eyelib-importer into a dedicated Forge subproject to separate data ownership from parsing responsibility | v1.5 |
+| Dissolve eyelib-preprocessing | Move bake/reload/loader/animation-bridge classes to their natural functional owners (root and eyelib-animation); delete dead ParticleFlipbook and BakedModels code | v1.5 |

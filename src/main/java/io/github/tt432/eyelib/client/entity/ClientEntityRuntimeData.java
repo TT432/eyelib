@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.entity;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 
 
-import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelib.client.model.ModelLookup;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;

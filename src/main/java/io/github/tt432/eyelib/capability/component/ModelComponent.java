@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.capability.component;
 
-import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelib.client.model.ModelLookup;
 import io.github.tt432.eyelibmaterial.render.RenderTypeResolver;

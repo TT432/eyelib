@@ -8,7 +8,7 @@ import io.github.tt432.eyelibutil.resource.ResourceLocations;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
 import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
 import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;

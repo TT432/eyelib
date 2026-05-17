@@ -10,7 +10,7 @@ import io.github.tt432.eyelibutil.codec.ChinExtraCodecs;
 import io.github.tt432.eyelibutil.codec.CodecHelper;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
-import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.MolangValue;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;

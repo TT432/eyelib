@@ -1,7 +1,7 @@
 # Eyelib Module Boundaries
 
 ## Current Major Areas
-- `eyelib-preprocessing/src/main/java/io/github/tt432/eyelibpreprocessing/`: platform-free processing and batching helpers.
+- `eyelib-model/src/main/java/io/github/tt432/eyelibmodel/`: canonical model data types (Model, Bone, Cube, Face, Vertex, TextureMesh, GlobalBoneIdHandler, VisibleBox, locator tree).
 - `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/`: importer/schema Forge functional module under `io.github.tt432.eyelibimporter.*`.
 - `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/`: Molang engine with Forge platform bindings under `platform/`.
 - `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/`: particle module boundary (APIs, runtime, packets, loading).

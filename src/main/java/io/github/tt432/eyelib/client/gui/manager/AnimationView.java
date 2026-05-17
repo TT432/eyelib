@@ -8,7 +8,7 @@ import io.github.tt432.eyelibanimation.AnimationLookup;
 import io.github.tt432.eyelibanimation.AnimationEffects;
 import io.github.tt432.eyelibanimation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.gui.ModalWorksurfaceScreen;
-import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibutil.math.EyeMath;

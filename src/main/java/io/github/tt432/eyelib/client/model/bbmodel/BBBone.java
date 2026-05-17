@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.model.bbmodel;
 
-import io.github.tt432.eyelibimporter.model.Model;
-import io.github.tt432.eyelibimporter.model.locator.GroupLocator;
+import io.github.tt432.eyelibmodel.Model;
+import io.github.tt432.eyelibmodel.locator.GroupLocator;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.With;
 import org.joml.Vector3f;

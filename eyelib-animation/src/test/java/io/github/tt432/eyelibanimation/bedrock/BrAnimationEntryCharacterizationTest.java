@@ -4,7 +4,7 @@ import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneAnimationSchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneKeyFrameSchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
-import io.github.tt432.eyelibimporter.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
 import io.github.tt432.eyelibmolang.MolangValue3;
 import org.junit.jupiter.api.Test;
 

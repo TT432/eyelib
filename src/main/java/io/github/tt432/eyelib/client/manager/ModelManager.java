@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.manager;
 
-import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibmodel.Model;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 

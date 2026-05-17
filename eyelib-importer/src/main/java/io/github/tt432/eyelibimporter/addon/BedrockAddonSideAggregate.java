@@ -3,7 +3,7 @@ package io.github.tt432.eyelibimporter.addon;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.material.BrMaterial;
 import io.github.tt432.eyelibimporter.material.BrMaterialEntry;
-import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
 import io.github.tt432.eyelibimporter.particle.BrParticle;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllerEntry;

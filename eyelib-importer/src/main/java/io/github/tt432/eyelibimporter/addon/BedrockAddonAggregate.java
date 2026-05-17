@@ -6,7 +6,7 @@ import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationCo
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibimporter.material.BrMaterialEntry;
-import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibimporter.particle.BrParticle;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllerEntry;
 

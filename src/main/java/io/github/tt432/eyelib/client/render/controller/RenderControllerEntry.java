@@ -6,7 +6,7 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-import io.github.tt432.eyelibimporter.model.Model;
+import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelibmolang.type.*;
