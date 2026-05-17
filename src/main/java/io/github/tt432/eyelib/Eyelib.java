@@ -1,12 +1,13 @@
 package io.github.tt432.eyelib;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import io.github.tt432.eyelib.network.EyelibNetworkManager;
+import net.minecraftforge.fml.common.Mod;
 
-/**
- * @author TT432
- */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@Mod(Eyelib.MOD_ID)
 public class Eyelib {
     public static final String MOD_ID = "eyelib";
+
+    public Eyelib() {
+        EyelibNetworkManager.register();
+    }
 }
