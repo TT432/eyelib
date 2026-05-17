@@ -51,4 +51,4 @@ P2（前端统一）──┘                P6（交叉验证）
 ## 验证命令
 
 - 单模块：`jetbrain_run_gradle_tasks :eyelib-molang:test`
-- 全量：`jetbrain_run_gradle_tasks :eyelib-molang:test :eyelib-importer:test :eyelib-processor:test :test`
+- 全量：`jetbrain_run_gradle_tasks :eyelib-molang:test :eyelib-importer:test :eyelib-preprocessing:test :test`

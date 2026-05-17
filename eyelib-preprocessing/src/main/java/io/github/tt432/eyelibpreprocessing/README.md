@@ -1,8 +1,8 @@
-# Eyelib Processor Module
+# Eyelib Preprocessing Module
 
 ## Scope
-- Path: `eyelib-processor/src/main/java/io/github/tt432/eyelibprocessor/`
-- Owns platform-free processing seams extracted from root runtime/tooling flows.
+- Path: `eyelib-preprocessing/src/main/java/io/github/tt432/eyelibpreprocessing/`
+- Owns platform-free processing and batching seams extracted from root runtime/tooling flows.
 
 ## Current Responsibilities
 - Path/file classification helpers for manager reload planning.
@@ -16,4 +16,4 @@
 
 ## Current Consumers
 - Root runtime/tooling module (`:`) depends on this module for processing seams.
-- Stage-1 extraction keeps this module independent from root runtime packages and free of reverse dependencies back into `:`.
+- The module is independent from root runtime packages and free of reverse dependencies back into `:`.

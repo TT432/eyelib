@@ -199,7 +199,8 @@ Target thresholds establish what "done" means before phase promotion.
 - Docs-only roadmap changes: verify every referenced path still exists.
 - **ALL Gradle commands must use JetBrains MCP** (`jetbrain_build_project`, `jetbrain_run_gradle_tasks`). Never run `./gradlew` in shell.
 - Phase 1-4 implementation slices: `jetbrain_run_gradle_tasks :eyelib-molang:test`.
-- Phase 7 and beyond: `jetbrain_run_gradle_tasks :eyelib-molang:test :eyelib-importer:test :eyelib-processor:test :test`.
+- Phase 7 and beyond: `jetbrain_run_gradle_tasks :eyelib-molang:test :eyelib-importer:test
+ :eyelib-preprocessing:test :test`.
 - Generated parser changes: require a task-specific regeneration/isolation plan and update `docs/architecture/03-generated-code-policy.md` if the generated zone moves or changes ownership.
 
 ## Anti-Drift Checklist

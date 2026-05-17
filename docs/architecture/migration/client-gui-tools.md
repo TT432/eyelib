@@ -22,17 +22,17 @@
 - `ManagerResourceImportPlanner` now delegates both single-file route selection and texture-key derivation to that helper; runtime registry publication, texture upload, importer calls, and Forge texture-change event posting remain MC-facing in the planner.
 
 ## Implementation notes
-- Moved the planning seam to `eyelib-processor/src/main/java/io/github/tt432/eyelibprocessor/manager/reload/ManagerResourceReloadPlan.java` with `Path`-based `classifySingleFile(basePath, file)`, normalized `classifySingleFile(String)`, and string-key `toTextureKey(basePath, textureFile)` helpers.
+- Moved the planning seam to `eyelib-preprocessing/src/main/java/io/github/tt432/eyelibpreprocessing/manager/reload/ManagerResourceReloadPlan.java` with `Path`-based `classifySingleFile(basePath, file)`, normalized `classifySingleFile(String)`, and string-key `toTextureKey(basePath, textureFile)` helpers.
 - `ManagerResourceImportPlanner` now routes texture upload via `ManagerResourceReloadPlan.toTextureKey(...)`, removing direct `ResourceLocation` construction from the planner and keeping runtime upload wiring in `NativeImageIO`.
 - Added a narrow `NativeImageIO.upload(String, NativeImage)` overload so planner runtime code can stay string-keyed at the planning seam boundary.
 - No UI flow rewrites and no hotkey/screen/file-dialog behavior changes.
 
 ## Tests
-- Added targeted seam test: `eyelib-processor/src/test/java/io/github/tt432/eyelibprocessor/manager/reload/ManagerResourceReloadPlanTest.java`.
+- Added targeted seam test: `eyelib-preprocessing/src/test/java/io/github/tt432/eyelibpreprocessing/manager/reload/ManagerResourceReloadPlanTest.java`.
 - Coverage now includes known JSON folder routes, model/texture routes, unsupported paths, backslash normalization, `Path`-based relative classification, and lowercase texture-key shaping.
 
 ## Verification (JetBrains MCP)
-- ✅ `./gradlew :eyelib-processor:test --tests io.github.tt432.eyelibprocessor.manager.reload.ManagerResourceReloadPlanTest`
+- ✅ `./gradlew :eyelib-preprocessing:test --tests io.github.tt432.eyelibpreprocessing.manager.reload.ManagerResourceReloadPlanTest`
 - ✅ `build`
 - ✅ `jetbrain_build_project` (project compile/build problem scan)
 - ⚠️ Java `lsp_diagnostics` is tool-blocked in this environment (`jdtls` not installed); verification used JetBrains MCP inspections/Gradle build instead.

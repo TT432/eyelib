@@ -77,7 +77,7 @@
 - Added Stage-4 seam coverage for internal runtime-owner extraction:
   - `BrAnimationEntryLifecycleTest`
   - `BrAnimationControllerStateOwnerTest`
-- Narrow Stage-5 cleanup completed: pure runtime forwarding sites no longer depend on `AnimationRuntimes`, while wrapper-backed ingress/publish/GUI seams remain deferred by design.
+- Phase 28 cleanup removed the legacy port layer: `AnimationRuntimes`, port interfaces, and `LegacyAnimationRuntimeAdapter` deleted; `Animation.java` default methods call their own abstract methods directly.
 - Landed model-definition follow-up seam: `Model.TextureMesh.CODEC` now uses Eyelib float-list vector codecs, removing direct `net.minecraft.util.ExtraCodecs` import from `client/model/Model.java` while keeping JSON shape compatibility for list-based vector fields.
 - Added targeted plain-JVM seam test coverage for the extracted definition contract:
   - `ModelTextureMeshCodecTest`

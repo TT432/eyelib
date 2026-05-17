@@ -7,7 +7,7 @@ graph TB
     subgraph subprojects["Gradle Subprojects"]
         molang["eyelib-molang<br/>java-library<br/>Molang engine / compiler / type"]
         importer["eyelib-importer<br/>legacyForge<br/>Schema / CODEC / parse"]
-        processor["eyelib-preprocessing<br/>java-library<br/>IR types / Baker / conversion"]
+        processor["eyelib-preprocessing<br/>legacyForge<br/>Processing / batching / parsing helpers"]
         utilmod["eyelib-util<br/>legacyForge<br/>Shared utility leaf"]
         attachment["eyelib-attachment<br/>legacyForge<br/>Attachment contracts"]
         material["eyelib-material<br/>legacyForge<br/>Material definitions"]
@@ -86,7 +86,7 @@ graph TB
 ## Target Roles
 - `eyelib-molang`: Molang engine / compiler / type system (no MC/Forge deps)
 - `eyelib-importer`: schema definitions / CODECs / raw JSON parsing (no runtime execution)
-- `eyelib-preprocessing`: pure-JVM IR types / format conversion / Baker classes (no MC/Forge deps)
+- `eyelib-preprocessing`: Forge-side processing / batching / parsing helpers (no root runtime deps)
 - `eyelib-util`: shared Forge-aware utility leaf module with no project-internal dependencies
 - `eyelib-attachment`: typed attachment contracts and attachment packet contracts; consumes `eyelib-util` stream codecs
 - `eyelib-material`: Bedrock material definitions; consumes `eyelib-util` codec infrastructure
@@ -102,7 +102,7 @@ graph TB
 1. Normalize all asset publication through `client/registry`
 2. Move packet application logic into domain services; keep `NetClientHandlers` shallow
 3. Introduce lookup facades for core runtime reads
-4. Extract pure-data conversions to `eyelib-preprocessing` (IR pattern)
+4. Extract pure-data conversions to `eyelib-preprocessing` (processing pattern)
 5. Migrate `eyelib-importer` to pure `java-library` after `StringRepresentable`/`ExtraCodecs` cleanup
 
 ## Rules

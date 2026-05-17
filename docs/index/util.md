@@ -10,18 +10,15 @@
 3. Relevant architecture doc before touching `util/client/`
 
 ## Hotspots
-- `src/main/java/io/github/tt432/eyelib/util/client/`
 - `src/main/java/io/github/tt432/eyelib/util/data_attach/`
-- `src/main/java/io/github/tt432/eyelib/util/SharedLibraryLoader.java`
 
-## Current Split Targets
-- `src/main/java/io/github/tt432/eyelib/util/client/texture/TexturePathHelper.java`
-- `src/main/java/io/github/tt432/eyelib/client/render/PoseCopies.java`
-- `src/main/java/io/github/tt432/eyelib/mc/impl/util/model/InventoryModelResourceLocations.java`
-- `src/main/java/io/github/tt432/eyelib/core/util/`
-- `src/main/java/io/github/tt432/eyelib/core/util/time/FixedStepTimerState.java`
-- `src/main/java/io/github/tt432/eyelib/mc/impl/modbridge/ModBridgeModelUpdateEvent.java`
+## Current Utility Ownership
+- Shared utility code lives in `:eyelib-util` under `io.github.tt432.eyelibutil` (packages: `time`, `color`, `loader`, `math`, `search`, `collection`, `resource`, `texture`, `codec`, `streamcodec`).
+- Platform-free render helpers (`PoseCopies`) live in `client/render/`.
+- Minecraft-facing adapter helpers live in `mc/impl/util/`.
+- Root `util/` is drained: no Java source remains.
+- Root `core/util/` is drained: no Java source remains.
 
 ## Boundary Reminder
-- `util/client/` is not a default destination for new code during the refactor.
-- Only truly cross-cutting helpers should remain in `util/` long term.
+- `util/client/` is drained; do not add new code here.
+- Only truly cross-cutting helpers should use `:eyelib-util`; domain-specific helpers belong with their functional owner.
