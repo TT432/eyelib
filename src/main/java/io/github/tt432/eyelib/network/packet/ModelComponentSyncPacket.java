@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mc.impl.network.packet;
+package io.github.tt432.eyelib.network.packet;
 
 import io.github.tt432.eyelib.client.render.sync.RenderModelSyncPayload;
 import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;

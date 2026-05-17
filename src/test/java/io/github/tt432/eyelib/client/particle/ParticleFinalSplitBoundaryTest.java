@@ -37,12 +37,12 @@ class ParticleFinalSplitBoundaryTest {
 
     @Test
     void packetContractsBelongToParticleModuleAndCommandStaysAsAdapter() throws IOException {
-        SourceCheck command = source("src/main/java/io/github/tt432/eyelib/mc/impl/common/command/EyelibParticleCommand.java");
+        SourceCheck command = source("src/main/java/io/github/tt432/eyelib/common/command/EyelibParticleCommand.java");
         SourceCheck spawnPacket = source("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/network/SpawnParticlePacket.java");
         SourceCheck removePacket = source("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/network/RemoveParticlePacket.java");
 
         assertAll(
-                () -> command.assertContains("package io.github.tt432.eyelib.mc.impl.common.command;"),
+                () -> command.assertContains("package io.github.tt432.eyelib.common.command;"),
                 () -> command.assertContains("ResourceLocationArgument"),
                 () -> command.assertContains("ParticleCommandRuntime.buildSpawnParticleRequest"),
                 () -> command.assertContains("new SpawnParticlePacket("),

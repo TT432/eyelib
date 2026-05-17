@@ -2,8 +2,8 @@ package io.github.tt432.eyelib.network;
 
 import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
 import io.github.tt432.eyelib.client.render.sync.ClientRenderSyncService;
-import io.github.tt432.eyelib.mc.impl.network.packet.AnimationComponentSyncPacket;
-import io.github.tt432.eyelib.mc.impl.network.packet.ModelComponentSyncPacket;
+import io.github.tt432.eyelib.network.packet.AnimationComponentSyncPacket;
+import io.github.tt432.eyelib.network.packet.ModelComponentSyncPacket;
 import io.github.tt432.eyelibattachment.network.DataAttachmentSyncPacket;
 import io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime;
 import io.github.tt432.eyelibattachment.network.DataAttachmentUpdatePacket;

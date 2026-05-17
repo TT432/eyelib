@@ -12,24 +12,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RenderMixinAccessorOwnershipTest {
     @Test
     void livingEntityRendererAccessorIsRenderOwnedTechnicalMixinWiring() throws IOException {
-        SourceCheck accessor = source("src/main/java/io/github/tt432/eyelib/mc/impl/mixin/LivingEntityRendererAccessor.java");
+        SourceCheck accessor = source("src/main/java/io/github/tt432/eyelib/mixin/LivingEntityRendererAccessor.java");
         SourceCheck renderAction = source("src/main/java/io/github/tt432/eyelib/client/render/SimpleRenderAction.java");
         SourceCheck mixinConfig = source("src/main/resources/eyelib.mixins.json");
         String docs = readDocs(
                 "MODULES.md",
                 "docs/architecture/01-module-boundaries.md",
                 "docs/architecture/04-mc-debt-ledger.md",
-                "src/main/java/io/github/tt432/eyelib/client/render/README.md",
-                "src/main/java/io/github/tt432/eyelib/mc/impl/mixin/README.md"
+                "src/main/java/io/github/tt432/eyelib/client/render/README.md"
         );
 
         assertAll(
-                () -> accessor.assertContains("package io.github.tt432.eyelib.mc.impl.mixin;"),
+                () -> accessor.assertContains("package io.github.tt432.eyelib.mixin;"),
                 () -> accessor.assertContains("@Mixin(LivingEntityRenderer.class)"),
                 () -> accessor.assertContains("float callGetWhiteOverlayProgress"),
-                () -> renderAction.assertContains("import io.github.tt432.eyelib.mc.impl.mixin.LivingEntityRendererAccessor;"),
+                () -> renderAction.assertContains("import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;"),
                 () -> renderAction.assertContains("((LivingEntityRendererAccessor) (event.getRenderer())).callGetWhiteOverlayProgress"),
-                () -> mixinConfig.assertContains("\"package\": \"io.github.tt432.eyelib.mc.impl.mixin\""),
+                () -> mixinConfig.assertContains("\"package\": \"io.github.tt432.eyelib.mixin\""),
                 () -> mixinConfig.assertContains("\"LivingEntityRendererAccessor\""),
                 () -> assertTrue(docs.contains("FM-015")),
                 () -> assertTrue(docs.contains("client-render-owned")),
