@@ -1,25 +1,11 @@
 # Engineering Conventions
 
-## Unified Temporary File Area
-
-- **Location**: `.sisyphus/tmp/`
-- **Purpose**: All session-scoped scratch artifacts (agent output, intermediate analysis, sandbox experiments)
-- **Naming**: `YYYY-MM-DD-purpose-description.ext`
-- **Lifecycle**: Clean up after session; do not accumulate
-- This is the **only** location for temporary files. Do not create `temp/`, `tmp/`, or scratch directories elsewhere in the repository.
-
 ## Gradle Execution
 
 - **ALL Gradle commands** must use JetBrains MCP (`jetbrain_run_gradle_tasks`) or IDE MCP tools.
 - **Never** run `./gradlew ...` directly in shell.
 - **Allowed MCP tools**: `jetbrain_run_gradle_tasks`, `jetbrain_build_project`, `jetbrain_sync_gradle_projects`
 - If MCP is unavailable: **stop and ask the user** to re-enable MCP before continuing.
-
-## Per-Session KPI Recording
-
-- At session end: fill `.sisyphus/kpi/template.md` copy for the session
-- Enter summary row into `.sisyphus/kpi/history.csv`
-- Required checks: lsp_diagnostics pass, build pass, ROADMAP anti-drift checklist
 
 ## Commit Message Convention
 
