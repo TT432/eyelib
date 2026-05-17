@@ -45,7 +45,6 @@ legacyForge {
 
 dependencies {
     compileOnly project(':eyelib-util')
-    implementation project(':eyelib-attachment')
 
     implementation 'io.github.dmlloyd:jdk-classfile-backport:24.0'
 
