@@ -16,7 +16,7 @@
 ## Current Runtime Boundaries
 - Legacy root `bedrock/**`, `ParticleLookup`, `ParticleManager`, and `ParticleAssetRegistry` have been deleted after production callers moved to module-owned definitions/publication and tests moved off the root compatibility schema.
 - `ParticleSpawnService.java`: transitional root facade converting packet fields into `io.github.tt432.eyelibparticle.api.ParticleSpawnRequest` and supplying root Minecraft/capability context to module-owned `io.github.tt432.eyelibparticle.client.ParticleSpawnRuntimeAdapter`; it no longer accepts root `BrParticle` or `BrParticleEmitter` overloads. Removal condition: delete after packet/runtime callers migrate directly to particle API/client runtime services.
-- Root `bedrock/BrParticleRenderManager.java` has also been deleted; instrumentation reads module `io.github.tt432.eyelibparticle.client.ParticleRenderManager` counters directly.
+- Root `bedrock/BrParticleRenderManager.java` has also been deleted.
 - Executable runtime remains in `io.github.tt432.eyelibparticle.runtime.bedrock/**`, including component equivalents under `io.github.tt432.eyelibparticle.runtime.bedrock.component/**`.
 - Spawn request state is owned by `io.github.tt432.eyelibparticle.api.ParticleSpawnRequest`; do not add a duplicate root request type.
 

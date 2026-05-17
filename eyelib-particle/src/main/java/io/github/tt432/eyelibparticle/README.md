@@ -29,7 +29,7 @@
 
 ## Current Consumers
 - Root runtime `:` consumes the module through Gradle project dependency wiring.
-- Root runtime still consumes this module through `BrParticleLoader`, `ParticleSpawnService`, command/network transport adapters, and instrumentation. Legacy root `ParticleLookup`, `ParticleAssetRegistry`, `ParticleManager`, `BrParticleRenderManager`, and `src/main/java/io/github/tt432/eyelib/client/particle/bedrock/**` have been deleted after production callers moved to module definitions/publication/runtime services.
+- Root runtime still consumes this module through `BrParticleLoader`, `ParticleSpawnService`, and command/network transport adapters. Legacy root `ParticleLookup`, `ParticleAssetRegistry`, `ParticleManager`, `BrParticleRenderManager`, and `src/main/java/io/github/tt432/eyelib/client/particle/bedrock/**` have been deleted after production callers moved to module definitions/publication/runtime services.
 - `ParticleSpawnService` remains only to adapt root packet callers, module-definition runtime callers, and root Minecraft/capability context into `ParticleSpawnRuntimeAdapter`; delete it after callers bind directly to `io.github.tt432.eyelibparticle.api` and `io.github.tt432.eyelibparticle.client` adapters/services.
 
 ## Verification Rule

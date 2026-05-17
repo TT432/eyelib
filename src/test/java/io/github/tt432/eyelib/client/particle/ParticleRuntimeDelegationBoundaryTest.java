@@ -84,25 +84,6 @@ class ParticleRuntimeDelegationBoundaryTest {
     }
 
     @Test
-    void rootRenderManagerFacadeIsDeletedAndInstrumentationReadsModuleRenderManager() throws IOException {
-        String observer = Files.readString(Path.of(
-                "src/main/java/io/github/tt432/eyelib/client/instrument/collector/BrParticleObserver.java"
-        ));
-        String hooks = Files.readString(Path.of(
-                "src/main/java/io/github/tt432/eyelib/client/instrument/InstrumentLifecycleHooks.java"
-        ));
-
-        assertTrue(Files.notExists(Path.of(
-                "src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticleRenderManager.java")));
-        assertTrue(observer.contains("import io.github.tt432.eyelibparticle.client.ParticleRenderManager;"));
-        assertTrue(observer.contains("ParticleRenderManager.INSTANCE.getEmitterCount()"));
-        assertTrue(!observer.contains("BrParticleRenderManager.get"));
-        assertTrue(hooks.contains("import io.github.tt432.eyelibparticle.client.ParticleRenderManager;"));
-        assertTrue(hooks.contains("ParticleRenderManager.INSTANCE.getEmitterCount()"));
-        assertTrue(!hooks.contains("BrParticleRenderManager.get"));
-    }
-
-    @Test
     void legacyRootEmitterRuntimeAndSchemaTreeAreDeleted() throws IOException {
         assertTrue(Files.notExists(Path.of("src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticle.java")));
         assertTrue(Files.notExists(Path.of("src/main/java/io/github/tt432/eyelib/client/particle/bedrock/BrParticleEmitter.java")));
