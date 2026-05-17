@@ -1,10 +1,9 @@
-package io.github.tt432.eyelib.common.entity;
+package io.github.tt432.eyelibattachment.runtime;
 
 import io.github.tt432.eyelibattachment.capability.ExtraEntityData;
 import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
 import io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime;
-import io.github.tt432.eyelibattachment.runtime.ExtraEntityDataUpdater;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
@@ -17,9 +16,6 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-/**
- * Observes Minecraft entity goals and syncs the derived extra-entity attachment state.
- */
 @Mod.EventBusSubscriber
 public final class EntityExtraDataRuntimeHooks {
     private EntityExtraDataRuntimeHooks() {
