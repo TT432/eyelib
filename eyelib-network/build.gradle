@@ -29,6 +29,12 @@ repositories {
 
 legacyForge {
     version = project.minecraft_version + '-' + project.forge_version
+
+    mods {
+        eyelibnetwork {
+            sourceSet(sourceSets.main)
+        }
+    }
 }
 
 dependencies {
@@ -46,6 +52,22 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.named('test').configure {
     useJUnitPlatform()
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    def replaceProperties = [
+            minecraft_version_range: minecraft_version_range,
+            forge_version_range    : forge_version_range,
+            loader_version_range   : loader_version_range,
+            mod_version            : mod_version,
+            mod_license            : mod_license,
+            mod_authors            : mod_authors,
+            mod_description        : 'Eyelib network transport layer.'
+    ]
+    inputs.properties(replaceProperties)
+    filesMatching('META-INF/mods.toml') {
+        expand(replaceProperties)
+    }
 }
 
 java {
