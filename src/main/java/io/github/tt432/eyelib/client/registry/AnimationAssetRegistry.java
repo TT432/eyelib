@@ -12,12 +12,25 @@ import java.util.Map;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class AnimationAssetRegistry {
-    public static void replaceAssets(Map<?, BrAnimation> animations, Map<?, BrAnimationControllers> controllers) {
+    private static Map<?, BrAnimation> stagedAnimations = Map.of();
+    private static Map<?, BrAnimationControllers> stagedControllers = Map.of();
+
+    public static void stageAnimations(Map<?, BrAnimation> animations) {
+        stagedAnimations = animations;
+        flushToManager();
+    }
+
+    public static void stageControllers(Map<?, BrAnimationControllers> controllers) {
+        stagedControllers = controllers;
+        flushToManager();
+    }
+
+    private static void flushToManager() {
         LinkedHashMap<String, Animation> flattened = new LinkedHashMap<>();
-        for (BrAnimation value : animations.values()) {
+        for (BrAnimation value : stagedAnimations.values()) {
             value.animations().forEach(flattened::put);
         }
-        for (BrAnimationControllers value : controllers.values()) {
+        for (BrAnimationControllers value : stagedControllers.values()) {
             value.animationControllers().forEach(flattened::put);
         }
         AnimationManager.INSTANCE.replaceAll(flattened);

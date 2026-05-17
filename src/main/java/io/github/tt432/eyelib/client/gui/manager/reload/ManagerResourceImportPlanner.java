@@ -97,7 +97,8 @@ public final class ManagerResourceImportPlanner {
                 )),
                 LOGGER
         );
-        AnimationAssetRegistry.replaceAssets(animations, animationControllers);
+        AnimationAssetRegistry.stageAnimations(animations);
+        AnimationAssetRegistry.stageControllers(animationControllers);
 
         Map<String, RenderControllers> renderControllers = ManagerResourceBatchPlanner.loadStructuredFiles(
                 basePath,

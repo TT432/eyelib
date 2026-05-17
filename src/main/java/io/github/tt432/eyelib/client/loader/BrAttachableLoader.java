@@ -11,28 +11,18 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.apache.commons.lang3.StringUtils;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.stream.Stream;
 
-/**
- * @author TT432
- */
 @Slf4j
+@ResourceLoader
 public class BrAttachableLoader extends BrResourcesLoader implements Searchable<BrClientEntity> {
-    public static final BrAttachableLoader INSTANCE = new BrAttachableLoader();
-
     private static final Logger LOGGER = LoggerFactory.getLogger(BrAttachableLoader.class);
 
-    @Nullable
-    public BrClientEntity get(ResourceLocation id) {
-        return AttachableManager.readPort().get(id.toString());
-    }
-
-    private BrAttachableLoader() {
+    BrAttachableLoader() {
         super("attachables", "json");
     }
 
@@ -55,4 +45,3 @@ public class BrAttachableLoader extends BrResourcesLoader implements Searchable<
                 .map(entry -> Map.entry(entry.getKey(), entry.getValue()));
     }
 }
-

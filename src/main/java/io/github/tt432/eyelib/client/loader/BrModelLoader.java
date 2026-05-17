@@ -13,12 +13,11 @@ import org.slf4j.LoggerFactory;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@ResourceLoader
 public class BrModelLoader extends BrResourcesLoader {
-    public static final BrModelLoader INSTANCE = new BrModelLoader();
-
     private static final Logger LOGGER = LoggerFactory.getLogger(BrModelLoader.class);
 
-    private BrModelLoader() {
+    BrModelLoader() {
         super("models", "geo.json");
     }
 
@@ -45,4 +44,3 @@ public class BrModelLoader extends BrResourcesLoader {
         return loadedModels;
     }
 }
-

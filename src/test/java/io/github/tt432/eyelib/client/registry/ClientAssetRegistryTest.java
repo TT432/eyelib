@@ -44,7 +44,8 @@ class ClientAssetRegistryTest {
                 }
                 """)).getOrThrow(false, AssertionError::new);
 
-        AnimationAssetRegistry.replaceAssets(Map.of("animations", animation), Map.of("controllers", controllers));
+        AnimationAssetRegistry.stageAnimations(Map.of("animations", animation));
+        AnimationAssetRegistry.stageControllers(Map.of("controllers", controllers));
 
         assertNotNull(AnimationLookup.get("animation.test.idle"));
         assertNotNull(AnimationLookup.get("controller.animation.test"));

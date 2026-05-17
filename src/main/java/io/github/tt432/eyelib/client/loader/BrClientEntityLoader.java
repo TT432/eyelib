@@ -13,16 +13,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-/**
- * @author TT432
- */
 @Slf4j
+@ResourceLoader
 public class BrClientEntityLoader extends BrResourcesLoader {
-    public static final BrClientEntityLoader INSTANCE = new BrClientEntityLoader();
-
     private static final Logger LOGGER = LoggerFactory.getLogger(BrClientEntityLoader.class);
 
-    private BrClientEntityLoader() {
+    BrClientEntityLoader() {
         super("entity", "json");
     }
 

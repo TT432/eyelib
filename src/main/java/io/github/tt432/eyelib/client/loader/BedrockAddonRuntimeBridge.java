@@ -37,10 +37,8 @@ public final class BedrockAddonRuntimeBridge {
     }
 
     public static void replaceFromResourcePack(BedrockAddonSideAggregate resourcePack) {
-        AnimationAssetRegistry.replaceAssets(
-                toRuntimeAnimations(resourcePack.animations()),
-                toRuntimeAnimationControllers(resourcePack.animationControllers())
-        );
+        AnimationAssetRegistry.stageAnimations(toRuntimeAnimations(resourcePack.animations()));
+        AnimationAssetRegistry.stageControllers(toRuntimeAnimationControllers(resourcePack.animationControllers()));
         ClientEntityAssetRegistry.replaceClientEntities(resourcePack.clientEntities().values());
         AttachableAssetRegistry.replaceAttachables(resourcePack.attachables().values());
         ModelAssetRegistry.replaceModels(resourcePack.modelsView());

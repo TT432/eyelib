@@ -12,16 +12,12 @@ import org.slf4j.LoggerFactory;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * @author TT432
- */
 @Slf4j
+@ResourceLoader
 public class BrParticleLoader extends BrResourcesLoader {
-    public static final BrParticleLoader INSTANCE = new BrParticleLoader();
-
     private static final Logger LOGGER = LoggerFactory.getLogger(BrParticleLoader.class);
 
-    private BrParticleLoader() {
+    BrParticleLoader() {
         super("particles", "json");
     }
 
@@ -32,4 +28,3 @@ public class BrParticleLoader extends BrResourcesLoader {
         ParticleResourcePublication.replaceFromJsonResources(resources, LOGGER);
     }
 }
-
