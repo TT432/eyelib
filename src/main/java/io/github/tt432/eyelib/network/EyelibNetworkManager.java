@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.network;
 
 import io.github.tt432.eyelibanimation.network.AnimationComponentSyncPacket;
-import io.github.tt432.eyelib.network.packet.ModelComponentSyncPacket;
+import io.github.tt432.eyelibmodel.network.packet.ModelComponentSyncPacket;
 import io.github.tt432.eyelibattachment.network.DataAttachmentSyncPacket;
 import io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime;
 import io.github.tt432.eyelibattachment.network.DataAttachmentUpdatePacket;

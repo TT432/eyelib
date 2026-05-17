@@ -43,6 +43,9 @@ legacyForge {
 }
 
 dependencies {
+    implementation project(':eyelib-util')
+    implementation project(':eyelib-attachment')
+
     implementation 'com.mojang:datafixerupper:6.0.8'
     api 'org.joml:joml:1.10.5'
     api 'it.unimi.dsi:fastutil:8.5.12'

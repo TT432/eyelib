@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.common;
+package io.github.tt432.eyelibmolang.platform.entity;
 
 import io.github.tt432.eyelibattachment.capability.EntityStatistics;
 import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
@@ -11,9 +11,6 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-/**
- * @author TT432
- */
 @Mod.EventBusSubscriber
 public class EntityStatisticsHandler {
     @SubscribeEvent

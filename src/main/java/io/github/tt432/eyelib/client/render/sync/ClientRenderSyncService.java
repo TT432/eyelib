@@ -6,7 +6,7 @@ import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelibattachment.sync.RenderModelSyncPayload;
 import io.github.tt432.eyelibnetwork.EyelibNetworkTransport;
 import io.github.tt432.eyelibanimation.network.AnimationComponentSyncPacket;
-import io.github.tt432.eyelib.network.packet.ModelComponentSyncPacket;
+import io.github.tt432.eyelibmodel.network.packet.ModelComponentSyncPacket;
 import io.github.tt432.eyelibutil.resource.ResourceLocations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

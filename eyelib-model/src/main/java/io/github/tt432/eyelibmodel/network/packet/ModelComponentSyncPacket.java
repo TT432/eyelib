@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.network.packet;
+package io.github.tt432.eyelibmodel.network.packet;
 
 import io.github.tt432.eyelibattachment.sync.RenderModelSyncPayload;
 import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
@@ -8,9 +8,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author TT432
- */
 public record ModelComponentSyncPacket(
         int entityId,
         List<RenderModelSyncPayload> modelInfo
