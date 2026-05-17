@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
 import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelib.client.model.importer.BedrockGeometryImporter;
+import io.github.tt432.eyelibimporter.model.importer.BedrockGeometryImporter;
 import io.github.tt432.eyelib.client.registry.ModelAssetRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;

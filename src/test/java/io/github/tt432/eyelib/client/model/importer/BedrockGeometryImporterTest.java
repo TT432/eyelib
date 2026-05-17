@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.client.model.importer;
 
 import io.github.tt432.eyelibimporter.model.importer.ModelImportException;
+import io.github.tt432.eyelibimporter.model.importer.ModelImporter;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;

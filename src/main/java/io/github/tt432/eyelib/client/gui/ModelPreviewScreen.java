@@ -19,7 +19,7 @@ import io.github.tt432.eyelibimporter.model.bbmodel.BBModel;
 import io.github.tt432.eyelibimporter.model.bbmodel.BBModelLoader;
 import io.github.tt432.eyelibimporter.model.bbmodel.Texture;
 import io.github.tt432.eyelib.client.gui.preview.ModelPreviewAsset;
-import io.github.tt432.eyelib.client.model.importer.ModelImporter;
+import io.github.tt432.eyelibimporter.model.importer.ModelImporter;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;

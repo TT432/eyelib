@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.client.model.bbmodel;
+package io.github.tt432.eyelibmodel.bbmodel;
 
 import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibmodel.locator.GroupLocator;
@@ -9,9 +9,6 @@ import org.joml.Vector3f;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author TT432
- */
 @With
 public record BBBone(
         int id,
