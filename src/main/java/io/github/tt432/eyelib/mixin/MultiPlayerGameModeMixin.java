@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mc.impl.mixin;
+package io.github.tt432.eyelib.mixin;
 
 import io.github.tt432.eyelib.network.EyelibNetworkManager;
 import io.github.tt432.eyelib.client.ClientTaskScheduler;
@@ -22,16 +22,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class MultiPlayerGameModeMixin {
     @Shadow
     private boolean isDestroying;
-
-//    @Inject(method = "lambda$startDestroyBlock$1", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;destroyBlock(Lnet/minecraft/core/BlockPos;)Z"))
-//    private void startDestroyBlock1(BlockState blockstate1, PlayerInteractEvent.LeftClickBlock event, BlockPos loc, Direction face, int p_233728_, CallbackInfoReturnable<Packet> cir) {
-//        EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(false));
-//    }
-//
-//    @Inject(method = "lambda$startDestroyBlock$1", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientLevel;destroyBlockProgress(ILnet/minecraft/core/BlockPos;I)V"))
-//    private void startDestroyBlock2(BlockState blockstate1, PlayerInteractEvent.LeftClickBlock event, BlockPos loc, Direction face, int p_233728_, CallbackInfoReturnable<Packet> cir) {
-//        EyelibNetworkManager.sendToServer(new UpdateDestroyInfoPacket(true));
-//    }
 
     @Inject(method = "startDestroyBlock", at = {@At(value = "RETURN", ordinal = 0), @At(value = "RETURN", ordinal = 1)})
     private void startDestroyBlock1(BlockPos loc, Direction face, CallbackInfoReturnable<Boolean> cir) {

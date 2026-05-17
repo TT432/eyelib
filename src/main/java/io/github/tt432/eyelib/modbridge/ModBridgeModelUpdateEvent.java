@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mc.impl.modbridge;
+package io.github.tt432.eyelib.modbridge;
 
 import net.minecraftforge.eventbus.api.Event;
 

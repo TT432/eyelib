@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mc.impl.mixin;
+package io.github.tt432.eyelib.mixin;
 
 import io.github.tt432.eyelib.client.model.RootModelPartModel;
 import net.minecraft.client.model.HumanoidModel;
@@ -30,4 +30,3 @@ public class HumanoidModelMixin implements RootModelPartModel {
         return eyelib$part;
     }
 }
-

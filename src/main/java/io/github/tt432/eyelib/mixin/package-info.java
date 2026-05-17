@@ -1,5 +1,4 @@
 @NullMarked
-package io.github.tt432.eyelib.mc.impl.mixin;
+package io.github.tt432.eyelib.mixin;
 
 import org.jspecify.annotations.NullMarked;
-

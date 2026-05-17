@@ -1,13 +1,5 @@
-package io.github.tt432.eyelib.mc.impl.client.loader;
+package io.github.tt432.eyelib.client.loader;
 
-import io.github.tt432.eyelib.client.loader.BrAnimationControllerLoader;
-import io.github.tt432.eyelib.client.loader.BrAnimationLoader;
-import io.github.tt432.eyelib.client.loader.BrAttachableLoader;
-import io.github.tt432.eyelib.client.loader.BrClientEntityLoader;
-import io.github.tt432.eyelib.client.loader.BrMaterialLoader;
-import io.github.tt432.eyelib.client.loader.BrModelLoader;
-import io.github.tt432.eyelib.client.loader.BrParticleLoader;
-import io.github.tt432.eyelib.client.loader.BrRenderControllerLoader;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;

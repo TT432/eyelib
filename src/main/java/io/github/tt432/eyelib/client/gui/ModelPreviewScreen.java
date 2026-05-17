@@ -23,7 +23,7 @@ import io.github.tt432.eyelib.client.model.importer.ModelImporter;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
-import io.github.tt432.eyelib.mc.impl.modbridge.ModBridgeModelUpdateEvent;
+import io.github.tt432.eyelib.modbridge.ModBridgeModelUpdateEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mc.impl.capability;
+package io.github.tt432.eyelib.capability;
 
 import io.github.tt432.eyelibattachment.capability.ExtraEntityUpdateData;
 import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;

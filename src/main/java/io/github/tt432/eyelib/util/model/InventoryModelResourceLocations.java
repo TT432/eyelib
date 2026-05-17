@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mc.impl.util.model;
+package io.github.tt432.eyelib.util.model;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

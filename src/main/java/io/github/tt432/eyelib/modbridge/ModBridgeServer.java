@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mc.impl.modbridge;
+package io.github.tt432.eyelib.modbridge;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;

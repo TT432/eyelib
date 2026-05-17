@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mc.impl.mixin;
+package io.github.tt432.eyelib.mixin;
 
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.world.entity.LivingEntity;

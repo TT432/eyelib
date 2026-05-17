@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mc.impl.capability;
+package io.github.tt432.eyelib.capability;
 
 import io.github.tt432.eyelib.capability.component.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
