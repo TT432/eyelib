@@ -25,7 +25,7 @@ class ImporterModuleIdentityTest {
 
         assertAll(
                 () -> assertTrue(readme.contains("importer/schema Forge functional module")),
-                () -> assertTrue(readme.contains("mc/impl/bootstrap/")),
+                () -> assertTrue(readme.contains("root package")),
                 () -> assertTrue(readme.contains("plain importer library remains future debt")),
                 () -> assertTrue(modules.contains("Importer/schema Forge functional module")),
                 () -> assertTrue(sideBoundaries.contains("currently an importer/schema Forge functional module"))
@@ -36,7 +36,7 @@ class ImporterModuleIdentityTest {
     void buildAndBootstrapKeepForgeModShapeExplicit() throws IOException {
         String build = Files.readString(MODULE_ROOT.resolve("build.gradle"));
         String modsToml = Files.readString(MODULE_ROOT.resolve("src/main/resources/META-INF/mods.toml"));
-        String bootstrap = Files.readString(SOURCE_ROOT.resolve("mc/impl/bootstrap/EyelibResourcesImporterMod.java"));
+        String bootstrap = Files.readString(SOURCE_ROOT.resolve("EyelibResourcesImporterMod.java"));
 
         assertAll(
                 () -> assertTrue(build.contains("id 'net.neoforged.moddev.legacyforge'")),
@@ -56,12 +56,13 @@ class ImporterModuleIdentityTest {
     }
 
     @Test
-    void directMinecraftAndForgeImportsStayInBootstrapPackage() throws IOException {
+    void directMinecraftAndForgeImportsStayInRootPackage() throws IOException {
         assertAll(javaSources().map(path -> () -> {
             String source = Files.readString(path);
             if (source.contains("import net.minecraft") || source.contains("import net.minecraftforge")) {
                 String normalized = SOURCE_ROOT.relativize(path).toString().replace('\\', '/');
-                assertTrue(normalized.startsWith("mc/impl/bootstrap/"), normalized + " has direct Minecraft/Forge imports");
+                assertTrue(normalized.equals("EyelibResourcesImporterMod.java") || normalized.startsWith("mc/"),
+                        normalized + " has direct Minecraft/Forge imports outside expected scope");
             }
         }));
     }

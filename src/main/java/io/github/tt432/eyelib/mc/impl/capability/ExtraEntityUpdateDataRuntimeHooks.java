@@ -1,10 +1,10 @@
 package io.github.tt432.eyelib.mc.impl.capability;
 
 import io.github.tt432.eyelibattachment.capability.ExtraEntityUpdateData;
-import io.github.tt432.eyelib.capability.EyelibAttachableData;
-import io.github.tt432.eyelib.mc.impl.data_attach.DataAttachmentHelper;
-import io.github.tt432.eyelib.mc.impl.network.EyelibNetworkTransport;
-import io.github.tt432.eyelib.mc.impl.network.packet.ExtraEntityUpdateDataPacket;
+import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
+import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelibattachment.network.ExtraEntityUpdateDataPacket;
+import io.github.tt432.eyelibnetwork.EyelibNetworkTransport;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.world.entity.Entity;
@@ -26,7 +26,7 @@ public final class ExtraEntityUpdateDataRuntimeHooks {
         if (directEntity != null) {
             Vec3 damageSourcePosition = directEntity.position();
             LivingEntity entity = event.getEntity();
-            var key = EyelibAttachableData.EXTRA_ENTITY_UPDATE.get();
+            var key = DataAttachmentTypeRegistry.EXTRA_ENTITY_UPDATE.get();
             ExtraEntityUpdateData data = DataAttachmentHelper.getOrCreate(key, entity);
             Vec3 entityPosition = entity.position();
             ExtraEntityUpdateData updated = updateFromEntity(data, entity)
@@ -44,7 +44,7 @@ public final class ExtraEntityUpdateDataRuntimeHooks {
     @SubscribeEvent
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
         Entity entity = event.getEntity();
-        var key = EyelibAttachableData.EXTRA_ENTITY_UPDATE.get();
+        var key = DataAttachmentTypeRegistry.EXTRA_ENTITY_UPDATE.get();
         ExtraEntityUpdateData data = DataAttachmentHelper.getOrCreate(key, entity);
         ExtraEntityUpdateData updated = updateFromEntity(data, entity);
 

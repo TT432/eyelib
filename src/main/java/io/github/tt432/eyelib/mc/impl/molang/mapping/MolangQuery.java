@@ -4,10 +4,11 @@ import io.github.tt432.eyelib.client.animation.bedrock.controller.BrAnimationCon
 
 
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
+import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
+import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
 import io.github.tt432.eyelib.client.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.common.behavior.component.MarkVariant;
 import io.github.tt432.eyelib.common.behavior.component.Variant;
-import io.github.tt432.eyelib.mc.impl.data_attach.DataAttachmentHelper;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.mapping.api.MolangFunction;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMapping;
@@ -221,19 +222,19 @@ public final class MolangQuery {
     @MolangFunction(value = "damage_x", description = "受伤来源方向 x")
     public static float damageX(MolangScope scope) {
         return livingFloat(scope, living ->
-                (float) DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_UPDATE.get(), living).lastHurtX());
+                (float) DataAttachmentHelper.getOrCreate(DataAttachmentTypeRegistry.EXTRA_ENTITY_UPDATE.get(), living).lastHurtX());
     }
 
     @MolangFunction(value = "damage_y", description = "受伤来源方向 x")
     public static float damageY(MolangScope scope) {
         return livingFloat(scope, living ->
-                (float) DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_UPDATE.get(), living).lastHurtY());
+                (float) DataAttachmentHelper.getOrCreate(DataAttachmentTypeRegistry.EXTRA_ENTITY_UPDATE.get(), living).lastHurtY());
     }
 
     @MolangFunction(value = "damage_z", description = "受伤来源方向 x")
     public static float damageZ(MolangScope scope) {
         return livingFloat(scope, living ->
-                (float) DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_UPDATE.get(), living).lastHurtZ());
+                (float) DataAttachmentHelper.getOrCreate(DataAttachmentTypeRegistry.EXTRA_ENTITY_UPDATE.get(), living).lastHurtZ());
     }
 
     @MolangFunction(value = "has_helmet", description = "已装备头盔")
@@ -371,17 +372,17 @@ public final class MolangQuery {
 
     @MolangFunction(value = "facing_target_to_range_attack", description = "正在进行远程攻击")
     public static float facingTargetToRageAttack(MolangScope scope) {
-        return entityBool(scope, e -> DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), e).facing_target_to_range_attack());
+        return entityBool(scope, e -> DataAttachmentHelper.getOrCreate(DataAttachmentTypeRegistry.EXTRA_ENTITY_DATA.get(), e).facing_target_to_range_attack());
     }
 
     @MolangFunction(value = "is_avoiding_mobs", description = "正在从怪物逃离")
     public static float isAvoidingMobs(MolangScope scope) {
-        return entityBool(scope, e -> DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), e).is_avoiding_mobs());
+        return entityBool(scope, e -> DataAttachmentHelper.getOrCreate(DataAttachmentTypeRegistry.EXTRA_ENTITY_DATA.get(), e).is_avoiding_mobs());
     }
 
     @MolangFunction(value = "is_grazing", description = "正在吃草")
     public static float isGrazing(MolangScope scope) {
-        return entityBool(scope, e -> DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), e).is_grazing());
+        return entityBool(scope, e -> DataAttachmentHelper.getOrCreate(DataAttachmentTypeRegistry.EXTRA_ENTITY_DATA.get(), e).is_grazing());
     }
 
     @MolangFunction(value = "time_since_last_vibration_detection", description = "自最后一次检测到声波的时间（监守者）")
@@ -442,7 +443,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "modified_distance_moved", description = "移动过的距离")
     public static float modifiedDistanceMoved(MolangScope scope) {
-        return scope.getHostContext().get(Entity.class).map(e -> DataAttachmentHelper.getOrCreate(EyelibAttachableData.ENTITY_STATISTICS.get(), e).distanceWalked()).orElse(0F);
+        return scope.getHostContext().get(Entity.class).map(e -> DataAttachmentHelper.getOrCreate(DataAttachmentTypeRegistry.ENTITY_STATISTICS.get(), e).distanceWalked()).orElse(0F);
     }
 
     @MolangFunction(value = "is_on_ground", description = "正处于地面上")
@@ -482,7 +483,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "is_digging", description = "正在挖掘（玩家）")
     public static float isDigging(MolangScope scope) {
-        return entityBool(scope, e -> DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), e).is_dig());
+        return entityBool(scope, e -> DataAttachmentHelper.getOrCreate(DataAttachmentTypeRegistry.EXTRA_ENTITY_DATA.get(), e).is_dig());
     }
 
     @MolangFunction(value = "is_eating", description = "正在食用物品")
@@ -658,7 +659,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "is_avoid", description = "正在逃离(比如苦力怕逃离猫)")
     public static float isAvoid(MolangScope scope) {
-        return entityBool(scope, e -> DataAttachmentHelper.getOrCreate(EyelibAttachableData.EXTRA_ENTITY_DATA.get(), e).is_avoid());
+        return entityBool(scope, e -> DataAttachmentHelper.getOrCreate(DataAttachmentTypeRegistry.EXTRA_ENTITY_DATA.get(), e).is_avoid());
     }
 
     @MolangFunction(value = "health", description = "生物血量")

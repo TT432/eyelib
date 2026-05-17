@@ -13,6 +13,7 @@ plugins {
 
 rootProject.name = "eyelib"
 
+include("eyelib-network")
 include("eyelib-attachment")
 include("eyelib-importer")
 include("eyelib-material")

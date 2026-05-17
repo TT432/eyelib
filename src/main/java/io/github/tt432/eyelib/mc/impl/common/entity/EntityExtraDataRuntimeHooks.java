@@ -1,10 +1,10 @@
 package io.github.tt432.eyelib.mc.impl.common.entity;
 
 import io.github.tt432.eyelibattachment.capability.ExtraEntityData;
-import io.github.tt432.eyelib.capability.EyelibAttachableData;
+import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
+import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime;
 import io.github.tt432.eyelib.common.runtime.ExtraEntityDataUpdater;
-import io.github.tt432.eyelib.mc.impl.data_attach.DataAttachmentHelper;
-import io.github.tt432.eyelib.mc.impl.network.dataattach.DataAttachmentSyncRuntime;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
@@ -28,7 +28,7 @@ public final class EntityExtraDataRuntimeHooks {
     @SubscribeEvent
     public static void onStartTracking(PlayerEvent.StartTracking event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            var attachment = EyelibAttachableData.EXTRA_ENTITY_DATA.get();
+            var attachment = DataAttachmentTypeRegistry.EXTRA_ENTITY_DATA.get();
             var data = DataAttachmentHelper.getOrCreate(attachment, event.getTarget());
             DataAttachmentSyncRuntime.syncToPlayer(attachment, event.getTarget(), data, player);
         }
@@ -40,7 +40,7 @@ public final class EntityExtraDataRuntimeHooks {
             return;
         }
 
-        var attachment = EyelibAttachableData.EXTRA_ENTITY_DATA.get();
+        var attachment = DataAttachmentTypeRegistry.EXTRA_ENTITY_DATA.get();
         ExtraEntityData data = DataAttachmentHelper.getOrCreate(attachment, mob);
         ExtraEntityData updated = ExtraEntityDataUpdater.update(data, observeGoalFlags(mob));
 

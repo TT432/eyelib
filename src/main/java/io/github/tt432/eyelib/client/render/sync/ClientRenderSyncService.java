@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.render.sync;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
-import io.github.tt432.eyelib.mc.impl.network.EyelibNetworkTransport;
+import io.github.tt432.eyelibnetwork.EyelibNetworkTransport;
 import io.github.tt432.eyelib.mc.impl.network.packet.AnimationComponentSyncPacket;
 import io.github.tt432.eyelib.mc.impl.network.packet.ModelComponentSyncPacket;
 import io.github.tt432.eyelibutil.resource.ResourceLocations;

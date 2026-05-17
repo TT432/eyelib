@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.mc.impl.data_attach;
+package io.github.tt432.eyelibattachment.dataattach.mc;
 
 import io.github.tt432.eyelibattachment.dataattach.IDataAttachmentContainer;
 import net.minecraft.core.Direction;
@@ -31,4 +31,3 @@ public class DataAttachmentContainerProvider implements ICapabilitySerializable<
         container.deserializeNBT(nbt);
     }
 }
-

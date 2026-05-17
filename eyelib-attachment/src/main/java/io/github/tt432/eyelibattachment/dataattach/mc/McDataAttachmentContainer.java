@@ -1,6 +1,5 @@
-package io.github.tt432.eyelib.mc.impl.data_attach;
+package io.github.tt432.eyelibattachment.dataattach.mc;
 
-import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelibattachment.dataattach.DataAttachment;
 import io.github.tt432.eyelibattachment.dataattach.DataAttachmentContainer;
 import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
@@ -31,7 +30,7 @@ public class McDataAttachmentContainer extends DataAttachmentContainer implement
             if (value == null) {
                 continue;
             }
-            DataAttachmentType<?> type = EyelibAttachableData.getById(key);
+            DataAttachmentType<?> type = DataAttachmentTypeRegistry.getById(key);
             DataAttachment<?> attachment = new DataAttachment<>(type);
             deserializeAttachmentUnchecked(attachment, value);
             attachments.put(type.id(), attachment);

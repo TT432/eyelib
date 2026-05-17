@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.bootstrap;
+package io.github.tt432.eyelibutil;
 
 import net.minecraftforge.fml.common.Mod;
 

@@ -1,9 +1,9 @@
-package io.github.tt432.eyelib.mc.impl.data_attach;
+package io.github.tt432.eyelibattachment.dataattach.mc;
 
 import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
 import io.github.tt432.eyelibattachment.dataattach.IDataAttachmentContainer;
-import org.jspecify.annotations.Nullable;
 import net.minecraft.world.entity.Entity;
+import org.jspecify.annotations.Nullable;
 
 public class DataAttachmentHelper {
     private static IDataAttachmentContainer get(Entity entity) {
@@ -24,4 +24,3 @@ public class DataAttachmentHelper {
         container.set(attachment, value);
     }
 }
-

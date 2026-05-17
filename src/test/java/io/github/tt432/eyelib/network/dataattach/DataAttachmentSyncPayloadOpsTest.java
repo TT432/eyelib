@@ -1,9 +1,10 @@
 package io.github.tt432.eyelib.network.dataattach;
 
 import io.github.tt432.eyelibattachment.capability.ExtraEntityData;
-import io.github.tt432.eyelib.mc.impl.network.packet.DataAttachmentUpdatePacket;
-import io.github.tt432.eyelib.mc.impl.network.packet.UniDataUpdatePacket;
 import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
+import io.github.tt432.eyelibattachment.network.DataAttachmentUpdatePacket;
+import io.github.tt432.eyelibattachment.network.DataAttachmentSyncPayloadOps;
+import io.github.tt432.eyelibattachment.network.UniDataUpdatePacket;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

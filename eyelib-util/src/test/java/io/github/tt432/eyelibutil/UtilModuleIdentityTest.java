@@ -31,7 +31,7 @@ class UtilModuleIdentityTest {
     @Test
     void forgeIdentityUsesSingleUtilModId() throws IOException {
         String modsToml = Files.readString(PROJECT_ROOT.resolve("src/main/resources/META-INF/mods.toml"));
-        String bootstrap = Files.readString(MODULE_ROOT.resolve("bootstrap/EyelibUtilMod.java"));
+        String bootstrap = Files.readString(MODULE_ROOT.resolve("EyelibUtilMod.java"));
 
         assertAll(
                 () -> assertTrue(modsToml.contains("modId=\"eyelibutil\"")),

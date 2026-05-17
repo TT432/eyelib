@@ -2,20 +2,17 @@ package io.github.tt432.eyelib.network;
 
 import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
 import io.github.tt432.eyelib.client.render.sync.ClientRenderSyncService;
-import io.github.tt432.eyelib.mc.impl.network.dataattach.DataAttachmentSyncRuntime;
 import io.github.tt432.eyelib.mc.impl.network.packet.AnimationComponentSyncPacket;
-import io.github.tt432.eyelib.mc.impl.network.packet.DataAttachmentUpdatePacket;
-import io.github.tt432.eyelib.mc.impl.network.packet.ExtraEntityDataPacket;
-import io.github.tt432.eyelib.mc.impl.network.packet.ExtraEntityUpdateDataPacket;
 import io.github.tt432.eyelib.mc.impl.network.packet.ModelComponentSyncPacket;
-import io.github.tt432.eyelib.mc.impl.network.packet.UniDataUpdatePacket;
 import io.github.tt432.eyelibattachment.network.DataAttachmentSyncPacket;
+import io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime;
+import io.github.tt432.eyelibattachment.network.DataAttachmentUpdatePacket;
+import io.github.tt432.eyelibattachment.network.ExtraEntityDataPacket;
+import io.github.tt432.eyelibattachment.network.ExtraEntityUpdateDataPacket;
+import io.github.tt432.eyelibattachment.network.UniDataUpdatePacket;
 import io.github.tt432.eyelibparticle.network.RemoveParticlePacket;
 import io.github.tt432.eyelibparticle.network.SpawnParticlePacket;
 
-/**
- * @author TT432
- */
 public class NetClientHandlers {
     // <editor-fold desc="Client handlers">
 
@@ -56,5 +53,4 @@ public class NetClientHandlers {
     }
 
     // </editor-fold>
-
 }

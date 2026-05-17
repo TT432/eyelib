@@ -6,7 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import io.github.tt432.eyelib.common.runtime.ParticleCommandRuntime;
-import io.github.tt432.eyelib.mc.impl.network.EyelibNetworkTransport;
+import io.github.tt432.eyelibnetwork.EyelibNetworkTransport;
 import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
 import io.github.tt432.eyelibparticle.network.SpawnParticlePacket;
 import net.minecraft.commands.CommandSourceStack;

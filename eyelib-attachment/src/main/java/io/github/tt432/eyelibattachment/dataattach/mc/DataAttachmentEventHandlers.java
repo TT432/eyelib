@@ -1,12 +1,11 @@
-package io.github.tt432.eyelib.mc.impl.data_attach;
+package io.github.tt432.eyelibattachment.dataattach.mc;
 
-import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelib.mc.impl.network.dataattach.DataAttachmentSyncRuntime;
+import io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = Eyelib.MOD_ID)
+@Mod.EventBusSubscriber(modid = "eyelibattachment")
 public class DataAttachmentEventHandlers {
 
     @SubscribeEvent

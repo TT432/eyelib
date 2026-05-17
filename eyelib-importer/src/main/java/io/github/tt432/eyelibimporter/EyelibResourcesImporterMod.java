@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter.mc.impl.bootstrap;
+package io.github.tt432.eyelibimporter;
 
 import net.minecraftforge.fml.common.Mod;
 

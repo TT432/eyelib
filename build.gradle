@@ -146,6 +146,7 @@ obfuscation {
 }
 
 dependencies {
+    api project(':eyelib-network')
     api project(':eyelib-attachment')
     modImplementation project(':eyelib-attachment')
     jarJar project(':eyelib-attachment')

@@ -1,14 +1,11 @@
-package io.github.tt432.eyelib.mc.impl.network.packet;
+package io.github.tt432.eyelibattachment.network;
 
-import io.github.tt432.eyelib.capability.EyelibAttachableData;
+import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
+import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
 import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
 import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
-import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
 import net.minecraft.network.FriendlyByteBuf;
 
-/**
- * @author TT432
- */
 public record UniDataUpdatePacket<T>(int entityId, DataAttachmentType<T> type, T data) {
 
     public static <T> UniDataUpdatePacket<T> crate(int entityId, DataAttachmentType<T> type, T data) {
@@ -32,7 +29,7 @@ public record UniDataUpdatePacket<T>(int entityId, DataAttachmentType<T> type, T
         public UniDataUpdatePacket<?> decode(FriendlyByteBuf buf) {
             var entityId = EyelibStreamCodecs.VAR_INT.decode(buf);
             var id = EyelibStreamCodecs.STRING.decode(buf);
-            var type = (DataAttachmentType<Object>) EyelibAttachableData.getById(id);
+            var type = (DataAttachmentType<Object>) DataAttachmentTypeRegistry.getById(id);
             var data = type.getStreamCodec().decode(buf);
             return new UniDataUpdatePacket(entityId, type, data);
         }

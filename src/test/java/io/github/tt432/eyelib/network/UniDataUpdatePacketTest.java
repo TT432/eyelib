@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.network;
 
-import io.github.tt432.eyelib.mc.impl.network.packet.UniDataUpdatePacket;
+import io.github.tt432.eyelibattachment.network.UniDataUpdatePacket;
 import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
 import org.junit.jupiter.api.Test;
 

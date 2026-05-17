@@ -1,6 +1,5 @@
-package io.github.tt432.eyelib.mc.impl.data_attach;
+package io.github.tt432.eyelibattachment.dataattach.mc;
 
-import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelibattachment.dataattach.IDataAttachmentContainer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -14,12 +13,12 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 public class DataAttachmentContainerCapability {
-    public static final ResourceLocation ID = new ResourceLocation(Eyelib.MOD_ID, "data_attachments");
+    public static final ResourceLocation ID = new ResourceLocation("eyelibattachment", "data_attachments");
 
     public static final Capability<IDataAttachmentContainer> INSTANCE = CapabilityManager.get(new CapabilityToken<>() {
     });
 
-    @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+    @Mod.EventBusSubscriber(modid = "eyelibattachment", bus = Mod.EventBusSubscriber.Bus.MOD)
     public static class ModBusHandlers {
         @SubscribeEvent
         public static void onRegister(RegisterCapabilitiesEvent event) {
@@ -27,7 +26,7 @@ public class DataAttachmentContainerCapability {
         }
     }
 
-    @Mod.EventBusSubscriber
+    @Mod.EventBusSubscriber(modid = "eyelibattachment")
     public static class GameBusHandlers {
         @SubscribeEvent
         public static void onAttachCapability(AttachCapabilitiesEvent<Entity> event) {

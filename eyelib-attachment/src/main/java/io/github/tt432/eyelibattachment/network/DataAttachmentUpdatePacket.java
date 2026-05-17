@@ -1,9 +1,9 @@
-package io.github.tt432.eyelib.mc.impl.network.packet;
+package io.github.tt432.eyelibattachment.network;
 
-import io.github.tt432.eyelib.capability.EyelibAttachableData;
+import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
+import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
 import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
 import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
-import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
 import net.minecraft.network.FriendlyByteBuf;
 
 public record DataAttachmentUpdatePacket<C>(int entityId, DataAttachmentType<C> attachment, C value) {
@@ -24,7 +24,7 @@ public record DataAttachmentUpdatePacket<C>(int entityId, DataAttachmentType<C> 
         public DataAttachmentUpdatePacket<Object> decode(FriendlyByteBuf buf) {
             var entityId = EyelibStreamCodecs.VAR_INT.decode(buf);
             var id = EyelibStreamCodecs.STRING.decode(buf);
-            var attachment = (DataAttachmentType<Object>) EyelibAttachableData.getById(id);
+            var attachment = (DataAttachmentType<Object>) DataAttachmentTypeRegistry.getById(id);
             var codec = attachment.streamCodec();
             if (codec == null) {
                 throw new IllegalStateException("DataAttachmentType " + id + " has no StreamCodec");
@@ -33,6 +33,4 @@ public record DataAttachmentUpdatePacket<C>(int entityId, DataAttachmentType<C> 
             return new DataAttachmentUpdatePacket<>(entityId, attachment, value);
         }
     };
-
-
 }

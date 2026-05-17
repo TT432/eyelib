@@ -1,18 +1,11 @@
-package io.github.tt432.eyelib.mc.impl.network.dataattach;
+package io.github.tt432.eyelibattachment.network;
 
-import io.github.tt432.eyelib.capability.EyelibAttachableData;
-import io.github.tt432.eyelib.mc.impl.data_attach.DataAttachmentContainerCapability;
-import io.github.tt432.eyelib.mc.impl.data_attach.DataAttachmentHelper;
-import io.github.tt432.eyelib.mc.impl.data_attach.McDataAttachmentContainer;
-import io.github.tt432.eyelib.mc.impl.network.EyelibNetworkTransport;
-import io.github.tt432.eyelib.mc.impl.network.packet.DataAttachmentUpdatePacket;
-import io.github.tt432.eyelib.mc.impl.network.packet.ExtraEntityDataPacket;
-import io.github.tt432.eyelib.mc.impl.network.packet.ExtraEntityUpdateDataPacket;
-import io.github.tt432.eyelib.mc.impl.network.packet.UniDataUpdatePacket;
-import io.github.tt432.eyelib.network.dataattach.DataAttachmentSyncPayloadOps;
 import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
-import io.github.tt432.eyelibattachment.network.DataAttachmentSyncPacket;
-import io.github.tt432.eyelibattachment.network.UpdateDestroyInfoPacket;
+import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentContainerCapability;
+import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
+import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelibattachment.dataattach.mc.McDataAttachmentContainer;
+import io.github.tt432.eyelibnetwork.EyelibNetworkTransport;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
@@ -66,7 +59,7 @@ public final class DataAttachmentSyncRuntime {
     }
 
     public static void handleDestroyInfoUpdate(UpdateDestroyInfoPacket packet, ServerPlayer player) {
-        var key = EyelibAttachableData.EXTRA_ENTITY_DATA.get();
+        var key = DataAttachmentTypeRegistry.EXTRA_ENTITY_DATA.get();
         var data = DataAttachmentHelper.getOrCreate(key, player);
         var updated = DataAttachmentSyncPayloadOps.withDigState(data, packet.dig());
         if (updated != data) {
@@ -92,4 +85,3 @@ public final class DataAttachmentSyncRuntime {
         return level.getEntity(entityId);
     }
 }
-

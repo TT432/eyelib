@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.particle;
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.client.ClientTickHandler;
-import io.github.tt432.eyelib.mc.impl.data_attach.DataAttachmentHelper;
+import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibparticle.api.ParticleSpawnApi;
 import io.github.tt432.eyelibparticle.api.ParticleSpawnRequest;

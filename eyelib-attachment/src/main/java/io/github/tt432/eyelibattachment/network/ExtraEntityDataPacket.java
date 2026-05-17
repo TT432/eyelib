@@ -1,13 +1,10 @@
-package io.github.tt432.eyelib.mc.impl.network.packet;
+package io.github.tt432.eyelibattachment.network;
 
 import io.github.tt432.eyelibattachment.capability.ExtraEntityData;
 import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
 import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
 import net.minecraft.network.FriendlyByteBuf;
 
-/**
- * @author TT432
- */
 public record ExtraEntityDataPacket(
         int entityId,
         ExtraEntityData data

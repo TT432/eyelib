@@ -10,7 +10,7 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.render.sync.ClientRenderSyncService;
 import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelib.mc.impl.data_attach.DataAttachmentHelper;
+import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.world.entity.Entity;

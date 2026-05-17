@@ -1,13 +1,9 @@
-package io.github.tt432.eyelib.network.dataattach;
+package io.github.tt432.eyelibattachment.network;
 
-import io.github.tt432.eyelib.capability.EyelibAttachableData;
-import io.github.tt432.eyelib.mc.impl.network.packet.DataAttachmentUpdatePacket;
-import io.github.tt432.eyelib.mc.impl.network.packet.ExtraEntityDataPacket;
-import io.github.tt432.eyelib.mc.impl.network.packet.ExtraEntityUpdateDataPacket;
-import io.github.tt432.eyelib.mc.impl.network.packet.UniDataUpdatePacket;
 import io.github.tt432.eyelibattachment.capability.ExtraEntityData;
 import io.github.tt432.eyelibattachment.capability.ExtraEntityUpdateData;
 import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
+import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -26,11 +22,11 @@ public final class DataAttachmentSyncPayloadOps {
     }
 
     public static AttachmentUpdate<ExtraEntityData> from(ExtraEntityDataPacket packet) {
-        return new AttachmentUpdate<>(packet.entityId(), EyelibAttachableData.EXTRA_ENTITY_DATA.get(), packet.data());
+        return new AttachmentUpdate<>(packet.entityId(), DataAttachmentTypeRegistry.EXTRA_ENTITY_DATA.get(), packet.data());
     }
 
     public static AttachmentUpdate<ExtraEntityUpdateData> from(ExtraEntityUpdateDataPacket packet) {
-        return new AttachmentUpdate<>(packet.entityId(), EyelibAttachableData.EXTRA_ENTITY_UPDATE.get(), packet.data());
+        return new AttachmentUpdate<>(packet.entityId(), DataAttachmentTypeRegistry.EXTRA_ENTITY_UPDATE.get(), packet.data());
     }
 
     public static ExtraEntityData withDigState(ExtraEntityData current, boolean dig) {

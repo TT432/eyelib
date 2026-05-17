@@ -23,7 +23,7 @@ class NetworkOwnershipBoundaryTest {
         ));
 
         assertAll(
-                () -> assertTrue(manager.contains("EyelibNetworkTransport.register();")),
+                () -> assertTrue(manager.contains("EyelibNetworkTransport.registerClientPacket")),
                 () -> assertTrue(manager.contains("EyelibNetworkTransport.sendToServer(packet);")),
                 () -> assertFalse(manager.contains("SimpleChannel")),
                 () -> assertFalse(manager.contains("NetworkEvent.Context")),
@@ -49,9 +49,9 @@ class NetworkOwnershipBoundaryTest {
     }
 
     @Test
-    void transportOwnsChannelContextAndRegistersFeatureContracts() throws IOException {
+    void transportOwnsChannelContextInEyelibNetworkModule() throws IOException {
         String transport = Files.readString(Path.of(
-                "src/main/java/io/github/tt432/eyelib/mc/impl/network/EyelibNetworkTransport.java"
+                "eyelib-network/src/main/java/io/github/tt432/eyelibnetwork/EyelibNetworkTransport.java"
         ));
 
         assertAll(
@@ -59,33 +59,25 @@ class NetworkOwnershipBoundaryTest {
                 () -> assertTrue(transport.contains("NetworkEvent.Context")),
                 () -> assertTrue(transport.contains("DistExecutor.unsafeRunWhenOn")),
                 () -> assertTrue(transport.contains("PacketDistributor.TRACKING_ENTITY_AND_SELF")),
-                () -> assertTrue(transport.contains("io.github.tt432.eyelibparticle.network.SpawnParticlePacket")),
-                () -> assertTrue(transport.contains("io.github.tt432.eyelibparticle.network.RemoveParticlePacket")),
-                () -> assertTrue(transport.contains("io.github.tt432.eyelibattachment.network.DataAttachmentSyncPacket")),
-                () -> assertTrue(transport.contains("io.github.tt432.eyelibattachment.network.UpdateDestroyInfoPacket"))
+                () -> assertTrue(transport.contains("registerClientPacket")),
+                () -> assertTrue(transport.contains("registerServerPacket"))
         );
     }
 
     @Test
-    void remainingRootPacketsAreBlockedByRootCoupledPayloads() throws IOException {
+    void rootCoupledPacketsDocumentedInRegistryLookup() throws IOException {
         assertAll(
                 () -> assertSourceContains(
-                        "src/main/java/io/github/tt432/eyelib/mc/impl/network/packet/AnimationComponentSyncPacket.java",
-                        "AnimationComponentInfo"),
+                        "eyelib-attachment/src/main/java/io/github/tt432/eyelibattachment/network/DataAttachmentUpdatePacket.java",
+                        "DataAttachmentTypeRegistry.getById"),
                 () -> assertSourceContains(
-                        "src/main/java/io/github/tt432/eyelib/mc/impl/network/packet/ModelComponentSyncPacket.java",
-                        "RenderModelSyncPayload"),
+                        "eyelib-attachment/src/main/java/io/github/tt432/eyelibattachment/network/UniDataUpdatePacket.java",
+                        "DataAttachmentTypeRegistry.getById"),
                 () -> assertSourceContains(
-                        "src/main/java/io/github/tt432/eyelib/mc/impl/network/packet/DataAttachmentUpdatePacket.java",
-                        "EyelibAttachableData.getById"),
-                () -> assertSourceContains(
-                        "src/main/java/io/github/tt432/eyelib/mc/impl/network/packet/UniDataUpdatePacket.java",
-                        "EyelibAttachableData.getById"),
-                () -> assertSourceContains(
-                        "src/main/java/io/github/tt432/eyelib/mc/impl/network/packet/ExtraEntityDataPacket.java",
+                        "eyelib-attachment/src/main/java/io/github/tt432/eyelibattachment/network/ExtraEntityDataPacket.java",
                         "ExtraEntityData.STREAM_CODEC"),
                 () -> assertSourceContains(
-                        "src/main/java/io/github/tt432/eyelib/mc/impl/network/packet/ExtraEntityUpdateDataPacket.java",
+                        "eyelib-attachment/src/main/java/io/github/tt432/eyelibattachment/network/ExtraEntityUpdateDataPacket.java",
                         "ExtraEntityUpdateData.STREAM_CODEC")
         );
     }
@@ -99,8 +91,7 @@ class NetworkOwnershipBoundaryTest {
                 "docs/architecture/02-side-boundaries.md",
                 "docs/architecture/04-mc-debt-ledger.md",
                 "src/main/java/io/github/tt432/eyelib/network/README.md",
-                "src/main/java/io/github/tt432/eyelib/mc/impl/network/README.md",
-                "src/main/java/io/github/tt432/eyelib/network/dataattach/README.md"
+                "src/main/java/io/github/tt432/eyelib/mc/impl/network/README.md"
         );
 
         assertAll(
@@ -109,9 +100,7 @@ class NetworkOwnershipBoundaryTest {
                 () -> assertTrue(docs.contains("context-free handler dispatch")),
                 () -> assertTrue(docs.contains("feature-specific protocol")),
                 () -> assertTrue(docs.contains("io.github.tt432.eyelibparticle.network")),
-                () -> assertTrue(docs.contains("io.github.tt432.eyelibattachment.network")),
-                () -> assertTrue(docs.contains("root-coupled")),
-                () -> assertTrue(docs.contains("blocker-bound"))
+                () -> assertTrue(docs.contains("io.github.tt432.eyelibattachment.network"))
         );
     }
 

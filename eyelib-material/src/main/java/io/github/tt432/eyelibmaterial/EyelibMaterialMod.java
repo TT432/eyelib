@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmaterial.bootstrap;
+package io.github.tt432.eyelibmaterial;
 
 import net.minecraftforge.fml.common.Mod;
 
