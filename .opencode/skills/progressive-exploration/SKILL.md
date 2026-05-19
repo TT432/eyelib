@@ -1,0 +1,114 @@
+---
+name: progressive-exploration
+description: Interactive runtime state exploration via the AI debug HTTP server in a running Minecraft client. Use to probe screens, inspect game state, navigate UI, or test hypotheses before writing code.
+---
+
+## When to use
+
+- You need to know what screen/state the game is actually in
+- You're debugging a runtime issue (entity not rendering, attachment missing, particle not spawning)
+- You're reasoning about MC/Forge UI flow
+- You want to inspect managers, entity capabilities, or particle states
+- You need to verify a hypothesis before writing production code
+
+## Prerequisites
+
+The debug HTTP server starts automatically in development environment (gated by Forge's `FMLLoader.isProduction()` check). It listens on a configurable port.
+
+Verify it's alive:
+```
+GET /ping → {"status": "ok"}
+```
+
+## Core Workflow
+
+### 1. Probe current state
+
+Start broad, narrow down based on the response. The code runs inside a template that auto-injects `minecraft`, `player`, `level`. They may be null if not in a world.
+
+```java
+// Where are we?
+return minecraft.screen == null ? "in world" : minecraft.screen.getClass().getName();
+
+// What UI elements are visible?
+StringBuilder sb = new StringBuilder();
+for (Object child : minecraft.screen.children()) {
+    sb.append(child.getClass().getName());
+    if (child instanceof net.minecraft.client.gui.components.AbstractWidget w) {
+        try { sb.append(" msg=").append(w.getMessage().getString()); } catch(Exception e) {}
+    }
+    sb.append("\n");
+}
+return sb.toString();
+```
+
+### 2. Act on findings
+
+Each response guides the next query. Don't write a script upfront — let the runtime state decide.
+
+### 3. Assert and document
+
+Once you confirm the behavior, write a unit test or update documentation. Don't leave findings ephemeral.
+
+## Practical Patterns
+
+### Navigate MC UI
+
+```java
+// Click a button by its text label
+for (Object child : minecraft.screen.children()) {
+    if (child instanceof net.minecraft.client.gui.components.Button b) {
+        if (b.getMessage().getString().equals("Singleplayer")) {
+            b.onPress();
+        }
+    }
+}
+
+// Type into a text field
+for (Object child : minecraft.screen.children()) {
+    if (child instanceof net.minecraft.client.gui.components.EditBox eb) {
+        eb.setValue("new value");
+    }
+}
+```
+
+### Inspect eyelib runtime state
+
+```java
+// Dump registered particle definitions
+return io.github.tt432.eyelibparticle.runtime.ParticleDefinitionRegistry
+    .publisher().entries().keySet().toString();
+
+// Check an entity's current animation
+// (use fully qualified names for project types)
+```
+
+### Modify game state
+
+```java
+// Teleport
+player.setPos(100, 70, 100);
+
+// Change time
+player.level().setDayTime(0);
+```
+
+### Error recovery
+
+```java
+// If stuck on LoadingErrorScreen, find the skip button
+for (Object child : minecraft.screen.children()) {
+    if (child instanceof net.minecraft.client.gui.components.Button b) {
+        if (b.getMessage().getString().contains("Proceed")) {
+            b.onPress();
+        }
+    }
+}
+```
+
+## Limitations
+
+- **Janino Java dialect**: the embedded compiler does not support `var`, pattern-matching `instanceof`, switch expressions, or records. Use explicit types and traditional syntax.
+- **Auto-imports**: only `Minecraft`, `LocalPlayer`, `ClientLevel` are imported. Other classes need fully qualified names.
+- **Timeout**: code runs on the MC render thread with a 10-second timeout. World generation and heavy operations will time out the HTTP response but may still complete asynchronously.
+- **Thread safety**: all MC API calls execute on the render thread via `Minecraft.tell()`. Long-running code blocks the render loop.

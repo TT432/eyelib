@@ -183,6 +183,9 @@ dependencies {
     compileOnly "io.github.tt432:clientsmoke:${version}"
     localRuntime "io.github.tt432:clientsmoke:${version}"
 
+    // AI Debug Server — dev-only runtime Java execution, gated by FMLLoader.isProduction()
+    additionalRuntimeClasspath(implementation('org.codehaus.janino:janino:3.1.12'))
+
     jarJar additionalRuntimeClasspath(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))
     jarJar additionalRuntimeClasspath(implementation('com.h2database:h2:2.4.240'))
     compileOnly 'org.jspecify:jspecify:1.0.0'

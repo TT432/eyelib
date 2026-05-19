@@ -40,6 +40,13 @@
 - Read :eyelib-molang/ROADMAP.md: before planning or implementing Molang refactor work.
 - Update :eyelib-molang/ROADMAP.md: in the same change when Molang phase status, milestones, gates, ownership, verification commands, corpus layers, binder/runtime semantics, host/query behavior, policy/specialization/cache behavior, or cutover posture changes.
 
+## Pitfall Records
+- `docs/pitfalls/` stores troubleshooting records for recurring or non-obvious issues.
+- **Each file has a single responsibility** — describe one class of problem, not a collection.
+- **File names must be clear and specific** (e.g. `non-mod-libs-need-additionalruntimeclasspath.md`).
+- When encountering a new issue, decide whether it fits an existing record — if so, merge it in; if it's a distinct problem, create a new file.
+- Each record should cover: what the symptom looks like, why it happens, and the correct fix.
+
 ## Reading Order
 1. :AGENTS.md:
 2. :MODULES.md:
