@@ -1,8 +1,17 @@
 package io.github.tt432.eyelibmolang.compiler.common;
 
+import org.jspecify.annotations.NullMarked;
+
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * Molang 根别名规范化（如 q→query）。
+ *
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public final class MolangRootAliasCanonicalizer {
     private static final Map<String, String> ROOT_ALIASES = Map.of(
             "q", "query",

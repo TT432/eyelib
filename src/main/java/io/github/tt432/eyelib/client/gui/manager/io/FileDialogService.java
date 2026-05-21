@@ -14,8 +14,12 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.jspecify.annotations.NullMarked;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+
+/** @author TT432 */
+@NullMarked
 public final class FileDialogService {
     private static final ExecutorService FILE_DIALOG_EXECUTOR = Executors.newSingleThreadExecutor();
     @Nullable
@@ -68,4 +72,3 @@ public final class FileDialogService {
         return future;
     }
 }
-

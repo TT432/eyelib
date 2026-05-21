@@ -45,8 +45,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import org.jspecify.annotations.NullMarked;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+
+/** @author TT432 */
+@NullMarked
 public final class ManagerResourceImportPlanner {
     private static final Gson GSON = new Gson();
     private static final Logger LOGGER = LoggerFactory.getLogger(ManagerResourceImportPlanner.class);

@@ -10,6 +10,7 @@ import io.github.tt432.eyelibmolang.type.MolangFloat;
 import io.github.tt432.eyelibmolang.type.MolangNull;
 import io.github.tt432.eyelibmolang.type.MolangObject;
 import io.github.tt432.eyelibmolang.type.MolangString;
+import org.jspecify.annotations.NullMarked;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
@@ -19,6 +20,13 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Molang 运行时方法调用和成员访问支持。
+ *
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public final class MolangRuntimeSupport {
     private MolangRuntimeSupport() {
     }

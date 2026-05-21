@@ -1,6 +1,7 @@
 package io.github.tt432.eyelibmaterial.shader;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -18,20 +19,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Integration tests for {@link ShaderManager}.
- * <p>
- * Tests cover resource loading, define injection, caching, error handling,
- * and program lifecycle. GL-dependent tests are individually disabled
- * and require an active OpenGL context on the render thread.
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 class ShaderManagerIntegrationTest {
-
-    // ─── test resource paths ───────────────────────────────────────────
 
     private static final String VERT_RESOURCE = "assets/eyelibmaterial/shaders/pass_through.vert";
     private static final String FRAG_RESOURCE = "assets/eyelibmaterial/shaders/pass_through.frag";
-
-    // ─── inline shader sources (same content as test resources) ────────
 
     private static final String PASSTHROUGH_VERT =
             "void main() {\n" +
@@ -47,8 +42,6 @@ class ShaderManagerIntegrationTest {
             "void main() {\n" +
             "    gl_FragColor = nonexistentVariable;\n" +
             "}\n";
-
-    // ─── reflectively accessed private helpers ─────────────────────────
 
     private static Method injectDefinesMethod;
     private static Method buildCacheKeyMethod;
@@ -68,8 +61,6 @@ class ShaderManagerIntegrationTest {
             ShaderManager.release();
         }
     }
-
-    // ─── 1. Resource loading from classpath (no GL needed) ─────────────
 
     @Test
     @DisplayName("loadFromResource loads .vert file from test resources and returns non-empty source")
@@ -97,8 +88,6 @@ class ShaderManagerIntegrationTest {
         assertThrows(RuntimeException.class,
                 () -> ShaderManager.loadFromResource("assets/eyelibmaterial/shaders/nonexistent.vert"));
     }
-
-    // ─── 2. Define injection verification (no GL needed, reflection) ───
 
     @Test
     @DisplayName("injectDefines with no defines returns source unchanged")
@@ -154,8 +143,6 @@ class ShaderManagerIntegrationTest {
         assertEquals(keyA, keyB, "Same inputs should produce identical cache keys");
     }
 
-    // ─── 3. Program cache hit/miss (requires GL context) ──────────────
-
     @Test
     @Disabled("Requires GL context — enable when running with a Forge client")
     @DisplayName("compileAndLink with same sources returns cached program on second call")
@@ -169,8 +156,6 @@ class ShaderManagerIntegrationTest {
         assertEquals(first, second, "Second call should return cached program ID");
     }
 
-    // ─── 4. Invalid GLSL error handling (requires GL context) ─────────
-
     @Test
     @Disabled("Requires GL context — enable when running with a Forge client")
     @DisplayName("compileAndLink with invalid fragment shader throws RuntimeException with error log")
@@ -183,8 +168,6 @@ class ShaderManagerIntegrationTest {
         assertTrue(ex.getMessage() != null && !ex.getMessage().isBlank(),
                 "Exception message should contain GLSL error log");
     }
-
-    // ─── 5. Program lifecycle (requires GL context) ───────────────────
 
     @Test
     @Disabled("Requires GL context — enable when running with a Forge client")
@@ -219,8 +202,6 @@ class ShaderManagerIntegrationTest {
         assertNotEquals(first, afterRelease,
                 "After release(), cache is empty so next compile should produce a new program");
     }
-
-    // ─── 6. Same source + different defines → different programs ──────
 
     @Test
     @Disabled("Requires GL context — enable when running with a Forge client")

@@ -1,7 +1,16 @@
 package io.github.tt432.eyelibmolang.compiler;
 
+import org.jspecify.annotations.NullMarked;
+
 import java.util.List;
 
+/**
+ * Molang 表达式编译异常。
+ *
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public class ExpressionCompileException extends RuntimeException {
     private final String sourceExpression;
     private final List<String> diagnostics;

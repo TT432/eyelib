@@ -11,6 +11,7 @@ import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
 import io.github.tt432.eyelibimporter.model.importer.ModelImporter;
 import io.github.tt432.eyelibimporter.particle.BrParticle;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllers;
+import org.jspecify.annotations.NullMarked;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +29,10 @@ import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+/** Bedrock 附加包的加载器，支持目录和压缩包（zip/mcpack/mcaddon）。
+ * @author TT432 */
+@NullMarked
+/** @author TT432 */
 public final class BedrockAddonLoader {
     private BedrockAddonLoader() {
     }

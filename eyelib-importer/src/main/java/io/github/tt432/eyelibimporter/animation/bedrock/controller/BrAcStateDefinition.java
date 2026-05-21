@@ -5,6 +5,8 @@ import io.github.tt432.eyelibmolang.MolangValue;
 import java.util.List;
 import java.util.Map;
 
+/** @author TT432 */
+@org.jspecify.annotations.NullMarked
 public record BrAcStateDefinition(
         MolangValue onEntry,
         MolangValue onExit,

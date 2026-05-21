@@ -17,10 +17,13 @@ import org.apache.commons.lang3.function.TriFunction;
 
 import org.jspecify.annotations.Nullable;
 import java.util.List;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 final class DragTargetWidget extends AbstractContainerEventHandler implements Renderable, NarratableEntry {
     private final int x;
     private final int y;
@@ -94,4 +97,3 @@ final class DragTargetWidget extends AbstractContainerEventHandler implements Re
     public void updateNarration(NarrationElementOutput narrationElementOutput) {
     }
 }
-

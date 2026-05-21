@@ -4,14 +4,10 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.joml.Vector4f;
 
-/**
- *
- * @param uv
- * @param texture  null if -1
- * @param cullFace
- * @param rotation
- * @param tint
- */
+/** BBModel 面数据，含 UV 坐标、纹理索引和旋转。
+ * @author TT432 */
+@org.jspecify.annotations.NullMarked
+/** @author TT432 */
 public record FaceData(
         Vector4f uv,
         int texture,

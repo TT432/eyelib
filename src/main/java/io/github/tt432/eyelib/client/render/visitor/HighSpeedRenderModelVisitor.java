@@ -7,11 +7,14 @@ import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelib.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import lombok.Setter;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @Setter
+@NullMarked
+/** @author TT432 */
 public class HighSpeedRenderModelVisitor extends ModelVisitor {
     @Override
     public void visitPreModel(RenderParams params, ModelVisitContext context, ModelRuntimeData infos, Model model) {

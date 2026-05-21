@@ -4,12 +4,18 @@ import io.github.tt432.eyelibanimation.Animation;
 import io.github.tt432.eyelibanimation.RuntimeParticlePlayData;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcStateDefinition;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 final class BrControllerStateOwner {
     private float startTick = -1;
     @Nullable private BrAcStateDefinition lastState;
@@ -32,4 +38,3 @@ final class BrControllerStateOwner {
     void currentAnimations(Map<String, String> currentAnimations) { this.currentAnimations = currentAnimations; }
     List<RuntimeParticlePlayData> particles() { return particles; }
 }
-

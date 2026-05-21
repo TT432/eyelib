@@ -19,11 +19,13 @@ import net.minecraftforge.client.event.RenderLivingEvent;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @With
+/** @author TT432 */
 public record SimpleRenderAction<T>(
         MultiBufferSource multiBufferSource,
         PoseStack poseStack,
@@ -66,6 +68,7 @@ public record SimpleRenderAction<T>(
         return tickedInfos != null && effects != null;
     }
 
+@NullMarked
     public static class Builder<T> {
         // required
         MultiBufferSource multiBufferSource;
@@ -128,4 +131,3 @@ public record SimpleRenderAction<T>(
         }
     }
 }
-

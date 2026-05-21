@@ -60,12 +60,15 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static net.minecraft.client.Minecraft.getInstance;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@NullMarked
+/** @author TT432 */
 public class EntityRenderSystem {
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
@@ -218,7 +221,7 @@ public class EntityRenderSystem {
         }
     }
 
-    // todo 权宜之计
+    // TODO: 权宜之计
     private static <T> T cast(Object obj) {
         return (T) obj;
     }
@@ -308,7 +311,7 @@ public class EntityRenderSystem {
 
             float yBodyRot = Mth.rotLerp(data.partialTick(), livingEntity.yBodyRotO, livingEntity.yBodyRot);
             poseStack.mulPose(Axis.YP.rotationDegrees(-yBodyRot));
-            // todo 1.20.1 没有 Attributes.SCALE
+            // TODO: 1.20.1 没有 Attributes.SCALE，这里自己算
 //            AttributeInstance scaleAttr = livingEntity.getAttribute(Attributes.SCALE);
 //            if (scaleAttr != null) {
 //                double scaleValue = scaleAttr.getValue();
@@ -407,4 +410,3 @@ public class EntityRenderSystem {
         return syncedActions;
     }
 }
-

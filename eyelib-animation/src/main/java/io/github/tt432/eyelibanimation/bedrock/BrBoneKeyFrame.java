@@ -20,6 +20,7 @@ import io.github.tt432.eyelibutil.math.EyeMath;
 import net.minecraft.util.StringRepresentable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +29,8 @@ import java.util.Optional;
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record BrBoneKeyFrame(
         float timestamp,
         List<MolangValue3> dataPoints,
@@ -246,4 +249,3 @@ public record BrBoneKeyFrame(
         }
     }
 }
-

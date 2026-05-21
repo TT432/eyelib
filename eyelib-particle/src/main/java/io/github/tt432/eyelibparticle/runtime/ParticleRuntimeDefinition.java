@@ -8,8 +8,11 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Typed executable-runtime view over the canonical particle-module {@link ParticleDefinition}.
+ * 规范粒子模块 {@link ParticleDefinition} 的类型化可执行运行时视图。
+ *
+ * @author TT432
  */
+/** @author TT432 */
 public record ParticleRuntimeDefinition(ParticleDefinition definition) {
     public ParticleRuntimeDefinition {
         Objects.requireNonNull(definition, "definition");

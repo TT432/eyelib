@@ -1,11 +1,14 @@
 package io.github.tt432.eyelibparticle.api;
 
 /**
- * Narrow lifecycle/reset port for particle stores.
+ * 粒子存储的窄生命周期/重置端口。
+ *
+ * @author TT432
  */
+/** @author TT432 */
 public interface ParticleLifecycle {
     /**
-     * Clears all currently published particle entries.
+     * 清除所有当前已发布的粒子条目。
      */
     void clear();
 }

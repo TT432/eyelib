@@ -24,6 +24,7 @@ import java.util.random.RandomGenerator;
 /**
  * Module-owned Bedrock emitter lifecycle state and component dispatch.
  */
+/** @author TT432 */
 public final class BedrockParticleEmitter implements EmitterParticleComponent.EmitterAccess {
     private final ParticleDefinition definition;
     private final ParticleRuntimeEnvironment environment;

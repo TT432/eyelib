@@ -6,11 +6,14 @@ import org.lwjgl.glfw.GLFWImage;
 import org.lwjgl.system.Pointer;
 
 import static org.lwjgl.glfw.GLFW.*;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @Getter
+@NullMarked
+/** @author TT432 */
 public class Cursor extends Pointer.Default {
     private final GLFWImage image;
     private final int xhot;

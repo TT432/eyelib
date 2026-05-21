@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public class EyeMath {
     public static final float DEGREES_TO_RADIANS = 0.017453292519943295F;
     public static final float RADIANS_TO_DEGREES = 57.29577951308232F;

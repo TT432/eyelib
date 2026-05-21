@@ -18,6 +18,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
+/** Bedrock 粒子效果的数据结构。
+ * @author TT432 */
+@org.jspecify.annotations.NullMarked
+/** @author TT432 */
 public record BrParticle(
         String formatVersion,
         ParticleEffect particleEffect

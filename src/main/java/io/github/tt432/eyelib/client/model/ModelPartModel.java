@@ -18,10 +18,15 @@ import org.joml.Vector3fc;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
 
 /**
+ * 基于ModelPart的模型实现。
+ *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record ModelPartModel(
         String name,
         ModelPart modelPart,
@@ -159,4 +164,3 @@ public record ModelPartModel(
         return new Model.Cube(faces);
     }
 }
-

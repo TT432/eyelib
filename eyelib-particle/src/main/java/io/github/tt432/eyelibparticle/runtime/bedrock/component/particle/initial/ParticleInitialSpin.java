@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.ParticleParticleComponent;
 
+/** @author TT432 */
 public record ParticleInitialSpin(
         MolangValue rotation,
         MolangValue rotationRate

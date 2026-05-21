@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class ParticleDefinitionAdapterTest {
     private static final String WITCHSPELL_FIXTURE =
             "io/github/tt432/eyelibparticle/runtime/fixtures/witchspell.json";

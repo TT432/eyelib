@@ -1,5 +1,7 @@
 package io.github.tt432.eyelibimporter.addon;
 
+/** @author TT432 */
+@org.jspecify.annotations.NullMarked
 public enum BedrockAddonWarningCode {
     UNMANAGED_RESOURCE,
     SCHEMA_PARSE_FAILED,

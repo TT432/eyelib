@@ -14,8 +14,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Predicate;
+import org.jspecify.annotations.NullMarked;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+
+/** @author TT432 */
+@NullMarked
 public final class ManagerResourceBatchPlanner {
     @FunctionalInterface
     public interface FileParser<T> {

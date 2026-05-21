@@ -24,7 +24,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.jspecify.annotations.NullMarked;
 
+/** @author TT432 */
+@NullMarked
 public final class BedrockAddonRuntimeBridge {
     private static final Logger LOGGER = LoggerFactory.getLogger(BedrockAddonRuntimeBridge.class);
     private static final String ADDON_SOURCE_KEY = "bedrock-addon";
@@ -124,7 +127,6 @@ public final class BedrockAddonRuntimeBridge {
     private static io.github.tt432.eyelibmaterial.shared.BrMaterialEntry toSharedEntry(
             io.github.tt432.eyelibimporter.material.BrMaterialEntry importer
     ) {
-        // samplerStates — convert each BrSamplerState
         var ss = importer.samplerStates();
         var sharedSamplerStates = new io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.SamplerStates(
                 ss.base().map(list -> list.stream().map(s -> new io.github.tt432.eyelibmaterial.shared.BrSamplerState(
@@ -144,7 +146,6 @@ public final class BedrockAddonRuntimeBridge {
                 )).toList())
         );
 
-        // states — convert each GLStates enum
         var st = importer.states();
         var sharedStates = new io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.States(
                 st.base().map(list -> list.stream().map(s -> io.github.tt432.eyelibmaterial.shared.GLStates.valueOf(s.name())).toList()),
@@ -152,7 +153,6 @@ public final class BedrockAddonRuntimeBridge {
                 st.sub().map(list -> list.stream().map(s -> io.github.tt432.eyelibmaterial.shared.GLStates.valueOf(s.name())).toList())
         );
 
-        // blend — convert each BlendFactor enum
         var bl = importer.blend();
         var sharedBlend = new io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.Blend(
                 bl.blendSrc().map(b -> io.github.tt432.eyelibmaterial.shared.BlendFactor.valueOf(b.name())),
@@ -161,7 +161,6 @@ public final class BedrockAddonRuntimeBridge {
                 bl.alphaDst().map(b -> io.github.tt432.eyelibmaterial.shared.BlendFactor.valueOf(b.name()))
         );
 
-        // stencil + faces — convert stencil enums
         var sc = importer.stencil();
         var sharedStencil = new io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.Stencil(
                 sc.stencilRef(),
@@ -182,7 +181,6 @@ public final class BedrockAddonRuntimeBridge {
                 ))
         );
 
-        // variants — recurse through nested entries
         List<Map<String, io.github.tt432.eyelibmaterial.shared.BrMaterialEntry>> sharedVariants = new ArrayList<>();
         for (var variantMap : importer.variants()) {
             LinkedHashMap<String, io.github.tt432.eyelibmaterial.shared.BrMaterialEntry> converted = new LinkedHashMap<>();

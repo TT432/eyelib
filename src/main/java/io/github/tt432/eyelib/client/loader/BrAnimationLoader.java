@@ -13,8 +13,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
 
 @ResourceLoader
+
+/** @author TT432 */
+@NullMarked
 public class BrAnimationLoader extends BrResourcesLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(BrAnimationLoader.class);
 

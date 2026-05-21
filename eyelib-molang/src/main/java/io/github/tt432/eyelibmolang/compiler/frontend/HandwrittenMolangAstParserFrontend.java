@@ -4,6 +4,7 @@ import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.SourceSpan;
 import io.github.tt432.eyelibmolang.generated.MolangLexer;
 import io.github.tt432.eyelibmolang.generated.MolangParser;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,8 +12,12 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
- * Small handwritten AST frontend used for phase-scoped coverage while the generated parser remains active.
+ * 手写 AST 解析前端，用于常量折叠等阶段。
+ *
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public final class HandwrittenMolangAstParserFrontend implements MolangParserFrontend {
     public static final HandwrittenMolangAstParserFrontend INSTANCE = new HandwrittenMolangAstParserFrontend();
 

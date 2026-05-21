@@ -13,6 +13,10 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+/**
+ * @author TT432
+ */
+/** @author TT432 */
 public record DispatchedMapCodec<K, V>(
         Codec<K> keyCodec,
         Function<K, Codec<? extends V>> valueCodecFunction

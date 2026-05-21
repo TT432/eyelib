@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+/**
+ * @author TT432
+ */
+/** @author TT432 */
 public class EyelibStreamCodecs {
     private static final Logger LOGGER = LogUtils.getLogger();
 

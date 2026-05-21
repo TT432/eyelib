@@ -1,6 +1,7 @@
 package io.github.tt432.eyelibmaterial.shader;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -14,11 +15,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Tests for {@link ShaderManager}.
- * <p>
- * GL-dependent tests require an active OpenGL context on the render thread.
- * Those tests are individually annotated with {@code @Disabled}.
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 class ShaderManagerTest {
 
     /** Minimal ARB-compatible vertex shader that passes through vertices. */
@@ -48,8 +48,6 @@ class ShaderManagerTest {
             ShaderManager.release();
         }
     }
-
-    // ─── success scenario (requires GL context) ────────────────────────
 
     @Test
     @Disabled("Requires GL context — enable when running with a Forge client")
@@ -83,8 +81,6 @@ class ShaderManagerTest {
         assertTrue(progA != progB, "Different defines should produce different cached programs");
     }
 
-    // ─── error scenario (requires GL context) ──────────────────────────
-
     @Test
     @Disabled("Requires GL context — enable when running with a Forge client")
     @DisplayName("Compile invalid shader → RuntimeException with non-empty message")
@@ -99,8 +95,6 @@ class ShaderManagerTest {
         assertTrue(ex.getMessage() != null && !ex.getMessage().isBlank(),
                 "Exception message should contain the GLSL error log, got: " + ex.getMessage());
     }
-
-    // ─── resource loading (no GL context needed) ───────────────────────
 
     @Test
     @DisplayName("loadFromResource with valid path returns non-empty string")

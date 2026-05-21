@@ -7,10 +7,13 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public class AttachableBlockEntityWithoutLevelRenderer extends BlockEntityWithoutLevelRenderer {
     public AttachableBlockEntityWithoutLevelRenderer(BlockEntityRenderDispatcher blockEntityRenderDispatcher, EntityModelSet entityModelSet) {
         super(blockEntityRenderDispatcher, entityModelSet);
@@ -25,7 +28,7 @@ public class AttachableBlockEntityWithoutLevelRenderer extends BlockEntityWithou
 //            MolangScope scope = data.getScope();
 //            var partialTick = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
 //            scope.set("variable.partial_tick",partialTick);
-////            scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration()); TODO:fix
+////            scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration()); // TODO: 修复
 //
 //            ClientEntityComponent clientEntityComponent = data.getClientEntityComponent();
 //

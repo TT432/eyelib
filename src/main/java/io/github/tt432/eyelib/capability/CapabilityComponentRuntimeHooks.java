@@ -7,8 +7,12 @@ import io.github.tt432.eyelib.event.TextureChangedEvent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.jspecify.annotations.NullMarked;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
+
+/** @author TT432 */
+@NullMarked
 public final class CapabilityComponentRuntimeHooks {
     private CapabilityComponentRuntimeHooks() {
     }

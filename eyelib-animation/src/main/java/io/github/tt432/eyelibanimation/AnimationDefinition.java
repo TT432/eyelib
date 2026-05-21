@@ -1,10 +1,16 @@
 package io.github.tt432.eyelibanimation;
 
+import org.jspecify.annotations.NullMarked;
+
 import java.util.Map;
 
 /**
- * Immutable animation definition composed from named channels.
+ * 命名通道组成的不可变动画定义。
+ *
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public interface AnimationDefinition<K, C extends AnimationChannelDefinition<K>> {
     Map<String, C> channels();
 

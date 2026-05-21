@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelibmaterial.material.BrMaterial;
 import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -14,11 +15,10 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * End-to-end integration test for the material pipeline:
- * JSON loading → CODEC parsing → Manager-like storage → data operations.
- * <p>
- * Does NOT require GL context or Minecraft client.
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 class MaterialEndToEndTest {
 
     // @formatter:off
@@ -112,20 +112,12 @@ class MaterialEndToEndTest {
         """;
     // @formatter:on
 
-    // ──────────────────────────────────────────────
-    // Helper: parse the embedded JSON
-    // ──────────────────────────────────────────────
-
     private static BrMaterial parseVanillaMaterial() {
         JsonElement json = JsonParser.parseString(VANILLA_JSON);
         return BrMaterial.CODEC
                 .parse(JsonOps.INSTANCE, json)
                 .getOrThrow(false, RuntimeException::new);
     }
-
-    // ──────────────────────────────────────────────
-    // Test 1: CODEC parsing → all 9 entries loaded
-    // ──────────────────────────────────────────────
 
     @Test
     void testCODECParsing_all9Entries() {
@@ -155,10 +147,6 @@ class MaterialEndToEndTest {
         assertEquals("entity", alphatest.base());
         assertEquals("entity_alphatest", alphatest.name());
     }
-
-    // ──────────────────────────────────────────────
-    // Test 2: Manager-style put/get roundtrip
-    // ──────────────────────────────────────────────
 
     @Test
     void testManagerPutGetRoundtrip() {
@@ -194,10 +182,6 @@ class MaterialEndToEndTest {
         assertNotNull(storage.get("test_entry"));
     }
 
-    // ──────────────────────────────────────────────
-    // Test 3: JSON roundtrip (encode → decode)
-    // ──────────────────────────────────────────────
-
     @Test
     void testJsonRoundtrip() {
         BrMaterial original = parseVanillaMaterial();
@@ -232,10 +216,6 @@ class MaterialEndToEndTest {
             assertEquals(origEntry.variants(), decEntry.variants());
         }
     }
-
-    // ──────────────────────────────────────────────
-    // Test 4: Inheritance end-to-end
-    // ──────────────────────────────────────────────
 
     @Test
     void testInheritance() {
@@ -274,10 +254,6 @@ class MaterialEndToEndTest {
         assertEquals(io.github.tt432.eyelibmaterial.gl.BlendFactor.SourceAlpha,
                 alphablend.blend().blendSrc().get());
     }
-
-    // ──────────────────────────────────────────────
-    // Test 5: Variant lookup from parsed material
-    // ──────────────────────────────────────────────
 
     @Test
     void testVariantLookup() {

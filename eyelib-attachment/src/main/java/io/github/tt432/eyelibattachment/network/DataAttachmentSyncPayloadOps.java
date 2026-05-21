@@ -7,7 +7,13 @@ import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+/**
+ * 数据附属同步载荷的转换工具。
+ *
+ * @author TT432
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public final class DataAttachmentSyncPayloadOps {
     public record AttachmentUpdate<T>(int entityId, DataAttachmentType<T> attachment, T value) {
     }

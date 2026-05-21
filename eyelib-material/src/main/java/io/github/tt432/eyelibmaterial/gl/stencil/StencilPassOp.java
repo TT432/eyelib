@@ -2,11 +2,14 @@ package io.github.tt432.eyelibmaterial.gl.stencil;
 
 import com.mojang.serialization.Codec;
 import net.minecraft.util.StringRepresentable;
+import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public enum StencilPassOp implements StringRepresentable {
     /**
      * 保留缓冲区原有值

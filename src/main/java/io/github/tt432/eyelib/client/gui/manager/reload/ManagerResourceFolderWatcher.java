@@ -11,8 +11,12 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.function.Consumer;
+import org.jspecify.annotations.NullMarked;
 
 @Slf4j
+
+/** @author TT432 */
+@NullMarked
 public final class ManagerResourceFolderWatcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(ManagerResourceFolderWatcher.class);
 
@@ -63,4 +67,3 @@ public final class ManagerResourceFolderWatcher {
         fileObserver = null;
     }
 }
-

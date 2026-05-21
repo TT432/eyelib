@@ -18,8 +18,12 @@ import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_HEIGHT;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_WIDTH;
 import static org.lwjgl.opengl.GL11.glGetTexLevelParameteriv;
+import org.jspecify.annotations.NullMarked;
 
 @UtilityClass
+
+/** @author TT432 */
+@NullMarked
 public class NativeImageIO {
     public void upload(ResourceLocation texture, NativeImage image) {
         DynamicTexture dynamicTexture = new DynamicTexture(image);
@@ -79,4 +83,3 @@ public class NativeImageIO {
         return image;
     }
 }
-

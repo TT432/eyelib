@@ -8,6 +8,7 @@ import java.util.Optional;
 /**
  * Typed runtime-local key/value storage for moved particle runtime classes.
  */
+/** @author TT432 */
 public final class ParticleBlackboard {
     private final Map<String, Object> data = new HashMap<>();
 

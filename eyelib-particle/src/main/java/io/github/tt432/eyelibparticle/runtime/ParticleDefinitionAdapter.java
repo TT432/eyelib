@@ -4,8 +4,11 @@ import com.mojang.serialization.DataResult;
 import io.github.tt432.eyelibimporter.particle.BrParticle;
 
 /**
- * Named seam from importer-owned raw Bedrock particle schema to particle-module runtime definition.
+ * 从导入器拥有的原始基岩版粒子模式到粒子模块运行时定义的命名接缝。
+ *
+ * @author TT432
  */
+/** @author TT432 */
 public final class ParticleDefinitionAdapter {
     private ParticleDefinitionAdapter() {
     }

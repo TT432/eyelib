@@ -25,8 +25,12 @@ import org.joml.Vector3f;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import org.jspecify.annotations.NullMarked;
 
 @Mod.EventBusSubscriber
+
+/** @author TT432 */
+@NullMarked
 public final class EyelibParticleCommand {
     @SubscribeEvent
     public static void onRegister(final RegisterCommandsEvent event) {

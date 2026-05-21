@@ -10,7 +10,10 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Collection;
+import org.jspecify.annotations.NullMarked;
 
+/** @author TT432 */
+@NullMarked
 public class ClientEntityRuntimeData {
     private final ModelResolver modelResolver;
     final Object2ObjectMap<String, Model> models = new Object2ObjectOpenHashMap<>();

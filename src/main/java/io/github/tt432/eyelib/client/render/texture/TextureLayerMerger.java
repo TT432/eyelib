@@ -32,8 +32,12 @@ import static org.lwjgl.opengl.GL42.glBindImageTexture;
 import static org.lwjgl.opengl.GL42.glMemoryBarrier;
 import static org.lwjgl.opengl.GL43.GL_COMPUTE_SHADER;
 import static org.lwjgl.opengl.GL43.glDispatchCompute;
+import org.jspecify.annotations.NullMarked;
 
 @UtilityClass
+
+/** @author TT432 */
+@NullMarked
 public class TextureLayerMerger {
     private static final String BLENDING_SHADER_SOURCE = """
             #version 430 core

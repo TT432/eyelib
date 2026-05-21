@@ -1,7 +1,13 @@
 package io.github.tt432.eyelibanimation.bedrock;
 
 import io.github.tt432.eyelibanimation.AnimationEffect;
+import org.jspecify.annotations.NullMarked;
 
+/**
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public record BrAnimationEntryEffectTrackDefinition<T>(
         BrAnimationEntryTrackName name,
         AnimationEffect<T> effect

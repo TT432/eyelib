@@ -6,6 +6,10 @@ import io.github.tt432.eyelibmodel.ImporterCodecs;
 import io.github.tt432.eyelibmodel.tree.ModelCubeNode;
 import org.joml.Vector3f;
 
+/**
+ * @author TT432
+ */
+/** @author TT432 */
 public record LocatorEntry(
         String name,
         Vector3f offset,

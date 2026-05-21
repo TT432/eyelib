@@ -10,7 +10,11 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+/**
+ * @author TT432
+ */
 @Mod.EventBusSubscriber
+/** @author TT432 */
 public class EntityStatisticsHandler {
     @SubscribeEvent
     public static void onEvent(LivingEvent.LivingTickEvent event) {

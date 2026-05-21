@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterParticleComponent;
 import org.joml.Vector3f;
 
+/** @author TT432 */
 public record EmitterShapeEntityAABB(
         boolean surfaceOnly,
         Direction direction

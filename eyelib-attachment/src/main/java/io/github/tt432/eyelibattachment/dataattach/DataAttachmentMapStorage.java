@@ -5,6 +5,10 @@ import org.jspecify.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author TT432
+ */
+/** @author TT432 */
 class DataAttachmentMapStorage implements DataAttachmentStorage {
     protected final Map<String, DataAttachment<?>> attachments = new HashMap<>();
 

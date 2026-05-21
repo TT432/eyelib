@@ -9,8 +9,12 @@ import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+
+/** @author TT432 */
+@NullMarked
 public final class ModelLookup {
     @Nullable
     public static Model get(String name) {
@@ -21,4 +25,3 @@ public final class ModelLookup {
         return ModelManager.readPort().getAllData();
     }
 }
-

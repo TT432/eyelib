@@ -23,23 +23,25 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.CRC32;
 
+import org.jspecify.annotations.NullMarked;
+
 /**
- * Disk persistence for compiled Molang bytecode cache entries.
+ * 编译后的 Molang 字节码磁盘缓存。
+ * 字节布局（大端序 4 字节整数）：
+ * 0       4   Magic: 0x4D4F4C43 ("MOLC")
+ * 4       4   编译器版本
+ * 8       4   注册表版本引用长度
+ * 12      N   注册表版本引用（UTF-8）
+ * 12+N    4   源码长度
+ * 16+N    M   源码（UTF-8）
+ * 16+N+M  4   类字节长度
+ * 20+N+M  C   类字节（raw JVM .class 文件）
+ * 20+N+M+C 4  CRC32 校验和（对 0 至 20+N+M+C-1 字节）
  *
- * <p>Byte layout (all integers are 4 bytes, big-endian):
- * <pre>
- * Offset  Size      Field
- * 0       4         Magic number: 0x4D4F4C43 ("MOLC")
- * 4       4         Compiler version (integer)
- * 8       4         Registry version ref length (integer)
- * 12      N         Registry version ref (UTF-8 bytes)
- * 12+N    4         Source expression length (integer)
- * 16+N    M         Source expression (UTF-8 bytes)
- * 16+N+M  4         Class bytes length (integer)
- * 20+N+M  C         Class bytes (raw JVM .class file)
- * 20+N+M+C 4        CRC32 checksum (over bytes 0..20+N+M+C-1)
- * </pre>
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public final class MolangDiskCache {
     private static final Logger LOG = Logger.getLogger(MolangDiskCache.class.getName());
 

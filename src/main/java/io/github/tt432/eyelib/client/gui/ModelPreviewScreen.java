@@ -36,15 +36,17 @@ import org.lwjgl.glfw.GLFW;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * A screen for previewing models from the ModelManager.
- * <p>
- * This screen allows searching for models by name or ID and rendering them
+ * 支持按名称或ID搜索模型并以交互方式旋转和缩放渲染。
  * with interactive rotation and scaling.
  *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public class ModelPreviewScreen extends ModalWorksurfaceScreen {
 //    @Mod.EventBusSubscriber(Dist.CLIENT)
     public static final class Events {
@@ -235,7 +237,6 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             }
         }
 
-        // todo
 //        if (found instanceof BBModel bbModel) {
 //            this.currentModel = bbModel;
 //            this.renderModels = bbModel.splitByTexture();
@@ -333,4 +334,3 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         super.onClose();
     }
 }
-

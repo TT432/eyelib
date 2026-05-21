@@ -6,6 +6,7 @@ import net.minecraft.util.StringRepresentable;
 /**
  * @author TT432
  */
+/** @author TT432 */
 public enum Operator implements StringRepresentable {
     NEQ("!="),
     EQ("=="),

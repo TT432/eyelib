@@ -1,12 +1,17 @@
 package io.github.tt432.eyelibanimation;
 
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 
 /**
- * Animation whose runtime behavior selects and advances named states.
+ * 运行时选择并推进命名状态的状态机动画。
+ *
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public interface StateMachineAnimation<S> extends Animation {
     S initialState();
 

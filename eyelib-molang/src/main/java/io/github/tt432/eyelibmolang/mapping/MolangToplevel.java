@@ -3,13 +3,16 @@ package io.github.tt432.eyelibmolang.mapping;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMapping;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
 @MolangMapping("")
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @SuppressWarnings("unused")
+/** @author TT432 */
 public final class MolangToplevel {
     public static final float pi = 3.14159265358979323846F;
     public static final float e = 2.7182818284590452354F;

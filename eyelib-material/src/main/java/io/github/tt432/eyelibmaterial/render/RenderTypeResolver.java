@@ -2,9 +2,17 @@ package io.github.tt432.eyelibmaterial.render;
 
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.function.Function;
 
+/**
+ * 根据资源路径将材质名称解析为对应的RenderType工厂。
+ *
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public final class RenderTypeResolver {
     private RenderTypeResolver() {
     }

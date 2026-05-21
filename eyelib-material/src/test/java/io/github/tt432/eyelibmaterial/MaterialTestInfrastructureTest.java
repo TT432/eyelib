@@ -1,13 +1,16 @@
 package io.github.tt432.eyelibmaterial;
 
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Smoke test to verify JUnit 5 test infrastructure works for the eyelib-material subproject.
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 class MaterialTestInfrastructureTest {
 
     @Test

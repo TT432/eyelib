@@ -8,6 +8,7 @@ import io.github.tt432.eyelibmolang.MolangValue3;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.ParticleParticleComponent;
 import org.joml.Vector3f;
 
+/** @author TT432 */
 public record ParticleMotionDynamic(
         MolangValue3 linearAcceleration,
         MolangValue linearDragCoefficient,

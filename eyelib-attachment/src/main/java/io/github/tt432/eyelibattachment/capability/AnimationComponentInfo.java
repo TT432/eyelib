@@ -9,6 +9,10 @@ import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author TT432
+ */
+/** @author TT432 */
 public record AnimationComponentInfo(
         Map<String, String> animations,
         Map<String, MolangValue> animate

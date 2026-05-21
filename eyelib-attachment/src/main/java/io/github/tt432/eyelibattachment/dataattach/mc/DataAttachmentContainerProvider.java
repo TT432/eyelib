@@ -9,6 +9,10 @@ import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
 import org.jspecify.annotations.Nullable;
 
+/**
+ * @author TT432
+ */
+/** @author TT432 */
 public class DataAttachmentContainerProvider implements ICapabilitySerializable<CompoundTag>, ICapabilityProvider {
     private final McDataAttachmentContainer container;
 

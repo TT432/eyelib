@@ -11,6 +11,7 @@ import net.minecraft.network.FriendlyByteBuf;
  * @author TT432
  */
 @With
+/** @author TT432 */
 public record ExtraEntityData(
         boolean facing_target_to_range_attack,
         boolean is_avoiding_mobs,

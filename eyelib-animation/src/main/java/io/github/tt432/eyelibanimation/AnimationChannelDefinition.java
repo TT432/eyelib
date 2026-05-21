@@ -1,10 +1,15 @@
 package io.github.tt432.eyelibanimation;
 
 import io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap;
+import org.jspecify.annotations.NullMarked;
 
 /**
- * Named animation channel backed by timestamp-keyed keyframes.
+ * 按时间戳索引关键帧的命名动画通道。
+ *
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public interface AnimationChannelDefinition<K> {
     String name();
 

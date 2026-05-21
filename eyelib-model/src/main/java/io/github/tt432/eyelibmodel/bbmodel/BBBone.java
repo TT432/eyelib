@@ -9,7 +9,11 @@ import org.joml.Vector3f;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author TT432
+ */
 @With
+/** @author TT432 */
 public record BBBone(
         int id,
         int parent,

@@ -1,5 +1,6 @@
 package io.github.tt432.eyelibimporter.model.importer;
 
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import javax.imageio.ImageIO;
@@ -8,6 +9,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
+/** 导入的图片数据，含宽高和 ARGB 像素数组。
+ * @author TT432 */
+@NullMarked
+/** @author TT432 */
 public final class ImportedImageData {
     private final int width;
     private final int height;
@@ -82,4 +87,3 @@ public final class ImportedImageData {
         return y * width + x;
     }
 }
-

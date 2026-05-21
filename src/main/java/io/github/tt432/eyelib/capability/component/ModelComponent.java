@@ -11,11 +11,14 @@ import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @Getter
+@NullMarked
+/** @author TT432 */
 public class ModelComponent {
     @Nullable
     ModelComponentInfo serializableInfo;
@@ -62,4 +65,3 @@ public class ModelComponent {
 
     final Int2BooleanOpenHashMap partVisibility = new Int2BooleanOpenHashMap();
 }
-

@@ -16,11 +16,13 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @With
+/** @author TT432 */
 public record RenderParams(
         @Nullable Entity renderTarget,
         PoseStack.Pose pose0,
@@ -96,6 +98,7 @@ public record RenderParams(
         return texture == null || texture.equals(MissingTextureAtlasSprite.getLocation());
     }
 
+@NullMarked
     public static final class Builder {
         // required
         private final PoseStack.Pose pose0;
@@ -149,4 +152,3 @@ public record RenderParams(
         }
     }
 }
-

@@ -10,6 +10,12 @@ import net.minecraftforge.common.util.INBTSerializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Minecraft NBT 序列化支持的数据附属容器。
+ *
+ * @author TT432
+ */
+/** @author TT432 */
 public class McDataAttachmentContainer extends DataAttachmentContainer implements INBTSerializable<CompoundTag> {
     private static final Logger LOGGER = LoggerFactory.getLogger(McDataAttachmentContainer.class);
 

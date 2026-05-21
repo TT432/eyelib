@@ -7,6 +7,7 @@ import org.joml.Vector3f;
 
 import java.util.Optional;
 
+/** @author TT432 */
 public interface ParticleParticleComponent extends ParticleComponent {
     default void onStart(ParticleAccess particle) {
     }

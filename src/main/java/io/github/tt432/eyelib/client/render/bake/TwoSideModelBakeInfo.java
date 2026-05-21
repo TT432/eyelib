@@ -11,10 +11,13 @@ import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import java.util.*;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.TwoSideInfoMap> {
     public static final TwoSideModelBakeInfo INSTANCE = new TwoSideModelBakeInfo();
 

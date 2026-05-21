@@ -30,6 +30,7 @@ import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.CAS
 import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.DEFAULT_MODE;
 import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.DEFAULT_POLICY_PACK;
 
+/** @author TT432 */
 final class MolangCorpusLoader {
     MolangLoadResult load(Path corpusRoot) {
         List<MolangCorpusCase> cases = new ArrayList<>();

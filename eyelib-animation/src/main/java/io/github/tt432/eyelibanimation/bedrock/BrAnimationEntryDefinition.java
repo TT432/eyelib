@@ -19,12 +19,20 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3f;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.TreeMap;
 import java.util.UUID;
 
+/**
+ * 动画条目定义，包含动画元数据和轨道集合。
+ *
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public record BrAnimationEntryDefinition(
         String name,
         BrLoopType loop,

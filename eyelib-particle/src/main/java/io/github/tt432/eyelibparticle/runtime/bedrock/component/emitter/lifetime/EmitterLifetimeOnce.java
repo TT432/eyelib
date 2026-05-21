@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterParticleComponent;
 
+/** @author TT432 */
 public record EmitterLifetimeOnce(MolangValue activeTime) implements EmitterParticleComponent {
     public static final Codec<EmitterLifetimeOnce> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             MolangValue.CODEC.optionalFieldOf("active_time", MolangValue.getConstant(10))

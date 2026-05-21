@@ -1,10 +1,13 @@
 package io.github.tt432.eyelibimporter.model.importer;
 
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.List;
 
+/** @author TT432 */
+@NullMarked
 public record ImportedBoneData(
         int id,
         int parentId,

@@ -1,15 +1,17 @@
 package io.github.tt432.eyelibanimation.bedrock.baked;
 
 import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneKeyFrameSchema;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.TreeMap;
 
 /**
- * Converts importer schema types into intermediate baked data types.
- * Pure conversion — no Minecraft/Forge types, no root runtime types.
+ * 将 importer schema 类型转换为中间烘焙数据类型（纯转换，无 Minecraft 依赖）。
  *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public final class BoneAnimationBaker {
 
     private BoneAnimationBaker() {

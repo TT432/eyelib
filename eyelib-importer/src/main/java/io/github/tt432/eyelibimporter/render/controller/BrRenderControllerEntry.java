@@ -4,10 +4,13 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibmolang.MolangValue;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 import java.util.Map;
 
+/** @author TT432 */
+@NullMarked
 public record BrRenderControllerEntry(
         MolangValue geometry,
         List<MolangValue> textures,

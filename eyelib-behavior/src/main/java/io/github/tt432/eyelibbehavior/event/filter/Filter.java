@@ -7,6 +7,7 @@ import io.github.tt432.eyelibbehavior.event.filter.base.BaseFilter;
 /**
  * @author TT432
  */
+/** @author TT432 */
 public interface Filter {
     Codec<Filter> CODEC = Codec.either(BaseFilter.CODEC, ComplexFilter.CODEC.codec()).xmap(
             e -> e.left().map(b -> (Filter) b).orElse(e.right().orElseThrow()),

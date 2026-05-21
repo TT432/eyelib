@@ -4,21 +4,18 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibutil.codec.DispatchedMapCodec;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.*;
 import java.util.function.Function;
 
 /**
- * Pure data record for a single Bedrock material entry.
- * <p>
- * No GL/LWJGL/MC dependencies — no {@code ApplyAble}, no {@code getRenderType()},
- * no {@code DEFAULT_FRONT/DEFAULT_BACK}, no GL behavior in enums.
- * <p>
- * All enums, {@link BrSamplerState}, and {@link Face} are in this package;
- * shared dispatched-map codec support comes from {@code :eyelib-util}.
+ * 单个Bedrock材质条目的纯数据记录。所有枚举、{@link BrSamplerState}和{@link Face}均在本包中定义。
  *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record BrMaterialEntry(
         String base,
         String name,
@@ -40,10 +37,6 @@ public record BrMaterialEntry(
         List<Map<String, BrMaterialEntry>> variants
 ) {
 
-    /**
-     * Pure-data modification interface — method signatures only, no default methods
-     * with inheritance-resolution logic (that lives in the runtime layer).
-     */
     private interface ModifyAble<T, S extends ModifyAble<T, S>> {
         Optional<List<T>> base();
 
@@ -53,8 +46,6 @@ public record BrMaterialEntry(
 
         S getBase(BrMaterialEntry base);
     }
-
-    // ---- Nested records ------------------------------------------------
 
     public record Defines(
             Optional<List<String>> base,
@@ -138,8 +129,6 @@ public record BrMaterialEntry(
                 Face.CODEC.optionalFieldOf("backFace").forGetter(Stencil::backFace)
         ).apply(ins, Stencil::new));
     }
-
-    // ---- Top-level CODEC -----------------------------------------------
 
     @SuppressWarnings("unchecked")
     public static final Function<String, Codec<BrMaterialEntry>> CODEC = name ->

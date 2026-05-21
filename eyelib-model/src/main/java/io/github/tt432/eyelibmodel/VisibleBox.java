@@ -6,8 +6,11 @@ import com.mojang.serialization.DataResult;
 import java.util.List;
 
 /**
- * Platform-free model visible bounds definition.
+ * 与平台无关的模型可见边界定义。
+ *
+ * @author TT432
  */
+/** @author TT432 */
 public record VisibleBox(
         double minX,
         double minY,

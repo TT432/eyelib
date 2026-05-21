@@ -8,6 +8,7 @@ import java.util.Optional;
 /**
  * Platform-free runtime environment port for Bedrock particle lifecycle code.
  */
+/** @author TT432 */
 public interface ParticleRuntimeEnvironment {
     int ticks();
 

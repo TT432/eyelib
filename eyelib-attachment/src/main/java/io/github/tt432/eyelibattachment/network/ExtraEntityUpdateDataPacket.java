@@ -5,6 +5,10 @@ import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
 import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
 import net.minecraft.network.FriendlyByteBuf;
 
+/**
+ * @author TT432
+ */
+/** @author TT432 */
 public record ExtraEntityUpdateDataPacket(
         int entityId,
         ExtraEntityUpdateData data

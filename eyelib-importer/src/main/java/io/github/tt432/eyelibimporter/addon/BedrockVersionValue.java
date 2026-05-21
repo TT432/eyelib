@@ -2,10 +2,13 @@ package io.github.tt432.eyelibimporter.addon;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
+/** @author TT432 */
+@NullMarked
 public record BedrockVersionValue(
         List<Integer> numericParts,
         @Nullable String semanticString

@@ -10,6 +10,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/** @author TT432 */
 class ParticlePublisherAndSpawnApiTest {
     @Test
     void publisherFlattensParticlesByExtractedIdentifierInIterationOrder() {

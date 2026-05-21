@@ -12,9 +12,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
 
 @Slf4j
 @ResourceLoader
+
+/** @author TT432 */
+@NullMarked
 public class BrRenderControllerLoader extends BrResourcesLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(BrRenderControllerLoader.class);
 

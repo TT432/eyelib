@@ -5,10 +5,15 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibmolang.type.MolangString;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.NullMarked;
 
 /**
+ * 手持物品的渲染数据。
+ *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record ItemInHandRenderData(
         RenderData<ItemStack> leftHandData,
         RenderData<ItemStack> rightHandData

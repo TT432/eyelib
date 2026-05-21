@@ -9,6 +9,7 @@ import org.joml.Vector3f;
 
 import java.util.Objects;
 
+/** @author TT432 */
 public record Direction(Type type, @Nullable MolangValue3 custom) {
     public static final Direction EMPTY = new Direction(Type.OUTWARDS, null);
 

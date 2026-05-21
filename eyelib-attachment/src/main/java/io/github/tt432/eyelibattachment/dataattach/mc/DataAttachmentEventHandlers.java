@@ -5,7 +5,11 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+/**
+ * @author TT432
+ */
 @Mod.EventBusSubscriber(modid = "eyelibattachment")
+/** @author TT432 */
 public class DataAttachmentEventHandlers {
 
     @SubscribeEvent

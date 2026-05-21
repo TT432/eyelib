@@ -8,6 +8,7 @@ import java.util.List;
 /**
  * @author TT432
  */
+/** @author TT432 */
 public record Sequence(
         List<LogicNode> nodes
 ) implements LogicNode {

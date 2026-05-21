@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+/** @author TT432 */
 class MolangMcAdapterSeamTest {
     @AfterEach
     void tearDown() {

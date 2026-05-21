@@ -1,8 +1,14 @@
 package io.github.tt432.eyelibmolang.mapping.api;
 
+import org.jspecify.annotations.NullMarked;
+
 /**
- * Narrow runtime port for environment-backed Molang query values.
+ * 环境相关 Molang 查询值的运行时适配接口。
+ *
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public interface MolangQueryRuntime {
     MolangQueryRuntime NOOP = new MolangQueryRuntime() {
         @Override

@@ -16,6 +16,7 @@ import java.util.function.Function;
  * Copy from <a href="https://github.com/TT432/chin/blob/main/src/main/java/io/github/tt432/chin/codec/ChinExtraCodecs.java">tt432/chin</a><br/>
  * As you wish!
  */
+/** @author TT432 */
 public class ChinExtraCodecs {
     /**
      * Example: <br/>

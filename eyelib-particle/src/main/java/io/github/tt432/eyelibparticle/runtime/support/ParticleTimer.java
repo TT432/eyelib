@@ -7,6 +7,7 @@ import java.util.Objects;
 /**
  * Platform-free fixed-step timer for particle runtime extraction.
  */
+/** @author TT432 */
 public final class ParticleTimer {
     private static final int DEFAULT_RATE = 30;
 

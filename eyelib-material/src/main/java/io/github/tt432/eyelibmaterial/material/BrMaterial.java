@@ -1,13 +1,18 @@
 package io.github.tt432.eyelibmaterial.material;
 
 import com.mojang.serialization.Codec;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
+ * 运行时Bedrock材质记录。CODEC委托给shared.BrMaterial.CODEC进行序列化。
+ *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record BrMaterial(
         Map<String, BrMaterialEntry> materials
 ) {

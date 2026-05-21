@@ -10,8 +10,11 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Module-owned active particle definition registry used by loading/publication seams.
+ * 由加载/发布接缝使用的模块拥有的活跃粒子定义注册表。
+ *
+ * @author TT432
  */
+/** @author TT432 */
 public final class ParticleDefinitionRegistry {
     private static final MemoryParticleDefinitionStore STORE = new MemoryParticleDefinitionStore();
     private static final ParticlePublisher<ParticleDefinition> PUBLISHER =

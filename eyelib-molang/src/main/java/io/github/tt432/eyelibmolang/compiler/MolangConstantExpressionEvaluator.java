@@ -7,14 +7,21 @@ import io.github.tt432.eyelibmolang.type.MolangObject;
 import io.github.tt432.eyelibmolang.type.MolangString;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Optional;
 
+/**
+ * 编译期常量表达式求值器。
+ *
+ * @author TT432
+ */
+@NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public final class MolangConstantExpressionEvaluator {
     /**
-     * Attempts to evaluate a Molang expression at compile time if it
-     * consists entirely of constant expressions (no variables, queries, or calls).
+     * 尝试在编译期求值纯常量 Molang 表达式。
      */
     public static Optional<MolangObject> tryEvaluate(String expression) {
         return HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(expression)
@@ -72,9 +79,7 @@ public final class MolangConstantExpressionEvaluator {
     }
 
     /**
-     * Evaluates a compile-time constant expression, returning the full MolangObject result.
-     * Handles number literals, string literals, unary/binary/grouping, ternary conditionals,
-     * and simple math.abs calls.
+     * 逐个表达式节点递归求值。
      */
     private static Optional<MolangObject> evaluateConstantExpr(MolangAst.Expr expr) {
         if (expr instanceof MolangAst.NumberLiteralExpr numberLiteralExpr) {

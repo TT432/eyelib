@@ -3,6 +3,7 @@ package io.github.tt432.eyelibparticle.network;
 import net.minecraft.network.FriendlyByteBuf;
 import org.joml.Vector3f;
 
+/** @author TT432 */
 public record SpawnParticlePacket(
         String spawnId,
         String particleId,

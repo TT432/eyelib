@@ -14,8 +14,12 @@ import io.github.tt432.eyelibparticle.network.RemoveParticlePacket;
 import io.github.tt432.eyelibparticle.network.SpawnParticlePacket;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+
+/** @author TT432 */
+@NullMarked
 public class EyelibNetworkManager {
     public static void register() {
         EyelibNetworkTransport.registerServerPacket(

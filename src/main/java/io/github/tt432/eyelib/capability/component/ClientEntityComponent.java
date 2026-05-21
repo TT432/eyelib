@@ -6,10 +6,13 @@ import io.github.tt432.eyelibmodel.Model;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public class ClientEntityComponent {
     @Nullable
     private BrClientEntity clientEntity;
@@ -42,4 +45,3 @@ public class ClientEntityComponent {
         return runtimeData.models();
     }
 }
-

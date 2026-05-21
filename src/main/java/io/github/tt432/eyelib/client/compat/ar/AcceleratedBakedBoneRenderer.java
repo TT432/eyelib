@@ -15,8 +15,12 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
 
 @ExtensionMethod(VertexConsumerExtension.class)
+
+/** @author TT432 */
+@NullMarked
 public class AcceleratedBakedBoneRenderer implements IAcceleratedRenderer<BakedModel.BakedBone> {
     public static final AcceleratedBakedBoneRenderer INSTANCE = new AcceleratedBakedBoneRenderer();
 

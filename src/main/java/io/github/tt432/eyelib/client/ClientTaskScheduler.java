@@ -7,8 +7,11 @@ import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.jspecify.annotations.NullMarked;
 
 @Mod.EventBusSubscriber(modid = Eyelib.MOD_ID)
+/** @author TT432 */
+@NullMarked
 public class ClientTaskScheduler {
     private static final List<ScheduledTask> TASKS = new ArrayList<>();
 

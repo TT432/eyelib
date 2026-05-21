@@ -4,10 +4,13 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import org.jspecify.annotations.Nullable;
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public final class ModelVisitContext {
     private final Map<String, Object> data = new Object2ObjectOpenHashMap<>();
 
@@ -35,4 +38,3 @@ public final class ModelVisitContext {
         data.clear();
     }
 }
-

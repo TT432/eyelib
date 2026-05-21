@@ -19,10 +19,15 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collection;
 import java.util.*;
+import org.jspecify.annotations.NullMarked;
 
 /**
+ * 渲染控制器条目。
+ *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record RenderControllerEntry(
         MolangValue geometry,
         List<MolangValue> textures,

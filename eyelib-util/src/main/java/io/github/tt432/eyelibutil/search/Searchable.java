@@ -6,6 +6,7 @@ import java.util.stream.Stream;
 /**
  * @author TT432
  */
+/** @author TT432 */
 public interface Searchable<V> {
     Stream<Map.Entry<String, V>> search(String searchStr);
 

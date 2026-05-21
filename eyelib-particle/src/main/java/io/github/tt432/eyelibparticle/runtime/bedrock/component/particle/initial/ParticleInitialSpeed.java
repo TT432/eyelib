@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.ParticleParticleComponent;
 
+/** @author TT432 */
 public record ParticleInitialSpeed(
         MolangValue speed
 ) implements ParticleParticleComponent {

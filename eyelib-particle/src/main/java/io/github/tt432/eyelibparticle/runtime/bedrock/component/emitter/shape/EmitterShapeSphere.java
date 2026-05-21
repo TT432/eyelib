@@ -6,6 +6,7 @@ import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelibmolang.MolangValue3;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterParticleComponent;
 
+/** @author TT432 */
 public record EmitterShapeSphere(
         MolangValue3 offset,
         MolangValue radius,

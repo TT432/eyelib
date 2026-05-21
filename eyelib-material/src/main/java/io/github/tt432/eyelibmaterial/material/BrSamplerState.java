@@ -3,6 +3,7 @@ package io.github.tt432.eyelibmaterial.material;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.util.StringRepresentable;
+import org.jspecify.annotations.NullMarked;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL46.GL_MAX_TEXTURE_MAX_ANISOTROPY;
@@ -11,6 +12,8 @@ import static org.lwjgl.opengl.GL46.GL_TEXTURE_MAX_ANISOTROPY;
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record BrSamplerState(
         int samplerIndex,
         TextureFilter textureFilter,
@@ -46,7 +49,7 @@ public record BrSamplerState(
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, maxAnisotropy[0]);
         }),
         PCF(() -> {
-            // todo
+            // TODO: PCF 未实现
         });
 
         public final Runnable onUse;

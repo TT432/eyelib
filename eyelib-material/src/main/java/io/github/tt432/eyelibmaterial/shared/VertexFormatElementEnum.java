@@ -6,17 +6,17 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.serialization.Codec;
 import net.minecraft.util.StringRepresentable;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.EnumSet;
 
 /**
- * Bedrock vertex field constants mapped to Minecraft {@link DefaultVertexFormat} elements.
- * <p>
- * This enum replaces the currently empty {@code VertexFormatElementEnum} in
- * {@code BrMaterialEntry.java} with 6 Bedrock vertex field mappings.
+ * Bedrock顶点字段常量到Minecraft {@link DefaultVertexFormat}元素的映射。
  *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public enum VertexFormatElementEnum implements StringRepresentable {
     Position(DefaultVertexFormat.ELEMENT_POSITION),
     Normal(DefaultVertexFormat.ELEMENT_NORMAL),

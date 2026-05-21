@@ -1,11 +1,14 @@
 package io.github.tt432.eyelibimporter.model.importer;
 
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.util.List;
 
+/** @author TT432 */
+@NullMarked
 public record ImportedFaceData(
         List<Vector3f> positions,
         List<Vector2f> uvs,

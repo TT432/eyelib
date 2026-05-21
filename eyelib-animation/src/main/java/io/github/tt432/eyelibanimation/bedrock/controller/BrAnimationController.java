@@ -11,6 +11,7 @@ import io.github.tt432.eyelibanimation.AnimationEffects;
 import io.github.tt432.eyelibanimation.StateMachineAnimation;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibmolang.MolangScope;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
@@ -18,6 +19,8 @@ import java.util.Map;
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record BrAnimationController(
         io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerDefinition definition
 ) implements StateMachineAnimation<BrAcStateDefinition> {
@@ -65,7 +68,7 @@ public record BrAnimationController(
 
     @Override
     public void onFinish(Object data) {
-        // todo
+        // TODO: 实现动画完成时的回调逻辑。
     }
 
     @Override
@@ -148,4 +151,3 @@ public record BrAnimationController(
         }
     }
 }
-

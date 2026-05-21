@@ -12,6 +12,7 @@ import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class MolangCorpusLinterTest {
     private static final String INVALID_CORPUS_RESOURCE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/invalid";
 

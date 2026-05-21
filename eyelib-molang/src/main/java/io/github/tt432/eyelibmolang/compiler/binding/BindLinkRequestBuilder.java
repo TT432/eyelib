@@ -1,11 +1,19 @@
 package io.github.tt432.eyelibmolang.compiler.binding;
 
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 绑定链路请求构建器，推断可见参数类型。
+ *
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public final class BindLinkRequestBuilder {
     private BindLinkRequestBuilder() {
     }

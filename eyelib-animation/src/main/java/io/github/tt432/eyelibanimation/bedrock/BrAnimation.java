@@ -5,6 +5,7 @@ import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
 
 import com.mojang.serialization.Codec;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -12,7 +13,9 @@ import java.util.Map;
 /**
  * @author TT432
  */
+@NullMarked
 @Slf4j
+/** @author TT432 */
 public record BrAnimation(
         Map<String, BrAnimationEntry> animations
 ) {

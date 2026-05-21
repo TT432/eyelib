@@ -2,11 +2,15 @@ package io.github.tt432.eyelib.client.gui;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * Consumes mouse interaction like a vanilla container screen so editor-style
  * GUI surfaces do not leak clicks to world/item use behind the screen.
  */
+
+/** @author TT432 */
+@NullMarked
 public abstract class ModalWorksurfaceScreen extends Screen {
     protected ModalWorksurfaceScreen(Component title) {
         super(title);

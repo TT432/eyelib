@@ -8,6 +8,7 @@ import io.github.tt432.eyelibattachment.capability.AnimationComponentInfo;
 import io.github.tt432.eyelibmolang.MolangValue;
 import lombok.Getter;
 
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,7 +19,9 @@ import java.util.WeakHashMap;
 /**
  * @author TT432
  */
+@NullMarked
 @Getter
+/** @author TT432 */
 public class AnimationComponent {
     private static final Set<AnimationComponent> INSTANCES = java.util.Collections.newSetFromMap(new WeakHashMap<>());
 

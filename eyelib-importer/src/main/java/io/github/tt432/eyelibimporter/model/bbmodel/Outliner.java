@@ -2,16 +2,18 @@ package io.github.tt432.eyelibimporter.model.bbmodel;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * @author TT432
- */
+/** BBModel 大纲层级，包含子节点和立方体引用。
+ * @author TT432 */
+@NullMarked
 @SuppressWarnings("NullAway")
+/** @author TT432 */
 public record Outliner(
         String uuid,
         Optional<Group> group,
@@ -54,4 +56,3 @@ public record Outliner(
                     children.stream().filter(c -> c.outliner != null).map(CubeOrOutliner::outliner).toList()
             ))));
 }
-

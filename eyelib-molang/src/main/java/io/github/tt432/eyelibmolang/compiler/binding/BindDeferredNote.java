@@ -1,7 +1,13 @@
 package io.github.tt432.eyelibmolang.compiler.binding;
 
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.SourceSpan;
+import org.jspecify.annotations.NullMarked;
 
+/**
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public record BindDeferredNote(
         SourceSpan span,
         Reason reason,

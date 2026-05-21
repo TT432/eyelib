@@ -10,11 +10,12 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Canonical particle-module runtime definition produced from the importer-owned raw Bedrock schema.
- * <p>
- * This record intentionally keeps importer raw component and Molang-backed curve/event values intact so
- * later runtime phases can preserve behavior without reparsing or silently dropping unknown Bedrock data.
+ * 由导入器拥有的原始基岩版模式生成的规范粒子模块运行时定义。
+ * 此 record 有意保留导入器的原始组件和 Molang 支持的曲线/事件值，以便后续运行时阶段可以保持行为而不重新解析或静默丢弃未知的基岩版数据。
+ *
+ * @author TT432
  */
+/** @author TT432 */
 public record ParticleDefinition(
         String formatVersion,
         String identifier,

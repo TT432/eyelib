@@ -1,16 +1,16 @@
 package io.github.tt432.eyelibmolang.mapping.api;
 
+import org.jspecify.annotations.NullMarked;
+
 import java.util.Optional;
 
 /**
- * Host context for typed host object publication and lookup.
- * <p>
- * This is the replacement for legacy {@code MolangOwnerSet}
- * based raw-class lookup. Consumers publish typed host objects via {@link #put(HostRole, Object)}
- * and retrieve them via {@link #get(HostRole)}.
+ * 类型化主机对象发布和查找的主机上下文，替代旧的 Class 查找方式。
  *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public interface HostContext {
     /**
      * Looks up a host object by its HostRole.

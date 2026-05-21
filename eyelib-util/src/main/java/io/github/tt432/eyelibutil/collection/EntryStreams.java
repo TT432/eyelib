@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 /**
  * @author Argon4W
  */
+/** @author TT432 */
 public class EntryStreams {
     public static <T1, T2, R> BiFunction<T1, T2, R> swap(BiFunction<T2, T1, R> function) {
         return (t1, t2) -> function.apply(t2, t1);

@@ -3,14 +3,15 @@ package io.github.tt432.eyelibmaterial.shared;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.util.StringRepresentable;
+import org.jspecify.annotations.NullMarked;
 
 /**
- * Pure data record for a single sampler state entry.
- * <p>
- * No GL/LWJGL/MC dependencies — suitable for platform-free serialization.
+ * 单个采样器状态条目的纯数据记录。
  *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record BrSamplerState(
         int samplerIndex,
         TextureFilter textureFilter,

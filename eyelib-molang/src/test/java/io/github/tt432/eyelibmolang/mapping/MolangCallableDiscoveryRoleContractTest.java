@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class MolangCallableDiscoveryRoleContractTest {
     @AfterEach
     void tearDown() {

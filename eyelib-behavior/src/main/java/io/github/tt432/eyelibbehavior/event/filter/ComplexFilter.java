@@ -12,6 +12,7 @@ import java.util.Map;
  * @author TT432
  */
 @AllArgsConstructor
+/** @author TT432 */
 public sealed class ComplexFilter implements Filter permits ComplexFilter.AllOf, ComplexFilter.OneOf, ComplexFilter.NoneOf {
     public final List<Filter> filters;
 

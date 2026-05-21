@@ -1,17 +1,19 @@
 package io.github.tt432.eyelibparticle.api;
 
 /**
- * Extracts the stable string identifier for a particle definition.
+ * 提取粒子定义的稳定字符串标识符。
  *
- * @param <T> particle definition type supplied by the consuming runtime adapter
+ * @param <T> 由消费方运行时适配器提供的粒子定义类型
+ * @author TT432
  */
 @FunctionalInterface
+/** @author TT432 */
 public interface ParticleIdentifier<T> {
     /**
-     * Returns the string identifier used to publish a particle definition.
+     * 返回用于发布粒子定义的字符串标识符。
      *
-     * @param particle particle definition
-     * @return stable string particle identifier
+     * @param particle 粒子定义
+     * @return 稳定的字符串粒子标识符
      */
     String identify(T particle);
 }

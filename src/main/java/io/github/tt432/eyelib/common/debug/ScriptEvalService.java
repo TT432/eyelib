@@ -8,7 +8,10 @@ import org.codehaus.janino.SimpleCompiler;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import org.jspecify.annotations.NullMarked;
 
+/** @author TT432 */
+@NullMarked
 public final class ScriptEvalService {
 
     private static final String TEMPLATE = """

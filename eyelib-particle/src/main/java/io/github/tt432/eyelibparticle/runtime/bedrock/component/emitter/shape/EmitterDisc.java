@@ -8,6 +8,7 @@ import io.github.tt432.eyelibmolang.MolangValue3;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterParticleComponent;
 import org.joml.Vector3f;
 
+/** @author TT432 */
 public record EmitterDisc(
         MolangValue3 planeNormal,
         MolangValue3 offset,

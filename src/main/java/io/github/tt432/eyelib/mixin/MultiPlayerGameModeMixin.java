@@ -14,11 +14,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @Mixin(MultiPlayerGameMode.class)
+@NullMarked
+/** @author TT432 */
 public class MultiPlayerGameModeMixin {
     @Shadow
     private boolean isDestroying;

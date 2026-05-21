@@ -22,10 +22,14 @@ import java.util.function.Function;
 
 import static io.github.tt432.eyelibmolang.MolangValue.FALSE;
 import static io.github.tt432.eyelibmolang.MolangValue.TRUE;
+import org.jspecify.annotations.NullMarked;
 
 @MolangMapping(value = "query", pureFunction = false)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @SuppressWarnings("unused")
+
+/** @author TT432 */
+@NullMarked
 public final class MolangQuery {
     @MolangFunction(value = "anim_time", alias = "life_time", description = "动画播放秒数")
     public static float animTime(MolangScope scope) {

@@ -45,6 +45,7 @@ import java.util.stream.Stream;
  * @author TT432
  */
 @SuppressWarnings({"unchecked", "rawtypes", "unused"})
+/** @author TT432 */
 public sealed interface TupleCodec extends Codec<List<Object>> {
     List<Codec<?>> getCodecs();
 

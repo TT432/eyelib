@@ -5,6 +5,7 @@ import io.github.tt432.eyelibmaterial.shared.DepthFunc;
 import io.github.tt432.eyelibmaterial.shared.MsaaSupport;
 import io.github.tt432.eyelibmaterial.shared.PrimitiveMode;
 import io.github.tt432.eyelibmaterial.shared.VertexFormatElementEnum;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -13,14 +14,10 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * Importer Bedrock material entry — delegates CODEC to shared pure-data types.
- * <p>
- * All nested types (Defines, SamplerStates, States, Blend, Stencil) and enums
- * now come from {@code io.github.tt432.eyelibmaterial.shared}.  The CODEC is a
- * thin {@code xmap} over {@code shared.BrMaterialEntry.CODEC}, converting between
- * the shared record and this importer record via {@link #fromShared} / {@link #toShared}.
- */
+/** CODEC 委托给共享纯数据类型的 import 层材料条目。
+ * @author TT432 */
+@NullMarked
+/** @author TT432 */
 public record BrMaterialEntry(
         String base,
         String name,
@@ -42,15 +39,11 @@ public record BrMaterialEntry(
         List<Map<String, BrMaterialEntry>> variants
 ) {
 
-    // ---- CODEC: delegates to shared pure-data CODEC, then xmaps ----------
-
     public static final Function<String, Codec<BrMaterialEntry>> CODEC = name ->
             io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.CODEC.apply(name).xmap(
                     BrMaterialEntry::fromShared,
                     BrMaterialEntry::toShared
             );
-
-    // ---- Conversion: shared → importer ------------------------------------
 
     static BrMaterialEntry fromShared(
             io.github.tt432.eyelibmaterial.shared.BrMaterialEntry s) {
@@ -83,8 +76,6 @@ public record BrMaterialEntry(
         return m.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> fromShared(e.getValue())));
     }
-
-    // ---- Conversion: importer → shared ------------------------------------
 
     static io.github.tt432.eyelibmaterial.shared.BrMaterialEntry toShared(
             BrMaterialEntry e) {

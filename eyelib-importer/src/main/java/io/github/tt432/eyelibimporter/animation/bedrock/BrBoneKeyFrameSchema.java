@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+/** @author TT432 */
+@org.jspecify.annotations.NullMarked
 public record BrBoneKeyFrameSchema(
         List<MolangValue3> dataPoints,
         LerpMode lerpMode

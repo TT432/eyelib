@@ -1,7 +1,18 @@
 package io.github.tt432.eyelibanimation;
-import lombok.AccessLevel; import lombok.NoArgsConstructor; import org.jspecify.annotations.Nullable;
+
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
 import java.util.Collection;
+
+/**
+ * @author TT432
+ */
+@NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public final class AnimationLookup {
     @Nullable public static Animation get(String name) { return AnimationManager.INSTANCE.get(name); }
     public static Collection<String> names() { return AnimationManager.INSTANCE.getAllData().keySet(); }

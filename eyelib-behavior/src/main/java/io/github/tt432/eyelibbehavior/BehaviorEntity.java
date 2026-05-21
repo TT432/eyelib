@@ -10,6 +10,7 @@ import java.util.Map;
 /**
  * @author TT432
  */
+/** @author TT432 */
 public record BehaviorEntity(
         ResourceLocation identifier,
         Map<String, ComponentGroup> component_groups

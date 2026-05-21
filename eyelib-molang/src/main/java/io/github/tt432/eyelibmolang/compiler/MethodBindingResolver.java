@@ -4,6 +4,7 @@ import io.github.tt432.eyelibmolang.mapping.api.MolangFunction;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.FunctionInfo;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.FunctionParameterRole;
+import org.jspecify.annotations.NullMarked;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -11,6 +12,13 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Optional;
 
+/**
+ * 根据 Molang 可见参数类型匹配方法绑定。
+ *
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public class MethodBindingResolver {
 
     public static Optional<MethodBinding> resolve(

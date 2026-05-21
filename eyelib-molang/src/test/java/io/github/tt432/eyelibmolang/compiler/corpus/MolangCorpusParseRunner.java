@@ -19,6 +19,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+/** @author TT432 */
 final class MolangCorpusParseRunner {
     MolangParseResult parseOnly(String source) {
         List<MolangDiagnostic> diagnostics = new ArrayList<>();

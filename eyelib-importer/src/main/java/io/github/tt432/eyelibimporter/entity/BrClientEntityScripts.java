@@ -5,6 +5,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.MolangValue;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +19,8 @@ import java.util.Optional;
  * @param animate       该脚本在pre_animation之后的每一帧运行。这是运行动画和动画控制器的地方。每一帧中的每个动画或动画控制器都会运行此键。
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record BrClientEntityScripts(
         MolangValue initialize,
         MolangValue pre_animation,

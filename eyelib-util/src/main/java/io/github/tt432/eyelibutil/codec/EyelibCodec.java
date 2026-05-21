@@ -25,6 +25,7 @@ import java.util.stream.Stream;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public class EyelibCodec {
     public static final Codec<Vector2f> VEC2F = io.github.tt432.eyelibutil.codec.ChinExtraCodecs.tuple(Codec.FLOAT, Codec.FLOAT)
                                                                                                 .bmap(Vector2f::new, v -> Tuple.of(v.x, v.y));
@@ -192,4 +193,3 @@ public class EyelibCodec {
         }
     }
 }
-

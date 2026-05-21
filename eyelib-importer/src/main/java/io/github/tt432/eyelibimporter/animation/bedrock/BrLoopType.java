@@ -3,13 +3,15 @@ package io.github.tt432.eyelibimporter.animation.bedrock;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.function.Function;
 
-/**
- * @author TT432
- */
+/** Bedrock 动画循环类型（停在最后一帧 / 循环 / 播放一次）。
+ * @author TT432 */
+@NullMarked
 @Slf4j
+/** @author TT432 */
 public enum BrLoopType {
     HOLD_ON_LAST_FRAME,
     LOOP,

@@ -8,14 +8,15 @@ import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
-
+/** @author TT432 */
+@org.jspecify.annotations.NullMarked
 final class BbModelCodecs {
     private BbModelCodecs() {
     }

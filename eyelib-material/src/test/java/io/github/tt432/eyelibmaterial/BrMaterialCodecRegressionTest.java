@@ -3,28 +3,19 @@ package io.github.tt432.eyelibmaterial;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelibmaterial.material.BrMaterial;
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * JSON roundtrip regression tests for {@link BrMaterial#CODEC}.
- * <p>
- * TDD RED phase: These tests may currently fail due to incomplete type definitions.
- * They establish a safety net that will turn GREEN when the shared type merge (Task 12)
- * completes without breaking JSON serialization compatibility.
- * <p>
- * Each test loads the full vanilla.material JSON, decodes via CODEC, re-encodes,
- * decodes again, and asserts the two decoded objects are equal.
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 class BrMaterialCodecRegressionTest {
 
-    /**
-     * The vanilla.material content as embedded JSON string.
-     * Source: {@code src/main/resources/assets/eyelib/eyelib/materials/vanilla.material}
-     * in the root project.
-     */
     private static final String VANILLA_MATERIAL_JSON = """
             {
               "materials": {
@@ -56,12 +47,6 @@ class BrMaterialCodecRegressionTest {
             }
             """;
 
-    /**
-     * Performs a full encode-decode roundtrip on the vanilla.material JSON.
-     *
-     * @param entryKey the material entry key to verify exists in the result
-     * @return the decoded {@link BrMaterial} (used for additional assertions)
-     */
     private static BrMaterial roundtripVanillaMaterial(String entryKey) {
         var jsonElement = JsonParser.parseString(VANILLA_MATERIAL_JSON);
         var jsonObject = jsonElement.getAsJsonObject();

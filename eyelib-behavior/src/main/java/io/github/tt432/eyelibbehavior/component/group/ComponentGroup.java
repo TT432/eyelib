@@ -19,6 +19,7 @@ import java.util.Map;
  * @author TT432
  */
 @Slf4j
+/** @author TT432 */
 public record ComponentGroup(
         Map<String, Map<String, Component>> components
 ) {

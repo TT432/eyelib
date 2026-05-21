@@ -3,6 +3,7 @@ package io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+/** @author TT432 */
 public record EmitterLocalSpace(
         boolean position,
         boolean rotation,

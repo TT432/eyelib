@@ -3,6 +3,7 @@ package io.github.tt432.eyelibmaterial.gl;
 import com.mojang.serialization.Codec;
 import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
 import net.minecraft.util.StringRepresentable;
+import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
@@ -12,6 +13,8 @@ import java.util.function.BiConsumer;
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public enum GLStates implements StringRepresentable {
     EnableAlphaToCoverage(
             (material, materials) -> {

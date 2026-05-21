@@ -1,10 +1,15 @@
 package io.github.tt432.eyelibmolang.mapping.api;
 
 import io.github.tt432.eyelibmolang.MolangScope;
+import org.jspecify.annotations.NullMarked;
 
 /**
- * Static bridge that lets mc-side code install a query runtime port.
+ * MC 侧安装查询运行时适配的静态桥接。
+ *
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public final class MolangQueryRuntimeBridge {
     private static volatile MolangQueryRuntime runtime = MolangQueryRuntime.NOOP;
 

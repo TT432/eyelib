@@ -2,6 +2,12 @@ package io.github.tt432.eyelibattachment.dataattach;
 
 import org.jspecify.annotations.Nullable;
 
+/**
+ * 数据附属存储的读写接口。
+ *
+ * @author TT432
+ */
+/** @author TT432 */
 public interface DataAttachmentStorage {
     <T> boolean has(DataAttachmentType<T> attachment);
 

@@ -6,6 +6,7 @@ import net.minecraft.network.FriendlyByteBuf;
 /**
  * @author TT432
  */
+/** @author TT432 */
 public record UpdateDestroyInfoPacket(
         boolean dig
 ) {

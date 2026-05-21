@@ -6,6 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibimporter.addon.BedrockResourceValue;
 import io.github.tt432.eyelibimporter.addon.BedrockVersionValue;
 import io.github.tt432.eyelibimporter.util.ImporterCodecUtil;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,8 @@ import java.util.Optional;
  * @param particle_effects 短名称 -> 全名
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record BrClientEntity(
         String identifier,
         Optional<BedrockVersionValue> min_engine_version,

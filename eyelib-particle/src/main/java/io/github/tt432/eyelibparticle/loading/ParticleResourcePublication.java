@@ -18,6 +18,7 @@ import java.util.function.Function;
 /**
  * Parses source-keyed Bedrock particle JSON resources and publishes valid runtime definitions.
  */
+/** @author TT432 */
 public final class ParticleResourcePublication {
     private ParticleResourcePublication() {
     }

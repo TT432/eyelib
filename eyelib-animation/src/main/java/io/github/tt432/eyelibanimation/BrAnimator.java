@@ -6,13 +6,16 @@ import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.MolangValue;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Map;
 
 /**
  * @author TT432
  */
+@NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public final class BrAnimator {
     public static ModelRuntimeData tickAnimation(AnimationComponent component, MolangScope scope, AnimationEffects effects,
                                                  float ticks, Runnable animationStartFeedback) {

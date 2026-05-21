@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class ImporterModuleIdentityTest {
     private static final Path PROJECT_ROOT = projectRoot();
     private static final Path MODULE_ROOT = PROJECT_ROOT.resolve("eyelib-importer");

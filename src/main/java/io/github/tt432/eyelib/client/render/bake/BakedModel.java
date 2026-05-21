@@ -7,10 +7,15 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import static com.mojang.blaze3d.vertex.DefaultVertexFormat.NEW_ENTITY;
+import org.jspecify.annotations.NullMarked;
 
 /**
+ * 预烘焙的模型数据。
+ *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record BakedModel(
         Int2ObjectMap<BakedBone> bones
 ) {

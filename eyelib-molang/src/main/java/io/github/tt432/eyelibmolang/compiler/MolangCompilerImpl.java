@@ -8,6 +8,7 @@ import io.github.tt432.eyelibmolang.compiler.frontend.MolangParserFrontendResult
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.type.MolangObject;
+import org.jspecify.annotations.NullMarked;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -16,6 +17,13 @@ import java.lang.invoke.MethodType;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Molang 编译器实现：解析 → 绑定 → 生成字节码 → 加载。
+ *
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public final class MolangCompilerImpl implements MolangCompiler {
     private static final MolangBinder BINDER = new MolangBinder();
 

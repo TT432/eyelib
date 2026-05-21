@@ -5,6 +5,7 @@ import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.Particl
 
 import java.util.List;
 
+/** @author TT432 */
 public record ParticleExpireIfNotInBlocks(
         List<String> blocks
 ) implements ParticleParticleComponent {

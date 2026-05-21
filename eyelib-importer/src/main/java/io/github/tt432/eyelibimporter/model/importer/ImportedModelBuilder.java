@@ -6,10 +6,15 @@ import io.github.tt432.eyelibmodel.locator.LocatorEntry;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.joml.Vector3f;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/** 将中间骨骼/面数据构建为 eyewlib Model 对象，处理顶点绕组和法线方向。
+ * @author TT432 */
+@NullMarked
+/** @author TT432 */
 final class ImportedModelBuilder {
     private ImportedModelBuilder() {
     }
@@ -68,33 +73,9 @@ final class ImportedModelBuilder {
     }
 
     /**
-     * Builds a {@link Model.Face} from imported face data, correcting vertex winding order
-     * and face normal direction for OpenGL rendering.
-     *
-     * <h3>Why reversal is needed</h3>
-     * <p>The vertex positions produced by the Bedrock / BBModel import layer
-     * ({@link ImportedModelData}) follow Blockbench's winding convention, which produces
-     * <b>clockwise (CW)</b> triangles when a face is viewed from the outside of the cube.
-     * Blockbench renders with {@code THREE.DoubleSide} (no face culling), so the winding
-     * direction is irrelevant there.</p>
-     *
-     * <p>eyelib renders with OpenGL's default {@code GL_CCW} front-face convention and
-     * {@code GL_BACK} culling. Under this convention CW-wound faces are treated as
-     * back-faces and culled, making them invisible from the outside.</p>
-     *
-     * <h3>What this method does</h3>
-     * <ul>
-     *   <li>Reverses the vertex iteration order (last-to-first), converting the winding
-     *       from CW to CCW so OpenGL treats the face as a front-face.</li>
-     *   <li>Negates the imported normal vector. The imported normal is inward-facing
-     *       (derived from the original CW winding via cross product); negating it produces
-     *       the correct outward-facing normal for the CCW-wound face.</li>
-     *   <li>Preserves the original position-to-UV pairing by iterating both
-     *       {@code positions} and {@code uvs} with the same reversed index.</li>
-     * </ul>
-     *
-     * @param face the imported face data with CW-wound positions and inward-facing normal
-     * @return a model face with CCW-wound vertices and outward-facing normal
+     * 将导入的面数据转为 OpenGL 渲染用的逆时针顶点绕组和向外法线。
+     * Blockbench 使用顺时针绕组和双面渲染，而 OpenGL 默认逆时针为正面并开启背面剔除。
+     * 此处反转顶点顺序并将法线取反以匹配 OpenGL 约定。
      */
     private static Model.Face buildFace(ImportedFaceData face) {
         List<Model.Vertex> vertexes = new ArrayList<>();

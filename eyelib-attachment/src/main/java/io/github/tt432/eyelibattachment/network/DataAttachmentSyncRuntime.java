@@ -14,7 +14,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.Nullable;
 
+/**
+ * 数据附属网络同步的运行时入口。
+ *
+ * @author TT432
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public final class DataAttachmentSyncRuntime {
     public static <C> void syncTrackedAndSelf(DataAttachmentType<C> attachment, Entity entity, C value) {
         EyelibNetworkTransport.sendToTrackedAndSelf(entity, new DataAttachmentUpdatePacket<>(entity.getId(), attachment, value));

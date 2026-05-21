@@ -4,21 +4,26 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NullMarked;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
+/** .bbmodel 文件的磁盘加载器。
+ * @author TT432 */
+@NullMarked
 @Slf4j
+/** @author TT432 */
 public class BBModelLoader {
     private static final Gson GSON = new Gson();
 
     /**
-     * Loads a .bbmodel file from disk.
+     * 从磁盘加载 .bbmodel 文件。
      *
-     * @param file The file to load.
-     * @return The parsed BBModel object.
-     * @throws IOException If file reading fails or parsing fails.
+     * @param file 要加载的文件。
+     * @return 解析后的 BBModel 对象。
+     * @throws IOException 文件读取或解析失败时抛出。
      */
     public BBModel load(File file) throws IOException {
         if (file == null || !file.exists()) {

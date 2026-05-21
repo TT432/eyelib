@@ -16,10 +16,13 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public class EntitiesListPanel extends ScrollPanel {
 
     static EyelibManagerScreen.@Nullable EntityButton lastSelected;
@@ -174,4 +177,3 @@ public class EntitiesListPanel extends ScrollPanel {
 
     }
 }
-

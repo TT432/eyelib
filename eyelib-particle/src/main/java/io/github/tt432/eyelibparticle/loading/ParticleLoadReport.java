@@ -6,6 +6,7 @@ import java.util.Objects;
 /**
  * Result of publishing source-keyed particle JSON resources into the module registry.
  */
+/** @author TT432 */
 public record ParticleLoadReport(
         List<String> processedSourceIds,
         List<String> publishedIdentifiers,

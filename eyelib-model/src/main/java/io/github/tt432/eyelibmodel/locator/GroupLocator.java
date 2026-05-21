@@ -10,6 +10,10 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * @author TT432
+ */
+/** @author TT432 */
 public record GroupLocator(
         Int2ObjectMap<GroupLocator> children,
         List<LocatorEntry> cubes

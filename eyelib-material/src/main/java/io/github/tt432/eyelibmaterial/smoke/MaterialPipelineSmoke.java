@@ -35,6 +35,7 @@ import java.util.Optional;
         priority = 10,
         modId = "eyelibmaterial"
 )
+/** @author TT432 */
 public class MaterialPipelineSmoke {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MaterialPipelineSmoke.class);

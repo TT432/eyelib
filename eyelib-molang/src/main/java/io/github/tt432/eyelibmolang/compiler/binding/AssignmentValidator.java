@@ -1,10 +1,18 @@
 package io.github.tt432.eyelibmolang.compiler.binding;
 
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 
+/**
+ * 赋值语句目标合法性验证器。
+ *
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public final class AssignmentValidator {
     private AssignmentValidator() {
     }

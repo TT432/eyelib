@@ -15,6 +15,7 @@ import java.util.*;
 /**
  * @author TT432
  */
+/** @author TT432 */
 public class EntityBehaviorData {
     public static final Codec<EntityBehaviorData> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             BehaviorEntity.CODEC.optionalFieldOf("behavior").forGetter(o -> o.behavior),
@@ -37,7 +38,7 @@ public class EntityBehaviorData {
     }
 
     public void setup() {
-        // todo 临时使用
+        // TODO: 临时使用
         for (ComponentGroup componentGroup : componentGroups) {
             for (Map<String, Component> value : componentGroup.components().values()) {
                 value.values().forEach(component -> components.put(component.getClass(), component));

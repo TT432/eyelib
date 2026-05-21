@@ -2,6 +2,7 @@ package io.github.tt432.eyelibparticle.network;
 
 import net.minecraft.network.FriendlyByteBuf;
 
+/** @author TT432 */
 public record RemoveParticlePacket(
         String removeId
 ) {

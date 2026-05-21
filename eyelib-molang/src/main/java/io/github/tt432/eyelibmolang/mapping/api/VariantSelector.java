@@ -3,6 +3,7 @@ package io.github.tt432.eyelibmolang.mapping.api;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.FunctionInfo;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.FunctionParameterRole;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.VisibleArgumentKind;
+import org.jspecify.annotations.NullMarked;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.MethodData;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.PublicationSignature;
 import lombok.AccessLevel;
@@ -13,9 +14,13 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * 查询函数变体选择策略。
+ *
  * @author TT432
  */
+@NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public class VariantSelector {
 
     @Nullable

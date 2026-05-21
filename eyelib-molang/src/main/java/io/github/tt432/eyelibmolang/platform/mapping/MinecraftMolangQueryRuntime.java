@@ -3,7 +3,13 @@ package io.github.tt432.eyelibmolang.platform.mapping;
 import io.github.tt432.eyelibmolang.mapping.api.MolangQueryRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
+import org.jspecify.annotations.NullMarked;
 
+/**
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public final class MinecraftMolangQueryRuntime implements MolangQueryRuntime {
     @Override
     public float actorCount() {

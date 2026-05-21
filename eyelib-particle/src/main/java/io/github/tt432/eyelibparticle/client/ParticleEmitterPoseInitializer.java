@@ -10,6 +10,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * Particle-owned pose initialization for emitters spawned from entity/locator context.
  */
+/** @author TT432 */
 public final class ParticleEmitterPoseInitializer {
     private ParticleEmitterPoseInitializer() {
     }

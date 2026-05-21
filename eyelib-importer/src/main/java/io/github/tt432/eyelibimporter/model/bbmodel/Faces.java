@@ -3,7 +3,10 @@ package io.github.tt432.eyelibimporter.model.bbmodel;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import lombok.With;
+import org.jspecify.annotations.NullMarked;
 
+/** @author TT432 */
+@NullMarked
 @With
 public record Faces(
         FaceData north,

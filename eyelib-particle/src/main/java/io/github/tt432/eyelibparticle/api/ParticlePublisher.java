@@ -4,19 +4,21 @@ import java.util.LinkedHashMap;
 import java.util.Objects;
 
 /**
- * Publication seam that flattens particle definitions into a string-keyed {@link ParticleStore}.
+ * 将粒子定义扁平化到字符串键控的 {@link ParticleStore} 中的发布接缝。
  *
- * @param <T> particle definition type supplied by the consuming runtime adapter
+ * @param <T> 由消费方运行时适配器提供的粒子定义类型
+ * @author TT432
  */
+/** @author TT432 */
 public final class ParticlePublisher<T> {
     private final ParticleStore<T> store;
     private final ParticleIdentifier<? super T> identifier;
 
     /**
-     * Creates a publisher backed by the provided store and identifier extractor.
+     * 创建一个由指定的存储和标识符提取器支持的发布器。
      *
-     * @param store      particle store to publish into
-     * @param identifier extracts each particle's canonical string identifier
+     * @param store      要发布到的粒子存储
+     * @param identifier 提取每个粒子的规范字符串标识符
      */
     public ParticlePublisher(ParticleStore<T> store, ParticleIdentifier<? super T> identifier) {
         this.store = Objects.requireNonNull(store, "store");
@@ -24,9 +26,9 @@ public final class ParticlePublisher<T> {
     }
 
     /**
-     * Publishes a single particle under the identifier supplied by the identifier extractor.
+     * 在标识符提取器提供的标识符下发布单个粒子。
      *
-     * @param particle particle definition to publish
+     * @param particle 要发布的粒子定义
      */
     public void publishParticle(T particle) {
         T checkedParticle = Objects.requireNonNull(particle, "particle");
@@ -34,11 +36,10 @@ public final class ParticlePublisher<T> {
     }
 
     /**
-     * Replaces all particles using identifiers supplied by the identifier extractor.
-     * <p>
-     * Iteration order is preserved through {@link LinkedHashMap} so replacement order remains stable.
+     * 使用标识符提取器提供的标识符替换所有粒子。
+     * 迭代顺序通过 {@link LinkedHashMap} 保持，因此替换顺序保持稳定。
      *
-     * @param particles particle definitions to publish
+     * @param particles 要发布的粒子定义
      */
     public void replaceParticles(Iterable<? extends T> particles) {
         Objects.requireNonNull(particles, "particles");

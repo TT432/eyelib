@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
  * Client-thread submission seam for particle client integration.
  */
 @FunctionalInterface
+/** @author TT432 */
 public interface ParticleClientRuntimeServices {
     void submit(Runnable action);
 

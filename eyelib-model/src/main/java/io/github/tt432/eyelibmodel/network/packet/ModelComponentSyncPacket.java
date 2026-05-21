@@ -8,6 +8,10 @@ import net.minecraft.network.FriendlyByteBuf;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author TT432
+ */
+/** @author TT432 */
 public record ModelComponentSyncPacket(
         int entityId,
         List<RenderModelSyncPayload> modelInfo

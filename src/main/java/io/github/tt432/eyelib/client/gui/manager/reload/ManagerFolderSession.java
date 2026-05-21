@@ -7,7 +7,10 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
+import org.jspecify.annotations.NullMarked;
 
+/** @author TT432 */
+@NullMarked
 public final class ManagerFolderSession {
     private final ManagerResourceFolderWatcher folderWatcher = new ManagerResourceFolderWatcher();
     private boolean monitoredFolderUsesAddonBridge;
@@ -51,4 +54,3 @@ public final class ManagerFolderSession {
         monitoredFolderUsesAddonBridge = false;
     }
 }
-

@@ -14,7 +14,13 @@ import org.joml.Vector3fc;
 
 import java.util.List;
 
+/**
+ * 模型数据定义，包含骨骼、立方体及其定位器信息。
+ *
+ * @author TT432
+ */
 @With
+/** @author TT432 */
 public record Model(
         String name,
         Int2ObjectMap<Bone> toplevelBones,

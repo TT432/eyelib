@@ -10,7 +10,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
+import org.jspecify.annotations.NullMarked;
 
+/** @author TT432 */
+@NullMarked
 public final class AIDebugServer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AIDebugServer.class);

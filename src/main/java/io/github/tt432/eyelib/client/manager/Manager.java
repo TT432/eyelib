@@ -6,7 +6,10 @@ import io.github.tt432.eyelibutil.manager.ManagerWritePort;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
 
+/** @author TT432 */
+@NullMarked
 public abstract class Manager<T> implements ManagerReadPort<T>, ManagerWritePort<T> {
     private final ManagerStorage<T> storage = new ManagerStorage<>();
 
@@ -36,4 +39,3 @@ public abstract class Manager<T> implements ManagerReadPort<T>, ManagerWritePort
         storage.clear();
     }
 }
-

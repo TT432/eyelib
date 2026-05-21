@@ -1,5 +1,6 @@
 package io.github.tt432.eyelibimporter.model.bedrock;
 
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -7,6 +8,10 @@ import org.joml.Vector3f;
 import java.util.List;
 import java.util.Map;
 
+/** Bedrock 几何模型的数据结构。
+ * @author TT432 */
+@NullMarked
+/** @author TT432 */
 public record BedrockGeometryModel(
         List<Geometry> geometries
 ) {
@@ -26,9 +31,7 @@ public record BedrockGeometryModel(
     ) {
     }
 
-    /**
-     * Parsed Bedrock bone locator: name is the JSON key (without _null_ handling — use {@link #nullObject()}).
-     */
+    /** 解析后的 Bedrock 骨骼定位器。name 为 JSON key（_null_ 前缀已处理，参见 {@link #nullObject()}）。 */
     public record BoneLocatorEntry(
             String name,
             Vector3f offset,
@@ -82,4 +85,3 @@ public record BedrockGeometryModel(
     ) {
     }
 }
-

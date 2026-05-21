@@ -1,5 +1,7 @@
 package io.github.tt432.eyelibimporter.addon;
 
+/** @author TT432 */
+@org.jspecify.annotations.NullMarked
 public sealed interface BedrockResourceContent permits BedrockResourceContent.StructuredContent,
         BedrockResourceContent.TextContent, BedrockResourceContent.BinaryContent {
     record StructuredContent(BedrockResourceValue value) implements BedrockResourceContent {

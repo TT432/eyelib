@@ -5,8 +5,12 @@ import io.github.tt432.eyelibutil.manager.ManagerReadPort;
 import io.github.tt432.eyelibutil.manager.ManagerWritePort;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+
+/** @author TT432 */
+@NullMarked
 public final class AttachableManager extends Manager<BrClientEntity> {
     public static final AttachableManager INSTANCE = new AttachableManager();
 

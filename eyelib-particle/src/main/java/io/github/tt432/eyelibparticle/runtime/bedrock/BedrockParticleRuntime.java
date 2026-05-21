@@ -10,6 +10,7 @@ import java.util.Optional;
 /**
  * Small factory for module-owned Bedrock particle runtime objects.
  */
+/** @author TT432 */
 public final class BedrockParticleRuntime {
     private final ParticleDefinition definition;
     private final ParticleRuntimeEnvironment environment;

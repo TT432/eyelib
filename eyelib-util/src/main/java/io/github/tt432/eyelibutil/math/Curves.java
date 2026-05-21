@@ -10,6 +10,7 @@ import java.util.List;
  * @author DustW
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public class Curves {
     public static float lerpSplineCurve(List<Vector2f> points, float time) {
         float p = (points.size() - 1) * time;

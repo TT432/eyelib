@@ -1,10 +1,13 @@
 package io.github.tt432.eyelibmolang.type;
 
 import io.github.tt432.eyelibmolang.util.CalledByGeneratedMethod;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public interface MolangObject {
     float asFloat();
 

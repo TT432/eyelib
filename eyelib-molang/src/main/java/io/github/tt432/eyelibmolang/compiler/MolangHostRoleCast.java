@@ -1,5 +1,12 @@
 package io.github.tt432.eyelibmolang.compiler;
 
+import org.jspecify.annotations.NullMarked;
+
+/**
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public final class MolangHostRoleCast {
     private MolangHostRoleCast() {
     }

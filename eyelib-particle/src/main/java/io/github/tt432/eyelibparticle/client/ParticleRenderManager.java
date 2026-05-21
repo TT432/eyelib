@@ -15,6 +15,7 @@ import java.util.function.Predicate;
 /**
  * Module-owned client render manager for Bedrock particle emitters and particles.
  */
+/** @author TT432 */
 public final class ParticleRenderManager {
     public static final ParticleRenderManager INSTANCE = new ParticleRenderManager(ParticleClientRuntimeServices.minecraftClient());
 

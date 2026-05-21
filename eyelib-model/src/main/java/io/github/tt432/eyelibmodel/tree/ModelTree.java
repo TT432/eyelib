@@ -1,5 +1,9 @@
 package io.github.tt432.eyelibmodel.tree;
 
+/**
+ * @author TT432
+ */
+/** @author TT432 */
 public interface ModelTree<G extends ModelGroupNode<C>, C extends ModelCubeNode> {
     G getGroup(int groupId);
 }

@@ -16,11 +16,17 @@ import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
 import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 final class BrControllerExecutor {
     private BrControllerExecutor() {
     }
@@ -151,4 +157,3 @@ final class BrControllerExecutor {
                 multiplier * blendValue, infos, effects, animationStartFeedback);
     }
 }
-

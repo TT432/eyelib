@@ -1,7 +1,14 @@
 package io.github.tt432.eyelibmolang.compiler.binding;
 
+import org.jspecify.annotations.NullMarked;
+
 import java.util.List;
 
+/**
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public record BindResult(
         BoundMolang.BoundExprSet root,
         List<BindDiagnostic> diagnostics,

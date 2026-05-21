@@ -6,6 +6,10 @@ import com.mojang.serialization.Codec;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * @author TT432
+ */
+/** @author TT432 */
 public class CodecHelper {
     public static <T> Codec<T> withAlternative(final Codec<T> primary, final Codec<? extends T> alternative) {
         return Codec.either(primary, alternative).xmap(Eithers::unwrap, Either::left);

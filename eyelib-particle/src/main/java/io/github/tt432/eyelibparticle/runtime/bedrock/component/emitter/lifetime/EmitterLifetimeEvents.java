@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+/** @author TT432 */
 public record EmitterLifetimeEvents(
         List<String> creationEvent,
         List<String> expirationEvent,

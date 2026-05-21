@@ -1,10 +1,16 @@
 package io.github.tt432.eyelibmolang.compiler.binding;
 
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.SourceSpan;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public final class BoundMolang {
     private BoundMolang() {
     }

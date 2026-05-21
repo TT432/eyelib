@@ -14,6 +14,8 @@ import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/** @author TT432 */
+@org.jspecify.annotations.NullMarked
 public record BedrockAddonSideAggregate(
         LinkedHashMap<String, BrAnimationEntrySchema> animations,
         LinkedHashMap<String, BrAnimationControllerSchema> animationControllers,

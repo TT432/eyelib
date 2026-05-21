@@ -6,6 +6,7 @@ import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelibmolang.MolangValue3;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.ParticleParticleComponent;
 
+/** @author TT432 */
 public record ParticleMotionParametric(
         MolangValue3 relativePosition,
         MolangValue3 direction,

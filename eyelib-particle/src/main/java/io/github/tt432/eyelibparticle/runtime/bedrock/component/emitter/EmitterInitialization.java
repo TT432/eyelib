@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibmolang.MolangValue;
 
+/** @author TT432 */
 public record EmitterInitialization(
         MolangValue creationExpression,
         MolangValue perUpdateExpression

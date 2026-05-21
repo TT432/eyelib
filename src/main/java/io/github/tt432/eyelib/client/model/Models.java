@@ -10,10 +10,13 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public class Models {
     public static @Nullable Model merge(List<Model> models) {
         if (models.isEmpty()) return null;
@@ -98,4 +101,3 @@ public class Models {
         return new Model(modelA.name(), newBones, modelA.locator(), modelA.visibleBox());
     }
 }
-

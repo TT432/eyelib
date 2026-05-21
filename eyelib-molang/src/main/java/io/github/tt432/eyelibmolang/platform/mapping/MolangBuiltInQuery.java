@@ -38,12 +38,19 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
 
+import org.jspecify.annotations.NullMarked;
+
 import static io.github.tt432.eyelibmolang.MolangValue.FALSE;
 import static io.github.tt432.eyelibmolang.MolangValue.TRUE;
 
+/**
+ * @author TT432
+ */
+@NullMarked
 @MolangMapping(value = "query", pureFunction = false)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @SuppressWarnings("unused")
+/** @author TT432 */
 public final class MolangBuiltInQuery {
     @MolangFunction(value = "has_main_hand", description = "主手有物品")
     public static float hasMainHand(MolangScope scope) {

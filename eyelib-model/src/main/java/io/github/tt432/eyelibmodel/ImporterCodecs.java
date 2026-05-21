@@ -8,7 +8,11 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
+/**
+ * @author TT432
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public final class ImporterCodecs {
     public static final Codec<Vector3f> VECTOR3F = Codec.FLOAT.listOf().comapFlatMap(
             values -> values.size() == 3

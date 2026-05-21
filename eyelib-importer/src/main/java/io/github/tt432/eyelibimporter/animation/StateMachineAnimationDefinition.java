@@ -1,12 +1,14 @@
 package io.github.tt432.eyelibimporter.animation;
 
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * Immutable state-machine animation definition.
- */
+/** 不可变状态机动画定义。
+ * @author TT432 */
+@NullMarked
+/** @author TT432 */
 public interface StateMachineAnimationDefinition<S> {
     String name();
 

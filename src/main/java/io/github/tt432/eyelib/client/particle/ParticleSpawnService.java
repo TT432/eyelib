@@ -29,15 +29,16 @@ import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
+import org.jspecify.annotations.NullMarked;
 
 /**
- * Transitional root runtime adapter for {@link ParticleSpawnApi}.
- * <p>
- * Packet adaptation and root Minecraft/capability context wiring delegate particle-only spawn/runtime behavior into
- * {@link ParticleSpawnRuntimeAdapter}. Legacy root particle publication is handled before this service boundary. Remove
- * this facade after packet/runtime callers bind directly to particle module adapters/services.
+ * Transitional root runtime adapter for {@link ParticleSpawnApi}。
+ * 将粒子专属的生成/运行时行为委托给 {@link ParticleSpawnRuntimeAdapter}。
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+
+/** @author TT432 */
+@NullMarked
 public final class ParticleSpawnService {
     private static final ParticleSpawnRuntimeAdapter ADAPTER = new ParticleSpawnRuntimeAdapter(
             ParticleDefinitionRegistry.store(),

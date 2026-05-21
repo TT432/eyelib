@@ -24,6 +24,7 @@ import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.DEF
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class MolangCorpusHarnessTest {
     private static final String STARTER_CORPUS_RESOURCE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/starter";
     private static final String INVALID_PARSE_GOLDEN_RESOURCE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/invalid-parse-golden";

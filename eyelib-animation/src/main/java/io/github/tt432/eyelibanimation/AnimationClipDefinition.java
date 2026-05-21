@@ -1,12 +1,17 @@
 package io.github.tt432.eyelibanimation;
 
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
 
 /**
- * Timed animation clip definition with metadata and addressable tracks.
+ * 带时间信息的动画剪辑定义。
+ *
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public interface AnimationClipDefinition<I, T, LOOP, V> {
     String name();
 

@@ -6,8 +6,12 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 import java.util.LinkedHashMap;
+import org.jspecify.annotations.NullMarked;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+
+/** @author TT432 */
+@NullMarked
 public final class ClientEntityAssetRegistry {
     public static void publishClientEntity(BrClientEntity entity) {
         ClientEntityManager.writePort().put(entity.identifier(), entity);

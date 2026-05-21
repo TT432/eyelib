@@ -15,9 +15,13 @@ import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.jspecify.annotations.NullMarked;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE)
+
+/** @author TT432 */
+@NullMarked
 public final class ExtraEntityUpdateDataRuntimeHooks {
     @SubscribeEvent
     public static void onLivingDamage(LivingDamageEvent event) {

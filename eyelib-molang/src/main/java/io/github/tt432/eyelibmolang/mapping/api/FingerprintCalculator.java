@@ -8,6 +8,7 @@ import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.RegistryVersio
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.PublicationSignature;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -15,7 +16,9 @@ import java.util.stream.Collectors;
 /**
  * @author TT432
  */
+@NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public class FingerprintCalculator {
 
     static RegistryVersionRef buildRegistryVersionRef(Node toplevelNode) {

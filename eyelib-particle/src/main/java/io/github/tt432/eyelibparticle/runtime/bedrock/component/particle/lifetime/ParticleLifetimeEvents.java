@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+/** @author TT432 */
 public record ParticleLifetimeEvents(
         List<String> creationEvent,
         List<String> expirationEvent,

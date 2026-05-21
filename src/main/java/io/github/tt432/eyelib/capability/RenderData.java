@@ -19,11 +19,14 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @Getter
+@NullMarked
+/** @author TT432 */
 public class RenderData<T> {
     public static <T> Codec<RenderData<T>> codec() {
         return RecordCodecBuilder.create(ins -> ins.group(
@@ -88,4 +91,3 @@ public class RenderData<T> {
         scope.set("variable.scale", 1);
     }
 }
-

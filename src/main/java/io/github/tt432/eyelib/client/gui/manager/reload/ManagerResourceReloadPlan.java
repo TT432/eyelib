@@ -5,8 +5,12 @@ import lombok.NoArgsConstructor;
 
 import java.nio.file.Path;
 import java.util.Locale;
+import org.jspecify.annotations.NullMarked;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+
+/** @author TT432 */
+@NullMarked
 public final class ManagerResourceReloadPlan {
     public enum ReloadTarget {
         ANIMATION_JSON,

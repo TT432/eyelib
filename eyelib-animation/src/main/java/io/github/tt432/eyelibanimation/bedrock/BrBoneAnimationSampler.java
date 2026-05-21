@@ -3,9 +3,15 @@ package io.github.tt432.eyelibanimation.bedrock;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap;
 import io.github.tt432.eyelibutil.math.EyeMath;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.joml.Vector3f;
 
+/**
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public final class BrBoneAnimationSampler {
     private BrBoneAnimationSampler() {
     }
@@ -45,4 +51,3 @@ public final class BrBoneAnimationSampler {
         return null;
     }
 }
-

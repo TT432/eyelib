@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.PrimitiveCodec;
 import io.github.tt432.eyelibutil.codec.DispatchedMapCodec;
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,13 +13,10 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * TDD verification: DispatchedMapCodec roundtrip.
- * <p>
- * Tests that a simple string-keyed, string-valued map roundtrips correctly
- * through the dispatched map codec.
- *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 class DispatchedMapCodecTest {
 
     @Test

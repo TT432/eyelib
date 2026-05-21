@@ -1,5 +1,12 @@
 package io.github.tt432.eyelibanimation.bedrock;
 
+import org.jspecify.annotations.NullMarked;
+
+/**
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public enum BrAnimationEntryTrackName {
     SOUND_EFFECTS("sound_effects"),
     PARTICLE_EFFECTS("particle_effects"),

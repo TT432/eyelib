@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class ParticleClientIntegrationBoundaryTest {
     @Test
     void forgeHooksAreClientSideOnlyAndDelegateLifecycleWork() throws IOException {

@@ -16,10 +16,12 @@ import lombok.AllArgsConstructor;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+/** @author TT432 */
 public record DFSModel(
         ReferenceList<Frame> frames
 ) {
@@ -27,6 +29,7 @@ public record DFSModel(
         frames.forEach(frame -> frame.visit(params, context, visitor, cast(infos), stateMachine));
     }
 
+@NullMarked
     public static class StateMachine {
         public boolean render;
     }

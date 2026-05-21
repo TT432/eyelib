@@ -1,11 +1,17 @@
 package io.github.tt432.eyelibmolang.mapping.api;
 
+import org.jspecify.annotations.NullMarked;
+
 import java.util.List;
 
 /**
- * Platform-side discovery port for {@link MolangMapping} classes.
+ * 平台侧 {@link MolangMapping} 类发现接口。
+ *
+ * @author TT432
  */
+@NullMarked
 @FunctionalInterface
+/** @author TT432 */
 public interface MolangMappingDiscovery {
     List<MolangMappingClassEntry> discover();
 

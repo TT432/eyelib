@@ -10,11 +10,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @UtilityClass
+@NullMarked
+/** @author TT432 */
 public class ModelRenderer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModelRenderer.class);
     private static final AtomicInteger DEBUG_REMAINING = new AtomicInteger(Integer.getInteger("eyelib.debug.uv.limit", 256));

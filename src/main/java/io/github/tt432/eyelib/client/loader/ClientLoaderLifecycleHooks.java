@@ -12,8 +12,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
+import org.jspecify.annotations.NullMarked;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+
+/** @author TT432 */
+@NullMarked
 public final class ClientLoaderLifecycleHooks {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientLoaderLifecycleHooks.class);
 

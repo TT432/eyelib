@@ -1,5 +1,10 @@
 package io.github.tt432.eyelibmaterial.material;
 
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
@@ -20,27 +25,23 @@ import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.StringRepresentable;
+import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static org.lwjgl.opengl.GL11.GL_BACK;
 import static org.lwjgl.opengl.GL11.GL_FRONT;
 import static org.lwjgl.opengl.GL20.*;
 
 /**
- * Runtime Bedrock material entry with GL behavior layered on shared pure-data types.
- * <p>
- * CODEC delegates to {@code shared.BrMaterialEntry.CODEC} for serialization;
- * runtime-specific GL behavior ({@link ApplyAble}, {@link ModifyAble} default methods,
- * {@link #getRenderType(ResourceLocation)}) lives here only.
+ * 运行时Bedrock材质条目，在shared纯数据类型之上叠加GL行为。
+ * CODEC委托{@code shared.BrMaterialEntry.CODEC}进行序列化；
+ * 运行时GL行为（{@link ApplyAble}、{@link ModifyAble}默认方法、{@link #getRenderType(ResourceLocation)}）仅在此定义。
  *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record BrMaterialEntry(
         String base,
         String name,
@@ -68,8 +69,6 @@ public record BrMaterialEntry(
 
         List<Map<String, BrMaterialEntry>> variants
 ) {
-
-    // ---- ModifyAble with inheritance-resolution default methods (runtime only) ----
 
     private interface ModifyAble<T, S extends ModifyAble<T, S>> {
         Optional<List<T>> base();
@@ -131,8 +130,6 @@ public record BrMaterialEntry(
             return result;
         }
     }
-
-    // ---- Nested runtime records ------------------------------------------
 
     public record Defines(
             Optional<List<String>> base,
@@ -379,21 +376,16 @@ public record BrMaterialEntry(
         }
     }
 
-    // ---- CODEC: delegates to shared pure-data CODEC, then converts -------
-
     /**
-     * CODEC factory function. The {@code name} parameter (entry key, e.g. "cutout" or "cutout:base")
-     * is forwarded to the shared CODEC. Serialization is delegated entirely to
-     * {@code shared.BrMaterialEntry.CODEC}; conversion between shared and runtime types
-     * happens via {@link #fromShared} / {@link #toShared()}.
+     * CODEC工厂函数。{@code name}参数（条目键，如"cutout"或"cutout:base"）转发给shared CODEC。
+     * 序列化完全委托给{@code shared.BrMaterialEntry.CODEC}；
+     * shared与运行时类型之间的转换通过{@link #fromShared}/{@link #toShared()}完成。
      */
     public static final Function<String, Codec<BrMaterialEntry>> CODEC = name ->
             io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.CODEC.apply(name).xmap(
                     BrMaterialEntry::fromShared,
                     BrMaterialEntry::toShared
             );
-
-    // ---- Conversion: shared → runtime ------------------------------------
 
     static BrMaterialEntry fromShared(io.github.tt432.eyelibmaterial.shared.BrMaterialEntry shared) {
         return new BrMaterialEntry(
@@ -480,8 +472,6 @@ public record BrMaterialEntry(
                 io.github.tt432.eyelibmaterial.gl.stencil.StencilPassOp.valueOf(sf.stencilPassOp().name())
         );
     }
-
-    // ---- Conversion: runtime → shared ------------------------------------
 
     io.github.tt432.eyelibmaterial.shared.BrMaterialEntry toShared() {
         return new io.github.tt432.eyelibmaterial.shared.BrMaterialEntry(
@@ -577,19 +567,13 @@ public record BrMaterialEntry(
         );
     }
 
-    // ---- Variant methods -------------------------------------------------
+    // TODO: 未来运行时变体选择应由Molang查询驱动（如query.has_variant），当前仅按名称匹配
 
     /**
-     * Finds a variant material entry by name.
-     * <p>
-     * Variants are alternative material definitions selected at render time
-     * based on entity state (e.g., skinning mode).
+     * 按名称查找变体材质条目。
      *
-     * @param variantName the variant name to look up
-     * @return the variant BrMaterialEntry if found, empty otherwise
-     * @implNote TODO: Future runtime variant selection should be driven by
-     *           Molang queries (e.g., {@code query.has_variant}).
-     *           Currently returns the first matching variant by name only.
+     * @param variantName 要查找的变体名称
+     * @return 找到的BrMaterialEntry，否则为空
      */
     public Optional<BrMaterialEntry> getVariant(String variantName) {
         return variants.stream()
@@ -599,29 +583,19 @@ public record BrMaterialEntry(
                 .findFirst();
     }
 
-    /**
-     * @return true if this material has any variant definitions
-     */
     public boolean hasVariants() {
         return !variants.isEmpty();
     }
 
-    // ---- getRenderType ---------------------------------------------------
-
-    /** Shared shader program cache keyed by shader paths plus direct material defines. */
     private static final Map<String, Integer> SHADER_PROGRAM_CACHE = new ConcurrentHashMap<>();
 
     /**
-     * Produces a {@link RenderType} for this material entry.
-     * <p>
-     * When custom vertex/fragment shaders are both defined, a custom
-     * {@code CompositeRenderType} is built with the vertex format
-     * from {@link #vertexFields} and GL states mapped to {@link RenderStateShard}s.
-     * <p>
-     * When shaders are absent, falls back to {@link RenderTypeResolver#resolve(ResourceLocation)}.
+     * 为当前材质条目生成{@link RenderType}。
+     * 当自定义顶点/片段着色器均已定义时，构建自定义{@code CompositeRenderType}；
+     * 否则回退到{@link RenderTypeResolver#resolve(ResourceLocation)}。
      *
-     * @param texture the texture ResourceLocation to bind
-     * @return a ready-to-use RenderType
+     * @param texture 要绑定的纹理ResourceLocation
+     * @return 可直接使用的RenderType
      */
     public RenderType getRenderType(ResourceLocation texture) {
         if (vertexShader.isPresent() && fragmentShader.isPresent()) {
@@ -630,8 +604,6 @@ public record BrMaterialEntry(
         return RenderTypeResolver.resolve(new ResourceLocation(name)).factory().apply(texture);
     }
 
-    // ── state detection helpers ────────────────────────────────────────
-
     private boolean hasBlending() {
         return states.toList(this, Map.of()).contains(GLStates.Blending);
     }
@@ -639,8 +611,6 @@ public record BrMaterialEntry(
     private boolean hasState(GLStates target) {
         return states.toList(this, Map.of()).contains(target);
     }
-
-    // ── RenderStateShard factories ──────────────────────────────────────
 
     private RenderStateShard.TransparencyStateShard getTransparencyState() {
         if (hasBlending()) {
@@ -690,8 +660,6 @@ public record BrMaterialEntry(
         }
         return VertexFormatElementEnum.fromFields(fields);
     }
-
-    // ── custom RenderType construction ──────────────────────────────────
 
     private RenderType buildCustomRenderType(ResourceLocation texture) {
         // ensure shader is compiled and cached
@@ -746,11 +714,9 @@ public record BrMaterialEntry(
     }
 
     /**
-     * Returns the compiled ARB shader program for this material, or 0 if no shaders are defined.
-     * The renderer should bind this program via
-     * {@code ARBShaderObjects.glUseProgramObjectARB(program)} before drawing.
+     * 返回此材质的已编译ARB着色器程序；若无着色器定义则返回0。
      *
-     * @return OpenGL program ID, or 0 if none
+     * @return OpenGL程序ID，无则为0
      */
     public int getCompiledShaderProgram() {
         if (vertexShader.isEmpty() || fragmentShader.isEmpty()) {

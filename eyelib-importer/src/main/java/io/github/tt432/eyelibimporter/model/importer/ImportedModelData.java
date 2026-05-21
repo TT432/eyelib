@@ -11,6 +11,7 @@ import io.github.tt432.eyelibimporter.model.bbmodel.Group;
 import io.github.tt432.eyelibimporter.model.bbmodel.Outliner;
 import io.github.tt432.eyelibimporter.model.bbmodel.Texture;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -24,6 +25,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/** 从 Blockbench 或 Bedrock 源数据转换得到的中间模型表示，支持纹理重打包。
+ * @author TT432 */
+@NullMarked
+/** @author TT432 */
 public record ImportedModelData(
         String name,
         VisibleBox visibleBox,
@@ -476,14 +481,14 @@ public record ImportedModelData(
 
         List<Vector2f> uvsWork = mirrorUv ? mirrorUvsHorizontally(uvs) : uvs;
 
-        // Align with Blockbench Bedrock parser behavior:
-        // parseCube() flips up/down UV rectangles (face.uv = [u1,v1,u0,v0]).
+        // 对齐 Blockbench Bedrock 解析器行为：
+        // parseCube() 会翻转 up/down 的 UV 矩形 (face.uv = [u1,v1,u0,v0])。
         List<Vector2f> sourceUvs = ("up".equals(faceName) || "down".equals(faceName))
                 ? List.of(uvsWork.get(2), uvsWork.get(3), uvsWork.get(0), uvsWork.get(1))
                 : uvsWork;
 
-        // The face position order above already matches Blockbench CubeFace.UVToLocal()
-        // corner mapping for Bedrock cubes. Reordering here breaks UV-to-vertex pairing.
+        // 上面的面位置顺序已对齐 Blockbench CubeFace.UVToLocal()。
+        // Bedrock 立方体的角映射。在这里重排会破坏 UV 与顶点的对应关系。
         List<Vector3f> copiedPositions = facePositions.stream().map(Vector3f::new).toList();
         List<Vector2f> copiedUvs = sourceUvs.stream().map(Vector2f::new).toList();
         faces.add(new ImportedFaceData(copiedPositions, copiedUvs, normal(
@@ -561,7 +566,7 @@ public record ImportedModelData(
         float sx = cube.size().x;
         float sy = cube.size().y;
         float sz = cube.size().z;
-        // Match Blockbench Bedrock parseCube: from.x = -(origin.x + size.x), with inflate expanding the box
+        // 对齐 Blockbench Bedrock parseCube: from.x = -(origin.x + size.x)，inflate 向外扩展方块。
         float minX = (-(ox + sx + inf)) * scalar;
         float minY = (oy - inf) * scalar;
         float minZ = (oz - inf) * scalar;
@@ -586,7 +591,7 @@ public record ImportedModelData(
             return;
         }
 
-        // Match Blockbench Bedrock parseCube transforms:
+        // 对齐 Blockbench Bedrock parseCube 变换：
         // pivot.x *= -1; rotation.x/y *= -1
         Vector3f origin = new Vector3f(cube.pivot()).div(16);
         origin.x *= -1;
@@ -626,7 +631,7 @@ public record ImportedModelData(
         float dx = cube.size().x;
         float dy = cube.size().y;
         float dz = cube.size().z;
-        // Match Blockbench Bedrock parseCube box-uv side strip order: east, north, west, south.
+        // 对齐 Blockbench Bedrock parseCube box-uv 侧边条带顺序: east, north, west, south。
         Vector2f start = switch (faceName) {
             case "north" -> new Vector2f(uv.x + dz, uv.y + dz);
             case "east" -> new Vector2f(uv.x, uv.y + dz);
@@ -712,4 +717,3 @@ public record ImportedModelData(
     }
 
 }
-

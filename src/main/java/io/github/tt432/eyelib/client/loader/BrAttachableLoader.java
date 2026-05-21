@@ -16,9 +16,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.stream.Stream;
+import org.jspecify.annotations.NullMarked;
 
 @Slf4j
 @ResourceLoader
+
+/** @author TT432 */
+@NullMarked
 public class BrAttachableLoader extends BrResourcesLoader implements Searchable<BrClientEntity> {
     private static final Logger LOGGER = LoggerFactory.getLogger(BrAttachableLoader.class);
 

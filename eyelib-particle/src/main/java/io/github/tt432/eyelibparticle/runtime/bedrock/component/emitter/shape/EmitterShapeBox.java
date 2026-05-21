@@ -6,6 +6,7 @@ import io.github.tt432.eyelibmolang.MolangValue3;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterParticleComponent;
 import org.joml.Vector3f;
 
+/** @author TT432 */
 public record EmitterShapeBox(
         MolangValue3 offset,
         MolangValue3 halfDimensions,

@@ -2,6 +2,7 @@ package io.github.tt432.eyelibimporter.model.importer;
 
 import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibimporter.model.bbmodel.BBModel;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
@@ -9,6 +10,10 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Map;
 
+/** 模型文件导入入口，根据扩展名分派到 Blockbench 或 Bedrock 导入器。
+ * @author TT432 */
+@NullMarked
+/** @author TT432 */
 public final class ModelImporter {
     private ModelImporter() {
     }

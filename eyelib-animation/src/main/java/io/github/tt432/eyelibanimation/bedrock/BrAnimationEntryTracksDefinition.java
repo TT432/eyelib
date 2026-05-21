@@ -4,10 +4,16 @@ import io.github.tt432.eyelibanimation.AnimationEffect;
 import io.github.tt432.eyelibimporter.animation.NamedTrackContainerDefinition;
 import io.github.tt432.eyelibmolang.MolangValue;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.EnumMap;
 import java.util.Map;
 
+/**
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public record BrAnimationEntryTracksDefinition(
         BrAnimationEntryEffectTrackDefinition<BrEffectsKeyFrameDefinition> soundEffects,
         BrAnimationEntryEffectTrackDefinition<BrEffectsKeyFrameDefinition> particleEffects,

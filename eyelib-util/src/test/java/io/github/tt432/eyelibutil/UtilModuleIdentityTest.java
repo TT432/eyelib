@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class UtilModuleIdentityTest {
     private static final Pattern PROJECT_DEPENDENCY_CALL = Pattern.compile("\\bproject\\s*\\(");
     private static final Path PROJECT_ROOT = projectRoot();

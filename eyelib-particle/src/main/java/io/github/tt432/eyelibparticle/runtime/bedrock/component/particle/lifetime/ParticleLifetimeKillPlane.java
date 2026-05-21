@@ -7,6 +7,7 @@ import org.joml.Vector4f;
 
 import java.util.List;
 
+/** @author TT432 */
 public record ParticleLifetimeKillPlane(
         Vector4f plane
 ) implements ParticleParticleComponent {

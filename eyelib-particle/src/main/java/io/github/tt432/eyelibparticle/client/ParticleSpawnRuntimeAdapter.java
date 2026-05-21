@@ -17,6 +17,7 @@ import java.util.function.Supplier;
 /**
  * Particle-owned spawn/runtime adapter for string-keyed spawn requests.
  */
+/** @author TT432 */
 public final class ParticleSpawnRuntimeAdapter implements ParticleSpawnApi {
     private final ParticleStore<ParticleDefinition> definitions;
     private final ParticleRenderManager renderManager;

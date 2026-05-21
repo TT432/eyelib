@@ -6,8 +6,12 @@ import com.github.argon4w.acceleratedrendering.features.entities.AcceleratedEnti
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bake.BakedModel;
 import lombok.experimental.ExtensionMethod;
+import org.jspecify.annotations.NullMarked;
 
 @ExtensionMethod(VertexConsumerExtension.class)
+
+/** @author TT432 */
+@NullMarked
 public class ARCompatImpl {
     public static boolean renderWithAR(BakedModel.BakedBone bakedBone, RenderParams params) {
         var extension = params.consumer().getAccelerated();

@@ -2,6 +2,8 @@ package io.github.tt432.eyelibimporter.addon;
 
 import com.google.gson.JsonObject;
 
+/** @author TT432 */
+@org.jspecify.annotations.NullMarked
 public record BrSoundIndex(
         BedrockResourceValue.ObjectValue entitySounds,
         BedrockResourceValue.ObjectValue blockSounds,

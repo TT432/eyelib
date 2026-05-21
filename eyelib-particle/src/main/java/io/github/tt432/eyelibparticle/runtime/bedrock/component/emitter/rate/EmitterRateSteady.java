@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterParticleComponent;
 
+/** @author TT432 */
 public record EmitterRateSteady(
         MolangValue spawnRate,
         MolangValue maxParticles

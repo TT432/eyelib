@@ -5,6 +5,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/** @author TT432 */
 class MolangParserFrontendDivergenceTest {
 
     @ParameterizedTest

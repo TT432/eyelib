@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class MolangFullPipelineTest {
     private final MolangCompilerImpl compiler = new MolangCompilerImpl();
 

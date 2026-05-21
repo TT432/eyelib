@@ -3,6 +3,7 @@ package io.github.tt432.eyelibmolang.mapping.api;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.FunctionInfo;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.FunctionParameterRole;
+import org.jspecify.annotations.NullMarked;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.MolangClass;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.Node;
 import lombok.AccessLevel;
@@ -13,12 +14,18 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
+import org.jspecify.annotations.NullMarked;
+
 import java.util.List;
 
 /**
+ * 方法参数角色解析器。
+ *
  * @author TT432
  */
+@NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public class ParameterRoleResolver {
 
     static void processMethod(MolangClass actualClass, Method method, Node last) {

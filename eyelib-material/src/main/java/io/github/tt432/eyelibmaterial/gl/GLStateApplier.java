@@ -2,20 +2,20 @@ package io.github.tt432.eyelibmaterial.gl;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
+import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
 import java.util.*;
 
 /**
- * Applies all GL state from a {@link BrMaterialEntry} in the correct Bedrock render-pipeline order,
- * and provides a {@link #reset()} method to restore default GL state.
- * <p>
- * <b>Thread safety:</b> all public methods assert the render thread via
- * {@link RenderSystem#assertOnRenderThread()}.
+ * 按正确的Bedrock渲染管线顺序应用{@link BrMaterialEntry}中的所有GL状态，并提供{@link #reset()}方法恢复默认GL状态。
+ * 所有公开方法都断言在渲染线程上执行。
  *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public final class GLStateApplier {
 
     private GLStateApplier() {
@@ -23,21 +23,10 @@ public final class GLStateApplier {
     }
 
     /**
-     * Applies GL states from the given material in Bedrock render-pipeline order:
-     * <ol>
-     *   <li>Depth function</li>
-     *   <li>Color mask</li>
-     *   <li>Culling</li>
-     *   <li>Blending</li>
-     *   <li>Depth write</li>
-     *   <li>Depth test</li>
-     *   <li>Stencil</li>
-     *   <li>Alpha to coverage</li>
-     *   <li>Wireframe</li>
-     * </ol>
+     * 按Bedrock渲染管线顺序应用给定材质中的GL状态：深度函数、颜色掩码、裁剪、混合、深度写入、深度测试、模板、Alpha到覆盖、线框。
      *
-     * @param material  the material entry whose states will be applied
-     * @param materials the full material map (for inheritance resolution)
+     * @param material  要应用状态的材质条目
+     * @param materials 完整材质映射（用于继承解析）
      */
     public static void apply(BrMaterialEntry material, Map<String, BrMaterialEntry> materials) {
         RenderSystem.assertOnRenderThread();
@@ -99,9 +88,6 @@ public final class GLStateApplier {
         }
     }
 
-    /**
-     * Restores the default GL state. Should be called before applying a new material.
-     */
     public static void reset() {
         RenderSystem.assertOnRenderThread();
         GL11.glDepthFunc(GL11.GL_LEQUAL);

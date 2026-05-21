@@ -3,10 +3,13 @@ package io.github.tt432.eyelibmolang.util;
 import io.github.tt432.eyelibmolang.type.MolangArray;
 import io.github.tt432.eyelibmolang.type.MolangNull;
 import io.github.tt432.eyelibmolang.type.MolangObject;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public class EyelibUtils {
     @CalledByGeneratedMethod
     public static MolangObject blackhole(MolangObject... f) {

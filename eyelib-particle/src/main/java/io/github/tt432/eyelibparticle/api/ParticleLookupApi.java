@@ -6,31 +6,33 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * String-keyed read port for particle definitions owned by the particle module boundary.
+ * 粒子模块边界拥有的字符串键控粒子定义读取端口。
  *
- * @param <T> particle definition type supplied by the consuming runtime adapter
+ * @param <T> 由消费方运行时适配器提供的粒子定义类型
+ * @author TT432
  */
+/** @author TT432 */
 public interface ParticleLookupApi<T> {
     /**
-     * Looks up a particle definition by its string identifier.
+     * 通过字符串标识符查找粒子定义。
      *
-     * @param id string particle identifier
-     * @return the particle definition, or {@code null} when no entry is registered for {@code id}
+     * @param id 字符串粒子标识符
+     * @return 粒子定义，如果 {@code id} 没有注册条目则返回 {@code null}
      */
     @Nullable
     T get(String id);
 
     /**
-     * Returns all currently registered particle definitions keyed by string identifier.
+     * 返回所有当前注册的粒子定义，以字符串标识符为键。
      *
-     * @return string-keyed particle definitions
+     * @return 以字符串为键的粒子定义映射
      */
     Map<String, T> all();
 
     /**
-     * Returns the registered string identifiers.
+     * 返回已注册的字符串标识符集合。
      *
-     * @return registered particle identifiers
+     * @return 已注册的粒子标识符集合
      */
     default Collection<String> names() {
         return all().keySet();

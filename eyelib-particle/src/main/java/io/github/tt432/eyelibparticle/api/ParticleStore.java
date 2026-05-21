@@ -3,23 +3,25 @@ package io.github.tt432.eyelibparticle.api;
 import java.util.Map;
 
 /**
- * String-keyed mutable particle store port.
+ * 字符串键控的可变粒子存储端口。
  *
- * @param <T> particle definition type supplied by the consuming runtime adapter
+ * @param <T> 由消费方运行时适配器提供的粒子定义类型
+ * @author TT432
  */
+/** @author TT432 */
 public interface ParticleStore<T> extends ParticleLookupApi<T>, ParticleLifecycle {
     /**
-     * Publishes or replaces a single particle definition under its string identifier.
+     * 在其字符串标识符下发布或替换单个粒子定义。
      *
-     * @param id       string particle identifier
-     * @param particle particle definition
+     * @param id       字符串粒子标识符
+     * @param particle 粒子定义
      */
     void put(String id, T particle);
 
     /**
-     * Replaces the entire store with the provided string-keyed particle definitions.
+     * 使用提供的以字符串标识符为键的粒子定义替换整个存储。
      *
-     * @param replacement replacement particle definitions keyed by string identifier
+     * @param replacement 以字符串为键的替换粒子定义
      */
     void replaceAll(Map<String, ? extends T> replacement);
 }

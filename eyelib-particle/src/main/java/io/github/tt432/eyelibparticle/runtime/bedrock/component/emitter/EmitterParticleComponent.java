@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.random.RandomGenerator;
 import java.util.concurrent.ThreadLocalRandom;
 
+/** @author TT432 */
 public interface EmitterParticleComponent extends ParticleComponent {
     default void onStart(EmitterAccess emitter) {
     }

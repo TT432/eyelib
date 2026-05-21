@@ -3,11 +3,20 @@ package io.github.tt432.eyelibmolang.compiler.binding;
 import io.github.tt432.eyelibmolang.compiler.common.MolangRootAliasCanonicalizer;
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.SourceSpan;
+import org.jspecify.annotations.NullMarked;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+/**
+ * Molang AST 绑定器，解析标识符并验证语义。
+ *
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public final class MolangBinder {
     public BindResult bind(MolangAst.ExprSet ast) {
         return bind(ast, BindDiagnosticsMode.NORMAL);

@@ -1,11 +1,5 @@
 package io.github.tt432.eyelibmaterial.shader;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import org.lwjgl.opengl.ARBFragmentShader;
-import org.lwjgl.opengl.ARBShaderObjects;
-import org.lwjgl.opengl.ARBVertexShader;
-import org.lwjgl.opengl.GL11;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,12 +9,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import org.jspecify.annotations.NullMarked;
+import org.lwjgl.opengl.ARBFragmentShader;
+import org.lwjgl.opengl.ARBShaderObjects;
+import org.lwjgl.opengl.ARBVertexShader;
+import org.lwjgl.opengl.GL11;
+
 /**
- * Loads, compiles, links, and caches GLSL vertex+fragment shader programs using ARB extensions.
- * <p>
- * All entry points assert they are on the render thread.
- * Shader programs are cached by a key composed of vertex/fragment source hashes and defines.
+ * 使用ARB扩展加载、编译、链接并缓存GLSL顶点+片段着色器程序。
+ * 所有入口方法都断言在渲染线程上执行。着色器程序按顶点/片段源码哈希和defines组成的键来缓存。
+ *
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public final class ShaderManager {
 
     private static final Map<String, Integer> PROGRAM_CACHE = new HashMap<>();
@@ -122,8 +125,6 @@ public final class ShaderManager {
             throw new RuntimeException("Failed to read shader resource: " + path, e);
         }
     }
-
-    // ─── private helpers ────────────────────────────────────────────────
 
     private static String injectDefines(String source, List<String> defines) {
         if (defines == null || defines.isEmpty()) {

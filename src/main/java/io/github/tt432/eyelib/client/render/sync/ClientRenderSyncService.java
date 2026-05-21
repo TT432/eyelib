@@ -13,8 +13,12 @@ import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+
+/** @author TT432 */
+@NullMarked
 public final class ClientRenderSyncService {
     public static void sync(RenderData<?> data) {
         var components = RenderSyncApplyOps.collectSerializableModelInfo(data.getModelComponents());
@@ -69,4 +73,3 @@ public final class ClientRenderSyncService {
         );
     }
 }
-

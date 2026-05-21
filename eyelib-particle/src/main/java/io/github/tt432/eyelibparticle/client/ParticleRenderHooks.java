@@ -11,6 +11,7 @@ import net.minecraftforge.fml.common.Mod;
  * Forge event wiring for the particle module client integration layer.
  */
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
+/** @author TT432 */
 public final class ParticleRenderHooks {
     private ParticleRenderHooks() {
     }

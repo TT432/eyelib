@@ -3,6 +3,7 @@ package io.github.tt432.eyelibparticle.runtime.support;
 /**
  * Particle-runtime-owned math helpers copied at the module boundary.
  */
+/** @author TT432 */
 public final class ParticleMath {
     public static final float DEGREES_TO_RADIANS = 0.017453292519943295F;
     public static final float RADIANS_TO_DEGREES = 57.29577951308232F;

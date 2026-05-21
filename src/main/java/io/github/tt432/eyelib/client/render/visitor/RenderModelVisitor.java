@@ -8,10 +8,13 @@ import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.joml.Vector4f;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public class RenderModelVisitor extends ModelVisitor {
     private static final Vector4f tPosition = new Vector4f();
     private static final Vector3f tNormal = new Vector3f();

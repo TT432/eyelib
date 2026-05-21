@@ -2,15 +2,15 @@ package io.github.tt432.eyelibmaterial.shared;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import org.jspecify.annotations.NullMarked;
 
 /**
- * Pure data record for a stencil face.
- * <p>
- * Four fields mapping to Bedrock stencil operations.
- * No GL/LWJGL/MC dependencies — no DEFAULT_FRONT/DEFAULT_BACK.
+ * 模板面的纯数据记录，对应四个Bedrock模板操作字段。
  *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record Face(
         StencilDepthFailOp stencilDepthFailOp,
         StencilFailOp stencilFailOp,

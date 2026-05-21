@@ -4,10 +4,16 @@ import io.github.tt432.eyelibanimation.AnimationEffect;
 import io.github.tt432.eyelibanimation.RuntimeParticlePlayData;
 import io.github.tt432.eyelibanimation.AnimationParticleSpawner;
 import io.github.tt432.eyelibmolang.MolangValue;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 final class BrClipStateOwner {
     private final BrAnimationPlaybackState playbackState = new BrAnimationPlaybackState();
     private final List<AnimationEffect.Runtime<?>> effects = new ArrayList<>();

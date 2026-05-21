@@ -12,6 +12,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/** @author TT432 */
+@org.jspecify.annotations.NullMarked
 public sealed interface BedrockResourceValue permits BedrockResourceValue.NullValue, BedrockResourceValue.BooleanValue,
         BedrockResourceValue.NumberValue, BedrockResourceValue.StringValue, BedrockResourceValue.ArrayValue,
         BedrockResourceValue.ObjectValue {

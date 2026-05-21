@@ -3,6 +3,7 @@ package io.github.tt432.eyelibmolang.mapping.api;
 import io.github.tt432.eyelibmolang.mapping.MolangBuiltInMappings;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Field;
@@ -12,9 +13,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
+ * Molang 映射注册表，管理所有已注册的函数/字段映射。
+ *
  * @author TT432
  */
+@NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public class MolangMappingTree {
     public static final MolangMappingTree INSTANCE = new MolangMappingTree();
 

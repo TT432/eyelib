@@ -10,9 +10,15 @@ import lombok.AccessLevel; import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft; import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries; import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level; import net.minecraft.world.phys.AABB;
-import org.joml.Vector3f;
+import org.joml.Vector3f; import org.jspecify.annotations.NullMarked;
 import java.util.Optional;
+
+/**
+ * @author TT432
+ */
+@NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public final class AnimationParticleSpawner {
     private static final ParticleSpawnRuntimeAdapter ADAPTER = new ParticleSpawnRuntimeAdapter(ParticleDefinitionRegistry.store(), ParticleRenderManager.INSTANCE, AnimationParticleSpawner::makeEnvironment, Optional::empty);
     public static BedrockParticleEmitter spawn(String spawnId, ParticleDefinition definition, Vector3f position) { var env = makeEnvironment().orElse(null); if (env == null) return null; return ADAPTER.spawnEmitter(spawnId, definition, Optional.empty(), env, position); }

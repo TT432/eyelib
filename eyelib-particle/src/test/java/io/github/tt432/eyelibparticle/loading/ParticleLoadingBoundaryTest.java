@@ -9,6 +9,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class ParticleLoadingBoundaryTest {
     private static final Path LOADING_SOURCE_ROOT = projectRoot().resolve(
             "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/loading");

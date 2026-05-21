@@ -9,6 +9,7 @@ import java.util.List;
 /**
  * @author TT432
  */
+/** @author TT432 */
 public class Lists {
     public static  <E> List<E> asList(int count, Int2ObjectFunction<E> function) {
         return new AsListView<>(count, function);

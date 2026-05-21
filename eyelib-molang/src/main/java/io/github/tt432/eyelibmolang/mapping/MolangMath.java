@@ -3,13 +3,16 @@ package io.github.tt432.eyelibmolang.mapping;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMapping;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
 @MolangMapping("math")
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @SuppressWarnings("unused")
+/** @author TT432 */
 public final class MolangMath {
     private static final float DEGREES_TO_RADIANS = 0.017453292519943295F;
     private static final float RADIANS_TO_DEGREES = 57.29577951308232F;

@@ -11,11 +11,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.function.Function;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @Mixin(HumanoidModel.class)
+@NullMarked
+/** @author TT432 */
 public class HumanoidModelMixin implements RootModelPartModel {
     @Unique
     private @Nullable ModelPart eyelib$part;

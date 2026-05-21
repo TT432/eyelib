@@ -1,6 +1,7 @@
 package io.github.tt432.eyelibmaterial.shared;
 
 import com.mojang.serialization.JsonOps;
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -11,14 +12,10 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * TDD verification: CODEC roundtrip for all shared pure-data enums.
- * <p>
- * Each test encodes an enum constant to JSON, decodes it back, and asserts
- * the result matches the original. This validates that every enum's
- * {@code StringRepresentable} CODEC works correctly.
- *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 class EnumCodecTest {
 
     // --- GLStates ---

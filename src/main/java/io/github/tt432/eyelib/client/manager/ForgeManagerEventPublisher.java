@@ -3,7 +3,10 @@ package io.github.tt432.eyelib.client.manager;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import io.github.tt432.eyelibutil.manager.ManagerEventPublisher;
 import net.minecraftforge.common.MinecraftForge;
+import org.jspecify.annotations.NullMarked;
 
+/** @author TT432 */
+@NullMarked
 public final class ForgeManagerEventPublisher implements ManagerEventPublisher {
     @Override
     public void publishManagerEntryChanged(String managerName, String entryName, Object entryData) {

@@ -32,6 +32,7 @@ import java.util.List;
 /**
  * Minecraft render-buffer adapter for module-owned Bedrock particle instances.
  */
+/** @author TT432 */
 public final class BedrockParticleRenderer implements ParticleRenderManager.ParticleRenderer {
     private final PoseStack poseStack;
 

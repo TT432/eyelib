@@ -9,6 +9,7 @@ import org.joml.Vector3f;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public class Shapes {
     public static Vector3f getRandomPointInAABB(RandomSource random, boolean surfaceOnly, Vector3f offset, Vector3f halfDim) {
         var x = random.nextFloat() - 0.5F;

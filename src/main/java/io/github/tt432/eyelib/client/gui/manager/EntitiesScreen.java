@@ -6,10 +6,13 @@ import net.minecraft.client.gui.components.EditBox;
 import io.github.tt432.eyelib.client.gui.ModalWorksurfaceScreen;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public class EntitiesScreen extends ModalWorksurfaceScreen {
     protected EntitiesScreen() {
         super(Component.empty());
@@ -54,4 +57,3 @@ public class EntitiesScreen extends ModalWorksurfaceScreen {
         return false;
     }
 }
-

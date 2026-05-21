@@ -13,6 +13,7 @@ import java.util.List;
  *
  * @author TT432
  */
+/** @author TT432 */
 public sealed interface Tuple permits Tuple.T10, Tuple.T11, Tuple.T12, Tuple.T13, Tuple.T14, Tuple.T15, Tuple.T16, Tuple.T2, Tuple.T3, Tuple.T4, Tuple.T5, Tuple.T6, Tuple.T7, Tuple.T8, Tuple.T9 {
     List<Object> asList();
 

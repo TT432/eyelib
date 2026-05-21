@@ -25,14 +25,11 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * @param override_previous_animation TODO 不确定
- * @param anim_time_update            动画播放速度
- * @param blendWeight                 动画混合时的权重
- * @param start_delay                 TODO 不确定
- * @param loop_delay                  TODO 不确定
+ * 基础动画条目，管理一个动画剪辑的定义和运行时状态。
  *
  * @author TT432
  */
+/** @author TT432 */
 public final class BrAnimationEntry implements Animation {
     private final BrAnimationEntryDefinition definition;
 
@@ -250,4 +247,3 @@ public final class BrAnimationEntry implements Animation {
         }
     }
 }
-

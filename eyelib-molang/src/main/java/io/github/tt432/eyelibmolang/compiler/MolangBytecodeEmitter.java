@@ -6,6 +6,7 @@ import io.github.dmlloyd.classfile.Label;
 import io.github.dmlloyd.classfile.TypeKind;
 import io.github.tt432.eyelibmolang.compiler.binding.BoundMolang;
 import io.github.tt432.eyelibmolang.type.MolangObject;
+import org.jspecify.annotations.NullMarked;
 
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
@@ -13,13 +14,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Generates JVM bytecode from a bound Molang AST using jdk-classfile-backport.
+ * 从绑定后的 Molang AST 生成 JVM 字节码，生成的 .class 实现 {@link CompiledMolangExpression}。
  *
- * <p>The generated .class file implements {@link CompiledMolangExpression} and
- * supports number literals and binary arithmetic ({@code + - * /}).
- * Each expression tree node is emitted as real JVM instructions so that
- * runtime scope values participate in evaluation.
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public final class MolangBytecodeEmitter {
 
     private static final int ACC_PUBLIC = 0x0001;
@@ -82,7 +82,7 @@ public final class MolangBytecodeEmitter {
             classBuilder.withSuperclass(cdObject);
             classBuilder.withInterfaceSymbols(cdCompiledExpr);
 
-            // ---- no-arg constructor ----
+            // no-arg constructor
             classBuilder.withMethod("<init>",
                     MethodTypeDesc.of(CD_VOID),
                     ACC_PUBLIC,
@@ -93,7 +93,7 @@ public final class MolangBytecodeEmitter {
                         code.return_();
                     }));
 
-            // ---- evaluate(MolangScope) : MolangObject ----
+            // evaluate(MolangScope) : MolangObject
             classBuilder.withMethod("evaluate",
                     MethodTypeDesc.of(CD_MOLANG_OBJECT, cdScope),
                     ACC_PUBLIC,
@@ -102,7 +102,7 @@ public final class MolangBytecodeEmitter {
                         code.areturn();
                     }));
 
-            // ---- sourceExpression() : String ----
+            // sourceExpression() : String
             classBuilder.withMethod("sourceExpression",
                     MethodTypeDesc.of(cdString),
                     ACC_PUBLIC,
@@ -111,7 +111,7 @@ public final class MolangBytecodeEmitter {
                         code.areturn();
                     }));
 
-            // ---- requiredHostRoles() : Set<String> ----
+            // requiredHostRoles() : Set<String>
             classBuilder.withMethod("requiredHostRoles",
                     MethodTypeDesc.of(cdSet),
                     ACC_PUBLIC,
@@ -164,7 +164,7 @@ public final class MolangBytecodeEmitter {
             // right side evaluates in that host's context.
             // Current implementation: left side is evaluated then discarded;
             // only the right side value is returned. 
-            // TODO(Phase 4): Implement HostContext switching for arrow access semantics.
+            // TODO: 实现箭头访问语义的 HostContext 切换。
             emitExpr(code, arrowAccessExpr.left());
             code.pop();
             emitExpr(code, arrowAccessExpr.right());
@@ -278,11 +278,9 @@ public final class MolangBytecodeEmitter {
     }
 
     /**
-     * Emits safe division bytecode that returns {@code 0.0f} when the divisor is zero,
-     * matching Bedrock Molang semantics. Uses inline bytecode instructions only.
-     *
-     * <p>Precondition: stack contains [leftFloat, rightFloat] with rightFloat on top.
-     * Postcondition: stack contains [resultFloat].
+     * 发出安全除法字节码，除数为零时返回 0.0f，与 Bedrock Molang 语义一致。
+     * 前置：栈上为 [leftFloat, rightFloat]，rightFloat 在栈顶。
+     * 后置：栈上为 [resultFloat]。
      */
     private static void emitSafeDiv(CodeBuilder code) {
         Label notZero = code.newLabel();

@@ -7,9 +7,15 @@ import io.github.tt432.eyelibutil.math.EyeMath;
 import io.github.tt432.eyelibutil.math.MathHelper;
 import io.github.tt432.eyelibmolang.MolangScope;
 import org.joml.Vector3f;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Map;
 
+/**
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 final class BrClipExecutor {
     private BrClipExecutor() {
     }

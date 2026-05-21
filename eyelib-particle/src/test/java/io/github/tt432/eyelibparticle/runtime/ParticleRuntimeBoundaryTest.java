@@ -9,6 +9,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class ParticleRuntimeBoundaryTest {
     @Test
     void runtimeSourcesRejectRootMinecraftAndForgeReferencesAfterStrippingCommentsAndStrings() throws IOException {

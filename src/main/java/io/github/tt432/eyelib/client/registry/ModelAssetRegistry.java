@@ -7,8 +7,12 @@ import lombok.NoArgsConstructor;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+
+/** @author TT432 */
+@NullMarked
 public final class ModelAssetRegistry {
     public static void publishModels(Map<String, Model> models) {
         models.forEach(ModelManager.writePort()::put);

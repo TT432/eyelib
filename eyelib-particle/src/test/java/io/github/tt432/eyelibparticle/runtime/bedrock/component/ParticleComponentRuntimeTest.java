@@ -31,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class ParticleComponentRuntimeTest {
     @Test
     void billboardLightingTintingAndInitialComponentsPreserveParticleBehavior() {

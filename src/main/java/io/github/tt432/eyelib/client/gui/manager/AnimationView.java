@@ -36,11 +36,14 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 //@Mod.EventBusSubscriber(Dist.CLIENT)
+@NullMarked
+/** @author TT432 */
 public class AnimationView extends ModalWorksurfaceScreen {
     @Nullable
     private String selectedAnimationName = null;
@@ -515,4 +518,3 @@ public class AnimationView extends ModalWorksurfaceScreen {
         );
     }
 }
-

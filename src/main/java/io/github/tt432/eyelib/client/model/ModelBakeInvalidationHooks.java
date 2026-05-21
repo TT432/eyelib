@@ -7,7 +7,10 @@ import io.github.tt432.eyelib.client.render.bake.TwoSideModelBakeInfo;
 import net.minecraftforge.common.MinecraftForge;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.jspecify.annotations.NullMarked;
 
+/** @author TT432 */
+@NullMarked
 public final class ModelBakeInvalidationHooks {
     private static final AtomicBoolean INSTALLED = new AtomicBoolean(false);
 

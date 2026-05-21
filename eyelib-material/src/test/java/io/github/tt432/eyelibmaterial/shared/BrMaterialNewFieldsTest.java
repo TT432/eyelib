@@ -2,6 +2,7 @@ package io.github.tt432.eyelibmaterial.shared;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -10,14 +11,10 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * CODEC roundtrip tests for the 6 new Bedrock material fields added to {@link BrMaterialEntry}.
- * <p>
- * Verifies that the new fields (msaaSupport, depthBias, slopeScaledDepthBias,
- * primitiveMode, renderTargetFormats, isAnimatedTexture) correctly serialize and
- * deserialize, and that existing vanilla.material (without these fields) still parses.
- *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 class BrMaterialNewFieldsTest {
 
     static final String ENTRY_JSON = """

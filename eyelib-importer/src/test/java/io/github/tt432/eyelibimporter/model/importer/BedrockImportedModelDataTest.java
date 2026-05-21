@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class BedrockImportedModelDataTest {
     private static final float EPSILON = 1.0e-6F;
 

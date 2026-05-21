@@ -5,6 +5,12 @@ import io.github.tt432.eyelibattachment.dataattach.IDataAttachmentContainer;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.Nullable;
 
+/**
+ * 数据附属的便捷读写工具。
+ *
+ * @author TT432
+ */
+/** @author TT432 */
 public class DataAttachmentHelper {
     private static IDataAttachmentContainer get(Entity entity) {
         return entity.getCapability(DataAttachmentContainerCapability.INSTANCE).orElseGet(McDataAttachmentContainer::new);

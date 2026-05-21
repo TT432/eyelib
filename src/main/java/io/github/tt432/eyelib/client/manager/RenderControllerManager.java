@@ -5,11 +5,14 @@ import io.github.tt432.eyelibutil.manager.ManagerReadPort;
 import io.github.tt432.eyelibutil.manager.ManagerWritePort;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@NullMarked
+/** @author TT432 */
 public class RenderControllerManager extends Manager<RenderControllerEntry> {
     public static final RenderControllerManager INSTANCE = new RenderControllerManager();
 

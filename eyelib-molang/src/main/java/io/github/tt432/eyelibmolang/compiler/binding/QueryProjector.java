@@ -1,9 +1,18 @@
 package io.github.tt432.eyelibmolang.compiler.binding;
 
+import org.jspecify.annotations.NullMarked;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * 查询表达式投影器，将 query-rooted 访问包装为 BoundQueryAccessExpr。
+ *
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public final class QueryProjector {
     private QueryProjector() {
     }

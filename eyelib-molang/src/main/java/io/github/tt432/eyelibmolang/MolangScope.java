@@ -7,6 +7,7 @@ import io.github.tt432.eyelibmolang.type.MolangFloatSupplierObject;
 import io.github.tt432.eyelibmolang.type.MolangNull;
 import io.github.tt432.eyelibmolang.type.MolangObject;
 import lombok.Getter;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
@@ -14,8 +15,12 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * Molang 求值作用域，管理变量、主机上下文和宿主角色。
+ *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public final class MolangScope {
     @Getter
     @Deprecated(forRemoval = true)
@@ -148,4 +153,3 @@ public final class MolangScope {
     public void setOwner(Object owner) {
     }
 }
-

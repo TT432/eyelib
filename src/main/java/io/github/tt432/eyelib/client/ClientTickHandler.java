@@ -7,12 +7,15 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@NullMarked
+/** @author TT432 */
 public class ClientTickHandler {
     static int tick;
 

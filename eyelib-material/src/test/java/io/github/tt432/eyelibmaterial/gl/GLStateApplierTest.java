@@ -6,6 +6,7 @@ import io.github.tt432.eyelibmaterial.gl.stencil.StencilFailOp;
 import io.github.tt432.eyelibmaterial.gl.stencil.StencilFunc;
 import io.github.tt432.eyelibmaterial.gl.stencil.StencilPassOp;
 import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,24 +16,13 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Tests for {@link GLStateApplier}.
- * <p>
- * All tests are {@code @Disabled} by default because they require an active OpenGL context
- * (both for LWJGL calls and {@link com.mojang.blaze3d.systems.RenderSystem#assertOnRenderThread()}).
- * Run these tests in a Minecraft dev environment where a GL context is available.
+ * @author TT432
  */
+@NullMarked
 @Disabled("All tests require an active OpenGL context — run in a Minecraft dev environment")
+/** @author TT432 */
 class GLStateApplierTest {
 
-    // ── Scenario 1: general GL enable/disable ────────────────────────────────
-
-    /**
-     * Verifies that {@link GLStateApplier#apply} toggles GL capabilities (enable/disable)
-     * according to the material's {@link GLStates} list.
-     * <p>
-     * Expected: {@code GL_BLEND} enabled, {@code GL_DEPTH_TEST} disabled,
-     * {@code GL_STENCIL_TEST} enabled — applied in Bedrock pipeline order.
-     */
     @Test
     @DisplayName("apply() sets correct GL enable/disable from material GLStates")
     void applySetsGLEnableDisableFromStates() {
@@ -43,15 +33,6 @@ class GLStateApplierTest {
         // Verify: GL_BLEND enabled, GL_DEPTH_TEST disabled, GL_STENCIL_TEST enabled
     }
 
-    // ── Scenario 2: blend function with blend factors ────────────────────────
-
-    /**
-     * Verifies that when the material has the {@link GLStates#Blending} state
-     * <em>and</em> explicit blend factors, the correct blend function is applied.
-     * <p>
-     * Expected: {@code GL_BLEND} enabled,
-     * {@code glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO)}.
-     */
     @Test
     @DisplayName("apply() sets correct blend function (Blending + blend factors)")
     void applySetsBlendFunction() {
@@ -64,14 +45,6 @@ class GLStateApplierTest {
         // Verify: GL_BLEND enabled, glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO)
     }
 
-    // ── Scenario 3: depth function ───────────────────────────────────────────
-
-    /**
-     * Verifies that an explicit {@link DepthFunc} on the material is passed
-     * through to {@code glDepthFunc}.
-     * <p>
-     * Expected: {@code glDepthFunc(GL_LEQUAL)}.
-     */
     @Test
     @DisplayName("apply() sets correct depth function")
     void applySetsDepthFunction() {
@@ -83,17 +56,6 @@ class GLStateApplierTest {
         // Verify: glDepthFunc(GL_LEQUAL)
     }
 
-    // ── Scenario 4: stencil operations ───────────────────────────────────────
-
-    /**
-     * Verifies that a material with {@link GLStates#EnableStencilTest} and
-     * {@link GLStates#StencilWrite} properly configures stencil function, operations,
-     * and masks on both front and back faces.
-     * <p>
-     * Expected: {@code GL_STENCIL_TEST} enabled, stencil ref=1, write mask=0xFF,
-     * front face func=ALWAYS, fail=REPLACE, depthFail=KEEP, pass=REPLACE,
-     * back face func=ALWAYS, fail=KEEP, depthFail=KEEP, pass=KEEP.
-     */
     @Test
     @DisplayName("apply() sets correct stencil operations")
     void applySetsStencilOperations() {
@@ -124,17 +86,6 @@ class GLStateApplierTest {
         // Verify: GL_STENCIL_TEST enabled, stencil func/op/mask configured per above
     }
 
-    // ── Scenario 5: reset ────────────────────────────────────────────────────
-
-    /**
-     * Verifies that {@link GLStateApplier#reset()} restores all GL state to
-     * known defaults.
-     * <p>
-     * Expected: depth func = LEQUAL, color mask = (true, true, true, true),
-     * culling enabled (BACK), blend disabled, depth test enabled,
-     * depth write enabled, stencil disabled, alpha-to-coverage disabled,
-     * polygon mode = FILL.
-     */
     @Test
     @DisplayName("reset() restores GL state to defaults")
     void resetRestoresDefaults() {
@@ -145,12 +96,6 @@ class GLStateApplierTest {
         //         polygon mode = FILL
     }
 
-    // ── Scenario 6: DisableCulling ───────────────────────────────────────────
-
-    /**
-     * Verifies that a material with {@link GLStates#DisableCulling} calls
-     * {@code glDisable(GL_CULL_FACE)}.
-     */
     @Test
     @DisplayName("Material with DisableCulling disables face culling")
     void materialWithDisableCulling() {
@@ -161,14 +106,6 @@ class GLStateApplierTest {
         // Verify: GL_CULL_FACE is disabled
     }
 
-    // ── Scenario 7: Wireframe ────────────────────────────────────────────────
-
-    /**
-     * Verifies that a material with {@link GLStates#Wireframe} sets polygon mode
-     * to {@code GL_LINE}.
-     * <p>
-     * Expected: {@code glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)}.
-     */
     @Test
     @DisplayName("Material with Wireframe sets polygon mode to GL_LINE")
     void materialWithWireframe() {
@@ -179,9 +116,7 @@ class GLStateApplierTest {
         // Verify: glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
     }
 
-    // ── supplementary existing tests (retained) ──────────────────────────────
 
-    /** Existing: Material with Blending → blend enabled, correct blend func applied. */
     @Test
     @DisplayName("Material with Blending state enables blending and applies blend func")
     void materialWithBlending() {
@@ -192,7 +127,8 @@ class GLStateApplierTest {
         // Verify: GL_BLEND is enabled, glBlendFuncSeparate called with correct factors
     }
 
-    /** Existing: Material with DisableDepthTest → depth test disabled. */
+
+
     @Test
     @DisplayName("Material with DisableDepthTest disables depth testing")
     void materialWithDisableDepthTest() {
@@ -203,7 +139,8 @@ class GLStateApplierTest {
         // Verify: GL_DEPTH_TEST is disabled
     }
 
-    /** Existing: Material with DisableAlphaWrite → alpha channel masked in color mask. */
+
+
     @Test
     @DisplayName("Material with DisableAlphaWrite masks alpha in color write")
     void materialWithDisableAlphaWrite() {
@@ -214,7 +151,8 @@ class GLStateApplierTest {
         // Verify: glColorMask(true, true, true, false)
     }
 
-    /** Existing: Material with Blending + DisableDepthWrite → both applied in correct order. */
+
+
     @Test
     @DisplayName("Material with multiple states applies them in correct Bedrock pipeline order")
     void materialWithMultipleStates() {
@@ -226,7 +164,8 @@ class GLStateApplierTest {
         //         blending enabled, wireframe enabled — in this order
     }
 
-    /** Existing: Material with InvertCulling → cull front face instead of back. */
+
+
     @Test
     @DisplayName("Material with InvertCulling enables culling and culls front faces")
     void materialWithInvertCulling() {
@@ -236,8 +175,6 @@ class GLStateApplierTest {
         GLStateApplier.apply(material, Map.of("invert_cull_material", material));
         // Verify: GL_CULL_FACE enabled, glCullFace(GL_FRONT)
     }
-
-    // ── helpers ──────────────────────────────────────────────────────────────
 
     private static BrMaterialEntry createEntry(String name, String base, List<GLStates> states) {
         return new BrMaterialEntry(

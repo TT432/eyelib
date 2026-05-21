@@ -7,6 +7,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/** @author TT432 */
 class ListAccessorsTest {
     @Test
     void firstAndLastReturnListEnds() {

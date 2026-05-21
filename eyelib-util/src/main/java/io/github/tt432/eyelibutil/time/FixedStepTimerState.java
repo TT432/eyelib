@@ -1,8 +1,11 @@
 package io.github.tt432.eyelibutil.time;
 
 /**
- * Platform-free fixed-step timer state.
+ * 与平台无关的固定步长定时器状态。
+ *
+ * @author TT432
  */
+/** @author TT432 */
 public final class FixedStepTimerState {
     private final int rate;
     private boolean init;

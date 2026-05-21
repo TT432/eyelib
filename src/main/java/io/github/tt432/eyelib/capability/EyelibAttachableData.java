@@ -9,9 +9,13 @@ import lombok.NoArgsConstructor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.RegistryObject;
+import org.jspecify.annotations.NullMarked;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Mod.EventBusSubscriber
+
+/** @author TT432 */
+@NullMarked
 public class EyelibAttachableData {
 
     private static final ResourceLocation RENDER_DATA_ID = new ResourceLocation(Eyelib.MOD_ID, "render_data");

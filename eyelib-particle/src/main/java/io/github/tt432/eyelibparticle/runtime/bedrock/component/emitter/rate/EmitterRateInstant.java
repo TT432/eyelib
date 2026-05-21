@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterParticleComponent;
 
+/** @author TT432 */
 public record EmitterRateInstant(MolangValue numParticles) implements EmitterParticleComponent {
     public static final Codec<EmitterRateInstant> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             MolangValue.CODEC.optionalFieldOf("num_particles", MolangValue.getConstant(10))

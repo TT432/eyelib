@@ -2,6 +2,8 @@ package io.github.tt432.eyelibimporter.addon;
 
 import java.util.Locale;
 
+/** @author TT432 */
+@org.jspecify.annotations.NullMarked
 public enum BedrockResourceFamily {
     MANIFEST,
     PACK_ICON,

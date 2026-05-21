@@ -1,6 +1,7 @@
 package io.github.tt432.eyelibmaterial.shared;
 
 import com.mojang.serialization.JsonOps;
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -11,13 +12,10 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * TDD verification: CODEC roundtrip for {@link BrSamplerState} and its enums.
- * <p>
- * Tests cover individual enum roundtrips for every constant, as well as
- * a full record roundtrip from a JSON string.
- *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 class BrSamplerStateCodecTest {
 
     // --- TextureFilter enum roundtrips ---

@@ -13,6 +13,7 @@ import java.util.Optional;
 /**
  * Module-owned particle instance lifecycle state.
  */
+/** @author TT432 */
 public final class BedrockParticleInstance implements ParticleParticleComponent.ParticleAccess {
     private final BedrockParticleEmitter emitter;
     private final Vector3f position = new Vector3f();

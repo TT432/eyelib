@@ -16,7 +16,13 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/**
+ * 网络分组的底层传输通道。
+ *
+ * @author TT432
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public final class EyelibNetworkTransport {
     private static final String PROTOCOL_VERSION = "1";
     private static final String CHANNEL_NAME = "networking";

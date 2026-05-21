@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/** @author TT432 */
 public final class ParticleComponentManager {
     private static final Map<String, ComponentInfo<? extends ParticleComponent>> BY_NAME = new LinkedHashMap<>();
     private static final Map<String, List<ComponentInfo<? extends ParticleComponent>>> BY_TYPE = new LinkedHashMap<>();

@@ -12,6 +12,10 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+/**
+ * @author TT432
+ */
+/** @author TT432 */
 public class DataAttachmentContainerCapability {
     public static final ResourceLocation ID = new ResourceLocation("eyelibattachment", "data_attachments");
 

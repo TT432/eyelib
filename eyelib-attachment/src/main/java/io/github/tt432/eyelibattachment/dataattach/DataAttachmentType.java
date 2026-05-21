@@ -7,14 +7,16 @@ import org.jspecify.annotations.Nullable;
 import java.util.function.Supplier;
 
 /**
- * Data attachments.
+ * 数据附属的类型定义。
  *
- * @param id          Attachment ID
- * @param factory     Factory method
- * @param codec       (De)Serializer (Null for not persist)
- * @param streamCodec Codec for network syncing (Null for not sync)
- * @param <C>         Attachment Type
+ * @param id          附属 ID
+ * @param factory     工厂方法
+ * @param codec       （反）序列化器（null 表示不持久化）
+ * @param streamCodec 用于网络同步的编解码器（null 表示不同步）
+ * @param <C>         附属类型
+ * @author TT432
  */
+/** @author TT432 */
 public record DataAttachmentType<C>(String id,
                                      Supplier<C> factory,
                                      @Nullable Codec<C> codec,

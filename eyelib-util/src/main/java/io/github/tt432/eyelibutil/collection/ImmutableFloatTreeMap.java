@@ -20,6 +20,7 @@ import java.util.function.Function;
  */
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
+/** @author TT432 */
 public sealed class ImmutableFloatTreeMap<V> {
 
     public static final class Empty<V> extends ImmutableFloatTreeMap<V> {
@@ -152,4 +153,3 @@ public sealed class ImmutableFloatTreeMap<V> {
         return null;
     }
 }
-

@@ -2,6 +2,7 @@ package io.github.tt432.eyelibmolang.mapping.api;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -9,7 +10,9 @@ import java.io.IOException;
 /**
  * @author TT432
  */
+@NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public class MolangFunctionExporter {
     public static void export() {
         try (var fw = new FileWriter("./exportedMolang.csv")) {

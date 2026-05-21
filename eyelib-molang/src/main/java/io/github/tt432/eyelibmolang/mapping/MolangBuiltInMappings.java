@@ -1,9 +1,15 @@
 package io.github.tt432.eyelibmolang.mapping;
 
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingDiscovery;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
 
+/**
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public final class MolangBuiltInMappings {
     private MolangBuiltInMappings() {
     }

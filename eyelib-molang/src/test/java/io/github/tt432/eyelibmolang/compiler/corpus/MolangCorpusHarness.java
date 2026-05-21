@@ -39,6 +39,7 @@ import java.util.Optional;
 import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.DEFAULT_MODE;
 import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.DEFAULT_POLICY_PACK;
 
+/** @author TT432 */
 final class MolangCorpusHarness {
     private final MolangCorpusLoader loader = new MolangCorpusLoader();
     private final MolangCorpusLinter linter = new MolangCorpusLinter();

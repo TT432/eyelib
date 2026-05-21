@@ -15,10 +15,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public class EyelibManagerScreen extends ModalWorksurfaceScreen {
     protected EyelibManagerScreen() {
         super(Component.empty());
@@ -168,4 +171,3 @@ public class EyelibManagerScreen extends ModalWorksurfaceScreen {
         super.onClose();
     }
 }
-

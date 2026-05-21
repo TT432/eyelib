@@ -12,10 +12,13 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
 import static io.github.tt432.eyelib.client.EntityRenderSystem.renderItemInHand;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public class EyelibLivingEntityRenderer<T extends LivingEntity>
         extends LivingEntityRenderer<T, EyelibLivingEntityRenderer.EmptyEntityModel<T>> {
     public EyelibLivingEntityRenderer(EntityRendererProvider.Context context, float shadowRadius) {
@@ -38,7 +41,7 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
                 .overlay(overlay)
                 .extraRender((helper, action) -> {
                     renderItemInHand(helper, buffer, entity, packedLight);
-                    // todo 修改成使用 layer
+                    // TODO: 修改成使用 layer
                 })
                 .build()
                 .render();
@@ -57,4 +60,3 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
         }
     }
 }
-

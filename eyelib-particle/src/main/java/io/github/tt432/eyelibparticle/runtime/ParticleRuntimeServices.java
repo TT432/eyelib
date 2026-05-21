@@ -5,8 +5,11 @@ import org.joml.Vector3f;
 import java.util.Objects;
 
 /**
- * Narrow runtime service ports for pure particle runtime code.
+ * 纯粒子运行时代码的窄运行时服务端口。
+ *
+ * @author TT432
  */
+/** @author TT432 */
 public record ParticleRuntimeServices(
         TimeSource timeSource,
         ParticleSpawner particleSpawner,

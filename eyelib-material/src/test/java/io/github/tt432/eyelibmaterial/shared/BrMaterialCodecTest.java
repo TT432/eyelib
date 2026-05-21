@@ -2,23 +2,19 @@ package io.github.tt432.eyelibmaterial.shared;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * CODEC roundtrip tests for shared {@link BrMaterial}.
- * <p>
- * Each test loads the vanilla.material JSON, decodes via {@link BrMaterial#CODEC},
- * re-encodes, decodes again, and asserts equality.
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 class BrMaterialCodecTest {
 
-    /**
-     * The vanilla.material content as embedded JSON string.
-     * Source: {@code src/main/resources/assets/eyelib/eyelib/materials/vanilla.material}
-     */
     private static final String VANILLA_MATERIAL_JSON = """
             {
               "materials": {
@@ -50,12 +46,6 @@ class BrMaterialCodecTest {
             }
             """;
 
-    /**
-     * Performs a full encode-decode roundtrip on the vanilla.material JSON.
-     *
-     * @param entryKey the material entry key to verify exists in the result
-     * @return the decoded {@link BrMaterial}
-     */
     private static BrMaterial roundtripVanillaMaterial(String entryKey) {
         var jsonElement = JsonParser.parseString(VANILLA_MATERIAL_JSON);
         var jsonObject = jsonElement.getAsJsonObject();

@@ -12,6 +12,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+/** @author TT432 */
 class BlockbenchModelCompatibilityTest {
     @Test
     void parsesMinimalFixtureWithExpectedSourceSemantics() throws Exception {

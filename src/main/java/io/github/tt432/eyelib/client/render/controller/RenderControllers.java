@@ -4,10 +4,15 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
 
 /**
+ * 渲染控制器集合。
+ *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record RenderControllers(
         Map<String, RenderControllerEntry> render_controllers
 ) {

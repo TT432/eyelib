@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class MolangBinderTest {
     private static final String DEFERRED_TERNARY_SOURCE = "query.get_name == 'Toast' ? Texture.toast : Array.skins[query.variant]";
 

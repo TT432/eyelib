@@ -1,37 +1,26 @@
 package io.github.tt432.eyelibmolang.mapping.api;
 
+import org.jspecify.annotations.NullMarked;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * usage:
- *
- * <pre>{@code
- * @MolangMapping("math")
- * class MolangMath {
- *     public static float max(float a, float b) {
- *         return a > b ? a : b;
- *     }
- * }
- * }</pre>
- * <p>
- * 此处的 max 可以对应 math.max(a, b) <br/>
- * 目标类的方法或字段都需要是 public static 才可调用
+ * 将 public static 方法/字段注册为 Molang 可调用函数。
+ * 例如 {@code @MolangMapping("math")} 定义的 max 方法可通过 {@code math.max(a, b)} 调用。
  *
  * @author TT432
  */
+@NullMarked
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
+/** @author TT432 */
 public @interface MolangMapping {
-    /**
-     * @return molang function or field name
-     */
+    /** Molang 函数或字段名 */
     String value();
 
-    /**
-     * @return will add MolangScope arg first if false
-     */
+    /** 为 false 时 MolangScope 作为第一个参数传入 */
     boolean pureFunction() default true;
 }

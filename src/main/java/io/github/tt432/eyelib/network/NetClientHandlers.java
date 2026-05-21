@@ -12,7 +12,10 @@ import io.github.tt432.eyelibattachment.network.ExtraEntityUpdateDataPacket;
 import io.github.tt432.eyelibattachment.network.UniDataUpdatePacket;
 import io.github.tt432.eyelibparticle.network.RemoveParticlePacket;
 import io.github.tt432.eyelibparticle.network.SpawnParticlePacket;
+import org.jspecify.annotations.NullMarked;
 
+/** @author TT432 */
+@NullMarked
 public class NetClientHandlers {
     // <editor-fold desc="Client handlers">
 

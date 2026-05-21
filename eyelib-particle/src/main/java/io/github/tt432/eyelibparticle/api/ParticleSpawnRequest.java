@@ -5,15 +5,17 @@ import org.joml.Vector3f;
 import java.util.Objects;
 
 /**
- * String-keyed particle spawn request consumed by runtime adapters.
+ * 由运行时适配器消费的字符串键控粒子生成请求。
  *
- * @param spawnId    string identifier for the spawned emitter instance
- * @param particleId string particle definition identifier
- * @param position   spawn position, defensively copied on input and output
+ * @param spawnId    已生成发射器实例的字符串标识符
+ * @param particleId 字符串粒子定义标识符
+ * @param position   生成位置，输入和输出时均进行防御性拷贝
+ * @author TT432
  */
+/** @author TT432 */
 public record ParticleSpawnRequest(String spawnId, String particleId, Vector3f position) {
     /**
-     * Creates a spawn request with non-null string identifiers and a defensively copied position.
+     * 使用非空字符串标识符和防御性拷贝的位置创建生成请求。
      */
     public ParticleSpawnRequest {
         spawnId = Objects.requireNonNull(spawnId, "spawnId");

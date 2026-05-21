@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+/** @author TT432 */
 public record ParticleAppearanceTinting(
         boolean isGradient,
         @Nullable MolangValue4 staticColor,

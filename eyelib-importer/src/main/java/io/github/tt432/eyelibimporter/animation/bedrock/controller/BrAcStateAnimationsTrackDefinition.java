@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/** @author TT432 */
+@org.jspecify.annotations.NullMarked
 public record BrAcStateAnimationsTrackDefinition(
         BrAcStateTrackName name,
         Map<String, MolangValue> animations

@@ -8,7 +8,13 @@ import lombok.With;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 
+/**
+ * 模型组件信息的 record 定义。
+ *
+ * @author TT432
+ */
 @With
+/** @author TT432 */
 public record ModelComponentInfo(
         String model,
         ResourceLocation texture,

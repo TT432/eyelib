@@ -7,10 +7,13 @@ import io.github.tt432.eyelibimporter.material.BrMaterial;
 import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
 import io.github.tt432.eyelibimporter.particle.BrParticle;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllers;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 
+/** @author TT432 */
+@NullMarked
 public record BedrockAddonPack(
         String sourceName,
         BedrockPackManifest manifest,

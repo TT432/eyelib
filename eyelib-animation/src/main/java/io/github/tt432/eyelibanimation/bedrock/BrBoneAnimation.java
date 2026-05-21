@@ -12,6 +12,7 @@ import io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap;
 import io.github.tt432.eyelibutil.codec.CodecHelper;
 import io.github.tt432.eyelibutil.math.EyeMath;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -21,15 +22,12 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * if rotation_global
- * relative_to / rotation -> 'entity'
- * rotation -> [0, 0, 0.01]
- * ---
- * if rotation_global
- * [2] = 0.01
+ * 骨骼动画的运行时期定义，管理通道和烘焙关键帧。
  *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record BrBoneAnimation(
         Map<String, BrAnimationChannel<BrBoneKeyFrame>> channels,
         BrBoneAnimationDefinition compiledDefinition
@@ -192,4 +190,3 @@ public record BrBoneAnimation(
         return null;
     }
 }
-

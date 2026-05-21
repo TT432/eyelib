@@ -18,6 +18,8 @@ import java.util.function.Function;
  * @param blendViaShortestPath 线性 t/f 平滑 (存疑)
  * @author TT432
  */
+@org.jspecify.annotations.NullMarked
+/** @author TT432 */
 public record BrAcState(
         Map<String, MolangValue> animations,
         MolangValue onEntry,

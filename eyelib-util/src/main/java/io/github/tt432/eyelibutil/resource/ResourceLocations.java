@@ -4,7 +4,11 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.resources.ResourceLocation;
 
+/**
+ * @author TT432
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+/** @author TT432 */
 public final class ResourceLocations {
     public static final ResourceLocation EMPTY = ResourceLocations.of("__blank");
 

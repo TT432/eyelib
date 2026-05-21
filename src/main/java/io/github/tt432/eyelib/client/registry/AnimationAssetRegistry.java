@@ -9,8 +9,12 @@ import lombok.NoArgsConstructor;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.jspecify.annotations.NullMarked;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+
+/** @author TT432 */
+@NullMarked
 public final class AnimationAssetRegistry {
     private static Map<?, BrAnimation> stagedAnimations = Map.of();
     private static Map<?, BrAnimationControllers> stagedControllers = Map.of();

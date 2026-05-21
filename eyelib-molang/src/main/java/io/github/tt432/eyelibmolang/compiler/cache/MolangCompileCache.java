@@ -2,12 +2,20 @@ package io.github.tt432.eyelibmolang.compiler.cache;
 
 import io.github.tt432.eyelibmolang.compiler.CompiledMolangExpression;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
+import org.jspecify.annotations.NullMarked;
 
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+/**
+ * Molang 编译结果的 L1 内存缓存，支持过期检测和大小限制淘汰。
+ *
+ * @author TT432
+ */
+@NullMarked
+/** @author TT432 */
 public final class MolangCompileCache {
     private static final int COMPILER_VERSION = 1;
     private static final int MAX_L1_SIZE = 1000;
@@ -17,16 +25,13 @@ public final class MolangCompileCache {
     // Required for staleness detection at lookup time
     private volatile MolangMappingTree mappingTree;
 
-    /** No-arg constructor: disk cache disabled (backward compatible). */
     public MolangCompileCache() {
         this(null, null);
     }
 
     /**
-     * Constructor keeping historical cacheDirectory parameter for compatibility.
-     *
-     * @param mappingTree    the Molang mapping tree for staleness detection; may be null
-     * @param cacheDirectory unused
+     * @param mappingTree    过期检测用的映射树，可为 null
+     * @param cacheDirectory 未使用，保留仅为兼容
      */
     public MolangCompileCache(MolangMappingTree mappingTree, Path cacheDirectory) {
         this.mappingTree = mappingTree;

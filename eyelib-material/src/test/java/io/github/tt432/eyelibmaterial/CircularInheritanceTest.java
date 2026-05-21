@@ -1,6 +1,7 @@
 package io.github.tt432.eyelibmaterial;
 
 import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,13 +12,10 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for circular inheritance detection in {@link BrMaterialEntry}.
- * <p>
- * Verifies that {@link BrMaterialEntry.ModifyAble#toList} (which internally traverses
- * the inheritance chain via {@code get()}, {@code add()}, {@code sub()}) correctly
- * detects cycles via the {@code Set<String> visited} guard parameter and throws
- * {@link IllegalStateException}.
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 class CircularInheritanceTest {
 
     @Test
@@ -63,10 +61,6 @@ class CircularInheritanceTest {
                 "Self-reference H→H should be detected");
     }
 
-    /**
-     * Creates a minimal {@link BrMaterialEntry} with the given name and base,
-     * using empty optionals / defaults for all other fields.
-     */
     private static BrMaterialEntry createEntry(String name, String base) {
         return new BrMaterialEntry(
                 base,

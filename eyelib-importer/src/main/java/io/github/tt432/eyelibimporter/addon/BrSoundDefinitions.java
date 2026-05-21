@@ -5,6 +5,8 @@ import com.google.gson.JsonObject;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/** @author TT432 */
+@org.jspecify.annotations.NullMarked
 public record BrSoundDefinitions(
         String formatVersion,
         LinkedHashMap<String, BedrockResourceValue.ObjectValue> soundDefinitions

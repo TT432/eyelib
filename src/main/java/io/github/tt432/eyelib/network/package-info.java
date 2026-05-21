@@ -1,11 +1,7 @@
-/**
- * Shared network entrypoints and sync handler delegation.
- * <p>
- * Networking code is internal by default and should expose behavior through narrow sync services.
- * Feature-specific packet contracts belong to their feature modules when dependencies allow.
- * Minecraft/Forge transport wiring (channel/context/side-gating) is owned by {@code mc.impl.network}.
- */
 @NullMarked
 package io.github.tt432.eyelib.network;
 
 import org.jspecify.annotations.NullMarked;
+
+// 包职责见同目录 README.md
+

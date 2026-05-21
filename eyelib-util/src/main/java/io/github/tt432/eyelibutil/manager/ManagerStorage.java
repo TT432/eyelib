@@ -5,6 +5,12 @@ import org.jspecify.annotations.Nullable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * 基于字符串键的通用管理器存储。
+ *
+ * @author TT432
+ */
+/** @author TT432 */
 public final class ManagerStorage<T> {
     private final Map<String, T> data = new LinkedHashMap<>();
 

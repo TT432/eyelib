@@ -8,6 +8,7 @@ import io.github.tt432.eyelibmolang.type.MolangFloat;
 import io.github.tt432.eyelibmolang.type.MolangNull;
 import io.github.tt432.eyelibmolang.type.MolangObject;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
+import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,8 +17,12 @@ import java.util.List;
 import java.util.Objects;
 
 /**
+ * Molang 表达式值，封装表达式编译、缓存和求值。
+ *
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public record MolangValue(
         String context,
         MolangFunction method
@@ -74,12 +79,8 @@ public record MolangValue(
     }
 
     /**
-     * Resolves a Molang expression string to an evaluable function.
-     * <p>
-     * Pipeline:
-     * 1. Try constant folding via {@link MolangConstantExpressionEvaluator#tryEvaluate}
-     * 2. Compile via {@link MolangCompilerImpl}
-     * 3. Cache the compiled result via {@link MolangCompileCache}
+     * 将 Molang 表达式字符串解析为可求值函数。
+     * 流程：常量折叠 → 编译 → 缓存。
      */
     private static MolangFunction resolveFunction(String context) {
         return MolangConstantExpressionEvaluator.tryEvaluate(context)
@@ -108,7 +109,7 @@ public record MolangValue(
     }
 
     /**
-     * Returns the size of the constant pool for telemetry.
+     * 常量池大小，仅用于遥测。
      */
     public static int getConstantPoolSize() {
         return MOLANG_VALUE_CONSTANT_POOL.size();
@@ -144,4 +145,3 @@ public record MolangValue(
         return obj == this || (obj instanceof MolangValue mv && mv.context.equals(context));
     }
 }
-

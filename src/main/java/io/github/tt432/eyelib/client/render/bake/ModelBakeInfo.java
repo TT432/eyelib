@@ -11,10 +11,13 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.lwjgl.opengl.GL11.*;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public abstract class ModelBakeInfo<Info> {
     private final Map<String, HashMap<ResourceLocation, BakedModel>> modelCache = new HashMap<>();
 

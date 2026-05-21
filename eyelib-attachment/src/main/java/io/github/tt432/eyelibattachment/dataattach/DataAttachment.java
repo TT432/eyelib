@@ -1,5 +1,11 @@
 package io.github.tt432.eyelibattachment.dataattach;
 
+/**
+ * 泛型数据附属的持有者。
+ *
+ * @author TT432
+ */
+/** @author TT432 */
 public class DataAttachment<C> {
 
     private final DataAttachmentType<C> type;

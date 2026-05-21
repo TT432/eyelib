@@ -6,6 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 /**
  * @author TT432
  */
+/** @author TT432 */
 public record MarkVariant(
         int value
 ) implements Component {

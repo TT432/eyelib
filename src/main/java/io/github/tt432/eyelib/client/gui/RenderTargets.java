@@ -4,10 +4,13 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
+import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public class RenderTargets {
     public static final VarHandle colorTextureIdHandle;
     public static final VarHandle depthBufferIdHandle;

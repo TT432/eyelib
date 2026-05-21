@@ -6,6 +6,10 @@ import java.util.Locale;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+/**
+ * @author TT432
+ */
+/** @author TT432 */
 public final class ParticleCommandRuntime {
     private ParticleCommandRuntime() {
     }

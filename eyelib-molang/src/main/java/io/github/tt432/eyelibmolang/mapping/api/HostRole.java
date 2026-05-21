@@ -1,15 +1,17 @@
 package io.github.tt432.eyelibmolang.mapping.api;
 
+import org.jspecify.annotations.NullMarked;
+
 import java.util.Objects;
 
 /**
- * Type-safe host role identifier - the canonical semantic term for host object lookup.
- * This replaces raw {@link Class}-based lookup with compile-time type safety
- * and supports multiple roles of the same Java type with different semantics.
+ * 类型安全的主机角色标识符，支持同一 Java 类型的不同语义角色。
  *
- * @param <T> the value type associated with this role
- * @see HostContext
+ * @param <T> 此角色关联的值类型
+ * @author TT432
  */
+@NullMarked
+/** @author TT432 */
 public final class HostRole<T> {
     private final String name;
     private final Class<T> type;
@@ -19,17 +21,14 @@ public final class HostRole<T> {
         this.type = Objects.requireNonNull(type, "type");
     }
 
-    /** Creates a new HostRole with the given descriptive name and type token. */
     public static <T> HostRole<T> of(String name, Class<T> type) {
         return new HostRole<>(name, type);
     }
 
-    /** The class token for type-safe cast. */
     public Class<T> type() {
         return type;
     }
 
-    /** Human-readable role name for diagnostics. */
     public String name() {
         return name;
     }

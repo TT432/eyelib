@@ -16,6 +16,7 @@ import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.DEB
 import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.DIAGNOSTICS_GOLDEN_EXTENSION;
 import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.PARSE_GOLDEN_EXTENSION;
 
+/** @author TT432 */
 final class MolangCorpusLinter {
     List<MolangCorpusIssue> lint(List<MolangCorpusCase> cases) {
         List<MolangCorpusIssue> issues = new ArrayList<>();

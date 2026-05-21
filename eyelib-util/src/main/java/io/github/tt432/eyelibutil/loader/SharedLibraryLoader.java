@@ -18,6 +18,7 @@ import java.util.zip.ZipFile;
  */
 @Slf4j
 @SuppressWarnings("NullAway")
+/** @author TT432 */
 public class SharedLibraryLoader {
     private static final boolean isWindows = System.getProperty("os.name").contains("Windows");
     private static final boolean isLinux = System.getProperty("os.name").contains("Linux");
@@ -313,5 +314,4 @@ public class SharedLibraryLoader {
         }
     }
 }
-
 
