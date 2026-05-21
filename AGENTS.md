@@ -18,6 +18,76 @@
 - If a module is added or removed, update :MODULES.md: and any impacted docs in the same change.
 - Subproject `build.gradle` `project(:)` edges define the real architecture. A subproject must never depend on root (`io.github.tt432.eyelib.*`).
 
+## Comment Rules
+
+### 基本原则
+- **统一使用中文**。
+- 注释的价值在于**信息增量** — 删掉后别人会误解或犯错时才需要。
+
+### `@author TT432`
+- 每个 `.java` 文件的类/接口声明前加 `/** @author TT432 */`。
+
+### `@NullMarked`
+- **全局强制**。所有类、所有 `package-info.java` 必须加 `@NullMarked`。
+
+### package-info.java
+- 统一格式：
+```java
+@NullMarked
+package ...;
+
+// 包职责见同目录 README.md
+```
+
+### Javadoc（类级）
+- 所有 `public` 类/接口必须有，不超过两句话简述职责。
+- `private` 内部类、纯数据 record、简单 DTO 可不加。
+
+### Javadoc（方法级）
+- `@param` / `@return` **不强制**。仅在行为非显而易见时写，重点关注：
+  - **边界条件**：null 约定、线程要求、副作用、前置/后置条件。
+  - **性能特征**：O(n) 还是 O(1)，会阻塞吗。
+  - **幂等性**：重复调用是否安全。
+- 简单 getter/setter、`equals`/`hashCode`/`toString`、框架 override 方法不加。
+
+### TODO
+- 统一格式：`// TODO: 中文描述`
+- 禁止：`todo`（小写无冒号）、`TODO:fix`、`TODO(Phase N)`、Javadoc 中嵌 TODO。
+
+### 行内注释（`//`）
+- **默认不写**。仅当逻辑确实复杂且一眼看不懂时才加，且必须回答 **"为什么这样做"** 而非 **"代码在做什么"**。
+
+### 禁止项
+- **段分隔装饰符**：`// ----`、`// ───`、`// ═══` 等一律禁止。
+- **变量名译本**：`// samplerStates — convert each BrSamplerState` 这类注释禁止。
+- **重复注解**：`@DisplayName("...")` 下方再写相同内容的 Javadoc。
+- **模板复制**：同一段话出现在多个文件的注释中。
+- **HTML 标签**：`<ul>`、`<ol>`、`<li>`、`<p>` 等禁止出现在注释中。
+
+### 各代码类型差异化标准
+
+| 代码类型 | 类级 Javadoc | 方法级 | 行内 |
+|---|---|---|---|
+| 公开 API（api/、接口） | 必须 | 边界条件必写 | 按需（层次 3） |
+| 实现类 | 必须 | 边界条件必写 | 按需（层次 3） |
+| 测试 | 不加 | 不加 | 按需（层次 3） |
+| Forge 注册/样板 | 不加 | 不加 | 不加 |
+| 生成代码 | 不加 | 不加 | 不加 |
+
+### 注释深度分层
+
+- **层次 0（禁止）**：删掉后无任何信息损失 → 不写。
+- **层次 1（标识）**：一句话说清职责或非显而易见的含义 → 类级 Javadoc、sentinel 值、API 枚举常量。
+- **层次 2（边界）**：调用方不知就可能会写 bug → null 约定、线程安全、副作用、前置条件。
+- **层次 3（解释）**：熟练同事 code review 会问「为什么不用 xxx？」→ 绕过已知问题、对齐外部规范、设计取舍。
+
+### 自检清单
+写注释前依次确认：
+1. 删掉后别人会误解吗？→ 不会 → 删
+2. 信息已经存在于类型签名/命名里吗？→ 是 → 删
+3. 半年后我自己还需要这个信息吗？→ 不需要 → 删
+4. 能用一句话说清吗？→ 不能 → 先重构代码，代码本身比注释好
+
 ## Documentation Rules
 - **Paths must resolve.** Every file path reference in docs must exist. If a referenced file is deleted or moved, update or delete the reference.
 - **Don't keep history in active docs.** Completed tasks, resolved problems, and historical intermediate states belong in `docs/architecture/migration/`, not in current-state documents.
