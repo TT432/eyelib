@@ -60,5 +60,8 @@ clientsmoke-reports/
 # temporary planning artifacts
 .planning/tmp-*
 
+# local reference / intermediate research results
+.local_ref/
+
 文档
 .extrasrc
