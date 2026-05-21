@@ -23,7 +23,7 @@ public final class ScriptEvalService {
             }
             """;
 
-    public record ScriptResult(boolean success, String result, String error) {}
+    public record ScriptResult(boolean success, @org.jspecify.annotations.Nullable String result, @org.jspecify.annotations.Nullable String error) {}
 
     public static ScriptResult evaluate(String code) {
         try {

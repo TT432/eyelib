@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.common.debug;
 
 import com.sun.net.httpserver.HttpServer;
 import net.minecraftforge.fml.loading.FMLLoader;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +16,7 @@ public final class AIDebugServer {
     private static final Logger LOGGER = LoggerFactory.getLogger(AIDebugServer.class);
     private static final int PORT = 25999;
 
+    @Nullable
     private HttpServer server;
 
     public void start() {
@@ -67,7 +69,7 @@ public final class AIDebugServer {
         }
     }
 
-    private static String escapeJson(String s) {
+    private static String escapeJson(@Nullable String s) {
         if (s == null) return "null";
         StringBuilder sb = new StringBuilder(s.length() + 16);
         for (char c : s.toCharArray()) {

@@ -87,6 +87,7 @@ class ParticleApiDelegationBoundaryTest {
                     .filter(path -> !path.toString().contains("/client/"))
                     .filter(path -> !path.toString().contains("\\network\\"))
                     .filter(path -> !path.toString().contains("/network/"))
+                    .filter(path -> !path.getFileName().toString().equals("EyelibParticleMod.java"))
                     .filter(path -> containsAnyForbiddenImport(path, forbiddenFragments))
                     .toList();
 

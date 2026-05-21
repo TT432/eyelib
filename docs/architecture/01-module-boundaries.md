@@ -2,9 +2,9 @@
 
 ## Current Major Areas
 - `eyelib-model/src/main/java/io/github/tt432/eyelibmodel/`: canonical model data types (Model, Bone, Cube, Face, Vertex, TextureMesh, GlobalBoneIdHandler, VisibleBox, locator tree).
-- `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/`: importer/schema Forge functional module under `io.github.tt432.eyelibimporter.*`.
+- `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/`: importer/schema Forge functional module under `io.github.tt432.eyelibimporter.*`. `io.github.tt432.eyelibimporter.particle.BrParticle` is the canonical raw Bedrock particle schema/codec owner.
 - `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/`: Molang engine with Forge platform bindings under `platform/`.
-- `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/`: particle module boundary (APIs, runtime, packets, loading).
+- `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/`: particle module boundary (APIs, runtime, packets, loading). `io.github.tt432.eyelibparticle.runtime.ParticleDefinition` is the canonical module runtime definition owner. `ParticleDefinitionAdapter` is the schema adapter seam. Root `client/particle/bedrock/BrParticle` has been deleted. The allowed particle -> importer dependency for ParticleDefinitionAdapter preserves mapped fields: identifier, format version, basic render material/texture, curves, events, raw components, billboard flipbook summary, and Molang value preservation. Phase 14 deferred scopes include ClientSmoke, hardware evidence, and PFUT-03 independent particle artifact publication.
 - `eyelib-material/src/main/java/io/github/tt432/eyelibmaterial/`: Bedrock material definitions and GL state.
 - `eyelib-animation/src/main/java/io/github/tt432/eyelibanimation/`: animation runtime (clips, controllers, keyframes, state machines).
 - `eyelib-behavior/src/main/java/io/github/tt432/eyelibbehavior/`: Bedrock entity behavior component model.
@@ -30,6 +30,11 @@
 - Feature-specific packets belong in feature modules where dependency edges allow.
 - Runtime executors (animation, controller, particle) are runtime implementation details that stay with their owning module.
 - Importer owns schema/codec definitions; root owns runtime adaptation and `NativeImage`/texture upload.
+- Particle module loading/publication is owned by `ParticleDefinitionRegistry` and `ParticleResourcePublication`, keyed by `ParticleDefinition.identifier()`. Particle packet contracts live under `io.github.tt432.eyelibparticle.network`.
+- Root legacy `client/particle/bedrock/**` schema/runtime tree has been deleted.
+- FM-015 supersedes package-name ownership for accessors: `LivingEntityRendererAccessor` is client-render-owned technical mixin wiring, physically hosted in one shared package root.
+- FM-014 designates shared channel entrypoints and context-free handler dispatch as root network responsibility; feature-specific protocol contracts stay in subproject modules.
+- Particle command/network integration routes through `mc/impl/common/command` with platform-free shaping in `ParticleCommandRuntime`. The `:eyelib-particle` module owns particle APIs, `ParticleDefinitionAdapter`, `ParticleDefinitionRegistry`, `ParticleResourcePublication`, and `io.github.tt432.eyelibparticle.network` packet contracts.
 
 ## Breaking Refactor Rule
 - Do not add new singleton reach-through methods to top-level `Eyelib`.

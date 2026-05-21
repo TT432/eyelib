@@ -11,7 +11,7 @@
 - Client rendering/runtime: `src/main/java/io/github/tt432/eyelib/client/`
 - Importer/schema: `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/`
 - Molang engine: `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/`
-- Particles: `eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/`
+- Particles: `:eyelib-particle` owns module APIs, `ParticleDefinition`, `ParticleDefinitionAdapter`, `ParticleDefinitionRegistry`, `ParticleResourcePublication`, keyed by `ParticleDefinition.identifier()`. Raw schema: `io.github.tt432.eyelibimporter.particle.BrParticle`. Network: `io.github.tt432.eyelibparticle.network`.
 - Animation: `eyelib-animation/src/main/java/io/github/tt432/eyelibanimation/`
 - Behavior: `eyelib-behavior/src/main/java/io/github/tt432/eyelibbehavior/`
 - Materials: `eyelib-material/src/main/java/io/github/tt432/eyelibmaterial/`
@@ -19,6 +19,7 @@
 - Network: `eyelib-network/src/main/java/io/github/tt432/eyelibnetwork/` + `src/main/java/io/github/tt432/eyelib/network/`
 - Shared utilities: `eyelib-util/src/main/java/io/github/tt432/eyelibutil/`
 - Auth dependency graph: each subproject's `build.gradle` `project(:)` edges
+- Phase 14 deferred scopes include ClientSmoke, hardware evidence, and PFUT-03 independent particle artifact publication.
 
 ## Read In This Order
 1. `AGENTS.md`

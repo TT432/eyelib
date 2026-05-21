@@ -41,16 +41,16 @@ class ParticleNetworkDelegationBoundaryTest {
     @Test
     void transportRegistersRemoveThenSpawnThroughClientHandlers() throws IOException {
         String source = Files.readString(Path.of(
-                "src/main/java/io/github/tt432/eyelib/mc/impl/network/EyelibNetworkTransport.java"
+                "src/main/java/io/github/tt432/eyelib/network/EyelibNetworkManager.java"
         ));
 
-        int removeRegistration = source.indexOf("INSTANCE.messageBuilder(RemoveParticlePacket.class, nextId())");
-        int spawnRegistration = source.indexOf("INSTANCE.messageBuilder(SpawnParticlePacket.class, nextId())");
+        int removeRegistration = source.indexOf("RemoveParticlePacket.class,");
+        int spawnRegistration = source.indexOf("SpawnParticlePacket.class,");
 
         assertTrue(removeRegistration >= 0);
         assertTrue(spawnRegistration > removeRegistration);
-        assertTrue(source.contains("onClientHandle(NetClientHandlers::onRemoveParticlePacket)"));
-        assertTrue(source.contains("onClientHandle(NetClientHandlers::onSpawnParticlePacket)"));
+        assertTrue(source.contains("NetClientHandlers::onRemoveParticlePacket"));
+        assertTrue(source.contains("NetClientHandlers::onSpawnParticlePacket"));
     }
 
     @Test

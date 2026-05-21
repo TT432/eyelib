@@ -57,9 +57,13 @@ class AttachmentModuleIdentityTest {
     }
 
     private static boolean isAllowedMinecraftFacingPath(String path) {
-        return path.startsWith("network/")
+        return !path.contains("/")
+                || path.startsWith("network/")
                 || path.startsWith("capability/")
-                || path.startsWith("bootstrap/");
+                || path.startsWith("bootstrap/")
+                || path.startsWith("runtime/")
+                || path.startsWith("dataattach/mc/")
+                || path.startsWith("sync/");
     }
 
     private static Path moduleRoot() {

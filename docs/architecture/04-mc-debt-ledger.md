@@ -11,3 +11,5 @@
 |---|---|---|
 | FM-004 | `ParticleSpawnService` — root compatibility facade for packet entrypoints and capability context. Particle-only spawn/runtime behavior already lives in `:eyelib-particle`. | Partial |
 | FM-008 | Root-coupled attachment packets — remaining update/extra packet contracts decode through root `EyelibAttachableData` or root capability payload types, preventing full attachment protocol surface ownership by `:eyelib-attachment`. | Partial |
+| FM-014 | Shared channel entrypoints and context-free handler dispatch — root network package owns shared registration/delegation, while feature-specific protocol contracts stay in subproject modules (`io.github.tt432.eyelibparticle.network`, `io.github.tt432.eyelibattachment.network`). | Stable |
+| FM-015 | `LivingEntityRendererAccessor` — client-render-owned accessor mixin, physically hosted in the shared `mixin/` package root with technical mixin wiring, superseding package-name ownership. | Stable |

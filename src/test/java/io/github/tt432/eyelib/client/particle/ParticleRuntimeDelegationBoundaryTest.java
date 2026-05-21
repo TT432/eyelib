@@ -63,20 +63,20 @@ class ParticleRuntimeDelegationBoundaryTest {
         assertNull(ParticleDefinitionRegistry.store().get("particles/runtime.particle"));
 
         String animationEntry = Files.readString(Path.of(
-                "src/main/java/io/github/tt432/eyelib/client/animation/bedrock/BrAnimationEntryDefinition.java"
+                "eyelib-animation/src/main/java/io/github/tt432/eyelibanimation/bedrock/BrAnimationEntryDefinition.java"
         ));
         String controllerExecutor = Files.readString(Path.of(
-                "src/main/java/io/github/tt432/eyelib/client/animation/bedrock/controller/BrControllerExecutor.java"
+                "eyelib-animation/src/main/java/io/github/tt432/eyelibanimation/bedrock/controller/BrControllerExecutor.java"
         ));
         String command = Files.readString(Path.of(
-                "src/main/java/io/github/tt432/eyelib/mc/impl/common/command/EyelibParticleCommand.java"
+                "src/main/java/io/github/tt432/eyelib/common/command/EyelibParticleCommand.java"
         ));
 
         assertTrue(animationEntry.contains("ParticleDefinitionRegistry.store().get(s)"));
-        assertTrue(animationEntry.contains("ParticleSpawnService.spawnEmitter(uuid, definition,"));
+        assertTrue(animationEntry.contains("AnimationParticleSpawner.spawn(uuid, definition,"));
         assertTrue(!animationEntry.contains("ParticleLookup.get("));
         assertTrue(controllerExecutor.contains("ParticleDefinitionRegistry.store().get(effect)"));
-        assertTrue(controllerExecutor.contains("ParticleSpawnService.spawnEmitter("));
+        assertTrue(controllerExecutor.contains("AnimationParticleSpawner.spawn("));
         assertTrue(controllerExecutor.contains("definition,"));
         assertTrue(!controllerExecutor.contains("ParticleLookup.get("));
         assertTrue(command.contains("ParticleDefinitionRegistry.store().names()"));
