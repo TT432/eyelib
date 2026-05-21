@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.client.render.visitor;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.tt432.eyelib.client.compat.ar.ARCompat;
 import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelib.client.render.bake.BakedModel;
@@ -15,11 +14,11 @@ import lombok.Setter;
 @Setter
 public class HighSpeedRenderModelVisitor extends ModelVisitor {
     @Override
-    public  void visitPreModel(RenderParams params, ModelVisitContext context, ModelRuntimeData infos, Model model) {
+    public void visitPreModel(RenderParams params, ModelVisitContext context, ModelRuntimeData infos, Model model) {
         super.visitPreModel(params, context, infos, model);
 
         if (!context.contains("BackedModel")) {
-            throw new RuntimeException("can't use HighSpeedRenderModelVisitor without HBackedModel");
+            throw new RuntimeException("can't use HighSpeedRenderModelVisitor without BackedModel");
         }
     }
 
@@ -39,27 +38,22 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
             return;
         }
 
-        PoseStack.Pose last = poseStack.last();
-
         if (renderParams.partVisibility().getOrDefault(bone.id(), true)) {
-            if (ARCompat.AR_INSTALLED && ARCompat.renderWithAR(bakedBone, renderParams)) {
-                return;
-            }
-
-             bakedBone.transformPos(last.pose());
-             bakedBone.transformNormal(last.normal());
-
-             if (renderParams.consumer() != null) {
-                 visitVertex(bakedBone, renderParams.consumer(), renderParams.overlay(), renderParams.light());
-             }
+            renderBakedBone(renderParams, bakedBone);
         }
     }
 
-    @Override
-    public void visitCube(RenderParams renderParams, ModelVisitContext context, Model.Cube cube) {
+    protected void renderBakedBone(RenderParams renderParams, BakedModel.BakedBone bakedBone) {
+        PoseStack.Pose last = renderParams.poseStack().last();
+        bakedBone.transformPos(last.pose());
+        bakedBone.transformNormal(last.normal());
+
+        if (renderParams.consumer() != null) {
+            visitVertex(bakedBone, renderParams.consumer(), renderParams.overlay(), renderParams.light());
+        }
     }
 
-    private static void visitVertex(BakedModel.BakedBone bakedBone, VertexConsumer consumer, int overlay, int light) {
+    static void visitVertex(BakedModel.BakedBone bakedBone, VertexConsumer consumer, int overlay, int light) {
         for (int nIdx = 0; nIdx < bakedBone.vertexSize(); nIdx++) {
             consumer.vertex(
                     bakedBone.positionResult()[nIdx * 3],
@@ -72,5 +66,9 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
                     bakedBone.normalResult()[nIdx * 3 + 2]
             );
         }
+    }
+
+    @Override
+    public void visitCube(RenderParams renderParams, ModelVisitContext context, Model.Cube cube) {
     }
 }

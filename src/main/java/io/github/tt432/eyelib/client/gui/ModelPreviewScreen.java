@@ -18,7 +18,7 @@ import io.github.tt432.eyelibimporter.model.bbmodel.Texture;
 import io.github.tt432.eyelib.client.gui.preview.ModelPreviewAsset;
 import io.github.tt432.eyelibimporter.model.importer.ModelImporter;
 import io.github.tt432.eyelib.client.render.RenderParams;
-import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
+import io.github.tt432.eyelib.client.render.visitor.ActiveModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -189,7 +189,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
                         context.put("BackedModel", bakedModel);
                     }
                     if (this.dfsModel != null) {
-                        this.dfsModel.visit(params, context, BuiltInBrModelRenderVisitors.HIGH_SPEED_RENDER, new ModelRuntimeData(), new DFSModel.StateMachine());
+                        this.dfsModel.visit(params, context, ActiveModelRenderVisitors.RENDER_VISITOR, new ModelRuntimeData(), new DFSModel.StateMachine());
                     }
                 }
             } catch (Exception e) {

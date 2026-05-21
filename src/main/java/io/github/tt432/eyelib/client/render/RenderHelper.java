@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelib.client.render.bake.TwoSideModelBakeInfo;
+import io.github.tt432.eyelib.client.render.visitor.ActiveModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
@@ -68,7 +69,7 @@ public class RenderHelper {
             context.put("BackedModel", TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, params.isSolid(), params.texture()));
         }
 
-        dfsModel(model).visit(params, context, BuiltInBrModelRenderVisitors.HIGH_SPEED_RENDER, infos, new DFSModel.StateMachine());
+        dfsModel(model).visit(params, context, ActiveModelRenderVisitors.RENDER_VISITOR, infos, new DFSModel.StateMachine());
 
         return this;
     }

@@ -14,4 +14,6 @@ public class BuiltInBrModelRenderVisitors {
     public static final CollectLocatorModelVisitor COLLECT_LOCATOR = new CollectLocatorModelVisitor();
 
     public static final HighSpeedRenderModelVisitor HIGH_SPEED_RENDER = new HighSpeedRenderModelVisitor();
+
+    public static final ARBakedVisitor AR_BAKED = new ARBakedVisitor();
 }
