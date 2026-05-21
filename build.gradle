@@ -6,6 +6,7 @@ plugins {
     id 'io.freefair.lombok' version '8.6'
     id 'net.ltgt.errorprone' version '4.4.0'
     id 'signing'
+    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -145,6 +146,22 @@ obfuscation {
     createRemappingConfiguration(configurations.localRuntime)
 }
 
+// Fix ObfuscationExtension.reobfuscate() variant replacement (ModDevGradle ObfuscationExtension.java:123-147)
+// The original apiElements/runtimeElements are skipped and replaced with dependency-free reobf variants.
+// Restore proper dependency inheritance so published POMs carry correct transitive dependencies.
+allprojects {
+    afterEvaluate { p ->
+        p.configurations.matching { it.name == 'reobfApiElements' }.all { c ->
+            def apiCfg = p.configurations.findByName('api')
+            if (apiCfg) c.extendsFrom(apiCfg)
+        }
+        p.configurations.matching { it.name == 'reobfRuntimeElements' }.all { c ->
+            def rtCfg = p.configurations.findByName('runtimeClasspath')
+            if (rtCfg) c.extendsFrom(rtCfg)
+        }
+    }
+}
+
 dependencies {
     api project(':eyelib-network')
     modImplementation project(':eyelib-network')
@@ -232,7 +249,14 @@ signing {
 
 java {
     withSourcesJar()
-//    withJavadocJar()
+    withJavadocJar()
+}
+
+tasks.named('javadoc', Javadoc).configure {
+    options.addStringOption('Xdoclint:none', '-quiet')
+    options.encoding = 'UTF-8'
+    // Use original source (not delombok) to avoid delombok configuration-cache issues
+    source = sourceSets.main.allJava
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
@@ -260,10 +284,80 @@ sourceSets.main.resources.srcDir generateModMetadata
 // To avoid having to run "generateModMetadata" manually, make it run on every project reload
 legacyForge.ideSyncTask generateModMetadata
 
+// Collect dependency data for the mavenCentralLibrary publication.
+// Subproject properties are not available during root evaluation, so defer to after all projects evaluate.
+def centralCompileDeps = [] as List<Map>
+def centralRuntimeDeps = [] as List<Map>
+
+gradle.projectsEvaluated {
+    subprojects.each { sub ->
+        centralCompileDeps << [
+                groupId: sub.group,
+                artifactId: sub.base.archivesName.get(),
+                version: sub.version
+        ]
+    }
+
+    def jarJarModuleIds = [] as Set<String>
+    project.configurations.jarJar.allDependencies.each { dep ->
+        if (dep instanceof ExternalModuleDependency && dep.group != null) {
+            jarJarModuleIds.add("${dep.group}:${dep.name}")
+        }
+    }
+
+    def ignoredGroups = ['io.github.llamalad7', 'net.minecraftforge', 'net.neoforged']
+    project.configurations.implementation.allDependencies.each { dep ->
+        if (dep instanceof ExternalModuleDependency && dep.group != null
+                && !ignoredGroups.contains(dep.group)
+                && dep.group != project.group) {
+            def id = "${dep.group}:${dep.name}"
+            if (!jarJarModuleIds.contains(id)) {
+                centralRuntimeDeps << [
+                        groupId: dep.group,
+                        artifactId: dep.name,
+                        version: dep.version
+                ]
+            }
+        }
+    }
+}
+
+// Library jar — root classes only, no jarJar embedding
+def centralDir = layout.buildDirectory.dir('libs-maven-central')
+
+tasks.register('libraryJar', Jar.class) {
+    archiveBaseName = 'eyelib'
+    archiveVersion = project.version
+    destinationDirectory = centralDir
+    from sourceSets.main.output
+    manifest {
+        attributes 'MixinConfigs': "${mod_id}.mixins.json"
+    }
+}
+
+tasks.register('librarySourcesJar', Jar.class) {
+    archiveBaseName = 'eyelib'
+    archiveClassifier = 'sources'
+    archiveVersion = project.version
+    destinationDirectory = centralDir
+    from sourceSets.main.allJava
+}
+
+tasks.register('libraryJavadocJar', Jar.class) {
+    archiveBaseName = 'eyelib'
+    archiveClassifier = 'javadoc'
+    archiveVersion = project.version
+    destinationDirectory = centralDir
+    from tasks.named('javadoc')
+}
+
 publishing {
     publications {
+        // Publication 1: Forge mod distribution — jarJar + reobfuscation, POM carries mod deps
         mavenJava(MavenPublication) {
             from components.java
+            suppressPomMetadataWarningsFor('reobfApiElements')
+            suppressPomMetadataWarningsFor('reobfRuntimeElements')
 
             pom {
                 name = project.mod_name
@@ -292,15 +386,139 @@ publishing {
                 }
             }
         }
+
+        // Publication 2: clean library jar + filtered POM for Maven Central consumers
+        mavenCentralLibrary(MavenPublication) {
+            artifact tasks.named('libraryJar')
+            artifact tasks.named('librarySourcesJar')
+            artifact tasks.named('libraryJavadocJar')
+
+            pom {
+                name = project.mod_name
+                description = project.mod_description
+                url = "https://github.com/${githubUserName}/${githubRepoName}"
+
+                scm {
+                    connection = "scm:git:git://github.com/${githubUserName}/${githubRepoName}.git"
+                    developerConnection = "scm:git:ssh://github.com/${githubUserName}/${githubRepoName}.git"
+                    url = "https://github.com/${githubUserName}/${githubRepoName}"
+                }
+
+                licenses {
+                    license {
+                        name = 'MIT'
+                        url = "https://github.com/${githubUserName}/${githubRepoName}/tree/master/LICENSE"
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'tt432'
+                        name = 'Chin'
+                        email = '2437315224@qq.com'
+                    }
+                }
+
+                withXml {
+                    def deps = asNode().appendNode('dependencies')
+
+                    centralCompileDeps.each { dep ->
+                        def n = deps.appendNode('dependency')
+                        n.appendNode('groupId', dep.groupId)
+                        n.appendNode('artifactId', dep.artifactId)
+                        n.appendNode('version', dep.version)
+                        n.appendNode('scope', 'compile')
+                    }
+
+                    centralRuntimeDeps.each { dep ->
+                        def n = deps.appendNode('dependency')
+                        n.appendNode('groupId', dep.groupId)
+                        n.appendNode('artifactId', dep.artifactId)
+                        n.appendNode('version', dep.version)
+                        n.appendNode('scope', 'runtime')
+                    }
+                }
+            }
+        }
     }
 
     repositories {
-        maven {
-            url = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
-            credentials {
-                username = project.findProperty('ossrhUsername')
-                password = project.findProperty('ossrhPassword')
+        mavenLocal()
+    }
+}
+
+// Nexus publish plugin — automatic staging close & release via OSSRH Staging API
+// (OSSRH shut down June 2025; replaced by https://ossrh-staging-api.central.sonatype.com)
+// Credentials from gradle.properties: ossrhUsername / ossrhPassword (Portal Token)
+// Note: add --no-configuration-cache when publishing (plugin not yet compatible)
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri('https://ossrh-staging-api.central.sonatype.com/service/local/'))
+            snapshotRepositoryUrl.set(uri('https://central.sonatype.com/repository/maven-snapshots/'))
+            username = project.findProperty('ossrhUsername')
+            password = project.findProperty('ossrhPassword')
+        }
+    }
+}
+
+// Configure publishing for all subprojects (POM metadata, javadoc, signing)
+subprojects {
+    afterEvaluate { p ->
+        // Javadoc generation (required by Maven Central portal)
+        p.java {
+            withSourcesJar()
+            withJavadocJar()
+        }
+        p.tasks.named('javadoc', Javadoc).configure {
+            options.addStringOption('Xdoclint:none', '-quiet')
+            options.encoding = 'UTF-8'
+            source = p.sourceSets.main.allJava
+        }
+
+        p.publishing {
+            publications {
+                mavenJava(MavenPublication) {
+                    pom {
+                        name = p.base.archivesName.get()
+                        description = p.findProperty('mod_description') ?: ''
+                        url = "https://github.com/${githubUserName}/${githubRepoName}"
+
+                        scm {
+                            connection = "scm:git:git://github.com/${githubUserName}/${githubRepoName}.git"
+                            developerConnection = "scm:git:ssh://github.com/${githubUserName}/${githubRepoName}.git"
+                            url = "https://github.com/${githubUserName}/${githubRepoName}"
+                        }
+
+                        licenses {
+                            license {
+                                name = 'MIT'
+                                url = "https://github.com/${githubUserName}/${githubRepoName}/tree/master/LICENSE"
+                            }
+                        }
+
+                        developers {
+                            developer {
+                                id = 'tt432'
+                                name = 'Chin'
+                                email = '2437315224@qq.com'
+                            }
+                        }
+                    }
+                    suppressPomMetadataWarningsFor('reobfApiElements')
+                    suppressPomMetadataWarningsFor('reobfRuntimeElements')
+                }
             }
+
+            repositories {
+                mavenLocal()
+            }
+        }
+
+        // Subprojects need their own signing since portal validates per-module
+        p.apply plugin: 'signing'
+        p.signing {
+            sign p.publishing.publications
         }
     }
 }
