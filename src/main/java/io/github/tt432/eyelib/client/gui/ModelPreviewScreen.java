@@ -5,21 +5,21 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import io.github.tt432.eyelib.client.gui.preview.ModelPreviewAsset;
 import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
-import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelib.client.model.ModelLookup;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
+import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.client.render.bake.TwoSideModelBakeInfo;
+import io.github.tt432.eyelib.client.render.visitor.ActiveModelRenderVisitors;
+import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
+import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibimporter.model.bbmodel.BBModel;
 import io.github.tt432.eyelibimporter.model.bbmodel.BBModelLoader;
 import io.github.tt432.eyelibimporter.model.bbmodel.Texture;
-import io.github.tt432.eyelib.client.gui.preview.ModelPreviewAsset;
 import io.github.tt432.eyelibimporter.model.importer.ModelImporter;
-import io.github.tt432.eyelib.client.render.RenderParams;
-import io.github.tt432.eyelib.client.render.visitor.ActiveModelRenderVisitors;
-import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
+import io.github.tt432.eyelibmodel.Model;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -29,14 +29,18 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.loading.FMLLoader;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * A screen for previewing models from the ModelManager.
@@ -47,10 +51,11 @@ import org.jspecify.annotations.NullMarked;
  */
 @NullMarked
 public class ModelPreviewScreen extends ModalWorksurfaceScreen {
-//    @Mod.EventBusSubscriber(Dist.CLIENT)
+    @Mod.EventBusSubscriber(Dist.CLIENT)
     public static final class Events {
-//        @SubscribeEvent
+        @SubscribeEvent
         public static void onEvent(TickEvent.ClientTickEvent event) {
+            if (FMLLoader.isProduction()) return;
             if (Minecraft.getInstance().screen == null
                     && InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_V)) {
                 Minecraft.getInstance().setScreen(new ModelPreviewScreen());
@@ -78,7 +83,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
     private float scale = 1.0f;
     private float translateX = 0;
     private float translateY = 0;
-    private boolean isDragging = false;
+    private final boolean isDragging = false;
 
     public ModelPreviewScreen() {
         super(Component.literal("Model Preview"));
@@ -126,7 +131,8 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             renderModelInViewport(guiGraphics, viewportX, viewportY, viewportWidth, viewportHeight, partialTick);
 
             // Render model info
-            guiGraphics.drawCenteredString(this.font, "Model: " + currentModel.model().name(), this.width / 2, viewportY + viewportHeight + 10, 0xFFFFFFFF);
+            guiGraphics.drawCenteredString(this.font, "Model: " + currentModel.model()
+                                                                              .name(), this.width / 2, viewportY + viewportHeight + 10, 0xFFFFFFFF);
             guiGraphics.drawCenteredString(this.font, String.format("Rotation: %.1f, %.1f | Scale: %.2fx | Pan: %.1f, %.1f", rotateX, rotateY, scale, translateX, translateY), this.width / 2, viewportY + viewportHeight + 25, 0xFFAAAAAA);
         } else {
             // Render status message (e.g., "Model not found")
@@ -178,9 +184,9 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             VertexConsumer buffer = bufferSource.getBuffer(renderType);
 
             RenderParams params = RenderParams.builder(poseStack, renderType, true, texture, buffer)
-                    .light(LightTexture.FULL_BRIGHT) // Full bright for preview
-                    .overlay(OverlayTexture.NO_OVERLAY)
-                    .build();
+                                              .light(LightTexture.FULL_BRIGHT) // Full bright for preview
+                                              .overlay(OverlayTexture.NO_OVERLAY)
+                                              .build();
 
             // Render
             try {
@@ -293,7 +299,8 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
                 BBModel model = new BBModelLoader().load(path);
                 this.currentModel = previewModel(model, ModelImporter.importBlockbench(model));
                 var model1 = currentModel.model();
-                var info = TwoSideModelBakeInfo.INSTANCE.getBakeInfo(model1, true, new ResourceLocation(currentModel.atlasTexture().id()));
+                var info = TwoSideModelBakeInfo.INSTANCE.getBakeInfo(model1, true, new ResourceLocation(currentModel.atlasTexture()
+                                                                                                                    .id()));
                 bakedModel = TwoSideModelBakeInfo.INSTANCE.bake(model1, info);
                 dfsModel = DFSModel.create(model1);
                 this.statusMessage = "";
