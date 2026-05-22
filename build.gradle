@@ -190,6 +190,9 @@ dependencies {
     api project(':eyelib-model')
     modImplementation project(':eyelib-model')
     jarJar project(':eyelib-model')
+    api project(':eyelib-track')
+    modImplementation project(':eyelib-track')
+    jarJar project(':eyelib-track')
     api project(':eyelib-util')
     modImplementation project(':eyelib-util')
     jarJar project(':eyelib-util')
@@ -239,7 +242,7 @@ dependencies {
 
 jar {
     manifest.attributes([
-            "MixinConfigs": "${mod_id}.mixins.json"
+            "MixinConfigs": "${mod_id}.mixins.json,eyelibtrack.mixins.json"
     ])
 }
 

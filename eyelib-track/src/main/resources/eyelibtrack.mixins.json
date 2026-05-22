@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "io.github.tt432.eyelibtrack.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "eyelibtrack.refmap.json",
+  "mixins": [
+    "common.ItemStackMixin",
+    "common.AbstractContainerMenuMixin",
+    "common.InventoryMixin",
+    "common.LivingEntityMixin"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
