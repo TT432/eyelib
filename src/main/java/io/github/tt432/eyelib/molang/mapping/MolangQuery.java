@@ -10,6 +10,7 @@ import io.github.tt432.eyelibanimation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelibbehavior.component.MarkVariant;
 import io.github.tt432.eyelibbehavior.component.Variant;
 import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.client.entity.AttachableResolver;
 import io.github.tt432.eyelibutil.resource.ResourceLocations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -146,6 +147,18 @@ public final class MolangQuery {
         return scope.getHostContext().get(LivingEntity.class)
                 .map(function)
                 .orElse(0F);
+    }
+
+    @MolangFunction(value = "equipped_item_is_attachable", description = "手持物品为 attachable")
+    public static float equippedItemIsAttachable(MolangScope scope) {
+        return scope.getHostContext().get(LivingEntity.class)
+                .map(entity -> {
+                    if (AttachableResolver.resolve(entity, entity.getMainHandItem()) != null
+                            || AttachableResolver.resolve(entity, entity.getOffhandItem()) != null) {
+                        return TRUE;
+                    }
+                    return FALSE;
+                }).orElse(FALSE);
     }
 
     @FunctionalInterface

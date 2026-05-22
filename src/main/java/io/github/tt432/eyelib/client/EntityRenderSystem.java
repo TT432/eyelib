@@ -15,6 +15,8 @@ import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.client.render.RenderParams;
+import io.github.tt432.eyelib.client.render.AttachableItemRenderSetup;
+import io.github.tt432.eyelib.client.entity.AttachableResolver;
 import io.github.tt432.eyelib.client.render.SimpleRenderAction;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerLookup;
@@ -27,6 +29,7 @@ import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -136,6 +139,8 @@ public class EntityRenderSystem {
                 }
                 cap.getAnimationComponent().tickedInfos = tickedInfos;
                 cap.getAnimationComponent().effects = effects;
+
+                AttachableItemRenderSetup.tickForEntity(entity, partialTick);
             }
         });
     }
@@ -194,15 +199,33 @@ public class EntityRenderSystem {
         if (offHandPose != null) {
             poseStack.poseStack.addLast(offHandPose);
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.OFF_HAND);
-            renderHandItem(bufferSource, renderTarget, itemInHand, ItemDisplayContext.THIRD_PERSON_LEFT_HAND, light, poseStack, true);
+            renderHandItemOrAttachable(bufferSource, renderTarget, itemInHand, ItemDisplayContext.THIRD_PERSON_LEFT_HAND, light, poseStack, true, InteractionHand.OFF_HAND);
         }
 
         var mainHandPose = locators.get(rightitem);
         if (mainHandPose != null) {
             poseStack.poseStack.addLast(mainHandPose);
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.MAIN_HAND);
-            renderHandItem(bufferSource, renderTarget, itemInHand, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, poseStack, false);
+            renderHandItemOrAttachable(bufferSource, renderTarget, itemInHand, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, poseStack, false, InteractionHand.MAIN_HAND);
         }
+    }
+
+    private static void renderHandItemOrAttachable(MultiBufferSource bufferSource, LivingEntity le, ItemStack item,
+                                                    ItemDisplayContext context, int light, PoseStack poseStack,
+                                                    boolean left, InteractionHand hand) {
+        if (item.isEmpty()) {
+            return;
+        }
+
+        var rd = AttachableItemRenderSetup.getOrPrepare(le, hand);
+        if (rd != null) {
+            poseStack.pushPose();
+            AttachableItemRenderSetup.renderAttachable(rd, poseStack, bufferSource, le, light, OverlayTexture.NO_OVERLAY);
+            poseStack.popPose();
+            return;
+        }
+
+        renderHandItem(bufferSource, le, item, context, light, poseStack, left);
     }
 
     private static void renderHandItem(MultiBufferSource bufferSource, LivingEntity le, ItemStack item, ItemDisplayContext context,
