@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BrMaterial(
         Map<String, BrMaterialEntry> materials
 ) {

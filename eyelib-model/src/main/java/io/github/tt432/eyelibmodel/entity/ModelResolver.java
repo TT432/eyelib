@@ -7,7 +7,6 @@ import org.jspecify.annotations.Nullable;
  * @author TT432
  */
 @FunctionalInterface
-/** @author TT432 */
 public interface ModelResolver {
     @Nullable
     Model resolve(String modelName);

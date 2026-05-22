@@ -6,7 +6,6 @@ import net.minecraftforge.fml.common.Mod;
  * @author TT432
  */
 @Mod(EyelibModelMod.MOD_ID)
-/** @author TT432 */
 public class EyelibModelMod {
     public static final String MOD_ID = "eyelibmodel";
 }

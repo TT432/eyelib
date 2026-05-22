@@ -8,7 +8,6 @@ import java.util.Map;
 /** 不可变状态机动画定义。
  * @author TT432 */
 @NullMarked
-/** @author TT432 */
 public interface StateMachineAnimationDefinition<S> {
     String name();
 

@@ -10,7 +10,6 @@ import java.util.Map;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public interface AnimationDefinition<K, C extends AnimationChannelDefinition<K>> {
     Map<String, C> channels();
 

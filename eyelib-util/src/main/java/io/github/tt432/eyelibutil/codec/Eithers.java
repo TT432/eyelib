@@ -10,7 +10,6 @@ import java.util.function.Function;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public final class Eithers {
     public static <U> U unwrap(final Either<? extends U, ? extends U> either) {
         return either.map(Function.identity(), Function.identity());

@@ -12,7 +12,6 @@ import java.util.Map;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BrBoneAnimationDefinition(
         Map<String, BrAnimationChannel<BrBoneKeyFrameDefinition>> channels
 ) implements AnimationDefinition<BrBoneKeyFrameDefinition, BrAnimationChannel<BrBoneKeyFrameDefinition>> {

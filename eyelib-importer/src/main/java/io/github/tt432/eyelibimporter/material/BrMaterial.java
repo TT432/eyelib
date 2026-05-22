@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 /** CODEC 委托给共享纯数据类型的 import 层材料。
  * @author TT432 */
 @NullMarked
-/** @author TT432 */
 public record BrMaterial(
         Map<String, BrMaterialEntry> materials
 ) {

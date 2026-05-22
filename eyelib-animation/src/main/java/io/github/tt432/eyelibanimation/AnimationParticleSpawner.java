@@ -18,7 +18,6 @@ import java.util.Optional;
  */
 @NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public final class AnimationParticleSpawner {
     private static final ParticleSpawnRuntimeAdapter ADAPTER = new ParticleSpawnRuntimeAdapter(ParticleDefinitionRegistry.store(), ParticleRenderManager.INSTANCE, AnimationParticleSpawner::makeEnvironment, Optional::empty);
     public static BedrockParticleEmitter spawn(String spawnId, ParticleDefinition definition, Vector3f position) { var env = makeEnvironment().orElse(null); if (env == null) return null; return ADAPTER.spawnEmitter(spawnId, definition, Optional.empty(), env, position); }

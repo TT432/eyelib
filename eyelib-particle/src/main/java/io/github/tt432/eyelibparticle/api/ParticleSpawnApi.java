@@ -5,7 +5,6 @@ package io.github.tt432.eyelibparticle.api;
  *
  * @author TT432
  */
-/** @author TT432 */
 public interface ParticleSpawnApi {
     /**
      * 应用一个粒子生成请求。

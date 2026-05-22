@@ -13,7 +13,6 @@ import java.util.Map;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BrAnimationEntryTracksDefinition(
         BrAnimationEntryEffectTrackDefinition<BrEffectsKeyFrameDefinition> soundEffects,
         BrAnimationEntryEffectTrackDefinition<BrEffectsKeyFrameDefinition> particleEffects,

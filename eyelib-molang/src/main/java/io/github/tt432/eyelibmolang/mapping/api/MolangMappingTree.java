@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
  */
 @NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public class MolangMappingTree {
     public static final MolangMappingTree INSTANCE = new MolangMappingTree();
 

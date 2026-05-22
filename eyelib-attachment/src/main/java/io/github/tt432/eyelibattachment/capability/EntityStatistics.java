@@ -11,7 +11,6 @@ import net.minecraft.network.FriendlyByteBuf;
  * @author TT432
  */
 @With
-/** @author TT432 */
 public record EntityStatistics(
         float distanceWalked
 ) {

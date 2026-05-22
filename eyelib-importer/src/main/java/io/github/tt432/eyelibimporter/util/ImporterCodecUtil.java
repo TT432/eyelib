@@ -14,7 +14,6 @@ import java.util.function.Function;
 /** Import 层通用 Codec 工具。
  * @author TT432 */
 @NullMarked
-/** @author TT432 */
 public final class ImporterCodecUtil {
     private ImporterCodecUtil() {
     }

@@ -12,7 +12,6 @@ import java.util.Objects;
  * @param position   生成位置，输入和输出时均进行防御性拷贝
  * @author TT432
  */
-/** @author TT432 */
 public record ParticleSpawnRequest(String spawnId, String particleId, Vector3f position) {
     /**
      * 使用非空字符串标识符和防御性拷贝的位置创建生成请求。

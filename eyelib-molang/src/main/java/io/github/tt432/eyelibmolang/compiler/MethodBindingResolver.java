@@ -18,7 +18,6 @@ import java.util.Optional;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public class MethodBindingResolver {
 
     public static Optional<MethodBinding> resolve(

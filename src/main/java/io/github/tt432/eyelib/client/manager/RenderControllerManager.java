@@ -12,7 +12,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @NullMarked
-/** @author TT432 */
 public class RenderControllerManager extends Manager<RenderControllerEntry> {
     public static final RenderControllerManager INSTANCE = new RenderControllerManager();
 

@@ -21,7 +21,6 @@ import org.jspecify.annotations.NullMarked;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public record DFSModel(
         ReferenceList<Frame> frames
 ) {

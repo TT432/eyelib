@@ -20,7 +20,6 @@ import org.jspecify.annotations.Nullable;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public final class DataAttachmentSyncRuntime {
     public static <C> void syncTrackedAndSelf(DataAttachmentType<C> attachment, Entity entity, C value) {
         EyelibNetworkTransport.sendToTrackedAndSelf(entity, new DataAttachmentUpdatePacket<>(entity.getId(), attachment, value));

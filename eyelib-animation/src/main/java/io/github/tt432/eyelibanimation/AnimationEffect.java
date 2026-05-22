@@ -11,7 +11,6 @@ import java.util.TreeMap;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record AnimationEffect<V>(
         TreeMap<Float, List<V>> data,
         TriConsumer<MolangScope, Float, V> action

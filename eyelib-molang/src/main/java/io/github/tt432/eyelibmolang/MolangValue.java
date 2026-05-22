@@ -22,7 +22,6 @@ import java.util.Objects;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record MolangValue(
         String context,
         MolangFunction method

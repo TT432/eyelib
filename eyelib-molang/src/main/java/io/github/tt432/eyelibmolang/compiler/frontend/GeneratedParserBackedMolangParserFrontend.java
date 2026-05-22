@@ -14,7 +14,6 @@ import java.util.function.Consumer;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class GeneratedParserBackedMolangParserFrontend implements MolangParserFrontend {
     public static final GeneratedParserBackedMolangParserFrontend INSTANCE = new GeneratedParserBackedMolangParserFrontend();
 

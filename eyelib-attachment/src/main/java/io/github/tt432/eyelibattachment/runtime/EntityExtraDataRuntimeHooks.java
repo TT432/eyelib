@@ -20,7 +20,6 @@ import net.minecraftforge.fml.common.Mod;
  * @author TT432
  */
 @Mod.EventBusSubscriber
-/** @author TT432 */
 public final class EntityExtraDataRuntimeHooks {
     private EntityExtraDataRuntimeHooks() {
     }

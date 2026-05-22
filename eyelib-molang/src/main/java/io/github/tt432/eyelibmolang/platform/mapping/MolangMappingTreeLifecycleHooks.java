@@ -11,7 +11,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @NullMarked
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
-/** @author TT432 */
 public final class MolangMappingTreeLifecycleHooks {
     private MolangMappingTreeLifecycleHooks() {
     }

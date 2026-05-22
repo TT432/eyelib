@@ -12,7 +12,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @NullMarked
-/** @author TT432 */
 public class ModelManager extends Manager<Model> {
     public static final ModelManager INSTANCE = new ModelManager();
 

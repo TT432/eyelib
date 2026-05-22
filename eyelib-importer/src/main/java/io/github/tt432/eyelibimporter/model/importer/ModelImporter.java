@@ -13,7 +13,6 @@ import java.util.Map;
 /** 模型文件导入入口，根据扩展名分派到 Blockbench 或 Bedrock 导入器。
  * @author TT432 */
 @NullMarked
-/** @author TT432 */
 public final class ModelImporter {
     private ModelImporter() {
     }

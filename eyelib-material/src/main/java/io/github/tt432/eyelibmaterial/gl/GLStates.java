@@ -14,7 +14,6 @@ import java.util.function.BiConsumer;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public enum GLStates implements StringRepresentable {
     EnableAlphaToCoverage(
             (material, materials) -> {

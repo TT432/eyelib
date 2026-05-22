@@ -16,7 +16,6 @@ import java.util.function.Supplier;
  * @param <C>         附属类型
  * @author TT432
  */
-/** @author TT432 */
 public record DataAttachmentType<C>(String id,
                                      Supplier<C> factory,
                                      @Nullable Codec<C> codec,

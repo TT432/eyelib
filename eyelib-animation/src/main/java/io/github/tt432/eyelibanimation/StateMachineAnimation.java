@@ -11,7 +11,6 @@ import java.util.Map;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public interface StateMachineAnimation<S> extends Animation {
     S initialState();
 

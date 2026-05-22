@@ -9,7 +9,6 @@ import net.minecraft.network.FriendlyByteBuf;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public record UniDataUpdatePacket<T>(int entityId, DataAttachmentType<T> type, T data) {
 
     public static <T> UniDataUpdatePacket<T> crate(int entityId, DataAttachmentType<T> type, T data) {

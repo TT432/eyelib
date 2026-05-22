@@ -19,7 +19,6 @@ import java.util.function.Supplier;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public class DataAttachmentTypeRegistry {
     private static final ResourceKey<Registry<DataAttachmentType<?>>> DATA_ATTACHMENTS_KEY =
             ResourceKey.createRegistryKey(new ResourceLocation("eyelib", "data_attachments"));

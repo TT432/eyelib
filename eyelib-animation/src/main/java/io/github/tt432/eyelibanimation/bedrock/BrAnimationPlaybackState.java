@@ -7,7 +7,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class BrAnimationPlaybackState {
     private int loopedTimes;
     private float lastTicks;

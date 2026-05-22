@@ -11,7 +11,6 @@ import org.jspecify.annotations.NullMarked;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NullMarked
-/** @author TT432 */
 public class InitComponentEvent extends Event {
     public final Object entity;
     public final Object componentObject;

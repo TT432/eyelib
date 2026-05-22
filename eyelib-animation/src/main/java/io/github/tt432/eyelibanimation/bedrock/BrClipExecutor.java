@@ -15,7 +15,6 @@ import java.util.Map;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 final class BrClipExecutor {
     private BrClipExecutor() {
     }

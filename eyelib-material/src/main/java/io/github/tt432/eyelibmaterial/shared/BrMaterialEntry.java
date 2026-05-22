@@ -15,7 +15,6 @@ import java.util.function.Function;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BrMaterialEntry(
         String base,
         String name,

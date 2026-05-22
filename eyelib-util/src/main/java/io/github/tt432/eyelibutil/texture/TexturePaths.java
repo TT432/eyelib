@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public final class TexturePaths {
     public static String emissivePath(String baseTexture) {
         int lastIndexOfDot = baseTexture.lastIndexOf(".png");

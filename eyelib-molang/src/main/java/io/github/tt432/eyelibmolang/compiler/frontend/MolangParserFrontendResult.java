@@ -10,7 +10,6 @@ import java.util.Optional;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record MolangParserFrontendResult(
         MolangParser parser,
         MolangParser.ExprSetContext exprSet,

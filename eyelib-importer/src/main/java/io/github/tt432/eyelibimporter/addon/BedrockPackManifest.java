@@ -13,7 +13,6 @@ import java.util.Map;
 /** Bedrock 附加包的清单文件数据结构。
  * @author TT432 */
 @NullMarked
-/** @author TT432 */
 public record BedrockPackManifest(
         int formatVersion,
         Header header,

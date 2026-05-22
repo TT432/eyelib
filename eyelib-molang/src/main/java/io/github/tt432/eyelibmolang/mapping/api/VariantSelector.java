@@ -20,7 +20,6 @@ import java.util.Set;
  */
 @NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public class VariantSelector {
 
     @Nullable

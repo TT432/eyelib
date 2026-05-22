@@ -10,7 +10,6 @@ import java.util.List;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record MolangValue2(
         MolangValue x,
         MolangValue y

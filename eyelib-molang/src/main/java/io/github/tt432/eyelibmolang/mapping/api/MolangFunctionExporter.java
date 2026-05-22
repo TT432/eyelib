@@ -12,7 +12,6 @@ import java.io.IOException;
  */
 @NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public class MolangFunctionExporter {
     public static void export() {
         try (var fw = new FileWriter("./exportedMolang.csv")) {

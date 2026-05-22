@@ -21,7 +21,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.Info> {
     public static final EmissiveModelBakeInfo INSTANCE = new EmissiveModelBakeInfo();
 

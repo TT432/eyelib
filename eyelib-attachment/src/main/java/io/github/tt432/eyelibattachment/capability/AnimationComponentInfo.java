@@ -12,7 +12,6 @@ import java.util.Map;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public record AnimationComponentInfo(
         Map<String, String> animations,
         Map<String, MolangValue> animate

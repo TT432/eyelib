@@ -5,7 +5,6 @@ import io.github.tt432.eyelibattachment.capability.ExtraEntityData;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public final class ExtraEntityDataUpdater {
     private ExtraEntityDataUpdater() {
     }

@@ -22,7 +22,6 @@ import java.util.function.Supplier;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public final class EyelibNetworkTransport {
     private static final String PROTOCOL_VERSION = "1";
     private static final String CHANNEL_NAME = "networking";

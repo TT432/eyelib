@@ -8,5 +8,4 @@ import org.jspecify.annotations.NullMarked;
  */
 @NullMarked
 @Mod("eyelibbehavior")
-/** @author TT432 */
 public class EyelibBehaviorMod {}

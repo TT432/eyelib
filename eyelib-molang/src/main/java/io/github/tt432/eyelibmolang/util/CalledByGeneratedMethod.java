@@ -10,6 +10,5 @@ import java.lang.annotation.Target;
  */
 @NullMarked
 @Target(ElementType.METHOD)
-/** @author TT432 */
 public @interface CalledByGeneratedMethod {
 }

@@ -13,7 +13,6 @@ import static org.lwjgl.opengl.GL46.GL_TEXTURE_MAX_ANISOTROPY;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BrSamplerState(
         int samplerIndex,
         TextureFilter textureFilter,

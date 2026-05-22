@@ -8,7 +8,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @NullMarked
 @Mod(EyelibMaterialMod.MOD_ID)
-/** @author TT432 */
 public class EyelibMaterialMod {
     public static final String MOD_ID = "eyelibmaterial";
 }

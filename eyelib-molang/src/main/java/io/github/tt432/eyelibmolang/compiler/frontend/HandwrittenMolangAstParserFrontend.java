@@ -17,7 +17,6 @@ import java.util.function.Consumer;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class HandwrittenMolangAstParserFrontend implements MolangParserFrontend {
     public static final HandwrittenMolangAstParserFrontend INSTANCE = new HandwrittenMolangAstParserFrontend();
 

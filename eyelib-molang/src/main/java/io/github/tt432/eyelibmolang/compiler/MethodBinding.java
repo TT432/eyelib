@@ -8,7 +8,6 @@ import java.lang.invoke.MethodHandle;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record MethodBinding(
         String methodName,
         Class<?> upperBoundType,

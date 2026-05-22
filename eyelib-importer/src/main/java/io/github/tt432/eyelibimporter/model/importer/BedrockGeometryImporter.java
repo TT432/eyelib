@@ -14,7 +14,6 @@ import java.util.Map;
 /** Bedrock 几何模型的导入器，解析 JSON 并构建中间表示。
  * @author TT432 */
 @NullMarked
-/** @author TT432 */
 public final class BedrockGeometryImporter {
     private BedrockGeometryImporter() {
     }

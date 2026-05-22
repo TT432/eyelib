@@ -19,7 +19,6 @@ import java.util.function.Function;
  * @author TT432
  */
 @org.jspecify.annotations.NullMarked
-/** @author TT432 */
 public record BrAcState(
         Map<String, MolangValue> animations,
         MolangValue onEntry,

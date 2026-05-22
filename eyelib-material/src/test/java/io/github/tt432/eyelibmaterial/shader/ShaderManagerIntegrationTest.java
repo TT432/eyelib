@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 class ShaderManagerIntegrationTest {
 
     private static final String VERT_RESOURCE = "assets/eyelibmaterial/shaders/pass_through.vert";

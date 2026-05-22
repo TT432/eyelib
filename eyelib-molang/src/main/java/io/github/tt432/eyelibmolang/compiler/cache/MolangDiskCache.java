@@ -41,7 +41,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class MolangDiskCache {
     private static final Logger LOG = Logger.getLogger(MolangDiskCache.class.getName());
 

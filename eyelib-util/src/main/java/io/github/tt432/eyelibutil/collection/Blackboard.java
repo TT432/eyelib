@@ -8,7 +8,6 @@ import java.util.Map;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public final class Blackboard {
     private final Map<String, Object> data = new HashMap<>();
 

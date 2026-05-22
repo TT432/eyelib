@@ -9,7 +9,6 @@ import org.lwjgl.opengl.GL11;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public enum StencilFunc implements StringRepresentable {
     /**
      * 总是通过模板测试

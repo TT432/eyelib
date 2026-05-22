@@ -3,7 +3,6 @@ package io.github.tt432.eyelibutil.time;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public class SimpleTimer {
     private long startNanoTime;
     private boolean paused;

@@ -7,7 +7,6 @@ import java.util.Map;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public interface ManagerReadPort<T> {
     @Nullable
     T get(String name);

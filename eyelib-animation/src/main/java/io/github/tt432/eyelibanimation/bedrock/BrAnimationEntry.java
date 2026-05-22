@@ -29,7 +29,6 @@ import java.util.TreeMap;
  *
  * @author TT432
  */
-/** @author TT432 */
 public final class BrAnimationEntry implements Animation {
     private final BrAnimationEntryDefinition definition;
 

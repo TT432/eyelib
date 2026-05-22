@@ -41,7 +41,6 @@ import static org.lwjgl.opengl.GL20.*;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BrMaterialEntry(
         String base,
         String name,

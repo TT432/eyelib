@@ -7,7 +7,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BindDiagnostic(
         SourceSpan span,
         Severity severity,

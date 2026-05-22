@@ -16,7 +16,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public class Models {
     public static @Nullable Model merge(List<Model> models) {
         if (models.isEmpty()) return null;

@@ -8,7 +8,6 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
  * @author TT432
  */
 @Mod(EyelibAttachmentMod.MOD_ID)
-/** @author TT432 */
 public class EyelibAttachmentMod {
     public static final String MOD_ID = "eyelibattachment";
 

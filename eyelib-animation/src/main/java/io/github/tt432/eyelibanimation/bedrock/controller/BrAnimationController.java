@@ -20,7 +20,6 @@ import java.util.Map;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BrAnimationController(
         io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerDefinition definition
 ) implements StateMachineAnimation<BrAcStateDefinition> {

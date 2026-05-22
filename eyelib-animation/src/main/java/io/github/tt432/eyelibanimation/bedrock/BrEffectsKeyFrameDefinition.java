@@ -13,7 +13,6 @@ import java.util.Optional;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BrEffectsKeyFrameDefinition(
         float timestamp,
         String effect,

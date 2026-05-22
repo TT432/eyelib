@@ -11,7 +11,6 @@ import java.util.Map;
  * @param <T> 由消费方运行时适配器提供的粒子定义类型
  * @author TT432
  */
-/** @author TT432 */
 public interface ParticleLookupApi<T> {
     /**
      * 通过字符串标识符查找粒子定义。

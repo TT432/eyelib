@@ -15,7 +15,6 @@ import java.util.Map;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 final class BrControllerStateOwner {
     private float startTick = -1;
     @Nullable private BrAcStateDefinition lastState;

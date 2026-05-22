@@ -16,7 +16,6 @@ import java.util.Optional;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class MolangBinder {
     public BindResult bind(MolangAst.ExprSet ast) {
         return bind(ast, BindDiagnosticsMode.NORMAL);

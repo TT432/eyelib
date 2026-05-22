@@ -15,7 +15,6 @@ import java.util.Map;
  */
 @NullMarked
 @Slf4j
-/** @author TT432 */
 public record BrAnimation(
         Map<String, BrAnimationEntry> animations
 ) {

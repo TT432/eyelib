@@ -12,7 +12,6 @@ import java.util.Collection;
  */
 @NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public final class AnimationLookup {
     @Nullable public static Animation get(String name) { return AnimationManager.INSTANCE.get(name); }
     public static Collection<String> names() { return AnimationManager.INSTANCE.getAllData().keySet(); }

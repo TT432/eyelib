@@ -18,7 +18,6 @@ import java.util.Optional;
  */
 @NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public final class MolangConstantExpressionEvaluator {
     /**
      * 尝试在编译期求值纯常量 Molang 表达式。

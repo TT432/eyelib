@@ -68,7 +68,6 @@ import org.jspecify.annotations.NullMarked;
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @NullMarked
-/** @author TT432 */
 public class EntityRenderSystem {
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {

@@ -11,7 +11,6 @@ import java.util.Map;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public interface AnimationClipDefinition<I, T, LOOP, V> {
     String name();
 

@@ -14,7 +14,6 @@ import net.minecraft.resources.ResourceLocation;
  * @author TT432
  */
 @With
-/** @author TT432 */
 public record ModelComponentInfo(
         String model,
         ResourceLocation texture,

@@ -11,7 +11,6 @@ import java.util.Map;
 /** Bedrock 几何模型的数据结构。
  * @author TT432 */
 @NullMarked
-/** @author TT432 */
 public record BedrockGeometryModel(
         List<Geometry> geometries
 ) {

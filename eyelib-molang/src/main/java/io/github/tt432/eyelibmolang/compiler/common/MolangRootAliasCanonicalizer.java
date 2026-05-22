@@ -11,7 +11,6 @@ import java.util.Map;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class MolangRootAliasCanonicalizer {
     private static final Map<String, String> ROOT_ALIASES = Map.of(
             "q", "query",

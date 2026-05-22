@@ -9,7 +9,6 @@ import java.util.Objects;
  * @param <T> 由消费方运行时适配器提供的粒子定义类型
  * @author TT432
  */
-/** @author TT432 */
 public final class ParticlePublisher<T> {
     private final ParticleStore<T> store;
     private final ParticleIdentifier<? super T> identifier;

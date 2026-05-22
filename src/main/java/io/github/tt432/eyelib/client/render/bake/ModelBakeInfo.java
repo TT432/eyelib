@@ -17,7 +17,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public abstract class ModelBakeInfo<Info> {
     private final Map<String, HashMap<ResourceLocation, BakedModel>> modelCache = new HashMap<>();
 

@@ -27,7 +27,6 @@ import java.util.TreeMap;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BrBoneAnimation(
         Map<String, BrAnimationChannel<BrBoneKeyFrame>> channels,
         BrBoneAnimationDefinition compiledDefinition

@@ -9,7 +9,6 @@ import org.lwjgl.opengl.GL11;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public enum StencilPassOp implements StringRepresentable {
     /**
      * 保留缓冲区原有值

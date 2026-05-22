@@ -5,7 +5,6 @@ import com.mojang.serialization.Codec;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public record EmptyComponent() implements Component {
     public static final EmptyComponent INSTANCE = new EmptyComponent();
 

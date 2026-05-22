@@ -8,7 +8,6 @@ import java.util.function.Supplier;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record MolangDynamicObject(
         Supplier<MolangObject> supplier
 ) implements MolangObject {

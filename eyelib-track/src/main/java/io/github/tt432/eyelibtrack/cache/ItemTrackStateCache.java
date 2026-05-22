@@ -11,7 +11,6 @@ import java.util.function.LongFunction;
  * @param <T> 缓存的数据类型
  * @author TT432
  */
-/** @author TT432 */
 public class ItemTrackStateCache<T> {
     private final Long2ObjectMap<T> store = new Long2ObjectOpenHashMap<>();
     private final LongFunction<T> factory;

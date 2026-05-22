@@ -10,7 +10,6 @@ import java.util.List;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public class ExpressionCompileException extends RuntimeException {
     private final String sourceExpression;
     private final List<String> diagnostics;

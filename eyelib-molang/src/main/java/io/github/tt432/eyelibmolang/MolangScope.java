@@ -20,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class MolangScope {
     @Getter
     @Deprecated(forRemoval = true)

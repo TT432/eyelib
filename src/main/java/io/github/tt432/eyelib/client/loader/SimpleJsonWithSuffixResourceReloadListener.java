@@ -22,7 +22,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public abstract class SimpleJsonWithSuffixResourceReloadListener extends SimplePreparableReloadListener<Map<ResourceLocation, JsonElement>> {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final Gson gson;

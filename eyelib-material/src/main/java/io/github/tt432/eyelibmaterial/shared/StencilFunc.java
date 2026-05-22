@@ -8,7 +8,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public enum StencilFunc implements StringRepresentable {
     Always,
     Equal,

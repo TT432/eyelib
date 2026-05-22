@@ -7,7 +7,6 @@ import net.minecraft.world.item.ItemStack;
  *
  * @author TT432
  */
-/** @author TT432 */
 public interface TrackableItem {
 
     /**

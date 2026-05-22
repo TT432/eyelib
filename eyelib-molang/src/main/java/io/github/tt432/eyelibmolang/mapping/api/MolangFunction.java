@@ -13,7 +13,6 @@ import java.lang.annotation.Target;
 @NullMarked
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-/** @author TT432 */
 public @interface MolangFunction {
     String value();
 

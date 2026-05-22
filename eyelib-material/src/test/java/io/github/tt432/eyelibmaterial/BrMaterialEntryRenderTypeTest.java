@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 class BrMaterialEntryRenderTypeTest {
 
     private static BrMaterialEntry createNoShaderEntry(String name) {

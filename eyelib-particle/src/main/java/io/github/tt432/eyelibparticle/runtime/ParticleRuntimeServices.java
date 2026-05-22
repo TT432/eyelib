@@ -9,7 +9,6 @@ import java.util.Objects;
  *
  * @author TT432
  */
-/** @author TT432 */
 public record ParticleRuntimeServices(
         TimeSource timeSource,
         ParticleSpawner particleSpawner,

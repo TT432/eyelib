@@ -8,7 +8,6 @@ import java.util.List;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BindResult(
         BoundMolang.BoundExprSet root,
         List<BindDiagnostic> diagnostics,

@@ -15,7 +15,6 @@ import java.util.*;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public class EntityBehaviorData {
     public static final Codec<EntityBehaviorData> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             BehaviorEntity.CODEC.optionalFieldOf("behavior").forGetter(o -> o.behavior),

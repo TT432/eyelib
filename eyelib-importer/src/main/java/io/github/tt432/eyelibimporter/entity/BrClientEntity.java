@@ -17,7 +17,6 @@ import java.util.Optional;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BrClientEntity(
         String identifier,
         Optional<BedrockVersionValue> min_engine_version,

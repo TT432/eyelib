@@ -13,7 +13,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public class CursorManager {
     @Nullable
     public static Cursor load(ResourceLocation location, int xhot, int yhot) {

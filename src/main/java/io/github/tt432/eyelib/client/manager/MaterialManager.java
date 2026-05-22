@@ -12,7 +12,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @NullMarked
-/** @author TT432 */
 public class MaterialManager extends Manager<BrMaterialEntry> {
     public static final MaterialManager INSTANCE = new MaterialManager();
 

@@ -7,7 +7,6 @@ import org.jspecify.annotations.Nullable;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record SourceSpan(
         int startIndex,
         int stopIndexInclusive,

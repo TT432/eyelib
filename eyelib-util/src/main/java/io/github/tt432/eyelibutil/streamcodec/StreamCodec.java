@@ -7,7 +7,6 @@ import java.util.function.Function;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public abstract class StreamCodec<T> {
     public abstract void encode(T obj, FriendlyByteBuf buf);
 

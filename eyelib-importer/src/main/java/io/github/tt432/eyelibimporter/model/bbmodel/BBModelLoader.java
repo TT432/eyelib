@@ -14,7 +14,6 @@ import java.nio.file.Path;
  * @author TT432 */
 @NullMarked
 @Slf4j
-/** @author TT432 */
 public class BBModelLoader {
     private static final Gson GSON = new Gson();
 

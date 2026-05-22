@@ -25,7 +25,6 @@ import java.util.List;
  */
 @NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public class ParameterRoleResolver {
 
     static void processMethod(MolangClass actualClass, Method method, Node last) {

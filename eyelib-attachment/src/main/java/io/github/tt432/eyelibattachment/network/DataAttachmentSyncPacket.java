@@ -8,7 +8,6 @@ import net.minecraft.network.FriendlyByteBuf;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public record DataAttachmentSyncPacket(int entityId, CompoundTag data) {
     public static final StreamCodec<DataAttachmentSyncPacket> STREAM_CODEC = new StreamCodec<>() {
         @Override

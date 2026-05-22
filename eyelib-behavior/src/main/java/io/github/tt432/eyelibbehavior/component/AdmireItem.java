@@ -10,7 +10,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * @param duration                      Duration, in seconds, that the mob is pacified.
  * @author TT432
  */
-/** @author TT432 */
 public record AdmireItem(
         int cooldown_after_being_attacked,
         int duration

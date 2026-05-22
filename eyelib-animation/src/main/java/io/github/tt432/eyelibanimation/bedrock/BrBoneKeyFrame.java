@@ -30,7 +30,6 @@ import java.util.Optional;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BrBoneKeyFrame(
         float timestamp,
         List<MolangValue3> dataPoints,

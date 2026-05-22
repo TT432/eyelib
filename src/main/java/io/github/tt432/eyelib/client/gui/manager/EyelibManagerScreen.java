@@ -21,7 +21,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public class EyelibManagerScreen extends ModalWorksurfaceScreen {
     protected EyelibManagerScreen() {
         super(Component.empty());

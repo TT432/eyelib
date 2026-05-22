@@ -13,7 +13,6 @@ import java.util.Map;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BrMaterial(Map<String, BrMaterialEntry> materials) {
     public static final Codec<BrMaterial> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             new DispatchedMapCodec<>(Codec.STRING, BrMaterialEntry.CODEC::apply)

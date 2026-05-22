@@ -25,7 +25,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @With
-/** @author TT432 */
 public record SimpleRenderAction<T>(
         MultiBufferSource multiBufferSource,
         PoseStack poseStack,

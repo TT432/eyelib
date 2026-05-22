@@ -9,7 +9,6 @@ import org.lwjgl.opengl.GL11;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public enum BlendFactor implements StringRepresentable {
     DestColor(GL11.GL_DST_COLOR),
     SourceColor(GL11.GL_SRC_COLOR),

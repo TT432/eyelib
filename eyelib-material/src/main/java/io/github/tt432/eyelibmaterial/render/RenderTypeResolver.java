@@ -12,7 +12,6 @@ import java.util.function.Function;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class RenderTypeResolver {
     private RenderTypeResolver() {
     }

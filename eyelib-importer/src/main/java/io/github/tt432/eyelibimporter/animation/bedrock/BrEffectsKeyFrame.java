@@ -10,7 +10,6 @@ import java.util.Optional;
 /** Bedrock 效果关键帧，定义特定时间点的粒子或声音效果。
  * @author TT432 */
 @NullMarked
-/** @author TT432 */
 public record BrEffectsKeyFrame(
         float timestamp,
         String effect,

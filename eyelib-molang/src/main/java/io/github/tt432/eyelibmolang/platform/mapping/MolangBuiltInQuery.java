@@ -50,7 +50,6 @@ import static io.github.tt432.eyelibmolang.MolangValue.TRUE;
 @MolangMapping(value = "query", pureFunction = false)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @SuppressWarnings("unused")
-/** @author TT432 */
 public final class MolangBuiltInQuery {
     @MolangFunction(value = "has_main_hand", description = "主手有物品")
     public static float hasMainHand(MolangScope scope) {

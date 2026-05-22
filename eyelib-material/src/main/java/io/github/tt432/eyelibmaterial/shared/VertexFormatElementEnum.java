@@ -16,7 +16,6 @@ import java.util.EnumSet;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public enum VertexFormatElementEnum implements StringRepresentable {
     Position(DefaultVertexFormat.ELEMENT_POSITION),
     Normal(DefaultVertexFormat.ELEMENT_NORMAL),

@@ -25,7 +25,6 @@ import java.util.Map;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public class RenderHelper {
     @Getter
     private final ModelVisitContext context = new ModelVisitContext();

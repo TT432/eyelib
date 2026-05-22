@@ -11,7 +11,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @NullMarked
 @UtilityClass
-/** @author TT432 */
 public class AnimationApplier {
     public void apply(ModelRuntimeData.Entry entry, Model.Bone model, ModelRuntimeData data) {
         var initPosition = model.position();

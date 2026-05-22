@@ -18,7 +18,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public class EyelibLivingEntityRenderer<T extends LivingEntity>
         extends LivingEntityRenderer<T, EyelibLivingEntityRenderer.EmptyEntityModel<T>> {
     public EyelibLivingEntityRenderer(EntityRendererProvider.Context context, float shadowRadius) {

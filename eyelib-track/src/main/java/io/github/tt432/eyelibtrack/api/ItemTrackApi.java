@@ -15,7 +15,6 @@ import java.util.Objects;
  *
  * @author TT432
  */
-/** @author TT432 */
 public final class ItemTrackApi {
 
     private ItemTrackApi() {

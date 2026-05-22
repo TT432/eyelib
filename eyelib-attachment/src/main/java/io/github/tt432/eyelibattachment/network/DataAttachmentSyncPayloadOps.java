@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public final class DataAttachmentSyncPayloadOps {
     public record AttachmentUpdate<T>(int entityId, DataAttachmentType<T> attachment, T value) {
     }

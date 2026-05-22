@@ -26,7 +26,6 @@ import java.util.Set;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class MolangRuntimeSupport {
     private MolangRuntimeSupport() {
     }

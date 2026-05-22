@@ -14,7 +14,6 @@ import java.util.Objects;
  *
  * @author TT432
  */
-/** @author TT432 */
 public final class ParticleDefinitionRegistry {
     private static final MemoryParticleDefinitionStore STORE = new MemoryParticleDefinitionStore();
     private static final ParticlePublisher<ParticleDefinition> PUBLISHER =

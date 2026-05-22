@@ -9,7 +9,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public record ModelLocator(
         Int2ObjectMap<GroupLocator> groupLocatorMap
 ) implements ModelTree<GroupLocator, LocatorEntry> {

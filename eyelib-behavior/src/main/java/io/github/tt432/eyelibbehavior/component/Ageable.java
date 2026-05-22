@@ -18,7 +18,6 @@ import java.util.Optional;
  * @param transform_to_item The feed item used will transform to this item upon successful interaction. Format: itemName:auxValue
  * @author TT432
  */
-/** @author TT432 */
 public record Ageable(
         List<String> drop_items,
         int duration,

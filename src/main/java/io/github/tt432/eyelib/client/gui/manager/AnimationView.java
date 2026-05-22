@@ -43,7 +43,6 @@ import org.jspecify.annotations.NullMarked;
  */
 //@Mod.EventBusSubscriber(Dist.CLIENT)
 @NullMarked
-/** @author TT432 */
 public class AnimationView extends ModalWorksurfaceScreen {
     @Nullable
     private String selectedAnimationName = null;

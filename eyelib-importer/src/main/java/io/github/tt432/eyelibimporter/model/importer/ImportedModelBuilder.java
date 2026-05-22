@@ -14,7 +14,6 @@ import java.util.List;
 /** 将中间骨骼/面数据构建为 eyewlib Model 对象，处理顶点绕组和法线方向。
  * @author TT432 */
 @NullMarked
-/** @author TT432 */
 final class ImportedModelBuilder {
     private ImportedModelBuilder() {
     }

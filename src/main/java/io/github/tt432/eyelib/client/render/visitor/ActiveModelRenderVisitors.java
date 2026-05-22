@@ -10,7 +10,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @NullMarked
-/** @author TT432 */
 public class ActiveModelRenderVisitors {
     public static final ModelVisitor RENDER_VISITOR;
 

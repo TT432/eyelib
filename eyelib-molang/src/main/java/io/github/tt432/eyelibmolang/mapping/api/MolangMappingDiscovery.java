@@ -11,7 +11,6 @@ import java.util.List;
  */
 @NullMarked
 @FunctionalInterface
-/** @author TT432 */
 public interface MolangMappingDiscovery {
     List<MolangMappingClassEntry> discover();
 

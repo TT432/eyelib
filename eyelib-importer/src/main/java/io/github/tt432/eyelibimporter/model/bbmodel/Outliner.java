@@ -13,7 +13,6 @@ import java.util.Optional;
  * @author TT432 */
 @NullMarked
 @SuppressWarnings("NullAway")
-/** @author TT432 */
 public record Outliner(
         String uuid,
         Optional<Group> group,

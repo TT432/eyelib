@@ -9,7 +9,6 @@ import org.joml.Vector3f;
 /** BBModel 分组，定义骨骼的变换和可见性属性。
  * @author TT432 */
 @NullMarked
-/** @author TT432 */
 public record Group(
         String name,
         Vector3f origin,

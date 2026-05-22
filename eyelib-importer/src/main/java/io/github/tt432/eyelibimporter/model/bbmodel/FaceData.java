@@ -7,7 +7,6 @@ import org.joml.Vector4f;
 /** BBModel 面数据，含 UV 坐标、纹理索引和旋转。
  * @author TT432 */
 @org.jspecify.annotations.NullMarked
-/** @author TT432 */
 public record FaceData(
         Vector4f uv,
         int texture,

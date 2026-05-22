@@ -14,7 +14,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @Setter
 @NullMarked
-/** @author TT432 */
 public class HighSpeedRenderModelVisitor extends ModelVisitor {
     @Override
     public void visitPreModel(RenderParams params, ModelVisitContext context, ModelRuntimeData infos, Model model) {

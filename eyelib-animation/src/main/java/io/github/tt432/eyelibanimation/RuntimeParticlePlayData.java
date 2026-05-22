@@ -9,7 +9,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record RuntimeParticlePlayData(
         String particleUUID,
         BedrockParticleEmitter emitter,

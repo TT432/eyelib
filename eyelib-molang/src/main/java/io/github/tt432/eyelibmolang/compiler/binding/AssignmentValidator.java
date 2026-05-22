@@ -12,7 +12,6 @@ import java.util.Optional;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class AssignmentValidator {
     private AssignmentValidator() {
     }

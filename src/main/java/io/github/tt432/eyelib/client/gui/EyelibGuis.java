@@ -8,7 +8,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @UtilityClass
 @NullMarked
-/** @author TT432 */
 public class EyelibGuis {
     @FunctionalInterface
     public interface DrawStringAction {

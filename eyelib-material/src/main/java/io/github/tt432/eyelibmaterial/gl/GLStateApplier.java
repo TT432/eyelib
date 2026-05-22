@@ -15,7 +15,6 @@ import java.util.*;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class GLStateApplier {
 
     private GLStateApplier() {

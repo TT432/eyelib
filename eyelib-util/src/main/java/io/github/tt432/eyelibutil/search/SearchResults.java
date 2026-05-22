@@ -11,7 +11,6 @@ import java.util.Map;
  * @author TT432
  */
 @RequiredArgsConstructor
-/** @author TT432 */
 public class SearchResults<V> {
     private final Searchable<V> searchable;
     @Getter

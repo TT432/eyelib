@@ -23,7 +23,6 @@ import java.util.Set;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class MolangCompilerImpl implements MolangCompiler {
     private static final MolangBinder BINDER = new MolangBinder();
 

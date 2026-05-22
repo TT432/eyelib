@@ -10,7 +10,6 @@ import lombok.AllArgsConstructor;
  * @author TT432
  */
 @AllArgsConstructor
-/** @author TT432 */
 public abstract sealed class BaseFilter<T> implements Filter permits ActorHealth {
     protected final T value;
     protected final Subject subject;

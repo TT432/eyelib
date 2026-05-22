@@ -20,7 +20,6 @@ import java.util.Optional;
  */
 @NullMarked
 @Disabled("All tests require an active OpenGL context — run in a Minecraft dev environment")
-/** @author TT432 */
 class GLStateApplierTest {
 
     @Test

@@ -8,7 +8,6 @@ import java.util.Map;
  * @param <T> 由消费方运行时适配器提供的粒子定义类型
  * @author TT432
  */
-/** @author TT432 */
 public interface ParticleStore<T> extends ParticleLookupApi<T>, ParticleLifecycle {
     /**
      * 在其字符串标识符下发布或替换单个粒子定义。

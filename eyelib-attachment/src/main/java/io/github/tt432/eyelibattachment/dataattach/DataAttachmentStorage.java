@@ -7,7 +7,6 @@ import org.jspecify.annotations.Nullable;
  *
  * @author TT432
  */
-/** @author TT432 */
 public interface DataAttachmentStorage {
     <T> boolean has(DataAttachmentType<T> attachment);
 

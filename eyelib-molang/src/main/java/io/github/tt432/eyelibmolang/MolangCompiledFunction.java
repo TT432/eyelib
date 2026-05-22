@@ -9,7 +9,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @NullMarked
 @FunctionalInterface
-/** @author TT432 */
 public interface MolangCompiledFunction {
     MolangCompiledFunction NULL = scope -> MolangNull.INSTANCE;
 

@@ -18,7 +18,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @Mixin(HumanoidModel.class)
 @NullMarked
-/** @author TT432 */
 public class HumanoidModelMixin implements RootModelPartModel {
     @Unique
     private @Nullable ModelPart eyelib$part;

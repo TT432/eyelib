@@ -13,7 +13,6 @@ import org.jspecify.annotations.Nullable;
  *
  * @author TT432
  */
-/** @author TT432 */
 public final class ItemTrackRenderer {
 
     private ItemTrackRenderer() {

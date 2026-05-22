@@ -5,7 +5,6 @@ package io.github.tt432.eyelibattachment.dataattach;
  *
  * @author TT432
  */
-/** @author TT432 */
 public class DataAttachment<C> {
 
     private final DataAttachmentType<C> type;

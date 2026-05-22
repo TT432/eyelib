@@ -10,7 +10,6 @@ import java.util.stream.Collector;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public class Collectors {
     static final Set<Collector.Characteristics> CH_ID
             = Collections.unmodifiableSet(EnumSet.of(Collector.Characteristics.IDENTITY_FINISH));

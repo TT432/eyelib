@@ -17,7 +17,6 @@ import java.util.stream.Stream;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public record KeyDispatchMapCodec<K, V>(
         Codec<K> keyCodec,
         Function<K, Codec<? extends V>> elementCodec
@@ -83,4 +82,3 @@ public record KeyDispatchMapCodec<K, V>(
         return prefix;
     }
 }
-

@@ -10,7 +10,6 @@ import java.util.Set;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record CompileContext(
         MolangMappingTree mappingTree,
         BindDiagnosticsMode diagnosticsMode,

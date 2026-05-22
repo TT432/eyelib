@@ -26,7 +26,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @Getter
 @NullMarked
-/** @author TT432 */
 public class RenderData<T> {
     public static <T> Codec<RenderData<T>> codec() {
         return RecordCodecBuilder.create(ins -> ins.group(

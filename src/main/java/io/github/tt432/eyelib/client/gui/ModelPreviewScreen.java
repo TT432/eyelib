@@ -46,7 +46,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public class ModelPreviewScreen extends ModalWorksurfaceScreen {
 //    @Mod.EventBusSubscriber(Dist.CLIENT)
     public static final class Events {

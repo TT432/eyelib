@@ -12,7 +12,6 @@ import org.jspecify.annotations.Nullable;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public class DataAttachmentContainerProvider implements ICapabilitySerializable<CompoundTag>, ICapabilityProvider {
     private final McDataAttachmentContainer container;
 

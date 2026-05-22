@@ -12,7 +12,6 @@ import java.util.List;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BakedBoneKeyFrame(
         float timestamp,
         List<MolangValue3> dataPoints,

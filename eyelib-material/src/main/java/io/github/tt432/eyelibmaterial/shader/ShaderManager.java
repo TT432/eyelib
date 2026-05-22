@@ -23,7 +23,6 @@ import org.lwjgl.opengl.GL11;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class ShaderManager {
 
     private static final Map<String, Integer> PROGRAM_CACHE = new HashMap<>();

@@ -12,7 +12,6 @@ import org.jspecify.annotations.NullMarked;
 @MolangMapping("math")
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @SuppressWarnings("unused")
-/** @author TT432 */
 public final class MolangMath {
     private static final float DEGREES_TO_RADIANS = 0.017453292519943295F;
     private static final float RADIANS_TO_DEGREES = 57.29577951308232F;

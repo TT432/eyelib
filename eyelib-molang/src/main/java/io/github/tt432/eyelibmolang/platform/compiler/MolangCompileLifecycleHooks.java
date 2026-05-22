@@ -10,7 +10,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @NullMarked
 @Mod.EventBusSubscriber
-/** @author TT432 */
 public final class MolangCompileLifecycleHooks {
     private MolangCompileLifecycleHooks() {
     }

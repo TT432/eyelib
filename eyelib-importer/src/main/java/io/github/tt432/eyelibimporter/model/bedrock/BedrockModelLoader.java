@@ -22,7 +22,6 @@ import java.util.Map;
 /** Bedrock 几何模型 JSON 的加载与解析器。
  * @author TT432 */
 @NullMarked
-/** @author TT432 */
 public final class BedrockModelLoader {
     private static final Gson GSON = new Gson();
 

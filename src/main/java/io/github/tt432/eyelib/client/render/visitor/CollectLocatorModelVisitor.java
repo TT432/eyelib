@@ -15,7 +15,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public class CollectLocatorModelVisitor extends ModelVisitor {
     @Override
     public void visitCube(RenderParams renderParams, ModelVisitContext context, Model.Cube cube) {

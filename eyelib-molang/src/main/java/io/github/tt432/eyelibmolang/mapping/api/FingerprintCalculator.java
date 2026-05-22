@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
  */
 @NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public class FingerprintCalculator {
 
     static RegistryVersionRef buildRegistryVersionRef(Node toplevelNode) {

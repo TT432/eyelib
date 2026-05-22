@@ -10,7 +10,6 @@ import java.util.Optional;
 /** 动画控制器中的粒子效果定义。
  * @author TT432 */
 @NullMarked
-/** @author TT432 */
 public record BrAcParticleEffect(
         Optional<String> effect,
         Optional<String> locator,

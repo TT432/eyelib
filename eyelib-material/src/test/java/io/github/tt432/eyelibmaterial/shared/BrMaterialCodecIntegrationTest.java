@@ -14,7 +14,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 class BrMaterialCodecIntegrationTest {
 
     private static final String VANILLA_MATERIAL_JSON = """

@@ -9,7 +9,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public class EyelibUtils {
     @CalledByGeneratedMethod
     public static MolangObject blackhole(MolangObject... f) {

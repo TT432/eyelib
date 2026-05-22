@@ -16,7 +16,6 @@ import java.util.Map;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BrAnimationControllers(
         Map<String, BrAnimationController> animationControllers
 ) {

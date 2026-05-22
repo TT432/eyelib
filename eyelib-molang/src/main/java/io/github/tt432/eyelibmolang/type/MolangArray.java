@@ -9,7 +9,6 @@ import java.util.List;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record MolangArray<T extends MolangObject>(
         List<T> value
 ) implements MolangObject {

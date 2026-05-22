@@ -12,7 +12,6 @@ import org.jspecify.annotations.NullMarked;
 @MolangMapping("")
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @SuppressWarnings("unused")
-/** @author TT432 */
 public final class MolangToplevel {
     public static final float pi = 3.14159265358979323846F;
     public static final float e = 2.7182818284590452354F;

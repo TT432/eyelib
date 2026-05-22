@@ -10,7 +10,6 @@ import java.util.Optional;
  *
  * @author TT432
  */
-/** @author TT432 */
 public record ParticleRuntimeContext(
         Optional<MolangScope> parentScope,
         ParticleRuntimeDefinition definition,

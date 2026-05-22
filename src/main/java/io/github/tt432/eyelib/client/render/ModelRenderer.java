@@ -17,7 +17,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @UtilityClass
 @NullMarked
-/** @author TT432 */
 public class ModelRenderer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModelRenderer.class);
     private static final AtomicInteger DEBUG_REMAINING = new AtomicInteger(Integer.getInteger("eyelib.debug.uv.limit", 256));

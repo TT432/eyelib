@@ -13,7 +13,6 @@ import java.util.List;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class BindLinkRequestBuilder {
     private BindLinkRequestBuilder() {
     }

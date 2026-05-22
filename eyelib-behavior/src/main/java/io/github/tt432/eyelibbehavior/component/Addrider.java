@@ -10,7 +10,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * @param spawn_event Trigger event when a rider is acquired
  * @author TT432
  */
-/** @author TT432 */
 public record Addrider(
         String entity_type,
         String spawn_event

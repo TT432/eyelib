@@ -19,7 +19,6 @@ import java.util.List;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class MolangBytecodeEmitter {
 
     private static final int ACC_PUBLIC = 0x0001;

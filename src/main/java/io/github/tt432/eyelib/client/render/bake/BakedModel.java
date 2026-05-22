@@ -15,7 +15,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BakedModel(
         Int2ObjectMap<BakedBone> bones
 ) {

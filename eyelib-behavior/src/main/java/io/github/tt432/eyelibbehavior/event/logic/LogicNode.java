@@ -11,7 +11,6 @@ import static io.github.tt432.eyelibutil.codec.EyelibCodec.list;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public interface LogicNode {
     MapCodec<LogicNode> CODEC = list(() -> Map.of(
             "add", new EyelibCodec.CodecInfo<>(Add.class, Add.CODEC),

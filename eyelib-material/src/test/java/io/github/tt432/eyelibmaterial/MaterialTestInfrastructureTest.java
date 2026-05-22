@@ -10,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 class MaterialTestInfrastructureTest {
 
     @Test

@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author TT432
  */
-/** @author TT432 */
 public class McDataAttachmentContainer extends DataAttachmentContainer implements INBTSerializable<CompoundTag> {
     private static final Logger LOGGER = LoggerFactory.getLogger(McDataAttachmentContainer.class);
 

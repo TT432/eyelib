@@ -21,7 +21,6 @@ import java.util.WeakHashMap;
  */
 @NullMarked
 @Getter
-/** @author TT432 */
 public class AnimationComponent {
     private static final Set<AnimationComponent> INSTANCES = java.util.Collections.newSetFromMap(new WeakHashMap<>());
 

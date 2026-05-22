@@ -13,7 +13,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public class RenderControllerComponent {
     private static final AtomicInteger TEXTURE_STATE_VERSION = new AtomicInteger();
 

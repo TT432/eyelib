@@ -5,7 +5,6 @@ package io.github.tt432.eyelibparticle.api;
  *
  * @author TT432
  */
-/** @author TT432 */
 public interface ParticleLifecycle {
     /**
      * 清除所有当前已发布的粒子条目。

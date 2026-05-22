@@ -11,7 +11,6 @@ import java.util.function.Function;
  * @author TT432 */
 @NullMarked
 @Slf4j
-/** @author TT432 */
 public enum BrLoopType {
     HOLD_ON_LAST_FRAME,
     LOOP,

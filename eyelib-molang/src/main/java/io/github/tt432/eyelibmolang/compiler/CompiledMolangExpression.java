@@ -13,7 +13,6 @@ import java.util.Set;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public interface CompiledMolangExpression extends MolangCompiledFunction {
     MolangObject evaluate(MolangScope scope);
 

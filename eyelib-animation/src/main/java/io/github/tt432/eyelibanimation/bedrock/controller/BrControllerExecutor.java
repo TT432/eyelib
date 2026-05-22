@@ -26,7 +26,6 @@ import java.util.UUID;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 final class BrControllerExecutor {
     private BrControllerExecutor() {
     }

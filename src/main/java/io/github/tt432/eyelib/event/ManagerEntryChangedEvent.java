@@ -11,7 +11,6 @@ import org.jspecify.annotations.NullMarked;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @NullMarked
-/** @author TT432 */
 public class ManagerEntryChangedEvent extends Event {
     private final String managerName;
     private final String entryName;

@@ -8,7 +8,6 @@ import net.minecraft.util.StringRepresentable;
  *
  * @author TT432
  */
-/** @author TT432 */
 public enum Subject implements StringRepresentable {
     /**
      * 交互所涉及的数据块。

@@ -10,7 +10,6 @@ import java.util.Optional;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public interface HostContext {
     /**
      * Looks up a host object by its HostRole.

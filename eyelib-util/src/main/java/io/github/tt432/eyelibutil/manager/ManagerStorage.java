@@ -10,7 +10,6 @@ import java.util.Map;
  *
  * @author TT432
  */
-/** @author TT432 */
 public final class ManagerStorage<T> {
     private final Map<String, T> data = new LinkedHashMap<>();
 

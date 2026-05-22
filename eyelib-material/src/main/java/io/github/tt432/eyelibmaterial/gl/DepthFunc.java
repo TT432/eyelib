@@ -9,7 +9,6 @@ import org.lwjgl.opengl.GL11;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public enum DepthFunc implements StringRepresentable {
     Always(GL11.GL_ALWAYS),
     Equal(GL11.GL_EQUAL),

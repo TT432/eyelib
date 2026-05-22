@@ -10,7 +10,6 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public record Randomize(
         List<Entry> entries
 ) implements LogicNode {

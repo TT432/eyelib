@@ -10,7 +10,6 @@ import java.util.Map;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class AnimationManager {
     private final Map<String, Animation> store = new LinkedHashMap<>();
     public static final AnimationManager INSTANCE = new AnimationManager();

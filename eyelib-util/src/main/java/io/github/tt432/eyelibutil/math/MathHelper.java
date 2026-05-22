@@ -3,7 +3,6 @@ package io.github.tt432.eyelibutil.math;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public class MathHelper {
     public static int clamp(int value, int min, int max) {
         return Math.max(min, Math.min(value, max));

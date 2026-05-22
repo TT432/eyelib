@@ -12,7 +12,6 @@ import java.util.function.Consumer;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public interface MolangParserFrontend {
     default MolangParserFrontendResult parseExprSet(String source) {
         return parseExprSet(source, lexer -> {

@@ -8,7 +8,6 @@ import io.github.tt432.eyelibimporter.particle.BrParticle;
  *
  * @author TT432
  */
-/** @author TT432 */
 public final class ParticleDefinitionAdapter {
     private ParticleDefinitionAdapter() {
     }

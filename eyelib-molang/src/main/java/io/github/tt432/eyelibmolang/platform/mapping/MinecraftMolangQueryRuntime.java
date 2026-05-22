@@ -9,7 +9,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class MinecraftMolangQueryRuntime implements MolangQueryRuntime {
     @Override
     public float actorCount() {

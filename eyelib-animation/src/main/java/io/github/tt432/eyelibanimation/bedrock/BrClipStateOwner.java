@@ -13,7 +13,6 @@ import java.util.List;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 final class BrClipStateOwner {
     private final BrAnimationPlaybackState playbackState = new BrAnimationPlaybackState();
     private final List<AnimationEffect.Runtime<?>> effects = new ArrayList<>();

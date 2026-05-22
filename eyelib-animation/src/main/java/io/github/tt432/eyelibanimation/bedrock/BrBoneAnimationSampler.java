@@ -11,7 +11,6 @@ import org.joml.Vector3f;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class BrBoneAnimationSampler {
     private BrBoneAnimationSampler() {
     }

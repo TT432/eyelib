@@ -12,7 +12,6 @@ import java.util.Arrays;
 /** 导入的图片数据，含宽高和 ARGB 像素数组。
  * @author TT432 */
 @NullMarked
-/** @author TT432 */
 public final class ImportedImageData {
     private final int width;
     private final int height;

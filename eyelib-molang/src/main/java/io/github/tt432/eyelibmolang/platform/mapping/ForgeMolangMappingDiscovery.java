@@ -18,7 +18,6 @@ import java.util.Objects;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class ForgeMolangMappingDiscovery implements MolangMappingDiscovery {
     private static final Logger LOGGER = LoggerFactory.getLogger(ForgeMolangMappingDiscovery.class);
 

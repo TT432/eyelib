@@ -12,7 +12,6 @@ import java.util.Optional;
  *
  * @author TT432
  */
-/** @author TT432 */
 public record ParticleRuntimeDefinition(ParticleDefinition definition) {
     public ParticleRuntimeDefinition {
         Objects.requireNonNull(definition, "definition");

@@ -10,7 +10,6 @@ import java.util.List;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public record Add(
         List<String> component_groups
 ) implements LogicNode {

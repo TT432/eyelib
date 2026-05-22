@@ -12,7 +12,6 @@ import java.util.Map;
 /** BBModel 文件的导入器，负责解析、重打包纹理并构建中间表示。
  * @author TT432 */
 @NullMarked
-/** @author TT432 */
 public final class BlockbenchModelImporter {
     private BlockbenchModelImporter() {
     }

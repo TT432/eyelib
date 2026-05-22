@@ -5,7 +5,6 @@ import java.util.Map;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public interface ManagerWritePort<T> {
     void put(String name, T value);
 

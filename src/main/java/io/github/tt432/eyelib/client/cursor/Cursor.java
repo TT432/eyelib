@@ -13,7 +13,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @Getter
 @NullMarked
-/** @author TT432 */
 public class Cursor extends Pointer.Default {
     private final GLFWImage image;
     private final int xhot;

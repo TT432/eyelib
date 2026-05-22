@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public final class ColorEncodings {
     public static int argbToAbgr(int argb32) {
         int a = (argb32 >>> 24) & 0xFF;

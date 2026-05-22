@@ -12,7 +12,6 @@ import net.minecraft.world.level.saveddata.SavedData;
  *
  * @author TT432
  */
-/** @author TT432 */
 public final class ItemStackIdCache extends SavedData {
     private static final String DATA_KEY = EyelibTrack.TRACK_ID_KEY;
 

@@ -8,7 +8,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public enum PrimitiveMode implements StringRepresentable {
     None, QuadList, TriangleList, TriangleStrip, LineList, LineStrip;
 

@@ -16,7 +16,6 @@ import java.lang.annotation.Target;
 @NullMarked
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-/** @author TT432 */
 public @interface MolangMapping {
     /** Molang 函数或字段名 */
     String value();

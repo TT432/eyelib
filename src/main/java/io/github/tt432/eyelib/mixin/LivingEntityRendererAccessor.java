@@ -11,7 +11,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @Mixin(LivingEntityRenderer.class)
 @NullMarked
-/** @author TT432 */
 public interface LivingEntityRendererAccessor {
     @Invoker
     float callGetWhiteOverlayProgress(LivingEntity le, float partialTicks);

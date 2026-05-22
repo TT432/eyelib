@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 class BrMaterialEntryVariantTest {
 
     private static BrMaterialEntry createMinimalEntry(String name) {

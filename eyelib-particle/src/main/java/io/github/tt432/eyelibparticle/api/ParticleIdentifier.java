@@ -7,7 +7,6 @@ package io.github.tt432.eyelibparticle.api;
  * @author TT432
  */
 @FunctionalInterface
-/** @author TT432 */
 public interface ParticleIdentifier<T> {
     /**
      * 返回用于发布粒子定义的字符串标识符。

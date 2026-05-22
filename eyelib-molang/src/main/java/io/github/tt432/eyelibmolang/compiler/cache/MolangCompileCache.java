@@ -15,7 +15,6 @@ import java.util.function.Supplier;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class MolangCompileCache {
     private static final int COMPILER_VERSION = 1;
     private static final int MAX_L1_SIZE = 1000;

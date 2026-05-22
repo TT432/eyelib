@@ -13,7 +13,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 class BrMaterialCodecRegressionTest {
 
     private static final String VANILLA_MATERIAL_JSON = """

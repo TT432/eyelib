@@ -11,7 +11,6 @@ import java.util.Locale;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public class GlobalBoneIdHandler {
     public static final Codec<Integer> STRING_ID_CODEC = Codec.STRING.xmap(GlobalBoneIdHandler::get, GlobalBoneIdHandler::get);
 

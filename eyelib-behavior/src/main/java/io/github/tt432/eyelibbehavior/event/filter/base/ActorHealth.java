@@ -9,7 +9,6 @@ import io.github.tt432.eyelibbehavior.event.filter.Subject;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public final class ActorHealth extends BaseFilter<Integer> {
     public static final MapCodec<ActorHealth> CODEC = RecordCodecBuilder.mapCodec(ins -> ins.group(
             Codec.INT.fieldOf("value").forGetter(o -> o.value),

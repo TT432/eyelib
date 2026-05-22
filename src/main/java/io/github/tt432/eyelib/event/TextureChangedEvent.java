@@ -7,6 +7,5 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public class TextureChangedEvent extends Event {
 }

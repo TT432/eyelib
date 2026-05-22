@@ -5,7 +5,6 @@ import io.github.tt432.eyelibattachment.capability.EntityStatistics;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public final class EntityStatisticsUpdater {
     private EntityStatisticsUpdater() {
     }

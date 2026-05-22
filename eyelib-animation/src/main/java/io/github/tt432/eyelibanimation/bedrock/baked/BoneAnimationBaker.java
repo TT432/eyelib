@@ -11,7 +11,6 @@ import java.util.TreeMap;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class BoneAnimationBaker {
 
     private BoneAnimationBaker() {

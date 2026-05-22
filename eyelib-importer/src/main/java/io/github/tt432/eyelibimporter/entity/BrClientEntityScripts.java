@@ -20,7 +20,6 @@ import java.util.Optional;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record BrClientEntityScripts(
         MolangValue initialize,
         MolangValue pre_animation,

@@ -11,7 +11,6 @@ import java.util.Objects;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public final class HostRole<T> {
     private final String name;
     private final Class<T> type;

@@ -9,7 +9,6 @@ import net.minecraft.network.FriendlyByteBuf;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public record DataAttachmentUpdatePacket<C>(int entityId, DataAttachmentType<C> attachment, C value) {
     public static final StreamCodec<DataAttachmentUpdatePacket<Object>> STREAM_CODEC = new StreamCodec<>() {
         @Override

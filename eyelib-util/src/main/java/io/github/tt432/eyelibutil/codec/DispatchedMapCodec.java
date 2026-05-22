@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 /**
  * @author TT432
  */
-/** @author TT432 */
 public record DispatchedMapCodec<K, V>(
         Codec<K> keyCodec,
         Function<K, Codec<? extends V>> valueCodecFunction

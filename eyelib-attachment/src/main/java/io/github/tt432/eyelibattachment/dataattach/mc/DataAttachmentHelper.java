@@ -10,7 +10,6 @@ import org.jspecify.annotations.Nullable;
  *
  * @author TT432
  */
-/** @author TT432 */
 public class DataAttachmentHelper {
     private static IDataAttachmentContainer get(Entity entity) {
         return entity.getCapability(DataAttachmentContainerCapability.INSTANCE).orElseGet(McDataAttachmentContainer::new);

@@ -21,7 +21,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @Mixin(MultiPlayerGameMode.class)
 @NullMarked
-/** @author TT432 */
 public class MultiPlayerGameModeMixin {
     @Shadow
     private boolean isDestroying;

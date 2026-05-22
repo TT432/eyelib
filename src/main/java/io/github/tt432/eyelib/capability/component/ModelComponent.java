@@ -18,7 +18,6 @@ import org.jspecify.annotations.NullMarked;
  */
 @Getter
 @NullMarked
-/** @author TT432 */
 public class ModelComponent {
     @Nullable
     ModelComponentInfo serializableInfo;

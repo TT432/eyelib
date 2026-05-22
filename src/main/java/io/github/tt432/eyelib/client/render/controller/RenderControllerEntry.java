@@ -27,7 +27,6 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NullMarked
-/** @author TT432 */
 public record RenderControllerEntry(
         MolangValue geometry,
         List<MolangValue> textures,

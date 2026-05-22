@@ -20,7 +20,6 @@ import java.util.List;
  * @author TT432
  */
 @With
-/** @author TT432 */
 public record Model(
         String name,
         Int2ObjectMap<Bone> toplevelBones,

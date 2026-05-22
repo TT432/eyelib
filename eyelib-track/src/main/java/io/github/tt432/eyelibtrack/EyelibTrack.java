@@ -8,7 +8,6 @@ import net.minecraft.resources.ResourceLocation;
  *
  * @author TT432
  */
-/** @author TT432 */
 public final class EyelibTrack {
     public static final String MOD_ID = "eyelibtrack";
     public static final String TRACK_ID_KEY = "eyelib_track_id";

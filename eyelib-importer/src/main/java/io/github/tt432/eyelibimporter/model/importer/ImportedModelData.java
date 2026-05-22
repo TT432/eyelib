@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 /** 从 Blockbench 或 Bedrock 源数据转换得到的中间模型表示，支持纹理重打包。
  * @author TT432 */
 @NullMarked
-/** @author TT432 */
 public record ImportedModelData(
         String name,
         VisibleBox visibleBox,
