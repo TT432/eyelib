@@ -3,13 +3,12 @@ package io.github.tt432.eyelib.client.gui.manager;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelibanimation.AnimationLookup;
-import io.github.tt432.eyelibanimation.AnimationEffects;
-import io.github.tt432.eyelibanimation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.client.gui.ModalWorksurfaceScreen;
-import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
+import io.github.tt432.eyelibanimation.AnimationEffects;
+import io.github.tt432.eyelibanimation.AnimationLookup;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
+import io.github.tt432.eyelibanimation.bedrock.BrAnimationEntry;
+import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibutil.math.EyeMath;
 import net.minecraft.client.Minecraft;
@@ -24,24 +23,28 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.gui.widget.ScrollPanel;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.loading.FMLLoader;
 import org.joml.Vector2f;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
-import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
-//@Mod.EventBusSubscriber(Dist.CLIENT)
+@Mod.EventBusSubscriber(Dist.CLIENT)
 @NullMarked
 public class AnimationView extends ModalWorksurfaceScreen {
     @Nullable
@@ -57,8 +60,9 @@ public class AnimationView extends ModalWorksurfaceScreen {
         super(title);
     }
 
-//    @SubscribeEvent
+    @SubscribeEvent
     public static void onEvent(TickEvent.ClientTickEvent event) {
+        if (FMLLoader.isProduction()) return;
         if (event.phase == TickEvent.Phase.START || Minecraft.getInstance().level == null) return;
 
         if (GLFW.glfwGetKey(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_G) == GLFW.GLFW_PRESS
@@ -91,34 +95,34 @@ public class AnimationView extends ModalWorksurfaceScreen {
             AtomicInteger posX = new AtomicInteger(startPosX);
             buttonNames.forEach(tabName -> children.add(
                     Button.builder(Component.literal(tabName), button -> {
-                                if (selectedButtonName != null) {
-                                    if (renderables.get(selectedButtonName) != null) {
-                                        for (var o : renderables.get(selectedButtonName)) {
-                                            children.remove(o);
-                                        }
-                                    }
-                                    if (selectedButton instanceof AbstractWidget aw) {
-                                        aw.active = true;
-                                    }
-                                }
-                                selectedButtonName = tabName;
-                                selectedButton = button;
-                                button.active = false;
-                                if (renderables.get(selectedButtonName) != null) {
-                                    children.addAll(renderables.get(selectedButtonName));
-                                    for (GuiEventListener listener : renderables.get(selectedButtonName)) {
-                                        if (listener instanceof Refreshable refreshable) {
-                                            refreshable.refresh();
-                                        }
-                                    }
-                                }
-                                if (children instanceof Refreshable refreshable) {
-                                    refreshable.refresh();
-                                }
-                            })
-                            .pos(posX.getAndAdd(posXDelta), startPosY)
-                            .size(w, h)
-                            .build()
+                              if (selectedButtonName != null) {
+                                  if (renderables.get(selectedButtonName) != null) {
+                                      for (var o : renderables.get(selectedButtonName)) {
+                                          children.remove(o);
+                                      }
+                                  }
+                                  if (selectedButton instanceof AbstractWidget aw) {
+                                      aw.active = true;
+                                  }
+                              }
+                              selectedButtonName = tabName;
+                              selectedButton = button;
+                              button.active = false;
+                              if (renderables.get(selectedButtonName) != null) {
+                                  children.addAll(renderables.get(selectedButtonName));
+                                  for (GuiEventListener listener : renderables.get(selectedButtonName)) {
+                                      if (listener instanceof Refreshable refreshable) {
+                                          refreshable.refresh();
+                                      }
+                                  }
+                              }
+                              if (children instanceof Refreshable refreshable) {
+                                  refreshable.refresh();
+                              }
+                          })
+                          .pos(posX.getAndAdd(posXDelta), startPosY)
+                          .size(w, h)
+                          .build()
             ));
             this.renderables = renderables;
         }
@@ -162,19 +166,19 @@ public class AnimationView extends ModalWorksurfaceScreen {
         @Override
         public void refresh() {
             buttons = strings.get().map(s ->
-                            Button.builder(Component.literal(s), button -> {
-                                        if (lastButton != null) {
-                                            lastButton.active = true;
-                                        }
+                                                Button.builder(Component.literal(s), button -> {
+                                                          if (lastButton != null) {
+                                                              lastButton.active = true;
+                                                          }
 
-                                        lastButton = button;
-                                        onPress.onPress(s, button);
-                                        button.active = false;
-                                    })
-                                    .size(98, buttonHeight)
-                                    .pos(0, 0)
-                                    .build())
-                    .toList();
+                                                          lastButton = button;
+                                                          onPress.onPress(s, button);
+                                                          button.active = false;
+                                                      })
+                                                      .size(98, buttonHeight)
+                                                      .pos(0, 0)
+                                                      .build())
+                             .toList();
         }
 
         public interface OnPress {
@@ -242,7 +246,7 @@ public class AnimationView extends ModalWorksurfaceScreen {
 
         int buttonHeight = 20;
         addRenderableWidget(new StringsScrollPanel(() -> AnimationLookup.names().stream(),
-                100, height - 10 - 30, 30, 10, 1, (name, button) -> {
+                                                   100, height - 10 - 30, 30, 10, 1, (name, button) -> {
             selectedAnimationName = name;
             if (boneNameScrollPanel != null) {
                 boneNameScrollPanel.refresh();
@@ -262,7 +266,7 @@ public class AnimationView extends ModalWorksurfaceScreen {
                 Map.of(
                         "curve", List.of(
                                 boneNameScrollPanel = new StringsScrollPanel(this::bones, 100, height - (initPosY + interval) - 10,
-                                        initPosY + interval, rightPanelStartY, 1, (name, button) -> selectedBoneName = name),
+                                                                             initPosY + interval, rightPanelStartY, 1, (name, button) -> selectedBoneName = name),
                                 animationChanelButtonGroup = new ButtonGroup(
                                         List.of("position", "rotation", "scale"),
                                         50, buttonHeight,
@@ -365,7 +369,9 @@ public class AnimationView extends ModalWorksurfaceScreen {
                 MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
                 VertexConsumer buffer = bufferSource.getBuffer(RenderType.gui());
 
-                var points = samplePoints.stream().map(v -> new Vector2f(v).mul(xScale, yScale).add(startX, startY)).toList();
+                var points = samplePoints.stream()
+                                         .map(v -> new Vector2f(v).mul(xScale, yScale).add(startX, startY))
+                                         .toList();
 
                 for (int i = 0; i < points.size(); i++) {
                     if (points.size() > i + 1) {
@@ -374,19 +380,22 @@ public class AnimationView extends ModalWorksurfaceScreen {
 
                         for (Vector2f vector2f : createRectangleFromLine(curr, next, 2)) {
                             buffer.vertex(vector2f.x, vector2f.y, 0)
-                                    .color(0xFFFF0000)
-                                    .endVertex();
+                                  .color(0xFFFF0000)
+                                  .endVertex();
                         }
                     }
                 }
 
-                var keyframePoints = this.keyframePoints.stream().map(v -> new Vector2f(v).mul(xScale, yScale).add(startX, startY)).toList();
+                var keyframePoints = this.keyframePoints.stream()
+                                                        .map(v -> new Vector2f(v).mul(xScale, yScale)
+                                                                                 .add(startX, startY))
+                                                        .toList();
 
                 for (Vector2f keyframePoint : keyframePoints) {
                     for (Vector2f vector2f : createSquareFromCenter(keyframePoint, 5)) {
                         buffer.vertex(vector2f.x, vector2f.y, 0)
-                                .color(0xFF0000FF)
-                                .endVertex();
+                              .color(0xFF0000FF)
+                              .endVertex();
                     }
                 }
 
@@ -400,6 +409,7 @@ public class AnimationView extends ModalWorksurfaceScreen {
          * @param p1    中线的起点
          * @param p2    中线的终点
          * @param width 矩形的宽度
+         *
          * @return 包含4个顶点的数组 (顺序: 起点左, 起点右, 终点右, 终点左)
          */
         public static Vector2f[] createRectangleFromLine(Vector2f p1, Vector2f p2, float width) {
@@ -503,8 +513,8 @@ public class AnimationView extends ModalWorksurfaceScreen {
                     case ROT -> animation.bones().get(boneId).rotation();
                     case SCL -> animation.bones().get(boneId).scale();
                 }).getData().float2ObjectEntrySet().stream()
-                        .flatMap(entry ->
-                                entry.getValue().dataPoints().stream()
+                  .flatMap(entry ->
+                                   entry.getValue().dataPoints().stream()
                                         .map(mv3 -> new Vector2f(
                                                 entry.getFloatKey(),
                                                 switch (axis) {
@@ -512,7 +522,7 @@ public class AnimationView extends ModalWorksurfaceScreen {
                                                     case Y -> mv3.eval(scope).y;
                                                     case Z -> mv3.eval(scope).z;
                                                 })))
-                        .toList(),
+                  .toList(),
                 points
         );
     }
