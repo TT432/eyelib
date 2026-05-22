@@ -7,6 +7,7 @@ import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import javax.imageio.ImageIO;
@@ -14,11 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Function;
 
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_HEIGHT;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_WIDTH;
-import static org.lwjgl.opengl.GL11.glGetTexLevelParameteriv;
-import org.jspecify.annotations.NullMarked;
+import static org.lwjgl.opengl.GL11.*;
 
 @UtilityClass
 
@@ -60,7 +57,7 @@ public class NativeImageIO {
         }
 
         var image = new NativeImage(NativeImage.Format.RGBA,
-                bufferedImage.getWidth(), bufferedImage.getHeight(), false);
+                                    bufferedImage.getWidth(), bufferedImage.getHeight(), false);
         var w = bufferedImage.getWidth();
         var h = bufferedImage.getHeight();
 

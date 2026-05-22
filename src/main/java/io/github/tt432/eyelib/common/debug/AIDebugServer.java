@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.common.debug;
 
 import com.sun.net.httpserver.HttpServer;
 import net.minecraftforge.fml.loading.FMLLoader;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,9 +11,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
-import org.jspecify.annotations.NullMarked;
 
-/** @author TT432 */
+/**
+ * @author TT432
+ */
 @NullMarked
 public final class AIDebugServer {
 

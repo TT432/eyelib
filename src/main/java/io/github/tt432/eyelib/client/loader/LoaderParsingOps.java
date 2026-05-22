@@ -3,14 +3,16 @@ package io.github.tt432.eyelib.client.loader;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
+import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
-import org.jspecify.annotations.NullMarked;
 
-/** @author TT432 */
+/**
+ * @author TT432
+ */
 @NullMarked
 public final class LoaderParsingOps {
     private LoaderParsingOps() {

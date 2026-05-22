@@ -1,18 +1,20 @@
 package io.github.tt432.eyelib.client.entity;
 
+import io.github.tt432.eyelib.client.model.ModelLookup;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibmodel.entity.ModelResolver;
-import io.github.tt432.eyelib.client.model.ModelLookup;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Collection;
-import org.jspecify.annotations.NullMarked;
+import java.util.Collections;
 
-/** @author TT432 */
+/**
+ * @author TT432
+ */
 @NullMarked
 public class ClientEntityRuntimeData {
     private final ModelResolver modelResolver;

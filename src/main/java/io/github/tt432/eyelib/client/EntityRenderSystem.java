@@ -6,21 +6,20 @@ import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
-import io.github.tt432.eyelibanimation.AnimationEffects;
-import io.github.tt432.eyelibanimation.BrAnimator;
-import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.entity.ClientEntityLookup;
-import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
+import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
+import io.github.tt432.eyelib.client.render.AttachableItemRenderSetup;
 import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.client.render.RenderParams;
-import io.github.tt432.eyelib.client.render.AttachableItemRenderSetup;
-import io.github.tt432.eyelib.client.entity.AttachableResolver;
 import io.github.tt432.eyelib.client.render.SimpleRenderAction;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerLookup;
 import io.github.tt432.eyelib.event.InitComponentEvent;
+import io.github.tt432.eyelibanimation.AnimationEffects;
+import io.github.tt432.eyelibanimation.BrAnimator;
+import io.github.tt432.eyelibanimation.ModelRuntimeData;
+import io.github.tt432.eyelibimporter.entity.BrClientEntity;
+import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
 import io.github.tt432.eyelibmolang.MolangScope;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -52,8 +51,9 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.jspecify.annotations.Nullable;
 import org.joml.Matrix4f;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,7 +63,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static net.minecraft.client.Minecraft.getInstance;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
@@ -127,7 +126,7 @@ public class EntityRenderSystem {
                 ModelRuntimeData tickedInfos;
                 if (cap.getAnimationComponent().getSerializableInfo() != null) {
                     tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
-                            (ClientTickHandler.getTick() + partialTick) / 20, () -> {
+                                                           (ClientTickHandler.getTick() + partialTick) / 20, () -> {
                                 if (clientEntityComponent.getClientEntity() != null) {
                                     clientEntityComponent.getClientEntity().scripts().ifPresent(scripts -> {
                                         scripts.pre_animation().eval(scope);
@@ -160,12 +159,12 @@ public class EntityRenderSystem {
         if (!cap.isUseBuiltInRenderSystem()) return;
 
         if (SimpleRenderAction.builder(event)
-                .animation(cap.getAnimationComponent())
-                .extraRender((helper, action) -> {
-                    renderItemInHand(helper, action.multiBufferSource(), entity, action.packedLight());
-                })
-                .build()
-                .render()) {
+                              .animation(cap.getAnimationComponent())
+                              .extraRender((helper, action) -> {
+                                  renderItemInHand(helper, action.multiBufferSource(), entity, action.packedLight());
+                              })
+                              .build()
+                              .render()) {
             event.setCanceled(true);
         }
     }
@@ -194,7 +193,8 @@ public class EntityRenderSystem {
 
     public static void renderItemInHand(RenderHelper helper, MultiBufferSource bufferSource, LivingEntity renderTarget, int light) {
         PoseStack poseStack = new PoseStack();
-        var locators = helper.getContext().<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>());
+        var locators = helper.getContext()
+                             .<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>());
         var offHandPose = locators.get(leftitem);
         if (offHandPose != null) {
             poseStack.poseStack.addLast(offHandPose);
@@ -211,8 +211,8 @@ public class EntityRenderSystem {
     }
 
     private static void renderHandItemOrAttachable(MultiBufferSource bufferSource, LivingEntity le, ItemStack item,
-                                                    ItemDisplayContext context, int light, PoseStack poseStack,
-                                                    boolean left, InteractionHand hand) {
+                                                   ItemDisplayContext context, int light, PoseStack poseStack,
+                                                   boolean left, InteractionHand hand) {
         if (item.isEmpty()) {
             return;
         }
@@ -237,7 +237,7 @@ public class EntityRenderSystem {
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
             poseStack.translate(-0.25, 0.1, -1.15);
             Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer()
-                    .renderItem(le, item, context, left, poseStack, bufferSource, light);
+                     .renderItem(le, item, context, left, poseStack, bufferSource, light);
 
             poseStack.popPose();
         }
@@ -250,55 +250,55 @@ public class EntityRenderSystem {
 
     public static <T> boolean renderComponents(SimpleRenderAction<T> data) {
         return data.renderData().getModelComponents().stream()
-                .filter(ModelComponent::readyForRendering)
-                .mapToLong(modelComponent -> {
-                    var model = modelComponent.getModel();
-                    if (model == null) {
-                        return 0;
-                    }
+                   .filter(ModelComponent::readyForRendering)
+                   .mapToLong(modelComponent -> {
+                       var model = modelComponent.getModel();
+                       if (model == null) {
+                           return 0;
+                       }
 
-                    var poseStack = data.poseStack();
-                    poseStack.pushPose();
+                       var poseStack = data.poseStack();
+                       poseStack.pushPose();
 
-                    RenderParams renderParams = data.renderParams(modelComponent);
+                       RenderParams renderParams = data.renderParams(modelComponent);
 
-                    var tickedInfos = data.tickedInfos();
-                    if (tickedInfos == null) {
-                        tickedInfos = ModelRuntimeData.EMPTY;
-                    }
-                    var effects = data.effects();
-                    if (effects == null) {
-                        effects = new AnimationEffects();
-                    }
-                    var entity = data.entity();
-                    if (entity == null) {
-                        poseStack.popPose();
-                        return 0;
-                    }
-                    MultiBufferSource multiBufferSource = data.multiBufferSource();
+                       var tickedInfos = data.tickedInfos();
+                       if (tickedInfos == null) {
+                           tickedInfos = ModelRuntimeData.EMPTY;
+                       }
+                       var effects = data.effects();
+                       if (effects == null) {
+                           effects = new AnimationEffects();
+                       }
+                       var entity = data.entity();
+                       if (entity == null) {
+                           poseStack.popPose();
+                           return 0;
+                       }
+                       MultiBufferSource multiBufferSource = data.multiBufferSource();
 
-                    setupEntityClientEntityData(data);
+                       setupEntityClientEntityData(data);
 
-                    RenderHelper renderHelper = RenderHelper.start()
-                            .render(renderParams, model, cast(tickedInfos))
-                            .collectLocators(model, tickedInfos);
+                       RenderHelper renderHelper = RenderHelper.start()
+                                                               .render(renderParams, model, cast(tickedInfos))
+                                                               .collectLocators(model, tickedInfos);
 
-                    setParticlesPosition(renderHelper, effects, entity);
+                       setParticlesPosition(renderHelper, effects, entity);
 
-                    data.extraRender().render(renderHelper, data);
+                       data.extraRender().render(renderHelper, data);
 
-                    RenderParams emissiveRenderParams = renderParams.asEmissive(multiBufferSource, modelComponent);
+                       RenderParams emissiveRenderParams = renderParams.asEmissive(multiBufferSource, modelComponent);
 
 //                    if (!emissiveRenderParams.textureMissing()) {
 //                        RenderHelper.start()
 //                                .render(emissiveRenderParams, model, cast(tickedInfos));
 //                    }
 
-                    poseStack.popPose();
+                       poseStack.popPose();
 
-                    return 1;
-                })
-                .sum() > 0;
+                       return 1;
+                   })
+                   .sum() > 0;
     }
 
     private static void setParticlesPosition(RenderHelper renderHelper, AnimationEffects effects, Entity entity) {
@@ -307,8 +307,8 @@ public class EntityRenderSystem {
         if (locators == null) return;
 
         effects.particles.stream()
-                .flatMap(Collection::stream)
-                .forEach(data -> ParticleSpawnService.initPose(data.emitter(), locators.get(data.locator()), entity));
+                         .flatMap(Collection::stream)
+                         .forEach(data -> ParticleSpawnService.initPose(data.emitter(), locators.get(data.locator()), entity));
     }
 
     public static <T> void setupEntityClientEntityData(SimpleRenderAction<T> data) {
@@ -344,7 +344,8 @@ public class EntityRenderSystem {
 
     public static void setupExtraMolang(Entity entity, MolangScope scope, float partialTick) {
         if (entity instanceof Llama llama) {
-            if (llama.inventory.getItem(AbstractHorse.INV_SLOT_ARMOR).getItem() instanceof BlockItem bi && bi.getBlock() instanceof WoolCarpetBlock wc) {
+            if (llama.inventory.getItem(AbstractHorse.INV_SLOT_ARMOR)
+                               .getItem() instanceof BlockItem bi && bi.getBlock() instanceof WoolCarpetBlock wc) {
                 scope.set("variable.decortextureindex", wc.getColor().getId() + 1);
             } else {
                 scope.set("variable.decortextureindex", 0);

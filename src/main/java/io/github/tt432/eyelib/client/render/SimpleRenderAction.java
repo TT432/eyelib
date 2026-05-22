@@ -2,12 +2,12 @@ package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.capability.RenderData;
-import io.github.tt432.eyelibanimation.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.EntityRenderSystem;
+import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
+import io.github.tt432.eyelibanimation.AnimationComponent;
 import io.github.tt432.eyelibanimation.AnimationEffects;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
-import io.github.tt432.eyelib.mixin.LivingEntityRendererAccessor;
 import lombok.With;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -16,10 +16,10 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.client.event.RenderLivingEvent;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
@@ -41,9 +41,9 @@ public record SimpleRenderAction<T>(
         LivingEntity entity = Objects.requireNonNull(event.getEntity());
 
         return SimpleRenderAction.<T>builder(event.getMultiBufferSource(), event.getPoseStack(), RenderData.getComponent(entity), event.getPartialTick())
-                .entity(entity)
-                .overlay(LivingEntityRenderer.getOverlayCoords(entity, ((LivingEntityRendererAccessor) (event.getRenderer())).callGetWhiteOverlayProgress(entity, event.getPartialTick())))
-                .light(event.getPackedLight());
+                                 .entity(entity)
+                                 .overlay(LivingEntityRenderer.getOverlayCoords(entity, ((LivingEntityRendererAccessor) (event.getRenderer())).callGetWhiteOverlayProgress(entity, event.getPartialTick())))
+                                 .light(event.getPackedLight());
     }
 
     public static <T> Builder<T> builder(MultiBufferSource multiBufferSource, PoseStack poseStack, RenderData<T> renderData, float partialTick) {
@@ -52,11 +52,11 @@ public record SimpleRenderAction<T>(
 
     public RenderParams renderParams(ModelComponent modelComponent) {
         return RenderParams.builder(poseStack, multiBufferSource, modelComponent)
-                .entity(entity)
-                .overlay(overlay)
-                .light(packedLight)
-                .partVisibility(modelComponent.getPartVisibility())
-                .build();
+                           .entity(entity)
+                           .overlay(overlay)
+                           .light(packedLight)
+                           .partVisibility(modelComponent.getPartVisibility())
+                           .build();
     }
 
     public boolean render() {
@@ -67,7 +67,7 @@ public record SimpleRenderAction<T>(
         return tickedInfos != null && effects != null;
     }
 
-@NullMarked
+    @NullMarked
     public static class Builder<T> {
         // required
         MultiBufferSource multiBufferSource;

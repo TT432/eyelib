@@ -10,10 +10,11 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.jspecify.annotations.NullMarked;
 
+/**
+ * @author TT432
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
-
-/** @author TT432 */
 @NullMarked
 public final class ManagerScreenOpenEvents {
     @SubscribeEvent

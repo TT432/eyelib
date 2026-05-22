@@ -3,23 +3,22 @@ package io.github.tt432.eyelib.client.render.controller;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
-import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
+import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
+import io.github.tt432.eyelib.client.render.texture.TextureLayerMerger;
+import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelibmolang.type.*;
-import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
-import io.github.tt432.eyelib.client.render.texture.TextureLayerMerger;
 import io.github.tt432.eyelibutil.texture.TexturePaths;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
-
-import java.util.Collection;
-import java.util.*;
 import org.jspecify.annotations.NullMarked;
+
+import java.util.*;
 
 /**
  * 渲染控制器条目。
@@ -36,8 +35,12 @@ public record RenderControllerEntry(
 ) {
     public static final Codec<RenderControllerEntry> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             MolangValue.CODEC.optionalFieldOf("geometry", MolangValue.ZERO).forGetter(RenderControllerEntry::geometry),
-            MolangValue.CODEC.listOf().optionalFieldOf("textures", List.of()).forGetter(RenderControllerEntry::textures),
-            Codec.unboundedMap(Codec.STRING, Codec.unboundedMap(Codec.STRING, Codec.STRING.listOf())).optionalFieldOf("arrays", Map.of()).forGetter(RenderControllerEntry::arrays),
+            MolangValue.CODEC.listOf()
+                             .optionalFieldOf("textures", List.of())
+                             .forGetter(RenderControllerEntry::textures),
+            Codec.unboundedMap(Codec.STRING, Codec.unboundedMap(Codec.STRING, Codec.STRING.listOf()))
+                 .optionalFieldOf("arrays", Map.of())
+                 .forGetter(RenderControllerEntry::arrays),
             Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).listOf().xmap(
                     l -> {
                         Map<String, MolangValue> result = new Object2ObjectOpenHashMap<>();

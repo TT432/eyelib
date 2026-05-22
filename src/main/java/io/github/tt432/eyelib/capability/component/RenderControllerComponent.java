@@ -2,12 +2,12 @@ package io.github.tt432.eyelib.capability.component;
 
 import io.github.tt432.eyelib.client.entity.RenderControllerRuntime;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432

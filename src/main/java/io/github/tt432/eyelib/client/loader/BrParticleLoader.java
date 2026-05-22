@@ -6,17 +6,19 @@ import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.jspecify.annotations.NullMarked;
 
+
+/**
+ * @author TT432
+ */
 @Slf4j
 @ResourceLoader
-
-/** @author TT432 */
 @NullMarked
 public class BrParticleLoader extends BrResourcesLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(BrParticleLoader.class);

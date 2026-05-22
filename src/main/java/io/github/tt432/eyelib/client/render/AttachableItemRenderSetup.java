@@ -4,13 +4,13 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.ClientTickHandler;
+import io.github.tt432.eyelib.client.EntityRenderSystem;
 import io.github.tt432.eyelib.client.entity.AttachableResolver;
 import io.github.tt432.eyelibanimation.AnimationComponent;
 import io.github.tt432.eyelibanimation.AnimationEffects;
 import io.github.tt432.eyelibanimation.BrAnimator;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-import io.github.tt432.eyelib.client.EntityRenderSystem;
 import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibmolang.type.MolangString;
 import lombok.AccessLevel;
@@ -20,8 +20,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import org.jspecify.annotations.Nullable;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -29,6 +29,7 @@ import java.util.Map;
 
 /**
  * 为手持 attachable 物品准备 RenderData，tick 动画，并渲染模型。
+ *
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -85,7 +86,7 @@ public final class AttachableItemRenderSetup {
 
             AnimationEffects effects = new AnimationEffects();
             ac.tickedInfos = BrAnimator.tickAnimation(ac, scope, effects,
-                    (ClientTickHandler.getTick() + partialTick) / 20, () -> {
+                                                      (ClientTickHandler.getTick() + partialTick) / 20, () -> {
                         var ce = rd.getClientEntityComponent().getClientEntity();
                         if (ce != null) {
                             ce.scripts().ifPresent(s -> s.pre_animation().eval(scope));
@@ -111,11 +112,11 @@ public final class AttachableItemRenderSetup {
             poseStack.pushPose();
 
             RenderParams rp = RenderParams.builder(poseStack, buffer, mc)
-                    .entity(entity)
-                    .light(light)
-                    .overlay(overlay)
-                    .partVisibility(mc.getPartVisibility())
-                    .build();
+                                          .entity(entity)
+                                          .light(light)
+                                          .overlay(overlay)
+                                          .partVisibility(mc.getPartVisibility())
+                                          .build();
 
             RenderHelper.start().render(rp, model, tickedInfos);
 

@@ -1,14 +1,12 @@
 package io.github.tt432.eyelib.client.model;
 
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
-import io.github.tt432.eyelibmodel.Model;
-
-
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelibmodel.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
+import io.github.tt432.eyelibanimation.ModelRuntimeData;
+import io.github.tt432.eyelibmodel.Model;
+import io.github.tt432.eyelibmodel.locator.LocatorEntry;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceList;
@@ -24,11 +22,11 @@ import org.jspecify.annotations.NullMarked;
 public record DFSModel(
         ReferenceList<Frame> frames
 ) {
-    public  void visit(RenderParams params, ModelVisitContext context, ModelVisitor visitor, ModelRuntimeData infos, StateMachine stateMachine) {
+    public void visit(RenderParams params, ModelVisitContext context, ModelVisitor visitor, ModelRuntimeData infos, StateMachine stateMachine) {
         frames.forEach(frame -> frame.visit(params, context, visitor, cast(infos), stateMachine));
     }
 
-@NullMarked
+    @NullMarked
     public static class StateMachine {
         public boolean render;
     }
@@ -38,7 +36,7 @@ public record DFSModel(
         return (T) o;
     }
 
-    public static  DFSModel create(Model model) {
+    public static DFSModel create(Model model) {
         ReferenceList<Frame> frames = new ReferenceArrayList<>();
 
         new ModelVisitor() {

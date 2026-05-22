@@ -1,17 +1,17 @@
 package io.github.tt432.eyelib.capability.component;
 
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelib.client.model.ModelLookup;
+import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelibmaterial.render.RenderTypeResolver;
+import io.github.tt432.eyelibmodel.Model;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.Getter;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432

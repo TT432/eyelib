@@ -3,13 +3,15 @@ package io.github.tt432.eyelib.client.gui.manager.reload;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.tt432.eyelib.client.gui.manager.io.FileDialogService;
 import lombok.Getter;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
-import org.jspecify.annotations.NullMarked;
 
-/** @author TT432 */
+/**
+ * @author TT432
+ */
 @NullMarked
 public final class ManagerFolderSession {
     private final ManagerResourceFolderWatcher folderWatcher = new ManagerResourceFolderWatcher();
@@ -25,7 +27,7 @@ public final class ManagerFolderSession {
 
     public void chooseFolder(Logger logger) {
         FileDialogService.selectFolder("打开资源包文件夹", Path.of("/")).whenComplete((path, throwable) ->
-                RenderSystem.recordRenderCall(() -> path.ifPresent(selected -> bindFolder(selected.toAbsolutePath(), logger))));
+                                                                                              RenderSystem.recordRenderCall(() -> path.ifPresent(selected -> bindFolder(selected.toAbsolutePath(), logger))));
     }
 
     private void bindFolder(Path absolutePath, Logger logger) {

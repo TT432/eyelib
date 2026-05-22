@@ -1,10 +1,10 @@
 package io.github.tt432.eyelib.client.render.visitor;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-
-import org.jspecify.annotations.Nullable;
-import java.util.Map;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Map;
 
 /**
  * @author TT432

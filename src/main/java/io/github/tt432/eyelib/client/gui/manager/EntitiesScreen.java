@@ -1,12 +1,12 @@
 package io.github.tt432.eyelib.client.gui.manager;
 
+import io.github.tt432.eyelib.client.gui.ModalWorksurfaceScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import io.github.tt432.eyelib.client.gui.ModalWorksurfaceScreen;
 import net.minecraft.network.chat.Component;
-import org.jspecify.annotations.Nullable;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author TT432

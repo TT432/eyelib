@@ -5,10 +5,10 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import io.github.tt432.eyelibparticle.runtime.ParticleCommandRuntime;
 import io.github.tt432.eyelibnetwork.EyelibNetworkTransport;
 import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
 import io.github.tt432.eyelibparticle.network.SpawnParticlePacket;
+import io.github.tt432.eyelibparticle.runtime.ParticleCommandRuntime;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
@@ -20,12 +20,12 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.jspecify.annotations.Nullable;
 import org.joml.Vector3f;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import org.jspecify.annotations.NullMarked;
 
 @Mod.EventBusSubscriber
 
@@ -39,23 +39,24 @@ public final class EyelibParticleCommand {
 
     private static LiteralArgumentBuilder<CommandSourceStack> root() {
         return Commands.literal("eyelib")
-                .then(particle());
+                       .then(particle());
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> particle() {
         return Commands.literal("particle")
-                .then(Commands.argument("effect", ResourceLocationArgument.id())
-                        .suggests(EyelibParticleCommand::suggestEffects)
-                        .executes(ctx -> execute(ctx, null))
-                        .then(Commands.argument("position", Vec3Argument.vec3())
-                                .executes(ctx -> execute(ctx, Vec3Argument.getVec3(ctx, "position")))
-                        )
-                );
+                       .then(Commands.argument("effect", ResourceLocationArgument.id())
+                                     .suggests(EyelibParticleCommand::suggestEffects)
+                                     .executes(ctx -> execute(ctx, null))
+                                     .then(Commands.argument("position", Vec3Argument.vec3())
+                                                   .executes(ctx -> execute(ctx, Vec3Argument.getVec3(ctx, "position")))
+                                     )
+                       );
     }
 
     private static CompletableFuture<Suggestions> suggestEffects(CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
-        ParticleCommandRuntime.suggestEffectIds(builder.getRemaining(), ParticleDefinitionRegistry.store().names(), EyelibParticleCommand::isValidResourceLocation)
-                .forEach(builder::suggest);
+        ParticleCommandRuntime.suggestEffectIds(builder.getRemaining(), ParticleDefinitionRegistry.store()
+                                                                                                  .names(), EyelibParticleCommand::isValidResourceLocation)
+                              .forEach(builder::suggest);
         return builder.buildFuture();
     }
 
@@ -91,7 +92,8 @@ public final class EyelibParticleCommand {
                 request.particleId(),
                 new Vector3f(request.x(), request.y(), request.z())
         ));
-        ctx.getSource().sendSuccess(() -> Component.literal(ParticleCommandRuntime.spawnSuccessMessage(request)), false);
+        ctx.getSource()
+           .sendSuccess(() -> Component.literal(ParticleCommandRuntime.spawnSuccessMessage(request)), false);
         return 1;
     }
 }

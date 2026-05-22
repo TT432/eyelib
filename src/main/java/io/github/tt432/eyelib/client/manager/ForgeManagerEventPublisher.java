@@ -5,7 +5,9 @@ import io.github.tt432.eyelibutil.manager.ManagerEventPublisher;
 import net.minecraftforge.common.MinecraftForge;
 import org.jspecify.annotations.NullMarked;
 
-/** @author TT432 */
+/**
+ * @author TT432
+ */
 @NullMarked
 public final class ForgeManagerEventPublisher implements ManagerEventPublisher {
     @Override

@@ -4,12 +4,13 @@ import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.Nullable;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
+/**
+ * @author TT432
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-
-/** @author TT432 */
 @NullMarked
 public final class AttachableLookup {
     @Nullable

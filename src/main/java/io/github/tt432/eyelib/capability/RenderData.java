@@ -2,24 +2,24 @@ package io.github.tt432.eyelib.capability;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibattachment.capability.AnimationComponentInfo;
-import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
-import io.github.tt432.eyelibanimation.AnimationComponent;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.render.sync.ClientRenderSyncService;
-import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelibanimation.AnimationComponent;
+import io.github.tt432.eyelibattachment.capability.AnimationComponentInfo;
+import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
+import io.github.tt432.eyelibmolang.MolangScope;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.world.entity.Entity;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
@@ -29,8 +29,13 @@ import org.jspecify.annotations.NullMarked;
 public class RenderData<T> {
     public static <T> Codec<RenderData<T>> codec() {
         return RecordCodecBuilder.create(ins -> ins.group(
-                ModelComponentInfo.CODEC.listOf().optionalFieldOf("model").forGetter(ac -> Optional.of(ac.modelComponents.stream().map(ModelComponent::getSerializableInfo).toList())),
-                AnimationComponentInfo.CODEC.optionalFieldOf("animation").forGetter(ac -> Optional.ofNullable(ac.animationComponent.getSerializableInfo()))
+                ModelComponentInfo.CODEC.listOf()
+                                        .optionalFieldOf("model")
+                                        .forGetter(ac -> Optional.of(ac.modelComponents.stream()
+                                                                                       .map(ModelComponent::getSerializableInfo)
+                                                                                       .toList())),
+                AnimationComponentInfo.CODEC.optionalFieldOf("animation")
+                                            .forGetter(ac -> Optional.ofNullable(ac.animationComponent.getSerializableInfo()))
         ).apply(ins, (mcsi, acsi) -> {
             RenderData<T> result = new RenderData<>();
             mcsi.ifPresent(l -> {
@@ -46,7 +51,7 @@ public class RenderData<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T>RenderData<T> getComponent(Entity entity) {
+    public static <T> RenderData<T> getComponent(Entity entity) {
         return (RenderData<T>) DataAttachmentHelper.getOrCreate(EyelibAttachableData.RENDER_DATA.get(), entity);
     }
 

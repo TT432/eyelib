@@ -1,19 +1,18 @@
 package io.github.tt432.eyelib.client.render.sync;
 
 import io.github.tt432.eyelib.capability.RenderData;
-import io.github.tt432.eyelib.capability.component.ModelComponent;
+import io.github.tt432.eyelibanimation.network.AnimationComponentSyncPacket;
 import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelibattachment.sync.RenderModelSyncPayload;
-import io.github.tt432.eyelibnetwork.EyelibNetworkTransport;
-import io.github.tt432.eyelibanimation.network.AnimationComponentSyncPacket;
 import io.github.tt432.eyelibmodel.network.packet.ModelComponentSyncPacket;
+import io.github.tt432.eyelibnetwork.EyelibNetworkTransport;
 import io.github.tt432.eyelibutil.resource.ResourceLocations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
-import org.jspecify.annotations.Nullable;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 
@@ -24,13 +23,13 @@ public final class ClientRenderSyncService {
         var components = RenderSyncApplyOps.collectSerializableModelInfo(data.getModelComponents());
 
         data.ownerAs(Entity.class).ifPresent(e -> EyelibNetworkTransport.sendToTrackedAndSelf(e,
-                new ModelComponentSyncPacket(e.getId(), components)));
+                                                                                              new ModelComponentSyncPacket(e.getId(), components)));
 
         if (data.getAnimationComponent().serializable()) {
             var serializableInfo = data.getAnimationComponent().getSerializableInfo();
             if (serializableInfo != null) {
                 data.ownerAs(Entity.class).ifPresent(e -> EyelibNetworkTransport.sendToTrackedAndSelf(e,
-                        new AnimationComponentSyncPacket(e.getId(), serializableInfo)));
+                                                                                                      new AnimationComponentSyncPacket(e.getId(), serializableInfo)));
             }
         }
     }

@@ -7,16 +7,18 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.forgespi.language.ModFileScanData;
+import org.jspecify.annotations.NullMarked;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
-import org.jspecify.annotations.NullMarked;
 
+
+/**
+ * @author TT432
+ */
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
-
-/** @author TT432 */
 @NullMarked
 public final class ClientLoaderLifecycleHooks {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientLoaderLifecycleHooks.class);
@@ -43,7 +45,8 @@ public final class ClientLoaderLifecycleHooks {
                         continue;
                     }
 
-                    PreparableReloadListener instance = (PreparableReloadListener) clazz.getDeclaredConstructor().newInstance();
+                    PreparableReloadListener instance = (PreparableReloadListener) clazz.getDeclaredConstructor()
+                                                                                        .newInstance();
                     event.registerReloadListener(instance);
                 } catch (Exception | LinkageError e) {
                     LOGGER.error("[ResourceLoader] Failed to load: {}", memberName, e);

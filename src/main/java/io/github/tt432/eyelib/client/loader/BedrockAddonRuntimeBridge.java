@@ -1,32 +1,25 @@
 package io.github.tt432.eyelib.client.loader;
 
-import io.github.tt432.eyelibanimation.bedrock.BrAnimation;
-import io.github.tt432.eyelibanimation.bedrock.controller.BrAnimationControllers;
-import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
-import io.github.tt432.eyelib.client.registry.AttachableAssetRegistry;
-import io.github.tt432.eyelib.client.registry.ClientEntityAssetRegistry;
-import io.github.tt432.eyelib.client.registry.MaterialAssetRegistry;
-import io.github.tt432.eyelib.client.registry.ModelAssetRegistry;
-import io.github.tt432.eyelib.client.registry.RenderControllerAssetRegistry;
+import io.github.tt432.eyelib.client.registry.*;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
+import io.github.tt432.eyelibanimation.bedrock.BrAnimation;
+import io.github.tt432.eyelibanimation.bedrock.controller.BrAnimationControllers;
 import io.github.tt432.eyelibimporter.addon.BedrockAddon;
 import io.github.tt432.eyelibimporter.addon.BedrockAddonSideAggregate;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
+import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import org.jspecify.annotations.NullMarked;
+import java.util.*;
 
-/** @author TT432 */
+/**
+ * @author TT432
+ */
 @NullMarked
 public final class BedrockAddonRuntimeBridge {
     private static final Logger LOGGER = LoggerFactory.getLogger(BedrockAddonRuntimeBridge.class);
@@ -131,26 +124,38 @@ public final class BedrockAddonRuntimeBridge {
         var sharedSamplerStates = new io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.SamplerStates(
                 ss.base().map(list -> list.stream().map(s -> new io.github.tt432.eyelibmaterial.shared.BrSamplerState(
                         s.samplerIndex(),
-                        io.github.tt432.eyelibmaterial.shared.BrSamplerState.TextureFilter.valueOf(s.textureFilter().name()),
+                        io.github.tt432.eyelibmaterial.shared.BrSamplerState.TextureFilter.valueOf(s.textureFilter()
+                                                                                                    .name()),
                         io.github.tt432.eyelibmaterial.shared.BrSamplerState.TextureWrap.valueOf(s.textureWrap().name())
                 )).toList()),
                 ss.add().map(list -> list.stream().map(s -> new io.github.tt432.eyelibmaterial.shared.BrSamplerState(
                         s.samplerIndex(),
-                        io.github.tt432.eyelibmaterial.shared.BrSamplerState.TextureFilter.valueOf(s.textureFilter().name()),
+                        io.github.tt432.eyelibmaterial.shared.BrSamplerState.TextureFilter.valueOf(s.textureFilter()
+                                                                                                    .name()),
                         io.github.tt432.eyelibmaterial.shared.BrSamplerState.TextureWrap.valueOf(s.textureWrap().name())
                 )).toList()),
                 ss.sub().map(list -> list.stream().map(s -> new io.github.tt432.eyelibmaterial.shared.BrSamplerState(
                         s.samplerIndex(),
-                        io.github.tt432.eyelibmaterial.shared.BrSamplerState.TextureFilter.valueOf(s.textureFilter().name()),
+                        io.github.tt432.eyelibmaterial.shared.BrSamplerState.TextureFilter.valueOf(s.textureFilter()
+                                                                                                    .name()),
                         io.github.tt432.eyelibmaterial.shared.BrSamplerState.TextureWrap.valueOf(s.textureWrap().name())
                 )).toList())
         );
 
         var st = importer.states();
         var sharedStates = new io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.States(
-                st.base().map(list -> list.stream().map(s -> io.github.tt432.eyelibmaterial.shared.GLStates.valueOf(s.name())).toList()),
-                st.add().map(list -> list.stream().map(s -> io.github.tt432.eyelibmaterial.shared.GLStates.valueOf(s.name())).toList()),
-                st.sub().map(list -> list.stream().map(s -> io.github.tt432.eyelibmaterial.shared.GLStates.valueOf(s.name())).toList())
+                st.base()
+                  .map(list -> list.stream()
+                                   .map(s -> io.github.tt432.eyelibmaterial.shared.GLStates.valueOf(s.name()))
+                                   .toList()),
+                st.add()
+                  .map(list -> list.stream()
+                                   .map(s -> io.github.tt432.eyelibmaterial.shared.GLStates.valueOf(s.name()))
+                                   .toList()),
+                st.sub()
+                  .map(list -> list.stream()
+                                   .map(s -> io.github.tt432.eyelibmaterial.shared.GLStates.valueOf(s.name()))
+                                   .toList())
         );
 
         var bl = importer.blend();
@@ -168,13 +173,15 @@ public final class BedrockAddonRuntimeBridge {
                 sc.stencilReadMask(),
                 sc.stencilWriteMask(),
                 sc.frontFace().map(face -> new io.github.tt432.eyelibmaterial.shared.Face(
-                        io.github.tt432.eyelibmaterial.shared.StencilDepthFailOp.valueOf(face.stencilDepthFailOp().name()),
+                        io.github.tt432.eyelibmaterial.shared.StencilDepthFailOp.valueOf(face.stencilDepthFailOp()
+                                                                                             .name()),
                         io.github.tt432.eyelibmaterial.shared.StencilFailOp.valueOf(face.stencilFailOp().name()),
                         io.github.tt432.eyelibmaterial.shared.StencilFunc.valueOf(face.stencilFunc().name()),
                         io.github.tt432.eyelibmaterial.shared.StencilPassOp.valueOf(face.stencilPassOp().name())
                 )),
                 sc.backFace().map(face -> new io.github.tt432.eyelibmaterial.shared.Face(
-                        io.github.tt432.eyelibmaterial.shared.StencilDepthFailOp.valueOf(face.stencilDepthFailOp().name()),
+                        io.github.tt432.eyelibmaterial.shared.StencilDepthFailOp.valueOf(face.stencilDepthFailOp()
+                                                                                             .name()),
                         io.github.tt432.eyelibmaterial.shared.StencilFailOp.valueOf(face.stencilFailOp().name()),
                         io.github.tt432.eyelibmaterial.shared.StencilFunc.valueOf(face.stencilFunc().name()),
                         io.github.tt432.eyelibmaterial.shared.StencilPassOp.valueOf(face.stencilPassOp().name())

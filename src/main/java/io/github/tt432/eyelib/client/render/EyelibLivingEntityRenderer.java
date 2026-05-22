@@ -10,9 +10,9 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import org.jspecify.annotations.NullMarked;
 
 import static io.github.tt432.eyelib.client.EntityRenderSystem.renderItemInHand;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
@@ -34,16 +34,16 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
         int overlay = LivingEntityRenderer.getOverlayCoords(entity, getWhiteOverlayProgress(entity, partialTicks));
         RenderData<Object> cap = RenderData.getComponent(entity);
         SimpleRenderAction.builder(buffer, poseStack, cap, partialTicks)
-                .entity(entity)
-                .animation(cap.getAnimationComponent())
-                .light(packedLight)
-                .overlay(overlay)
-                .extraRender((helper, action) -> {
-                    renderItemInHand(helper, buffer, entity, packedLight);
-                    // TODO: 修改成使用 layer
-                })
-                .build()
-                .render();
+                          .entity(entity)
+                          .animation(cap.getAnimationComponent())
+                          .light(packedLight)
+                          .overlay(overlay)
+                          .extraRender((helper, action) -> {
+                              renderItemInHand(helper, buffer, entity, packedLight);
+                              // TODO: 修改成使用 layer
+                          })
+                          .build()
+                          .render();
     }
 
     public static class EmptyEntityModel<T extends Entity> extends EntityModel<T> {

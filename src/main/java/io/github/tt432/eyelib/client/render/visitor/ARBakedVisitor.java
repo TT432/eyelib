@@ -4,8 +4,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.compat.ar.ARCompat;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bake.BakedModel;
-import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
+import io.github.tt432.eyelibmodel.Model;
 import org.jspecify.annotations.NullMarked;
 
 /**

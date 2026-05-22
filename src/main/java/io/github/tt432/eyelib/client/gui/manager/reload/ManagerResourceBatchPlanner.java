@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.gui.manager.reload;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -14,11 +15,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Predicate;
-import org.jspecify.annotations.NullMarked;
 
+
+/**
+ * @author TT432
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-
-/** @author TT432 */
 @NullMarked
 public final class ManagerResourceBatchPlanner {
     @FunctionalInterface

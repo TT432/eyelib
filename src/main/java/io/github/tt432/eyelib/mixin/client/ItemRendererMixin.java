@@ -45,7 +45,8 @@ public class ItemRendererMixin {
         rd.getScope().set("variable.partial_tick", partialTick);
 
         ModelRuntimeData tickedInfos = BrAnimator.tickAnimation(ac, rd.getScope(), effects,
-                (ClientTickHandler.getTick() + partialTick) / 20, () -> {});
+                                                                (ClientTickHandler.getTick() + partialTick) / 20, () -> {
+                });
         ac.tickedInfos = tickedInfos;
         ac.effects = effects;
     }

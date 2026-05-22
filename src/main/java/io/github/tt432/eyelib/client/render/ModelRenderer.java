@@ -1,16 +1,16 @@
 package io.github.tt432.eyelib.client.render;
 
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
+import io.github.tt432.eyelibanimation.ModelRuntimeData;
+import io.github.tt432.eyelibmodel.Model;
 import lombok.experimental.UtilityClass;
+import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
@@ -29,10 +29,10 @@ public class ModelRenderer {
     public static void render(RenderParams renderParams, Model model, ModelRuntimeData infos, ModelRenderVisitorList visitors) {
         if (DEBUG_REMAINING.getAndDecrement() > 0) {
             LOGGER.info("[UV-DEBUG][ModelRenderer.render] visitorCount={} visitors={} boneCount={} consumerPresent={}",
-                    visitors.visitors().size(),
-                    visitors.visitors().stream().map(v -> v.getClass().getSimpleName()).toList(),
-                    model.toplevelBones().size(),
-                    renderParams.consumer() != null);
+                        visitors.visitors().size(),
+                        visitors.visitors().stream().map(v -> v.getClass().getSimpleName()).toList(),
+                        model.toplevelBones().size(),
+                        renderParams.consumer() != null);
         }
         for (ModelVisitor visitor : visitors.visitors()) {
             visitor.visitModel(renderParams, new ModelVisitContext(), cast(infos), model);

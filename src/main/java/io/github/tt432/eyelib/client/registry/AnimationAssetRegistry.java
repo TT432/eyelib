@@ -1,19 +1,19 @@
 package io.github.tt432.eyelib.client.registry;
 
 import io.github.tt432.eyelibanimation.Animation;
+import io.github.tt432.eyelibanimation.AnimationManager;
 import io.github.tt432.eyelibanimation.bedrock.BrAnimation;
 import io.github.tt432.eyelibanimation.bedrock.controller.BrAnimationControllers;
-import io.github.tt432.eyelibanimation.AnimationManager;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.jspecify.annotations.NullMarked;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 
 /** @author TT432 */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @NullMarked
 public final class AnimationAssetRegistry {
     private static Map<?, BrAnimation> stagedAnimations = Map.of();

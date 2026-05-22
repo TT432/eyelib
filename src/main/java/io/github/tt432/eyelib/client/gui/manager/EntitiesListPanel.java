@@ -11,12 +11,12 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.gui.widget.ScrollPanel;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
@@ -36,7 +36,8 @@ public class EntitiesListPanel extends ScrollPanel {
                 allEntitiesList.add(new EyelibManagerScreen.EntityButton(
                         resourceLocation.toString(),
                         BuiltInRegistries.ENTITY_TYPE.get(resourceLocation).getDescription(),
-                        new ResourceLocation(Eyelib.MOD_ID, "icons/entities/" + resourceLocation.toString().replace(":", "/"))
+                        new ResourceLocation(Eyelib.MOD_ID, "icons/entities/" + resourceLocation.toString()
+                                                                                                .replace(":", "/"))
                 ));
             }
             filtedEntitiesList.addAll(allEntitiesList);

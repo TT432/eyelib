@@ -2,22 +2,22 @@ package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.manager.ModelManager;
-import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
 import io.github.tt432.eyelib.client.model.DFSModel;
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
+import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
 import io.github.tt432.eyelib.client.render.bake.TwoSideModelBakeInfo;
 import io.github.tt432.eyelib.client.render.visitor.ActiveModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
+import io.github.tt432.eyelibanimation.ModelRuntimeData;
+import io.github.tt432.eyelibmodel.Model;
 import lombok.Getter;
 import net.minecraftforge.common.MinecraftForge;
-import org.jspecify.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
 import java.util.HashMap;
 import java.util.Map;
 

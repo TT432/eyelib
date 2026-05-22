@@ -5,13 +5,13 @@ import io.github.tt432.eyelibmodel.Model;
 import it.unimi.dsi.fastutil.ints.Int2BooleanFunction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.lwjgl.opengl.GL11.*;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
@@ -22,10 +22,10 @@ public abstract class ModelBakeInfo<Info> {
 
     public BakedModel getBakedModel(Model model, boolean isSolid, ResourceLocation texture) {
         return modelCache.computeIfAbsent(model.name(), s -> new HashMap<>())
-                .computeIfAbsent(texture, i -> {
-                    Info bakeInfo = getBakeInfo(model, isSolid, texture);
-                    return bake(model, bakeInfo);
-                });
+                         .computeIfAbsent(texture, i -> {
+                             Info bakeInfo = getBakeInfo(model, isSolid, texture);
+                             return bake(model, bakeInfo);
+                         });
     }
 
     public void invalidateModel(String modelName) {
@@ -71,9 +71,9 @@ public abstract class ModelBakeInfo<Info> {
                 var uv0 = face.vertexes().get(0).uv();
                 var uv2 = face.vertexes().get(2).uv();
                 if (pixelAnyMatch(intBuffer,
-                        uv0.x(), uv0.y(),
-                        uv2.x(), uv2.y(),
-                        f
+                                  uv0.x(), uv0.y(),
+                                  uv2.x(), uv2.y(),
+                                  f
                 )) {
                     result[i] = true;
                     break;

@@ -1,13 +1,11 @@
 package io.github.tt432.eyelib.client.entity;
 
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-
-
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
+import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.Nullable;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 

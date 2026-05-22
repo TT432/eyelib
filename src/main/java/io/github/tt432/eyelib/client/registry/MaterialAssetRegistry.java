@@ -5,14 +5,14 @@ import io.github.tt432.eyelibmaterial.material.BrMaterial;
 import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.jspecify.annotations.NullMarked;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 
 /** @author TT432 */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @NullMarked
 public final class MaterialAssetRegistry {
     public static void replaceMaterials(Map<?, BrMaterial> materials) {

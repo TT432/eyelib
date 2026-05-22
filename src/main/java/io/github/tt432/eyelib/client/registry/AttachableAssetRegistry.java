@@ -4,13 +4,13 @@ import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-
-import java.util.LinkedHashMap;
 import org.jspecify.annotations.NullMarked;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+import java.util.LinkedHashMap;
+
 
 /** @author TT432 */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @NullMarked
 public final class AttachableAssetRegistry {
     public static void publishAttachable(BrClientEntity attachable) {

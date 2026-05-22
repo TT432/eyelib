@@ -1,15 +1,17 @@
 package io.github.tt432.eyelib.client.model;
 
 import io.github.tt432.eyelib.client.manager.ModelManager;
-import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import io.github.tt432.eyelib.client.render.bake.EmissiveModelBakeInfo;
 import io.github.tt432.eyelib.client.render.bake.TwoSideModelBakeInfo;
+import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import net.minecraftforge.common.MinecraftForge;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.jspecify.annotations.NullMarked;
 
-/** @author TT432 */
+import java.util.concurrent.atomic.AtomicBoolean;
+
+/**
+ * @author TT432
+ */
 @NullMarked
 public final class ModelBakeInvalidationHooks {
     private static final AtomicBoolean INSTALLED = new AtomicBoolean(false);

@@ -3,7 +3,9 @@ package io.github.tt432.eyelib.client.manager;
 import io.github.tt432.eyelibutil.manager.ManagerEventPublisher;
 import org.jspecify.annotations.NullMarked;
 
-/** @author TT432 */
+/**
+ * @author TT432
+ */
 @NullMarked
 public final class ManagerEventPublishBridge {
     private static volatile ManagerEventPublisher publisher = ManagerEventPublisher.NOOP;

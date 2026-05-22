@@ -10,13 +10,13 @@ import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
+import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
@@ -46,7 +46,8 @@ public abstract class SimpleJsonWithSuffixResourceReloadListener extends SimpleP
     public static void scanDirectory(ResourceManager resourceManager, String name, String suffix, Gson gson, Map<ResourceLocation, JsonElement> output) {
         FileToIdConverter filetoidconverter = new FileToIdConverter(name, "." + suffix);
 
-        for (Map.Entry<ResourceLocation, Resource> entry : filetoidconverter.listMatchingResources(resourceManager).entrySet()) {
+        for (Map.Entry<ResourceLocation, Resource> entry : filetoidconverter.listMatchingResources(resourceManager)
+                                                                            .entrySet()) {
             ResourceLocation resourcelocation = entry.getKey();
             ResourceLocation resourcelocation1 = filetoidconverter.fileToId(resourcelocation);
 

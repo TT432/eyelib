@@ -15,8 +15,8 @@ import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
-import org.jspecify.annotations.Nullable;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author TT432
@@ -76,7 +76,7 @@ public record RenderParams(
         }
         ResourceLocation emissiveTextureLocation = texture.withPath(TexturePaths::emissivePath);
         AbstractTexture emissiveTexture = Minecraft.getInstance().getTextureManager()
-                .getTexture(emissiveTextureLocation, MissingTextureAtlasSprite.getTexture());
+                                                   .getTexture(emissiveTextureLocation, MissingTextureAtlasSprite.getTexture());
 
         if (emissiveTexture != MissingTextureAtlasSprite.getTexture()) {
             var emissiveRenderType = modelComponent.getRenderType(emissiveTextureLocation);
@@ -97,7 +97,7 @@ public record RenderParams(
         return texture == null || texture.equals(MissingTextureAtlasSprite.getLocation());
     }
 
-@NullMarked
+    @NullMarked
     public static final class Builder {
         // required
         private final PoseStack.Pose pose0;

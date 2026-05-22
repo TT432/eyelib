@@ -1,12 +1,12 @@
 package io.github.tt432.eyelib.capability.component;
 
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.entity.ClientEntityRuntimeData;
+import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibmodel.Model;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432

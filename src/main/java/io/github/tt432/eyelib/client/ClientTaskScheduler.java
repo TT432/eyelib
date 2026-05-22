@@ -4,10 +4,10 @@ import io.github.tt432.eyelib.Eyelib;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.jspecify.annotations.NullMarked;
 
 @Mod.EventBusSubscriber(modid = Eyelib.MOD_ID)
 /** @author TT432 */

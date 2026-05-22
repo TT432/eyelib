@@ -1,11 +1,11 @@
 package io.github.tt432.eyelib.client.render.visitor;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
-import io.github.tt432.eyelibmodel.locator.LocatorEntry;
 import io.github.tt432.eyelib.client.render.PoseCopies;
 import io.github.tt432.eyelib.client.render.RenderParams;
+import io.github.tt432.eyelibanimation.ModelRuntimeData;
+import io.github.tt432.eyelibmodel.Model;
+import io.github.tt432.eyelibmodel.locator.LocatorEntry;
 import io.github.tt432.eyelibutil.math.EyeMath;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -13,10 +13,10 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector2fc;
 import org.joml.Vector3fc;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.Deque;
 import java.util.List;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
@@ -106,7 +106,7 @@ public class ModelVisitor {
     public void visitCube(RenderParams renderParams, ModelVisitContext context, Model.Cube cube) {
         for (Model.Face face : cube.faces()) {
             visitFace(renderParams, context, cube, face.vertexes().stream().map(Model.Vertex::position).toList(),
-                    face.vertexes().stream().map(Model.Vertex::uv).toList(), face.normal());
+                      face.vertexes().stream().map(Model.Vertex::uv).toList(), face.normal());
 
             for (Model.Vertex vertex : face.vertexes()) {
                 visitVertex(renderParams, context, cube, vertex.position(), vertex.uv(), vertex.normal());
@@ -133,32 +133,33 @@ public class ModelVisitor {
     protected static void applyBoneTranslate(
             ModelVisitContext context, PoseStack poseStack, Model.Bone bone, ModelRuntimeData data
     ) {
-        context.<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>()).compute(bone.id(), (n, pose) -> {
-            if (pose == null) {
-                PoseStack.Pose last = poseStack.last();
-                Matrix4f m4 = last.pose();
+        context.<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>())
+               .compute(bone.id(), (n, pose) -> {
+                   if (pose == null) {
+                       PoseStack.Pose last = poseStack.last();
+                       Matrix4f m4 = last.pose();
 
-                m4.translate(data.position(bone));
+                       m4.translate(data.position(bone));
 
-                var renderPivot = bone.pivot();
-                m4.translate(renderPivot);
+                       var renderPivot = bone.pivot();
+                       m4.translate(renderPivot);
 
-                var rotation = data.rotation(bone);
+                       var rotation = data.rotation(bone);
 
-                last.normal().rotateZYX(rotation.z(), rotation.y(), rotation.x());
-                m4.rotateZYX(rotation.z(), rotation.y(), rotation.x());
+                       last.normal().rotateZYX(rotation.z(), rotation.y(), rotation.x());
+                       m4.rotateZYX(rotation.z(), rotation.y(), rotation.x());
 
-                var scale = data.scale(bone);
-                poseStack.scale(scale.x(), scale.y(), scale.z());
+                       var scale = data.scale(bone);
+                       poseStack.scale(scale.x(), scale.y(), scale.z());
 
-                m4.translate(-renderPivot.x(), -renderPivot.y(), -renderPivot.z());
-                return PoseCopies.copy(last);
-            } else {
-                Deque<PoseStack.Pose> stack = poseStack.poseStack;
-                stack.removeLast();
-                stack.addLast(pose);
-                return pose;
-            }
-        });
+                       m4.translate(-renderPivot.x(), -renderPivot.y(), -renderPivot.z());
+                       return PoseCopies.copy(last);
+                   } else {
+                       Deque<PoseStack.Pose> stack = poseStack.poseStack;
+                       stack.removeLast();
+                       stack.addLast(pose);
+                       return pose;
+                   }
+               });
     }
 }

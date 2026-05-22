@@ -1,14 +1,8 @@
 package io.github.tt432.eyelib.network;
 
 import io.github.tt432.eyelibanimation.network.AnimationComponentSyncPacket;
+import io.github.tt432.eyelibattachment.network.*;
 import io.github.tt432.eyelibmodel.network.packet.ModelComponentSyncPacket;
-import io.github.tt432.eyelibattachment.network.DataAttachmentSyncPacket;
-import io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime;
-import io.github.tt432.eyelibattachment.network.DataAttachmentUpdatePacket;
-import io.github.tt432.eyelibattachment.network.ExtraEntityDataPacket;
-import io.github.tt432.eyelibattachment.network.ExtraEntityUpdateDataPacket;
-import io.github.tt432.eyelibattachment.network.UniDataUpdatePacket;
-import io.github.tt432.eyelibattachment.network.UpdateDestroyInfoPacket;
 import io.github.tt432.eyelibnetwork.EyelibNetworkTransport;
 import io.github.tt432.eyelibparticle.network.RemoveParticlePacket;
 import io.github.tt432.eyelibparticle.network.SpawnParticlePacket;

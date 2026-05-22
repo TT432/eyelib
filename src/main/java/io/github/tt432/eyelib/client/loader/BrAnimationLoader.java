@@ -1,23 +1,24 @@
 package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
+import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
 import io.github.tt432.eyelibanimation.bedrock.BrAnimation;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
-import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
-import io.github.tt432.eyelib.client.loader.LoaderParsingOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.jspecify.annotations.NullMarked;
 
+
+/**
+ * @author TT432
+ */
 @ResourceLoader
-
-/** @author TT432 */
 @NullMarked
 public class BrAnimationLoader extends BrResourcesLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(BrAnimationLoader.class);

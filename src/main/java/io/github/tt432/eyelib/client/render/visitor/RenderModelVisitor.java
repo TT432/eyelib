@@ -2,8 +2,8 @@ package io.github.tt432.eyelib.client.render.visitor;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelib.client.render.RenderParams;
+import io.github.tt432.eyelibmodel.Model;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -31,9 +31,9 @@ public class RenderModelVisitor extends ModelVisitor {
             return;
         }
         consumer.vertex(tPosition.x, tPosition.y, tPosition.z,
-                1, 1, 1, 1,
-                uv.x(), uv.y(),
-                renderParams.overlay(), renderParams.light(),
-                tNormal.x, tNormal.y, tNormal.z);
+                        1, 1, 1, 1,
+                        uv.x(), uv.y(),
+                        renderParams.overlay(), renderParams.light(),
+                        tNormal.x, tNormal.y, tNormal.z);
     }
 }

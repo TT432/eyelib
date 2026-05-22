@@ -1,9 +1,9 @@
 package io.github.tt432.eyelib.capability;
 
-import io.github.tt432.eyelibbehavior.EntityBehaviorData;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
 import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelibbehavior.EntityBehaviorData;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.resources.ResourceLocation;
@@ -25,11 +25,11 @@ public class EyelibAttachableData {
     // tt432: All attachments are only for LivingEntity now.
     public static final RegistryObject<DataAttachmentType<RenderData<Object>>> RENDER_DATA =
             DataAttachmentTypeRegistry.DATA_ATTACHMENTS.register(RENDER_DATA_ID.getPath(),
-                    () -> new DataAttachmentType<>(RENDER_DATA_ID.toString(), RenderData::new, RenderData.codec(), null));
+                                                                 () -> new DataAttachmentType<>(RENDER_DATA_ID.toString(), RenderData::new, RenderData.codec(), null));
     public static final RegistryObject<DataAttachmentType<ItemInHandRenderData>> ITEM_IN_HAND_RENDER_DATA =
             DataAttachmentTypeRegistry.DATA_ATTACHMENTS.register(ITEM_IN_HAND_RENDER_DATA_ID.getPath(),
-                    () -> new DataAttachmentType<>(ITEM_IN_HAND_RENDER_DATA_ID.toString(), ItemInHandRenderData::empty, ItemInHandRenderData.CODEC, null));
+                                                                 () -> new DataAttachmentType<>(ITEM_IN_HAND_RENDER_DATA_ID.toString(), ItemInHandRenderData::empty, ItemInHandRenderData.CODEC, null));
     public static final RegistryObject<DataAttachmentType<EntityBehaviorData>> ENTITY_BEHAVIOR_DATA =
             DataAttachmentTypeRegistry.DATA_ATTACHMENTS.register(ENTITY_BEHAVIOR_DATA_ID.getPath(),
-                    () -> new DataAttachmentType<>(ENTITY_BEHAVIOR_DATA_ID.toString(), EntityBehaviorData::new, EntityBehaviorData.CODEC, EntityBehaviorData.STREAM_CODEC));
+                                                                 () -> new DataAttachmentType<>(ENTITY_BEHAVIOR_DATA_ID.toString(), EntityBehaviorData::new, EntityBehaviorData.CODEC, EntityBehaviorData.STREAM_CODEC));
 }

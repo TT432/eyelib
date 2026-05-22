@@ -2,10 +2,10 @@ package io.github.tt432.eyelib.client.render.visitor;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
-import io.github.tt432.eyelib.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.client.render.RenderParams;
+import io.github.tt432.eyelib.client.render.bake.BakedModel;
+import io.github.tt432.eyelibanimation.ModelRuntimeData;
+import io.github.tt432.eyelibmodel.Model;
 import lombok.Setter;
 import org.jspecify.annotations.NullMarked;
 

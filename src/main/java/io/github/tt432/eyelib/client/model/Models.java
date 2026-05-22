@@ -6,11 +6,11 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
@@ -91,7 +91,9 @@ public class Models {
 
         modelA.allBones().int2ObjectEntrySet().forEach(entry -> {
             if (modelB.allBones().containsKey(entry.getIntKey())) {
-                newBones.put(entry.getIntKey(), entry.getValue().withCubes(new ArrayList<>()).withChildren(new Int2ObjectOpenHashMap<>()));
+                newBones.put(entry.getIntKey(), entry.getValue()
+                                                     .withCubes(new ArrayList<>())
+                                                     .withChildren(new Int2ObjectOpenHashMap<>()));
             } else {
                 newBones.put(entry.getIntKey(), entry.getValue().withChildren(new Int2ObjectOpenHashMap<>()));
             }

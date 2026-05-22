@@ -9,9 +9,9 @@ import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.*;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
@@ -25,17 +25,17 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     @Override
     public TwoSideInfoMap getBakeInfo(Model model, boolean isSolid, ResourceLocation texture) {
         return cache.computeIfAbsent(model.name(), ___ -> new HashMap<>())
-                .computeIfAbsent(texture, __ -> {
-                    Int2ObjectMap<TwoSideInfo> builder = new Int2ObjectOpenHashMap<>();
+                    .computeIfAbsent(texture, __ -> {
+                        Int2ObjectMap<TwoSideInfo> builder = new Int2ObjectOpenHashMap<>();
 
-                    downloadTexture(texture, nativeimage ->
-                            model.toplevelBones().forEach((boneName, bone) ->
-                                    processBone(bone, nativeimage,
-                                            color -> ((FastColor.ABGR32.alpha(color) & 0xFF) == 0xFF) == isSolid,
-                                            (n, d) -> builder.put(n, new TwoSideInfo(n, d)))));
+                        downloadTexture(texture, nativeimage ->
+                                model.toplevelBones().forEach((boneName, bone) ->
+                                                                      processBone(bone, nativeimage,
+                                                                                  color -> ((FastColor.ABGR32.alpha(color) & 0xFF) == 0xFF) == isSolid,
+                                                                                  (n, d) -> builder.put(n, new TwoSideInfo(n, d)))));
 
-                    return new TwoSideInfoMap(builder);
-                });
+                        return new TwoSideInfoMap(builder);
+                    });
     }
 
     @Override

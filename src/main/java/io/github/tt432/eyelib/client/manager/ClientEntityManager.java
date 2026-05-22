@@ -5,7 +5,9 @@ import io.github.tt432.eyelibutil.manager.ManagerReadPort;
 import io.github.tt432.eyelibutil.manager.ManagerWritePort;
 import org.jspecify.annotations.NullMarked;
 
-/** @author TT432 */
+/**
+ * @author TT432
+ */
 @NullMarked
 public class ClientEntityManager extends Manager<BrClientEntity> {
     public static final ClientEntityManager INSTANCE = new ClientEntityManager();

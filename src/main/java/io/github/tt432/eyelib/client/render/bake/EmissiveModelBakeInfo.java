@@ -10,12 +10,12 @@ import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
@@ -34,17 +34,17 @@ public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.I
     @Override
     public Info getBakeInfo(Model model, boolean isSolid, ResourceLocation texture) {
         return cache.computeIfAbsent(model.name(), ___ -> new HashMap<>())
-                .computeIfAbsent(texture, __ -> {
-                    Int2ObjectMap<BooleanList> builder = new Int2ObjectOpenHashMap<>();
+                    .computeIfAbsent(texture, __ -> {
+                        Int2ObjectMap<BooleanList> builder = new Int2ObjectOpenHashMap<>();
 
-                    downloadTexture(texture, nativeimage ->
-                            model.toplevelBones().forEach((boneName, bone) ->
-                                    processBone(bone, nativeimage,
-                                            c -> c != 0,
-                                            (n, d) -> builder.put(n, BooleanList.of(d)))));
+                        downloadTexture(texture, nativeimage ->
+                                model.toplevelBones().forEach((boneName, bone) ->
+                                                                      processBone(bone, nativeimage,
+                                                                                  c -> c != 0,
+                                                                                  (n, d) -> builder.put(n, BooleanList.of(d)))));
 
-                    return new Info(builder);
-                });
+                        return new Info(builder);
+                    });
     }
 
     @Override

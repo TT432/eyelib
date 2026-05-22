@@ -4,34 +4,28 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.client.loader.BedrockAddonRuntimeBridge;
+import io.github.tt432.eyelib.client.registry.*;
+import io.github.tt432.eyelib.client.render.controller.RenderControllers;
+import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
+import io.github.tt432.eyelib.event.TextureChangedEvent;
 import io.github.tt432.eyelibanimation.bedrock.BrAnimation;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
 import io.github.tt432.eyelibanimation.bedrock.controller.BrAnimationControllers;
-import io.github.tt432.eyelib.client.gui.manager.reload.ManagerResourceBatchPlanner;
-import io.github.tt432.eyelib.client.gui.manager.reload.ManagerResourceReloadPlan;
 import io.github.tt432.eyelibimporter.addon.BedrockAddon;
 import io.github.tt432.eyelibimporter.addon.BedrockAddonLoader;
+import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
+import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
-import io.github.tt432.eyelib.client.loader.BedrockAddonRuntimeBridge;
-import io.github.tt432.eyelibmaterial.material.BrMaterial;
 import io.github.tt432.eyelibimporter.model.importer.ModelImporter;
-import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
-import io.github.tt432.eyelib.client.registry.AttachableAssetRegistry;
-import io.github.tt432.eyelib.client.registry.ClientEntityAssetRegistry;
-import io.github.tt432.eyelib.client.registry.MaterialAssetRegistry;
-import io.github.tt432.eyelib.client.registry.ModelAssetRegistry;
-import io.github.tt432.eyelib.client.registry.RenderControllerAssetRegistry;
-import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
-import io.github.tt432.eyelib.client.render.controller.RenderControllers;
+import io.github.tt432.eyelibmaterial.material.BrMaterial;
+import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibparticle.loading.ParticleResourcePublication;
-import io.github.tt432.eyelib.event.TextureChangedEvent;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraftforge.common.MinecraftForge;
 import org.apache.commons.io.IOUtils;
+import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,16 +34,13 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import org.jspecify.annotations.NullMarked;
+import java.util.*;
 
+
+/**
+ * @author TT432
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-
-/** @author TT432 */
 @NullMarked
 public final class ManagerResourceImportPlanner {
     private static final Gson GSON = new Gson();
@@ -60,7 +51,9 @@ public final class ManagerResourceImportPlanner {
         if (addon.isPresent()) {
             BedrockAddon addonValue = addon.get();
             BedrockAddonRuntimeBridge.replaceFromAddon(addonValue);
-            ParticleResourcePublication.replaceFromSchemas(addonValue.aggregate().resourcePack().particleFiles(), logger);
+            ParticleResourcePublication.replaceFromSchemas(addonValue.aggregate()
+                                                                     .resourcePack()
+                                                                     .particleFiles(), logger);
             loadAddonTextures(addonValue.aggregate().textures());
             return true;
         }
@@ -109,7 +102,8 @@ public final class ManagerResourceImportPlanner {
                 "render_controllers",
                 ".json",
                 jsonFile -> parseJsonFile(jsonFile,
-                        jo -> RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)),
+                                          jo -> RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo)
+                                                                       .getOrThrow(false, logger::warn)),
                 LOGGER
         );
         RenderControllerAssetRegistry.replaceRenderControllers(renderControllers);
@@ -130,7 +124,8 @@ public final class ManagerResourceImportPlanner {
                 "entity",
                 ".json",
                 jsonFile -> parseJsonFile(jsonFile,
-                        jo -> BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)),
+                                          jo -> BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo)
+                                                                    .getOrThrow(false, logger::warn)),
                 LOGGER
         );
         ClientEntityAssetRegistry.replaceClientEntities(parsedEntities.values());
@@ -140,7 +135,8 @@ public final class ManagerResourceImportPlanner {
                 "attachables",
                 ".json",
                 jsonFile -> parseJsonFile(jsonFile,
-                        jo -> BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)),
+                                          jo -> BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, jo)
+                                                                               .getOrThrow(false, logger::warn)),
                 LOGGER
         );
         AttachableAssetRegistry.replaceAttachables(parsedAttachables.values());
@@ -155,7 +151,8 @@ public final class ManagerResourceImportPlanner {
                 "materials",
                 ".material",
                 jsonFile -> parseJsonFile(jsonFile,
-                        jo -> BrMaterial.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)),
+                                          jo -> BrMaterial.CODEC.parse(JsonOps.INSTANCE, jo)
+                                                                .getOrThrow(false, logger::warn)),
                 LOGGER
         );
         MaterialAssetRegistry.replaceMaterials(parsedMaterials);
@@ -190,7 +187,7 @@ public final class ManagerResourceImportPlanner {
                      ENTITY_JSON,
                      ATTACHABLE_JSON,
                      PARTICLE_JSON,
-                      MODEL_JSON -> {
+                     MODEL_JSON -> {
                     JsonObject jo;
                     try (InputStream inputStream = Files.newInputStream(file)) {
                         jo = GSON.fromJson(IOUtils.toString(inputStream, StandardCharsets.UTF_8), JsonObject.class);
@@ -204,20 +201,24 @@ public final class ManagerResourceImportPlanner {
                         }
                         case ANIMATION_CONTROLLER_JSON -> {
                             var animation = BrAnimationControllers.fromSchemaSet(
-                                    BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)
+                                    BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, jo)
+                                                                  .getOrThrow(false, logger::warn)
                             );
                             AnimationAssetRegistry.publishAnimationController(animation);
                         }
                         case RENDER_CONTROLLER_JSON -> {
-                            var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
+                            var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo)
+                                                                    .getOrThrow(false, logger::warn);
                             RenderControllerAssetRegistry.publishRenderController(controller);
                         }
                         case ENTITY_JSON -> {
-                            var entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
+                            var entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo)
+                                                             .getOrThrow(false, logger::warn);
                             ClientEntityAssetRegistry.publishClientEntity(entity);
                         }
                         case ATTACHABLE_JSON -> {
-                            var attachable = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
+                            var attachable = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, jo)
+                                                                            .getOrThrow(false, logger::warn);
                             AttachableAssetRegistry.publishAttachable(attachable);
                         }
                         case PARTICLE_JSON -> {

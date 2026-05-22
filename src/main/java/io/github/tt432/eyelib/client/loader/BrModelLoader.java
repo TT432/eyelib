@@ -1,22 +1,22 @@
 package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibimporter.model.importer.BedrockGeometryImporter;
 import io.github.tt432.eyelib.client.registry.ModelAssetRegistry;
+import io.github.tt432.eyelibimporter.model.importer.BedrockGeometryImporter;
+import io.github.tt432.eyelibmodel.Model;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.jspecify.annotations.NullMarked;
 
-@ResourceLoader
 
 /** @author TT432 */
+@ResourceLoader
 @NullMarked
 public class BrModelLoader extends BrResourcesLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(BrModelLoader.class);

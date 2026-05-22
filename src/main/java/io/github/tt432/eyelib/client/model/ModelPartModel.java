@@ -1,10 +1,7 @@
 package io.github.tt432.eyelib.client.model;
 
 import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
-
 import io.github.tt432.eyelibmodel.Model;
-
-
 import io.github.tt432.eyelibmodel.locator.GroupLocator;
 import io.github.tt432.eyelibutil.collection.EntryStreams;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -14,11 +11,11 @@ import net.minecraft.client.model.geom.PartPose;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * 基于ModelPart的模型实现。
@@ -39,7 +36,10 @@ public record ModelPartModel(
     }
 
     public Model createModel() {
-        return new Model(name, allBones.int2ObjectEntrySet().stream().map(e -> Map.entry(e.getIntKey(), e.getValue().createBone())).collect(EntryStreams.collect(Int2ObjectOpenHashMap::new)));
+        return new Model(name, allBones.int2ObjectEntrySet()
+                                       .stream()
+                                       .map(e -> Map.entry(e.getIntKey(), e.getValue().createBone()))
+                                       .collect(EntryStreams.collect(Int2ObjectOpenHashMap::new)));
     }
 
     public record Data(
@@ -139,7 +139,10 @@ public record ModelPartModel(
                     new Vector3f(),
                     new Vector3f(1),
                     null,
-                    children.int2ObjectEntrySet().stream().map(e -> Map.entry(e.getIntKey(), e.getValue().createBone())).collect(EntryStreams.collect(Int2ObjectOpenHashMap::new)),
+                    children.int2ObjectEntrySet()
+                            .stream()
+                            .map(e -> Map.entry(e.getIntKey(), e.getValue().createBone()))
+                            .collect(EntryStreams.collect(Int2ObjectOpenHashMap::new)),
                     cubes,
                     new GroupLocator(new Int2ObjectOpenHashMap<>(), new ArrayList<>())
             );

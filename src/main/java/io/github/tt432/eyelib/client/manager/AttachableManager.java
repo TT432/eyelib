@@ -7,9 +7,9 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 
 /** @author TT432 */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @NullMarked
 public final class AttachableManager extends Manager<BrClientEntity> {
     public static final AttachableManager INSTANCE = new AttachableManager();

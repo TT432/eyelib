@@ -10,12 +10,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
@@ -119,27 +119,27 @@ public class EyelibManagerScreen extends ModalWorksurfaceScreen {
 
         widgets = List.of(
                 action(x1, y1, w, h, Component.literal("动画"), new ResourceLocation(Eyelib.MOD_ID, "icons/animation"),
-                        () -> ManagerImportActions.importAnimation(LOGGER)),
+                       () -> ManagerImportActions.importAnimation(LOGGER)),
                 action(x1, y2, w, h, Component.literal("动画控制器"), new ResourceLocation(Eyelib.MOD_ID, "icons/animation_controller"),
-                        () -> ManagerImportActions.importAnimationController(LOGGER)),
+                       () -> ManagerImportActions.importAnimationController(LOGGER)),
                 new DragTargetWidget(x2, y1, w, h, new GuiAnimator(5), new ResourceLocation(Eyelib.MOD_ID, "icons/folder"), Component.literal("监控资源文件夹"),
-                        (mx, my, b) -> {
-                            if (hover(x2, y1, w, h, mx, my)) {
-                                folderSession.chooseFolder(LOGGER);
-                                return true;
-                            }
+                                     (mx, my, b) -> {
+                                         if (hover(x2, y1, w, h, mx, my)) {
+                                             folderSession.chooseFolder(LOGGER);
+                                             return true;
+                                         }
 
-                            return false;
-                        }),
+                                         return false;
+                                     }),
                 action(x2, y2, w, h, Component.literal("渲染控制器"), new ResourceLocation(Eyelib.MOD_ID, "icons/render_controller"),
-                        () -> ManagerImportActions.importRenderController(LOGGER)),
+                       () -> ManagerImportActions.importRenderController(LOGGER)),
                 new DragTargetWidget(x2, y3, w, h, new GuiAnimator(5),
-                        new ResourceLocation(Eyelib.MOD_ID, "icons/entity"),
-                        Component.literal("客户端实体"),
-                        (mx, my, b) -> {
-                            Minecraft.getInstance().setScreen(new EntitiesScreen());
-                            return true;
-                        })
+                                     new ResourceLocation(Eyelib.MOD_ID, "icons/entity"),
+                                     Component.literal("客户端实体"),
+                                     (mx, my, b) -> {
+                                         Minecraft.getInstance().setScreen(new EntitiesScreen());
+                                         return true;
+                                     })
         );
         for (DragTargetWidget widget : widgets) {
             addRenderableWidget(widget);
@@ -150,7 +150,8 @@ public class EyelibManagerScreen extends ModalWorksurfaceScreen {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
-        if (folderSession.getMonitoredFolderPathText() != null && !folderSession.getMonitoredFolderPathText().isEmpty()) {
+        if (folderSession.getMonitoredFolderPathText() != null && !folderSession.getMonitoredFolderPathText()
+                                                                                .isEmpty()) {
             var font = Minecraft.getInstance().font;
             String display = "监控路径: " + folderSession.getMonitoredFolderPathText();
             int px = Math.round(width * 0.05F);

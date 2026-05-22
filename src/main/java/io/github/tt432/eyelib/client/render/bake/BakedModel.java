@@ -5,9 +5,9 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.jspecify.annotations.NullMarked;
 
 import static com.mojang.blaze3d.vertex.DefaultVertexFormat.NEW_ENTITY;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * 预烘焙的模型数据。
@@ -49,14 +49,14 @@ public record BakedModel(
                          float[] nxListResult, float[] nyListResult, float[] nzListResult,
                          float[] u, float[] v) {
             this(xList.length, merge(xList, yList, zList), merge(nxList, nyList, nzList),
-                    merge(xListResult, yListResult, zListResult), merge(nxListResult, nyListResult, nzListResult),
-                    u, v, new BufferBuilder(NEW_ENTITY.getVertexSize() * xList.length));
+                 merge(xListResult, yListResult, zListResult), merge(nxListResult, nyListResult, nzListResult),
+                 u, v, new BufferBuilder(NEW_ENTITY.getVertexSize() * xList.length));
             vertices.begin(VertexFormat.Mode.QUADS, NEW_ENTITY);
             for (int i = 0; i < xList.length; i++) {
                 vertices.vertex(xList[i], yList[i], zList[i],
-                        0, 0, 0, 0,
-                        u[i], v[i], 0, 0,
-                        nxList[i], nyList[i], nzList[i]);
+                                0, 0, 0, 0,
+                                u[i], v[i], 0, 0,
+                                nxList[i], nyList[i], nzList[i]);
             }
             vertices.end();
         }

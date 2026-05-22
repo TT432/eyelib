@@ -2,14 +2,16 @@ package io.github.tt432.eyelib.client.gui.manager.reload;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.jspecify.annotations.NullMarked;
 
 import java.nio.file.Path;
 import java.util.Locale;
-import org.jspecify.annotations.NullMarked;
 
+
+/**
+ * @author TT432
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-
-/** @author TT432 */
 @NullMarked
 public final class ManagerResourceReloadPlan {
     public enum ReloadTarget {

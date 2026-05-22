@@ -1,19 +1,20 @@
 package io.github.tt432.eyelib.client.entity;
 
+import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
 import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.MolangValue;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.*;
+import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
+import it.unimi.dsi.fastutil.objects.ReferenceList;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.regex.Pattern;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
@@ -47,7 +48,7 @@ public class RenderControllerRuntime {
                 model.allBones().int2ObjectEntrySet().forEach(entry -> {
                     renderController.part_visibility().forEach((k, v) -> {
                         if (Pattern.compile(k.replace("*", ".*"))
-                                .matcher(GlobalBoneIdHandler.get(entry.getIntKey())).matches()) {
+                                   .matcher(GlobalBoneIdHandler.get(entry.getIntKey())).matches()) {
                             part.computeIfAbsent(entry.getIntKey(), __ -> new ReferenceArrayList<>()).add(v);
                         }
                     });

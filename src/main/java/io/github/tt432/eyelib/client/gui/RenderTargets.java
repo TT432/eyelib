@@ -1,10 +1,10 @@
 package io.github.tt432.eyelib.client.gui;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
+import org.jspecify.annotations.NullMarked;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432

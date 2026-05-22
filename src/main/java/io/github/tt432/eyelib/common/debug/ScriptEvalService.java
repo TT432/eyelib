@@ -5,12 +5,14 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.SimpleCompiler;
+import org.jspecify.annotations.NullMarked;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import org.jspecify.annotations.NullMarked;
 
-/** @author TT432 */
+/**
+ * @author TT432
+ */
 @NullMarked
 public final class ScriptEvalService {
 
@@ -18,7 +20,7 @@ public final class ScriptEvalService {
             import net.minecraft.client.Minecraft;
             import net.minecraft.client.multiplayer.ClientLevel;
             import net.minecraft.client.player.LocalPlayer;
-                        
+            
             public class _EyelibScript {
                 public static Object run(Minecraft minecraft, LocalPlayer player, ClientLevel level) throws Throwable {
             %s
@@ -26,7 +28,12 @@ public final class ScriptEvalService {
             }
             """;
 
-    public record ScriptResult(boolean success, @org.jspecify.annotations.Nullable String result, @org.jspecify.annotations.Nullable String error) {}
+    public record ScriptResult(
+            boolean success,
+            @org.jspecify.annotations.Nullable String result,
+            @org.jspecify.annotations.Nullable String error
+    ) {
+    }
 
     public static ScriptResult evaluate(String code) {
         try {
@@ -43,7 +50,7 @@ public final class ScriptEvalService {
             mc.tell(() -> {
                 try {
                     Object result = clazz.getMethod("run", Minecraft.class, LocalPlayer.class, ClientLevel.class)
-                            .invoke(null, mc, mc.player, mc.level);
+                                         .invoke(null, mc, mc.player, mc.level);
                     future.complete(result);
                 } catch (Throwable t) {
                     Throwable cause = t.getCause() != null ? t.getCause() : t;

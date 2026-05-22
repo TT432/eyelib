@@ -18,26 +18,26 @@ import io.github.tt432.eyelibparticle.runtime.bedrock.ParticleRuntimeEnvironment
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterParticleComponent;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
-import org.jspecify.annotations.NullMarked;
 
 /**
  * Transitional root runtime adapter for {@link ParticleSpawnApi}。
  * 将粒子专属的生成/运行时行为委托给 {@link ParticleSpawnRuntimeAdapter}。
+ *
+ * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-
-/** @author TT432 */
 @NullMarked
 public final class ParticleSpawnService {
     private static final ParticleSpawnRuntimeAdapter ADAPTER = new ParticleSpawnRuntimeAdapter(

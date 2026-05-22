@@ -23,6 +23,7 @@ public final class ItemTrackRenderer {
      *
      * @param stack          要渲染的 ItemStack
      * @param displayContext 渲染视角
+     *
      * @return 准备好的 RenderData，或 null（如果 item 不支持追踪）
      */
     @Nullable
