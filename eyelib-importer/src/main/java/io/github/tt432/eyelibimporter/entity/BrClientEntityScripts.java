@@ -14,15 +14,16 @@ import java.util.Optional;
 
 /**
  * @param initialize    该脚本在实体首次初始化时运行，即在实体生成时以及每次加载时运行。
- *                      这意味着每次您登录到您的世界时，它都会运行此脚本中的任何内容。这对于设置自定义变量的默认值很有用。
- * @param pre_animation 该脚本在动画播放之前运行每一帧。这对于计算动画运行之前需要计算的动画中使用的变量非常有用。
- * @param animate       该脚本在pre_animation之后的每一帧运行。这是运行动画和动画控制器的地方。每一帧中的每个动画或动画控制器都会运行此键。
+ * @param pre_animation 该脚本在动画播放之前运行每一帧。
+ * @param parent_setup  该脚本在附属体附加到父实体时运行。常用于隐藏原生盔甲层。
+ * @param animate       运行动画和动画控制器。
  * @author TT432
  */
 @NullMarked
 public record BrClientEntityScripts(
         MolangValue initialize,
         MolangValue pre_animation,
+        MolangValue parent_setup,
         Map<String, MolangValue> animate,
         MolangValue scale,
         Optional<MolangValue> scaleX,
@@ -32,6 +33,7 @@ public record BrClientEntityScripts(
     public static final Codec<BrClientEntityScripts> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             MolangValue.CODEC.optionalFieldOf("initialize", MolangValue.ZERO).forGetter(BrClientEntityScripts::initialize),
             MolangValue.CODEC.optionalFieldOf("pre_animation", MolangValue.ZERO).forGetter(BrClientEntityScripts::pre_animation),
+            MolangValue.CODEC.optionalFieldOf("parent_setup", MolangValue.ZERO).forGetter(BrClientEntityScripts::parent_setup),
             Codec.either(Codec.STRING, Codec.unboundedMap(Codec.STRING, MolangValue.CODEC))
                     .listOf()
                     .xmap(le -> {

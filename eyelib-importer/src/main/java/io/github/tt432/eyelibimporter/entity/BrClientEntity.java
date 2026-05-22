@@ -8,12 +8,17 @@ import io.github.tt432.eyelibimporter.addon.BedrockVersionValue;
 import io.github.tt432.eyelibimporter.util.ImporterCodecUtil;
 import org.jspecify.annotations.NullMarked;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.mojang.datafixers.util.Either;
+
 /**
  * @param particle_effects 短名称 -> 全名
+ * @param item             物品标识符→条件 Molang 的映射；空 Map 表示无物品绑定
+ * @param enable_attachables 此 attachable 上是否允许子 attachable
  * @author TT432
  */
 @NullMarked
@@ -29,7 +34,9 @@ public record BrClientEntity(
         Map<String, String> sound_effects,
         List<String> render_controllers,
         Optional<BrClientEntityScripts> scripts,
-        Optional<BedrockResourceValue.ObjectValue> spawn_egg
+        Optional<BedrockResourceValue.ObjectValue> spawn_egg,
+        Map<String, String> item,
+        boolean enable_attachables
 ) {
     private static final Codec<BedrockResourceValue.ObjectValue> OBJECT_VALUE_CODEC = ImporterCodecUtil.JSON_ELEMENT_CODEC.comapFlatMap(
             jsonElement -> {
@@ -40,6 +47,24 @@ public record BrClientEntity(
             },
             value -> {
                 throw new UnsupportedOperationException("Client entity object encoding is not supported");
+            }
+    );
+
+    private static final Codec<Map<String, String>> ITEM_FIELD_CODEC = Codec.either(
+            Codec.STRING,
+            Codec.unboundedMap(Codec.STRING, Codec.STRING)
+    ).xmap(
+            either -> {
+                Map<String, String> result = new LinkedHashMap<>();
+                either.ifLeft(s -> result.put(s, "1.0"));
+                either.ifRight(result::putAll);
+                return result;
+            },
+            map -> {
+                if (map.size() == 1 && "1.0".equals(map.values().iterator().next())) {
+                    return Either.left(map.keySet().iterator().next());
+                }
+                return Either.right(map);
             }
     );
 
@@ -58,6 +83,7 @@ public record BrClientEntity(
         render_controllers = List.copyOf(render_controllers);
         scripts = scripts == null ? Optional.empty() : scripts;
         spawn_egg = spawn_egg == null ? Optional.empty() : spawn_egg;
+        item = item == null ? Map.of() : Map.copyOf(item);
     }
 
     public BrClientEntity(
@@ -72,7 +98,7 @@ public record BrClientEntity(
             Optional<BrClientEntityScripts> scripts
     ) {
         this(identifier, Optional.empty(), materials, textures, geometry, animations, List.of(), particle_effects, sound_effects,
-                render_controllers, scripts, Optional.empty());
+                render_controllers, scripts, Optional.empty(), Map.of(), false);
     }
 
     private static Codec<BrClientEntity> wrapDescription(String rootField) {
@@ -90,7 +116,9 @@ public record BrClientEntity(
                                 Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("sound_effects", Map.of()).forGetter(BrClientEntity::sound_effects),
                                 Codec.STRING.listOf().optionalFieldOf("render_controllers", List.of()).forGetter(BrClientEntity::render_controllers),
                                 BrClientEntityScripts.CODEC.optionalFieldOf("scripts").forGetter(BrClientEntity::scripts),
-                                OBJECT_VALUE_CODEC.optionalFieldOf("spawn_egg").forGetter(BrClientEntity::spawn_egg)
+                                OBJECT_VALUE_CODEC.optionalFieldOf("spawn_egg").forGetter(BrClientEntity::spawn_egg),
+                                ITEM_FIELD_CODEC.optionalFieldOf("item", Map.of()).forGetter(BrClientEntity::item),
+                                Codec.BOOL.optionalFieldOf("enable_attachables", false).forGetter(BrClientEntity::enable_attachables)
                         ).apply(ins2, BrClientEntity::new)).fieldOf("description").forGetter(o -> o)
                 ).apply(ins1, o -> o)).fieldOf(rootField).forGetter(o -> o)
         ).apply(ins, o -> o));

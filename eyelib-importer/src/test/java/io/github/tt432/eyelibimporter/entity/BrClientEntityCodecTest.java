@@ -5,6 +5,7 @@ import com.mojang.serialization.JsonOps;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** @author TT432 */
@@ -68,6 +69,105 @@ class BrClientEntityCodecTest {
         assertEquals("textures/attachable.png", entity.textures().get("default"));
         assertEquals(1, entity.scripts().orElseThrow().animate().size());
         assertTrue(entity.scripts().orElseThrow().animate().containsKey("animation.attachable.idle"));
+        assertTrue(entity.item().isEmpty());
+        assertFalse(entity.enable_attachables());
+    }
+
+    @Test
+    void parsesAttachableItemAsSimpleString() {
+        String json = """
+                {
+                  "minecraft:attachable": {
+                    "description": {
+                      "identifier": "eyelib:test_attachable",
+                      "item": "minecraft:stick",
+                      "geometry": { "default": "geometry.attachable" }
+                    }
+                  }
+                }
+                """;
+
+        BrClientEntity entity = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
+                .getOrThrow(false, message -> {
+                    throw new AssertionError(message);
+                });
+
+        assertEquals(1, entity.item().size());
+        assertTrue(entity.item().containsKey("minecraft:stick"));
+        assertEquals("1.0", entity.item().get("minecraft:stick"));
+    }
+
+    @Test
+    void parsesAttachableItemAsConditionalObject() {
+        String json = """
+                {
+                  "minecraft:attachable": {
+                    "description": {
+                      "identifier": "eyelib:test_attachable",
+                      "item": {
+                        "minecraft:stick": "query.is_owner_identifier_any('minecraft:player')"
+                      },
+                      "geometry": { "default": "geometry.attachable" }
+                    }
+                  }
+                }
+                """;
+
+        BrClientEntity entity = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
+                .getOrThrow(false, message -> {
+                    throw new AssertionError(message);
+                });
+
+        assertEquals(1, entity.item().size());
+        assertTrue(entity.item().containsKey("minecraft:stick"));
+        assertEquals("query.is_owner_identifier_any('minecraft:player')", entity.item().get("minecraft:stick"));
+    }
+
+    @Test
+    void parsesAttachableWithEnableAttachablesFlag() {
+        String json = """
+                {
+                  "minecraft:attachable": {
+                    "description": {
+                      "identifier": "eyelib:test_attachable",
+                      "enable_attachables": true,
+                      "geometry": { "default": "geometry.attachable" }
+                    }
+                  }
+                }
+                """;
+
+        BrClientEntity entity = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
+                .getOrThrow(false, message -> {
+                    throw new AssertionError(message);
+                });
+
+        assertTrue(entity.enable_attachables());
+    }
+
+    @Test
+    void parsesAttachableWithParentSetupScript() {
+        String json = """
+                {
+                  "minecraft:attachable": {
+                    "description": {
+                      "identifier": "eyelib:test_attachable",
+                      "geometry": { "default": "geometry.attachable" },
+                      "scripts": {
+                        "parent_setup": "variable.chest_layer_visible = 0.0;"
+                      }
+                    }
+                  }
+                }
+                """;
+
+        BrClientEntity entity = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
+                .getOrThrow(false, message -> {
+                    throw new AssertionError(message);
+                });
+
+        assertTrue(entity.scripts().isPresent());
+        assertEquals("variable.chest_layer_visible = 0.0;", entity.scripts().orElseThrow().parent_setup().toString());
     }
 
     @Test
