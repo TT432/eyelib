@@ -10,7 +10,8 @@
     "HumanoidModelMixin",
     "LivingEntityRendererAccessor",
     "MultiPlayerGameModeMixin",
-    "client.ItemRendererMixin"
+    "client.ItemRendererMixin",
+    "client.ItemInHandRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
