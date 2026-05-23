@@ -42,10 +42,12 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
 
     private static final class Parser {
         private final List<Token> tokens;
+        private final String source;
         private int position;
 
         private Parser(String source) {
             this.tokens = new Tokenizer(source).tokenize();
+            this.source = source;
             this.position = 0;
         }
 
@@ -299,11 +301,12 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
 
         private MolangAst.LoopExpr parseLoopControlForm(Token loopToken) {
             consume(TokenKind.LEFT_PAREN, "Expected '(' after loop.");
-            Token count = consume(TokenKind.NUMBER, "Expected loop iteration count.");
+            MolangAst.Expr count = parseExpression();
+            String countText = source.substring(count.span().startIndex(), count.span().stopIndexInclusive() + 1);
             consume(TokenKind.COMMA, "Expected ',' after loop iteration count.");
             MolangAst.BlockExpr body = parseBlockExpression();
             Token rightParen = consume(TokenKind.RIGHT_PAREN, "Expected ')' after loop body.");
-            return new MolangAst.LoopExpr(SourceSpan.covering(span(loopToken), span(rightParen)), count.lexeme, body);
+            return new MolangAst.LoopExpr(SourceSpan.covering(span(loopToken), span(rightParen)), countText, body);
         }
 
         private MolangAst.ForEachExpr parseForEachControlForm(Token forEachToken) {

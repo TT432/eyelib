@@ -341,10 +341,7 @@ public final class BedrockAddonLoader {
         if (jsonBytes.length == 0) {
             return;
         }
-        String json = new String(jsonBytes, StandardCharsets.UTF_8);
-        com.google.gson.stream.JsonReader reader = new com.google.gson.stream.JsonReader(new java.io.StringReader(json));
-        reader.setLenient(true);
-        com.google.gson.JsonElement element = com.google.gson.JsonParser.parseReader(reader);
+        var element = parseJsonLenient(new String(jsonBytes, StandardCharsets.UTF_8));
 
         String name = lowerName.replace("__brarchive/", "");
         if (name.startsWith("animations.")) {
@@ -398,6 +395,13 @@ public final class BedrockAddonLoader {
         try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             return JsonParser.parseReader(reader);
         }
+    }
+
+    private static com.google.gson.JsonElement parseJsonLenient(String json) {
+        var stringReader = new java.io.StringReader(json);
+        var jsonReader = new com.google.gson.stream.JsonReader(stringReader);
+        jsonReader.setLenient(true);
+        return JsonParser.parseReader(jsonReader);
     }
 
     private static void collectPackRoots(Path source, List<Path> packRoots, List<Path> temporaryDirectories) throws IOException {
