@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 /** Bedrock 附加包的清单文件数据结构。
  * @author TT432 */
@@ -20,6 +21,7 @@ public record BedrockPackManifest(
         List<Dependency> dependencies,
         Metadata metadata,
         List<String> capabilities,
+        List<Subpack> subpacks,
         List<BedrockResourceValue.ObjectValue> settings,
         Map<String, BedrockResourceValue> extraFields
 ) {
@@ -48,6 +50,12 @@ public record BedrockPackManifest(
         List<String> capabilities = root.has("capabilities")
                 ? Codec.STRING.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, root.get("capabilities")).getOrThrow(false, IllegalArgumentException::new)
                 : List.of();
+        List<Subpack> subpacks = new java.util.ArrayList<>();
+        if (root.has("subpacks")) {
+            for (com.google.gson.JsonElement element : root.getAsJsonArray("subpacks")) {
+                subpacks.add(Subpack.parse(element.getAsJsonObject()));
+            }
+        }
         List<BedrockResourceValue.ObjectValue> settings = new java.util.ArrayList<>();
         if (root.has("settings")) {
             for (com.google.gson.JsonElement element : root.getAsJsonArray("settings")) {
@@ -56,12 +64,12 @@ public record BedrockPackManifest(
         }
         LinkedHashMap<String, BedrockResourceValue> extraFields = new LinkedHashMap<>();
         for (Map.Entry<String, com.google.gson.JsonElement> entry : root.entrySet()) {
-            if (List.of("format_version", "header", "modules", "dependencies", "metadata", "capabilities", "settings").contains(entry.getKey())) {
+            if (List.of("format_version", "header", "modules", "dependencies", "metadata", "capabilities", "subpacks", "settings").contains(entry.getKey())) {
                 continue;
             }
             extraFields.put(entry.getKey(), BedrockResourceValue.fromJsonElement(entry.getValue()));
         }
-        return new BedrockPackManifest(formatVersion, header, modules, List.copyOf(dependencies), metadata, capabilities, List.copyOf(settings), Map.copyOf(extraFields));
+        return new BedrockPackManifest(formatVersion, header, modules, List.copyOf(dependencies), metadata, capabilities, List.copyOf(subpacks), List.copyOf(settings), Map.copyOf(extraFields));
     }
 
     public record Metadata(
@@ -110,15 +118,18 @@ public record BedrockPackManifest(
             String description,
             String uuid,
             BedrockVersionValue version,
-            BedrockVersionValue minEngineVersion
+            BedrockVersionValue minEngineVersion,
+            @Nullable String packOptimizationVersion
     ) {
         public static final Codec<Header> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.STRING.optionalFieldOf("name", "").forGetter(Header::name),
                 Codec.STRING.optionalFieldOf("description", "").forGetter(Header::description),
                 Codec.STRING.fieldOf("uuid").forGetter(Header::uuid),
                 BedrockVersionValue.CODEC.optionalFieldOf("version", BedrockVersionValue.numeric(List.of())).forGetter(Header::version),
-                BedrockVersionValue.CODEC.optionalFieldOf("min_engine_version", BedrockVersionValue.numeric(List.of())).forGetter(Header::minEngineVersion)
-        ).apply(instance, Header::new));
+                BedrockVersionValue.CODEC.optionalFieldOf("min_engine_version", BedrockVersionValue.numeric(List.of())).forGetter(Header::minEngineVersion),
+                Codec.STRING.optionalFieldOf("pack_optimization_version").forGetter(header -> Optional.ofNullable(header.packOptimizationVersion()))
+        ).apply(instance, (name, description, uuid, version, minEngineVersion, packOptimizationVersion) ->
+                new Header(name, description, uuid, version, minEngineVersion, packOptimizationVersion.orElse(null))));
     }
 
     public record Module(
@@ -157,6 +168,22 @@ public record BedrockPackManifest(
 
         public boolean hasReference() {
             return uuid != null || moduleName != null;
+        }
+    }
+
+    /** 子包信息，来自 manifest.json 的 subpacks 字段。
+     * @author TT432 */
+    public record Subpack(
+            String folderName,
+            String name,
+            int memoryPerformanceTier
+    ) {
+        public static Subpack parse(com.google.gson.JsonObject root) {
+            return new Subpack(
+                    root.get("folder_name").getAsString(),
+                    root.get("name").getAsString(),
+                    root.has("memory_performance_tier") ? root.get("memory_performance_tier").getAsInt() : 0
+            );
         }
     }
 }
