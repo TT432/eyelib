@@ -341,33 +341,89 @@ public final class BedrockAddonLoader {
         if (jsonBytes.length == 0) {
             return;
         }
-        var element = parseJsonLenient(new String(jsonBytes, StandardCharsets.UTF_8));
-
+        String fullJson = new String(jsonBytes, StandardCharsets.UTF_8);
         String name = lowerName.replace("__brarchive/", "");
+
         if (name.startsWith("animations.")) {
-            BrAnimationSet set = BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
-            animationFiles.put(effectivePath, set);
+            for (String chunk : splitConcatenatedJson(fullJson)) {
+                var element = parseJsonLenient(chunk);
+                BrAnimationSet set = BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
+                animationFiles.put(effectivePath, set);
+            }
         } else if (name.startsWith("animation_controllers.")) {
-            BrAnimationControllerSet set = BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
-            animationControllerFiles.put(effectivePath, set);
+            for (String chunk : splitConcatenatedJson(fullJson)) {
+                var element = parseJsonLenient(chunk);
+                BrAnimationControllerSet set = BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
+                animationControllerFiles.put(effectivePath, set);
+            }
         } else if (name.startsWith("entity.") || name.startsWith("entities.")) {
-            BrClientEntity entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
-            clientEntityFiles.put(effectivePath, entity);
+            for (String chunk : splitConcatenatedJson(fullJson)) {
+                try {
+                    var element = parseJsonLenient(chunk);
+                    BrClientEntity entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
+                    clientEntityFiles.put(entity.identifier(), entity);
+                } catch (RuntimeException ignored) {
+                }
+            }
         } else if (name.startsWith("attachables.")) {
-            BrClientEntity attachable = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
-            attachableFiles.put(effectivePath, attachable);
+            for (String chunk : splitConcatenatedJson(fullJson)) {
+                var element = parseJsonLenient(chunk);
+                BrClientEntity attachable = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
+                attachableFiles.put(attachable.identifier(), attachable);
+            }
         } else if (name.startsWith("particles.")) {
-            BrParticle particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
-            particleFiles.put(effectivePath, particle);
+            for (String chunk : splitConcatenatedJson(fullJson)) {
+                var element = parseJsonLenient(chunk);
+                BrParticle particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
+                particleFiles.put(effectivePath, particle);
+            }
         } else if (name.startsWith("render_controllers.")) {
-            BrRenderControllers controllers = BrRenderControllers.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
-            renderControllerFiles.put(effectivePath, controllers);
+            for (String chunk : splitConcatenatedJson(fullJson)) {
+                var element = parseJsonLenient(chunk);
+                BrRenderControllers controllers = BrRenderControllers.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
+                renderControllerFiles.put(effectivePath, controllers);
+            }
         } else {
+            var element = parseJsonLenient(fullJson);
             unmanagedResources.put(relativePath, new BedrockUnmanagedResource(
                     BedrockResourceFamily.BRARCHIVE, relativePath,
                     new BedrockResourceContent.StructuredContent(BedrockResourceValue.fromJsonElement(element)),
                     BedrockUnmanagedReason.NO_TYPED_SCHEMA_YET));
         }
+    }
+
+    private static List<String> splitConcatenatedJson(String json) {
+        var chunks = new ArrayList<String>();
+        int depth = 0;
+        int start = -1;
+        boolean inString = false;
+        int len = json.length();
+        for (int i = 0; i < len; i++) {
+            char c = json.charAt(i);
+            if (inString) {
+                if (c == '\\') {
+                    i++;
+                } else if (c == '"') {
+                    inString = false;
+                }
+            } else {
+                if (c == '"') {
+                    inString = true;
+                } else if (c == '{') {
+                    if (depth == 0) {
+                        start = i;
+                    }
+                    depth++;
+                } else if (c == '}') {
+                    depth--;
+                    if (depth == 0 && start >= 0) {
+                        chunks.add(json.substring(start, i + 1));
+                        start = -1;
+                    }
+                }
+            }
+        }
+        return chunks;
     }
 
     private static BedrockResourceContent readContent(Path file, BedrockResourceFamily family) throws IOException {
