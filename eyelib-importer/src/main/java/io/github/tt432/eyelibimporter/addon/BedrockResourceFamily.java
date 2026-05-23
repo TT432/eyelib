@@ -34,6 +34,8 @@ public enum BedrockResourceFamily {
     UI,
     FOG,
     BIOME,
+    SPLASHES,
+    BRARCHIVE,
     TEXTURE_INDEX,
     TEXTURE_METADATA,
     UNKNOWN_JSON,
@@ -44,7 +46,7 @@ public enum BedrockResourceFamily {
         String path = relativePath.toLowerCase(Locale.ROOT);
         if (path.equals("manifest.json")) return MANIFEST;
         if (path.equals("pack_icon.png")) return PACK_ICON;
-        if (path.startsWith("textures/") && path.endsWith(".png")) return TEXTURE;
+        if (path.startsWith("textures/") && (path.endsWith(".png") || path.endsWith(".tga"))) return TEXTURE;
         if (path.startsWith("materials/") && path.endsWith(".material")) return MATERIAL;
         if (path.startsWith("animations/")) return ANIMATION;
         if (path.startsWith("animation_controllers/")) return ANIMATION_CONTROLLER;
@@ -69,16 +71,19 @@ public enum BedrockResourceFamily {
         if (path.startsWith("scripts/")) return SCRIPT;
         if (path.startsWith("ui/")) return UI;
         if (path.startsWith("fogs/")) return FOG;
+        if (path.equals("splashes.json")) return SPLASHES;
         if (path.equals("blocks.json")
             || path.equals("biomes_client.json")
             || path.equals("textures/item_texture.json")
             || path.equals("textures/terrain_texture.json")
             || path.equals("textures/flipbook_textures.json")
-            || path.equals("textures/texture_list.json")) {
+            || path.equals("textures/texture_list.json")
+            || path.equals("textures/textures_list.json")) {
             return TEXTURE_INDEX;
         }
         if (path.startsWith("biomes/")) return BIOME;
         if (path.startsWith("textures/") && path.endsWith(".json")) return TEXTURE_METADATA;
+        if (path.endsWith(".brarchive")) return BRARCHIVE;
         if (path.endsWith(".json") || path.endsWith(".material") || path.endsWith(".bbmodel")) return UNKNOWN_JSON;
         if (path.endsWith(".lang") || path.endsWith(".txt") || path.endsWith(".md")) return UNKNOWN_TEXT;
         return UNKNOWN_BINARY;
