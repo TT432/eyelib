@@ -1,0 +1,26 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.eyelib.test_stick",
+        "texture_width": 16,
+        "texture_height": 16
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [0, 0, 0],
+          "binding": "q.item_slot_to_bone_name(context.item_slot)",
+          "cubes": [
+            {
+              "origin": [-2, -12, -2],
+              "size": [4, 12, 4],
+              "uv": [0, 0]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

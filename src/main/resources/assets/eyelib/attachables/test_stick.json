@@ -1,0 +1,19 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "eyelib:test_stick",
+      "item": "minecraft:stick",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "minecraft:textures/item/stick"
+      },
+      "geometry": {
+        "default": "geometry.eyelib.test_stick"
+      },
+      "render_controllers": ["controller.render.eyelib.test_stick"]
+    }
+  }
+}

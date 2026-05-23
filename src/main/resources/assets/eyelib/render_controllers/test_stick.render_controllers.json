@@ -1,0 +1,10 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.eyelib.test_stick": {
+      "geometry": "geometry.default",
+      "materials": [{"*": "material.default"}],
+      "textures": ["texture.default"]
+    }
+  }
+}
