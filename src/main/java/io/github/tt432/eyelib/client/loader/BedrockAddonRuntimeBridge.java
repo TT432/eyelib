@@ -105,7 +105,7 @@ public final class BedrockAddonRuntimeBridge {
         try {
             LinkedHashMap<String, io.github.tt432.eyelibmaterial.shared.BrMaterialEntry> sharedEntries = new LinkedHashMap<>();
             input.materials().forEach((key, value) -> sharedEntries.put(key, toSharedEntry(value)));
-            var sharedMaterial = new io.github.tt432.eyelibmaterial.shared.BrMaterial(sharedEntries);
+            var sharedMaterial = new io.github.tt432.eyelibmaterial.shared.BrMaterial(null, sharedEntries);
             return Optional.of(io.github.tt432.eyelibmaterial.material.BrMaterial.fromShared(sharedMaterial));
         } catch (Exception exception) {
             LOGGER.error("can't bridge material {}", sourceKey, exception);

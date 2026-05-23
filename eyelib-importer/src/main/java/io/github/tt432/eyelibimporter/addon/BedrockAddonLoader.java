@@ -161,6 +161,7 @@ public final class BedrockAddonLoader {
         LinkedHashMap<String, BrMaterial> materialFiles = new LinkedHashMap<>();
         LinkedHashMap<String, BedrockUnmanagedResource> unmanagedResources = new LinkedHashMap<>();
         ImportedImageData packIcon = null;
+        BedrockResourceValue splashIndex = null;
 
         List<Path> files = new ArrayList<>();
         try (var stream = Files.walk(packRoot)) {
@@ -170,59 +171,83 @@ public final class BedrockAddonLoader {
 
         for (Path file : files) {
             String relativePath = normalize(packRoot.relativize(file).toString());
-            String lowerCasePath = relativePath.toLowerCase(Locale.ROOT);
-            BedrockResourceFamily family = BedrockResourceFamily.classify(relativePath);
+            String effectivePath = stripSubpackPrefix(relativePath);
+            String lowerCasePath = effectivePath.toLowerCase(Locale.ROOT);
+            BedrockResourceFamily family = BedrockResourceFamily.classify(effectivePath);
             if (lowerCasePath.equals("manifest.json")) {
                 continue;
             }
             if (lowerCasePath.equals("pack_icon.png")) {
-                packIcon = ImportedImageData.decodePng(Files.readAllBytes(file));
+                try {
+                    packIcon = ImportedImageData.decodePng(Files.readAllBytes(file));
+                } catch (IOException | RuntimeException e) {
+                    captureUnmanaged(packRoot, file, relativePath, family, warnings, unmanagedResources, BedrockUnmanagedReason.NO_TYPED_SCHEMA_YET, false, e.getMessage());
+                }
                 continue;
             }
             if (lowerCasePath.startsWith("textures/") && lowerCasePath.endsWith(".png")) {
-                textures.put(relativePath, Objects.requireNonNull(ImportedImageData.decodePng(Files.readAllBytes(file))));
+                try {
+                    textures.put(effectivePath, Objects.requireNonNull(ImportedImageData.decodePng(Files.readAllBytes(file))));
+                } catch (IOException | RuntimeException e) {
+                    captureUnmanaged(packRoot, file, relativePath, family, warnings, unmanagedResources, BedrockUnmanagedReason.NO_TYPED_SCHEMA_YET, false, e.getMessage());
+                }
+                continue;
+            }
+            if (lowerCasePath.startsWith("textures/") && lowerCasePath.endsWith(".tga")) {
+                try {
+                    textures.put(effectivePath, Objects.requireNonNull(ImportedImageData.decodeTga(Files.readAllBytes(file))));
+                } catch (IOException | RuntimeException e) {
+                    captureUnmanaged(packRoot, file, relativePath, family, warnings, unmanagedResources, BedrockUnmanagedReason.NO_TYPED_SCHEMA_YET, false, e.getMessage());
+                }
                 continue;
             }
             try {
                 switch (family) {
                     case MATERIAL -> {
                         BrMaterial material = BrMaterial.CODEC.parse(JsonOps.INSTANCE, parseJson(file)).getOrThrow(false, IllegalArgumentException::new);
-                        materialFiles.put(relativePath, material);
+                        materialFiles.put(effectivePath, material);
                     }
                     case ANIMATION -> {
                         BrAnimationSet animationSet = BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, parseJson(file)).getOrThrow(false, IllegalArgumentException::new);
-                        animationFiles.put(relativePath, animationSet);
+                        animationFiles.put(effectivePath, animationSet);
                     }
                     case ANIMATION_CONTROLLER -> {
                         BrAnimationControllerSet controllerSet = BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, parseJson(file)).getOrThrow(false, IllegalArgumentException::new);
-                        animationControllerFiles.put(relativePath, controllerSet);
+                        animationControllerFiles.put(effectivePath, controllerSet);
                     }
                     case CLIENT_ENTITY -> {
                         BrClientEntity entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, parseJson(file)).getOrThrow(false, IllegalArgumentException::new);
-                        clientEntityFiles.put(relativePath, entity);
+                        clientEntityFiles.put(effectivePath, entity);
                     }
                     case ATTACHABLE -> {
                         BrClientEntity attachable = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, parseJson(file)).getOrThrow(false, IllegalArgumentException::new);
-                        attachableFiles.put(relativePath, attachable);
+                        attachableFiles.put(effectivePath, attachable);
                     }
-                    case MODEL -> modelFiles.put(relativePath, new BedrockImportedModels(new LinkedHashMap<>(ModelImporter.importFile(file))));
-                    case SOUND_INDEX -> soundIndexFiles.put(relativePath, BrSoundIndex.parse(parseJson(file)));
-                    case SOUND_DEFINITION -> soundDefinitionFiles.put(relativePath, BrSoundDefinitions.parse(parseJson(file)));
-                    case LOCALIZATION -> languageFiles.put(relativePath, BrLanguageFile.parse(Files.readString(file, StandardCharsets.UTF_8)));
-                    case BEHAVIOR_ENTITY -> behaviorEntityFiles.put(relativePath, BrBehaviorEntityFile.parse(parseJson(file)));
-                    case SOUND_FILE -> soundFiles.put(relativePath, new BedrockBinaryAsset(extensionOf(relativePath), Files.readAllBytes(file)));
-                    case TEXTURE_INDEX -> textureIndexFiles.put(relativePath,
+                    case MODEL -> modelFiles.put(effectivePath, new BedrockImportedModels(new LinkedHashMap<>(ModelImporter.importFile(file))));
+                    case SOUND_INDEX -> soundIndexFiles.put(effectivePath, BrSoundIndex.parse(parseJson(file)));
+                    case SOUND_DEFINITION -> soundDefinitionFiles.put(effectivePath, BrSoundDefinitions.parse(parseJson(file)));
+                    case LOCALIZATION -> {
+                        if (lowerCasePath.endsWith("languages.json")) {
+                            continue;
+                        }
+                        languageFiles.put(effectivePath, BrLanguageFile.parse(Files.readString(file, StandardCharsets.UTF_8)));
+                    }
+                    case BEHAVIOR_ENTITY -> behaviorEntityFiles.put(effectivePath, BrBehaviorEntityFile.parse(parseJson(file)));
+                    case SOUND_FILE -> soundFiles.put(effectivePath, new BedrockBinaryAsset(extensionOf(effectivePath), Files.readAllBytes(file)));
+                    case TEXTURE_INDEX -> textureIndexFiles.put(effectivePath,
                             new BrTextureIndexFile(BedrockResourceValue.fromJsonElement(parseJsonElement(file))));
-                    case TEXTURE_METADATA -> textureMetadataFiles.put(relativePath,
+                    case TEXTURE_METADATA -> textureMetadataFiles.put(effectivePath,
                             new BrTextureMetadataFile((BedrockResourceValue.ObjectValue) BedrockResourceValue.fromJsonElement(parseJson(file))));
                     case RENDER_CONTROLLER -> {
                         BrRenderControllers controllers = BrRenderControllers.CODEC.parse(JsonOps.INSTANCE, parseJson(file)).getOrThrow(false, IllegalArgumentException::new);
-                        renderControllerFiles.put(relativePath, controllers);
+                        renderControllerFiles.put(effectivePath, controllers);
                     }
                     case PARTICLE -> {
                         BrParticle particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, parseJson(file)).getOrThrow(false, IllegalArgumentException::new);
-                        particleFiles.put(relativePath, particle);
+                        particleFiles.put(effectivePath, particle);
                     }
+                    case SPLASHES -> splashIndex = BedrockResourceValue.fromJsonElement(parseJson(file));
+                    case BRARCHIVE -> loadBrarchive(file, effectivePath, lowerCasePath, animationFiles, animationControllerFiles, clientEntityFiles, attachableFiles, particleFiles, renderControllerFiles, warnings, packRoot, relativePath, unmanagedResources);
                     default -> captureUnmanaged(packRoot, file, relativePath, family, warnings, unmanagedResources, unmanagedReasonFor(family), false, null);
                 }
             } catch (RuntimeException exception) {
@@ -251,7 +276,8 @@ public final class BedrockAddonLoader {
                 materialFiles,
                 unmanagedResources,
                 warnings,
-                packIcon
+                packIcon,
+                splashIndex
         );
     }
 
@@ -281,11 +307,11 @@ public final class BedrockAddonLoader {
     }
 
     private static void captureUnmanaged(Path packRoot, Path file, String relativePath, BedrockResourceFamily family,
-                                         List<BedrockAddonWarning> warnings,
-                                         LinkedHashMap<String, BedrockUnmanagedResource> unmanagedResources,
-                                         BedrockUnmanagedReason reason,
-                                         boolean parseFailure,
-                                         String parseMessage) throws IOException {
+                                          List<BedrockAddonWarning> warnings,
+                                          LinkedHashMap<String, BedrockUnmanagedResource> unmanagedResources,
+                                          BedrockUnmanagedReason reason,
+                                          boolean parseFailure,
+                                          String parseMessage) throws IOException {
         BedrockResourceContent content = readContent(file, family);
         unmanagedResources.put(relativePath, new BedrockUnmanagedResource(family, relativePath, content, reason));
         warnings.add(new BedrockAddonWarning(
@@ -299,11 +325,59 @@ public final class BedrockAddonLoader {
         ));
     }
 
+    @SuppressWarnings("unchecked")
+    private static void loadBrarchive(Path file, String effectivePath, String lowerName,
+                                      LinkedHashMap<String, BrAnimationSet> animationFiles,
+                                      LinkedHashMap<String, BrAnimationControllerSet> animationControllerFiles,
+                                      LinkedHashMap<String, BrClientEntity> clientEntityFiles,
+                                      LinkedHashMap<String, BrClientEntity> attachableFiles,
+                                      LinkedHashMap<String, BrParticle> particleFiles,
+                                      LinkedHashMap<String, BrRenderControllers> renderControllerFiles,
+                                      List<BedrockAddonWarning> warnings,
+                                      Path packRoot,
+                                      String relativePath,
+                                      LinkedHashMap<String, BedrockUnmanagedResource> unmanagedResources) throws IOException {
+        byte[] jsonBytes = BrArchiveDecoder.extractJson(file);
+        if (jsonBytes.length == 0) {
+            return;
+        }
+        String json = new String(jsonBytes, StandardCharsets.UTF_8);
+        com.google.gson.stream.JsonReader reader = new com.google.gson.stream.JsonReader(new java.io.StringReader(json));
+        reader.setLenient(true);
+        com.google.gson.JsonElement element = com.google.gson.JsonParser.parseReader(reader);
+
+        String name = lowerName.replace("__brarchive/", "");
+        if (name.startsWith("animations.")) {
+            BrAnimationSet set = BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
+            animationFiles.put(effectivePath, set);
+        } else if (name.startsWith("animation_controllers.")) {
+            BrAnimationControllerSet set = BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
+            animationControllerFiles.put(effectivePath, set);
+        } else if (name.startsWith("entity.") || name.startsWith("entities.")) {
+            BrClientEntity entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
+            clientEntityFiles.put(effectivePath, entity);
+        } else if (name.startsWith("attachables.")) {
+            BrClientEntity attachable = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
+            attachableFiles.put(effectivePath, attachable);
+        } else if (name.startsWith("particles.")) {
+            BrParticle particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
+            particleFiles.put(effectivePath, particle);
+        } else if (name.startsWith("render_controllers.")) {
+            BrRenderControllers controllers = BrRenderControllers.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
+            renderControllerFiles.put(effectivePath, controllers);
+        } else {
+            unmanagedResources.put(relativePath, new BedrockUnmanagedResource(
+                    BedrockResourceFamily.BRARCHIVE, relativePath,
+                    new BedrockResourceContent.StructuredContent(BedrockResourceValue.fromJsonElement(element)),
+                    BedrockUnmanagedReason.NO_TYPED_SCHEMA_YET));
+        }
+    }
+
     private static BedrockResourceContent readContent(Path file, BedrockResourceFamily family) throws IOException {
         return switch (family) {
             case SOUND_INDEX, SOUND_DEFINITION, BEHAVIOR_ENTITY, ITEM, BLOCK, RECIPE, LOOT_TABLE, SPAWN_RULE, TRADING,
                     FEATURE, FEATURE_RULE, STRUCTURE, SCRIPT, UI, FOG, BIOME, TEXTURE_INDEX, TEXTURE_METADATA, UNKNOWN_JSON ->
-                    new BedrockResourceContent.StructuredContent(BedrockResourceValue.fromJsonElement(parseJson(file)));
+                    new BedrockResourceContent.StructuredContent(BedrockResourceValue.fromJsonElement(parseJsonElement(file)));
             case LOCALIZATION, UNKNOWN_TEXT -> new BedrockResourceContent.TextContent(Files.readString(file, StandardCharsets.UTF_8));
             default -> new BedrockResourceContent.BinaryContent(Files.readAllBytes(file));
         };
@@ -415,5 +489,16 @@ public final class BedrockAddonLoader {
 
     private static String normalize(String path) {
         return path.replace('\\', '/');
+    }
+
+    private static String stripSubpackPrefix(String relativePath) {
+        String lower = relativePath.toLowerCase(Locale.ROOT);
+        if (lower.startsWith("subpacks/")) {
+            int slashAfterFolder = relativePath.indexOf('/', "subpacks/".length());
+            if (slashAfterFolder > 0) {
+                return relativePath.substring(slashAfterFolder + 1);
+            }
+        }
+        return relativePath;
     }
 }

@@ -39,6 +39,6 @@ public record BrMaterial(
                         Map.Entry::getKey,
                         e -> e.getValue().toShared()
                 ));
-        return new io.github.tt432.eyelibmaterial.shared.BrMaterial(sharedMaterials);
+        return new io.github.tt432.eyelibmaterial.shared.BrMaterial(null, sharedMaterials);
     }
 }

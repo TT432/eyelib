@@ -35,7 +35,8 @@ public record BedrockAddonPack(
         LinkedHashMap<String, BrMaterial> materialFiles,
         LinkedHashMap<String, BedrockUnmanagedResource> unmanagedResources,
         java.util.List<BedrockAddonWarning> warnings,
-        @Nullable ImportedImageData packIcon
+        @Nullable ImportedImageData packIcon,
+        @Nullable BedrockResourceValue splashIndex
 ) {
     public BedrockAddonPack {
         animationFiles = new LinkedHashMap<>(animationFiles);
