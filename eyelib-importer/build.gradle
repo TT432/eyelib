@@ -93,4 +93,5 @@ publishing {
 
 tasks.named('test').configure {
     useJUnitPlatform()
+    maxHeapSize = '2g'
 }

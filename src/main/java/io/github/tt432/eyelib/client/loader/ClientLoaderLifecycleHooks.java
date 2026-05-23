@@ -53,5 +53,7 @@ public final class ClientLoaderLifecycleHooks {
                 }
             }
         }
+
+        event.registerReloadListener(new BedrockAddonAutoLoader());
     }
 }
