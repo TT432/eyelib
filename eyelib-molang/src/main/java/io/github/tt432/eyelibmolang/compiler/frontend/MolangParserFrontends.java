@@ -7,7 +7,7 @@ import org.jspecify.annotations.NullMarked;
  */
 @NullMarked
 public final class MolangParserFrontends {
-    private static final MolangParserFrontend ACTIVE = GeneratedParserBackedMolangParserFrontend.INSTANCE;
+    private static final MolangParserFrontend ACTIVE = HandwrittenMolangAstParserFrontend.INSTANCE;
 
     private MolangParserFrontends() {
     }
