@@ -105,6 +105,21 @@ package ...;
 - IntelliJ IDEA is the sole IDE. VS Code and Eclipse artifacts must never be committed.
 - **JDTLS is explicitly prohibited.** All tooling integration uses JetBrains MCP.
 - All Gradle commands must use JetBrains MCP (`jetbrain_build_project`, `jetbrain_run_gradle_tasks`). Never run `./gradlew` in shell.
+- **Game restarts**: close running clients via debug HTTP `/eval` → `minecraft.stop()`, never `kill` java processes from shell.
+- **Game startup**: use `jetbrain_run_gradle_tasks` with `["runClient"]`. Before starting, check port 25999 is free; if occupied, close the old instance first.
+
+## Build & Test Verification
+- **`FROM-CACHE` / `UP-TO-DATE` without test execution does NOT count as passing.** If a Gradle `test` task shows 0 tests or all tasks are up-to-date without running, tests did not execute. Clear the affected module's `build/` directory and the Gradle `.gradle/configuration-cache`, then re-run.
+- **Never pass `--no-build-cache` to Gradle.** It forces a full rebuild of MC Forge artifacts. Use targeted cache clearing instead.
+- `jetbrain_build_project` compiles via IntelliJ. For runtime verification that depends on reobfuscated JARs, use `jetbrain_run_gradle_tasks` with `runClient`.
+
+## Skill Maintenance
+- Skills in `.opencode/skills/` are living operational knowledge. When a recurring pitfall or workflow is discovered during a session, update the relevant skill in the same session.
+- `progressive-exploration`: covers debug HTTP server, session management, debugger workflow.
+- `testing`: covers test type selection, cache awareness, anti-patterns.
+- `unit-test`: covers JUnit patterns and execution commands.
+- `smoke-test`: covers visual integration testing.
+- Skills must be kept in sync with AGENTS.md: if a rule changes here, check whether skill docs need the same change.
 
 ## Molang Roadmap
 - Read :eyelib-molang/ROADMAP.md: before planning or implementing Molang refactor work.

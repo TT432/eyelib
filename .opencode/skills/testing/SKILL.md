@@ -56,3 +56,5 @@ A single bug typically requires all three: explore to find the problem → unit 
 - Writing a smoke test for something a unit test can catch
 - Guessing runtime state instead of probing it with the debug endpoint
 - Leaving a runtime discovery undocumented (no follow-up unit test)
+- **Trusting Gradle `FROM-CACHE` or `UP-TO-DATE`** — if a test task shows no tests executed (0 tests, 0 failed, 0 skipped) or all tasks are `FROM-CACHE`, the tests did NOT run. Clear the project build directory and re-run.
+- **Using `--no-build-cache`** — never pass this to Gradle. It forces a full rebuild of MC Forge artifacts taking 30+ minutes. Clear only the affected module's `build/` directory and the configuration cache (`.gradle/configuration-cache`).

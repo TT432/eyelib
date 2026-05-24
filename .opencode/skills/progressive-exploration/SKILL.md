@@ -13,12 +13,26 @@ description: Interactive runtime state exploration via the AI debug HTTP server 
 
 ## Prerequisites
 
-The debug HTTP server starts automatically in development environment (gated by Forge's `FMLLoader.isProduction()` check). It listens on a configurable port.
+The debug HTTP server starts automatically in development environment (gated by Forge's `FMLLoader.isProduction()` check). It listens on port `25999`.
 
-Verify it's alive:
+### Startup guard
+
+Before starting the client, always check port 25999:
+
 ```
-GET /ping → {"status": "ok"}
+GET /ping → {"status": "ok"}  → old instance still running → minecraft.stop() first
+GET /ping → connection refused → port free, safe to start
 ```
+
+If an old instance is running, close it via `/eval`:
+```java
+minecraft.stop();
+```
+Wait for port to be freed before launching the new client. **Never kill java processes from shell.**
+
+### Session verification
+
+After game startup, confirm the debug server belongs to the current launch by checking the in-game log timestamp matches the process start time. If `/eval` gives unexpected results (wrong world, wrong screen, different position), suspect a stale session.
 
 ## Core Workflow
 
@@ -105,6 +119,30 @@ for (Object child : minecraft.screen.children()) {
     }
 }
 ```
+
+### Shutdown
+
+```java
+// Close the game properly — never kill java processes from shell
+minecraft.stop();
+```
+
+## Debugger Workflow
+
+When investigating rendering or logic issues, use the JetBrains debugger in combination with progressive exploration:
+
+1. **Set a breakpoint** via `jetbrain_xdebug_set_breakpoint` at the suspect line
+2. **Start debug session** via `jetbrain_xdebug_start_debugger_session`
+3. **Wait for pause** via `jetbrain_xdebug_control_session(action=WAIT_FOR_PAUSE)`
+4. **Inspect values** via `jetbrain_xdebug_get_frame_values` to see locals/parameters
+5. **Step into** via `jetbrain_xdebug_control_session(action=STEP_INTO)` to trace execution
+6. **Resume** via `jetbrain_xdebug_control_session(action=RESUME)` after inspection
+
+Never skip the debugger in favor of "guess → change code → rebuild → restart". A breakpoint hit proves the code path is reached and shows real data.
+
+### Janino class name gotcha
+
+The Janino compiler auto-imports only `Minecraft`, `LocalPlayer`, `ClientLevel`. All other classes need fully qualified names. **Before writing an eval, verify the class path** — don't guess package names. Use `jetbrain_search_file` to find the correct path.
 
 ## Limitations
 

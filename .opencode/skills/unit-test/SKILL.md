@@ -7,13 +7,10 @@ description: Write and run JUnit 5 unit tests. Use for structural invariants, bo
 
 JUnit Jupiter 5.10.2. No custom runners, no Mockito, no base classes.
 
-Tests are run via Gradle `test` tasks:
-```bash
-./gradlew test              # all modules
-./gradlew :subproject:test  # single module
+Tests are run via Gradle `test` tasks using JetBrains MCP — never `./gradlew` in shell:
 ```
-
-The project uses JetBrains MCP for Gradle execution — never `./gradlew` in shell.
+jetbrain_run_gradle_tasks with taskNames [":subproject:test"]
+```
 
 ## Test File Conventions
 
