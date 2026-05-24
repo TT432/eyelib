@@ -30,6 +30,7 @@ import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
@@ -59,6 +60,8 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -76,6 +79,7 @@ import static net.minecraft.client.Minecraft.getInstance;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @NullMarked
 public class EntityRenderSystem {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EntityRenderSystem.class);
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
         Entity entity = event.getEntity();
@@ -256,12 +260,20 @@ public class EntityRenderSystem {
     private static void renderWithVanillaModel(SimpleRenderAction<?> data, ModelComponent modelComponent) {
         Entity entity = data.entity();
         if (entity == null) return;
-        var renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entity);
+        EntityRenderer<?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entity);
         if (!(renderer instanceof LivingEntityRenderer<?, ?> ler)) return;
-        var vanillaModel = ler.getModel();
+        EntityModel<?> vanillaModel = ler.getModel();
         try {
-            var root = vanillaModel.getClass().getField("root").get(vanillaModel);
-            if (!(root instanceof ModelPart modelRoot)) return;
+            Class<?> cls = vanillaModel.getClass();
+            java.lang.reflect.Field rootField = null;
+            while (cls != Object.class && rootField == null) {
+                try { rootField = cls.getDeclaredField("root"); } catch (NoSuchFieldException ignored) {}
+                cls = cls.getSuperclass();
+            }
+            if (rootField == null) return;
+            rootField.setAccessible(true);
+            Object rootObj = rootField.get(vanillaModel);
+            if (!(rootObj instanceof ModelPart modelRoot)) return;
 
             var poseStack = data.poseStack();
             poseStack.pushPose();
@@ -273,7 +285,7 @@ public class EntityRenderSystem {
                 applyAnimationToModelPart(modelRoot, tickedInfos);
             }
 
-            var texture = modelComponent.getSerializableInfo().texture();
+            ResourceLocation texture = modelComponent.getSerializableInfo().texture();
             RenderType renderType = RenderType.entityCutoutNoCull(texture);
             VertexConsumer consumer = data.multiBufferSource().getBuffer(renderType);
             modelRoot.render(poseStack, consumer, data.packedLight(), data.overlay());
@@ -293,8 +305,7 @@ public class EntityRenderSystem {
                     .mapToLong(modelComponent -> {
                         var model = modelComponent.getModel();
                         if (model == null) {
-                            renderWithVanillaModel(data, modelComponent);
-                            return 1;
+                            return 0;
                         }
 
                         var poseStack = data.poseStack();
@@ -460,7 +471,7 @@ public class EntityRenderSystem {
             if (components.isEmpty() && !ce.geometry().isEmpty()) {
                 var entry = ce.geometry().entrySet().stream().findFirst().orElse(null);
                 if (entry != null) {
-                    var defaultTexture = ce.textures().get("default");
+                    var defaultTexture = ce.textures().get(entry.getKey());
                     if (defaultTexture == null && !ce.textures().isEmpty()) {
                         defaultTexture = ce.textures().values().stream().findFirst().orElse(null);
                     }

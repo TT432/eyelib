@@ -15,6 +15,8 @@ import io.github.tt432.eyelibimporter.particle.BrParticle;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllerEntry;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllers;
 import org.jspecify.annotations.NullMarked;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -367,6 +369,7 @@ public final class BedrockAddonLoader {
             for (String chunk : splitConcatenatedJson(fullJson)) {
                 try {
                     var element = parseJsonLenient(chunk);
+                    normalizeRenderControllers(element);
                     BrClientEntity entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
                     clientEntityFiles.put(entity.identifier(), entity);
                 } catch (RuntimeException ignored) {
@@ -404,6 +407,38 @@ public final class BedrockAddonLoader {
                     BedrockResourceFamily.BRARCHIVE, relativePath,
                     new BedrockResourceContent.StructuredContent(BedrockResourceValue.fromJsonElement(element)),
                     BedrockUnmanagedReason.NO_TYPED_SCHEMA_YET));
+        }
+    }
+
+    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(BedrockAddonLoader.class);
+
+    private static void normalizeRenderControllers(com.google.gson.JsonElement root) {
+        if (!root.isJsonObject()) return;
+        var obj = root.getAsJsonObject();
+        for (String key : obj.keySet()) {
+            var val = obj.get(key);
+            if (!val.isJsonObject()) continue;
+            var desc = val.getAsJsonObject().get("description");
+            if (desc == null || !desc.isJsonObject()) continue;
+            var rc = desc.getAsJsonObject().get("render_controllers");
+            if (rc == null || !rc.isJsonArray()) continue;
+            var arr = rc.getAsJsonArray();
+            var normalized = new com.google.gson.JsonArray();
+            int cntSaved = 0;
+            for (com.google.gson.JsonElement el : arr) {
+                if (el.isJsonPrimitive()) {
+                    normalized.add(el);
+                    cntSaved++;
+                } else if (el.isJsonObject()) {
+                    var o = el.getAsJsonObject();
+                    if (o.size() > 0) {
+                        normalized.add(new com.google.gson.JsonPrimitive(o.keySet().iterator().next()));
+                        cntSaved++;
+                    }
+                }
+            }
+            desc.getAsJsonObject().add("render_controllers", normalized);
+            LOGGER.info("normalizeRenderControllers for " + key + ": " + cntSaved + " controllers for " + desc.getAsJsonObject().get("identifier").getAsString());
         }
     }
 

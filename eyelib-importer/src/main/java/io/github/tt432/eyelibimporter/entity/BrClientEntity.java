@@ -15,6 +15,8 @@ import java.util.Optional;
 
 import com.mojang.datafixers.util.Either;
 
+import com.google.gson.JsonElement;
+
 /**
  * @param particle_effects 短名称 -> 全名
  * @param item             物品标识符→条件 Molang 的映射；空 Map 表示无物品绑定
@@ -48,6 +50,22 @@ public record BrClientEntity(
             value -> {
                 throw new UnsupportedOperationException("Client entity object encoding is not supported");
             }
+    );
+
+    private static final Codec<String> RENDER_CONTROLLER_CODEC = ImporterCodecUtil.JSON_ELEMENT_CODEC.comapFlatMap(
+            jsonElement -> {
+                if (jsonElement.isJsonPrimitive()) {
+                    return DataResult.success(jsonElement.getAsString());
+                }
+                if (jsonElement.isJsonObject()) {
+                    var obj = jsonElement.getAsJsonObject();
+                    if (obj.size() > 0) {
+                        return DataResult.success(obj.keySet().iterator().next());
+                    }
+                }
+                return DataResult.error(() -> "Expected string or object for render_controller");
+            },
+            name -> { throw new UnsupportedOperationException(); }
     );
 
     private static final Codec<Map<String, String>> ITEM_FIELD_CODEC = Codec.either(
@@ -114,7 +132,7 @@ public record BrClientEntity(
                                 Codec.unboundedMap(Codec.STRING, Codec.STRING).listOf().optionalFieldOf("animation_controllers", List.of()).forGetter(BrClientEntity::animation_controllers),
                                 Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("particle_effects", Map.of()).forGetter(BrClientEntity::particle_effects),
                                 Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("sound_effects", Map.of()).forGetter(BrClientEntity::sound_effects),
-                                Codec.STRING.listOf().optionalFieldOf("render_controllers", List.of()).forGetter(BrClientEntity::render_controllers),
+                                RENDER_CONTROLLER_CODEC.listOf().optionalFieldOf("render_controllers", List.of()).forGetter(BrClientEntity::render_controllers),
                                 BrClientEntityScripts.CODEC.optionalFieldOf("scripts").forGetter(BrClientEntity::scripts),
                                 OBJECT_VALUE_CODEC.optionalFieldOf("spawn_egg").forGetter(BrClientEntity::spawn_egg),
                                 ITEM_FIELD_CODEC.optionalFieldOf("item", Map.of()).forGetter(BrClientEntity::item),
