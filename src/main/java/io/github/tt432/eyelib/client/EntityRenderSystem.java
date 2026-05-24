@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
@@ -18,6 +19,7 @@ import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelibanimation.AnimationEffects;
 import io.github.tt432.eyelibanimation.BrAnimator;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
+import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
 import io.github.tt432.eyelibmolang.MolangScope;
@@ -27,7 +29,10 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -248,17 +253,52 @@ public class EntityRenderSystem {
         return (T) obj;
     }
 
+    private static void renderWithVanillaModel(SimpleRenderAction<?> data, ModelComponent modelComponent) {
+        Entity entity = data.entity();
+        if (entity == null) return;
+        var renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entity);
+        if (!(renderer instanceof LivingEntityRenderer<?, ?> ler)) return;
+        var vanillaModel = ler.getModel();
+        try {
+            var root = vanillaModel.getClass().getField("root").get(vanillaModel);
+            if (!(root instanceof ModelPart modelRoot)) return;
+
+            var poseStack = data.poseStack();
+            poseStack.pushPose();
+            poseStack.translate(0, -0.15, 0);
+            poseStack.scale(-1, -1, 1);
+
+            var tickedInfos = data.tickedInfos();
+            if (tickedInfos != null) {
+                applyAnimationToModelPart(modelRoot, tickedInfos);
+            }
+
+            var texture = modelComponent.getSerializableInfo().texture();
+            RenderType renderType = RenderType.entityCutoutNoCull(texture);
+            VertexConsumer consumer = data.multiBufferSource().getBuffer(renderType);
+            modelRoot.render(poseStack, consumer, data.packedLight(), data.overlay());
+
+            poseStack.popPose();
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static void applyAnimationToModelPart(ModelPart root, ModelRuntimeData tickedInfos) {
+        // TODO: 将动画数据映射到 ModelPart 变换字段
+    }
+
     public static <T> boolean renderComponents(SimpleRenderAction<T> data) {
         return data.renderData().getModelComponents().stream()
-                   .filter(ModelComponent::readyForRendering)
-                   .mapToLong(modelComponent -> {
-                       var model = modelComponent.getModel();
-                       if (model == null) {
-                           return 0;
-                       }
+                    .filter(mc -> mc.readyForRendering() || (mc.getSerializableInfo() != null && mc.getSerializableInfo().texture() != null))
+                    .mapToLong(modelComponent -> {
+                        var model = modelComponent.getModel();
+                        if (model == null) {
+                            renderWithVanillaModel(data, modelComponent);
+                            return 1;
+                        }
 
-                       var poseStack = data.poseStack();
-                       poseStack.pushPose();
+                        var poseStack = data.poseStack();
+                        poseStack.pushPose();
 
                        RenderParams renderParams = data.renderParams(modelComponent);
 
@@ -416,6 +456,23 @@ public class EntityRenderSystem {
                     components.add(renderControllerEntry.setupModel(cap.getScope(), appliedClientEntity, clientEntityComponent.getModels(), renderControllerSlot, syncedActions));
             }
             renderControllerComponent.trim(ce.render_controllers().size());
+
+            if (components.isEmpty() && !ce.geometry().isEmpty()) {
+                var entry = ce.geometry().entrySet().stream().findFirst().orElse(null);
+                if (entry != null) {
+                    var defaultTexture = ce.textures().get("default");
+                    if (defaultTexture == null && !ce.textures().isEmpty()) {
+                        defaultTexture = ce.textures().values().stream().findFirst().orElse(null);
+                    }
+                    if (defaultTexture != null) {
+                        var modelComponent = new ModelComponent();
+                        modelComponent.setInfo(new ModelComponentInfo(
+                                entry.getValue(), ResourceLocation.tryParse(defaultTexture),
+                                ResourceLocation.tryParse("entity_translucent")));
+                        components.add(modelComponent);
+                    }
+                }
+            }
 
             ce.scripts().ifPresent(s -> cap.getAnimationComponent().setup(ce.animations(), s.animate()));
 

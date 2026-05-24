@@ -64,6 +64,10 @@ public final class AIDebugServer {
             LOGGER.info("AI Debug Server started on port {}", PORT);
         } catch (IOException e) {
             LOGGER.error("Failed to start AI Debug Server", e);
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc != null) {
+                mc.stop();
+            }
         }
     }
 
