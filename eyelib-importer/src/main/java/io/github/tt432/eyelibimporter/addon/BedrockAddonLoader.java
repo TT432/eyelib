@@ -3,13 +3,16 @@ package io.github.tt432.eyelibimporter.addon;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
+import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibimporter.material.BrMaterial;
 import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
 import io.github.tt432.eyelibimporter.model.importer.ModelImporter;
 import io.github.tt432.eyelibimporter.particle.BrParticle;
+import io.github.tt432.eyelibimporter.render.controller.BrRenderControllerEntry;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllers;
 import org.jspecify.annotations.NullMarked;
 
@@ -345,17 +348,21 @@ public final class BedrockAddonLoader {
         String name = lowerName.replace("__brarchive/", "");
 
         if (name.startsWith("animations.")) {
+            var mergedAnimations = new LinkedHashMap<String, BrAnimationEntrySchema>();
             for (String chunk : splitConcatenatedJson(fullJson)) {
                 var element = parseJsonLenient(chunk);
                 BrAnimationSet set = BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
-                animationFiles.put(effectivePath, set);
+                mergedAnimations.putAll(set.animations());
             }
+            animationFiles.put(effectivePath, new BrAnimationSet(Map.copyOf(mergedAnimations)));
         } else if (name.startsWith("animation_controllers.")) {
+            var mergedControllers = new LinkedHashMap<String, BrAnimationControllerSchema>();
             for (String chunk : splitConcatenatedJson(fullJson)) {
                 var element = parseJsonLenient(chunk);
                 BrAnimationControllerSet set = BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
-                animationControllerFiles.put(effectivePath, set);
+                mergedControllers.putAll(set.animationControllers());
             }
+            animationControllerFiles.put(effectivePath, new BrAnimationControllerSet(Map.copyOf(mergedControllers)));
         } else if (name.startsWith("entity.") || name.startsWith("entities.")) {
             for (String chunk : splitConcatenatedJson(fullJson)) {
                 try {
@@ -367,22 +374,30 @@ public final class BedrockAddonLoader {
             }
         } else if (name.startsWith("attachables.")) {
             for (String chunk : splitConcatenatedJson(fullJson)) {
-                var element = parseJsonLenient(chunk);
-                BrClientEntity attachable = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
-                attachableFiles.put(attachable.identifier(), attachable);
+                try {
+                    var element = parseJsonLenient(chunk);
+                    BrClientEntity attachable = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
+                    attachableFiles.put(attachable.identifier(), attachable);
+                } catch (RuntimeException ignored) {
+                }
             }
         } else if (name.startsWith("particles.")) {
             for (String chunk : splitConcatenatedJson(fullJson)) {
-                var element = parseJsonLenient(chunk);
-                BrParticle particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
-                particleFiles.put(effectivePath, particle);
+                try {
+                    var element = parseJsonLenient(chunk);
+                    BrParticle particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
+                    particleFiles.put(particle.particleEffect().description().identifier(), particle);
+                } catch (RuntimeException ignored) {
+                }
             }
         } else if (name.startsWith("render_controllers.")) {
+            var merged = new LinkedHashMap<String, BrRenderControllerEntry>();
             for (String chunk : splitConcatenatedJson(fullJson)) {
                 var element = parseJsonLenient(chunk);
                 BrRenderControllers controllers = BrRenderControllers.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
-                renderControllerFiles.put(effectivePath, controllers);
+                merged.putAll(controllers.renderControllers());
             }
+            renderControllerFiles.put(effectivePath, new BrRenderControllers(Map.copyOf(merged)));
         } else {
             var element = parseJsonLenient(fullJson);
             unmanagedResources.put(relativePath, new BedrockUnmanagedResource(
