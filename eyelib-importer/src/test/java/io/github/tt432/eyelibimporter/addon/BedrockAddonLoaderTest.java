@@ -7,6 +7,8 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -210,6 +212,53 @@ class BedrockAddonLoaderTest {
         assertFalse(addon.unmanagedResources().containsKey("resource_pack:blocks.json"));
     }
 
+    @Test
+    void mergesRenderControllersFromBrarchiveWithRepeatedRootKeys() throws Exception {
+        Path addonRoot = tempDir.resolve("render-controller-brarchive-addon");
+        Path resourcePack = writeResourcePack(addonRoot.resolve("resource_pack"));
+        Files.delete(resourcePack.resolve("render_controllers/test.render_controllers.json"));
+        writeBrarchive(resourcePack.resolve("__brarchive/render_controllers.test.brarchive"), """
+                {
+                  "render_controllers": {
+                    "controller.render.first": {
+                      "geometry": "geometry.default",
+                      "textures": ["texture.default"],
+                      "materials": [{ "*": "material.default" }]
+                    }
+                  },
+                  "render_controllers": {
+                    "controller.render.second": {
+                      "geometry": "geometry.default",
+                      "textures": ["texture.default"],
+                      "materials": [{ "*": "material.default" }]
+                    }
+                  }
+                }
+                """);
+
+        BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
+
+        assertTrue(addon.aggregate().flattenedRenderControllers().containsKey("controller.render.first"));
+        assertTrue(addon.aggregate().flattenedRenderControllers().containsKey("controller.render.second"));
+        assertFalse(addon.warnings().stream().anyMatch(warning ->
+                warning.code() == BedrockAddonWarningCode.SCHEMA_PARSE_FAILED
+                        && "__brarchive/render_controllers.test.brarchive".equals(warning.relativePath())));
+    }
+
+    @Test
+    void mergesRenderControllerBrarchivesAcrossSubpacks() throws Exception {
+        Path addonRoot = tempDir.resolve("render-controller-subpack-addon");
+        Path resourcePack = writeResourcePack(addonRoot.resolve("resource_pack"));
+        Files.delete(resourcePack.resolve("render_controllers/test.render_controllers.json"));
+        writeBrarchive(resourcePack.resolve("__brarchive/render_controllers.test.brarchive"), renderControllerArchiveJson("controller.render.base"));
+        writeBrarchive(resourcePack.resolve("subpacks/SP0/__brarchive/render_controllers.test.brarchive"), renderControllerArchiveJson("controller.render.subpack"));
+
+        BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
+
+        assertTrue(addon.aggregate().flattenedRenderControllers().containsKey("controller.render.base"));
+        assertTrue(addon.aggregate().flattenedRenderControllers().containsKey("controller.render.subpack"));
+    }
+
     private Path writeResourcePack(Path packDir) throws Exception {
         Files.createDirectories(packDir);
         String uuidBase = UUID.randomUUID().toString();
@@ -276,6 +325,20 @@ class BedrockAddonLoaderTest {
         BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         image.setRGB(0, 0, argb);
         ImageIO.write(image, "png", path.toFile());
+    }
+
+    private static void writeBrarchive(Path path, String json) throws IOException {
+        Path parent = path.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        byte[] jsonBytes = json.getBytes(StandardCharsets.UTF_8);
+        ByteBuffer buffer = ByteBuffer.allocate(16 + jsonBytes.length).order(ByteOrder.LITTLE_ENDIAN);
+        buffer.putLong(0x267052A0B125277DL);
+        buffer.putInt(0);
+        buffer.putInt(1);
+        buffer.put(jsonBytes);
+        Files.write(path, buffer.array());
     }
 
     private static void zipDirectory(Path sourceDir, Path archivePath) throws IOException {
@@ -523,6 +586,20 @@ class BedrockAddonLoaderTest {
                   }
                 }
                 """;
+    }
+
+    private static String renderControllerArchiveJson(String name) {
+        return """
+                {
+                  "render_controllers": {
+                    "%s": {
+                      "geometry": "geometry.default",
+                      "textures": ["texture.default"],
+                      "materials": [{ "*": "material.default" }]
+                    }
+                  }
+                }
+                """.formatted(name);
     }
 
     private static String particleJson() {

@@ -10,7 +10,9 @@ import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationCo
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibimporter.material.BrMaterial;
 import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
+import io.github.tt432.eyelibimporter.model.importer.BedrockGeometryImporter;
 import io.github.tt432.eyelibimporter.model.importer.ModelImporter;
+import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibimporter.particle.BrParticle;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllerEntry;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllers;
@@ -245,14 +247,14 @@ public final class BedrockAddonLoader {
                             new BrTextureMetadataFile((BedrockResourceValue.ObjectValue) BedrockResourceValue.fromJsonElement(parseJson(file))));
                     case RENDER_CONTROLLER -> {
                         BrRenderControllers controllers = BrRenderControllers.CODEC.parse(JsonOps.INSTANCE, parseJson(file)).getOrThrow(false, IllegalArgumentException::new);
-                        renderControllerFiles.put(effectivePath, controllers);
+                        mergeRenderControllers(renderControllerFiles, effectivePath, controllers.renderControllers());
                     }
                     case PARTICLE -> {
                         BrParticle particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, parseJson(file)).getOrThrow(false, IllegalArgumentException::new);
                         particleFiles.put(effectivePath, particle);
                     }
                     case SPLASHES -> splashIndex = BedrockResourceValue.fromJsonElement(parseJson(file));
-                    case BRARCHIVE -> loadBrarchive(file, effectivePath, lowerCasePath, animationFiles, animationControllerFiles, clientEntityFiles, attachableFiles, particleFiles, renderControllerFiles, warnings, packRoot, relativePath, unmanagedResources);
+                    case BRARCHIVE -> loadBrarchive(file, effectivePath, lowerCasePath, animationFiles, animationControllerFiles, clientEntityFiles, attachableFiles, particleFiles, renderControllerFiles, modelFiles, warnings, packRoot, relativePath, unmanagedResources);
                     default -> captureUnmanaged(packRoot, file, relativePath, family, warnings, unmanagedResources, unmanagedReasonFor(family), false, null);
                 }
             } catch (RuntimeException exception) {
@@ -338,6 +340,7 @@ public final class BedrockAddonLoader {
                                       LinkedHashMap<String, BrClientEntity> attachableFiles,
                                       LinkedHashMap<String, BrParticle> particleFiles,
                                       LinkedHashMap<String, BrRenderControllers> renderControllerFiles,
+                                      LinkedHashMap<String, BedrockImportedModels> modelFiles,
                                       List<BedrockAddonWarning> warnings,
                                       Path packRoot,
                                       String relativePath,
@@ -396,11 +399,27 @@ public final class BedrockAddonLoader {
         } else if (name.startsWith("render_controllers.")) {
             var merged = new LinkedHashMap<String, BrRenderControllerEntry>();
             for (String chunk : splitConcatenatedJson(fullJson)) {
-                var element = parseJsonLenient(chunk);
-                BrRenderControllers controllers = BrRenderControllers.CODEC.parse(JsonOps.INSTANCE, element).getOrThrow(false, IllegalArgumentException::new);
-                merged.putAll(controllers.renderControllers());
+                merged.putAll(parseRenderControllerEntries(chunk, warnings, packRoot, relativePath));
             }
-            renderControllerFiles.put(effectivePath, new BrRenderControllers(Map.copyOf(merged)));
+            mergeRenderControllers(renderControllerFiles, effectivePath, merged);
+        } else if (name.startsWith("models")) {
+            var merged = new LinkedHashMap<String, Model>();
+            for (String chunk : splitConcatenatedJson(fullJson)) {
+                try {
+                    var element = parseJsonLenient(chunk).getAsJsonObject();
+                    merged.putAll(BedrockGeometryImporter.importJson(element));
+                } catch (Exception ignored) {
+                }
+            }
+            BedrockImportedModels previous = modelFiles.get(effectivePath);
+            if (previous == null) {
+                modelFiles.put(effectivePath, new BedrockImportedModels(merged));
+            } else {
+                var mergedAll = new LinkedHashMap<String, Model>();
+                mergedAll.putAll(previous.models());
+                mergedAll.putAll(merged);
+                modelFiles.put(effectivePath, new BedrockImportedModels(mergedAll));
+            }
         } else {
             var element = parseJsonLenient(fullJson);
             unmanagedResources.put(relativePath, new BedrockUnmanagedResource(
@@ -408,6 +427,46 @@ public final class BedrockAddonLoader {
                     new BedrockResourceContent.StructuredContent(BedrockResourceValue.fromJsonElement(element)),
                     BedrockUnmanagedReason.NO_TYPED_SCHEMA_YET));
         }
+    }
+
+    private static void mergeRenderControllers(LinkedHashMap<String, BrRenderControllers> renderControllerFiles,
+                                               String effectivePath,
+                                               Map<String, BrRenderControllerEntry> controllers) {
+        BrRenderControllers previous = renderControllerFiles.get(effectivePath);
+        if (previous == null) {
+            renderControllerFiles.put(effectivePath, new BrRenderControllers(Map.copyOf(controllers)));
+            return;
+        }
+
+        var merged = new LinkedHashMap<String, BrRenderControllerEntry>(previous.renderControllers());
+        merged.putAll(controllers);
+        renderControllerFiles.put(effectivePath, new BrRenderControllers(Map.copyOf(merged)));
+    }
+
+    private static Map<String, BrRenderControllerEntry> parseRenderControllerEntries(String json,
+                                                                                     List<BedrockAddonWarning> warnings,
+                                                                                     Path packRoot,
+                                                                                     String relativePath) {
+        var merged = new LinkedHashMap<String, BrRenderControllerEntry>();
+        for (String objectJson : extractNamedObjects(json, "render_controllers")) {
+            JsonObject controllers = parseJsonLenient(objectJson).getAsJsonObject();
+            for (Map.Entry<String, com.google.gson.JsonElement> entry : controllers.entrySet()) {
+                try {
+                    BrRenderControllerEntry controller = BrRenderControllerEntry.CODEC.parse(JsonOps.INSTANCE, entry.getValue())
+                            .getOrThrow(false, IllegalArgumentException::new);
+                    merged.put(entry.getKey(), controller);
+                } catch (RuntimeException exception) {
+                    warnings.add(new BedrockAddonWarning(
+                            BedrockAddonWarningSeverity.WARNING,
+                            BedrockAddonWarningCode.SCHEMA_PARSE_FAILED,
+                            packRoot.getFileName() == null ? packRoot.toString() : packRoot.getFileName().toString(),
+                            relativePath,
+                            "Render controller parse failed; skipped entry " + entry.getKey() + " because: " + exception.getMessage()
+                    ));
+                }
+            }
+        }
+        return merged;
     }
 
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(BedrockAddonLoader.class);
@@ -474,6 +533,70 @@ public final class BedrockAddonLoader {
             }
         }
         return chunks;
+    }
+
+    private static List<String> extractNamedObjects(String json, String name) {
+        var objects = new ArrayList<String>();
+        int index = 0;
+        String quotedName = '"' + name + '"';
+        while (index < json.length()) {
+            int keyIndex = json.indexOf(quotedName, index);
+            if (keyIndex < 0) {
+                break;
+            }
+            int colonIndex = findNextNonWhitespace(json, keyIndex + quotedName.length());
+            if (colonIndex >= json.length() || json.charAt(colonIndex) != ':') {
+                index = keyIndex + quotedName.length();
+                continue;
+            }
+            int valueIndex = findNextNonWhitespace(json, colonIndex + 1);
+            if (valueIndex >= json.length() || json.charAt(valueIndex) != '{') {
+                index = colonIndex + 1;
+                continue;
+            }
+            int endIndex = findObjectEnd(json, valueIndex);
+            if (endIndex < 0) {
+                break;
+            }
+            objects.add(json.substring(valueIndex, endIndex + 1));
+            index = endIndex + 1;
+        }
+        return objects;
+    }
+
+    private static int findNextNonWhitespace(String text, int start) {
+        int index = start;
+        while (index < text.length() && Character.isWhitespace(text.charAt(index))) {
+            index++;
+        }
+        return index;
+    }
+
+    private static int findObjectEnd(String json, int objectStart) {
+        int depth = 0;
+        boolean inString = false;
+        for (int i = objectStart; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (inString) {
+                if (c == '\\') {
+                    i++;
+                } else if (c == '"') {
+                    inString = false;
+                }
+            } else {
+                if (c == '"') {
+                    inString = true;
+                } else if (c == '{') {
+                    depth++;
+                } else if (c == '}') {
+                    depth--;
+                    if (depth == 0) {
+                        return i;
+                    }
+                }
+            }
+        }
+        return -1;
     }
 
     private static BedrockResourceContent readContent(Path file, BedrockResourceFamily family) throws IOException {

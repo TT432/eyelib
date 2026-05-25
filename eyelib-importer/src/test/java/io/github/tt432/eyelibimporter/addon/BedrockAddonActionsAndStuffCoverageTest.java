@@ -53,5 +53,14 @@ class BedrockAddonActionsAndStuffCoverageTest {
         assertEquals(3, rp.manifest().subpacks().size());
         assertNotNull(rp.manifest().header().packOptimizationVersion());
         assertNotNull(rp.packIcon());
+
+        var creeper = addon.aggregate().clientEntities().get("minecraft:creeper");
+        assertNotNull(creeper, "应加载 creeper client entity");
+        assertEquals(16, creeper.render_controllers().size(), "creeper 应保留16个 render controller 引用");
+        var renderControllers = addon.aggregate().flattenedRenderControllers();
+        for (String renderController : creeper.render_controllers()) {
+            assertTrue(renderControllers.containsKey(renderController),
+                    "creeper 引用的 render controller 应存在: " + renderController);
+        }
     }
 }

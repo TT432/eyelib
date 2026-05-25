@@ -25,23 +25,19 @@ public record BrRenderControllerEntry(
                     .optionalFieldOf("arrays", Map.of())
                     .forGetter(BrRenderControllerEntry::arrays),
             Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).listOf().xmap(
-                    BrRenderControllerEntry::flattenUniqueMolangMaps,
+                    BrRenderControllerEntry::flattenMolangMaps,
                     List::of
             ).optionalFieldOf("materials", Map.of()).forGetter(BrRenderControllerEntry::materials),
             Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).listOf().xmap(
-                    BrRenderControllerEntry::flattenUniqueMolangMaps,
+                    BrRenderControllerEntry::flattenMolangMaps,
                     List::of
             ).optionalFieldOf("part_visibility", Map.of()).forGetter(BrRenderControllerEntry::partVisibility)
     ).apply(instance, BrRenderControllerEntry::new));
 
-    private static Map<String, MolangValue> flattenUniqueMolangMaps(List<Map<String, MolangValue>> values) {
+    private static Map<String, MolangValue> flattenMolangMaps(List<Map<String, MolangValue>> values) {
         Map<String, MolangValue> result = new Object2ObjectOpenHashMap<>();
         for (Map<String, MolangValue> value : values) {
-            for (Map.Entry<String, MolangValue> entry : value.entrySet()) {
-                if (result.put(entry.getKey(), entry.getValue()) != null) {
-                    throw new IllegalStateException("Duplicate key");
-                }
-            }
+            result.putAll(value);
         }
         return result;
     }

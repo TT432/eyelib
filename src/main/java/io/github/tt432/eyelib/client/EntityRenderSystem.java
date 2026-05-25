@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
@@ -29,13 +28,10 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
-import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -255,48 +251,6 @@ public class EntityRenderSystem {
     // TODO: 权宜之计
     private static <T> T cast(Object obj) {
         return (T) obj;
-    }
-
-    private static void renderWithVanillaModel(SimpleRenderAction<?> data, ModelComponent modelComponent) {
-        Entity entity = data.entity();
-        if (entity == null) return;
-        EntityRenderer<?> renderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entity);
-        if (!(renderer instanceof LivingEntityRenderer<?, ?> ler)) return;
-        EntityModel<?> vanillaModel = ler.getModel();
-        try {
-            Class<?> cls = vanillaModel.getClass();
-            java.lang.reflect.Field rootField = null;
-            while (cls != Object.class && rootField == null) {
-                try { rootField = cls.getDeclaredField("root"); } catch (NoSuchFieldException ignored) {}
-                cls = cls.getSuperclass();
-            }
-            if (rootField == null) return;
-            rootField.setAccessible(true);
-            Object rootObj = rootField.get(vanillaModel);
-            if (!(rootObj instanceof ModelPart modelRoot)) return;
-
-            var poseStack = data.poseStack();
-            poseStack.pushPose();
-            poseStack.translate(0, -0.15, 0);
-            poseStack.scale(-1, -1, 1);
-
-            var tickedInfos = data.tickedInfos();
-            if (tickedInfos != null) {
-                applyAnimationToModelPart(modelRoot, tickedInfos);
-            }
-
-            ResourceLocation texture = modelComponent.getSerializableInfo().texture();
-            RenderType renderType = RenderType.entityCutoutNoCull(texture);
-            VertexConsumer consumer = data.multiBufferSource().getBuffer(renderType);
-            modelRoot.render(poseStack, consumer, data.packedLight(), data.overlay());
-
-            poseStack.popPose();
-        } catch (Exception ignored) {
-        }
-    }
-
-    private static void applyAnimationToModelPart(ModelPart root, ModelRuntimeData tickedInfos) {
-        // TODO: 将动画数据映射到 ModelPart 变换字段
     }
 
     public static <T> boolean renderComponents(SimpleRenderAction<T> data) {
