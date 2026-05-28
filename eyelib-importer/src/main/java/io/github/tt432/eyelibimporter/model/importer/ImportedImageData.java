@@ -1,5 +1,8 @@
 package io.github.tt432.eyelibimporter.model.importer;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -15,6 +18,15 @@ import java.util.Arrays;
  * @author TT432 */
 @NullMarked
 public final class ImportedImageData {
+
+    public static final Codec<ImportedImageData> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            Codec.INT.fieldOf("width").forGetter(ImportedImageData::width),
+            Codec.INT.fieldOf("height").forGetter(ImportedImageData::height),
+            Codec.INT_STREAM.xmap(
+                    intStream -> intStream.toArray(),
+                    ints -> Arrays.stream(ints)
+            ).fieldOf("argb_pixels").forGetter(ImportedImageData::copyPixels)
+    ).apply(ins, ImportedImageData::new));
     private final int width;
     private final int height;
     private final int[] argbPixels;

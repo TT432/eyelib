@@ -30,6 +30,13 @@ public record Model(
     public static final VisibleBox EMPTY_VISIBLE_BOX = VisibleBox.EMPTY;
     private static final Codec<Vector3f> VECTOR3F_CODEC = ImporterCodecs.VECTOR3F;
 
+    public static final Codec<Model> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            Codec.STRING.fieldOf("name").forGetter(Model::name),
+            GlobalBoneIdHandler.map(Bone.CODEC).fieldOf("all_bones").forGetter(Model::allBones),
+            ModelLocator.CODEC.fieldOf("locator").forGetter(Model::locator),
+            VisibleBox.CODEC.optionalFieldOf("visible_box", EMPTY_VISIBLE_BOX).forGetter(Model::visibleBox)
+    ).apply(ins, Model::new));
+
     public Model(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator, VisibleBox visibleBox) {
         this(name, new Int2ObjectOpenHashMap<>(), allBones, locator, visibleBox);
 
@@ -91,6 +98,22 @@ public record Model(
             @Nullable String material,
             List<TextureMesh> textureMeshes
     ) {
+        public static final Codec<Bone> CODEC = net.minecraft.util.ExtraCodecs.lazyInitializedCodec(() -> RecordCodecBuilder.create(ins -> ins.group(
+                Codec.INT.fieldOf("id").forGetter(Bone::id),
+                Codec.INT.fieldOf("parent").forGetter(Bone::parent),
+                ImporterCodecs.VECTOR3FC.fieldOf("pivot").forGetter(Bone::pivot),
+                ImporterCodecs.VECTOR3FC.fieldOf("rotation").forGetter(Bone::rotation),
+                ImporterCodecs.VECTOR3FC.fieldOf("position").forGetter(Bone::position),
+                ImporterCodecs.VECTOR3FC.fieldOf("scale").forGetter(Bone::scale),
+                Codec.STRING.optionalFieldOf("binding", null).forGetter(Bone::binding),
+                GlobalBoneIdHandler.map(Bone.CODEC).fieldOf("children").forGetter(Bone::children),
+                Cube.CODEC.listOf().fieldOf("cubes").forGetter(Bone::cubes),
+                GroupLocator.CODEC.fieldOf("locator").forGetter(Bone::locator),
+                Codec.BOOL.optionalFieldOf("reset", false).forGetter(Bone::reset),
+                Codec.STRING.optionalFieldOf("material", null).forGetter(Bone::material),
+                TextureMesh.CODEC.listOf().optionalFieldOf("texture_meshes", List.of()).forGetter(Bone::textureMeshes)
+        ).apply(ins, Bone::new)));
+
         public Bone(
                 int id,
                 int parent,
@@ -111,6 +134,9 @@ public record Model(
     public record Cube(
             List<Face> faces
     ) {
+        public static final Codec<Cube> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+                Face.CODEC.listOf().fieldOf("faces").forGetter(Cube::faces)
+        ).apply(ins, Cube::new));
     }
 
     @With
@@ -119,6 +145,12 @@ public record Model(
             Vector3fc normal,
             @Nullable String materialInstance
     ) {
+        public static final Codec<Face> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+                Vertex.CODEC.listOf().fieldOf("vertexes").forGetter(Face::vertexes),
+                ImporterCodecs.VECTOR3FC.fieldOf("normal").forGetter(Face::normal),
+                Codec.STRING.optionalFieldOf("material_instance", null).forGetter(Face::materialInstance)
+        ).apply(ins, Face::new));
+
         public Face(List<Vertex> vertexes, Vector3fc normal) {
             this(vertexes, normal, null);
         }
@@ -154,6 +186,11 @@ public record Model(
             Vector2fc uv,
             Vector3fc normal
     ) {
+        public static final Codec<Vertex> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+                ImporterCodecs.VECTOR3FC.fieldOf("position").forGetter(Vertex::position),
+                ImporterCodecs.VECTOR2FC.fieldOf("uv").forGetter(Vertex::uv),
+                ImporterCodecs.VECTOR3FC.fieldOf("normal").forGetter(Vertex::normal)
+        ).apply(ins, Vertex::new));
     }
 
     @With

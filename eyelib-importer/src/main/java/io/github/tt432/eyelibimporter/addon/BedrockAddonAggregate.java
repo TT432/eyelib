@@ -1,5 +1,7 @@
 package io.github.tt432.eyelibimporter.addon;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
@@ -9,6 +11,9 @@ import io.github.tt432.eyelibimporter.material.BrMaterialEntry;
 import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibimporter.particle.BrParticle;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllerEntry;
+import io.github.tt432.eyelibimporter.render.controller.BrRenderControllers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,6 +25,13 @@ public record BedrockAddonAggregate(
         BedrockAddonSideAggregate resourcePack,
         BedrockAddonSideAggregate behaviorPack
 ) {
+    public static final Codec<BedrockAddonAggregate> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            BedrockAddonSideAggregate.CODEC.fieldOf("resource_pack").forGetter(BedrockAddonAggregate::resourcePack),
+            BedrockAddonSideAggregate.CODEC.fieldOf("behavior_pack").forGetter(BedrockAddonAggregate::behaviorPack)
+    ).apply(ins, BedrockAddonAggregate::new));
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BedrockAddonAggregate.class);
+
     public static BedrockAddonAggregate fromPacks(List<BedrockAddonPack> packs, List<BedrockAddonWarning> warnings) {
         return new BedrockAddonAggregate(
                 fromSidePacks(packs.stream().filter(BedrockAddonPack::isResourcePack).toList(), warnings),
@@ -59,7 +71,22 @@ public record BedrockAddonAggregate(
             soundFiles.putAll(pack.soundFiles());
             textureIndexFiles.putAll(pack.textureIndexFiles());
             textureMetadataFiles.putAll(pack.textureMetadataFiles());
-            renderControllerFiles.putAll(pack.renderControllerFiles());
+            pack.renderControllerFiles().forEach((key, newRC) -> {
+            BrRenderControllers oldRC = renderControllerFiles.get(key);
+            if (oldRC == null) {
+                renderControllerFiles.put(key, newRC);
+            } else {
+                var merged = new LinkedHashMap<String, BrRenderControllerEntry>(oldRC.renderControllers());
+                newRC.renderControllers().forEach((name, entry) -> {
+                    BrRenderControllerEntry exist = merged.get(name);
+                    if (exist != null && exist.partVisibility().size() > entry.partVisibility().size()) {
+                        return;
+                    }
+                    merged.put(name, entry);
+                });
+                renderControllerFiles.put(key, new BrRenderControllers(merged));
+            }
+        });
             particleFiles.putAll(pack.particleFiles());
             materialFiles.putAll(pack.materialFiles());
         }

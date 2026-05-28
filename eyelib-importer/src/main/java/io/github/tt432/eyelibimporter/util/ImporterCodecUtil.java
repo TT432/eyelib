@@ -5,6 +5,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelibimporter.addon.BedrockResourceValue;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.LinkedHashMap;
@@ -21,6 +22,26 @@ public final class ImporterCodecUtil {
     public static final Codec<JsonElement> JSON_ELEMENT_CODEC = Codec.PASSTHROUGH.xmap(
             dynamic -> dynamic.convert(JsonOps.INSTANCE).getValue(),
             jsonElement -> new Dynamic<>(JsonOps.INSTANCE, jsonElement)
+    );
+
+    public static final Codec<BedrockResourceValue.ObjectValue> OBJECT_VALUE_CODEC = JSON_ELEMENT_CODEC.comapFlatMap(
+            jsonElement -> {
+                BedrockResourceValue value = BedrockResourceValue.fromJsonElement(jsonElement);
+                if (value instanceof BedrockResourceValue.ObjectValue objectValue) {
+                    return DataResult.success(objectValue);
+                }
+                return DataResult.error(() -> "Expected object value, got " + value.getClass().getSimpleName());
+            },
+            value -> {
+                throw new UnsupportedOperationException("ObjectValue encoding is not supported");
+            }
+    );
+
+    public static final Codec<BedrockResourceValue> BEDROCK_RESOURCE_VALUE_CODEC = JSON_ELEMENT_CODEC.comapFlatMap(
+            jsonElement -> DataResult.success(BedrockResourceValue.fromJsonElement(jsonElement)),
+            value -> {
+                throw new UnsupportedOperationException("BedrockResourceValue encoding is not supported");
+            }
     );
 
     public static <T> Codec<Map<String, T>> dispatchedMap(Function<String, Codec<T>> codecFactory) {

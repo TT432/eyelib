@@ -1,5 +1,7 @@
 package io.github.tt432.eyelibimporter.addon;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.material.BrMaterial;
 import io.github.tt432.eyelibimporter.material.BrMaterialEntry;
@@ -34,6 +36,28 @@ public record BedrockAddonSideAggregate(
         LinkedHashMap<String, BrParticle> particleFiles,
         LinkedHashMap<String, BrMaterial> materialFiles
 ) {
+    private static <T> Codec<LinkedHashMap<String, T>> linkedHashMapCodec(Codec<T> valueCodec) {
+        return Codec.unboundedMap(Codec.STRING, valueCodec).xmap(LinkedHashMap::new, m -> m);
+    }
+
+    public static final Codec<BedrockAddonSideAggregate> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            linkedHashMapCodec(BrAnimationEntrySchema.CODEC).optionalFieldOf("animations", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::animations),
+            linkedHashMapCodec(BrAnimationControllerSchema.CODEC).optionalFieldOf("animation_controllers", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::animationControllers),
+            linkedHashMapCodec(BrClientEntity.CODEC).optionalFieldOf("client_entities", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::clientEntities),
+            linkedHashMapCodec(BrClientEntity.ATTACHABLE_CODEC).optionalFieldOf("attachables", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::attachables),
+            linkedHashMapCodec(BrBehaviorEntityFile.CODEC).optionalFieldOf("behavior_entities", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::behaviorEntities),
+            linkedHashMapCodec(Model.CODEC).optionalFieldOf("models", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::models),
+            linkedHashMapCodec(ImportedImageData.CODEC).optionalFieldOf("textures", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::textures),
+            linkedHashMapCodec(BrSoundIndex.CODEC).optionalFieldOf("sound_index_files", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::soundIndexFiles),
+            linkedHashMapCodec(BrSoundDefinitions.CODEC).optionalFieldOf("sound_definition_files", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::soundDefinitionFiles),
+            linkedHashMapCodec(BrLanguageFile.CODEC).optionalFieldOf("language_files", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::languageFiles),
+            linkedHashMapCodec(BedrockBinaryAsset.CODEC).optionalFieldOf("sound_files", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::soundFiles),
+            linkedHashMapCodec(BrTextureIndexFile.CODEC).optionalFieldOf("texture_index_files", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::textureIndexFiles),
+            linkedHashMapCodec(BrTextureMetadataFile.CODEC).optionalFieldOf("texture_metadata_files", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::textureMetadataFiles),
+            linkedHashMapCodec(BrRenderControllers.CODEC).optionalFieldOf("render_controller_files", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::renderControllerFiles),
+            linkedHashMapCodec(BrParticle.CODEC).optionalFieldOf("particle_files", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::particleFiles),
+            linkedHashMapCodec(BrMaterial.CODEC).optionalFieldOf("material_files", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::materialFiles)
+    ).apply(ins, BedrockAddonSideAggregate::new));
     public BedrockAddonSideAggregate {
         animations = new LinkedHashMap<>(animations);
         animationControllers = new LinkedHashMap<>(animationControllers);

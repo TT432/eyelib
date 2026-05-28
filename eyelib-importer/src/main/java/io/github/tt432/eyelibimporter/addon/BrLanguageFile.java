@@ -1,5 +1,8 @@
 package io.github.tt432.eyelibimporter.addon;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -8,6 +11,13 @@ import java.util.Map;
 public record BrLanguageFile(
         LinkedHashMap<String, String> entries
 ) {
+    public static final Codec<BrLanguageFile> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            Codec.unboundedMap(Codec.STRING, Codec.STRING)
+                    .xmap(LinkedHashMap::new, m -> m)
+                    .fieldOf("entries")
+                    .forGetter(BrLanguageFile::entries)
+    ).apply(ins, BrLanguageFile::new));
+
     public BrLanguageFile {
         entries = new LinkedHashMap<>(entries);
     }

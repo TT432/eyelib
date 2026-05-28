@@ -6,6 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibimporter.addon.BedrockResourceValue;
 import io.github.tt432.eyelibimporter.addon.BedrockVersionValue;
 import io.github.tt432.eyelibimporter.util.ImporterCodecUtil;
+import io.github.tt432.eyelibmolang.MolangValue;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.LinkedHashMap;
@@ -35,6 +36,7 @@ public record BrClientEntity(
         Map<String, String> particle_effects,
         Map<String, String> sound_effects,
         List<String> render_controllers,
+        Map<String, MolangValue> renderControllerConditions,
         Optional<BrClientEntityScripts> scripts,
         Optional<BedrockResourceValue.ObjectValue> spawn_egg,
         Map<String, String> item,
@@ -99,6 +101,7 @@ public record BrClientEntity(
         particle_effects = Map.copyOf(particle_effects);
         sound_effects = Map.copyOf(sound_effects);
         render_controllers = List.copyOf(render_controllers);
+        renderControllerConditions = renderControllerConditions == null ? Map.of() : Map.copyOf(renderControllerConditions);
         scripts = scripts == null ? Optional.empty() : scripts;
         spawn_egg = spawn_egg == null ? Optional.empty() : spawn_egg;
         item = item == null ? Map.of() : Map.copyOf(item);
@@ -116,7 +119,7 @@ public record BrClientEntity(
             Optional<BrClientEntityScripts> scripts
     ) {
         this(identifier, Optional.empty(), materials, textures, geometry, animations, List.of(), particle_effects, sound_effects,
-                render_controllers, scripts, Optional.empty(), Map.of(), false);
+                render_controllers, Map.of(), scripts, Optional.empty(), Map.of(), false);
     }
 
     private static Codec<BrClientEntity> wrapDescription(String rootField) {
@@ -133,6 +136,7 @@ public record BrClientEntity(
                                 Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("particle_effects", Map.of()).forGetter(BrClientEntity::particle_effects),
                                 Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("sound_effects", Map.of()).forGetter(BrClientEntity::sound_effects),
                                 RENDER_CONTROLLER_CODEC.listOf().optionalFieldOf("render_controllers", List.of()).forGetter(BrClientEntity::render_controllers),
+                                Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).optionalFieldOf("render_controller_conditions", Map.of()).forGetter(BrClientEntity::renderControllerConditions),
                                 BrClientEntityScripts.CODEC.optionalFieldOf("scripts").forGetter(BrClientEntity::scripts),
                                 OBJECT_VALUE_CODEC.optionalFieldOf("spawn_egg").forGetter(BrClientEntity::spawn_egg),
                                 ITEM_FIELD_CODEC.optionalFieldOf("item", Map.of()).forGetter(BrClientEntity::item),

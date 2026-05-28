@@ -246,6 +246,69 @@ class BedrockAddonLoaderTest {
     }
 
     @Test
+    void loadsAnimationControllersDirectlyAtTopLevelInBrarchive() throws Exception {
+        Path addonRoot = tempDir.resolve("animation-controllers-direct-brarchive-addon");
+        Path resourcePack = writeResourcePack(addonRoot.resolve("resource_pack"));
+        Files.delete(resourcePack.resolve("animation_controllers/test.animation_controllers.json"));
+        writeBrarchive(resourcePack.resolve("__brarchive/animation_controllers.test.brarchive"), """
+                {
+                  "controller.animation.test.direct_a": {
+                    "initial_state": "default",
+                    "states": {
+                      "default": {
+                        "animations": {
+                          "anim_a": "1.0"
+                        }
+                      }
+                    }
+                  },
+                  "controller.animation.test.direct_b": {
+                    "initial_state": "walk",
+                    "states": {
+                      "walk": {
+                        "animations": {
+                          "anim_b": "1.0"
+                        }
+                      }
+                    }
+                  }
+                }
+                """);
+
+        BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
+
+        assertTrue(addon.aggregate().animationControllers().containsKey("controller.animation.test.direct_a"));
+        assertTrue(addon.aggregate().animationControllers().containsKey("controller.animation.test.direct_b"));
+    }
+
+    @Test
+    void loadsAnimationControllersWithWrapperKeyInBrarchive() throws Exception {
+        Path addonRoot = tempDir.resolve("animation-controllers-wrapped-brarchive-addon");
+        Path resourcePack = writeResourcePack(addonRoot.resolve("resource_pack"));
+        Files.delete(resourcePack.resolve("animation_controllers/test.animation_controllers.json"));
+        writeBrarchive(resourcePack.resolve("__brarchive/animation_controllers.test.brarchive"), """
+                {
+                  "animation_controllers": {
+                    "controller.animation.test.wrapped": {
+                      "initial_state": "idle",
+                      "states": {
+                        "idle": {
+                          "animations": {
+                            "anim_c": "1.0"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                """);
+
+        BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
+
+        assertTrue(addon.aggregate().animationControllers().containsKey("controller.animation.test.wrapped"));
+    }
+
+    @Test
     void mergesRenderControllerBrarchivesAcrossSubpacks() throws Exception {
         Path addonRoot = tempDir.resolve("render-controller-subpack-addon");
         Path resourcePack = writeResourcePack(addonRoot.resolve("resource_pack"));

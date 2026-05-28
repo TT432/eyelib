@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 public record BedrockAddonPack(
         String sourceName,
         BedrockPackManifest manifest,
+        @Nullable String selectedSubpack,
         LinkedHashMap<String, BrAnimationSet> animationFiles,
         LinkedHashMap<String, BrAnimationControllerSet> animationControllerFiles,
         LinkedHashMap<String, BrClientEntity> clientEntityFiles,
