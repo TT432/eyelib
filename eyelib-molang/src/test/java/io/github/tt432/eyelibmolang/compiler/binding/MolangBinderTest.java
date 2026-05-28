@@ -105,18 +105,18 @@ class MolangBinderTest {
     }
 
     @Test
-    void bindsDeferredTernaryAsUnsupportedInThisSliceWithDeferredNote() {
+    void bindsTernaryConditionalAsBoundTernaryConditionalExpr() {
         BindResult bindResult = bind(DEFERRED_TERNARY_SOURCE);
 
-        BoundMolang.BoundDeferredExpr deferredExpr = assertInstanceOf(BoundMolang.BoundDeferredExpr.class, bindResult.root().root());
-        assertEquals(BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, deferredExpr.reason());
-        assertEquals("TernaryConditionalExpr", deferredExpr.sourceFamily());
+        BoundMolang.BoundTernaryConditionalExpr ternaryExpr = assertInstanceOf(BoundMolang.BoundTernaryConditionalExpr.class, bindResult.root().root());
+        assertInstanceOf(BoundMolang.BoundBinaryExpr.class, ternaryExpr.condition());
+        assertInstanceOf(BoundMolang.BoundMemberAccessExpr.class, ternaryExpr.whenTrue());
+        assertInstanceOf(BoundMolang.BoundIndexExpr.class, ternaryExpr.whenFalse());
 
-        assertTrue(bindResult.deferredNotes().stream().anyMatch(note ->
-                note.reason() == BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
-                && note.sourceFamily().equals("TernaryConditionalExpr")
+        assertTrue(bindResult.deferredNotes().isEmpty());
+        assertTrue(bindResult.diagnostics().stream().noneMatch(d ->
+                d.code().equals("BIND_DEFERRED_UNSUPPORTED") && d.message().contains("TernaryConditionalExpr")
         ));
-        assertDeferredUnsupportedWarning(bindResult, "TernaryConditionalExpr");
     }
 
     @Test
@@ -135,23 +135,21 @@ class MolangBinderTest {
     }
 
     @Test
-    void strictModeEmitsDeferredWarningForTernaryBinding() {
+    void strictModeDoesNotEmitDeferredWarningForNowSupportedTernaryBinding() {
         BindResult bindResult = bind(DEFERRED_TERNARY_SOURCE, BindDiagnosticsMode.STRICT);
 
-        assertTrue(bindResult.diagnostics().stream().anyMatch(diagnostic ->
-                diagnostic.severity() == BindDiagnostic.Severity.WARNING
-                && diagnostic.code().equals("BIND_STRICT_UNSUPPORTED_DEFERRED")
+        assertTrue(bindResult.diagnostics().stream().noneMatch(diagnostic ->
+                diagnostic.code().equals("BIND_STRICT_UNSUPPORTED_DEFERRED")
                 && diagnostic.message().contains("TernaryConditionalExpr")
         ));
     }
 
     @Test
-    void debugModeEmitsDeferredInfoForTernaryBinding() {
+    void debugModeDoesNotEmitDeferredInfoForNowSupportedTernaryBinding() {
         BindResult bindResult = bind(DEFERRED_TERNARY_SOURCE, BindDiagnosticsMode.DEBUG);
 
-        assertTrue(bindResult.diagnostics().stream().anyMatch(diagnostic ->
-                diagnostic.severity() == BindDiagnostic.Severity.INFO
-                && diagnostic.code().equals("BIND_DEBUG_DEFERRED_NOTE")
+        assertTrue(bindResult.diagnostics().stream().noneMatch(diagnostic ->
+                diagnostic.code().equals("BIND_DEBUG_DEFERRED_NOTE")
                 && diagnostic.message().contains("TernaryConditionalExpr")
         ));
     }

@@ -10,7 +10,12 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -103,7 +108,7 @@ public class FingerprintCalculator {
             List<FunctionInfo> functionInfos = node.actualFunctions.get(functionName);
             if (functionInfos != null) {
                 functionInfos.sort(functionPublicationOrder);
-                validateEqualTieConflicts(scopeName, functionName, functionInfos);
+                deduplicateEqualTies(functionInfos);
                 orderedFunctions.put(functionName, functionInfos);
             }
         }
@@ -116,24 +121,17 @@ public class FingerprintCalculator {
         }
     }
 
-    private static void validateEqualTieConflicts(String scopeName, String functionName, List<FunctionInfo> functionInfos) {
-        if (functionName.isBlank() || functionInfos.size() <= 1) {
+    private static void deduplicateEqualTies(List<FunctionInfo> functionInfos) {
+        if (functionInfos.size() <= 1) {
             return;
         }
 
-        Map<PublicationSignature, FunctionInfo> signatures = new HashMap<>();
+        Map<PublicationSignature, FunctionInfo> lastWin = new LinkedHashMap<>();
         for (FunctionInfo functionInfo : functionInfos) {
             PublicationSignature signature = MolangMappingTree.publicationSignature(functionInfo);
-            FunctionInfo existing = signatures.putIfAbsent(signature, functionInfo);
-            if (existing != null && !existing.method().equals(functionInfo.method())) {
-                String qualifiedName = scopeName.isEmpty() ? functionName : scopeName + "." + functionName;
-                throw new IllegalStateException(
-                        "Unresolved callable publication conflict for '" + qualifiedName
-                                + "' with signature " + signature
-                                + ": " + describeFunction(existing)
-                                + " vs " + describeFunction(functionInfo)
-                );
-            }
+            lastWin.put(signature, functionInfo);
         }
+        functionInfos.clear();
+        functionInfos.addAll(lastWin.values());
     }
 }

@@ -189,6 +189,8 @@ public final class MolangBytecodeEmitter {
             }
         } else if (expr instanceof BoundMolang.BoundNullCoalesceExpr nullCoalesceExpr) {
             emitNullCoalesceExpr(code, nullCoalesceExpr);
+        } else if (expr instanceof BoundMolang.BoundTernaryConditionalExpr ternary) {
+            emitTernaryExpr(code, ternary);
         } else if (expr instanceof BoundMolang.BoundUnknownExpr || expr instanceof BoundMolang.BoundDeferredExpr) {
             code.getstatic(CD_MOLANG_NULL, "INSTANCE", CD_MOLANG_NULL);
         } else {
@@ -375,6 +377,19 @@ public final class MolangBytecodeEmitter {
         code.goto_(end);
         code.labelBinding(returnLeft);
         code.labelBinding(end);
+    }
+
+    private static void emitTernaryExpr(CodeBuilder code, BoundMolang.BoundTernaryConditionalExpr ternary) {
+        emitExpr(code, ternary.condition());
+        code.invokeinterface(CD_MOLANG_OBJECT, "asBoolean", MethodTypeDesc.of(CD_BOOL));
+        Label elseLabel = code.newLabel();
+        Label endLabel = code.newLabel();
+        code.ifeq(elseLabel);
+        emitExpr(code, ternary.whenTrue());
+        code.goto_(endLabel);
+        code.labelBinding(elseLabel);
+        emitExpr(code, ternary.whenFalse());
+        code.labelBinding(endLabel);
     }
 
     private static void emitBlockExpr(CodeBuilder code, BoundMolang.BoundBlockExpr blockExpr) {

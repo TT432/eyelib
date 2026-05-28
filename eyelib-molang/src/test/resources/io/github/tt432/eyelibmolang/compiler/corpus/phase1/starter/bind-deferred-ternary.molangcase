@@ -5,6 +5,5 @@ evidence: internal
 assertions:
   - parse-accept
   - bind-normalize
-  - deferred-note
 ---
 query.get_name == 'Toast' ? Texture.toast : Array.skins[query.variant]

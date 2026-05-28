@@ -34,7 +34,9 @@ import static io.github.tt432.eyelibmolang.MolangValue.TRUE;
 public final class MolangQuery {
     @MolangFunction(value = "anim_time", alias = "life_time", description = "动画播放秒数")
     public static float animTime(MolangScope scope) {
-        return scope.getHostContext().get(BrAnimationEntry.Data.class).map(BrAnimationEntry.Data::animTime).orElse(0F);
+        return scope.getHostContext().get(BrAnimationEntry.Data.class).map(BrAnimationEntry.Data::animTime)
+                .orElseGet(() -> scope.getHostContext().get(BrAnimationController.Data.class)
+                        .map(BrAnimationController.Data::animTime).orElse(0F));
     }
 
     @MolangFunction(value = "delta_time", description = "距离上一帧的秒数")

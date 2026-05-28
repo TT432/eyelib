@@ -12,8 +12,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** @author TT432 */
 class MolangCallablePublicationSignatureRoleTest {
@@ -43,17 +41,19 @@ class MolangCallablePublicationSignatureRoleTest {
     }
 
     @Test
-    void setupMolangMappingTreeFailsLoudlyOnEqualTieCallablePublicationConflictAfterRoleResolution() {
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> MolangMappingTree.setupMolangMappingTree(() -> List.of(
-                        entry(RoleResolvedTieLeftMapping.class),
-                        entry(RoleResolvedTieRightMapping.class)
-                ))
-        );
+    void setupMolangMappingTreeLastWinDedupEqualTieCallablePublicationConflictAfterRoleResolution() {
+        MolangMappingTree.setupMolangMappingTree(() -> List.of(
+                entry(RoleResolvedTieLeftMapping.class),
+                entry(RoleResolvedTieRightMapping.class)
+        ));
 
-        assertTrue(exception.getMessage().contains("query.role_conflict"));
-        assertTrue(exception.getMessage().contains("PublicationSignature[varArgs=false, visibleArity=1]"));
+        MolangMappingTree.MethodData methodData = MolangMappingTree.INSTANCE.findMethod("query.role_conflict");
+        assertNotNull(methodData);
+        assertEquals(1, methodData.functionInfos().size());
+        assertEquals(
+                RoleResolvedTieRightMapping.class.getName(),
+                methodData.functionInfos().get(0).molangClass().classInstance().getName()
+        );
     }
 
     @Test

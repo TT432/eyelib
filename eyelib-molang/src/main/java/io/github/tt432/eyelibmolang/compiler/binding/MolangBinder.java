@@ -123,7 +123,12 @@ public final class MolangBinder {
         } else if (expr instanceof MolangAst.ForEachExpr forEachExpr) {
             boundExpr = bindForEachExpr(forEachExpr, state);
         } else if (expr instanceof MolangAst.TernaryConditionalExpr ternaryConditionalExpr) {
-            boundExpr = deferUnsupportedExpr(state, ternaryConditionalExpr, "TernaryConditionalExpr");
+            boundExpr = new BoundMolang.BoundTernaryConditionalExpr(
+                    ternaryConditionalExpr.span(),
+                    bindExpr(ternaryConditionalExpr.condition(), state, true),
+                    bindExpr(ternaryConditionalExpr.whenTrue(), state, true),
+                    bindExpr(ternaryConditionalExpr.whenFalse(), state, true)
+            );
         } else if (expr instanceof MolangAst.BinaryConditionalExpr binaryConditionalExpr) {
             boundExpr = deferUnsupportedExpr(state, binaryConditionalExpr, "BinaryConditionalExpr");
         } else {

@@ -11,8 +11,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** @author TT432 */
 class MolangHostPublicationDeterminismConflictTest {
@@ -40,16 +38,19 @@ class MolangHostPublicationDeterminismConflictTest {
     }
 
     @Test
-    void setupMolangMappingTreeFailsLoudlyOnEqualTieCallablePublicationConflict() {
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> MolangMappingTree.setupMolangMappingTree(() -> List.of(
-                        entry(EqualTieConflictLeftMapping.class),
-                        entry(EqualTieConflictRightMapping.class)
-                ))
-        );
+    void setupMolangMappingTreeLastWinDedupEqualTieCallablePublicationConflict() {
+        MolangMappingTree.setupMolangMappingTree(() -> List.of(
+                entry(EqualTieConflictLeftMapping.class),
+                entry(EqualTieConflictRightMapping.class)
+        ));
 
-        assertTrue(exception.getMessage().contains("query.conflict"));
+        MolangMappingTree.MethodData methodData = MolangMappingTree.INSTANCE.findMethod("query.conflict");
+        assertNotNull(methodData);
+        assertEquals(1, methodData.functionInfos().size());
+        assertEquals(
+                EqualTieConflictRightMapping.class.getName(),
+                methodData.functionInfos().get(0).molangClass().classInstance().getName()
+        );
     }
 
     private static List<String> publishedCallableOrder(List<MolangMappingDiscovery.MolangMappingClassEntry> entries) {

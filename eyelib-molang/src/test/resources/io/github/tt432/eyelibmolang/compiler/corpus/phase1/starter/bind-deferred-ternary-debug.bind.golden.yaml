@@ -1,3 +1,2 @@
-root: BoundDeferredExpr
-contains:
-  - deferred-note-reason:UNSUPPORTED_IN_THIS_SLICE
+root: BoundTernaryConditionalExpr
+contains: []

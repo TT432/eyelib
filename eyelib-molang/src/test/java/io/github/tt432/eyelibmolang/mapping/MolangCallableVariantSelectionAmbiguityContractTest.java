@@ -10,9 +10,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** @author TT432 */
 class MolangCallableVariantSelectionAmbiguityContractTest {
@@ -22,23 +21,23 @@ class MolangCallableVariantSelectionAmbiguityContractTest {
     }
 
     @Test
-    void callableVariantSelectionFailsLoudlyOnEqualSpecificityEqualPriorityAmbiguity() {
+    void callableVariantSelectionLastWinOnEqualSpecificityEqualPriorityAmbiguity() {
         MolangMappingTree.setupMolangMappingTree(() -> List.of(
                 entry(AmbiguousFixedCallableVariantMapping.class),
                 entry(AmbiguousVarArgCallableVariantMapping.class)
         ));
 
-        IllegalStateException exception = assertThrows(
-                IllegalStateException.class,
-                () -> MolangMappingTree.INSTANCE.selectQueryVariant(
-                        "math.ambiguous_callable_tie",
-                        List.of(MolangMappingTree.VisibleArgumentKind.NUMBER),
-                        Set.of()
-                )
+        MolangMappingTree.FunctionInfo selected = MolangMappingTree.INSTANCE.selectQueryVariant(
+                "math.ambiguous_callable_tie",
+                List.of(MolangMappingTree.VisibleArgumentKind.NUMBER),
+                Set.of()
         );
 
-        assertTrue(exception.getMessage().contains("math.ambiguous_callable_tie"));
-        assertTrue(exception.getMessage().contains("equal specificity=7 and priority=5"));
+        assertNotNull(selected);
+        assertEquals(
+                AmbiguousVarArgCallableVariantMapping.class.getName(),
+                selected.molangClass().classInstance().getName()
+        );
     }
 
     private static MolangMappingDiscovery.MolangMappingClassEntry entry(Class<?> mappingClass) {

@@ -1,6 +1,5 @@
 package io.github.tt432.eyelibmolang.mapping.api;
 
-import io.github.tt432.eyelibmolang.mapping.MolangBuiltInMappings;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;
@@ -49,9 +48,6 @@ public class MolangMappingTree {
 
     public static void setupMolangMappingTree(MolangMappingDiscovery discovery) {
         INSTANCE.clear();
-        for (var entry : MolangBuiltInMappings.discover().stream().sorted(MAPPING_ENTRY_ORDER).toList()) {
-            INSTANCE.addNode(entry.mappingName(), new MolangClass(entry.mappingClass(), entry.pureFunction()));
-        }
         for (var entry : discovery.discover().stream().sorted(MAPPING_ENTRY_ORDER).toList()) {
             INSTANCE.addNode(entry.mappingName(), new MolangClass(entry.mappingClass(), entry.pureFunction()));
         }
@@ -113,6 +109,12 @@ public class MolangMappingTree {
 
         for (String s : split) {
             last = last.children.computeIfAbsent(s, $ -> new Node());
+        }
+
+        for (MolangClass existing : last.actualClasses) {
+            if (existing.classInstance().equals(actualClass.classInstance())) {
+                return;
+            }
         }
 
         last.actualClasses.add(actualClass);

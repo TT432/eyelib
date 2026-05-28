@@ -128,6 +128,14 @@ public final class BoundMolang {
     public record BoundReturnStmt(SourceSpan span, BoundExpr expression) implements BoundStmt {
     }
 
+    public record BoundTernaryConditionalExpr(
+            SourceSpan span,
+            BoundExpr condition,
+            BoundExpr whenTrue,
+            BoundExpr whenFalse
+    ) implements BoundExpr {
+    }
+
     public record BoundBreakStmt(
             SourceSpan span,
             BindDeferredNote.Reason deferredReason

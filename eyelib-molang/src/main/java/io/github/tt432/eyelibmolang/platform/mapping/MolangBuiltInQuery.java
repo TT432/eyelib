@@ -186,6 +186,22 @@ public final class MolangBuiltInQuery {
         return scope.getHostContext().get(Entity.class).map(Entity::getName).orElse(Component.empty()).getString();
     }
 
+    @MolangFunction(value = "is_name_any", description = "判断实体的名称是否匹配给定字符串中的任意一个（不区分大小写子串匹配）")
+    public static float isNameAny(MolangScope scope, String... names) {
+        return scope.getHostContext().get(Entity.class).map(entity -> {
+            String entityName = entity.hasCustomName()
+                    ? entity.getCustomName().getString()
+                    : entity.getName().getString();
+            String lowerName = entityName.toLowerCase(java.util.Locale.ROOT);
+            for (String name : names) {
+                if (lowerName.contains(name.toLowerCase(java.util.Locale.ROOT))) {
+                    return TRUE;
+                }
+            }
+            return FALSE;
+        }).orElse(FALSE);
+    }
+
     @MolangFunction(value = "item_slot_to_bone_name", description = "从 item slot 获取 bone 的名称")
     public static String itemSlotToBoneName(MolangScope scope, String slot) {
         return switch (slot.toString()) {

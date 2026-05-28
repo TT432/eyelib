@@ -72,18 +72,7 @@ public class VariantSelector {
                 .filter(functionInfo -> variantPriority(functionInfo) == highestPriority)
                 .toList();
 
-        if (priorityCandidates.size() > 1) {
-            throw variantSelectionAmbiguityFailure(
-                    name,
-                    priorityCandidates,
-                    highestSpecificity,
-                    highestPriority,
-                    visibleArgumentCallShape,
-                    hostRoles
-            );
-        }
-
-        return priorityCandidates.get(0);
+        return priorityCandidates.get(priorityCandidates.size() - 1);
     }
 
     private static boolean visibleArityMatches(FunctionInfo functionInfo, int visibleArity) {
@@ -199,26 +188,5 @@ public class VariantSelector {
         }
 
         return null;
-    }
-
-    private static IllegalStateException variantSelectionAmbiguityFailure(
-            String qualifiedName,
-            List<FunctionInfo> ambiguousCandidates,
-            int specificity,
-            int priority,
-            List<VisibleArgumentKind> visibleArgumentCallShape,
-            Set<MolangFunction.ParameterRole> availableHostRoles
-    ) {
-        String candidates = ambiguousCandidates.stream()
-                .map(FingerprintCalculator::describeFunction)
-                .collect(java.util.stream.Collectors.joining(" vs "));
-        return new IllegalStateException(
-                "Ambiguous query variant selection for '" + qualifiedName
-                        + "' with call shape " + visibleArgumentCallShape
-                        + " and host roles " + availableHostRoles
-                        + ": equal specificity=" + specificity
-                        + " and priority=" + priority
-                        + " across " + candidates
-        );
     }
 }
