@@ -3,7 +3,6 @@ package io.github.tt432.eyelibmolang.compiler;
 import io.github.dmlloyd.classfile.ClassFile;
 import io.github.dmlloyd.classfile.CodeBuilder;
 import io.github.dmlloyd.classfile.Label;
-import io.github.dmlloyd.classfile.TypeKind;
 import io.github.tt432.eyelibmolang.compiler.binding.BoundMolang;
 import io.github.tt432.eyelibmolang.type.MolangObject;
 import org.jspecify.annotations.NullMarked;
@@ -38,7 +37,8 @@ public final class MolangBytecodeEmitter {
     private static final ClassDesc CD_STRING = ClassDesc.of("java.lang.String");
     private static final ClassDesc CD_FLOAT = ClassDesc.ofDescriptor("F");
     private static final ClassDesc CD_BOOL = ClassDesc.ofDescriptor("Z");
-    private static final ClassDesc CD_FLOAT_ARRAY = ClassDesc.ofDescriptor("[F");
+    private static final ClassDesc CD_MOLANG_OBJECT_ARRAY =
+            ClassDesc.ofDescriptor("[Lio/github/tt432/eyelibmolang/type/MolangObject;");
     private static final ClassDesc CD_INT = ClassDesc.ofDescriptor("I");
     private static final ClassDesc CD_VOID = ClassDesc.ofDescriptor("V");
 
@@ -154,9 +154,9 @@ public final class MolangBytecodeEmitter {
         } else if (expr instanceof BoundMolang.BoundCallExpr callExpr) {
             code.aload(1);
             code.ldc(resolveCallName(callExpr.callee()));
-            emitCallFloatArgsArray(code, callExpr.arguments());
+            emitCallArgsArray(code, callExpr.arguments());
             code.invokestatic(CD_RUNTIME_SUPPORT, "resolveCall",
-                    MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_MOLANG_SCOPE, CD_STRING, CD_FLOAT_ARRAY));
+                    MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_MOLANG_SCOPE, CD_STRING, CD_MOLANG_OBJECT_ARRAY));
         } else if (expr instanceof BoundMolang.BoundArrowAccessExpr arrowAccessExpr) {
             // Arrow access (->) is a documented Molang construct for cross-entity access.
             // Design intent: left side evaluates to a host entity reference,
@@ -433,15 +433,14 @@ public final class MolangBytecodeEmitter {
         code.getstatic(CD_MOLANG_NULL, "INSTANCE", CD_MOLANG_NULL);
     }
 
-    private static void emitCallFloatArgsArray(CodeBuilder code, List<BoundMolang.BoundExpr> args) {
+    private static void emitCallArgsArray(CodeBuilder code, List<BoundMolang.BoundExpr> args) {
         code.ldc(args.size());
-        code.newarray(TypeKind.FLOAT);
+        code.anewarray(CD_MOLANG_OBJECT);
         for (int i = 0; i < args.size(); i++) {
             code.dup();
             code.ldc(i);
             emitExpr(code, args.get(i));
-            code.invokeinterface(CD_MOLANG_OBJECT, "asFloat", MethodTypeDesc.of(CD_FLOAT));
-            code.fastore();
+            code.aastore();
         }
     }
 

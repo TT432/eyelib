@@ -16,7 +16,7 @@ import java.util.function.Supplier;
  */
 @NullMarked
 public final class MolangCompileCache {
-    private static final int COMPILER_VERSION = 1;
+    private static final int COMPILER_VERSION = 2;
     private static final int MAX_L1_SIZE = 1000;
 
     private final Map<String, CompiledMolangExpression> cache = new ConcurrentHashMap<>();

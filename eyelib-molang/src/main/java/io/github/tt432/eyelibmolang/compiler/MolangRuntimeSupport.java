@@ -77,7 +77,7 @@ public final class MolangRuntimeSupport {
         return MolangNull.INSTANCE;
     }
 
-    public static MolangObject resolveCall(MolangScope scope, String methodName, float[] argValues) {
+    public static MolangObject resolveCall(MolangScope scope, String methodName, MolangObject[] argValues) {
         if (scope == null || methodName == null || methodName.isBlank()) {
             return MolangNull.INSTANCE;
         }
@@ -87,9 +87,9 @@ public final class MolangRuntimeSupport {
         List<MolangObject> visibleArgs = new ArrayList<>();
         List<VisibleArgumentKind> callShape = new ArrayList<>();
         if (argValues != null) {
-            for (float argValue : argValues) {
-                visibleArgs.add(MolangFloat.valueOf(argValue));
-                callShape.add(VisibleArgumentKind.NUMBER);
+            for (MolangObject argValue : argValues) {
+                visibleArgs.add(argValue);
+                callShape.add(callShapeKind(argValue));
             }
         }
 
@@ -124,6 +124,13 @@ public final class MolangRuntimeSupport {
         }
         String indexedName = owner.asString() + "[" + index + "]";
         return scope.get(indexedName);
+    }
+
+    private static VisibleArgumentKind callShapeKind(MolangObject value) {
+        if (value instanceof MolangString) {
+            return VisibleArgumentKind.STRING;
+        }
+        return VisibleArgumentKind.NUMBER;
     }
 
     private static Set<MolangFunction.ParameterRole> computeAvailableHostRoles(MolangScope scope) {
