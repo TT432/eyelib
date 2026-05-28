@@ -64,6 +64,9 @@ legacyForge {
 
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+
+            systemProperty 'eyelib.preventMouseGrab', 'true'
+            systemProperty 'eyelib.minimizeWindow', 'true'
         }
 
         clientSmoke {

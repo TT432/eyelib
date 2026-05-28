@@ -49,6 +49,14 @@ public final class AIDebugServer {
                 exchange.getResponseBody().write(resp);
                 exchange.close();
             });
+            server.createContext("/loaded", exchange -> {
+                var mc = net.minecraft.client.Minecraft.getInstance();
+                boolean loaded = mc.screen != null || mc.player != null;
+                byte[] resp = ("{\"loaded\":" + loaded + "}").getBytes(StandardCharsets.UTF_8);
+                exchange.sendResponseHeaders(200, resp.length);
+                exchange.getResponseBody().write(resp);
+                exchange.close();
+            });
             server.createContext("/ping", exchange -> {
                 byte[] resp = "{\"status\":\"ok\"}".getBytes(StandardCharsets.UTF_8);
                 exchange.sendResponseHeaders(200, resp.length);

@@ -30,6 +30,20 @@ minecraft.stop();
 ```
 Wait for port to be freed before launching the new client. **Never kill java processes from shell.**
 
+### 等待游戏加载完成
+
+客户端启动后需要经历资源加载阶段，此阶段 `minecraft.screen` 和 `minecraft.player` 均为 null。**启动后必须等待 `/loaded` 返回 `true` 才能开始调试操作。**
+
+```
+GET /loaded → {"loaded": true}  → 游戏已就绪（标题画面或世界中）
+GET /loaded → {"loaded": false} → 仍在加载资源，继续等待
+```
+
+等待示例（轮询间隔 3 秒）：
+```
+while /loaded == false → sleep 3s → retry
+```
+
 ### Session verification
 
 After game startup, confirm the debug server belongs to the current launch by checking the in-game log timestamp matches the process start time. If `/eval` gives unexpected results (wrong world, wrong screen, different position), suspect a stale session.
