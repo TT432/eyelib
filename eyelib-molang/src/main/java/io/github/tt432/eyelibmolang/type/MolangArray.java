@@ -24,7 +24,7 @@ public record MolangArray<T extends MolangObject>(
 
     @Override
     public boolean asBoolean() {
-        return false;
+        return !value.isEmpty();
     }
 
     @Override

@@ -15,6 +15,7 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
 import java.nio.IntBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -59,13 +60,18 @@ public class TextureLayerMerger {
         if (textures.isEmpty() || textures.size() > 16) {
             return new NativeImage(16, 16, false);
         }
+        // 过滤掉纹理管理器中不存在的纹理，避免 FileNotFoundException
+        List<ResourceLocation> validTextures = filterExisting(textures);
+        if (validTextures.isEmpty()) {
+            return new NativeImage(16, 16, false);
+        }
 
         int maxX = 16;
         int maxY = 16;
         IntBuffer widthBuffer = BufferUtils.createIntBuffer(1);
         IntBuffer heightBuffer = BufferUtils.createIntBuffer(1);
 
-        for (ResourceLocation resourceLocation : textures) {
+        for (ResourceLocation resourceLocation : validTextures) {
             AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(resourceLocation);
             if (texture == MissingTextureAtlasSprite.getTexture()) continue;
             texture.bind();
@@ -92,16 +98,17 @@ public class TextureLayerMerger {
             GL20.glTexImage2D(GL_TEXTURE_2D, 0, GL30.GL_RGBA8, maxX, maxY, 0, GL_RGBA, GL_UNSIGNED_BYTE, (IntBuffer) null);
             glBindImageTexture(0, outputTexture, 0, false, 0, GL15.GL_WRITE_ONLY, GL30.GL_RGBA8);
 
-            int[] samplers = new int[textures.size()];
-            for (int i = 0; i < textures.size(); i++) {
-                AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(textures.get(i));
+            int validCount = validTextures.size();
+            int[] samplers = new int[validCount];
+            for (int i = 0; i < validCount; i++) {
+                AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(validTextures.get(i));
                 GlStateManager._activeTexture(GL_TEXTURE0 + i + 1);
                 texture.bind();
                 samplers[i] = i + 1;
             }
 
             GL20.glUniform1iv(GL20.glGetUniformLocation(program, "u_Textures"), samplers);
-            GL20.glUniform1i(GL20.glGetUniformLocation(program, "u_TextureCount"), textures.size());
+            GL20.glUniform1i(GL20.glGetUniformLocation(program, "u_TextureCount"), validCount);
 
             glDispatchCompute((maxX + 7) / 8, (maxY + 7) / 8, 1);
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -115,6 +122,20 @@ public class TextureLayerMerger {
         }
 
         return finalImage;
+    }
+
+    private static List<ResourceLocation> filterExisting(List<ResourceLocation> textures) {
+        List<ResourceLocation> valid = new ArrayList<>(textures.size());
+        for (ResourceLocation resourceLocation : textures) {
+            try {
+                AbstractTexture tex = Minecraft.getInstance().getTextureManager().getTexture(resourceLocation);
+                if (tex != MissingTextureAtlasSprite.getTexture()) {
+                    valid.add(resourceLocation);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return valid;
     }
 
     private static int getComputeProgram() {

@@ -13,7 +13,6 @@ import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelibmolang.type.*;
 import io.github.tt432.eyelibutil.texture.TexturePaths;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.NullMarked;
@@ -43,7 +42,7 @@ public record RenderControllerEntry(
                  .forGetter(RenderControllerEntry::arrays),
             Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).listOf().xmap(
                     l -> {
-                        Map<String, MolangValue> result = new Object2ObjectOpenHashMap<>();
+                        Map<String, MolangValue> result = new LinkedHashMap<>();
                         for (Map<String, MolangValue> map : l) {
                             result.putAll(map);
                         }
@@ -53,7 +52,7 @@ public record RenderControllerEntry(
             ).optionalFieldOf("materials", Map.of()).forGetter(RenderControllerEntry::materials),
             Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).listOf().xmap(
                     l -> {
-                        Map<String, MolangValue> result = new Object2ObjectOpenHashMap<>();
+                        Map<String, MolangValue> result = new LinkedHashMap<>();
                         for (Map<String, MolangValue> map : l) {
                             result.putAll(map);
                         }
@@ -153,9 +152,10 @@ public record RenderControllerEntry(
             return Objects.requireNonNullElse(r, "minecraft:null");
         } else if (object instanceof MolangString || object instanceof MolangDynamicObject) {
             return Objects.requireNonNullElse(object.asString(), "minecraft:null");
+        } else if (object instanceof MolangArray) {
+            return "minecraft:null";
         } else {
             var r = map.get(object.asString().toLowerCase(Locale.ROOT).replace(type + ".", ""));
-
             return Objects.requireNonNullElse(r, "minecraft:null");
         }
     }

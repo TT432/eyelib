@@ -3,9 +3,9 @@ package io.github.tt432.eyelibimporter.render.controller;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibmolang.MolangValue;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jspecify.annotations.NullMarked;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,7 +35,7 @@ public record BrRenderControllerEntry(
     ).apply(instance, BrRenderControllerEntry::new));
 
     private static Map<String, MolangValue> flattenMolangMaps(List<Map<String, MolangValue>> values) {
-        Map<String, MolangValue> result = new Object2ObjectOpenHashMap<>();
+        Map<String, MolangValue> result = new LinkedHashMap<>();
         for (Map<String, MolangValue> value : values) {
             result.putAll(value);
         }

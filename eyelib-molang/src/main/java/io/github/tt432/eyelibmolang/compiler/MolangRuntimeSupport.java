@@ -6,6 +6,7 @@ import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.FunctionInfo;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.FunctionParameterRole;
 import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.VisibleArgumentKind;
+import io.github.tt432.eyelibmolang.type.MolangArray;
 import io.github.tt432.eyelibmolang.type.MolangFloat;
 import io.github.tt432.eyelibmolang.type.MolangNull;
 import io.github.tt432.eyelibmolang.type.MolangObject;
@@ -109,6 +110,9 @@ public final class MolangRuntimeSupport {
     public static MolangObject resolveIndex(MolangScope scope, MolangObject owner, int index) {
         if (scope == null || owner == null || index < 0) {
             return MolangNull.INSTANCE;
+        }
+        if (owner instanceof MolangArray<?> arr) {
+            return index < arr.value().size() ? arr.value().get(index) : MolangNull.INSTANCE;
         }
         String indexedName = owner.asString() + "[" + index + "]";
         return scope.get(indexedName);
@@ -235,6 +239,20 @@ public final class MolangRuntimeSupport {
         }
         if (result instanceof String str) {
             return MolangString.valueOf(str);
+        }
+        if (result instanceof List<?> list) {
+            List<MolangObject> items = new ArrayList<>();
+            for (Object item : list) {
+                items.add(wrapJavaResult(item));
+            }
+            return new MolangArray<>(items);
+        }
+        if (result.getClass().isArray()) {
+            List<MolangObject> items = new ArrayList<>();
+            for (int i = 0, len = Array.getLength(result); i < len; i++) {
+                items.add(wrapJavaResult(Array.get(result, i)));
+            }
+            return new MolangArray<>(items);
         }
         return MolangNull.INSTANCE;
     }
