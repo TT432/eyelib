@@ -45,11 +45,7 @@ public record RenderControllerEntry(
                     l -> {
                         Map<String, MolangValue> result = new Object2ObjectOpenHashMap<>();
                         for (Map<String, MolangValue> map : l) {
-                            for (Map.Entry<String, MolangValue> stringMolangValueEntry : map.entrySet()) {
-                                if (result.put(stringMolangValueEntry.getKey(), stringMolangValueEntry.getValue()) != null) {
-                                    throw new IllegalStateException("Duplicate key");
-                                }
-                            }
+                            result.putAll(map);
                         }
                         return result;
                     },
@@ -59,11 +55,7 @@ public record RenderControllerEntry(
                     l -> {
                         Map<String, MolangValue> result = new Object2ObjectOpenHashMap<>();
                         for (Map<String, MolangValue> map : l) {
-                            for (Map.Entry<String, MolangValue> stringMolangValueEntry : map.entrySet()) {
-                                if (result.put(stringMolangValueEntry.getKey(), stringMolangValueEntry.getValue()) != null) {
-                                    throw new IllegalStateException("Duplicate key");
-                                }
-                            }
+                            result.putAll(map);
                         }
                         return result;
                     },
@@ -133,8 +125,15 @@ public record RenderControllerEntry(
 
         ModelComponent component = new ModelComponent();
 
+        var geometryResult = get(scope, geometry, "geometry", entity.geometry());
+        if ("minecraft:null".equals(geometryResult)) {
+            var defaultGeo = entity.geometry().get("default");
+            geometryResult = defaultGeo != null ? defaultGeo
+                    : entity.geometry().values().stream().findFirst().orElse("minecraft:null");
+        }
+
         component.setInfo(new ModelComponentInfo(
-                get(scope, geometry, "geometry", entity.geometry()),
+                geometryResult,
                 texture,
                 new ResourceLocation(materials.containsKey("*") ? get(scope, materials.get("*"), "material", entity.materials()) : "")
         ));

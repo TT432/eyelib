@@ -41,6 +41,7 @@ final class BrControllerExecutor {
 
         scope.getHostContext().put(BrAnimationController.Data.class, data);
         scope.getHostContext().put(BrAnimationController.class, controller);
+        data.owner().currentTick(ticks);
 
         for (Map.Entry<String, io.github.tt432.eyelibmolang.MolangValue> entry : currState.transitions().entrySet()) {
             if (entry.getValue().evalAsBool(scope)) {

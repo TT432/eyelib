@@ -75,6 +75,7 @@ class AttachableResolverTest {
                 Map.of(),
                 Map.of(),
                 List.of(),
+                Map.of(),
                 Optional.empty(),
                 Optional.empty(),
                 item,

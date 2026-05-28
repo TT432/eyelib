@@ -7,7 +7,6 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 
@@ -15,15 +14,26 @@ import java.util.Map;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @NullMarked
 public final class RenderControllerAssetRegistry {
+
     public static void replaceRenderControllers(Map<?, RenderControllers> controllers) {
-        LinkedHashMap<String, RenderControllerEntry> flattened = new LinkedHashMap<>();
         for (RenderControllers value : controllers.values()) {
-            value.render_controllers().forEach(flattened::put);
+            value.render_controllers().forEach((key, entry) -> {
+                RenderControllerEntry existing = RenderControllerManager.readPort().get(key);
+                if (existing != null && existing.part_visibility().size() > entry.part_visibility().size()) {
+                    return;
+                }
+                RenderControllerManager.writePort().put(key, entry);
+            });
         }
-        RenderControllerManager.writePort().replaceAll(flattened);
     }
 
     public static void publishRenderController(RenderControllers controller) {
-        controller.render_controllers().forEach(RenderControllerManager.writePort()::put);
+        controller.render_controllers().forEach((key, entry) -> {
+            RenderControllerEntry existing = RenderControllerManager.readPort().get(key);
+            if (existing != null && existing.part_visibility().size() > entry.part_visibility().size()) {
+                return;
+            }
+            RenderControllerManager.writePort().put(key, entry);
+        });
     }
 }

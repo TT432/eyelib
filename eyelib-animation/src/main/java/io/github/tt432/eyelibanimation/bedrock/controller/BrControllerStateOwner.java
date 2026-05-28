@@ -17,6 +17,7 @@ import java.util.Map;
 @NullMarked
 final class BrControllerStateOwner {
     private float startTick = -1;
+    private float currentTick;
     @Nullable private BrAcStateDefinition lastState;
     @Nullable private BrAcStateDefinition currState;
     private final Map<String, Object> data = new Object2ObjectOpenHashMap<>();
@@ -29,6 +30,8 @@ final class BrControllerStateOwner {
 
     float startTick() { return startTick; }
     void startTick(float startTick) { this.startTick = startTick; }
+    float currentTick() { return currentTick; }
+    void currentTick(float currentTick) { this.currentTick = currentTick; }
     @Nullable BrAcStateDefinition lastState() { return lastState; }
     void lastState(@Nullable BrAcStateDefinition lastState) { this.lastState = lastState; }
     @Nullable BrAcStateDefinition currState() { return currState; }

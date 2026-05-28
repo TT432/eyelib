@@ -254,7 +254,7 @@ public class EntityRenderSystem {
     }
 
     public static <T> boolean renderComponents(SimpleRenderAction<T> data) {
-        return data.renderData().getModelComponents().stream()
+        return new ArrayList<>(data.renderData().getModelComponents()).stream()
                     .filter(mc -> mc.readyForRendering() || (mc.getSerializableInfo() != null && mc.getSerializableInfo().texture() != null))
                     .mapToLong(modelComponent -> {
                         var model = modelComponent.getModel();
@@ -415,6 +415,10 @@ public class EntityRenderSystem {
 
             for (int i = 0; i < ce.render_controllers().size(); i++) {
                 String renderController = ce.render_controllers().get(i);
+                io.github.tt432.eyelibmolang.MolangValue condition = ce.renderControllerConditions().get(renderController);
+                if (condition != null && cap.getScope() != null && !condition.evalAsBool(cap.getScope())) {
+                    continue;
+                }
                 RenderControllerEntry renderControllerEntry = RenderControllerLookup.get(renderController);
                 RenderControllerComponent.Slot renderControllerSlot = renderControllerComponent.syncSlot(i, renderControllerEntry);
                 if (renderControllerEntry != null && cap.getScope() != null)

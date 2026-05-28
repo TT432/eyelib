@@ -28,33 +28,31 @@ public class RenderControllerRuntime {
                                    Int2BooleanOpenHashMap partVisibility, MolangScope scope) {
         setup(models, renderControllerEntry);
         Int2ObjectMap<ReferenceList<MolangValue>> referenceListInt2ObjectMap = this.partVisibility;
-        if (referenceListInt2ObjectMap != null) {
+        if (referenceListInt2ObjectMap != null && !referenceListInt2ObjectMap.isEmpty()) {
             referenceListInt2ObjectMap.int2ObjectEntrySet().forEach(e -> {
+                boolean lastVisible = true;
                 for (MolangValue molangValue : e.getValue()) {
-                    if (!molangValue.evalAsBool(scope)) {
-                        partVisibility.put(e.getIntKey(), false);
-                        break;
-                    }
+                    lastVisible = molangValue.evalAsBool(scope);
+                }
+                if (!lastVisible) {
+                    partVisibility.put(e.getIntKey(), false);
                 }
             });
         }
     }
 
     public void setup(Collection<Model> models, RenderControllerEntry renderController) {
-        if (partVisibility == null) {
-            Int2ObjectOpenHashMap<ReferenceList<MolangValue>> part = new Int2ObjectOpenHashMap<>();
-            partVisibility = part;
-            models.stream().filter(java.util.Objects::nonNull).forEach(model -> {
-                model.allBones().int2ObjectEntrySet().forEach(entry -> {
-                    renderController.part_visibility().forEach((k, v) -> {
-                        if (Pattern.compile(k.replace("*", ".*"))
-                                   .matcher(GlobalBoneIdHandler.get(entry.getIntKey())).matches()) {
-                            part.computeIfAbsent(entry.getIntKey(), __ -> new ReferenceArrayList<>()).add(v);
-                        }
-                    });
+        Int2ObjectOpenHashMap<ReferenceList<MolangValue>> part = new Int2ObjectOpenHashMap<>();
+        partVisibility = part;
+        models.stream().filter(java.util.Objects::nonNull).forEach(model -> {
+            model.allBones().int2ObjectEntrySet().forEach(entry -> {
+                String boneName = GlobalBoneIdHandler.get(entry.getIntKey());
+                renderController.part_visibility().forEach((k, v) -> {
+                    if (boneName != null && Pattern.compile(k.replace("*", ".*")).matcher(boneName).matches()) {
+                        part.computeIfAbsent(entry.getIntKey(), __ -> new ReferenceArrayList<>()).add(v);
+                    }
                 });
-
             });
-        }
+        });
     }
 }

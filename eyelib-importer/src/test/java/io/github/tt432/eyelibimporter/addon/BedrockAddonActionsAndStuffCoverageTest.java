@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author TT432 */
 class BedrockAddonActionsAndStuffCoverageTest {
 
-    private static final Path SAMPLE_PATH = Path.of("E:/Downloads/Actions-and-Stuff-1.10-v2.mcpack");
+    private static final Path SAMPLE_PATH = Path.of("E:/_ideaProjects/qylEyelib/run/resourcepacks/Actions-and-Stuff-1.10-v2.mcpack");
 
     @Test
     void loadsSampleAndReportsCoverageStatistics() throws Exception {

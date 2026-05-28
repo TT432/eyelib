@@ -118,6 +118,10 @@ public record BrAnimationController(
             owner.startTick(startTick);
         }
 
+        public float animTime() {
+            return owner.currentTick() - owner.startTick();
+        }
+
         @Nullable
         public BrAcStateDefinition getLastState() {
             return owner.lastState();

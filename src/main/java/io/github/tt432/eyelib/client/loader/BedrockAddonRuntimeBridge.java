@@ -72,13 +72,15 @@ public final class BedrockAddonRuntimeBridge {
             Map<String, io.github.tt432.eyelibimporter.render.controller.BrRenderControllers> controllers
     ) {
         LinkedHashMap<String, RenderControllers> adapted = new LinkedHashMap<>();
-        controllers.forEach((sourceKey, controllerFile) -> adapted.put(sourceKey, new RenderControllers(
-                controllerFile.renderControllers().entrySet().stream().collect(
-                        LinkedHashMap::new,
-                        (map, entry) -> map.put(entry.getKey(), toRuntimeRenderControllerEntry(entry.getValue())),
-                        LinkedHashMap::putAll
-                )
-        )));
+        controllers.forEach((sourceKey, controllerFile) -> {
+            adapted.put(sourceKey, new RenderControllers(
+                    controllerFile.renderControllers().entrySet().stream().collect(
+                            LinkedHashMap::new,
+                            (map, entry) -> map.put(entry.getKey(), toRuntimeRenderControllerEntry(entry.getValue())),
+                            LinkedHashMap::putAll
+                    )
+            ));
+        });
         return adapted;
     }
 
