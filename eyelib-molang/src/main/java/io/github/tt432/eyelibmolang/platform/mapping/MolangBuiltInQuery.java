@@ -66,6 +66,41 @@ public final class MolangBuiltInQuery {
         return entityBool(scope, entity -> entity.xo != entity.getX() || entity.yo != entity.getY() || entity.zo != entity.getZ());
     }
 
+    @MolangFunction(value = "any", description = "对第一个参数求值后，若后续任意参数与第一个参数值相等则返回 1.0。至少需要 3 个参数")
+    public static float any(MolangScope scope, float value, float... candidates) {
+        for (float candidate : candidates) {
+            if (Float.compare(value, candidate) == 0) {
+                return TRUE;
+            }
+        }
+        return FALSE;
+    }
+
+    @MolangFunction(value = "in_range", description = "若第一个参数在最小值和最大值（含）之间则返回 1.0")
+    public static float inRange(MolangScope scope, float value, float min, float max) {
+        return value >= min && value <= max ? TRUE : FALSE;
+    }
+
+    @MolangFunction(value = "position", description = "返回实体的绝对位置。参数为轴索引 (0=x, 1=y, 2=z)")
+    public static float position(MolangScope scope, float axis) {
+        return switch ((int) axis) {
+            case 0 -> posX(scope);
+            case 1 -> posY(scope);
+            case 2 -> posZ(scope);
+            default -> 0F;
+        };
+    }
+
+    @MolangFunction(value = "camera_distance_range_lerp", description = "根据相机距离在两个距离范围之间插值返回 0~1")
+    public static float cameraDistanceRangeLerp(MolangScope scope, float d1, float d2) {
+        float dist = distanceFromCamera(scope);
+        float min = Math.min(d1, d2);
+        float max = Math.max(d1, d2);
+        if (dist <= min) return 0F;
+        if (dist >= max) return TRUE;
+        return (dist - min) / (max - min);
+    }
+
     @MolangFunction(value = "has_target", description = "拥有目标")
     public static float hasTarget(MolangScope scope) {
         return scope.getHostContext().get(Targeting.class).map(m -> m.getTarget() != null ? TRUE : FALSE).orElse(FALSE);
@@ -738,6 +773,116 @@ public final class MolangBuiltInQuery {
     @MolangFunction(value = "baby", alias = "is_baby", description = "幼年体")
     public static float baby(MolangScope scope) {
         return livingBool(scope, LivingEntity::isBaby);
+    }
+
+    @MolangFunction(value = "is_riding_any_entity_of_type", description = "检查实体是否骑乘任意指定类型的实体")
+    public static float isRidingAnyEntityOfType(MolangScope scope, String... types) {
+        return scope.getHostContext().get(Entity.class).map(entity -> {
+            Entity vehicle = entity.getVehicle();
+            if (vehicle == null) return FALSE;
+            ResourceLocation vehicleKey = BuiltInRegistries.ENTITY_TYPE.getKey(vehicle.getType());
+            for (String type : types) {
+                if (ResourceLocations.of(type).equals(vehicleKey)) {
+                    return TRUE;
+                }
+            }
+            return FALSE;
+        }).orElse(FALSE);
+    }
+
+    @MolangFunction(value = "equipped_item_any_tag", description = "检查指定槽位物品是否拥有任意指定的物品标签")
+    public static float equippedItemAnyTag(MolangScope scope, String slot, String... tags) {
+        return livingBool(scope, l -> {
+            ItemStack item = getItemBySlot(l, slot, 0);
+            for (String tag : tags) {
+                var tagKey = net.minecraft.tags.TagKey.create(Registries.ITEM, ResourceLocations.of(tag));
+                if (item.is(tagKey)) {
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+
+    @MolangFunction(value = "get_equipped_item_name", description = "获取指定槽位的物品名称（已弃用，建议使用 is_item_name_any）")
+    public static String getEquippedItemName(MolangScope scope) {
+        return scope.getHostContext().get(LivingEntity.class)
+                .map(l -> BuiltInRegistries.ITEM.getKey(getItemBySlot(l, "0", 0).getItem()).toString())
+                .orElse("");
+    }
+
+    @MolangFunction(value = "relative_block_has_any_tag", description = "检查实体相对位置的方块是否拥有任意指定的方块标签")
+    public static float relativeBlockHasAnyTag(MolangScope scope, float relX, float relY, float relZ, String... tags) {
+        return entityBool(scope, entity -> {
+            var level = entity.level();
+            var pos = entity.blockPosition().offset((int) relX, (int) relY, (int) relZ);
+            var blockState = level.getBlockState(pos);
+            for (String tag : tags) {
+                var tagKey = net.minecraft.tags.TagKey.create(Registries.BLOCK, ResourceLocations.of(tag));
+                if (blockState.is(tagKey)) {
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+
+    @MolangFunction(value = "armor_texture_slot", description = "盔甲纹理类型槽（Bedrock 专属，Java 无等效数据源，始终返回 0）")
+    public static float armorTextureSlot(MolangScope scope, float slot) {
+        return 0F;
+    }
+
+    @MolangFunction(value = "bone_orientation_trs", description = "骨骼 TRS 分解（Bedrock .geo 模型数据，Java 运行时无等效数据源，始终返回 0）")
+    public static float boneOrientationTrs(MolangScope scope, String boneName) {
+        return 0F;
+    }
+
+    @MolangFunction(value = "bone_origin", description = "骨骼初始枢轴点（Bedrock .geo 模型数据，Java 运行时无等效数据源，始终返回 0）")
+    public static float boneOrigin(MolangScope scope, String boneName) {
+        return 0F;
+    }
+
+    @MolangFunction(value = "get_root_locator_offset", description = "根模型定位器偏移（Bedrock .geo 模型数据，Java 运行时无等效数据源，始终返回 0）")
+    public static float getRootLocatorOffset(MolangScope scope, String locator, String axis) {
+        return 0F;
+    }
+
+    @MolangFunction(value = "graphics_mode_is_any", description = "图形模式检查（Bedrock 客户端特性，Java 无等效数据源，始终返回 1.0 代表 fancy）")
+    public static float graphicsModeIsAny(MolangScope scope, String... modes) {
+        return TRUE;
+    }
+
+    @MolangFunction(value = "is_pack_setting_enabled", description = "资源包设置开关（Bedrock 客户端特性，Java 无等效数据源，始终返回 0）")
+    public static float isPackSettingEnabled(MolangScope scope, String settingName) {
+        return FALSE;
+    }
+
+    @MolangFunction(value = "is_pack_setting_selected", description = "资源包设置下拉选择（Bedrock 客户端特性，Java 无等效数据源，始终返回 0）")
+    public static float isPackSettingSelected(MolangScope scope, String settingName, String selection) {
+        return FALSE;
+    }
+
+    @MolangFunction(value = "has_property", description = "实体属性存在检查（Bedrock 实体属性系统，Java 无等效数据源，始终返回 0）")
+    public static float hasProperty(MolangScope scope, String propertyName) {
+        return FALSE;
+    }
+
+    @MolangFunction(value = "property", description = "实体属性值（Bedrock 实体属性系统，Java 无等效数据源，始终返回 0）")
+    public static float property(MolangScope scope, String propertyName) {
+        return 0F;
+    }
+
+    @MolangFunction(value = "is_owner_identifier_any", description = "检查根实体标识符是否与任一指定字符串匹配")
+    public static float isOwnerIdentifierAny(MolangScope scope, String... identifiers) {
+        return scope.getHostContext().get(Entity.class).map(entity -> {
+            ResourceLocation entityKey = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+            for (String id : identifiers) {
+                if (ResourceLocations.of(id).equals(entityKey)) {
+                    return TRUE;
+                }
+            }
+            return FALSE;
+        }).orElse(FALSE);
     }
 
     @FunctionalInterface
