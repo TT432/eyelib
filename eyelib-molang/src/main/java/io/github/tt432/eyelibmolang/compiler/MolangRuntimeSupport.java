@@ -12,12 +12,16 @@ import io.github.tt432.eyelibmolang.type.MolangNull;
 import io.github.tt432.eyelibmolang.type.MolangObject;
 import io.github.tt432.eyelibmolang.type.MolangString;
 import org.jspecify.annotations.NullMarked;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -28,6 +32,9 @@ import java.util.Set;
  */
 @NullMarked
 public final class MolangRuntimeSupport {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MolangRuntimeSupport.class);
+    private static final Set<String> WARNED_MISSING = Collections.synchronizedSet(new HashSet<>());
+
     private MolangRuntimeSupport() {
     }
 
@@ -91,13 +98,14 @@ public final class MolangRuntimeSupport {
         try {
             functionInfo = mappingTree.selectQueryVariant(methodName, callShape, hostRoles);
         } catch (Exception e) {
-            // Variant selection may fail with ambiguity errors — treat as unresolved
+            warnMissing(methodName);
             if (visibleArgs.isEmpty()) {
                 return scope.get(methodName);
             }
             return MolangNull.INSTANCE;
         }
         if (functionInfo == null) {
+            warnMissing(methodName);
             if (visibleArgs.isEmpty()) {
                 return scope.get(methodName);
             }
@@ -255,5 +263,14 @@ public final class MolangRuntimeSupport {
             return new MolangArray<>(items);
         }
         return MolangNull.INSTANCE;
+    }
+
+    /**
+     * 对未找到的 Molang 方法输出一次性警告。
+     */
+    private static void warnMissing(String methodName) {
+        if (WARNED_MISSING.add(methodName)) {
+            LOGGER.warn("Molang function '{}' not found or unresolvable — returning 0", methodName);
+        }
     }
 }
