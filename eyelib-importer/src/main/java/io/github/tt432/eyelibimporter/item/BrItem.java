@@ -18,12 +18,10 @@ public record BrItem(
 
     public static final Codec<BrItem> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.STRING.fieldOf("format_version").forGetter(BrItem::formatVersion),
-            RecordCodecBuilder.<BrItem>create(ins1 -> ins1.group(
-                    RecordCodecBuilder.<BrItem>create(ins2 -> ins2.group(
-                            Codec.STRING.fieldOf("identifier").forGetter(BrItem::identifier)
-                    ).apply(ins2, o -> o)).fieldOf("description").forGetter(BrItem::identifier),
+            RecordCodecBuilder.<BrItem>create(inner -> inner.group(
+                    Codec.STRING.fieldOf("identifier").forGetter(BrItem::identifier),
                     OBJECT_VALUE_CODEC.fieldOf("components").forGetter(BrItem::components)
-            ).apply(ins1, BrItem::fromDescriptionAndComponents))
+            ).apply(inner, BrItem::fromDescriptionAndComponents))
                     .fieldOf("minecraft:item").forGetter(o -> o)
     ).apply(ins, BrItem::fromFormatAndItem));
 

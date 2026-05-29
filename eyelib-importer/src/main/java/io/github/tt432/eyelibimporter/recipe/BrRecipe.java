@@ -45,7 +45,9 @@ public sealed interface BrRecipe
             for (var entry : CODEC_BY_KEY.entrySet()) {
                 var val = map.get(entry.getKey());
                 if (val != null) {
-                    return entry.getValue().decode(ops, val);
+                    @SuppressWarnings("unchecked")
+                    var codec = (Codec<BrRecipe>) entry.getValue();
+                    return codec.decode(ops, val);
                 }
             }
             return DataResult.error(() -> "No recipe type key found, expected one of: " + CODEC_BY_KEY.keySet());

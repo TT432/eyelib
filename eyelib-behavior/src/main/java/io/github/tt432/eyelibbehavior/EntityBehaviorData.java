@@ -37,7 +37,7 @@ public class EntityBehaviorData {
     }
 
     public void setup() {
-        // TODO: 临时使用
+        components.clear();
         for (ComponentGroup componentGroup : componentGroups) {
             for (Map<String, Component> value : componentGroup.components().values()) {
                 value.values().forEach(component -> components.put(component.getClass(), component));

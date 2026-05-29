@@ -24,6 +24,7 @@ import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelibbehavior.BehaviorEntity;
 import io.github.tt432.eyelibbehavior.EntityBehaviorData;
+import io.github.tt432.eyelibbehavior.component.group.ComponentGroup;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
 import io.github.tt432.eyelibmolang.MolangScope;
@@ -97,15 +98,23 @@ public class EntityRenderSystem {
             if (key != null) {
                 var be = BehaviorEntityManager.readPort().get(key.toString());
                 if (be != null) {
-                    var data = new EntityBehaviorData(
-                            Optional.of(be),
-                            new ArrayList<>(be.component_groups().values())
-                    );
+                    var spawnEvent = be.events().get("minecraft:entity_spawned");
+                    List<ComponentGroup> groups;
+                    if (spawnEvent != null) {
+                        groups = new ArrayList<>();
+                    } else {
+                        groups = new ArrayList<>(be.component_groups().values());
+                    }
+                    var data = new EntityBehaviorData(Optional.of(be), groups);
                     DataAttachmentHelper.setLocal(
                             EyelibAttachableData.ENTITY_BEHAVIOR_DATA.get(),
                             living,
                             data
                     );
+                    if (spawnEvent != null) {
+                        spawnEvent.eval(data);
+                        data.setup();
+                    }
                 }
             }
         }
