@@ -17,6 +17,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.Slime;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.function.Function;
@@ -62,11 +63,12 @@ public final class MolangQuery {
 
     @MolangFunction(value = "variant", description = "变体")
     public static float variant(MolangScope scope) {
-        return livingFloat(scope, l -> {
-            Variant component = DataAttachmentHelper.getOrCreate(EyelibAttachableData.ENTITY_BEHAVIOR_DATA.get(), l)
-                                                    .component(Variant.class);
-            return component != null ? (float) component.value() : 0;
-        });
+        return scope.getHostContext().get(Slime.class).map(s -> (float) s.getSize())
+                .orElseGet(() -> livingFloat(scope, l -> {
+                    Variant component = DataAttachmentHelper.getOrCreate(EyelibAttachableData.ENTITY_BEHAVIOR_DATA.get(), l)
+                                                            .component(Variant.class);
+                    return component != null ? (float) component.value() : 0;
+                }));
     }
 
     @MolangFunction(value = "mark_variant", description = "变体")
