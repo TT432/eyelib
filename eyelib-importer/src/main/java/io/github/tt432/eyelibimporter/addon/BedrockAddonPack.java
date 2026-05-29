@@ -34,6 +34,8 @@ public record BedrockAddonPack(
         LinkedHashMap<String, BrRenderControllers> renderControllerFiles,
         LinkedHashMap<String, BrParticle> particleFiles,
         LinkedHashMap<String, BrMaterial> materialFiles,
+        LinkedHashMap<String, BrSpawnRule> spawnRulesFiles,
+        LinkedHashMap<String, BrLootTable> lootTableFiles,
         LinkedHashMap<String, BedrockUnmanagedResource> unmanagedResources,
         java.util.List<BedrockAddonWarning> warnings,
         @Nullable ImportedImageData packIcon,
@@ -56,6 +58,8 @@ public record BedrockAddonPack(
         renderControllerFiles = new LinkedHashMap<>(renderControllerFiles);
         particleFiles = new LinkedHashMap<>(particleFiles);
         materialFiles = new LinkedHashMap<>(materialFiles);
+        spawnRulesFiles = new LinkedHashMap<>(spawnRulesFiles);
+        lootTableFiles = new LinkedHashMap<>(lootTableFiles);
         unmanagedResources = new LinkedHashMap<>(unmanagedResources);
         warnings = java.util.List.copyOf(warnings);
     }

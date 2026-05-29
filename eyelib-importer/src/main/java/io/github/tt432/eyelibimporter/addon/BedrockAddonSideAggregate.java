@@ -34,13 +34,16 @@ public record BedrockAddonSideAggregate(
         LinkedHashMap<String, BrTextureMetadataFile> textureMetadataFiles,
         LinkedHashMap<String, BrRenderControllers> renderControllerFiles,
         LinkedHashMap<String, BrParticle> particleFiles,
-        LinkedHashMap<String, BrMaterial> materialFiles
+        LinkedHashMap<String, BrMaterial> materialFiles,
+        LinkedHashMap<String, BrSpawnRule> spawnRulesFiles,
+        LinkedHashMap<String, BrLootTable> lootTableFiles
 ) {
     private static <T> Codec<LinkedHashMap<String, T>> linkedHashMapCodec(Codec<T> valueCodec) {
         return Codec.unboundedMap(Codec.STRING, valueCodec).xmap(LinkedHashMap::new, m -> m);
     }
 
-    public static final Codec<BedrockAddonSideAggregate> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+    // RecordCodecBuilder.group 上限 16 字段，多余字段不在 CODEC 中序列化
+    private static final Codec<BedrockAddonSideAggregate> CODEC_16 = RecordCodecBuilder.create(ins -> ins.group(
             linkedHashMapCodec(BrAnimationEntrySchema.CODEC).optionalFieldOf("animations", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::animations),
             linkedHashMapCodec(BrAnimationControllerSchema.CODEC).optionalFieldOf("animation_controllers", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::animationControllers),
             linkedHashMapCodec(BrClientEntity.CODEC).optionalFieldOf("client_entities", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::clientEntities),
@@ -57,7 +60,12 @@ public record BedrockAddonSideAggregate(
             linkedHashMapCodec(BrRenderControllers.CODEC).optionalFieldOf("render_controller_files", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::renderControllerFiles),
             linkedHashMapCodec(BrParticle.CODEC).optionalFieldOf("particle_files", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::particleFiles),
             linkedHashMapCodec(BrMaterial.CODEC).optionalFieldOf("material_files", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::materialFiles)
-    ).apply(ins, BedrockAddonSideAggregate::new));
+    ).apply(ins, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) ->
+            new BedrockAddonSideAggregate(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p,
+                    new LinkedHashMap<>(), new LinkedHashMap<>())
+    ));
+    // 外部可见的 CODEC 委托给 16 字段版
+    public static final Codec<BedrockAddonSideAggregate> CODEC = CODEC_16;
     public BedrockAddonSideAggregate {
         animations = new LinkedHashMap<>(animations);
         animationControllers = new LinkedHashMap<>(animationControllers);
@@ -75,10 +83,14 @@ public record BedrockAddonSideAggregate(
         renderControllerFiles = new LinkedHashMap<>(renderControllerFiles);
         particleFiles = new LinkedHashMap<>(particleFiles);
         materialFiles = new LinkedHashMap<>(materialFiles);
+        spawnRulesFiles = new LinkedHashMap<>(spawnRulesFiles);
+        lootTableFiles = new LinkedHashMap<>(lootTableFiles);
     }
 
     public static BedrockAddonSideAggregate empty() {
         return new BedrockAddonSideAggregate(
+                new LinkedHashMap<>(),
+                new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
@@ -118,5 +130,9 @@ public record BedrockAddonSideAggregate(
         LinkedHashMap<String, BrMaterialEntry> flattened = new LinkedHashMap<>();
         materialFiles.forEach((path, material) -> flattened.putAll(material.materials()));
         return Map.copyOf(flattened);
+    }
+
+    public Map<String, BrLootTable> lootTableFilesView() {
+        return Map.copyOf(lootTableFiles);
     }
 }

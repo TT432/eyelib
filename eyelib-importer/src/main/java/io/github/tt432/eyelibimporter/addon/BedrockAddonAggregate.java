@@ -56,6 +56,8 @@ public record BedrockAddonAggregate(
         var renderControllerFiles = new java.util.LinkedHashMap<String, io.github.tt432.eyelibimporter.render.controller.BrRenderControllers>();
         var particleFiles = new java.util.LinkedHashMap<String, BrParticle>();
         var materialFiles = new java.util.LinkedHashMap<String, io.github.tt432.eyelibimporter.material.BrMaterial>();
+        var spawnRulesFiles = new java.util.LinkedHashMap<String, BrSpawnRule>();
+        var lootTableFiles = new java.util.LinkedHashMap<String, BrLootTable>();
 
         for (BedrockAddonPack pack : packs) {
             mergeWithWarnings(animations, flattenAnimations(pack.animationFiles()), pack.sourceName(), warnings, BedrockResourceFamily.ANIMATION);
@@ -89,6 +91,8 @@ public record BedrockAddonAggregate(
         });
             particleFiles.putAll(pack.particleFiles());
             materialFiles.putAll(pack.materialFiles());
+            spawnRulesFiles.putAll(pack.spawnRulesFiles());
+            lootTableFiles.putAll(pack.lootTableFiles());
         }
 
         return new BedrockAddonSideAggregate(
@@ -107,7 +111,9 @@ public record BedrockAddonAggregate(
                 textureMetadataFiles,
                 renderControllerFiles,
                 particleFiles,
-                materialFiles
+                materialFiles,
+                spawnRulesFiles,
+                lootTableFiles
         );
     }
 
@@ -235,5 +241,9 @@ public record BedrockAddonAggregate(
 
     public Map<String, BrMaterialEntry> flattenedMaterialEntries() {
         return resourcePack.flattenedMaterialEntries();
+    }
+
+    public Map<String, BrLootTable> lootTableFiles() {
+        return behaviorPack.lootTableFilesView();
     }
 }

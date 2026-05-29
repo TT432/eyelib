@@ -201,6 +201,8 @@ public final class BedrockAddonLoader {
             }
             case BEHAVIOR_ENTITY ->
                 acc.behaviorEntityFiles.put(entry.effectivePath(), BrBehaviorEntityFile.parse(readJsonFile(entry.file())));
+            case SPAWN_RULE ->
+                acc.spawnRulesFiles.put(entry.effectivePath(), BrSpawnRule.parse(readJsonFile(entry.file())));
             case SOUND_FILE ->
                 acc.soundFiles.put(entry.effectivePath(), new BedrockBinaryAsset(extensionOf(entry.effectivePath()),
                         Files.readAllBytes(entry.file())));
@@ -211,6 +213,8 @@ public final class BedrockAddonLoader {
                 acc.textureMetadataFiles.put(entry.effectivePath(),
                         new BrTextureMetadataFile((BedrockResourceValue.ObjectValue)
                                 BedrockResourceValue.fromJsonElement(readJsonFile(entry.file()))));
+            case LOOT_TABLE ->
+                acc.parseAndStore(entry, BrLootTable.CODEC, acc.lootTableFiles);
             case SPLASHES ->
                 acc.splashIndex = BedrockResourceValue.fromJsonElement(readJsonFile(entry.file()));
             case BRARCHIVE ->
@@ -244,6 +248,8 @@ public final class BedrockAddonLoader {
         final LinkedHashMap<String, BrRenderControllers> renderControllerFiles = new LinkedHashMap<>();
         final LinkedHashMap<String, BrParticle> particleFiles = new LinkedHashMap<>();
         final LinkedHashMap<String, BrMaterial> materialFiles = new LinkedHashMap<>();
+        final LinkedHashMap<String, BrSpawnRule> spawnRulesFiles = new LinkedHashMap<>();
+        final LinkedHashMap<String, BrLootTable> lootTableFiles = new LinkedHashMap<>();
         final LinkedHashMap<String, BedrockUnmanagedResource> unmanagedResources = new LinkedHashMap<>();
         @Nullable ImportedImageData packIcon;
         @Nullable BedrockResourceValue splashIndex;
@@ -310,6 +316,7 @@ public final class BedrockAddonLoader {
                     behaviorEntityFiles, soundFiles,
                     textureIndexFiles, textureMetadataFiles,
                     renderControllerFiles, particleFiles, materialFiles,
+                    spawnRulesFiles, lootTableFiles,
                     unmanagedResources, List.copyOf(warnings),
                     packIcon, splashIndex
             );
@@ -619,7 +626,7 @@ public final class BedrockAddonLoader {
 
     private static BedrockUnmanagedReason unmanagedReasonFor(BedrockResourceFamily family) {
         return switch (family) {
-            case ITEM, BLOCK, RECIPE, LOOT_TABLE, SPAWN_RULE, TRADING, FEATURE, FEATURE_RULE, STRUCTURE, SCRIPT, BIOME ->
+            case ITEM, BLOCK, RECIPE, SPAWN_RULE, TRADING, FEATURE, FEATURE_RULE, STRUCTURE, SCRIPT, BIOME ->
                     BedrockUnmanagedReason.OUTSIDE_IMPORTER_SCOPE;
             case UI, FOG, UNKNOWN_JSON, UNKNOWN_TEXT, UNKNOWN_BINARY ->
                     BedrockUnmanagedReason.NO_TYPED_SCHEMA_YET;

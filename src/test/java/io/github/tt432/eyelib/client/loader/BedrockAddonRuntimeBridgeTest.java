@@ -109,7 +109,9 @@ class BedrockAddonRuntimeBridgeTest {
                 new LinkedHashMap<>(),
                 linkedMapOf("render_controllers/test.render_controllers.json", renderControllers),
                 new LinkedHashMap<>(),
-                linkedMapOf("materials/test.material", material)
+                linkedMapOf("materials/test.material", material),
+                new LinkedHashMap<>(),
+                new LinkedHashMap<>()
         );
 
         BedrockAddon addon = new BedrockAddon(List.of(), List.of(), new LinkedHashMap<>(), new BedrockAddonAggregate(
