@@ -9,12 +9,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * @author TT432
@@ -23,21 +26,7 @@ import java.util.stream.Stream;
 final class VanillaBehaviorEntityLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(VanillaBehaviorEntityLoader.class);
     private static final Path DEFAULT_ENTITY_DIR = Paths.get("run/vanilla_behavior_pack/entities");
-    private static final String ENTITIES_RESOURCE_PREFIX = "eyelib/vanilla_behavior/entities/";
-
-    private static final List<String> ENTITY_NAMES = List.of(
-            "slime",
-            "creeper",
-            "cat",
-            "fox",
-            "panda",
-            "parrot",
-            "rabbit",
-            "sheep",
-            "wolf",
-            "zombie",
-            "skeleton"
-    );
+    private static final String MCPACK_RESOURCE_PATH = "data/eyelib/vanilla_behavior_pack.mcpack";
 
     private VanillaBehaviorEntityLoader() {
     }
@@ -49,7 +38,7 @@ final class VanillaBehaviorEntityLoader {
             loadFromDirectory(entities, entityDir);
         }
         if (entities.isEmpty()) {
-            loadFromClasspath(entities);
+            loadFromMcpack(entities);
         }
         if (!entities.isEmpty()) {
             BehaviorEntityAssetRegistry.replaceBehaviorEntities(entities);
@@ -73,20 +62,31 @@ final class VanillaBehaviorEntityLoader {
         }
     }
 
-    private static void loadFromClasspath(LinkedHashMap<String, BrBehaviorEntityFile> entities) {
-        for (String name : ENTITY_NAMES) {
-            String resourcePath = ENTITIES_RESOURCE_PREFIX + name + ".json";
-            try (var is = VanillaBehaviorEntityLoader.class.getClassLoader().getResourceAsStream(resourcePath)) {
-                if (is == null) {
-                    LOGGER.warn("Vanilla behavior entity resource not found: {}", resourcePath);
-                    continue;
-                }
-                JsonObject json = JsonParser.parseReader(new java.io.InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
-                BrBehaviorEntityFile entityFile = BrBehaviorEntityFile.parse(json);
-                entities.put(entityFile.identifier(), entityFile);
-            } catch (Exception e) {
-                LOGGER.warn("Failed to parse vanilla behavior entity: {}", name, e);
+    private static void loadFromMcpack(LinkedHashMap<String, BrBehaviorEntityFile> entities) {
+        var cl = VanillaBehaviorEntityLoader.class.getClassLoader();
+        try (var is = cl.getResourceAsStream(MCPACK_RESOURCE_PATH)) {
+            if (is == null) {
+                LOGGER.warn("Vanilla behavior pack resource not found: {}", MCPACK_RESOURCE_PATH);
+                return;
             }
+            try (var zis = new ZipInputStream(is)) {
+                ZipEntry entry;
+                while ((entry = zis.getNextEntry()) != null) {
+                    String name = entry.getName();
+                    if (name.startsWith("vanilla/entities/") && name.endsWith(".json") && !entry.isDirectory()) {
+                        try {
+                            JsonObject json = JsonParser.parseReader(new InputStreamReader(zis, StandardCharsets.UTF_8)).getAsJsonObject();
+                            BrBehaviorEntityFile entityFile = BrBehaviorEntityFile.parse(json);
+                            entities.put(entityFile.identifier(), entityFile);
+                        } catch (Exception e) {
+                            LOGGER.warn("Failed to parse behavior entity: {}", name, e);
+                        }
+                    }
+                    zis.closeEntry();
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.warn("Failed to read behavior pack from classpath: {}", MCPACK_RESOURCE_PATH, e);
         }
     }
 }
