@@ -11,6 +11,7 @@ import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationCo
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibimporter.material.BrMaterial;
+import io.github.tt432.eyelibimporter.material.BrMaterialEntry;
 import io.github.tt432.eyelibimporter.model.importer.BedrockGeometryImporter;
 import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
 import io.github.tt432.eyelibimporter.model.importer.ModelImporter;
@@ -402,6 +403,16 @@ public final class BedrockAddonLoader {
                 merged.putAll(parseRenderControllerChunk(chunk, acc, entry));
             }
             mergeRenderControllers(acc.renderControllerFiles, entry.effectivePath(), merged);
+        } else if (name.startsWith("materials.")) {
+            var merged = new LinkedHashMap<String, BrMaterialEntry>();
+            for (String chunk : splitConcatenatedJson(fullJson)) {
+                DataResult<BrMaterial> result = BrMaterial.CODEC.parse(JsonOps.INSTANCE, parseJsonLenient(chunk));
+                result.error().ifPresent(err -> acc.warnings.add(
+                        warn(BedrockAddonWarningCode.SCHEMA_PARSE_FAILED, entry.effectivePath(),
+                                "material chunk: " + err.message())));
+                result.result().ifPresent(mat -> merged.putAll(mat.materials()));
+            }
+            mergeMaterials(acc.materialFiles, entry.effectivePath(), merged);
         } else if (name.startsWith("models")) {
             var merged = new LinkedHashMap<String, Model>();
             for (String chunk : splitConcatenatedJson(fullJson)) {
@@ -490,6 +501,19 @@ public final class BedrockAddonLoader {
             merged.put(e.getKey(), e.getValue());
         }
         files.put(effectivePath, new BrRenderControllers(Map.copyOf(merged)));
+    }
+
+    private static void mergeMaterials(LinkedHashMap<String, BrMaterial> files,
+                                        String effectivePath,
+                                        Map<String, BrMaterialEntry> materials) {
+        BrMaterial previous = files.get(effectivePath);
+        if (previous == null) {
+            files.put(effectivePath, new BrMaterial(new LinkedHashMap<>(materials)));
+            return;
+        }
+        var merged = new LinkedHashMap<>(previous.materials());
+        merged.putAll(materials);
+        files.put(effectivePath, new BrMaterial(merged));
     }
 
     // == BrArchive 低级解析 ========================================
