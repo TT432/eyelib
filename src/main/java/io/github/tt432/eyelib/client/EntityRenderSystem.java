@@ -2,10 +2,12 @@ package io.github.tt432.eyelib.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
+import io.github.tt432.eyelib.client.manager.BehaviorEntityManager;
 import io.github.tt432.eyelib.client.entity.ClientEntityLookup;
 import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
 import io.github.tt432.eyelib.client.render.AttachableItemRenderSetup;
@@ -19,6 +21,9 @@ import io.github.tt432.eyelibanimation.AnimationEffects;
 import io.github.tt432.eyelibanimation.BrAnimator;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
+import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
+import io.github.tt432.eyelibbehavior.BehaviorEntity;
+import io.github.tt432.eyelibbehavior.EntityBehaviorData;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
 import io.github.tt432.eyelibmolang.MolangScope;
@@ -63,6 +68,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -76,6 +82,7 @@ import static net.minecraft.client.Minecraft.getInstance;
 @NullMarked
 public class EntityRenderSystem {
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityRenderSystem.class);
+
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
         Entity entity = event.getEntity();
@@ -83,6 +90,24 @@ public class EntityRenderSystem {
 
         if (cap.getOwner() != entity) {
             cap.init(entity);
+        }
+
+        if (entity instanceof LivingEntity living) {
+            var key = ForgeRegistries.ENTITY_TYPES.getKey(living.getType());
+            if (key != null) {
+                var be = BehaviorEntityManager.readPort().get(key.toString());
+                if (be != null) {
+                    var data = new EntityBehaviorData(
+                            Optional.of(be),
+                            new ArrayList<>(be.component_groups().values())
+                    );
+                    DataAttachmentHelper.setLocal(
+                            EyelibAttachableData.ENTITY_BEHAVIOR_DATA.get(),
+                            living,
+                            data
+                    );
+                }
+            }
         }
 
         MinecraftForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
@@ -255,55 +280,56 @@ public class EntityRenderSystem {
 
     public static <T> boolean renderComponents(SimpleRenderAction<T> data) {
         return new ArrayList<>(data.renderData().getModelComponents()).stream()
-                    .filter(mc -> mc.readyForRendering() || (mc.getSerializableInfo() != null && mc.getSerializableInfo().texture() != null))
-                    .mapToLong(modelComponent -> {
-                        var model = modelComponent.getModel();
-                        if (model == null) {
-                            return 0;
-                        }
+                                                                      .filter(mc -> mc.readyForRendering() || (mc.getSerializableInfo() != null && mc.getSerializableInfo()
+                                                                                                                                                     .texture() != null))
+                                                                      .mapToLong(modelComponent -> {
+                                                                          var model = modelComponent.getModel();
+                                                                          if (model == null) {
+                                                                              return 0;
+                                                                          }
 
-                        var poseStack = data.poseStack();
-                        poseStack.pushPose();
+                                                                          var poseStack = data.poseStack();
+                                                                          poseStack.pushPose();
 
-                       RenderParams renderParams = data.renderParams(modelComponent);
+                                                                          RenderParams renderParams = data.renderParams(modelComponent);
 
-                       var tickedInfos = data.tickedInfos();
-                       if (tickedInfos == null) {
-                           tickedInfos = ModelRuntimeData.EMPTY;
-                       }
-                       var effects = data.effects();
-                       if (effects == null) {
-                           effects = new AnimationEffects();
-                       }
-                       var entity = data.entity();
-                       if (entity == null) {
-                           poseStack.popPose();
-                           return 0;
-                       }
-                       MultiBufferSource multiBufferSource = data.multiBufferSource();
+                                                                          var tickedInfos = data.tickedInfos();
+                                                                          if (tickedInfos == null) {
+                                                                              tickedInfos = ModelRuntimeData.EMPTY;
+                                                                          }
+                                                                          var effects = data.effects();
+                                                                          if (effects == null) {
+                                                                              effects = new AnimationEffects();
+                                                                          }
+                                                                          var entity = data.entity();
+                                                                          if (entity == null) {
+                                                                              poseStack.popPose();
+                                                                              return 0;
+                                                                          }
+                                                                          MultiBufferSource multiBufferSource = data.multiBufferSource();
 
-                       setupEntityClientEntityData(data);
+                                                                          setupEntityClientEntityData(data);
 
-                       RenderHelper renderHelper = RenderHelper.start()
-                                                               .render(renderParams, model, cast(tickedInfos))
-                                                               .collectLocators(model, tickedInfos);
+                                                                          RenderHelper renderHelper = RenderHelper.start()
+                                                                                                                  .render(renderParams, model, cast(tickedInfos))
+                                                                                                                  .collectLocators(model, tickedInfos);
 
-                       setParticlesPosition(renderHelper, effects, entity);
+                                                                          setParticlesPosition(renderHelper, effects, entity);
 
-                       data.extraRender().render(renderHelper, data);
+                                                                          data.extraRender().render(renderHelper, data);
 
-                       RenderParams emissiveRenderParams = renderParams.asEmissive(multiBufferSource, modelComponent);
+                                                                          RenderParams emissiveRenderParams = renderParams.asEmissive(multiBufferSource, modelComponent);
 
 //                    if (!emissiveRenderParams.textureMissing()) {
 //                        RenderHelper.start()
 //                                .render(emissiveRenderParams, model, cast(tickedInfos));
 //                    }
 
-                       poseStack.popPose();
+                                                                          poseStack.popPose();
 
-                       return 1;
-                   })
-                   .sum() > 0;
+                                                                          return 1;
+                                                                      })
+                                                                      .sum() > 0;
     }
 
     private static void setParticlesPosition(RenderHelper renderHelper, AnimationEffects effects, Entity entity) {
@@ -415,7 +441,8 @@ public class EntityRenderSystem {
 
             for (int i = 0; i < ce.render_controllers().size(); i++) {
                 String renderController = ce.render_controllers().get(i);
-                io.github.tt432.eyelibmolang.MolangValue condition = ce.renderControllerConditions().get(renderController);
+                io.github.tt432.eyelibmolang.MolangValue condition = ce.renderControllerConditions()
+                                                                       .get(renderController);
                 if (condition != null && cap.getScope() != null && !condition.evalAsBool(cap.getScope())) {
                     continue;
                 }

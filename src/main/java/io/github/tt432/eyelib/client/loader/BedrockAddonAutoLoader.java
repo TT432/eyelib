@@ -38,7 +38,8 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
     public CompletableFuture<Void> reload(PreparationBarrier barrier, ResourceManager resourceManager,
                                           ProfilerFiller preparationsProfiler, ProfilerFiller reloadProfiler,
                                           Executor backgroundExecutor, Executor gameExecutor) {
-        return CompletableFuture.supplyAsync(this::loadAllAddons, backgroundExecutor)
+        return CompletableFuture.runAsync(VanillaBehaviorEntityLoader::loadAndRegister, backgroundExecutor)
+                .thenCompose(v -> CompletableFuture.supplyAsync(this::loadAllAddons, backgroundExecutor))
                 .thenCompose(barrier::wait)
                 .thenAcceptAsync(addons -> {
                     for (BedrockAddon addon : addons) {

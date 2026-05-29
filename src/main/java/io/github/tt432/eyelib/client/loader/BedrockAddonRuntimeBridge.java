@@ -36,6 +36,7 @@ public final class BedrockAddonRuntimeBridge {
         AnimationAssetRegistry.stageAnimations(toRuntimeAnimations(resourcePack.animations()));
         AnimationAssetRegistry.stageControllers(toRuntimeAnimationControllers(resourcePack.animationControllers()));
         ClientEntityAssetRegistry.replaceClientEntities(resourcePack.clientEntities().values());
+        BehaviorEntityAssetRegistry.replaceBehaviorEntities(resourcePack.behaviorEntities());
         AttachableAssetRegistry.replaceAttachables(resourcePack.attachables().values());
         ModelAssetRegistry.replaceModels(resourcePack.modelsView());
         MaterialAssetRegistry.replaceMaterials(toRuntimeMaterials(resourcePack.materialFiles()));
