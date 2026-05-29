@@ -72,7 +72,7 @@ final class VanillaBehaviorEntityLoader {
             try (var zis = new ZipInputStream(is)) {
                 ZipEntry entry;
                 while ((entry = zis.getNextEntry()) != null) {
-                    String name = entry.getName();
+                    String name = entry.getName().replace('\\', '/');
                     if (name.startsWith("vanilla/entities/") && name.endsWith(".json") && !entry.isDirectory()) {
                         try {
                             JsonObject json = JsonParser.parseReader(new InputStreamReader(zis, StandardCharsets.UTF_8)).getAsJsonObject();
