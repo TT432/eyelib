@@ -81,7 +81,7 @@ public final class BehaviorEntityAssetRegistry {
         return new BehaviorEntity(identifier, groups, events);
     }
 
-    private static Map<String, LogicNode> parseEvents(@Nullable BedrockResourceValue.ObjectValue events) {
+    private static Map<String, LogicNode> parseEvents(BedrockResourceValue.ObjectValue events) {
         if (events == null || events.values().isEmpty()) {
             return Collections.emptyMap();
         }
