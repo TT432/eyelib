@@ -13,10 +13,9 @@ import io.github.tt432.eyelibmolang.MolangValue;
 import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
 import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
 import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
+import io.github.tt432.eyelibanimation.SoundPlayer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.client.Minecraft;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NullMarked;
@@ -43,6 +42,12 @@ public record BrAnimationEntryDefinition(
         @Nullable MolangValue loopDelay,
         BrAnimationEntryTracksDefinition namedTracks
 ) implements AnimationClipDefinition<Integer, BrBoneAnimation, BrLoopType, MolangValue> {
+    private static SoundPlayer soundPlayer = (id, x, y, z, v, p) -> {};
+
+    public static void installSoundPlayer(SoundPlayer sp) {
+        soundPlayer = sp;
+    }
+
     public static BrAnimationEntryDefinition fromSchema(String name, BrAnimationEntrySchema schema) {
         TreeMap<Float, List<BrEffectsKeyFrameDefinition>> soundEffectsData = mapEffects(schema.soundEffects());
         TreeMap<Float, List<BrEffectsKeyFrameDefinition>> particleEffectsData = mapEffects(schema.particleEffects());
@@ -82,12 +87,7 @@ public record BrAnimationEntryDefinition(
                     String s = clientEntity.sound_effects().get(frame.effect());
 
                     if (s != null) {
-                        SoundEvent soundEvent = SoundEvent.createVariableRangeEvent(ResourceLocations.of(s));
-
-                        if (!e.isSilent()) {
-                            e.level().playSound(Minecraft.getInstance().player,
-                                    e.getX(), e.getY(), e.getZ(), soundEvent, e.getSoundSource(), 1, 1);
-                        }
+                        soundPlayer.playSound(s, e.getX(), e.getY(), e.getZ(), 1f, 1f);
                     }
                 })
             );
@@ -104,10 +104,13 @@ public record BrAnimationEntryDefinition(
                         if (s != null) {
                             ParticleDefinition definition = ParticleDefinitionRegistry.store().get(s);
                             if (definition != null) {
-                                String uuid = UUID.randomUUID().toString();
-                                BedrockParticleEmitter emitter = AnimationParticleSpawner.spawn(uuid, definition, entity.position().toVector3f());
-                                if (emitter != null) {
-                                    animationData.owner().particles().add(new RuntimeParticlePlayData(uuid, emitter, frame.locator().orElse(null), ticks));
+                                AnimationParticleSpawner spawner = scope.getHostContext().get(AnimationParticleSpawner.class).orElse(null);
+                                if (spawner != null) {
+                                    String uuid = UUID.randomUUID().toString();
+                                    BedrockParticleEmitter emitter = spawner.spawn(uuid, definition, entity.position().toVector3f());
+                                    if (emitter != null) {
+                                        animationData.owner().particles().add(new RuntimeParticlePlayData(uuid, emitter, frame.locator().orElse(null), ticks));
+                                    }
                                 }
                             }
                         }

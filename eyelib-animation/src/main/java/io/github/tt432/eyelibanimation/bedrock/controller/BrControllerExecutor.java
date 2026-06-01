@@ -1,7 +1,6 @@
 package io.github.tt432.eyelibanimation.bedrock.controller;
 
 import io.github.tt432.eyelibanimation.Animation;
-import io.github.tt432.eyelibanimation.Animation;
 import io.github.tt432.eyelibanimation.AnimationEffects;
 import io.github.tt432.eyelibanimation.AnimationLookup;
 import io.github.tt432.eyelibanimation.RuntimeParticlePlayData;
@@ -14,7 +13,7 @@ import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
 import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
 import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
-import net.minecraft.util.Mth;
+import io.github.tt432.eyelibutil.math.MathHelper;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -71,8 +70,11 @@ final class BrControllerExecutor {
             data.setLastState(lastState);
             lastState.onExit().eval(scope);
             if (!data.owner().particles().isEmpty()) {
-                for (var particle : data.owner().particles()) {
-                    AnimationParticleSpawner.remove(particle.particleUUID());
+                AnimationParticleSpawner spawner = scope.getHostContext().get(AnimationParticleSpawner.class).orElse(null);
+                if (spawner != null) {
+                    for (var particle : data.owner().particles()) {
+                        spawner.remove(particle.particleUUID());
+                    }
                 }
                 data.owner().particles().clear();
             }
@@ -86,9 +88,12 @@ final class BrControllerExecutor {
                     particleEffect.effect().map(clientEntity.particle_effects()::get).ifPresent(effect -> {
                         ParticleDefinition definition = ParticleDefinitionRegistry.store().get(effect);
                         if (definition != null) {
-                            BedrockParticleEmitter emitter = AnimationParticleSpawner.spawn(uuid, definition, entity.position().toVector3f());
-                            if (emitter != null) {
-                                data.owner().particles().add(new RuntimeParticlePlayData(uuid, emitter, particleEffect.locator().orElse(null), ticks));
+                            AnimationParticleSpawner spawner = scope.getHostContext().get(AnimationParticleSpawner.class).orElse(null);
+                            if (spawner != null) {
+                                BedrockParticleEmitter emitter = spawner.spawn(uuid, definition, entity.position().toVector3f());
+                                if (emitter != null) {
+                                    data.owner().particles().add(new RuntimeParticlePlayData(uuid, emitter, particleEffect.locator().orElse(null), ticks));
+                                }
                             }
                         }
                     });
@@ -114,7 +119,7 @@ final class BrControllerExecutor {
                               float multiplier, float stateTimeSec, AnimationEffects effects,
                               Runnable animationStartFeedback) {
         float blendProgress = lastState != null && lastState.blendTransition() != 0
-                ? Mth.clamp(stateTimeSec / lastState.blendTransition(), 0, 1)
+                ? MathHelper.clamp(stateTimeSec / lastState.blendTransition(), 0, 1)
                 : 1;
 
         currState.animations().forEach((animationName, blendValue) ->

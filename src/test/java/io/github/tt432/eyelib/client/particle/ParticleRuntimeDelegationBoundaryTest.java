@@ -73,10 +73,10 @@ class ParticleRuntimeDelegationBoundaryTest {
         ));
 
         assertTrue(animationEntry.contains("ParticleDefinitionRegistry.store().get(s)"));
-        assertTrue(animationEntry.contains("AnimationParticleSpawner.spawn(uuid, definition,"));
+        assertTrue(animationEntry.contains("spawner.spawn(uuid, definition,"));
         assertTrue(!animationEntry.contains("ParticleLookup.get("));
         assertTrue(controllerExecutor.contains("ParticleDefinitionRegistry.store().get(effect)"));
-        assertTrue(controllerExecutor.contains("AnimationParticleSpawner.spawn("));
+        assertTrue(controllerExecutor.contains("spawner.spawn("));
         assertTrue(controllerExecutor.contains("definition,"));
         assertTrue(!controllerExecutor.contains("ParticleLookup.get("));
         assertTrue(command.contains("ParticleDefinitionRegistry.store().names()"));

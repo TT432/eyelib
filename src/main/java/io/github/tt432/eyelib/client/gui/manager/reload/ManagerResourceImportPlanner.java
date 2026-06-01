@@ -267,12 +267,12 @@ public final class ManagerResourceImportPlanner {
                         case PARTICLE_JSON -> {
                             ParticleResourcePublication.publishFromJsonResource(file.toString(), jo, logger);
                         }
-                        case MODEL_JSON -> ModelManager.writePort().putAll(ModelImporter.importFile(file));
+                        case MODEL_JSON -> ModelManager.writePort().replaceAll(ModelImporter.importFile(file));
                         default -> {
                         }
                     }
                 }
-                case MODEL_BBMODEL -> ModelManager.writePort().putAll(ModelImporter.importFile(file));
+                case MODEL_BBMODEL -> ModelManager.writePort().replaceAll(ModelImporter.importFile(file));
                 case MATERIAL_FILE -> {
                     try (InputStream inputStream = Files.newInputStream(file)) {
                         JsonObject jo = GSON.fromJson(IOUtils.toString(inputStream, StandardCharsets.UTF_8), JsonObject.class);

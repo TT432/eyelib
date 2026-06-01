@@ -18,10 +18,16 @@ final class BrClipStateOwner {
     private final List<AnimationEffect.Runtime<?>> effects = new ArrayList<>();
     private final List<RuntimeParticlePlayData> particles = new ArrayList<>();
 
+    private AnimationParticleSpawner spawner;
+
     private int loopedTimes;
     private float lastTicks;
     private float animTime;
     private float deltaTime;
+
+    void setParticleSpawner(AnimationParticleSpawner spawner) {
+        this.spawner = spawner;
+    }
 
     BrClipStateOwner resetEffects(AnimationEffect<BrEffectsKeyFrameDefinition> soundEffects,
                                   AnimationEffect<BrEffectsKeyFrameDefinition> particleEffects,
@@ -48,7 +54,9 @@ final class BrClipStateOwner {
         resetEffects(soundEffects, particleEffects, timeline);
 
         for (var particle : particles) {
-            AnimationParticleSpawner.remove(particle.particleUUID());
+            if (spawner != null) {
+                spawner.remove(particle.particleUUID());
+            }
         }
         particles.clear();
     }
