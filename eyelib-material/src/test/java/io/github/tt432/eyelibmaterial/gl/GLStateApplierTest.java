@@ -16,10 +16,18 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
+ * GL 状态应用器测试。
+ * <p>
+ * 所有测试方法均标注了被验证的预期 GL 行为（见方法上的 {@code @DisplayName} 和后续注释），
+ * 但由于它们是纯 GL 集成测试，需要在有 OpenGL 上下文的 Minecraft 开发环境中运行，
+ * 因此在标准 CI/无头环境中无法执行。
+ * <p>
+ * 运行方式：在 Minecraft 开发环境（如IntelliJ Minecraft Client 启动配置）中移除 {@code @Disabled} 后执行。
+ *
  * @author TT432
  */
 @NullMarked
-@Disabled("All tests require an active OpenGL context — run in a Minecraft dev environment")
+@Disabled("需要 OpenGL 上下文——请在 Minecraft 开发环境中运行")
 class GLStateApplierTest {
 
     @Test
