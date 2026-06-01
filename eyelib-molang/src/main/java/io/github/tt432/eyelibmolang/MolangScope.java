@@ -6,7 +6,6 @@ import io.github.tt432.eyelibmolang.type.MolangFloat;
 import io.github.tt432.eyelibmolang.type.MolangFloatSupplierObject;
 import io.github.tt432.eyelibmolang.type.MolangNull;
 import io.github.tt432.eyelibmolang.type.MolangObject;
-import lombok.Getter;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -21,10 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @NullMarked
 public final class MolangScope {
-    @Getter
-    @Deprecated(forRemoval = true)
-    private final MolangObject owner = MolangNull.INSTANCE;
-
     private final Map<Class<?>, Object> hostContextStore = new ConcurrentHashMap<>();
     private final Map<HostRole<?>, Object> hostRoleStore = new ConcurrentHashMap<>();
 
@@ -148,7 +143,4 @@ public final class MolangScope {
         return cache.size();
     }
 
-    @Deprecated(forRemoval = true)
-    public void setOwner(Object owner) {
-    }
 }

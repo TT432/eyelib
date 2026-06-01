@@ -1,7 +1,8 @@
+/**
+ * Render controller definitions and runtime behavior.
+ */
 @NullMarked
 package io.github.tt432.eyelib.client.render.controller;
 
 import org.jspecify.annotations.NullMarked;
-
-// 包职责见同目录 README.md
 

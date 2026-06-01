@@ -1,10 +1,11 @@
 package io.github.tt432.eyelib.client.registry;
 
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
+import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +26,9 @@ class ClientEntityAssetRegistryTest {
 
         BrClientEntity first = testEntity("eyelib:first");
         BrClientEntity second = testEntity("eyelib:second");
-        ClientEntityAssetRegistry.replaceClientEntities(List.of(first, second));
+        LinkedHashMap<String, BrClientEntity> flattened = new LinkedHashMap<>();
+        List.of(first, second).forEach(entity -> flattened.put(entity.identifier(), entity));
+        ClientEntityManager.writePort().replaceAll(flattened);
 
         assertNull(ClientEntityManager.readPort().get("eyelib:stale"));
         assertEquals(first, ClientEntityManager.readPort().get("eyelib:first"));

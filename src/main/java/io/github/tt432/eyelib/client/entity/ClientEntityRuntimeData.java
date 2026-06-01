@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.entity;
 
-import io.github.tt432.eyelib.client.model.ModelLookup;
+import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibmodel.entity.ModelResolver;
@@ -23,7 +23,7 @@ public class ClientEntityRuntimeData {
     private BrClientEntity appliedClientEntity;
 
     public ClientEntityRuntimeData() {
-        this(ModelLookup::get);
+        this(ModelManager.readPort()::get);
     }
 
     ClientEntityRuntimeData(ModelResolver modelResolver) {

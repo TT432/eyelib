@@ -8,7 +8,7 @@ import com.mojang.math.Axis;
 import io.github.tt432.eyelib.client.gui.preview.ModelPreviewAsset;
 import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
-import io.github.tt432.eyelib.client.model.ModelLookup;
+import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.client.render.bake.TwoSideModelBakeInfo;
@@ -227,7 +227,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         }
 
         String lowerQuery = query.toLowerCase();
-        Map<String, Model> allModels = ModelLookup.all();
+        Map<String, Model> allModels = ModelManager.readPort().getAllData();
 
         Model found = null;
 

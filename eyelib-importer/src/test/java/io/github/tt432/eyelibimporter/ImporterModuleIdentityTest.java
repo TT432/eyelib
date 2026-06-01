@@ -20,14 +20,14 @@ class ImporterModuleIdentityTest {
 
     @Test
     void moduleDocsDeclareImporterSchemaForgeFunctionalIdentity() throws IOException {
-        String readme = Files.readString(SOURCE_ROOT.resolve("README.md"));
+        String readme = Files.readString(SOURCE_ROOT.resolve("package-info.java"));
         String modules = Files.readString(PROJECT_ROOT.resolve("MODULES.md"));
-        String sideBoundaries = Files.readString(PROJECT_ROOT.resolve("docs/architecture/02-side-boundaries.md"));
+        String sideBoundaries = Files.readString(PROJECT_ROOT.resolve("docs/decisions/0003-side-boundaries.md"));
 
         assertAll(
-                () -> assertTrue(readme.contains("importer/schema Forge functional module")),
-                () -> assertTrue(readme.contains("root package")),
-                () -> assertTrue(readme.contains("plain importer library remains future debt")),
+                () -> assertTrue(readme.contains("导入器/数据格式模块")),
+                () -> assertTrue(readme.contains("Bedrock 资源导入")),
+                () -> assertTrue(readme.contains("数据格式编解码")),
                 () -> assertTrue(modules.contains("Importer/schema Forge functional module")),
                 () -> assertTrue(sideBoundaries.contains("currently an importer/schema Forge functional module"))
         );

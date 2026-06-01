@@ -5,6 +5,7 @@ import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +26,9 @@ class AttachableAssetRegistryTest {
 
         BrClientEntity first = testAttachable("eyelib:first_attachable");
         BrClientEntity second = testAttachable("eyelib:second_attachable");
-        AttachableAssetRegistry.replaceAttachables(List.of(first, second));
+        LinkedHashMap<String, BrClientEntity> flattened = new LinkedHashMap<>();
+        List.of(first, second).forEach(attachable -> flattened.put(attachable.identifier(), attachable));
+        AttachableManager.writePort().replaceAll(flattened);
 
         assertNull(AttachableManager.readPort().get("eyelib:stale_attachable"));
         assertEquals(first, AttachableManager.readPort().get("eyelib:first_attachable"));

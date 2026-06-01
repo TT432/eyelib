@@ -6,7 +6,6 @@ import io.github.tt432.eyelibanimation.AnimationLookup;
 import io.github.tt432.eyelibanimation.AnimationManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelib.client.model.ModelLookup;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibmolang.MolangScope;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -40,7 +39,7 @@ class ClientLookupFacadeTest {
         Model model = new Model("geometry.test", new Int2ObjectOpenHashMap<>());
         ModelManager.INSTANCE.put("geometry.test", model);
 
-        Map<String, Model> snapshot = ModelLookup.all();
+        Map<String, Model> snapshot = ModelManager.readPort().getAllData();
         ModelManager.INSTANCE.put("geometry.other", new Model("geometry.other", new Int2ObjectOpenHashMap<>()));
 
         assertEquals(Set.of("geometry.test"), snapshot.keySet());

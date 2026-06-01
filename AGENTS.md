@@ -3,7 +3,7 @@
 ## Start Here
 - Read :MODULES.md: before planning structural or multi-module changes.
 - Read the nearest package :README.md: before editing files in that subtree.
-- For boundary decisions, read :docs/architecture/01-module-boundaries.md:.
+- For boundary decisions, read :docs/decisions/0002-module-boundaries.md:.
 
 ## Repository Shape
 - Multi-project :Gradle + Java 17 + Forge: codebase: root runtime module :::, and 10 Gradle subprojects: ::eyelib-animation:, ::eyelib-attachment:, ::eyelib-behavior:, ::eyelib-importer:, ::eyelib-material:, ::eyelib-molang:, ::eyelib-network:, ::eyelib-particle:, ::eyelib-preprocessing:, ::eyelib-util:.
@@ -31,13 +31,21 @@
 - **全局强制**。所有类、所有 `package-info.java` 必须加 `@NullMarked`。
 
 ### package-info.java
-- 统一格式：
+- 统一格式，用一段话简述包职责：
 ```java
 @NullMarked
 package ...;
 
-// 包职责见同目录 README.md
+/**
+ * 一句话说明包的职责。
+ */
 ```
+
+- 不再单独维护包级 README.md。包的知识分层如下：
+  - **公共 API 的 Javadoc** → 类/方法签名自带
+  - **包定位** → `package-info.java` 一句话
+  - **架构决策** → `docs/decisions/`（为什么这么设计）
+  - **工作导航** → `AGENTS.md`（怎么看这个项目）
 
 ### Javadoc（类级）
 - 所有 `public` 类/接口必须有，不超过两句话简述职责。
@@ -90,7 +98,9 @@ package ...;
 
 ## Documentation Rules
 - **Paths must resolve.** Every file path reference in docs must exist. If a referenced file is deleted or moved, update or delete the reference.
-- **Don't keep history in active docs.** Completed tasks, resolved problems, and historical intermediate states belong in `docs/architecture/migration/`, not in current-state documents.
+- **Don't keep history in active docs.** Completed tasks, resolved problems, and historical intermediate states belong in git history, not in current-state documents.
+- **Architecture decisions go in `docs/decisions/`.** Each file is one ADR: context → decision → consequences. No implementation details.
+- **Code is the authoritative reference.** Package structure, class names, and method signatures are the source of truth for "what exists." External docs (Bedrock standards, Blockbench format) live under `docs/reference/`.
 - **Claims about dependencies must match `build.gradle`.** The Gradle dependency graph is the single source of truth.
 - **Docs-only changes:** verify every referenced file path resolves before committing.
 - **Structure/code changes:** build via JetBrains MCP and require exit code :0: before claiming completion.

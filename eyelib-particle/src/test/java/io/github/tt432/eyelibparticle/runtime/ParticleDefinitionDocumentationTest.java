@@ -13,11 +13,11 @@ class ParticleDefinitionDocumentationTest {
     @Test
     void ownershipDocumentsNameCanonicalOwnersLegacyRootStatusAndMappedFields() throws IOException {
         SourceCheck modules = source("MODULES.md");
-        SourceCheck moduleBoundaries = source("docs/architecture/01-module-boundaries.md");
-        SourceCheck sideBoundaries = source("docs/architecture/02-side-boundaries.md");
-        SourceCheck particleReadme = source("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/README.md");
+        SourceCheck moduleBoundaries = source("docs/decisions/0002-module-boundaries.md");
+        SourceCheck sideBoundaries = source("docs/decisions/0003-side-boundaries.md");
+        SourceCheck particleReadme = source("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/package-info.java");
         SourceCheck runtimePackageInfo = source("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/runtime/package-info.java");
-        SourceCheck rootParticleReadme = source("src/main/java/io/github/tt432/eyelib/client/particle/README.md");
+        SourceCheck rootParticleReadme = source("src/main/java/io/github/tt432/eyelib/client/particle/package-info.java");
 
         modules.assertContains("canonical raw Bedrock particle schema/codec owner");
         modules.assertContains("io.github.tt432.eyelibimporter.particle.BrParticle");

@@ -86,12 +86,10 @@ class NetworkOwnershipBoundaryTest {
     void docsLockFm014NetworkResponsibility() throws IOException {
         String docs = readDocs(
                 "MODULES.md",
-                "docs/index/network.md",
-                "docs/architecture/01-module-boundaries.md",
-                "docs/architecture/02-side-boundaries.md",
-                "docs/architecture/04-mc-debt-ledger.md",
-                "src/main/java/io/github/tt432/eyelib/network/README.md",
-                "src/main/java/io/github/tt432/eyelib/mc/impl/network/README.md"
+                "docs/decisions/0002-module-boundaries.md",
+                "docs/decisions/0003-side-boundaries.md",
+                "docs/decisions/0005-mc-debt-ledger.md",
+                "src/main/java/io/github/tt432/eyelib/network/package-info.java"
         );
 
         assertAll(

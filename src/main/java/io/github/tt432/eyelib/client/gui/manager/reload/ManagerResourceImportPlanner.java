@@ -5,7 +5,13 @@ import com.google.gson.JsonObject;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.loader.BedrockAddonRuntimeBridge;
-import io.github.tt432.eyelib.client.registry.*;
+import io.github.tt432.eyelib.client.manager.AttachableManager;
+import io.github.tt432.eyelib.client.manager.ClientEntityManager;
+import io.github.tt432.eyelib.client.manager.MaterialManager;
+import io.github.tt432.eyelib.client.manager.ModelManager;
+import io.github.tt432.eyelib.client.manager.RenderControllerManager;
+import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
+import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
 import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
 import io.github.tt432.eyelib.event.TextureChangedEvent;
@@ -19,6 +25,7 @@ import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
 import io.github.tt432.eyelibimporter.model.importer.ModelImporter;
 import io.github.tt432.eyelibmaterial.material.BrMaterial;
+import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
 import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibparticle.loading.ParticleResourcePublication;
 import lombok.AccessLevel;
@@ -106,7 +113,18 @@ public final class ManagerResourceImportPlanner {
                                                                        .getOrThrow(false, logger::warn)),
                 LOGGER
         );
-        RenderControllerAssetRegistry.replaceRenderControllers(renderControllers);
+        // replaceRenderControllers
+        {
+            for (RenderControllers value : renderControllers.values()) {
+                value.render_controllers().forEach((key, entry) -> {
+                    RenderControllerEntry existing = RenderControllerManager.readPort().get(key);
+                    if (existing != null && existing.part_visibility().size() > entry.part_visibility().size()) {
+                        return;
+                    }
+                    RenderControllerManager.writePort().put(key, entry);
+                });
+            }
+        }
 
         Map<String, JsonObject> particles = ManagerResourceBatchPlanner.loadStructuredFiles(
                 basePath,
@@ -128,7 +146,12 @@ public final class ManagerResourceImportPlanner {
                                                                     .getOrThrow(false, logger::warn)),
                 LOGGER
         );
-        ClientEntityAssetRegistry.replaceClientEntities(parsedEntities.values());
+        // replaceClientEntities
+        {
+            LinkedHashMap<String, BrClientEntity> flattened = new LinkedHashMap<>();
+            parsedEntities.values().forEach(entity -> flattened.put(entity.identifier(), entity));
+            ClientEntityManager.writePort().replaceAll(flattened);
+        }
 
         Map<String, BrClientEntity> parsedAttachables = ManagerResourceBatchPlanner.loadStructuredFiles(
                 basePath,
@@ -139,12 +162,18 @@ public final class ManagerResourceImportPlanner {
                                                                                .getOrThrow(false, logger::warn)),
                 LOGGER
         );
-        AttachableAssetRegistry.replaceAttachables(parsedAttachables.values());
+        // replaceAttachables
+        {
+            LinkedHashMap<String, BrClientEntity> flattened = new LinkedHashMap<>();
+            parsedAttachables.values().forEach(attachable -> flattened.put(attachable.identifier(), attachable));
+            AttachableManager.writePort().replaceAll(flattened);
+        }
 
         Map<String, Map<String, Model>> parsedModels = ManagerResourceBatchPlanner.loadModelFiles(basePath, ModelImporter::importFile, LOGGER);
         LinkedHashMap<String, Model> models = new LinkedHashMap<>();
         parsedModels.values().forEach(models::putAll);
-        ModelAssetRegistry.replaceModels(models);
+        // replaceModels
+        ModelManager.writePort().replaceAll(new LinkedHashMap<>(models));
 
         Map<String, BrMaterial> parsedMaterials = ManagerResourceBatchPlanner.loadStructuredFiles(
                 basePath,
@@ -155,7 +184,14 @@ public final class ManagerResourceImportPlanner {
                                                                 .getOrThrow(false, logger::warn)),
                 LOGGER
         );
-        MaterialAssetRegistry.replaceMaterials(parsedMaterials);
+        // replaceMaterials
+        {
+            LinkedHashMap<String, BrMaterialEntry> flattened = new LinkedHashMap<>();
+            for (BrMaterial value : parsedMaterials.values()) {
+                value.materials().forEach(flattened::put);
+            }
+            MaterialManager.writePort().replaceAll(flattened);
+        }
 
         loadTextures(basePath);
     }
@@ -209,32 +245,39 @@ public final class ManagerResourceImportPlanner {
                         case RENDER_CONTROLLER_JSON -> {
                             var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo)
                                                                     .getOrThrow(false, logger::warn);
-                            RenderControllerAssetRegistry.publishRenderController(controller);
+                            // publishRenderController
+                            controller.render_controllers().forEach((key, entry) -> {
+                                RenderControllerEntry existing = RenderControllerManager.readPort().get(key);
+                                if (existing != null && existing.part_visibility().size() > entry.part_visibility().size()) {
+                                    return;
+                                }
+                                RenderControllerManager.writePort().put(key, entry);
+                            });
                         }
                         case ENTITY_JSON -> {
                             var entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo)
                                                              .getOrThrow(false, logger::warn);
-                            ClientEntityAssetRegistry.publishClientEntity(entity);
+                            ClientEntityManager.writePort().put(entity.identifier(), entity);
                         }
                         case ATTACHABLE_JSON -> {
                             var attachable = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, jo)
                                                                             .getOrThrow(false, logger::warn);
-                            AttachableAssetRegistry.publishAttachable(attachable);
+                            AttachableManager.writePort().put(attachable.identifier(), attachable);
                         }
                         case PARTICLE_JSON -> {
                             ParticleResourcePublication.publishFromJsonResource(file.toString(), jo, logger);
                         }
-                        case MODEL_JSON -> ModelAssetRegistry.publishModels(ModelImporter.importFile(file));
+                        case MODEL_JSON -> ModelManager.writePort().putAll(ModelImporter.importFile(file));
                         default -> {
                         }
                     }
                 }
-                case MODEL_BBMODEL -> ModelAssetRegistry.publishModels(ModelImporter.importFile(file));
+                case MODEL_BBMODEL -> ModelManager.writePort().putAll(ModelImporter.importFile(file));
                 case MATERIAL_FILE -> {
                     try (InputStream inputStream = Files.newInputStream(file)) {
                         JsonObject jo = GSON.fromJson(IOUtils.toString(inputStream, StandardCharsets.UTF_8), JsonObject.class);
                         var material = BrMaterial.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
-                        MaterialAssetRegistry.publishMaterial(material);
+                        material.materials().forEach(MaterialManager.writePort()::put);
                     }
                 }
                 case TEXTURE_PNG -> {

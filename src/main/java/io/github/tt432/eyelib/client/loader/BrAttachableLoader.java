@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
 import io.github.tt432.eyelib.client.manager.AttachableManager;
-import io.github.tt432.eyelib.client.registry.AttachableAssetRegistry;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibutil.search.Searchable;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +13,7 @@ import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -40,7 +40,9 @@ public class BrAttachableLoader extends BrResourcesLoader implements Searchable<
                 LOGGER,
                 "entity"
         );
-        AttachableAssetRegistry.replaceAttachables(parsedAttachables.values());
+        LinkedHashMap<String, BrClientEntity> flattened = new LinkedHashMap<>();
+        parsedAttachables.values().forEach(attachable -> flattened.put(attachable.identifier(), attachable));
+        AttachableManager.writePort().replaceAll(flattened);
     }
 
     @Override

@@ -26,7 +26,7 @@ When documents disagree, resolve them in this order:
 1. `eyelib-molang/ROADMAP.md` for current progress and next actions.
 2. `eyelib-molang/refactor-plan/README.md` and phase files for gates and phase-level acceptance criteria.
 3. `eyelib-molang/design/README.md` and design drafts for rationale and candidate architecture.
-4. `docs/index/molang.md`, `MODULES.md`, and package READMEs for navigation and ownership summaries.
+4. `docs/decisions/`, `MODULES.md`, and package READMEs for navigation and ownership summaries.
 
 Design drafts are not implementation commitments until this roadmap or the refactor plan promotes them.
 
@@ -63,7 +63,7 @@ Evidence from the current tree:
 
 | Phase | Status | Evidence | Current rule |
 |---|---|---|---|
-| Phase 0 - Overview and boundaries | `Done / maintain` | `refactor-plan/00-overview-and-boundaries.md`, `docs/index/molang.md`, generated-code policy | Keep boundary docs aligned when ownership changes. |
+| Phase 0 - Overview and boundaries | `Done / maintain` | `refactor-plan/00-overview-and-boundaries.md`, `docs/decisions/0002-module-boundaries.md`, generated-code policy | Keep boundary docs aligned when ownership changes. |
 | Phase 1 - Corpus and harness | `Current / partial` | corpus loader, linter, harness, parse runner, phase1 resources, corpus tests | Continue using `./gradlew :eyelib-molang:test`; add dedicated runner command only when it exists. |
 | Phase 2 - Parser and AST | `Current / partial` | `compiler/frontend/ast/`, generated-backed AST frontend, handwritten frontend, frontend tests | Keep generated parser path active; parser work must be additive and corpus-backed. |
 | Phase 3 - Binder and diagnostics | `Current / partial` | `compiler/binding/`, `src/test/java/io/github/tt432/eyelibmolang/compiler/binding/MolangBinderTest.java` for typed deferred loop break/continue coverage in normal/strict/debug modes, normal deferred unsupported warnings, alias canonicalization coverage for all four roots (`q/t/v/c`), bind-shape/diagnostics/debug-trace corpus support, 5 deferred reason types (`UNSUPPORTED_IN_THIS_SLICE`, `HOST_SHAPE_DEPENDENT`, `QUERY_VARIANT_SELECTION_DEPENDENT`, `COMPATIBILITY_POLICY_DEPENDENT`, `DIAGNOSTICS_OVERLAY_OWNED_FOLLOWUP`) | Widen binder families through tests; keep unsupported semantics explicit via deferred notes plus normal warnings, and keep the typed deferred break/continue lane narrow until broader Phase 3 widening is separately planned. |
@@ -201,7 +201,7 @@ Target thresholds establish what "done" means before phase promotion.
 - Phase 1-4 implementation slices: `jetbrain_run_gradle_tasks :eyelib-molang:test`.
 - Phase 7 and beyond: `jetbrain_run_gradle_tasks :eyelib-molang:test :eyelib-importer:test
  :eyelib-preprocessing:test :test`.
-- Generated parser changes: require a task-specific regeneration/isolation plan and update `docs/architecture/03-generated-code-policy.md` if the generated zone moves or changes ownership.
+- Generated parser changes: require a task-specific regeneration/isolation plan and update `docs/decisions/0004-generated-code-policy.md` if the generated zone moves or changes ownership.
 
 ## Anti-Drift Checklist
 

@@ -15,6 +15,11 @@ import java.util.Map;
 
 
 /**
+ * Forge 资源重载系统的粒子适配器。将 particles/*.json 文件通过
+ * {@link ParticleResourcePublication#replaceFromJsonResources(Map, org.slf4j.Logger)}
+ * 发布到粒子模块。此 Bridge 必须保留在根模块中，eyelib-particle 的
+ * ParticleResourcePublication 不提供 Forge ReloadListener 注册。
+ *
  * @author TT432
  */
 @Slf4j

@@ -15,12 +15,12 @@ class ParticleApiDelegationBoundaryTest {
     void retainedRootSpawnFacadeDelegatesToParticleModuleApiAndLegacyRegistryFacadesAreDeleted() throws IOException {
         SourceCheck spawnService = source("src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java");
         SourceCheck loader = source("src/main/java/io/github/tt432/eyelib/client/loader/BrParticleLoader.java");
-        SourceCheck particleReadme = source("src/main/java/io/github/tt432/eyelib/client/particle/README.md");
-        SourceCheck registryReadme = source("src/main/java/io/github/tt432/eyelib/client/registry/README.md");
-        SourceCheck loaderReadme = source("src/main/java/io/github/tt432/eyelib/client/loader/README.md");
-        SourceCheck moduleReadme = source("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/README.md");
-        SourceCheck moduleBoundaries = source("docs/architecture/01-module-boundaries.md");
-        SourceCheck sideBoundaries = source("docs/architecture/02-side-boundaries.md");
+        SourceCheck particleReadme = source("src/main/java/io/github/tt432/eyelib/client/particle/package-info.java");
+        SourceCheck registryReadme = source("src/main/java/io/github/tt432/eyelib/client/registry/package-info.java");
+        SourceCheck loaderReadme = source("src/main/java/io/github/tt432/eyelib/client/loader/package-info.java");
+        SourceCheck moduleReadme = source("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/package-info.java");
+        SourceCheck moduleBoundaries = source("docs/decisions/0002-module-boundaries.md");
+        SourceCheck sideBoundaries = source("docs/decisions/0003-side-boundaries.md");
         Path obsoleteRootRequest = Path.of("src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnRequest.java");
         List<Path> deletedLegacyFacades = List.of(
                 Path.of("src/main/java/io/github/tt432/eyelib/client/particle/ParticleLookup.java"),
@@ -49,18 +49,18 @@ class ParticleApiDelegationBoundaryTest {
         loader.assertContains("ParticleResourcePublication.replaceFromJsonResources");
         loader.assertContains("entry.getKey().toString()");
 
-        particleReadme.assertContains("`ParticleSpawnService.java`: transitional root facade");
-        particleReadme.assertContains("Legacy root `bedrock/**`, `ParticleLookup`, `ParticleManager`, and `ParticleAssetRegistry` have been deleted");
-        particleReadme.assertContains("do not add a duplicate root request type");
+        particleReadme.assertContains("particle runtime");
+        particleReadme.assertContains("render manager");
+        particleReadme.assertContains("lookup/spawn boundaries");
         assertTrue(Files.notExists(obsoleteRootRequest), () -> obsoleteRootRequest + " should not be reintroduced");
-        registryReadme.assertContains("`ParticleAssetRegistry` has been deleted");
-        registryReadme.assertContains("ParticleResourcePublication");
-        loaderReadme.assertContains("delegates particle publication");
-        loaderReadme.assertContains("ParticleResourcePublication");
-        moduleReadme.assertContains("active loading/publication");
-        moduleReadme.assertContains("ParticleSpawnRuntimeAdapter");
-        moduleReadme.assertContains("ParticleResourcePublication");
-        moduleReadme.assertContains("ParticleDefinition.identifier()");
+        registryReadme.assertContains("Runtime publication");
+        registryReadme.assertContains("lookup-facing boundary");
+        loaderReadme.assertContains("resource reload listeners");
+        loaderReadme.assertContains("parse/reload entrypoints");
+        moduleReadme.assertContains("粒子定义");
+        moduleReadme.assertContains("运行时");
+        moduleReadme.assertContains("加载管线");
+        moduleReadme.assertContains("客户端渲染");
         moduleBoundaries.assertContains("ParticleDefinitionRegistry");
         moduleBoundaries.assertContains("ParticleResourcePublication");
         moduleBoundaries.assertContains("ParticleDefinition.identifier()");

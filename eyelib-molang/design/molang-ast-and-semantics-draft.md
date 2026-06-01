@@ -20,7 +20,7 @@
 - `src/main/java/io/github/tt432/eyelib/molang/` remains a legacy marker/handoff path only and is not the destination for new handwritten engine design.
 - `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/` is generated/read-only during normal work; this draft may describe replacing that pipeline in the future, but it does not authorize hand-editing generated parser artifacts.
 - Platform/query/lifecycle wiring stays root-owned under `src/main/java/io/github/tt432/eyelib/mc/impl/molang/**`; host injection examples in this document describe engine-side contracts, not permission to move Minecraft/Forge bindings into `:eyelib-molang`.
-- If future design work changes engine/platform ownership, `MODULES.md`, `docs/index/molang.md`, and architecture boundary docs must be updated together.
+- If future design work changes engine/platform ownership, `MODULES.md`, `docs/decisions/`, and architecture boundary docs must be updated together.
 
 ---
 

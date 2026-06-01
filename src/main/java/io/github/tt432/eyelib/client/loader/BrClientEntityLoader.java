@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
-import io.github.tt432.eyelib.client.registry.ClientEntityAssetRegistry;
+import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
@@ -11,6 +11,7 @@ import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 
@@ -37,6 +38,8 @@ public class BrClientEntityLoader extends BrResourcesLoader {
                 "entity"
         );
 
-        ClientEntityAssetRegistry.replaceClientEntities(parsedEntities.values());
+        LinkedHashMap<String, BrClientEntity> flattened = new LinkedHashMap<>();
+        parsedEntities.values().forEach(entity -> flattened.put(entity.identifier(), entity));
+        ClientEntityManager.writePort().replaceAll(flattened);
     }
 }

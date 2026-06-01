@@ -27,7 +27,18 @@ class ParticleFinalDocumentationGateTest {
                     "ClientSmoke",
                     "hardware",
                     "PFUT-03")),
-            entry("docs/index/repo-map.md", List.of(
+            entry("docs/decisions/0002-module-boundaries.md", List.of(
+                    ":eyelib-particle",
+                    "ParticleDefinitionRegistry",
+                    "ParticleResourcePublication",
+                    "ParticleDefinition.identifier()",
+                    "ParticleDefinitionAdapter",
+                    "io.github.tt432.eyelibimporter.particle.BrParticle",
+                    "mc/impl/common/command",
+                    "io.github.tt432.eyelibparticle.network",
+                    "ClientSmoke",
+                    "PFUT-03")),
+            entry("docs/decisions/0003-side-boundaries.md", List.of(
                     ":eyelib-particle",
                     "ParticleDefinitionRegistry",
                     "ParticleResourcePublication",
@@ -38,7 +49,17 @@ class ParticleFinalDocumentationGateTest {
                     "ClientSmoke",
                     "hardware",
                     "PFUT-03")),
-            entry("docs/architecture/01-module-boundaries.md", List.of(
+            entry("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/package-info.java", List.of(
+                    ":eyelib-particle",
+                    "ParticleDefinitionRegistry",
+                    "ParticleResourcePublication",
+                    "ParticleDefinition.identifier()",
+                    "ParticleDefinitionAdapter",
+                    "io.github.tt432.eyelibimporter.particle.BrParticle",
+                    "io.github.tt432.eyelibparticle.network",
+                    "ClientSmoke",
+                    "PFUT-03")),
+            entry("src/main/java/io/github/tt432/eyelib/client/particle/package-info.java", List.of(
                     ":eyelib-particle",
                     "ParticleDefinitionRegistry",
                     "ParticleResourcePublication",
@@ -49,58 +70,10 @@ class ParticleFinalDocumentationGateTest {
                     "io.github.tt432.eyelibparticle.network",
                     "ClientSmoke",
                     "PFUT-03")),
-            entry("docs/architecture/02-side-boundaries.md", List.of(
-                    ":eyelib-particle",
-                    "ParticleDefinitionRegistry",
-                    "ParticleResourcePublication",
-                    "ParticleDefinition.identifier()",
-                    "ParticleDefinitionAdapter",
-                    "io.github.tt432.eyelibimporter.particle.BrParticle",
-                    "io.github.tt432.eyelibparticle.network",
-                    "ClientSmoke",
-                    "hardware",
-                    "PFUT-03")),
-            entry("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/README.md", List.of(
-                    ":eyelib-particle",
-                    "ParticleDefinitionRegistry",
-                    "ParticleResourcePublication",
-                    "ParticleDefinition.identifier()",
-                    "ParticleDefinitionAdapter",
-                    "io.github.tt432.eyelibimporter.particle.BrParticle",
-                    "io.github.tt432.eyelibparticle.network",
-                    "ClientSmoke",
-                    "PFUT-03")),
-            entry("src/main/java/io/github/tt432/eyelib/client/particle/README.md", List.of(
-                    ":eyelib-particle",
-                    "ParticleDefinitionRegistry",
-                    "ParticleResourcePublication",
-                    "ParticleDefinition.identifier()",
-                    "ParticleDefinitionAdapter",
-                    "io.github.tt432.eyelibimporter.particle.BrParticle",
-                    "mc/impl/common/command",
-                    "io.github.tt432.eyelibparticle.network",
-                    "ClientSmoke",
-                    "PFUT-03")),
-            entry("src/main/java/io/github/tt432/eyelib/network/README.md", List.of(
-                    ":eyelib-particle",
-                    "ParticleDefinitionRegistry",
-                    "ParticleResourcePublication",
-                    "io.github.tt432.eyelibimporter.particle.BrParticle",
-                    "io.github.tt432.eyelibparticle.network",
-                    "SpawnParticlePacket(String spawnId, String particleId, Vector3f position)",
-                    "RemoveParticlePacket(String removeId)",
-                    "ClientSmoke",
-                    "PFUT-03")),
-            entry("src/main/java/io/github/tt432/eyelib/mc/impl/common/command/README.md", List.of(
-                    "mc/impl/common/command",
-                    "SpawnParticlePacket(String spawnId, String particleId, Vector3f position)",
-                    "RemoveParticlePacket(String removeId)",
-                    "io.github.tt432.eyelibparticle.network")),
-            entry("src/main/java/io/github/tt432/eyelib/mc/impl/network/README.md", List.of(
-                    "io.github.tt432.eyelibparticle.network",
-                    "SpawnParticlePacket(String spawnId, String particleId, Vector3f position)",
-                    "RemoveParticlePacket(String removeId)"))
-    );
+            entry("src/main/java/io/github/tt432/eyelib/network/package-info.java", List.of(
+                    "shared channel",
+                    "transport delegation",
+                    "context-free handler dispatch")));
 
     @Test
     void finalDocsDescribeParticleSplitClosureWithoutPlanningDependencies() throws IOException {

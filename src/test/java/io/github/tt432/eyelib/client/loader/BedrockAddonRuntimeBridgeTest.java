@@ -3,16 +3,13 @@ package io.github.tt432.eyelib.client.loader;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelibanimation.AnimationLookup;
-import io.github.tt432.eyelib.client.entity.AttachableLookup;
-import io.github.tt432.eyelib.client.entity.ClientEntityLookup;
+import io.github.tt432.eyelibanimation.AnimationLookup;
 import io.github.tt432.eyelibanimation.AnimationManager;
 import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.manager.RenderControllerManager;
-import io.github.tt432.eyelib.client.model.ModelLookup;
-import io.github.tt432.eyelib.client.render.controller.RenderControllerLookup;
 import io.github.tt432.eyelibimporter.addon.BedrockAddon;
 import io.github.tt432.eyelibimporter.addon.BedrockAddonAggregate;
 import io.github.tt432.eyelibimporter.addon.BedrockAddonSideAggregate;
@@ -123,11 +120,11 @@ class BedrockAddonRuntimeBridgeTest {
 
         assertNotNull(AnimationLookup.get("animation.test.idle"));
         assertNotNull(AnimationLookup.get("controller.animation.test"));
-        assertEquals(clientEntity, ClientEntityLookup.get(clientEntity.identifier()));
-        assertEquals(attachable, AttachableLookup.get(attachable.identifier()));
-        assertEquals(model, ModelLookup.get(model.name()));
+        assertEquals(clientEntity, ClientEntityManager.readPort().get(clientEntity.identifier()));
+        assertEquals(attachable, AttachableManager.readPort().get(attachable.identifier()));
+        assertEquals(model, ModelManager.readPort().get(model.name()));
         assertNotNull(MaterialManager.readPort().get("entity_alphatest"));
-        assertNotNull(RenderControllerLookup.get("controller.render.test"));
+        assertNotNull(RenderControllerManager.readPort().get("controller.render.test"));
     }
 
     private static BrClientEntity testEntity(String identifier) {

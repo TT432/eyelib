@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
-import io.github.tt432.eyelib.client.registry.ModelAssetRegistry;
+import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelibimporter.model.importer.BedrockGeometryImporter;
 import io.github.tt432.eyelibmodel.Model;
 import net.minecraft.resources.ResourceLocation;
@@ -28,7 +28,7 @@ public class BrModelLoader extends BrResourcesLoader {
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
         LinkedHashMap<String, Model> loadedModels = parseLoadedModels(pObject);
-        ModelAssetRegistry.replaceModels(loadedModels);
+        ModelManager.writePort().replaceAll(new LinkedHashMap<>(loadedModels));
     }
 
     static LinkedHashMap<String, Model> parseLoadedModels(Map<ResourceLocation, JsonElement> sourceModels) {

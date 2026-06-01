@@ -17,9 +17,9 @@ class RenderMixinAccessorOwnershipTest {
         SourceCheck mixinConfig = source("src/main/resources/eyelib.mixins.json");
         String docs = readDocs(
                 "MODULES.md",
-                "docs/architecture/01-module-boundaries.md",
-                "docs/architecture/04-mc-debt-ledger.md",
-                "src/main/java/io/github/tt432/eyelib/client/render/README.md"
+                "docs/decisions/0002-module-boundaries.md",
+                "docs/decisions/0005-mc-debt-ledger.md",
+                "src/main/java/io/github/tt432/eyelib/client/render/package-info.java"
         );
 
         assertAll(

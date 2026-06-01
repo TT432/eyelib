@@ -26,9 +26,8 @@ dependencies {
 
 ## Repository Docs
 
-- Repo map: [docs/index/repo-map.md](docs/index/repo-map.md)
-- Refactor control spec: [docs/architecture/00-control-spec.md](docs/architecture/00-control-spec.md)
-- Module boundaries: [docs/architecture/01-module-boundaries.md](docs/architecture/01-module-boundaries.md)
-- Side boundaries: [docs/architecture/02-side-boundaries.md](docs/architecture/02-side-boundaries.md)
-- Generated code policy: [docs/architecture/03-generated-code-policy.md](docs/architecture/03-generated-code-policy.md)
-- Functional module debt ledger: [docs/architecture/04-mc-debt-ledger.md](docs/architecture/04-mc-debt-ledger.md)
+|- Architecture decisions: `docs/decisions/`
+|- Module boundaries: [docs/decisions/0002-module-boundaries.md](docs/decisions/0002-module-boundaries.md)
+|- Side boundaries: [docs/decisions/0003-side-boundaries.md](docs/decisions/0003-side-boundaries.md)
+|- Generated code policy: [docs/decisions/0004-generated-code-policy.md](docs/decisions/0004-generated-code-policy.md)
+|- Functional module debt ledger: [docs/decisions/0005-mc-debt-ledger.md](docs/decisions/0005-mc-debt-ledger.md)

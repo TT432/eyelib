@@ -1,9 +1,15 @@
 package io.github.tt432.eyelib.client.loader;
 
-import io.github.tt432.eyelib.client.registry.*;
+import io.github.tt432.eyelib.client.manager.AttachableManager;
+import io.github.tt432.eyelib.client.manager.ClientEntityManager;
+import io.github.tt432.eyelib.client.manager.MaterialManager;
+import io.github.tt432.eyelib.client.manager.ModelManager;
+import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
 import io.github.tt432.eyelibanimation.bedrock.BrAnimation;
+import io.github.tt432.eyelibmaterial.material.BrMaterial;
+import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
 import io.github.tt432.eyelibanimation.bedrock.controller.BrAnimationControllers;
 import io.github.tt432.eyelibimporter.addon.BedrockAddon;
 import io.github.tt432.eyelibimporter.addon.BedrockAddonSideAggregate;
@@ -35,12 +41,43 @@ public final class BedrockAddonRuntimeBridge {
     public static void replaceFromResourcePack(BedrockAddonSideAggregate resourcePack) {
         AnimationAssetRegistry.stageAnimations(toRuntimeAnimations(resourcePack.animations()));
         AnimationAssetRegistry.stageControllers(toRuntimeAnimationControllers(resourcePack.animationControllers()));
-        ClientEntityAssetRegistry.replaceClientEntities(resourcePack.clientEntities().values());
+        // replaceClientEntities
+        {
+            java.util.LinkedHashMap<String, BrClientEntity> flattened = new java.util.LinkedHashMap<>();
+            resourcePack.clientEntities().values().forEach(entity -> flattened.put(entity.identifier(), entity));
+            ClientEntityManager.writePort().replaceAll(flattened);
+        }
         BehaviorEntityAssetRegistry.replaceBehaviorEntities(resourcePack.behaviorEntities());
-        AttachableAssetRegistry.replaceAttachables(resourcePack.attachables().values());
-        ModelAssetRegistry.replaceModels(resourcePack.modelsView());
-        MaterialAssetRegistry.replaceMaterials(toRuntimeMaterials(resourcePack.materialFiles()));
-        RenderControllerAssetRegistry.replaceRenderControllers(toRuntimeRenderControllers(resourcePack.renderControllerFiles()));
+        // replaceAttachables
+        {
+            java.util.LinkedHashMap<String, BrClientEntity> flattened = new java.util.LinkedHashMap<>();
+            resourcePack.attachables().values().forEach(attachable -> flattened.put(attachable.identifier(), attachable));
+            AttachableManager.writePort().replaceAll(flattened);
+        }
+        // replaceModels
+        ModelManager.writePort().replaceAll(new java.util.LinkedHashMap<>(resourcePack.modelsView()));
+        // replaceMaterials
+        {
+            var materials = toRuntimeMaterials(resourcePack.materialFiles());
+            java.util.LinkedHashMap<String, BrMaterialEntry> flattened = new java.util.LinkedHashMap<>();
+            for (BrMaterial value : materials.values()) {
+                value.materials().forEach(flattened::put);
+            }
+            MaterialManager.writePort().replaceAll(flattened);
+        }
+        // replaceRenderControllers
+        {
+            var controllers = toRuntimeRenderControllers(resourcePack.renderControllerFiles());
+            for (RenderControllers value : controllers.values()) {
+                value.render_controllers().forEach((key, entry) -> {
+                    RenderControllerEntry existing = RenderControllerManager.readPort().get(key);
+                    if (existing != null && existing.part_visibility().size() > entry.part_visibility().size()) {
+                        return;
+                    }
+                    RenderControllerManager.writePort().put(key, entry);
+                });
+            }
+        }
     }
 
     private static Map<String, BrAnimation> toRuntimeAnimations(Map<String, BrAnimationEntrySchema> animations) {

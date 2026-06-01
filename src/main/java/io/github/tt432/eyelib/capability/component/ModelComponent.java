@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.capability.component;
 
-import io.github.tt432.eyelib.client.model.ModelLookup;
+import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelibmaterial.render.RenderTypeResolver;
 import io.github.tt432.eyelibmodel.Model;
@@ -42,7 +42,7 @@ public class ModelComponent {
     @Nullable
     public Model getModel() {
         if (serializableInfo == null) return null;
-        return ModelLookup.get(serializableInfo.model());
+        return ModelManager.readPort().get(serializableInfo.model());
     }
 
     @Nullable

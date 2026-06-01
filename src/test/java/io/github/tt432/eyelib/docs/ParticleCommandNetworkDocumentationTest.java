@@ -14,15 +14,11 @@ class ParticleCommandNetworkDocumentationTest {
     void phase13DocsDescribeCommandAndNetworkOwnership() throws IOException {
         String docs = readDocs(
                 "MODULES.md",
-                "docs/index/repo-map.md",
-                "docs/index/network.md",
-                "docs/architecture/01-module-boundaries.md",
-                "docs/architecture/02-side-boundaries.md",
-                "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/README.md",
-                "src/main/java/io/github/tt432/eyelib/client/particle/README.md",
-                "src/main/java/io/github/tt432/eyelib/network/README.md",
-                "src/main/java/io/github/tt432/eyelib/mc/impl/common/command/README.md",
-                "src/main/java/io/github/tt432/eyelib/mc/impl/network/README.md"
+                "docs/decisions/0002-module-boundaries.md",
+                "docs/decisions/0003-side-boundaries.md",
+                "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/package-info.java",
+                "src/main/java/io/github/tt432/eyelib/client/particle/package-info.java",
+                "src/main/java/io/github/tt432/eyelib/network/package-info.java"
         );
 
         assertAll(
@@ -42,12 +38,11 @@ class ParticleCommandNetworkDocumentationTest {
     void phase13DocsPreserveDeferredScopeBoundaries() throws IOException {
         String docs = readDocs(
                 "MODULES.md",
-                "docs/index/repo-map.md",
-                "docs/architecture/01-module-boundaries.md",
-                "docs/architecture/02-side-boundaries.md",
-                "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/README.md",
-                "src/main/java/io/github/tt432/eyelib/client/particle/README.md",
-                "src/main/java/io/github/tt432/eyelib/network/README.md"
+                "docs/decisions/0002-module-boundaries.md",
+                "docs/decisions/0003-side-boundaries.md",
+                "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/package-info.java",
+                "src/main/java/io/github/tt432/eyelib/client/particle/package-info.java",
+                "src/main/java/io/github/tt432/eyelib/network/package-info.java"
         );
 
         assertAll(

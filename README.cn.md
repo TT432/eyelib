@@ -26,9 +26,8 @@ dependencies {
 
 ## 仓库文档
 
-- 仓库索引： [docs/index/repo-map.md](docs/index/repo-map.md)
-- 重构控制规范： [docs/architecture/00-control-spec.md](docs/architecture/00-control-spec.md)
-- 模块边界： [docs/architecture/01-module-boundaries.md](docs/architecture/01-module-boundaries.md)
-- Side 边界： [docs/architecture/02-side-boundaries.md](docs/architecture/02-side-boundaries.md)
-- 生成代码策略： [docs/architecture/03-generated-code-policy.md](docs/architecture/03-generated-code-policy.md)
-- 功能模块债务清单： [docs/architecture/04-mc-debt-ledger.md](docs/architecture/04-mc-debt-ledger.md)
+|- 架构决策： `docs/decisions/`
+|- 模块边界： [docs/decisions/0002-module-boundaries.md](docs/decisions/0002-module-boundaries.md)
+|- Side 边界： [docs/decisions/0003-side-boundaries.md](docs/decisions/0003-side-boundaries.md)
+|- 生成代码策略： [docs/decisions/0004-generated-code-policy.md](docs/decisions/0004-generated-code-policy.md)
+|- 功能模块债务清单： [docs/decisions/0005-mc-debt-ledger.md](docs/decisions/0005-mc-debt-ledger.md)

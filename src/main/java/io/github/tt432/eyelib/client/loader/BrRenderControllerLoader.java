@@ -1,7 +1,8 @@
 package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
-import io.github.tt432.eyelib.client.registry.RenderControllerAssetRegistry;
+import io.github.tt432.eyelib.client.manager.RenderControllerManager;
+import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
@@ -31,6 +32,14 @@ public class BrRenderControllerLoader extends BrResourcesLoader {
     protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
         Map<ResourceLocation, RenderControllers> parsedRenderControllers =
                 LoaderParsingOps.parseBySourceKey(pObject, RenderControllers.CODEC, LOGGER, "render controller");
-        RenderControllerAssetRegistry.replaceRenderControllers(parsedRenderControllers);
+        for (RenderControllers value : parsedRenderControllers.values()) {
+            value.render_controllers().forEach((key, entry) -> {
+                RenderControllerEntry existing = RenderControllerManager.readPort().get(key);
+                if (existing != null && existing.part_visibility().size() > entry.part_visibility().size()) {
+                    return;
+                }
+                RenderControllerManager.writePort().put(key, entry);
+            });
+        }
     }
 }

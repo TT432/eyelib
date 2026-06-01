@@ -4,8 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.gui.manager.io.FileDialogService;
+import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
-import io.github.tt432.eyelib.client.registry.RenderControllerAssetRegistry;
+import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
 import io.github.tt432.eyelibanimation.bedrock.BrAnimation;
 import io.github.tt432.eyelibanimation.bedrock.controller.BrAnimationControllers;
@@ -44,8 +45,16 @@ public final class ManagerImportActions {
     }
 
     public static void importRenderController(Logger logger) {
-        importJson("读取文件", json -> RenderControllerAssetRegistry.publishRenderController(
-                RenderControllers.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow(false, logger::warn)));
+        importJson("读取文件", json -> {
+            var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow(false, logger::warn);
+            controller.render_controllers().forEach((key, entry) -> {
+                RenderControllerEntry existing = RenderControllerManager.readPort().get(key);
+                if (existing != null && existing.part_visibility().size() > entry.part_visibility().size()) {
+                    return;
+                }
+                RenderControllerManager.writePort().put(key, entry);
+            });
+        });
     }
 
     private static void importJson(String title, Consumer<JsonObject> action) {

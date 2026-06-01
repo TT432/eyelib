@@ -1,8 +1,9 @@
 package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
-import io.github.tt432.eyelib.client.registry.MaterialAssetRegistry;
+import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelibmaterial.material.BrMaterial;
+import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -11,6 +12,7 @@ import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 
@@ -31,6 +33,10 @@ public class BrMaterialLoader extends BrResourcesLoader {
     protected void apply(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
         Map<ResourceLocation, BrMaterial> parsedMaterials =
                 LoaderParsingOps.parseBySourceKey(object, BrMaterial.CODEC, LOGGER, "material");
-        MaterialAssetRegistry.replaceMaterials(parsedMaterials);
+        LinkedHashMap<String, BrMaterialEntry> flattened = new LinkedHashMap<>();
+        for (BrMaterial value : parsedMaterials.values()) {
+            value.materials().forEach(flattened::put);
+        }
+        MaterialManager.writePort().replaceAll(flattened);
     }
 }

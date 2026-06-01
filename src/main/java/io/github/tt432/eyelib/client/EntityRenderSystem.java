@@ -8,14 +8,14 @@ import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.manager.BehaviorEntityManager;
-import io.github.tt432.eyelib.client.entity.ClientEntityLookup;
+import io.github.tt432.eyelib.client.manager.ClientEntityManager;
+import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
 import io.github.tt432.eyelib.client.render.AttachableItemRenderSetup;
 import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.SimpleRenderAction;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
-import io.github.tt432.eyelib.client.render.controller.RenderControllerLookup;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelibanimation.AnimationEffects;
 import io.github.tt432.eyelibanimation.BrAnimator;
@@ -410,7 +410,7 @@ public class EntityRenderSystem {
         BrClientEntity clientEntity = clientEntityComponent.getClientEntity();
 
         if (clientEntity == null) {
-            clientEntity = ClientEntityLookup.get(entityId.toString());
+            clientEntity = ClientEntityManager.readPort().get(entityId.toString());
             if (clientEntity != null) {
                 clientEntityComponent.setClientEntity(clientEntity);
             }
@@ -455,7 +455,7 @@ public class EntityRenderSystem {
                 if (condition != null && cap.getScope() != null && !condition.evalAsBool(cap.getScope())) {
                     continue;
                 }
-                RenderControllerEntry renderControllerEntry = RenderControllerLookup.get(renderController);
+                RenderControllerEntry renderControllerEntry = RenderControllerManager.readPort().get(renderController);
                 RenderControllerComponent.Slot renderControllerSlot = renderControllerComponent.syncSlot(i, renderControllerEntry);
                 if (renderControllerEntry != null && cap.getScope() != null)
                     components.add(renderControllerEntry.setupModel(cap.getScope(), appliedClientEntity, clientEntityComponent.getModels(), renderControllerSlot, syncedActions));

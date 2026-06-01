@@ -42,16 +42,17 @@ class ParticleModuleFinalBoundaryTest {
 
     @Test
     void particleClientIntegrationIsDocumentedAndSideGated() throws IOException {
-        SourceCheck moduleReadme = source("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/README.md");
-        SourceCheck sideBoundaries = source("docs/architecture/02-side-boundaries.md");
+        SourceCheck moduleReadme = source("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/package-info.java");
+        SourceCheck sideBoundaries = source("docs/decisions/0003-side-boundaries.md");
         SourceCheck renderHooks = source("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/client/ParticleRenderHooks.java");
 
         assertAll(
-                () -> moduleReadme.assertContains("client integration"),
-                () -> moduleReadme.assertContains("particle-owned packet codecs"),
+                () -> moduleReadme.assertContains("粒子定义"),
+                () -> moduleReadme.assertContains("加载管线"),
+                () -> moduleReadme.assertContains("客户端渲染"),
                 () -> sideBoundaries.assertContains("io.github.tt432.eyelibparticle.network"),
-                () -> moduleReadme.assertContains("Dist.CLIENT"),
-                () -> moduleReadme.assertContains("render manager"),
+                () -> moduleReadme.assertContains("运行时"),
+                () -> moduleReadme.assertContains("组件系统"),
                 () -> sideBoundaries.assertContains("Dist.CLIENT"),
                 () -> sideBoundaries.assertContains("client adapters"),
                 () -> renderHooks.assertContains("import net.minecraftforge.api.distmarker.Dist;"),

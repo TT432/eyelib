@@ -24,13 +24,13 @@ class ClientEntityLookupTest {
         BrClientEntity clientEntity = testEntity();
         ClientEntityManager.writePort().put(clientEntity.identifier(), clientEntity);
 
-        assertSame(clientEntity, ClientEntityLookup.get("eyelib:test_entity"));
-        assertNull(ClientEntityLookup.get("eyelib:missing"));
+        assertSame(clientEntity, ClientEntityManager.readPort().get("eyelib:test_entity"));
+        assertNull(ClientEntityManager.readPort().get("eyelib:missing"));
     }
 
     @Test
     void managerNameExposesUnderlyingClientEntityManagerName() {
-        assertEquals("ClientEntityManager", ClientEntityLookup.managerName());
+        assertEquals("ClientEntityManager", ClientEntityManager.readPort().getManagerName());
     }
 
     private static BrClientEntity testEntity() {
