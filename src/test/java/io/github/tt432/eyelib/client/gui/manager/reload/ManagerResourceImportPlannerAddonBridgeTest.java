@@ -34,12 +34,12 @@ class ManagerResourceImportPlannerAddonBridgeTest {
     @AfterEach
     void tearDown() {
         AnimationManager.INSTANCE.clear();
-        RenderControllerManager.writePort().clear();
-        ClientEntityManager.writePort().clear();
-        AttachableManager.writePort().clear();
-        ModelManager.writePort().clear();
+        RenderControllerManager.INSTANCE.clear();
+        ClientEntityManager.INSTANCE.clear();
+        AttachableManager.INSTANCE.clear();
+        ModelManager.INSTANCE.clear();
         ParticleDefinitionRegistry.store().clear();
-        MaterialManager.writePort().clear();
+        MaterialManager.INSTANCE.clear();
     }
 
     @Test
@@ -51,11 +51,11 @@ class ManagerResourceImportPlannerAddonBridgeTest {
         assertTrue(addonMode);
         assertNotNull(AnimationLookup.get("animation.test.idle"));
         assertNotNull(AnimationLookup.get("controller.animation.test"));
-        assertNotNull(RenderControllerManager.readPort().get("controller.render.test"));
-        assertNotNull(ClientEntityManager.readPort().get("eyelib:test_entity"));
-        assertNotNull(AttachableManager.readPort().get("eyelib:test_attachable"));
-        assertNotNull(ModelManager.readPort().get("geometry.test"));
-        assertNotNull(MaterialManager.readPort().get("entity_alphatest"));
+        assertNotNull(RenderControllerManager.INSTANCE.get("controller.render.test"));
+        assertNotNull(ClientEntityManager.INSTANCE.get("eyelib:test_entity"));
+        assertNotNull(AttachableManager.INSTANCE.get("eyelib:test_attachable"));
+        assertNotNull(ModelManager.INSTANCE.get("geometry.test"));
+        assertNotNull(MaterialManager.INSTANCE.get("entity_alphatest"));
         assertNotNull(ParticleDefinitionRegistry.store().get("eyelib:addon_particle"));
         assertNull(ParticleDefinitionRegistry.store().get("particles/test.particle"));
     }
@@ -69,7 +69,7 @@ class ManagerResourceImportPlannerAddonBridgeTest {
 
         assertTrue(addonMode);
         assertNotNull(AnimationLookup.get("animation.test.idle"));
-        assertNotNull(ClientEntityManager.readPort().get("eyelib:test_entity"));
+        assertNotNull(ClientEntityManager.INSTANCE.get("eyelib:test_entity"));
     }
 
     @Test
@@ -83,8 +83,8 @@ class ManagerResourceImportPlannerAddonBridgeTest {
 
         assertFalse(addonMode);
         assertNotNull(AnimationLookup.get("animation.test.legacy"));
-        assertNotNull(AttachableManager.readPort().get("eyelib:test_attachable"));
-        assertNotNull(MaterialManager.readPort().get("entity_alphatest"));
+        assertNotNull(AttachableManager.INSTANCE.get("eyelib:test_attachable"));
+        assertNotNull(MaterialManager.INSTANCE.get("entity_alphatest"));
     }
 
     @Test

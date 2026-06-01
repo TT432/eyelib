@@ -42,7 +42,7 @@ public class ModelComponent {
     @Nullable
     public Model getModel() {
         if (serializableInfo == null) return null;
-        return ModelManager.readPort().get(serializableInfo.model());
+        return ModelManager.INSTANCE.get(serializableInfo.model());
     }
 
     @Nullable

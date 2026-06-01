@@ -48,11 +48,11 @@ public final class ManagerImportActions {
         importJson("读取文件", json -> {
             var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow(false, logger::warn);
             controller.render_controllers().forEach((key, entry) -> {
-                RenderControllerEntry existing = RenderControllerManager.readPort().get(key);
+                RenderControllerEntry existing = RenderControllerManager.INSTANCE.get(key);
                 if (existing != null && existing.part_visibility().size() > entry.part_visibility().size()) {
                     return;
                 }
-                RenderControllerManager.writePort().put(key, entry);
+                RenderControllerManager.INSTANCE.put(key, entry);
             });
         });
     }

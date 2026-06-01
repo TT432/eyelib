@@ -26,6 +26,10 @@ public final class ManagerStorage<T> {
         return new LinkedHashMap<>(data);
     }
 
+    public Map<String, T> all() {
+        return getAllData();
+    }
+
     public void replaceAll(Map<String, ? extends T> replacement) {
         data.clear();
         data.putAll(replacement);

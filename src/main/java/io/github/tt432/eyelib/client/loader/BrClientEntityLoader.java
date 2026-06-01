@@ -40,6 +40,6 @@ public class BrClientEntityLoader extends BrResourcesLoader {
 
         LinkedHashMap<String, BrClientEntity> flattened = new LinkedHashMap<>();
         parsedEntities.values().forEach(entity -> flattened.put(entity.identifier(), entity));
-        ClientEntityManager.writePort().replaceAll(flattened);
+        ClientEntityManager.INSTANCE.replaceAll(flattened);
     }
 }

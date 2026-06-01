@@ -28,7 +28,7 @@ public class BrModelLoader extends BrResourcesLoader {
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
         LinkedHashMap<String, Model> loadedModels = parseLoadedModels(pObject);
-        ModelManager.writePort().replaceAll(new LinkedHashMap<>(loadedModels));
+        ModelManager.INSTANCE.replaceAll(new LinkedHashMap<>(loadedModels));
     }
 
     static LinkedHashMap<String, Model> parseLoadedModels(Map<ResourceLocation, JsonElement> sourceModels) {

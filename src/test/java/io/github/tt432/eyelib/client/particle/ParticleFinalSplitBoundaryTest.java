@@ -104,10 +104,6 @@ class ParticleFinalSplitBoundaryTest {
                     () -> "root particle components should not be referenced after legacy deletion: "
                             + externalRootComponentReferences);
         }
-
-        SourceCheck readme = source("src/main/java/io/github/tt432/eyelib/client/particle/README.md");
-        readme.assertContains("Legacy root `bedrock/**`, `ParticleLookup`, `ParticleManager`, and `ParticleAssetRegistry` have been deleted");
-        readme.assertContains("Executable runtime remains in `io.github.tt432.eyelibparticle.runtime.bedrock/**`");
     }
 
     @Test

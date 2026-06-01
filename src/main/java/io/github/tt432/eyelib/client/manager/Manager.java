@@ -1,8 +1,7 @@
 package io.github.tt432.eyelib.client.manager;
 
-import io.github.tt432.eyelibutil.manager.ManagerReadPort;
 import io.github.tt432.eyelibutil.manager.ManagerStorage;
-import io.github.tt432.eyelibutil.manager.ManagerWritePort;
+import io.github.tt432.eyelibutil.repository.Repository;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -12,7 +11,7 @@ import java.util.Map;
  * @author TT432
  */
 @NullMarked
-public abstract class Manager<T> implements ManagerReadPort<T>, ManagerWritePort<T> {
+public abstract class Manager<T> implements Repository<T> {
     private final ManagerStorage<T> storage = new ManagerStorage<>();
 
     public void put(String name, T value) {
@@ -31,6 +30,11 @@ public abstract class Manager<T> implements ManagerReadPort<T>, ManagerWritePort
 
     public Map<String, T> getAllData() {
         return storage.getAllData();
+    }
+
+    @Override
+    public Map<String, T> all() {
+        return storage.all();
     }
 
     public void replaceAll(Map<String, ? extends T> replacement) {

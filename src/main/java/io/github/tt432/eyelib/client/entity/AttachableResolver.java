@@ -34,7 +34,7 @@ public final class AttachableResolver {
 
     @Nullable
     static BrClientEntity resolveByItemId(String itemId) {
-        for (BrClientEntity attachable : AttachableManager.readPort().getAllData().values()) {
+        for (BrClientEntity attachable : AttachableManager.INSTANCE.getAllData().values()) {
             if (attachable.item().containsKey(itemId)) {
                 return attachable;
             }

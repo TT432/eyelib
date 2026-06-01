@@ -39,7 +39,7 @@ public final class BehaviorEntityAssetRegistry {
             }
         }
         if (!flattened.isEmpty()) {
-            BehaviorEntityManager.writePort().replaceAll(flattened);
+            BehaviorEntityManager.INSTANCE.replaceAll(flattened);
         }
     }
 

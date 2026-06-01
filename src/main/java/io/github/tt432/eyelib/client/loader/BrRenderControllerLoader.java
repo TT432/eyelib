@@ -34,11 +34,11 @@ public class BrRenderControllerLoader extends BrResourcesLoader {
                 LoaderParsingOps.parseBySourceKey(pObject, RenderControllers.CODEC, LOGGER, "render controller");
         for (RenderControllers value : parsedRenderControllers.values()) {
             value.render_controllers().forEach((key, entry) -> {
-                RenderControllerEntry existing = RenderControllerManager.readPort().get(key);
+                RenderControllerEntry existing = RenderControllerManager.INSTANCE.get(key);
                 if (existing != null && existing.part_visibility().size() > entry.part_visibility().size()) {
                     return;
                 }
-                RenderControllerManager.writePort().put(key, entry);
+                RenderControllerManager.INSTANCE.put(key, entry);
             });
         }
     }

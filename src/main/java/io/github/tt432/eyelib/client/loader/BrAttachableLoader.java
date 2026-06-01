@@ -42,12 +42,12 @@ public class BrAttachableLoader extends BrResourcesLoader implements Searchable<
         );
         LinkedHashMap<String, BrClientEntity> flattened = new LinkedHashMap<>();
         parsedAttachables.values().forEach(attachable -> flattened.put(attachable.identifier(), attachable));
-        AttachableManager.writePort().replaceAll(flattened);
+        AttachableManager.INSTANCE.replaceAll(flattened);
     }
 
     @Override
     public Stream<Map.Entry<String, BrClientEntity>> search(String searchStr) {
-        return AttachableManager.readPort().getAllData().entrySet().stream()
+        return AttachableManager.INSTANCE.getAllData().entrySet().stream()
                                 .filter(entry -> StringUtils.contains(entry.getKey(), searchStr))
                                 .map(entry -> Map.entry(entry.getKey(), entry.getValue()));
     }

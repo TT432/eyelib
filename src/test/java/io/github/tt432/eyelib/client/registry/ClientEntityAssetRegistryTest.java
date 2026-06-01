@@ -16,23 +16,23 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class ClientEntityAssetRegistryTest {
     @AfterEach
     void tearDown() {
-        ClientEntityManager.writePort().clear();
+        ClientEntityManager.INSTANCE.clear();
     }
 
     @Test
     void replaceClientEntitiesUsesEntityIdentifierAsStorageKey() {
         BrClientEntity stale = testEntity("eyelib:stale");
-        ClientEntityManager.writePort().put(stale.identifier(), stale);
+        ClientEntityManager.INSTANCE.put(stale.identifier(), stale);
 
         BrClientEntity first = testEntity("eyelib:first");
         BrClientEntity second = testEntity("eyelib:second");
         LinkedHashMap<String, BrClientEntity> flattened = new LinkedHashMap<>();
         List.of(first, second).forEach(entity -> flattened.put(entity.identifier(), entity));
-        ClientEntityManager.writePort().replaceAll(flattened);
+        ClientEntityManager.INSTANCE.replaceAll(flattened);
 
-        assertNull(ClientEntityManager.readPort().get("eyelib:stale"));
-        assertEquals(first, ClientEntityManager.readPort().get("eyelib:first"));
-        assertEquals(second, ClientEntityManager.readPort().get("eyelib:second"));
+        assertNull(ClientEntityManager.INSTANCE.get("eyelib:stale"));
+        assertEquals(first, ClientEntityManager.INSTANCE.get("eyelib:first"));
+        assertEquals(second, ClientEntityManager.INSTANCE.get("eyelib:second"));
     }
 
     private static BrClientEntity testEntity(String identifier) {

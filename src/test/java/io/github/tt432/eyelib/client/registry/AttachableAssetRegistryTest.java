@@ -16,23 +16,23 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class AttachableAssetRegistryTest {
     @AfterEach
     void tearDown() {
-        AttachableManager.writePort().clear();
+        AttachableManager.INSTANCE.clear();
     }
 
     @Test
     void replaceAttachablesUsesEntityIdentifierAsStorageKey() {
         BrClientEntity stale = testAttachable("eyelib:stale_attachable");
-        AttachableManager.writePort().put(stale.identifier(), stale);
+        AttachableManager.INSTANCE.put(stale.identifier(), stale);
 
         BrClientEntity first = testAttachable("eyelib:first_attachable");
         BrClientEntity second = testAttachable("eyelib:second_attachable");
         LinkedHashMap<String, BrClientEntity> flattened = new LinkedHashMap<>();
         List.of(first, second).forEach(attachable -> flattened.put(attachable.identifier(), attachable));
-        AttachableManager.writePort().replaceAll(flattened);
+        AttachableManager.INSTANCE.replaceAll(flattened);
 
-        assertNull(AttachableManager.readPort().get("eyelib:stale_attachable"));
-        assertEquals(first, AttachableManager.readPort().get("eyelib:first_attachable"));
-        assertEquals(second, AttachableManager.readPort().get("eyelib:second_attachable"));
+        assertNull(AttachableManager.INSTANCE.get("eyelib:stale_attachable"));
+        assertEquals(first, AttachableManager.INSTANCE.get("eyelib:first_attachable"));
+        assertEquals(second, AttachableManager.INSTANCE.get("eyelib:second_attachable"));
     }
 
     private static BrClientEntity testAttachable(String identifier) {

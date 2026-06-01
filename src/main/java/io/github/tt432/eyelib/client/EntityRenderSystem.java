@@ -96,7 +96,7 @@ public class EntityRenderSystem {
         if (entity instanceof LivingEntity living) {
             var key = ForgeRegistries.ENTITY_TYPES.getKey(living.getType());
             if (key != null) {
-                var be = BehaviorEntityManager.readPort().get(key.toString());
+                var be = BehaviorEntityManager.INSTANCE.get(key.toString());
                 if (be != null) {
                     var spawnEvent = be.events().get("minecraft:entity_spawned");
                     List<ComponentGroup> groups;
@@ -410,7 +410,7 @@ public class EntityRenderSystem {
         BrClientEntity clientEntity = clientEntityComponent.getClientEntity();
 
         if (clientEntity == null) {
-            clientEntity = ClientEntityManager.readPort().get(entityId.toString());
+            clientEntity = ClientEntityManager.INSTANCE.get(entityId.toString());
             if (clientEntity != null) {
                 clientEntityComponent.setClientEntity(clientEntity);
             }
@@ -455,7 +455,7 @@ public class EntityRenderSystem {
                 if (condition != null && cap.getScope() != null && !condition.evalAsBool(cap.getScope())) {
                     continue;
                 }
-                RenderControllerEntry renderControllerEntry = RenderControllerManager.readPort().get(renderController);
+                RenderControllerEntry renderControllerEntry = RenderControllerManager.INSTANCE.get(renderController);
                 RenderControllerComponent.Slot renderControllerSlot = renderControllerComponent.syncSlot(i, renderControllerEntry);
                 if (renderControllerEntry != null && cap.getScope() != null)
                     components.add(renderControllerEntry.setupModel(cap.getScope(), appliedClientEntity, clientEntityComponent.getModels(), renderControllerSlot, syncedActions));

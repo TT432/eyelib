@@ -32,7 +32,7 @@ public class AttachableSmoke {
             throw new AssertionError("Player not available");
         }
 
-        var all = AttachableManager.readPort().getAllData();
+        var all = AttachableManager.INSTANCE.getAllData();
         LOGGER.info("[AttachableSmoke] auto-loaded attachables: {}", all.size());
         all.forEach((k, v) -> LOGGER.info("[AttachableSmoke]   {} item={}", k, v.item()));
 

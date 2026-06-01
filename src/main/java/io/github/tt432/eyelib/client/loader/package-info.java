@@ -1,5 +1,5 @@
 /**
- * Resource reload listeners and parse/reload entrypoints for animations, materials, particles,
+ * resource reload listeners and parse/reload entrypoints for animations, materials, particles,
  * render controllers, entities, and related assets.
  */
 @NullMarked

@@ -23,7 +23,7 @@ public class ClientEntityRuntimeData {
     private BrClientEntity appliedClientEntity;
 
     public ClientEntityRuntimeData() {
-        this(ModelManager.readPort()::get);
+        this(ModelManager.INSTANCE::get);
     }
 
     ClientEntityRuntimeData(ModelResolver modelResolver) {

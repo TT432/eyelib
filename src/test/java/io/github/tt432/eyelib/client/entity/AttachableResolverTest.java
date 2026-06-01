@@ -16,15 +16,15 @@ class AttachableResolverTest {
 
     @AfterEach
     void tearDown() {
-        AttachableManager.writePort().clear();
+        AttachableManager.INSTANCE.clear();
     }
 
     @Test
     void resolveByItemIdReturnsAttachableWhenItemMatches() {
         BrClientEntity wrench = testAttachable("eyelib:wrench", Map.of("demo:wrench", "1.0"));
         BrClientEntity sword = testAttachable("eyelib:sword", Map.of("demo:sword", "1.0"));
-        AttachableManager.writePort().put(wrench.identifier(), wrench);
-        AttachableManager.writePort().put(sword.identifier(), sword);
+        AttachableManager.INSTANCE.put(wrench.identifier(), wrench);
+        AttachableManager.INSTANCE.put(sword.identifier(), sword);
 
         assertEquals(wrench, AttachableResolver.resolveByItemId("demo:wrench"));
         assertEquals(sword, AttachableResolver.resolveByItemId("demo:sword"));
@@ -33,7 +33,7 @@ class AttachableResolverTest {
     @Test
     void resolveByItemIdReturnsNullWhenNoMatch() {
         BrClientEntity wrench = testAttachable("eyelib:wrench", Map.of("demo:wrench", "1.0"));
-        AttachableManager.writePort().put(wrench.identifier(), wrench);
+        AttachableManager.INSTANCE.put(wrench.identifier(), wrench);
 
         assertNull(AttachableResolver.resolveByItemId("demo:nonexistent"));
     }
@@ -47,8 +47,8 @@ class AttachableResolverTest {
     void resolveByItemIdMatchesFirstAttachableWithItemKey() {
         BrClientEntity first = testAttachable("eyelib:a", Map.of("demo:shared", "1.0"));
         BrClientEntity second = testAttachable("eyelib:b", Map.of("demo:shared", "1.0"));
-        AttachableManager.writePort().put(first.identifier(), first);
-        AttachableManager.writePort().put(second.identifier(), second);
+        AttachableManager.INSTANCE.put(first.identifier(), first);
+        AttachableManager.INSTANCE.put(second.identifier(), second);
 
         assertEquals(first, AttachableResolver.resolveByItemId("demo:shared"));
     }
@@ -57,7 +57,7 @@ class AttachableResolverTest {
     void resolveByItemIdHandlesMultipleItemsInOneAttachable() {
         BrClientEntity tool = testAttachable("eyelib:tool",
                 Map.of("demo:pickaxe", "1.0", "demo:axe", "query.is_sneaking"));
-        AttachableManager.writePort().put(tool.identifier(), tool);
+        AttachableManager.INSTANCE.put(tool.identifier(), tool);
 
         assertEquals(tool, AttachableResolver.resolveByItemId("demo:pickaxe"));
         assertEquals(tool, AttachableResolver.resolveByItemId("demo:axe"));

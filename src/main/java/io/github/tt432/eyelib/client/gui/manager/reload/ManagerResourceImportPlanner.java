@@ -117,11 +117,11 @@ public final class ManagerResourceImportPlanner {
         {
             for (RenderControllers value : renderControllers.values()) {
                 value.render_controllers().forEach((key, entry) -> {
-                    RenderControllerEntry existing = RenderControllerManager.readPort().get(key);
+                    RenderControllerEntry existing = RenderControllerManager.INSTANCE.get(key);
                     if (existing != null && existing.part_visibility().size() > entry.part_visibility().size()) {
                         return;
                     }
-                    RenderControllerManager.writePort().put(key, entry);
+                    RenderControllerManager.INSTANCE.put(key, entry);
                 });
             }
         }
@@ -150,7 +150,7 @@ public final class ManagerResourceImportPlanner {
         {
             LinkedHashMap<String, BrClientEntity> flattened = new LinkedHashMap<>();
             parsedEntities.values().forEach(entity -> flattened.put(entity.identifier(), entity));
-            ClientEntityManager.writePort().replaceAll(flattened);
+            ClientEntityManager.INSTANCE.replaceAll(flattened);
         }
 
         Map<String, BrClientEntity> parsedAttachables = ManagerResourceBatchPlanner.loadStructuredFiles(
@@ -166,14 +166,14 @@ public final class ManagerResourceImportPlanner {
         {
             LinkedHashMap<String, BrClientEntity> flattened = new LinkedHashMap<>();
             parsedAttachables.values().forEach(attachable -> flattened.put(attachable.identifier(), attachable));
-            AttachableManager.writePort().replaceAll(flattened);
+            AttachableManager.INSTANCE.replaceAll(flattened);
         }
 
         Map<String, Map<String, Model>> parsedModels = ManagerResourceBatchPlanner.loadModelFiles(basePath, ModelImporter::importFile, LOGGER);
         LinkedHashMap<String, Model> models = new LinkedHashMap<>();
         parsedModels.values().forEach(models::putAll);
         // replaceModels
-        ModelManager.writePort().replaceAll(new LinkedHashMap<>(models));
+        ModelManager.INSTANCE.replaceAll(new LinkedHashMap<>(models));
 
         Map<String, BrMaterial> parsedMaterials = ManagerResourceBatchPlanner.loadStructuredFiles(
                 basePath,
@@ -190,7 +190,7 @@ public final class ManagerResourceImportPlanner {
             for (BrMaterial value : parsedMaterials.values()) {
                 value.materials().forEach(flattened::put);
             }
-            MaterialManager.writePort().replaceAll(flattened);
+            MaterialManager.INSTANCE.replaceAll(flattened);
         }
 
         loadTextures(basePath);
@@ -247,37 +247,37 @@ public final class ManagerResourceImportPlanner {
                                                                     .getOrThrow(false, logger::warn);
                             // publishRenderController
                             controller.render_controllers().forEach((key, entry) -> {
-                                RenderControllerEntry existing = RenderControllerManager.readPort().get(key);
+                                RenderControllerEntry existing = RenderControllerManager.INSTANCE.get(key);
                                 if (existing != null && existing.part_visibility().size() > entry.part_visibility().size()) {
                                     return;
                                 }
-                                RenderControllerManager.writePort().put(key, entry);
+                                RenderControllerManager.INSTANCE.put(key, entry);
                             });
                         }
                         case ENTITY_JSON -> {
                             var entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo)
                                                              .getOrThrow(false, logger::warn);
-                            ClientEntityManager.writePort().put(entity.identifier(), entity);
+                            ClientEntityManager.INSTANCE.put(entity.identifier(), entity);
                         }
                         case ATTACHABLE_JSON -> {
                             var attachable = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, jo)
                                                                             .getOrThrow(false, logger::warn);
-                            AttachableManager.writePort().put(attachable.identifier(), attachable);
+                            AttachableManager.INSTANCE.put(attachable.identifier(), attachable);
                         }
                         case PARTICLE_JSON -> {
                             ParticleResourcePublication.publishFromJsonResource(file.toString(), jo, logger);
                         }
-                        case MODEL_JSON -> ModelManager.writePort().replaceAll(ModelImporter.importFile(file));
+                        case MODEL_JSON -> ModelManager.INSTANCE.replaceAll(ModelImporter.importFile(file));
                         default -> {
                         }
                     }
                 }
-                case MODEL_BBMODEL -> ModelManager.writePort().replaceAll(ModelImporter.importFile(file));
+                case MODEL_BBMODEL -> ModelManager.INSTANCE.replaceAll(ModelImporter.importFile(file));
                 case MATERIAL_FILE -> {
                     try (InputStream inputStream = Files.newInputStream(file)) {
                         JsonObject jo = GSON.fromJson(IOUtils.toString(inputStream, StandardCharsets.UTF_8), JsonObject.class);
                         var material = BrMaterial.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
-                        material.materials().forEach(MaterialManager.writePort()::put);
+                        material.materials().forEach(MaterialManager.INSTANCE::put);
                     }
                 }
                 case TEXTURE_PNG -> {

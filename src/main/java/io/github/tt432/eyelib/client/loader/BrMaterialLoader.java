@@ -37,6 +37,6 @@ public class BrMaterialLoader extends BrResourcesLoader {
         for (BrMaterial value : parsedMaterials.values()) {
             value.materials().forEach(flattened::put);
         }
-        MaterialManager.writePort().replaceAll(flattened);
+        MaterialManager.INSTANCE.replaceAll(flattened);
     }
 }

@@ -39,7 +39,7 @@ class ClientLookupFacadeTest {
         Model model = new Model("geometry.test", new Int2ObjectOpenHashMap<>());
         ModelManager.INSTANCE.put("geometry.test", model);
 
-        Map<String, Model> snapshot = ModelManager.readPort().getAllData();
+        Map<String, Model> snapshot = ModelManager.INSTANCE.getAllData();
         ModelManager.INSTANCE.put("geometry.other", new Model("geometry.other", new Int2ObjectOpenHashMap<>()));
 
         assertEquals(Set.of("geometry.test"), snapshot.keySet());

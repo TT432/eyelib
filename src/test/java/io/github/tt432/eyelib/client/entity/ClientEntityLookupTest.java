@@ -16,21 +16,21 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 class ClientEntityLookupTest {
     @AfterEach
     void tearDown() {
-        ClientEntityManager.writePort().clear();
+        ClientEntityManager.INSTANCE.clear();
     }
 
     @Test
     void getReadsClientEntityByPlatformFreeStringIdentifier() {
         BrClientEntity clientEntity = testEntity();
-        ClientEntityManager.writePort().put(clientEntity.identifier(), clientEntity);
+        ClientEntityManager.INSTANCE.put(clientEntity.identifier(), clientEntity);
 
-        assertSame(clientEntity, ClientEntityManager.readPort().get("eyelib:test_entity"));
-        assertNull(ClientEntityManager.readPort().get("eyelib:missing"));
+        assertSame(clientEntity, ClientEntityManager.INSTANCE.get("eyelib:test_entity"));
+        assertNull(ClientEntityManager.INSTANCE.get("eyelib:missing"));
     }
 
     @Test
     void managerNameExposesUnderlyingClientEntityManagerName() {
-        assertEquals("ClientEntityManager", ClientEntityManager.readPort().getManagerName());
+        assertEquals("ClientEntityManager", ClientEntityManager.INSTANCE.getManagerName());
     }
 
     private static BrClientEntity testEntity() {

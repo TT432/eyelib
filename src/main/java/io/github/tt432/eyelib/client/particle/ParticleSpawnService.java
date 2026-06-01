@@ -38,6 +38,7 @@ import java.util.Optional;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+// this facade after packet/runtime callers bind directly
 @NullMarked
 public final class ParticleSpawnService {
     private static final ParticleSpawnRuntimeAdapter ADAPTER = new ParticleSpawnRuntimeAdapter(

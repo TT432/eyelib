@@ -35,11 +35,11 @@ class BedrockAddonRuntimeBridgeTest {
     @AfterEach
     void tearDown() {
         AnimationManager.INSTANCE.clear();
-        ClientEntityManager.writePort().clear();
-        AttachableManager.writePort().clear();
-        ModelManager.writePort().clear();
-        MaterialManager.writePort().clear();
-        RenderControllerManager.writePort().clear();
+        ClientEntityManager.INSTANCE.clear();
+        AttachableManager.INSTANCE.clear();
+        ModelManager.INSTANCE.clear();
+        MaterialManager.INSTANCE.clear();
+        RenderControllerManager.INSTANCE.clear();
     }
 
     @Test
@@ -120,11 +120,11 @@ class BedrockAddonRuntimeBridgeTest {
 
         assertNotNull(AnimationLookup.get("animation.test.idle"));
         assertNotNull(AnimationLookup.get("controller.animation.test"));
-        assertEquals(clientEntity, ClientEntityManager.readPort().get(clientEntity.identifier()));
-        assertEquals(attachable, AttachableManager.readPort().get(attachable.identifier()));
-        assertEquals(model, ModelManager.readPort().get(model.name()));
-        assertNotNull(MaterialManager.readPort().get("entity_alphatest"));
-        assertNotNull(RenderControllerManager.readPort().get("controller.render.test"));
+        assertEquals(clientEntity, ClientEntityManager.INSTANCE.get(clientEntity.identifier()));
+        assertEquals(attachable, AttachableManager.INSTANCE.get(attachable.identifier()));
+        assertEquals(model, ModelManager.INSTANCE.get(model.name()));
+        assertNotNull(MaterialManager.INSTANCE.get("entity_alphatest"));
+        assertNotNull(RenderControllerManager.INSTANCE.get("controller.render.test"));
     }
 
     private static BrClientEntity testEntity(String identifier) {

@@ -48,17 +48,17 @@ public final class BedrockAddonRuntimeBridge {
         {
             java.util.LinkedHashMap<String, BrClientEntity> flattened = new java.util.LinkedHashMap<>();
             resourcePack.clientEntities().values().forEach(entity -> flattened.put(entity.identifier(), entity));
-            ClientEntityManager.writePort().replaceAll(flattened);
+            ClientEntityManager.INSTANCE.replaceAll(flattened);
         }
         BehaviorEntityAssetRegistry.replaceBehaviorEntities(resourcePack.behaviorEntities());
         // replaceAttachables
         {
             java.util.LinkedHashMap<String, BrClientEntity> flattened = new java.util.LinkedHashMap<>();
             resourcePack.attachables().values().forEach(attachable -> flattened.put(attachable.identifier(), attachable));
-            AttachableManager.writePort().replaceAll(flattened);
+            AttachableManager.INSTANCE.replaceAll(flattened);
         }
         // replaceModels
-        ModelManager.writePort().replaceAll(new java.util.LinkedHashMap<>(resourcePack.modelsView()));
+        ModelManager.INSTANCE.replaceAll(new java.util.LinkedHashMap<>(resourcePack.modelsView()));
         // replaceMaterials
         {
             var materials = toRuntimeMaterials(resourcePack.materialFiles());
@@ -66,18 +66,18 @@ public final class BedrockAddonRuntimeBridge {
             for (BrMaterial value : materials.values()) {
                 value.materials().forEach(flattened::put);
             }
-            MaterialManager.writePort().replaceAll(flattened);
+            MaterialManager.INSTANCE.replaceAll(flattened);
         }
         // replaceRenderControllers
         {
             var controllers = toRuntimeRenderControllers(resourcePack.renderControllerFiles());
             for (RenderControllers value : controllers.values()) {
                 value.render_controllers().forEach((key, entry) -> {
-                    RenderControllerEntry existing = RenderControllerManager.readPort().get(key);
+                    RenderControllerEntry existing = RenderControllerManager.INSTANCE.get(key);
                     if (existing != null && existing.part_visibility().size() > entry.part_visibility().size()) {
                         return;
                     }
-                    RenderControllerManager.writePort().put(key, entry);
+                    RenderControllerManager.INSTANCE.put(key, entry);
                 });
             }
         }

@@ -227,7 +227,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         }
 
         String lowerQuery = query.toLowerCase();
-        Map<String, Model> allModels = ModelManager.readPort().getAllData();
+        Map<String, Model> allModels = ModelManager.INSTANCE.getAllData();
 
         Model found = null;
 

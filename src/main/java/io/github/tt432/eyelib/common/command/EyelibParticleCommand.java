@@ -54,8 +54,7 @@ public final class EyelibParticleCommand {
     }
 
     private static CompletableFuture<Suggestions> suggestEffects(CommandContext<CommandSourceStack> ctx, SuggestionsBuilder builder) {
-        ParticleCommandRuntime.suggestEffectIds(builder.getRemaining(), ParticleDefinitionRegistry.store()
-                                                                                                  .names(), EyelibParticleCommand::isValidResourceLocation)
+        ParticleCommandRuntime.suggestEffectIds(builder.getRemaining(), ParticleDefinitionRegistry.store().names(), EyelibParticleCommand::isValidResourceLocation)
                               .forEach(builder::suggest);
         return builder.buildFuture();
     }
