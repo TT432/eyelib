@@ -43,6 +43,7 @@ public final class BehaviorEntityAssetRegistry {
         }
     }
 
+    @Nullable
     private static BehaviorEntity toBehaviorEntity(BrBehaviorEntityFile file) {
         ResourceLocation identifier = ResourceLocation.tryParse(file.identifier());
         if (identifier == null) {
@@ -126,6 +127,7 @@ public final class BehaviorEntityAssetRegistry {
         return null;
     }
 
+    @Nullable
     private static Add parseAdd(BedrockResourceValue val) {
         if (!(val instanceof BedrockResourceValue.ObjectValue obj)) {
             return null;
@@ -140,6 +142,7 @@ public final class BehaviorEntityAssetRegistry {
         return new Add(groups);
     }
 
+    @Nullable
     private static Remove parseRemove(BedrockResourceValue val) {
         if (!(val instanceof BedrockResourceValue.ObjectValue obj)) {
             return null;
@@ -154,6 +157,7 @@ public final class BehaviorEntityAssetRegistry {
         return new Remove(groups);
     }
 
+    @Nullable
     private static Randomize parseRandomize(
             BedrockResourceValue val,
             Map<String, BedrockResourceValue.ObjectValue> allRawEvents
@@ -181,6 +185,7 @@ public final class BehaviorEntityAssetRegistry {
         return new Randomize(Collections.unmodifiableList(entries));
     }
 
+    @Nullable
     private static Sequence parseSequence(
             BedrockResourceValue val,
             Map<String, BedrockResourceValue.ObjectValue> allRawEvents

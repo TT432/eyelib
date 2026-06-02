@@ -13,6 +13,7 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraftforge.common.MinecraftForge;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +73,7 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
         return Files.isRegularFile(path) && (name.endsWith(".mcpack") || name.endsWith(".mcaddon"));
     }
 
+    @Nullable
     private BedrockAddon loadOne(Path addonFile) {
         LOGGER.info("Loading Bedrock addon from resourcepacks/: {}", addonFile.getFileName());
         try {
