@@ -2,7 +2,6 @@ package io.github.tt432.eyelibanimation.bedrock;
 
 import io.github.tt432.eyelibanimation.AnimationEffect;
 import io.github.tt432.eyelibanimation.RuntimeParticlePlayData;
-import io.github.tt432.eyelibanimation.AnimationParticleSpawner;
 import io.github.tt432.eyelibmolang.MolangValue;
 import org.jspecify.annotations.NullMarked;
 
@@ -18,16 +17,10 @@ final class BrClipStateOwner {
     private final List<AnimationEffect.Runtime<?>> effects = new ArrayList<>();
     private final List<RuntimeParticlePlayData> particles = new ArrayList<>();
 
-    private AnimationParticleSpawner spawner;
-
     private int loopedTimes;
     private float lastTicks;
     private float animTime;
     private float deltaTime;
-
-    void setParticleSpawner(AnimationParticleSpawner spawner) {
-        this.spawner = spawner;
-    }
 
     BrClipStateOwner resetEffects(AnimationEffect<BrEffectsKeyFrameDefinition> soundEffects,
                                   AnimationEffect<BrEffectsKeyFrameDefinition> particleEffects,
@@ -53,11 +46,6 @@ final class BrClipStateOwner {
         syncStateFields();
         resetEffects(soundEffects, particleEffects, timeline);
 
-        for (var particle : particles) {
-            if (spawner != null) {
-                spawner.remove(particle.particleUUID());
-            }
-        }
         particles.clear();
     }
 

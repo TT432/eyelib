@@ -4,10 +4,12 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.ClientTickHandler;
+import io.github.tt432.eyelib.client.particle.RootAnimationParticleSpawner;
 import io.github.tt432.eyelib.client.EntityRenderSystem;
 import io.github.tt432.eyelib.client.entity.AttachableResolver;
 import io.github.tt432.eyelibanimation.AnimationComponent;
 import io.github.tt432.eyelibanimation.AnimationEffects;
+import io.github.tt432.eyelibanimation.AnimationParticleSpawner;
 import io.github.tt432.eyelibanimation.BrAnimator;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
@@ -85,6 +87,7 @@ public final class AttachableItemRenderSetup {
             scope.set("variable.partial_tick", partialTick);
 
             AnimationEffects effects = new AnimationEffects();
+            scope.getHostContext().put(AnimationParticleSpawner.class, new RootAnimationParticleSpawner());
             ac.tickedInfos = BrAnimator.tickAnimation(ac, scope, effects,
                                                       (ClientTickHandler.getTick() + partialTick) / 20, () -> {
                         var ce = rd.getClientEntityComponent().getClientEntity();

@@ -7,13 +7,10 @@ import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibparticle.api.ParticleSpawnApi;
 import io.github.tt432.eyelibparticle.api.ParticleSpawnRequest;
-import io.github.tt432.eyelibparticle.client.ParticleEmitterPoseInitializer;
 import io.github.tt432.eyelibparticle.client.ParticleRenderManager;
 import io.github.tt432.eyelibparticle.client.ParticleSpawnRuntimeAdapter;
 import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
 import io.github.tt432.eyelibparticle.network.SpawnParticlePacket;
-import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
-import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
 import io.github.tt432.eyelibparticle.runtime.bedrock.ParticleRuntimeEnvironment;
 import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterParticleComponent;
 import lombok.AccessLevel;
@@ -24,10 +21,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -56,28 +51,8 @@ public final class ParticleSpawnService {
         api().spawn(new ParticleSpawnRequest(packet.spawnId(), packet.particleId(), packet.position()));
     }
 
-    public static @Nullable BedrockParticleEmitter spawnEmitter(
-            String spawnId,
-            ParticleDefinition definition,
-            @Nullable MolangScope parentScope,
-            Level level,
-            Vector3f position
-    ) {
-        return ADAPTER.spawnEmitter(
-                spawnId,
-                definition,
-                Optional.ofNullable(parentScope),
-                new MinecraftParticleRuntimeEnvironment(level),
-                position
-        );
-    }
-
     public static void removeEmitter(String removeId) {
         api().remove(removeId);
-    }
-
-    public static void initPose(BedrockParticleEmitter emitter, @Nullable Matrix4f locatorMatrix, @Nullable Entity attachedEntity) {
-        ParticleEmitterPoseInitializer.initPose(emitter, locatorMatrix, attachedEntity);
     }
 
     private static Optional<ParticleRuntimeEnvironment> currentEnvironment() {

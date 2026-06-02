@@ -10,7 +10,7 @@ import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.manager.BehaviorEntityManager;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import io.github.tt432.eyelib.client.manager.RenderControllerManager;
-import io.github.tt432.eyelib.client.particle.ParticleSpawnService;
+import io.github.tt432.eyelib.client.particle.RootAnimationParticleSpawner;
 import io.github.tt432.eyelib.client.render.AttachableItemRenderSetup;
 import io.github.tt432.eyelib.client.render.RenderHelper;
 import io.github.tt432.eyelib.client.render.RenderParams;
@@ -18,6 +18,7 @@ import io.github.tt432.eyelib.client.render.SimpleRenderAction;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.event.InitComponentEvent;
 import io.github.tt432.eyelibanimation.AnimationEffects;
+import io.github.tt432.eyelibanimation.AnimationParticleSpawner;
 import io.github.tt432.eyelibanimation.BrAnimator;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
@@ -161,6 +162,8 @@ public class EntityRenderSystem {
                 AnimationEffects effects = new AnimationEffects();
                 scope.set("variable.partial_tick", partialTick);
                 scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
+
+                scope.getHostContext().put(AnimationParticleSpawner.class, new RootAnimationParticleSpawner());
 
                 ModelRuntimeData tickedInfos;
                 if (cap.getAnimationComponent().getSerializableInfo() != null) {
@@ -323,8 +326,6 @@ public class EntityRenderSystem {
                                                                                                                   .render(renderParams, model, cast(tickedInfos))
                                                                                                                   .collectLocators(model, tickedInfos);
 
-                                                                          setParticlesPosition(renderHelper, effects, entity);
-
                                                                           data.extraRender().render(renderHelper, data);
 
                                                                           RenderParams emissiveRenderParams = renderParams.asEmissive(multiBufferSource, modelComponent);
@@ -339,16 +340,6 @@ public class EntityRenderSystem {
                                                                           return 1;
                                                                       })
                                                                       .sum() > 0;
-    }
-
-    private static void setParticlesPosition(RenderHelper renderHelper, AnimationEffects effects, Entity entity) {
-        Map<String, Matrix4f> locators = renderHelper.getContext().get("locators");
-
-        if (locators == null) return;
-
-        effects.particles.stream()
-                         .flatMap(Collection::stream)
-                         .forEach(data -> ParticleSpawnService.initPose(data.emitter(), locators.get(data.locator()), entity));
     }
 
     public static <T> void setupEntityClientEntityData(SimpleRenderAction<T> data) {

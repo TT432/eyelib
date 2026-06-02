@@ -10,9 +10,7 @@ import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcStateDefinition;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
-import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
-import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
+
 import io.github.tt432.eyelibutil.math.MathHelper;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.NullMarked;
@@ -86,15 +84,10 @@ final class BrControllerExecutor {
                 for (io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcParticleEffectDefinition particleEffect : currState.particleEffects()) {
                     String uuid = UUID.randomUUID().toString();
                     particleEffect.effect().map(clientEntity.particle_effects()::get).ifPresent(effect -> {
-                        ParticleDefinition definition = ParticleDefinitionRegistry.store().get(effect);
-                        if (definition != null) {
-                            AnimationParticleSpawner spawner = scope.getHostContext().get(AnimationParticleSpawner.class).orElse(null);
-                            if (spawner != null) {
-                                BedrockParticleEmitter emitter = spawner.spawn(uuid, definition, entity.position().toVector3f());
-                                if (emitter != null) {
-                                    data.owner().particles().add(new RuntimeParticlePlayData(uuid, emitter, particleEffect.locator().orElse(null), ticks));
-                                }
-                            }
+                        AnimationParticleSpawner spawner = scope.getHostContext().get(AnimationParticleSpawner.class).orElse(null);
+                        if (spawner != null) {
+                            spawner.spawn(uuid, effect, entity.position().toVector3f());
+                            data.owner().particles().add(new RuntimeParticlePlayData(uuid, particleEffect.locator().orElse(null), ticks));
                         }
                     });
                 }

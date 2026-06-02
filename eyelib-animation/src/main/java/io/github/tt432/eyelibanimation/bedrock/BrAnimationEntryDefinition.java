@@ -10,9 +10,7 @@ import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
 import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
-import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
-import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
+
 import io.github.tt432.eyelibanimation.SoundPlayer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -102,18 +100,13 @@ public record BrAnimationEntryDefinition(
                         String s = clientEntity.particle_effects().get(frame.effect());
 
                         if (s != null) {
-                            ParticleDefinition definition = ParticleDefinitionRegistry.store().get(s);
-                            if (definition != null) {
                                 AnimationParticleSpawner spawner = scope.getHostContext().get(AnimationParticleSpawner.class).orElse(null);
                                 if (spawner != null) {
                                     String uuid = UUID.randomUUID().toString();
-                                    BedrockParticleEmitter emitter = spawner.spawn(uuid, definition, entity.position().toVector3f());
-                                    if (emitter != null) {
-                                        animationData.owner().particles().add(new RuntimeParticlePlayData(uuid, emitter, frame.locator().orElse(null), ticks));
-                                    }
+                                    spawner.spawn(uuid, s, entity.position().toVector3f());
+                                    animationData.owner().particles().add(new RuntimeParticlePlayData(uuid, frame.locator().orElse(null), ticks));
                                 }
                             }
-                        }
                     })
                 )
             );

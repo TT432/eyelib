@@ -43,7 +43,6 @@ legacyForge {
 }
 
 dependencies {
-    implementation project(':eyelib-animation')
     implementation project(':eyelib-attachment')
     implementation project(':eyelib-util')
     implementation project(':eyelib-molang')

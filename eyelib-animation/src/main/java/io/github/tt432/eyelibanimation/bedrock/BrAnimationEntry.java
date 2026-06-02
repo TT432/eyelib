@@ -5,7 +5,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibanimation.Animation;
 import io.github.tt432.eyelibanimation.AnimationEffect;
 import io.github.tt432.eyelibanimation.AnimationEffects;
-import io.github.tt432.eyelibanimation.AnimationParticleSpawner;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibutil.codec.ChinExtraCodecs;
 import io.github.tt432.eyelibutil.codec.CodecHelper;
@@ -142,10 +141,6 @@ public final class BrAnimationEntry implements Animation {
 
         BrClipStateOwner owner() {
             return owner;
-        }
-
-        public void setParticleSpawner(AnimationParticleSpawner spawner) {
-            owner.setParticleSpawner(spawner);
         }
 
         public int loopedTimes() {
