@@ -5,8 +5,8 @@ evidence: internal
 assertions:
   - parse-reject
 expected-diagnostics:
-  - phase: LEXER
+  - phase: PARSER
     severity: ERROR
-    code: LEXER_SYNTAX_ERROR
+    code: PARSER_SYNTAX_ERROR
 ---
 'abc

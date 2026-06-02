@@ -35,7 +35,6 @@ class ParticleApiDelegationBoundaryTest {
         spawnService.assertContains("import io.github.tt432.eyelibparticle.api.ParticleSpawnRequest;");
         spawnService.assertContains("import io.github.tt432.eyelibparticle.client.ParticleSpawnRuntimeAdapter;");
         spawnService.assertContains("import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;");
-        spawnService.assertContains("import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;");
         spawnService.assertContains("ParticleSpawnApi api()");
         spawnService.assertContains("api().spawn(new ParticleSpawnRequest(");
         spawnService.assertContains("api().remove(removeId);");

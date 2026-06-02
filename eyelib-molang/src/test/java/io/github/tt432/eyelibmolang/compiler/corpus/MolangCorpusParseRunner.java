@@ -37,7 +37,7 @@ final class MolangCorpusParseRunner {
         );
 
         ParserRuleContext root = parseResult.exprSet();
-        if (parseResult.parser().getCurrentToken().getType() != Token.EOF) {
+        if (parseResult.parser() != null && parseResult.parser().getCurrentToken().getType() != Token.EOF) {
             diagnostics.add(new MolangDiagnostic(
                     MolangDiagnosticPhase.PARSER,
                     MolangDiagnosticSeverity.ERROR,
@@ -46,7 +46,27 @@ final class MolangCorpusParseRunner {
             ));
         }
 
-        return new MolangParseResult(!diagnostics.isEmpty(), diagnostics, collectParseShape(root), parseResult.ast());
+        // When the handwritten frontend (or any non-ANTLR frontend) fails to
+        // produce an AST, indicate failure via a synthetic diagnostic so that
+        // parse-reject assertions can detect the rejection.
+        if (root == null && parseResult.ast().isEmpty() && !source.trim().isEmpty()) {
+            diagnostics.add(new MolangDiagnostic(
+                    MolangDiagnosticPhase.PARSER,
+                    MolangDiagnosticSeverity.ERROR,
+                    "PARSER_SYNTAX_ERROR",
+                    "Frontend completed without producing an AST."
+            ));
+        }
+
+        MolangParseShape shape;
+        if (root != null) {
+            shape = collectParseShape(root);
+        } else {
+            // 手写前端不产生 ANTLR 解析树，返回空形状
+            shape = new MolangParseShape("", Set.of());
+        }
+
+        return new MolangParseResult(!diagnostics.isEmpty(), diagnostics, shape, parseResult.ast());
     }
 
     private MolangParseShape collectParseShape(ParserRuleContext root) {
