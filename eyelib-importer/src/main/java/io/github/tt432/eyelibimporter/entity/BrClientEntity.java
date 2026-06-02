@@ -19,9 +19,6 @@ import com.mojang.datafixers.util.Either;
 import com.google.gson.JsonElement;
 
 /**
- * @param particle_effects 短名称 -> 全名
- * @param item             物品标识符→条件 Molang 的映射；空 Map 表示无物品绑定
- * @param enable_attachables 此 attachable 上是否允许子 attachable
  * @author TT432
  */
 @NullMarked

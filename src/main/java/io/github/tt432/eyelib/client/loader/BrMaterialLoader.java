@@ -17,6 +17,8 @@ import java.util.Map;
 
 
 /**
+ * 加载 materials 目录下的材质文件。
+ *
  * @author TT432
  */
 @Slf4j

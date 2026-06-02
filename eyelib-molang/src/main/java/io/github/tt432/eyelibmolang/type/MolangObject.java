@@ -4,6 +4,8 @@ import io.github.tt432.eyelibmolang.util.CalledByGeneratedMethod;
 import org.jspecify.annotations.NullMarked;
 
 /**
+ * Molang 类型系统的顶层接口。
+ *
  * @author TT432
  */
 @NullMarked

@@ -495,7 +495,7 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
                 }
             }
 
-            // Scientific notation: 1.8e-4, 1.8E+4, etc.
+            // 科学计数法：1.8e-4、1.8E+4 等
             if (hasRemaining() && (source.charAt(index) == 'e' || source.charAt(index) == 'E')) {
                 index++;
                 column++;

@@ -7,9 +7,10 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
- * @author Argon4W
+ * 提供 Entry 流转换、收集与映射的工具方法。
+ *
+ * @author Argon4W, TT432
  */
-/** @author TT432 */
 public class EntryStreams {
     public static <T1, T2, R> BiFunction<T1, T2, R> swap(BiFunction<T2, T1, R> function) {
         return (t1, t2) -> function.apply(t2, t1);

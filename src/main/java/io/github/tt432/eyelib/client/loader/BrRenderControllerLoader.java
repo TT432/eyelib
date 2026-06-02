@@ -16,6 +16,8 @@ import java.util.Map;
 
 
 /**
+ * 加载 render_controllers 目录下的渲染控制器 JSON 文件。
+ *
  * @author TT432
  */
 @Slf4j

@@ -8,6 +8,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 /**
+ * Molang 函数导出工具，将注册的函数写入 CSV 文件。
+ *
  * @author TT432
  */
 @NullMarked

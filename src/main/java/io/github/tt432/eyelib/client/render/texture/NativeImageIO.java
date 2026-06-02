@@ -17,9 +17,8 @@ import java.util.function.Function;
 
 import static org.lwjgl.opengl.GL11.*;
 
-@UtilityClass
-
 /** @author TT432 */
+@UtilityClass
 @NullMarked
 public class NativeImageIO {
     public void upload(ResourceLocation texture, NativeImage image) {

@@ -1,6 +1,7 @@
+/**
+ * 数据附属存储的单元测试。
+ */
 @NullMarked
 package io.github.tt432.eyelibattachment.dataattach;
 
 import org.jspecify.annotations.NullMarked;
-
-// 包职责见同目录 README.md

@@ -4,6 +4,8 @@ import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
 import org.jspecify.annotations.NullMarked;
 
 /**
+ * 动画播放状态机，管理循环次数、时间累计和复位逻辑。
+ *
  * @author TT432
  */
 @NullMarked

@@ -12,6 +12,8 @@ import org.joml.Vector3fc;
 import java.util.List;
 
 /**
+ * 提供了常用的 Codec 实现，用于 JOML 向量的序列化和反序列化。
+ *
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)

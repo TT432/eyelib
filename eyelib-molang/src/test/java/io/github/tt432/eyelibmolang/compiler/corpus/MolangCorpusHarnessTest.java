@@ -44,14 +44,14 @@ class MolangCorpusHarnessTest {
     @BeforeEach
     void setUp() {
         if (RECORD_MODE) {
-            // Record mode: skip all assertions and capture actual output for golden files
+            // 记录模式：跳过所有断言并捕获实际输出用于 golden 文件
         }
     }
 
     @AfterAll
     static void tearDownAll() {
         if (RECORD_MODE && !GOLDEN_BUFFER.isEmpty()) {
-            // Batch write golden files from buffer
+            // 批量从缓冲区写入 golden 文件
             GOLDEN_BUFFER.forEach((path, content) -> {
                 try {
                     Path goldenPath = Paths.get(path);
@@ -72,7 +72,7 @@ class MolangCorpusHarnessTest {
         MolangRunReport report = new MolangCorpusHarness().run(corpusPath);
 
         if (RECORD_MODE) {
-            // Record actual output for golden comparison
+            // 记录 golden 比较的实际输出
             var ids = report.caseReports().stream().map(MolangCaseReport::caseId).collect(Collectors.toSet());
             GOLDEN_BUFFER.put("molang-corpus-case-ids.txt",
                     ids.stream().sorted().collect(Collectors.joining("\n")));

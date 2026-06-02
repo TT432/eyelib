@@ -42,6 +42,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
+ * 基于列表的元组编解码器接口，支持 1 至 16 个元素的编解码。
+ *
  * @author TT432
  */
 @SuppressWarnings({"unchecked", "rawtypes", "unused"})

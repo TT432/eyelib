@@ -1,6 +1,7 @@
+/**
+ * 交易数据格式：Bedrock 交易表编解码。
+ */
 @NullMarked
 package io.github.tt432.eyelibimporter.trading;
-
-// 包职责见同目录 README.md
 
 import org.jspecify.annotations.NullMarked;

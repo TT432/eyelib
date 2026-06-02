@@ -3,4 +3,4 @@ package io.github.tt432.eyelibutil.loader;
 
 import org.jspecify.annotations.NullMarked;
 
-// 包职责见同目录 README.md
+/** 本机库加载工具包，支持跨平台动态库的提取与加载。 */

@@ -8,6 +8,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 
 /**
+ * 提供 TreeMap 收集器及内部收集器实现。
+ *
  * @author TT432
  */
 public class Collectors {

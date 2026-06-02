@@ -16,6 +16,8 @@ import java.util.Map;
 
 
 /**
+ * 加载 animations 目录下的动画 JSON 文件。
+ *
  * @author TT432
  */
 @ResourceLoader

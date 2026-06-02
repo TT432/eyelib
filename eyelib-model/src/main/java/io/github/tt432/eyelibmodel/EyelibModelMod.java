@@ -3,6 +3,8 @@ package io.github.tt432.eyelibmodel;
 import net.minecraftforge.fml.common.Mod;
 
 /**
+ * 模组主入口，声明模组 ID。
+ *
  * @author TT432
  */
 @Mod(EyelibModelMod.MOD_ID)

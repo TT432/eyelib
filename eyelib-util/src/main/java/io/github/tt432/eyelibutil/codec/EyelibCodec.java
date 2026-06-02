@@ -22,6 +22,8 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
+ * 提供常用的 JOML 向量、AABB 以及递归 Codec 等编解码常量与方法。
+ *
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)

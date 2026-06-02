@@ -15,7 +15,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 
-/** @author TT432 */
+/**
+ * 加载 models 目录下的几何模型 JSON 文件。
+ *
+ * @author TT432
+ */
 @ResourceLoader
 @NullMarked
 public class BrModelLoader extends BrResourcesLoader {

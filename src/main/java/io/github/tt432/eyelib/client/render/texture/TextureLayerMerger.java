@@ -24,9 +24,8 @@ import static org.lwjgl.opengl.GL42.*;
 import static org.lwjgl.opengl.GL43.GL_COMPUTE_SHADER;
 import static org.lwjgl.opengl.GL43.glDispatchCompute;
 
-@UtilityClass
-
 /** @author TT432 */
+@UtilityClass
 @NullMarked
 public class TextureLayerMerger {
     private static final String BLENDING_SHADER_SOURCE = """

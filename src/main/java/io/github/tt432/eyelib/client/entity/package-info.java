@@ -1,6 +1,5 @@
 /**
- * Runtime-facing client-entity lookup/helpers, RenderData integration, and transitional schema-adjacent types
- * used by render and model systems.
+ * 客户端实体查询、RenderData 集成及渲染和模型系统使用的过渡类型。
  */
 @NullMarked
 package io.github.tt432.eyelib.client.entity;

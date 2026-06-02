@@ -10,9 +10,10 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 
+/**
+ * @author TT432
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-
-/** @author TT432 */
 @NullMarked
 public class EyelibNetworkManager {
     public static void register() {

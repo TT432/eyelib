@@ -44,6 +44,8 @@ import static io.github.tt432.eyelibmolang.MolangValue.FALSE;
 import static io.github.tt432.eyelibmolang.MolangValue.TRUE;
 
 /**
+ * Molang 平台映射（内置查询函数）。
+ *
  * @author TT432
  */
 @NullMarked

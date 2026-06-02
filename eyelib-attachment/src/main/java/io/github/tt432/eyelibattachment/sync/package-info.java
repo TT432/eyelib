@@ -1,6 +1,7 @@
+/**
+ * 渲染模型同步载荷的定义。
+ */
 @NullMarked
 package io.github.tt432.eyelibattachment.sync;
 
 import org.jspecify.annotations.NullMarked;
-
-// 包职责见同目录 README.md

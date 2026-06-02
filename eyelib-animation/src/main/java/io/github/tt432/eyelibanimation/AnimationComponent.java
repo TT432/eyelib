@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 /**
+ * 动画运行时组件，管理动画数据、状态和序列化信息。
+ *
  * @author TT432
  */
 @NullMarked

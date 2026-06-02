@@ -25,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class ManagerResourceImportPlannerAddonBridgeTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(ManagerResourceImportPlannerAddonBridgeTest.class);
 

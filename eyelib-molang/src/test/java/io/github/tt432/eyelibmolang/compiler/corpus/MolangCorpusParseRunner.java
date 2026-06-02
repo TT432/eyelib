@@ -46,9 +46,8 @@ final class MolangCorpusParseRunner {
             ));
         }
 
-        // When the handwritten frontend (or any non-ANTLR frontend) fails to
-        // produce an AST, indicate failure via a synthetic diagnostic so that
-        // parse-reject assertions can detect the rejection.
+        // 当手写前端（或任何非 ANTLR 前端）无法生成 AST 时，
+        // 通过合成诊断指示失败，以便 parse-reject 断言能检测到拒绝。
         if (root == null && parseResult.ast().isEmpty() && !source.trim().isEmpty()) {
             diagnostics.add(new MolangDiagnostic(
                     MolangDiagnosticPhase.PARSER,

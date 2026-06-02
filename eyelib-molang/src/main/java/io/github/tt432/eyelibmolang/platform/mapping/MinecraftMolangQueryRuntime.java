@@ -6,6 +6,8 @@ import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.NullMarked;
 
 /**
+ * Minecraft Molang 查询运行时实现。
+ *
  * @author TT432
  */
 @NullMarked

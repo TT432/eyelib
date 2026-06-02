@@ -12,10 +12,6 @@ import java.util.Set;
 import java.util.function.Function;
 
 /**
- * @param animations           动画名称 -> 混合系数（动画变换倍数）
- * @param transitions          stateName -> condition
- * @param blendTransition      插值时间
- * @param blendViaShortestPath 线性 t/f 平滑 (存疑)
  * @author TT432
  */
 @org.jspecify.annotations.NullMarked

@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * 支持实时搜索的搜索结果缓存，包装 Searchable 并维护建议列表。
+ *
  * @author TT432
  */
 @RequiredArgsConstructor

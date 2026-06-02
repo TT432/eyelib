@@ -32,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class BedrockGeometryImporterTest {
     private static final Gson GSON = new Gson();
     private static final float EaSILON = 1.0e-6F;

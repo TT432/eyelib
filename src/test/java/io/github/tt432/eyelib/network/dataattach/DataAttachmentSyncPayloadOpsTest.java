@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class DataAttachmentSyncPayloadOpsTest {
     @Test
     void fromDataAttachmentUpdatePacketBuildsAttachmentUpdate() {

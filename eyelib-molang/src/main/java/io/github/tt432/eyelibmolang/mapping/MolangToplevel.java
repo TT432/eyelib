@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 
 /**
+ * Molang 顶层映射（pi、e、loop）。
+ *
  * @author TT432
  */
 @NullMarked

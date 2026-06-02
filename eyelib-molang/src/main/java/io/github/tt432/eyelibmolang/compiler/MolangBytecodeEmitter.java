@@ -60,7 +60,7 @@ public final class MolangBytecodeEmitter {
         String sourceExpr = input.sourceExpression();
         BoundMolang.BoundExpr rootExpr = input.root().root();
 
-        // Hidden class must be in same runtime package as the lookup class (MolangCompilerImpl)
+        // 隐藏类必须与查找类（MolangCompilerImpl）在同一个运行时包中
         String internalName = "io/github/tt432/eyelibmolang/compiler/Molang$Expr$"
                 + Integer.toHexString(sourceExpr.hashCode());
         ClassDesc thisClass = ClassDesc.ofDescriptor("L" + internalName + ";");
@@ -75,7 +75,7 @@ public final class MolangBytecodeEmitter {
         ClassDesc cdCollections = ClassDesc.of("java.util.Collections");
 
         return ClassFile.of().build(thisClass, classBuilder -> {
-            // Pin to Java 17 (major version 61) for Forge compatibility
+            // 固定为 Java 17（主版本号 61）以保证 Forge 兼容性
             classBuilder.withVersion(61, 0);
             classBuilder.withFlags(ClassFile.ACC_PUBLIC | ClassFile.ACC_SUPER);
             classBuilder.withSuperclass(cdObject);
@@ -158,11 +158,9 @@ public final class MolangBytecodeEmitter {
             code.invokestatic(CD_RUNTIME_SUPPORT, "resolveCall",
                     MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_MOLANG_SCOPE, CD_STRING, CD_MOLANG_OBJECT_ARRAY));
         } else if (expr instanceof BoundMolang.BoundArrowAccessExpr arrowAccessExpr) {
-            // Arrow access (->) is a documented Molang construct for cross-entity access.
-            // Design intent: left side evaluates to a host entity reference,
-            // right side evaluates in that host's context.
-            // Current implementation: left side is evaluated then discarded;
-            // only the right side value is returned. 
+            // 箭头访问（->）是文档化的 Molang 跨实体访问构造。
+            // 设计意图：左侧求值为宿主实体引用，右侧在该宿主上下文中求值。
+            // 当前实现：左侧求值后丢弃，仅返回右侧值。
             // TODO: 实现箭头访问语义的 HostContext 切换。
             emitExpr(code, arrowAccessExpr.left());
             code.pop();
@@ -349,8 +347,8 @@ public final class MolangBytecodeEmitter {
         if (assignmentExpr.writableTarget()) {
             String targetName = resolveAssignmentTargetName(assignmentExpr.target());
             if (targetName != null) {
-                // Stack: { ..., value }
-                // We need: { ..., value, scope, name, value(dup) } for invokevirtual scope.set(name, value)
+                // 栈：{ ..., value }
+                // 我们需要：{ ..., value, scope, name, value(dup) } 用于 invokevirtual scope.set(name, value)
                 code.aload(1);                                // → {value, scope}
                 code.swap();                                  // → {scope, value}
                 code.dup_x1();                                // → {value, scope, value}

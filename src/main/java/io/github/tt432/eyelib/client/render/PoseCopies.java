@@ -7,9 +7,8 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.NullMarked;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-
 /** @author TT432 */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @NullMarked
 public final class PoseCopies {
     public static PoseStack.Pose copy(PoseStack.Pose pose) {

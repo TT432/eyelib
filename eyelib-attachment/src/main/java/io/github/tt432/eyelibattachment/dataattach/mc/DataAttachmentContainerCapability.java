@@ -13,6 +13,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
+ * 数据附属容器的 Minecraft Forge Capability 系统集成。
+ *
  * @author TT432
  */
 public class DataAttachmentContainerCapability {

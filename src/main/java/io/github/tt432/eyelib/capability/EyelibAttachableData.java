@@ -11,10 +11,11 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.RegistryObject;
 import org.jspecify.annotations.NullMarked;
 
+/**
+ * @author TT432
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Mod.EventBusSubscriber
-
-/** @author TT432 */
 @NullMarked
 public class EyelibAttachableData {
 
@@ -22,7 +23,7 @@ public class EyelibAttachableData {
     private static final ResourceLocation ITEM_IN_HAND_RENDER_DATA_ID = new ResourceLocation(Eyelib.MOD_ID, "item_in_hand_render_data");
     private static final ResourceLocation ENTITY_BEHAVIOR_DATA_ID = new ResourceLocation(Eyelib.MOD_ID, "entity_behavior_data");
 
-    // tt432: All attachments are only for LivingEntity now.
+    // tt432: 所有 attachment 目前仅适用于 LivingEntity。
     public static final RegistryObject<DataAttachmentType<RenderData<Object>>> RENDER_DATA =
             DataAttachmentTypeRegistry.DATA_ATTACHMENTS.register(RENDER_DATA_ID.getPath(),
                                                                  () -> new DataAttachmentType<>(RENDER_DATA_ID.toString(), RenderData::new, RenderData.codec(), null));

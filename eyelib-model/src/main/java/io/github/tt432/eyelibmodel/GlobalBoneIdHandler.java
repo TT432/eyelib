@@ -9,6 +9,8 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import java.util.Locale;
 
 /**
+ * 管理骨骼 ID 与字符串名称之间的双向映射。
+ *
  * @author TT432
  */
 public class GlobalBoneIdHandler {

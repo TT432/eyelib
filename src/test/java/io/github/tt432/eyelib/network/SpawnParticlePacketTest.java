@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class SpawnParticlePacketTest {
     @Test
     void packetCarriesStringParticleIdContract() {

@@ -15,9 +15,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Merged BrMaterial CODEC tests: roundtrip + entry field verification.
- * <p>
- * Sources: BrMaterialCodecTest (roundtrip), BrMaterialCodecRegressionTest (roundtrip),
- * BrMaterialCodecIntegrationTest (field-level verification).
+ * 合并自 BrMaterialCodecTest (roundtrip)、BrMaterialCodecRegressionTest (roundtrip)、
+ * BrMaterialCodecIntegrationTest (字段级验证)。
  *
  * @author TT432
  */

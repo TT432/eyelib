@@ -74,7 +74,7 @@ class BrMaterialNewFieldsTest {
         var jsonElement = JsonParser.parseString(ENTRY_JSON);
         var jsonObject = jsonElement.getAsJsonObject();
 
-        // First decode: JSON → BrMaterial
+        // 首次解码: JSON → BrMaterial
         var firstResult = BrMaterial.CODEC.parse(JsonOps.INSTANCE, jsonObject);
         var first = firstResult.getOrThrow(false,
                 msg -> new AssertionError("First decode failed: " + msg));
@@ -82,7 +82,7 @@ class BrMaterialNewFieldsTest {
         var entry = first.materials().get("cutout");
         assertNotNull(entry, "Entry 'cutout' should exist");
 
-        // Assert all new fields are present and correct
+        // 验证所有新增字段存在且正确
         assertTrue(entry.msaaSupport().isPresent(), "msaaSupport should be present");
         assertEquals(MsaaSupport.Both, entry.msaaSupport().get());
 
@@ -101,17 +101,17 @@ class BrMaterialNewFieldsTest {
         assertTrue(entry.isAnimatedTexture().isPresent(), "isAnimatedTexture should be present");
         assertTrue(entry.isAnimatedTexture().get());
 
-        // Re-encode: BrMaterial → JSON
+        // 重新编码: BrMaterial → JSON
         var encodedResult = BrMaterial.CODEC.encodeStart(JsonOps.INSTANCE, first);
         var encoded = encodedResult.getOrThrow(false,
                 msg -> new AssertionError("Re-encode failed: " + msg));
 
-        // Second decode: JSON → BrMaterial
+        // 二次解码: JSON → BrMaterial
         var secondResult = BrMaterial.CODEC.parse(JsonOps.INSTANCE, encoded);
         var second = secondResult.getOrThrow(false,
                 msg -> new AssertionError("Second decode failed: " + msg));
 
-        // Assert structural equality
+        // 验证结构相等性
         assertEquals(first, second,
                 "Roundtrip: decoded BrMaterial differs after encode→decode");
     }
@@ -126,12 +126,12 @@ class BrMaterialNewFieldsTest {
         var material = result.getOrThrow(false,
                 msg -> new AssertionError("Decode failed for vanilla material: " + msg));
 
-        // Verify all entries exist
+        // 验证所有条目均存在
         assertTrue(material.materials().containsKey("cutout"));
         assertTrue(material.materials().containsKey("translucent"));
         assertTrue(material.materials().containsKey("solid"));
 
-        // Verify all new fields are Optional.empty() in each entry
+        // 验证每个条目中所有新增字段均为 Optional.empty()
         for (var entry : material.materials().values()) {
             assertTrue(entry.msaaSupport().isEmpty(),
                     "msaaSupport should be empty in vanilla material");

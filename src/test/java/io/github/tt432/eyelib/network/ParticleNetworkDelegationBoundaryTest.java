@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class ParticleNetworkDelegationBoundaryTest {
     @Test
     void packetRecordsStayStringKeyedAndCodecOwnedByParticleModule() throws IOException {

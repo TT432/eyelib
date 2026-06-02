@@ -8,6 +8,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
+ * 动画实例注册中心，基于 LinkedHashMap 管理动画的增删查改。
+ *
  * @author TT432
  */
 @NullMarked

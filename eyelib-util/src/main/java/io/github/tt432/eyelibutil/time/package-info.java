@@ -3,4 +3,4 @@ package io.github.tt432.eyelibutil.time;
 
 import org.jspecify.annotations.NullMarked;
 
-// 包职责见同目录 README.md
+/** 时间工具包，提供定时器与时间状态管理功能。 */

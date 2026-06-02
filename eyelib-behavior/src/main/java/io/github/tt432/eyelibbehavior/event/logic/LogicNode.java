@@ -9,6 +9,8 @@ import java.util.Map;
 import static io.github.tt432.eyelibutil.codec.EyelibCodec.list;
 
 /**
+ * 逻辑节点接口，定义行为事件的执行入口。
+ *
  * @author TT432
  */
 public interface LogicNode {

@@ -5,6 +5,8 @@ import io.github.tt432.eyelibmolang.type.MolangObject;
 import org.jspecify.annotations.NullMarked;
 
 /**
+ * 已编译的 Molang 函数接口。
+ *
  * @author TT432
  */
 @NullMarked

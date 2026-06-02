@@ -5,9 +5,10 @@ import io.github.tt432.eyelibparticle.runtime.ParticleRuntimeServices;
 import java.util.Objects;
 
 /**
- * Platform-free fixed-step timer for particle runtime extraction.
+ * 无平台依赖的固定步进计时器，用于粒子运行时 tick 推进。
+ *
+ * @author TT432
  */
-/** @author TT432 */
 public final class ParticleTimer {
     private static final int DEFAULT_RATE = 30;
 

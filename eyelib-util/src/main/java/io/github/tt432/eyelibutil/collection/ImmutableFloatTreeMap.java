@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
+ * 不可变的浮点键树形映射，支持 floor、lower、higher 查询。
+ *
  * @author TT432
  */
 @AllArgsConstructor(access = AccessLevel.PRIVATE)

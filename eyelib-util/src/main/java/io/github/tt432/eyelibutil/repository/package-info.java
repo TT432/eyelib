@@ -1,4 +1,6 @@
-@org.jspecify.annotations.NullMarked
+@NullMarked
 package io.github.tt432.eyelibutil.repository;
 
-// 包职责见同目录 README.md
+import org.jspecify.annotations.NullMarked;
+
+/** 仓储工具包，提供通用字符串键控存储接口定义。 */

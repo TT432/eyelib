@@ -6,9 +6,10 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Typed runtime-local key/value storage for moved particle runtime classes.
+ * 类型安全的运行时局部键值存储，用于迁移后的粒子运行时类。
+ *
+ * @author TT432
  */
-/** @author TT432 */
 public final class ParticleBlackboard {
     private final Map<String, Object> data = new HashMap<>();
 

@@ -13,10 +13,6 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * @param initialize    该脚本在实体首次初始化时运行，即在实体生成时以及每次加载时运行。
- * @param pre_animation 该脚本在动画播放之前运行每一帧。
- * @param parent_setup  该脚本在附属体附加到父实体时运行。常用于隐藏原生盔甲层。
- * @param animate       运行动画和动画控制器。
  * @author TT432
  */
 @NullMarked

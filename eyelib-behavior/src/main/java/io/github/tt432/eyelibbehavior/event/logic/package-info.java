@@ -1,6 +1,7 @@
+/**
+ * 事件逻辑包：实现行为事件的逻辑节点。
+ */
 @NullMarked
 package io.github.tt432.eyelibbehavior.event.logic;
 
 import org.jspecify.annotations.NullMarked;
-
-// 包职责见同目录 README.md

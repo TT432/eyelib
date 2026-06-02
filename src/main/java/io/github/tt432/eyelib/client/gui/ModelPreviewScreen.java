@@ -43,9 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A screen for previewing models from the ModelManager.
- * 支持按名称或ID搜索模型并以交互方式旋转和缩放渲染。
- * with interactive rotation and scaling.
+ * 用于预览 ModelManager 中模型的屏幕。支持按名称或 ID 搜索模型并以交互方式旋转和缩放渲染。
  *
  * @author TT432
  */

@@ -14,6 +14,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
+ * 按键分派的 Map Codec，每个条目使用键对应的 Codec 独立编码/解码。
+ *
  * @author TT432
  */
 public record DispatchedMapCodec<K, V>(
@@ -70,7 +72,7 @@ public record DispatchedMapCodec<K, V>(
                 return result.apply2stable((u, p) -> u, DataResult.error(() -> "Duplicate entry for key: '" + key + "'"));
             }
         }
-        // XXX: isError -> error().isPresent() ?
+        // TODO: isError 应改为 error().isPresent() 吗？
         if (entryResult.error().isPresent()) {
             failed.add(input);
         }

@@ -3,6 +3,8 @@ package io.github.tt432.eyelibattachment.runtime;
 import io.github.tt432.eyelibattachment.capability.ExtraEntityData;
 
 /**
+ * 额外实体数据的更新工具。
+ *
  * @author TT432
  */
 public final class ExtraEntityDataUpdater {

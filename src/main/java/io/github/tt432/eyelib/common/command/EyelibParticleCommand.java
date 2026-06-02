@@ -27,9 +27,10 @@ import org.jspecify.annotations.Nullable;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * @author TT432
+ */
 @Mod.EventBusSubscriber
-
-/** @author TT432 */
 @NullMarked
 public final class EyelibParticleCommand {
     @SubscribeEvent

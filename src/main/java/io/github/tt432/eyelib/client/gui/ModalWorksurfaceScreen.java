@@ -5,8 +5,7 @@ import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.NullMarked;
 
 /**
- * Consumes mouse interaction like a vanilla container screen so editor-style
- * GUI surfaces do not leak clicks to world/item use behind the screen.
+ * 消耗鼠标交互事件，使编辑器风格的 GUI 界面不会将点击泄露到背后的世界/物品交互。
  *
  * @author TT432
  */

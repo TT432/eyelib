@@ -10,6 +10,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class ParticleApiDelegationBoundaryTest {
     @Test
     void retainedRootSpawnFacadeDelegatesToParticleModuleApiAndLegacyRegistryFacadesAreDeleted() throws IOException {
@@ -43,19 +44,18 @@ class ParticleApiDelegationBoundaryTest {
         spawnService.assertNotContains("import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;");
         spawnService.assertNotContains("import io.github.tt432.eyelib.client.registry.ParticleAssetRegistry;");
         spawnService.assertContains("Transitional");
-        spawnService.assertContains("this facade after packet/runtime callers bind directly");
+        spawnService.assertContains("ParticleSpawnApi");
 
         loader.assertContains("ParticleResourcePublication.replaceFromJsonResources");
         loader.assertContains("entry.getKey().toString()");
 
-        particleReadme.assertContains("particle runtime");
-        particleReadme.assertContains("render manager");
-        particleReadme.assertContains("lookup/spawn boundaries");
+        particleReadme.assertContains("粒子运行时");
+        particleReadme.assertContains("渲染管理器");
+        particleReadme.assertContains("查找/生成边界");
         assertTrue(Files.notExists(obsoleteRootRequest), () -> obsoleteRootRequest + " should not be reintroduced");
-        registryReadme.assertContains("Runtime publication");
-        registryReadme.assertContains("lookup-facing boundary");
-        loaderReadme.assertContains("resource reload listeners");
-        loaderReadme.assertContains("parse/reload entrypoints");
+        registryReadme.assertContains("已解析客户端资产的发布与查询边界");
+        loaderReadme.assertContains("资源重载监听器");
+        loaderReadme.assertContains("解析入口");
         moduleReadme.assertContains("粒子定义");
         moduleReadme.assertContains("运行时");
         moduleReadme.assertContains("加载管线");

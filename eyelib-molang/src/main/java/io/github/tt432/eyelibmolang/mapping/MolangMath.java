@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 
 /**
+ * Molang 数学函数映射（math.*）。
+ *
  * @author TT432
  */
 @NullMarked

@@ -113,7 +113,7 @@ public final class ManagerResourceImportPlanner {
                                                                        .getOrThrow(false, logger::warn)),
                 LOGGER
         );
-        // replaceRenderControllers
+        // 替换渲染控制器
         {
             for (RenderControllers value : renderControllers.values()) {
                 value.render_controllers().forEach((key, entry) -> {
@@ -146,7 +146,7 @@ public final class ManagerResourceImportPlanner {
                                                                     .getOrThrow(false, logger::warn)),
                 LOGGER
         );
-        // replaceClientEntities
+        // 替换客户端实体
         {
             LinkedHashMap<String, BrClientEntity> flattened = new LinkedHashMap<>();
             parsedEntities.values().forEach(entity -> flattened.put(entity.identifier(), entity));
@@ -162,7 +162,7 @@ public final class ManagerResourceImportPlanner {
                                                                                .getOrThrow(false, logger::warn)),
                 LOGGER
         );
-        // replaceAttachables
+        // 替换附着物
         {
             LinkedHashMap<String, BrClientEntity> flattened = new LinkedHashMap<>();
             parsedAttachables.values().forEach(attachable -> flattened.put(attachable.identifier(), attachable));
@@ -172,7 +172,7 @@ public final class ManagerResourceImportPlanner {
         Map<String, Map<String, Model>> parsedModels = ManagerResourceBatchPlanner.loadModelFiles(basePath, ModelImporter::importFile, LOGGER);
         LinkedHashMap<String, Model> models = new LinkedHashMap<>();
         parsedModels.values().forEach(models::putAll);
-        // replaceModels
+        // 替换模型
         ModelManager.INSTANCE.replaceAll(new LinkedHashMap<>(models));
 
         Map<String, BrMaterial> parsedMaterials = ManagerResourceBatchPlanner.loadStructuredFiles(
@@ -184,7 +184,7 @@ public final class ManagerResourceImportPlanner {
                                                                 .getOrThrow(false, logger::warn)),
                 LOGGER
         );
-        // replaceMaterials
+        // 替换材质
         {
             LinkedHashMap<String, BrMaterialEntry> flattened = new LinkedHashMap<>();
             for (BrMaterial value : parsedMaterials.values()) {

@@ -11,6 +11,8 @@ import org.jspecify.annotations.NullMarked;
 import java.util.Map;
 
 /**
+ * Bedrock 动画帧调度器，遍历动画组件并驱动每个动画实例前进。
+ *
  * @author TT432
  */
 @NullMarked

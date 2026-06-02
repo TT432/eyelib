@@ -9,6 +9,9 @@ import lombok.experimental.ExtensionMethod;
 import org.jspecify.annotations.NullMarked;
 
 /**
+ * 加速渲染（AR）兼容性实现的工具类。
+ * 提供条件性加速渲染的调用入口，仅在加速管线可用时执行。
+ *
  * @author TT432
  */
 @ExtensionMethod(VertexConsumerExtension.class)

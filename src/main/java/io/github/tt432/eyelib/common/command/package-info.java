@@ -1,5 +1,5 @@
 /**
- * Common-side command registration and execution logic.
+ * 通用侧的命令注册和执行逻辑。
  */
 @NullMarked
 package io.github.tt432.eyelib.common.command;

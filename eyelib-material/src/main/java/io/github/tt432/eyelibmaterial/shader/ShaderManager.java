@@ -28,7 +28,7 @@ public final class ShaderManager {
     private static final Map<String, Integer> PROGRAM_CACHE = new HashMap<>();
 
     private ShaderManager() {
-        // static utility class — no instantiation
+        // 工具类，禁止实例化
     }
 
     /**
@@ -53,26 +53,26 @@ public final class ShaderManager {
         String processedVert = injectDefines(vertSource, defines);
         String processedFrag = injectDefines(fragSource, defines);
 
-        // Compile vertex shader
+        // 编译顶点着色器
         int vertShader = ARBShaderObjects.glCreateShaderObjectARB(ARBVertexShader.GL_VERTEX_SHADER_ARB);
         ARBShaderObjects.glShaderSourceARB(vertShader, processedVert);
         ARBShaderObjects.glCompileShaderARB(vertShader);
         checkCompileStatus(vertShader, "vertex");
 
-        // Compile fragment shader
+        // 编译片元着色器
         int fragShader = ARBShaderObjects.glCreateShaderObjectARB(ARBFragmentShader.GL_FRAGMENT_SHADER_ARB);
         ARBShaderObjects.glShaderSourceARB(fragShader, processedFrag);
         ARBShaderObjects.glCompileShaderARB(fragShader);
         checkCompileStatus(fragShader, "fragment");
 
-        // Link program
+        // 链接着色器程序
         int program = ARBShaderObjects.glCreateProgramObjectARB();
         ARBShaderObjects.glAttachObjectARB(program, vertShader);
         ARBShaderObjects.glAttachObjectARB(program, fragShader);
         ARBShaderObjects.glLinkProgramARB(program);
         checkLinkStatus(program);
 
-        // Cleanup shader objects — no longer needed after linking
+        // 清理着色器对象—链接后不再需要
         ARBShaderObjects.glDeleteObjectARB(vertShader);
         ARBShaderObjects.glDeleteObjectARB(fragShader);
 

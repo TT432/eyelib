@@ -1,6 +1,7 @@
+/**
+ * 数据附属的网络同步包定义和运行时处理。
+ */
 @NullMarked
 package io.github.tt432.eyelibattachment.network;
 
 import org.jspecify.annotations.NullMarked;
-
-// 包职责见同目录 README.md

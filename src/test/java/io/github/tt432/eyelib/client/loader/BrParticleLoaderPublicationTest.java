@@ -8,6 +8,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class BrParticleLoaderPublicationTest {
     @Test
     void preservesParticlesJsonReloadContract() throws IOException {

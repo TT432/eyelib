@@ -15,6 +15,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
+ * 按键分派的 Map Codec，使用键 Codec 解析出对应的元素 Codec。
+ *
  * @author TT432
  */
 public record KeyDispatchMapCodec<K, V>(
@@ -58,7 +60,7 @@ public record KeyDispatchMapCodec<K, V>(
                             return r.apply2stable((u, p) -> u, DataResult.error(() -> "Duplicate entry for key: '" + entry.get().getFirst() + "'"));
                         }
                     }
-                    // XXX: isError -> error().isPresent() ?
+                    // TODO: isError 应改为 error().isPresent() 吗？
                     if (entryResult.error().isPresent()) {
                         failed.add(pair);
                     }

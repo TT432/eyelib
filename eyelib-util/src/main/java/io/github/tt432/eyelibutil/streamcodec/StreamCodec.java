@@ -5,6 +5,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import java.util.function.Function;
 
 /**
+ * 提供基于 FriendlyByteBuf 的泛型流编解码抽象基类。
+ *
  * @author TT432
  */
 public abstract class StreamCodec<T> {

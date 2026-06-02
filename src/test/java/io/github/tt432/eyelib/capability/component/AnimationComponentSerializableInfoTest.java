@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+/** @author TT432 */
 class AnimationComponentSerializableInfoTest {
     @AfterEach
     void tearDown() {

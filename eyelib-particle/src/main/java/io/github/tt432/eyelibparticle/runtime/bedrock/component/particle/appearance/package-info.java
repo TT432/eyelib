@@ -1,6 +1,7 @@
+/**
+ * 粒子外观组件：广告牌、着色、光照显示策略。
+ */
 @NullMarked
 package io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.appearance;
 
 import org.jspecify.annotations.NullMarked;
-
-// 包职责见同目录 README.md

@@ -27,18 +27,18 @@ public final class MolangScope {
         @Override
         @SuppressWarnings("unchecked")
         public <T> Optional<T> get(HostRole<T> role) {
-            // 1. Try exact key match
+            // 1. 尝试精确键匹配
             Object exact = hostRoleStore.get(role);
             if (exact != null && role.type().isInstance(exact)) {
                 return Optional.of((T) exact);
             }
-            // 2. Fall back to isInstance match across role store
+            // 2. 回退到 isInstance 遍历角色存储
             for (var entry : hostRoleStore.entrySet()) {
                 if (role.type().isInstance(entry.getValue())) {
                     return Optional.of((T) entry.getValue());
                 }
             }
-            // 3. Fall back to class-based store for backward compat
+            // 3. 回退到基于类的存储以向后兼容
             return get(role.type());
         }
 
@@ -55,12 +55,12 @@ public final class MolangScope {
         @Override
         @SuppressWarnings("unchecked")
         public <T> Optional<T> get(Class<T> clazz) {
-            // 1. Try exact match first
+            // 1. 先尝试精确匹配
             Object exact = hostContextStore.get(clazz);
             if (exact != null) {
                 return Optional.of((T) exact);
             }
-            // 2. Fall back to superclass/interface match (isInstance)
+            // 2. 回退到超类/接口匹配（isInstance）
             for (var entry : hostContextStore.entrySet()) {
                 if (clazz.isInstance(entry.getValue())) {
                     return Optional.of((T) entry.getValue());

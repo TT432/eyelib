@@ -35,7 +35,6 @@ public enum VertexFormatElementEnum implements StringRepresentable {
 
     /**
      * Builds a {@link VertexFormat} from the given set of vertex fields.
-     * <p>
      * The order of elements in the resulting format follows iteration order of the enum set,
      * which is the natural declaration order of this enum.
      *

@@ -8,6 +8,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * 将方法标记为 Molang 可调用函数。
+ *
  * @author TT432
  */
 @NullMarked

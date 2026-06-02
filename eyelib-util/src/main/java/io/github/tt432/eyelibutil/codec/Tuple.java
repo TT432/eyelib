@@ -3,9 +3,9 @@ package io.github.tt432.eyelibutil.codec;
 import java.util.List;
 
 /**
- * Tuple 接口定义了一种有限长度的元组，允许存储多个类型不同的值。<br/>
- * 它提供了一系列静态工厂方法来创建不同长度（从2到16个元素）的元组实例。<br/>
- * 元组实例可以通过 asList 方法转换为列表形式。<br/>
+ * Tuple 接口定义了一种有限长度的元组，允许存储多个类型不同的值。
+ * 它提供了一系列静态工厂方法来创建不同长度（从2到16个元素）的元组实例。
+ * 元组实例可以通过 asList 方法转换为列表形式。
  * 示例：
  * <pre>{@code
  *     Tuple.of(1, 2) // Tuple.T2<Integer,Integer>

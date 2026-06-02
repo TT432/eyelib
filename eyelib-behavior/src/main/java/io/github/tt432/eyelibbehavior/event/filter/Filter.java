@@ -5,6 +5,8 @@ import com.mojang.serialization.Codec;
 import io.github.tt432.eyelibbehavior.event.filter.base.BaseFilter;
 
 /**
+ * 过滤器接口，支持基础过滤与复合过滤的编解码。
+ *
  * @author TT432
  */
 public interface Filter {

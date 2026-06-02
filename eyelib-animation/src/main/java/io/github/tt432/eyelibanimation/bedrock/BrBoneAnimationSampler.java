@@ -8,6 +8,8 @@ import org.jspecify.annotations.Nullable;
 import org.joml.Vector3f;
 
 /**
+ * 骨骼关键帧采样器，对定义数据进行线性或 Catmull-Rom 插值。
+ *
  * @author TT432
  */
 @NullMarked

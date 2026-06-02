@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
+ * 提供 Codec 组合与分派映射的辅助方法。
+ *
  * @author TT432
  */
 public class CodecHelper {

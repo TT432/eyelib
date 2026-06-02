@@ -25,17 +25,16 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Runtime smoke test for the eyelib-material client pipeline.
+ * ClientSmoke框架中使用客户端运行管道验证材质渲染行为的冒烟测试。
+ * 通用框架负责发现/报告/截图，本类负责材质特定夹具与视觉断言。
  *
- * <p>The generic ClientSmoke framework owns discovery/reporting/screenshots;
- * this class owns material-specific fixtures and visual assertions.</p>
+ * @author TT432
  */
 @ClientSmoke(
         description = "Validates eyelib-material multi-material visual pipeline in a live client",
         priority = 10,
         modId = "eyelibmaterial"
 )
-/** @author TT432 */
 public class MaterialPipelineSmoke {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MaterialPipelineSmoke.class);

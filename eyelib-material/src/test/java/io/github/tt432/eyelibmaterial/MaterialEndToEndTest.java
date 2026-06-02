@@ -133,13 +133,13 @@ class MaterialEndToEndTest {
         assertTrue(material.materials().containsKey("particles_blend"));
         assertTrue(material.materials().containsKey("opaque_block"));
 
-        // Spot-check "cutout" fields
+        // 抽查 "cutout" 字段
         BrMaterialEntry cutout = material.materials().get("cutout");
         assertEquals(Optional.of("a"), cutout.vertexShader());
         assertEquals(Optional.of("b"), cutout.fragmentShader());
         assertEquals("", cutout.base());
 
-        // Spot-check "entity_alphatest:entity" parsing: base="entity", name="entity_alphatest"
+        // 抽查 "entity_alphatest:entity" 解析: base="entity", name="entity_alphatest"
         BrMaterialEntry alphatest = material.materials().get("entity_alphatest:entity");
         assertEquals("entity", alphatest.base());
         assertEquals("entity_alphatest", alphatest.name());
@@ -149,17 +149,17 @@ class MaterialEndToEndTest {
     void testJsonRoundtrip() {
         BrMaterial original = parseVanillaMaterial();
 
-        // Encode back to JSON
+        // 编码回 JSON
         JsonElement encoded = BrMaterial.CODEC
                 .encodeStart(JsonOps.INSTANCE, original)
                 .getOrThrow(false, RuntimeException::new);
 
-        // Decode the JSON back to BrMaterial
+        // 再解码 JSON 回 BrMaterial
         BrMaterial decoded = BrMaterial.CODEC
                 .parse(JsonOps.INSTANCE, encoded)
                 .getOrThrow(false, RuntimeException::new);
 
-        // Verify structural equality
+        // 验证结构相等性
         assertEquals(original.materials().size(), decoded.materials().size(),
                 "Roundtrip must preserve entry count");
 
@@ -246,7 +246,7 @@ class MaterialEndToEndTest {
     void testVariantLookup() {
         BrMaterial material = parseVanillaMaterial();
 
-        // None of the current vanilla entries have variants
+        // 当前所有 vanilla 条目均无变体
         for (var entry : material.materials().entrySet()) {
             BrMaterialEntry mat = entry.getValue();
             assertFalse(mat.hasVariants(),
@@ -255,11 +255,11 @@ class MaterialEndToEndTest {
                     "getVariant on variant-free entry should return empty");
         }
 
-        // Create a material entry with variants to verify the method works
+        // 创建带变体的材质条目以验证方法工作
         BrMaterialEntry baseEntry = material.materials().get("entity");
         assertNotNull(baseEntry);
 
-        // Verify that getVariant returns empty for non-existent variants
+        // 验证变体不存在时返回空
         assertEquals(Optional.empty(), baseEntry.getVariant("skinning"));
     }
 }

@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import java.util.function.Function;
 
 /**
+ * Either 工具类，提供统一的解包操作。
+ *
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)

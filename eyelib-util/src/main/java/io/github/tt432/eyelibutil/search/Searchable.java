@@ -4,6 +4,8 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 /**
+ * 可搜索接口，支持按字符串提供搜索结果流。
+ *
  * @author TT432
  */
 public interface Searchable<V> {

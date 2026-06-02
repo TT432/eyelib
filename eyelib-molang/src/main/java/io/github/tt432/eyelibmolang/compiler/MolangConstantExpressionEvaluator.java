@@ -106,7 +106,7 @@ public final class MolangConstantExpressionEvaluator {
             };
         }
         if (expr instanceof MolangAst.BinaryExpr binaryExpr) {
-            // Only pure arithmetic/comparison on number constants can be folded
+            // 仅纯算术/比较数字常量可以被折叠
             Optional<Float> result = evaluateNumber(binaryExpr);
             return result.map(MolangFloat::valueOf);
         }
@@ -128,7 +128,7 @@ public final class MolangConstantExpressionEvaluator {
                 return evaluateConstantExpr(binaryCond.whenFalse());
             }
         }
-        // Non-constant: identifiers, calls with variables, member access, etc.
+        // 非常量：标识符、带变量的调用、成员访问等
         return Optional.empty();
     }
 }

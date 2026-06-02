@@ -7,6 +7,8 @@ import io.github.tt432.eyelibbehavior.event.filter.Operator;
 import io.github.tt432.eyelibbehavior.event.filter.Subject;
 
 /**
+ * 基于实体生命值的过滤器。
+ *
  * @author TT432
  */
 public final class ActorHealth extends BaseFilter<Integer> {

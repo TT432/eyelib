@@ -30,8 +30,7 @@ public class MethodBindingResolver {
             return Optional.empty();
         }
 
-        // Match by Molang-visible parameter types only (excluding
-        // RECEIVER / INJECTED_HOST / SPECIAL_ENGINE_ARG roles)
+        // 仅按 Molang 可见参数类型匹配（排除 RECEIVER / INJECTED_HOST / SPECIAL_ENGINE_ARG 角色）
         for (FunctionInfo info : methodData.functionInfos()) {
             var visibleParams = info.parameterRoles().stream()
                     .filter(r -> r.role() == MolangFunction.ParameterRole.VISIBLE_ARG)

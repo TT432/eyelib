@@ -1,7 +1,7 @@
+/**
+ * Bedrock 几何模型 JSON 的数据结构及加载解析。
+ */
 @NullMarked
 package io.github.tt432.eyelibimporter.model.bedrock;
 
-// 包职责见同目录 README.md
-
 import org.jspecify.annotations.NullMarked;
-

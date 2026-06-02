@@ -4,6 +4,8 @@ import com.mojang.serialization.Codec;
 import net.minecraft.util.StringRepresentable;
 
 /**
+ * 比较操作符枚举，定义过滤器中的比较逻辑。
+ *
  * @author TT432
  */
 public enum Operator implements StringRepresentable {

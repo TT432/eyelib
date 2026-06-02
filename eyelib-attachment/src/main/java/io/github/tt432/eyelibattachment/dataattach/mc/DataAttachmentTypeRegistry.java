@@ -16,6 +16,8 @@ import net.minecraftforge.registries.RegistryBuilder;
 import java.util.function.Supplier;
 
 /**
+ * 数据附属类型的注册中心。
+ *
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)

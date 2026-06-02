@@ -28,8 +28,8 @@ class MolangCompilerImplHandsOnQaTest {
 
     @Test
     void compileUnknownFunctionCompilesSuccessfully() {
-        // With full bytecode emitter coverage, all expressions compile successfully.
-        // Unknown functions resolve to MolangNull at runtime via MolangRuntimeSupport.
+        // 完整的字节码发射器覆盖后，所有表达式都能成功编译。
+        // 未知函数在运行时通过 MolangRuntimeSupport 解析为 MolangNull。
         MolangCompilerImpl compiler = new MolangCompilerImpl();
         CompiledMolangExpression compiled = compiler.compile("1+nonexistent()", CompileContext.defaults());
         assertNotNull(compiled);

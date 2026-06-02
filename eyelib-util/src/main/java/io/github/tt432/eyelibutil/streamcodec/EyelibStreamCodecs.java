@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
+ * 提供基于 FriendlyByteBuf 的常见类型流编解码常量与方法。
+ *
  * @author TT432
  */
 public class EyelibStreamCodecs {

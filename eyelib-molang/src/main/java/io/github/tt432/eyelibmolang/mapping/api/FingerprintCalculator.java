@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
+ * 映射树指纹计算器，用于版本变更检测。
+ *
  * @author TT432
  */
 @NullMarked

@@ -9,6 +9,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+/** @author TT432 */
 class ManagerStorageTest {
     @Test
     void putAndGetAllDataReturnsSnapshot() {

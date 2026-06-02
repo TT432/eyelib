@@ -44,22 +44,22 @@ public final class BedrockAddonRuntimeBridge {
     public static void replaceFromResourcePack(BedrockAddonSideAggregate resourcePack) {
         AnimationAssetRegistry.stageAnimations(toRuntimeAnimations(resourcePack.animations()));
         AnimationAssetRegistry.stageControllers(toRuntimeAnimationControllers(resourcePack.animationControllers()));
-        // replaceClientEntities
+        // 替换客户端实体
         {
             java.util.LinkedHashMap<String, BrClientEntity> flattened = new java.util.LinkedHashMap<>();
             resourcePack.clientEntities().values().forEach(entity -> flattened.put(entity.identifier(), entity));
             ClientEntityManager.INSTANCE.replaceAll(flattened);
         }
         BehaviorEntityAssetRegistry.replaceBehaviorEntities(resourcePack.behaviorEntities());
-        // replaceAttachables
+        // 替换附着物
         {
             java.util.LinkedHashMap<String, BrClientEntity> flattened = new java.util.LinkedHashMap<>();
             resourcePack.attachables().values().forEach(attachable -> flattened.put(attachable.identifier(), attachable));
             AttachableManager.INSTANCE.replaceAll(flattened);
         }
-        // replaceModels
+        // 替换模型
         ModelManager.INSTANCE.replaceAll(new java.util.LinkedHashMap<>(resourcePack.modelsView()));
-        // replaceMaterials
+        // 替换材质
         {
             var materials = toRuntimeMaterials(resourcePack.materialFiles());
             java.util.LinkedHashMap<String, BrMaterialEntry> flattened = new java.util.LinkedHashMap<>();
@@ -68,7 +68,7 @@ public final class BedrockAddonRuntimeBridge {
             }
             MaterialManager.INSTANCE.replaceAll(flattened);
         }
-        // replaceRenderControllers
+        // 替换渲染控制器
         {
             var controllers = toRuntimeRenderControllers(resourcePack.renderControllerFiles());
             for (RenderControllers value : controllers.values()) {

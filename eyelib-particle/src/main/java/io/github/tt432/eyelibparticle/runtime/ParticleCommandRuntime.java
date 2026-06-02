@@ -7,6 +7,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
+ * 粒子命令运行时：提供粒子 ID 补全与生成请求构建工具。
+ *
  * @author TT432
  */
 public final class ParticleCommandRuntime {

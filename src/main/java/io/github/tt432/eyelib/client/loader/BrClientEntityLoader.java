@@ -16,6 +16,8 @@ import java.util.Map;
 
 
 /**
+ * 加载 entity 目录下的客户端实体定义 JSON 文件。
+ *
  * @author TT432
  */
 @Slf4j

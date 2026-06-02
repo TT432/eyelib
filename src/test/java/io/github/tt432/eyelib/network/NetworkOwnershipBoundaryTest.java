@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/** @author TT432 */
 class NetworkOwnershipBoundaryTest {
     @Test
     void featureOwnedPacketContractsStayOutOfRootNetworkPackage() throws IOException {

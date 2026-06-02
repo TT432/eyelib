@@ -10,6 +10,8 @@ import net.minecraftforge.common.util.LazyOptional;
 import org.jspecify.annotations.Nullable;
 
 /**
+ * 数据附属容器的能力提供者。
+ *
  * @author TT432
  */
 public class DataAttachmentContainerProvider implements ICapabilitySerializable<CompoundTag>, ICapabilityProvider {

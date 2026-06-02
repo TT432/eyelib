@@ -66,7 +66,7 @@ public final class MolangRuntimeSupport {
             try {
                 functionInfo = mappingTree.selectQueryVariant(dottedName, List.of(), hostRoles);
             } catch (Exception e) {
-                // Variant ambiguity — treat as unresolved
+                // 变体歧义 — 当作未解析处理
                 return MolangNull.INSTANCE;
             }
             if (functionInfo != null) {

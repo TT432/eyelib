@@ -19,6 +19,8 @@ import java.util.stream.Stream;
 
 
 /**
+ * 加载 attachables 目录下的附着物 JSON 文件。
+ *
  * @author TT432
  */
 @Slf4j

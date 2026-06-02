@@ -6,6 +6,8 @@ import net.minecraftforge.fml.common.Mod;
 import org.jspecify.annotations.NullMarked;
 
 /**
+ * 编译生命周期钩子（Forge 事件）。
+ *
  * @author TT432
  */
 @NullMarked

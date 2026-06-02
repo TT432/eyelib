@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
+ * 提供列表首尾元素的快速访问方法。
+ *
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)

@@ -3,6 +3,8 @@ package io.github.tt432.eyelibattachment.runtime;
 import io.github.tt432.eyelibattachment.capability.EntityStatistics;
 
 /**
+ * 实体统计数据的更新工具。
+ *
  * @author TT432
  */
 public final class EntityStatisticsUpdater {

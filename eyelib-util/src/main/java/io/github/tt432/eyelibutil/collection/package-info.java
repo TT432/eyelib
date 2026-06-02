@@ -3,4 +3,4 @@ package io.github.tt432.eyelibutil.collection;
 
 import org.jspecify.annotations.NullMarked;
 
-// 包职责见同目录 README.md
+/** 集合工具包，提供增强的集合类与自定义收集器。 */

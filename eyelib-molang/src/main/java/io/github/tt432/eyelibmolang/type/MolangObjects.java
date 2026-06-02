@@ -4,6 +4,8 @@ import io.github.tt432.eyelibmolang.util.CalledByGeneratedMethod;
 import org.jspecify.annotations.NullMarked;
 
 /**
+ * Molang 对象工厂，将 Java 对象转为 MolangObject。
+ *
  * @author TT432
  */
 @NullMarked

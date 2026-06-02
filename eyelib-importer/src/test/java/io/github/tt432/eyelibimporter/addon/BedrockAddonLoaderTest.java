@@ -23,7 +23,7 @@ class BedrockAddonLoaderTest {
     @TempDir
     Path tempDir;
 
-    // ====== Split from loadsFolderAddonWithResourceAndBehaviorPacks ======
+    // Split from loadsFolderAddonWithResourceAndBehaviorPacks
 
     @Test
     void loadsFolderAddonWithResourcePacks() throws Exception {
@@ -147,7 +147,7 @@ class BedrockAddonLoaderTest {
         assertNotNull(addon.resourcePacks().get(0).packIcon());
     }
 
-    // ====== Existing tests (kept unchanged) ======
+    // Existing tests (kept unchanged)
 
     @Test
     void loadsSingleMcpackArchive() throws Exception {

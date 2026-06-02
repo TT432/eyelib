@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** .brarchive 二进制存档格式解码器。
- * <p>格式：8B magic + 4B entryCount(LE) + 4B version + entryCount×256B entry records + 合并JSON。
+ * 格式：8B magic + 4B entryCount(LE) + 4B version + entryCount×256B entry records + 合并JSON。
  * @author TT432 */
 @NullMarked
 final class BrArchiveDecoder {

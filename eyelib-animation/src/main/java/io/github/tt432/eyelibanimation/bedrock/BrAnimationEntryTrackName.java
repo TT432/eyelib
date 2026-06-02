@@ -3,6 +3,8 @@ package io.github.tt432.eyelibanimation.bedrock;
 import org.jspecify.annotations.NullMarked;
 
 /**
+ * 动画条目轨道名称枚举，对应 sound_effects / particle_effects / timeline / bones。
+ *
  * @author TT432
  */
 @NullMarked

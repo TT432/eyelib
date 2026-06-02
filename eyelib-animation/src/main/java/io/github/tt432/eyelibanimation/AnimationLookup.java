@@ -8,6 +8,8 @@ import org.jspecify.annotations.Nullable;
 import java.util.Collection;
 
 /**
+ * 动画查找工具类，委托给 AnimationManager 进行查询。
+ *
  * @author TT432
  */
 @NullMarked

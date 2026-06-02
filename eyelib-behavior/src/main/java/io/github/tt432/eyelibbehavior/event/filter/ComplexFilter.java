@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * 复合过滤器，支持 all_of/one_of/none_of 逻辑组合。
+ *
  * @author TT432
  */
 @AllArgsConstructor

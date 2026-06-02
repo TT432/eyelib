@@ -3,6 +3,8 @@ package io.github.tt432.eyelibmolang.compiler.frontend;
 import org.jspecify.annotations.NullMarked;
 
 /**
+ * 解析前端选择器，返回当前启用的前端。
+ *
  * @author TT432
  */
 @NullMarked

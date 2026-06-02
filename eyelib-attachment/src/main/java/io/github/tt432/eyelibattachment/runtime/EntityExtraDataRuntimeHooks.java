@@ -17,6 +17,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
+ * 额外实体数据运行时的 Forge 事件钩子。
+ *
  * @author TT432
  */
 @Mod.EventBusSubscriber

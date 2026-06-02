@@ -21,7 +21,7 @@ public final class MolangCompileCache {
 
     private final Map<String, CompiledMolangExpression> cache = new ConcurrentHashMap<>();
 
-    // Required for staleness detection at lookup time
+    // 用于查找时检测过期
     private volatile MolangMappingTree mappingTree;
 
     public MolangCompileCache() {
@@ -45,7 +45,7 @@ public final class MolangCompileCache {
     }
 
     public CompiledMolangExpression getOrCompile(String key, Supplier<CompiledMolangExpression> supplier) {
-        // Build composite key incorporating registry version ref for staleness detection
+        // 构建包含注册表版本引用的复合键，用于过期检测
         String currentRegistryRef = mappingTree != null
                 ? mappingTree.registryVersionRef().value()
                 : null;
@@ -53,7 +53,7 @@ public final class MolangCompileCache {
                 ? key + "#" + currentRegistryRef
                 : key;
 
-        // Size-bound eviction: remove ~25% of entries when threshold is exceeded
+        // 大小限制淘汰：超出阈值时移除约 25% 的条目
         if (cache.size() >= MAX_L1_SIZE) {
             int toRemove = MAX_L1_SIZE / 4;
             var it = cache.keySet().iterator();

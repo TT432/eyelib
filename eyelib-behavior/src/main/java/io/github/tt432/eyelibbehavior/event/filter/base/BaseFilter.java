@@ -7,6 +7,8 @@ import io.github.tt432.eyelibbehavior.event.filter.Subject;
 import lombok.AllArgsConstructor;
 
 /**
+ * 过滤器的抽象基类，封装通用过滤字段。
+ *
  * @author TT432
  */
 @AllArgsConstructor

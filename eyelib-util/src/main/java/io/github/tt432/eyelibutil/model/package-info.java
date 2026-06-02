@@ -3,4 +3,4 @@ package io.github.tt432.eyelibutil.model;
 
 import org.jspecify.annotations.NullMarked;
 
-// 包职责见同目录 README.md
+/** 模型工具包，提供模型资源位置相关的工具方法。 */

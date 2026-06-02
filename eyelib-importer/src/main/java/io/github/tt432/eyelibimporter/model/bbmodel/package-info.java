@@ -1,7 +1,7 @@
+/**
+ * Blockbench 模型文件（.bbmodel）的数据结构编解码。
+ */
 @NullMarked
 package io.github.tt432.eyelibimporter.model.bbmodel;
 
-// 包职责见同目录 README.md
-
 import org.jspecify.annotations.NullMarked;
-

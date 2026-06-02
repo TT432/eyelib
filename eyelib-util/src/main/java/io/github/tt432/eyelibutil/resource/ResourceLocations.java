@@ -5,6 +5,8 @@ import lombok.NoArgsConstructor;
 import net.minecraft.resources.ResourceLocation;
 
 /**
+ * 提供 ResourceLocation 的创建与空值判断工具方法。
+ *
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)

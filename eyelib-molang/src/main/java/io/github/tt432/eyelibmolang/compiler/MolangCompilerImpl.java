@@ -30,7 +30,7 @@ public final class MolangCompilerImpl implements MolangCompiler {
     public CompiledMolangExpression compile(String expression, CompileContext ctx) {
         CompileContext effectiveCtx = ctx == null ? CompileContext.defaults() : ctx;
         try {
-            // Step 1: Parse source into AST via unified frontend entry
+            // 步骤 1：通过统一前端入口将源码解析为 AST
             MolangParserFrontendResult parseResult = MolangParserFrontends.active()
                     .parseExprSet(expression);
             MolangAst.ExprSet ast = parseResult.ast()
@@ -38,7 +38,7 @@ public final class MolangCompilerImpl implements MolangCompiler {
                             new ExpressionCompileException(expression,
                                     "Failed to parse molang expression: [" + expression + "]"));
 
-            // Step 2: Bind AST — resolve identifiers, validate semantics
+            // 步骤 2：绑定 AST — 解析标识符、验证语义
             BindResult bindResult = BINDER.bind(ast, effectiveCtx.diagnosticsMode());
             if (bindResult.hasErrors()) {
                 List<String> diagnostics = bindResult.diagnostics().stream()
@@ -49,12 +49,12 @@ public final class MolangCompilerImpl implements MolangCompiler {
                         "Failed to bind molang expression: semantic errors detected.", diagnostics);
             }
 
-            // Step 3: Emit JVM bytecode from bound AST
+            // 步骤 3：从绑定后的 AST 生成 JVM 字节码
             BoundMolangCompilerInput input = new BoundMolangCompilerInput(
                     expression, bindResult.root(), effectiveCtx);
             byte[] classBytes = MolangBytecodeEmitter.emit(input);
 
-            // Step 4: Load generated class and wrap as CompiledMolangExpression
+            // 步骤 4：加载生成的类并包装为 CompiledMolangExpression
             return instantiate(classBytes);
         } catch (ExpressionCompileException e) {
             throw e;

@@ -11,6 +11,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
+ * 实体统计数据的事件处理器。
+ *
  * @author TT432
  */
 @Mod.EventBusSubscriber

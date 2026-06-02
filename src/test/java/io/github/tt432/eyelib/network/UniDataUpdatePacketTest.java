@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+/** @author TT432 */
 class UniDataUpdatePacketTest {
     @Test
     void crateBuildsPacketFromStringIdAttachmentContract() {

@@ -17,9 +17,13 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.Map;
 
+/**
+ * 加速渲染管线中骨骼模型的自定义加速渲染器。
+ * 将 BakedBone 的顶点数据提交到加速缓冲区图结构中。
+ *
+ * @author TT432
+ */
 @ExtensionMethod(VertexConsumerExtension.class)
-
-/** @author TT432 */
 @NullMarked
 public class AcceleratedBakedBoneRenderer implements IAcceleratedRenderer<BakedModel.BakedBone> {
     public static final AcceleratedBakedBoneRenderer INSTANCE = new AcceleratedBakedBoneRenderer();

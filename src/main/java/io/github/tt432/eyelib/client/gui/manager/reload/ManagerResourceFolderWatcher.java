@@ -13,9 +13,8 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 
-@Slf4j
-
 /** @author TT432 */
+@Slf4j
 @NullMarked
 public final class ManagerResourceFolderWatcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(ManagerResourceFolderWatcher.class);

@@ -1,9 +1,10 @@
 package io.github.tt432.eyelibparticle.runtime.support;
 
 /**
- * Particle-runtime-owned math helpers copied at the module boundary.
+ * 粒子运行时自有数学辅助工具，在模块边界复制。
+ *
+ * @author TT432
  */
-/** @author TT432 */
 public final class ParticleMath {
     public static final float DEGREES_TO_RADIANS = 0.017453292519943295F;
     public static final float RADIANS_TO_DEGREES = 57.29577951308232F;

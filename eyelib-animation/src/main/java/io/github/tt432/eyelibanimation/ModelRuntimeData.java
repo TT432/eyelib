@@ -11,6 +11,8 @@ import org.joml.Vector3fc;
 import org.jspecify.annotations.NullMarked;
 
 /**
+ * 模型运行时变换数据，按骨骼 ID 存储位置/旋转/缩放偏移。
+ *
  * @author TT432
  */
 @NullMarked

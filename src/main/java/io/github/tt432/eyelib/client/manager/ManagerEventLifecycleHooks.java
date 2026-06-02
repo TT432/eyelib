@@ -6,9 +6,8 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.jspecify.annotations.NullMarked;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
-
 /** @author TT432 */
+@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 @NullMarked
 public final class ManagerEventLifecycleHooks {
     private ManagerEventLifecycleHooks() {

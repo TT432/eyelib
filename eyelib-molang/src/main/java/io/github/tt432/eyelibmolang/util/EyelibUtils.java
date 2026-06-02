@@ -6,6 +6,8 @@ import io.github.tt432.eyelibmolang.type.MolangObject;
 import org.jspecify.annotations.NullMarked;
 
 /**
+ * Molang 运行时工具方法集合。
+ *
  * @author TT432
  */
 @NullMarked

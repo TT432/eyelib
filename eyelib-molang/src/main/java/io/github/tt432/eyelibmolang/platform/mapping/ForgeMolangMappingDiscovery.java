@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
+ * Forge Mod 文件扫描实现的映射发现。
+ *
  * @author TT432
  */
 @NullMarked

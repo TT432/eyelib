@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/** @author TT432 */
 class ManagerEventPublishBridgeTest {
     @AfterEach
     void tearDown() {

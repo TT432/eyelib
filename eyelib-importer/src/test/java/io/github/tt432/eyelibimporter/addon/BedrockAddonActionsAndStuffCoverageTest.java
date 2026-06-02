@@ -10,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * 用真实 Actions-and-Stuff 1.10 v2 样本包验证加载覆盖率，包括子包层叠覆盖。
- * <p>
  * 此测试依赖开发者本地的 {@code Actions-and-Stuff-1.10-v2.mcpack} addon 文件，
  * 该文件版权归属于 Actions-and-Stuff 团队，不能提交到仓库中。
  * 如需运行，将样本包放置到 {@code run/resourcepacks/} 目录下，并移除 {@code @Disabled} 注解。

@@ -9,9 +9,10 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.jspecify.annotations.NullMarked;
 
+/**
+ * @author TT432
+ */
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
-
-/** @author TT432 */
 @NullMarked
 public final class CapabilityComponentRuntimeHooks {
     private CapabilityComponentRuntimeHooks() {

@@ -14,11 +14,12 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
- * @author DustW
+ * 共享动态库加载器，支持从类路径或 JAR 中提取并加载本机库。
+ *
+ * @author DustW, TT432
  */
 @Slf4j
 @SuppressWarnings("NullAway")
-/** @author TT432 */
 public class SharedLibraryLoader {
     private static final boolean isWindows = System.getProperty("os.name").contains("Windows");
     private static final boolean isLinux = System.getProperty("os.name").contains("Linux");
@@ -104,7 +105,7 @@ public class SharedLibraryLoader {
             return input;
         }
 
-        // Read from JAR.
+        // 从 JAR 中读取文件
         try {
             ZipFile file = new ZipFile(nativesJar);
             ZipEntry entry = file.getEntry(path);
@@ -136,7 +137,7 @@ public class SharedLibraryLoader {
             }
             return extractFile(sourcePath, sourceCrc, extractedFile);
         } catch (RuntimeException ex) {
-            // Fallback to file at java.library.path location, eg for applets.
+            // 回退到 java.library.path 位置（如 applet 环境）
             File file = new File(System.getProperty("java.library.path"), sourcePath);
             if (file.exists()) return file;
             throw ex;
@@ -160,12 +161,12 @@ public class SharedLibraryLoader {
      * @return null if a writable path could not be found.
      */
     private @Nullable File getExtractedFile(String dirName, String fileName) {
-        // Temp directory with username in path.
+        // 临时目录（含用户名路径）
         File idealFile = new File(
                 System.getProperty("java.io.tmpdir") + "/libgdx" + System.getProperty("user.name") + "/" + dirName, fileName);
         if (canWrite(idealFile)) return idealFile;
 
-        // System provided temp directory.
+        // 系统临时目录
         try {
             File file = File.createTempFile(dirName, null);
             if (file.delete()) {
@@ -175,15 +176,15 @@ public class SharedLibraryLoader {
         } catch (IOException ignored) {
         }
 
-        // User home.
+        // 用户主目录
         File file = new File(System.getProperty("user.home") + "/.libgdx/" + dirName, fileName);
         if (canWrite(file)) return file;
 
-        // Relative directory.
+        // 相对目录
         file = new File(".temp/" + dirName, fileName);
         if (canWrite(file)) return file;
 
-        // We are running in the OS X sandbox.
+        // 运行在 OS X 沙箱中
         if (System.getenv("APP_SANDBOX_CONTAINER_ID") != null) return idealFile;
 
         return null;
@@ -197,7 +198,7 @@ public class SharedLibraryLoader {
         File testFile;
         if (file.exists()) {
             if (!file.canWrite() || !canExecute(file)) return false;
-            // Don't overwrite existing file just to check if we can write to directory.
+            // 不要为了测试目录可写性而覆盖已有文件
             testFile = new File(parent, randomUUID().toString());
         } else {
             parent.mkdirs();
@@ -238,7 +239,7 @@ public class SharedLibraryLoader {
             }
         }
 
-        // If file doesn't exist or the CRC doesn't match, extract it to the temp dir.
+        // 文件不存在或 CRC 不匹配时从临时目录提取
         if (extractedCrc == null || !extractedCrc.equals(sourceCrc)) {
             InputStream input = null;
             FileOutputStream output = null;
@@ -275,7 +276,7 @@ public class SharedLibraryLoader {
         File file = new File(".natives/" + sourceCrc, fileName);
         if (loadFile(sourcePath, sourceCrc, file) == null) return;
 
-        // Fallback to java.library.path location, eg for applets.
+        // 回退到 java.library.path 位置（如 applet 环境）
         file = new File(System.getProperty("java.library.path"), sourcePath);
         if (file.exists()) {
             System.load(file.getAbsolutePath());

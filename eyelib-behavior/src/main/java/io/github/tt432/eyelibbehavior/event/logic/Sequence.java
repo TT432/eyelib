@@ -15,7 +15,6 @@ public record Sequence(
 
     @Override
     public void eval(EntityBehaviorData data) {
-        // 遍历 nodes 列表，依次执行每个逻辑节点的 eval 方法
         for (LogicNode node : nodes) {
             node.eval(data);
         }

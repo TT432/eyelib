@@ -5,6 +5,8 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 /**
+ * 附加数据模块的主模组类。
+ *
  * @author TT432
  */
 @Mod(EyelibAttachmentMod.MOD_ID)

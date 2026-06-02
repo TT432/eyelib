@@ -650,7 +650,7 @@ public record BrMaterialEntry(
         return new RenderStateShard.WriteMaskStateShard(writeColor, writeDepth);
     }
 
-    // ── format builder ──────────────────────────────────────────────────
+    // format builder
 
     private VertexFormat getFormat() {
         EnumSet<VertexFormatElementEnum> fields = vertexFields.orElse(EnumSet.noneOf(VertexFormatElementEnum.class));

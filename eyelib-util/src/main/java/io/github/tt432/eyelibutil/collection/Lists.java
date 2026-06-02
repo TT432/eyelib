@@ -7,6 +7,8 @@ import java.util.AbstractList;
 import java.util.List;
 
 /**
+ * 提供基于 Int2ObjectFunction 的懒加载列表视图。
+ *
  * @author TT432
  */
 public class Lists {

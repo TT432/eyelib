@@ -7,6 +7,8 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import org.jspecify.annotations.NullMarked;
 
 /**
+ * 映射树生命周期钩子（Forge 通用设置）。
+ *
  * @author TT432
  */
 @NullMarked

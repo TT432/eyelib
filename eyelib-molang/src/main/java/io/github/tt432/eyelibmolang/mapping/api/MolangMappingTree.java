@@ -179,7 +179,7 @@ public class MolangMappingTree {
             try {
                 return new FieldData(aClass, aClass.getField(fieldName));
             } catch (NoSuchFieldException ignored) {
-                // Field not found in this class; continue trying other mapped classes
+                // 未在此类中找到字段；继续尝试其他映射的类
             }
         }
 

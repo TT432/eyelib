@@ -6,6 +6,8 @@ import net.minecraft.util.RandomSource;
 import org.joml.Vector3f;
 
 /**
+ * 提供在 AABB 内随机选点的方法，支持仅表面或体积内。
+ *
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)

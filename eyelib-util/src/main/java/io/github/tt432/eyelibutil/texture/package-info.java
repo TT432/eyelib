@@ -3,4 +3,4 @@ package io.github.tt432.eyelibutil.texture;
 
 import org.jspecify.annotations.NullMarked;
 
-// 包职责见同目录 README.md
+/** 纹理工具包，提供纹理路径处理相关的工具方法。 */

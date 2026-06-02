@@ -126,7 +126,7 @@ class ImportedImageDataTest {
         assertThrows(IOException.class, () -> ImportedImageData.decodeTga(buf));
     }
 
-    // ---- helpers ----
+    // helpers
 
     private static byte[] buildUncompressedTga(int w, int h, int bpp, boolean topToBottom,
                                                 byte[]... pixels) throws IOException {

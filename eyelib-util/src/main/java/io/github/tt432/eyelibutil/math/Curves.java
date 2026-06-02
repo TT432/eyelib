@@ -7,10 +7,11 @@ import org.joml.Vector2f;
 import java.util.List;
 
 /**
- * @author DustW
+ * Catmull-Rom 样条插值工具类。
+ *
+ * @author DustW, TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-/** @author TT432 */
 public class Curves {
     public static float lerpSplineCurve(List<Vector2f> points, float time) {
         float p = (points.size() - 1) * time;

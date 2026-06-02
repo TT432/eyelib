@@ -77,7 +77,7 @@ public final class BedrockAddonLoader {
         }
     }
 
-    // == 子包选择 ==================================================
+    // 子包选择
 
     /** 按基岩版规则自动选择子包：取最高 memoryPerformanceTier，同 tier 取最后一个。 */
     private static @Nullable String selectSubpack(List<BedrockPackManifest.Subpack> subpacks) {
@@ -120,7 +120,7 @@ public final class BedrockAddonLoader {
         return relativePath;
     }
 
-    // == Pack 加载核心 =============================================
+    // Pack 加载核心
 
     private static BedrockAddonPack loadPack(Path packRoot) throws IOException {
         JsonObject manifestJson = readJsonFile(packRoot.resolve("manifest.json"));
@@ -224,7 +224,7 @@ public final class BedrockAddonLoader {
         }
     }
 
-    // == Pack 资源累加器 ===========================================
+    // Pack 资源累加器
 
     /** 单个包加载过程中的资源容器。 */
     @NullMarked
@@ -323,7 +323,7 @@ public final class BedrockAddonLoader {
         }
     }
 
-    // == 文件条目 ==================================================
+    // 文件条目$
 
     /** 包中一个待处理文件的元数据。 */
     private record FileEntry(
@@ -346,7 +346,7 @@ public final class BedrockAddonLoader {
         }
     }
 
-    // == BrArchive 加载 ============================================
+    // BrArchive 加载
 
     @SuppressWarnings("unchecked")
     private static void loadBrarchive(PackAccumulator acc, FileEntry entry) throws IOException {
@@ -463,7 +463,7 @@ public final class BedrockAddonLoader {
         return merged;
     }
 
-    // == 合并辅助方法 ===============================================
+    // 合并辅助方法
 
     private static void mergeAnimations(LinkedHashMap<String, BrAnimationSet> files,
                                         String effectivePath,
@@ -523,7 +523,7 @@ public final class BedrockAddonLoader {
         files.put(effectivePath, new BrMaterial(merged));
     }
 
-    // == BrArchive 低级解析 ========================================
+    // BrArchive 低级解析
 
     private static Map<String, BrAnimationControllerSchema> parseAnimationControllerChunk(
             String json, PackAccumulator acc, FileEntry entry) {
@@ -577,7 +577,7 @@ public final class BedrockAddonLoader {
         return merged;
     }
 
-    // == 警告 / 日志辅助 ============================================
+    // 警告 / 日志辅助
 
     private static String warnSource(PackAccumulator acc) {
         return acc != null ? acc.sourceName() : "<unknown>";
@@ -607,7 +607,7 @@ public final class BedrockAddonLoader {
                         : "Resource is retained but unmanaged because: " + reason));
     }
 
-    // == Manifest ==================================================
+    // Manifest$
 
     private static void warnForUnmanagedManifestFields(Path packRoot, BedrockPackManifest manifest,
                                                         List<BedrockAddonWarning> warnings) {
@@ -634,7 +634,7 @@ public final class BedrockAddonLoader {
         };
     }
 
-    // == 依赖排序 ==================================================
+    // 依赖排序$
 
     private static List<BedrockAddonPack> sortPacksByDependencies(List<BedrockAddonPack> packs,
                                                                    List<BedrockAddonWarning> warnings) {
@@ -692,7 +692,7 @@ public final class BedrockAddonLoader {
         return ordered;
     }
 
-    // == BrArchive 辅助函数 ========================================
+    // BrArchive 辅助函数
 
     private static void normalizeRenderControllers(com.google.gson.JsonElement root) {
         if (!root.isJsonObject()) return;
@@ -727,7 +727,7 @@ public final class BedrockAddonLoader {
         }
     }
 
-    // == JSON 分片 / 低级工具 ======================================
+    // JSON 分片 / 低级工具
 
     private static List<String> splitConcatenatedJson(String json) {
         var chunks = new ArrayList<String>();
@@ -812,7 +812,7 @@ public final class BedrockAddonLoader {
         };
     }
 
-    // == I/O 工具 ==================================================
+    // I/O 工具$
 
     private static String extensionOf(String relativePath) {
         int index = relativePath.lastIndexOf('.');
@@ -842,7 +842,7 @@ public final class BedrockAddonLoader {
         return path.replace('\\', '/');
     }
 
-    // == Zip / 目录工具 =============================================
+    // Zip / 目录工具
 
     private static void collectPackRoots(Path source, List<Path> packRoots, List<Path> temporaryDirectories)
             throws IOException {

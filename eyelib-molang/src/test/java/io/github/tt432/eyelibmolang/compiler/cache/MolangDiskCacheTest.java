@@ -161,9 +161,9 @@ class MolangDiskCacheTest {
         assertEquals(1, supplierCalls.get());
     }
 
-    // L2 disk cache integration with MolangCompileCache has been removed.
-    // L2 tests (l2DiskHitOnFreshCache, evaluatorFallbackNotWrittenToDisk) are obsolete.
-    // MolangDiskCache standalone read/write tests remain valid below.
+    // L2 磁盘缓存与 MolangCompileCache 的集成已被移除。
+    // L2 测试（l2DiskHitOnFreshCache、evaluatorFallbackNotWrittenToDisk）已废弃。
+    // MolangDiskCache 独立的读写测试在下文仍然有效。
 
     @Test
     void concurrentReadWrite() throws Exception {

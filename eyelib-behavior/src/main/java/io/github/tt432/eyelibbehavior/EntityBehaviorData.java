@@ -13,6 +13,8 @@ import org.jspecify.annotations.Nullable;
 import java.util.*;
 
 /**
+ * 实体行为数据，管理实体行为描述与组件。
+ *
  * @author TT432
  */
 public class EntityBehaviorData {

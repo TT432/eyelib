@@ -6,6 +6,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
+ * 数据附属相关的事件处理器。
+ *
  * @author TT432
  */
 @Mod.EventBusSubscriber(modid = "eyelibattachment")

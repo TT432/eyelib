@@ -12,9 +12,10 @@ import java.util.TreeMap;
 import java.util.function.Function;
 
 /**
- * @author TT432 <br/>
- * Copy from <a href="https://github.com/TT432/chin/blob/main/src/main/java/io/github/tt432/chin/codec/ChinExtraCodecs.java">tt432/chin</a><br/>
+ * @author TT432
+ * Copy from tt432/chin (https://github.com/TT432/chin)
  * As you wish!
+ * 提供单个/列表兼容器、校验、树映射和元组 Codec 工厂方法。
  */
 public class ChinExtraCodecs {
     /**
