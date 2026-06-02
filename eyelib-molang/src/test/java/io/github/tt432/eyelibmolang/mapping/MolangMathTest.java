@@ -19,11 +19,27 @@ class MolangMathTest {
     }
 
     @Test
-    void trigonometryAndClampStayPlainJvmAndStable() {
+    void sin30() {
         assertEquals(0.5F, MolangMath.sin(30), 0.0001F);
+    }
+
+    @Test
+    void cos60() {
         assertEquals(0.5F, MolangMath.cos(60), 0.0001F);
+    }
+
+    @Test
+    void atan2() {
         assertEquals(45F, MolangMath.atan2(1, 1), 0.0001F);
+    }
+
+    @Test
+    void clampMax() {
         assertEquals(2F, MolangMath.clamp(3, 0, 2), 0.0001F);
+    }
+
+    @Test
+    void clampMin() {
         assertEquals(0F, MolangMath.clamp(-1, 0, 2), 0.0001F);
     }
 

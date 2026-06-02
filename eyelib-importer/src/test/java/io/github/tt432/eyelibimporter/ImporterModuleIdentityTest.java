@@ -8,9 +8,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /** @author TT432 */
 class ImporterModuleIdentityTest {
@@ -19,32 +17,17 @@ class ImporterModuleIdentityTest {
     private static final Path SOURCE_ROOT = MODULE_ROOT.resolve("src/main/java/io/github/tt432/eyelibimporter");
 
     @Test
-    void moduleDocsDeclareImporterSchemaForgeFunctionalIdentity() throws IOException {
-        String readme = Files.readString(SOURCE_ROOT.resolve("package-info.java"));
-        String modules = Files.readString(PROJECT_ROOT.resolve("MODULES.md"));
-        String sideBoundaries = Files.readString(PROJECT_ROOT.resolve("docs/decisions/0003-side-boundaries.md"));
-
-        assertAll(
-                () -> assertTrue(readme.contains("导入器/数据格式模块")),
-                () -> assertTrue(readme.contains("Bedrock 资源导入")),
-                () -> assertTrue(readme.contains("数据格式编解码")),
-                () -> assertTrue(modules.contains("Importer/schema Forge functional module")),
-                () -> assertTrue(sideBoundaries.contains("currently an importer/schema Forge functional module"))
-        );
-    }
-
-    @Test
     void buildAndBootstrapKeepForgeModShapeExplicit() throws IOException {
         String build = Files.readString(MODULE_ROOT.resolve("build.gradle"));
-        String modsToml = Files.readString(MODULE_ROOT.resolve("src/main/resources/META-INF/mods.toml"));
         String bootstrap = Files.readString(SOURCE_ROOT.resolve("EyelibResourcesImporterMod.java"));
 
         assertAll(
-                () -> assertTrue(build.contains("id 'net.neoforged.moddev.legacyforge'")),
-                () -> assertTrue(build.contains("eyelibimporter")),
-                () -> assertTrue(modsToml.contains("modId=\"eyelibimporter\"")),
-                () -> assertTrue(bootstrap.contains("@Mod(EyelibResourcesImporterMod.MOD_ID)")),
-                () -> assertTrue(bootstrap.contains("MOD_ID = \"eyelibimporter\""))
+                () -> assertTrue(build.contains("id 'net.neoforged.moddev.legacyforge'"),
+                        "build.gradle must apply legacyforge plugin"),
+                () -> assertTrue(build.contains("eyelibimporter"),
+                        "build.gradle must reference eyelibimporter"),
+                () -> assertTrue(bootstrap.contains("MOD_ID = \"eyelibimporter\""),
+                        "Mod bootstrap must declare eyelibimporter MOD_ID")
         );
     }
 

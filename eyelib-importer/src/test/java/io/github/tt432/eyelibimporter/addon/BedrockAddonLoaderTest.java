@@ -16,18 +16,30 @@ import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /** @author TT432 */
 class BedrockAddonLoaderTest {
     @TempDir
     Path tempDir;
 
+    // ====== Split from loadsFolderAddonWithResourceAndBehaviorPacks ======
+
     @Test
-    void loadsFolderAddonWithResourceAndBehaviorPacks() throws Exception {
+    void loadsFolderAddonWithResourcePacks() throws Exception {
+        Path addonRoot = tempDir.resolve("folder-addon");
+        Path resourcePack = writeResourcePack(addonRoot.resolve("resource_pack"));
+        writeBehaviorPack(addonRoot.resolve("behavior_pack"), resourcePack);
+
+        BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
+
+        assertEquals(2, addon.packs().size());
+        assertEquals(1, addon.resourcePacks().size());
+        assertEquals(1, addon.dataPacks().size());
+    }
+
+    @Test
+    void folderAddonMapsEntityFiles() throws Exception {
         Path addonRoot = tempDir.resolve("folder-addon");
         Path resourcePack = writeResourcePack(addonRoot.resolve("resource_pack"));
         writeBehaviorPack(addonRoot.resolve("behavior_pack"), resourcePack);
@@ -35,27 +47,85 @@ class BedrockAddonLoaderTest {
         BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
         BedrockAddonPack resourcePackView = addon.resourcePacks().get(0);
 
-        assertEquals(2, addon.packs().size());
-        assertEquals(1, addon.resourcePacks().size());
-        assertEquals(1, addon.dataPacks().size());
         assertTrue(resourcePackView.modelFiles().containsKey("models/entity/test.geo.json"));
         assertTrue(resourcePackView.clientEntityFiles().containsKey("entity/test.entity.json"));
-        assertTrue(resourcePackView.animationFiles().containsKey("animations/test.animation.json"));
         assertTrue(addon.aggregate().resourcePack().models().containsKey("geometry.test"));
         assertTrue(addon.aggregate().resourcePack().clientEntities().containsKey("eyelib:test_entity"));
         assertTrue(addon.aggregate().behaviorPack().behaviorEntities().isEmpty());
         assertTrue(addon.aggregate().models().containsKey("geometry.test"));
         assertTrue(addon.aggregate().clientEntities().containsKey("eyelib:test_entity"));
         assertTrue(addon.aggregate().attachables().containsKey("eyelib:test_attachable"));
+    }
+
+    @Test
+    void folderAddonMapsAnimationFiles() throws Exception {
+        Path addonRoot = tempDir.resolve("folder-addon");
+        Path resourcePack = writeResourcePack(addonRoot.resolve("resource_pack"));
+        writeBehaviorPack(addonRoot.resolve("behavior_pack"), resourcePack);
+
+        BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
+        BedrockAddonPack resourcePackView = addon.resourcePacks().get(0);
+
+        assertTrue(resourcePackView.animationFiles().containsKey("animations/test.animation.json"));
         assertTrue(addon.aggregate().animations().containsKey("animation.test.idle"));
         assertTrue(addon.aggregate().animationControllers().containsKey("controller.animation.test"));
+    }
+
+    @Test
+    void folderAddonMapsRenderControllers() throws Exception {
+        Path addonRoot = tempDir.resolve("folder-addon");
+        Path resourcePack = writeResourcePack(addonRoot.resolve("resource_pack"));
+        writeBehaviorPack(addonRoot.resolve("behavior_pack"), resourcePack);
+
+        BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
+
         assertTrue(addon.aggregate().renderControllerFiles().containsKey("render_controllers/test.render_controllers.json"));
         assertTrue(addon.aggregate().flattenedRenderControllers().containsKey("controller.render.test"));
+    }
+
+    @Test
+    void folderAddonMapsParticleFiles() throws Exception {
+        Path addonRoot = tempDir.resolve("folder-addon");
+        Path resourcePack = writeResourcePack(addonRoot.resolve("resource_pack"));
+        writeBehaviorPack(addonRoot.resolve("behavior_pack"), resourcePack);
+
+        BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
+
         assertTrue(addon.aggregate().particleFiles().containsKey("particles/test.particle.json"));
         assertTrue(addon.aggregate().particlesByIdentifier().containsKey("eyelib:test_particle"));
+    }
+
+    @Test
+    void folderAddonMapsTextureFiles() throws Exception {
+        Path addonRoot = tempDir.resolve("folder-addon");
+        Path resourcePack = writeResourcePack(addonRoot.resolve("resource_pack"));
+        writeBehaviorPack(addonRoot.resolve("behavior_pack"), resourcePack);
+
+        BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
+
         assertTrue(addon.aggregate().textures().containsKey("textures/entity/test.png"));
+    }
+
+    @Test
+    void folderAddonMapsMaterialFiles() throws Exception {
+        Path addonRoot = tempDir.resolve("folder-addon");
+        Path resourcePack = writeResourcePack(addonRoot.resolve("resource_pack"));
+        writeBehaviorPack(addonRoot.resolve("behavior_pack"), resourcePack);
+
+        BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
+
         assertTrue(addon.aggregate().materialFiles().containsKey("materials/test.material"));
         assertTrue(addon.aggregate().flattenedMaterialEntries().containsKey("entity_alphatest"));
+    }
+
+    @Test
+    void folderAddonMapsTextureIndexFiles() throws Exception {
+        Path addonRoot = tempDir.resolve("folder-addon");
+        Path resourcePack = writeResourcePack(addonRoot.resolve("resource_pack"));
+        writeBehaviorPack(addonRoot.resolve("behavior_pack"), resourcePack);
+
+        BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
+
         assertTrue(addon.aggregate().textureIndexFiles().containsKey("textures/item_texture.json"));
         assertTrue(addon.aggregate().textureIndexFiles().containsKey("textures/terrain_texture.json"));
         assertTrue(addon.aggregate().textureIndexFiles().containsKey("textures/flipbook_textures.json"));
@@ -64,8 +134,20 @@ class BedrockAddonLoaderTest {
         assertTrue(addon.aggregate().textureIndexFiles().containsKey("biomes_client.json"));
         assertTrue(addon.aggregate().textureIndexFiles().get("textures/flipbook_textures.json").root() instanceof BedrockResourceValue.ArrayValue);
         assertTrue(addon.aggregate().textureIndexFiles().get("textures/texture_list.json").root() instanceof BedrockResourceValue.ArrayValue);
+    }
+
+    @Test
+    void folderAddonLoadsPackIcon() throws Exception {
+        Path addonRoot = tempDir.resolve("folder-addon");
+        Path resourcePack = writeResourcePack(addonRoot.resolve("resource_pack"));
+        writeBehaviorPack(addonRoot.resolve("behavior_pack"), resourcePack);
+
+        BedrockAddon addon = BedrockAddonLoader.load(addonRoot);
+
         assertNotNull(addon.resourcePacks().get(0).packIcon());
     }
+
+    // ====== Existing tests (kept unchanged) ======
 
     @Test
     void loadsSingleMcpackArchive() throws Exception {
@@ -321,6 +403,8 @@ class BedrockAddonLoaderTest {
         assertTrue(addon.aggregate().flattenedRenderControllers().containsKey("controller.render.base"));
         assertTrue(addon.aggregate().flattenedRenderControllers().containsKey("controller.render.subpack"));
     }
+
+    // ====== Helper methods ======
 
     private Path writeResourcePack(Path packDir) throws Exception {
         Files.createDirectories(packDir);

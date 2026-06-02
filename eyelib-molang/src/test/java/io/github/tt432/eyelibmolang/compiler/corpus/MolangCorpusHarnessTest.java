@@ -9,11 +9,16 @@ import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangResu
 import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangRunReport;
 import io.github.tt432.eyelibmolang.compiler.frontend.HandwrittenMolangAstParserFrontend;
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -26,6 +31,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** @author TT432 */
 class MolangCorpusHarnessTest {
+    private static final boolean RECORD_MODE = Boolean.getBoolean("molang.corpus.record");
+    private static final Map<String, String> GOLDEN_BUFFER = new HashMap<>();
+
     private static final String STARTER_CORPUS_RESOURCE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/starter";
     private static final String INVALID_PARSE_GOLDEN_RESOURCE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/invalid-parse-golden";
     private static final String INVALID_ADJACENT_GOLDEN_RESOURCE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/invalid-adjacent-golden";
@@ -33,11 +41,43 @@ class MolangCorpusHarnessTest {
     private static final String INVALID_DEBUG_TRACE_GOLDEN_RESOURCE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/invalid-debug-trace-golden";
     private static final String INVALID_DEBUG_TRACE_MISMATCH_GOLDEN_RESOURCE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/invalid-debug-trace-mismatch";
 
+    @BeforeEach
+    void setUp() {
+        if (RECORD_MODE) {
+            // Record mode: skip all assertions and capture actual output for golden files
+        }
+    }
+
+    @AfterAll
+    static void tearDownAll() {
+        if (RECORD_MODE && !GOLDEN_BUFFER.isEmpty()) {
+            // Batch write golden files from buffer
+            GOLDEN_BUFFER.forEach((path, content) -> {
+                try {
+                    Path goldenPath = Paths.get(path);
+                    Files.createDirectories(goldenPath.getParent());
+                    Files.writeString(goldenPath, content);
+                    System.out.println("[RECORD] Wrote golden: " + path);
+                } catch (IOException e) {
+                    System.err.println("[RECORD] Failed to write golden: " + path + " - " + e.getMessage());
+                }
+            });
+        }
+    }
+
     @Test
     void starterCorpusRunsParseOnlyAssertionsAgainstGeneratedParserPath() throws URISyntaxException {
         Path corpusPath = starterCorpusPath();
 
         MolangRunReport report = new MolangCorpusHarness().run(corpusPath);
+
+        if (RECORD_MODE) {
+            // Record actual output for golden comparison
+            var ids = report.caseReports().stream().map(MolangCaseReport::caseId).collect(Collectors.toSet());
+            GOLDEN_BUFFER.put("molang-corpus-case-ids.txt",
+                    ids.stream().sorted().collect(Collectors.joining("\n")));
+            return;
+        }
         assertEquals(36, report.summary().totalCases());
         assertEquals(36, report.summary().passCount());
         assertEquals(0, report.summary().corpusErrorCount());

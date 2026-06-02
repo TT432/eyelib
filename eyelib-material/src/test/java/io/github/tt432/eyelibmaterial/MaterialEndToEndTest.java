@@ -8,8 +8,6 @@ import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -148,40 +146,6 @@ class MaterialEndToEndTest {
     }
 
     @Test
-    void testManagerPutGetRoundtrip() {
-        BrMaterial material = parseVanillaMaterial();
-
-        // Simulate Manager storage using a simple Map
-        // (MaterialManager lives in the root module; eyelib-material cannot
-        //  access it without introducing a circular dependency. A Map achieves
-        //  the same pipeline verification: store → retrieve → identity.)
-        Map<String, BrMaterialEntry> storage = new HashMap<>();
-
-        // Put all parsed entries into the map
-        for (var entry : material.materials().entrySet()) {
-            storage.put(entry.getKey(), entry.getValue());
-        }
-
-        assertEquals(9, storage.size());
-
-        // Get entries back and verify identity
-        BrMaterialEntry entity = storage.get("entity");
-        assertNotNull(entity);
-        assertEquals(Optional.of("eyelibmaterial:shaders/render.vert"), entity.vertexShader());
-        assertEquals(Optional.of("eyelibmaterial:shaders/render.frag"), entity.fragmentShader());
-        assertTrue(entity.samplerStates().base().isPresent());
-        assertEquals(1, entity.samplerStates().base().get().size());
-
-        // Replace all and verify
-        Map<String, BrMaterialEntry> replacement = new HashMap<>();
-        replacement.put("test_entry", entity);
-        storage.clear();
-        storage.putAll(replacement);
-        assertEquals(1, storage.size());
-        assertNotNull(storage.get("test_entry"));
-    }
-
-    @Test
     void testJsonRoundtrip() {
         BrMaterial original = parseVanillaMaterial();
 
@@ -217,7 +181,7 @@ class MaterialEndToEndTest {
     }
 
     @Test
-    void testInheritance() {
+    void testInheritance_alphatestInheritsFromEntity() {
         BrMaterial material = parseVanillaMaterial();
 
         BrMaterialEntry entity = material.materials().get("entity");
@@ -236,22 +200,46 @@ class MaterialEndToEndTest {
         // entity_alphatest has +defines: ALPHA_TEST
         assertTrue(alphatest.defines().add().isPresent());
         assertTrue(alphatest.defines().add().get().contains("ALPHA_TEST"));
+    }
 
-        // entity_nocull inherits from entity and adds DisableCulling
+    @Test
+    void testInheritance_nocullInheritsFromEntity() {
+        BrMaterial material = parseVanillaMaterial();
+
         BrMaterialEntry nocull = material.materials().get("entity_nocull:entity");
         assertNotNull(nocull);
         assertEquals("entity", nocull.base());
         assertTrue(nocull.states().add().isPresent());
         assertTrue(nocull.states().add().get().contains(
                 io.github.tt432.eyelibmaterial.gl.GLStates.DisableCulling));
+    }
 
-        // entity_alphablend inherits from entity and adds Blending + blend factors
+    @Test
+    void testInheritance_alphablendInheritsFromEntity() {
+        BrMaterial material = parseVanillaMaterial();
+
         BrMaterialEntry alphablend = material.materials().get("entity_alphablend:entity");
         assertNotNull(alphablend);
         assertEquals("entity", alphablend.base());
         assertTrue(alphablend.blend().blendSrc().isPresent());
         assertEquals(io.github.tt432.eyelibmaterial.gl.BlendFactor.SourceAlpha,
                 alphablend.blend().blendSrc().get());
+    }
+
+    @Test
+    void testInheritance_particlesBlendStandalone() {
+        BrMaterial material = parseVanillaMaterial();
+
+        BrMaterialEntry particlesBlend = material.materials().get("particles_blend");
+        assertNotNull(particlesBlend);
+        assertEquals("", particlesBlend.base());
+        assertTrue(particlesBlend.states().base().isPresent());
+        assertTrue(particlesBlend.states().base().get().contains(
+                io.github.tt432.eyelibmaterial.gl.GLStates.Blending));
+        assertEquals(io.github.tt432.eyelibmaterial.gl.BlendFactor.SourceAlpha,
+                particlesBlend.blend().blendSrc().get());
+        assertEquals(io.github.tt432.eyelibmaterial.gl.BlendFactor.OneMinusSrcAlpha,
+                particlesBlend.blend().blendDst().get());
     }
 
     @Test

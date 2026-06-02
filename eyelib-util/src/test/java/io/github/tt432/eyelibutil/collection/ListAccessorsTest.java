@@ -10,10 +10,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /** @author TT432 */
 class ListAccessorsTest {
     @Test
-    void firstAndLastReturnListEnds() {
+    void firstReturnsFirstElement() {
         List<String> values = List.of("first", "middle", "last");
 
         assertEquals("first", ListAccessors.first(values));
+    }
+
+    @Test
+    void lastReturnsLastElement() {
+        List<String> values = List.of("first", "middle", "last");
+
         assertEquals("last", ListAccessors.last(values));
     }
 

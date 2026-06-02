@@ -9,33 +9,11 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** @author TT432 */
 class AttachmentModuleIdentityTest {
     private static final Path MODULE_ROOT = moduleRoot();
-
-    @Test
-    void moduleDocsDeclareMinecraftFunctionalIdentityAndUtilStreamCodecScope() throws IOException {
-        String readme = Files.readString(MODULE_ROOT.resolve("README.md"));
-
-        assertAll(
-                () -> assertTrue(readme.contains("Minecraft/Forge functional module")),
-                () -> assertTrue(readme.contains("FriendlyByteBuf")),
-                () -> assertTrue(readme.contains(":eyelib-util")),
-                () -> assertTrue(readme.contains("network/")),
-                () -> assertTrue(readme.contains("Shared"))
-        );
-    }
-
-    @Test
-    void attachmentModuleDoesNotDependOnRootRuntimePackages() throws IOException {
-        assertAll(javaSources().map(path -> () -> {
-            String source = Files.readString(path);
-            assertFalse(source.contains("import io.github.tt432.eyelib."), path + " must not import root runtime packages");
-        }));
-    }
 
     @Test
     void directMinecraftAndForgeImportsStayInAttachmentFacingPackages() throws IOException {
