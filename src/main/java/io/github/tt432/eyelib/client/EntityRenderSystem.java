@@ -17,6 +17,7 @@ import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.SimpleRenderAction;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.event.InitComponentEvent;
+import io.github.tt432.eyelibparticle.client.ParticleSpawnRuntimeAdapter;
 import io.github.tt432.eyelibanimation.AnimationEffects;
 import io.github.tt432.eyelibanimation.AnimationParticleSpawner;
 import io.github.tt432.eyelibanimation.BrAnimator;
@@ -163,7 +164,7 @@ public class EntityRenderSystem {
                 scope.set("variable.partial_tick", partialTick);
                 scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
 
-                scope.getHostContext().put(AnimationParticleSpawner.class, new RootAnimationParticleSpawner());
+                scope.getHostContext().put(AnimationParticleSpawner.class, new RootAnimationParticleSpawner(ParticleSpawnRuntimeAdapter.INSTANCE));
 
                 ModelRuntimeData tickedInfos;
                 if (cap.getAnimationComponent().getSerializableInfo() != null) {

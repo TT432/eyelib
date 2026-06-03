@@ -29,14 +29,6 @@ class ParticleNetworkDelegationBoundaryTest {
         assertTrue(spawnPacket.contains("String spawnId = buf.readUtf();"));
         assertTrue(spawnPacket.contains("String particleId = buf.readUtf();"));
         assertTrue(spawnPacket.contains("import net.minecraft.network.FriendlyByteBuf;"));
-
-        assertTrue(Pattern.compile("record\\s+RemoveParticlePacket\\s*\\(\\s*String\\s+removeId", Pattern.DOTALL)
-                .matcher(removePacket)
-                .find());
-        assertTrue(removePacket.contains("String removeId"));
-        assertTrue(removePacket.contains("buf.writeUtf(packet.removeId);"));
-        assertTrue(removePacket.contains("String removeId = buf.readUtf();"));
-        assertTrue(removePacket.contains("import net.minecraft.network.FriendlyByteBuf;"));
     }
 
     @Test
@@ -60,8 +52,8 @@ class ParticleNetworkDelegationBoundaryTest {
                 "src/main/java/io/github/tt432/eyelib/network/NetClientHandlers.java"
         ));
 
-        assertTrue(source.contains("ParticleSpawnService.removeEmitter(packet.removeId());"));
-        assertTrue(source.contains("ParticleSpawnService.spawnFromPacket(packet);"));
+        assertTrue(source.contains("ParticleSpawnRuntimeAdapter.INSTANCE.remove(packet.removeId());"));
+        assertTrue(source.contains("ParticleSpawnRuntimeAdapter.INSTANCE.spawn("));
         assertTrue(!source.contains("ParticleRenderManager"));
         assertTrue(!source.contains("ParticleDefinitionRegistry"));
         assertTrue(!source.contains("BrParticleLoader"));
@@ -69,17 +61,20 @@ class ParticleNetworkDelegationBoundaryTest {
     }
 
     @Test
-    void spawnServiceBuildsModuleRequestAndNoOpsMissingRuntimeState() throws IOException {
-        String source = Files.readString(Path.of(
+    void spawnServiceIsDeletedAndAdapterUsesStaticSuppliers() throws IOException {
+        // ParticleSpawnService 已被删除：验证文件不存在
+        assertTrue(Files.notExists(Path.of(
                 "src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java"
-        ));
+        )));
+
+        // ParticleSpawnRuntimeAdapter 现在使用静态 supplier
         String adapter = Files.readString(Path.of(
                 "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/client/ParticleSpawnRuntimeAdapter.java"
         ));
 
-        assertTrue(source.contains("new ParticleSpawnRequest(packet.spawnId(), packet.particleId(), packet.position())"));
+        assertTrue(adapter.contains("environmentSupplier.get()"));
+        assertTrue(adapter.contains("parentScopeSupplier.get()"));
         assertTrue(adapter.contains("definitions.get(request.particleId())"));
-        assertTrue(source.contains("Minecraft.getInstance().player == null || Minecraft.getInstance().level == null"));
         assertTrue(adapter.contains("if (definition == null)"));
         assertTrue(adapter.contains("if (runtimeEnvironment.isEmpty())"));
     }

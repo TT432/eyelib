@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.ClientTickHandler;
 import io.github.tt432.eyelib.client.particle.RootAnimationParticleSpawner;
 import io.github.tt432.eyelib.client.EntityRenderSystem;
+import io.github.tt432.eyelibparticle.client.ParticleSpawnRuntimeAdapter;
 import io.github.tt432.eyelib.client.entity.AttachableResolver;
 import io.github.tt432.eyelibanimation.AnimationComponent;
 import io.github.tt432.eyelibanimation.AnimationEffects;
@@ -87,7 +88,7 @@ public final class AttachableItemRenderSetup {
             scope.set("variable.partial_tick", partialTick);
 
             AnimationEffects effects = new AnimationEffects();
-            scope.getHostContext().put(AnimationParticleSpawner.class, new RootAnimationParticleSpawner());
+            scope.getHostContext().put(AnimationParticleSpawner.class, new RootAnimationParticleSpawner(ParticleSpawnRuntimeAdapter.INSTANCE));
             ac.tickedInfos = BrAnimator.tickAnimation(ac, scope, effects,
                                                       (ClientTickHandler.getTick() + partialTick) / 20, () -> {
                         var ce = rd.getClientEntityComponent().getClientEntity();

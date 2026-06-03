@@ -14,7 +14,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ParticleApiDelegationBoundaryTest {
     @Test
     void retainedRootSpawnFacadeDelegatesToParticleModuleApiAndLegacyRegistryFacadesAreDeleted() throws IOException {
-        SourceCheck spawnService = source("src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java");
+        // ParticleSpawnService 已被删除 —— 验证文件不存在
+        assertTrue(Files.notExists(Path.of(
+                "src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java"
+        )));
+
+        SourceCheck adapter = source("eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/client/ParticleSpawnRuntimeAdapter.java");
         SourceCheck loader = source("src/main/java/io/github/tt432/eyelib/client/loader/BrParticleLoader.java");
         SourceCheck particleReadme = source("src/main/java/io/github/tt432/eyelib/client/particle/package-info.java");
         SourceCheck registryReadme = source("src/main/java/io/github/tt432/eyelib/client/registry/package-info.java");
@@ -32,19 +37,12 @@ class ParticleApiDelegationBoundaryTest {
 
         deletedLegacyFacades.forEach(path -> assertTrue(Files.notExists(path), () -> path + " should remain deleted"));
 
-        spawnService.assertContains("import io.github.tt432.eyelibparticle.api.ParticleSpawnApi;");
-        spawnService.assertContains("import io.github.tt432.eyelibparticle.api.ParticleSpawnRequest;");
-        spawnService.assertContains("import io.github.tt432.eyelibparticle.client.ParticleSpawnRuntimeAdapter;");
-        spawnService.assertContains("import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;");
-        spawnService.assertContains("ParticleSpawnApi api()");
-        spawnService.assertContains("api().spawn(new ParticleSpawnRequest(");
-        spawnService.assertContains("api().remove(removeId);");
-        spawnService.assertNotContains("BrParticle.CODEC.encodeStart");
-        spawnService.assertNotContains("import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;");
-        spawnService.assertNotContains("import io.github.tt432.eyelib.client.particle.bedrock.BrParticleEmitter;");
-        spawnService.assertNotContains("import io.github.tt432.eyelib.client.registry.ParticleAssetRegistry;");
-        spawnService.assertContains("Transitional");
-        spawnService.assertContains("ParticleSpawnApi");
+        // ParticleSpawnRuntimeAdapter 现在接管了之前的 ParticleSpawnService 职责
+        adapter.assertContains("implements ParticleSpawnApi");
+        adapter.assertContains("import io.github.tt432.eyelibparticle.api.ParticleSpawnRequest;");
+        adapter.assertContains("definitions.get(request.particleId())");
+        adapter.assertContains("public void spawn(ParticleSpawnRequest request)");
+        adapter.assertContains("renderManager.removeEmitter(spawnId);");
 
         loader.assertContains("ParticleResourcePublication.replaceFromJsonResources");
         loader.assertContains("entry.getKey().toString()");
