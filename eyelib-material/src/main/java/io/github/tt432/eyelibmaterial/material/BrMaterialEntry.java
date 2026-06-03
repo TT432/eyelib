@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.mojang.logging.LogUtils;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
@@ -28,6 +29,7 @@ import net.minecraft.util.StringRepresentable;
 import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
+import org.slf4j.Logger;
 
 import static org.lwjgl.opengl.GL11.GL_BACK;
 import static org.lwjgl.opengl.GL11.GL_FRONT;
@@ -68,6 +70,8 @@ public record BrMaterialEntry(
 
         List<Map<String, BrMaterialEntry>> variants
 ) {
+
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private interface ModifyAble<T, S extends ModifyAble<T, S>> {
         Optional<List<T>> base();
@@ -121,11 +125,23 @@ public record BrMaterialEntry(
         default List<T> toList(BrMaterialEntry material, Map<String, BrMaterialEntry> materials) {
             Set<String> visited = new HashSet<>();
             BrMaterialEntry baseEntry = materials.get(material.base);
+            // 按 name 字段查找基材质：MaterialManager 的 key 是 "namespace:name"，base 引用的是 name
+            if (baseEntry == null && material.base != null && !material.base.isEmpty()) {
+                for (var entry : materials.entrySet()) {
+                    if (material.base.equals(entry.getValue().name())) {
+                        baseEntry = entry.getValue();
+                        break;
+                    }
+                }
+            }
             var result = new ArrayList<>(get(material, materials, visited));
             if (baseEntry != null) {
                 add(result, baseEntry, materials, visited);
                 sub(result, baseEntry, materials, visited);
             }
+            // 即使基材质不存在，也要应用当前材质的 +states 和 -states
+            result.addAll(add().orElse(List.of()));
+            result.removeAll(sub().orElse(List.of()));
             return result;
         }
     }
@@ -597,23 +613,41 @@ public record BrMaterialEntry(
      * @return 可直接使用的RenderType
      */
     public RenderType getRenderType(ResourceLocation texture) {
+        return getRenderType(texture, Map.of());
+    }
+
+    public RenderType getRenderType(ResourceLocation texture, Map<String, BrMaterialEntry> materials) {
         if (vertexShader.isPresent() && fragmentShader.isPresent()) {
-            return buildCustomRenderType(texture);
+            return buildCustomRenderType(texture, materials);
         }
-        if (hasBlending()) return RenderType.entityTranslucent(texture);
+        if (hasBlending(materials)) return RenderType.entityTranslucent(texture);
         return RenderType.entitySolid(texture);
     }
 
+    /**
+     * @deprecated 使用 {@link #hasBlending(Map)} 以正确解析父材质状态。
+     */
+    @Deprecated
     public boolean hasBlending() {
         return states.toList(this, Map.of()).contains(GLStates.Blending);
+    }
+
+    public boolean hasBlending(Map<String, BrMaterialEntry> materials) {
+        try {
+            return states.toList(this, materials).contains(GLStates.Blending);
+        } catch (IllegalStateException e) {
+            // 材质继承链存在循环引用，fallback 到仅检查自身状态
+            LOGGER.warn("Circular material inheritance detected for {}: {}", name, e.getMessage());
+            return states.toList(this, Map.of()).contains(GLStates.Blending);
+        }
     }
 
     private boolean hasState(GLStates target) {
         return states.toList(this, Map.of()).contains(target);
     }
 
-    private RenderStateShard.TransparencyStateShard getTransparencyState() {
-        if (hasBlending()) {
+    private RenderStateShard.TransparencyStateShard getTransparencyState(Map<String, BrMaterialEntry> materials) {
+        if (hasBlending(materials)) {
             return new RenderStateShard.TransparencyStateShard(
                     "translucent_transparency",
                     () -> {
@@ -661,12 +695,12 @@ public record BrMaterialEntry(
         return VertexFormatElementEnum.fromFields(fields);
     }
 
-    private RenderType buildCustomRenderType(ResourceLocation texture) {
+    private RenderType buildCustomRenderType(ResourceLocation texture, Map<String, BrMaterialEntry> materials) {
         // ensure shader is compiled and cached
         getOrCompileShader();
 
         VertexFormat format = getFormat();
-        boolean translucent = hasBlending();
+        boolean translucent = hasBlending(materials);
 
         return RenderType.create(
                 name + "_" + texture.getNamespace() + "_" + texture.getPath(),
@@ -679,7 +713,7 @@ public record BrMaterialEntry(
                         .setShaderState(new RenderStateShard.ShaderStateShard(() ->
                                 Minecraft.getInstance().gameRenderer.getRendertypeEntitySolidShader()))
                         .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
-                        .setTransparencyState(getTransparencyState())
+                        .setTransparencyState(getTransparencyState(materials))
                         .setDepthTestState(getDepthTestState())
                         .setCullState(getCullState())
                         .setWriteMaskState(getWriteMaskState())
