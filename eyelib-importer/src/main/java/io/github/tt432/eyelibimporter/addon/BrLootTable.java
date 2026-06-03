@@ -10,6 +10,7 @@ import io.github.tt432.eyelibimporter.util.ImporterCodecUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /** Bedrock 战利品表数据结构。
  * @author TT432 */
@@ -34,14 +35,42 @@ public record BrLootTable(
         return new BrLootTable(pools);
     }
 
-    /** 战利品表池，封装 rolls、entries 和可选的 conditions/functions。
+    /** 战利品表池的 tiers 字段，包含装备/附魔品级范围。
+     * @author TT432 */
+    @org.jspecify.annotations.NullMarked
+    public record BrLootTableTiers(
+            List<Integer> initialRange,
+            int bonusRounds
+    ) {
+        public static final Codec<BrLootTableTiers> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+                Codec.INT.listOf().fieldOf("initial_range").forGetter(BrLootTableTiers::initialRange),
+                Codec.INT.optionalFieldOf("bonus_rounds", 0).forGetter(BrLootTableTiers::bonusRounds)
+        ).apply(ins, BrLootTableTiers::new));
+
+        public BrLootTableTiers {
+            initialRange = List.copyOf(initialRange);
+        }
+
+        static BrLootTableTiers parse(JsonObject root) {
+            List<Integer> initialRange = new ArrayList<>();
+            for (JsonElement e : root.getAsJsonArray("initial_range")) {
+                initialRange.add(e.getAsInt());
+            }
+            int bonusRounds = root.has("bonus_rounds") ? root.get("bonus_rounds").getAsInt() : 0;
+            return new BrLootTableTiers(initialRange, bonusRounds);
+        }
+    }
+
+    /** 战利品表池，封装 rolls、entries 和可选的 conditions/functions/bonus_rolls/tiers。
      * @author TT432 */
     @org.jspecify.annotations.NullMarked
     public record BrLootTablePool(
             Either<Integer, BrLootTableRollsRange> rolls,
             List<BrLootTablePoolEntry> entries,
             List<BedrockResourceValue.ObjectValue> conditions,
-            List<BedrockResourceValue.ObjectValue> functions
+            List<BedrockResourceValue.ObjectValue> functions,
+            @org.jspecify.annotations.Nullable Integer bonusRolls,
+            @org.jspecify.annotations.Nullable BrLootTableTiers tiers
     ) {
         public static final Codec<BrLootTablePool> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 Codec.either(Codec.INT, BrLootTableRollsRange.CODEC)
@@ -51,8 +80,14 @@ public record BrLootTable(
                 ImporterCodecUtil.OBJECT_VALUE_CODEC.listOf()
                         .optionalFieldOf("conditions", List.of()).forGetter(BrLootTablePool::conditions),
                 ImporterCodecUtil.OBJECT_VALUE_CODEC.listOf()
-                        .optionalFieldOf("functions", List.of()).forGetter(BrLootTablePool::functions)
-        ).apply(ins, BrLootTablePool::new));
+                        .optionalFieldOf("functions", List.of()).forGetter(BrLootTablePool::functions),
+                Codec.INT.optionalFieldOf("bonus_rolls")
+                        .forGetter(p -> Optional.ofNullable(p.bonusRolls)),
+                BrLootTableTiers.CODEC.optionalFieldOf("tiers")
+                        .forGetter(p -> Optional.ofNullable(p.tiers))
+        ).apply(ins, (rolls, entries, conditions, functions, bonusRolls, tiers) ->
+                new BrLootTablePool(rolls, entries, conditions, functions, bonusRolls.orElse(null), tiers.orElse(null))
+        ));
 
         public BrLootTablePool {
             entries = List.copyOf(entries);
@@ -79,7 +114,9 @@ public record BrLootTable(
             }
             List<BedrockResourceValue.ObjectValue> conditions = parseObjectValueList(root, "conditions");
             List<BedrockResourceValue.ObjectValue> functions = parseObjectValueList(root, "functions");
-            return new BrLootTablePool(rolls, entries, conditions, functions);
+            Integer bonusRolls = root.has("bonus_rolls") ? root.get("bonus_rolls").getAsInt() : null;
+            BrLootTableTiers tiers = root.has("tiers") ? BrLootTableTiers.parse(root.getAsJsonObject("tiers")) : null;
+            return new BrLootTablePool(rolls, entries, conditions, functions, bonusRolls, tiers);
         }
     }
 

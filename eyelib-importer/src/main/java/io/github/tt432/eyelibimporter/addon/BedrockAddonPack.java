@@ -2,11 +2,15 @@ package io.github.tt432.eyelibimporter.addon;
 
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
+import io.github.tt432.eyelibimporter.block.BrBlock;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
+import io.github.tt432.eyelibimporter.item.BrItem;
 import io.github.tt432.eyelibimporter.material.BrMaterial;
 import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
 import io.github.tt432.eyelibimporter.particle.BrParticle;
+import io.github.tt432.eyelibimporter.recipe.BrRecipe;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllers;
+import io.github.tt432.eyelibimporter.trading.BrTrading;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -36,6 +40,10 @@ public record BedrockAddonPack(
         LinkedHashMap<String, BrMaterial> materialFiles,
         LinkedHashMap<String, BrSpawnRule> spawnRulesFiles,
         LinkedHashMap<String, BrLootTable> lootTableFiles,
+        LinkedHashMap<String, BrItem> itemFiles,
+        LinkedHashMap<String, BrBlock> blockFiles,
+        LinkedHashMap<String, BrRecipe> recipeFiles,
+        LinkedHashMap<String, BrTrading> tradeFiles,
         LinkedHashMap<String, BedrockUnmanagedResource> unmanagedResources,
         java.util.List<BedrockAddonWarning> warnings,
         @Nullable ImportedImageData packIcon,
@@ -60,6 +68,10 @@ public record BedrockAddonPack(
         materialFiles = new LinkedHashMap<>(materialFiles);
         spawnRulesFiles = new LinkedHashMap<>(spawnRulesFiles);
         lootTableFiles = new LinkedHashMap<>(lootTableFiles);
+        itemFiles = new LinkedHashMap<>(itemFiles);
+        blockFiles = new LinkedHashMap<>(blockFiles);
+        recipeFiles = new LinkedHashMap<>(recipeFiles);
+        tradeFiles = new LinkedHashMap<>(tradeFiles);
         unmanagedResources = new LinkedHashMap<>(unmanagedResources);
         warnings = java.util.List.copyOf(warnings);
     }

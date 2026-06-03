@@ -9,15 +9,19 @@ import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
+import io.github.tt432.eyelibimporter.block.BrBlock;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
+import io.github.tt432.eyelibimporter.item.BrItem;
 import io.github.tt432.eyelibimporter.material.BrMaterial;
 import io.github.tt432.eyelibimporter.material.BrMaterialEntry;
 import io.github.tt432.eyelibimporter.model.importer.BedrockGeometryImporter;
 import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
 import io.github.tt432.eyelibimporter.model.importer.ModelImporter;
 import io.github.tt432.eyelibimporter.particle.BrParticle;
+import io.github.tt432.eyelibimporter.recipe.BrRecipe;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllerEntry;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllers;
+import io.github.tt432.eyelibimporter.trading.BrTrading;
 import io.github.tt432.eyelibmodel.Model;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -213,8 +217,16 @@ public final class BedrockAddonLoader {
                 acc.textureMetadataFiles.put(entry.effectivePath(),
                         new BrTextureMetadataFile((BedrockResourceValue.ObjectValue)
                                 BedrockResourceValue.fromJsonElement(readJsonFile(entry.file()))));
+            case RECIPE ->
+                acc.parseAndStore(entry, BrRecipe.CODEC, acc.recipeFiles);
             case LOOT_TABLE ->
                 acc.parseAndStore(entry, BrLootTable.CODEC, acc.lootTableFiles);
+            case ITEM ->
+                acc.parseAndStore(entry, BrItem.CODEC, acc.itemFiles);
+            case BLOCK ->
+                acc.parseAndStore(entry, BrBlock.CODEC, acc.blockFiles);
+            case TRADING ->
+                acc.parseAndStore(entry, BrTrading.CODEC, acc.tradeFiles);
             case SPLASHES ->
                 acc.splashIndex = BedrockResourceValue.fromJsonElement(readJsonFile(entry.file()));
             case BRARCHIVE ->
@@ -250,6 +262,10 @@ public final class BedrockAddonLoader {
         final LinkedHashMap<String, BrMaterial> materialFiles = new LinkedHashMap<>();
         final LinkedHashMap<String, BrSpawnRule> spawnRulesFiles = new LinkedHashMap<>();
         final LinkedHashMap<String, BrLootTable> lootTableFiles = new LinkedHashMap<>();
+        final LinkedHashMap<String, BrRecipe> recipeFiles = new LinkedHashMap<>();
+        final LinkedHashMap<String, BrItem> itemFiles = new LinkedHashMap<>();
+        final LinkedHashMap<String, BrBlock> blockFiles = new LinkedHashMap<>();
+        final LinkedHashMap<String, BrTrading> tradeFiles = new LinkedHashMap<>();
         final LinkedHashMap<String, BedrockUnmanagedResource> unmanagedResources = new LinkedHashMap<>();
         @Nullable ImportedImageData packIcon;
         @Nullable BedrockResourceValue splashIndex;
@@ -316,7 +332,7 @@ public final class BedrockAddonLoader {
                     behaviorEntityFiles, soundFiles,
                     textureIndexFiles, textureMetadataFiles,
                     renderControllerFiles, particleFiles, materialFiles,
-                    spawnRulesFiles, lootTableFiles,
+                    spawnRulesFiles, lootTableFiles, itemFiles, blockFiles, recipeFiles, tradeFiles,
                     unmanagedResources, List.copyOf(warnings),
                     packIcon, splashIndex
             );

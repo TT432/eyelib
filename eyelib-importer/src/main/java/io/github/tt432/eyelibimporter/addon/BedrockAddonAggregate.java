@@ -6,12 +6,16 @@ import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
+import io.github.tt432.eyelibimporter.block.BrBlock;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
+import io.github.tt432.eyelibimporter.item.BrItem;
 import io.github.tt432.eyelibimporter.material.BrMaterialEntry;
+import io.github.tt432.eyelibimporter.recipe.BrRecipe;
 import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibimporter.particle.BrParticle;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllerEntry;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllers;
+import io.github.tt432.eyelibimporter.trading.BrTrading;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +62,10 @@ public record BedrockAddonAggregate(
         var materialFiles = new java.util.LinkedHashMap<String, io.github.tt432.eyelibimporter.material.BrMaterial>();
         var spawnRulesFiles = new java.util.LinkedHashMap<String, BrSpawnRule>();
         var lootTableFiles = new java.util.LinkedHashMap<String, BrLootTable>();
+        var itemFiles = new java.util.LinkedHashMap<String, BrItem>();
+        var blockFiles = new java.util.LinkedHashMap<String, BrBlock>();
+        var recipeFiles = new java.util.LinkedHashMap<String, BrRecipe>();
+        var tradeFiles = new java.util.LinkedHashMap<String, BrTrading>();
 
         for (BedrockAddonPack pack : packs) {
             mergeWithWarnings(animations, flattenAnimations(pack.animationFiles()), pack.sourceName(), warnings, BedrockResourceFamily.ANIMATION);
@@ -93,6 +101,10 @@ public record BedrockAddonAggregate(
             materialFiles.putAll(pack.materialFiles());
             spawnRulesFiles.putAll(pack.spawnRulesFiles());
             lootTableFiles.putAll(pack.lootTableFiles());
+            itemFiles.putAll(pack.itemFiles());
+            blockFiles.putAll(pack.blockFiles());
+            recipeFiles.putAll(pack.recipeFiles());
+            tradeFiles.putAll(pack.tradeFiles());
         }
 
         return new BedrockAddonSideAggregate(
@@ -113,7 +125,11 @@ public record BedrockAddonAggregate(
                 particleFiles,
                 materialFiles,
                 spawnRulesFiles,
-                lootTableFiles
+                lootTableFiles,
+                itemFiles,
+                blockFiles,
+                recipeFiles,
+                tradeFiles
         );
     }
 
@@ -245,5 +261,38 @@ public record BedrockAddonAggregate(
 
     public Map<String, BrLootTable> lootTableFiles() {
         return behaviorPack.lootTableFilesView();
+    }
+
+    /**
+     * 返回行为包中的物品文件映射。
+     * @author TT432
+     */
+    public Map<String, BrItem> itemFiles() {
+        return behaviorPack.itemFilesView();
+    }
+
+    /**
+     * 方块文件默认在行为包侧（blocks/ 目录）。<br>
+     * 如果后续有资源包侧方块需求，可在此调整。
+     * @author TT432
+     */
+    public Map<String, BrBlock> blockFiles() {
+        return behaviorPack.blockFilesView();
+    }
+
+    /**
+     * 返回交易表文件映射（行为包侧）。
+     * @author TT432
+     */
+    public Map<String, BrTrading> tradeFiles() {
+        return behaviorPack.tradeFilesView();
+    }
+
+    /**
+     * 返回行为包中的配方文件映射。
+     * @author TT432
+     */
+    public Map<String, BrRecipe> recipeFiles() {
+        return behaviorPack.recipeFilesView();
     }
 }

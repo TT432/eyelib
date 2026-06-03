@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
 import io.github.tt432.eyelib.client.registry.BehaviorEntityAssetRegistry;
+import io.github.tt432.eyelib.client.registry.SpawnRuleRegistry;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
@@ -16,6 +17,7 @@ import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
 import io.github.tt432.eyelibanimation.bedrock.controller.BrAnimationControllers;
 import io.github.tt432.eyelibimporter.addon.BedrockAddon;
 import io.github.tt432.eyelibimporter.addon.BedrockAddonSideAggregate;
+import io.github.tt432.eyelibimporter.addon.BrSpawnRule;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
@@ -39,6 +41,32 @@ public final class BedrockAddonRuntimeBridge {
 
     public static void replaceFromAddon(BedrockAddon addon) {
         replaceFromResourcePack(addon.aggregate().resourcePack());
+        publishSpawnRules(addon.aggregate().behaviorPack());
+    }
+
+    /**
+     * 将行为包中的 spawn rules 发布到 {@link SpawnRuleRegistry}。
+     * <p>
+     * 遍历行为包侧 aggregate 的 spawn rule 文件，提取 identifier 并注册。
+     */
+    private static void publishSpawnRules(BedrockAddonSideAggregate behaviorPack) {
+        var spawnRules = behaviorPack.spawnRulesFiles();
+        if (spawnRules.isEmpty()) {
+            return;
+        }
+        var map = new java.util.LinkedHashMap<String, BrSpawnRule>();
+        spawnRules.forEach((path, rule) -> {
+            String identifier = rule.identifier();
+            // 如果同一 identifier 出现多次，后处理的覆盖先前的（记录警告）
+            if (map.containsKey(identifier)) {
+                LOGGER.warn("Duplicate spawn rule identifier '{}' from path '{}', overriding previous", identifier, path);
+            }
+            map.put(identifier, rule);
+        });
+        // 遵循 replace 模式，与 ModelManager.replaceAll 等一致
+        SpawnRuleRegistry.clear();
+        SpawnRuleRegistry.registerAll(map);
+        LOGGER.info("Published {} spawn rules to registry", map.size());
     }
 
     public static void replaceFromResourcePack(BedrockAddonSideAggregate resourcePack) {

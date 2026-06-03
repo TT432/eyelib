@@ -3,8 +3,11 @@ package io.github.tt432.eyelibimporter.addon;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
+import io.github.tt432.eyelibimporter.block.BrBlock;
+import io.github.tt432.eyelibimporter.item.BrItem;
 import io.github.tt432.eyelibimporter.material.BrMaterial;
 import io.github.tt432.eyelibimporter.material.BrMaterialEntry;
+import io.github.tt432.eyelibimporter.recipe.BrRecipe;
 import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
 import io.github.tt432.eyelibimporter.particle.BrParticle;
@@ -12,6 +15,7 @@ import io.github.tt432.eyelibimporter.render.controller.BrRenderControllerEntry;
 import io.github.tt432.eyelibimporter.render.controller.BrRenderControllers;
 import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
+import io.github.tt432.eyelibimporter.trading.BrTrading;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -36,7 +40,11 @@ public record BedrockAddonSideAggregate(
         LinkedHashMap<String, BrParticle> particleFiles,
         LinkedHashMap<String, BrMaterial> materialFiles,
         LinkedHashMap<String, BrSpawnRule> spawnRulesFiles,
-        LinkedHashMap<String, BrLootTable> lootTableFiles
+        LinkedHashMap<String, BrLootTable> lootTableFiles,
+        LinkedHashMap<String, BrItem> itemFiles,
+        LinkedHashMap<String, BrBlock> blockFiles,
+        LinkedHashMap<String, BrRecipe> recipeFiles,
+        LinkedHashMap<String, BrTrading> tradeFiles
 ) {
     private static <T> Codec<LinkedHashMap<String, T>> linkedHashMapCodec(Codec<T> valueCodec) {
         return Codec.unboundedMap(Codec.STRING, valueCodec).xmap(LinkedHashMap::new, m -> m);
@@ -62,7 +70,7 @@ public record BedrockAddonSideAggregate(
             linkedHashMapCodec(BrMaterial.CODEC).optionalFieldOf("material_files", new LinkedHashMap<>()).forGetter(BedrockAddonSideAggregate::materialFiles)
     ).apply(ins, (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) ->
             new BedrockAddonSideAggregate(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p,
-                    new LinkedHashMap<>(), new LinkedHashMap<>())
+                    new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>())
     ));
     // 外部可见的 CODEC 委托给 16 字段版
     public static final Codec<BedrockAddonSideAggregate> CODEC = CODEC_16;
@@ -85,10 +93,18 @@ public record BedrockAddonSideAggregate(
         materialFiles = new LinkedHashMap<>(materialFiles);
         spawnRulesFiles = new LinkedHashMap<>(spawnRulesFiles);
         lootTableFiles = new LinkedHashMap<>(lootTableFiles);
+        itemFiles = new LinkedHashMap<>(itemFiles);
+        blockFiles = new LinkedHashMap<>(blockFiles);
+        recipeFiles = new LinkedHashMap<>(recipeFiles);
+        tradeFiles = new LinkedHashMap<>(tradeFiles);
     }
 
     public static BedrockAddonSideAggregate empty() {
         return new BedrockAddonSideAggregate(
+                new LinkedHashMap<>(),
+                new LinkedHashMap<>(),
+                new LinkedHashMap<>(),
+                new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
@@ -134,5 +150,37 @@ public record BedrockAddonSideAggregate(
 
     public Map<String, BrLootTable> lootTableFilesView() {
         return Map.copyOf(lootTableFiles);
+    }
+
+    /**
+     * 返回物品文件的只读视图。
+     * @author TT432
+     */
+    public Map<String, BrItem> itemFilesView() {
+        return Map.copyOf(itemFiles);
+    }
+
+    /**
+     * 返回方块文件的只读视图。
+     * @author TT432
+     */
+    public Map<String, BrBlock> blockFilesView() {
+        return Map.copyOf(blockFiles);
+    }
+
+    /**
+     * 返回交易表文件的只读视图。
+     * @author TT432
+     */
+    public Map<String, BrTrading> tradeFilesView() {
+        return Map.copyOf(tradeFiles);
+    }
+
+    /**
+     * 返回配方文件的只读视图。
+     * @author TT432
+     */
+    public Map<String, BrRecipe> recipeFilesView() {
+        return Map.copyOf(recipeFiles);
     }
 }

@@ -6,6 +6,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Bedrock 交易表的数据模型，支持 trading/*.json 和 economy_trades/*.json。
@@ -65,13 +66,30 @@ public record BrTrading(List<BrTier> tiers) {
     /**
      * @param wants 玩家需付出的物品列表
      * @param gives 玩家将获得的物品列表
+     * @param traderExp 交易后村民获得的经验值（可选）
+     * @param maxUses 交易最大使用次数（可选）
+     * @param rewardExp 交易是否奖励经验（可选）
      */
     @NullMarked
-    public record BrTrade(List<BrTradeEntry> wants, List<BrTradeEntry> gives) {
+    public record BrTrade(
+            List<BrTradeEntry> wants,
+            List<BrTradeEntry> gives,
+            @org.jspecify.annotations.Nullable Integer traderExp,
+            @org.jspecify.annotations.Nullable Integer maxUses,
+            @org.jspecify.annotations.Nullable Boolean rewardExp
+    ) {
         static final Codec<BrTrade> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 BrTradeEntry.CODEC.listOf().fieldOf("wants").forGetter(BrTrade::wants),
-                BrTradeEntry.CODEC.listOf().fieldOf("gives").forGetter(BrTrade::gives)
-        ).apply(ins, BrTrade::new));
+                BrTradeEntry.CODEC.listOf().fieldOf("gives").forGetter(BrTrade::gives),
+                Codec.INT.optionalFieldOf("trader_exp")
+                        .forGetter(t -> Optional.ofNullable(t.traderExp)),
+                Codec.INT.optionalFieldOf("max_uses")
+                        .forGetter(t -> Optional.ofNullable(t.maxUses)),
+                Codec.BOOL.optionalFieldOf("reward_exp")
+                        .forGetter(t -> Optional.ofNullable(t.rewardExp))
+        ).apply(ins, (wants, gives, traderExp, maxUses, rewardExp) ->
+                new BrTrade(wants, gives, traderExp.orElse(null), maxUses.orElse(null), rewardExp.orElse(null))
+        ));
     }
 
     /**
@@ -102,13 +120,22 @@ public record BrTrading(List<BrTier> tiers) {
 
     /**
      * @param quantity 物品数量，未指定时默认为 1
+     * @param priceMultiplier 价格倍率（可选）
      */
     @NullMarked
-    public record BrTradeItem(String item, BrQuantity quantity) {
+    public record BrTradeItem(
+            String item,
+            BrQuantity quantity,
+            @org.jspecify.annotations.Nullable Double priceMultiplier
+    ) {
         static final Codec<BrTradeItem> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 Codec.STRING.fieldOf("item").forGetter(BrTradeItem::item),
-                BrQuantity.CODEC.optionalFieldOf("quantity", new BrQuantity(1, 1)).forGetter(BrTradeItem::quantity)
-        ).apply(ins, BrTradeItem::new));
+                BrQuantity.CODEC.optionalFieldOf("quantity", new BrQuantity(1, 1)).forGetter(BrTradeItem::quantity),
+                Codec.DOUBLE.optionalFieldOf("price_multiplier")
+                        .forGetter(t -> Optional.ofNullable(t.priceMultiplier))
+        ).apply(ins, (item, quantity, priceMultiplier) ->
+                new BrTradeItem(item, quantity, priceMultiplier.orElse(null))
+        ));
     }
 
     /**

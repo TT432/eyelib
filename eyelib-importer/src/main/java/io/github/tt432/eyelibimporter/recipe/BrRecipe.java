@@ -7,13 +7,18 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
-/** Bedrock 配方数据结构，支持 7 种配方类型的序列化。
- * @author TT432 */
+/**
+ * Bedrock 配方数据结构，支持 7 种配方类型的序列化。
+ *
+ * @author TT432
+ */
 @NullMarked
 public sealed interface BrRecipe
         permits BrRecipe.Shaped, BrRecipe.Shapeless, BrRecipe.Furnace,
@@ -71,12 +76,18 @@ public sealed interface BrRecipe
         }
     };
 
+    /**
+     * 配方描述信息。
+     */
     record RecipeDescription(String identifier) {
         public static final Codec<RecipeDescription> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 Codec.STRING.fieldOf("identifier").forGetter(RecipeDescription::identifier)
         ).apply(ins, RecipeDescription::new));
     }
 
+    /**
+     * 配方原料，支持简写（仅字符串）和完整对象两种格式。
+     */
     record RecipeIngredient(String item, int data, int count) {
         private static final Codec<RecipeIngredient> OBJ = RecordCodecBuilder.create(ins -> ins.group(
                 Codec.STRING.fieldOf("item").forGetter(RecipeIngredient::item),
@@ -94,6 +105,9 @@ public sealed interface BrRecipe
         );
     }
 
+    /**
+     * 配方产物，支持单对象和数组两种格式。
+     */
     record RecipeResult(String item, int count, int data) {
         private static final Codec<RecipeResult> OBJ = RecordCodecBuilder.create(ins -> ins.group(
                 Codec.STRING.fieldOf("item").forGetter(RecipeResult::item),
@@ -101,7 +115,7 @@ public sealed interface BrRecipe
                 Codec.INT.optionalFieldOf("data", 0).forGetter(RecipeResult::data)
         ).apply(ins, RecipeResult::new));
 
-        static final Codec<RecipeResult> CODEC = Codec.either(
+        static final Codec<RecipeResult> SINGLE_CODEC = Codec.either(
                 Codec.STRING.xmap(s -> new RecipeResult(s, 1, 0), RecipeResult::item),
                 OBJ
         ).xmap(
@@ -109,14 +123,32 @@ public sealed interface BrRecipe
                 result -> result.count == 1 && result.data == 0
                         ? Either.left(result) : Either.right(result)
         );
+
+        /**
+         * 支持单对象和数组两种格式的 Codec。
+         * 数组格式用于多输出配方。
+         */
+        static final Codec<List<RecipeResult>> CODEC = Codec.either(
+                SINGLE_CODEC,
+                SINGLE_CODEC.listOf()
+        ).xmap(
+                either -> either.map(List::of, Function.identity()),
+                list -> list.size() == 1 ? Either.left(list.get(0)) : Either.right(list)
+        );
     }
 
+    /**
+     * 有序合成配方。
+     */
     record Shaped(
             RecipeDescription description,
+            @Nullable String group,
             List<String> tags,
+            @Nullable Integer priority,
+            boolean assumeSymmetry,
             List<String> pattern,
             Map<String, RecipeIngredient> key,
-            RecipeResult result
+            List<RecipeResult> result
     ) implements BrRecipe {
         @Override
         public String typeKey() {
@@ -125,18 +157,29 @@ public sealed interface BrRecipe
 
         static final Codec<Shaped> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 RecipeDescription.CODEC.fieldOf("description").forGetter(Shaped::description),
+                Codec.STRING.optionalFieldOf("group")
+                        .forGetter(s -> Optional.ofNullable(s.group)),
                 Codec.STRING.listOf().optionalFieldOf("tags", List.of()).forGetter(Shaped::tags),
+                Codec.INT.optionalFieldOf("priority")
+                        .forGetter(s -> Optional.ofNullable(s.priority)),
+                Codec.BOOL.optionalFieldOf("assume_symmetry", true).forGetter(Shaped::assumeSymmetry),
                 Codec.STRING.listOf().fieldOf("pattern").forGetter(Shaped::pattern),
                 Codec.unboundedMap(Codec.STRING, RecipeIngredient.CODEC).fieldOf("key").forGetter(Shaped::key),
                 RecipeResult.CODEC.fieldOf("result").forGetter(Shaped::result)
-        ).apply(ins, Shaped::new));
+        ).apply(ins, (desc, group, tags, priority, assumeSymmetry, pattern, key, result) ->
+                new Shaped(desc, group.orElse(null), tags, priority.orElse(null), assumeSymmetry, pattern, key, result)));
     }
 
+    /**
+     * 无序合成配方。
+     */
     record Shapeless(
             RecipeDescription description,
+            @Nullable String group,
             List<String> tags,
+            @Nullable Integer priority,
             List<RecipeIngredient> ingredients,
-            RecipeResult result
+            List<RecipeResult> result
     ) implements BrRecipe {
         @Override
         public String typeKey() {
@@ -145,17 +188,26 @@ public sealed interface BrRecipe
 
         static final Codec<Shapeless> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 RecipeDescription.CODEC.fieldOf("description").forGetter(Shapeless::description),
+                Codec.STRING.optionalFieldOf("group")
+                        .forGetter(s -> Optional.ofNullable(s.group)),
                 Codec.STRING.listOf().optionalFieldOf("tags", List.of()).forGetter(Shapeless::tags),
+                Codec.INT.optionalFieldOf("priority")
+                        .forGetter(s -> Optional.ofNullable(s.priority)),
                 RecipeIngredient.CODEC.listOf().fieldOf("ingredients").forGetter(Shapeless::ingredients),
                 RecipeResult.CODEC.fieldOf("result").forGetter(Shapeless::result)
-        ).apply(ins, Shapeless::new));
+        ).apply(ins, (desc, group, tags, priority, ingredients, result) ->
+                new Shapeless(desc, group.orElse(null), tags, priority.orElse(null), ingredients, result)));
     }
 
+    /**
+     * 熔炉烧炼配方。
+     */
     record Furnace(
             RecipeDescription description,
+            @Nullable String group,
             List<String> tags,
             RecipeIngredient input,
-            RecipeResult output
+            List<RecipeResult> output
     ) implements BrRecipe {
         @Override
         public String typeKey() {
@@ -164,17 +216,25 @@ public sealed interface BrRecipe
 
         static final Codec<Furnace> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 RecipeDescription.CODEC.fieldOf("description").forGetter(Furnace::description),
+                Codec.STRING.optionalFieldOf("group")
+                        .forGetter(f -> Optional.ofNullable(f.group)),
                 Codec.STRING.listOf().optionalFieldOf("tags", List.of()).forGetter(Furnace::tags),
                 RecipeIngredient.CODEC.fieldOf("input").forGetter(Furnace::input),
                 RecipeResult.CODEC.fieldOf("output").forGetter(Furnace::output)
-        ).apply(ins, Furnace::new));
+        ).apply(ins, (desc, group, tags, input, output) ->
+                new Furnace(desc, group.orElse(null), tags, input, output)));
     }
 
+    /**
+     * 酿造混合配方。
+     */
     record BrewingMix(
             RecipeDescription description,
+            @Nullable String group,
+            List<String> tags,
             RecipeIngredient input,
             RecipeIngredient reagent,
-            RecipeResult output
+            List<RecipeResult> output
     ) implements BrRecipe {
         @Override
         public String typeKey() {
@@ -183,17 +243,26 @@ public sealed interface BrRecipe
 
         static final Codec<BrewingMix> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 RecipeDescription.CODEC.fieldOf("description").forGetter(BrewingMix::description),
+                Codec.STRING.optionalFieldOf("group")
+                        .forGetter(b -> Optional.ofNullable(b.group)),
+                Codec.STRING.listOf().optionalFieldOf("tags", List.of()).forGetter(BrewingMix::tags),
                 RecipeIngredient.CODEC.fieldOf("input").forGetter(BrewingMix::input),
                 RecipeIngredient.CODEC.fieldOf("reagent").forGetter(BrewingMix::reagent),
                 RecipeResult.CODEC.fieldOf("output").forGetter(BrewingMix::output)
-        ).apply(ins, BrewingMix::new));
+        ).apply(ins, (desc, group, tags, input, reagent, output) ->
+                new BrewingMix(desc, group.orElse(null), tags, input, reagent, output)));
     }
 
+    /**
+     * 酿造容器配方。
+     */
     record BrewingContainer(
             RecipeDescription description,
+            @Nullable String group,
+            List<String> tags,
             RecipeIngredient input,
             RecipeIngredient reagent,
-            RecipeResult output
+            List<RecipeResult> output
     ) implements BrRecipe {
         @Override
         public String typeKey() {
@@ -202,18 +271,27 @@ public sealed interface BrRecipe
 
         static final Codec<BrewingContainer> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 RecipeDescription.CODEC.fieldOf("description").forGetter(BrewingContainer::description),
+                Codec.STRING.optionalFieldOf("group")
+                        .forGetter(b -> Optional.ofNullable(b.group)),
+                Codec.STRING.listOf().optionalFieldOf("tags", List.of()).forGetter(BrewingContainer::tags),
                 RecipeIngredient.CODEC.fieldOf("input").forGetter(BrewingContainer::input),
                 RecipeIngredient.CODEC.fieldOf("reagent").forGetter(BrewingContainer::reagent),
                 RecipeResult.CODEC.fieldOf("output").forGetter(BrewingContainer::output)
-        ).apply(ins, BrewingContainer::new));
+        ).apply(ins, (desc, group, tags, input, reagent, output) ->
+                new BrewingContainer(desc, group.orElse(null), tags, input, reagent, output)));
     }
 
+    /**
+     * 锻造台变换配方。
+     */
     record SmithingTransform(
             RecipeDescription description,
+            @Nullable String group,
+            List<String> tags,
             RecipeIngredient template,
             RecipeIngredient base,
             RecipeIngredient addition,
-            RecipeResult result
+            List<RecipeResult> result
     ) implements BrRecipe {
         @Override
         public String typeKey() {
@@ -222,15 +300,24 @@ public sealed interface BrRecipe
 
         static final Codec<SmithingTransform> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 RecipeDescription.CODEC.fieldOf("description").forGetter(SmithingTransform::description),
+                Codec.STRING.optionalFieldOf("group")
+                        .forGetter(s -> Optional.ofNullable(s.group)),
+                Codec.STRING.listOf().optionalFieldOf("tags", List.of()).forGetter(SmithingTransform::tags),
                 RecipeIngredient.CODEC.fieldOf("template").forGetter(SmithingTransform::template),
                 RecipeIngredient.CODEC.fieldOf("base").forGetter(SmithingTransform::base),
                 RecipeIngredient.CODEC.fieldOf("addition").forGetter(SmithingTransform::addition),
                 RecipeResult.CODEC.fieldOf("result").forGetter(SmithingTransform::result)
-        ).apply(ins, SmithingTransform::new));
+        ).apply(ins, (desc, group, tags, template, base, addition, result) ->
+                new SmithingTransform(desc, group.orElse(null), tags, template, base, addition, result)));
     }
 
+    /**
+     * 锻造台纹饰配方（无 result）。
+     */
     record SmithingTrim(
             RecipeDescription description,
+            @Nullable String group,
+            List<String> tags,
             RecipeIngredient template,
             RecipeIngredient base,
             RecipeIngredient addition
@@ -242,9 +329,13 @@ public sealed interface BrRecipe
 
         static final Codec<SmithingTrim> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 RecipeDescription.CODEC.fieldOf("description").forGetter(SmithingTrim::description),
+                Codec.STRING.optionalFieldOf("group")
+                        .forGetter(s -> Optional.ofNullable(s.group)),
+                Codec.STRING.listOf().optionalFieldOf("tags", List.of()).forGetter(SmithingTrim::tags),
                 RecipeIngredient.CODEC.fieldOf("template").forGetter(SmithingTrim::template),
                 RecipeIngredient.CODEC.fieldOf("base").forGetter(SmithingTrim::base),
                 RecipeIngredient.CODEC.fieldOf("addition").forGetter(SmithingTrim::addition)
-        ).apply(ins, SmithingTrim::new));
+        ).apply(ins, (desc, group, tags, template, base, addition) ->
+                new SmithingTrim(desc, group.orElse(null), tags, template, base, addition)));
     }
 }
