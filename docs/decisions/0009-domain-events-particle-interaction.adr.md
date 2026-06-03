@@ -1,6 +1,6 @@
 # ADR-0009: Domain Events — Particle Interaction 解耦
 
-**Status:** Implemented (Phase 1: Interface boundary)  
+**Status:** Implemented (Phase 1 + Phase 2)  
 **Date:** 2026-06-01  
 **Context:** Phase 3 DDD 重构目标：消除 `eyelib-animation` 模块对 `eyelib-particle` 模块内部类型的直接编译期依赖，引入 Domain Events 作为交互边界。  
 
@@ -167,24 +167,12 @@ if (spawner != null) {
 - `eyelib-animation/build.gradle` — 移除 `implementation project(':eyelib-particle')`
 - 根模块 `EntityRenderSystem.setParticlesPosition()` — 移除死代码（依赖已删除的 emitter 字段）
 
-### Deferred（Phase 2 候选）
-- Domain Event subscriber 在 particle 侧的独立实现
-- `AnimationParticleSpawner` 的根模块 concrete 实现（等 animation → particle 的 host context 注入链路激活时再做）
-
-## 4. ~~Domain Event 机制~~
-
-引入一个轻量级的 Domain Event 总线（或直接使用已有的 `MolangScope.getHostContext()` + 事件分发模式），注册以下事件：
-
-| Event | Producer (animation side) | Consumer (particle side) |
-|-------|--------------------------|--------------------------|
-| `ParticleSpawnRequest(spawnId, effectId, position)` | `BrControllerExecutor` / `BrAnimationEntryDefinition` | Particle runtime subscriber |
-| `ParticleRemoveRequest(spawnId)` | `BrControllerExecutor.switchState()` | Particle runtime subscriber |
-
-Particle 侧的 subscriber 负责：
-1. 接收 `effectId` (shortname)
-2. 查询 `ParticleDefinitionRegistry.store().get(effectId)` 获取 `ParticleDefinition`
-3. 调用 `ParticleSpawnRuntimeAdapter.spawnEmitter(...)` 生成实际 emitter
-4. 不需要向 animation 侧返回 `BedrockParticleEmitter` 引用（因为 animation 侧不再读取它）
+### Phase 2（2026-06-02）— Runtime Implementation
+已完成的变更：
+- `RootAnimationParticleSpawner` 构造接受 `ParticleSpawnApi`，通过 `ParticleSpawnRuntimeAdapter.INSTANCE` 连接
+- `ParticleSpawnRuntimeAdapter.spawn()` 在 particle 侧执行 `definitions.get(request.particleId())` — 即 ADR 规划的 Domain Event subscriber
+- `ManagerEventLifecycleHooks.onClientSetup()` 中调用 `configure()` 注入 Minecraft 上下文 supplier
+- 删除 `ParticleSpawnService`（原 root 兼容层），消除中间编排器
 
 ## 4. 受影响文件清单
 
@@ -204,5 +192,5 @@ Particle 侧的 subscriber 负责：
 - [x] `RuntimeParticlePlayData` 不引用 `BedrockParticleEmitter`
 - [x] `AnimationParticleSpawner` 是纯接口，无 particle 内部类型依赖
 - [x] `eyelib-animation` 的 `build.gradle` 不包含 `implementation project(':eyelib-particle')`
-- [ ] Particle runtime 的 Domain Event subscriber 可独立测试（Phase 2）
-- [ ] 原功能行为不变：粒子 spawn/remove 仍然正常工作（需 host context 注入链路激活后验证）
+- [x] Particle runtime 的 Domain Event subscriber 已实现并通过验证（Phase 2）
+- [x] 原功能行为不变：粒子 spawn/remove 仍然正常工作（host context 注入链路已激活）

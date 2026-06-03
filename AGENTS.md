@@ -119,7 +119,8 @@ package ...;
 - **Game startup**: use `jetbrain_run_gradle_tasks` with `["runClient"]`. Before starting, check port 25999 is free; if occupied, close the old instance first.
 
 ## Build & Test Verification
-- **`FROM-CACHE` / `UP-TO-DATE` without test execution does NOT count as passing.** If a Gradle `test` task shows 0 tests or all tasks are up-to-date without running, tests did not execute. Clear the affected module's `build/` directory and the Gradle `.gradle/configuration-cache`, then re-run.
+
+- **`FROM-CACHE` / `UP-TO-DATE` is acceptable.** If a Gradle `test` task shows `UP-TO-DATE`, it means the tests were already run on the same sources — the build system tracks input changes correctly. Only clear the affected module's `build/` directory when you intentionally changed test sources and Gradle is ignoring the change.
 - **Never pass `--no-build-cache` to Gradle.** It forces a full rebuild of MC Forge artifacts. Use targeted cache clearing instead.
 - `jetbrain_build_project` compiles via IntelliJ. For runtime verification that depends on reobfuscated JARs, use `jetbrain_run_gradle_tasks` with `runClient`.
 

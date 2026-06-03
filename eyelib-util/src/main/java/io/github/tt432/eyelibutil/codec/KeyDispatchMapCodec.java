@@ -60,7 +60,6 @@ public record KeyDispatchMapCodec<K, V>(
                             return r.apply2stable((u, p) -> u, DataResult.error(() -> "Duplicate entry for key: '" + entry.get().getFirst() + "'"));
                         }
                     }
-                    // TODO: isError 应改为 error().isPresent() 吗？
                     if (entryResult.error().isPresent()) {
                         failed.add(pair);
                     }

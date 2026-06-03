@@ -63,6 +63,7 @@ clientsmoke-reports/
 
 # local reference / intermediate research results
 .local_ref/
+.mc-source/
 
 文档
 .extrasrc
