@@ -6,7 +6,6 @@ import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelibattachment.sync.RenderModelSyncPayload;
 import io.github.tt432.eyelibmodel.network.packet.ModelComponentSyncPacket;
 import io.github.tt432.eyelibnetwork.EyelibNetworkTransport;
-import io.github.tt432.eyelibutil.resource.ResourceLocations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
@@ -64,10 +63,6 @@ public final class ClientRenderSyncService {
     }
 
     private static ModelComponentInfo decodeModelPayload(RenderModelSyncPayload payload) {
-        return new ModelComponentInfo(
-                payload.model(),
-                ResourceLocations.of(payload.texture()),
-                ResourceLocations.of(payload.renderType())
-        );
+        return payload.toInfo();
     }
 }

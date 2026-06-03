@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "io.github.tt432.eyelibattachment.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "eyelibattachment.refmap.json",
+  "mixins": [
+  ],
+  "client": [
+    "MultiPlayerGameModeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

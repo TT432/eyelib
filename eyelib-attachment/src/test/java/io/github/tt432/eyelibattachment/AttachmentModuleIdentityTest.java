@@ -42,6 +42,7 @@ class AttachmentModuleIdentityTest {
                 || path.startsWith("bootstrap/")
                 || path.startsWith("runtime/")
                 || path.startsWith("dataattach/mc/")
+                || path.startsWith("mixin/")
                 || path.startsWith("sync/");
     }
 

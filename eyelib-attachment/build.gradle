@@ -55,6 +55,8 @@ dependencies {
 
     compileOnly 'org.jspecify:jspecify:1.0.0'
 
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -72,6 +74,12 @@ java {
     withSourcesJar()
 }
 
+jar {
+    manifest.attributes([
+            "MixinConfigs": "eyelibattachment.mixins.json"
+    ])
+}
+
 tasks.named('processResources', ProcessResources).configure {
     def replaceProperties = [
             minecraft_version_range: minecraft_version_range,
@@ -86,6 +94,11 @@ tasks.named('processResources', ProcessResources).configure {
     filesMatching('META-INF/mods.toml') {
         expand(replaceProperties)
     }
+}
+
+mixin {
+    add sourceSets.main, 'eyelibattachment.refmap.json'
+    config 'eyelibattachment.mixins.json'
 }
 
 publishing {
