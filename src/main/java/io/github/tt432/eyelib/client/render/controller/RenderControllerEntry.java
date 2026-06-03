@@ -87,11 +87,12 @@ public record RenderControllerEntry(
     }
 
     public ResourceLocation getTexture(MolangScope scope, BrClientEntity entity) {
-        return composeTextureLocation(resolveTextureLayerPaths(scope, entity), ".png");
+        return composeTextureLocation(resolveTextureLayerPaths(scope, entity), "");
     }
 
     public ResourceLocation getEmissiveTexture(MolangScope scope, BrClientEntity entity) {
-        return composeTextureLocation(resolveTextureLayerPaths(scope, entity), ".emissive.png");
+        List<String> layerPaths = resolveTextureLayerPaths(scope, entity);
+        return composeTextureLocation(toEmissiveTextureLayerPaths(layerPaths), "");
     }
 
     public ModelComponent setupModel(MolangScope scope, BrClientEntity entity,

@@ -600,10 +600,11 @@ public record BrMaterialEntry(
         if (vertexShader.isPresent() && fragmentShader.isPresent()) {
             return buildCustomRenderType(texture);
         }
-        return RenderTypeResolver.resolve(new ResourceLocation(name)).factory().apply(texture);
+        if (hasBlending()) return RenderType.entityTranslucent(texture);
+        return RenderType.entitySolid(texture);
     }
 
-    private boolean hasBlending() {
+    public boolean hasBlending() {
         return states.toList(this, Map.of()).contains(GLStates.Blending);
     }
 

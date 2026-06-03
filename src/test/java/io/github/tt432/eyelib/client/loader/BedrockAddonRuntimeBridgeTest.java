@@ -10,6 +10,7 @@ import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.manager.RenderControllerManager;
+import io.github.tt432.eyelib.client.registry.SpawnRuleRegistry;
 import io.github.tt432.eyelibimporter.addon.BedrockAddon;
 import io.github.tt432.eyelibimporter.addon.BedrockAddonAggregate;
 import io.github.tt432.eyelibimporter.addon.BedrockAddonSideAggregate;
@@ -41,6 +42,7 @@ class BedrockAddonRuntimeBridgeTest {
         ModelManager.INSTANCE.clear();
         MaterialManager.INSTANCE.clear();
         RenderControllerManager.INSTANCE.clear();
+        SpawnRuleRegistry.clear();
     }
 
     @Test
@@ -108,6 +110,10 @@ class BedrockAddonRuntimeBridgeTest {
                 linkedMapOf("render_controllers/test.render_controllers.json", renderControllers),
                 new LinkedHashMap<>(),
                 linkedMapOf("materials/test.material", material),
+                new LinkedHashMap<>(),
+                new LinkedHashMap<>(),
+                new LinkedHashMap<>(),
+                new LinkedHashMap<>(),
                 new LinkedHashMap<>(),
                 new LinkedHashMap<>()
         );

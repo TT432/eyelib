@@ -1,7 +1,9 @@
 package io.github.tt432.eyelib.capability.component;
 
+import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
+import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
 import io.github.tt432.eyelibmaterial.render.RenderTypeResolver;
 import io.github.tt432.eyelibmodel.Model;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
@@ -54,12 +56,26 @@ public class ModelComponent {
     @Nullable
     public RenderType getRenderType(ResourceLocation texture) {
         if (serializableInfo == null) return null;
+        var entry = findMaterial(serializableInfo.renderType().getPath());
+        if (entry != null) return entry.getRenderType(texture);
         return RenderTypeResolver.resolve(serializableInfo.renderType()).factory().apply(texture);
     }
 
     public boolean isSolid() {
         if (serializableInfo == null) return true;
+        var entry = findMaterial(serializableInfo.renderType().getPath());
+        if (entry != null) return !entry.hasBlending();
         return RenderTypeResolver.resolve(serializableInfo.renderType()).isSolid();
+    }
+
+    @Nullable
+    private BrMaterialEntry findMaterial(String materialName) {
+        for (var entry : MaterialManager.INSTANCE.getAllData().entrySet()) {
+            if (entry.getKey().endsWith(":" + materialName)) {
+                return entry.getValue();
+            }
+        }
+        return null;
     }
 
     final Int2BooleanOpenHashMap partVisibility = new Int2BooleanOpenHashMap();
