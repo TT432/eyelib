@@ -1,6 +1,7 @@
 package io.github.tt432.eyelibbehavior.event.filter.base;
 
 import com.mojang.serialization.Codec;
+import io.github.tt432.eyelibbehavior.EntityBehaviorData;
 import io.github.tt432.eyelibbehavior.event.filter.Filter;
 import io.github.tt432.eyelibbehavior.event.filter.Operator;
 import io.github.tt432.eyelibbehavior.event.filter.Subject;
@@ -33,4 +34,34 @@ public abstract sealed class BaseFilter<T> implements Filter permits ActorHealth
                     throw new IllegalStateException("Unexpected value: " + s);
                 }
             });
+
+    /**
+     * 获取要比较的实体值（由子类实现）。
+     *
+     * @param data 实体行为数据
+     * @return 实体当前值
+     */
+    protected abstract float getComparisonValue(EntityBehaviorData data);
+
+    /**
+     * 获取过滤器中设定的比较值。
+     *
+     * @return 过滤器设定的值
+     */
+    protected abstract float getFilterValue();
+
+    @Override
+    public boolean eval(EntityBehaviorData data) {
+        float entityValue = getComparisonValue(data);
+        float filterValue = getFilterValue();
+        return switch (operator) {
+            case EQUALS, EQ2, EQ -> entityValue == filterValue;
+            case NEQ, NEQ2 -> entityValue != filterValue;
+            case LESS -> entityValue < filterValue;
+            case GREATER -> entityValue > filterValue;
+            case LESS_EQUAL -> entityValue <= filterValue;
+            case GREATER_EQUAL -> entityValue >= filterValue;
+            case NOT -> entityValue != filterValue;
+        };
+    }
 }

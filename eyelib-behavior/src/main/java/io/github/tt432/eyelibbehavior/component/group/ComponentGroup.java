@@ -4,10 +4,7 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-import io.github.tt432.eyelibbehavior.component.Component;
-import io.github.tt432.eyelibbehavior.component.EmptyComponent;
-import io.github.tt432.eyelibbehavior.component.MarkVariant;
-import io.github.tt432.eyelibbehavior.component.Variant;
+import io.github.tt432.eyelibbehavior.component.*;
 import io.github.tt432.eyelibutil.codec.KeyDispatchMapCodec;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
@@ -24,21 +21,32 @@ public record ComponentGroup(
 ) {
     public static final ComponentGroup EMPTY = new ComponentGroup(new HashMap<>());
 
-    public static final Codec<ComponentGroup> CODEC = Codec.unboundedMap(Codec.STRING, new KeyDispatchMapCodec<>(Codec.STRING, s -> switch (new ResourceLocation(s).toString()) {
+    /**
+     * 组件分发编解码器，根据组件名称映射到对应的 typed codec。
+     * 同时被 ComponentGroup 和 BehaviorComponents 使用。
+     */
+    public static final Codec<Map<String, Component>> DISPATCH_CODEC = new KeyDispatchMapCodec<>(Codec.STRING, s -> switch (new ResourceLocation(s).toString()) {
         case "minecraft:variant" -> Variant.CODEC;
         case "minecraft:mark_variant" -> MarkVariant.CODEC;
-        default -> new Codec<Component>() {
+        case "minecraft:ageable" -> Ageable.CODEC;
+        case "minecraft:admire_item" -> AdmireItem.CODEC;
+        case "minecraft:addrider" -> Addrider.CODEC;
+        case "minecraft:health" -> Health.CODEC;
+        default -> new Codec<>() {
             @Override
             public <T> DataResult<Pair<Component, T>> decode(DynamicOps<T> ops, T input) {
-                log.error("Unknown component type: {}", s);
+                log.warn("Unknown component type: {}, using EmptyComponent fallback", s);
                 return DataResult.success(new Pair<>(EmptyComponent.INSTANCE, input));
             }
 
             @Override
             public <T> DataResult<T> encode(Component input, DynamicOps<T> ops, T prefix) {
-                log.error("Unknown component type: {}", s);
+                log.warn("Unknown component type: {}, cannot encode", s);
                 return DataResult.success(ops.empty());
             }
         };
-    })).xmap(ComponentGroup::new, ComponentGroup::components);
+    });
+
+    public static final Codec<ComponentGroup> CODEC = Codec.unboundedMap(Codec.STRING, DISPATCH_CODEC)
+            .xmap(ComponentGroup::new, ComponentGroup::components);
 }

@@ -2,6 +2,7 @@ package io.github.tt432.eyelibbehavior.event.filter;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import io.github.tt432.eyelibbehavior.EntityBehaviorData;
 import io.github.tt432.eyelibbehavior.event.filter.base.BaseFilter;
 
 /**
@@ -21,4 +22,12 @@ public interface Filter {
                     throw new IllegalStateException("Unexpected value: " + v);
                 }
             });
+
+    /**
+     * 评估过滤器是否通过。
+     *
+     * @param data 实体行为数据
+     * @return 过滤器评估结果
+     */
+    boolean eval(EntityBehaviorData data);
 }

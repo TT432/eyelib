@@ -1,9 +1,17 @@
 package io.github.tt432.eyelib.client.registry;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.client.manager.BehaviorEntityManager;
+import io.github.tt432.eyelibbehavior.BehaviorComponents;
 import io.github.tt432.eyelibbehavior.BehaviorEntity;
 import io.github.tt432.eyelibbehavior.component.Component;
+import io.github.tt432.eyelibbehavior.component.Health;
 import io.github.tt432.eyelibbehavior.component.MarkVariant;
+import io.github.tt432.eyelibbehavior.component.RawComponent;
 import io.github.tt432.eyelibbehavior.component.Variant;
 import io.github.tt432.eyelibbehavior.component.group.ComponentGroup;
 import io.github.tt432.eyelibbehavior.event.logic.Add;
@@ -11,6 +19,7 @@ import io.github.tt432.eyelibbehavior.event.logic.LogicNode;
 import io.github.tt432.eyelibbehavior.event.logic.Randomize;
 import io.github.tt432.eyelibbehavior.event.logic.Remove;
 import io.github.tt432.eyelibbehavior.event.logic.Sequence;
+import io.github.tt432.eyelibbehavior.event.logic.SequenceEntry;
 import io.github.tt432.eyelibimporter.addon.BedrockResourceValue;
 import io.github.tt432.eyelibimporter.addon.BrBehaviorEntityFile;
 import lombok.AccessLevel;
@@ -77,9 +86,111 @@ public final class BehaviorEntityAssetRegistry {
             });
         }
 
+        // === 新增：解析顶层 components ===
+        BehaviorComponents topComponents = BehaviorComponents.EMPTY;
+        BedrockResourceValue.ObjectValue rawComponents = file.components();
+        if (rawComponents != null && !rawComponents.values().isEmpty()) {
+            var parsed = new LinkedHashMap<String, Component>();
+            for (var entry : rawComponents.values().entrySet()) {
+                String compKey = entry.getKey();
+                BedrockResourceValue compVal = entry.getValue();
+                Component component = parseSingleComponent(compKey, compVal);
+                if (component != null) {
+                    parsed.put(compKey, component);
+                }
+            }
+            if (!parsed.isEmpty()) {
+                topComponents = new BehaviorComponents(parsed);
+            }
+        }
+        // === 新增结束 ===
+
         Map<String, LogicNode> events = parseEvents(file.events());
 
-        return new BehaviorEntity(identifier, groups, events);
+        return new BehaviorEntity(identifier, groups, topComponents, events);
+    }
+
+    /**
+     * 解析单个行为实体顶层组件。
+     * 先尝试已知 typed 组件，未知组件用 RawComponent（保留原始 JSON）兜底。
+     */
+    @Nullable
+    private static Component parseSingleComponent(String key, BedrockResourceValue compVal) {
+        if (!(compVal instanceof BedrockResourceValue.ObjectValue obj)) {
+            return null;
+        }
+        return switch (key) {
+            case "minecraft:variant" -> parseVariant(obj);
+            case "minecraft:mark_variant" -> parseMarkVariant(obj);
+            case "minecraft:health" -> parseHealth(obj);
+            // 可扩展：新组件在这里加 case
+            default -> {
+                // 未知组件保留原始数据，不丢失
+                yield new RawComponent(key, bedrockObjectToJson(obj));
+            }
+        };
+    }
+
+    @Nullable
+    private static Variant parseVariant(BedrockResourceValue.ObjectValue obj) {
+        var val = obj.values().get("value");
+        if (val instanceof BedrockResourceValue.NumberValue nv) {
+            return new Variant(nv.value().intValue());
+        }
+        return null;
+    }
+
+    @Nullable
+    private static MarkVariant parseMarkVariant(BedrockResourceValue.ObjectValue obj) {
+        var val = obj.values().get("value");
+        if (val instanceof BedrockResourceValue.NumberValue nv) {
+            return new MarkVariant(nv.value().intValue());
+        }
+        return null;
+    }
+
+    @Nullable
+    private static Health parseHealth(BedrockResourceValue.ObjectValue obj) {
+        var val = obj.values().get("value");
+        var maxVal = obj.values().get("max");
+        if (val instanceof BedrockResourceValue.NumberValue nv) {
+            int value = nv.value().intValue();
+            int max = maxVal instanceof BedrockResourceValue.NumberValue mnv ? mnv.value().intValue() : 20;
+            return new Health(value, max);
+        }
+        return null;
+    }
+
+    /**
+     * 将 BedrockResourceValue.ObjectValue 转换为 Gson JsonObject，用于 RawComponent 的数据保留。
+     */
+    private static JsonObject bedrockObjectToJson(BedrockResourceValue.ObjectValue obj) {
+        JsonObject json = new JsonObject();
+        for (var entry : obj.values().entrySet()) {
+            json.add(entry.getKey(), bedrockValueToJson(entry.getValue()));
+        }
+        return json;
+    }
+
+    private static JsonElement bedrockValueToJson(BedrockResourceValue val) {
+        if (val instanceof BedrockResourceValue.NullValue) {
+            return JsonNull.INSTANCE;
+        } else if (val instanceof BedrockResourceValue.BooleanValue b) {
+            return new JsonPrimitive(b.value());
+        } else if (val instanceof BedrockResourceValue.NumberValue n) {
+            return new JsonPrimitive(n.value());
+        } else if (val instanceof BedrockResourceValue.StringValue s) {
+            return new JsonPrimitive(s.value());
+        } else if (val instanceof BedrockResourceValue.ArrayValue a) {
+            JsonArray arr = new JsonArray();
+            for (BedrockResourceValue v : a.values()) {
+                arr.add(bedrockValueToJson(v));
+            }
+            return arr;
+        } else if (val instanceof BedrockResourceValue.ObjectValue o) {
+            return bedrockObjectToJson(o);
+        }
+        return JsonNull.INSTANCE;
     }
 
     private static Map<String, LogicNode> parseEvents(BedrockResourceValue.ObjectValue events) {
@@ -193,11 +304,12 @@ public final class BehaviorEntityAssetRegistry {
         if (!(val instanceof BedrockResourceValue.ArrayValue arr)) {
             return null;
         }
-        List<LogicNode> nodes = arr.values().stream()
+        List<SequenceEntry> entries = arr.values().stream()
                 .map(v -> v instanceof BedrockResourceValue.ObjectValue obj
                         ? parseSingleEvent(obj, allRawEvents) : null)
                 .filter(Objects::nonNull)
+                .map(node -> new SequenceEntry(null, node))
                 .toList();
-        return new Sequence(Collections.unmodifiableList(nodes));
+        return new Sequence(Collections.unmodifiableList(entries));
     }
 }

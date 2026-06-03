@@ -2,6 +2,7 @@ package io.github.tt432.eyelibbehavior.event.filter;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
+import io.github.tt432.eyelibbehavior.EntityBehaviorData;
 import io.github.tt432.eyelibutil.codec.EyelibCodec;
 import lombok.AllArgsConstructor;
 
@@ -14,7 +15,7 @@ import java.util.Map;
  * @author TT432
  */
 @AllArgsConstructor
-public sealed class ComplexFilter implements Filter permits ComplexFilter.AllOf, ComplexFilter.OneOf, ComplexFilter.NoneOf {
+public abstract sealed class ComplexFilter implements Filter permits ComplexFilter.AllOf, ComplexFilter.OneOf, ComplexFilter.NoneOf {
     public final List<Filter> filters;
 
     public static final MapCodec<ComplexFilter> CODEC = EyelibCodec.list(() -> Map.of(
@@ -29,6 +30,16 @@ public sealed class ComplexFilter implements Filter permits ComplexFilter.AllOf,
         public AllOf(List<Filter> filters) {
             super(filters);
         }
+
+        @Override
+        public boolean eval(EntityBehaviorData data) {
+            for (Filter filter : filters) {
+                if (!filter.eval(data)) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
     public static final class OneOf extends ComplexFilter {
@@ -37,6 +48,16 @@ public sealed class ComplexFilter implements Filter permits ComplexFilter.AllOf,
         public OneOf(List<Filter> filters) {
             super(filters);
         }
+
+        @Override
+        public boolean eval(EntityBehaviorData data) {
+            for (Filter filter : filters) {
+                if (filter.eval(data)) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     public static final class NoneOf extends ComplexFilter {
@@ -44,6 +65,16 @@ public sealed class ComplexFilter implements Filter permits ComplexFilter.AllOf,
 
         public NoneOf(List<Filter> filters) {
             super(filters);
+        }
+
+        @Override
+        public boolean eval(EntityBehaviorData data) {
+            for (Filter filter : filters) {
+                if (filter.eval(data)) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

@@ -15,6 +15,7 @@ import java.util.Map;
 public record BehaviorEntity(
         ResourceLocation identifier,
         Map<String, ComponentGroup> component_groups,
+        BehaviorComponents components,
         Map<String, LogicNode> events
 ) {
     public static final Codec<BehaviorEntity> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -23,6 +24,7 @@ public record BehaviorEntity(
                             ResourceLocation.CODEC.fieldOf("identifier").forGetter(r -> r)
                     ).apply(instance3, r -> r)).fieldOf("description").forGetter(BehaviorEntity::identifier),
                     Codec.unboundedMap(Codec.STRING, ComponentGroup.CODEC).fieldOf("component_groups").forGetter(BehaviorEntity::component_groups),
+                    BehaviorComponents.CODEC.optionalFieldOf("components", BehaviorComponents.EMPTY).forGetter(BehaviorEntity::components),
                     Codec.unboundedMap(Codec.STRING, LogicNode.CODEC.codec()).optionalFieldOf("events", Collections.emptyMap()).forGetter(BehaviorEntity::events)
             ).apply(instance2, BehaviorEntity::new)).fieldOf("minecraft:entity").forGetter(e -> e)
     ).apply(instance, e -> e));

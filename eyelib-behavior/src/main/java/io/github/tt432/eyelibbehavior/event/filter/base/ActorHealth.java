@@ -3,6 +3,8 @@ package io.github.tt432.eyelibbehavior.event.filter.base;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelibbehavior.EntityBehaviorData;
+import io.github.tt432.eyelibbehavior.component.Health;
 import io.github.tt432.eyelibbehavior.event.filter.Operator;
 import io.github.tt432.eyelibbehavior.event.filter.Subject;
 
@@ -21,5 +23,16 @@ public final class ActorHealth extends BaseFilter<Integer> {
 
     public ActorHealth(Integer value, Subject subject, Operator operator, String domain) {
         super(value, subject, operator, domain);
+    }
+
+    @Override
+    protected float getComparisonValue(EntityBehaviorData data) {
+        Health health = data.component(Health.class);
+        return health != null ? health.value() : 0;
+    }
+
+    @Override
+    protected float getFilterValue() {
+        return value.floatValue();
     }
 }

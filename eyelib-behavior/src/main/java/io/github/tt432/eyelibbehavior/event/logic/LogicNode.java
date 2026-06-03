@@ -18,7 +18,9 @@ public interface LogicNode {
             "add", new EyelibCodec.CodecInfo<>(Add.class, Add.CODEC),
             "randomize", new EyelibCodec.CodecInfo<>(Randomize.class, Randomize.CODEC),
             "sequence", new EyelibCodec.CodecInfo<>(Sequence.class, Sequence.CODEC),
-            "remove", new EyelibCodec.CodecInfo<>(Remove.class, Remove.CODEC)
+            "remove", new EyelibCodec.CodecInfo<>(Remove.class, Remove.CODEC),
+            "trigger", new EyelibCodec.CodecInfo<>(Trigger.class, Trigger.CODEC),
+            "queue_command", new EyelibCodec.CodecInfo<>(QueueCommand.class, QueueCommand.CODEC)
     ));
 
     void eval(EntityBehaviorData data);
