@@ -245,7 +245,7 @@ dependencies {
 
 jar {
     manifest.attributes([
-            "MixinConfigs": "${mod_id}.mixins.json,eyelibtrack.mixins.json"
+            "MixinConfigs": "${mod_id}.mixins.json,eyelibtrack.mixins.json,eyelibattachment.mixins.json"
     ])
 }
 

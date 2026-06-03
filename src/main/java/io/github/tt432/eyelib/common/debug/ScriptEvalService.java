@@ -48,6 +48,11 @@ public final class ScriptEvalService {
 
             CompletableFuture<Object> future = new CompletableFuture<>();
             mc.tell(() -> {
+                if (mc.screen == null && mc.level == null) {
+                    future.complete("Game not ready yet — wait for the title screen to appear");
+                    return;
+                }
+
                 try {
                     Object result = clazz.getMethod("run", Minecraft.class, LocalPlayer.class, ClientLevel.class)
                                          .invoke(null, mc, mc.player, mc.level);
