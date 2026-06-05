@@ -24,9 +24,11 @@ public class RenderControllerRuntime {
     @Nullable
     private Int2ObjectMap<ReferenceList<MolangValue>> partVisibility;
 
-    public void evalPartVisibility(Collection<Model> models, RenderControllerEntry renderControllerEntry,
-                                   Int2BooleanOpenHashMap partVisibility, MolangScope scope) {
-        setup(models, renderControllerEntry);
+    /**
+     * 应用预计算的part_visibility条件到指定可见性映射。
+     * 需先调用{@link #setup(Collection, RenderControllerEntry)}。
+     */
+    public void evalPartVisibility(Int2BooleanOpenHashMap partVisibility, MolangScope scope) {
         Int2ObjectMap<ReferenceList<MolangValue>> referenceListInt2ObjectMap = this.partVisibility;
         if (referenceListInt2ObjectMap != null && !referenceListInt2ObjectMap.isEmpty()) {
             referenceListInt2ObjectMap.int2ObjectEntrySet().forEach(e -> {

@@ -329,6 +329,11 @@ public class EntityRenderSystem {
 
                                                                           data.extraRender().render(renderHelper, data);
 
+                                                                          // 刷新当前 fallback buffer，确保不同 RenderType 的 ModelComponent 使用独立 draw call
+                                                                          if (multiBufferSource instanceof MultiBufferSource.BufferSource bs) {
+                                                                              bs.endBatch();
+                                                                          }
+
                                                                           RenderParams emissiveRenderParams = renderParams.asEmissive(multiBufferSource, modelComponent);
 
 //                    if (!emissiveRenderParams.textureMissing()) {
@@ -450,7 +455,7 @@ public class EntityRenderSystem {
                 RenderControllerEntry renderControllerEntry = RenderControllerManager.INSTANCE.get(renderController);
                 RenderControllerComponent.Slot renderControllerSlot = renderControllerComponent.syncSlot(i, renderControllerEntry);
                 if (renderControllerEntry != null && cap.getScope() != null)
-                    components.add(renderControllerEntry.setupModel(cap.getScope(), appliedClientEntity, clientEntityComponent.getModels(), renderControllerSlot, syncedActions));
+                    components.addAll(renderControllerEntry.setupModel(cap.getScope(), appliedClientEntity, clientEntityComponent.getModels(), renderControllerSlot, syncedActions));
             }
             renderControllerComponent.trim(ce.render_controllers().size());
 

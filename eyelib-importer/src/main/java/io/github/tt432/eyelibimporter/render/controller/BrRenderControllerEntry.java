@@ -2,12 +2,11 @@ package io.github.tt432.eyelibimporter.render.controller;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelibmolang.MolangMapEntry;
 import io.github.tt432.eyelibmolang.MolangValue;
 import org.jspecify.annotations.NullMarked;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /** @author TT432 */
 @NullMarked
@@ -15,7 +14,7 @@ public record BrRenderControllerEntry(
         MolangValue geometry,
         List<MolangValue> textures,
         Map<String, Map<String, List<String>>> arrays,
-        Map<String, MolangValue> materials,
+        List<MolangMapEntry> materials,
         Map<String, MolangValue> partVisibility
 ) {
     public static final Codec<BrRenderControllerEntry> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -25,14 +24,30 @@ public record BrRenderControllerEntry(
                     .optionalFieldOf("arrays", Map.of())
                     .forGetter(BrRenderControllerEntry::arrays),
             Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).listOf().xmap(
-                    BrRenderControllerEntry::flattenMolangMaps,
-                    List::of
-            ).optionalFieldOf("materials", Map.of()).forGetter(BrRenderControllerEntry::materials),
+                    BrRenderControllerEntry::toMolangMapEntries,
+                    BrRenderControllerEntry::fromMolangMapEntries
+            ).optionalFieldOf("materials", List.of()).forGetter(BrRenderControllerEntry::materials),
             Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).listOf().xmap(
                     BrRenderControllerEntry::flattenMolangMaps,
                     List::of
             ).optionalFieldOf("part_visibility", Map.of()).forGetter(BrRenderControllerEntry::partVisibility)
     ).apply(instance, BrRenderControllerEntry::new));
+
+    private static List<MolangMapEntry> toMolangMapEntries(List<Map<String, MolangValue>> list) {
+        List<MolangMapEntry> result = new ArrayList<>();
+        for (Map<String, MolangValue> map : list) {
+            for (var entry : map.entrySet()) {
+                result.add(new MolangMapEntry(entry.getKey(), entry.getValue()));
+            }
+        }
+        return result;
+    }
+
+    private static List<Map<String, MolangValue>> fromMolangMapEntries(List<MolangMapEntry> entries) {
+        return entries.stream()
+                .map(e -> Map.of(e.key(), e.value()))
+                .toList();
+    }
 
     private static Map<String, MolangValue> flattenMolangMaps(List<Map<String, MolangValue>> values) {
         Map<String, MolangValue> result = new LinkedHashMap<>();
