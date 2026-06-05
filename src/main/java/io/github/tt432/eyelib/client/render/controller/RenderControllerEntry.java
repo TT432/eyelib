@@ -1,9 +1,11 @@
 package io.github.tt432.eyelib.client.render.controller;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
+import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
 import io.github.tt432.eyelib.client.render.texture.TextureLayerMerger;
 import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
@@ -214,9 +216,9 @@ public record RenderControllerEntry(
         try {
             List<String> textureLayerPaths = resolveTextureLayerPaths(scope, entity);
             ResourceLocation texture = getTexture(scope, entity);
+            List<ResourceLocation> textureLayers = toResourceLocations(textureLayerPaths);
 
             if (needReload) {
-                List<ResourceLocation> textureLayers = toResourceLocations(textureLayerPaths);
                 syncedActions.add(() -> NativeImageIO.upload(texture, TextureLayerMerger.merge(textureLayers)));
 
                 ResourceLocation emissiveTexture = getEmissiveTexture(scope, entity);
@@ -224,6 +226,10 @@ public record RenderControllerEntry(
                 syncedActions.add(() -> NativeImageIO.upload(emissiveTexture, TextureLayerMerger.merge(emissiveTextureLayers)));
             }
 
+            // alphatest 材质走 clamped 纹理，避免 MC cutout threshold 0.5 丢弃低 alpha 像素
+            if (isAlphatestMaterial(materialName)) {
+                return clampedTexture(texture, textureLayers, syncedActions, needReload);
+            }
             return texture;
         } finally {
             if (texPath != null) {
@@ -234,6 +240,67 @@ public record RenderControllerEntry(
                 }
             }
         }
+    }
+
+    /**
+     * 创建 clamped 纹理副本：download 每个原始纹理层，clamp alpha，再 merge。
+     * 避免 regular merge 的 premultiplied alpha 把低 alpha 颜色乘成黑色。
+     * alphatest 材质使用此副本以避免低 alpha 像素被 MC cutout shader 丢弃。
+     */
+    private static ResourceLocation clampedTexture(ResourceLocation original, List<ResourceLocation> layers,
+                                                    List<Runnable> syncedActions, boolean needReload) {
+        ResourceLocation clamped = new ResourceLocation(original.getNamespace(),
+                "clamped/" + original.getPath());
+        if (needReload) {
+            syncedActions.add(() -> {
+                List<ResourceLocation> clampedLayers = new java.util.ArrayList<>();
+                for (ResourceLocation layer : layers) {
+                    ResourceLocation clampedLayer = new ResourceLocation(layer.getNamespace(),
+                            "_tmp_clamped/" + layer.getPath());
+                    NativeImage img = NativeImageIO.download(layer, NativeImageIO::copyImage);
+                    if (img != null) {
+                        NativeImageIO.clampAlphaToBinary(img);
+                        NativeImageIO.upload(clampedLayer, img);
+                        clampedLayers.add(clampedLayer);
+                    }
+                }
+                if (!clampedLayers.isEmpty()) {
+                    NativeImageIO.upload(clamped, TextureLayerMerger.merge(clampedLayers));
+                }
+            });
+        }
+        return clamped;
+    }
+
+    /**
+     * 判断材质是否为 alphatest（非 blending）。
+     * alphatest 材质需要 clamp alpha 以解决 MC cutout shader threshold 0.5
+     * 丢弃 Bedrock 低 alpha 像素的问题。
+     */
+    private static boolean isAlphatestMaterial(String materialName) {
+        var matMap = MaterialManager.INSTANCE.getAllData();
+        var entry = matMap.get(materialName);
+        if (entry == null) {
+            // 尝试 suffix 查找
+            for (var e : matMap.entrySet()) {
+                String key = e.getKey();
+                int idx = key.lastIndexOf(':');
+                if (idx >= 0 && key.substring(idx + 1).equals(materialName)) {
+                    entry = e.getValue();
+                    break;
+                }
+            }
+        }
+        if (entry == null) {
+            // 尝试 name 字段查找
+            for (var e : matMap.entrySet()) {
+                if (e.getValue().name().equals(materialName)) {
+                    entry = e.getValue();
+                    break;
+                }
+            }
+        }
+        return entry != null && !entry.hasBlending(matMap);
     }
 
     /**
