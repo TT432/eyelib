@@ -114,14 +114,6 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
                 uvs.add(new Vector2f(vertex.uv()));
                 normals.add(new Vector3f(vertex.normal()));
             }
-            if (twoSide) {
-                for (int reverseIdx = face.vertexes().size() - 1; reverseIdx >= 0; reverseIdx--) {
-                    var vertex = face.vertexes().get(reverseIdx);
-                    vertexes.add(new Vector3f(vertex.position()));
-                    uvs.add(new Vector2f(vertex.uv()));
-                    normals.add(new Vector3f(vertex.normal()));
-                }
-            }
         }
     }
 
