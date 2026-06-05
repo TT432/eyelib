@@ -87,14 +87,12 @@ public final class BedrockAddonRuntimeBridge {
         }
         // 替换模型
         ModelManager.INSTANCE.replaceAll(new java.util.LinkedHashMap<>(resourcePack.modelsView()));
-        // 替换材质
+        // 替换材质（叠加而非替换，保留 BrMaterialLoader 加载的 vanilla 条目）
         {
             var materials = toRuntimeMaterials(resourcePack.materialFiles());
-            java.util.LinkedHashMap<String, BrMaterialEntry> flattened = new java.util.LinkedHashMap<>();
             for (BrMaterial value : materials.values()) {
-                value.materials().forEach(flattened::put);
+                value.materials().forEach(MaterialManager.INSTANCE::put);
             }
-            MaterialManager.INSTANCE.replaceAll(flattened);
         }
         // 替换渲染控制器
         {

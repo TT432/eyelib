@@ -61,7 +61,7 @@ public class ModelComponent {
         var entry = matMap.get(serializableInfo.renderType().getPath());
         if (entry != null) {
             if (entry.hasBlending(matMap)) return RenderType.entityTranslucent(texture);
-            if (isBaseType(entry, "entity_alphatest", matMap)) return RenderType.entityCutoutNoCull(texture);
+            if (entry.isAlphatest(matMap)) return RenderType.entityCutoutNoCull(texture);
             return RenderType.entitySolid(texture);
         }
         return RenderTypeResolver.resolve(serializableInfo.renderType()).factory().apply(texture);
@@ -73,28 +73,10 @@ public class ModelComponent {
         var entry = matMap.get(serializableInfo.renderType().getPath());
         if (entry != null) {
             if (entry.hasBlending(matMap)) return false;
-            if (isBaseType(entry, "entity_alphatest", matMap)) return false;
+            if (entry.isAlphatest(matMap)) return false;
             return true;
         }
         return RenderTypeResolver.resolve(serializableInfo.renderType()).isSolid();
-    }
-
-    /**
-     * 遍历材质继承链，检查是否以指定 Bedrock 基材质为根。
-     * 当 materials 中查不到时，直接用 base 字段字符串比对（处理 Bedrock 原生基材质）。
-     */
-    private boolean isBaseType(BrMaterialEntry entry, String baseType, Map<String, BrMaterialEntry> materials) {
-        BrMaterialEntry current = entry;
-        java.util.Set<String> visited = new java.util.HashSet<>();
-        while (current != null && visited.add(current.name())) {
-            if (baseType.equals(current.name())) return true;
-            String nextName = current.base();
-            if (nextName == null || nextName.isEmpty()) break;
-            // Bedrock 原生基材质（如 entity_alphatest）不在 MaterialManager 中
-            if (baseType.equals(nextName)) return true;
-            current = materials.get(nextName);
-        }
-        return false;
     }
 
     /**
@@ -104,26 +86,17 @@ public class ModelComponent {
     private Map<String, BrMaterialEntry> buildMaterialLookupMap() {
         Map<String, BrMaterialEntry> result = new java.util.HashMap<>(MaterialManager.INSTANCE.getAllData());
         for (var entry : MaterialManager.INSTANCE.getAllData().entrySet()) {
-            // 按 entry.name() 建索引（用于 base 引用解析）
-            result.putIfAbsent(entry.getValue().name(), entry.getValue());
-            // 按 key 后缀建索引
-            String key = entry.getKey();
-            int colon = key.lastIndexOf(':');
-            if (colon >= 0) {
-                result.putIfAbsent(key.substring(colon + 1), entry.getValue());
+            String name = entry.getValue().name();
+            String mapKey = entry.getKey();
+            int colon = mapKey.lastIndexOf(':');
+            // 按 entry.name() 建索引（canonical: suffix 等于 name 的优先）
+            if (colon >= 0 && name.equals(mapKey.substring(colon + 1))) {
+                result.put(name, entry.getValue());
+            } else {
+                result.putIfAbsent(name, entry.getValue());
             }
         }
         return result;
-    }
-
-    @Nullable
-    private BrMaterialEntry findMaterial(String materialName) {
-        for (var entry : MaterialManager.INSTANCE.getAllData().entrySet()) {
-            if (entry.getKey().endsWith(":" + materialName)) {
-                return entry.getValue();
-            }
-        }
-        return null;
     }
 
     final Int2BooleanOpenHashMap partVisibility = new Int2BooleanOpenHashMap();

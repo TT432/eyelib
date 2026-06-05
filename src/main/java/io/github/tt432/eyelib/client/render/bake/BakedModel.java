@@ -54,7 +54,7 @@ public record BakedModel(
             vertices.begin(VertexFormat.Mode.QUADS, NEW_ENTITY);
             for (int i = 0; i < xList.length; i++) {
                 vertices.vertex(xList[i], yList[i], zList[i],
-                                0, 0, 0, 0,
+                                1, 1, 1, 1,
                                 u[i], v[i], 0, 0,
                                 nxList[i], nyList[i], nzList[i]);
             }

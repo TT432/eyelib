@@ -87,8 +87,17 @@ public record BrMaterialEntry(
                 throw new IllegalStateException("Circular material inheritance detected involving: " + material.name());
             }
             var base = materials.get(material.base());
+            if (base == null && material.base != null && !material.base.isEmpty()) {
+                for (var entry : materials.entrySet()) {
+                    if (material.base.equals(entry.getValue().name())) {
+                        base = entry.getValue();
+                        break;
+                    }
+                }
+            }
+            final var resolvedBase = base;
             try {
-                return base().orElseGet(() -> base != null ? getBase(base).get(base, materials, visited) : List.of());
+                return base().orElseGet(() -> resolvedBase != null ? getBase(resolvedBase).get(resolvedBase, materials, visited) : List.of());
             } finally {
                 visited.remove(material.name());
             }
@@ -99,10 +108,18 @@ public record BrMaterialEntry(
                 throw new IllegalStateException("Circular material inheritance detected involving: " + material.name());
             }
             BrMaterialEntry base = materials.get(material.base);
+            if (base == null && material.base != null && !material.base.isEmpty()) {
+                for (var entry : materials.entrySet()) {
+                    if (material.base.equals(entry.getValue().name())) {
+                        base = entry.getValue();
+                        break;
+                    }
+                }
+            }
             try {
                 if (base != null)
                     getBase(base).add(defines, base, materials, visited);
-                defines.addAll(add().orElse(List.of()));
+                defines.addAll(getBase(material).add().orElse(List.of()));
             } finally {
                 visited.remove(material.name());
             }
@@ -113,10 +130,18 @@ public record BrMaterialEntry(
                 throw new IllegalStateException("Circular material inheritance detected involving: " + material.name());
             }
             BrMaterialEntry base = materials.get(material.base);
+            if (base == null && material.base != null && !material.base.isEmpty()) {
+                for (var entry : materials.entrySet()) {
+                    if (material.base.equals(entry.getValue().name())) {
+                        base = entry.getValue();
+                        break;
+                    }
+                }
+            }
             try {
                 if (base != null)
                     getBase(base).sub(defines, base, materials, visited);
-                defines.removeAll(sub().orElse(List.of()));
+                defines.removeAll(getBase(material).sub().orElse(List.of()));
             } finally {
                 visited.remove(material.name());
             }
@@ -621,6 +646,7 @@ public record BrMaterialEntry(
             return buildCustomRenderType(texture, materials);
         }
         if (hasBlending(materials)) return RenderType.entityTranslucent(texture);
+        if (isAlphatest(materials)) return RenderType.entityCutoutNoCull(texture);
         return RenderType.entitySolid(texture);
     }
 
@@ -639,6 +665,15 @@ public record BrMaterialEntry(
             // 材质继承链存在循环引用，fallback 到仅检查自身状态
             LOGGER.warn("Circular material inheritance detected for {}: {}", name, e.getMessage());
             return states.toList(this, Map.of()).contains(GLStates.Blending);
+        }
+    }
+
+    public boolean isAlphatest(Map<String, BrMaterialEntry> materials) {
+        try {
+            return defines.toList(this, materials).contains("ALPHA_TEST");
+        } catch (IllegalStateException e) {
+            LOGGER.warn("Circular material inheritance detected for {}: {}", name, e.getMessage());
+            return defines.toList(this, Map.of()).contains("ALPHA_TEST");
         }
     }
 

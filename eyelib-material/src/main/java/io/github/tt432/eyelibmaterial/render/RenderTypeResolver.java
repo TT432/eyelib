@@ -26,6 +26,7 @@ public final class RenderTypeResolver {
     public static EntityRenderTypeData resolve(ResourceLocation id) {
         return switch (id.toString()) {
             case "minecraft:cutout" -> new EntityRenderTypeData(id, false, RenderType::entityCutout);
+            case "minecraft:cutout_no_cull" -> new EntityRenderTypeData(id, false, RenderType::entityCutoutNoCull);
             case "minecraft:translucent", "minecraft:particles_blend" -> new EntityRenderTypeData(id, false, RenderType::entityTranslucent);
             default -> new EntityRenderTypeData(id, true, RenderType::entitySolid);
         };
