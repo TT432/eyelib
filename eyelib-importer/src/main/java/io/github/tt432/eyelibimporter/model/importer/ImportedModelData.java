@@ -627,9 +627,9 @@ public record ImportedModelData(
         if (uv == null) {
             return List.of();
         }
-        float dx = cube.size().x;
-        float dy = cube.size().y;
-        float dz = cube.size().z;
+        float dx = (float) Math.floor(cube.size().x);
+        float dy = (float) Math.floor(cube.size().y);
+        float dz = (float) Math.floor(cube.size().z);
         // 对齐 Blockbench Bedrock parseCube box-uv 侧边条带顺序: east, north, west, south。
         Vector2f start = switch (faceName) {
             case "north" -> new Vector2f(uv.x + dz, uv.y + dz);
