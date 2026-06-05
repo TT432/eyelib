@@ -72,7 +72,7 @@ public record DFSModel(
         }.visitModel(new RenderParams(
                 null, new PoseStack.Pose(new Matrix4f(), new Matrix3f()), new PoseStack(),
                 null, null, false, null, 0,
-                OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap()
+                OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap(), null
         ), new ModelVisitContext(), new ModelRuntimeData(), model);
 
         return new DFSModel(frames);

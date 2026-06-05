@@ -32,20 +32,21 @@ public record RenderParams(
         @Nullable VertexConsumer consumer,
         int light,
         int overlay,
-        Int2BooleanOpenHashMap partVisibility
+        Int2BooleanOpenHashMap partVisibility,
+        @Nullable float[] tintColor
 ) {
     public static RenderParams noRender() {
         var poseStack = new PoseStack();
         return new RenderParams(
                 null, poseStack.last(), poseStack, null, null, false,
-                null, 0, OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap()
+                null, 0, OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap(), null
         );
     }
 
     public static RenderParams noRender(PoseStack poseStack) {
         return new RenderParams(
                 null, poseStack.last(), poseStack, null, null, false,
-                null, 0, OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap()
+                null, 0, OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap(), null
         );
     }
 
@@ -116,6 +117,8 @@ public record RenderParams(
         private int light = LightTexture.FULL_BRIGHT;
         private int overlay = OverlayTexture.NO_OVERLAY;
         private Int2BooleanOpenHashMap partVisibility = new Int2BooleanOpenHashMap();
+        @Nullable
+        private float[] tintColor;
 
         public Builder(PoseStack.Pose pose0, PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable ResourceLocation texture, @Nullable VertexConsumer consumer) {
             this.pose0 = pose0;
@@ -146,8 +149,13 @@ public record RenderParams(
             return this;
         }
 
+        public Builder tintColor(@Nullable float[] tintColor) {
+            this.tintColor = tintColor;
+            return this;
+        }
+
         public RenderParams build() {
-            return new RenderParams(renderTarget, pose0, poseStack, renderType, texture, isSolid, consumer, light, overlay, partVisibility);
+            return new RenderParams(renderTarget, pose0, poseStack, renderType, texture, isSolid, consumer, light, overlay, partVisibility, tintColor);
         }
     }
 }

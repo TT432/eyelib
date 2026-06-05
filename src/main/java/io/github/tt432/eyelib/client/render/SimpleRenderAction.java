@@ -15,6 +15,8 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.item.DyeColor;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -56,7 +58,23 @@ public record SimpleRenderAction<T>(
                            .overlay(overlay)
                            .light(packedLight)
                            .partVisibility(modelComponent.getPartVisibility())
+                           .tintColor(entityTintColor())
                            .build();
+    }
+
+    /**
+     * 从实体提取染色颜色。用于支持 Bedrock 的 change_color 材质效果。
+     */
+    @Nullable
+    private float[] entityTintColor() {
+        if (entity instanceof Sheep sheep) {
+            var dyeColor = sheep.getColor();
+            if (dyeColor != null) {
+                float[] diffuse = dyeColor.getTextureDiffuseColors();
+                return new float[]{diffuse[0], diffuse[1], diffuse[2], 1.0F};
+            }
+        }
+        return null;
     }
 
     public boolean render() {

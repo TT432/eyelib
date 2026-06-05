@@ -78,4 +78,38 @@ public class NativeImageIO {
         }
         return image;
     }
+
+    /**
+     * 深拷贝 NativeImage，用于 download 后传递给外部持有（避免 try-with-resources 释放）。
+     */
+    public static NativeImage copyImage(NativeImage source) {
+        NativeImage copy = new NativeImage(source.format(), source.getWidth(), source.getHeight(), false);
+        for (int y = 0; y < source.getHeight(); y++) {
+            for (int x = 0; x < source.getWidth(); x++) {
+                copy.setPixelRGBA(x, y, source.getPixelRGBA(x, y));
+            }
+        }
+        return copy;
+    }
+
+    /**
+     * 将 alpha 值二值化：有颜色内容的像素 → alpha 255，纯透明 → alpha 0。
+     * 解决 Bedrock addon 纹理使用低 alpha（如 alpha=3）做边缘抗锯齿，
+     * 以及部分像素（如眼睛）被错误保存为 alpha=0 但颜色非空的问题。
+     */
+    public void clampAlphaToBinary(NativeImage image) {
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                int rgba = image.getPixelRGBA(x, y);
+                int alpha = (rgba >> 24) & 0xFF;
+                if (alpha < 255) {
+                    // 有颜色内容（任何 RGB 通道非零）→ 设为完全不透明
+                    int rgb = rgba & 0x00FFFFFF;
+                    if (rgb != 0 || alpha > 0) {
+                        image.setPixelRGBA(x, y, rgba | 0xFF000000);
+                    }
+                }
+            }
+        }
+    }
 }

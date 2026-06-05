@@ -8,6 +8,7 @@ import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibmodel.Model;
 import lombok.Setter;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author TT432
@@ -51,17 +52,22 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
         bakedBone.transformNormal(last.normal());
 
         if (renderParams.consumer() != null) {
-            visitVertex(bakedBone, renderParams.consumer(), renderParams.overlay(), renderParams.light());
+            float[] tint = renderParams.tintColor();
+            visitVertex(bakedBone, renderParams.consumer(), renderParams.overlay(), renderParams.light(), tint);
         }
     }
 
-    static void visitVertex(BakedModel.BakedBone bakedBone, VertexConsumer consumer, int overlay, int light) {
+    static void visitVertex(BakedModel.BakedBone bakedBone, VertexConsumer consumer, int overlay, int light, @Nullable float[] tintColor) {
+        float r = 1.0F, g = 1.0F, b = 1.0F, a = 1.0F;
+        if (tintColor != null) {
+            r = tintColor[0]; g = tintColor[1]; b = tintColor[2]; a = tintColor[3];
+        }
         for (int nIdx = 0; nIdx < bakedBone.vertexSize(); nIdx++) {
             consumer.vertex(
                     bakedBone.positionResult()[nIdx * 3],
                     bakedBone.positionResult()[nIdx * 3 + 1],
                     bakedBone.positionResult()[nIdx * 3 + 2],
-                    1, 1, 1, 1,
+                    r, g, b, a,
                     bakedBone.u()[nIdx], bakedBone.v()[nIdx], overlay, light,
                     bakedBone.normalResult()[nIdx * 3],
                     bakedBone.normalResult()[nIdx * 3 + 1],
