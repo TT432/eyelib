@@ -1,5 +1,6 @@
 package io.github.tt432.eyelibimporter.addon;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
@@ -31,15 +32,22 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.zip.ZipFile;
 
-/** Bedrock 附加包的加载器，支持目录和压缩包（zip/mcpack/mcaddon）。
- * @author TT432 */
+/**
+ * Bedrock 附加包的加载器，支持目录和压缩包（zip/mcpack/mcaddon）。
+ * <p>
+ * 压缩包内容通过 ZipFile 流式读取，保留在内存中，不再解压到磁盘。
+ *
+ * @author TT432
+ */
 @NullMarked
 public final class BedrockAddonLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(BedrockAddonLoader.class);
@@ -48,18 +56,18 @@ public final class BedrockAddonLoader {
     }
 
     public static BedrockAddon load(Path source) throws IOException {
-        List<Path> temporaryDirectories = new ArrayList<>();
+        List<PackFiles> packFilesList = new ArrayList<>();
+        List<ZipFile> openZips = new ArrayList<>();
         try {
-            List<Path> packRoots = new ArrayList<>();
-            collectPackRoots(source, packRoots, temporaryDirectories);
-            packRoots.sort(Comparator.comparing(path -> path.toAbsolutePath().normalize().toString()));
+            collectPackRoots(source, packFilesList, openZips);
+            packFilesList.sort(Comparator.comparing(pf -> pf.sourceName()));
 
             List<BedrockAddonPack> unsortedPacks = new ArrayList<>();
             List<BedrockAddonWarning> warnings = new ArrayList<>();
             LinkedHashMap<String, BedrockUnmanagedResource> unmanagedResources = new LinkedHashMap<>();
 
-            for (Path packRoot : packRoots) {
-                BedrockAddonPack pack = loadPack(packRoot);
+            for (PackFiles pf : packFilesList) {
+                BedrockAddonPack pack = loadPack(pf.sourceName(), pf.entries());
                 unsortedPacks.add(pack);
             }
 
@@ -75,8 +83,8 @@ public final class BedrockAddonLoader {
 
             return new BedrockAddon(packs, warnings, unmanagedResources, aggregate);
         } finally {
-            for (Path temporaryDirectory : temporaryDirectories) {
-                deleteRecursively(temporaryDirectory);
+            for (ZipFile zf : openZips) {
+                try { zf.close(); } catch (IOException ignored) {}
             }
         }
     }
@@ -126,16 +134,35 @@ public final class BedrockAddonLoader {
 
     // Pack 加载核心
 
-    private static BedrockAddonPack loadPack(Path packRoot) throws IOException {
-        JsonObject manifestJson = readJsonFile(packRoot.resolve("manifest.json"));
+    /**
+     * 从文件条目列表加载一个包。
+     *
+     * @param sourceName 来源名称（用于警告/日志）
+     * @param allEntries 包内所有文件条目
+     */
+    private static BedrockAddonPack loadPack(String sourceName, List<FileEntry> allEntries) throws IOException {
+        // 找到 manifest.json
+        FileEntry manifestEntry = allEntries.stream()
+                .filter(e -> e.lowerEffectivePath().equals("manifest.json"))
+                .findFirst()
+                .orElseThrow(() -> new IOException("Missing manifest.json in pack: " + sourceName));
+
+        JsonObject manifestJson = readJsonFile(manifestEntry);
         BedrockPackManifest manifest = BedrockPackManifest.parse(manifestJson);
         String selectedSubpack = selectSubpack(manifest.subpacks());
-        PackAccumulator acc = new PackAccumulator(packRoot);
+        PackAccumulator acc = new PackAccumulator(sourceName);
 
-        warnForUnmanagedManifestFields(packRoot, manifest, acc.warnings);
+        warnForUnmanagedManifestFields(sourceName, manifest, acc.warnings);
 
-        List<FileEntry> files = collectFiles(packRoot, selectedSubpack);
-        for (FileEntry entry : files) {
+        // 按子包过滤
+        List<FileEntry> entries = allEntries.stream()
+                .filter(e -> {
+                    String subpackFolder = extractSubpackFolder(e.relativePath());
+                    return selectedSubpack == null || subpackFolder == null || subpackFolder.equals(selectedSubpack);
+                })
+                .toList();
+
+        for (FileEntry entry : entries) {
             if (entry.lowerEffectivePath().equals("manifest.json")) {
                 continue;
             }
@@ -158,26 +185,6 @@ public final class BedrockAddonLoader {
         return acc.build(manifest, selectedSubpack);
     }
 
-    private static List<FileEntry> collectFiles(Path packRoot, @Nullable String selectedSubpack) throws IOException {
-        List<Path> raw = new ArrayList<>();
-        try (var stream = Files.walk(packRoot)) {
-            stream.filter(Files::isRegularFile).forEach(raw::add);
-        }
-        raw.sort(Comparator.comparing(path -> normalize(packRoot.relativize(path).toString())));
-
-        List<FileEntry> entries = new ArrayList<>();
-        for (Path file : raw) {
-            String relativePath = normalize(packRoot.relativize(file).toString());
-            String subpackFolder = extractSubpackFolder(relativePath);
-            if (selectedSubpack != null && subpackFolder != null && !subpackFolder.equals(selectedSubpack)) {
-                continue;
-            }
-            String effectivePath = stripSubpackPrefix(relativePath);
-            entries.add(new FileEntry(file, relativePath, effectivePath));
-        }
-        return entries;
-    }
-
     /** 按文件类型分发到对应的解析器。 */
     private static void processEntry(PackAccumulator acc, FileEntry entry) throws IOException {
         switch (entry.family()) {
@@ -189,34 +196,59 @@ public final class BedrockAddonLoader {
             case PARTICLE ->                acc.parseAndStore(entry, BrParticle.CODEC, acc.particleFiles);
             case RENDER_CONTROLLER -> {
                 BrRenderControllers controllers = BrRenderControllers.CODEC.parse(JsonOps.INSTANCE,
-                        readJsonFile(entry.file())).getOrThrow(false, IllegalArgumentException::new);
+                        readJsonElement(entry)).getOrThrow(false, IllegalArgumentException::new);
                 mergeRenderControllers(acc.renderControllerFiles, entry.effectivePath(), controllers.renderControllers());
             }
-            case MODEL ->
-                acc.modelFiles.put(entry.effectivePath(),
-                        new BedrockImportedModels(new LinkedHashMap<>(ModelImporter.importFile(entry.file()))));
+            case MODEL -> {
+                // 优先用 BedrockGeometryImporter.importJson 从内存 JSON 读取
+                try {
+                    JsonObject json = readJsonFile(entry);
+                    acc.modelFiles.put(entry.effectivePath(),
+                            new BedrockImportedModels(new LinkedHashMap<>(BedrockGeometryImporter.importJson(json))));
+                } catch (Exception ignored) {
+                    // fallback: 写入临时文件后调用 ModelImporter.importFile
+                    Path modelFile = entry.file();
+                    if (modelFile == null) {
+                        modelFile = Files.createTempFile("eyelib-model-", ".json");
+                        try {
+                            Files.write(modelFile, entry.dataSupplier().get());
+                        } catch (IOException ex) {
+                            Files.deleteIfExists(modelFile);
+                            throw ex;
+                        }
+                    }
+                    try {
+                        acc.modelFiles.put(entry.effectivePath(),
+                                new BedrockImportedModels(new LinkedHashMap<>(ModelImporter.importFile(modelFile))));
+                    } finally {
+                        if (entry.dataSupplier() != null) {
+                            Files.deleteIfExists(modelFile);
+                        }
+                    }
+                }
+            }
             case SOUND_INDEX ->
-                acc.soundIndexFiles.put(entry.effectivePath(), BrSoundIndex.parse(readJsonFile(entry.file())));
+                acc.soundIndexFiles.put(entry.effectivePath(), BrSoundIndex.parse(readJsonFile(entry)));
             case SOUND_DEFINITION ->
-                acc.soundDefinitionFiles.put(entry.effectivePath(), BrSoundDefinitions.parse(readJsonFile(entry.file())));
+                acc.soundDefinitionFiles.put(entry.effectivePath(), BrSoundDefinitions.parse(readJsonFile(entry)));
             case LOCALIZATION -> {
                 if (entry.lowerEffectivePath().endsWith("languages.json")) break;
-                acc.languageFiles.put(entry.effectivePath(), BrLanguageFile.parse(Files.readString(entry.file(), StandardCharsets.UTF_8)));
+                acc.languageFiles.put(entry.effectivePath(), BrLanguageFile.parse(readString(entry)));
             }
             case BEHAVIOR_ENTITY ->
-                acc.behaviorEntityFiles.put(entry.effectivePath(), BrBehaviorEntityFile.parse(readJsonFile(entry.file())));
+                acc.behaviorEntityFiles.put(entry.effectivePath(), BrBehaviorEntityFile.parse(readJsonFile(entry)));
             case SPAWN_RULE ->
-                acc.spawnRulesFiles.put(entry.effectivePath(), BrSpawnRule.parse(readJsonFile(entry.file())));
+                acc.spawnRulesFiles.put(entry.effectivePath(), BrSpawnRule.parse(readJsonFile(entry)));
             case SOUND_FILE ->
                 acc.soundFiles.put(entry.effectivePath(), new BedrockBinaryAsset(extensionOf(entry.effectivePath()),
-                        Files.readAllBytes(entry.file())));
+                        readBytes(entry)));
             case TEXTURE_INDEX ->
                 acc.textureIndexFiles.put(entry.effectivePath(),
-                        new BrTextureIndexFile(BedrockResourceValue.fromJsonElement(readJsonElement(entry.file()))));
+                        new BrTextureIndexFile(BedrockResourceValue.fromJsonElement(readJsonElement(entry))));
             case TEXTURE_METADATA ->
                 acc.textureMetadataFiles.put(entry.effectivePath(),
                         new BrTextureMetadataFile((BedrockResourceValue.ObjectValue)
-                                BedrockResourceValue.fromJsonElement(readJsonFile(entry.file()))));
+                                BedrockResourceValue.fromJsonElement(readJsonFile(entry))));
             case RECIPE ->
                 acc.parseAndStore(entry, BrRecipe.CODEC, acc.recipeFiles);
             case LOOT_TABLE ->
@@ -228,7 +260,7 @@ public final class BedrockAddonLoader {
             case TRADING ->
                 acc.parseAndStore(entry, BrTrading.CODEC, acc.tradeFiles);
             case SPLASHES ->
-                acc.splashIndex = BedrockResourceValue.fromJsonElement(readJsonFile(entry.file()));
+                acc.splashIndex = BedrockResourceValue.fromJsonElement(readJsonFile(entry));
             case BRARCHIVE ->
                 loadBrarchive(acc, entry);
             default ->
@@ -241,7 +273,7 @@ public final class BedrockAddonLoader {
     /** 单个包加载过程中的资源容器。 */
     @NullMarked
     static final class PackAccumulator {
-        final Path packRoot;
+        final String sourceName;
         final List<BedrockAddonWarning> warnings = new ArrayList<>();
 
         final LinkedHashMap<String, BrAnimationSet> animationFiles = new LinkedHashMap<>();
@@ -270,18 +302,17 @@ public final class BedrockAddonLoader {
         @Nullable ImportedImageData packIcon;
         @Nullable BedrockResourceValue splashIndex;
 
-        PackAccumulator(Path packRoot) {
-            this.packRoot = packRoot;
+        PackAccumulator(String sourceName) {
+            this.sourceName = sourceName;
         }
 
         String sourceName() {
-            Path fname = packRoot.getFileName();
-            return fname == null ? packRoot.toString() : fname.toString();
+            return sourceName;
         }
 
         /** 通用 JSON 解析：读文件 → Codec.parse → 放入目标 map（effectivePath 为 key）。解析失败时回退为未托管资源。 */
         <T> void parseAndStore(FileEntry entry, Codec<T> codec, LinkedHashMap<String, T> dest) throws IOException {
-            JsonObject json = readJsonFile(entry.file());
+            JsonObject json = readJsonFile(entry);
             DataResult<T> result = codec.parse(JsonOps.INSTANCE, json);
             if (result.error().isPresent()) {
                 captureUnmanaged(this, entry, BedrockUnmanagedReason.SCHEMA_PARSE_FAILED, true,
@@ -292,7 +323,7 @@ public final class BedrockAddonLoader {
         }
 
         void loadPackIcon(FileEntry entry) throws IOException {
-            byte[] data = Files.readAllBytes(entry.file());
+            byte[] data = readBytes(entry);
             try {
                 packIcon = ImportedImageData.decodePng(data);
             } catch (RuntimeException e) {
@@ -306,7 +337,7 @@ public final class BedrockAddonLoader {
         }
 
         void loadTexture(FileEntry entry) throws IOException {
-            byte[] data = Files.readAllBytes(entry.file());
+            byte[] data = readBytes(entry);
             try {
                 if (entry.lowerEffectivePath().endsWith(".tga")) {
                     textures.put(entry.effectivePath(), Objects.requireNonNull(ImportedImageData.decodeTga(data)));
@@ -339,18 +370,33 @@ public final class BedrockAddonLoader {
         }
     }
 
-    // 文件条目$
+    // 文件条目
 
-    /** 包中一个待处理文件的元数据。 */
+    /**
+     * 包中一个待处理文件的元数据。
+     * 支持三种来源：磁盘路径（fromPath）、ZIP 引用（fromZipRef）。
+     * ZIP 模式下内容按需读取，不预加载到内存。
+     */
     private record FileEntry(
-            Path file,
+            @Nullable Path file,
             String relativePath,
-            String effectivePath
+            String effectivePath,
+            @Nullable Supplier<byte[]> dataSupplier
     ) {
-        FileEntry(Path file, String relativePath, String effectivePath) {
-            this.file = file;
-            this.relativePath = relativePath;
-            this.effectivePath = effectivePath;
+        /** 从磁盘路径创建文件条目（内容延迟读取）。 */
+        static FileEntry fromPath(Path file, String relativePath, String effectivePath) {
+            return new FileEntry(file, relativePath, effectivePath, null);
+        }
+
+        /** 从 ZIP 引用创建文件条目（内容在首次访问时才从 ZipFile 读取）。 */
+        static FileEntry fromZipRef(ZipFile zf, ZipEntry ze, String relativePath, String effectivePath) {
+            return new FileEntry(null, relativePath, effectivePath, () -> {
+                try {
+                    return readZipEntryBytes(zf, ze);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
         }
 
         String lowerEffectivePath() {
@@ -362,11 +408,30 @@ public final class BedrockAddonLoader {
         }
     }
 
+    // 包文件集合
+
+    /** 一个包的来源名称及其文件条目列表。 */
+    private record PackFiles(String sourceName, List<FileEntry> entries) {
+    }
+
     // BrArchive 加载
 
     @SuppressWarnings("unchecked")
     private static void loadBrarchive(PackAccumulator acc, FileEntry entry) throws IOException {
-        byte[] jsonBytes = BrArchiveDecoder.extractJson(entry.file());
+        byte[] jsonBytes;
+        // BrArchiveDecoder.extractJson 只接受 Path，因此非磁盘来源需写入临时文件
+        if (entry.dataSupplier() != null) {
+            Path tempFile = Files.createTempFile("eyelib-brarchive-", ".bin");
+            try {
+                Files.write(tempFile, entry.dataSupplier().get());
+                jsonBytes = BrArchiveDecoder.extractJson(tempFile);
+            } finally {
+                Files.deleteIfExists(tempFile);
+            }
+        } else {
+            jsonBytes = BrArchiveDecoder.extractJson(entry.file());
+        }
+
         if (jsonBytes.length == 0) {
             return;
         }
@@ -550,7 +615,7 @@ public final class BedrockAddonLoader {
         }
         if (!element.isJsonObject()) return Map.of();
         var merged = new LinkedHashMap<String, BrAnimationControllerSchema>();
-        for (Map.Entry<String, com.google.gson.JsonElement> je : element.getAsJsonObject().entrySet()) {
+        for (Map.Entry<String, JsonElement> je : element.getAsJsonObject().entrySet()) {
             if (!je.getKey().startsWith("controller.")) continue;
             try {
                 DataResult<BrAnimationControllerSchema> controllerResult =
@@ -574,7 +639,7 @@ public final class BedrockAddonLoader {
         var merged = new LinkedHashMap<String, BrRenderControllerEntry>();
         for (String objectJson : extractNamedObjects(json, "render_controllers")) {
             JsonObject controllers = parseJsonLenient(objectJson).getAsJsonObject();
-            for (Map.Entry<String, com.google.gson.JsonElement> je : controllers.entrySet()) {
+            for (Map.Entry<String, JsonElement> je : controllers.entrySet()) {
                 try {
                     DataResult<BrRenderControllerEntry> result =
                             BrRenderControllerEntry.CODEC.parse(JsonOps.INSTANCE, je.getValue());
@@ -611,7 +676,7 @@ public final class BedrockAddonLoader {
                                           BedrockUnmanagedReason reason,
                                           boolean parseFailure,
                                           @Nullable String parseMessage) throws IOException {
-        BedrockResourceContent content = readContent(entry.file(), entry.family());
+        BedrockResourceContent content = readContent(entry);
         acc.unmanagedResources.put(entry.relativePath(),
                 new BedrockUnmanagedResource(entry.family(), entry.relativePath(), content, reason));
         acc.warnings.add(new BedrockAddonWarning(
@@ -623,20 +688,19 @@ public final class BedrockAddonLoader {
                         : "Resource is retained but unmanaged because: " + reason));
     }
 
-    // Manifest$
+    // Manifest
 
-    private static void warnForUnmanagedManifestFields(Path packRoot, BedrockPackManifest manifest,
+    private static void warnForUnmanagedManifestFields(String sourceName, BedrockPackManifest manifest,
                                                         List<BedrockAddonWarning> warnings) {
-        String source = packRoot.getFileName() == null ? packRoot.toString() : packRoot.getFileName().toString();
         manifest.extraFields().forEach((key, value) -> warnings.add(new BedrockAddonWarning(
                 BedrockAddonWarningSeverity.WARNING,
                 BedrockAddonWarningCode.MANIFEST_FIELD_UNMANAGED,
-                source, "manifest.json",
+                sourceName, "manifest.json",
                 "Manifest top-level field is retained but not modeled semantically: " + key)));
         manifest.metadata().extraFields().forEach((key, value) -> warnings.add(new BedrockAddonWarning(
                 BedrockAddonWarningSeverity.WARNING,
                 BedrockAddonWarningCode.MANIFEST_FIELD_UNMANAGED,
-                source, "manifest.json",
+                sourceName, "manifest.json",
                 "Manifest metadata field is retained but not modeled semantically: metadata." + key)));
     }
 
@@ -650,7 +714,7 @@ public final class BedrockAddonLoader {
         };
     }
 
-    // 依赖排序$
+    // 依赖排序
 
     private static List<BedrockAddonPack> sortPacksByDependencies(List<BedrockAddonPack> packs,
                                                                    List<BedrockAddonWarning> warnings) {
@@ -710,7 +774,7 @@ public final class BedrockAddonLoader {
 
     // BrArchive 辅助函数
 
-    private static void normalizeRenderControllers(com.google.gson.JsonElement root) {
+    private static void normalizeRenderControllers(JsonElement root) {
         if (!root.isJsonObject()) return;
         var obj = root.getAsJsonObject();
         for (String key : obj.keySet()) {
@@ -723,7 +787,7 @@ public final class BedrockAddonLoader {
             var arr = rc.getAsJsonArray();
             var normalized = new com.google.gson.JsonArray();
             var conditions = new com.google.gson.JsonObject();
-            for (com.google.gson.JsonElement el : arr) {
+            for (JsonElement el : arr) {
                 if (el.isJsonPrimitive()) {
                     normalized.add(el);
                 } else if (el.isJsonObject()) {
@@ -731,7 +795,7 @@ public final class BedrockAddonLoader {
                     if (!o.keySet().isEmpty()) {
                         String ctrlName = o.keySet().iterator().next();
                         normalized.add(new com.google.gson.JsonPrimitive(ctrlName));
-                        com.google.gson.JsonElement condVal = o.get(ctrlName);
+                        JsonElement condVal = o.get(ctrlName);
                         if (condVal != null && condVal.isJsonPrimitive()) {
                             conditions.addProperty(ctrlName, condVal.getAsString());
                         }
@@ -817,18 +881,55 @@ public final class BedrockAddonLoader {
         return -1;
     }
 
-    private static BedrockResourceContent readContent(Path file, BedrockResourceFamily family) throws IOException {
-        return switch (family) {
+    /**
+     * 从 FileEntry 读取资源内容。根据 data / file 选择不同读取方式。
+     */
+    private static BedrockResourceContent readContent(FileEntry entry) throws IOException {
+        return switch (entry.family()) {
             case SOUND_INDEX, SOUND_DEFINITION, BEHAVIOR_ENTITY, ITEM, BLOCK, RECIPE, LOOT_TABLE, SPAWN_RULE, TRADING,
                  FEATURE, FEATURE_RULE, STRUCTURE, SCRIPT, UI, FOG, BIOME, TEXTURE_INDEX, TEXTURE_METADATA, UNKNOWN_JSON ->
-                    new BedrockResourceContent.StructuredContent(BedrockResourceValue.fromJsonElement(readJsonElement(file)));
+                    new BedrockResourceContent.StructuredContent(BedrockResourceValue.fromJsonElement(readJsonElement(entry)));
             case LOCALIZATION, UNKNOWN_TEXT ->
-                    new BedrockResourceContent.TextContent(Files.readString(file, StandardCharsets.UTF_8));
-            default -> new BedrockResourceContent.BinaryContent(Files.readAllBytes(file));
+                    new BedrockResourceContent.TextContent(readString(entry));
+            default -> new BedrockResourceContent.BinaryContent(readBytes(entry));
         };
     }
 
-    // I/O 工具$
+    // 统一读取工具方法
+
+    /** 从 FileEntry 读取 JSON 对象。优先从 Supplier 获取数据，否则读磁盘文件。 */
+    private static JsonObject readJsonFile(FileEntry entry) throws IOException {
+        if (entry.dataSupplier() != null) {
+            return JsonParser.parseString(new String(entry.dataSupplier().get(), StandardCharsets.UTF_8)).getAsJsonObject();
+        }
+        return readJsonFile(entry.file());
+    }
+
+    /** 从 FileEntry 读取任意 JSON 元素。优先从 Supplier 获取数据，否则读磁盘文件。 */
+    private static JsonElement readJsonElement(FileEntry entry) throws IOException {
+        if (entry.dataSupplier() != null) {
+            return JsonParser.parseString(new String(entry.dataSupplier().get(), StandardCharsets.UTF_8));
+        }
+        return readJsonElement(entry.file());
+    }
+
+    /** 从 FileEntry 读取 UTF-8 字符串。优先从 Supplier 获取数据，否则读磁盘文件。 */
+    private static String readString(FileEntry entry) throws IOException {
+        if (entry.dataSupplier() != null) {
+            return new String(entry.dataSupplier().get(), StandardCharsets.UTF_8);
+        }
+        return Files.readString(entry.file(), StandardCharsets.UTF_8);
+    }
+
+    /** 从 FileEntry 读取字节数组。优先从 Supplier 获取数据，否则读磁盘文件。 */
+    private static byte[] readBytes(FileEntry entry) throws IOException {
+        if (entry.dataSupplier() != null) {
+            return entry.dataSupplier().get();
+        }
+        return Files.readAllBytes(entry.file());
+    }
+
+    // I/O 工具（保留基于 Path 的重载以供内部使用）
 
     private static String extensionOf(String relativePath) {
         int index = relativePath.lastIndexOf('.');
@@ -841,13 +942,13 @@ public final class BedrockAddonLoader {
         }
     }
 
-    private static com.google.gson.JsonElement readJsonElement(Path path) throws IOException {
+    private static JsonElement readJsonElement(Path path) throws IOException {
         try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             return JsonParser.parseReader(reader);
         }
     }
 
-    private static com.google.gson.JsonElement parseJsonLenient(String json) {
+    private static JsonElement parseJsonLenient(String json) {
         var stringReader = new java.io.StringReader(json);
         var jsonReader = new com.google.gson.stream.JsonReader(stringReader);
         jsonReader.setLenient(true);
@@ -860,7 +961,13 @@ public final class BedrockAddonLoader {
 
     // Zip / 目录工具
 
-    private static void collectPackRoots(Path source, List<Path> packRoots, List<Path> temporaryDirectories)
+    /**
+     * 收集源路径中的所有包根目录文件条目。
+     * <p>
+     * 对于压缩包（zip/mcpack/mcaddon），使用 ZipFile 流式读取，内容按需加载。
+     * 对于目录，递归搜索含有 manifest.json 的包根目录。
+     */
+    private static void collectPackRoots(Path source, List<PackFiles> packFilesList, List<ZipFile> openZips)
             throws IOException {
         if (!Files.exists(source)) {
             throw new IOException("Source does not exist: " + source);
@@ -868,19 +975,23 @@ public final class BedrockAddonLoader {
         if (Files.isRegularFile(source)) {
             String fileName = source.getFileName().toString().toLowerCase(Locale.ROOT);
             if (fileName.equals("manifest.json")) {
-                packRoots.add(source.getParent());
+                // 单个 manifest.json 文件，处理其父目录
+                Path parent = source.getParent();
+                if (parent != null) {
+                    packFilesList.add(collectFilesFromDir(parent));
+                }
                 return;
             }
             if (isArchive(fileName)) {
-                Path extracted = extractArchive(source);
-                temporaryDirectories.add(extracted);
-                collectPackRoots(extracted, packRoots, temporaryDirectories);
+                // 使用 ZipFile 流式读取，不解压到磁盘
+                collectFilesFromZip(source, packFilesList, openZips);
                 return;
             }
             throw new IOException("Unsupported Bedrock addon source: " + source);
         }
+        // 目录处理
         if (Files.exists(source.resolve("manifest.json"))) {
-            packRoots.add(source);
+            packFilesList.add(collectFilesFromDir(source));
             return;
         }
         List<Path> children = new ArrayList<>();
@@ -889,54 +1000,117 @@ public final class BedrockAddonLoader {
         }
         children.sort(Comparator.comparing(path -> path.getFileName().toString().toLowerCase(Locale.ROOT)));
         for (Path child : children) {
-            if (Files.isDirectory(child)) {
-                collectPackRoots(child, packRoots, temporaryDirectories);
-                continue;
-            }
-            if (isArchive(child.getFileName().toString().toLowerCase(Locale.ROOT))) {
-                Path extracted = extractArchive(child);
-                temporaryDirectories.add(extracted);
-                collectPackRoots(extracted, packRoots, temporaryDirectories);
-            }
+            collectPackRoots(child, packFilesList, openZips);
         }
+    }
+
+    /**
+     * 从磁盘目录收集文件条目。
+     * 每个文件对应一个 FileEntry.fromPath，内容暂不读入内存（延迟读取）。
+     */
+    private static PackFiles collectFilesFromDir(Path packRoot) throws IOException {
+        String sourceName = Optional.ofNullable(packRoot.getFileName())
+                .map(Path::toString).orElse(packRoot.toString());
+        List<FileEntry> entries = new ArrayList<>();
+        try (var stream = Files.walk(packRoot)) {
+            stream.filter(Files::isRegularFile).forEach(file -> {
+                String relativePath = normalize(packRoot.relativize(file).toString());
+                String effectivePath = stripSubpackPrefix(relativePath);
+                entries.add(FileEntry.fromPath(file, relativePath, effectivePath));
+            });
+        }
+        entries.sort(Comparator.comparing(e -> e.relativePath()));
+        return new PackFiles(sourceName, entries);
+    }
+
+    /**
+     * 从压缩包（zip/mcpack/mcaddon）收集文件条目。
+     * 所有条目内容读入内存（byte[]），不写入磁盘。
+     * <p>
+     * - .mcpack 风格：根目录含 manifest.json，所有 entry 属于同一个包
+     * - .mcaddon 风格：子目录（behavior_pack/、resource_pack/）各自含 manifest.json
+     */
+    private static void collectFilesFromZip(Path source, List<PackFiles> packFilesList, List<ZipFile> openZips) throws IOException {
+        String archiveName = source.getFileName().toString();
+        String baseName = archiveName.contains(".")
+                ? archiveName.substring(0, archiveName.lastIndexOf('.'))
+                : archiveName;
+
+        ZipFile zf = new ZipFile(source.toFile());
+        openZips.add(zf); // 由 load() 的 finally 块统一关闭
+
+        // 收集所有文件条目
+        List<ZipEntry> allEntries = new ArrayList<>();
+        Enumeration<? extends ZipEntry> en = zf.entries();
+        while (en.hasMoreElements()) {
+            ZipEntry ze = en.nextElement();
+            if (ze.isDirectory()) continue;
+            allEntries.add(ze);
+        }
+
+        // mcpack 风格：根目录含 manifest.json → 所有 entry 属于同一个包
+        boolean hasRootManifest = allEntries.stream()
+                .anyMatch(e -> normalize(e.getName()).equals("manifest.json"));
+        if (hasRootManifest) {
+            List<FileEntry> entries = new ArrayList<>();
+            for (ZipEntry ze : allEntries) {
+                String relativePath = normalize(ze.getName());
+                String effectivePath = stripSubpackPrefix(relativePath);
+                entries.add(FileEntry.fromZipRef(zf, ze, relativePath, effectivePath));
+            }
+            entries.sort(Comparator.comparing(e -> e.relativePath()));
+            packFilesList.add(new PackFiles(baseName, entries));
+            return;
+        }
+
+        // mcaddon 风格：按顶级目录分组，各组独立含 manifest.json
+        Map<String, List<ZipEntry>> groups = new LinkedHashMap<>();
+        for (ZipEntry ze : allEntries) {
+            String name = normalize(ze.getName());
+            String topDir = topLevelDir(name);
+            groups.computeIfAbsent(topDir, k -> new ArrayList<>()).add(ze);
+        }
+        for (Map.Entry<String, List<ZipEntry>> group : groups.entrySet()) {
+            String prefix = group.getKey();
+            boolean hasManifest = group.getValue().stream()
+                    .anyMatch(e -> normalize(stripPrefix(e.getName(), prefix)).equals("manifest.json"));
+            if (!hasManifest) continue;
+
+            List<FileEntry> entries = new ArrayList<>();
+            for (ZipEntry ze : group.getValue()) {
+                String relativePath = normalize(ze.getName());
+                String innerPath = stripPrefix(relativePath, prefix);
+                String effectivePath = stripSubpackPrefix(innerPath);
+                entries.add(FileEntry.fromZipRef(zf, ze, relativePath, effectivePath));
+            }
+            entries.sort(Comparator.comparing(e -> e.relativePath()));
+            packFilesList.add(new PackFiles(baseName + "/" + prefix, entries));
+        }
+    }
+
+    /** 读取 ZipEntry 的全部字节。 */
+    private static byte[] readZipEntryBytes(ZipFile zf, ZipEntry ze) throws IOException {
+        try (InputStream in = zf.getInputStream(ze)) {
+            return in.readAllBytes();
+        }
+    }
+
+    /** 取路径的顶级目录（无斜杠则返回空字符串）。 */
+    private static String topLevelDir(String path) {
+        int slash = path.indexOf('/');
+        return slash < 0 ? "" : path.substring(0, slash);
+    }
+
+    /** 移除路径的前缀。如果前缀为空，返回原路径。 */
+    private static String stripPrefix(String path, String prefix) {
+        if (prefix.isEmpty()) return path;
+        if (path.startsWith(prefix + "/")) {
+            return path.substring(prefix.length() + 1);
+        }
+        return path;
     }
 
     private static boolean isArchive(String fileName) {
         return fileName.endsWith(".zip") || fileName.endsWith(".mcpack") || fileName.endsWith(".mcaddon");
-    }
-
-    private static Path extractArchive(Path archive) throws IOException {
-        Path targetDir = Files.createTempDirectory("eyelib-addon-");
-        try (InputStream fis = Files.newInputStream(archive);
-             ZipInputStream zis = new ZipInputStream(fis)) {
-            ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                Path targetPath = targetDir.resolve(entry.getName()).normalize();
-                if (!targetPath.startsWith(targetDir)) {
-                    throw new IOException("Zip entry escapes target directory: " + entry.getName());
-                }
-                if (entry.isDirectory()) {
-                    Files.createDirectories(targetPath);
-                } else {
-                    Path parent = targetPath.getParent();
-                    if (parent != null) Files.createDirectories(parent);
-                    Files.copy(zis, targetPath);
-                }
-                zis.closeEntry();
-            }
-        }
-        return targetDir;
-    }
-
-    private static void deleteRecursively(Path path) throws IOException {
-        if (!Files.exists(path)) return;
-        List<Path> paths = new ArrayList<>();
-        try (var stream = Files.walk(path)) {
-            stream.forEach(paths::add);
-        }
-        paths.sort(Comparator.reverseOrder());
-        for (Path current : paths) {
-            Files.deleteIfExists(current);
-        }
     }
 }
