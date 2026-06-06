@@ -11,6 +11,8 @@ import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -23,6 +25,7 @@ import java.util.function.Supplier;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class EyelibNetworkTransport {
+    private static final Logger LOGGER = LoggerFactory.getLogger(EyelibNetworkTransport.class);
     private static final String PROTOCOL_VERSION = "1";
     private static final String CHANNEL_NAME = "networking";
 
@@ -61,16 +64,28 @@ public final class EyelibNetworkTransport {
                 .add();
     }
 
-    public static void sendToServer(Object packet) {
-        CHANNEL.sendToServer(packet);
-    }
-
     public static void sendToTrackedAndSelf(Entity entity, Object packet) {
-        CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity), packet);
+        try {
+            CHANNEL.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity), packet);
+        } catch (IllegalArgumentException e) {
+            LOGGER.error("Failed to send {} (discarding): {}", packet.getClass().getSimpleName(), e.getMessage());
+        }
     }
 
     public static void sendToPlayer(ServerPlayer player, Object packet) {
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+        try {
+            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+        } catch (IllegalArgumentException e) {
+            LOGGER.error("Failed to send {} (discarding): {}", packet.getClass().getSimpleName(), e.getMessage());
+        }
+    }
+
+    public static void sendToServer(Object packet) {
+        try {
+            CHANNEL.sendToServer(packet);
+        } catch (IllegalArgumentException e) {
+            LOGGER.error("Failed to send {} (discarding): {}", packet.getClass().getSimpleName(), e.getMessage());
+        }
     }
 
     private static <T> BiConsumer<T, Supplier<NetworkEvent.Context>> onClientHandle(Consumer<T> handler) {
