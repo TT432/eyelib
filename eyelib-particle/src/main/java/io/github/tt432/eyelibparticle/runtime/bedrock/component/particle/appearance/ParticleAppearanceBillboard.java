@@ -24,7 +24,7 @@ public record ParticleAppearanceBillboard(
 ) implements ParticleParticleComponent {
     public static final Codec<ParticleAppearanceBillboard> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             MolangValue2.CODEC.fieldOf("size").forGetter(ParticleAppearanceBillboard::size),
-            FaceCameraMode.CODEC.fieldOf("facing_camera_mode").forGetter(ParticleAppearanceBillboard::facingCameraMode),
+            FaceCameraMode.CODEC.optionalFieldOf("facing_camera_mode", FaceCameraMode.ROTATE_XYZ).forGetter(ParticleAppearanceBillboard::facingCameraMode),
             Direction.CODEC.optionalFieldOf("direction", Direction.EMPTY).forGetter(ParticleAppearanceBillboard::direction),
             UV.CODEC.optionalFieldOf("uv", UV.EMPTY).forGetter(ParticleAppearanceBillboard::uv)
     ).apply(ins, ParticleAppearanceBillboard::new));
@@ -196,6 +196,22 @@ public record ParticleAppearanceBillboard(
             @Override
             public void setRotation(ParticleAccess particle, Quaternionf quaternion, CameraAccess camera, float partialTick) {
                 quaternion.rotateY(90 * ParticleMath.DEGREES_TO_RADIANS);
+            }
+        },
+        LOOKAT_DIRECTION {
+            @Override
+            public void setRotation(ParticleAccess particle, Quaternionf quaternion, CameraAccess camera, float partialTick) {
+                Vector3f vel = particle.velocity();
+                if (vel.x == 0 && vel.y == 0 && vel.z == 0) {
+                    quaternion.identity();
+                } else {
+                    Vector3f pp = particle.position();
+                    Vector3f forward = new Vector3f(vel).normalize();
+                    Vector3f up = new Vector3f(0, 1, 0);
+                    if (Math.abs(forward.dot(up)) > 0.999) up = new Vector3f(0, 0, 1);
+                    new Matrix4f().lookAt(pp.x, pp.y, pp.z, pp.x + forward.x, pp.y + forward.y, pp.z + forward.z,
+                            0, 1, 0).invert().getNormalizedRotation(quaternion);
+                }
             }
         };
 
