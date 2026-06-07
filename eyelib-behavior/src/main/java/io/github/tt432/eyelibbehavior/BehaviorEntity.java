@@ -23,7 +23,7 @@ public record BehaviorEntity(
                     RecordCodecBuilder.<ResourceLocation>create(instance3 -> instance3.group(
                             ResourceLocation.CODEC.fieldOf("identifier").forGetter(r -> r)
                     ).apply(instance3, r -> r)).fieldOf("description").forGetter(BehaviorEntity::identifier),
-                    Codec.unboundedMap(Codec.STRING, ComponentGroup.CODEC).fieldOf("component_groups").forGetter(BehaviorEntity::component_groups),
+                    Codec.unboundedMap(Codec.STRING, ComponentGroup.CODEC).optionalFieldOf("component_groups", java.util.Collections.emptyMap()).forGetter(BehaviorEntity::component_groups),
                     BehaviorComponents.CODEC.optionalFieldOf("components", BehaviorComponents.EMPTY).forGetter(BehaviorEntity::components),
                     Codec.unboundedMap(Codec.STRING, LogicNode.CODEC.codec()).optionalFieldOf("events", Collections.emptyMap()).forGetter(BehaviorEntity::events)
             ).apply(instance2, BehaviorEntity::new)).fieldOf("minecraft:entity").forGetter(e -> e)

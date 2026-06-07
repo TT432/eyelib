@@ -94,7 +94,7 @@ public final class BehaviorEntityAssetRegistry {
             for (var entry : rawComponents.values().entrySet()) {
                 String compKey = entry.getKey();
                 BedrockResourceValue compVal = entry.getValue();
-                Component component = parseSingleComponent(compKey, compVal);
+                io.github.tt432.eyelibbehavior.component.Component component = parseSingleComponent(compKey, compVal);
                 if (component != null) {
                     parsed.put(compKey, component);
                 }
@@ -123,10 +123,27 @@ public final class BehaviorEntityAssetRegistry {
             case "minecraft:variant" -> parseVariant(obj);
             case "minecraft:mark_variant" -> parseMarkVariant(obj);
             case "minecraft:health" -> parseHealth(obj);
-            // 可扩展：新组件在这里加 case
             default -> {
-                // 未知组件保留原始数据，不丢失
-                yield new RawComponent(key, bedrockObjectToJson(obj));
+                // 优先用 CODEC dispatch 识别为 typed 组件
+                var jsonObj = bedrockObjectToJson(obj);
+                var singleEntry = "{\"" + key + "\":" + jsonObj + "}";
+                var wrapper = com.google.gson.JsonParser.parseString(singleEntry);
+                try {
+                    @SuppressWarnings("unchecked")
+                    var resultMap = (java.util.Map<String, Component>) ComponentGroup.DISPATCH_CODEC
+                            .parse(com.mojang.serialization.JsonOps.INSTANCE, wrapper)
+                            .getOrThrow(false, s -> {
+                                throw new RuntimeException(s);
+                            });
+                    var typedParsed = resultMap.get(key);
+                    if (typedParsed != null && !(typedParsed instanceof io.github.tt432.eyelibbehavior.component.EmptyComponent)) {
+                        yield typedParsed;
+                    }
+                } catch (Exception e) {
+                    // CODEC 解析失败 → 跳过此组件（后续修正 CODEC 后会重新识别）
+                }
+                // CODEC 无法识别 — 跳过而非存储 RawComponent，避免 encode 时 CCE
+                yield null;
             }
         };
     }
