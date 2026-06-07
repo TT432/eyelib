@@ -60,9 +60,7 @@ public class ModelComponent {
         var matMap = buildMaterialLookupMap();
         var entry = matMap.get(serializableInfo.renderType().getPath());
         if (entry != null) {
-            if (entry.hasBlending(matMap)) return RenderType.entityTranslucent(texture);
-            if (entry.isAlphatest(matMap)) return RenderType.entityCutoutNoCull(texture);
-            return RenderType.entitySolid(texture);
+            return RenderTypeResolver.resolve(texture, entry, matMap);
         }
         return RenderTypeResolver.resolve(serializableInfo.renderType()).factory().apply(texture);
     }
@@ -72,9 +70,7 @@ public class ModelComponent {
         var matMap = buildMaterialLookupMap();
         var entry = matMap.get(serializableInfo.renderType().getPath());
         if (entry != null) {
-            if (entry.hasBlending(matMap)) return false;
-            if (entry.isAlphatest(matMap)) return false;
-            return true;
+            return RenderTypeResolver.isSolid(entry, matMap);
         }
         return RenderTypeResolver.resolve(serializableInfo.renderType()).isSolid();
     }

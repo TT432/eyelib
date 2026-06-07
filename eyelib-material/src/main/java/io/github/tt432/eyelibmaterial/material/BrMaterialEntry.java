@@ -21,7 +21,6 @@ import io.github.tt432.eyelibmaterial.shader.ShaderManager;
 import io.github.tt432.eyelibmaterial.shared.MsaaSupport;
 import io.github.tt432.eyelibmaterial.shared.PrimitiveMode;
 import io.github.tt432.eyelibmaterial.shared.VertexFormatElementEnum;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
@@ -643,11 +642,9 @@ public record BrMaterialEntry(
 
     public RenderType getRenderType(ResourceLocation texture, Map<String, BrMaterialEntry> materials) {
         if (vertexShader.isPresent() && fragmentShader.isPresent()) {
-            return buildCustomRenderType(texture, materials);
+            getOrCompileShader();
         }
-        if (hasBlending(materials)) return RenderType.entityTranslucent(texture);
-        if (isAlphatest(materials)) return RenderType.entityCutoutNoCull(texture);
-        return RenderType.entitySolid(texture);
+        return RenderTypeResolver.resolve(texture, this, materials);
     }
 
     /**
@@ -660,7 +657,7 @@ public record BrMaterialEntry(
 
     public boolean hasBlending(Map<String, BrMaterialEntry> materials) {
         try {
-            return states.toList(this, materials).contains(GLStates.Blending);
+            return BrMaterialResolver.resolve(this, materials).hasState(GLStates.Blending);
         } catch (IllegalStateException e) {
             // 材质继承链存在循环引用，fallback 到仅检查自身状态
             LOGGER.warn("Circular material inheritance detected for {}: {}", name, e.getMessage());
@@ -670,7 +667,7 @@ public record BrMaterialEntry(
 
     public boolean isAlphatest(Map<String, BrMaterialEntry> materials) {
         try {
-            return defines.toList(this, materials).contains("ALPHA_TEST");
+            return BrMaterialResolver.resolve(this, materials).hasDefine("ALPHA_TEST");
         } catch (IllegalStateException e) {
             LOGGER.warn("Circular material inheritance detected for {}: {}", name, e.getMessage());
             return defines.toList(this, Map.of()).contains("ALPHA_TEST");
@@ -745,8 +742,8 @@ public record BrMaterialEntry(
                 false, // affectsCrumbling
                 translucent, // sortOnUpload
                 RenderType.CompositeState.builder()
-                        .setShaderState(new RenderStateShard.ShaderStateShard(() ->
-                                Minecraft.getInstance().gameRenderer.getRendertypeEntitySolidShader()))
+                        .setShaderState(new RenderStateShard.ShaderStateShard(
+                                net.minecraft.client.renderer.GameRenderer::getRendertypeEntitySolidShader))
                         .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
                         .setTransparencyState(getTransparencyState(materials))
                         .setDepthTestState(getDepthTestState())
