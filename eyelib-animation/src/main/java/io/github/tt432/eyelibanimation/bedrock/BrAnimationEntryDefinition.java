@@ -9,6 +9,7 @@ import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
+import io.github.tt432.eyelibmolang.MolangScope;
 import io.github.tt432.eyelibmolang.MolangValue;
 
 import io.github.tt432.eyelibanimation.SoundPlayer;
@@ -16,6 +17,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3f;
+import org.joml.Vector3fc;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -103,7 +105,8 @@ public record BrAnimationEntryDefinition(
                                 AnimationParticleSpawner spawner = scope.getHostContext().get(AnimationParticleSpawner.class).orElse(null);
                                 if (spawner != null) {
                                     String uuid = UUID.randomUUID().toString();
-                                    spawner.spawn(uuid, s, entity.position().toVector3f());
+                                    org.joml.Vector3f position = resolveLocatorPosition(scope, frame.locator().orElse(null), entity);
+                                    spawner.spawn(uuid, s, position);
                                     animationData.owner().particles().add(new RuntimeParticlePlayData(uuid, frame.locator().orElse(null), ticks));
                                 }
                             }
@@ -111,6 +114,42 @@ public record BrAnimationEntryDefinition(
                 )
             );
         });
+    }
+
+    /**
+     * 从 scope 中解析 locator 的世界坐标。
+     * 如果找不到 locator，退回到实体坐标。
+     */
+    public static org.joml.Vector3f resolveLocatorPosition(MolangScope scope, @Nullable String locatorName, Entity entity) {
+        org.joml.Vector3f fallback = entity.position().toVector3f();
+        if (locatorName == null || locatorName.isEmpty()) {
+            return fallback;
+        }
+        try {
+            Object cap = Class.forName("io.github.tt432.eyelib.capability.RenderData")
+                    .getMethod("getComponent", Entity.class)
+                    .invoke(null, entity);
+            if (cap == null) return fallback;
+            java.util.List<?> comps = (java.util.List<?>) cap.getClass()
+                    .getMethod("getModelComponents").invoke(cap);
+            if (comps.isEmpty()) return fallback;
+            Object model = comps.get(0).getClass().getMethod("getModel").invoke(comps.get(0));
+            if (model == null) return fallback;
+            java.util.Map<?, ?> bones = (java.util.Map<?, ?>) model.getClass()
+                    .getMethod("allBones").invoke(model);
+            for (Object bone : bones.values()) {
+                Object locator = bone.getClass().getMethod("locator").invoke(bone);
+                java.util.Map<?, ?> offsets = (java.util.Map<?, ?>) locator.getClass()
+                        .getMethod("offsets").invoke(locator);
+                if (offsets.containsKey(locatorName)) {
+                    org.joml.Vector3fc offset = (org.joml.Vector3fc) offsets.get(locatorName);
+                    // locator offset 是骨骼局部坐标，叠加到实体坐标上作为近似
+                    return fallback.add(offset.x(), offset.y(), offset.z(), new org.joml.Vector3f());
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return fallback;
     }
 
     public static AnimationEffect<MolangValue> timelineEffect(TreeMap<Float, List<MolangValue>> data) {

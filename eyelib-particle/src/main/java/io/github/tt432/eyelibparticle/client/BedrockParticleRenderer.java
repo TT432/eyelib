@@ -43,7 +43,7 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
     @Override
     public void render(BedrockParticleInstance particle) {
         String material = particle.emitter().definition().material();
-        RenderTypeResolver.EntityRenderTypeData factory = RenderTypeResolver.resolve(new ResourceLocation(material));
+        RenderTypeResolver.EntityRenderTypeData factory = RenderTypeResolver.resolveParticle(material);
         ResourceLocation texture = new ResourceLocation(particle.emitter().definition().texture()).withSuffix(".png");
         VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(
                 factory.factory().apply(texture)

@@ -86,7 +86,8 @@ final class BrControllerExecutor {
                     particleEffect.effect().map(clientEntity.particle_effects()::get).ifPresent(effect -> {
                         AnimationParticleSpawner spawner = scope.getHostContext().get(AnimationParticleSpawner.class).orElse(null);
                         if (spawner != null) {
-                            spawner.spawn(uuid, effect, entity.position().toVector3f());
+                            org.joml.Vector3f position = io.github.tt432.eyelibanimation.bedrock.BrAnimationEntryDefinition.resolveLocatorPosition(scope, particleEffect.locator().orElse(null), entity);
+                            spawner.spawn(uuid, effect, position);
                             data.owner().particles().add(new RuntimeParticlePlayData(uuid, particleEffect.locator().orElse(null), ticks));
                         }
                     });
