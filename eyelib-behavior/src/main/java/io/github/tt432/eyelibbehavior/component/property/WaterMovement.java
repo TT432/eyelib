@@ -1,0 +1,20 @@
+package io.github.tt432.eyelibbehavior.component.property;
+
+import com.mojang.serialization.Codec;
+
+/**
+ * minecraft:water_movement — marker component.
+ *
+ * @author TT432
+ */
+@org.jspecify.annotations.NullMarked
+public record WaterMovement() implements io.github.tt432.eyelibbehavior.component.Component {
+    private static final WaterMovement INSTANCE = new WaterMovement();
+
+    public static final Codec<WaterMovement> CODEC = Codec.unit(INSTANCE);
+
+    @Override
+    public String id() {
+        return "water_movement";
+    }
+}

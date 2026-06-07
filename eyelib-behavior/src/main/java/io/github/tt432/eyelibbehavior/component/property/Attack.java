@@ -1,0 +1,29 @@
+package io.github.tt432.eyelibbehavior.component.property;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelibbehavior.component.Component;
+import org.jspecify.annotations.NullMarked;
+
+/**
+ * @author TT432
+ */
+@NullMarked
+public record Attack(
+        String damage,
+        float effect_duration,
+        String effect_name,
+        int effect_amplifier
+) implements Component {
+    public static final Codec<Attack> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+            Codec.STRING.fieldOf("damage").forGetter(Attack::damage),
+            Codec.FLOAT.optionalFieldOf("effect_duration", 0f).forGetter(Attack::effect_duration),
+            Codec.STRING.optionalFieldOf("effect_name", "").forGetter(Attack::effect_name),
+            Codec.INT.optionalFieldOf("effect_amplifier", 0).forGetter(Attack::effect_amplifier)
+    ).apply(ins, Attack::new));
+
+    @Override
+    public String id() {
+        return "attack";
+    }
+}
