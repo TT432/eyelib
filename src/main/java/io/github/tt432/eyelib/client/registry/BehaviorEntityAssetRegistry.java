@@ -11,15 +11,9 @@ import io.github.tt432.eyelibbehavior.BehaviorEntity;
 import io.github.tt432.eyelibbehavior.component.Component;
 import io.github.tt432.eyelibbehavior.component.Health;
 import io.github.tt432.eyelibbehavior.component.MarkVariant;
-import io.github.tt432.eyelibbehavior.component.RawComponent;
 import io.github.tt432.eyelibbehavior.component.Variant;
 import io.github.tt432.eyelibbehavior.component.group.ComponentGroup;
-import io.github.tt432.eyelibbehavior.event.logic.Add;
 import io.github.tt432.eyelibbehavior.event.logic.LogicNode;
-import io.github.tt432.eyelibbehavior.event.logic.Randomize;
-import io.github.tt432.eyelibbehavior.event.logic.Remove;
-import io.github.tt432.eyelibbehavior.event.logic.Sequence;
-import io.github.tt432.eyelibbehavior.event.logic.SequenceEntry;
 import io.github.tt432.eyelibimporter.addon.BedrockResourceValue;
 import io.github.tt432.eyelibimporter.addon.BrBehaviorEntityFile;
 import lombok.AccessLevel;
@@ -28,12 +22,9 @@ import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /** @author TT432 */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -59,31 +50,29 @@ public final class BehaviorEntityAssetRegistry {
             return null;
         }
 
+        // component_groups 通过 DISPATCH_CODEC 解析（与顶层 components 统一）
         var groups = new LinkedHashMap<String, ComponentGroup>();
         BedrockResourceValue.ObjectValue componentGroups = file.componentGroups();
         if (componentGroups != null) {
-            componentGroups.values().forEach((groupKey, groupValue) -> {
-                if (groupValue instanceof BedrockResourceValue.ObjectValue obj) {
-                    var compMap = new LinkedHashMap<String, Component>();
-                    obj.values().forEach((compKey, compVal) -> {
-                        if ("minecraft:variant".equals(compKey) && compVal instanceof BedrockResourceValue.ObjectValue cv) {
-                            var val = cv.values().get("value");
-                            if (val instanceof BedrockResourceValue.NumberValue nv) {
-                                compMap.put("minecraft:variant", new Variant(nv.value().intValue()));
-                            }
+            for (var entry : componentGroups.values().entrySet()) {
+                String groupKey = entry.getKey();
+                if (entry.getValue() instanceof BedrockResourceValue.ObjectValue obj && !obj.values().isEmpty()) {
+                    JsonObject jsonObj = bedrockObjectToJson(obj);
+                    try {
+                        @SuppressWarnings("unchecked")
+                        var compMap = (Map<String, Component>) ComponentGroup.DISPATCH_CODEC
+                                .parse(com.mojang.serialization.JsonOps.INSTANCE, jsonObj)
+                                .getOrThrow(false, s -> {
+                                    throw new RuntimeException(s);
+                                });
+                        if (!compMap.isEmpty()) {
+                            groups.put(groupKey, new ComponentGroup(Map.of("default", compMap)));
                         }
-                        if ("minecraft:mark_variant".equals(compKey) && compVal instanceof BedrockResourceValue.ObjectValue cv) {
-                            var val = cv.values().get("value");
-                            if (val instanceof BedrockResourceValue.NumberValue nv) {
-                                compMap.put("minecraft:mark_variant", new MarkVariant(nv.value().intValue()));
-                            }
-                        }
-                    });
-                    if (!compMap.isEmpty()) {
-                        groups.put(groupKey, new ComponentGroup(Map.of("default", compMap)));
+                    } catch (Exception e) {
+                        // CODEC 解析失败 → 跳过该 group，不影响其他
                     }
                 }
-            });
+            }
         }
 
         // === 新增：解析顶层 components ===
@@ -215,118 +204,22 @@ public final class BehaviorEntityAssetRegistry {
             return Collections.emptyMap();
         }
 
-        Map<String, BedrockResourceValue.ObjectValue> rawEvents = new LinkedHashMap<>();
+        Map<String, LogicNode> result = new LinkedHashMap<>();
         for (var entry : events.values().entrySet()) {
             if (entry.getValue() instanceof BedrockResourceValue.ObjectValue obj) {
-                rawEvents.put(entry.getKey(), obj);
-            }
-        }
-
-        Map<String, LogicNode> result = new LinkedHashMap<>();
-        for (var entry : rawEvents.entrySet()) {
-            LogicNode node = parseSingleEvent(entry.getValue(), rawEvents);
-            if (node != null) {
-                result.put(entry.getKey(), node);
-            }
-        }
-
-        return result;
-    }
-
-    @Nullable
-    private static LogicNode parseSingleEvent(
-            BedrockResourceValue.ObjectValue eventValue,
-            Map<String, BedrockResourceValue.ObjectValue> allRawEvents
-    ) {
-        for (var entry : eventValue.values().entrySet()) {
-            String key = entry.getKey();
-            BedrockResourceValue val = entry.getValue();
-            switch (key) {
-                case "add":
-                    return parseAdd(val);
-                case "remove":
-                    return parseRemove(val);
-                case "sequence":
-                    return parseSequence(val, allRawEvents);
-                case "randomize":
-                    return parseRandomize(val, allRawEvents);
-            }
-        }
-        return null;
-    }
-
-    @Nullable
-    private static Add parseAdd(BedrockResourceValue val) {
-        if (!(val instanceof BedrockResourceValue.ObjectValue obj)) {
-            return null;
-        }
-        BedrockResourceValue groupsVal = obj.values().get("component_groups");
-        if (!(groupsVal instanceof BedrockResourceValue.ArrayValue arr)) {
-            return null;
-        }
-        List<String> groups = arr.values().stream()
-                .map(v -> ((BedrockResourceValue.StringValue) v).value())
-                .toList();
-        return new Add(groups);
-    }
-
-    @Nullable
-    private static Remove parseRemove(BedrockResourceValue val) {
-        if (!(val instanceof BedrockResourceValue.ObjectValue obj)) {
-            return null;
-        }
-        BedrockResourceValue groupsVal = obj.values().get("component_groups");
-        if (!(groupsVal instanceof BedrockResourceValue.ArrayValue arr)) {
-            return null;
-        }
-        List<String> groups = arr.values().stream()
-                .map(v -> ((BedrockResourceValue.StringValue) v).value())
-                .toList();
-        return new Remove(groups);
-    }
-
-    @Nullable
-    private static Randomize parseRandomize(
-            BedrockResourceValue val,
-            Map<String, BedrockResourceValue.ObjectValue> allRawEvents
-    ) {
-        if (!(val instanceof BedrockResourceValue.ArrayValue arr)) {
-            return null;
-        }
-        List<Randomize.Entry> entries = new ArrayList<>();
-        for (BedrockResourceValue item : arr.values()) {
-            if (!(item instanceof BedrockResourceValue.ObjectValue entryObj)) {
-                continue;
-            }
-            BedrockResourceValue weightVal = entryObj.values().get("weight");
-            int weight = weightVal instanceof BedrockResourceValue.NumberValue nv
-                    ? nv.value().intValue() : 0;
-            BedrockResourceValue triggerVal = entryObj.values().get("trigger");
-            if (triggerVal instanceof BedrockResourceValue.StringValue sv) {
-                BedrockResourceValue.ObjectValue targetEvent = allRawEvents.get(sv.value());
-                LogicNode node = targetEvent != null ? parseSingleEvent(targetEvent, allRawEvents) : null;
-                if (node != null) {
-                    entries.add(new Randomize.Entry(weight, node));
+                JsonObject jsonObj = bedrockObjectToJson(obj);
+                try {
+                    var parsed = LogicNode.CODEC.codec()
+                            .parse(com.mojang.serialization.JsonOps.INSTANCE, jsonObj)
+                            .getOrThrow(false, s -> {
+                                throw new RuntimeException(s);
+                            });
+                    result.put(entry.getKey(), parsed);
+                } catch (Exception e) {
+                    // 事件解析失败 → 跳过
                 }
             }
         }
-        return new Randomize(Collections.unmodifiableList(entries));
-    }
-
-    @Nullable
-    private static Sequence parseSequence(
-            BedrockResourceValue val,
-            Map<String, BedrockResourceValue.ObjectValue> allRawEvents
-    ) {
-        if (!(val instanceof BedrockResourceValue.ArrayValue arr)) {
-            return null;
-        }
-        List<SequenceEntry> entries = arr.values().stream()
-                .map(v -> v instanceof BedrockResourceValue.ObjectValue obj
-                        ? parseSingleEvent(obj, allRawEvents) : null)
-                .filter(Objects::nonNull)
-                .map(node -> new SequenceEntry(null, node))
-                .toList();
-        return new Sequence(Collections.unmodifiableList(entries));
+        return result;
     }
 }

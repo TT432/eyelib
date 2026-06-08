@@ -108,7 +108,7 @@ public class EyelibCodec {
                             if (codec == null) {
                                 return DataResult.<S>error(() -> "no codec for " + p.getFirst());
                             }
-                            return codec.fieldOf(p.getFirst()).decode(ops, input);
+                            return codec.decode(ops, input);
                         });
 
                 if (result.isPresent()) {
