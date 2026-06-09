@@ -1,12 +1,13 @@
 # Eyelib Agent Guide
 
 ## Start Here
+- Read :docs/README.md: for the full documentation system navigation.
 - Read :MODULES.md: before planning structural or multi-module changes.
 - Read the nearest package :README.md: before editing files in that subtree.
 - For boundary decisions, read :docs/decisions/0002-module-boundaries.md:.
 
 ## Repository Shape
-- Multi-project :Gradle + Java 17 + Forge: codebase: root runtime module :::, and 10 Gradle subprojects: ::eyelib-animation:, ::eyelib-attachment:, ::eyelib-behavior:, ::eyelib-importer:, ::eyelib-material:, ::eyelib-molang:, ::eyelib-network:, ::eyelib-particle:, ::eyelib-preprocessing:, ::eyelib-util:.
+- Multi-project :Gradle + Java 17 + Forge: codebase: root runtime module :::, and 13 Gradle subprojects: ::eyelib-animation:, ::eyelib-attachment:, ::eyelib-behavior:, ::eyelib-bridge:, ::eyelib-importer:, ::eyelib-material:, ::eyelib-model:, ::eyelib-molang:, ::eyelib-network:, ::eyelib-particle:, ::eyelib-preprocessing:, ::eyelib-track:, ::eyelib-util:.
 - The authoritative dependency graph is each subproject's `build.gradle` `project(:)` edges. Read those before trusting any prose document.
 - Preserve existing core patterns: manager, loader, visitor, and codec.
 
@@ -125,11 +126,7 @@ package ...;
 - `jetbrain_build_project` compiles via IntelliJ. For runtime verification that depends on reobfuscated JARs, use `jetbrain_run_gradle_tasks` with `runClient`.
 
 ## Skill Maintenance
-- Skills in `.opencode/skills/` are living operational knowledge. When a recurring pitfall or workflow is discovered during a session, update the relevant skill in the same session.
-- `progressive-exploration`: covers debug HTTP server, session management, debugger workflow.
-- `testing`: covers test type selection, cache awareness, anti-patterns.
-- `unit-test`: covers JUnit patterns and execution commands.
-- `smoke-test`: covers visual integration testing.
+- The `eyelib` skill at `~/.hermes/profiles/qyleyelib/skills/eyelib/eyelib/SKILL.md` is the living operational knowledge base. When a recurring pitfall or workflow is discovered during a session, update the relevant skill or its reference files in the same session.
 - Skills must be kept in sync with AGENTS.md: if a rule changes here, check whether skill docs need the same change.
 
 ## Molang Roadmap
@@ -144,7 +141,8 @@ package ...;
 - Each record should cover: what the symptom looks like, why it happens, and the correct fix.
 
 ## Reading Order
-1. :AGENTS.md:
-2. :MODULES.md:
-3. Nearest package :README.md:
-4. Only then the code files you need to change
+1. :AGENTS.md: (this file) — rules and conventions
+2. :docs/README.md: — documentation system navigation
+3. :MODULES.md: — module inventory and ownership
+4. Nearest package :README.md: (if exists)
+5. Only then the code files you need to change

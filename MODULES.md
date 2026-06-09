@@ -6,7 +6,7 @@
 - Use this file when deciding scope, ownership, affected areas, and summary regeneration requirements.
 
 ## Summary
-- Eyelib is a multi-project `Gradle + Java 17 + Forge` repository: root runtime module plus model data subproject ::eyelib-model:, and 12 Gradle subprojects: ::eyelib-animation:, ::eyelib-attachment:, ::eyelib-behavior:, ::eyelib-importer:, ::eyelib-material:, ::eyelib-molang:, ::eyelib-network:, ::eyelib-particle:, ::eyelib-track:, ::eyelib-util:.
+- Eyelib is a multi-project `Gradle + Java 17 + Forge` repository: root runtime module plus model data subproject ::eyelib-model:, and 12 Gradle subprojects: ::eyelib-animation:, ::eyelib-attachment:, ::eyelib-behavior:, ::eyelib-bridge:, ::eyelib-importer:, ::eyelib-material:, ::eyelib-molang:, ::eyelib-network:, ::eyelib-particle:, ::eyelib-track:, ::eyelib-util:.
 - Final particle ownership for the v1.2 gate is fixed as follows: `:eyelib-particle` owns module APIs, `ParticleDefinition`, `ParticleDefinitionAdapter`, executable runtime, client integration, render manager, particle packet contracts under `io.github.tt432.eyelibparticle.network`, and loading/publication through `ParticleDefinitionRegistry` plus `ParticleResourcePublication`; root owns Forge/resource adapter `BrParticleLoader`, root compatibility adapters, `mc/impl/common/command`, transport registration, and `NetClientHandlers` delegation; importer owns raw `io.github.tt432.eyelibimporter.particle.BrParticle` schema/codec. Active particle keys are `ParticleDefinition.identifier()`; source `ResourceLocation` values are diagnostics metadata only.
 - Phase 14 verification keeps source tests independent from historical planning artifacts, records ClientSmoke/hardware evidence separately from JetBrains MCP Gradle gates, and treats PFUT-03 independent particle artifact publication, unrelated fixture cleanup, and manual visual proof as non-blocking scope boundaries.
 - Phase 13 rewires command/network integration through root/MC adapters only; Phase 14 owns final split verification with stable source tests and JetBrains MCP gates.
@@ -14,6 +14,7 @@
 - Recent refactor work introduced several narrow seam modules to reduce context leakage: domain-specific `client/registry` writers, `client/gui/manager/io`, `client/gui/manager/reload`, `client/gui/manager/hotkey`, `client/particle` lookup/spawn seams, `network/dataattach`, and named client helper owners under `client/render/*`, `client/gui/preview/*`, and `client/*`.
 - Utility split work now also includes additive platform-free seams, with adapter-style compatibility preserved in existing `util/*` callers.
 - Documentation is also modularized: root guidance, architecture docs, index docs, plan docs, and package-local package-info.java files all act as maintained repository modules.
+- Documentation follows the Diátaxis framework (concepts/guides/reference/decisions). The entry point is `docs/README.md`. ADR records live in `docs/decisions/`, architecture overview in `docs/concepts/architecture.md`, module navigation in `docs/concepts/module-map.md`.
 
 ## Inventory
 
@@ -24,8 +25,11 @@
 |---|---|---|---|
 | Root bootstrap guide | repository-wide working rules for humans and AI | `AGENTS.md` | points to repo map, architecture docs, package-info.java files |
 || Root package index | top-level code package overview | `src/main/java/io/github/tt432/eyelib/package-info.java` | routes readers into child modules |
-|| Module inventory (this file) | repo map merged into self; canonical module boundary and ownership reference | `MODULES.md` | self-referential; entrypoint into architecture docs and package docs |
-|| Architecture decisions | ADR records for architecture decisions | `docs/decisions/` | governs structural edits |
+||| Module inventory (this file) | repo map merged into self; canonical module boundary and ownership reference | `MODULES.md` | self-referential; entrypoint into architecture docs and package docs |
+||| Documentation entry point | navigation index for the entire documentation system | `docs/README.md` | routes readers into concepts/decisions/reference/guides/ quadrants |
+||| Architecture concepts | system architecture overview with C4 diagrams and module layering | `docs/concepts/architecture.md`, `docs/concepts/module-map.md` | entry points for understanding system structure |
+||| Architecture decisions | all ADR records in one directory | `docs/decisions/` (0001 through 0011) | governs structural edits |
+||| Architecture operations | domain extraction guides, acceptance gates, port templates | `docs/architecture/` | operational manuals for the hexagonal refactoring |
 || Module boundaries doc | current ownership map and boundary rules | `docs/decisions/0002-module-boundaries.md` | used to classify affected modules |
 || Generated code policy | generated-vs-handwritten Molang rule set | `docs/decisions/0004-generated-code-policy.md` | governs parser regeneration/isolation |
 || Key decisions | historical record of architecture decisions | `docs/decisions/0006-key-architecture-decisions.md` | reference for why critical boundary choices were made |
@@ -146,6 +150,13 @@ FM-005 particle compatibility note: root legacy `client/particle/bedrock/**`, `P
 4. If a change alters module boundaries, also update `docs/decisions/0002-module-boundaries.md` and any relevant package-info.java files.
 5. If a change affects packet/data-attachment/client-side applicability, also re-check `docs/decisions/0002-module-boundaries.md`.
 6. If a change affects Molang phase status, milestones, gates, ownership, verification commands, corpus layers, binder/runtime semantics, host/query behavior, policy/specialization/cache behavior, or cutover posture, update `eyelib-molang/ROADMAP.md` in the same change.
+
+## Architecture Adapter Modules
+
+### Bridge Subproject
+|| Module | Responsibility | Main paths | Interactions |
+||---|---|---|---|
+|| eyelib-bridge subproject | `:eyelib-bridge` is the hexagonal architecture adapter layer: implements Domain Port interfaces for MC/Forge runtime, provides Entity→PortEntity adaptation, RenderType resolution bridge, platform Molang query bindings, and MinecraftMolangQueryRuntime. All MC import surface for domain modules concentrates here. | `eyelib-bridge/build.gradle`, `eyelib-bridge/src/main/java/io/github/tt432/eyelibbridge/`, `eyelib-bridge/src/main/java/io/github/tt432/eyelibbridge/material/`, `eyelib-bridge/src/main/java/io/github/tt432/eyelibbridge/molang/`, `eyelib-bridge/src/main/resources/META-INF/mods.toml` | depends on all domain modules (material, molang, model, animation, importer, behavior) + eyelib-util; implements domain Port interfaces; MC RenderType/Entity/Level types used internally; direction: bridge → domain (no reverse) |
 
 ## Regeneration Checklist
 - Re-read the affected package-info.java files.
