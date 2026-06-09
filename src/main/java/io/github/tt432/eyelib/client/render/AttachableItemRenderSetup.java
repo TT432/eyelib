@@ -63,6 +63,8 @@ public final class AttachableItemRenderSetup {
         if (scope != null) {
             scope.getHostContext().put(LivingEntity.class, entity);
             scope.getHostContext().put(Entity.class, entity);
+            scope.getHostContext().put(io.github.tt432.eyelibmolang.port.PortEntity.class,
+                    io.github.tt432.eyelibbridge.molang.EntityPortAdapter.from(entity));
             scope.set("context.item_slot", new MolangString(
                     hand == InteractionHand.OFF_HAND ? "off_hand" : "main_hand"));
         }

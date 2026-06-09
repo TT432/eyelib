@@ -300,7 +300,7 @@ public record RenderControllerEntry(
                 }
             }
         }
-        return entry != null && io.github.tt432.eyelibmaterial.render.RenderTypeResolver.isAlphaTest(entry, matMap);
+        return entry != null && io.github.tt432.eyelibbridge.material.RenderTypeResolver.isAlphaTest(entry, matMap);
     }
 
     /**

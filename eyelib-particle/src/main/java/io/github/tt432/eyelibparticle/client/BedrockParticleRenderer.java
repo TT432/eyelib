@@ -2,6 +2,8 @@ package io.github.tt432.eyelibparticle.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.tt432.eyelibmaterial.port.PortRenderPass;
+import io.github.tt432.eyelibutil.PortResourceLocation;
 import io.github.tt432.eyelibmaterial.render.RenderTypeResolver;
 import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
 import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleInstance;
@@ -44,9 +46,16 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
     public void render(BedrockParticleInstance particle) {
         String material = particle.emitter().definition().material();
         RenderTypeResolver.EntityRenderTypeData factory = RenderTypeResolver.resolveParticle(material);
-        ResourceLocation texture = new ResourceLocation(particle.emitter().definition().texture()).withSuffix(".png");
+        net.minecraft.resources.ResourceLocation texture = new net.minecraft.resources.ResourceLocation(particle.emitter().definition().texture()).withSuffix(".png");
+        PortRenderPass pass = factory.factory().apply(PortResourceLocation.of(texture.getNamespace(), texture.getPath()));
         VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(
-                factory.factory().apply(texture)
+                switch (pass.transparency()) {
+                    case SOLID -> net.minecraft.client.renderer.RenderType.entitySolid(texture);
+                    case ALPHA_TEST -> pass.disableCulling()
+                            ? net.minecraft.client.renderer.RenderType.entityCutoutNoCull(texture)
+                            : net.minecraft.client.renderer.RenderType.entityCutout(texture);
+                    case TRANSLUCENT, ADDITIVE -> net.minecraft.client.renderer.RenderType.entityTranslucent(texture);
+                }
         );
         render(particle, poseStack, buffer);
     }

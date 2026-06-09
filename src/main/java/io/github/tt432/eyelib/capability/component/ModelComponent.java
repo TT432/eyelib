@@ -3,8 +3,12 @@ package io.github.tt432.eyelib.capability.component;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
+import io.github.tt432.eyelibbridge.material.RenderPassAdapter;
+import io.github.tt432.eyelibbridge.material.RenderTypeResolver;
+import io.github.tt432.eyelibbridge.material.ResourceLocationBridge;
 import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
-import io.github.tt432.eyelibmaterial.render.RenderTypeResolver;
+import io.github.tt432.eyelibmaterial.port.PortRenderPass;
+import io.github.tt432.eyelibutil.PortResourceLocation;
 import io.github.tt432.eyelibmodel.Model;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.Getter;
@@ -60,9 +64,15 @@ public class ModelComponent {
         var matMap = buildMaterialLookupMap();
         var entry = matMap.get(serializableInfo.renderType().getPath());
         if (entry != null) {
-            return RenderTypeResolver.resolve(texture, entry, matMap);
+            PortResourceLocation portTex = ResourceLocationBridge.fromMc(texture);
+            PortRenderPass pass = RenderTypeResolver.resolve(portTex, entry, matMap);
+            return RenderPassAdapter.toRenderType(pass, portTex);
         }
-        return RenderTypeResolver.resolve(serializableInfo.renderType()).factory().apply(texture);
+        PortResourceLocation portId = ResourceLocationBridge.fromMc(serializableInfo.renderType());
+        PortResourceLocation portTex = ResourceLocationBridge.fromMc(texture);
+        var data = RenderTypeResolver.resolve(portId);
+        PortRenderPass pass = data.factory().apply(portTex);
+        return RenderPassAdapter.toRenderType(pass, portTex);
     }
 
     public boolean isSolid() {
@@ -72,7 +82,8 @@ public class ModelComponent {
         if (entry != null) {
             return RenderTypeResolver.isSolid(entry, matMap);
         }
-        return RenderTypeResolver.resolve(serializableInfo.renderType()).isSolid();
+        PortResourceLocation portId = ResourceLocationBridge.fromMc(serializableInfo.renderType());
+        return RenderTypeResolver.resolve(portId).isSolid();
     }
 
     /**

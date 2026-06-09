@@ -10,6 +10,7 @@ import io.github.tt432.eyelibbehavior.BehaviorComponents;
 import io.github.tt432.eyelibbehavior.BehaviorEntity;
 import io.github.tt432.eyelibbehavior.component.Component;
 import io.github.tt432.eyelibbehavior.component.Health;
+import io.github.tt432.eyelibutil.PortResourceLocation;
 import io.github.tt432.eyelibbehavior.component.MarkVariant;
 import io.github.tt432.eyelibbehavior.component.Variant;
 import io.github.tt432.eyelibbehavior.component.group.ComponentGroup;
@@ -49,6 +50,7 @@ public final class BehaviorEntityAssetRegistry {
         if (identifier == null) {
             return null;
         }
+        PortResourceLocation portId = PortResourceLocation.of(identifier.getNamespace(), identifier.getPath());
 
         // component_groups 通过 DISPATCH_CODEC 解析（与顶层 components 统一）
         var groups = new LinkedHashMap<String, ComponentGroup>();
@@ -96,7 +98,7 @@ public final class BehaviorEntityAssetRegistry {
 
         Map<String, LogicNode> events = parseEvents(file.events());
 
-        return new BehaviorEntity(identifier, groups, topComponents, events);
+        return new BehaviorEntity(portId, groups, topComponents, events);
     }
 
     /**
