@@ -8,7 +8,7 @@ import io.github.tt432.eyelibbehavior.component.*;
 import io.github.tt432.eyelibbehavior.component.property.*;
 import io.github.tt432.eyelibutil.codec.KeyDispatchMapCodec;
 import lombok.extern.slf4j.Slf4j;
-import net.minecraft.resources.ResourceLocation;
+import io.github.tt432.eyelibutil.PortResourceLocation;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +26,7 @@ public record ComponentGroup(
      * 组件分发编解码器，根据组件名称映射到对应的 typed codec。
      * 同时被 ComponentGroup 和 BehaviorComponents 使用。
      */
-    public static final Codec<Map<String, Component>> DISPATCH_CODEC = new KeyDispatchMapCodec<>(Codec.STRING, s -> switch (new ResourceLocation(s).toString()) {
+    public static final Codec<Map<String, Component>> DISPATCH_CODEC = new KeyDispatchMapCodec<>(Codec.STRING, s -> switch (PortResourceLocation.parse(s).toString()) {
         case "minecraft:absorption" -> Absorption.CODEC;
         case "minecraft:addrider" -> Addrider.CODEC;
         case "minecraft:admire_item" -> AdmireItem.CODEC;
