@@ -66,6 +66,7 @@ docs/
 | 0009 | Domain 事件—粒子交互 | Accepted |
 | 0010 | 六边形架构 — Domain/Bridge 分层 | Implemented |
 | 0011 | 文档设计基线 | Accepted (2026-06-09) |
+| 0012 | System 层测试策略 — 三层 Fake-Contract 模型 | Proposed (2026-06-09) |
 
 ## 维护规则
 
