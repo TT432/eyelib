@@ -1,18 +1,18 @@
 package io.github.tt432.eyelibmaterial.shared;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @NullMarked
-public enum StencilPassOp implements StringRepresentable {
+public enum StencilPassOp implements PortStringRepresentable {
     Keep,
     Replace;
 
-    public static final Codec<StencilPassOp> CODEC = StringRepresentable.fromEnum(StencilPassOp::values);
+    public static final Codec<StencilPassOp> CODEC = PortStringRepresentable.fromEnum(StencilPassOp::values);
 
     @Override
     public String getSerializedName() {

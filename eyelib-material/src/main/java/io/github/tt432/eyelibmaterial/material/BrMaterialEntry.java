@@ -16,15 +16,14 @@ import io.github.tt432.eyelibmaterial.gl.BlendFactor;
 import io.github.tt432.eyelibmaterial.gl.DepthFunc;
 import io.github.tt432.eyelibmaterial.gl.GLStates;
 import io.github.tt432.eyelibmaterial.gl.stencil.Face;
-import io.github.tt432.eyelibmaterial.render.RenderTypeResolver;
 import io.github.tt432.eyelibmaterial.shader.ShaderManager;
 import io.github.tt432.eyelibmaterial.shared.MsaaSupport;
 import io.github.tt432.eyelibmaterial.shared.PrimitiveMode;
 import io.github.tt432.eyelibmaterial.shared.VertexFormatElementEnum;
 import net.minecraft.client.renderer.RenderStateShard;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibmaterial.port.PortRenderPass;
+import io.github.tt432.eyelibutil.PortResourceLocation;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
@@ -37,7 +36,7 @@ import static org.lwjgl.opengl.GL20.*;
 /**
  * 运行时Bedrock材质条目，在shared纯数据类型之上叠加GL行为。
  * CODEC委托{@code shared.BrMaterialEntry.CODEC}进行序列化；
- * 运行时GL行为（{@link ApplyAble}、{@link ModifyAble}默认方法、{@link #getRenderType(ResourceLocation)}）仅在此定义。
+ * 运行时GL行为（{@link ApplyAble}、{@link ModifyAble}默认方法、{@link #getRenderType(PortResourceLocation)}）仅在此定义。
  *
  * @author TT432
  */
@@ -629,22 +628,37 @@ public record BrMaterialEntry(
     private static final Map<String, Integer> SHADER_PROGRAM_CACHE = new ConcurrentHashMap<>();
 
     /**
-     * 为当前材质条目生成{@link RenderType}。
-     * 当自定义顶点/片段着色器均已定义时，构建自定义{@code CompositeRenderType}；
-     * 否则回退到{@link RenderTypeResolver#resolve(ResourceLocation)}。
+     * 为当前材质条目生成{@link PortRenderPass}，描述渲染所需的半透明与剔除语义。
      *
-     * @param texture 要绑定的纹理ResourceLocation
-     * @return 可直接使用的RenderType
+     * @param texture 要绑定的纹理 PortResourceLocation
+     * @return 语义化 PortRenderPass
      */
-    public RenderType getRenderType(ResourceLocation texture) {
+    public PortRenderPass getRenderType(PortResourceLocation texture) {
         return getRenderType(texture, Map.of());
     }
 
-    public RenderType getRenderType(ResourceLocation texture, Map<String, BrMaterialEntry> materials) {
+    public PortRenderPass getRenderType(PortResourceLocation texture, Map<String, BrMaterialEntry> materials) {
         if (vertexShader.isPresent() && fragmentShader.isPresent()) {
             getOrCompileShader();
         }
-        return RenderTypeResolver.resolve(texture, this, materials);
+        return computeRenderPass(materials);
+    }
+
+    private PortRenderPass computeRenderPass(Map<String, BrMaterialEntry> materials) {
+        boolean blending = hasBlending(materials);
+        boolean alphatest = isAlphatest(materials);
+        boolean noCull = hasState(GLStates.DisableCulling);
+
+        PortRenderPass.Transparency transparency;
+        if (blending) {
+            transparency = PortRenderPass.Transparency.TRANSLUCENT;
+        } else if (alphatest) {
+            transparency = PortRenderPass.Transparency.ALPHA_TEST;
+        } else {
+            transparency = PortRenderPass.Transparency.SOLID;
+        }
+
+        return PortRenderPass.of(transparency, noCull);
     }
 
     /**
@@ -727,24 +741,25 @@ public record BrMaterialEntry(
         return VertexFormatElementEnum.fromFields(fields);
     }
 
-    private RenderType buildCustomRenderType(ResourceLocation texture, Map<String, BrMaterialEntry> materials) {
+    private net.minecraft.client.renderer.RenderType buildCustomRenderType(PortResourceLocation texture, Map<String, BrMaterialEntry> materials) {
         // ensure shader is compiled and cached
         getOrCompileShader();
 
+        net.minecraft.resources.ResourceLocation mcTex = new net.minecraft.resources.ResourceLocation(texture.namespace(), texture.path());
         VertexFormat format = getFormat();
         boolean translucent = hasBlending(materials);
 
-        return RenderType.create(
-                name + "_" + texture.getNamespace() + "_" + texture.getPath(),
+        return net.minecraft.client.renderer.RenderType.create(
+                name + "_" + texture.namespace() + "_" + texture.path(),
                 format,
                 VertexFormat.Mode.QUADS,
                 256,
                 false, // affectsCrumbling
                 translucent, // sortOnUpload
-                RenderType.CompositeState.builder()
+                net.minecraft.client.renderer.RenderType.CompositeState.builder()
                         .setShaderState(new RenderStateShard.ShaderStateShard(
                                 net.minecraft.client.renderer.GameRenderer::getRendertypeEntitySolidShader))
-                        .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                        .setTextureState(new RenderStateShard.TextureStateShard(mcTex, false, false))
                         .setTransparencyState(getTransparencyState(materials))
                         .setDepthTestState(getDepthTestState())
                         .setCullState(getCullState())

@@ -1,14 +1,14 @@
 package io.github.tt432.eyelibmaterial.shared;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @NullMarked
-public enum StencilFunc implements StringRepresentable {
+public enum StencilFunc implements PortStringRepresentable {
     Always,
     Equal,
     NotEqual,
@@ -17,7 +17,7 @@ public enum StencilFunc implements StringRepresentable {
     GreaterEqual,
     LessEqual;
 
-    public static final Codec<StencilFunc> CODEC = StringRepresentable.fromEnum(StencilFunc::values);
+    public static final Codec<StencilFunc> CODEC = PortStringRepresentable.fromEnum(StencilFunc::values);
 
     @Override
     public String getSerializedName() {

@@ -5,7 +5,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.serialization.Codec;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.EnumSet;
@@ -16,7 +16,7 @@ import java.util.EnumSet;
  * @author TT432
  */
 @NullMarked
-public enum VertexFormatElementEnum implements StringRepresentable {
+public enum VertexFormatElementEnum implements PortStringRepresentable {
     Position(DefaultVertexFormat.ELEMENT_POSITION),
     Normal(DefaultVertexFormat.ELEMENT_NORMAL),
     UV0(DefaultVertexFormat.ELEMENT_UV0),
@@ -25,7 +25,7 @@ public enum VertexFormatElementEnum implements StringRepresentable {
     BoneId0(DefaultVertexFormat.ELEMENT_UV2);
 
     public static final Codec<VertexFormatElementEnum> CODEC =
-            StringRepresentable.fromEnum(VertexFormatElementEnum::values);
+            PortStringRepresentable.fromEnum(VertexFormatElementEnum::values);
 
     public final VertexFormatElement element;
 

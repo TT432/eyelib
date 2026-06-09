@@ -2,7 +2,7 @@ package io.github.tt432.eyelibmaterial.material;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -24,7 +24,7 @@ public record BrSamplerState(
             TextureWrap.CODEC.fieldOf("textureWrap").forGetter(BrSamplerState::textureWrap)
     ).apply(ins, BrSamplerState::new));
 
-    public enum TextureFilter implements StringRepresentable {
+    public enum TextureFilter implements PortStringRepresentable {
         Point(() -> {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -57,7 +57,7 @@ public record BrSamplerState(
             this.onUse = onUse;
         }
 
-        public static final Codec<TextureFilter> CODEC = StringRepresentable.fromEnum(TextureFilter::values);
+        public static final Codec<TextureFilter> CODEC = PortStringRepresentable.fromEnum(TextureFilter::values);
 
         @Override
         public String getSerializedName() {
@@ -65,7 +65,7 @@ public record BrSamplerState(
         }
     }
 
-    public enum TextureWrap implements StringRepresentable {
+    public enum TextureWrap implements PortStringRepresentable {
         Repeat(() -> {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -76,7 +76,7 @@ public record BrSamplerState(
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
         });
 
-        public static final Codec<TextureWrap> CODEC = StringRepresentable.fromEnum(TextureWrap::values);
+        public static final Codec<TextureWrap> CODEC = PortStringRepresentable.fromEnum(TextureWrap::values);
         public final Runnable onUse;
 
         TextureWrap(Runnable onUse) {
