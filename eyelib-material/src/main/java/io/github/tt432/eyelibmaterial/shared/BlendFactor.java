@@ -1,14 +1,14 @@
 package io.github.tt432.eyelibmaterial.shared;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @NullMarked
-public enum BlendFactor implements StringRepresentable {
+public enum BlendFactor implements PortStringRepresentable {
     DestColor,
     SourceColor,
     Zero,
@@ -19,7 +19,7 @@ public enum BlendFactor implements StringRepresentable {
     DestAlpha,
     OneMinusSrcAlpha;
 
-    public static final Codec<BlendFactor> CODEC = StringRepresentable.fromEnum(BlendFactor::values);
+    public static final Codec<BlendFactor> CODEC = PortStringRepresentable.fromEnum(BlendFactor::values);
 
     @Override
     public String getSerializedName() {

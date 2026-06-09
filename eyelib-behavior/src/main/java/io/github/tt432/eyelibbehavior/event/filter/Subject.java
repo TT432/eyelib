@@ -1,14 +1,14 @@
 package io.github.tt432.eyelibbehavior.event.filter;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 
 /**
  * 该枚举类定义了交互中涉及的不同主体类型。
  *
  * @author TT432
  */
-public enum Subject implements StringRepresentable {
+public enum Subject implements PortStringRepresentable {
     /**
      * 交互所涉及的数据块。
      */
@@ -41,7 +41,7 @@ public enum Subject implements StringRepresentable {
     /**
      * 提供一个编解码器，用于将 {@link Subject} 枚举与字符串进行相互转换。
      */
-    public static final Codec<Subject> CODEC = StringRepresentable.fromEnum(Subject::values);
+    public static final Codec<Subject> CODEC = PortStringRepresentable.fromEnum(Subject::values);
 
     /**
      * 获取该枚举常量的序列化名称，这里直接返回枚举常量的名称。

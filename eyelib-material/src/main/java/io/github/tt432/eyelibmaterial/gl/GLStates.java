@@ -2,7 +2,7 @@ package io.github.tt432.eyelibmaterial.gl;
 
 import com.mojang.serialization.Codec;
 import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
@@ -14,7 +14,7 @@ import java.util.function.BiConsumer;
  * @author TT432
  */
 @NullMarked
-public enum GLStates implements StringRepresentable {
+public enum GLStates implements PortStringRepresentable {
     EnableAlphaToCoverage(
             (material, materials) -> {
                 GL11.glEnable(GL30.GL_SAMPLE_ALPHA_TO_COVERAGE);
@@ -105,7 +105,7 @@ public enum GLStates implements StringRepresentable {
                 GL11.glDisable(GL11.GL_STENCIL_TEST);
             });
 
-    public static final Codec<GLStates> CODEC = StringRepresentable.fromEnum(GLStates::values);
+    public static final Codec<GLStates> CODEC = PortStringRepresentable.fromEnum(GLStates::values);
     private final BiConsumer<BrMaterialEntry, Map<String, BrMaterialEntry>> enableAction;
     private final BiConsumer<BrMaterialEntry, Map<String, BrMaterialEntry>> disableAction;
 

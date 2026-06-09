@@ -17,7 +17,7 @@ import io.github.tt432.eyelibutil.codec.CodecHelper;
 import io.github.tt432.eyelibutil.collection.ListAccessors;
 import io.github.tt432.eyelibutil.math.Curves;
 import io.github.tt432.eyelibutil.math.EyeMath;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NullMarked;
@@ -56,10 +56,10 @@ public record BrBoneKeyFrame(
         return new BrBoneKeyFrame(baked.timestamp(), baked.dataPoints(), LerpMode.valueOf(baked.lerpMode().name()));
     }
 
-    public enum LerpMode implements StringRepresentable {
+    public enum LerpMode implements PortStringRepresentable {
         LINEAR,
         CATMULLROM;
-        public static final Codec<LerpMode> CODEC = StringRepresentable.fromEnum(LerpMode::values);
+        public static final Codec<LerpMode> CODEC = PortStringRepresentable.fromEnum(LerpMode::values);
 
         @Override
         public String getSerializedName() {

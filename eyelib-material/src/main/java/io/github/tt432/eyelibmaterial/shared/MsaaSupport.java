@@ -1,17 +1,17 @@
 package io.github.tt432.eyelibmaterial.shared;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @NullMarked
-public enum MsaaSupport implements StringRepresentable {
+public enum MsaaSupport implements PortStringRepresentable {
     Both, MSAA, NonMSAA;
 
-    public static final Codec<MsaaSupport> CODEC = StringRepresentable.fromEnum(MsaaSupport::values);
+    public static final Codec<MsaaSupport> CODEC = PortStringRepresentable.fromEnum(MsaaSupport::values);
 
     @Override
     public String getSerializedName() {

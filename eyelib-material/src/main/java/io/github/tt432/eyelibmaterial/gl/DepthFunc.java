@@ -1,7 +1,7 @@
 package io.github.tt432.eyelibmaterial.gl;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 
@@ -9,7 +9,7 @@ import org.lwjgl.opengl.GL11;
  * @author TT432
  */
 @NullMarked
-public enum DepthFunc implements StringRepresentable {
+public enum DepthFunc implements PortStringRepresentable {
     Always(GL11.GL_ALWAYS),
     Equal(GL11.GL_EQUAL),
     NotEqual(GL11.GL_NOTEQUAL),
@@ -18,7 +18,7 @@ public enum DepthFunc implements StringRepresentable {
     GreaterEqual(GL11.GL_GEQUAL),
     LessEqual(GL11.GL_LEQUAL);
 
-    public static final Codec<DepthFunc> CODEC = StringRepresentable.fromEnum(DepthFunc::values);
+    public static final Codec<DepthFunc> CODEC = PortStringRepresentable.fromEnum(DepthFunc::values);
 
     public final int value;
 

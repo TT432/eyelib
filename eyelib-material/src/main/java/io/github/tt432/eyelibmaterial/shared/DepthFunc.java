@@ -1,14 +1,14 @@
 package io.github.tt432.eyelibmaterial.shared;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @NullMarked
-public enum DepthFunc implements StringRepresentable {
+public enum DepthFunc implements PortStringRepresentable {
     Always,
     Equal,
     NotEqual,
@@ -17,7 +17,7 @@ public enum DepthFunc implements StringRepresentable {
     GreaterEqual,
     LessEqual;
 
-    public static final Codec<DepthFunc> CODEC = StringRepresentable.fromEnum(DepthFunc::values);
+    public static final Codec<DepthFunc> CODEC = PortStringRepresentable.fromEnum(DepthFunc::values);
 
     @Override
     public String getSerializedName() {

@@ -1,7 +1,7 @@
 package io.github.tt432.eyelibmaterial.gl.stencil;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 
@@ -9,7 +9,7 @@ import org.lwjgl.opengl.GL11;
  * @author TT432
  */
 @NullMarked
-public enum StencilFunc implements StringRepresentable {
+public enum StencilFunc implements PortStringRepresentable {
     /**
      * 总是通过模板测试
      */
@@ -45,7 +45,7 @@ public enum StencilFunc implements StringRepresentable {
      */
     LessEqual(GL11.GL_LEQUAL);
 
-    public static final Codec<StencilFunc> CODEC = StringRepresentable.fromEnum(StencilFunc::values);
+    public static final Codec<StencilFunc> CODEC = PortStringRepresentable.fromEnum(StencilFunc::values);
     public final int value;
 
     StencilFunc(int value) {

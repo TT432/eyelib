@@ -1,7 +1,7 @@
 package io.github.tt432.eyelibmaterial.gl;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 
@@ -9,7 +9,7 @@ import org.lwjgl.opengl.GL11;
  * @author TT432
  */
 @NullMarked
-public enum BlendFactor implements StringRepresentable {
+public enum BlendFactor implements PortStringRepresentable {
     DestColor(GL11.GL_DST_COLOR),
     SourceColor(GL11.GL_SRC_COLOR),
     Zero(GL11.GL_ZERO),
@@ -21,7 +21,7 @@ public enum BlendFactor implements StringRepresentable {
     OneMinusSrcAlpha(GL11.GL_ONE_MINUS_SRC_ALPHA),
     ;
 
-    public static final Codec<BlendFactor> CODEC = StringRepresentable.fromEnum(BlendFactor::values);
+    public static final Codec<BlendFactor> CODEC = PortStringRepresentable.fromEnum(BlendFactor::values);
 
     public final int factor;
 

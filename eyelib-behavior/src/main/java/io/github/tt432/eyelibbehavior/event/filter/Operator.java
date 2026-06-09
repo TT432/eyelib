@@ -1,14 +1,14 @@
 package io.github.tt432.eyelibbehavior.event.filter;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 
 /**
  * 比较操作符枚举，定义过滤器中的比较逻辑。
  *
  * @author TT432
  */
-public enum Operator implements StringRepresentable {
+public enum Operator implements PortStringRepresentable {
     NEQ("!="),
     EQ("=="),
     LESS("<"),
@@ -20,7 +20,7 @@ public enum Operator implements StringRepresentable {
     EQUALS("equals"),
     NOT("not");
 
-    public static final Codec<Operator> CODEC = StringRepresentable.fromEnum(Operator::values);
+    public static final Codec<Operator> CODEC = PortStringRepresentable.fromEnum(Operator::values);
     final String realString;
 
     Operator(String realString) {

@@ -1,14 +1,14 @@
 package io.github.tt432.eyelibmaterial.shared;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.StringRepresentable;
+import io.github.tt432.eyelibutil.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 
 /**
  * @author TT432
  */
 @NullMarked
-public enum GLStates implements StringRepresentable {
+public enum GLStates implements PortStringRepresentable {
     EnableAlphaToCoverage,
     Wireframe,
     Blending,
@@ -22,7 +22,7 @@ public enum GLStates implements StringRepresentable {
     StencilWrite,
     EnableStencilTest;
 
-    public static final Codec<GLStates> CODEC = StringRepresentable.fromEnum(GLStates::values);
+    public static final Codec<GLStates> CODEC = PortStringRepresentable.fromEnum(GLStates::values);
 
     @Override
     public String getSerializedName() {
