@@ -399,6 +399,200 @@ async def eyelib_debug_close() -> str:
         return "⚠️ Client force-stopped (did not shut down within 30s)."
 
 
+@mcp.tool()
+async def eyelib_debug_clientsmoke(timeout: int = 120) -> str:
+    """
+    Run clientsmoke tests in a plain MC client (no RenderDoc).
+    Rebuilds → starts MC with clientsmoke.enabled=true → waits for tests → parses report.
+
+    The client auto-exits after tests finish (clientsmoke.autoExit=true).
+    Args:
+        timeout: Max seconds to wait for tests to complete (default 120).
+    """
+    global _proc, _launch_time
+
+    ping = await _http_get("/ping")
+    if ping is not None:
+        return "❌ Game is already running (port 25999 responds). Use eyelib_debug_close first."
+
+    # rebuild
+    def _rebuild():
+        subprocess.run(
+            ["cmd.exe", "/c",
+             "cd /d E:\\_ideaProjects\\qylEyelib && "
+             "gradlew.bat :compileJava createLaunchScripts --no-configuration-cache"],
+            cwd="/mnt/e/_ideaProjects/qylEyelib",
+            capture_output=True, text=True, timeout=300,
+        )
+    await asyncio.to_thread(_rebuild)
+
+    # kill zombie
+    def _kill_zombie():
+        subprocess.run(
+            ["cmd.exe", "/c",
+             'for /f "tokens=5" %i in (\'netstat -ano ^| findstr 25999\')'
+             " do (taskkill /F /PID %i >nul 2>&1)"],
+            capture_output=True, text=True, timeout=10, cwd="/mnt/e",
+        )
+    await asyncio.to_thread(_kill_zombie)
+    await asyncio.sleep(1)
+
+    # inject clientsmoke JVM args
+    vm_args_path = os.path.join(PROJECT_DIR, "build", "moddev", "clientRunVmArgs.txt")
+    def _inject():
+        with open(vm_args_path, "a", encoding="utf-8") as f:
+            f.write("\n-Dclientsmoke.enabled=true\n-Dclientsmoke.autoExit=true\n")
+    await asyncio.to_thread(_inject)
+
+    # launch (no RenderDoc)
+    try:
+        _proc = await asyncio.create_subprocess_exec(
+            "cmd.exe", "/c", RUN_CLIENT_CMD,
+            cwd="/mnt/e/_ideaProjects/qylEyelib",
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        _launch_time = time.time()
+    except Exception as e:
+        return f"❌ Launch failed: {e}"
+
+    # wait for /ping
+    ok, msg = await _poll_until(
+        "/ping", lambda d: d.get("status") == "ok",
+        timeout=min(timeout, 60), interval=2, desc="Client startup",
+    )
+    if not ok:
+        return f"❌ Client failed to start: {msg}"
+
+    # wait for clientsmoke completion (report file or port close)
+    report_dir = os.path.join(PROJECT_DIR, "run", "clientsmoke-reports")
+    start = time.time()
+    consecutive_ping_fails = 0
+
+    while time.time() - start < timeout:
+        ping = await _http_get("/ping")
+        if ping is None:
+            consecutive_ping_fails += 1
+            if consecutive_ping_fails >= 5:
+                break
+        else:
+            consecutive_ping_fails = 0
+
+        try:
+            json_files = sorted(
+                [f for f in os.listdir(report_dir) if f.startswith("report-") and f.endswith(".json")],
+                reverse=True)
+            if json_files:
+                rp = os.path.join(report_dir, json_files[0])
+                if time.time() - os.path.getmtime(rp) > 2:
+                    await asyncio.sleep(3)
+                    break
+        except (FileNotFoundError, OSError):
+            pass
+        await asyncio.sleep(2)
+
+    # stop if still running
+    ping = await _http_get("/ping")
+    if ping is not None:
+        await _http_post("/close")
+        await _poll_until_gone(timeout=15)
+
+    _proc = None
+    _launch_time = 0.0
+
+    # parse report
+    try:
+        json_files = sorted(
+            [f for f in os.listdir(report_dir) if f.startswith("report-") and f.endswith(".json")],
+            reverse=True)
+        if not json_files:
+            return "⚠️ No report file found. Clientsmoke may not have run."
+
+        with open(os.path.join(report_dir, json_files[0]), "r", encoding="utf-8") as f:
+            report = json.load(f)
+
+        total = report.get("totalTests", 0)
+        passed = report.get("passed", 0)
+        failed = report.get("failed", 0)
+        ts = report.get("timestamp", "?")
+
+        lines = [f"📋 Clientsmoke Report ({ts})",
+                 f"   Total: {total}  |  ✅ Passed: {passed}  |  ❌ Failed: {failed}"]
+        for e in report.get("entries", []):
+            icon = "✅" if e.get("status") == "passed" else "❌"
+            name = e.get("className", "?").split(".")[-1]
+            lines.append(f"   {icon} {name} ({e.get('durationMs', 0)}ms) — {e.get('description', '')}")
+            if e.get("status") == "failed" and e.get("error"):
+                lines.append(f"      ↳ {e['error'].get('message', '?')}")
+
+        if failed > 0:
+            lines.append(f"\n❌ {failed} test(s) FAILED")
+        else:
+            lines.append(f"\n✅ All {passed} test(s) PASSED")
+        return "\n".join(lines)
+    except (FileNotFoundError, OSError, json.JSONDecodeError) as e:
+        return f"⚠️ Failed to read report: {e}"
+
+
+@mcp.tool()
+async def eyelib_debug_nullaway(module: str = "") -> str:
+    """
+    Run NullAway/Error Prone nullness checks on eyelib sources.
+    Compiles with NullAway enabled and returns violations.
+
+    Args:
+        module: Specific Gradle subproject to check (e.g. 'eyelib-material').
+                Omit to run root :nullawayMain which checks all sources.
+    """
+    global _proc
+
+    target = f":{module}:nullawayMain" if module else ":nullawayMain"
+    desc = f"NullAway ({target})"
+
+    def _run() -> subprocess.CompletedProcess:
+        return subprocess.run(
+            ["cmd.exe", "/c",
+             f"cd /d E:\\\\_ideaProjects\\\\qylEyelib && "
+             f"gradlew.bat {target} --no-configuration-cache"],
+            cwd="/mnt/e/_ideaProjects/qylEyelib",
+            capture_output=True, text=True, timeout=300,
+        )
+
+    try:
+        result = await asyncio.to_thread(_run)
+    except subprocess.TimeoutExpired:
+        return f"⏰ {desc} timed out after 300s"
+
+    stdout = result.stdout
+    stderr = result.stderr
+
+    # Extract NullAway violations from output (Error Prone format: file:line: error: ...)
+    violations = []
+    for line in (stdout + "\n" + stderr).split("\n"):
+        stripped = line.strip()
+        if "error:" in stripped and ("NullAway" in stripped or "[NullAway]" in stripped):
+            violations.append(stripped)
+        elif stripped.startswith("warning:") and "NullAway" in stripped:
+            violations.append(stripped)
+
+    if result.returncode == 0:
+        return f"✅ {desc} — no NullAway violations"
+    elif violations:
+        lines = [f"❌ {desc} — {len(violations)} violation(s):", ""]
+        for v in violations[:30]:
+            lines.append(f"   {v}")
+        if len(violations) > 30:
+            lines.append(f"   ... and {len(violations) - 30} more")
+        return "\n".join(lines)
+    else:
+        # Non-NullAway compile errors
+        error_lines = []
+        for line in (stdout + "\n" + stderr).split("\n"):
+            if "error:" in line.strip() or "BUILD FAILED" in line.strip():
+                error_lines.append(line.strip())
+        return f"❌ {desc} — build failed (non-NullAway errors):\n" + "\n".join(error_lines[:20])
+
+
 # ── Resource ───────────────────────────────────────────────────
 
 @mcp.resource(uri="debug://session", name="DebugSession")
