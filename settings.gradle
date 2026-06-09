@@ -15,6 +15,7 @@ rootProject.name = "eyelib"
 
 include("eyelib-animation")
 include("eyelib-behavior")
+include("eyelib-bridge")
 include("eyelib-model")
 include("eyelib-network")
 include("eyelib-attachment")
