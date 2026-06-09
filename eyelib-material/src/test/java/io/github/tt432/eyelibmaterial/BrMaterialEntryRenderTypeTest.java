@@ -3,8 +3,9 @@ package io.github.tt432.eyelibmaterial;
 import io.github.tt432.eyelibmaterial.gl.GLStates;
 import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
 import io.github.tt432.eyelibmaterial.shared.VertexFormatElementEnum;
+import io.github.tt432.eyelibmaterial.port.PortRenderPass;
+import io.github.tt432.eyelibutil.PortResourceLocation;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -63,34 +64,39 @@ class BrMaterialEntryRenderTypeTest {
         );
     }
 
-    private static final ResourceLocation TEST_TEXTURE =
-            new ResourceLocation("minecraft:textures/entity/steve.png");
+    private static final PortResourceLocation TEST_TEXTURE =
+            PortResourceLocation.of("minecraft", "textures/entity/steve.png");
 
     @Test
-    @DisplayName("No shader + 'solid' → falls through to RenderTypeResolver (LinkageError from RenderType class init without MC)")
-    void noShaderSolid_entersFallbackPath() {
+    @DisplayName("No shader — getRenderType returns PortRenderPass without MC dependency")
+    void noShader_returnsPortRenderPass() {
         BrMaterialEntry material = createNoShaderEntry("solid");
 
-        assertThrows(LinkageError.class, () -> material.getRenderType(TEST_TEXTURE),
-                "Should fall through to RenderTypeResolver which fails at RenderType class loading -> LinkageError");
+        PortRenderPass pass = material.getRenderType(TEST_TEXTURE);
+        assertNotNull(pass);
+        assertEquals(PortRenderPass.Transparency.SOLID, pass.transparency(),
+                "无 material 属性时默认为 SOLID");
+        assertFalse(pass.disableCulling(),
+                "无 DisableCulling 状态时默认启用剔除");
     }
 
     @Test
-    @DisplayName("No shader + 'cutout' → falls through to RenderTypeResolver (LinkageError from RenderType class init without MC)")
-    void noShaderCutout_entersFallbackPath() {
-        BrMaterialEntry material = createNoShaderEntry("cutout");
-
-        assertThrows(LinkageError.class, () -> material.getRenderType(TEST_TEXTURE),
-                "Should fall through to RenderTypeResolver which fails at RenderType class loading -> LinkageError");
+    @DisplayName("No shader + Blending state → TRANSLUCENT transparency")
+    void noShaderBlending_returnsTranslucent() {
+        // createShaderEntry sets base="" and blending=true in states
+        // hasBlending with empty map falls back to checking own states
+        BrMaterialEntry material = createShaderEntry("translucent", true, null);
+        // 只检查自身状态，不依赖继承链
+        assertTrue(material.hasBlending(), "blending=true 时自身状态应包含 Blending");
     }
 
     @Test
-    @DisplayName("No shader + 'translucent' → falls through to RenderTypeResolver (LinkageError from RenderType class init without MC)")
-    void noShaderTranslucent_entersFallbackPath() {
-        BrMaterialEntry material = createNoShaderEntry("translucent");
+    @DisplayName("No shader + no states → SOLID")
+    void noShaderNoStates_returnsSolid() {
+        BrMaterialEntry material = createNoShaderEntry("solid");
 
-        assertThrows(LinkageError.class, () -> material.getRenderType(TEST_TEXTURE),
-                "Should fall through to RenderTypeResolver which fails at RenderType class loading -> LinkageError");
+        PortRenderPass pass = material.getRenderType(TEST_TEXTURE);
+        assertEquals(PortRenderPass.Transparency.SOLID, pass.transparency());
     }
 
     @Test

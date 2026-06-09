@@ -105,8 +105,8 @@ class BehaviorEntityIntegrationTest {
     @Test
     void identifierIsCorrect() {
         var entity = parseEntity();
-        assertEquals("test", entity.identifier().getNamespace());
-        assertEquals("robot", entity.identifier().getPath());
+        assertEquals("test", entity.identifier().namespace());
+        assertEquals("robot", entity.identifier().path());
     }
 
     @Test
