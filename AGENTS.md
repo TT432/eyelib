@@ -3,7 +3,7 @@
 ## Start Here
 - Read :docs/README.md: for the full documentation system navigation.
 - Read :MODULES.md: before planning structural or multi-module changes.
-- Read the nearest package :README.md: before editing files in that subtree.
+- Read the nearest `package-info.java` for package-level orientation.
 - For boundary decisions, read :docs/decisions/0002-module-boundaries.md:.
 
 ## Repository Shape
@@ -101,16 +101,15 @@ package ...;
 - **Paths must resolve.** Every file path reference in docs must exist. If a referenced file is deleted or moved, update or delete the reference.
 - **Don't keep history in active docs.** Completed tasks, resolved problems, and historical intermediate states belong in git history, not in current-state documents.
 - **Architecture decisions go in `docs/decisions/`.** Each file is one ADR: context → decision → consequences. No implementation details.
-- **Code is the authoritative reference.** Package structure, class names, and method signatures are the source of truth for "what exists." External docs (Bedrock standards, Blockbench format) live under `docs/reference/`.
+- **Code is the authoritative reference.** Package structure, class names, and method signatures are the source of truth for "what exists." Bedrock standards and external format specs are referenced directly from their canonical sources (E盘 Bedrock 文档、Mojang Creator 文档).
 - **Claims about dependencies must match `build.gradle`.** The Gradle dependency graph is the single source of truth.
 - **Docs-only changes:** verify every referenced file path resolves before committing.
 - **Structure/code changes:** build via JetBrains MCP and require exit code :0: before claiming completion.
 - **Runtime-sensitive changes:** compile first, then use the existing dev client flow for smoke checks.
 
-## Generated Code
-- Treat :eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/: as generated/read-only during normal work.
+## Generated Code (Historical — ANTLR Removed)
+- `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/` has been removed along with all ANTLR-generated parser artifacts. The handwritten recursive-descent parser is the sole frontend.
 - `src/main/java/io/github/tt432/eyelib/molang/mapping/MolangQuery.java` holds root-coupled query functions (animation controller, variant) that cannot move to `eyelib-molang`.
-- Do not hand-edit generated parser files unless the current task is explicitly about generated-code isolation or regeneration.
 
 ## Tooling Restrictions
 - IntelliJ IDEA is the sole IDE. VS Code and Eclipse artifacts must never be committed.
@@ -125,8 +124,9 @@ package ...;
 - **Never pass `--no-build-cache` to Gradle.** It forces a full rebuild of MC Forge artifacts. Use targeted cache clearing instead.
 - `jetbrain_build_project` compiles via IntelliJ. For runtime verification that depends on reobfuscated JARs, use `jetbrain_run_gradle_tasks` with `runClient`.
 
-## Skill Maintenance
-- The `eyelib` skill at `~/.hermes/profiles/qyleyelib/skills/eyelib/eyelib/SKILL.md` is the living operational knowledge base. When a recurring pitfall or workflow is discovered during a session, update the relevant skill or its reference files in the same session.
+## Skill Usage
+- Skills are modular and focused — one skill covers one workflow domain. Don't dump everything into a single skill.
+- When a recurring pitfall or workflow is discovered, decide which skill domain it belongs to (build, debug, renderdoc, clientsmoke). If no existing skill fits, create a new focused one.
 - Skills must be kept in sync with AGENTS.md: if a rule changes here, check whether skill docs need the same change.
 
 ## Molang Roadmap
@@ -134,11 +134,9 @@ package ...;
 - Update :eyelib-molang/ROADMAP.md: in the same change when Molang phase status, milestones, gates, ownership, verification commands, corpus layers, binder/runtime semantics, host/query behavior, policy/specialization/cache behavior, or cutover posture changes.
 
 ## Pitfall Records
-- `docs/pitfalls/` stores troubleshooting records for recurring or non-obvious issues.
-- **Each file has a single responsibility** — describe one class of problem, not a collection.
-- **File names must be clear and specific** (e.g. `non-mod-libs-need-additionalruntimeclasspath.md`).
-- When encountering a new issue, decide whether it fits an existing record — if so, merge it in; if it's a distinct problem, create a new file.
-- Each record should cover: what the symptom looks like, why it happens, and the correct fix.
+- Operational troubleshooting knowledge lives in the relevant skill (e.g. `eyelib-build` for build issues, `eyelib-debug` for rendering issues).
+- Each skill's "Common Pitfalls" section covers one class of problem per entry.
+- When encountering a new issue, add it to the relevant skill's pitfalls section — or create a new focused skill if no existing skill covers that domain.
 
 ## Reading Order
 1. :AGENTS.md: (this file) — rules and conventions

@@ -679,11 +679,10 @@ return "Loaded spawn_rules=" + count + ", runtime_registry_exists=" + hasRuntime
 
 | 文件 | 用途 |
 |------|------|
-| `docs/reference/bedrock-addon/行为文件层-behavior_entities.md` | Bedrock behavior entity 规范 |
-| `docs/reference/bedrock-addon/递归字段索引-bp-entity-table.md` | 递归字段索引 |
-| `docs/reference/bedrock-addon/递归字段索引-importer-support.md` | Importer 支持面 |
-| `docs/reference/bedrock-addon/implementation-effect-tracker.ai.yaml` | 实现效果追踪器 |
-| `docs/tests/AI_DEBUG_SERVER_MANUAL.md` | /eval endpoint 使用文档 |
+| Bedrock 官方文档：`/mnt/e/_____基岩版文档/bedrock-dot-dev/` | Bedrock behavior entity 规范 |
+| Mojang Creator 文档：`/mnt/e/_____基岩版文档/minecraft-creator/` | 官方 Creator 参考 |
+| Bedrock Wiki：`/mnt/e/_____基岩版文档/bedrock-wiki/docs/` | 社区整理的行为实体参考 |
+| `/eval` endpoint（见 `eyelib-debug` skill） | 调试 /eval HTTP endpoint 使用 |
 | `eyelib-importer/.../BrBehaviorEntityFile.java` | Importer 端 Behavior Entity codec |
 | `eyelib-importer/.../BrSpawnRule.java` | Importer 端 Spawn Rule codec |
 | `eyelib-behavior/.../BehaviorEntity.java` | Runtime Behavior Entity 模型 |
