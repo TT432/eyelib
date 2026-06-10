@@ -1,5 +1,7 @@
 # P2：前端统一 — 消除 active() 与生产路径的脱钩
 
+**Status: ✅ Superseded** (ANTLR entirely removed; `GeneratedParserBackedMolangParserFrontend` deleted; handwritten parser is the sole frontend)
+
 ## 问题类型
 
 **架构耦合缺陷**：`MolangParserFrontends.active()` 返回 `GeneratedParserBackedMolangParserFrontend`，但生产编译器 `MolangCompilerImpl` 直接调用 `HandwrittenMolangAstParserFrontend.INSTANCE`，完全绕过 `active()`。
@@ -21,7 +23,7 @@
 **后果**：
 - 修改 `MolangParserFrontends.ACTIVE` 对生产行为零影响
 - 测试使用 `active()` 但生产不使用 — 测试与生产使用不同代码路径
-- ANTLR 生成的 `ExprSetContext` 在 `GeneratedParserBackedMolangParserFrontend` 中被计算但永不消费
+- ANTLR 生成的 `ExprSetContext` 在 `GeneratedParserBackedMolangParserFrontend` 中被计算但永不消费 ~~（历史：该前端已随 ANTLR 移除而删除）~~
 
 ## 业已验证的解决模式
 
@@ -86,6 +88,7 @@ return new MolangParserFrontendResult(
 - **选项B**：保留 `GeneratedParserBackedMolangParserFrontend` 用于语料测试中的 parse shape 收集
 
 **推荐选项B**：语料测试需要 ANTLR parse tree 做 shape verification。保留双前端但通过统一入口访问。
+~~（历史：ANTLR 已删除，该建议不再适用；语料测试仅使用手写前端）~~
 
 ### Step 3：修改 `MolangCompilerImpl` 使用 `active()`
 

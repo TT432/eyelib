@@ -14,7 +14,7 @@ Update this file in the same change whenever Molang work does any of the followi
 1. Adds, removes, renames, or re-scopes a Molang phase, milestone, gate, or verification command.
 2. Promotes a design draft or refactor-plan item into implemented code/tests.
 3. Moves a roadmap item between `Current`, `Next`, `Blocked`, `Deferred`, or `Done`.
-4. Changes ownership between `:eyelib-molang`, generated parser code, root legacy marker docs, or root `mc/impl/molang/**` platform bindings.
+4. Changes ownership between `:eyelib-molang`, handwritten parser code, root legacy marker docs, or root `mc/impl/molang/**` platform bindings.
 5. Adds a new corpus layer, diagnostics mode behavior, binder family, host/query bridge, execution path, policy-pack behavior, cache behavior, or cutover mechanism.
 
 If a Molang code change does not update this roadmap, it must be because the change is an implementation detail that leaves all milestones, gates, and ownership unchanged.
@@ -33,10 +33,9 @@ Design drafts are not implementation commitments until this roadmap or the refac
 ## Stable Boundaries
 
 - Engine-owned code lives under `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/`.
-- Generated parser artifacts live under `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/` and are read-only during normal work.
+- Handwritten parser is the sole frontend; all parser artifacts live under handwritten packages.
 - Root `src/main/java/io/github/tt432/eyelib/molang/mapping/MolangQuery.java` is the only file remaining in the root `molang/` path — it holds root-coupled query functions (animation controller, variant) that cannot move to `eyelib-molang`.
 - `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/platform/**` owns Minecraft/Forge platform bindings and lifecycle hooks.
-- The old generated-parser-backed compile path must remain available until a cutover checklist and rollback point are documented.
 
 ## Current Implementation Snapshot
 
@@ -51,8 +50,8 @@ Evidence from the current tree:
 - **MolangFloat** optimization: `valueOf(float)` returns cached ZERO/ONE constants for 0f/1f to reduce per-frame allocations.
 - **MolangDiskCache** (`computeFileName`) uses SHA-256 instead of 32-bit `String.hashCode()` for collision-resistant file naming.
 - Old `MolangCompileHandler.java` (ANTLR-based bytecode compiler with file-based caching) has been removed.
-- Generated parser path exists: `generated/` plus `compiler/frontend/GeneratedMolangParserFrontend.java`.
-- Additive AST frontend work exists: `compiler/frontend/ast/`, `GeneratedParserBackedAstMolangParserFrontend.java`, and `HandwrittenMolangAstParserFrontend.java`.
+- Handwritten parser is the sole frontend; `generated/` directory and `GeneratedMolangParserFrontend.java` have been removed.
+- Handwritten parser frontend is the sole frontend: `compiler/frontend/ast/` and `HandwrittenMolangAstParserFrontend.java`.
 - Corpus/harness work exists in tests: `src/test/java/io/github/tt432/eyelibmolang/compiler/corpus/` and `src/test/resources/io/github/tt432/eyelibmolang/compiler/corpus/phase1/`. Phase1 starter corpus now has 33 expression rows (≥30 KR met), covering unary, comparison, for_each, return, member dot-chain, grouping, strings, array-literal reject, and binary-conditional syntax baseline families.
 - Binder work exists: `compiler/binding/` with alias normalization, query projection, invalid-write diagnostics, typed deferred loop break/continue nodes, deferred notes, and normal/strict/debug diagnostic modes. Normal mode now emits `BIND_DEFERRED_UNSUPPORTED` warnings for deferred unsupported constructs, while strict/debug keep their additional overlay diagnostics. Deferred reason taxonomy now has 5 distinct types: `UNSUPPORTED_IN_THIS_SLICE`, `HOST_SHAPE_DEPENDENT`, `QUERY_VARIANT_SELECTION_DEPENDENT`, `COMPATIBILITY_POLICY_DEPENDENT`, and `DIAGNOSTICS_OVERLAY_OWNED_FOLLOWUP` (≥3 distinct reason types KR met).
 - Mapping ports exist: `mapping/api/` plus built-in mappings in `mapping/MolangMath.java` and `mapping/MolangToplevel.java`; `HostRole<T>` is now the canonical typed host lookup key while deprecated `Class<?>` lookup remains for transitional callers.
@@ -65,7 +64,7 @@ Evidence from the current tree:
 |---|---|---|---|
 | Phase 0 - Overview and boundaries | `Done / maintain` | `refactor-plan/00-overview-and-boundaries.md`, `docs/decisions/0002-module-boundaries.md`, generated-code policy | Keep boundary docs aligned when ownership changes. |
 | Phase 1 - Corpus and harness | `Current / partial` | corpus loader, linter, harness, parse runner, phase1 resources, corpus tests | Continue using `./gradlew :eyelib-molang:test`; add dedicated runner command only when it exists. |
-| Phase 2 - Parser and AST | `Current / partial` | `compiler/frontend/ast/`, generated-backed AST frontend, handwritten frontend, frontend tests | Keep generated parser path active; parser work must be additive and corpus-backed. |
+| Phase 2 - Parser and AST | `Done` | `compiler/frontend/ast/`, handwritten frontend, frontend tests; ANTLR-generated parser removed | Handwritten parser is the sole frontend; all parser work is AST-driven. |
 | Phase 3 - Binder and diagnostics | `Current / partial` | `compiler/binding/`, `src/test/java/io/github/tt432/eyelibmolang/compiler/binding/MolangBinderTest.java` for typed deferred loop break/continue coverage in normal/strict/debug modes, normal deferred unsupported warnings, alias canonicalization coverage for all four roots (`q/t/v/c`), bind-shape/diagnostics/debug-trace corpus support, 5 deferred reason types (`UNSUPPORTED_IN_THIS_SLICE`, `HOST_SHAPE_DEPENDENT`, `QUERY_VARIANT_SELECTION_DEPENDENT`, `COMPATIBILITY_POLICY_DEPENDENT`, `DIAGNOSTICS_OVERLAY_OWNED_FOLLOWUP`) | Widen binder families through tests; keep unsupported semantics explicit via deferred notes plus normal warnings, and keep the typed deferred break/continue lane narrow until broader Phase 3 widening is separately planned. |
 | Phase 4 - Host and query bridge | `Blocked by recorded decisions, contract test slices partial` | current `mapping/api/` ports exist, the Phase 4 decision set is recorded, `mapping/MolangHostPublicationDeterminismConflictTest.java` covers host publication determinism plus equal-tie conflict failure, `mapping/MolangCallableDiscoveryRoleContractTest.java` covers callable discovery roles, `mapping/MolangQueryVariantSelectionMatrixContractTest.java` covers query-variant matrix ordering, `mapping/MolangCallableVariantSelectionAmbiguityContractTest.java` covers variant ambiguity, `mapping/MolangCallablePublicationSignatureRoleTest.java` covers callable publication roles; bind-link and animation-clock transitional parity tests (`MolangQueryBindLinkContractTest`, `MolangCallableBindLinkContractTest`, `MolangAnimationClockTransitionalParityContractTest`) are NOT YET IMPLEMENTED (⬜); root runtime `mc/impl/molang/mapping/MolangQueryAnimationClockRuntimeParityTest.java` and `client/animation/bedrock/BrAnimationCodecTest.java` cover animation-clock parity. | Keep broad implementation blocked; bind-link contract tests remain deferred. |
 | Phase 5 - Execution and runtime semantics | `Superseded — replaced by unified bytecode compiler` | Unified compile-then-execute architecture replaces separate planning/execution phases | All execution semantics now handled by the bytecode compiler pipeline. |
@@ -85,7 +84,6 @@ Evidence from the current tree:
 - Add parser acceptance/rejection cases before adding new handwritten parser behavior.
 - Keep `BlockExpr` as the canonical expression-valued block node.
 - Keep `loop` and `for_each` as dedicated control-form productions, not generic call-like forms.
-- Do not edit generated parser artifacts unless the task is explicitly a regeneration/isolation task.
 
 ### M3 - Widen binder diagnostics without hiding semantics
 
@@ -112,7 +110,6 @@ Before host/query bridge implementation starts, keep this roadmap and `refactor-
 ## Blocked / Deferred Decisions
 
 - Phase 4 MolangOwnerSet has been removed. HostContext exists in `mapping/api/HostContext.java` and now supports canonical `HostRole<T>` lookup alongside deprecated raw `Class<?>` lookup for transitional callers. Migration status: file deleted, semantic model partially migrated (type-safe HostRole<T> operational, downstream Class<?> callers still pending migration).
-- Final cutover and deletion of generated-parser-backed compile path (deferred until downstream parity evidence is green).
 - All Phase 5/6 items resolved by the unified compile-then-execute refactor — see Phase 7 status above.
 
 ## Phase 4 Recorded Decisions And Required Test Surfaces
@@ -158,8 +155,8 @@ Target thresholds establish what "done" means before phase promotion.
 |---|---|---|
 | AST node coverage | All syntax-baseline checklist nodes have explicit AST types | 🔶 |
 | ForEachExpr binder branch | Explicit handler in MolangBinder (not generic else) | ✅ |
-| Generated parser parity | 0 regression failures on old compile path | 🔶 |
 | Handwritten frontend coverage | ≥20 acceptance/rejection tests | ✅ |
+| ANTLR-generated parser removed | All ANTLR artifacts deleted; handwritten parser is sole frontend | ✅ |
 
 ### Phase 3 — Binder and Diagnostics
 
@@ -201,7 +198,6 @@ Target thresholds establish what "done" means before phase promotion.
 - Phase 1-4 implementation slices: `jetbrain_run_gradle_tasks :eyelib-molang:test`.
 - Phase 7 and beyond: `jetbrain_run_gradle_tasks :eyelib-molang:test :eyelib-importer:test
  :eyelib-preprocessing:test :test`.
-- Generated parser changes: require a task-specific regeneration/isolation plan and update `docs/decisions/0004-generated-code-policy.md` if the generated zone moves or changes ownership.
 
 ## Anti-Drift Checklist
 
@@ -211,4 +207,4 @@ Before ending any Molang refactor task, answer these in the change itself:
 2. Did the task implement a design draft or phase-plan promise? If yes, update the corresponding roadmap row and evidence.
 3. Did the task defer a previously planned behavior? If yes, add it to `Blocked / Deferred Decisions` or the relevant phase plan.
 4. Did the task change verification commands? If yes, update `Verification Gates` here and the phase plan.
-5. Did the task touch generated parser output or root platform bindings? If yes, update the boundary notes that point to those paths.
+5. Did the task touch root platform bindings? If yes, update the boundary notes that point to those paths.

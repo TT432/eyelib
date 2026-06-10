@@ -136,6 +136,13 @@ public final class BoundMolang {
     ) implements BoundExpr {
     }
 
+    public record BoundBinaryConditionalExpr(
+            SourceSpan span,
+            BoundExpr condition,
+            BoundExpr whenTrue
+    ) implements BoundExpr {
+    }
+
     public record BoundBreakStmt(
             SourceSpan span,
             BindDeferredNote.Reason deferredReason

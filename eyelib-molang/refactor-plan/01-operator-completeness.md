@@ -1,5 +1,7 @@
 # P1：运算符完整性 — 补全缺失的比较运算符
 
+**Status: ✅ Done** (all 6 comparison operators added to handwritten parser; ANTLR-generated parser no longer exists for differential testing)
+
 ## 问题类型
 
 **解析器完整性缺陷**：手写递归下降解析器实现的运算符集与参考语法（ANTLR Molang.g4）不一致。
@@ -17,7 +19,7 @@ while (match(TokenKind.GREATER, TokenKind.EQUAL_EQUAL, TokenKind.BANG_EQUAL)) {
 ```
 仅匹配三种比较运算符。
 
-**证据链 E3** — ANTLR语法中的比较运算符：
+**证据链 E3** — ANTLR语法中的比较运算符（历史参考：该文件已随 ANTLR 移除而删除）：
 - 文件：`eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/MolangParser.java`
 - 行19-24：`T__11='<'`, `T__12='<='`, `T__13='>='`, `T__14='>'`
 - 行638-653：`ComparisonOperatorContext` 匹配全部四种运算符
@@ -56,7 +58,7 @@ for each row in OperatorTable:
     test: parse(row.input) → assert operator == row.operator
 ```
 
-### 模式：差异测试（Differential Testing）
+### 模式：差异测试（Differential Testing）~~（历史：双解析器已不适用）~~
 
 **核心思想**：将同一输入同时送入两个解析器实现（ANTLR生成 + 手写），断言产出等价AST结构。
 

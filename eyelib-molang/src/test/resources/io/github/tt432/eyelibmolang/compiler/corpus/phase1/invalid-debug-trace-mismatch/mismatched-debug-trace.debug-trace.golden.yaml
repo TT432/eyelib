@@ -1,5 +1,4 @@
 trace:
-  - diagnostic-code:BIND_DEBUG_DEFERRED_NOTE
-  - diagnostic-severity:INFO
-  - deferred-note-reason:UNSUPPORTED_IN_THIS_SLICE
+  - diagnostic-code:EXPECTED_BUT_NOT_PRODUCED
+  - diagnostic-severity:WARNING
   - deferred-note-source-family:NotARealFamily

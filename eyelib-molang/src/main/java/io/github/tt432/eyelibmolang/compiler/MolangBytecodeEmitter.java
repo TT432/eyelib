@@ -139,7 +139,9 @@ public final class MolangBytecodeEmitter {
         } else if (expr instanceof BoundMolang.BoundGroupingExpr grouping) {
             emitExpr(code, grouping.expression());
         } else if (expr instanceof BoundMolang.BoundThisExpr) {
-            code.getstatic(CD_MOLANG_FLOAT, "ZERO", CD_MOLANG_FLOAT);
+            code.aload(1);
+            code.ldc("this");
+            code.invokevirtual(CD_MOLANG_SCOPE, "get", MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_STRING));
         } else if (expr instanceof BoundMolang.BoundIdentifierExpr identifierExpr) {
             code.aload(1);
             code.ldc(identifierExpr.name());
@@ -189,6 +191,8 @@ public final class MolangBytecodeEmitter {
             emitNullCoalesceExpr(code, nullCoalesceExpr);
         } else if (expr instanceof BoundMolang.BoundTernaryConditionalExpr ternary) {
             emitTernaryExpr(code, ternary);
+        } else if (expr instanceof BoundMolang.BoundBinaryConditionalExpr binaryCond) {
+            emitBinaryConditionalExpr(code, binaryCond);
         } else if (expr instanceof BoundMolang.BoundUnknownExpr || expr instanceof BoundMolang.BoundDeferredExpr) {
             code.getstatic(CD_MOLANG_NULL, "INSTANCE", CD_MOLANG_NULL);
         } else {
@@ -390,6 +394,23 @@ public final class MolangBytecodeEmitter {
         code.labelBinding(endLabel);
     }
 
+    /**
+     * 发出二元条件表达式字节码：condition 为真则返回 whenTrue，否则返回 MolangNull.INSTANCE。
+     * 对应 Bedrock 语法 {@code <test> ? <if true>}。
+     */
+    private static void emitBinaryConditionalExpr(CodeBuilder code, BoundMolang.BoundBinaryConditionalExpr expr) {
+        emitExpr(code, expr.condition());
+        code.invokeinterface(CD_MOLANG_OBJECT, "asBoolean", MethodTypeDesc.of(CD_BOOL));
+        Label elseLabel = code.newLabel();
+        Label endLabel = code.newLabel();
+        code.ifeq(elseLabel);
+        emitExpr(code, expr.whenTrue());
+        code.goto_(endLabel);
+        code.labelBinding(elseLabel);
+        code.getstatic(CD_MOLANG_NULL, "INSTANCE", CD_MOLANG_NULL);
+        code.labelBinding(endLabel);
+    }
+
     private static void emitBlockExpr(CodeBuilder code, BoundMolang.BoundBlockExpr blockExpr) {
         if (blockExpr.statements().isEmpty()) {
             code.getstatic(CD_MOLANG_NULL, "INSTANCE", CD_MOLANG_NULL);
@@ -401,6 +422,12 @@ public final class MolangBytecodeEmitter {
             if (i < blockExpr.statements().size() - 1) {
                 code.pop();
             }
+        }
+        // 如果最后一个语句不是 return，则弹出其值并隐式返回 0.0（MolangNull）
+        BoundMolang.BoundStmt lastStmt = blockExpr.statements().get(blockExpr.statements().size() - 1);
+        if (!(lastStmt instanceof BoundMolang.BoundReturnStmt)) {
+            code.pop();
+            code.getstatic(CD_MOLANG_NULL, "INSTANCE", CD_MOLANG_NULL);
         }
     }
 

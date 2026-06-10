@@ -123,9 +123,9 @@ public final class MolangConstantExpressionEvaluator {
             Optional<MolangObject> condition = evaluateConstantExpr(binaryCond.condition());
             if (condition.isEmpty()) return Optional.empty();
             if (condition.get().asBoolean()) {
-                return evaluateConstantExpr(binaryCond.condition());
-            } else {
                 return evaluateConstantExpr(binaryCond.whenFalse());
+            } else {
+                return Optional.of(io.github.tt432.eyelibmolang.type.MolangFloat.valueOf(0));
             }
         }
         // 非常量：标识符、带变量的调用、成员访问等

@@ -1,5 +1,7 @@
 # P3：测试扩展 — 系统化测试覆盖
 
+**Status: ✅ Done / partially superseded** (full pipeline tests created; dual-frontend divergence tests superseded by ANTLR removal — only one frontend remains)
+
 ## 问题类型
 
 **测试覆盖不足**：全流水线测试仅3个（全为"1+2"变体），5种AST类型零直接测试，生成解析器与手写解析器零交叉验证。

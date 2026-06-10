@@ -6,6 +6,5 @@ mode: debug
 assertions:
   - parse-accept
   - bind-normalize
-  - deferred-note
 ---
 loop(3, {variable.counter = variable.counter + 1;})

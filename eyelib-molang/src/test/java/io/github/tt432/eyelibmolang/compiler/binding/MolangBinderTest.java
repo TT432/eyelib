@@ -120,18 +120,17 @@ class MolangBinderTest {
     }
 
     @Test
-    void bindsDeferredBinaryConditionalWithNormalWarning() {
+    void bindsBinaryConditionalAsBoundBinaryConditionalExpr() {
         BindResult bindResult = bind("a ? b");
 
-        BoundMolang.BoundDeferredExpr deferredExpr = assertInstanceOf(BoundMolang.BoundDeferredExpr.class, bindResult.root().root());
-        assertEquals(BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, deferredExpr.reason());
-        assertEquals("BinaryConditionalExpr", deferredExpr.sourceFamily());
+        BoundMolang.BoundBinaryConditionalExpr binaryCondExpr = assertInstanceOf(BoundMolang.BoundBinaryConditionalExpr.class, bindResult.root().root());
+        assertInstanceOf(BoundMolang.BoundIdentifierExpr.class, binaryCondExpr.condition());
+        assertInstanceOf(BoundMolang.BoundIdentifierExpr.class, binaryCondExpr.whenTrue());
 
-        assertTrue(bindResult.deferredNotes().stream().anyMatch(note ->
-                note.reason() == BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
-                && note.sourceFamily().equals("BinaryConditionalExpr")
+        assertTrue(bindResult.deferredNotes().isEmpty());
+        assertTrue(bindResult.diagnostics().stream().noneMatch(d ->
+                d.code().equals("BIND_DEFERRED_UNSUPPORTED") && d.message().contains("BinaryConditionalExpr")
         ));
-        assertDeferredUnsupportedWarning(bindResult, "BinaryConditionalExpr");
     }
 
     @Test
@@ -155,30 +154,28 @@ class MolangBinderTest {
     }
 
     @Test
-    void bindsLoopToExplicitLoopContractWithTypedDeferralNote() {
+    void bindsLoopToExplicitLoopContract() {
         BindResult bindResult = bind("loop(3, {variable.counter = variable.counter + 1;})");
 
         BoundMolang.BoundLoopExpr loopExpr = assertInstanceOf(BoundMolang.BoundLoopExpr.class, bindResult.root().root());
         assertEquals("3", loopExpr.iterationCountRawText());
-        assertEquals(BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, loopExpr.deferredReason());
+        // deferredReason 为 null 表示 loop 已完全实现，未被 defer
 
         BoundMolang.BoundExprStmt bodyStatement = assertInstanceOf(BoundMolang.BoundExprStmt.class, loopExpr.body().statements().get(0));
         BoundMolang.BoundAssignmentExpr assignmentExpr = assertInstanceOf(BoundMolang.BoundAssignmentExpr.class, bodyStatement.expression());
         assertTrue(assignmentExpr.writableTarget());
         assertEquals("variable", assignmentExpr.targetRoot().orElseThrow());
 
-        assertTrue(bindResult.deferredNotes().stream().anyMatch(note ->
-                note.reason() == BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
-                && note.sourceFamily().equals("LoopExpr")
+        assertTrue(bindResult.deferredNotes().stream().noneMatch(note ->
+                note.sourceFamily().equals("LoopExpr")
         ));
-        assertDeferredUnsupportedWarning(bindResult, "LoopExpr");
     }
 
     @Test
-    void strictModeEmitsDeferredWarningForLoopBinding() {
+    void strictModeDoesNotEmitDeferredWarningForNowSupportedLoopBinding() {
         BindResult bindResult = bind("loop(3, {variable.counter = variable.counter + 1;})", BindDiagnosticsMode.STRICT);
 
-        assertTrue(bindResult.diagnostics().stream().anyMatch(diagnostic ->
+        assertTrue(bindResult.diagnostics().stream().noneMatch(diagnostic ->
                 diagnostic.severity() == BindDiagnostic.Severity.WARNING
                 && diagnostic.code().equals("BIND_STRICT_UNSUPPORTED_DEFERRED")
                 && diagnostic.message().contains("LoopExpr")
@@ -186,10 +183,10 @@ class MolangBinderTest {
     }
 
     @Test
-    void debugModeEmitsDeferredInfoForLoopBinding() {
+    void debugModeDoesNotEmitDeferredInfoForNowSupportedLoopBinding() {
         BindResult bindResult = bind("loop(3, {variable.counter = variable.counter + 1;})", BindDiagnosticsMode.DEBUG);
 
-        assertTrue(bindResult.diagnostics().stream().anyMatch(diagnostic ->
+        assertTrue(bindResult.diagnostics().stream().noneMatch(diagnostic ->
                 diagnostic.severity() == BindDiagnostic.Severity.INFO
                 && diagnostic.code().equals("BIND_DEBUG_DEFERRED_NOTE")
                 && diagnostic.message().contains("LoopExpr")
@@ -230,7 +227,7 @@ class MolangBinderTest {
 
         BoundMolang.BoundLoopExpr loopExpr = assertInstanceOf(BoundMolang.BoundLoopExpr.class, bindResult.root().root());
         assertEquals("2", loopExpr.iterationCountRawText());
-        assertEquals(BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, loopExpr.deferredReason());
+        // deferredReason 为 null 表示 loop 已完全实现
 
         assertEquals(2, loopExpr.body().statements().size());
         BoundMolang.BoundBreakStmt breakStmt = assertInstanceOf(BoundMolang.BoundBreakStmt.class, loopExpr.body().statements().get(0));
@@ -240,17 +237,12 @@ class MolangBinderTest {
 
         assertTrue(bindResult.deferredNotes().stream().anyMatch(note ->
                 note.reason() == BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
-                && note.sourceFamily().equals("LoopExpr")
-        ));
-        assertTrue(bindResult.deferredNotes().stream().anyMatch(note ->
-                note.reason() == BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
                 && note.sourceFamily().equals("BreakStmt")
         ));
         assertTrue(bindResult.deferredNotes().stream().anyMatch(note ->
                 note.reason() == BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
                 && note.sourceFamily().equals("ContinueStmt")
         ));
-        assertDeferredUnsupportedWarning(bindResult, "LoopExpr");
         assertDeferredUnsupportedWarning(bindResult, "BreakStmt");
         assertDeferredUnsupportedWarning(bindResult, "ContinueStmt");
     }
@@ -294,6 +286,109 @@ class MolangBinderTest {
         assertInstanceOf(BoundMolang.BoundThisExpr.class, bindResult.root().root());
         assertTrue(bindResult.diagnostics().isEmpty());
         assertTrue(bindResult.deferredNotes().isEmpty());
+    }
+
+    @Test
+    void bindsNullCoalesceAsBoundNullCoalesceExpr() {
+        // a ?? b → BoundNullCoalesceExpr
+        BindResult bindResult = bind("a ?? b");
+
+        BoundMolang.BoundNullCoalesceExpr nullCoalesceExpr = assertInstanceOf(BoundMolang.BoundNullCoalesceExpr.class, bindResult.root().root());
+        assertInstanceOf(BoundMolang.BoundIdentifierExpr.class, nullCoalesceExpr.left());
+        assertInstanceOf(BoundMolang.BoundIdentifierExpr.class, nullCoalesceExpr.right());
+        assertTrue(bindResult.diagnostics().isEmpty());
+        assertTrue(bindResult.deferredNotes().isEmpty());
+    }
+
+    @Test
+    void bindsUnaryNegationAsBoundUnaryExpr() {
+        // -x → BoundUnaryExpr with "-"
+        BindResult bindResult = bind("-x");
+
+        BoundMolang.BoundUnaryExpr unaryExpr = assertInstanceOf(BoundMolang.BoundUnaryExpr.class, bindResult.root().root());
+        assertEquals("-", unaryExpr.operator());
+        assertInstanceOf(BoundMolang.BoundIdentifierExpr.class, unaryExpr.expression());
+        assertTrue(bindResult.diagnostics().isEmpty());
+        assertTrue(bindResult.deferredNotes().isEmpty());
+    }
+
+    @Test
+    void bindsSimpleMemberAccessAsBoundMemberAccessExpr() {
+        // a.b → BoundMemberAccessExpr
+        BindResult bindResult = bind("a.b");
+
+        BoundMolang.BoundMemberAccessExpr memberAccessExpr = assertInstanceOf(BoundMolang.BoundMemberAccessExpr.class, bindResult.root().root());
+        assertInstanceOf(BoundMolang.BoundIdentifierExpr.class, memberAccessExpr.owner());
+        assertEquals("b", memberAccessExpr.memberName());
+        assertTrue(bindResult.diagnostics().isEmpty());
+        assertTrue(bindResult.deferredNotes().isEmpty());
+    }
+
+    @Test
+    void bindsSimpleArrowAccessAsBoundArrowAccessExpr() {
+        // a->q.x → BoundArrowAccessExpr
+        BindResult bindResult = bind("a->q.x");
+
+        BoundMolang.BoundArrowAccessExpr arrowAccessExpr = assertInstanceOf(BoundMolang.BoundArrowAccessExpr.class, bindResult.root().root());
+        assertInstanceOf(BoundMolang.BoundIdentifierExpr.class, arrowAccessExpr.left());
+        BoundMolang.BoundMemberAccessExpr rightMember = assertInstanceOf(BoundMolang.BoundMemberAccessExpr.class, arrowAccessExpr.right());
+        assertEquals("query", ((BoundMolang.BoundIdentifierExpr) rightMember.owner()).name());
+        assertEquals("x", rightMember.memberName());
+        assertTrue(bindResult.diagnostics().isEmpty());
+        assertTrue(bindResult.deferredNotes().isEmpty());
+    }
+
+    @Test
+    void bindsFunctionCallAsBoundCallExpr() {
+        // f(1) → BoundCallExpr
+        BindResult bindResult = bind("f(1)");
+
+        BoundMolang.BoundCallExpr callExpr = assertInstanceOf(BoundMolang.BoundCallExpr.class, bindResult.root().root());
+        assertInstanceOf(BoundMolang.BoundIdentifierExpr.class, callExpr.callee());
+        assertEquals(1, callExpr.arguments().size());
+        assertInstanceOf(BoundMolang.BoundNumberLiteralExpr.class, callExpr.arguments().get(0));
+        assertTrue(bindResult.diagnostics().isEmpty());
+        assertTrue(bindResult.deferredNotes().isEmpty());
+    }
+
+    @Test
+    void bindsIndexAccessAsBoundIndexExpr() {
+        // a[0] → BoundIndexExpr
+        BindResult bindResult = bind("a[0]");
+
+        BoundMolang.BoundIndexExpr indexExpr = assertInstanceOf(BoundMolang.BoundIndexExpr.class, bindResult.root().root());
+        assertInstanceOf(BoundMolang.BoundIdentifierExpr.class, indexExpr.owner());
+        assertInstanceOf(BoundMolang.BoundNumberLiteralExpr.class, indexExpr.index());
+        assertTrue(bindResult.diagnostics().isEmpty());
+        assertTrue(bindResult.deferredNotes().isEmpty());
+    }
+
+    @Test
+    void bindsExplicitBlockExprAsBoundBlockExpr() {
+        // {v.x=1;} → BoundBlockExpr
+        BindResult bindResult = bindFromHandwrittenFrontend("{v.x=1;}");
+
+        BoundMolang.BoundBlockExpr blockExpr = assertInstanceOf(BoundMolang.BoundBlockExpr.class, bindResult.root().root());
+        assertEquals(1, blockExpr.statements().size());
+        BoundMolang.BoundExprStmt exprStmt = assertInstanceOf(BoundMolang.BoundExprStmt.class, blockExpr.statements().get(0));
+        assertInstanceOf(BoundMolang.BoundAssignmentExpr.class, exprStmt.expression());
+        assertTrue(bindResult.diagnostics().isEmpty());
+        assertTrue(bindResult.deferredNotes().isEmpty());
+    }
+
+    @Test
+    void rejectsContextWriteWithInvalidWriteDiagnostic() {
+        // c.foo = 1 → BIND_INVALID_WRITE_TARGET_ROOT diagnostic
+        BindResult bindResult = bind("c.foo = 1");
+
+        BoundMolang.BoundAssignmentExpr assignmentExpr = assertInstanceOf(BoundMolang.BoundAssignmentExpr.class, bindResult.root().root());
+        assertEquals("context", assignmentExpr.targetRoot().orElseThrow());
+        assertFalse(assignmentExpr.writableTarget());
+        assertTrue(bindResult.hasErrors());
+        assertTrue(bindResult.diagnostics().stream().anyMatch(diagnostic ->
+                diagnostic.code().equals("BIND_INVALID_WRITE_TARGET_ROOT")
+                && diagnostic.message().contains("read-only")
+        ));
     }
 
     private BindResult bind(String source) {

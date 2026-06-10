@@ -1,4 +1,4 @@
-root: BoundBlockExpr
+root: BoundBinaryConditionalExpr
 contains:
-  - BoundDeferredExpr
-  - deferred-note-reason:UNSUPPORTED_IN_THIS_SLICE
+  - BoundIdentifierExpr
+  - BoundNumberLiteralExpr

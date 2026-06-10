@@ -130,7 +130,11 @@ public final class MolangBinder {
                     bindExpr(ternaryConditionalExpr.whenFalse(), state, true)
             );
         } else if (expr instanceof MolangAst.BinaryConditionalExpr binaryConditionalExpr) {
-            boundExpr = deferUnsupportedExpr(state, binaryConditionalExpr, "BinaryConditionalExpr");
+            boundExpr = new BoundMolang.BoundBinaryConditionalExpr(
+                    binaryConditionalExpr.span(),
+                    bindExpr(binaryConditionalExpr.condition(), state, true),
+                    bindExpr(binaryConditionalExpr.whenFalse(), state, true)
+            );
         } else {
             boundExpr = deferUnsupportedExpr(state, expr, expr.getClass().getSimpleName());
         }
@@ -177,7 +181,6 @@ public final class MolangBinder {
     }
 
     private BoundMolang.BoundExpr bindLoopExpr(MolangAst.LoopExpr loopExpr, BindingState state) {
-        addDeferredNote(state, loopExpr.span(), BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, "LoopExpr");
         List<BoundMolang.BoundStmt> statements = new ArrayList<>();
         for (MolangAst.Stmt statement : loopExpr.body().statements()) {
             statements.add(bindStmt(statement, state));
@@ -186,7 +189,7 @@ public final class MolangBinder {
                 loopExpr.span(),
                 loopExpr.iterationCountRawText(),
                 new BoundMolang.BoundBlockExpr(loopExpr.body().span(), statements),
-                BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
+                null
         );
     }
 

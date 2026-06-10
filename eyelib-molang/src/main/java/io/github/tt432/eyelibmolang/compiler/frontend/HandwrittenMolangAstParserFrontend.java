@@ -2,14 +2,11 @@ package io.github.tt432.eyelibmolang.compiler.frontend;
 
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.SourceSpan;
-import io.github.tt432.eyelibmolang.generated.MolangLexer;
-import io.github.tt432.eyelibmolang.generated.MolangParser;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * 手写 AST 解析前端，用于常量折叠等阶段。
@@ -24,14 +21,16 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
     }
 
     @Override
-    public MolangParserFrontendResult parseExprSet(
-            String source,
-            Consumer<MolangLexer> lexerConfigurator,
-            Consumer<MolangParser> parserConfigurator) {
-        return new MolangParserFrontendResult(null, null, parseExprSetAst(source));
+    public MolangParserFrontendResult parseExprSet(String source) {
+        return new MolangParserFrontendResult(parseExprSetAst(source));
     }
 
     public Optional<MolangAst.ExprSet> parseExprSetAst(String source) {
+        if (source.isBlank()) {
+            MolangAst.NumberLiteralExpr zero = new MolangAst.NumberLiteralExpr(
+                    SourceSpan.unknown(), "0", 0.0);
+            return Optional.of(new MolangAst.ExprSet(zero.span(), zero));
+        }
         try {
             Parser parser = new Parser(source);
             return Optional.of(parser.parseExprSet());
@@ -149,10 +148,10 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
         }
 
         private MolangAst.Expr parseAnd() {
-            MolangAst.Expr expression = parseComparison();
+            MolangAst.Expr expression = parseEquality();
             while (match(TokenKind.AND_AND)) {
                 Token operator = previous();
-                MolangAst.Expr right = parseComparison();
+                MolangAst.Expr right = parseEquality();
                 expression = new MolangAst.BinaryExpr(SourceSpan.covering(expression.span(), right.span()), operator.lexeme, expression, right);
             }
             return expression;
@@ -169,9 +168,19 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
         }
         private MolangAst.Expr parseComparison() {
             MolangAst.Expr expression = parseAdd();
-            while (match(TokenKind.GREATER, TokenKind.GREATER_EQUAL, TokenKind.LESS, TokenKind.LESS_EQUAL, TokenKind.EQUAL_EQUAL, TokenKind.BANG_EQUAL)) {
+            while (match(TokenKind.GREATER, TokenKind.GREATER_EQUAL, TokenKind.LESS, TokenKind.LESS_EQUAL)) {
                 Token operator = previous();
                 MolangAst.Expr right = parseAdd();
+                expression = new MolangAst.BinaryExpr(SourceSpan.covering(expression.span(), right.span()), operator.lexeme, expression, right);
+            }
+            return expression;
+        }
+
+        private MolangAst.Expr parseEquality() {
+            MolangAst.Expr expression = parseComparison();
+            while (match(TokenKind.EQUAL_EQUAL, TokenKind.BANG_EQUAL)) {
+                Token operator = previous();
+                MolangAst.Expr right = parseComparison();
                 expression = new MolangAst.BinaryExpr(SourceSpan.covering(expression.span(), right.span()), operator.lexeme, expression, right);
             }
             return expression;
@@ -294,6 +303,14 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
                 ParseBlockResult block = parseStatements(TokenKind.RIGHT_BRACE);
                 Token rightBrace = consume(TokenKind.RIGHT_BRACE, "Expected '}' after block expression.");
                 return new MolangAst.BlockExpr(SourceSpan.covering(span(leftBrace), span(rightBrace)), block.statements);
+            }
+
+            if (match(TokenKind.BREAK)) {
+                return new MolangAst.UnknownExpr(span(previous()), previous().lexeme);
+            }
+
+            if (match(TokenKind.CONTINUE)) {
+                return new MolangAst.UnknownExpr(span(previous()), previous().lexeme);
             }
 
             throw error("Unexpected token: " + peek().kind);
@@ -509,12 +526,18 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
                 }
             }
 
+            // 尾缀 f/F（在 vanilla .mcpack 数据中出现，无实际语义）
+            if (hasRemaining() && (source.charAt(index) == 'f' || source.charAt(index) == 'F')) {
+                index++;
+                column++;
+            }
+
             String text = source.substring(start, index);
             return new Token(TokenKind.NUMBER, text, startIndex, index - 1, startLine, startColumn, line, column);
         }
 
         private Token readPunctuationOrOperator(int startIndex, int startLine, int startColumn) {
-        if (match("&&")) {
+            if (match("&&")) {
                 return token(TokenKind.AND_AND, "&&", startIndex, startLine, startColumn, 2);
             }
             if (match("||")) {

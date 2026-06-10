@@ -51,8 +51,6 @@ dependencies {
     // com.mojang.serialization.* — standalone DataFixerUpper library (bundled by MC but not part of MC itself)
     implementation 'com.mojang:datafixerupper:6.0.8'
 
-    // Previously resolved through the Forge classpath — now explicit
-    implementation 'org.antlr:antlr4-runtime:4.9.1'
     implementation 'org.joml:joml:1.10.5'
     implementation 'org.slf4j:slf4j-api:2.0.7'
 
