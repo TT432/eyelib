@@ -27,10 +27,112 @@ PROJECT_DIR = r"E:\_ideaProjects\qylEyelib"
 RENDERDOC_CMD = r"E:\RenderDoc\renderdoccmd.exe"
 RUN_CLIENT_CMD = r"E:\_ideaProjects\qylEyelib\build\moddev\runClient.cmd"
 CAPTURE_PREFIX = "eyelib_capture"
+CLIENT_RUN_TASKS = "prepareClientRun writeClientLegacyClasspath createClientLaunchScript"
 
 # runtime state (minimal, just process handle for cleanup)
 _proc = None
 _launch_time: float = 0.0
+
+
+def _tail_text(text: str, max_chars: int = 3000) -> str:
+    if len(text) <= max_chars:
+        return text
+    return text[-max_chars:]
+
+
+def _read_argfile(path: str) -> tuple[str, str]:
+    with open(path, "r", encoding="utf-8") as f:
+        lines = f.read().splitlines()
+    if len(lines) < 2:
+        raise ValueError(f"Invalid argfile: {path}")
+    return lines[0], lines[1]
+
+
+def _run_artifacts() -> list[str]:
+    moddev_dir = os.path.join(PROJECT_DIR, "build", "moddev")
+    return [
+        os.path.join(moddev_dir, "runClient.cmd"),
+        os.path.join(moddev_dir, "clientRunClasspath.txt"),
+        os.path.join(moddev_dir, "clientRunVmArgs.txt"),
+        os.path.join(moddev_dir, "clientRunProgramArgs.txt"),
+        os.path.join(moddev_dir, "clientLegacyClasspath.txt"),
+    ]
+
+
+def _format_artifact_status() -> str:
+    lines = []
+    for path in _run_artifacts():
+        if not os.path.exists(path):
+            lines.append(f"missing  {path}")
+            continue
+        mtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(os.path.getmtime(path)))
+        lines.append(f"{mtime}  {os.path.getsize(path):>8}  {path}")
+    return "\n".join(lines)
+
+
+def _validate_run_artifacts() -> Optional[str]:
+    missing = [path for path in _run_artifacts() if not os.path.exists(path)]
+    if missing:
+        return (
+            "Missing ModDev run artifact(s). Run eyelib_debug_build first.\n"
+            + "\n".join(f"  {path}" for path in missing)
+        )
+
+    classpath_header, classpath_value = _read_argfile(
+        os.path.join(PROJECT_DIR, "build", "moddev", "clientRunClasspath.txt")
+    )
+    if classpath_header != "-classpath" or not classpath_value.strip():
+        return f"Invalid clientRunClasspath.txt header/value: {classpath_header!r}"
+
+    vm_args_path = os.path.join(PROJECT_DIR, "build", "moddev", "clientRunVmArgs.txt")
+    with open(vm_args_path, "r", encoding="utf-8") as f:
+        vm_args = f.read()
+    if "legacyClassPath.file" not in vm_args:
+        return "clientRunVmArgs.txt does not contain legacyClassPath.file"
+
+    return None
+
+
+def _port_25999_occupied() -> bool:
+    result = subprocess.run(
+        ["cmd.exe", "/c", "netstat -ano | findstr 25999"],
+        cwd=PROJECT_DIR,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    return result.returncode == 0 and bool(result.stdout.strip())
+
+
+def _classpath_duplicate_report() -> str:
+    run_cp_path = os.path.join(PROJECT_DIR, "build", "moddev", "clientRunClasspath.txt")
+    legacy_cp_path = os.path.join(PROJECT_DIR, "build", "moddev", "clientLegacyClasspath.txt")
+
+    header, classpath = _read_argfile(run_cp_path)
+    if header != "-classpath":
+        raise ValueError(f"Unsupported classpath argfile header: {header}")
+
+    run_entries = [p.strip() for p in classpath.split(os.pathsep) if p.strip()]
+    legacy_names = {
+        os.path.basename(p.strip()).lower()
+        for p in open(legacy_cp_path, "r", encoding="utf-8").read().splitlines()
+        if p.strip() and os.path.basename(p.strip()).lower().endswith(".jar")
+    }
+    duplicates = [
+        p for p in run_entries
+        if os.path.basename(p).lower() in legacy_names
+    ]
+
+    sample = ", ".join(os.path.basename(p) for p in duplicates[:12])
+    if len(duplicates) > 12:
+        sample += f", ... +{len(duplicates) - 12}"
+    report = (
+        f"Run classpath diagnostic: {len(run_entries)} entries; "
+        f"{len(duplicates)} jar basename(s) also appear in legacy classpath"
+    )
+    if sample:
+        report += f": {sample}"
+    return report
 
 
 mcp = FastMCP(
@@ -90,9 +192,51 @@ async def _poll_until(
     return False, f"{desc} timed out after {timeout}s"
 
 
+async def _process_exit_message(desc: str) -> Optional[str]:
+    if _proc is None:
+        return None
+    try:
+        await asyncio.wait_for(_proc.wait(), timeout=0.01)
+    except asyncio.TimeoutError:
+        return None
+
+    stderr = ""
+    if _proc.stderr is not None:
+        try:
+            data = await asyncio.wait_for(_proc.stderr.read(), timeout=1.0)
+            stderr = data.decode("utf-8", errors="replace").strip()
+        except (asyncio.TimeoutError, OSError):
+            stderr = "<failed to read stderr>"
+    if stderr:
+        return f"{desc} exited early (exit={_proc.returncode}). stderr tail:\n{_tail_text(stderr)}"
+    return f"{desc} exited early (exit={_proc.returncode}). No stderr captured."
+
+
+async def _poll_ping_until_ready_or_exit(timeout: float, interval: float = 2.0) -> tuple[bool, str]:
+    start = time.time()
+    early_exit_msg = None
+    while time.time() - start < timeout:
+        if early_exit_msg is None:
+            early_exit_msg = await _process_exit_message("RenderDoc wrapper")
+
+        ping = await _http_get("/ping")
+        if ping is not None and ping.get("status") == "ok":
+            elapsed = time.time() - start
+            if early_exit_msg is not None:
+                return True, f"Client startup succeeded after {elapsed:.0f}s ({early_exit_msg}; client kept running)"
+            return True, f"Client startup succeeded after {elapsed:.0f}s"
+
+        await asyncio.sleep(interval)
+
+    if early_exit_msg is not None:
+        return False, early_exit_msg
+    return False, f"Client startup timed out after {timeout}s"
+
+
 async def _poll_until_loaded(
     timeout: float = 120.0,
     interval: float = 3.0,
+    check_process_exit: bool = False,
 ) -> tuple[Optional[str], Optional[str]]:
     """
     Poll /loaded until true, periodically checking /ping for crashes.
@@ -102,9 +246,17 @@ async def _poll_until_loaded(
     start = time.time()
     consecutive_ping_fails = 0
     max_ping_fails = 3  # ~10s at 3s interval before declaring crash
+    last_ping = None
+    last_loaded = None
 
     while time.time() - start < timeout:
+        if check_process_exit:
+            exit_msg = await _process_exit_message("Client process")
+            if exit_msg is not None:
+                return "crash", exit_msg
+
         ping = await _http_get("/ping")
+        last_ping = ping
         if ping is None:
             consecutive_ping_fails += 1
             if consecutive_ping_fails >= max_ping_fails:
@@ -115,12 +267,13 @@ async def _poll_until_loaded(
             consecutive_ping_fails = 0
 
         loaded = await _http_get("/loaded")
+        last_loaded = loaded
         if loaded and loaded.get("loaded") is True:
             elapsed = time.time() - start
             return None, f"Loaded after {elapsed:.0f}s"
         await asyncio.sleep(interval)
 
-    return "timeout", f"Loading timed out after {timeout}s"
+    return "timeout", f"Loading timed out after {timeout}s (last ping={last_ping}, last loaded={last_loaded})"
 
 
 async def _poll_until_gone(timeout: float = 30.0) -> bool:
@@ -187,7 +340,7 @@ def _state_summary(gs: dict) -> str:
 async def eyelib_debug_launch(timeout: int = 120) -> str:
     """
     Launch MC client under RenderDoc capture mode.
-    Rebuilds → kills zombie → renderdoccmd capture → polls /ping and /loaded until game is ready.
+    Starts RenderDoc capture → polls /ping and /loaded until game is ready.
 
     Args:
         timeout: Max seconds to wait for client to load AFTER rebuild (default 120).
@@ -199,36 +352,26 @@ async def eyelib_debug_launch(timeout: int = 120) -> str:
     if ping is not None:
         return "❌ Game is already running (port 25999 responds). Use eyelib_debug_close first."
 
-    # ── Pre-launch: rebuild ──
-    def _rebuild():
-        subprocess.run(
-            ["cmd.exe", "/c",
-             "cd /d E:\\_ideaProjects\\qylEyelib && "
-             "gradlew.bat :compileJava createLaunchScripts --no-configuration-cache"],
-            cwd="/mnt/e/_ideaProjects/qylEyelib",
-            capture_output=True, text=True, timeout=300,
-        )
-    await asyncio.to_thread(_rebuild)
+    if not os.path.exists(RUN_CLIENT_CMD):
+        return "❌ runClient.cmd is missing. Run eyelib_debug_build first."
 
-    # Kill zombie
-    def _kill_zombie():
-        subprocess.run(
-            ["cmd.exe", "/c",
-             'for /f "tokens=5" %i in (\'netstat -ano ^| findstr 25999\')'
-             " do (taskkill /F /PID %i >nul 2>&1)"],
-            capture_output=True, text=True, timeout=10,
-            cwd="/mnt/e",
-        )
-    await asyncio.to_thread(_kill_zombie)
-    await asyncio.sleep(1)
+    artifact_error = await asyncio.to_thread(_validate_run_artifacts)
+    if artifact_error is not None:
+        status = await asyncio.to_thread(_format_artifact_status)
+        return f"❌ {artifact_error}\n\nRun artifacts:\n{status}"
+
+    occupied = await asyncio.to_thread(_port_25999_occupied)
+    if occupied:
+        return "❌ Port 25999 is occupied but /ping does not respond. Close the old process or restart it outside MCP."
 
     # Launch
     try:
+        classpath_report = await asyncio.to_thread(_classpath_duplicate_report)
         _proc = await asyncio.create_subprocess_exec(
-            "/mnt/e/RenderDoc/renderdoccmd.exe", "capture",
+            RENDERDOC_CMD, "capture",
             "-c", CAPTURE_PREFIX, "--opt-hook-children",
-            "E:\\\\_ideaProjects\\\\qylEyelib\\\\build\\\\moddev\\\\runClient.cmd",
-            cwd="/mnt/e/_ideaProjects/qylEyelib",
+            RUN_CLIENT_CMD,
+            cwd=PROJECT_DIR,
             stdout=asyncio.subprocess.DEVNULL,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -237,10 +380,7 @@ async def eyelib_debug_launch(timeout: int = 120) -> str:
         return f"❌ Launch failed: {e}"
 
     # Wait for /ping
-    ok, msg = await _poll_until(
-        "/ping", lambda d: d.get("status") == "ok",
-        timeout=timeout, interval=2, desc="Client startup",
-    )
+    ok, msg = await _poll_ping_until_ready_or_exit(timeout=timeout, interval=2)
     if not ok:
         return f"❌ {msg}"
 
@@ -259,7 +399,7 @@ async def eyelib_debug_launch(timeout: int = 120) -> str:
     if ping is None:
         return "❌ Client became unreachable right after loading (crashed)."
 
-    return "✅ Client ready at title screen. Use eyelib_debug_enter_world to start."
+    return f"✅ Client ready at title screen. Use eyelib_debug_enter_world to start.\n{classpath_report}"
 
 
 @mcp.tool()
@@ -417,25 +557,25 @@ async def eyelib_debug_clientsmoke(timeout: int = 120) -> str:
 
     # rebuild
     def _rebuild():
-        subprocess.run(
+        return subprocess.run(
             ["cmd.exe", "/c",
-             "cd /d E:\\_ideaProjects\\qylEyelib && "
-             "gradlew.bat :compileJava createLaunchScripts --no-configuration-cache"],
-            cwd="/mnt/e/_ideaProjects/qylEyelib",
+             f"cd /d {PROJECT_DIR} && "
+             f"gradlew.bat :compileJava {CLIENT_RUN_TASKS} --no-configuration-cache"],
+            cwd=PROJECT_DIR,
             capture_output=True, text=True, timeout=300,
         )
-    await asyncio.to_thread(_rebuild)
+    rebuild_result = await asyncio.to_thread(_rebuild)
+    if rebuild_result.returncode != 0:
+        return "❌ Clientsmoke build failed:\n" + _tail_text(rebuild_result.stdout + "\n" + rebuild_result.stderr)
 
-    # kill zombie
-    def _kill_zombie():
-        subprocess.run(
-            ["cmd.exe", "/c",
-             'for /f "tokens=5" %i in (\'netstat -ano ^| findstr 25999\')'
-             " do (taskkill /F /PID %i >nul 2>&1)"],
-            capture_output=True, text=True, timeout=10, cwd="/mnt/e",
-        )
-    await asyncio.to_thread(_kill_zombie)
-    await asyncio.sleep(1)
+    artifact_error = await asyncio.to_thread(_validate_run_artifacts)
+    if artifact_error is not None:
+        status = await asyncio.to_thread(_format_artifact_status)
+        return f"❌ {artifact_error}\n\nRun artifacts:\n{status}"
+
+    occupied = await asyncio.to_thread(_port_25999_occupied)
+    if occupied:
+        return "❌ Port 25999 is occupied but /ping does not respond. Close the old process or restart it outside MCP."
 
     # inject clientsmoke JVM args
     vm_args_path = os.path.join(PROJECT_DIR, "build", "moddev", "clientRunVmArgs.txt")
@@ -448,7 +588,7 @@ async def eyelib_debug_clientsmoke(timeout: int = 120) -> str:
     try:
         _proc = await asyncio.create_subprocess_exec(
             "cmd.exe", "/c", RUN_CLIENT_CMD,
-            cwd="/mnt/e/_ideaProjects/qylEyelib",
+            cwd=PROJECT_DIR,
             stdout=asyncio.subprocess.DEVNULL,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -554,7 +694,7 @@ async def eyelib_debug_nullaway(module: str = "") -> str:
             ["cmd.exe", "/c",
              f"cd /d E:\\\\_ideaProjects\\\\qylEyelib && "
              f"gradlew.bat {target} --no-configuration-cache"],
-            cwd="/mnt/e/_ideaProjects/qylEyelib",
+            cwd=PROJECT_DIR,
             capture_output=True, text=True, timeout=300,
         )
 
@@ -591,6 +731,61 @@ async def eyelib_debug_nullaway(module: str = "") -> str:
             if "error:" in line.strip() or "BUILD FAILED" in line.strip():
                 error_lines.append(line.strip())
         return f"❌ {desc} — build failed (non-NullAway errors):\n" + "\n".join(error_lines[:20])
+
+
+@mcp.tool()
+async def eyelib_debug_build(module: str = "") -> str:
+    """
+    Build one or all eyelib modules using Windows gradlew.bat.
+    After build, refreshes client run artifacts generated by ModDevGradle.
+
+    Args:
+        module: Subproject name (e.g. 'eyelib-bridge', 'eyelib-molang').
+                Omit or use 'all' to build all modules.
+    """
+    if module and module.lower() != "all":
+        target = f":{module}:jar {CLIENT_RUN_TASKS}"
+        desc = f"Build {module}"
+    else:
+        target = f"jar {CLIENT_RUN_TASKS}"
+        desc = "Build all modules"
+
+    def _run() -> subprocess.CompletedProcess:
+        return subprocess.run(
+            ["cmd.exe", "/c",
+             "cd /d E:\\\\_ideaProjects\\\\qylEyelib && "
+             f"gradlew.bat {target} --no-configuration-cache"],
+            cwd=PROJECT_DIR,
+            capture_output=True, text=True, timeout=300,
+        )
+
+    try:
+        result = await asyncio.to_thread(_run)
+    except subprocess.TimeoutExpired:
+        return f"⏰ {desc} timed out after 300s"
+
+    if result.returncode == 0:
+        # Count tasks
+        executed = sum(1 for line in result.stdout.split("\n") if " executed" in line and "up-to-date" not in line.lower())
+        uptodate = sum(1 for line in result.stdout.split("\n") if "up-to-date" in line.lower())
+        artifact_error = _validate_run_artifacts()
+        status = _format_artifact_status()
+        if artifact_error is not None:
+            return (
+                f"⚠️ {desc} — BUILD SUCCESSFUL ({executed} executed, {uptodate} up-to-date), "
+                f"but run artifact validation failed: {artifact_error}\n\nRun artifacts:\n{status}"
+            )
+        return (
+            f"✅ {desc} — BUILD SUCCESSFUL ({executed} executed, {uptodate} up-to-date)\n"
+            f"Refreshed tasks: {CLIENT_RUN_TASKS}\n\nRun artifacts:\n{status}"
+        )
+    else:
+        error_lines = []
+        for line in (result.stdout + "\n" + result.stderr).split("\n"):
+            stripped = line.strip()
+            if stripped and ("error:" in stripped.lower() or "BUILD FAILED" in stripped or "FAILURE" in stripped):
+                error_lines.append(stripped)
+        return f"❌ {desc} — BUILD FAILED\n" + "\n".join(error_lines[:20])
 
 
 # ── Resource ───────────────────────────────────────────────────

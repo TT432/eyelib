@@ -63,12 +63,24 @@ public final class AIDebugServer {
                 exchange.close();
             });
             server.createContext("/loaded", exchange -> {
-                var mc = net.minecraft.client.Minecraft.getInstance();
-                boolean loaded = mc.screen != null || mc.player != null;
-                byte[] resp = ("{\"loaded\":" + loaded + "}").getBytes(StandardCharsets.UTF_8);
-                exchange.sendResponseHeaders(200, resp.length);
-                exchange.getResponseBody().write(resp);
-                exchange.close();
+                Minecraft mc = Minecraft.getInstance();
+                CompletableFuture<String> future = new CompletableFuture<>();
+                mc.tell(() -> {
+                    @Nullable String overlay = mc.getOverlay() == null ? null : mc.getOverlay().getClass().getName();
+                    @Nullable String screen = mc.screen == null ? null : mc.screen.getClass().getName();
+                    boolean inWorld = mc.level != null && mc.player != null;
+                    boolean loaded = overlay == null && (screen != null || inWorld);
+                    future.complete("{\"loaded\":" + loaded
+                                            + ",\"overlay\":" + jsonStringOrNull(overlay)
+                                            + ",\"screen\":" + jsonStringOrNull(screen)
+                                            + ",\"inWorld\":" + inWorld
+                                            + "}");
+                });
+                try {
+                    writeJson(exchange, 200, future.get(5, TimeUnit.SECONDS));
+                } catch (Exception e) {
+                    writeJson(exchange, 500, "{\"loaded\":false,\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
+                }
             });
             server.createContext("/ping", exchange -> {
                 byte[] resp = "{\"status\":\"ok\"}".getBytes(StandardCharsets.UTF_8);
@@ -106,9 +118,9 @@ public final class AIDebugServer {
                         mc.createWorldOpenFlows().createFreshLevel(
                                 finalName, levelSettings, worldOptions,
                                 registry -> registry.registryOrThrow(Registries.WORLD_PRESET)
-                                        .getHolderOrThrow(WorldPresets.FLAT)
-                                        .value()
-                                        .createWorldDimensions());
+                                                    .getHolderOrThrow(WorldPresets.FLAT)
+                                                    .value()
+                                                    .createWorldDimensions());
                         future.complete("World creation initiated: " + finalName);
                     } catch (Exception e) {
                         future.complete("Failed to enter world: " + e.getMessage());
@@ -199,5 +211,17 @@ public final class AIDebugServer {
             }
         }
         return sb.toString();
+    }
+
+    private static String jsonStringOrNull(@Nullable String s) {
+        return s == null ? "null" : "\"" + escapeJson(s) + "\"";
+    }
+
+    private static void writeJson(com.sun.net.httpserver.HttpExchange exchange, int status, String json) throws IOException {
+        byte[] resp = json.getBytes(StandardCharsets.UTF_8);
+        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+        exchange.sendResponseHeaders(status, resp.length);
+        exchange.getResponseBody().write(resp);
+        exchange.close();
     }
 }
