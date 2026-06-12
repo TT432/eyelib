@@ -42,6 +42,24 @@
       "states": [],
       "variants": []
     },
+    "entity_change_color:entity_nocull": {
+      "vertexShader": "eyelibmaterial:shaders/render.vert",
+      "fragmentShader": "eyelibmaterial:shaders/render.frag",
+      "+defines": ["USE_OVERLAY", "USE_COLOR_MASK"],
+      "samplerStates": [],
+      "states": [],
+      "variants": []
+    },
+    "entity_alphatest_change_color:entity_change_color": {
+      "vertexShader": "eyelibmaterial:shaders/render.vert",
+      "fragmentShader": "eyelibmaterial:shaders/render.frag",
+      "+defines": ["ALPHA_TEST", "USE_COLOR_MASK"],
+      "samplerStates": [
+        {"samplerIndex": 1, "textureWrap": "Repeat"}
+      ],
+      "+states": ["DisableAlphaWrite"],
+      "variants": []
+    },
     "entity_alphablend:entity": {
       "vertexShader": "eyelibmaterial:shaders/render.vert",
       "fragmentShader": "eyelibmaterial:shaders/render.frag",

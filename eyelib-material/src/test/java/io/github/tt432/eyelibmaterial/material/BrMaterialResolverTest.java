@@ -37,6 +37,43 @@ class BrMaterialResolverTest {
     }
 
     @Test
+    void findsMaterialByInheritanceKeyName() {
+        BrMaterialEntry material = entry(
+                "entity_alphatest_change_color",
+                "entity_change_color",
+                defines(null, List.of("ALPHA_TEST"), null),
+                states()
+        );
+        Map<String, BrMaterialEntry> materials = Map.of(
+                "entity_alphatest_change_color:entity_change_color", material
+        );
+
+        assertSame(material, BrMaterialResolver.find(materials, "entity_alphatest_change_color").orElseThrow());
+        assertTrue(BrMaterialResolver.find(materials, "entity_change_color").isEmpty());
+    }
+
+    @Test
+    void prefersParentDefinitionOverChildrenWithSameBaseName() {
+        BrMaterialEntry parent = entry("entity_alphatest_change_color", "entity_change_color",
+                                       defines(null, List.of("ALPHA_TEST", "USE_COLOR_MASK"), null), states());
+        Map<String, BrMaterialEntry> materials = Map.of(
+                "entity_change_color:entity_nocull",
+                entry("entity_change_color", "entity_nocull",
+                      defines(null, List.of("USE_COLOR_MASK"), null), states()),
+                "entity_alphatest_change_color:entity_change_color",
+                parent,
+                "gijoho:entity_alphatest_change_color",
+                entry("gijoho", "entity_alphatest_change_color", defines(), states())
+        );
+
+        ResolvedBrMaterial resolved = BrMaterialResolver.resolve(
+                materials.get("gijoho:entity_alphatest_change_color"), materials);
+
+        assertSame(parent, BrMaterialResolver.find(materials, "entity_alphatest_change_color").orElseThrow());
+        assertTrue(resolved.hasDefine("USE_COLOR_MASK"));
+    }
+
+    @Test
     void resolvesEmissiveAlphaAsCutoutEmissiveWithoutBlending() {
         Map<String, BrMaterialEntry> materials = Map.of(
                 "entity", entry("entity", "", defines(), states()),
@@ -86,7 +123,7 @@ class BrMaterialResolverTest {
             BrMaterialEntry.States states
     ) {
         return entry(name, base, defines, states,
-                new BrMaterialEntry.Blend(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()));
+                     new BrMaterialEntry.Blend(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty()));
     }
 
     private static BrMaterialEntry entry(

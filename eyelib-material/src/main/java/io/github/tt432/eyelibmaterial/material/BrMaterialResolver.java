@@ -49,7 +49,8 @@ public final class BrMaterialResolver {
             }
             apply(defines, material.defines().base(), material.defines().add(), material.defines().sub());
             apply(states, material.states().base(), material.states().add(), material.states().sub());
-            apply(samplerStates, material.samplerStates().base(), material.samplerStates().add(), material.samplerStates().sub());
+            apply(samplerStates, material.samplerStates().base(), material.samplerStates()
+                                                                          .add(), material.samplerStates().sub());
             blend = mergeBlend(blend, material.blend());
             stencil = mergeStencil(stencil, material.stencil());
             for (Map<String, BrMaterialEntry> map : material.variants()) {
@@ -106,11 +107,13 @@ public final class BrMaterialResolver {
             if (entry.getValue() == excluded) {
                 continue;
             }
-            if (entry.getValue().name().equals(name)) {
+            int colon = entry.getKey().indexOf(':');
+            if (colon >= 0 && entry.getKey().substring(0, colon).equals(name)) {
                 return Optional.of(entry.getValue());
             }
-            int colon = entry.getKey().lastIndexOf(':');
-            if (colon >= 0 && entry.getKey().substring(colon + 1).equals(name)) {
+        }
+        for (Map.Entry<String, BrMaterialEntry> entry : materials.entrySet()) {
+            if (entry.getValue() != excluded && entry.getValue().name().equals(name)) {
                 return Optional.of(entry.getValue());
             }
         }

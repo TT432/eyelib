@@ -82,6 +82,24 @@ class MaterialEndToEndTest {
               "+states": ["DisableCulling"],
               "variants": []
             },
+            "entity_change_color:entity_nocull": {
+              "vertexShader": "eyelibmaterial:shaders/render.vert",
+              "fragmentShader": "eyelibmaterial:shaders/render.frag",
+              "+defines": ["USE_OVERLAY", "USE_COLOR_MASK"],
+              "samplerStates": [],
+              "states": [],
+              "variants": []
+            },
+            "entity_alphatest_change_color:entity_change_color": {
+              "vertexShader": "eyelibmaterial:shaders/render.vert",
+              "fragmentShader": "eyelibmaterial:shaders/render.frag",
+              "+defines": ["ALPHA_TEST", "USE_COLOR_MASK"],
+              "samplerStates": [
+                {"samplerIndex": 1, "textureWrap": "Repeat"}
+              ],
+              "+states": ["DisableAlphaWrite"],
+              "variants": []
+            },
             "particles_blend": {
               "vertexShader": "eyelibmaterial:shaders/particle.vert",
               "fragmentShader": "eyelibmaterial:shaders/particle.frag",
@@ -117,11 +135,11 @@ class MaterialEndToEndTest {
     }
 
     @Test
-    void testCODECParsing_all9Entries() {
+    void testCODECParsing_all11Entries() {
         BrMaterial material = parseVanillaMaterial();
 
-        assertEquals(9, material.materials().size(),
-                "vanilla.material must contain exactly 9 entries");
+        assertEquals(11, material.materials().size(),
+                     "vanilla.material must contain exactly 11 entries");
 
         assertTrue(material.materials().containsKey("cutout"));
         assertTrue(material.materials().containsKey("translucent"));
@@ -130,6 +148,8 @@ class MaterialEndToEndTest {
         assertTrue(material.materials().containsKey("entity_alphatest:entity"));
         assertTrue(material.materials().containsKey("entity_alphablend:entity"));
         assertTrue(material.materials().containsKey("entity_nocull:entity"));
+        assertTrue(material.materials().containsKey("entity_change_color:entity_nocull"));
+        assertTrue(material.materials().containsKey("entity_alphatest_change_color:entity_change_color"));
         assertTrue(material.materials().containsKey("particles_blend"));
         assertTrue(material.materials().containsKey("opaque_block"));
 
@@ -161,7 +181,7 @@ class MaterialEndToEndTest {
 
         // 验证结构相等性
         assertEquals(original.materials().size(), decoded.materials().size(),
-                "Roundtrip must preserve entry count");
+                     "Roundtrip must preserve entry count");
 
         for (var key : original.materials().keySet()) {
             BrMaterialEntry origEntry = original.materials().get(key);
@@ -223,7 +243,7 @@ class MaterialEndToEndTest {
         assertEquals("entity", alphablend.base());
         assertTrue(alphablend.blend().blendSrc().isPresent());
         assertEquals(io.github.tt432.eyelibmaterial.gl.BlendFactor.SourceAlpha,
-                alphablend.blend().blendSrc().get());
+                     alphablend.blend().blendSrc().get());
     }
 
     @Test
@@ -237,9 +257,9 @@ class MaterialEndToEndTest {
         assertTrue(particlesBlend.states().base().get().contains(
                 io.github.tt432.eyelibmaterial.gl.GLStates.Blending));
         assertEquals(io.github.tt432.eyelibmaterial.gl.BlendFactor.SourceAlpha,
-                particlesBlend.blend().blendSrc().get());
+                     particlesBlend.blend().blendSrc().get());
         assertEquals(io.github.tt432.eyelibmaterial.gl.BlendFactor.OneMinusSrcAlpha,
-                particlesBlend.blend().blendDst().get());
+                     particlesBlend.blend().blendDst().get());
     }
 
     @Test
@@ -250,9 +270,9 @@ class MaterialEndToEndTest {
         for (var entry : material.materials().entrySet()) {
             BrMaterialEntry mat = entry.getValue();
             assertFalse(mat.hasVariants(),
-                    "Entry '" + entry.getKey() + "' should have no variants");
+                        "Entry '" + entry.getKey() + "' should have no variants");
             assertEquals(Optional.empty(), mat.getVariant("nonexistent"),
-                    "getVariant on variant-free entry should return empty");
+                         "getVariant on variant-free entry should return empty");
         }
 
         // 创建带变体的材质条目以验证方法工作
