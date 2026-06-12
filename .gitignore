@@ -65,5 +65,8 @@ clientsmoke-reports/
 .local_ref/
 .mc-source/
 
+# generated source bundle
+scripts/eyelib-all-main.md
+
 文档
 .extrasrc
