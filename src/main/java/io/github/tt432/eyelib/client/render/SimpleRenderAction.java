@@ -53,17 +53,21 @@ public record SimpleRenderAction<T>(
     }
 
     public RenderParams renderParams(ModelComponent modelComponent) {
-        return RenderParams.builder(poseStack, multiBufferSource, modelComponent)
-                           .entity(entity)
-                           .overlay(overlay)
-                           .light(packedLight)
-                           .partVisibility(modelComponent.getPartVisibility())
-                           .tintColor(entityTintColor())
-                           .build();
+        RenderParams.Builder builder = RenderParams.builder(poseStack, multiBufferSource, modelComponent);
+        float[] colorMask = modelComponent.usesColorMask() ? entityTintColor() : null;
+        if (colorMask != null) {
+            builder = builder.colorMaskTexture(multiBufferSource, modelComponent, colorMask);
+        }
+        return builder
+                .entity(entity)
+                .overlay(overlay)
+                .light(packedLight)
+                .partVisibility(modelComponent.getPartVisibility())
+                .build();
     }
 
     /**
-     * 从实体提取染色颜色。用于支持 Bedrock 的 change_color 材质效果。
+     * 从实体提取 Bedrock color mask 使用的染色颜色。
      */
     @Nullable
     private float[] entityTintColor() {

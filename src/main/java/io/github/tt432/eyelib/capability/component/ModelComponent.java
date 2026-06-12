@@ -6,7 +6,8 @@ import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelibbridge.material.RenderPassAdapter;
 import io.github.tt432.eyelibbridge.material.RenderTypeResolver;
 import io.github.tt432.eyelibbridge.material.ResourceLocationBridge;
-import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
+import io.github.tt432.eyelibmaterial.material.BrMaterialResolver;
+import io.github.tt432.eyelibmaterial.material.ResolvedBrMaterial;
 import io.github.tt432.eyelibmaterial.port.PortRenderPass;
 import io.github.tt432.eyelibutil.PortResourceLocation;
 import io.github.tt432.eyelibmodel.Model;
@@ -17,7 +18,6 @@ import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -61,8 +61,8 @@ public class ModelComponent {
     @Nullable
     public RenderType getRenderType(ResourceLocation texture) {
         if (serializableInfo == null) return null;
-        var matMap = buildMaterialLookupMap();
-        var entry = matMap.get(serializableInfo.renderType().getPath());
+        var matMap = MaterialManager.INSTANCE.getAllData();
+        var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().getPath()).orElse(null);
         if (entry != null) {
             PortResourceLocation portTex = ResourceLocationBridge.fromMc(texture);
             PortRenderPass pass = RenderTypeResolver.resolve(portTex, entry, matMap);
@@ -77,8 +77,8 @@ public class ModelComponent {
 
     public boolean isSolid() {
         if (serializableInfo == null) return true;
-        var matMap = buildMaterialLookupMap();
-        var entry = matMap.get(serializableInfo.renderType().getPath());
+        var matMap = MaterialManager.INSTANCE.getAllData();
+        var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().getPath()).orElse(null);
         if (entry != null) {
             return RenderTypeResolver.isSolid(entry, matMap);
         }
@@ -86,24 +86,23 @@ public class ModelComponent {
         return RenderTypeResolver.resolve(portId).isSolid();
     }
 
-    /**
-     * 构建材质查找表：同时按完整 key、key 后缀、以及 entry.name() 建立索引。
-     * entry.name() 优先——它是 Bedrock 材质继承链中的"真名"。
-     */
-    private Map<String, BrMaterialEntry> buildMaterialLookupMap() {
-        Map<String, BrMaterialEntry> result = new java.util.HashMap<>(MaterialManager.INSTANCE.getAllData());
-        for (var entry : MaterialManager.INSTANCE.getAllData().entrySet()) {
-            String name = entry.getValue().name();
-            String mapKey = entry.getKey();
-            int colon = mapKey.lastIndexOf(':');
-            // 按 entry.name() 建索引（canonical: suffix 等于 name 的优先）
-            if (colon >= 0 && name.equals(mapKey.substring(colon + 1))) {
-                result.put(name, entry.getValue());
-            } else {
-                result.putIfAbsent(name, entry.getValue());
-            }
+    public boolean usesColorMask() {
+        if (serializableInfo == null) return false;
+        var matMap = MaterialManager.INSTANCE.getAllData();
+        var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().getPath()).orElse(null);
+        if (entry == null) {
+            return false;
         }
-        return result;
+        try {
+            ResolvedBrMaterial material = BrMaterialResolver.resolve(entry, matMap);
+            return material.hasDefine("USE_COLOR_MASK");
+        } catch (IllegalStateException exception) {
+            return entry.defines()
+                        .add()
+                        .stream()
+                        .flatMap(java.util.Collection::stream)
+                        .anyMatch("USE_COLOR_MASK"::equals);
+        }
     }
 
     final Int2BooleanOpenHashMap partVisibility = new Int2BooleanOpenHashMap();

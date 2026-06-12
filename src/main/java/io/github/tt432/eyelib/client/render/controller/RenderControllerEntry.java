@@ -10,6 +10,8 @@ import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
 import io.github.tt432.eyelib.client.render.texture.TextureLayerMerger;
 import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
+import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
+import io.github.tt432.eyelibmaterial.material.BrMaterialResolver;
 import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
 import io.github.tt432.eyelibmodel.Model;
 import io.github.tt432.eyelibmolang.MolangMapEntry;
@@ -73,8 +75,8 @@ public record RenderControllerEntry(
 
     private static List<Map<String, MolangValue>> fromMolangMapEntries(List<MolangMapEntry> entries) {
         return entries.stream()
-                .map(e -> Map.of(e.key(), e.value()))
-                .toList();
+                      .map(e -> Map.of(e.key(), e.value()))
+                      .toList();
     }
 
     public void initArrays(MolangScope scope, BrClientEntity clientEntity) {
@@ -170,7 +172,7 @@ public record RenderControllerEntry(
             Set<Integer> visibleBones = groupEntry.getValue();
 
             ResourceLocation matTexture = resolveSlotTexture(scope, entity, materialName,
-                    needReloadTexture, syncedActions);
+                                                             needReloadTexture, syncedActions);
 
             ModelComponent comp = new ModelComponent();
             comp.setInfo(new ModelComponentInfo(geometryResult, matTexture, new ResourceLocation(materialName)));
@@ -217,17 +219,25 @@ public record RenderControllerEntry(
             List<String> textureLayerPaths = resolveTextureLayerPaths(scope, entity);
             ResourceLocation texture = getTexture(scope, entity);
             List<ResourceLocation> textureLayers = toResourceLocations(textureLayerPaths);
+            if (textureLayers.size() == 1) {
+                texture = textureLayers.get(0);
+            }
 
             if (needReload) {
-                syncedActions.add(() -> NativeImageIO.upload(texture, TextureLayerMerger.merge(textureLayers)));
+                ResourceLocation uploadTexture = texture;
+                if (textureLayers.size() > 1) {
+                    syncedActions.add(() -> NativeImageIO.upload(uploadTexture, TextureLayerMerger.merge(textureLayers)));
+                }
 
                 ResourceLocation emissiveTexture = getEmissiveTexture(scope, entity);
                 List<ResourceLocation> emissiveTextureLayers = toResourceLocations(toEmissiveTextureLayerPaths(textureLayerPaths));
-                syncedActions.add(() -> NativeImageIO.upload(emissiveTexture, TextureLayerMerger.merge(emissiveTextureLayers)));
+                if (emissiveTextureLayers.size() > 1) {
+                    syncedActions.add(() -> NativeImageIO.upload(emissiveTexture, TextureLayerMerger.merge(emissiveTextureLayers)));
+                }
             }
 
             // alphatest 材质走 clamped 纹理，避免 MC cutout threshold 0.5 丢弃低 alpha 像素
-            if (isAlphatestMaterial(materialName)) {
+            if (!usesColorMask(materialName) && isAlphatestMaterial(materialName)) {
                 return clampedTexture(texture, textureLayers, syncedActions, needReload);
             }
             return texture;
@@ -248,15 +258,15 @@ public record RenderControllerEntry(
      * alphatest 材质使用此副本以避免低 alpha 像素被 MC cutout shader 丢弃。
      */
     private static ResourceLocation clampedTexture(ResourceLocation original, List<ResourceLocation> layers,
-                                                    List<Runnable> syncedActions, boolean needReload) {
+                                                   List<Runnable> syncedActions, boolean needReload) {
         ResourceLocation clamped = new ResourceLocation(original.getNamespace(),
-                "clamped/" + original.getPath());
+                                                        "clamped/" + original.getPath());
         if (needReload) {
             syncedActions.add(() -> {
                 List<ResourceLocation> clampedLayers = new java.util.ArrayList<>();
                 for (ResourceLocation layer : layers) {
                     ResourceLocation clampedLayer = new ResourceLocation(layer.getNamespace(),
-                            "_tmp_clamped/" + layer.getPath());
+                                                                         "_tmp_clamped/" + layer.getPath());
                     NativeImage img = NativeImageIO.download(layer, NativeImageIO::copyImage);
                     if (img != null) {
                         NativeImageIO.clampAlphaToBinary(img);
@@ -301,6 +311,19 @@ public record RenderControllerEntry(
             }
         }
         return entry != null && io.github.tt432.eyelibbridge.material.RenderTypeResolver.isAlphaTest(entry, matMap);
+    }
+
+    private static boolean usesColorMask(String materialName) {
+        var matMap = MaterialManager.INSTANCE.getAllData();
+        var entry = BrMaterialResolver.find(matMap, materialName).orElse(null);
+        if (entry == null) {
+            return false;
+        }
+        try {
+            return BrMaterialResolver.resolve(entry, matMap).hasDefine("USE_COLOR_MASK");
+        } catch (IllegalStateException exception) {
+            return entry.defines().add().stream().flatMap(Collection::stream).anyMatch("USE_COLOR_MASK"::equals);
+        }
     }
 
     /**

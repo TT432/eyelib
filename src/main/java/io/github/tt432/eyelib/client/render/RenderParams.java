@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
+import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
 import io.github.tt432.eyelibutil.texture.TexturePaths;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.With;
@@ -104,12 +105,12 @@ public record RenderParams(
         private final PoseStack.Pose pose0;
         private final PoseStack poseStack;
         @Nullable
-        private final RenderType renderType;
+        private RenderType renderType;
         @Nullable
-        private final ResourceLocation texture;
-        private final boolean isSolid;
+        private ResourceLocation texture;
+        private boolean isSolid;
         @Nullable
-        private final VertexConsumer consumer;
+        private VertexConsumer consumer;
 
         // optional
         @Nullable
@@ -151,6 +152,25 @@ public record RenderParams(
 
         public Builder tintColor(@Nullable float[] tintColor) {
             this.tintColor = tintColor;
+            return this;
+        }
+
+        public Builder colorMaskTexture(MultiBufferSource multiBufferSource, ModelComponent modelComponent, float[] color) {
+            if (texture == null) {
+                return this;
+            }
+            ResourceLocation colorMaskTexture = NativeImageIO.colorMaskTexture(texture, color);
+            if (colorMaskTexture == null) {
+                return this;
+            }
+            RenderType colorMaskRenderType = modelComponent.getRenderType(colorMaskTexture);
+            if (colorMaskRenderType == null) {
+                return this;
+            }
+            texture = colorMaskTexture;
+            renderType = colorMaskRenderType;
+            consumer = multiBufferSource.getBuffer(colorMaskRenderType);
+            isSolid = modelComponent.isSolid();
             return this;
         }
 

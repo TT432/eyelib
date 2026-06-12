@@ -13,14 +13,20 @@ import org.jspecify.annotations.Nullable;
 import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 import static org.lwjgl.opengl.GL11.*;
 
-/** @author TT432 */
+/**
+ * @author TT432
+ */
 @UtilityClass
 @NullMarked
 public class NativeImageIO {
+    private static final Map<String, ResourceLocation> COLOR_MASK_CACHE = new HashMap<>();
+
     public void upload(ResourceLocation texture, NativeImage image) {
         DynamicTexture dynamicTexture = new DynamicTexture(image);
         Minecraft.getInstance().getTextureManager().register(texture, dynamicTexture);
@@ -77,6 +83,56 @@ public class NativeImageIO {
             }
         }
         return image;
+    }
+
+    @Nullable
+    public ResourceLocation colorMaskTexture(ResourceLocation texture, float[] color) {
+        String cacheKey = texture + "/" + colorKey(color);
+        ResourceLocation cached = COLOR_MASK_CACHE.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        ResourceLocation generated = new ResourceLocation(texture.getNamespace(),
+                                                          "_color_mask/" + colorKey(color) + "/" + texture.getPath());
+        NativeImage image = download(texture, NativeImageIO::copyImage);
+        if (image == null) {
+            return null;
+        }
+        applyColorMask(image, color);
+        upload(generated, image);
+        COLOR_MASK_CACHE.put(cacheKey, generated);
+        return generated;
+    }
+
+    private static String colorKey(float[] color) {
+        int r = Math.round(color[0] * 255.0F);
+        int g = Math.round(color[1] * 255.0F);
+        int b = Math.round(color[2] * 255.0F);
+        return "%02x%02x%02x".formatted(r, g, b);
+    }
+
+    private static void applyColorMask(NativeImage image, float[] color) {
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                int abgr = image.getPixelRGBA(x, y);
+                int alpha = (abgr >>> 24) & 0xFF;
+                int baseR = abgr & 0xFF;
+                int baseG = (abgr >>> 8) & 0xFF;
+                int baseB = (abgr >>> 16) & 0xFF;
+                float mask = alpha / 255.0F;
+                int r = maskedChannel(baseR, color[0], mask);
+                int g = maskedChannel(baseG, color[1], mask);
+                int b = maskedChannel(baseB, color[2], mask);
+                int outputAlpha = alpha == 0 ? 0 : 0xFF;
+                image.setPixelRGBA(x, y, (outputAlpha << 24) | (b << 16) | (g << 8) | r);
+            }
+        }
+    }
+
+    private static int maskedChannel(int base, float tint, float mask) {
+        float tinted = base * tint;
+        return Math.round(base + (tinted - base) * mask);
     }
 
     /**
