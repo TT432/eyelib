@@ -50,6 +50,7 @@ public final class MolangBytecodeEmitter {
      * for the given bound AST.
      *
      * @param input the bound compiler input (must not be {@code null})
+     *
      * @return the class file bytes
      */
     public static byte[] emit(BoundMolangCompilerInput input) {
@@ -83,42 +84,42 @@ public final class MolangBytecodeEmitter {
 
             // no-arg constructor
             classBuilder.withMethod("<init>",
-                    MethodTypeDesc.of(CD_VOID),
-                    ACC_PUBLIC,
-                    mb -> mb.withCode(code -> {
-                        code.aload(0);
-                        code.invokespecial(cdObject, "<init>",
-                                MethodTypeDesc.of(CD_VOID));
-                        code.return_();
-                    }));
+                                    MethodTypeDesc.of(CD_VOID),
+                                    ACC_PUBLIC,
+                                    mb -> mb.withCode(code -> {
+                                        code.aload(0);
+                                        code.invokespecial(cdObject, "<init>",
+                                                           MethodTypeDesc.of(CD_VOID));
+                                        code.return_();
+                                    }));
 
             // evaluate(MolangScope) : MolangObject
             classBuilder.withMethod("evaluate",
-                    MethodTypeDesc.of(CD_MOLANG_OBJECT, cdScope),
-                    ACC_PUBLIC,
-                    mb -> mb.withCode(code -> {
-                        emitExpr(code, rootExpr);
-                        code.areturn();
-                    }));
+                                    MethodTypeDesc.of(CD_MOLANG_OBJECT, cdScope),
+                                    ACC_PUBLIC,
+                                    mb -> mb.withCode(code -> {
+                                        emitExpr(code, rootExpr);
+                                        code.areturn();
+                                    }));
 
             // sourceExpression() : String
             classBuilder.withMethod("sourceExpression",
-                    MethodTypeDesc.of(cdString),
-                    ACC_PUBLIC,
-                    mb -> mb.withCode(code -> {
-                        code.ldc(sourceExpr);
-                        code.areturn();
-                    }));
+                                    MethodTypeDesc.of(cdString),
+                                    ACC_PUBLIC,
+                                    mb -> mb.withCode(code -> {
+                                        code.ldc(sourceExpr);
+                                        code.areturn();
+                                    }));
 
             // requiredHostRoles() : Set<String>
             classBuilder.withMethod("requiredHostRoles",
-                    MethodTypeDesc.of(cdSet),
-                    ACC_PUBLIC,
-                    mb -> mb.withCode(code -> {
-                        code.invokestatic(cdCollections, "emptySet",
-                                MethodTypeDesc.of(cdSet));
-                        code.areturn();
-                    }));
+                                    MethodTypeDesc.of(cdSet),
+                                    ACC_PUBLIC,
+                                    mb -> mb.withCode(code -> {
+                                        code.invokestatic(cdCollections, "emptySet",
+                                                          MethodTypeDesc.of(cdSet));
+                                        code.areturn();
+                                    }));
         });
     }
 
@@ -152,13 +153,13 @@ public final class MolangBytecodeEmitter {
             code.aload(1);
             code.ldc(memberAccessName(memberAccessExpr));
             code.invokestatic(CD_RUNTIME_SUPPORT, "resolveMemberAccess",
-                    MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_MOLANG_SCOPE, CD_STRING));
+                              MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_MOLANG_SCOPE, CD_STRING));
         } else if (expr instanceof BoundMolang.BoundCallExpr callExpr) {
             code.aload(1);
             code.ldc(resolveCallName(callExpr.callee()));
             emitCallArgsArray(code, callExpr.arguments());
             code.invokestatic(CD_RUNTIME_SUPPORT, "resolveCall",
-                    MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_MOLANG_SCOPE, CD_STRING, CD_MOLANG_OBJECT_ARRAY));
+                              MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_MOLANG_SCOPE, CD_STRING, CD_MOLANG_OBJECT_ARRAY));
         } else if (expr instanceof BoundMolang.BoundArrowAccessExpr arrowAccessExpr) {
             // 箭头访问（->）是文档化的 Molang 跨实体访问构造。
             // 设计意图：左侧求值为宿主实体引用，右侧在该宿主上下文中求值。
@@ -176,7 +177,7 @@ public final class MolangBytecodeEmitter {
             code.invokeinterface(CD_MOLANG_OBJECT, "asFloat", MethodTypeDesc.of(CD_FLOAT));
             code.f2i();
             code.invokestatic(CD_RUNTIME_SUPPORT, "resolveIndex",
-                    MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_MOLANG_SCOPE, CD_MOLANG_OBJECT, CD_INT));
+                              MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_MOLANG_SCOPE, CD_MOLANG_OBJECT, CD_INT));
         } else if (expr instanceof BoundMolang.BoundBlockExpr blockExpr) {
             emitBlockExpr(code, blockExpr);
         } else if (expr instanceof BoundMolang.BoundLoopExpr loopExpr) {
@@ -223,7 +224,7 @@ public final class MolangBytecodeEmitter {
     private static void emitNumberLiteral(CodeBuilder code, float value) {
         code.ldc(value);
         code.invokestatic(CD_MOLANG_FLOAT, "valueOf",
-                MethodTypeDesc.of(CD_MOLANG_FLOAT, CD_FLOAT));
+                          MethodTypeDesc.of(CD_MOLANG_FLOAT, CD_FLOAT));
     }
 
     private static void emitBinaryExpr(CodeBuilder code, BoundMolang.BoundBinaryExpr binary) {
@@ -259,6 +260,26 @@ public final class MolangBytecodeEmitter {
             return;
         }
 
+        // Handle == and != with type-aware comparison via equalsF/nEqualsF
+        if ("==".equals(operator)) {
+            emitExpr(code, binary.left());
+            emitExpr(code, binary.right());
+            code.invokeinterface(CD_MOLANG_OBJECT, "equalsF",
+                                 MethodTypeDesc.of(CD_FLOAT, CD_MOLANG_OBJECT));
+            code.invokestatic(CD_MOLANG_FLOAT, "valueOf",
+                              MethodTypeDesc.of(CD_MOLANG_FLOAT, CD_FLOAT));
+            return;
+        }
+        if ("!=".equals(operator)) {
+            emitExpr(code, binary.left());
+            emitExpr(code, binary.right());
+            code.invokeinterface(CD_MOLANG_OBJECT, "nEqualsF",
+                                 MethodTypeDesc.of(CD_FLOAT, CD_MOLANG_OBJECT));
+            code.invokestatic(CD_MOLANG_FLOAT, "valueOf",
+                              MethodTypeDesc.of(CD_MOLANG_FLOAT, CD_FLOAT));
+            return;
+        }
+
         emitExpr(code, binary.left());
         code.invokeinterface(CD_MOLANG_OBJECT, "asFloat", MethodTypeDesc.of(CD_FLOAT));
         emitExpr(code, binary.right());
@@ -269,7 +290,7 @@ public final class MolangBytecodeEmitter {
             case "-" -> code.fsub();
             case "*" -> code.fmul();
             case "/" -> emitSafeDiv(code);
-            case "==", "!=", "<", "<=", ">", ">=" -> emitComparison(code, operator);
+            case "<", "<=", ">", ">=" -> emitComparison(code, operator);
             default -> throw new IllegalArgumentException("Unsupported binary operator: " + operator);
         }
 
@@ -359,7 +380,7 @@ public final class MolangBytecodeEmitter {
                 code.ldc(targetName);                         // → {value, scope, value, name}
                 code.swap();                                  // → {value, scope, name, value}
                 code.invokevirtual(CD_MOLANG_SCOPE, "set",
-                        MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_STRING, CD_MOLANG_OBJECT));
+                                   MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_STRING, CD_MOLANG_OBJECT));
                 code.pop();                                   // discard set return, leaving original value
             }
         }
@@ -437,7 +458,7 @@ public final class MolangBytecodeEmitter {
             return;
         }
         emitExpr(code, new BoundMolang.BoundNumberLiteralExpr(loopExpr.span(), loopExpr.iterationCountRawText(),
-                parseIterationCount(loopExpr.iterationCountRawText())));
+                                                              parseIterationCount(loopExpr.iterationCountRawText())));
         code.invokeinterface(CD_MOLANG_OBJECT, "asFloat", MethodTypeDesc.of(CD_FLOAT));
         code.f2i();
         code.istore(2);

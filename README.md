@@ -19,7 +19,7 @@ dependencies {
 
 ## Dependencies
 
-- [Antlr-Molang](https://github.com/TT432/antlr-molang) for parse Molang.
+- Handwritten recursive-descent parser for Molang (ANTLR removed).
 - [jdk-classfile-backport](https://github.com/dmlloyd/jdk-classfile-backport) for generate bytecode for Molang.
 - [lombok](https://projectlombok.org/) for generate getter/setter and more.
 - [Chin](https://github.com/TT432/chin) for utils.

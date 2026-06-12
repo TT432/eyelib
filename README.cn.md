@@ -19,7 +19,7 @@ dependencies {
 
 ## 依赖
 
-- [Antlr-Molang](https://github.com/TT432/antlr-molang) 用于解析 Molang。
+- Handwritten recursive-descent parser for Molang (ANTLR removed).
 - [jdk-classfile-backport](https://github.com/dmlloyd/jdk-classfile-backport) 用于生成 molang 字节码。
 - [lombok](https://projectlombok.org/) 用于生成 getter/setter 等。
 - [Chin](https://github.com/TT432/chin) 用于提供工具类。
