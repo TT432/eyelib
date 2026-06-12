@@ -101,7 +101,7 @@ def _port_25999_occupied() -> bool:
         text=True,
         timeout=10,
     )
-    return result.returncode == 0 and bool(result.stdout.strip())
+    return any("LISTENING" in line for line in result.stdout.splitlines())
 
 
 def _classpath_duplicate_report() -> str:
