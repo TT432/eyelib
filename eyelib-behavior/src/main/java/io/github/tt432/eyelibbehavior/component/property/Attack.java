@@ -16,7 +16,10 @@ public record Attack(
         int effect_amplifier
 ) implements Component {
     public static final Codec<Attack> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            Codec.STRING.fieldOf("damage").forGetter(Attack::damage),
+            Codec.either(Codec.INT, Codec.STRING).xmap(
+                    r -> r.map(i -> Integer.toString(i), s -> s),
+                    s -> com.mojang.datafixers.util.Either.right(s)
+            ).fieldOf("damage").forGetter(Attack::damage),
             Codec.FLOAT.optionalFieldOf("effect_duration", 0f).forGetter(Attack::effect_duration),
             Codec.STRING.optionalFieldOf("effect_name", "").forGetter(Attack::effect_name),
             Codec.INT.optionalFieldOf("effect_amplifier", 0).forGetter(Attack::effect_amplifier)

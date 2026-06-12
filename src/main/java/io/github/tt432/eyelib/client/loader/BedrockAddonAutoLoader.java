@@ -28,8 +28,11 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-/** 扫描 resourcepacks/ 目录自动加载 .mcpack/.mcaddon 格式 Bedrock 附加包。
- * @author TT432 */
+/**
+ * 扫描 resourcepacks/ 目录自动加载资源包侧 Bedrock 附加包资产。
+ *
+ * @author TT432
+ */
 @NullMarked
 final class BedrockAddonAutoLoader implements PreparableReloadListener {
 
@@ -39,14 +42,13 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
     public CompletableFuture<Void> reload(PreparationBarrier barrier, ResourceManager resourceManager,
                                           ProfilerFiller preparationsProfiler, ProfilerFiller reloadProfiler,
                                           Executor backgroundExecutor, Executor gameExecutor) {
-        return CompletableFuture.runAsync(VanillaBehaviorEntityLoader::loadAndRegister, backgroundExecutor)
-                .thenCompose(v -> CompletableFuture.supplyAsync(this::loadAllAddons, backgroundExecutor))
-                .thenCompose(barrier::wait)
-                .thenAcceptAsync(addons -> {
-                    for (BedrockAddon addon : addons) {
-                        bridgeAndPublish(addon);
-                    }
-                }, gameExecutor);
+        return CompletableFuture.supplyAsync(this::loadAllAddons, backgroundExecutor)
+                                .thenCompose(barrier::wait)
+                                .thenAcceptAsync(addons -> {
+                                    for (BedrockAddon addon : addons) {
+                                        bridgeAndPublish(addon);
+                                    }
+                                }, gameExecutor);
     }
 
     private List<BedrockAddon> loadAllAddons() {
@@ -100,7 +102,7 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
         textures.forEach((relativePath, imageData) -> {
             try {
                 NativeImageIO.upload(relativePath.toLowerCase(Locale.ROOT),
-                        NativeImageIO.fromImportedImageData(imageData));
+                                     NativeImageIO.fromImportedImageData(imageData));
             } catch (RuntimeException e) {
                 LOGGER.error("Failed to upload addon texture: {}", relativePath, e);
             }

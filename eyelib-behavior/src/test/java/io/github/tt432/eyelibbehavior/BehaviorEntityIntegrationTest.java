@@ -148,7 +148,7 @@ class BehaviorEntityIntegrationTest {
         // test:baby group
         var babyGroup = groups.get("test:baby");
         assertNotNull(babyGroup);
-        Map<String, Map<String, Component>> babyComps = babyGroup.components();
+        Map<String, Component> babyComps = babyGroup.components();
         assertTrue(babyComps.containsKey("minecraft:scale"), "baby group 应有 scale");
         assertTrue(babyComps.containsKey("minecraft:health"), "baby group 应有 health");
 

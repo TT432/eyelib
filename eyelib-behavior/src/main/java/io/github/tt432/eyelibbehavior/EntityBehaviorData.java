@@ -42,9 +42,7 @@ public class EntityBehaviorData {
         components.clear();
         // 1. 从 component_groups 收集
         for (ComponentGroup componentGroup : componentGroups) {
-            for (Map<String, Component> value : componentGroup.components().values()) {
-                value.values().forEach(component -> components.put(component.getClass(), component));
-            }
+            componentGroup.components().values().forEach(component -> components.put(component.getClass(), component));
         }
         // 2. 从 behavior 的顶层 components 收集（不覆盖，component_groups 优先级更高）
         behavior.ifPresent(b -> {

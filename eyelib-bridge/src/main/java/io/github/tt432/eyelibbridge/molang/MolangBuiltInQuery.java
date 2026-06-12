@@ -41,6 +41,10 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+
+import io.github.tt432.eyelibbridge.molang.ComponentStore;
+import io.github.tt432.eyelibbridge.molang.MolangEntityContext;
 
 import static io.github.tt432.eyelibmolang.MolangValue.FALSE;
 import static io.github.tt432.eyelibmolang.MolangValue.TRUE;
@@ -113,19 +117,19 @@ public final class MolangBuiltInQuery {
     @MolangFunction(value = "target_x_rotation", description = "指向当前目标所需的 X 轴角度")
     public static float targetXRotation(MolangScope scope) {
         return scope.getHostContext().get(Entity.class)
-                .flatMap(entity -> scope.getHostContext().get(Targeting.class)
-                        .map(targeting -> {
-                            if (targeting.getTarget() != null) {
-                                Vec3 targetPos = targeting.getTarget().position();
-                                var x = targetPos.x - entity.getX();
-                                var y = targetPos.y - entity.getY();
-                                var z = targetPos.z - entity.getZ();
-                                return (float) Math.atan2(y, Math.sqrt(x * x + z * z));
-                            }
+                    .flatMap(entity -> scope.getHostContext().get(Targeting.class)
+                                            .map(targeting -> {
+                                                if (targeting.getTarget() != null) {
+                                                    Vec3 targetPos = targeting.getTarget().position();
+                                                    var x = targetPos.x - entity.getX();
+                                                    var y = targetPos.y - entity.getY();
+                                                    var z = targetPos.z - entity.getZ();
+                                                    return (float) Math.atan2(y, Math.sqrt(x * x + z * z));
+                                                }
 
-                            return pitch(scope);
-                        })
-                ).orElse(FALSE);
+                                                return pitch(scope);
+                                            })
+                    ).orElse(FALSE);
     }
 
     @MolangFunction(value = "target_y_rotation", description = "指向当前目标所需的 Y 轴角度")
@@ -323,17 +327,26 @@ public final class MolangBuiltInQuery {
 
     @MolangFunction(value = "is_sniffing", description = "正在嗅")
     public static float isSniffing(MolangScope scope) {
-        return scope.getHostContext().get(LivingEntity.class).map(living -> living.getBrain().isActive(Activity.SNIFF)).orElse(false) ? TRUE : FALSE;
+        return scope.getHostContext()
+                    .get(LivingEntity.class)
+                    .map(living -> living.getBrain().isActive(Activity.SNIFF))
+                    .orElse(false) ? TRUE : FALSE;
     }
 
     @MolangFunction(value = "is_roaring", description = "正在咆哮")
     public static float isRoaring(MolangScope scope) {
-        return scope.getHostContext().get(LivingEntity.class).map(living -> living.getBrain().isActive(Activity.ROAR)).orElse(false) ? TRUE : FALSE;
+        return scope.getHostContext()
+                    .get(LivingEntity.class)
+                    .map(living -> living.getBrain().isActive(Activity.ROAR))
+                    .orElse(false) ? TRUE : FALSE;
     }
 
     @MolangFunction(value = "is_sonic_boom", description = "唢呐爆炸")
     public static float isSonicBoom(MolangScope scope) {
-        return scope.getHostContext().get(Warden.class).map(w -> w.getBrain().isActive(Activity.FIGHT)).orElse(false) ? TRUE : FALSE;
+        return scope.getHostContext()
+                    .get(Warden.class)
+                    .map(w -> w.getBrain().isActive(Activity.FIGHT))
+                    .orElse(false) ? TRUE : FALSE;
     }
 
     @MolangFunction(value = "is_emerging", description = "正在出生")
@@ -382,20 +395,30 @@ public final class MolangBuiltInQuery {
     @MolangFunction(value = "is_chested", description = "")
     public static float isChested(MolangScope scope) {
         return portBool(scope, "is_chested")
-                || scope.getHostContext().get(AbstractChestedHorse.class).map(AbstractChestedHorse::hasChest).orElse(false)
+                || scope.getHostContext()
+                        .get(AbstractChestedHorse.class)
+                        .map(AbstractChestedHorse::hasChest)
+                        .orElse(false)
                 ? TRUE : FALSE;
     }
 
     @MolangFunction(value = "time_since_last_vibration_detection", description = "自最后一次检测到声波的时间（监守者）")
     public static float timeSinceLastVibrationDetection(MolangScope scope) {
         return portFloat(scope, "time_since_last_vibration_detection")
-                .orElse(scope.getHostContext().get(Warden.class).map(w -> (40L - w.getBrain().getTimeUntilExpiry(MemoryModuleType.VIBRATION_COOLDOWN)) / 20F).orElse(0F));
+                .orElse(scope.getHostContext()
+                             .get(Warden.class)
+                             .map(w -> (40L - w.getBrain()
+                                               .getTimeUntilExpiry(MemoryModuleType.VIBRATION_COOLDOWN)) / 20F)
+                             .orElse(0F));
     }
 
     @MolangFunction(value = "heartbeat_phase", description = "心跳（监守者）")
     public static float heartbeatPhase(MolangScope scope) {
         return portFloat(scope, "heartbeat_phase")
-                .orElse(scope.getHostContext().get(Warden.class).map(w -> w.getHeartAnimation(partialTicks(scope))).orElse(0F));
+                .orElse(scope.getHostContext()
+                             .get(Warden.class)
+                             .map(w -> w.getHeartAnimation(partialTicks(scope)))
+                             .orElse(0F));
     }
 
     @MolangFunction(value = "time_of_day", description = "一天中的时间")
@@ -527,15 +550,15 @@ public final class MolangBuiltInQuery {
     public static float climbingX(MolangScope scope) {
         return livingFloat(scope, e -> e.onClimbable()
                 ? e.getLastClimbablePos()
-                .map(p -> {
-                    VoxelShape shape = e.level().getBlockState(p).getShape(e.level(), p);
-                    return shape.isEmpty() ? 0F : new Vec3(p.getX(), p.getY(), p.getZ())
-                            .add(shape.bounds().getCenter())
-                            .subtract(e.position())
-                            .x;
-                })
-                .orElse(0D)
-                .floatValue()
+                   .map(p -> {
+                       VoxelShape shape = e.level().getBlockState(p).getShape(e.level(), p);
+                       return shape.isEmpty() ? 0F : new Vec3(p.getX(), p.getY(), p.getZ())
+                                                     .add(shape.bounds().getCenter())
+                                                     .subtract(e.position())
+                                                     .x;
+                   })
+                   .orElse(0D)
+                   .floatValue()
                 : 0F);
     }
 
@@ -543,15 +566,15 @@ public final class MolangBuiltInQuery {
     public static float climbingY(MolangScope scope) {
         return livingFloat(scope, e -> e.onClimbable()
                 ? e.getLastClimbablePos()
-                .map(p -> {
-                    VoxelShape shape = e.level().getBlockState(p).getShape(e.level(), p);
-                    return shape.isEmpty() ? 0F : new Vec3(p.getX(), p.getY(), p.getZ())
-                            .add(shape.bounds().getCenter())
-                            .subtract(e.position())
-                            .y;
-                })
-                .orElse(0D)
-                .floatValue()
+                   .map(p -> {
+                       VoxelShape shape = e.level().getBlockState(p).getShape(e.level(), p);
+                       return shape.isEmpty() ? 0F : new Vec3(p.getX(), p.getY(), p.getZ())
+                                                     .add(shape.bounds().getCenter())
+                                                     .subtract(e.position())
+                                                     .y;
+                   })
+                   .orElse(0D)
+                   .floatValue()
                 : 0F);
     }
 
@@ -559,15 +582,15 @@ public final class MolangBuiltInQuery {
     public static float climbingZ(MolangScope scope) {
         return livingFloat(scope, e -> e.onClimbable()
                 ? e.getLastClimbablePos()
-                .map(p -> {
-                    VoxelShape shape = e.level().getBlockState(p).getShape(e.level(), p);
-                    return shape.isEmpty() ? 0F : new Vec3(p.getX(), p.getY(), p.getZ())
-                            .add(shape.bounds().getCenter())
-                            .subtract(e.position())
-                            .z;
-                })
-                .orElse(0D)
-                .floatValue()
+                   .map(p -> {
+                       VoxelShape shape = e.level().getBlockState(p).getShape(e.level(), p);
+                       return shape.isEmpty() ? 0F : new Vec3(p.getX(), p.getY(), p.getZ())
+                                                     .add(shape.bounds().getCenter())
+                                                     .subtract(e.position())
+                                                     .z;
+                   })
+                   .orElse(0D)
+                   .floatValue()
                 : 0F);
     }
 
@@ -594,8 +617,8 @@ public final class MolangBuiltInQuery {
     @MolangFunction(value = "is_stalking", description = "判断生物是否正在追踪其他实体")
     public static float isStalking(MolangScope scope) {
         return scope.getHostContext().get(Mob.class)
-                .map(m -> m.isAggressive() ? TRUE : FALSE)
-                .orElse(0F);
+                    .map(m -> m.isAggressive() ? TRUE : FALSE)
+                    .orElse(0F);
     }
 
     @MolangFunction(value = "attack_time", description = "攻击时间")
@@ -624,7 +647,11 @@ public final class MolangBuiltInQuery {
     @MolangFunction(value = "invulnerable_ticks", description = "")
     public static float invulnerableTicks(MolangScope scope) {
         return portFloat(scope, "invulnerable_ticks")
-                .orElse(scope.getHostContext().get(WitherBoss.class).map(WitherBoss::getInvulnerableTicks).orElse(0).floatValue());
+                .orElse(scope.getHostContext()
+                             .get(WitherBoss.class)
+                             .map(WitherBoss::getInvulnerableTicks)
+                             .orElse(0)
+                             .floatValue());
     }
 
     @MolangFunction(value = "health", description = "生物血量")
@@ -718,7 +745,8 @@ public final class MolangBuiltInQuery {
             var lerpBodyRot = Mth.rotLerp(partialTicks, livingEntity.yBodyRotO, livingEntity.yBodyRot);
             var lerpHeadRot = function.apply(livingEntity);
             float netHeadYaw = lerpHeadRot - lerpBodyRot;
-            boolean shouldSit = livingEntity.isPassenger() && (livingEntity.getVehicle() != null && livingEntity.getVehicle().shouldRiderSit());
+            boolean shouldSit = livingEntity.isPassenger() && (livingEntity.getVehicle() != null && livingEntity.getVehicle()
+                                                                                                                .shouldRiderSit());
             if (shouldSit && livingEntity.getVehicle() instanceof LivingEntity vehicle) {
                 lerpBodyRot = Mth.rotLerp(partialTicks, vehicle.yBodyRotO, vehicle.yBodyRot);
                 netHeadYaw = lerpHeadRot - lerpBodyRot;
@@ -748,17 +776,20 @@ public final class MolangBuiltInQuery {
     @MolangFunction(value = "shake_angle", description = "头摇晃角度（狼）")
     public static float shakeAngle(MolangScope scope) {
         return portFloat(scope, "shake_angle")
-                .orElse(scope.getHostContext().get(Wolf.class).map(w -> w.getHeadRollAngle(partialTicks(scope))).orElse(0F));
+                .orElse(scope.getHostContext()
+                             .get(Wolf.class)
+                             .map(w -> w.getHeadRollAngle(partialTicks(scope)))
+                             .orElse(0F));
     }
 
     @MolangFunction(value = "body_yaw", description = "身体 yaw 旋转角度")
     public static float bodyYaw(MolangScope scope) {
         return scope.getHostContext().get(LivingEntity.class)
-                .map(living -> Mth.wrapDegrees(Mth.rotLerp(partialTicks(scope),
-                        living.yBodyRotO, living.yBodyRot)))
-                .orElse(scope.getHostContext().get(Entity.class)
-                        .map(e -> Mth.wrapDegrees(e.getYRot()))
-                        .orElse(0F));
+                    .map(living -> Mth.wrapDegrees(Mth.rotLerp(partialTicks(scope),
+                                                               living.yBodyRotO, living.yBodyRot)))
+                    .orElse(scope.getHostContext().get(Entity.class)
+                                 .map(e -> Mth.wrapDegrees(e.getYRot()))
+                                 .orElse(0F));
     }
 
     @MolangFunction(value = "body_yaw_speed", description = "身体 yaw 旋转角度")
@@ -834,8 +865,8 @@ public final class MolangBuiltInQuery {
     @MolangFunction(value = "get_equipped_item_name", description = "获取指定槽位的物品名称（已弃用，建议使用 is_item_name_any）")
     public static String getEquippedItemName(MolangScope scope) {
         return scope.getHostContext().get(LivingEntity.class)
-                .map(l -> BuiltInRegistries.ITEM.getKey(getItemBySlot(l, "0", 0).getItem()).toString())
-                .orElse("");
+                    .map(l -> BuiltInRegistries.ITEM.getKey(getItemBySlot(l, "0", 0).getItem()).toString())
+                    .orElse("");
     }
 
     @MolangFunction(value = "relative_block_has_any_tag", description = "检查实体相对位置的方块是否拥有任意指定的方块标签")
@@ -912,6 +943,30 @@ public final class MolangBuiltInQuery {
         }).orElse(FALSE);
     }
 
+    @MolangFunction(value = "variant", description = "变体")
+    public static float variant(@Nullable MolangEntityContext ctx) {
+        if (ctx == null) return 0f;
+        ComponentStore store = ctx.componentStore();
+        Number v = store.get("minecraft:variant");
+        return v != null ? v.floatValue() : 0f;
+    }
+
+    @MolangFunction(value = "mark_variant", description = "标记变体")
+    public static float markVariant(@Nullable MolangEntityContext ctx) {
+        if (ctx == null) return 0f;
+        ComponentStore store = ctx.componentStore();
+        Number v = store.get("minecraft:mark_variant");
+        return v != null ? v.floatValue() : 0f;
+    }
+
+    @MolangFunction(value = "scale", description = "行为包缩放")
+    public static float scale(@Nullable MolangEntityContext ctx) {
+        if (ctx == null) return 1f;
+        ComponentStore store = ctx.componentStore();
+        Number v = store.get("minecraft:scale");
+        return v != null ? v.floatValue() : 1f;
+    }
+
     @FunctionalInterface
     interface ToBooleanFunction<K> {
         boolean apply(K key);
@@ -927,14 +982,14 @@ public final class MolangBuiltInQuery {
 
     private static float livingBool(MolangScope scope, ToBooleanFunction<LivingEntity> function) {
         return scope.getHostContext().get(LivingEntity.class)
-                .map(l -> function.apply(l) ? TRUE : FALSE)
-                .orElse(0F);
+                    .map(l -> function.apply(l) ? TRUE : FALSE)
+                    .orElse(0F);
     }
 
     private static float livingFloat(MolangScope scope, Function<LivingEntity, Float> function) {
         return scope.getHostContext().get(LivingEntity.class)
-                .map(function)
-                .orElse(0F);
+                    .map(function)
+                    .orElse(0F);
     }
 
     private static float handIs(MolangScope scope, InteractionHand hand, String... objects) {
@@ -959,7 +1014,8 @@ public final class MolangBuiltInQuery {
         return scope.getHostContext().get(LivingEntity.class).map(livingEntity -> {
             for (String object : objects) {
                 if (ResourceLocations.of(object)
-                        .equals(BuiltInRegistries.ITEM.getKey(livingEntity.getItemBySlot(slot).getItem()))) {
+                                     .equals(BuiltInRegistries.ITEM.getKey(livingEntity.getItemBySlot(slot)
+                                                                                       .getItem()))) {
                     return TRUE;
                 }
             }
@@ -970,17 +1026,17 @@ public final class MolangBuiltInQuery {
 
     private static boolean portBool(MolangScope scope, String key) {
         return scope.getHostContext().get(PortEntity.class)
-                .map(pe -> {
-                    Object val = pe.getQueryProperties().get(key);
-                    return val instanceof Boolean b && b;
-                })
-                .orElse(false);
+                    .map(pe -> {
+                        Object val = pe.getQueryProperties().get(key);
+                        return val instanceof Boolean b && b;
+                    })
+                    .orElse(false);
     }
 
     private static Optional<Float> portFloat(MolangScope scope, String key) {
         return scope.getHostContext().get(PortEntity.class)
-                .map(pe -> pe.getQueryProperties().get(key))
-                .filter(val -> val instanceof Number)
-                .map(val -> ((Number) val).floatValue());
+                    .map(pe -> pe.getQueryProperties().get(key))
+                    .filter(val -> val instanceof Number)
+                    .map(val -> ((Number) val).floatValue());
     }
 }

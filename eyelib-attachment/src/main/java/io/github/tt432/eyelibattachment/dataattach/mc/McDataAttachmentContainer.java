@@ -29,16 +29,18 @@ public class McDataAttachmentContainer extends DataAttachmentContainer implement
 
     @Override
     public void deserializeNBT(CompoundTag nbt) {
-        attachments.clear();
         for (var key : nbt.getAllKeys()) {
             var value = nbt.get(key);
             if (value == null) {
                 continue;
             }
             DataAttachmentType<?> type = DataAttachmentTypeRegistry.getById(key);
-            DataAttachment<?> attachment = new DataAttachment<>(type);
+            if (type == null) {
+                LOGGER.warn("Skip unknown data attachment id while reading NBT: {}", key);
+                continue;
+            }
+            DataAttachment<?> attachment = attachments.computeIfAbsent(type.id(), k -> new DataAttachment<>(type));
             deserializeAttachmentUnchecked(attachment, value);
-            attachments.put(type.id(), attachment);
         }
     }
 

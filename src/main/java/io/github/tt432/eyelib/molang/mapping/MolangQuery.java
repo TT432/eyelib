@@ -6,6 +6,7 @@ import io.github.tt432.eyelibanimation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelibanimation.bedrock.controller.BrAnimationController;
 import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelibbehavior.SyncedBehaviorState;
 import io.github.tt432.eyelibbehavior.component.MarkVariant;
 import io.github.tt432.eyelibbehavior.component.Variant;
 import io.github.tt432.eyelibmolang.MolangScope;
@@ -35,8 +36,8 @@ public final class MolangQuery {
     @MolangFunction(value = "anim_time", alias = "life_time", description = "动画播放秒数")
     public static float animTime(MolangScope scope) {
         return scope.getHostContext().get(BrAnimationEntry.Data.class).map(BrAnimationEntry.Data::animTime)
-                .orElseGet(() -> scope.getHostContext().get(BrAnimationController.Data.class)
-                        .map(BrAnimationController.Data::animTime).orElse(0F));
+                    .orElseGet(() -> scope.getHostContext().get(BrAnimationController.Data.class)
+                                          .map(BrAnimationController.Data::animTime).orElse(0F));
     }
 
     @MolangFunction(value = "delta_time", description = "距离上一帧的秒数")
@@ -63,6 +64,11 @@ public final class MolangQuery {
     @MolangFunction(value = "variant", description = "变体")
     public static float variant(MolangScope scope) {
         return livingFloat(scope, l -> {
+            SyncedBehaviorState synced = DataAttachmentHelper.getOrNull(
+                    EyelibAttachableData.SYNCED_BEHAVIOR_STATE.get(), l);
+            if (synced != null) {
+                return (float) synced.variant();
+            }
             Variant component = DataAttachmentHelper.getOrCreate(EyelibAttachableData.ENTITY_BEHAVIOR_DATA.get(), l)
                                                     .component(Variant.class);
             return component != null ? (float) component.value() : 0;
@@ -72,6 +78,11 @@ public final class MolangQuery {
     @MolangFunction(value = "mark_variant", description = "变体")
     public static float markVariant(MolangScope scope) {
         return livingFloat(scope, l -> {
+            SyncedBehaviorState synced = DataAttachmentHelper.getOrNull(
+                    EyelibAttachableData.SYNCED_BEHAVIOR_STATE.get(), l);
+            if (synced != null) {
+                return (float) synced.markVariant();
+            }
             MarkVariant component = DataAttachmentHelper.getOrCreate(EyelibAttachableData.ENTITY_BEHAVIOR_DATA.get(), l)
                                                         .component(MarkVariant.class);
             return component != null ? (float) component.value() : 0;

@@ -22,7 +22,7 @@
 - `eyelib-util/src/main/java/io/github/tt432/eyelibutil/`: shared utility leaf module.
 - `src/main/java/io/github/tt432/eyelib/client/`: client rendering, GUI, loaders, managers, tooling.
 - `src/main/java/io/github/tt432/eyelib/capability/`: attachment registration and runtime hooks.
-- `src/main/java/io/github/tt432/eyelib/common/`: shared behavior logic and commands.
+- `src/main/java/io/github/tt432/eyelib/common/`: shared commands plus server-side Bedrock behavior pack loading, publication, runtime registries, and behavior-state synchronization orchestration.
 - `src/main/java/io/github/tt432/eyelib/network/`: shared channel entrypoints and root-coupled packet blockers.
 - `src/main/java/io/github/tt432/eyelib/molang/mapping/`: root-coupled `MolangQuery`.
 - `clientsmoke/`: external client smoke framework (composite build).
@@ -35,7 +35,8 @@
 
 ## Boundary Rules
 - Subproject `build.gradle` `project(:)` edges define the real architecture. A subproject must never depend on root (`io.github.tt432.eyelib.*`).
-- Root owns cross-module orchestration: `EntityRenderSystem`, capability wiring, network registration, command registration, loader/reload lifecycle, manager store infrastructure.
+- Root owns cross-module orchestration: `EntityRenderSystem`, capability wiring, network registration, command registration, loader/reload lifecycle, manager store infrastructure, and server-side behavior-pack publication/synchronization.
+- Bedrock behavior packs are server-side runtime data: root common loads and publishes them on server lifecycle events, while the client receives only network-synchronized behavior state needed for rendering/Molang queries.
 - Feature-specific packets belong in feature modules where dependency edges allow.
 - Runtime executors (animation, controller, particle) are runtime implementation details that stay with their owning module.
 - Importer owns schema/codec definitions; root owns runtime adaptation and `NativeImage`/texture upload.

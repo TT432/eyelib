@@ -18,7 +18,7 @@ import java.util.Map;
  */
 @Slf4j
 public record ComponentGroup(
-        Map<String, Map<String, Component>> components
+        Map<String, Component> components
 ) {
     public static final ComponentGroup EMPTY = new ComponentGroup(new HashMap<>());
 
@@ -26,7 +26,8 @@ public record ComponentGroup(
      * 组件分发编解码器，根据组件名称映射到对应的 typed codec。
      * 同时被 ComponentGroup 和 BehaviorComponents 使用。
      */
-    public static final Codec<Map<String, Component>> DISPATCH_CODEC = new KeyDispatchMapCodec<>(Codec.STRING, s -> switch (PortResourceLocation.parse(s).toString()) {
+    public static final Codec<Map<String, Component>> DISPATCH_CODEC = new KeyDispatchMapCodec<>(Codec.STRING, s -> switch (PortResourceLocation.parse(s)
+                                                                                                                                                .toString()) {
         case "minecraft:absorption" -> Absorption.CODEC;
         case "minecraft:addrider" -> Addrider.CODEC;
         case "minecraft:admire_item" -> AdmireItem.CODEC;
@@ -217,6 +218,6 @@ public record ComponentGroup(
         };
     });
 
-    public static final Codec<ComponentGroup> CODEC = Codec.unboundedMap(Codec.STRING, DISPATCH_CODEC)
+    public static final Codec<ComponentGroup> CODEC = DISPATCH_CODEC
             .xmap(ComponentGroup::new, ComponentGroup::components);
 }

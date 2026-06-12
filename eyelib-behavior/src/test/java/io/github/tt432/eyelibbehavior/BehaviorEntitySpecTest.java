@@ -140,7 +140,7 @@ class BehaviorEntitySpecTest {
         // baby group 包含 scale 和 health
         var babyGroup = groups.get("test:baby");
         assertNotNull(babyGroup);
-        Map<String, Map<String, Component>> babyComps = babyGroup.components();
+        Map<String, Component> babyComps = babyGroup.components();
         assertTrue(babyComps.containsKey("minecraft:scale"),
                 "Mojang 文档: component_groups 中可以包含组件定义");
         assertTrue(babyComps.containsKey("minecraft:health"));

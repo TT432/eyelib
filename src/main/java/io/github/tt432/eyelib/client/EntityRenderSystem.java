@@ -7,7 +7,6 @@ import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
-import io.github.tt432.eyelib.client.manager.BehaviorEntityManager;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelib.client.particle.RootAnimationParticleSpawner;
@@ -24,9 +23,9 @@ import io.github.tt432.eyelibanimation.BrAnimator;
 import io.github.tt432.eyelibanimation.ModelRuntimeData;
 import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelibbehavior.BehaviorEntity;
-import io.github.tt432.eyelibbehavior.EntityBehaviorData;
-import io.github.tt432.eyelibbehavior.component.group.ComponentGroup;
+import io.github.tt432.eyelibbehavior.SyncedBehaviorState;
+import io.github.tt432.eyelibbridge.molang.ComponentStore;
+import io.github.tt432.eyelibbridge.molang.MolangEntityContext;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
 import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
 import io.github.tt432.eyelibmolang.MolangScope;
@@ -64,14 +63,10 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -84,8 +79,6 @@ import static net.minecraft.client.Minecraft.getInstance;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @NullMarked
 public class EntityRenderSystem {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EntityRenderSystem.class);
-
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
         Entity entity = event.getEntity();
@@ -93,32 +86,6 @@ public class EntityRenderSystem {
 
         if (cap.getOwner() != entity) {
             cap.init(entity);
-        }
-
-        if (entity instanceof LivingEntity living) {
-            var key = ForgeRegistries.ENTITY_TYPES.getKey(living.getType());
-            if (key != null) {
-                var be = BehaviorEntityManager.INSTANCE.get(key.toString());
-                if (be != null) {
-                    var spawnEvent = be.events().get("minecraft:entity_spawned");
-                    List<ComponentGroup> groups;
-                    if (spawnEvent != null) {
-                        groups = new ArrayList<>();
-                    } else {
-                        groups = new ArrayList<>(be.component_groups().values());
-                    }
-                    var data = new EntityBehaviorData(Optional.of(be), groups);
-                    DataAttachmentHelper.setLocal(
-                            EyelibAttachableData.ENTITY_BEHAVIOR_DATA.get(),
-                            living,
-                            data
-                    );
-                    if (spawnEvent != null) {
-                        spawnEvent.eval(data);
-                        data.setup();
-                    }
-                }
-            }
         }
 
         MinecraftForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
@@ -158,13 +125,17 @@ public class EntityRenderSystem {
                 if (scope == null) {
                     return;
                 }
+
+                setupSyncedBehaviorContext(entity, scope);
+
                 ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
 
                 AnimationEffects effects = new AnimationEffects();
                 scope.set("variable.partial_tick", partialTick);
                 scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
 
-                scope.getHostContext().put(AnimationParticleSpawner.class, new RootAnimationParticleSpawner(ParticleSpawnRuntimeAdapter.INSTANCE));
+                scope.getHostContext()
+                     .put(AnimationParticleSpawner.class, new RootAnimationParticleSpawner(ParticleSpawnRuntimeAdapter.INSTANCE));
 
                 ModelRuntimeData tickedInfos;
                 if (cap.getAnimationComponent().getSerializableInfo() != null) {
@@ -227,6 +198,9 @@ public class EntityRenderSystem {
             return false;
         }
         setupExtraMolang(entity, cap.getScope(), data.partialTick());
+        if (entity instanceof LivingEntity livingEntity) {
+            setupSyncedBehaviorContext(livingEntity, cap.getScope());
+        }
 
         return data.animationNotNull() && renderComponents(data);
     }
@@ -392,6 +366,21 @@ public class EntityRenderSystem {
         scope.set("variable.partial_tick", partialTick);
         if (entity instanceof LivingEntity livingEntity)
             scope.set("variable.attack_time", ((float) livingEntity.swingTime) / livingEntity.getCurrentSwingDuration());
+    }
+
+    private static void setupSyncedBehaviorContext(LivingEntity entity, MolangScope scope) {
+        SyncedBehaviorState synced = DataAttachmentHelper.getOrNull(
+                EyelibAttachableData.SYNCED_BEHAVIOR_STATE.get(), entity);
+        if (synced == null) {
+            scope.getHostContext().remove(MolangEntityContext.class);
+            return;
+        }
+
+        ComponentStore store = new ComponentStore();
+        store.put("minecraft:variant", synced.variant());
+        store.put("minecraft:mark_variant", synced.markVariant());
+        store.put("minecraft:scale", synced.scale());
+        scope.getHostContext().put(MolangEntityContext.class, new MolangEntityContext(store));
     }
 
     public static <T extends Entity> List<Runnable> setupClientEntity(T entity, RenderData<T> cap) {

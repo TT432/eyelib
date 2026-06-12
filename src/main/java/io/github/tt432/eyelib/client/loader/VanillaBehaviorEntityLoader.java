@@ -1,92 +1,32 @@
 package io.github.tt432.eyelib.client.loader;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import io.github.tt432.eyelib.client.registry.BehaviorEntityAssetRegistry;
-import io.github.tt432.eyelibimporter.addon.BrBehaviorEntityFile;
 import org.jspecify.annotations.NullMarked;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedHashMap;
-import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 /**
+ * 兼容旧调用点的 vanilla 行为实体加载入口；实际加载逻辑由 common 行为包边界维护。
+ *
  * @author TT432
  */
+@Deprecated(forRemoval = false)
 @NullMarked
-final class VanillaBehaviorEntityLoader {
-    private static final Logger LOGGER = LoggerFactory.getLogger(VanillaBehaviorEntityLoader.class);
-    private static final Path DEFAULT_ENTITY_DIR = Paths.get("run/vanilla_behavior_pack/entities");
-    private static final String MCPACK_RESOURCE_PATH = "data/eyelib/vanilla_behavior_pack.mcpack";
+public final class VanillaBehaviorEntityLoader {
+    private static volatile boolean loaded;
 
     private VanillaBehaviorEntityLoader() {
     }
 
+    public static void ensureLoaded() {
+        if (loaded) return;
+        synchronized (VanillaBehaviorEntityLoader.class) {
+            if (loaded) return;
+            loadAndRegister();
+            loaded = true;
+        }
+    }
+
     static void loadAndRegister() {
-        var entities = new LinkedHashMap<String, BrBehaviorEntityFile>();
-        Path entityDir = DEFAULT_ENTITY_DIR;
-        if (Files.isDirectory(entityDir)) {
-            loadFromDirectory(entities, entityDir);
-        }
-        if (entities.isEmpty()) {
-            loadFromMcpack(entities);
-        }
-        if (!entities.isEmpty()) {
-            BehaviorEntityAssetRegistry.replaceBehaviorEntities(entities);
-            LOGGER.info("Loaded {} vanilla behavior entities", entities.size());
-        }
-    }
-
-    private static void loadFromDirectory(LinkedHashMap<String, BrBehaviorEntityFile> entities, Path entityDir) {
-        try (Stream<Path> files = Files.list(entityDir)) {
-            files.filter(p -> p.getFileName().toString().endsWith(".json")).forEach(jsonFile -> {
-                try {
-                    JsonObject json = JsonParser.parseReader(Files.newBufferedReader(jsonFile)).getAsJsonObject();
-                    BrBehaviorEntityFile entityFile = BrBehaviorEntityFile.parse(json);
-                    entities.put(entityFile.identifier(), entityFile);
-                } catch (Exception e) {
-                    LOGGER.warn("Failed to parse behavior entity: {}", jsonFile.getFileName(), e);
-                }
-            });
-        } catch (IOException e) {
-            LOGGER.warn("Failed to list behavior entity directory: {}", entityDir, e);
-        }
-    }
-
-    private static void loadFromMcpack(LinkedHashMap<String, BrBehaviorEntityFile> entities) {
-        var cl = VanillaBehaviorEntityLoader.class.getClassLoader();
-        try (var is = cl.getResourceAsStream(MCPACK_RESOURCE_PATH)) {
-            if (is == null) {
-                LOGGER.warn("Vanilla behavior pack resource not found: {}", MCPACK_RESOURCE_PATH);
-                return;
-            }
-            try (var zis = new ZipInputStream(is)) {
-                ZipEntry entry;
-                while ((entry = zis.getNextEntry()) != null) {
-                    String name = entry.getName().replace('\\', '/');
-                    if (name.startsWith("vanilla/entities/") && name.endsWith(".json") && !entry.isDirectory()) {
-                        try {
-                            JsonObject json = JsonParser.parseReader(new InputStreamReader(zis, StandardCharsets.UTF_8)).getAsJsonObject();
-                            BrBehaviorEntityFile entityFile = BrBehaviorEntityFile.parse(json);
-                            entities.put(entityFile.identifier(), entityFile);
-                        } catch (Exception e) {
-                            LOGGER.warn("Failed to parse behavior entity: {}", name, e);
-                        }
-                    }
-                    zis.closeEntry();
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.warn("Failed to read behavior pack from classpath: {}", MCPACK_RESOURCE_PATH, e);
-        }
+        io.github.tt432.eyelib.common.behavior.VanillaBehaviorEntityLoader.mergeIntoRegistry(Paths.get("run"));
     }
 }
