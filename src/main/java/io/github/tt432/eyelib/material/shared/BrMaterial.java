@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibmaterial.shared;
+package io.github.tt432.eyelib.material.shared;
 
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-import io.github.tt432.eyelibutil.codec.DispatchedMapCodec;
+import io.github.tt432.eyelib.util.codec.DispatchedMapCodec;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 

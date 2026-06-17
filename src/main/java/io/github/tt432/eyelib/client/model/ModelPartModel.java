@@ -1,9 +1,9 @@
 package io.github.tt432.eyelib.client.model;
 
-import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibmodel.locator.GroupLocator;
-import io.github.tt432.eyelibutil.collection.EntryStreams;
+import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.model.locator.GroupLocator;
+import io.github.tt432.eyelib.util.collection.EntryStreams;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.model.geom.ModelPart;

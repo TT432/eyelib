@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component;
+package io.github.tt432.eyelib.behavior.component;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

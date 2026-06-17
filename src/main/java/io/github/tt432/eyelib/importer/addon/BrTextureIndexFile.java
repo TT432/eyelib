@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibimporter.addon;
+package io.github.tt432.eyelib.importer.addon;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibimporter.util.ImporterCodecUtil;
+import io.github.tt432.eyelib.importer.util.ImporterCodecUtil;
 
 /** @author TT432 */
 @org.jspecify.annotations.NullMarked

@@ -1,12 +1,12 @@
-package io.github.tt432.eyelibmolang.mapping;
+package io.github.tt432.eyelib.molang.mapping;
 
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.mapping.api.MolangFunction;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMapping;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingDiscovery;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
-import io.github.tt432.eyelibmolang.mapping.api.MolangQueryRuntime;
-import io.github.tt432.eyelibmolang.mapping.api.MolangQueryRuntimeBridge;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingDiscovery;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
+import io.github.tt432.eyelib.molang.mapping.api.MolangQueryRuntime;
+import io.github.tt432.eyelib.molang.mapping.api.MolangQueryRuntimeBridge;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 

@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibimporter.model.importer;
+package io.github.tt432.eyelib.importer.model.importer;
 
 import com.google.gson.JsonObject;
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibimporter.model.bedrock.BedrockGeometryModel;
-import io.github.tt432.eyelibimporter.model.bedrock.BedrockModelLoader;
+import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.importer.model.bedrock.BedrockGeometryModel;
+import io.github.tt432.eyelib.importer.model.bedrock.BedrockModelLoader;
 import org.jspecify.annotations.NullMarked;
 
 import java.io.IOException;

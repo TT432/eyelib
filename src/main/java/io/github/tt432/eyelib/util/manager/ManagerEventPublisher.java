@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.manager;
+package io.github.tt432.eyelib.util.manager;
 
 /**
  * 管理器变更事件发布接口，用于通知条目变更。

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.event;
+package io.github.tt432.eyelib.behavior.event;
 
 /**
  * 实体事件标记类。

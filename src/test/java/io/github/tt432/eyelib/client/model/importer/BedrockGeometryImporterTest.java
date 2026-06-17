@@ -1,16 +1,16 @@
 package io.github.tt432.eyelib.client.model.importer;
 
-import io.github.tt432.eyelibimporter.model.importer.ModelImportException;
-import io.github.tt432.eyelibimporter.model.importer.ModelImporter;
+import io.github.tt432.eyelib.importer.model.importer.ModelImportException;
+import io.github.tt432.eyelib.importer.model.importer.ModelImporter;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibmodel.VisibleBox;
-import io.github.tt432.eyelibmodel.locator.LocatorEntry;
+import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.model.VisibleBox;
+import io.github.tt432.eyelib.model.locator.LocatorEntry;
 import org.junit.jupiter.api.Test;
 import org.joml.Vector2fc;
 import org.joml.Vector2f;

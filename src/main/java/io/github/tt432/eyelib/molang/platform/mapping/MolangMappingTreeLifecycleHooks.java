@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibmolang.platform.mapping;
+package io.github.tt432.eyelib.molang.platform.mapping;
 
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;

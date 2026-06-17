@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.model;
 
-import io.github.tt432.eyelibmodel.Model;
+import io.github.tt432.eyelib.model.Model;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

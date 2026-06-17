@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibparticle.api;
+package io.github.tt432.eyelib.particle.api;
 
 import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;

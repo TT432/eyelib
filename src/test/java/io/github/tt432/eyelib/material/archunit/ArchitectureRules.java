@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmaterial.archunit;
+package io.github.tt432.eyelib.material.archunit;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -21,7 +21,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 class ArchitectureRules {
 
     private static final JavaClasses classes = new ClassFileImporter()
-            .importPackages("io.github.tt432.eyelibmaterial");
+            .importPackages("io.github.tt432.eyelib.material");
 
     @Test
     void domainLayerHasNoMcDependency() {
@@ -30,7 +30,7 @@ class ArchitectureRules {
                         c -> !(c.getSimpleName().equals("EyelibMaterialMod")
                                 || c.getSimpleName().equals("BrShaderMapping")
                                 || c.getSimpleName().equals("BrMaterialEntry"))))
-                .and().resideInAPackage("io.github.tt432.eyelibmaterial..")
+                .and().resideInAPackage("io.github.tt432.eyelib.material..")
                 .should().dependOnClassesThat()
                 .resideInAPackage("net.minecraft..")
                 .check(classes);
@@ -39,7 +39,7 @@ class ArchitectureRules {
     @Test
     void portInterfacesHaveNoMcDependency() {
         noClasses()
-                .that().resideInAPackage("io.github.tt432.eyelibmaterial.port..")
+                .that().resideInAPackage("io.github.tt432.eyelib.material.port..")
                 .should().dependOnClassesThat()
                 .resideInAPackage("net.minecraft..")
                 .check(classes);

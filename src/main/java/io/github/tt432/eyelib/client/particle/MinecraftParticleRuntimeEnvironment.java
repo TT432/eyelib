@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.client.particle;
 
 import io.github.tt432.eyelib.client.ClientTickHandler;
-import io.github.tt432.eyelibparticle.runtime.bedrock.ParticleRuntimeEnvironment;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterParticleComponent;
+import io.github.tt432.eyelib.particle.runtime.bedrock.ParticleRuntimeEnvironment;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.EmitterParticleComponent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;

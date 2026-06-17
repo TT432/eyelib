@@ -1,14 +1,14 @@
-package io.github.tt432.eyelibmolang.compiler.corpus;
+package io.github.tt432.eyelib.molang.compiler.corpus;
 
-import io.github.tt432.eyelibmolang.compiler.binding.BindDiagnosticsMode;
-import io.github.tt432.eyelibmolang.compiler.binding.BindResult;
-import io.github.tt432.eyelibmolang.compiler.binding.MolangBinder;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangCaseReport;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangDiagnosticsMode;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangResultType;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangRunReport;
-import io.github.tt432.eyelibmolang.compiler.frontend.HandwrittenMolangAstParserFrontend;
-import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
+import io.github.tt432.eyelib.molang.compiler.binding.BindDiagnosticsMode;
+import io.github.tt432.eyelib.molang.compiler.binding.BindResult;
+import io.github.tt432.eyelib.molang.compiler.binding.MolangBinder;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangCaseReport;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangDiagnosticsMode;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangResultType;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangRunReport;
+import io.github.tt432.eyelib.molang.compiler.frontend.HandwrittenMolangAstParserFrontend;
+import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,8 +24,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.DEFAULT_MODE;
-import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.DEFAULT_POLICY_PACK;
+import static io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.DEFAULT_MODE;
+import static io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.DEFAULT_POLICY_PACK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

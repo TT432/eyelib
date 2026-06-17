@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -24,7 +24,7 @@ public record Tamemount(
         int min_temper,
         int max_temper,
         String ride_text
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Tamemount> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             FeedItem.CODEC.listOf().fieldOf("feed_items").forGetter(Tamemount::feed_items),
             Codec.FLOAT.optionalFieldOf("attempt_temper_mod", 5.0f).forGetter(Tamemount::attempt_temper_mod),

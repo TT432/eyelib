@@ -1,5 +1,5 @@
 @NullMarked
-package io.github.tt432.eyelibutil.streamcodec;
+package io.github.tt432.eyelib.util.streamcodec;
 
 import org.jspecify.annotations.NullMarked;
 

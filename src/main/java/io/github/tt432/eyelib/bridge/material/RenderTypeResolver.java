@@ -1,13 +1,13 @@
-package io.github.tt432.eyelibbridge.material;
+package io.github.tt432.eyelib.bridge.material;
 
-import io.github.tt432.eyelibmaterial.gl.GLStates;
-import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
-import io.github.tt432.eyelibmaterial.material.BrMaterialResolver;
-import io.github.tt432.eyelibmaterial.material.ResolvedBrMaterial;
-import io.github.tt432.eyelibmaterial.port.PortRenderPass;
-import io.github.tt432.eyelibutil.PortResourceLocation;
-import io.github.tt432.eyelibmaterial.render.BrRenderState;
-import io.github.tt432.eyelibmaterial.render.BrRenderStateFactory;
+import io.github.tt432.eyelib.material.gl.GLStates;
+import io.github.tt432.eyelib.material.material.BrMaterialEntry;
+import io.github.tt432.eyelib.material.material.BrMaterialResolver;
+import io.github.tt432.eyelib.material.material.ResolvedBrMaterial;
+import io.github.tt432.eyelib.material.port.PortRenderPass;
+import io.github.tt432.eyelib.util.PortResourceLocation;
+import io.github.tt432.eyelib.material.render.BrRenderState;
+import io.github.tt432.eyelib.material.render.BrRenderStateFactory;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Map;
@@ -107,10 +107,10 @@ public final class RenderTypeResolver {
                 java.util.List.of(),
                 Optional.empty(),
                 new ResolvedBrMaterial.BlendState(
-                        io.github.tt432.eyelibmaterial.gl.BlendFactor.SourceAlpha,
-                        io.github.tt432.eyelibmaterial.gl.BlendFactor.One,
-                        io.github.tt432.eyelibmaterial.gl.BlendFactor.One,
-                        io.github.tt432.eyelibmaterial.gl.BlendFactor.OneMinusSrcAlpha
+                        io.github.tt432.eyelib.material.gl.BlendFactor.SourceAlpha,
+                        io.github.tt432.eyelib.material.gl.BlendFactor.One,
+                        io.github.tt432.eyelib.material.gl.BlendFactor.One,
+                        io.github.tt432.eyelib.material.gl.BlendFactor.OneMinusSrcAlpha
                 ),
                 ResolvedBrMaterial.StencilState.DEFAULT,
                 java.util.List.of()

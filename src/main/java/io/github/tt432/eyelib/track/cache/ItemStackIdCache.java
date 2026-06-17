@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibtrack.cache;
+package io.github.tt432.eyelib.track.cache;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibtrack.EyelibTrack;
+import io.github.tt432.eyelib.track.EyelibTrack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;

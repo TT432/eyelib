@@ -1,5 +1,5 @@
 @NullMarked
-package io.github.tt432.eyelibbridge.molang;
+package io.github.tt432.eyelib.bridge.molang;
 
 /**
  * eyelib-bridge Molang 层：MolangBuiltInQuery（平台查询函数）、EntityPortAdapter、MinecraftMolangQueryRuntime。

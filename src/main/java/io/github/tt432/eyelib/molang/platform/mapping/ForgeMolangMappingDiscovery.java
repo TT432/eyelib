@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibmolang.platform.mapping;
+package io.github.tt432.eyelib.molang.platform.mapping;
 
-import io.github.tt432.eyelibmolang.mapping.api.MolangMapping;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingDiscovery;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingDiscovery;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.ModFileScanData;
 import org.jspecify.annotations.NullMarked;

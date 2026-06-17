@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock;
+package io.github.tt432.eyelib.particle.runtime.bedrock;
 
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.ParticleComponentManager;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.ParticleParticleComponent;
-import io.github.tt432.eyelibparticle.runtime.support.ParticleBlackboard;
-import io.github.tt432.eyelibparticle.runtime.support.ParticleTimer;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.ParticleComponentManager;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.particle.ParticleParticleComponent;
+import io.github.tt432.eyelib.particle.runtime.support.ParticleBlackboard;
+import io.github.tt432.eyelib.particle.runtime.support.ParticleTimer;
 import org.joml.Vector3f;
 
 import java.util.List;
@@ -34,7 +34,7 @@ public final class BedrockParticleInstance implements ParticleParticleComponent.
 
     BedrockParticleInstance(BedrockParticleEmitter emitter) {
         this.emitter = emitter;
-        timer = new ParticleTimer(new io.github.tt432.eyelibparticle.runtime.ParticleRuntimeServices.TimeSource() {
+        timer = new ParticleTimer(new io.github.tt432.eyelib.particle.runtime.ParticleRuntimeServices.TimeSource() {
             @Override
             public int ticks() {
                 return emitter.environment().ticks();

@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.client.entity.AttachableResolver;
 import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.client.render.AttachableItemRenderSetup;
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
+import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;

@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibanimation.bedrock;
+package io.github.tt432.eyelib.animation.bedrock;
 
-import io.github.tt432.eyelibanimation.AnimationEffect;
-import io.github.tt432.eyelibimporter.animation.NamedTrackContainerDefinition;
-import io.github.tt432.eyelibmolang.MolangValue;
+import io.github.tt432.eyelib.animation.AnimationEffect;
+import io.github.tt432.eyelib.importer.animation.NamedTrackContainerDefinition;
+import io.github.tt432.eyelib.molang.MolangValue;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.jspecify.annotations.NullMarked;
 

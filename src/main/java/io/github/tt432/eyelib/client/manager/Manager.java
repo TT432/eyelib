@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.manager;
 
-import io.github.tt432.eyelibutil.manager.ManagerStorage;
-import io.github.tt432.eyelibutil.repository.Repository;
+import io.github.tt432.eyelib.util.manager.ManagerStorage;
+import io.github.tt432.eyelib.util.repository.Repository;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 

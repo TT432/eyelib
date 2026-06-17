@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibattachment.runtime;
+package io.github.tt432.eyelib.attachment.runtime;
 
-import io.github.tt432.eyelibattachment.capability.ExtraEntityData;
+import io.github.tt432.eyelib.attachment.capability.ExtraEntityData;
 
 /**
  * 额外实体数据的更新工具。

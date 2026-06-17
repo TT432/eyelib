@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.repository;
+package io.github.tt432.eyelib.util.repository;
 
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;

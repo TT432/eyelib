@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibbehavior;
+package io.github.tt432.eyelib.behavior;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibbehavior.component.group.ComponentGroup;
-import io.github.tt432.eyelibbehavior.event.logic.LogicNode;
-import io.github.tt432.eyelibutil.PortResourceLocation;
+import io.github.tt432.eyelib.behavior.component.group.ComponentGroup;
+import io.github.tt432.eyelib.behavior.event.logic.LogicNode;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 
 import java.util.Collections;
 import java.util.Map;

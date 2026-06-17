@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibimporter.animation.bedrock.controller;
+package io.github.tt432.eyelib.importer.animation.bedrock.controller;
 
-import io.github.tt432.eyelibimporter.animation.StateMachineAnimationDefinition;
+import io.github.tt432.eyelib.importer.animation.StateMachineAnimationDefinition;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -26,8 +26,8 @@ public record BrAnimationControllerDefinition(
             initial = definitions.get("default");
         }
         if (initial == null) {
-            initial = BrAcStateDefinition.fromSchema(new BrAcState(Map.of(), io.github.tt432.eyelibmolang.MolangValue.ZERO,
-                    io.github.tt432.eyelibmolang.MolangValue.ZERO, java.util.List.of(), java.util.List.of(), Map.of(), 0F, false));
+            initial = BrAcStateDefinition.fromSchema(new BrAcState(Map.of(), io.github.tt432.eyelib.molang.MolangValue.ZERO,
+                    io.github.tt432.eyelib.molang.MolangValue.ZERO, java.util.List.of(), java.util.List.of(), Map.of(), 0F, false));
         }
         return new BrAnimationControllerDefinition(name, initial, definitions);
     }

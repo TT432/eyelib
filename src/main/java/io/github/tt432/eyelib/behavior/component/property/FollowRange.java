@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -15,7 +15,7 @@ import java.util.Optional;
 public record FollowRange(
         int value,
         Optional<Integer> max
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<FollowRange> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.INT.optionalFieldOf("value", 16).forGetter(FollowRange::value),
             Codec.INT.optionalFieldOf("max").forGetter(FollowRange::max)

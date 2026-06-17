@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component;
+package io.github.tt432.eyelib.behavior.component;
 
 /**
  * 组件接口，定义实体组件的唯一标识。

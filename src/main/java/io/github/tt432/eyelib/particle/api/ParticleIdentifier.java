@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibparticle.api;
+package io.github.tt432.eyelib.particle.api;
 
 /**
  * 提取粒子定义的稳定字符串标识符。

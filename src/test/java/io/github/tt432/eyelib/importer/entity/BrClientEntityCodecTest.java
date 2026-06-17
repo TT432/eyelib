@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter.entity;
+package io.github.tt432.eyelib.importer.entity;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
@@ -197,7 +197,7 @@ class BrClientEntityCodecTest {
 
         assertEquals("1.20.80", entity.min_engine_version().orElseThrow().semanticString());
         assertEquals("controller.animation.test", entity.animation_controllers().get(0).get("idle"));
-        assertEquals("#ffffff", ((io.github.tt432.eyelibimporter.addon.BedrockResourceValue.StringValue) entity.spawn_egg().orElseThrow().values().get("base_color")).value());
-        assertEquals("#000000", ((io.github.tt432.eyelibimporter.addon.BedrockResourceValue.StringValue) entity.spawn_egg().orElseThrow().values().get("overlay_color")).value());
+        assertEquals("#ffffff", ((io.github.tt432.eyelib.importer.addon.BedrockResourceValue.StringValue) entity.spawn_egg().orElseThrow().values().get("base_color")).value());
+        assertEquals("#000000", ((io.github.tt432.eyelib.importer.addon.BedrockResourceValue.StringValue) entity.spawn_egg().orElseThrow().values().get("overlay_color")).value());
     }
 }

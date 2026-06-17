@@ -2,11 +2,11 @@ package io.github.tt432.eyelib.client.loader;
 
 import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
 import io.github.tt432.eyelib.event.TextureChangedEvent;
-import io.github.tt432.eyelibimporter.addon.BedrockAddon;
-import io.github.tt432.eyelibimporter.addon.BedrockAddonLoader;
-import io.github.tt432.eyelibimporter.addon.BedrockAddonWarning;
-import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
-import io.github.tt432.eyelibparticle.loading.ParticleResourcePublication;
+import io.github.tt432.eyelib.importer.addon.BedrockAddon;
+import io.github.tt432.eyelib.importer.addon.BedrockAddonLoader;
+import io.github.tt432.eyelib.importer.addon.BedrockAddonWarning;
+import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
+import io.github.tt432.eyelib.particle.loading.ParticleResourcePublication;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;

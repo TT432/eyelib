@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibbehavior;
+package io.github.tt432.eyelib.behavior;
 
-import io.github.tt432.eyelibbehavior.component.Component;
-import io.github.tt432.eyelibbehavior.component.group.ComponentGroup;
+import io.github.tt432.eyelib.behavior.component.Component;
+import io.github.tt432.eyelib.behavior.component.group.ComponentGroup;
 
 import java.util.Collections;
 import java.util.Map;

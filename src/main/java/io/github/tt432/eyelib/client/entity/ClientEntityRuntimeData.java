@@ -1,9 +1,9 @@
 package io.github.tt432.eyelib.client.entity;
 
 import io.github.tt432.eyelib.client.manager.ModelManager;
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibmodel.entity.ModelResolver;
+import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.model.entity.ModelResolver;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jspecify.annotations.NullMarked;

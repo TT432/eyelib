@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibparticle.loading;
+package io.github.tt432.eyelib.particle.loading;
 
 import com.google.gson.JsonElement;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelibimporter.particle.BrParticle;
-import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
-import io.github.tt432.eyelibparticle.runtime.ParticleDefinitionAdapter;
+import io.github.tt432.eyelib.importer.particle.BrParticle;
+import io.github.tt432.eyelib.particle.runtime.ParticleDefinition;
+import io.github.tt432.eyelib.particle.runtime.ParticleDefinitionAdapter;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;

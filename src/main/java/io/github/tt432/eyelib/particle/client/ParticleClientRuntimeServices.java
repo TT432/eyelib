@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibparticle.client;
+package io.github.tt432.eyelib.particle.client;
 
 import net.minecraft.client.Minecraft;
 

@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.client.registry;
 import io.github.tt432.eyelib.client.manager.BehaviorEntityManager;
 import io.github.tt432.eyelib.common.behavior.BehaviorEntityRegistry;
 import io.github.tt432.eyelib.common.behavior.BehaviorPackPublication;
-import io.github.tt432.eyelibimporter.addon.BrBehaviorEntityFile;
+import io.github.tt432.eyelib.importer.addon.BrBehaviorEntityFile;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -19,7 +19,7 @@ public record Projectile(
         ProjectilePhysics physics,
         ProjectileCombat combat,
         ProjectileBehavior behavior
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Projectile> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             ProjectilePhysics.MAP_CODEC.forGetter(Projectile::physics),
             ProjectileCombat.MAP_CODEC.forGetter(Projectile::combat),

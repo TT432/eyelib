@@ -1,12 +1,12 @@
-package io.github.tt432.eyelibbehavior;
+package io.github.tt432.eyelib.behavior;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibbehavior.BehaviorEntity;
-import io.github.tt432.eyelibbehavior.component.Component;
-import io.github.tt432.eyelibbehavior.component.group.ComponentGroup;
-import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
-import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
+import io.github.tt432.eyelib.behavior.BehaviorEntity;
+import io.github.tt432.eyelib.behavior.component.Component;
+import io.github.tt432.eyelib.behavior.component.group.ComponentGroup;
+import io.github.tt432.eyelib.util.streamcodec.StreamCodec;
+import io.github.tt432.eyelib.util.streamcodec.EyelibStreamCodecs;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 

@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibanimation.bedrock;
+package io.github.tt432.eyelib.animation.bedrock;
 
-import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrLoopType;
 import org.jspecify.annotations.NullMarked;
 
 /**

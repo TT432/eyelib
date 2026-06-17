@@ -2,16 +2,16 @@ package io.github.tt432.eyelib.molang.mapping;
 
 import io.github.tt432.eyelib.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.client.entity.AttachableResolver;
-import io.github.tt432.eyelibanimation.bedrock.BrAnimationEntry;
-import io.github.tt432.eyelibanimation.bedrock.controller.BrAnimationController;
-import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
-import io.github.tt432.eyelibbehavior.SyncedBehaviorState;
-import io.github.tt432.eyelibbehavior.component.MarkVariant;
-import io.github.tt432.eyelibbehavior.component.Variant;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.mapping.api.MolangFunction;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMapping;
+import io.github.tt432.eyelib.animation.bedrock.BrAnimationEntry;
+import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationController;
+import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentHelper;
+import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
+import io.github.tt432.eyelib.behavior.component.MarkVariant;
+import io.github.tt432.eyelib.behavior.component.Variant;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.world.entity.Entity;
@@ -22,8 +22,8 @@ import org.jspecify.annotations.NullMarked;
 
 import java.util.function.Function;
 
-import static io.github.tt432.eyelibmolang.MolangValue.FALSE;
-import static io.github.tt432.eyelibmolang.MolangValue.TRUE;
+import static io.github.tt432.eyelib.molang.MolangValue.FALSE;
+import static io.github.tt432.eyelib.molang.MolangValue.TRUE;
 
 /**
  * @author TT432

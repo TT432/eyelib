@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelibbehavior.component.Component;
+import io.github.tt432.eyelib.behavior.component.Component;
 import org.jspecify.annotations.NullMarked;
 
 /**

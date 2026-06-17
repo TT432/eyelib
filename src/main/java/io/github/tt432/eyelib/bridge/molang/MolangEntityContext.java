@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbridge.molang;
+package io.github.tt432.eyelib.bridge.molang;
 
 import org.jspecify.annotations.NullMarked;
 

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter;
+package io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

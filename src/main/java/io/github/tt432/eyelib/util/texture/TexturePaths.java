@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.texture;
+package io.github.tt432.eyelib.util.texture;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

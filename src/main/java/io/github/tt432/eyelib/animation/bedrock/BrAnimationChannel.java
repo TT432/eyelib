@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibanimation.bedrock;
+package io.github.tt432.eyelib.animation.bedrock;
 
-import io.github.tt432.eyelibanimation.AnimationChannelDefinition;
-import io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap;
+import io.github.tt432.eyelib.animation.AnimationChannelDefinition;
+import io.github.tt432.eyelib.util.collection.ImmutableFloatTreeMap;
 import org.jspecify.annotations.NullMarked;
 
 /**

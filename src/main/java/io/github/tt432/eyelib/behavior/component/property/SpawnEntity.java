@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibbehavior.component.Component;
+import io.github.tt432.eyelib.behavior.component.Component;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.List;

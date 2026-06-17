@@ -1,15 +1,15 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock;
+package io.github.tt432.eyelib.particle.runtime.bedrock;
 
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibimporter.particle.BrParticle;
-import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.ParticleComponentManager;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterLocalSpace;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterParticleComponent;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.shape.Direction;
-import io.github.tt432.eyelibparticle.runtime.support.ParticleBlackboard;
-import io.github.tt432.eyelibparticle.runtime.support.ParticleMath;
-import io.github.tt432.eyelibparticle.runtime.support.ParticleTimer;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.importer.particle.BrParticle;
+import io.github.tt432.eyelib.particle.runtime.ParticleDefinition;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.ParticleComponentManager;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.EmitterLocalSpace;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.EmitterParticleComponent;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.shape.Direction;
+import io.github.tt432.eyelib.particle.runtime.support.ParticleBlackboard;
+import io.github.tt432.eyelib.particle.runtime.support.ParticleMath;
+import io.github.tt432.eyelib.particle.runtime.support.ParticleTimer;
 import org.jspecify.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -60,7 +60,7 @@ public final class BedrockParticleEmitter implements EmitterParticleComponent.Em
         this.environment = Objects.requireNonNull(environment, "environment");
         this.spawner = Objects.requireNonNull(spawner, "spawner");
         this.position = new Vector3f(Objects.requireNonNull(position, "position"));
-        timer = new ParticleTimer(new io.github.tt432.eyelibparticle.runtime.ParticleRuntimeServices.TimeSource() {
+        timer = new ParticleTimer(new io.github.tt432.eyelib.particle.runtime.ParticleRuntimeServices.TimeSource() {
             @Override
             public int ticks() {
                 return environment.ticks();
@@ -251,8 +251,8 @@ public final class BedrockParticleEmitter implements EmitterParticleComponent.Em
 
     private static float calculateLinear(BrParticle.Curve curve, float input, MolangScope scope) {
         return curve.nodes().nodes().map(nodes -> {
-            Map.Entry<Float, io.github.tt432.eyelibmolang.MolangValue> before = nodes.floorEntry(input);
-            Map.Entry<Float, io.github.tt432.eyelibmolang.MolangValue> after = nodes.higherEntry(input);
+            Map.Entry<Float, io.github.tt432.eyelib.molang.MolangValue> before = nodes.floorEntry(input);
+            Map.Entry<Float, io.github.tt432.eyelib.molang.MolangValue> after = nodes.higherEntry(input);
             if (before == null) {
                 return after == null ? 0F : after.getValue().eval(scope);
             }
@@ -274,7 +274,7 @@ public final class BedrockParticleEmitter implements EmitterParticleComponent.Em
             }
             float[] values = new float[4];
             int index = 0;
-            for (io.github.tt432.eyelibmolang.MolangValue value : nodes.values()) {
+            for (io.github.tt432.eyelib.molang.MolangValue value : nodes.values()) {
                 values[index++] = value.eval(scope);
             }
             return bezier(input, values[0], values[1], values[2], values[3]);

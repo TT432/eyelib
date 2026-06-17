@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.manager;
 
-import io.github.tt432.eyelibutil.manager.ManagerEventPublisher;
+import io.github.tt432.eyelib.util.manager.ManagerEventPublisher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 

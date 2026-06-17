@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.manager;
 
-import io.github.tt432.eyelibmodel.Model;
+import io.github.tt432.eyelib.model.Model;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;

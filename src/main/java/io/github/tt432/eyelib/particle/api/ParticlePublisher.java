@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibparticle.api;
+package io.github.tt432.eyelib.particle.api;
 
 import java.util.LinkedHashMap;
 import java.util.Objects;

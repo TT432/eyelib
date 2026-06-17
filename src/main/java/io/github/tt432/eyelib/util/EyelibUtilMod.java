@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil;
+package io.github.tt432.eyelib.util;
 
 import net.minecraftforge.fml.common.Mod;
 

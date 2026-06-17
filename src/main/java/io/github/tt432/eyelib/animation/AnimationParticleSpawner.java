@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibanimation;
+package io.github.tt432.eyelib.animation;
 
 import org.joml.Vector3f;
 import org.jspecify.annotations.NullMarked;

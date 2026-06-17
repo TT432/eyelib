@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibattachment.dataattach.mc;
+package io.github.tt432.eyelib.attachment.dataattach.mc;
 
-import io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime;
+import io.github.tt432.eyelib.attachment.network.DataAttachmentSyncRuntime;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbridge;
+package io.github.tt432.eyelib.bridge;
 
 import net.minecraftforge.fml.common.Mod;
 import org.jspecify.annotations.NullMarked;

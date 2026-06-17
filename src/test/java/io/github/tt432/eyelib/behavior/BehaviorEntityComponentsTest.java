@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibbehavior;
+package io.github.tt432.eyelib.behavior;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelibbehavior.component.Health;
-import io.github.tt432.eyelibbehavior.component.RawComponent;
+import io.github.tt432.eyelib.behavior.component.Health;
+import io.github.tt432.eyelib.behavior.component.RawComponent;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

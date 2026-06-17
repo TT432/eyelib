@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -22,7 +22,7 @@ public record Leashable(
         EventRef on_leash,
         EventRef on_unleash,
         boolean can_be_stolen
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Leashable> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             Codec.FLOAT.optionalFieldOf("soft_distance", 4.0f).forGetter(Leashable::soft_distance),
             Codec.FLOAT.optionalFieldOf("hard_distance", 6.0f).forGetter(Leashable::hard_distance),

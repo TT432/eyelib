@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibanimation.bedrock;
+package io.github.tt432.eyelib.animation.bedrock;
 
-import io.github.tt432.eyelibanimation.AnimationClipDefinition;
-import io.github.tt432.eyelibimporter.animation.NamedTrackContainerDefinition;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
+import io.github.tt432.eyelib.animation.AnimationClipDefinition;
+import io.github.tt432.eyelib.importer.animation.NamedTrackContainerDefinition;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrLoopType;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
@@ -54,7 +54,7 @@ class BrAnimationCodecTest {
         assertTrue(boneAnimation.channels().containsKey(BrBoneAnimation.ROTATION));
         assertNotNull(boneAnimation.rotation().floorEntry(0F));
 
-        AnimationClipDefinition<Integer, BrBoneAnimation, BrLoopType, io.github.tt432.eyelibmolang.MolangValue> clipDefinition = entry.definition();
+        AnimationClipDefinition<Integer, BrBoneAnimation, BrLoopType, io.github.tt432.eyelib.molang.MolangValue> clipDefinition = entry.definition();
         Integer firstBoneId = entry.bones().keySet().intStream().findFirst().orElseThrow();
         assertEquals(entry.bones().get(firstBoneId), clipDefinition.track(firstBoneId));
         assertEquals("animation.test.idle", clipDefinition.name());

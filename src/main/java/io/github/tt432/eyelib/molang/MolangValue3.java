@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmolang;
+package io.github.tt432.eyelib.molang;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;

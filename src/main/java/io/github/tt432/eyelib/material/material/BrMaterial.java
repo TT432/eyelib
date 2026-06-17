@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmaterial.material;
+package io.github.tt432.eyelib.material.material;
 
 import com.mojang.serialization.Codec;
 import org.jspecify.annotations.NullMarked;
@@ -19,12 +19,12 @@ public record BrMaterial(
      * CODEC delegates to the shared pure-data CODEC for serialization,
      * then converts to/from the runtime type via xmap.
      */
-    public static final Codec<BrMaterial> CODEC = io.github.tt432.eyelibmaterial.shared.BrMaterial.CODEC.xmap(
+    public static final Codec<BrMaterial> CODEC = io.github.tt432.eyelib.material.shared.BrMaterial.CODEC.xmap(
             BrMaterial::fromShared,
             BrMaterial::toShared
     );
 
-    public static BrMaterial fromShared(io.github.tt432.eyelibmaterial.shared.BrMaterial shared) {
+    public static BrMaterial fromShared(io.github.tt432.eyelib.material.shared.BrMaterial shared) {
         var materials = shared.materials().entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
@@ -33,12 +33,12 @@ public record BrMaterial(
         return new BrMaterial(materials);
     }
 
-    io.github.tt432.eyelibmaterial.shared.BrMaterial toShared() {
+    io.github.tt432.eyelib.material.shared.BrMaterial toShared() {
         var sharedMaterials = materials.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         e -> e.getValue().toShared()
                 ));
-        return new io.github.tt432.eyelibmaterial.shared.BrMaterial(null, sharedMaterials);
+        return new io.github.tt432.eyelib.material.shared.BrMaterial(null, sharedMaterials);
     }
 }

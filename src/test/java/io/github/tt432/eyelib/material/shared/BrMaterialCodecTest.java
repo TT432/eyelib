@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmaterial.shared;
+package io.github.tt432.eyelib.material.shared;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;

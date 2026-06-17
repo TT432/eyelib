@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.model;
 
-import io.github.tt432.eyelibmodel.VisibleBox;
+import io.github.tt432.eyelib.model.VisibleBox;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;

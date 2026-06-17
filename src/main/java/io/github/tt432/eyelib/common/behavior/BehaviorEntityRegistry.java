@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.common.behavior;
 
-import io.github.tt432.eyelibbehavior.BehaviorEntity;
+import io.github.tt432.eyelib.behavior.BehaviorEntity;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;

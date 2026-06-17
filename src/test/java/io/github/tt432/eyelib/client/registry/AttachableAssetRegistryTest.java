@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.registry;
 
 import io.github.tt432.eyelib.client.manager.AttachableManager;
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
+import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 

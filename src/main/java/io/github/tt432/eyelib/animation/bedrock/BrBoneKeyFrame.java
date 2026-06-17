@@ -1,23 +1,23 @@
-package io.github.tt432.eyelibanimation.bedrock;
+package io.github.tt432.eyelib.animation.bedrock;
 
-import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneKeyFrameSchema;
-import io.github.tt432.eyelibanimation.bedrock.baked.BakedBoneKeyFrame;
-import io.github.tt432.eyelibanimation.bedrock.baked.BoneAnimationBaker;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrBoneKeyFrameSchema;
+import io.github.tt432.eyelib.animation.bedrock.baked.BakedBoneKeyFrame;
+import io.github.tt432.eyelib.animation.bedrock.baked.BoneAnimationBaker;
 
 
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibmolang.MolangValue3;
-import io.github.tt432.eyelibutil.codec.ChinExtraCodecs;
-import io.github.tt432.eyelibutil.codec.CodecHelper;
-import io.github.tt432.eyelibutil.collection.ListAccessors;
-import io.github.tt432.eyelibutil.math.Curves;
-import io.github.tt432.eyelibutil.math.EyeMath;
-import io.github.tt432.eyelibutil.PortStringRepresentable;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangValue3;
+import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
+import io.github.tt432.eyelib.util.codec.CodecHelper;
+import io.github.tt432.eyelib.util.collection.ListAccessors;
+import io.github.tt432.eyelib.util.math.Curves;
+import io.github.tt432.eyelib.util.math.EyeMath;
+import io.github.tt432.eyelib.util.PortStringRepresentable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NullMarked;

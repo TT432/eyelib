@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmaterial;
+package io.github.tt432.eyelib.material;
 
 import net.minecraftforge.fml.common.Mod;
 import org.jspecify.annotations.NullMarked;

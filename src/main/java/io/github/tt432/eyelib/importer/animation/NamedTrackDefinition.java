@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter.animation;
+package io.github.tt432.eyelib.importer.animation;
 
 /** 异构轨道容器中的单个命名轨道。
  * @author TT432 */

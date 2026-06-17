@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibmolang.compiler;
+package io.github.tt432.eyelib.molang.compiler;
 
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.mapping.MolangMath;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.MolangClass;
-import io.github.tt432.eyelibmolang.type.MolangObject;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.mapping.MolangMath;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.MolangClass;
+import io.github.tt432.eyelib.molang.type.MolangObject;
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

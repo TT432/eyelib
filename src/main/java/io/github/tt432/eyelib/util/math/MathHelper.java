@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.math;
+package io.github.tt432.eyelib.util.math;
 
 /**
  * 提供 int、float、double 三种类型的数值钳制方法。

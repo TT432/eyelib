@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -25,7 +25,7 @@ public record LookedAt(
         EventRef on_look_at,
         JsonObject filters,
         boolean allow_invulnerable
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<LookedAt> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             Codec.FLOAT.optionalFieldOf("search_radius", 10.0f).forGetter(LookedAt::search_radius),
             Codec.BOOL.optionalFieldOf("set_target", true).forGetter(LookedAt::set_target),

@@ -1,12 +1,12 @@
-package io.github.tt432.eyelibbehavior.event.logic;
+package io.github.tt432.eyelib.behavior.event.logic;
 
 import com.mojang.serialization.MapCodec;
-import io.github.tt432.eyelibbehavior.EntityBehaviorData;
-import io.github.tt432.eyelibutil.codec.EyelibCodec;
+import io.github.tt432.eyelib.behavior.EntityBehaviorData;
+import io.github.tt432.eyelib.util.codec.EyelibCodec;
 
 import java.util.Map;
 
-import static io.github.tt432.eyelibutil.codec.EyelibCodec.list;
+import static io.github.tt432.eyelib.util.codec.EyelibCodec.list;
 
 /**
  * 逻辑节点接口，定义行为事件的执行入口。

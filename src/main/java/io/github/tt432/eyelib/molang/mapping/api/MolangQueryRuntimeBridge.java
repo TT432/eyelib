@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibmolang.mapping.api;
+package io.github.tt432.eyelib.molang.mapping.api;
 
-import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangScope;
 import org.jspecify.annotations.NullMarked;
 
 /**

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmaterial.shared;
+package io.github.tt432.eyelib.material.shared;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;

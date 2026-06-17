@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmaterial.gl.stencil;
+package io.github.tt432.eyelib.material.gl.stencil;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

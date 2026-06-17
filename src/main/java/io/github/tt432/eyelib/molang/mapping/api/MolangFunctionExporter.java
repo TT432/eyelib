@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmolang.mapping.api;
+package io.github.tt432.eyelib.molang.mapping.api;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

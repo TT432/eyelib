@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -19,7 +19,7 @@ import java.util.List;
 public record Healable(
         List<HealItem> items,
         boolean force_use
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Healable> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             HealItem.CODEC.listOf().fieldOf("items").forGetter(Healable::items),
             Codec.BOOL.optionalFieldOf("force_use", false).forGetter(Healable::force_use)

@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibattachment.dataattach;
+package io.github.tt432.eyelib.attachment.dataattach;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
+import io.github.tt432.eyelib.util.streamcodec.StreamCodec;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.Supplier;

@@ -1,14 +1,14 @@
-package io.github.tt432.eyelibparticle.client;
+package io.github.tt432.eyelib.particle.client;
 
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibparticle.api.ParticleSpawnApi;
-import io.github.tt432.eyelibparticle.api.ParticleSpawnRequest;
-import io.github.tt432.eyelibparticle.api.ParticleStore;
-import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
-import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
-import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
-import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleRuntime;
-import io.github.tt432.eyelibparticle.runtime.bedrock.ParticleRuntimeEnvironment;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.particle.api.ParticleSpawnApi;
+import io.github.tt432.eyelib.particle.api.ParticleSpawnRequest;
+import io.github.tt432.eyelib.particle.api.ParticleStore;
+import io.github.tt432.eyelib.particle.loading.ParticleDefinitionRegistry;
+import io.github.tt432.eyelib.particle.runtime.ParticleDefinition;
+import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleEmitter;
+import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleRuntime;
+import io.github.tt432.eyelib.particle.runtime.bedrock.ParticleRuntimeEnvironment;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NullMarked;
 

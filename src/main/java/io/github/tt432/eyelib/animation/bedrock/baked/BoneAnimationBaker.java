@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibanimation.bedrock.baked;
+package io.github.tt432.eyelib.animation.bedrock.baked;
 
-import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneKeyFrameSchema;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrBoneKeyFrameSchema;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.TreeMap;

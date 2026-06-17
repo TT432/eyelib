@@ -1,9 +1,9 @@
 package io.github.tt432.eyelib.client.registry;
 
-import io.github.tt432.eyelibanimation.Animation;
-import io.github.tt432.eyelibanimation.AnimationManager;
-import io.github.tt432.eyelibanimation.bedrock.BrAnimation;
-import io.github.tt432.eyelibanimation.bedrock.controller.BrAnimationControllers;
+import io.github.tt432.eyelib.animation.Animation;
+import io.github.tt432.eyelib.animation.AnimationManager;
+import io.github.tt432.eyelib.animation.bedrock.BrAnimation;
+import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationControllers;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;

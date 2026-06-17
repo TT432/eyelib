@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibbridge.molang;
+package io.github.tt432.eyelib.bridge.molang;
 
-import io.github.tt432.eyelibmolang.port.PortEntity;
+import io.github.tt432.eyelib.molang.port.PortEntity;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.NullMarked;
 

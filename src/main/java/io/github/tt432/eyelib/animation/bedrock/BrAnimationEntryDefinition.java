@@ -1,18 +1,18 @@
-package io.github.tt432.eyelibanimation.bedrock;
+package io.github.tt432.eyelib.animation.bedrock;
 
-import io.github.tt432.eyelibanimation.AnimationClipDefinition;
-import io.github.tt432.eyelibanimation.AnimationEffect;
-import io.github.tt432.eyelibanimation.RuntimeParticlePlayData;
-import io.github.tt432.eyelibanimation.AnimationParticleSpawner;
-import io.github.tt432.eyelibutil.resource.ResourceLocations;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.MolangValue;
+import io.github.tt432.eyelib.animation.AnimationClipDefinition;
+import io.github.tt432.eyelib.animation.AnimationEffect;
+import io.github.tt432.eyelib.animation.RuntimeParticlePlayData;
+import io.github.tt432.eyelib.animation.AnimationParticleSpawner;
+import io.github.tt432.eyelib.util.resource.ResourceLocations;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationEntrySchema;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrLoopType;
+import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangValue;
 
-import io.github.tt432.eyelibanimation.SoundPlayer;
+import io.github.tt432.eyelib.animation.SoundPlayer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.world.entity.Entity;
@@ -74,7 +74,7 @@ public record BrAnimationEntryDefinition(
         );
     }
 
-    private static TreeMap<Float, List<BrEffectsKeyFrameDefinition>> mapEffects(java.util.TreeMap<Float, java.util.List<io.github.tt432.eyelibimporter.animation.bedrock.BrEffectsKeyFrame>> schemaData) {
+    private static TreeMap<Float, List<BrEffectsKeyFrameDefinition>> mapEffects(java.util.TreeMap<Float, java.util.List<io.github.tt432.eyelib.importer.animation.bedrock.BrEffectsKeyFrame>> schemaData) {
         TreeMap<Float, List<BrEffectsKeyFrameDefinition>> result = new TreeMap<>();
         schemaData.forEach((tick, frames) -> result.put(tick, frames.stream().map(BrEffectsKeyFrameDefinition::fromSchema).toList()));
         return result;
@@ -164,9 +164,9 @@ public record BrAnimationEntryDefinition(
     @Override
     public BrBoneAnimation emptyTrack(Integer key) {
         return new BrBoneAnimation(
-                io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap.empty(),
-                io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap.empty(),
-                io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap.empty()
+                io.github.tt432.eyelib.util.collection.ImmutableFloatTreeMap.empty(),
+                io.github.tt432.eyelib.util.collection.ImmutableFloatTreeMap.empty(),
+                io.github.tt432.eyelib.util.collection.ImmutableFloatTreeMap.empty()
         );
     }
 

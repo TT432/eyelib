@@ -1,12 +1,12 @@
-package io.github.tt432.eyelibbehavior.event.filter.base;
+package io.github.tt432.eyelib.behavior.event.filter.base;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibbehavior.EntityBehaviorData;
-import io.github.tt432.eyelibbehavior.component.Health;
-import io.github.tt432.eyelibbehavior.event.filter.Operator;
-import io.github.tt432.eyelibbehavior.event.filter.Subject;
+import io.github.tt432.eyelib.behavior.EntityBehaviorData;
+import io.github.tt432.eyelib.behavior.component.Health;
+import io.github.tt432.eyelib.behavior.event.filter.Operator;
+import io.github.tt432.eyelib.behavior.event.filter.Subject;
 
 /**
  * 基于实体生命值的过滤器。

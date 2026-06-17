@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.common.behavior;
 
-import io.github.tt432.eyelibimporter.addon.BedrockAddon;
-import io.github.tt432.eyelibimporter.addon.BedrockAddonLoader;
-import io.github.tt432.eyelibimporter.addon.BedrockAddonWarning;
+import io.github.tt432.eyelib.importer.addon.BedrockAddon;
+import io.github.tt432.eyelib.importer.addon.BedrockAddonLoader;
+import io.github.tt432.eyelib.importer.addon.BedrockAddonWarning;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.server.MinecraftServer;
@@ -39,8 +39,8 @@ public final class BehaviorPackAutoLoader {
         SpawnRuleRegistry.clear();
         VanillaBehaviorEntityLoader.mergeIntoRegistry(serverDirectory);
 
-        var entityFiles = new LinkedHashMap<String, io.github.tt432.eyelibimporter.addon.BrBehaviorEntityFile>();
-        var spawnRules = new LinkedHashMap<String, io.github.tt432.eyelibimporter.addon.BrSpawnRule>();
+        var entityFiles = new LinkedHashMap<String, io.github.tt432.eyelib.importer.addon.BrBehaviorEntityFile>();
+        var spawnRules = new LinkedHashMap<String, io.github.tt432.eyelib.importer.addon.BrSpawnRule>();
         for (String dirName : BEHAVIOR_PACK_DIRS) {
             loadDirectory(serverDirectory.resolve(dirName), entityFiles, spawnRules);
         }
@@ -56,8 +56,8 @@ public final class BehaviorPackAutoLoader {
 
     private static void loadDirectory(
             Path directory,
-            LinkedHashMap<String, io.github.tt432.eyelibimporter.addon.BrBehaviorEntityFile> entityFiles,
-            LinkedHashMap<String, io.github.tt432.eyelibimporter.addon.BrSpawnRule> spawnRules
+            LinkedHashMap<String, io.github.tt432.eyelib.importer.addon.BrBehaviorEntityFile> entityFiles,
+            LinkedHashMap<String, io.github.tt432.eyelib.importer.addon.BrSpawnRule> spawnRules
     ) {
         if (!Files.isDirectory(directory)) {
             return;

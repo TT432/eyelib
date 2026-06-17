@@ -8,18 +8,18 @@ import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
 import io.github.tt432.eyelib.client.render.texture.TextureLayerMerger;
-import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-import io.github.tt432.eyelibimporter.render.controller.BrRcColor;
-import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
-import io.github.tt432.eyelibmaterial.material.BrMaterialResolver;
-import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibmolang.MolangMapEntry;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibmolang.type.*;
-import io.github.tt432.eyelibutil.texture.TexturePaths;
+import io.github.tt432.eyelib.attachment.capability.ModelComponentInfo;
+import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.importer.render.controller.BrRcColor;
+import io.github.tt432.eyelib.material.material.BrMaterialEntry;
+import io.github.tt432.eyelib.material.material.BrMaterialResolver;
+import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.molang.MolangMapEntry;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.type.*;
+import io.github.tt432.eyelib.util.texture.TexturePaths;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
@@ -353,7 +353,7 @@ public record RenderControllerEntry(
                 }
             }
         }
-        return entry != null && io.github.tt432.eyelibbridge.material.RenderTypeResolver.isAlphaTest(entry, matMap);
+        return entry != null && io.github.tt432.eyelib.bridge.material.RenderTypeResolver.isAlphaTest(entry, matMap);
     }
 
     private static boolean usesColorMask(String materialName) {

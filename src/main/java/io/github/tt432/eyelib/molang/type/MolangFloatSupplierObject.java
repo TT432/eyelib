@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibmolang.type;
+package io.github.tt432.eyelib.molang.type;
 
-import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangScope;
 import org.jspecify.annotations.NullMarked;
 
 /**

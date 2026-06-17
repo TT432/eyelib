@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibmaterial.shared;
+package io.github.tt432.eyelib.material.shared;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibutil.PortStringRepresentable;
+import io.github.tt432.eyelib.util.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 
 /**

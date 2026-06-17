@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter.model.bbmodel;
+package io.github.tt432.eyelib.importer.model.bbmodel;
 
 import com.google.gson.annotations.SerializedName;
 import com.mojang.datafixers.util.Either;

@@ -1,13 +1,13 @@
 package io.github.tt432.eyelib.smoke;
 
 import io.github.tt432.clientsmokeannotation.ClientSmoke;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibmolang.compiler.ExpressionCompileException;
-import io.github.tt432.eyelibmolang.compiler.cache.MolangCompileCache;
-import io.github.tt432.eyelibmolang.type.MolangFloat;
-import io.github.tt432.eyelibmolang.type.MolangObject;
-import io.github.tt432.eyelibmolang.type.MolangString;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.compiler.ExpressionCompileException;
+import io.github.tt432.eyelib.molang.compiler.cache.MolangCompileCache;
+import io.github.tt432.eyelib.molang.type.MolangFloat;
+import io.github.tt432.eyelib.molang.type.MolangObject;
+import io.github.tt432.eyelib.molang.type.MolangString;
 
 /**
  * Molang 全链路烟雾测试——在 MC 进程内验证 parser → binder → bytecode → evaluate。

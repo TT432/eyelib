@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibparticle.runtime.support;
+package io.github.tt432.eyelib.particle.runtime.support;
 
 import java.util.HashMap;
 import java.util.Map;

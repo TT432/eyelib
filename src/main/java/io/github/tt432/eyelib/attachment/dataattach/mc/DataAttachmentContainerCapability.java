@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibattachment.dataattach.mc;
+package io.github.tt432.eyelib.attachment.dataattach.mc;
 
-import io.github.tt432.eyelibattachment.dataattach.IDataAttachmentContainer;
+import io.github.tt432.eyelib.attachment.dataattach.IDataAttachmentContainer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.capabilities.Capability;

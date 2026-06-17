@@ -4,6 +4,6 @@
  * @author TT432
  */
 @NullMarked
-package io.github.tt432.eyelibbridge;
+package io.github.tt432.eyelib.bridge;
 
 import org.jspecify.annotations.NullMarked;

@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibutil.math;
+package io.github.tt432.eyelib.util.math;
 
-import io.github.tt432.eyelibutil.color.ColorEncodings;
+import io.github.tt432.eyelib.util.color.ColorEncodings;
 
 /**
  * 颜色编码转换快捷入口，委托至 ColorEncodings。

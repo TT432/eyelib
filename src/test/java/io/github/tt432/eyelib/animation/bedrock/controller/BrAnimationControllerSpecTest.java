@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibanimation.bedrock.controller;
+package io.github.tt432.eyelib.animation.bedrock.controller;
 
-import io.github.tt432.eyelibanimation.AnimationManager;
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcParticleEffect;
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcState;
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
-import io.github.tt432.eyelibmolang.MolangValue;
+import io.github.tt432.eyelib.animation.AnimationManager;
+import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcParticleEffect;
+import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcState;
+import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSchema;
+import io.github.tt432.eyelib.molang.MolangValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

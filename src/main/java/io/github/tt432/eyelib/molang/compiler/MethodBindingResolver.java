@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibmolang.compiler;
+package io.github.tt432.eyelib.molang.compiler;
 
-import io.github.tt432.eyelibmolang.mapping.api.MolangFunction;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.FunctionInfo;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.FunctionParameterRole;
+import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.FunctionInfo;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.FunctionParameterRole;
 import org.jspecify.annotations.NullMarked;
 
 import java.lang.invoke.MethodHandle;

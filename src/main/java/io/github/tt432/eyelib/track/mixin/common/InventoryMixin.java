@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibtrack.mixin.common;
+package io.github.tt432.eyelib.track.mixin.common;
 
-import io.github.tt432.eyelibtrack.api.ItemTrackApi;
-import io.github.tt432.eyelibtrack.api.TrackableItem;
+import io.github.tt432.eyelib.track.api.ItemTrackApi;
+import io.github.tt432.eyelib.track.api.TrackableItem;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;

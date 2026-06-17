@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.manager;
 
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
-import io.github.tt432.eyelibutil.manager.ManagerEventPublisher;
+import io.github.tt432.eyelib.util.manager.ManagerEventPublisher;
 import net.minecraftforge.common.MinecraftForge;
 import org.jspecify.annotations.NullMarked;
 

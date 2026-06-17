@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibbehavior.event.filter;
+package io.github.tt432.eyelib.behavior.event.filter;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
-import io.github.tt432.eyelibbehavior.EntityBehaviorData;
-import io.github.tt432.eyelibutil.codec.EyelibCodec;
+import io.github.tt432.eyelib.behavior.EntityBehaviorData;
+import io.github.tt432.eyelib.util.codec.EyelibCodec;
 import lombok.AllArgsConstructor;
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter.recipe;
+package io.github.tt432.eyelib.importer.recipe;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;

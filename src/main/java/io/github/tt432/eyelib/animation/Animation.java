@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibanimation;
+package io.github.tt432.eyelib.animation;
 
-import io.github.tt432.eyelibanimation.AnimationManager;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
-import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelib.animation.AnimationManager;
+import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.molang.MolangScope;
 
 import java.util.Map;
 import org.jspecify.annotations.NullMarked;

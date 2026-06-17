@@ -1,14 +1,14 @@
-package io.github.tt432.eyelibbehavior.component.group;
+package io.github.tt432.eyelib.behavior.component.group;
 
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-import io.github.tt432.eyelibbehavior.component.*;
-import io.github.tt432.eyelibbehavior.component.property.*;
-import io.github.tt432.eyelibutil.codec.KeyDispatchMapCodec;
+import io.github.tt432.eyelib.behavior.component.*;
+import io.github.tt432.eyelib.behavior.component.property.*;
+import io.github.tt432.eyelib.util.codec.KeyDispatchMapCodec;
 import lombok.extern.slf4j.Slf4j;
-import io.github.tt432.eyelibutil.PortResourceLocation;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 
 import java.util.HashMap;
 import java.util.Map;

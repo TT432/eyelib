@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibmolang.compiler.cache;
+package io.github.tt432.eyelib.molang.compiler.cache;
 
-import io.github.tt432.eyelibmolang.compiler.CompiledMolangExpression;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
+import io.github.tt432.eyelib.molang.compiler.CompiledMolangExpression;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import org.jspecify.annotations.NullMarked;
 
 import java.nio.file.Path;

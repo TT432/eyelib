@@ -2,11 +2,11 @@ package io.github.tt432.eyelib.client.registry;
 
 import com.google.gson.JsonParser;
 import io.github.tt432.eyelib.client.manager.BehaviorEntityManager;
-import io.github.tt432.eyelibbehavior.BehaviorEntity;
-import io.github.tt432.eyelibbehavior.component.Health;
-import io.github.tt432.eyelibbehavior.component.RawComponent;
-import io.github.tt432.eyelibbehavior.component.Variant;
-import io.github.tt432.eyelibimporter.addon.BrBehaviorEntityFile;
+import io.github.tt432.eyelib.behavior.BehaviorEntity;
+import io.github.tt432.eyelib.behavior.component.Health;
+import io.github.tt432.eyelib.behavior.component.RawComponent;
+import io.github.tt432.eyelib.behavior.component.Variant;
+import io.github.tt432.eyelib.importer.addon.BrBehaviorEntityFile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

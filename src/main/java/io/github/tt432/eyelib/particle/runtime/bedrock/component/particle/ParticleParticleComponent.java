@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock.component.particle;
+package io.github.tt432.eyelib.particle.runtime.bedrock.component.particle;
 
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.ParticleComponent;
-import io.github.tt432.eyelibparticle.runtime.support.ParticleBlackboard;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.ParticleComponent;
+import io.github.tt432.eyelib.particle.runtime.support.ParticleBlackboard;
 import org.joml.Vector3f;
 
 import java.util.Optional;

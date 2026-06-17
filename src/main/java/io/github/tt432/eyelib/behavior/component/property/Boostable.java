@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -18,7 +18,7 @@ public record Boostable(
         List<BoostItem> boost_items,
         float duration,
         float speed_multiplier
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Boostable> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             BoostItem.CODEC.listOf().fieldOf("boost_items").forGetter(Boostable::boost_items),
             Codec.FLOAT.optionalFieldOf("duration", 3.0f).forGetter(Boostable::duration),

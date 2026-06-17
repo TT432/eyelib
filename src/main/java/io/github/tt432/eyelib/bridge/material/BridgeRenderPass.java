@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibbridge.material;
+package io.github.tt432.eyelib.bridge.material;
 
-import io.github.tt432.eyelibmaterial.port.PortRenderPass;
+import io.github.tt432.eyelib.material.port.PortRenderPass;
 import net.minecraft.client.renderer.RenderType;
 import org.jspecify.annotations.NullMarked;
 

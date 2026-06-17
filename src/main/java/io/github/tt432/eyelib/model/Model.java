@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibmodel;
+package io.github.tt432.eyelib.model;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibmodel.locator.GroupLocator;
-import io.github.tt432.eyelibmodel.locator.ModelLocator;
+import io.github.tt432.eyelib.model.locator.GroupLocator;
+import io.github.tt432.eyelib.model.locator.ModelLocator;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.With;

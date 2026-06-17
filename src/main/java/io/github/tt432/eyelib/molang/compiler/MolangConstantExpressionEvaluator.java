@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibmolang.compiler;
+package io.github.tt432.eyelib.molang.compiler;
 
-import io.github.tt432.eyelibmolang.compiler.frontend.HandwrittenMolangAstParserFrontend;
-import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
-import io.github.tt432.eyelibmolang.type.MolangFloat;
-import io.github.tt432.eyelibmolang.type.MolangObject;
-import io.github.tt432.eyelibmolang.type.MolangString;
+import io.github.tt432.eyelib.molang.compiler.frontend.HandwrittenMolangAstParserFrontend;
+import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
+import io.github.tt432.eyelib.molang.type.MolangFloat;
+import io.github.tt432.eyelib.molang.type.MolangObject;
+import io.github.tt432.eyelib.molang.type.MolangString;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;
@@ -125,7 +125,7 @@ public final class MolangConstantExpressionEvaluator {
             if (condition.get().asBoolean()) {
                 return evaluateConstantExpr(binaryCond.whenFalse());
             } else {
-                return Optional.of(io.github.tt432.eyelibmolang.type.MolangFloat.valueOf(0));
+                return Optional.of(io.github.tt432.eyelib.molang.type.MolangFloat.valueOf(0));
             }
         }
         // 非常量：标识符、带变量的调用、成员访问等

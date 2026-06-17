@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibanimation;
+package io.github.tt432.eyelib.animation;
 
-import io.github.tt432.eyelibmodel.Model;
+import io.github.tt432.eyelib.model.Model;
 
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;

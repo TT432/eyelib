@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibimporter.block;
+package io.github.tt432.eyelib.importer.block;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibimporter.addon.BedrockResourceValue;
-import io.github.tt432.eyelibimporter.util.ImporterCodecUtil;
+import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
+import io.github.tt432.eyelib.importer.util.ImporterCodecUtil;
 import org.jspecify.annotations.NullMarked;
 
 /**

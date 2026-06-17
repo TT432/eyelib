@@ -1,5 +1,5 @@
 @NullMarked
-package io.github.tt432.eyelibmolang.compiler.binding;
+package io.github.tt432.eyelib.molang.compiler.binding;
 
 // 包职责见同目录 README.md
 

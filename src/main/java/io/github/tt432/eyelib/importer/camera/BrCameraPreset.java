@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter.camera;
+package io.github.tt432.eyelib.importer.camera;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

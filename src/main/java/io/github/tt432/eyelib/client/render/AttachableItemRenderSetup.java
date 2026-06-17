@@ -6,16 +6,16 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.client.ClientTickHandler;
 import io.github.tt432.eyelib.client.particle.RootAnimationParticleSpawner;
 import io.github.tt432.eyelib.client.EntityRenderSystem;
-import io.github.tt432.eyelibparticle.client.ParticleSpawnRuntimeAdapter;
+import io.github.tt432.eyelib.particle.client.ParticleSpawnRuntimeAdapter;
 import io.github.tt432.eyelib.client.entity.AttachableResolver;
-import io.github.tt432.eyelibanimation.AnimationComponent;
-import io.github.tt432.eyelibanimation.AnimationEffects;
-import io.github.tt432.eyelibanimation.AnimationParticleSpawner;
-import io.github.tt432.eyelibanimation.BrAnimator;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibmolang.type.MolangString;
+import io.github.tt432.eyelib.animation.AnimationComponent;
+import io.github.tt432.eyelib.animation.AnimationEffects;
+import io.github.tt432.eyelib.animation.AnimationParticleSpawner;
+import io.github.tt432.eyelib.animation.BrAnimator;
+import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.molang.type.MolangString;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -63,8 +63,8 @@ public final class AttachableItemRenderSetup {
         if (scope != null) {
             scope.getHostContext().put(LivingEntity.class, entity);
             scope.getHostContext().put(Entity.class, entity);
-            scope.getHostContext().put(io.github.tt432.eyelibmolang.port.PortEntity.class,
-                    io.github.tt432.eyelibbridge.molang.EntityPortAdapter.from(entity));
+            scope.getHostContext().put(io.github.tt432.eyelib.molang.port.PortEntity.class,
+                    io.github.tt432.eyelib.bridge.molang.EntityPortAdapter.from(entity));
             scope.set("context.item_slot", new MolangString(
                     hand == InteractionHand.OFF_HAND ? "off_hand" : "main_hand"));
         }

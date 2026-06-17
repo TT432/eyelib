@@ -1,12 +1,12 @@
-package io.github.tt432.eyelibbehavior;
+package io.github.tt432.eyelib.behavior;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelibbehavior.component.property.Breathable;
-import io.github.tt432.eyelibbehavior.component.property.CanClimb;
-import io.github.tt432.eyelibbehavior.component.property.CollisionBox;
-import io.github.tt432.eyelibbehavior.component.property.Explode;
-import io.github.tt432.eyelibbehavior.component.group.ComponentGroup;
+import io.github.tt432.eyelib.behavior.component.property.Breathable;
+import io.github.tt432.eyelib.behavior.component.property.CanClimb;
+import io.github.tt432.eyelib.behavior.component.property.CollisionBox;
+import io.github.tt432.eyelib.behavior.component.property.Explode;
+import io.github.tt432.eyelib.behavior.component.group.ComponentGroup;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

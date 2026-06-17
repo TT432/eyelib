@@ -1,15 +1,15 @@
-package io.github.tt432.eyelibmolang.compiler.corpus;
+package io.github.tt432.eyelib.molang.compiler.corpus;
 
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangAssertionType;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangCorpusCase;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangCorpusEvidence;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangCorpusIssue;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangCorpusLayer;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangDiagnosticPhase;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangDiagnosticSeverity;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangDiagnosticsMode;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangExpectedDiagnostic;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangLoadResult;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangAssertionType;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangCorpusCase;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangCorpusEvidence;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangCorpusIssue;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangCorpusLayer;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangDiagnosticPhase;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangDiagnosticSeverity;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangDiagnosticsMode;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangExpectedDiagnostic;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangLoadResult;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -26,9 +26,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.CASE_EXTENSION;
-import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.DEFAULT_MODE;
-import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.DEFAULT_POLICY_PACK;
+import static io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.CASE_EXTENSION;
+import static io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.DEFAULT_MODE;
+import static io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.DEFAULT_POLICY_PACK;
 
 /** @author TT432 */
 final class MolangCorpusLoader {

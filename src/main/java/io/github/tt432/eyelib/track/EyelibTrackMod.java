@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibtrack;
+package io.github.tt432.eyelib.track;
 
 import net.minecraftforge.fml.common.Mod;
 

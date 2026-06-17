@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -27,7 +27,7 @@ public record MobEffect(
         JsonObject entity_filter,
         float effect_range,
         int effect_id
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<MobEffect> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             Codec.INT.optionalFieldOf("cooldown_time", 0).forGetter(MobEffect::cooldown_time),
             Codec.INT.optionalFieldOf("effect_time", 0).forGetter(MobEffect::effect_time),

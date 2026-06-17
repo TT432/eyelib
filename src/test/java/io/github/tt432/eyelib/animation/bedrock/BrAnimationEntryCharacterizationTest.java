@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibanimation.bedrock;
+package io.github.tt432.eyelib.animation.bedrock;
 
-import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneAnimationSchema;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneKeyFrameSchema;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
-import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
-import io.github.tt432.eyelibmolang.MolangValue3;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationEntrySchema;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrBoneAnimationSchema;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrBoneKeyFrameSchema;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrLoopType;
+import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelib.molang.MolangValue3;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -24,10 +24,10 @@ class BrAnimationEntryCharacterizationTest {
                 BrLoopType.LOOP,
                 2F,
                 false,
-                io.github.tt432.eyelibmolang.MolangValue.ZERO,
-                io.github.tt432.eyelibmolang.MolangValue.ONE,
-                io.github.tt432.eyelibmolang.MolangValue.ZERO,
-                io.github.tt432.eyelibmolang.MolangValue.ZERO,
+                io.github.tt432.eyelib.molang.MolangValue.ZERO,
+                io.github.tt432.eyelib.molang.MolangValue.ONE,
+                io.github.tt432.eyelib.molang.MolangValue.ZERO,
+                io.github.tt432.eyelib.molang.MolangValue.ZERO,
                 new TreeMap<>(Float::compare),
                 new TreeMap<>(Float::compare),
                 new TreeMap<>(Float::compare),

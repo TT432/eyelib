@@ -1,13 +1,13 @@
 package io.github.tt432.eyelib.client.lookup;
 
-import io.github.tt432.eyelibanimation.Animation;
-import io.github.tt432.eyelibanimation.AnimationEffects;
-import io.github.tt432.eyelibanimation.AnimationLookup;
-import io.github.tt432.eyelibanimation.AnimationManager;
+import io.github.tt432.eyelib.animation.Animation;
+import io.github.tt432.eyelib.animation.AnimationEffects;
+import io.github.tt432.eyelib.animation.AnimationLookup;
+import io.github.tt432.eyelib.animation.AnimationManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
-import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.molang.MolangScope;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

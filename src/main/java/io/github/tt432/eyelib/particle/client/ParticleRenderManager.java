@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibparticle.client;
+package io.github.tt432.eyelib.particle.client;
 
-import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
-import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleInstance;
+import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleEmitter;
+import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleInstance;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;

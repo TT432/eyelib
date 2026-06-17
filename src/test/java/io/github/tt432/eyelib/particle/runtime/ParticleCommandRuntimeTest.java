@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibparticle.runtime;
+package io.github.tt432.eyelib.particle.runtime;
 
 import org.junit.jupiter.api.Test;
 

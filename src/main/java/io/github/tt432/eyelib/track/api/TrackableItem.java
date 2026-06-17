@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibtrack.api;
+package io.github.tt432.eyelib.track.api;
 
 import net.minecraft.world.item.ItemStack;
 

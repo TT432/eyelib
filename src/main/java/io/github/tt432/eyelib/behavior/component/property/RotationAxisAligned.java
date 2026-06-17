@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 
@@ -8,7 +8,7 @@ import com.mojang.serialization.Codec;
  * @author TT432
  */
 @org.jspecify.annotations.NullMarked
-public record RotationAxisAligned() implements io.github.tt432.eyelibbehavior.component.Component {
+public record RotationAxisAligned() implements io.github.tt432.eyelib.behavior.component.Component {
     private static final RotationAxisAligned INSTANCE = new RotationAxisAligned();
 
     public static final Codec<RotationAxisAligned> CODEC = Codec.unit(INSTANCE);

@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibmolang.compiler.frontend;
+package io.github.tt432.eyelib.molang.compiler.frontend;
 
-import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
+import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;

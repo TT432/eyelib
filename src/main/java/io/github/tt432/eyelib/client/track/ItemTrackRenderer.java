@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.client.track;
 
 import io.github.tt432.eyelib.capability.RenderData;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.type.MolangString;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.type.MolangString;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -28,7 +28,7 @@ public final class ItemTrackRenderer {
      */
     @Nullable
     public static RenderData<ItemStack> prepareRenderData(ItemStack stack, ItemDisplayContext displayContext) {
-        if (!io.github.tt432.eyelibtrack.api.TrackableItem.isTrackable(stack)) {
+        if (!io.github.tt432.eyelib.track.api.TrackableItem.isTrackable(stack)) {
             return null;
         }
 

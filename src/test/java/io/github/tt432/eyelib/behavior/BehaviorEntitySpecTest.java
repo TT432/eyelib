@@ -1,14 +1,14 @@
-package io.github.tt432.eyelibbehavior;
+package io.github.tt432.eyelib.behavior;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelibbehavior.component.Component;
-import io.github.tt432.eyelibbehavior.component.Health;
-import io.github.tt432.eyelibbehavior.component.group.ComponentGroup;
-import io.github.tt432.eyelibbehavior.component.property.CollisionBox;
-import io.github.tt432.eyelibbehavior.component.property.Scale;
-import io.github.tt432.eyelibbehavior.component.property.TypeFamily;
-import io.github.tt432.eyelibbehavior.event.logic.LogicNode;
+import io.github.tt432.eyelib.behavior.component.Component;
+import io.github.tt432.eyelib.behavior.component.Health;
+import io.github.tt432.eyelib.behavior.component.group.ComponentGroup;
+import io.github.tt432.eyelib.behavior.component.property.CollisionBox;
+import io.github.tt432.eyelib.behavior.component.property.Scale;
+import io.github.tt432.eyelib.behavior.component.property.TypeFamily;
+import io.github.tt432.eyelib.behavior.event.logic.LogicNode;
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

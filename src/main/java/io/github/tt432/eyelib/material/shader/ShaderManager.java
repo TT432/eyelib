@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmaterial.shader;
+package io.github.tt432.eyelib.material.shader;
 
 import java.io.BufferedReader;
 import java.io.IOException;

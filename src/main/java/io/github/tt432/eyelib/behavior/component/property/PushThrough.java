@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -10,7 +10,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
  * @author TT432
  */
 @org.jspecify.annotations.NullMarked
-public record PushThrough(float value) implements io.github.tt432.eyelibbehavior.component.Component {
+public record PushThrough(float value) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<PushThrough> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             Codec.FLOAT.optionalFieldOf("value", 0.0f).forGetter(PushThrough::value)
     ).apply(inst, PushThrough::new));

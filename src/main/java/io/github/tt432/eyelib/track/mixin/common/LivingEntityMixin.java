@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibtrack.mixin.common;
+package io.github.tt432.eyelib.track.mixin.common;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import io.github.tt432.eyelibtrack.api.ItemTrackApi;
+import io.github.tt432.eyelib.track.api.ItemTrackApi;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;

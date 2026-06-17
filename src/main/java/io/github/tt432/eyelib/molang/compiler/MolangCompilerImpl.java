@@ -1,13 +1,13 @@
-package io.github.tt432.eyelibmolang.compiler;
+package io.github.tt432.eyelib.molang.compiler;
 
-import io.github.tt432.eyelibmolang.compiler.binding.BindDiagnostic;
-import io.github.tt432.eyelibmolang.compiler.binding.BindResult;
-import io.github.tt432.eyelibmolang.compiler.binding.MolangBinder;
-import io.github.tt432.eyelibmolang.compiler.frontend.MolangParserFrontends;
-import io.github.tt432.eyelibmolang.compiler.frontend.MolangParserFrontendResult;
-import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.type.MolangObject;
+import io.github.tt432.eyelib.molang.compiler.binding.BindDiagnostic;
+import io.github.tt432.eyelib.molang.compiler.binding.BindResult;
+import io.github.tt432.eyelib.molang.compiler.binding.MolangBinder;
+import io.github.tt432.eyelib.molang.compiler.frontend.MolangParserFrontends;
+import io.github.tt432.eyelib.molang.compiler.frontend.MolangParserFrontendResult;
+import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.type.MolangObject;
 import org.jspecify.annotations.NullMarked;
 
 import java.lang.invoke.MethodHandle;

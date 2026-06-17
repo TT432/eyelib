@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.codec;
+package io.github.tt432.eyelib.util.codec;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;

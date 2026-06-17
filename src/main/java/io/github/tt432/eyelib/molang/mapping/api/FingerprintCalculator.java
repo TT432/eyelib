@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibmolang.mapping.api;
+package io.github.tt432.eyelib.molang.mapping.api;
 
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.FunctionInfo;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.FunctionParameterRole;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.MolangClass;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.Node;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.RegistryVersionRef;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree.PublicationSignature;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.FunctionInfo;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.FunctionParameterRole;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.MolangClass;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.Node;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.RegistryVersionRef;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.PublicationSignature;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;

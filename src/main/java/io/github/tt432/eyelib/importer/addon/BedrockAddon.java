@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter.addon;
+package io.github.tt432.eyelib.importer.addon;
 
 import java.util.LinkedHashMap;
 import java.util.List;

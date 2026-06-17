@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibimporter.model.importer;
+package io.github.tt432.eyelib.importer.model.importer;
 
-import io.github.tt432.eyelibimporter.model.bbmodel.BBModelLoader;
+import io.github.tt432.eyelib.importer.model.bbmodel.BBModelLoader;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;

@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibattachment;
+package io.github.tt432.eyelib.attachment;
 
-import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentTypeRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 

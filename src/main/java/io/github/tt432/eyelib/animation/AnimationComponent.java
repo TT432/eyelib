@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibanimation;
+package io.github.tt432.eyelib.animation;
 
-import io.github.tt432.eyelibanimation.Animation;
-import io.github.tt432.eyelibanimation.AnimationEffects;
-import io.github.tt432.eyelibanimation.AnimationLookup;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
-import io.github.tt432.eyelibattachment.capability.AnimationComponentInfo;
-import io.github.tt432.eyelibmolang.MolangValue;
+import io.github.tt432.eyelib.animation.Animation;
+import io.github.tt432.eyelib.animation.AnimationEffects;
+import io.github.tt432.eyelib.animation.AnimationLookup;
+import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.attachment.capability.AnimationComponentInfo;
+import io.github.tt432.eyelib.molang.MolangValue;
 import lombok.Getter;
 
 import org.jspecify.annotations.NullMarked;

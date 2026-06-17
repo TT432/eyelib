@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.initial;
+package io.github.tt432.eyelib.particle.runtime.bedrock.component.particle.initial;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.ParticleParticleComponent;
+import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.particle.ParticleParticleComponent;
 
 /** @author TT432 */
 public record ParticleInitialSpeed(

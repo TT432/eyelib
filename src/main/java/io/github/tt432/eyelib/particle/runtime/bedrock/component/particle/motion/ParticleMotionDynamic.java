@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.motion;
+package io.github.tt432.eyelib.particle.runtime.bedrock.component.particle.motion;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibmolang.MolangValue3;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.ParticleParticleComponent;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangValue3;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.particle.ParticleParticleComponent;
 import org.joml.Vector3f;
 
 /** @author TT432 */

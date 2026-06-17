@@ -1,12 +1,12 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock;
+package io.github.tt432.eyelib.particle.runtime.bedrock;
 
-import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.lifetime.EmitterLifetimeExpression;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.lifetime.EmitterLifetimeLooping;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.lifetime.EmitterLifetimeOnce;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.rate.EmitterRateInstant;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.rate.EmitterRateSteady;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.lifetime.ParticleLifetimeExpression;
+import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.lifetime.EmitterLifetimeExpression;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.lifetime.EmitterLifetimeLooping;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.lifetime.EmitterLifetimeOnce;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.rate.EmitterRateInstant;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.rate.EmitterRateSteady;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.particle.lifetime.ParticleLifetimeExpression;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

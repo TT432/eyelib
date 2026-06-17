@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -14,7 +14,7 @@ import java.util.Optional;
 @org.jspecify.annotations.NullMarked
 public record Despawn(
         Optional<Despawn.DespawnRule> despawn_from_distance
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
 
     /**
      * 距离消失规则。

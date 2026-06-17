@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmolang.compiler.frontend.ast;
+package io.github.tt432.eyelib.molang.compiler.frontend.ast;
 
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;

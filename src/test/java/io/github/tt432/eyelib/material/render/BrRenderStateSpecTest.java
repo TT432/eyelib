@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibmaterial.render;
+package io.github.tt432.eyelib.material.render;
 
-import io.github.tt432.eyelibmaterial.gl.BlendFactor;
-import io.github.tt432.eyelibmaterial.gl.GLStates;
-import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
-import io.github.tt432.eyelibmaterial.material.BrMaterialResolver;
-import io.github.tt432.eyelibmaterial.material.ResolvedBrMaterial;
+import io.github.tt432.eyelib.material.gl.BlendFactor;
+import io.github.tt432.eyelib.material.gl.GLStates;
+import io.github.tt432.eyelib.material.material.BrMaterialEntry;
+import io.github.tt432.eyelib.material.material.BrMaterialResolver;
+import io.github.tt432.eyelib.material.material.ResolvedBrMaterial;
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

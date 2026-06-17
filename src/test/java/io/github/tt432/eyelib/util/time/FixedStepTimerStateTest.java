@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.time;
+package io.github.tt432.eyelib.util.time;
 
 import org.junit.jupiter.api.Test;
 

@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibutil.codec;
+package io.github.tt432.eyelib.util.codec;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
-import io.github.tt432.eyelibutil.codec.TupleCodec.*;
+import io.github.tt432.eyelib.util.codec.TupleCodec.*;
 
 import java.util.Comparator;
 import java.util.List;

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter.model.bedrock;
+package io.github.tt432.eyelib.importer.model.bedrock;
 
 import org.junit.jupiter.api.Test;
 import org.joml.Vector3f;

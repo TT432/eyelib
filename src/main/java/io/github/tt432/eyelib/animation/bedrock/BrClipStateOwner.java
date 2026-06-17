@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibanimation.bedrock;
+package io.github.tt432.eyelib.animation.bedrock;
 
-import io.github.tt432.eyelibanimation.AnimationEffect;
-import io.github.tt432.eyelibanimation.RuntimeParticlePlayData;
-import io.github.tt432.eyelibmolang.MolangValue;
+import io.github.tt432.eyelib.animation.AnimationEffect;
+import io.github.tt432.eyelib.animation.RuntimeParticlePlayData;
+import io.github.tt432.eyelib.molang.MolangValue;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;

@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibimporter.model.importer;
+package io.github.tt432.eyelib.importer.model.importer;
 
-import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
-import io.github.tt432.eyelibimporter.model.bedrock.BedrockGeometryModel;
-import io.github.tt432.eyelibimporter.model.bedrock.BedrockModelLoader;
+import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelib.importer.model.bedrock.BedrockGeometryModel;
+import io.github.tt432.eyelib.importer.model.bedrock.BedrockModelLoader;
 import org.junit.jupiter.api.Test;
 import org.joml.Vector2f;
 import org.joml.Vector3f;

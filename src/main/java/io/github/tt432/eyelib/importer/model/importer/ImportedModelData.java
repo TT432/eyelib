@@ -1,15 +1,15 @@
-package io.github.tt432.eyelibimporter.model.importer;
+package io.github.tt432.eyelib.importer.model.importer;
 
-import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
-import io.github.tt432.eyelibmodel.VisibleBox;
-import io.github.tt432.eyelibimporter.model.bedrock.BedrockGeometryModel;
-import io.github.tt432.eyelibimporter.model.bbmodel.BBModel;
-import io.github.tt432.eyelibimporter.model.bbmodel.Element;
-import io.github.tt432.eyelibimporter.model.bbmodel.FaceData;
-import io.github.tt432.eyelibimporter.model.bbmodel.Faces;
-import io.github.tt432.eyelibimporter.model.bbmodel.Group;
-import io.github.tt432.eyelibimporter.model.bbmodel.Outliner;
-import io.github.tt432.eyelibimporter.model.bbmodel.Texture;
+import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelib.model.VisibleBox;
+import io.github.tt432.eyelib.importer.model.bedrock.BedrockGeometryModel;
+import io.github.tt432.eyelib.importer.model.bbmodel.BBModel;
+import io.github.tt432.eyelib.importer.model.bbmodel.Element;
+import io.github.tt432.eyelib.importer.model.bbmodel.FaceData;
+import io.github.tt432.eyelib.importer.model.bbmodel.Faces;
+import io.github.tt432.eyelib.importer.model.bbmodel.Group;
+import io.github.tt432.eyelib.importer.model.bbmodel.Outliner;
+import io.github.tt432.eyelib.importer.model.bbmodel.Texture;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;

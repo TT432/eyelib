@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibimporter.model.bbmodel;
+package io.github.tt432.eyelib.importer.model.bbmodel;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
+import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 

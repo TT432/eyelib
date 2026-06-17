@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibanimation.bedrock;
+package io.github.tt432.eyelib.animation.bedrock;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibanimation.AnimationKeyframeDefinition;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrEffectsKeyFrame;
-import io.github.tt432.eyelibmolang.MolangValue;
+import io.github.tt432.eyelib.animation.AnimationKeyframeDefinition;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrEffectsKeyFrame;
+import io.github.tt432.eyelib.molang.MolangValue;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Optional;

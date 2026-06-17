@@ -1,12 +1,12 @@
-package io.github.tt432.eyelibanimation.bedrock.controller;
+package io.github.tt432.eyelib.animation.bedrock.controller;
 
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
+import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSchema;
+import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSet;
 
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibutil.codec.CodecHelper;
+import io.github.tt432.eyelib.util.codec.CodecHelper;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.LinkedHashMap;

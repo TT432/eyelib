@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.client.render.texture;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
-import io.github.tt432.eyelibutil.color.ColorEncodings;
+import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
+import io.github.tt432.eyelib.util.color.ColorEncodings;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;

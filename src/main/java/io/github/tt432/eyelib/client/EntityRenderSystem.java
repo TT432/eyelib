@@ -16,19 +16,19 @@ import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.SimpleRenderAction;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.event.InitComponentEvent;
-import io.github.tt432.eyelibparticle.client.ParticleSpawnRuntimeAdapter;
-import io.github.tt432.eyelibanimation.AnimationEffects;
-import io.github.tt432.eyelibanimation.AnimationParticleSpawner;
-import io.github.tt432.eyelibanimation.BrAnimator;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
-import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
-import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelibbehavior.SyncedBehaviorState;
-import io.github.tt432.eyelibbridge.molang.ComponentStore;
-import io.github.tt432.eyelibbridge.molang.MolangEntityContext;
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
-import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelib.particle.client.ParticleSpawnRuntimeAdapter;
+import io.github.tt432.eyelib.animation.AnimationEffects;
+import io.github.tt432.eyelib.animation.AnimationParticleSpawner;
+import io.github.tt432.eyelib.animation.BrAnimator;
+import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.attachment.capability.ModelComponentInfo;
+import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentHelper;
+import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
+import io.github.tt432.eyelib.bridge.molang.ComponentStore;
+import io.github.tt432.eyelib.bridge.molang.MolangEntityContext;
+import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelib.molang.MolangScope;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.AccessLevel;
@@ -436,7 +436,7 @@ public class EntityRenderSystem {
 
             for (int i = 0; i < ce.render_controllers().size(); i++) {
                 String renderController = ce.render_controllers().get(i);
-                io.github.tt432.eyelibmolang.MolangValue condition = ce.renderControllerConditions()
+                io.github.tt432.eyelib.molang.MolangValue condition = ce.renderControllerConditions()
                                                                        .get(renderController);
                 if (condition != null && cap.getScope() != null && !condition.evalAsBool(cap.getScope())) {
                     continue;

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmolang.mapping;
+package io.github.tt432.eyelib.molang.mapping;
 
 import org.junit.jupiter.api.Test;
 

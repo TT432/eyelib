@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmodel.tree;
+package io.github.tt432.eyelib.model.tree;
 
 import org.jspecify.annotations.Nullable;
 

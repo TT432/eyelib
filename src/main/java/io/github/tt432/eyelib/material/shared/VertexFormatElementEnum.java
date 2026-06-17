@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibmaterial.shared;
+package io.github.tt432.eyelib.material.shared;
 
 import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelibutil.PortStringRepresentable;
+import io.github.tt432.eyelib.util.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.EnumSet;

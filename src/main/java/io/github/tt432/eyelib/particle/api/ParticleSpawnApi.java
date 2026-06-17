@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibparticle.api;
+package io.github.tt432.eyelib.particle.api;
 
 /**
  * 粒子运行时适配器的字符串键控生成/移除请求端口。

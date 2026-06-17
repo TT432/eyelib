@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.common.behavior;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.github.tt432.eyelibimporter.addon.BrBehaviorEntityFile;
+import io.github.tt432.eyelib.importer.addon.BrBehaviorEntityFile;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;

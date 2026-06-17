@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.lifetime;
+package io.github.tt432.eyelib.particle.runtime.bedrock.component.particle.lifetime;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.ParticleParticleComponent;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.particle.ParticleParticleComponent;
 
 import java.util.Comparator;
 import java.util.List;

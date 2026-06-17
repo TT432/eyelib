@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibparticle;
+package io.github.tt432.eyelib.particle;
 
 import net.minecraftforge.fml.common.Mod;
 

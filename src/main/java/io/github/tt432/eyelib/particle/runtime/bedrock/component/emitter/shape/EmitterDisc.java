@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.shape;
+package io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.shape;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibmolang.MolangValue3;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterParticleComponent;
+import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangValue3;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.EmitterParticleComponent;
 import org.joml.Vector3f;
 
 /** @author TT432 */

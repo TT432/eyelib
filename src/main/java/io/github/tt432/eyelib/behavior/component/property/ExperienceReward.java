@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -15,7 +15,7 @@ import java.util.Optional;
 public record ExperienceReward(
         String on_death,
         Optional<String> on_bred
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<ExperienceReward> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.STRING.optionalFieldOf("on_death", "0").forGetter(ExperienceReward::on_death),
             Codec.STRING.optionalFieldOf("on_bred").forGetter(ExperienceReward::on_bred)

@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock;
+package io.github.tt432.eyelib.particle.runtime.bedrock;
 
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.particle.runtime.ParticleDefinition;
 import org.joml.Vector3f;
 
 import java.util.Objects;

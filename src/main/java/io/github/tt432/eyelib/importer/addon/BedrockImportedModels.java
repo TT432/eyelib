@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibimporter.addon;
+package io.github.tt432.eyelib.importer.addon;
 
-import io.github.tt432.eyelibmodel.Model;
+import io.github.tt432.eyelib.model.Model;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.LinkedHashMap;

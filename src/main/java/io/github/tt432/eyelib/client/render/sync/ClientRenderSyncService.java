@@ -1,11 +1,11 @@
 package io.github.tt432.eyelib.client.render.sync;
 
 import io.github.tt432.eyelib.capability.RenderData;
-import io.github.tt432.eyelibanimation.network.AnimationComponentSyncPacket;
-import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
-import io.github.tt432.eyelibattachment.sync.RenderModelSyncPayload;
-import io.github.tt432.eyelibmodel.network.packet.ModelComponentSyncPacket;
-import io.github.tt432.eyelibnetwork.EyelibNetworkTransport;
+import io.github.tt432.eyelib.animation.network.AnimationComponentSyncPacket;
+import io.github.tt432.eyelib.attachment.capability.ModelComponentInfo;
+import io.github.tt432.eyelib.attachment.sync.RenderModelSyncPayload;
+import io.github.tt432.eyelib.model.network.packet.ModelComponentSyncPacket;
+import io.github.tt432.eyelib.network.EyelibNetworkTransport;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;

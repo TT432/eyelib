@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibmolang.compiler.binding;
+package io.github.tt432.eyelib.molang.compiler.binding;
 
-import io.github.tt432.eyelibmolang.compiler.frontend.HandwrittenMolangAstParserFrontend;
-import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
+import io.github.tt432.eyelib.molang.compiler.frontend.HandwrittenMolangAstParserFrontend;
+import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

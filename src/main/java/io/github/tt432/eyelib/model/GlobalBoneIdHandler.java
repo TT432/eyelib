@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmodel;
+package io.github.tt432.eyelib.model;
 
 import com.mojang.serialization.Codec;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;

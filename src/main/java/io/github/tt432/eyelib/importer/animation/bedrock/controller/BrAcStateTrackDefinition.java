@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibimporter.animation.bedrock.controller;
+package io.github.tt432.eyelib.importer.animation.bedrock.controller;
 
-import io.github.tt432.eyelibimporter.animation.NamedTrackDefinition;
+import io.github.tt432.eyelib.importer.animation.NamedTrackDefinition;
 
 /** @author TT432 */
 @org.jspecify.annotations.NullMarked

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -18,7 +18,7 @@ public record Tameable(
         float probability,
         List<String> tame_items,
         EventRef tame_event
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Tameable> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             Codec.FLOAT.optionalFieldOf("probability", 1.0f).forGetter(Tameable::probability),
             Codec.STRING.listOf().optionalFieldOf("tame_items", List.of()).forGetter(Tameable::tame_items),

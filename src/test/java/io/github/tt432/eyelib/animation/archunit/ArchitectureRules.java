@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibanimation.archunit;
+package io.github.tt432.eyelib.animation.archunit;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -21,7 +21,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 class ArchitectureRules {
 
     private static final JavaClasses classes = new ClassFileImporter()
-            .importPackages("io.github.tt432.eyelibanimation");
+            .importPackages("io.github.tt432.eyelib.animation");
 
     @Test
     void domainLayerHasNoMcDependency() {
@@ -31,7 +31,7 @@ class ArchitectureRules {
                                 || c.getPackageName().matches(".*\\.network($|\\..*)")
                                 || c.getSimpleName().equals("BrAnimationEntryDefinition")
                                 || c.getSimpleName().equals("BrControllerExecutor"))))
-                .and().resideInAPackage("io.github.tt432.eyelibanimation..")
+                .and().resideInAPackage("io.github.tt432.eyelib.animation..")
                 .should().dependOnClassesThat()
                 .resideInAPackage("net.minecraft..")
                 .check(classes);

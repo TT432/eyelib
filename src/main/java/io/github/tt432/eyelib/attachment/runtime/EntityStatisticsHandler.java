@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibattachment.runtime;
+package io.github.tt432.eyelib.attachment.runtime;
 
-import io.github.tt432.eyelibattachment.capability.EntityStatistics;
-import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
-import io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime;
+import io.github.tt432.eyelib.attachment.capability.EntityStatistics;
+import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentHelper;
+import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.attachment.network.DataAttachmentSyncRuntime;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.living.LivingEvent;

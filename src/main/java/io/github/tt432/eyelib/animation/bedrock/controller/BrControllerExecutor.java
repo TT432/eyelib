@@ -1,17 +1,17 @@
-package io.github.tt432.eyelibanimation.bedrock.controller;
+package io.github.tt432.eyelib.animation.bedrock.controller;
 
-import io.github.tt432.eyelibanimation.Animation;
-import io.github.tt432.eyelibanimation.AnimationEffects;
-import io.github.tt432.eyelibanimation.AnimationLookup;
-import io.github.tt432.eyelibanimation.RuntimeParticlePlayData;
-import io.github.tt432.eyelibanimation.bedrock.BrAnimationEntry;
-import io.github.tt432.eyelibanimation.AnimationParticleSpawner;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcStateDefinition;
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelib.animation.Animation;
+import io.github.tt432.eyelib.animation.AnimationEffects;
+import io.github.tt432.eyelib.animation.AnimationLookup;
+import io.github.tt432.eyelib.animation.RuntimeParticlePlayData;
+import io.github.tt432.eyelib.animation.bedrock.BrAnimationEntry;
+import io.github.tt432.eyelib.animation.AnimationParticleSpawner;
+import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcStateDefinition;
+import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.molang.MolangScope;
 
-import io.github.tt432.eyelibutil.math.MathHelper;
+import io.github.tt432.eyelib.util.math.MathHelper;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -40,7 +40,7 @@ final class BrControllerExecutor {
         scope.getHostContext().put(BrAnimationController.class, controller);
         data.owner().currentTick(ticks);
 
-        for (Map.Entry<String, io.github.tt432.eyelibmolang.MolangValue> entry : currState.transitions().entrySet()) {
+        for (Map.Entry<String, io.github.tt432.eyelib.molang.MolangValue> entry : currState.transitions().entrySet()) {
             if (entry.getValue().evalAsBool(scope)) {
                 BrAcStateDefinition nextState = controller.states().get(entry.getKey());
                 if (nextState == null) break;
@@ -81,12 +81,12 @@ final class BrControllerExecutor {
         currState.onEntry().eval(scope);
         scope.getHostContext().get(Entity.class).ifPresent(entity ->
             scope.getHostContext().get(BrClientEntity.class).ifPresent(clientEntity -> {
-                for (io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcParticleEffectDefinition particleEffect : currState.particleEffects()) {
+                for (io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcParticleEffectDefinition particleEffect : currState.particleEffects()) {
                     String uuid = UUID.randomUUID().toString();
                     particleEffect.effect().map(clientEntity.particle_effects()::get).ifPresent(effect -> {
                         AnimationParticleSpawner spawner = scope.getHostContext().get(AnimationParticleSpawner.class).orElse(null);
                         if (spawner != null) {
-                            org.joml.Vector3f position = io.github.tt432.eyelibanimation.bedrock.BrAnimationEntryDefinition.resolveLocatorPosition(scope, particleEffect.locator().orElse(null), entity);
+                            org.joml.Vector3f position = io.github.tt432.eyelib.animation.bedrock.BrAnimationEntryDefinition.resolveLocatorPosition(scope, particleEffect.locator().orElse(null), entity);
                             spawner.spawn(uuid, effect, position);
                             data.owner().particles().add(new RuntimeParticlePlayData(uuid, particleEffect.locator().orElse(null), ticks));
                         }

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.collection;
+package io.github.tt432.eyelib.util.collection;
 
 import org.jspecify.annotations.Nullable;
 

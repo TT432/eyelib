@@ -1,21 +1,21 @@
-package io.github.tt432.eyelibimporter.addon;
+package io.github.tt432.eyelib.importer.addon;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
-import io.github.tt432.eyelibimporter.block.BrBlock;
-import io.github.tt432.eyelibimporter.item.BrItem;
-import io.github.tt432.eyelibimporter.material.BrMaterial;
-import io.github.tt432.eyelibimporter.material.BrMaterialEntry;
-import io.github.tt432.eyelibimporter.recipe.BrRecipe;
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
-import io.github.tt432.eyelibimporter.particle.BrParticle;
-import io.github.tt432.eyelibimporter.render.controller.BrRenderControllerEntry;
-import io.github.tt432.eyelibimporter.render.controller.BrRenderControllers;
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-import io.github.tt432.eyelibimporter.trading.BrTrading;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationEntrySchema;
+import io.github.tt432.eyelib.importer.block.BrBlock;
+import io.github.tt432.eyelib.importer.item.BrItem;
+import io.github.tt432.eyelib.importer.material.BrMaterial;
+import io.github.tt432.eyelib.importer.material.BrMaterialEntry;
+import io.github.tt432.eyelib.importer.recipe.BrRecipe;
+import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
+import io.github.tt432.eyelib.importer.particle.BrParticle;
+import io.github.tt432.eyelib.importer.render.controller.BrRenderControllerEntry;
+import io.github.tt432.eyelib.importer.render.controller.BrRenderControllers;
+import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSchema;
+import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.importer.trading.BrTrading;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

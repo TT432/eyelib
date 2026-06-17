@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibimporter.material;
+package io.github.tt432.eyelib.importer.material;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelibmaterial.shared.DepthFunc;
-import io.github.tt432.eyelibmaterial.shared.MsaaSupport;
-import io.github.tt432.eyelibmaterial.shared.PrimitiveMode;
-import io.github.tt432.eyelibmaterial.shared.VertexFormatElementEnum;
+import io.github.tt432.eyelib.material.shared.DepthFunc;
+import io.github.tt432.eyelib.material.shared.MsaaSupport;
+import io.github.tt432.eyelib.material.shared.PrimitiveMode;
+import io.github.tt432.eyelib.material.shared.VertexFormatElementEnum;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.EnumSet;
@@ -22,12 +22,12 @@ public record BrMaterialEntry(
         String name,
         Optional<String> vertexShader,
         Optional<String> fragmentShader,
-        io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.Defines defines,
-        io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.SamplerStates samplerStates,
-        io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.States states,
+        io.github.tt432.eyelib.material.shared.BrMaterialEntry.Defines defines,
+        io.github.tt432.eyelib.material.shared.BrMaterialEntry.SamplerStates samplerStates,
+        io.github.tt432.eyelib.material.shared.BrMaterialEntry.States states,
         Optional<DepthFunc> depthFunc,
-        io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.Blend blend,
-        io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.Stencil stencil,
+        io.github.tt432.eyelib.material.shared.BrMaterialEntry.Blend blend,
+        io.github.tt432.eyelib.material.shared.BrMaterialEntry.Stencil stencil,
         Optional<EnumSet<VertexFormatElementEnum>> vertexFields,
         Optional<MsaaSupport> msaaSupport,
         Optional<Double> depthBias,
@@ -39,13 +39,13 @@ public record BrMaterialEntry(
 ) {
 
     public static final Function<String, Codec<BrMaterialEntry>> CODEC = name ->
-            io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.CODEC.apply(name).xmap(
+            io.github.tt432.eyelib.material.shared.BrMaterialEntry.CODEC.apply(name).xmap(
                     BrMaterialEntry::fromShared,
                     BrMaterialEntry::toShared
             );
 
     static BrMaterialEntry fromShared(
-            io.github.tt432.eyelibmaterial.shared.BrMaterialEntry s) {
+            io.github.tt432.eyelib.material.shared.BrMaterialEntry s) {
         return new BrMaterialEntry(
                 s.base(),
                 s.name(),
@@ -71,14 +71,14 @@ public record BrMaterialEntry(
     }
 
     private static Map<String, BrMaterialEntry> convertVariantMap(
-            Map<String, io.github.tt432.eyelibmaterial.shared.BrMaterialEntry> m) {
+            Map<String, io.github.tt432.eyelib.material.shared.BrMaterialEntry> m) {
         return m.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> fromShared(e.getValue())));
     }
 
-    static io.github.tt432.eyelibmaterial.shared.BrMaterialEntry toShared(
+    static io.github.tt432.eyelib.material.shared.BrMaterialEntry toShared(
             BrMaterialEntry e) {
-        return new io.github.tt432.eyelibmaterial.shared.BrMaterialEntry(
+        return new io.github.tt432.eyelib.material.shared.BrMaterialEntry(
                 e.base(),
                 e.name(),
                 e.vertexShader(),
@@ -102,7 +102,7 @@ public record BrMaterialEntry(
         );
     }
 
-    private static Map<String, io.github.tt432.eyelibmaterial.shared.BrMaterialEntry>
+    private static Map<String, io.github.tt432.eyelib.material.shared.BrMaterialEntry>
     convertVariantMapToShared(Map<String, BrMaterialEntry> m) {
         return m.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> toShared(e.getValue())));

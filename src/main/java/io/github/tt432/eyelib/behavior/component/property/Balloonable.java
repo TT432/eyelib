@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -20,7 +20,7 @@ public record Balloonable(
         EventRef on_balloon,
         EventRef on_unballoon,
         float mass
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Balloonable> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             Codec.FLOAT.optionalFieldOf("soft_distance", 2.0f).forGetter(Balloonable::soft_distance),
             Codec.FLOAT.optionalFieldOf("max_distance", 10.0f).forGetter(Balloonable::max_distance),

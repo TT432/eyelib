@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibmaterial.material;
+package io.github.tt432.eyelib.material.material;
 
-import io.github.tt432.eyelibmaterial.gl.BlendFactor;
-import io.github.tt432.eyelibmaterial.gl.GLStates;
-import io.github.tt432.eyelibmaterial.render.BrRenderState;
-import io.github.tt432.eyelibmaterial.render.BrRenderStateFactory;
+import io.github.tt432.eyelib.material.gl.BlendFactor;
+import io.github.tt432.eyelib.material.gl.GLStates;
+import io.github.tt432.eyelib.material.render.BrRenderState;
+import io.github.tt432.eyelib.material.render.BrRenderStateFactory;
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

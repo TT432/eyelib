@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmolang.compiler.cache;
+package io.github.tt432.eyelib.molang.compiler.cache;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

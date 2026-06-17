@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibanimation;
+package io.github.tt432.eyelib.animation;
 
-import io.github.tt432.eyelibanimation.AnimationComponent;
-import io.github.tt432.eyelibanimation.AnimationManager;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.MolangValue;
+import io.github.tt432.eyelib.animation.AnimationComponent;
+import io.github.tt432.eyelib.animation.AnimationManager;
+import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 

@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibanimation;
+package io.github.tt432.eyelib.animation;
 
-import io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap;
+import io.github.tt432.eyelib.util.collection.ImmutableFloatTreeMap;
 import org.jspecify.annotations.NullMarked;
 
 /**

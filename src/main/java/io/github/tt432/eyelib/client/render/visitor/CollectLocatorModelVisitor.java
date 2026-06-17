@@ -2,9 +2,9 @@ package io.github.tt432.eyelib.client.render.visitor;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.render.RenderParams;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibmodel.locator.LocatorEntry;
+import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.model.locator.LocatorEntry;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.NullMarked;
 

@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibparticle.runtime;
+package io.github.tt432.eyelib.particle.runtime;
 
-import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangScope;
 
 import java.util.Objects;
 import java.util.Optional;

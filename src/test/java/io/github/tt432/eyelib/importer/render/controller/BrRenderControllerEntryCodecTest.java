@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter.render.controller;
+package io.github.tt432.eyelib.importer.render.controller;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;

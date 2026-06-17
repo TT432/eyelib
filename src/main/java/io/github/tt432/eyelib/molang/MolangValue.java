@@ -1,12 +1,12 @@
-package io.github.tt432.eyelibmolang;
+package io.github.tt432.eyelib.molang;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelibmolang.compiler.*;
-import io.github.tt432.eyelibmolang.compiler.cache.MolangCompileCache;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
-import io.github.tt432.eyelibmolang.type.MolangFloat;
-import io.github.tt432.eyelibmolang.type.MolangNull;
-import io.github.tt432.eyelibmolang.type.MolangObject;
+import io.github.tt432.eyelib.molang.compiler.*;
+import io.github.tt432.eyelib.molang.compiler.cache.MolangCompileCache;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
+import io.github.tt432.eyelib.molang.type.MolangFloat;
+import io.github.tt432.eyelib.molang.type.MolangNull;
+import io.github.tt432.eyelib.molang.type.MolangObject;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;

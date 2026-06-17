@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibparticle.loading;
+package io.github.tt432.eyelib.particle.loading;
 
 import java.util.List;
 import java.util.Objects;

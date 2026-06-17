@@ -1,11 +1,11 @@
 package io.github.tt432.eyelib.client.render.sync;
 
 import io.github.tt432.eyelib.capability.component.ModelComponent;
-import io.github.tt432.eyelibattachment.capability.AnimationComponentInfo;
-import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
-import io.github.tt432.eyelibattachment.sync.RenderModelSyncPayload;
-import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibutil.resource.ResourceLocations;
+import io.github.tt432.eyelib.attachment.capability.AnimationComponentInfo;
+import io.github.tt432.eyelib.attachment.capability.ModelComponentInfo;
+import io.github.tt432.eyelib.attachment.sync.RenderModelSyncPayload;
+import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.util.resource.ResourceLocations;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

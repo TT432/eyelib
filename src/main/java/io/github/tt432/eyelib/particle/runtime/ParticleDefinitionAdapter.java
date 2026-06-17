@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibparticle.runtime;
+package io.github.tt432.eyelib.particle.runtime;
 
 import com.mojang.serialization.DataResult;
-import io.github.tt432.eyelibimporter.particle.BrParticle;
+import io.github.tt432.eyelib.importer.particle.BrParticle;
 
 /**
  * 从导入器拥有的原始基岩版粒子模式到粒子模块运行时定义的命名接缝。

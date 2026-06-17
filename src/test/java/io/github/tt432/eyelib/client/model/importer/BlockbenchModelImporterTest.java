@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.model.importer;
 
-import io.github.tt432.eyelibimporter.model.importer.ModelImporter;
-import io.github.tt432.eyelibmodel.Model;
+import io.github.tt432.eyelib.importer.model.importer.ModelImporter;
+import io.github.tt432.eyelib.model.Model;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;

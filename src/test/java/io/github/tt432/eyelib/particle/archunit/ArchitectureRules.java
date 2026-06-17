@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibparticle.archunit;
+package io.github.tt432.eyelib.particle.archunit;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -21,7 +21,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 class ArchitectureRules {
 
     private static final JavaClasses classes = new ClassFileImporter()
-            .importPackages("io.github.tt432.eyelibparticle");
+            .importPackages("io.github.tt432.eyelib.particle");
 
     @Test
     void domainLayerHasNoMcDependency() {
@@ -30,7 +30,7 @@ class ArchitectureRules {
                         c -> !(c.getSimpleName().equals("EyelibParticleMod")
                                 || c.getPackageName().matches(".*\\.client($|\\..*)")
                                 || c.getPackageName().matches(".*\\.network($|\\..*)"))))
-                .and().resideInAPackage("io.github.tt432.eyelibparticle..")
+                .and().resideInAPackage("io.github.tt432.eyelib.particle..")
                 .should().dependOnClassesThat()
                 .resideInAPackage("net.minecraft..")
                 .check(classes);

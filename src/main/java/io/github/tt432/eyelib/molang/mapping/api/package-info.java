@@ -1,5 +1,5 @@
 @NullMarked
-package io.github.tt432.eyelibmolang.mapping.api;
+package io.github.tt432.eyelib.molang.mapping.api;
 
 // 包职责见同目录 README.md
 

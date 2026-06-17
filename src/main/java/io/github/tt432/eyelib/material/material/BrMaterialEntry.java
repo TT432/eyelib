@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmaterial.material;
+package io.github.tt432.eyelib.material.material;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,18 +12,18 @@ import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibmaterial.gl.BlendFactor;
-import io.github.tt432.eyelibmaterial.gl.DepthFunc;
-import io.github.tt432.eyelibmaterial.gl.GLStates;
-import io.github.tt432.eyelibmaterial.gl.stencil.Face;
-import io.github.tt432.eyelibmaterial.shader.ShaderManager;
-import io.github.tt432.eyelibmaterial.shared.MsaaSupport;
-import io.github.tt432.eyelibmaterial.shared.PrimitiveMode;
-import io.github.tt432.eyelibmaterial.shared.VertexFormatElementEnum;
+import io.github.tt432.eyelib.material.gl.BlendFactor;
+import io.github.tt432.eyelib.material.gl.DepthFunc;
+import io.github.tt432.eyelib.material.gl.GLStates;
+import io.github.tt432.eyelib.material.gl.stencil.Face;
+import io.github.tt432.eyelib.material.shader.ShaderManager;
+import io.github.tt432.eyelib.material.shared.MsaaSupport;
+import io.github.tt432.eyelib.material.shared.PrimitiveMode;
+import io.github.tt432.eyelib.material.shared.VertexFormatElementEnum;
 import net.minecraft.client.renderer.RenderStateShard;
-import io.github.tt432.eyelibmaterial.port.PortRenderPass;
-import io.github.tt432.eyelibutil.PortResourceLocation;
-import io.github.tt432.eyelibutil.PortStringRepresentable;
+import io.github.tt432.eyelib.material.port.PortRenderPass;
+import io.github.tt432.eyelib.util.PortResourceLocation;
+import io.github.tt432.eyelib.util.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
@@ -420,12 +420,12 @@ public record BrMaterialEntry(
      * shared与运行时类型之间的转换通过{@link #fromShared}/{@link #toShared()}完成。
      */
     public static final Function<String, Codec<BrMaterialEntry>> CODEC = name ->
-            io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.CODEC.apply(name).xmap(
+            io.github.tt432.eyelib.material.shared.BrMaterialEntry.CODEC.apply(name).xmap(
                     BrMaterialEntry::fromShared,
                     BrMaterialEntry::toShared
             );
 
-    static BrMaterialEntry fromShared(io.github.tt432.eyelibmaterial.shared.BrMaterialEntry shared) {
+    static BrMaterialEntry fromShared(io.github.tt432.eyelib.material.shared.BrMaterialEntry shared) {
         return new BrMaterialEntry(
                 shared.base(),
                 shared.name(),
@@ -454,11 +454,11 @@ public record BrMaterialEntry(
         );
     }
 
-    private static Defines fromSharedDefines(io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.Defines sd) {
+    private static Defines fromSharedDefines(io.github.tt432.eyelib.material.shared.BrMaterialEntry.Defines sd) {
         return new Defines(sd.base(), sd.add(), sd.sub());
     }
 
-    private static SamplerStates fromSharedSamplerStates(io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.SamplerStates ss) {
+    private static SamplerStates fromSharedSamplerStates(io.github.tt432.eyelib.material.shared.BrMaterialEntry.SamplerStates ss) {
         return new SamplerStates(
                 ss.base().map(list -> list.stream().map(BrMaterialEntry::fromSharedBrSamplerState).toList()),
                 ss.add().map(list -> list.stream().map(BrMaterialEntry::fromSharedBrSamplerState).toList()),
@@ -466,7 +466,7 @@ public record BrMaterialEntry(
         );
     }
 
-    private static BrSamplerState fromSharedBrSamplerState(io.github.tt432.eyelibmaterial.shared.BrSamplerState s) {
+    private static BrSamplerState fromSharedBrSamplerState(io.github.tt432.eyelib.material.shared.BrSamplerState s) {
         return new BrSamplerState(
                 s.samplerIndex(),
                 BrSamplerState.TextureFilter.valueOf(s.textureFilter().name()),
@@ -474,7 +474,7 @@ public record BrMaterialEntry(
         );
     }
 
-    private static States fromSharedStates(io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.States ss) {
+    private static States fromSharedStates(io.github.tt432.eyelib.material.shared.BrMaterialEntry.States ss) {
         return new States(
                 ss.base().map(list -> list.stream().map(s -> GLStates.valueOf(s.name())).toList()),
                 ss.add().map(list -> list.stream().map(s -> GLStates.valueOf(s.name())).toList()),
@@ -482,7 +482,7 @@ public record BrMaterialEntry(
         );
     }
 
-    private static Blend fromSharedBlend(io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.Blend sb) {
+    private static Blend fromSharedBlend(io.github.tt432.eyelib.material.shared.BrMaterialEntry.Blend sb) {
         return new Blend(
                 sb.blendSrc().map(b -> BlendFactor.valueOf(b.name())),
                 sb.blendDst().map(b -> BlendFactor.valueOf(b.name())),
@@ -491,7 +491,7 @@ public record BrMaterialEntry(
         );
     }
 
-    private static Stencil fromSharedStencil(io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.Stencil ss) {
+    private static Stencil fromSharedStencil(io.github.tt432.eyelib.material.shared.BrMaterialEntry.Stencil ss) {
         return new Stencil(
                 ss.stencilRef(),
                 ss.stencilRefOverride(),
@@ -502,17 +502,17 @@ public record BrMaterialEntry(
         );
     }
 
-    private static Face fromSharedFace(io.github.tt432.eyelibmaterial.shared.Face sf) {
+    private static Face fromSharedFace(io.github.tt432.eyelib.material.shared.Face sf) {
         return new Face(
-                io.github.tt432.eyelibmaterial.gl.stencil.StencilDepthFailOp.valueOf(sf.stencilDepthFailOp().name()),
-                io.github.tt432.eyelibmaterial.gl.stencil.StencilFailOp.valueOf(sf.stencilFailOp().name()),
-                io.github.tt432.eyelibmaterial.gl.stencil.StencilFunc.valueOf(sf.stencilFunc().name()),
-                io.github.tt432.eyelibmaterial.gl.stencil.StencilPassOp.valueOf(sf.stencilPassOp().name())
+                io.github.tt432.eyelib.material.gl.stencil.StencilDepthFailOp.valueOf(sf.stencilDepthFailOp().name()),
+                io.github.tt432.eyelib.material.gl.stencil.StencilFailOp.valueOf(sf.stencilFailOp().name()),
+                io.github.tt432.eyelib.material.gl.stencil.StencilFunc.valueOf(sf.stencilFunc().name()),
+                io.github.tt432.eyelib.material.gl.stencil.StencilPassOp.valueOf(sf.stencilPassOp().name())
         );
     }
 
-    io.github.tt432.eyelibmaterial.shared.BrMaterialEntry toShared() {
-        return new io.github.tt432.eyelibmaterial.shared.BrMaterialEntry(
+    io.github.tt432.eyelib.material.shared.BrMaterialEntry toShared() {
+        return new io.github.tt432.eyelib.material.shared.BrMaterialEntry(
                 base,
                 name,
                 vertexShader,
@@ -520,7 +520,7 @@ public record BrMaterialEntry(
                 toSharedDefines(),
                 toSharedSamplerStates(),
                 toSharedStates(),
-                depthFunc.map(d -> io.github.tt432.eyelibmaterial.shared.DepthFunc.valueOf(d.name())),
+                depthFunc.map(d -> io.github.tt432.eyelib.material.shared.DepthFunc.valueOf(d.name())),
                 toSharedBlend(),
                 toSharedStencil(),
                 vertexFields,
@@ -540,53 +540,53 @@ public record BrMaterialEntry(
         );
     }
 
-    private io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.Defines toSharedDefines() {
-        return new io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.Defines(
+    private io.github.tt432.eyelib.material.shared.BrMaterialEntry.Defines toSharedDefines() {
+        return new io.github.tt432.eyelib.material.shared.BrMaterialEntry.Defines(
                 defines.base(), defines.add(), defines.sub()
         );
     }
 
-    private io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.SamplerStates toSharedSamplerStates() {
-        return new io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.SamplerStates(
+    private io.github.tt432.eyelib.material.shared.BrMaterialEntry.SamplerStates toSharedSamplerStates() {
+        return new io.github.tt432.eyelib.material.shared.BrMaterialEntry.SamplerStates(
                 samplerStates.base().map(list -> list.stream().map(BrMaterialEntry::toSharedBrSamplerState).toList()),
                 samplerStates.add().map(list -> list.stream().map(BrMaterialEntry::toSharedBrSamplerState).toList()),
                 samplerStates.sub().map(list -> list.stream().map(BrMaterialEntry::toSharedBrSamplerState).toList())
         );
     }
 
-    private static io.github.tt432.eyelibmaterial.shared.BrSamplerState toSharedBrSamplerState(BrSamplerState r) {
-        return new io.github.tt432.eyelibmaterial.shared.BrSamplerState(
+    private static io.github.tt432.eyelib.material.shared.BrSamplerState toSharedBrSamplerState(BrSamplerState r) {
+        return new io.github.tt432.eyelib.material.shared.BrSamplerState(
                 r.samplerIndex(),
-                io.github.tt432.eyelibmaterial.shared.BrSamplerState.TextureFilter.valueOf(r.textureFilter().name()),
-                io.github.tt432.eyelibmaterial.shared.BrSamplerState.TextureWrap.valueOf(r.textureWrap().name())
+                io.github.tt432.eyelib.material.shared.BrSamplerState.TextureFilter.valueOf(r.textureFilter().name()),
+                io.github.tt432.eyelib.material.shared.BrSamplerState.TextureWrap.valueOf(r.textureWrap().name())
         );
     }
 
-    private io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.States toSharedStates() {
-        return new io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.States(
+    private io.github.tt432.eyelib.material.shared.BrMaterialEntry.States toSharedStates() {
+        return new io.github.tt432.eyelib.material.shared.BrMaterialEntry.States(
                 states.base().map(list -> list.stream()
-                        .map(s -> io.github.tt432.eyelibmaterial.shared.GLStates.valueOf(s.name()))
+                        .map(s -> io.github.tt432.eyelib.material.shared.GLStates.valueOf(s.name()))
                         .toList()),
                 states.add().map(list -> list.stream()
-                        .map(s -> io.github.tt432.eyelibmaterial.shared.GLStates.valueOf(s.name()))
+                        .map(s -> io.github.tt432.eyelib.material.shared.GLStates.valueOf(s.name()))
                         .toList()),
                 states.sub().map(list -> list.stream()
-                        .map(s -> io.github.tt432.eyelibmaterial.shared.GLStates.valueOf(s.name()))
+                        .map(s -> io.github.tt432.eyelib.material.shared.GLStates.valueOf(s.name()))
                         .toList())
         );
     }
 
-    private io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.Blend toSharedBlend() {
-        return new io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.Blend(
-                blend.blendSrc().map(b -> io.github.tt432.eyelibmaterial.shared.BlendFactor.valueOf(b.name())),
-                blend.blendDst().map(b -> io.github.tt432.eyelibmaterial.shared.BlendFactor.valueOf(b.name())),
-                blend.alphaSrc().map(b -> io.github.tt432.eyelibmaterial.shared.BlendFactor.valueOf(b.name())),
-                blend.alphaDst().map(b -> io.github.tt432.eyelibmaterial.shared.BlendFactor.valueOf(b.name()))
+    private io.github.tt432.eyelib.material.shared.BrMaterialEntry.Blend toSharedBlend() {
+        return new io.github.tt432.eyelib.material.shared.BrMaterialEntry.Blend(
+                blend.blendSrc().map(b -> io.github.tt432.eyelib.material.shared.BlendFactor.valueOf(b.name())),
+                blend.blendDst().map(b -> io.github.tt432.eyelib.material.shared.BlendFactor.valueOf(b.name())),
+                blend.alphaSrc().map(b -> io.github.tt432.eyelib.material.shared.BlendFactor.valueOf(b.name())),
+                blend.alphaDst().map(b -> io.github.tt432.eyelib.material.shared.BlendFactor.valueOf(b.name()))
         );
     }
 
-    private io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.Stencil toSharedStencil() {
-        return new io.github.tt432.eyelibmaterial.shared.BrMaterialEntry.Stencil(
+    private io.github.tt432.eyelib.material.shared.BrMaterialEntry.Stencil toSharedStencil() {
+        return new io.github.tt432.eyelib.material.shared.BrMaterialEntry.Stencil(
                 stencil.stencilRef(),
                 stencil.stencilRefOverride(),
                 stencil.stencilReadMask(),
@@ -596,12 +596,12 @@ public record BrMaterialEntry(
         );
     }
 
-    private static io.github.tt432.eyelibmaterial.shared.Face toSharedFace(Face rf) {
-        return new io.github.tt432.eyelibmaterial.shared.Face(
-                io.github.tt432.eyelibmaterial.shared.StencilDepthFailOp.valueOf(rf.stencilDepthFailOp().name()),
-                io.github.tt432.eyelibmaterial.shared.StencilFailOp.valueOf(rf.stencilFailOp().name()),
-                io.github.tt432.eyelibmaterial.shared.StencilFunc.valueOf(rf.stencilFunc().name()),
-                io.github.tt432.eyelibmaterial.shared.StencilPassOp.valueOf(rf.stencilPassOp().name())
+    private static io.github.tt432.eyelib.material.shared.Face toSharedFace(Face rf) {
+        return new io.github.tt432.eyelib.material.shared.Face(
+                io.github.tt432.eyelib.material.shared.StencilDepthFailOp.valueOf(rf.stencilDepthFailOp().name()),
+                io.github.tt432.eyelib.material.shared.StencilFailOp.valueOf(rf.stencilFailOp().name()),
+                io.github.tt432.eyelib.material.shared.StencilFunc.valueOf(rf.stencilFunc().name()),
+                io.github.tt432.eyelib.material.shared.StencilPassOp.valueOf(rf.stencilPassOp().name())
         );
     }
 

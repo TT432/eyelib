@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibanimation.bedrock;
+package io.github.tt432.eyelib.animation.bedrock;
 
-import io.github.tt432.eyelibanimation.AnimationKeyframeDefinition;
-import io.github.tt432.eyelibmolang.MolangValue3;
+import io.github.tt432.eyelib.animation.AnimationKeyframeDefinition;
+import io.github.tt432.eyelib.molang.MolangValue3;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.List;

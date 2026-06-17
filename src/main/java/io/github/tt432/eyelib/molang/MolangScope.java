@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibmolang;
+package io.github.tt432.eyelib.molang;
 
-import io.github.tt432.eyelibmolang.mapping.api.HostContext;
-import io.github.tt432.eyelibmolang.mapping.api.HostRole;
-import io.github.tt432.eyelibmolang.type.MolangFloat;
-import io.github.tt432.eyelibmolang.type.MolangFloatSupplierObject;
-import io.github.tt432.eyelibmolang.type.MolangNull;
-import io.github.tt432.eyelibmolang.type.MolangObject;
+import io.github.tt432.eyelib.molang.mapping.api.HostContext;
+import io.github.tt432.eyelib.molang.mapping.api.HostRole;
+import io.github.tt432.eyelib.molang.type.MolangFloat;
+import io.github.tt432.eyelib.molang.type.MolangFloatSupplierObject;
+import io.github.tt432.eyelib.molang.type.MolangNull;
+import io.github.tt432.eyelib.molang.type.MolangObject;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 

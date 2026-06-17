@@ -1,13 +1,13 @@
-package io.github.tt432.eyelibimporter.particle;
+package io.github.tt432.eyelib.importer.particle;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibimporter.addon.BedrockResourceValue;
-import io.github.tt432.eyelibimporter.util.ImporterCodecUtil;
-import io.github.tt432.eyelibmolang.MolangValue;
+import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
+import io.github.tt432.eyelib.importer.util.ImporterCodecUtil;
+import io.github.tt432.eyelib.molang.MolangValue;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

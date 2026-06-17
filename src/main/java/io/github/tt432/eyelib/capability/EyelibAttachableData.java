@@ -1,10 +1,10 @@
 package io.github.tt432.eyelib.capability;
 
 import io.github.tt432.eyelib.Eyelib;
-import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
-import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
-import io.github.tt432.eyelibbehavior.EntityBehaviorData;
-import io.github.tt432.eyelibbehavior.SyncedBehaviorState;
+import io.github.tt432.eyelib.attachment.dataattach.DataAttachmentType;
+import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.behavior.EntityBehaviorData;
+import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.resources.ResourceLocation;

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter;
+package io.github.tt432.eyelib.importer;
 
 import org.junit.jupiter.api.Test;
 

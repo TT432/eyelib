@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.manager;
 
-import io.github.tt432.eyelibbehavior.BehaviorEntity;
+import io.github.tt432.eyelib.behavior.BehaviorEntity;
 import org.jspecify.annotations.NullMarked;
 
 /**

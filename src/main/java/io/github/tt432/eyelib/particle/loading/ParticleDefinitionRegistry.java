@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibparticle.loading;
+package io.github.tt432.eyelib.particle.loading;
 
-import io.github.tt432.eyelibparticle.api.ParticlePublisher;
-import io.github.tt432.eyelibparticle.api.ParticleStore;
-import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
+import io.github.tt432.eyelib.particle.api.ParticlePublisher;
+import io.github.tt432.eyelib.particle.api.ParticleStore;
+import io.github.tt432.eyelib.particle.runtime.ParticleDefinition;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;

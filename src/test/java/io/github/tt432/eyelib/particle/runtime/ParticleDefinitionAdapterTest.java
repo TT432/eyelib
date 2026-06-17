@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibparticle.runtime;
+package io.github.tt432.eyelib.particle.runtime;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelibimporter.addon.BedrockResourceValue;
-import io.github.tt432.eyelibimporter.particle.BrParticle;
+import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
+import io.github.tt432.eyelib.importer.particle.BrParticle;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

@@ -27,7 +27,7 @@ class BrParticleLoaderPublicationTest {
                 "src/main/java/io/github/tt432/eyelib/client/loader/BrParticleLoader.java"
         ));
 
-        assertTrue(source.contains("import io.github.tt432.eyelibparticle.loading.ParticleResourcePublication;"));
+        assertTrue(source.contains("import io.github.tt432.eyelib.particle.loading.ParticleResourcePublication;"));
         assertTrue(source.contains("ParticleResourcePublication.replaceFromJsonResources("));
         assertTrue(!source.contains("client.particle.bedrock.BrParticle"));
         assertTrue(!source.contains("BrParticle.CODEC"));

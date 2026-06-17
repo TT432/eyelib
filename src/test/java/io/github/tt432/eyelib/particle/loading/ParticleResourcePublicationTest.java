@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibparticle.loading;
+package io.github.tt432.eyelib.particle.loading;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
+import io.github.tt432.eyelib.particle.runtime.ParticleDefinition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;

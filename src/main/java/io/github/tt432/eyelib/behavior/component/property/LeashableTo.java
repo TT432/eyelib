@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 
@@ -8,7 +8,7 @@ import com.mojang.serialization.Codec;
  * @author TT432
  */
 @org.jspecify.annotations.NullMarked
-public record LeashableTo() implements io.github.tt432.eyelibbehavior.component.Component {
+public record LeashableTo() implements io.github.tt432.eyelib.behavior.component.Component {
     private static final LeashableTo INSTANCE = new LeashableTo();
 
     public static final Codec<LeashableTo> CODEC = Codec.unit(INSTANCE);

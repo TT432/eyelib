@@ -2,12 +2,12 @@ package io.github.tt432.eyelib.smoke;
 
 import io.github.tt432.clientsmokeannotation.ClientSmoke;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
-import io.github.tt432.eyelibbridge.material.RenderPassAdapter;
-import io.github.tt432.eyelibbridge.material.RenderTypeResolver;
-import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
-import io.github.tt432.eyelibmaterial.port.PortRenderPass;
-import io.github.tt432.eyelibmaterial.port.PortRenderPass.Transparency;
-import io.github.tt432.eyelibutil.PortResourceLocation;
+import io.github.tt432.eyelib.bridge.material.RenderPassAdapter;
+import io.github.tt432.eyelib.bridge.material.RenderTypeResolver;
+import io.github.tt432.eyelib.material.material.BrMaterialEntry;
+import io.github.tt432.eyelib.material.port.PortRenderPass;
+import io.github.tt432.eyelib.material.port.PortRenderPass.Transparency;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;

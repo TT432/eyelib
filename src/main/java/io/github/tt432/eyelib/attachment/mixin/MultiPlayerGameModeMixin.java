@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibattachment.mixin;
+package io.github.tt432.eyelib.attachment.mixin;
 
-import io.github.tt432.eyelibattachment.network.UpdateDestroyInfoPacket;
-import io.github.tt432.eyelibnetwork.EyelibNetworkTransport;
+import io.github.tt432.eyelib.attachment.network.UpdateDestroyInfoPacket;
+import io.github.tt432.eyelib.network.EyelibNetworkTransport;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

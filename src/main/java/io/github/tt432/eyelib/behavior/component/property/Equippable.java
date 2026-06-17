@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -12,7 +12,7 @@ import java.util.List;
  * @author TT432
  */
 @org.jspecify.annotations.NullMarked
-public record Equippable(List<EquipSlot> slots) implements io.github.tt432.eyelibbehavior.component.Component {
+public record Equippable(List<EquipSlot> slots) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Equippable> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             EquipSlot.CODEC.listOf().fieldOf("slots").forGetter(Equippable::slots)
     ).apply(inst, Equippable::new));

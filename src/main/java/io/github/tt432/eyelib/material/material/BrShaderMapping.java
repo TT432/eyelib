@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmaterial.material;
+package io.github.tt432.eyelib.material.material;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;

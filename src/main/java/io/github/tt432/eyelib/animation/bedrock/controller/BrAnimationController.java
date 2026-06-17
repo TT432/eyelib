@@ -1,16 +1,16 @@
-package io.github.tt432.eyelibanimation.bedrock.controller;
+package io.github.tt432.eyelib.animation.bedrock.controller;
 
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcState;
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcStateDefinition;
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
+import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcState;
+import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcStateDefinition;
+import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSchema;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelibanimation.Animation;
-import io.github.tt432.eyelibanimation.AnimationLookup;
-import io.github.tt432.eyelibanimation.AnimationEffects;
-import io.github.tt432.eyelibanimation.StateMachineAnimation;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
-import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelib.animation.Animation;
+import io.github.tt432.eyelib.animation.AnimationLookup;
+import io.github.tt432.eyelib.animation.AnimationEffects;
+import io.github.tt432.eyelib.animation.StateMachineAnimation;
+import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.molang.MolangScope;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -21,10 +21,10 @@ import java.util.Map;
  */
 @NullMarked
 public record BrAnimationController(
-        io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerDefinition definition
+        io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerDefinition definition
 ) implements StateMachineAnimation<BrAcStateDefinition> {
     public BrAnimationController(String name, BrAcState initialState, Map<String, BrAcState> states) {
-        this(new io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerDefinition(
+        this(new io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerDefinition(
                 name,
                 BrAcStateDefinition.fromSchema(initialState),
                 states.entrySet().stream().collect(java.util.stream.Collectors.toMap(
@@ -45,7 +45,7 @@ public record BrAnimationController(
     );
 
     public static BrAnimationController fromSchema(String name, BrAnimationControllerSchema schema) {
-        return new BrAnimationController(io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerDefinition.fromSchema(name, schema));
+        return new BrAnimationController(io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerDefinition.fromSchema(name, schema));
     }
 
     public BrAnimationControllerSchema toSchema() {

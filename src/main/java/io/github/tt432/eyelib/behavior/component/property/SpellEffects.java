@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -16,7 +16,7 @@ import java.util.List;
 public record SpellEffects(
         List<SpellEntry> add_spell_effects,
         List<String> remove_spell_effects
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<SpellEffects> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             SpellEntry.CODEC.listOf().fieldOf("add_spell_effects").forGetter(SpellEffects::add_spell_effects),
             Codec.STRING.listOf().optionalFieldOf("remove_spell_effects", List.of()).forGetter(SpellEffects::remove_spell_effects)

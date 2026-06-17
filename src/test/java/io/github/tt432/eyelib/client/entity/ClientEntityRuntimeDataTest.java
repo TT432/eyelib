@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.client.entity;
 
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
+import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 
-import io.github.tt432.eyelibmodel.Model;
+import io.github.tt432.eyelib.model.Model;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.junit.jupiter.api.Test;
 

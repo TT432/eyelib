@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibanimation;
+package io.github.tt432.eyelib.animation;
 
-import io.github.tt432.eyelibutil.repository.Repository;
+import io.github.tt432.eyelib.util.repository.Repository;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 

@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibmolang.compiler;
+package io.github.tt432.eyelib.molang.compiler;
 
-import io.github.tt432.eyelibmolang.type.MolangFloat;
-import io.github.tt432.eyelibmolang.type.MolangObject;
-import io.github.tt432.eyelibmolang.type.MolangString;
+import io.github.tt432.eyelib.molang.type.MolangFloat;
+import io.github.tt432.eyelib.molang.type.MolangObject;
+import io.github.tt432.eyelib.molang.type.MolangString;
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.Test;
 

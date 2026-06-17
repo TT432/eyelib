@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibimporter.model.bedrock;
+package io.github.tt432.eyelib.importer.model.bedrock;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import io.github.tt432.eyelibimporter.model.importer.ModelImportException;
+import io.github.tt432.eyelib.importer.model.importer.ModelImportException;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.joml.Vector2f;

@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibanimation.bedrock;
+package io.github.tt432.eyelib.animation.bedrock;
 
-import io.github.tt432.eyelibanimation.AnimationEffect;
-import io.github.tt432.eyelibanimation.AnimationEffects;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
-import io.github.tt432.eyelibutil.math.EyeMath;
-import io.github.tt432.eyelibutil.math.MathHelper;
-import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelib.animation.AnimationEffect;
+import io.github.tt432.eyelib.animation.AnimationEffects;
+import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.util.math.EyeMath;
+import io.github.tt432.eyelib.util.math.MathHelper;
+import io.github.tt432.eyelib.molang.MolangScope;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NullMarked;
 

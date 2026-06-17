@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibbehavior;
+package io.github.tt432.eyelib.behavior;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
-import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
+import io.github.tt432.eyelib.util.streamcodec.EyelibStreamCodecs;
+import io.github.tt432.eyelib.util.streamcodec.StreamCodec;
 import org.jspecify.annotations.NullMarked;
 
 /**

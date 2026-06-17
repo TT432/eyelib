@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibimporter.animation.bedrock;
+package io.github.tt432.eyelib.importer.animation.bedrock;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibmolang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangValue;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Optional;

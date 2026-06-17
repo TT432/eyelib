@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibattachment.runtime;
+package io.github.tt432.eyelib.attachment.runtime;
 
-import io.github.tt432.eyelibattachment.capability.ExtraEntityData;
-import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
-import io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime;
+import io.github.tt432.eyelib.attachment.capability.ExtraEntityData;
+import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentHelper;
+import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.attachment.network.DataAttachmentSyncRuntime;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;

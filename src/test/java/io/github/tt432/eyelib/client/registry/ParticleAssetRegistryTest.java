@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.client.registry;
 
 import com.google.gson.JsonParser;
-import io.github.tt432.eyelibparticle.loading.ParticleDefinitionRegistry;
-import io.github.tt432.eyelibparticle.loading.ParticleResourcePublication;
+import io.github.tt432.eyelib.particle.loading.ParticleDefinitionRegistry;
+import io.github.tt432.eyelib.particle.loading.ParticleResourcePublication;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
@@ -58,7 +58,7 @@ class ParticleAssetRegistryTest {
                 List.copyOf(ParticleDefinitionRegistry.store().all().keySet()));
     }
 
-    private static io.github.tt432.eyelibparticle.runtime.ParticleDefinition moduleDefinition(String identifier) {
+    private static io.github.tt432.eyelib.particle.runtime.ParticleDefinition moduleDefinition(String identifier) {
         ParticleResourcePublication.replaceFromJsonResources(
                 Map.of(identifier, JsonParser.parseString(particleJson(identifier))),
                 LoggerFactory.getLogger(ParticleAssetRegistryTest.class)

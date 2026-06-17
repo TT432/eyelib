@@ -1,16 +1,16 @@
-package io.github.tt432.eyelibimporter.addon;
+package io.github.tt432.eyelib.importer.addon;
 
-import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
-import io.github.tt432.eyelibimporter.block.BrBlock;
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-import io.github.tt432.eyelibimporter.item.BrItem;
-import io.github.tt432.eyelibimporter.material.BrMaterial;
-import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
-import io.github.tt432.eyelibimporter.particle.BrParticle;
-import io.github.tt432.eyelibimporter.recipe.BrRecipe;
-import io.github.tt432.eyelibimporter.render.controller.BrRenderControllers;
-import io.github.tt432.eyelibimporter.trading.BrTrading;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationSet;
+import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSet;
+import io.github.tt432.eyelib.importer.block.BrBlock;
+import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.importer.item.BrItem;
+import io.github.tt432.eyelib.importer.material.BrMaterial;
+import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
+import io.github.tt432.eyelib.importer.particle.BrParticle;
+import io.github.tt432.eyelib.importer.recipe.BrRecipe;
+import io.github.tt432.eyelib.importer.render.controller.BrRenderControllers;
+import io.github.tt432.eyelib.importer.trading.BrTrading;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 

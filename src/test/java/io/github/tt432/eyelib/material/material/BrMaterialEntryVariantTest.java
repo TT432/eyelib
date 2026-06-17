@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmaterial.material;
+package io.github.tt432.eyelib.material.material;
 
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;

@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibmolang.mapping;
+package io.github.tt432.eyelib.molang.mapping;
 
-import io.github.tt432.eyelibmolang.mapping.api.MolangMapping;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;

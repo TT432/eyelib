@@ -1,12 +1,12 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.appearance;
+package io.github.tt432.eyelib.particle.runtime.bedrock.component.particle.appearance;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibmolang.MolangValue4;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.ParticleParticleComponent;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangValue4;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.particle.ParticleParticleComponent;
 import org.jspecify.annotations.Nullable;
 import org.joml.Vector4f;
 

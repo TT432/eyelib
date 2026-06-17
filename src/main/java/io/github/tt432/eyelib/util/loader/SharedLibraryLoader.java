@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.loader;
+package io.github.tt432.eyelib.util.loader;
 
 import lombok.extern.slf4j.Slf4j;
 

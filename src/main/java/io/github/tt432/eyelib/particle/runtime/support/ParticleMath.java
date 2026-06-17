@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibparticle.runtime.support;
+package io.github.tt432.eyelib.particle.runtime.support;
 
 /**
  * 粒子运行时自有数学辅助工具，在模块边界复制。

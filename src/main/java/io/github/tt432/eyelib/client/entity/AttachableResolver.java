@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.entity;
 
 import io.github.tt432.eyelib.client.manager.AttachableManager;
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
+import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.world.entity.LivingEntity;

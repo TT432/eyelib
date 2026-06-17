@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibanimation.bedrock;
+package io.github.tt432.eyelib.animation.bedrock;
 
-import io.github.tt432.eyelibanimation.AnimationDefinition;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneAnimationSchema;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneKeyFrameSchema;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibmolang.MolangValue3;
+import io.github.tt432.eyelib.animation.AnimationDefinition;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrBoneAnimationSchema;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrBoneKeyFrameSchema;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangValue3;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 

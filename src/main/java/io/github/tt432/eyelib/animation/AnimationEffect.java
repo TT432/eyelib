@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibanimation;
+package io.github.tt432.eyelib.animation;
 
-import io.github.tt432.eyelibmolang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangScope;
 import org.apache.logging.log4j.util.TriConsumer;
 import org.jspecify.annotations.NullMarked;
 

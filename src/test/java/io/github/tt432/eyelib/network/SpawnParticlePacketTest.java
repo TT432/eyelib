@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.network;
 
-import io.github.tt432.eyelibparticle.network.SpawnParticlePacket;
+import io.github.tt432.eyelib.particle.network.SpawnParticlePacket;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import org.joml.Vector3f;

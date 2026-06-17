@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibbridge.molang;
+package io.github.tt432.eyelib.bridge.molang;
 
-import io.github.tt432.eyelibmolang.mapping.api.MolangQueryRuntimeBridge;
+import io.github.tt432.eyelib.molang.mapping.api.MolangQueryRuntimeBridge;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;

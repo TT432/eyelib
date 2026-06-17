@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.search;
+package io.github.tt432.eyelib.util.search;
 
 import java.util.Map;
 import java.util.stream.Stream;

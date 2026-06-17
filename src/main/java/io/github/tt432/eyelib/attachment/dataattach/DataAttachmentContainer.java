@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibattachment.dataattach;
+package io.github.tt432.eyelib.attachment.dataattach;
 
 /**
  * 数据附属容器的默认实现。

@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibanimation.bedrock.controller;
+package io.github.tt432.eyelib.animation.bedrock.controller;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelibimporter.animation.NamedTrackContainerDefinition;
-import io.github.tt432.eyelibanimation.StateMachineAnimation;
-import io.github.tt432.eyelibimporter.animation.StateMachineAnimationDefinition;
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcStateDefinition;
+import io.github.tt432.eyelib.importer.animation.NamedTrackContainerDefinition;
+import io.github.tt432.eyelib.animation.StateMachineAnimation;
+import io.github.tt432.eyelib.importer.animation.StateMachineAnimationDefinition;
+import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcStateDefinition;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -44,9 +44,9 @@ class BrAnimationControllersCodecTest {
         assertEquals(controller.states().get("default"), controller.initialState());
         assertTrue(controller.initialState().animations().containsKey("animation.test.idle"));
 
-        NamedTrackContainerDefinition<io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcStateTrackName, io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcStateTrackDefinition> tracks = controller.initialState().namedTracks();
+        NamedTrackContainerDefinition<io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcStateTrackName, io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcStateTrackDefinition> tracks = controller.initialState().namedTracks();
         assertEquals(controller.initialState().namedTracks().tracksByName(), controller.initialState().namedTracks().byName());
-        assertEquals(controller.initialState().animations(), ((io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcStateAnimationsTrackDefinition) tracks.trackOrNull(io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcStateTrackName.ANIMATIONS)).animations());
+        assertEquals(controller.initialState().animations(), ((io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcStateAnimationsTrackDefinition) tracks.trackOrNull(io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcStateTrackName.ANIMATIONS)).animations());
 
         StateMachineAnimationDefinition<BrAcStateDefinition> definition = controller.definition();
         assertEquals(controller.initialState(), definition.initialState());

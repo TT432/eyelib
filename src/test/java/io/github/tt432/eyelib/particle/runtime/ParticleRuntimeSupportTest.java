@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibparticle.runtime;
+package io.github.tt432.eyelib.particle.runtime;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibparticle.runtime.support.ParticleBlackboard;
-import io.github.tt432.eyelibparticle.runtime.support.ParticleMath;
-import io.github.tt432.eyelibparticle.runtime.support.ParticleTimer;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.particle.runtime.support.ParticleBlackboard;
+import io.github.tt432.eyelib.particle.runtime.support.ParticleMath;
+import io.github.tt432.eyelib.particle.runtime.support.ParticleTimer;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -106,7 +106,7 @@ class ParticleRuntimeSupportTest {
 
     private static ParticleDefinition minimalDefinition() {
         return ParticleDefinitionAdapter.fromSchema(
-                io.github.tt432.eyelibimporter.particle.BrParticle.CODEC.parse(
+                io.github.tt432.eyelib.importer.particle.BrParticle.CODEC.parse(
                         JsonOps.INSTANCE,
                         JsonParser.parseString(MINIMAL_PARTICLE_FIXTURE)
                 ).getOrThrow(false, message -> {

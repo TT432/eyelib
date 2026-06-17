@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.codec;
+package io.github.tt432.eyelib.util.codec;
 
 import com.mojang.datafixers.util.Pair;
 import com.mojang.datafixers.util.Function10;
@@ -19,21 +19,21 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.ListBuilder;
-import io.github.tt432.eyelibutil.codec.Tuple.T10;
-import io.github.tt432.eyelibutil.codec.Tuple.T11;
-import io.github.tt432.eyelibutil.codec.Tuple.T12;
-import io.github.tt432.eyelibutil.codec.Tuple.T13;
-import io.github.tt432.eyelibutil.codec.Tuple.T14;
-import io.github.tt432.eyelibutil.codec.Tuple.T15;
-import io.github.tt432.eyelibutil.codec.Tuple.T16;
-import io.github.tt432.eyelibutil.codec.Tuple.T2;
-import io.github.tt432.eyelibutil.codec.Tuple.T3;
-import io.github.tt432.eyelibutil.codec.Tuple.T4;
-import io.github.tt432.eyelibutil.codec.Tuple.T5;
-import io.github.tt432.eyelibutil.codec.Tuple.T6;
-import io.github.tt432.eyelibutil.codec.Tuple.T7;
-import io.github.tt432.eyelibutil.codec.Tuple.T8;
-import io.github.tt432.eyelibutil.codec.Tuple.T9;
+import io.github.tt432.eyelib.util.codec.Tuple.T10;
+import io.github.tt432.eyelib.util.codec.Tuple.T11;
+import io.github.tt432.eyelib.util.codec.Tuple.T12;
+import io.github.tt432.eyelib.util.codec.Tuple.T13;
+import io.github.tt432.eyelib.util.codec.Tuple.T14;
+import io.github.tt432.eyelib.util.codec.Tuple.T15;
+import io.github.tt432.eyelib.util.codec.Tuple.T16;
+import io.github.tt432.eyelib.util.codec.Tuple.T2;
+import io.github.tt432.eyelib.util.codec.Tuple.T3;
+import io.github.tt432.eyelib.util.codec.Tuple.T4;
+import io.github.tt432.eyelib.util.codec.Tuple.T5;
+import io.github.tt432.eyelib.util.codec.Tuple.T6;
+import io.github.tt432.eyelib.util.codec.Tuple.T7;
+import io.github.tt432.eyelib.util.codec.Tuple.T8;
+import io.github.tt432.eyelib.util.codec.Tuple.T9;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -120,7 +120,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         }
 
         public <T> Codec<T> bmap(BiFunction<A, B, T> to, Function<T, T2<A, B>> from) {
-            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1)), from.andThen(io.github.tt432.eyelibutil.codec.Tuple::asList));
+            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1)), from.andThen(io.github.tt432.eyelib.util.codec.Tuple::asList));
         }
 
         @Override
@@ -136,7 +136,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         }
 
         public <T> Codec<T> bmap(Function3<A, B, C, T> to, Function<T, T3<A, B, C>> from) {
-            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2)), from.andThen(io.github.tt432.eyelibutil.codec.Tuple::asList));
+            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2)), from.andThen(io.github.tt432.eyelib.util.codec.Tuple::asList));
         }
 
         @Override
@@ -153,7 +153,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         }
 
         public <T> Codec<T> bmap(Function4<A, B, C, D, T> to, Function<T, T4<A, B, C, D>> from) {
-            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3)), from.andThen(io.github.tt432.eyelibutil.codec.Tuple::asList));
+            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3)), from.andThen(io.github.tt432.eyelib.util.codec.Tuple::asList));
         }
 
         @Override
@@ -170,7 +170,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         }
 
         public <T> Codec<T> bmap(Function5<A, B, C, D, E, T> to, Function<T, T5<A, B, C, D, E>> from) {
-            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4)), from.andThen(io.github.tt432.eyelibutil.codec.Tuple::asList));
+            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4)), from.andThen(io.github.tt432.eyelib.util.codec.Tuple::asList));
         }
 
         @Override
@@ -187,7 +187,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         }
 
         public <T> Codec<T> bmap(Function6<A, B, C, D, E, F, T> to, Function<T, T6<A, B, C, D, E, F>> from) {
-            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5)), from.andThen(io.github.tt432.eyelibutil.codec.Tuple::asList));
+            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5)), from.andThen(io.github.tt432.eyelib.util.codec.Tuple::asList));
         }
 
         @Override
@@ -204,7 +204,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         }
 
         public <T> Codec<T> bmap(Function7<A, B, C, D, E, F, G, T> to, Function<T, T7<A, B, C, D, E, F, G>> from) {
-            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6)), from.andThen(io.github.tt432.eyelibutil.codec.Tuple::asList));
+            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6)), from.andThen(io.github.tt432.eyelib.util.codec.Tuple::asList));
         }
 
         @Override
@@ -222,7 +222,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         }
 
         public <T> Codec<T> bmap(Function8<A, B, C, D, E, F, G, H, T> to, Function<T, T8<A, B, C, D, E, F, G, H>> from) {
-            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7)), from.andThen(io.github.tt432.eyelibutil.codec.Tuple::asList));
+            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7)), from.andThen(io.github.tt432.eyelib.util.codec.Tuple::asList));
         }
 
         @Override
@@ -240,7 +240,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         }
 
         public <T> Codec<T> bmap(Function9<A, B, C, D, E, F, G, H, I, T> to, Function<T, T9<A, B, C, D, E, F, G, H, I>> from) {
-            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8)), from.andThen(io.github.tt432.eyelibutil.codec.Tuple::asList));
+            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8)), from.andThen(io.github.tt432.eyelib.util.codec.Tuple::asList));
         }
 
         @Override
@@ -258,7 +258,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         }
 
         public <T> Codec<T> bmap(Function10<A, B, C, D, E, F, G, H, I, J, T> to, Function<T, T10<A, B, C, D, E, F, G, H, I, J>> from) {
-            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8), (J) l.get(9)), from.andThen(io.github.tt432.eyelibutil.codec.Tuple::asList));
+            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8), (J) l.get(9)), from.andThen(io.github.tt432.eyelib.util.codec.Tuple::asList));
         }
 
         @Override
@@ -277,7 +277,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         }
 
         public <T> Codec<T> bmap(Function11<A, B, C, D, E, F, G, H, I, J, K, T> to, Function<T, T11<A, B, C, D, E, F, G, H, I, J, K>> from) {
-            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8), (J) l.get(9), (K) l.get(10)), from.andThen(io.github.tt432.eyelibutil.codec.Tuple::asList));
+            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8), (J) l.get(9), (K) l.get(10)), from.andThen(io.github.tt432.eyelib.util.codec.Tuple::asList));
         }
 
         @Override
@@ -297,7 +297,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         }
 
         public <T> Codec<T> bmap(Function12<A, B, C, D, E, F, G, H, I, J, K, L, T> to, Function<T, T12<A, B, C, D, E, F, G, H, I, J, K, L>> from) {
-            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8), (J) l.get(9), (K) l.get(10), (L) l.get(11)), from.andThen(io.github.tt432.eyelibutil.codec.Tuple::asList));
+            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8), (J) l.get(9), (K) l.get(10), (L) l.get(11)), from.andThen(io.github.tt432.eyelib.util.codec.Tuple::asList));
         }
 
         @Override
@@ -317,7 +317,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         }
 
         public <T> Codec<T> bmap(Function13<A, B, C, D, E, F, G, H, I, J, K, L, M, T> to, Function<T, T13<A, B, C, D, E, F, G, H, I, J, K, L, M>> from) {
-            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8), (J) l.get(9), (K) l.get(10), (L) l.get(11), (M) l.get(12)), from.andThen(io.github.tt432.eyelibutil.codec.Tuple::asList));
+            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8), (J) l.get(9), (K) l.get(10), (L) l.get(11), (M) l.get(12)), from.andThen(io.github.tt432.eyelib.util.codec.Tuple::asList));
         }
 
         @Override
@@ -338,7 +338,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         }
 
         public <T> Codec<T> bmap(Function14<A, B, C, D, E, F, G, H, I, J, K, L, M, N, T> to, Function<T, T14<A, B, C, D, E, F, G, H, I, J, K, L, M, N>> from) {
-            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8), (J) l.get(9), (K) l.get(10), (L) l.get(11), (M) l.get(12), (N) l.get(13)), from.andThen(io.github.tt432.eyelibutil.codec.Tuple::asList));
+            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8), (J) l.get(9), (K) l.get(10), (L) l.get(11), (M) l.get(12), (N) l.get(13)), from.andThen(io.github.tt432.eyelib.util.codec.Tuple::asList));
         }
 
         @Override
@@ -359,7 +359,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         }
 
         public <T> Codec<T> bmap(Function15<A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, T> to, Function<T, T15<A, B, C, D, E, F, G, H, I, J, K, L, M, N, O>> from) {
-            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8), (J) l.get(9), (K) l.get(10), (L) l.get(11), (M) l.get(12), (N) l.get(13), (O) l.get(14)), from.andThen(io.github.tt432.eyelibutil.codec.Tuple::asList));
+            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8), (J) l.get(9), (K) l.get(10), (L) l.get(11), (M) l.get(12), (N) l.get(13), (O) l.get(14)), from.andThen(io.github.tt432.eyelib.util.codec.Tuple::asList));
         }
 
         @Override
@@ -381,7 +381,7 @@ public sealed interface TupleCodec extends Codec<List<Object>> {
         }
 
         public <T> Codec<T> bmap(Function16<A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, T> to, Function<T, T16<A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P>> from) {
-            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8), (J) l.get(9), (K) l.get(10), (L) l.get(11), (M) l.get(12), (N) l.get(13), (O) l.get(14), (P) l.get(15)), from.andThen(io.github.tt432.eyelibutil.codec.Tuple::asList));
+            return xmap(l -> to.apply((A) l.get(0), (B) l.get(1), (C) l.get(2), (D) l.get(3), (E) l.get(4), (F) l.get(5), (G) l.get(6), (H) l.get(7), (I) l.get(8), (J) l.get(9), (K) l.get(10), (L) l.get(11), (M) l.get(12), (N) l.get(13), (O) l.get(14), (P) l.get(15)), from.andThen(io.github.tt432.eyelib.util.codec.Tuple::asList));
         }
 
         @Override

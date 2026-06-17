@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibbehavior.event.logic;
+package io.github.tt432.eyelib.behavior.event.logic;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibbehavior.EntityBehaviorData;
-import io.github.tt432.eyelibbehavior.event.filter.Filter;
-import io.github.tt432.eyelibbehavior.event.filter.Subject;
+import io.github.tt432.eyelib.behavior.EntityBehaviorData;
+import io.github.tt432.eyelib.behavior.event.filter.Filter;
+import io.github.tt432.eyelib.behavior.event.filter.Subject;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;

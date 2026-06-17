@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibattachment.dataattach;
+package io.github.tt432.eyelib.attachment.dataattach;
 
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibparticle.runtime.support;
+package io.github.tt432.eyelib.particle.runtime.support;
 
-import io.github.tt432.eyelibparticle.runtime.ParticleRuntimeServices;
+import io.github.tt432.eyelib.particle.runtime.ParticleRuntimeServices;
 
 import java.util.Objects;
 

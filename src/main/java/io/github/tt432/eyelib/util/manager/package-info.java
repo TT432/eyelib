@@ -1,5 +1,5 @@
 @NullMarked
-package io.github.tt432.eyelibutil.manager;
+package io.github.tt432.eyelib.util.manager;
 
 import org.jspecify.annotations.NullMarked;
 

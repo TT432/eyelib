@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.time;
+package io.github.tt432.eyelib.util.time;
 
 /**
  * 与平台无关的固定步长定时器状态。

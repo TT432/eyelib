@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibmolang.compiler;
+package io.github.tt432.eyelib.molang.compiler;
 
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.type.MolangNull;
-import io.github.tt432.eyelibmolang.type.MolangObject;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.type.MolangNull;
+import io.github.tt432.eyelib.molang.type.MolangObject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;

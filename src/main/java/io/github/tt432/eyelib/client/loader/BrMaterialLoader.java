@@ -2,8 +2,8 @@ package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
-import io.github.tt432.eyelibmaterial.material.BrMaterial;
-import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
+import io.github.tt432.eyelib.material.material.BrMaterial;
+import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;

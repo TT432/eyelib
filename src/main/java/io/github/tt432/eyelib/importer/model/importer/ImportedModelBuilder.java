@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibimporter.model.importer;
+package io.github.tt432.eyelib.importer.model.importer;
 
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibmodel.locator.GroupLocator;
-import io.github.tt432.eyelibmodel.locator.LocatorEntry;
+import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.model.locator.GroupLocator;
+import io.github.tt432.eyelib.model.locator.LocatorEntry;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.joml.Vector3f;

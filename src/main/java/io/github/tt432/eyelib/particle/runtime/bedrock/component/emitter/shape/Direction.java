@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.shape;
+package io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.shape;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.MolangValue3;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangValue3;
 import org.jspecify.annotations.Nullable;
 import org.joml.Vector3f;
 

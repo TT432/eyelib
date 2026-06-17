@@ -1,5 +1,5 @@
 @NullMarked
-package io.github.tt432.eyelibmaterial.port;
+package io.github.tt432.eyelib.material.port;
 
 /**
  * eyelib-material 的 Port 接口定义：PortRenderPass 描述渲染 pass 语义。

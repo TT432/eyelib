@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.client.track;
 
 import io.github.tt432.eyelib.capability.RenderData;
-import io.github.tt432.eyelibtrack.api.ItemTrackApi;
-import io.github.tt432.eyelibtrack.cache.ItemTrackStateCache;
+import io.github.tt432.eyelib.track.api.ItemTrackApi;
+import io.github.tt432.eyelib.track.cache.ItemTrackStateCache;
 import net.minecraft.world.item.ItemStack;
 
 /**

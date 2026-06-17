@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.registry;
 
-import io.github.tt432.eyelibimporter.addon.BrSpawnRule;
+import io.github.tt432.eyelib.importer.addon.BrSpawnRule;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;

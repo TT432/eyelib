@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.color;
+package io.github.tt432.eyelib.util.color;
 
 import org.junit.jupiter.api.Test;
 

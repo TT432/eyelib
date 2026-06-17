@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibattachment.network;
+package io.github.tt432.eyelib.attachment.network;
 
-import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
-import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentContainerCapability;
-import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
-import io.github.tt432.eyelibattachment.dataattach.mc.McDataAttachmentContainer;
-import io.github.tt432.eyelibnetwork.EyelibNetworkTransport;
+import io.github.tt432.eyelib.attachment.dataattach.DataAttachmentType;
+import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentContainerCapability;
+import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentHelper;
+import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.attachment.dataattach.mc.McDataAttachmentContainer;
+import io.github.tt432.eyelib.network.EyelibNetworkTransport;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;

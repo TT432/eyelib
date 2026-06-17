@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -18,7 +18,7 @@ public record Home(
         List<String> home_block_list,
         int restriction_radius,
         boolean use_home_position
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Home> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             Codec.STRING.listOf().optionalFieldOf("home_block_list", List.of()).forGetter(Home::home_block_list),
             Codec.INT.optionalFieldOf("restriction_radius", -1).forGetter(Home::restriction_radius),

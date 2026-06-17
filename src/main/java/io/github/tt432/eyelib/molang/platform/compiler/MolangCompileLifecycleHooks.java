@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmolang.platform.compiler;
+package io.github.tt432.eyelib.molang.platform.compiler;
 
 import net.minecraftforge.event.GameShuttingDownEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;

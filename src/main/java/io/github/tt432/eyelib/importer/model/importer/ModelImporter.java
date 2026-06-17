@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibimporter.model.importer;
+package io.github.tt432.eyelib.importer.model.importer;
 
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibimporter.model.bbmodel.BBModel;
+import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.importer.model.bbmodel.BBModel;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 

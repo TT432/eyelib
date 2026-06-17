@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibbehavior.event.filter.base;
+package io.github.tt432.eyelib.behavior.event.filter.base;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelibbehavior.EntityBehaviorData;
-import io.github.tt432.eyelibbehavior.event.filter.Filter;
-import io.github.tt432.eyelibbehavior.event.filter.Operator;
-import io.github.tt432.eyelibbehavior.event.filter.Subject;
+import io.github.tt432.eyelib.behavior.EntityBehaviorData;
+import io.github.tt432.eyelib.behavior.event.filter.Filter;
+import io.github.tt432.eyelib.behavior.event.filter.Operator;
+import io.github.tt432.eyelib.behavior.event.filter.Subject;
 import lombok.AllArgsConstructor;
 
 /**

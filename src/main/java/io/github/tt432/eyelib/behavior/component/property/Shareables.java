@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -12,7 +12,7 @@ import java.util.List;
  * @author TT432
  */
 @org.jspecify.annotations.NullMarked
-public record Shareables(List<ShareableItem> items) implements io.github.tt432.eyelibbehavior.component.Component {
+public record Shareables(List<ShareableItem> items) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Shareables> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             ShareableItem.CODEC.listOf().fieldOf("items").forGetter(Shareables::items)
     ).apply(inst, Shareables::new));

@@ -1,16 +1,16 @@
-package io.github.tt432.eyelibanimation.bedrock;
+package io.github.tt432.eyelib.animation.bedrock;
 
-import io.github.tt432.eyelibimporter.animation.bedrock.BrBoneAnimationSchema;
-import io.github.tt432.eyelibanimation.bedrock.baked.BakedBoneKeyFrame;
-import io.github.tt432.eyelibanimation.bedrock.baked.BoneAnimationBaker;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrBoneAnimationSchema;
+import io.github.tt432.eyelib.animation.bedrock.baked.BakedBoneKeyFrame;
+import io.github.tt432.eyelib.animation.bedrock.baked.BoneAnimationBaker;
 
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibutil.collection.ImmutableFloatTreeMap;
-import io.github.tt432.eyelibutil.codec.CodecHelper;
-import io.github.tt432.eyelibutil.math.EyeMath;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.util.collection.ImmutableFloatTreeMap;
+import io.github.tt432.eyelib.util.codec.CodecHelper;
+import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;

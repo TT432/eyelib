@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibparticle.api;
+package io.github.tt432.eyelib.particle.api;
 
-import io.github.tt432.eyelibutil.repository.Repository;
+import io.github.tt432.eyelib.util.repository.Repository;
 
 import java.util.Map;
 

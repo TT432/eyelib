@@ -2,10 +2,10 @@ package io.github.tt432.eyelib.client.registry;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelibanimation.AnimationLookup;
-import io.github.tt432.eyelibanimation.bedrock.BrAnimation;
-import io.github.tt432.eyelibanimation.bedrock.controller.BrAnimationControllers;
-import io.github.tt432.eyelibanimation.AnimationManager;
+import io.github.tt432.eyelib.animation.AnimationLookup;
+import io.github.tt432.eyelib.animation.bedrock.BrAnimation;
+import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationControllers;
+import io.github.tt432.eyelib.animation.AnimationManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 

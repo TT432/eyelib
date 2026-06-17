@@ -1,16 +1,16 @@
 package io.github.tt432.eyelib.network;
 
-import io.github.tt432.eyelibanimation.network.AnimationComponentSyncPacket;
-import io.github.tt432.eyelibattachment.network.DataAttachmentSyncPacket;
-import io.github.tt432.eyelibattachment.network.DataAttachmentUpdatePacket;
-import io.github.tt432.eyelibattachment.network.ExtraEntityDataPacket;
-import io.github.tt432.eyelibattachment.network.ExtraEntityUpdateDataPacket;
-import io.github.tt432.eyelibattachment.network.UniDataUpdatePacket;
-import io.github.tt432.eyelibattachment.network.UpdateDestroyInfoPacket;
-import io.github.tt432.eyelibmodel.network.packet.ModelComponentSyncPacket;
-import io.github.tt432.eyelibnetwork.EyelibNetworkTransport;
-import io.github.tt432.eyelibparticle.network.RemoveParticlePacket;
-import io.github.tt432.eyelibparticle.network.SpawnParticlePacket;
+import io.github.tt432.eyelib.animation.network.AnimationComponentSyncPacket;
+import io.github.tt432.eyelib.attachment.network.DataAttachmentSyncPacket;
+import io.github.tt432.eyelib.attachment.network.DataAttachmentUpdatePacket;
+import io.github.tt432.eyelib.attachment.network.ExtraEntityDataPacket;
+import io.github.tt432.eyelib.attachment.network.ExtraEntityUpdateDataPacket;
+import io.github.tt432.eyelib.attachment.network.UniDataUpdatePacket;
+import io.github.tt432.eyelib.attachment.network.UpdateDestroyInfoPacket;
+import io.github.tt432.eyelib.model.network.packet.ModelComponentSyncPacket;
+import io.github.tt432.eyelib.network.EyelibNetworkTransport;
+import io.github.tt432.eyelib.particle.network.RemoveParticlePacket;
+import io.github.tt432.eyelib.particle.network.SpawnParticlePacket;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;
@@ -26,42 +26,42 @@ public class EyelibNetworkManager {
                 UpdateDestroyInfoPacket.class,
                 UpdateDestroyInfoPacket.STREAM_CODEC::encode,
                 UpdateDestroyInfoPacket.STREAM_CODEC::decode,
-                io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime::handleDestroyInfoUpdate
+                io.github.tt432.eyelib.attachment.network.DataAttachmentSyncRuntime::handleDestroyInfoUpdate
         );
 
         EyelibNetworkTransport.registerClientPacket(
                 ExtraEntityUpdateDataPacket.class,
                 ExtraEntityUpdateDataPacket.STREAM_CODEC::encode,
                 ExtraEntityUpdateDataPacket.STREAM_CODEC::decode,
-                io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime::applyExtraEntityUpdateData
+                io.github.tt432.eyelib.attachment.network.DataAttachmentSyncRuntime::applyExtraEntityUpdateData
         );
 
         EyelibNetworkTransport.registerClientPacket(
                 UniDataUpdatePacket.class,
                 UniDataUpdatePacket.STREAM_CODEC::encode,
                 UniDataUpdatePacket.STREAM_CODEC::decode,
-                io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime::applyUpdate
+                io.github.tt432.eyelib.attachment.network.DataAttachmentSyncRuntime::applyUpdate
         );
 
         EyelibNetworkTransport.registerClientPacket(
                 ExtraEntityDataPacket.class,
                 ExtraEntityDataPacket.STREAM_CODEC::encode,
                 ExtraEntityDataPacket.STREAM_CODEC::decode,
-                io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime::applyExtraEntityData
+                io.github.tt432.eyelib.attachment.network.DataAttachmentSyncRuntime::applyExtraEntityData
         );
 
         EyelibNetworkTransport.registerClientPacket(
                 DataAttachmentUpdatePacket.class,
                 DataAttachmentUpdatePacket.STREAM_CODEC::encode,
                 DataAttachmentUpdatePacket.STREAM_CODEC::decode,
-                io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime::applyUpdate
+                io.github.tt432.eyelib.attachment.network.DataAttachmentSyncRuntime::applyUpdate
         );
 
         EyelibNetworkTransport.registerClientPacket(
                 DataAttachmentSyncPacket.class,
                 DataAttachmentSyncPacket.STREAM_CODEC::encode,
                 DataAttachmentSyncPacket.STREAM_CODEC::decode,
-                io.github.tt432.eyelibattachment.network.DataAttachmentSyncRuntime::applySync
+                io.github.tt432.eyelib.attachment.network.DataAttachmentSyncRuntime::applySync
         );
 
         EyelibNetworkTransport.registerClientPacket(

@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.network;
 
-import io.github.tt432.eyelibparticle.network.RemoveParticlePacket;
+import io.github.tt432.eyelib.particle.network.RemoveParticlePacket;
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import org.junit.jupiter.api.Test;

@@ -1,21 +1,21 @@
-package io.github.tt432.eyelibimporter.addon;
+package io.github.tt432.eyelib.importer.addon;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationEntrySchema;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrAnimationSet;
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSchema;
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAnimationControllerSet;
-import io.github.tt432.eyelibimporter.block.BrBlock;
-import io.github.tt432.eyelibimporter.entity.BrClientEntity;
-import io.github.tt432.eyelibimporter.item.BrItem;
-import io.github.tt432.eyelibimporter.material.BrMaterialEntry;
-import io.github.tt432.eyelibimporter.recipe.BrRecipe;
-import io.github.tt432.eyelibmodel.Model;
-import io.github.tt432.eyelibimporter.particle.BrParticle;
-import io.github.tt432.eyelibimporter.render.controller.BrRenderControllerEntry;
-import io.github.tt432.eyelibimporter.render.controller.BrRenderControllers;
-import io.github.tt432.eyelibimporter.trading.BrTrading;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationEntrySchema;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationSet;
+import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSchema;
+import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSet;
+import io.github.tt432.eyelib.importer.block.BrBlock;
+import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.importer.item.BrItem;
+import io.github.tt432.eyelib.importer.material.BrMaterialEntry;
+import io.github.tt432.eyelib.importer.recipe.BrRecipe;
+import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.importer.particle.BrParticle;
+import io.github.tt432.eyelib.importer.render.controller.BrRenderControllerEntry;
+import io.github.tt432.eyelib.importer.render.controller.BrRenderControllers;
+import io.github.tt432.eyelib.importer.trading.BrTrading;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,16 +50,16 @@ public record BedrockAddonAggregate(
         var attachables = new java.util.LinkedHashMap<String, BrClientEntity>();
         var behaviorEntities = new java.util.LinkedHashMap<String, BrBehaviorEntityFile>();
         var models = new java.util.LinkedHashMap<String, Model>();
-        var textures = new java.util.LinkedHashMap<String, io.github.tt432.eyelibimporter.model.importer.ImportedImageData>();
+        var textures = new java.util.LinkedHashMap<String, io.github.tt432.eyelib.importer.model.importer.ImportedImageData>();
         var soundIndexFiles = new java.util.LinkedHashMap<String, BrSoundIndex>();
         var soundDefinitionFiles = new java.util.LinkedHashMap<String, BrSoundDefinitions>();
         var languageFiles = new java.util.LinkedHashMap<String, BrLanguageFile>();
         var soundFiles = new java.util.LinkedHashMap<String, BedrockBinaryAsset>();
         var textureIndexFiles = new java.util.LinkedHashMap<String, BrTextureIndexFile>();
         var textureMetadataFiles = new java.util.LinkedHashMap<String, BrTextureMetadataFile>();
-        var renderControllerFiles = new java.util.LinkedHashMap<String, io.github.tt432.eyelibimporter.render.controller.BrRenderControllers>();
+        var renderControllerFiles = new java.util.LinkedHashMap<String, io.github.tt432.eyelib.importer.render.controller.BrRenderControllers>();
         var particleFiles = new java.util.LinkedHashMap<String, BrParticle>();
-        var materialFiles = new java.util.LinkedHashMap<String, io.github.tt432.eyelibimporter.material.BrMaterial>();
+        var materialFiles = new java.util.LinkedHashMap<String, io.github.tt432.eyelib.importer.material.BrMaterial>();
         var spawnRulesFiles = new java.util.LinkedHashMap<String, BrSpawnRule>();
         var lootTableFiles = new java.util.LinkedHashMap<String, BrLootTable>();
         var itemFiles = new java.util.LinkedHashMap<String, BrItem>();
@@ -203,7 +203,7 @@ public record BedrockAddonAggregate(
         return resourcePack.models();
     }
 
-    public Map<String, io.github.tt432.eyelibimporter.model.importer.ImportedImageData> textures() {
+    public Map<String, io.github.tt432.eyelib.importer.model.importer.ImportedImageData> textures() {
         return resourcePack.textures();
     }
 
@@ -231,7 +231,7 @@ public record BedrockAddonAggregate(
         return resourcePack.textureMetadataFiles();
     }
 
-    public Map<String, io.github.tt432.eyelibimporter.render.controller.BrRenderControllers> renderControllerFiles() {
+    public Map<String, io.github.tt432.eyelib.importer.render.controller.BrRenderControllers> renderControllerFiles() {
         return resourcePack.renderControllerFiles();
     }
 
@@ -239,7 +239,7 @@ public record BedrockAddonAggregate(
         return resourcePack.particleFiles();
     }
 
-    public Map<String, io.github.tt432.eyelibimporter.material.BrMaterial> materialFiles() {
+    public Map<String, io.github.tt432.eyelib.importer.material.BrMaterial> materialFiles() {
         return resourcePack.materialFiles();
     }
 

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmodel.archunit;
+package io.github.tt432.eyelib.model.archunit;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -21,7 +21,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 class ArchitectureRules {
 
     private static final JavaClasses classes = new ClassFileImporter()
-            .importPackages("io.github.tt432.eyelibmodel");
+            .importPackages("io.github.tt432.eyelib.model");
 
     @Test
     void domainLayerHasNoMcDependency() {
@@ -29,8 +29,8 @@ class ArchitectureRules {
                 .that(DescribedPredicate.describe("not excluded",
                         c -> !(c.getSimpleName().equals("EyelibModelMod")
                                 || c.getPackageName().contains(".network.packet")
-                                || c.getName().startsWith("io.github.tt432.eyelibmodel.Model"))))
-                .and().resideInAPackage("io.github.tt432.eyelibmodel..")
+                                || c.getName().startsWith("io.github.tt432.eyelib.model.Model"))))
+                .and().resideInAPackage("io.github.tt432.eyelib.model..")
                 .should().dependOnClassesThat()
                 .resideInAPackage("net.minecraft..")
                 .check(classes);

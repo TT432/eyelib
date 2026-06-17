@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibattachment.sync;
+package io.github.tt432.eyelib.attachment.sync;
 
-import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
-import io.github.tt432.eyelibutil.resource.ResourceLocations;
+import io.github.tt432.eyelib.attachment.capability.ModelComponentInfo;
+import io.github.tt432.eyelib.util.resource.ResourceLocations;
 
 /**
  * @author TT432

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 
@@ -8,7 +8,7 @@ import com.mojang.serialization.Codec;
  * @author TT432
  */
 @org.jspecify.annotations.NullMarked
-public record MovementHover() implements io.github.tt432.eyelibbehavior.component.Component {
+public record MovementHover() implements io.github.tt432.eyelib.behavior.component.Component {
     private static final MovementHover INSTANCE = new MovementHover();
 
     public static final Codec<MovementHover> CODEC = Codec.unit(INSTANCE);

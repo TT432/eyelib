@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibmodel.locator;
+package io.github.tt432.eyelib.model.locator;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
-import io.github.tt432.eyelibmodel.tree.ModelTree;
+import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
+import io.github.tt432.eyelib.model.tree.ModelTree;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 /**

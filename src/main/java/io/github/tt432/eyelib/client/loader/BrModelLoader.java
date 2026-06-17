@@ -2,8 +2,8 @@ package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
 import io.github.tt432.eyelib.client.manager.ModelManager;
-import io.github.tt432.eyelibimporter.model.importer.BedrockGeometryImporter;
-import io.github.tt432.eyelibmodel.Model;
+import io.github.tt432.eyelib.importer.model.importer.BedrockGeometryImporter;
+import io.github.tt432.eyelib.model.Model;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;

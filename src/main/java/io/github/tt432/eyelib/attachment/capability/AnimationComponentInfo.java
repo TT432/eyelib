@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibattachment.capability;
+package io.github.tt432.eyelib.attachment.capability;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
-import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
+import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.util.streamcodec.EyelibStreamCodecs;
+import io.github.tt432.eyelib.util.streamcodec.StreamCodec;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -15,7 +15,7 @@ import java.util.List;
  * @author TT432
  */
 @org.jspecify.annotations.NullMarked
-public record Interact(List<InteractEntry> interactions) implements io.github.tt432.eyelibbehavior.component.Component {
+public record Interact(List<InteractEntry> interactions) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Interact> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             InteractEntry.CODEC.listOf().fieldOf("interactions").forGetter(Interact::interactions)
     ).apply(inst, Interact::new));

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter.animation.bedrock.controller;
+package io.github.tt432.eyelib.importer.animation.bedrock.controller;
 
 /** @author TT432 */
 @org.jspecify.annotations.NullMarked

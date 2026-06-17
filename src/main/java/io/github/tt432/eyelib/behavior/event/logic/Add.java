@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibbehavior.event.logic;
+package io.github.tt432.eyelib.behavior.event.logic;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibbehavior.EntityBehaviorData;
-import io.github.tt432.eyelibbehavior.component.group.ComponentGroup;
+import io.github.tt432.eyelib.behavior.EntityBehaviorData;
+import io.github.tt432.eyelib.behavior.component.group.ComponentGroup;
 
 import java.util.List;
 

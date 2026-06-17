@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibattachment.dataattach;
+package io.github.tt432.eyelib.attachment.dataattach;
 
 /**
  * 泛型数据附属的持有者。

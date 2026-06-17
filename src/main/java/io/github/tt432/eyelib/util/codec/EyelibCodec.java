@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.codec;
+package io.github.tt432.eyelib.util.codec;
 
 import com.google.common.base.Suppliers;
 import com.mojang.datafixers.util.Either;
@@ -28,7 +28,7 @@ import java.util.stream.Stream;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EyelibCodec {
-    public static final Codec<Vector2f> VEC2F = io.github.tt432.eyelibutil.codec.ChinExtraCodecs.tuple(Codec.FLOAT, Codec.FLOAT)
+    public static final Codec<Vector2f> VEC2F = io.github.tt432.eyelib.util.codec.ChinExtraCodecs.tuple(Codec.FLOAT, Codec.FLOAT)
                                                                                                 .bmap(Vector2f::new, v -> Tuple.of(v.x, v.y));
 
     public static final Codec<Vector2fc> VEC2FC = VEC2F.xmap(v -> v, Vector2f::new);
@@ -56,7 +56,7 @@ public class EyelibCodec {
     );
 
     public static final Codec<Float> STR_FLOAT_CODEC =
-            io.github.tt432.eyelibutil.codec.CodecHelper.withAlternative(Codec.FLOAT, Codec.STRING.xmap(Float::parseFloat, String::valueOf));
+            io.github.tt432.eyelib.util.codec.CodecHelper.withAlternative(Codec.FLOAT, Codec.STRING.xmap(Float::parseFloat, String::valueOf));
 
     public record CodecInfo<T>(Class<T> aClass, Codec<T> codec) {
     }

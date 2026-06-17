@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter.model.bbmodel;
+package io.github.tt432.eyelib.importer.model.bbmodel;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

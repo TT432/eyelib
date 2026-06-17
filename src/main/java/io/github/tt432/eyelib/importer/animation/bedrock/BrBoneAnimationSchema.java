@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter.animation.bedrock;
+package io.github.tt432.eyelib.importer.animation.bedrock;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;

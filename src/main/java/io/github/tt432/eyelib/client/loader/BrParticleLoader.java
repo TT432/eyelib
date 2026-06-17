@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonElement;
-import io.github.tt432.eyelibparticle.loading.ParticleResourcePublication;
+import io.github.tt432.eyelib.particle.loading.ParticleResourcePublication;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;

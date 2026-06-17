@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibmolang.compiler;
+package io.github.tt432.eyelib.molang.compiler;
 
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.compiler.binding.BindResult;
-import io.github.tt432.eyelibmolang.compiler.binding.MolangBinder;
-import io.github.tt432.eyelibmolang.compiler.frontend.HandwrittenMolangAstParserFrontend;
-import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.compiler.binding.BindResult;
+import io.github.tt432.eyelib.molang.compiler.binding.MolangBinder;
+import io.github.tt432.eyelib.molang.compiler.frontend.HandwrittenMolangAstParserFrontend;
+import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibimporter.util;
+package io.github.tt432.eyelib.importer.util;
 
 import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelibimporter.addon.BedrockResourceValue;
+import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.LinkedHashMap;

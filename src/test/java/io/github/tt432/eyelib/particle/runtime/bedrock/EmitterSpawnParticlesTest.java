@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock;
+package io.github.tt432.eyelib.particle.runtime.bedrock;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibparticle.runtime.ParticleDefinition;
-import io.github.tt432.eyelibparticle.runtime.ParticleDefinitionAdapter;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.particle.runtime.ParticleDefinition;
+import io.github.tt432.eyelib.particle.runtime.ParticleDefinitionAdapter;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 
@@ -54,7 +54,7 @@ class EmitterSpawnParticlesTest {
                 }
                 """.formatted(componentsJson);
         return ParticleDefinitionAdapter.fromSchema(
-                io.github.tt432.eyelibimporter.particle.BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
+                io.github.tt432.eyelib.importer.particle.BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
                         .getOrThrow(false, AssertionError::new)
         ).getOrThrow(false, AssertionError::new);
     }

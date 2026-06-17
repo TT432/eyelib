@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmolang.port;
+package io.github.tt432.eyelib.molang.port;
 
 import org.jspecify.annotations.NullMarked;
 

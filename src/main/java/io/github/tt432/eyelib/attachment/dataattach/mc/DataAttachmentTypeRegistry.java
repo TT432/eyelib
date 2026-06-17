@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibattachment.dataattach.mc;
+package io.github.tt432.eyelib.attachment.dataattach.mc;
 
-import io.github.tt432.eyelibattachment.capability.EntityStatistics;
-import io.github.tt432.eyelibattachment.capability.ExtraEntityData;
-import io.github.tt432.eyelibattachment.capability.ExtraEntityUpdateData;
-import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
+import io.github.tt432.eyelib.attachment.capability.EntityStatistics;
+import io.github.tt432.eyelib.attachment.capability.ExtraEntityData;
+import io.github.tt432.eyelib.attachment.capability.ExtraEntityUpdateData;
+import io.github.tt432.eyelib.attachment.dataattach.DataAttachmentType;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.core.Registry;

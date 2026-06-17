@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibattachment.dataattach.mc;
+package io.github.tt432.eyelib.attachment.dataattach.mc;
 
-import io.github.tt432.eyelibattachment.dataattach.DataAttachment;
-import io.github.tt432.eyelibattachment.dataattach.DataAttachmentContainer;
-import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
+import io.github.tt432.eyelib.attachment.dataattach.DataAttachment;
+import io.github.tt432.eyelib.attachment.dataattach.DataAttachmentContainer;
+import io.github.tt432.eyelib.attachment.dataattach.DataAttachmentType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter.animation.bedrock.controller;
+package io.github.tt432.eyelib.importer.animation.bedrock.controller;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

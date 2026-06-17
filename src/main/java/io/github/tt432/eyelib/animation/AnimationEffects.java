@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibanimation;
+package io.github.tt432.eyelib.animation;
 
 import java.util.ArrayList;
 import java.util.List;

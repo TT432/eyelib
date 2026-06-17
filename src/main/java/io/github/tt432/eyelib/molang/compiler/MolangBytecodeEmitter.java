@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibmolang.compiler;
+package io.github.tt432.eyelib.molang.compiler;
 
 import io.github.dmlloyd.classfile.ClassFile;
 import io.github.dmlloyd.classfile.CodeBuilder;
 import io.github.dmlloyd.classfile.Label;
-import io.github.tt432.eyelibmolang.compiler.binding.BoundMolang;
-import io.github.tt432.eyelibmolang.type.MolangObject;
+import io.github.tt432.eyelib.molang.compiler.binding.BoundMolang;
+import io.github.tt432.eyelib.molang.type.MolangObject;
 import org.jspecify.annotations.NullMarked;
 
 import java.lang.constant.ClassDesc;
@@ -25,19 +25,19 @@ public final class MolangBytecodeEmitter {
     private static final int ACC_PUBLIC = 0x0001;
 
     private static final ClassDesc CD_MOLANG_OBJECT =
-            ClassDesc.of("io.github.tt432.eyelibmolang.type.MolangObject");
+            ClassDesc.of("io.github.tt432.eyelib.molang.type.MolangObject");
     private static final ClassDesc CD_MOLANG_FLOAT =
-            ClassDesc.of("io.github.tt432.eyelibmolang.type.MolangFloat");
+            ClassDesc.of("io.github.tt432.eyelib.molang.type.MolangFloat");
     private static final ClassDesc CD_MOLANG_STRING =
-            ClassDesc.of("io.github.tt432.eyelibmolang.type.MolangString");
+            ClassDesc.of("io.github.tt432.eyelib.molang.type.MolangString");
     private static final ClassDesc CD_MOLANG_NULL =
-            ClassDesc.of("io.github.tt432.eyelibmolang.type.MolangNull");
+            ClassDesc.of("io.github.tt432.eyelib.molang.type.MolangNull");
     private static final ClassDesc CD_MOLANG_ARRAY =
-            ClassDesc.of("io.github.tt432.eyelibmolang.type.MolangArray");
+            ClassDesc.of("io.github.tt432.eyelib.molang.type.MolangArray");
     private static final ClassDesc CD_MOLANG_SCOPE =
-            ClassDesc.of("io.github.tt432.eyelibmolang.MolangScope");
+            ClassDesc.of("io.github.tt432.eyelib.molang.MolangScope");
     private static final ClassDesc CD_RUNTIME_SUPPORT =
-            ClassDesc.of("io.github.tt432.eyelibmolang.compiler.MolangRuntimeSupport");
+            ClassDesc.of("io.github.tt432.eyelib.molang.compiler.MolangRuntimeSupport");
     private static final ClassDesc CD_STRING = ClassDesc.of("java.lang.String");
     private static final ClassDesc CD_ITERATOR = ClassDesc.of("java.util.Iterator");
     private static final ClassDesc CD_LIST = ClassDesc.of("java.util.List");
@@ -73,9 +73,9 @@ public final class MolangBytecodeEmitter {
         ClassDesc thisClass = ClassDesc.ofDescriptor("L" + internalName + ";");
         ClassDesc cdString = ClassDesc.of("java.lang.String");
         ClassDesc cdSet = ClassDesc.of("java.util.Set");
-        ClassDesc cdScope = ClassDesc.of("io.github.tt432.eyelibmolang.MolangScope");
+        ClassDesc cdScope = ClassDesc.of("io.github.tt432.eyelib.molang.MolangScope");
         ClassDesc cdCompiledExpr = ClassDesc.of(
-                "io.github.tt432.eyelibmolang.compiler.CompiledMolangExpression"
+                "io.github.tt432.eyelib.molang.compiler.CompiledMolangExpression"
         );
         ClassDesc cdObject = ClassDesc.of("java.lang.Object");
 

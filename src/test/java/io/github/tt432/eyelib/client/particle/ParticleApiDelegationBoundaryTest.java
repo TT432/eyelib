@@ -39,7 +39,7 @@ class ParticleApiDelegationBoundaryTest {
 
         // ParticleSpawnRuntimeAdapter 现在接管了之前的 ParticleSpawnService 职责
         adapter.assertContains("implements ParticleSpawnApi");
-        adapter.assertContains("import io.github.tt432.eyelibparticle.api.ParticleSpawnRequest;");
+        adapter.assertContains("import io.github.tt432.eyelib.particle.api.ParticleSpawnRequest;");
         adapter.assertContains("definitions.get(request.particleId())");
         adapter.assertContains("public void spawn(ParticleSpawnRequest request)");
         adapter.assertContains("renderManager.removeEmitter(spawnId);");

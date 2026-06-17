@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibmodel.locator;
+package io.github.tt432.eyelib.model.locator;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelibmodel.ImporterCodecs;
-import io.github.tt432.eyelibmodel.tree.ModelCubeNode;
+import io.github.tt432.eyelib.model.ImporterCodecs;
+import io.github.tt432.eyelib.model.tree.ModelCubeNode;
 import org.joml.Vector3f;
 
 /**

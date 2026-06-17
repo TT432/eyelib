@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibtrack.cache;
+package io.github.tt432.eyelib.track.cache;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;

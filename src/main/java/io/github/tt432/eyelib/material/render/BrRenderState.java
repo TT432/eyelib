@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibmaterial.render;
+package io.github.tt432.eyelib.material.render;
 
-import io.github.tt432.eyelibmaterial.gl.BlendFactor;
-import io.github.tt432.eyelibmaterial.gl.DepthFunc;
-import io.github.tt432.eyelibmaterial.material.ResolvedBrMaterial;
+import io.github.tt432.eyelib.material.gl.BlendFactor;
+import io.github.tt432.eyelib.material.gl.DepthFunc;
+import io.github.tt432.eyelib.material.material.ResolvedBrMaterial;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.Optional;

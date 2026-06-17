@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.archunit;
+package io.github.tt432.eyelib.behavior.archunit;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -19,14 +19,14 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 class ArchitectureRules {
 
     private static final JavaClasses classes = new ClassFileImporter()
-            .importPackages("io.github.tt432.eyelibbehavior");
+            .importPackages("io.github.tt432.eyelib.behavior");
 
     @Test
     void domainLayerHasNoMcDependency() {
         noClasses()
                 .that(DescribedPredicate.describe("not excluded",
                         c -> !c.getSimpleName().equals("EyelibBehaviorMod")))
-                .and().resideInAPackage("io.github.tt432.eyelibbehavior..")
+                .and().resideInAPackage("io.github.tt432.eyelib.behavior..")
                 .should().dependOnClassesThat()
                 .resideInAPackage("net.minecraft..")
                 .check(classes);

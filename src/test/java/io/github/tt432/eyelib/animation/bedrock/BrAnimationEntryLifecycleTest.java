@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibanimation.bedrock;
+package io.github.tt432.eyelib.animation.bedrock;
 
-import io.github.tt432.eyelibanimation.AnimationEffect;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
-import io.github.tt432.eyelibmolang.MolangValue;
+import io.github.tt432.eyelib.animation.AnimationEffect;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrLoopType;
+import io.github.tt432.eyelib.molang.MolangValue;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

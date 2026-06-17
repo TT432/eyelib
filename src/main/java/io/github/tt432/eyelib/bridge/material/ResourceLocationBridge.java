@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibbridge.material;
+package io.github.tt432.eyelib.bridge.material;
 
-import io.github.tt432.eyelibutil.PortResourceLocation;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.NullMarked;
 

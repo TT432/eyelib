@@ -1,15 +1,15 @@
 package io.github.tt432.eyelib.molang.mapping;
 
-import io.github.tt432.eyelibanimation.AnimationEffects;
-import io.github.tt432.eyelibanimation.bedrock.BrAnimationEntry;
-import io.github.tt432.eyelibanimation.ModelRuntimeData;
-import io.github.tt432.eyelibimporter.animation.bedrock.BrLoopType;
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibmolang.mapping.api.MolangFunction;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMapping;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingDiscovery;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
+import io.github.tt432.eyelib.animation.AnimationEffects;
+import io.github.tt432.eyelib.animation.bedrock.BrAnimationEntry;
+import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.importer.animation.bedrock.BrLoopType;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingDiscovery;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -76,9 +76,9 @@ class MolangQueryAnimationClockRuntimeParityTest {
                 MolangValue.ONE,
                 MolangValue.ZERO,
                 MolangValue.ZERO,
-                io.github.tt432.eyelibanimation.AnimationEffect.empty(),
-                io.github.tt432.eyelibanimation.AnimationEffect.empty(),
-                io.github.tt432.eyelibanimation.AnimationEffect.empty(),
+                io.github.tt432.eyelib.animation.AnimationEffect.empty(),
+                io.github.tt432.eyelib.animation.AnimationEffect.empty(),
+                io.github.tt432.eyelib.animation.AnimationEffect.empty(),
                 new Int2ObjectOpenHashMap<>()
         );
     }

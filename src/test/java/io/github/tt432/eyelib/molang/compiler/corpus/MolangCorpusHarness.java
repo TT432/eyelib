@@ -1,27 +1,27 @@
-package io.github.tt432.eyelibmolang.compiler.corpus;
+package io.github.tt432.eyelib.molang.compiler.corpus;
 
-import io.github.tt432.eyelibmolang.compiler.binding.BindResult;
-import io.github.tt432.eyelibmolang.compiler.binding.BindDiagnostic;
-import io.github.tt432.eyelibmolang.compiler.binding.BindDiagnosticsMode;
-import io.github.tt432.eyelibmolang.compiler.binding.BoundMolang;
-import io.github.tt432.eyelibmolang.compiler.binding.MolangBinder;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangAssertionType;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangBindGoldenExpectation;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangBindShape;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangCaseReport;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangCorpusCase;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangCorpusIssue;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangParseResult;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangParseShape;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangParseGoldenExpectation;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangDiagnosticPhase;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangDiagnosticSeverity;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangDiagnosticsMode;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangResultType;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangRunReport;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangDiagnostic;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangExpectedDiagnostic;
-import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
+import io.github.tt432.eyelib.molang.compiler.binding.BindResult;
+import io.github.tt432.eyelib.molang.compiler.binding.BindDiagnostic;
+import io.github.tt432.eyelib.molang.compiler.binding.BindDiagnosticsMode;
+import io.github.tt432.eyelib.molang.compiler.binding.BoundMolang;
+import io.github.tt432.eyelib.molang.compiler.binding.MolangBinder;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangAssertionType;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangBindGoldenExpectation;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangBindShape;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangCaseReport;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangCorpusCase;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangCorpusIssue;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangParseResult;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangParseShape;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangParseGoldenExpectation;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangDiagnosticPhase;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangDiagnosticSeverity;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangDiagnosticsMode;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangResultType;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangRunReport;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangDiagnostic;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangExpectedDiagnostic;
+import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -36,8 +36,8 @@ import java.util.Set;
 import java.util.Locale;
 import java.util.Optional;
 
-import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.DEFAULT_MODE;
-import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.DEFAULT_POLICY_PACK;
+import static io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.DEFAULT_MODE;
+import static io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.DEFAULT_POLICY_PACK;
 
 /** @author TT432 */
 final class MolangCorpusHarness {

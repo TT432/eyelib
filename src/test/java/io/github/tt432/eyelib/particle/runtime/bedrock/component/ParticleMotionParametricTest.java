@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock.component;
+package io.github.tt432.eyelib.particle.runtime.bedrock.component;
 
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.MolangValue;
-import io.github.tt432.eyelibmolang.MolangValue3;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.ParticleParticleComponent;
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.particle.motion.ParticleMotionParametric;
-import io.github.tt432.eyelibparticle.runtime.support.ParticleBlackboard;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangValue3;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.particle.ParticleParticleComponent;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.particle.motion.ParticleMotionParametric;
+import io.github.tt432.eyelib.particle.runtime.support.ParticleBlackboard;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 

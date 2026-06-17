@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibattachment.runtime;
+package io.github.tt432.eyelib.attachment.runtime;
 
-import io.github.tt432.eyelibattachment.capability.EntityStatistics;
+import io.github.tt432.eyelib.attachment.capability.EntityStatistics;
 
 /**
  * 实体统计数据的更新工具。

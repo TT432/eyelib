@@ -1,11 +1,11 @@
-package io.github.tt432.eyelibbridge.molang;
+package io.github.tt432.eyelib.bridge.molang;
 
-import io.github.tt432.eyelibmolang.MolangScope;
-import io.github.tt432.eyelibmolang.mapping.api.MolangFunction;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMapping;
-import io.github.tt432.eyelibmolang.mapping.api.MolangQueryRuntimeBridge;
-import io.github.tt432.eyelibmolang.port.PortEntity;
-import io.github.tt432.eyelibutil.resource.ResourceLocations;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
+import io.github.tt432.eyelib.molang.mapping.api.MolangQueryRuntimeBridge;
+import io.github.tt432.eyelib.molang.port.PortEntity;
+import io.github.tt432.eyelib.util.resource.ResourceLocations;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -43,11 +43,11 @@ import java.util.function.Function;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import io.github.tt432.eyelibbridge.molang.ComponentStore;
-import io.github.tt432.eyelibbridge.molang.MolangEntityContext;
+import io.github.tt432.eyelib.bridge.molang.ComponentStore;
+import io.github.tt432.eyelib.bridge.molang.MolangEntityContext;
 
-import static io.github.tt432.eyelibmolang.MolangValue.FALSE;
-import static io.github.tt432.eyelibmolang.MolangValue.TRUE;
+import static io.github.tt432.eyelib.molang.MolangValue.FALSE;
+import static io.github.tt432.eyelib.molang.MolangValue.TRUE;
 
 /**
  * Molang 平台映射（内置查询函数）。

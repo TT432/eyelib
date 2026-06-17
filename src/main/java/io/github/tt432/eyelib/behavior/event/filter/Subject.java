@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibbehavior.event.filter;
+package io.github.tt432.eyelib.behavior.event.filter;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelibutil.PortStringRepresentable;
+import io.github.tt432.eyelib.util.PortStringRepresentable;
 
 /**
  * 该枚举类定义了交互中涉及的不同主体类型。

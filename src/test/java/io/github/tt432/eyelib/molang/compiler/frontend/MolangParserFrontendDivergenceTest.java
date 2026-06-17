@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmolang.compiler.frontend;
+package io.github.tt432.eyelib.molang.compiler.frontend;
 
 import org.junit.jupiter.api.Test;
 

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter.model.importer;
+package io.github.tt432.eyelib.importer.model.importer;
 
 import java.util.List;
 

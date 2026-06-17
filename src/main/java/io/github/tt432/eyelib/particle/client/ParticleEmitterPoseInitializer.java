@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibparticle.client;
+package io.github.tt432.eyelib.particle.client;
 
-import io.github.tt432.eyelibparticle.runtime.bedrock.BedrockParticleEmitter;
+import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleEmitter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import org.joml.Matrix4f;

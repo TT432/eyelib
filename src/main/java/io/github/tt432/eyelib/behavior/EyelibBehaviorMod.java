@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior;
+package io.github.tt432.eyelib.behavior;
 
 import net.minecraftforge.fml.common.Mod;
 import org.jspecify.annotations.NullMarked;

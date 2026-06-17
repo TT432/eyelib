@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibmolang.compiler.corpus;
+package io.github.tt432.eyelib.molang.compiler.corpus;
 
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangResultType;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangRunReport;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangResultType;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangRunReport;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;

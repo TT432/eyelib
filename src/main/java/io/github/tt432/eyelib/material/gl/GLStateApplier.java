@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibmaterial.gl;
+package io.github.tt432.eyelib.material.gl;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
+import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;

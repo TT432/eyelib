@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.resource;
+package io.github.tt432.eyelib.util.resource;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

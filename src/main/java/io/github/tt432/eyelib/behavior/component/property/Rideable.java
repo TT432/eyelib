@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -18,7 +18,7 @@ public record Rideable(
         int seat_count,
         List<String> family_types,
         int controlling_seat
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Rideable> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             Codec.INT.optionalFieldOf("seat_count", 1).forGetter(Rideable::seat_count),
             Codec.STRING.listOf().optionalFieldOf("family_types", List.of()).forGetter(Rideable::family_types),

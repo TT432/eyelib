@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmodel.tree;
+package io.github.tt432.eyelib.model.tree;
 
 /**
  * 模型树结构接口，提供按组 ID 获取子节点的方法。

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibparticle.network;
+package io.github.tt432.eyelib.particle.network;
 
 import net.minecraft.network.FriendlyByteBuf;
 

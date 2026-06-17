@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibmaterial;
+package io.github.tt432.eyelib.material;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelibmaterial.material.BrMaterial;
-import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
+import io.github.tt432.eyelib.material.material.BrMaterial;
+import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.Test;
 
@@ -231,7 +231,7 @@ class MaterialEndToEndTest {
         assertEquals("entity", nocull.base());
         assertTrue(nocull.states().add().isPresent());
         assertTrue(nocull.states().add().get().contains(
-                io.github.tt432.eyelibmaterial.gl.GLStates.DisableCulling));
+                io.github.tt432.eyelib.material.gl.GLStates.DisableCulling));
     }
 
     @Test
@@ -242,7 +242,7 @@ class MaterialEndToEndTest {
         assertNotNull(alphablend);
         assertEquals("entity", alphablend.base());
         assertTrue(alphablend.blend().blendSrc().isPresent());
-        assertEquals(io.github.tt432.eyelibmaterial.gl.BlendFactor.SourceAlpha,
+        assertEquals(io.github.tt432.eyelib.material.gl.BlendFactor.SourceAlpha,
                      alphablend.blend().blendSrc().get());
     }
 
@@ -255,10 +255,10 @@ class MaterialEndToEndTest {
         assertEquals("", particlesBlend.base());
         assertTrue(particlesBlend.states().base().isPresent());
         assertTrue(particlesBlend.states().base().get().contains(
-                io.github.tt432.eyelibmaterial.gl.GLStates.Blending));
-        assertEquals(io.github.tt432.eyelibmaterial.gl.BlendFactor.SourceAlpha,
+                io.github.tt432.eyelib.material.gl.GLStates.Blending));
+        assertEquals(io.github.tt432.eyelib.material.gl.BlendFactor.SourceAlpha,
                      particlesBlend.blend().blendSrc().get());
-        assertEquals(io.github.tt432.eyelibmaterial.gl.BlendFactor.OneMinusSrcAlpha,
+        assertEquals(io.github.tt432.eyelib.material.gl.BlendFactor.OneMinusSrcAlpha,
                      particlesBlend.blend().blendDst().get());
     }
 

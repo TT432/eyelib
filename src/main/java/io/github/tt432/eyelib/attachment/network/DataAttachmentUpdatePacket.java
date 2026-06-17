@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibattachment.network;
+package io.github.tt432.eyelib.attachment.network;
 
-import io.github.tt432.eyelibattachment.dataattach.DataAttachmentType;
-import io.github.tt432.eyelibattachment.dataattach.mc.DataAttachmentTypeRegistry;
-import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
-import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
+import io.github.tt432.eyelib.attachment.dataattach.DataAttachmentType;
+import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.util.streamcodec.EyelibStreamCodecs;
+import io.github.tt432.eyelib.util.streamcodec.StreamCodec;
 import net.minecraft.network.FriendlyByteBuf;
 
 /**

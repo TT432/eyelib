@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibmaterial.gl;
+package io.github.tt432.eyelib.material.gl;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
-import io.github.tt432.eyelibutil.PortStringRepresentable;
+import io.github.tt432.eyelib.material.material.BrMaterialEntry;
+import io.github.tt432.eyelib.util.PortStringRepresentable;
 import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;

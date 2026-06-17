@@ -1,12 +1,12 @@
 package io.github.tt432.eyelib.network;
 
 import io.github.tt432.eyelib.client.render.sync.ClientRenderSyncService;
-import io.github.tt432.eyelibparticle.api.ParticleSpawnRequest;
-import io.github.tt432.eyelibparticle.client.ParticleSpawnRuntimeAdapter;
-import io.github.tt432.eyelibparticle.network.RemoveParticlePacket;
-import io.github.tt432.eyelibparticle.network.SpawnParticlePacket;
-import io.github.tt432.eyelibanimation.network.AnimationComponentSyncPacket;
-import io.github.tt432.eyelibmodel.network.packet.ModelComponentSyncPacket;
+import io.github.tt432.eyelib.particle.api.ParticleSpawnRequest;
+import io.github.tt432.eyelib.particle.client.ParticleSpawnRuntimeAdapter;
+import io.github.tt432.eyelib.particle.network.RemoveParticlePacket;
+import io.github.tt432.eyelib.particle.network.SpawnParticlePacket;
+import io.github.tt432.eyelib.animation.network.AnimationComponentSyncPacket;
+import io.github.tt432.eyelib.model.network.packet.ModelComponentSyncPacket;
 import org.jspecify.annotations.NullMarked;
 
 /**

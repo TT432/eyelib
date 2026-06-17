@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibbridge.molang;
+package io.github.tt432.eyelib.bridge.molang;
 
-import io.github.tt432.eyelibmolang.mapping.api.MolangQueryRuntime;
+import io.github.tt432.eyelib.molang.mapping.api.MolangQueryRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.NullMarked;

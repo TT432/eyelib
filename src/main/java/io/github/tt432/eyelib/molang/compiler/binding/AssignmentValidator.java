@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibmolang.compiler.binding;
+package io.github.tt432.eyelib.molang.compiler.binding;
 
-import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
+import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 

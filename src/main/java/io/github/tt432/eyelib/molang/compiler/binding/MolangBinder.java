@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibmolang.compiler.binding;
+package io.github.tt432.eyelib.molang.compiler.binding;
 
-import io.github.tt432.eyelibmolang.compiler.common.MolangRootAliasCanonicalizer;
-import io.github.tt432.eyelibmolang.compiler.frontend.ast.MolangAst;
-import io.github.tt432.eyelibmolang.compiler.frontend.ast.SourceSpan;
+import io.github.tt432.eyelib.molang.compiler.common.MolangRootAliasCanonicalizer;
+import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
+import io.github.tt432.eyelib.molang.compiler.frontend.ast.SourceSpan;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;

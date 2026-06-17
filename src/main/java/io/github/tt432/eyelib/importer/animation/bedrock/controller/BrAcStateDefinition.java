@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibimporter.animation.bedrock.controller;
+package io.github.tt432.eyelib.importer.animation.bedrock.controller;
 
-import io.github.tt432.eyelibmolang.MolangValue;
+import io.github.tt432.eyelib.molang.MolangValue;
 
 import java.util.List;
 import java.util.Map;
@@ -22,7 +22,7 @@ public record BrAcStateDefinition(
                 schema.blendViaShortestPath(),
                 BrAcStateTracksDefinition.of(
                         schema.animations(),
-                        schema.particleEffects().stream().map(io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcParticleEffectDefinition::fromSchema).toList(),
+                        schema.particleEffects().stream().map(io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcParticleEffectDefinition::fromSchema).toList(),
                         schema.soundEffects(),
                         schema.transitions()
                 )
@@ -34,7 +34,7 @@ public record BrAcStateDefinition(
                 animations(),
                 onEntry,
                 onExit,
-                particleEffects().stream().map(io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcParticleEffectDefinition::toSchema).toList(),
+                particleEffects().stream().map(io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcParticleEffectDefinition::toSchema).toList(),
                 soundEffects(),
                 transitions(),
                 blendTransition,
@@ -46,7 +46,7 @@ public record BrAcStateDefinition(
         return namedTracks.animations().animations();
     }
 
-    public List<io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcParticleEffectDefinition> particleEffects() {
+    public List<io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcParticleEffectDefinition> particleEffects() {
         return namedTracks.particleEffects().particleEffects();
     }
 

@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock.component;
+package io.github.tt432.eyelib.particle.runtime.bedrock.component;
 
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterLocalSpace;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.EmitterLocalSpace;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;

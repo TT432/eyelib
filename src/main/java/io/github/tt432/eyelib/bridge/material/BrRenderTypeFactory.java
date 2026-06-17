@@ -1,12 +1,12 @@
-package io.github.tt432.eyelibbridge.material;
+package io.github.tt432.eyelib.bridge.material;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import io.github.tt432.eyelibmaterial.gl.BlendFactor;
-import io.github.tt432.eyelibmaterial.port.PortRenderPass;
-import io.github.tt432.eyelibutil.PortResourceLocation;
-import io.github.tt432.eyelibmaterial.render.BrRenderState;
+import io.github.tt432.eyelib.material.gl.BlendFactor;
+import io.github.tt432.eyelib.material.port.PortRenderPass;
+import io.github.tt432.eyelib.util.PortResourceLocation;
+import io.github.tt432.eyelib.material.render.BrRenderState;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;

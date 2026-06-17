@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.client.particle;
 
-import io.github.tt432.eyelibanimation.AnimationParticleSpawner;
-import io.github.tt432.eyelibparticle.api.ParticleSpawnApi;
-import io.github.tt432.eyelibparticle.api.ParticleSpawnRequest;
+import io.github.tt432.eyelib.animation.AnimationParticleSpawner;
+import io.github.tt432.eyelib.particle.api.ParticleSpawnApi;
+import io.github.tt432.eyelib.particle.api.ParticleSpawnRequest;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NullMarked;
 

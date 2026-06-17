@@ -1,12 +1,12 @@
-package io.github.tt432.eyelibmolang.compiler.corpus;
+package io.github.tt432.eyelib.molang.compiler.corpus;
 
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangParseResult;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangParseShape;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangDiagnostic;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangDiagnosticPhase;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangDiagnosticSeverity;
-import io.github.tt432.eyelibmolang.compiler.frontend.MolangParserFrontendResult;
-import io.github.tt432.eyelibmolang.compiler.frontend.MolangParserFrontends;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangParseResult;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangParseShape;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangDiagnostic;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangDiagnosticPhase;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangDiagnosticSeverity;
+import io.github.tt432.eyelib.molang.compiler.frontend.MolangParserFrontendResult;
+import io.github.tt432.eyelib.molang.compiler.frontend.MolangParserFrontends;
 
 import java.util.ArrayList;
 import java.util.List;

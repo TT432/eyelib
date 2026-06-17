@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibmolang.compiler.cache;
+package io.github.tt432.eyelib.molang.compiler.cache;
 
-import io.github.tt432.eyelibmolang.compiler.CompiledMolangExpression;
-import io.github.tt432.eyelibmolang.compiler.CompileContext;
-import io.github.tt432.eyelibmolang.compiler.ExpressionCompileException;
-import io.github.tt432.eyelibmolang.compiler.MolangCompilerImpl;
-import io.github.tt432.eyelibmolang.mapping.api.MolangMappingTree;
+import io.github.tt432.eyelib.molang.compiler.CompiledMolangExpression;
+import io.github.tt432.eyelib.molang.compiler.CompileContext;
+import io.github.tt432.eyelib.molang.compiler.ExpressionCompileException;
+import io.github.tt432.eyelib.molang.compiler.MolangCompilerImpl;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

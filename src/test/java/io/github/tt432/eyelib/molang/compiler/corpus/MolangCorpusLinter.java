@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibmolang.compiler.corpus;
+package io.github.tt432.eyelib.molang.compiler.corpus;
 
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangCorpusCase;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangCorpusIssue;
-import io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.MolangAssertionType;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangCorpusCase;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangCorpusIssue;
+import io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.MolangAssertionType;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,10 +11,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.BIND_GOLDEN_EXTENSION;
-import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.DEBUG_TRACE_GOLDEN_EXTENSION;
-import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.DIAGNOSTICS_GOLDEN_EXTENSION;
-import static io.github.tt432.eyelibmolang.compiler.corpus.MolangCorpusModel.PARSE_GOLDEN_EXTENSION;
+import static io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.BIND_GOLDEN_EXTENSION;
+import static io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.DEBUG_TRACE_GOLDEN_EXTENSION;
+import static io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.DIAGNOSTICS_GOLDEN_EXTENSION;
+import static io.github.tt432.eyelib.molang.compiler.corpus.MolangCorpusModel.PARSE_GOLDEN_EXTENSION;
 
 /** @author TT432 */
 final class MolangCorpusLinter {

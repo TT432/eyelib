@@ -1,10 +1,10 @@
-package io.github.tt432.eyelibmaterial;
+package io.github.tt432.eyelib.material;
 
-import io.github.tt432.eyelibmaterial.gl.GLStates;
-import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
-import io.github.tt432.eyelibmaterial.shared.VertexFormatElementEnum;
-import io.github.tt432.eyelibmaterial.port.PortRenderPass;
-import io.github.tt432.eyelibutil.PortResourceLocation;
+import io.github.tt432.eyelib.material.gl.GLStates;
+import io.github.tt432.eyelib.material.material.BrMaterialEntry;
+import io.github.tt432.eyelib.material.shared.VertexFormatElementEnum;
+import io.github.tt432.eyelib.material.port.PortRenderPass;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.client.renderer.RenderType;
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;

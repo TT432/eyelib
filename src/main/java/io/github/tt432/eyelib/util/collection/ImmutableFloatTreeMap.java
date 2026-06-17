@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibutil.collection;
+package io.github.tt432.eyelib.util.collection;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelibutil.codec.CodecHelper;
+import io.github.tt432.eyelib.util.codec.CodecHelper;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import lombok.AccessLevel;

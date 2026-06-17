@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibimporter.trading;
+package io.github.tt432.eyelib.importer.trading;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;

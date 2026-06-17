@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.streamcodec;
+package io.github.tt432.eyelib.util.streamcodec;
 
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
@@ -24,21 +24,21 @@ public class EyelibStreamCodecs {
 
     // <editor-fold desc="Primitive types">
 
-    public static final io.github.tt432.eyelibutil.streamcodec.StreamCodec<Boolean> BOOL = io.github.tt432.eyelibutil.streamcodec.StreamCodec.create((obj, buf) -> buf.writeBoolean(obj), FriendlyByteBuf::readBoolean);
+    public static final io.github.tt432.eyelib.util.streamcodec.StreamCodec<Boolean> BOOL = io.github.tt432.eyelib.util.streamcodec.StreamCodec.create((obj, buf) -> buf.writeBoolean(obj), FriendlyByteBuf::readBoolean);
 
-    public static final io.github.tt432.eyelibutil.streamcodec.StreamCodec<Float> FLOAT = io.github.tt432.eyelibutil.streamcodec.StreamCodec.create((obj, buf) -> buf.writeFloat(obj), FriendlyByteBuf::readFloat);
+    public static final io.github.tt432.eyelib.util.streamcodec.StreamCodec<Float> FLOAT = io.github.tt432.eyelib.util.streamcodec.StreamCodec.create((obj, buf) -> buf.writeFloat(obj), FriendlyByteBuf::readFloat);
 
-    public static final io.github.tt432.eyelibutil.streamcodec.StreamCodec<Double> DOUBLE = io.github.tt432.eyelibutil.streamcodec.StreamCodec.create((obj, buf) -> buf.writeDouble(obj), FriendlyByteBuf::readDouble);
+    public static final io.github.tt432.eyelib.util.streamcodec.StreamCodec<Double> DOUBLE = io.github.tt432.eyelib.util.streamcodec.StreamCodec.create((obj, buf) -> buf.writeDouble(obj), FriendlyByteBuf::readDouble);
 
-    public static final io.github.tt432.eyelibutil.streamcodec.StreamCodec<String> STRING = io.github.tt432.eyelibutil.streamcodec.StreamCodec.create((obj, buf) -> buf.writeUtf(obj), FriendlyByteBuf::readUtf);
+    public static final io.github.tt432.eyelib.util.streamcodec.StreamCodec<String> STRING = io.github.tt432.eyelib.util.streamcodec.StreamCodec.create((obj, buf) -> buf.writeUtf(obj), FriendlyByteBuf::readUtf);
 
-    public static final io.github.tt432.eyelibutil.streamcodec.StreamCodec<Integer> VAR_INT = io.github.tt432.eyelibutil.streamcodec.StreamCodec.create((obj, buf) -> buf.writeVarInt(obj), FriendlyByteBuf::readVarInt);
+    public static final io.github.tt432.eyelib.util.streamcodec.StreamCodec<Integer> VAR_INT = io.github.tt432.eyelib.util.streamcodec.StreamCodec.create((obj, buf) -> buf.writeVarInt(obj), FriendlyByteBuf::readVarInt);
 
     // </editor-fold>
 
     // <editor-fold desc="Minecraft types">
 
-    public static final io.github.tt432.eyelibutil.streamcodec.StreamCodec<ResourceLocation> RESOURCE_LOCATION = new io.github.tt432.eyelibutil.streamcodec.StreamCodec<>() {
+    public static final io.github.tt432.eyelib.util.streamcodec.StreamCodec<ResourceLocation> RESOURCE_LOCATION = new io.github.tt432.eyelib.util.streamcodec.StreamCodec<>() {
         @Override
         public void encode(ResourceLocation obj, FriendlyByteBuf buf) {
             STRING.encode(obj.toString(), buf);
@@ -51,7 +51,7 @@ public class EyelibStreamCodecs {
         }
     };
 
-    public static final io.github.tt432.eyelibutil.streamcodec.StreamCodec<Vector3f> VECTOR_3_F = new io.github.tt432.eyelibutil.streamcodec.StreamCodec<>() {
+    public static final io.github.tt432.eyelib.util.streamcodec.StreamCodec<Vector3f> VECTOR_3_F = new io.github.tt432.eyelib.util.streamcodec.StreamCodec<>() {
         @Override
         public void encode(Vector3f obj, FriendlyByteBuf buf) {
             FLOAT.encode(obj.x(), buf);
@@ -68,8 +68,8 @@ public class EyelibStreamCodecs {
         }
     };
 
-    public static io.github.tt432.eyelibutil.streamcodec.StreamCodec<Tag> tag(final Supplier<NbtAccounter> supplier) {
-        return new io.github.tt432.eyelibutil.streamcodec.StreamCodec<>() {
+    public static io.github.tt432.eyelib.util.streamcodec.StreamCodec<Tag> tag(final Supplier<NbtAccounter> supplier) {
+        return new io.github.tt432.eyelib.util.streamcodec.StreamCodec<>() {
             @Override
             public Tag decode(FriendlyByteBuf buf) {
                 Tag tag = buf.readNbt(supplier.get());
@@ -91,7 +91,7 @@ public class EyelibStreamCodecs {
         };
     }
 
-    public static final io.github.tt432.eyelibutil.streamcodec.StreamCodec<CompoundTag> COMPOUND_TAG = new io.github.tt432.eyelibutil.streamcodec.StreamCodec<CompoundTag>() {
+    public static final io.github.tt432.eyelib.util.streamcodec.StreamCodec<CompoundTag> COMPOUND_TAG = new io.github.tt432.eyelib.util.streamcodec.StreamCodec<CompoundTag>() {
         @Override
         public void encode(CompoundTag obj, FriendlyByteBuf buf) {
             buf.writeNbt(obj);
@@ -103,8 +103,8 @@ public class EyelibStreamCodecs {
         }
     };
 
-    public static <K, V> io.github.tt432.eyelibutil.streamcodec.StreamCodec<Map<K, V>> map(Supplier<Map<K, V>> factory, io.github.tt432.eyelibutil.streamcodec.StreamCodec<K> keyCodec, io.github.tt432.eyelibutil.streamcodec.StreamCodec<V> valueCodec) {
-        return new io.github.tt432.eyelibutil.streamcodec.StreamCodec<>() {
+    public static <K, V> io.github.tt432.eyelib.util.streamcodec.StreamCodec<Map<K, V>> map(Supplier<Map<K, V>> factory, io.github.tt432.eyelib.util.streamcodec.StreamCodec<K> keyCodec, io.github.tt432.eyelib.util.streamcodec.StreamCodec<V> valueCodec) {
+        return new io.github.tt432.eyelib.util.streamcodec.StreamCodec<>() {
             @Override
             public void encode(Map<K, V> obj, FriendlyByteBuf buf) {
                 VAR_INT.encode(obj.size(), buf);
@@ -126,8 +126,8 @@ public class EyelibStreamCodecs {
         };
     }
 
-    public static <E> io.github.tt432.eyelibutil.streamcodec.StreamCodec<List<E>> list(Supplier<List<E>> factory, io.github.tt432.eyelibutil.streamcodec.StreamCodec<E> elementCodec) {
-        return new io.github.tt432.eyelibutil.streamcodec.StreamCodec<>() {
+    public static <E> io.github.tt432.eyelib.util.streamcodec.StreamCodec<List<E>> list(Supplier<List<E>> factory, io.github.tt432.eyelib.util.streamcodec.StreamCodec<E> elementCodec) {
+        return new io.github.tt432.eyelib.util.streamcodec.StreamCodec<>() {
             @Override
             public void encode(List<E> obj, FriendlyByteBuf buf) {
                 VAR_INT.encode(obj.size(), buf);
@@ -150,11 +150,11 @@ public class EyelibStreamCodecs {
 
     // </editor-fold>
 
-    public static <T> io.github.tt432.eyelibutil.streamcodec.StreamCodec<T> fromCodec(Codec<T> codec) {
+    public static <T> io.github.tt432.eyelib.util.streamcodec.StreamCodec<T> fromCodec(Codec<T> codec) {
         return fromCodec(codec, () -> new NbtAccounter(2097152L));
     }
 
-    public static <T> io.github.tt432.eyelibutil.streamcodec.StreamCodec<T> fromCodec(Codec<T> codec, Supplier<NbtAccounter> supplier) {
+    public static <T> io.github.tt432.eyelib.util.streamcodec.StreamCodec<T> fromCodec(Codec<T> codec, Supplier<NbtAccounter> supplier) {
         return tag(supplier).map(o -> codec.encodeStart(NbtOps.INSTANCE, o).getOrThrow(false, s -> LOGGER.error("Failed to encode: {} {}", s, o)),
                 tag -> codec.parse(NbtOps.INSTANCE, tag).getOrThrow(false, s -> LOGGER.error("Failed to decode: {} {}", s, tag)));
     }

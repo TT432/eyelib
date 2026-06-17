@@ -1,5 +1,5 @@
 @NullMarked
-package io.github.tt432.eyelibutil.time;
+package io.github.tt432.eyelib.util.time;
 
 import org.jspecify.annotations.NullMarked;
 

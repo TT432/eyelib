@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibanimation.network;
+package io.github.tt432.eyelib.animation.network;
 
-import io.github.tt432.eyelibattachment.capability.AnimationComponentInfo;
-import io.github.tt432.eyelibutil.streamcodec.EyelibStreamCodecs;
-import io.github.tt432.eyelibutil.streamcodec.StreamCodec;
+import io.github.tt432.eyelib.attachment.capability.AnimationComponentInfo;
+import io.github.tt432.eyelib.util.streamcodec.EyelibStreamCodecs;
+import io.github.tt432.eyelib.util.streamcodec.StreamCodec;
 import net.minecraft.network.FriendlyByteBuf;
 import org.jspecify.annotations.NullMarked;
 

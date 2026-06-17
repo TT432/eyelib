@@ -1,9 +1,9 @@
-package io.github.tt432.eyelibbehavior.event.filter;
+package io.github.tt432.eyelib.behavior.event.filter;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelibbehavior.EntityBehaviorData;
-import io.github.tt432.eyelibbehavior.event.filter.base.BaseFilter;
+import io.github.tt432.eyelib.behavior.EntityBehaviorData;
+import io.github.tt432.eyelib.behavior.event.filter.base.BaseFilter;
 
 /**
  * 过滤器接口，支持基础过滤与复合过滤的编解码。

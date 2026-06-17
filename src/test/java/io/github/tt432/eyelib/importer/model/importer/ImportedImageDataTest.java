@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibimporter.model.importer;
+package io.github.tt432.eyelib.importer.model.importer;
 
-import io.github.tt432.eyelibimporter.model.importer.ImportedImageData;
+import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;

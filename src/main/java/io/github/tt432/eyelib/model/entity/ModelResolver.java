@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibmodel.entity;
+package io.github.tt432.eyelib.model.entity;
 
-import io.github.tt432.eyelibmodel.Model;
+import io.github.tt432.eyelib.model.Model;
 import org.jspecify.annotations.Nullable;
 
 /**

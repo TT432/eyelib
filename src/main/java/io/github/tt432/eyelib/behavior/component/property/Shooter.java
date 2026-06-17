@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibbehavior.component.property;
+package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -22,7 +22,7 @@ public record Shooter(
         boolean magic,
         float power,
         List<ShooterPotion> pots
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Shooter> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             Codec.STRING.optionalFieldOf("def", "").forGetter(Shooter::def),
             Codec.INT.optionalFieldOf("aux_val", 0).forGetter(Shooter::aux_val),

@@ -1,6 +1,6 @@
-package io.github.tt432.eyelibparticle.runtime.bedrock;
+package io.github.tt432.eyelib.particle.runtime.bedrock;
 
-import io.github.tt432.eyelibparticle.runtime.bedrock.component.emitter.EmitterParticleComponent;
+import io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.EmitterParticleComponent;
 import org.joml.Vector3f;
 
 import java.util.Optional;

@@ -1,9 +1,9 @@
 package io.github.tt432.eyelib.client.render.sync;
 
 import io.github.tt432.eyelib.capability.component.ModelComponent;
-import io.github.tt432.eyelibattachment.capability.AnimationComponentInfo;
-import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
-import io.github.tt432.eyelibattachment.sync.RenderModelSyncPayload;
+import io.github.tt432.eyelib.attachment.capability.AnimationComponentInfo;
+import io.github.tt432.eyelib.attachment.capability.ModelComponentInfo;
+import io.github.tt432.eyelib.attachment.sync.RenderModelSyncPayload;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;

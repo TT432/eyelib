@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibmaterial.port;
+package io.github.tt432.eyelib.material.port;
 
 import org.jspecify.annotations.NullMarked;
 

@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibparticle.runtime;
+package io.github.tt432.eyelib.particle.runtime;
 
-import io.github.tt432.eyelibimporter.addon.BedrockResourceValue;
-import io.github.tt432.eyelibimporter.particle.BrParticle;
+import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
+import io.github.tt432.eyelib.importer.particle.BrParticle;
 
 import java.util.Map;
 import java.util.Objects;

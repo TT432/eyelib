@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibtrack.api;
+package io.github.tt432.eyelib.track.api;
 
-import io.github.tt432.eyelibtrack.EyelibTrack;
-import io.github.tt432.eyelibtrack.cache.ItemStackIdCache;
+import io.github.tt432.eyelib.track.EyelibTrack;
+import io.github.tt432.eyelib.track.cache.ItemStackIdCache;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;

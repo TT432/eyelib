@@ -1,8 +1,8 @@
-package io.github.tt432.eyelibanimation.bedrock.controller;
+package io.github.tt432.eyelib.animation.bedrock.controller;
 
-import io.github.tt432.eyelibanimation.Animation;
-import io.github.tt432.eyelibanimation.RuntimeParticlePlayData;
-import io.github.tt432.eyelibimporter.animation.bedrock.controller.BrAcStateDefinition;
+import io.github.tt432.eyelib.animation.Animation;
+import io.github.tt432.eyelib.animation.RuntimeParticlePlayData;
+import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcStateDefinition;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;

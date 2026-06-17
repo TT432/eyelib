@@ -1,4 +1,4 @@
-package io.github.tt432.eyelibutil.time;
+package io.github.tt432.eyelib.util.time;
 
 /**
  * 基于纳秒的精确定时器，支持暂停与重置。

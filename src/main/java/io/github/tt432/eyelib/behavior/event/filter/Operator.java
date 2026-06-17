@@ -1,7 +1,7 @@
-package io.github.tt432.eyelibbehavior.event.filter;
+package io.github.tt432.eyelib.behavior.event.filter;
 
 import com.mojang.serialization.Codec;
-import io.github.tt432.eyelibutil.PortStringRepresentable;
+import io.github.tt432.eyelib.util.PortStringRepresentable;
 
 /**
  * 比较操作符枚举，定义过滤器中的比较逻辑。
