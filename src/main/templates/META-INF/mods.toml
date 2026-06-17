@@ -77,15 +77,8 @@ side="BOTH"
 modId="minecraft"
 mandatory=true
 # This version range declares a minimum of the current minecraft version up to but not including the next major version
-versionRange="${minecraft_version_range}"
+ versionRange="${minecraft_version_range}"
 ordering="NONE"
-side="BOTH"
-
-[[dependencies.${mod_id}]]
-modId="eyelibimporter"
-mandatory=true
-versionRange="[${mod_version},)"
-ordering="AFTER"
 side="BOTH"
 
 
