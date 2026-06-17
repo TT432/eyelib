@@ -1,7 +1,7 @@
 # ADR-0014: 模块扁平合并 — 取消 Gradle 子项目，统一包命名空间
 
-**Status:** Proposed
-**Date:** 2026-06-16
+**Status:** Accepted
+**Date:** 2026-06-17
 **Author:** @TT432
 **Supersedes:** ADR-0006 中「Independent Gradle subproject for each seam | Build isolation | v1.0」决策行
 **Amends:** ADR-0002（模块边界由 Gradle project 边界改为包边界）、ADR-0010（ArchUnit 强制改为文档约定）

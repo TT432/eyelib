@@ -1,6 +1,6 @@
 # ADR-0010: 六边形架构 — Domain/Bridge 分层与 Working Core 提取
 
-**Status:** Implemented (partially — all domain modules have MC import exclusion rules enforced by ArchUnit; remaining are @Mod bootstrap, platform bindings, and FriendlyByteBuf hard dependencies)
+**Status:** Implemented (partially — domain isolation is now convention-only per ADR-0014; ArchUnit rules removed)
 **Date:** 2026-06-08
 **Author:** @TT432
 
@@ -54,7 +54,7 @@
 
 ### 核心约束
 
-1. **Domain 模块不 import `net.minecraft.*` 或 `net.minecraftforge.*`。** 编译时由 ArchUnit 规则强制。
+1. **Domain 包不 import `net.minecraft.*` 或 `net.minecraftforge.*`。** ArchUnit 规则已由 [ADR-0014](0014-flat-merge.md) 删除，改为文档约定 + PR review 人工把关。
 2. **Domain 模块的测试 oracle 来自 Bedrock 规范**（Mojang Creator 文档 / .mcpack 数据），不来自当前实现输出。
 3. **Port 接口由 domain 模块定义，`eyelib-bridge` 实现。** 依赖方向: bridge → domain，无循环。
 4. **Bridge 模块是所有 Stonecutter `//? if` 的唯一栖息地。** 多版本切换只改一个模块。
@@ -87,7 +87,7 @@
 - **行为可离线验证**：Domain 层测试不需要 MC 运行时。对照 Bedrock 文档 + .mcpack JSON 跑 JUnit 即可验证 CODEC 往返、材料继承链、Molang 求值、RC 状态转换。
 - **Oracle 正确**：测试的期望值来自 Bedrock 文档，不是来自当前代码输出。
 - **多版本可控**：MC 版本切换只影响 `eyelib-bridge` 一个模块。
-- **编译隔离**：ArchUnit 规则自动化检查 domain 模块的 MC 依赖，违反即编译失败。当前所有 6 个 domain 模块 ArchUnit 通过（@Mod bootstrap 类排除）。
+- **编译隔离**：~~ArchUnit 规则自动化检查 domain 模块的 MC 依赖~~ ArchUnit 已由 ADR-0014 删除，domain 隔离改为文档约定 + PR review 人工把关。
 
 ### Negative / Risk
 
@@ -103,12 +103,12 @@
 
 ## Verification
 
-- [x] `eyelib-material` ArchUnit 规则通过（排除 @Mod + BrShaderMapping + BrMaterialEntry）
-- [x] `eyelib-molang` ArchUnit 规则通过（排除 @Mod + platform/）
-- [x] `eyelib-model` ArchUnit 规则通过（排除 @Mod + network.packet/ + Model）
-- [x] `eyelib-animation` ArchUnit 规则通过（排除 @Mod + network/ + Entity 引用类）
-- [x] `eyelib-behavior` ArchUnit 规则通过（仅排除 @Mod）
-- [x] `eyelib-particle` ArchUnit 规则通过（排除 @Mod + client/ + network/）
+- [x] ~~`eyelib-material` ArchUnit 规则通过（排除 @Mod + BrShaderMapping + BrMaterialEntry）~~ ArchUnit 已由 ADR-0014 删除
+- [x] ~~`eyelib-molang` ArchUnit 规则通过（排除 @Mod + platform/）~~ 同上
+- [x] ~~`eyelib-model` ArchUnit 规则通过（排除 @Mod + network.packet/ + Model）~~ 同上
+- [x] ~~`eyelib-animation` ArchUnit 规则通过（排除 @Mod + network/ + Entity 引用类）~~ 同上
+- [x] ~~`eyelib-behavior` ArchUnit 规则通过（仅排除 @Mod）~~ 同上
+- [x] ~~`eyelib-particle` ArchUnit 规则通过（排除 @Mod + client/ + network/）~~ 同上
 - [x] Spec-based 测试对照 Bedrock 文档：material(28) + molang(21) + animation(7) + behavior(9) + particle(6) = 71 个
 - [x] RenderDoc 截帧 / 运行时验证：`shouldRender=true`, `comps=2`, `useBuiltInRenderSystem=true`
 - [ ] `eyelib-material` BrShaderMapping + BrMaterialEntry 迁移到 bridge（R2 未完成部分）

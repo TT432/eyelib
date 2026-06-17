@@ -15,7 +15,7 @@ Historical architectural decisions from the module separation milestones.
 |----------|-----------|-------------|
 | @ClientSmoke annotation | Decouple test from business code | v1.0 |
 | iris-tutorial-mod auto-start pattern | Proven reference implementation | v1.0 |
-| Independent Gradle subproject for each seam | Build isolation | v1.0 |
+| Independent Gradle subproject for each seam | Build isolation | v1.0 | ~~Superseded by [ADR-0014](0014-flat-merge.md)~~ |
 | Runtime dependency, not compile | Prevent framework leakage | v1.0 |
 | Unconditional localRuntime | No Gradle property required; runtime control via isEnabled() | v1.1 |
 | System property override bridge | isEnabled()/shouldExitAfterSmoke() check System.getProperty first, ForgeConfigSpec fallback | v1.1 |
@@ -23,7 +23,7 @@ Historical architectural decisions from the module separation milestones.
 | Conditional halt(0)/halt(1) | Gradle exit code propagation | v1.1 |
 | `eyelib-particle` as real module boundary | Particle responsibilities spread across root runtime, importer schema, command/network integration, manager publication | v1.2 |
 | `eyelib-util` as Forge module | May depend on MC/Forge; not artificially constrained to be pure Java | v1.3 |
-| `io.github.tt432.eyelibutil` namespace | Avoid split packages with root and sibling modules | v1.3 |
+| `io.github.tt432.eyelibutil` namespace | Avoid split packages with root and sibling modules | v1.3 | ~~Superseded by [ADR-0014](0014-flat-merge.md)~~ |
 | Single-consumer utility routing | Domain-specific code belongs to functional owners, not the shared util module | v1.3 |
 | v1.4 Phase ordering: Analysis→Rename→Data→Capability→Docs | Research-backed dependency chain | v1.4 |
 | Atomic module rename | settings.gradle + build.gradle + .idea/ + directory in one operation before Gradle sync | v1.4 |

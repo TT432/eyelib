@@ -7,8 +7,8 @@
 - For boundary decisions, read :docs/decisions/0002-module-boundaries.md:.
 
 ## Repository Shape
-- Multi-project :Gradle + Java 17 + Forge: codebase: root runtime module :::, and 13 Gradle subprojects: ::eyelib-animation:, ::eyelib-attachment:, ::eyelib-behavior:, ::eyelib-bridge:, ::eyelib-importer:, ::eyelib-material:, ::eyelib-model:, ::eyelib-molang:, ::eyelib-network:, ::eyelib-particle:, ::eyelib-preprocessing:, ::eyelib-track:, ::eyelib-util:.
-- The authoritative dependency graph is each subproject's `build.gradle` `project(:)` edges. Read those before trusting any prose document.
+- Single-project :Gradle + Java 17 + Forge: codebase. All source under `src/main/java/io/github/tt432/eyelib/<module>/`, modules separated by package convention (see :docs/decisions/0014-flat-merge.md:). `clientsmoke/` is a composite build (smoke test framework), not part of the main project.
+- The authoritative module inventory is :MODULES.md:. Package boundaries (`io.github.tt432.eyelib.<module>`) define the real architecture.
 - Preserve existing core patterns: manager, loader, visitor, and codec.
 
 ## Editing Rules
@@ -17,7 +17,7 @@
 - Do not add code to ambiguous areas without first documenting the destination responsibility.
 - Before each change, identify which modules in :MODULES.md: are affected. Update :MODULES.md: in the same change if responsibility, paths, or interactions change.
 - If a module is added or removed, update :MODULES.md: and any impacted docs in the same change.
-- Subproject `build.gradle` `project(:)` edges define the real architecture. A subproject must never depend on root (`io.github.tt432.eyelib.*`).
+- Package boundaries (`io.github.tt432.eyelib.<module>`) define the real architecture. A module package must not depend on root orchestration packages (`io.github.tt432.eyelib.client`, `io.github.tt432.eyelib.common`).
 
 ## Comment Rules
 
