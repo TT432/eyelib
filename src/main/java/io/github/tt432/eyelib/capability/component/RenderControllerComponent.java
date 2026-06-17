@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.capability.component;
 
 import io.github.tt432.eyelib.client.entity.RenderControllerRuntime;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -12,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author TT432
  */
-@NullMarked
 public class RenderControllerComponent {
     private static final AtomicInteger TEXTURE_STATE_VERSION = new AtomicInteger();
 

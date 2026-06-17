@@ -3,14 +3,11 @@ package io.github.tt432.eyelib.behavior.component.property;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * minecraft:spawn_on_death — 实体死亡时生成其他实体。
  *
  * @author TT432
  */
-@NullMarked
 public record SpawnOnDeath(
         String spawn_entity,
         String spawn_event,

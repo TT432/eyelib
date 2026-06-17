@@ -3,14 +3,11 @@ package io.github.tt432.eyelib.behavior.component.property;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * minecraft:on_equipment_changed — 实体装备变化时触发事件。
  *
  * @author TT432
  */
-@NullMarked
 public record OnEquipmentChanged(
         String event,
         String target

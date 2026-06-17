@@ -3,15 +3,12 @@ package io.github.tt432.eyelib.importer.model.importer;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.importer.model.bbmodel.BBModel;
 import io.github.tt432.eyelib.importer.model.bbmodel.BBModelLoader;
-import org.jspecify.annotations.NullMarked;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 
 /** BBModel 文件的导入器，负责解析、重打包纹理并构建中间表示。
  * @author TT432 */
-@NullMarked
 public final class BlockbenchModelImporter {
     private BlockbenchModelImporter() {
     }

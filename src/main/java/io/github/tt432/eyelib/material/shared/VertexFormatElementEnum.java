@@ -6,8 +6,6 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.serialization.Codec;
 import io.github.tt432.eyelib.util.PortStringRepresentable;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.EnumSet;
 
 /**
@@ -15,7 +13,6 @@ import java.util.EnumSet;
  *
  * @author TT432
  */
-@NullMarked
 public enum VertexFormatElementEnum implements PortStringRepresentable {
     Position(DefaultVertexFormat.ELEMENT_POSITION),
     Normal(DefaultVertexFormat.ELEMENT_NORMAL),

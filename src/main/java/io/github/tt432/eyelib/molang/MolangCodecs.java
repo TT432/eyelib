@@ -3,15 +3,12 @@ package io.github.tt432.eyelib.molang;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.List;
 import java.util.function.Function;
 
 /**
  * @author TT432
  */
-@NullMarked
 final class MolangCodecs {
     private MolangCodecs() {
     }

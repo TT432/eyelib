@@ -1,7 +1,5 @@
 package io.github.tt432.eyelib.molang.util;
 
-import org.jspecify.annotations.NullMarked;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
@@ -10,7 +8,6 @@ import java.lang.annotation.Target;
  *
  * @author TT432
  */
-@NullMarked
 @Target(ElementType.METHOD)
 public @interface CalledByGeneratedMethod {
 }

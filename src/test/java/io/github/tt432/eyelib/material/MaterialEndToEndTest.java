@@ -5,7 +5,6 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.material.material.BrMaterial;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
-import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -15,7 +14,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author TT432
  */
-@NullMarked
 class MaterialEndToEndTest {
 
     // @formatter:off

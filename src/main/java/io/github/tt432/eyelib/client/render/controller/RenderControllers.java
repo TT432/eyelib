@@ -2,8 +2,6 @@ package io.github.tt432.eyelib.client.render.controller;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Map;
 
 /**
@@ -11,7 +9,6 @@ import java.util.Map;
  *
  * @author TT432
  */
-@NullMarked
 public record RenderControllers(
         Map<String, RenderControllerEntry> render_controllers
 ) {

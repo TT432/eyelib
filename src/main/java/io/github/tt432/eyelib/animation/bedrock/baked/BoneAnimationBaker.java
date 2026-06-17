@@ -1,8 +1,6 @@
 package io.github.tt432.eyelib.animation.bedrock.baked;
 
 import io.github.tt432.eyelib.importer.animation.bedrock.BrBoneKeyFrameSchema;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.TreeMap;
 
 /**
@@ -10,7 +8,6 @@ import java.util.TreeMap;
  *
  * @author TT432
  */
-@NullMarked
 public final class BoneAnimationBaker {
 
     private BoneAnimationBaker() {

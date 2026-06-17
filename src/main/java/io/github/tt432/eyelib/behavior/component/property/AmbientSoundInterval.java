@@ -3,14 +3,11 @@ package io.github.tt432.eyelib.behavior.component.property;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Optional;
 
 /**
  * @author TT432
  */
-@NullMarked
 public record AmbientSoundInterval(
         float value,
         Optional<String> event_name,

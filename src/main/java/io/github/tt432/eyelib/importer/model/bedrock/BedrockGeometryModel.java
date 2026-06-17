@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.importer.model.bedrock;
 
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
@@ -10,7 +9,6 @@ import java.util.Map;
 
 /** Bedrock 几何模型的数据结构。
  * @author TT432 */
-@NullMarked
 public record BedrockGeometryModel(
         List<Geometry> geometries
 ) {

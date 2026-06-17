@@ -7,7 +7,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
-import org.jspecify.annotations.NullMarked;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -21,7 +20,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * @author TT432
  */
 @Mixin(MultiPlayerGameMode.class)
-@NullMarked
 public class MultiPlayerGameModeMixin {
     @Shadow
     private boolean isDestroying;

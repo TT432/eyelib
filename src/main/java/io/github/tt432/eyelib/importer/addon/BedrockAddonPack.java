@@ -11,13 +11,11 @@ import io.github.tt432.eyelib.importer.particle.BrParticle;
 import io.github.tt432.eyelib.importer.recipe.BrRecipe;
 import io.github.tt432.eyelib.importer.render.controller.BrRenderControllers;
 import io.github.tt432.eyelib.importer.trading.BrTrading;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 
 /** @author TT432 */
-@NullMarked
 public record BedrockAddonPack(
         String sourceName,
         BedrockPackManifest manifest,

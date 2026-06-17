@@ -5,7 +5,6 @@ import io.github.tt432.eyelib.material.gl.GLStates;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import io.github.tt432.eyelib.material.material.BrMaterialResolver;
 import io.github.tt432.eyelib.material.material.ResolvedBrMaterial;
-import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -34,7 +33,6 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author TT432
  */
-@NullMarked
 class BrRenderStateSpecTest {
 
     // === 辅助构造 ===

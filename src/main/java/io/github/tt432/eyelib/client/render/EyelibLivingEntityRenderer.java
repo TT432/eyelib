@@ -10,14 +10,11 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import org.jspecify.annotations.NullMarked;
-
 import static io.github.tt432.eyelib.client.EntityRenderSystem.renderItemInHand;
 
 /**
  * @author TT432
  */
-@NullMarked
 public class EyelibLivingEntityRenderer<T extends LivingEntity>
         extends LivingEntityRenderer<T, EyelibLivingEntityRenderer.EmptyEntityModel<T>> {
     public EyelibLivingEntityRenderer(EntityRendererProvider.Context context, float shadowRadius) {

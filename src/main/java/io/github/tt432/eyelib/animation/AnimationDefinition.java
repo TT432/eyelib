@@ -1,7 +1,5 @@
 package io.github.tt432.eyelib.animation;
 
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Map;
 
 /**
@@ -9,7 +7,6 @@ import java.util.Map;
  *
  * @author TT432
  */
-@NullMarked
 public interface AnimationDefinition<K, C extends AnimationChannelDefinition<K>> {
     Map<String, C> channels();
 

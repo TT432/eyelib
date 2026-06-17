@@ -24,7 +24,6 @@ import io.github.tt432.eyelib.importer.addon.BrSpawnRule;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -38,7 +37,6 @@ import java.util.Map;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@NullMarked
 public final class BehaviorPackPublication {
     public static void replaceFromBehaviorPack(BedrockAddonSideAggregate behaviorPack, Logger logger) {
         replaceBehaviorEntities(behaviorPack.behaviorEntities(), logger);

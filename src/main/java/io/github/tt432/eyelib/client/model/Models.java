@@ -6,7 +6,6 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -15,7 +14,6 @@ import java.util.List;
 /**
  * @author TT432
  */
-@NullMarked
 public class Models {
     public static @Nullable Model merge(List<Model> models) {
         if (models.isEmpty()) return null;

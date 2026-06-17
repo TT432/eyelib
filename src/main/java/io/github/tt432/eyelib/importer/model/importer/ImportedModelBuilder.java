@@ -6,14 +6,11 @@ import io.github.tt432.eyelib.model.locator.LocatorEntry;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.joml.Vector3f;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.ArrayList;
 import java.util.List;
 
 /** 将中间骨骼/面数据构建为 eyewlib Model 对象，处理顶点绕组和法线方向。
  * @author TT432 */
-@NullMarked
 final class ImportedModelBuilder {
     private ImportedModelBuilder() {
     }

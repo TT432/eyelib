@@ -10,7 +10,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +19,6 @@ import java.util.List;
 /**
  * @author TT432
  */
-@NullMarked
 public class EyelibManagerScreen extends ModalWorksurfaceScreen {
     protected EyelibManagerScreen() {
         super(Component.empty());

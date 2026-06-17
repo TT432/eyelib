@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.material.material;
 
-import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +13,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author TT432
  */
-@NullMarked
 class BrMaterialEntryVariantTest {
 
     private static BrMaterialEntry createMinimalEntry(String name) {

@@ -7,7 +7,6 @@ import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import javax.imageio.ImageIO;
@@ -23,7 +22,6 @@ import static org.lwjgl.opengl.GL11.*;
  * @author TT432
  */
 @UtilityClass
-@NullMarked
 public class NativeImageIO {
     private static final Map<String, ResourceLocation> COLOR_MASK_CACHE = new HashMap<>();
 

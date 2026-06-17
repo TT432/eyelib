@@ -2,8 +2,6 @@ package io.github.tt432.eyelib.animation.bedrock;
 
 import io.github.tt432.eyelib.animation.AnimationDefinition;
 import io.github.tt432.eyelib.util.collection.ImmutableFloatTreeMap;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -11,7 +9,6 @@ import java.util.Map;
 /**
  * @author TT432
  */
-@NullMarked
 public record BrBoneAnimationDefinition(
         Map<String, BrAnimationChannel<BrBoneKeyFrameDefinition>> channels
 ) implements AnimationDefinition<BrBoneKeyFrameDefinition, BrAnimationChannel<BrBoneKeyFrameDefinition>> {

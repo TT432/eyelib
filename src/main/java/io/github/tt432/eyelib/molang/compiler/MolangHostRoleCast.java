@@ -1,16 +1,15 @@
 package io.github.tt432.eyelib.molang.compiler;
 
-import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author TT432
  */
-@NullMarked
 public final class MolangHostRoleCast {
     private MolangHostRoleCast() {
     }
 
-    public static <T> T castOrNull(Object host, Class<T> upperBound) {
+    public static <T> @Nullable T castOrNull(Object host, Class<T> upperBound) {
         try {
             return upperBound.cast(host);
         } catch (ClassCastException e) {

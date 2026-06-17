@@ -4,8 +4,6 @@ import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.FunctionInfo;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.FunctionParameterRole;
-import org.jspecify.annotations.NullMarked;
-
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Modifier;
@@ -17,7 +15,6 @@ import java.util.Optional;
  *
  * @author TT432
  */
-@NullMarked
 public class MethodBindingResolver {
 
     public static Optional<MethodBinding> resolve(

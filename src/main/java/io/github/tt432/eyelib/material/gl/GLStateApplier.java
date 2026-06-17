@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.material.gl;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
-import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
@@ -14,7 +13,6 @@ import java.util.*;
  *
  * @author TT432
  */
-@NullMarked
 public final class GLStateApplier {
 
     private GLStateApplier() {

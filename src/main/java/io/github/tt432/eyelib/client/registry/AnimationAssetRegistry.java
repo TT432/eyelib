@@ -6,15 +6,12 @@ import io.github.tt432.eyelib.animation.bedrock.BrAnimation;
 import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationControllers;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 
 /** @author TT432 */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@NullMarked
 public final class AnimationAssetRegistry {
     private static Map<?, BrAnimation> stagedAnimations = Map.of();
     private static Map<?, BrAnimationControllers> stagedControllers = Map.of();

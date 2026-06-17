@@ -4,8 +4,6 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.attachment.capability.AnimationComponentInfo;
 import io.github.tt432.eyelib.attachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelib.attachment.sync.RenderModelSyncPayload;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -14,7 +12,6 @@ import java.util.function.Function;
 /**
  * @author TT432
  */
-@NullMarked
 public final class RenderSyncApplyOps {
     private RenderSyncApplyOps() {
     }

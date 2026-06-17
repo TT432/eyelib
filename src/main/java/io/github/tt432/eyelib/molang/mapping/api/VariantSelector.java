@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.molang.mapping.api;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.FunctionInfo;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.FunctionParameterRole;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.VisibleArgumentKind;
-import org.jspecify.annotations.NullMarked;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.MethodData;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.PublicationSignature;
 import lombok.AccessLevel;
@@ -18,7 +17,6 @@ import java.util.Set;
  *
  * @author TT432
  */
-@NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class VariantSelector {
 

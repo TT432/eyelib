@@ -6,7 +6,6 @@ import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;
 import lombok.experimental.UtilityClass;
-import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +15,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author TT432
  */
 @UtilityClass
-@NullMarked
 public class ModelRenderer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModelRenderer.class);
     private static final AtomicInteger DEBUG_REMAINING = new AtomicInteger(Integer.getInteger("eyelib.debug.uv.limit", 256));

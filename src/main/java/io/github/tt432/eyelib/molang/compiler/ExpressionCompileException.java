@@ -1,7 +1,5 @@
 package io.github.tt432.eyelib.molang.compiler;
 
-import org.jspecify.annotations.NullMarked;
-
 import java.util.List;
 
 /**
@@ -9,7 +7,6 @@ import java.util.List;
  *
  * @author TT432
  */
-@NullMarked
 public class ExpressionCompileException extends RuntimeException {
     private final String sourceExpression;
     private final List<String> diagnostics;

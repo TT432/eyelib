@@ -6,15 +6,12 @@ import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.model.locator.LocatorEntry;
 import org.joml.Matrix4f;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author TT432
  */
-@NullMarked
 public class CollectLocatorModelVisitor extends ModelVisitor {
     @Override
     public void visitCube(RenderParams renderParams, ModelVisitContext context, Model.Cube cube) {

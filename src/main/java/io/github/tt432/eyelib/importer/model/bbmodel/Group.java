@@ -3,12 +3,10 @@ package io.github.tt432.eyelib.importer.model.bbmodel;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import org.jspecify.annotations.NullMarked;
 import org.joml.Vector3f;
 
 /** BBModel 分组，定义骨骼的变换和可见性属性。
  * @author TT432 */
-@NullMarked
 public record Group(
         String name,
         Vector3f origin,

@@ -5,7 +5,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import io.github.tt432.eyelib.util.codec.DispatchedMapCodec;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -17,7 +16,6 @@ import java.util.stream.Stream;
  *
  * @author TT432
  */
-@NullMarked
 public record BrMaterial(@Nullable String version, Map<String, BrMaterialEntry> materials) {
     private static final Codec<Map<String, BrMaterialEntry>> ENTRIES_CODEC =
             new DispatchedMapCodec<>(Codec.STRING, BrMaterialEntry.CODEC::apply);

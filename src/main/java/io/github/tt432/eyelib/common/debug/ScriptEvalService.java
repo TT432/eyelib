@@ -5,15 +5,12 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.SimpleCompiler;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
  * @author TT432
  */
-@NullMarked
 public final class ScriptEvalService {
 
     private static final String TEMPLATE = """

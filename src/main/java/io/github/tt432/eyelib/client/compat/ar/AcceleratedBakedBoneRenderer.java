@@ -13,8 +13,6 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import lombok.experimental.ExtensionMethod;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Map;
 
 /**
@@ -24,7 +22,6 @@ import java.util.Map;
  * @author TT432
  */
 @ExtensionMethod(VertexConsumerExtension.class)
-@NullMarked
 public class AcceleratedBakedBoneRenderer implements IAcceleratedRenderer<BakedModel.BakedBone> {
     public static final AcceleratedBakedBoneRenderer INSTANCE = new AcceleratedBakedBoneRenderer();
 

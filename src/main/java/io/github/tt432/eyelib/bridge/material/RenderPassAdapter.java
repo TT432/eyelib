@@ -3,14 +3,11 @@ package io.github.tt432.eyelib.bridge.material;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.client.renderer.RenderType;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * 将 PortRenderPass 语义转换为 MC RenderType 实例。
  *
  * @author TT432
  */
-@NullMarked
 public final class RenderPassAdapter {
 
     private RenderPassAdapter() {}

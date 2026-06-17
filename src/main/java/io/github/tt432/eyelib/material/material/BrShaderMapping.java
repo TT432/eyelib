@@ -2,8 +2,6 @@ package io.github.tt432.eyelib.material.material;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.function.Supplier;
 
 /**
@@ -15,7 +13,6 @@ import java.util.function.Supplier;
  *
  * @author TT432
  */
-@NullMarked
 public enum BrShaderMapping {
 
     OPAQUE("entity_solid"),

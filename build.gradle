@@ -179,11 +179,11 @@ dependencies {
     jarJar additionalRuntimeClasspath(implementation('com.h2database:h2:2.4.240'))
     compileOnly 'org.jspecify:jspecify:1.0.0'
     errorprone 'com.google.errorprone:error_prone_core:2.42.0'
-    errorprone 'com.uber.nullaway:nullaway:0.12.10'
+    errorprone 'com.uber.nullaway:nullaway:0.13.7'
     nullawayProcessor 'org.projectlombok:lombok:1.18.30'
     nullawayProcessor 'com.google.guava:guava:33.4.0-jre'
     nullawayProcessor 'com.google.errorprone:error_prone_core:2.42.0'
-    nullawayProcessor 'com.uber.nullaway:nullaway:0.12.10'
+    nullawayProcessor 'com.uber.nullaway:nullaway:0.13.7'
 
     compileOnly(annotationProcessor('io.github.llamalad7:mixinextras-common:0.5.0'))
     implementation(jarJar('io.github.llamalad7:mixinextras-forge:0.5.0'))
@@ -330,10 +330,12 @@ tasks.register('nullawayMain', JavaCompile) {
     options.errorprone.enabled = true
     options.errorprone.disableWarningsInGeneratedCode = true
     options.errorprone.check('NullAway', net.ltgt.gradle.errorprone.CheckSeverity.ERROR)
-    options.errorprone.option('NullAway:AnnotatedPackages', 'io.github.tt432.eyelib')
+    options.errorprone.check('RequireExplicitNullMarking', net.ltgt.gradle.errorprone.CheckSeverity.ERROR)
+    options.errorprone.option('NullAway:OnlyNullMarked', 'true')
     options.errorprone.option('NullAway:CheckOptionalEmptiness', 'true')
     options.errorprone.errorproneArgs.add('-XepDisableAllChecks')
     options.errorprone.errorproneArgs.add('-Xep:NullAway:ERROR')
+    options.errorprone.errorproneArgs.add('-Xep:RequireExplicitNullMarking:ERROR')
 }
 
 tasks.named('check').configure {

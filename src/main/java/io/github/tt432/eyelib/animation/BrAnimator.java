@@ -6,8 +6,6 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Map;
 
 /**
@@ -15,7 +13,6 @@ import java.util.Map;
  *
  * @author TT432
  */
-@NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class BrAnimator {
     public static ModelRuntimeData tickAnimation(AnimationComponent component, MolangScope scope, AnimationEffects effects,

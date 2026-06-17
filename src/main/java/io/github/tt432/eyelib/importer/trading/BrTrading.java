@@ -3,8 +3,6 @@ package io.github.tt432.eyelib.importer.trading;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -12,7 +10,6 @@ import java.util.Optional;
  * Bedrock 交易表的数据模型，支持 trading/*.json 和 economy_trades/*.json。
  * @author TT432
  */
-@NullMarked
 public record BrTrading(List<BrTier> tiers) {
     public static final Codec<BrTrading> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             BrTier.CODEC.listOf().fieldOf("tiers").forGetter(BrTrading::tiers)
@@ -21,7 +18,6 @@ public record BrTrading(List<BrTier> tiers) {
     /**
      * Either 统一两种 tier 格式：直接含 trades 的简单格式（left），及含 groups 的完整格式（right）。
      */
-    @NullMarked
     public record BrTier(int totalExpRequired, Either<List<BrTrade>, List<BrGroup>> content) {
         static final Codec<BrTier> CODEC = Codec.either(
                 SimpleTierRaw.CODEC,
@@ -55,7 +51,6 @@ public record BrTrading(List<BrTier> tiers) {
     /**
      * @param numToSelect 从 trades 中选取的交易数量，0 表示全选
      */
-    @NullMarked
     public record BrGroup(int numToSelect, List<BrTrade> trades) {
         static final Codec<BrGroup> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 Codec.INT.optionalFieldOf("num_to_select", 0).forGetter(BrGroup::numToSelect),
@@ -70,7 +65,6 @@ public record BrTrading(List<BrTier> tiers) {
      * @param maxUses 交易最大使用次数（可选）
      * @param rewardExp 交易是否奖励经验（可选）
      */
-    @NullMarked
     public record BrTrade(
             List<BrTradeEntry> wants,
             List<BrTradeEntry> gives,
@@ -95,7 +89,6 @@ public record BrTrading(List<BrTier> tiers) {
     /**
      * wants/gives 中的条目，可能为单件物品（left）或 choice 列表（right）。
      */
-    @NullMarked
     public record BrTradeEntry(Either<BrTradeItem, List<BrTradeItem>> content) {
         static final Codec<BrTradeEntry> CODEC = Codec.either(
                 BrTradeItem.CODEC,
@@ -122,7 +115,6 @@ public record BrTrading(List<BrTier> tiers) {
      * @param quantity 物品数量，未指定时默认为 1
      * @param priceMultiplier 价格倍率（可选）
      */
-    @NullMarked
     public record BrTradeItem(
             String item,
             BrQuantity quantity,
@@ -141,7 +133,6 @@ public record BrTrading(List<BrTier> tiers) {
     /**
      * 物品数量，支持单值和 {min,max} 区间。单值解码后 min == max。
      */
-    @NullMarked
     public record BrQuantity(int min, int max) {
         static final Codec<BrQuantity> CODEC = Codec.either(
                 Codec.INT,

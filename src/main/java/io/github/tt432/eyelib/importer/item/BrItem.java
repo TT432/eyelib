@@ -4,7 +4,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
 import io.github.tt432.eyelib.importer.util.ImporterCodecUtil;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
@@ -14,7 +13,6 @@ import java.util.Optional;
  *
  * @author TT432
  */
-@NullMarked
 public record BrItem(
         String formatVersion,
         Description description,

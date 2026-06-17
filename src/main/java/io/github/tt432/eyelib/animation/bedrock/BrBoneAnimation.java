@@ -12,7 +12,6 @@ import io.github.tt432.eyelib.util.collection.ImmutableFloatTreeMap;
 import io.github.tt432.eyelib.util.codec.CodecHelper;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -26,7 +25,6 @@ import java.util.TreeMap;
  *
  * @author TT432
  */
-@NullMarked
 public record BrBoneAnimation(
         Map<String, BrAnimationChannel<BrBoneKeyFrame>> channels,
         BrBoneAnimationDefinition compiledDefinition

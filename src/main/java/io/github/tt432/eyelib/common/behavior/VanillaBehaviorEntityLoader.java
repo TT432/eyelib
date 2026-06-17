@@ -5,7 +5,6 @@ import com.google.gson.JsonParser;
 import io.github.tt432.eyelib.importer.addon.BrBehaviorEntityFile;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +24,6 @@ import java.util.zip.ZipInputStream;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@NullMarked
 public final class VanillaBehaviorEntityLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(VanillaBehaviorEntityLoader.class);
     private static final String MCPACK_RESOURCE_PATH = "data/eyelib/vanilla_behavior_pack.mcpack";

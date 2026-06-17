@@ -1,7 +1,5 @@
 package io.github.tt432.eyelib.molang.mapping.api;
 
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Objects;
 
 /**
@@ -10,7 +8,6 @@ import java.util.Objects;
  * @param <T> 此角色关联的值类型
  * @author TT432
  */
-@NullMarked
 public final class HostRole<T> {
     private final String name;
     private final Class<T> type;

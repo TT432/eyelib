@@ -6,15 +6,12 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
 
 /** Import 层通用 Codec 工具。
  * @author TT432 */
-@NullMarked
 public final class ImporterCodecUtil {
     private ImporterCodecUtil() {
     }

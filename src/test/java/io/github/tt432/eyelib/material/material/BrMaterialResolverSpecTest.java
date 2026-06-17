@@ -4,7 +4,6 @@ import io.github.tt432.eyelib.material.gl.BlendFactor;
 import io.github.tt432.eyelib.material.gl.GLStates;
 import io.github.tt432.eyelib.material.render.BrRenderState;
 import io.github.tt432.eyelib.material.render.BrRenderStateFactory;
-import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author TT432
  */
-@NullMarked
 class BrMaterialResolverSpecTest {
 
     // === Helper methods ===

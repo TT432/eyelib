@@ -3,14 +3,11 @@ package io.github.tt432.eyelib.bridge.molang;
 import io.github.tt432.eyelib.molang.mapping.api.MolangQueryRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * Minecraft Molang 查询运行时实现。
  *
  * @author TT432
  */
-@NullMarked
 public final class MinecraftMolangQueryRuntime implements MolangQueryRuntime {
     @Override
     public float actorCount() {

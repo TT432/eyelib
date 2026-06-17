@@ -29,18 +29,21 @@
 - 每个 `.java` 文件的类/接口声明前加 `/** @author TT432 */`。
 
 ### `@NullMarked`
-- **全局强制**。所有类、所有 `package-info.java` 必须加 `@NullMarked`。
+- **只在 `package-info.java` 加 `@NullMarked`**。类/接口/枚举/record 声明前**不加**（`package-info.java` 已覆盖整个包，类级是冗余）。
+- NullAway 通过 `OnlyNullMarked=true` + `RequireExplicitNullMarking` checker 强制此约定。新包必须先建 `package-info.java`，否则该包内的类会被 NullAway 报错。
 
 ### package-info.java
-- 统一格式，用一段话简述包职责：
+- 每个包含 `.java` 文件的包都必须有一份。统一格式：
 ```java
-@NullMarked
-package ...;
-
 /**
- * 一句话说明包的职责。
+ * 一句话说明包的职责（中文）。
  */
+@NullMarked
+package io.github.tt432.eyelib.<module>;
+
+import org.jspecify.annotations.NullMarked;
 ```
+- **关键**：`import` 必须在 `package` 声明之后（javac 强制要求），Javadoc 必须在最顶部。
 
 - 不再单独维护包级 README.md。包的知识分层如下：
   - **公共 API 的 Javadoc** → 类/方法签名自带

@@ -1,13 +1,10 @@
 package io.github.tt432.eyelib.material.port;
 
-import org.jspecify.annotations.NullMarked;
-
 /**
  * 描述渲染 Pass 的语义需求，替代 MC 的 RenderType 体系。
  *
  * @author TT432
  */
-@NullMarked
 public interface PortRenderPass {
 
     /** 渲染 pass 的半透明类型 */

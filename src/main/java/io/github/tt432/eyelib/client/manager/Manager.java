@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.client.manager;
 
 import io.github.tt432.eyelib.util.manager.ManagerStorage;
 import io.github.tt432.eyelib.util.repository.Repository;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
@@ -10,7 +9,6 @@ import java.util.Map;
 /**
  * @author TT432
  */
-@NullMarked
 public abstract class Manager<T> implements Repository<T> {
     private final ManagerStorage<T> storage = new ManagerStorage<>();
 

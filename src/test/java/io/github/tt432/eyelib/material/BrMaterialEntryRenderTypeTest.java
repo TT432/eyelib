@@ -6,7 +6,6 @@ import io.github.tt432.eyelib.material.shared.VertexFormatElementEnum;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.client.renderer.RenderType;
-import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +18,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author TT432
  */
-@NullMarked
 class BrMaterialEntryRenderTypeTest {
 
     private static BrMaterialEntry createNoShaderEntry(String name) {

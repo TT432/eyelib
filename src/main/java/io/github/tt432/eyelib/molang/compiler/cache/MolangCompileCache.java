@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.molang.compiler.cache;
 
 import io.github.tt432.eyelib.molang.compiler.CompiledMolangExpression;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
-import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -14,7 +14,6 @@ import java.util.function.Supplier;
  *
  * @author TT432
  */
-@NullMarked
 public final class MolangCompileCache {
     private static final int COMPILER_VERSION = 2;
     private static final int MAX_L1_SIZE = 1000;
@@ -22,7 +21,7 @@ public final class MolangCompileCache {
     private final Map<String, CompiledMolangExpression> cache = new ConcurrentHashMap<>();
 
     // 用于查找时检测过期
-    private volatile MolangMappingTree mappingTree;
+    private volatile @Nullable MolangMappingTree mappingTree;
 
     public MolangCompileCache() {
         this(null, null);
@@ -32,7 +31,7 @@ public final class MolangCompileCache {
      * @param mappingTree    过期检测用的映射树，可为 null
      * @param cacheDirectory 未使用，保留仅为兼容
      */
-    public MolangCompileCache(MolangMappingTree mappingTree, Path cacheDirectory) {
+    public MolangCompileCache(@Nullable MolangMappingTree mappingTree, @Nullable Path cacheDirectory) {
         this.mappingTree = mappingTree;
     }
 

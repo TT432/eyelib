@@ -2,8 +2,6 @@ package io.github.tt432.eyelib.bridge.molang;
 
 import io.github.tt432.eyelib.molang.port.PortEntity;
 import net.minecraft.world.entity.Entity;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +10,6 @@ import java.util.Map;
  *
  * @author TT432
  */
-@NullMarked
 public final class EntityPortAdapter {
 
     private EntityPortAdapter() {}

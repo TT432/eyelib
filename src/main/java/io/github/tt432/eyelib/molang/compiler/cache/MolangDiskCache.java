@@ -23,7 +23,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.CRC32;
 
-import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 编译后的 Molang 字节码磁盘缓存。
@@ -40,7 +40,6 @@ import org.jspecify.annotations.NullMarked;
  *
  * @author TT432
  */
-@NullMarked
 public final class MolangDiskCache {
     private static final Logger LOG = Logger.getLogger(MolangDiskCache.class.getName());
 
@@ -122,7 +121,7 @@ public final class MolangDiskCache {
         }
     }
 
-    public byte[] read(String sourceExpression, String registryVersionRef, int compilerVersion) throws IOException {
+    public byte @Nullable [] read(String sourceExpression, String registryVersionRef, int compilerVersion) throws IOException {
         Objects.requireNonNull(sourceExpression, "sourceExpression");
         Objects.requireNonNull(registryVersionRef, "registryVersionRef");
 

@@ -2,12 +2,9 @@ package io.github.tt432.eyelib.material.shared;
 
 import com.mojang.serialization.Codec;
 import io.github.tt432.eyelib.util.PortStringRepresentable;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * @author TT432
  */
-@NullMarked
 public enum PrimitiveMode implements PortStringRepresentable {
     None, QuadList, TriangleList, TriangleStrip, LineList, LineStrip;
 

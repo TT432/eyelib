@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.particle.loading;
 import io.github.tt432.eyelib.particle.api.ParticlePublisher;
 import io.github.tt432.eyelib.particle.api.ParticleStore;
 import io.github.tt432.eyelib.particle.runtime.ParticleDefinition;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -34,7 +35,7 @@ public final class ParticleDefinitionRegistry {
         private final LinkedHashMap<String, ParticleDefinition> particles = new LinkedHashMap<>();
 
         @Override
-        public ParticleDefinition get(String id) {
+        public @Nullable ParticleDefinition get(String id) {
             return particles.get(id);
         }
 

@@ -1,8 +1,6 @@
 package io.github.tt432.eyelib.material.material;
 
 import com.mojang.serialization.Codec;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -11,7 +9,6 @@ import java.util.stream.Collectors;
  *
  * @author TT432
  */
-@NullMarked
 public record BrMaterial(
         Map<String, BrMaterialEntry> materials
 ) {

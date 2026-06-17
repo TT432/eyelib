@@ -10,13 +10,10 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Optional;
 
 /** @author TT432 */
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
-@NullMarked
 public final class ManagerEventLifecycleHooks {
     private ManagerEventLifecycleHooks() {
     }

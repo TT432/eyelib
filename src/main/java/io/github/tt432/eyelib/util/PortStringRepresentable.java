@@ -1,8 +1,6 @@
 package io.github.tt432.eyelib.util;
 
 import com.mojang.serialization.Codec;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Arrays;
 import java.util.function.Supplier;
 
@@ -11,7 +9,6 @@ import java.util.function.Supplier;
  *
  * @author TT432
  */
-@NullMarked
 public interface PortStringRepresentable {
 
     String getSerializedName();

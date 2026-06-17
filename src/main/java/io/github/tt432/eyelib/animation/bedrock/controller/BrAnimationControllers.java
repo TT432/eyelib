@@ -7,15 +7,12 @@ import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationC
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.util.codec.CodecHelper;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
  * @author TT432
  */
-@NullMarked
 public record BrAnimationControllers(
         Map<String, BrAnimationController> animationControllers
 ) {

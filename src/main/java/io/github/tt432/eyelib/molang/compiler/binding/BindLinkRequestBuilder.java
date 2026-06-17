@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.molang.compiler.binding;
 
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -12,7 +11,6 @@ import java.util.List;
  *
  * @author TT432
  */
-@NullMarked
 public final class BindLinkRequestBuilder {
     private BindLinkRequestBuilder() {
     }

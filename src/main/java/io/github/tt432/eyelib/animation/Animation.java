@@ -5,14 +5,11 @@ import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.molang.MolangScope;
 
 import java.util.Map;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * 动画运行时接口，定义动画生命周期和数据管理。
  *
  * @author TT432
  */
-@NullMarked
 public interface Animation {
     /**
      * @return name

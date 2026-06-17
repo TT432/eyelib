@@ -3,14 +3,11 @@ package io.github.tt432.eyelib.behavior.component.property;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * minecraft:explode — 爆炸组件，控制实体的爆炸行为。
  *
  * @author TT432
  */
-@NullMarked
 public record Explode(
         float fuse_length,
         boolean fuse_lit,

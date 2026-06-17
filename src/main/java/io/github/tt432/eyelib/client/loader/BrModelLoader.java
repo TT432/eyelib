@@ -7,7 +7,6 @@ import io.github.tt432.eyelib.model.Model;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
-import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +20,6 @@ import java.util.Map;
  * @author TT432
  */
 @ResourceLoader
-@NullMarked
 public class BrModelLoader extends BrResourcesLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(BrModelLoader.class);
 

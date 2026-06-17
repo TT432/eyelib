@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.ARBFragmentShader;
 import org.lwjgl.opengl.ARBShaderObjects;
 import org.lwjgl.opengl.ARBVertexShader;
@@ -22,7 +21,6 @@ import org.lwjgl.opengl.GL11;
  *
  * @author TT432
  */
-@NullMarked
 public final class ShaderManager {
 
     private static final Map<String, Integer> PROGRAM_CACHE = new HashMap<>();

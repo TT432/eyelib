@@ -3,14 +3,11 @@ package io.github.tt432.eyelib.behavior.component.property;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * minecraft:dweller — 居民组件，控制实体在村庄等定居点的行为。
  *
  * @author TT432
  */
-@NullMarked
 public record Dweller(
         String dwelling_type,
         String dweller_role,

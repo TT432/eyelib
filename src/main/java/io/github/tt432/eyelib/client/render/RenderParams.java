@@ -16,7 +16,6 @@ import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -34,7 +33,7 @@ public record RenderParams(
         int light,
         int overlay,
         Int2BooleanOpenHashMap partVisibility,
-        @Nullable float[] tintColor
+        float @Nullable [] tintColor
 ) {
     public static RenderParams noRender() {
         var poseStack = new PoseStack();
@@ -99,7 +98,6 @@ public record RenderParams(
         return texture == null || texture.equals(MissingTextureAtlasSprite.getLocation());
     }
 
-    @NullMarked
     public static final class Builder {
         // required
         private final PoseStack.Pose pose0;
@@ -118,8 +116,7 @@ public record RenderParams(
         private int light = LightTexture.FULL_BRIGHT;
         private int overlay = OverlayTexture.NO_OVERLAY;
         private Int2BooleanOpenHashMap partVisibility = new Int2BooleanOpenHashMap();
-        @Nullable
-        private float[] tintColor;
+        private float @Nullable [] tintColor = null;
 
         public Builder(PoseStack.Pose pose0, PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable ResourceLocation texture, @Nullable VertexConsumer consumer) {
             this.pose0 = pose0;
@@ -150,7 +147,7 @@ public record RenderParams(
             return this;
         }
 
-        public Builder tintColor(@Nullable float[] tintColor) {
+        public Builder tintColor(float @Nullable [] tintColor) {
             this.tintColor = tintColor;
             return this;
         }

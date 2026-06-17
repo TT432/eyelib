@@ -5,8 +5,6 @@ import io.github.tt432.eyelib.model.Model;
 import it.unimi.dsi.fastutil.ints.Int2BooleanFunction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -16,7 +14,6 @@ import static org.lwjgl.opengl.GL11.*;
 /**
  * @author TT432
  */
-@NullMarked
 public abstract class ModelBakeInfo<Info> {
     private final Map<String, HashMap<ResourceLocation, BakedModel>> modelCache = new HashMap<>();
 

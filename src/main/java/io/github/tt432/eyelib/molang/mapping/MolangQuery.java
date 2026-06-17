@@ -18,8 +18,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.monster.Creeper;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.function.Function;
 
 import static io.github.tt432.eyelib.molang.MolangValue.FALSE;
@@ -31,7 +29,6 @@ import static io.github.tt432.eyelib.molang.MolangValue.TRUE;
 @MolangMapping(value = "query", pureFunction = false)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @SuppressWarnings("unused")
-@NullMarked
 public final class MolangQuery {
     @MolangFunction(value = "anim_time", alias = "life_time", description = "动画播放秒数")
     public static float animTime(MolangScope scope) {

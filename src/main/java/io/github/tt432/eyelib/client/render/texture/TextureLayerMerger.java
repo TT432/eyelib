@@ -8,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
-import org.jspecify.annotations.NullMarked;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
@@ -26,7 +25,6 @@ import static org.lwjgl.opengl.GL43.glDispatchCompute;
 
 /** @author TT432 */
 @UtilityClass
-@NullMarked
 public class TextureLayerMerger {
     private static final String BLENDING_SHADER_SOURCE = """
             #version 430 core

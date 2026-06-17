@@ -4,14 +4,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.util.streamcodec.EyelibStreamCodecs;
 import io.github.tt432.eyelib.util.streamcodec.StreamCodec;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * 由服务端权威计算、同步给客户端的轻量行为状态数据。
  *
  * @author TT432
  */
-@NullMarked
 public record SyncedBehaviorState(
         int variant,
         float scale,

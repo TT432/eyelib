@@ -8,6 +8,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
 import io.github.tt432.eyelib.importer.util.ImporterCodecUtil;
 import io.github.tt432.eyelib.molang.MolangValue;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -261,12 +262,12 @@ public record BrParticle(
                 return jsonObject;
             }
 
-            private static Float readOptionalFloat(JsonObject jsonObject, String key) {
+            private static @Nullable Float readOptionalFloat(JsonObject jsonObject, String key) {
                 return jsonObject.has(key) ? jsonObject.get(key).getAsFloat() : null;
             }
         }
 
-        private static float firstNonNull(Float primary, Float alternative, String label) {
+        private static float firstNonNull(@Nullable Float primary, @Nullable Float alternative, String label) {
             if (primary != null) {
                 return primary;
             }

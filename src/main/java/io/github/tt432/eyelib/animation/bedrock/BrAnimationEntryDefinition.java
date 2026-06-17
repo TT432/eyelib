@@ -18,7 +18,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -30,7 +29,6 @@ import java.util.UUID;
  *
  * @author TT432
  */
-@NullMarked
 public record BrAnimationEntryDefinition(
         String name,
         BrLoopType loop,

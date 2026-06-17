@@ -6,7 +6,6 @@ import io.github.tt432.eyelib.molang.type.MolangFloat;
 import io.github.tt432.eyelib.molang.type.MolangFloatSupplierObject;
 import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
@@ -18,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author TT432
  */
-@NullMarked
 public final class MolangScope {
     private final Map<Class<?>, Object> hostContextStore = new ConcurrentHashMap<>();
     private final Map<HostRole<?>, Object> hostRoleStore = new ConcurrentHashMap<>();

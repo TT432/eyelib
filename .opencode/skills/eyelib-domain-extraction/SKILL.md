@@ -48,7 +48,7 @@ grep -rn "import net.minecraft" src/main/java/ --include="*.java"
 
 必须遵守：
 - 接口不加 `public` 修饰符
-- 加 `@NullMarked`
+- 不加类级 `@NullMarked`（依赖包的 `package-info.java`）
 - 不能 import 任何 `net.minecraft.*`
 
 ### Step 4：修改 domain 代码
@@ -149,7 +149,6 @@ public interface PortRenderContext { long dayTime(); long gameTime(); float came
 
 ```java
 /** @author TT432 */
-@NullMarked
 interface PortXxx {
     ReturnType someProperty();
     @Nullable ReturnType optionalProperty();
@@ -163,7 +162,6 @@ interface PortXxx {
 Port 替代 `StringRepresentable` 时必须提供：
 
 ```java
-@NullMarked
 public interface PortStringRepresentable {
     String getSerializedName();
 

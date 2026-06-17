@@ -6,7 +6,6 @@ import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
 import com.sun.jna.Pointer;
 import org.jspecify.annotations.Nullable;
-import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +16,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author TT432
  */
-@NullMarked
 public final class RenderDocCapturer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RenderDocCapturer.class);

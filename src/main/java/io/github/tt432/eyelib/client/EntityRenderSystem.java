@@ -61,7 +61,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.joml.Matrix4f;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -77,7 +76,6 @@ import static net.minecraft.client.Minecraft.getInstance;
  */
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@NullMarked
 public class EntityRenderSystem {
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {

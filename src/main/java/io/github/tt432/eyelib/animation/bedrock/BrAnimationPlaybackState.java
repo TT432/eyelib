@@ -1,14 +1,11 @@
 package io.github.tt432.eyelib.animation.bedrock;
 
 import io.github.tt432.eyelib.importer.animation.bedrock.BrLoopType;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * 动画播放状态机，管理循环次数、时间累计和复位逻辑。
  *
  * @author TT432
  */
-@NullMarked
 public final class BrAnimationPlaybackState {
     private int loopedTimes;
     private float lastTicks;

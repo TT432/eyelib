@@ -4,14 +4,11 @@ import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import lombok.experimental.UtilityClass;
 import org.joml.Vector3f;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * 将动画变换（位置/旋转/缩放）应用到模型骨骼上。
  *
  * @author TT432
  */
-@NullMarked
 @UtilityClass
 public class AnimationApplier {
     public void apply(ModelRuntimeData.Entry entry, Model.Bone model, ModelRuntimeData data) {

@@ -5,8 +5,6 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.List;
 
 /**
@@ -14,7 +12,6 @@ import java.util.List;
  *
  * @author TT432
  */
-@NullMarked
 public record Scheduler(
         float min_delay_secs,
         float max_delay_secs,
@@ -28,7 +25,6 @@ public record Scheduler(
     /**
      * 调度事件配置。
      */
-    @NullMarked
     public record ScheduledEvent(
             JsonObject filters,
             String event

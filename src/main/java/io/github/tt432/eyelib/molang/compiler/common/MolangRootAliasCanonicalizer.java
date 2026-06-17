@@ -1,7 +1,5 @@
 package io.github.tt432.eyelib.molang.compiler.common;
 
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Locale;
 import java.util.Map;
 
@@ -10,7 +8,6 @@ import java.util.Map;
  *
  * @author TT432
  */
-@NullMarked
 public final class MolangRootAliasCanonicalizer {
     private static final Map<String, String> ROOT_ALIASES = Map.of(
             "q", "query",

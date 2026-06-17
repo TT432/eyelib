@@ -13,7 +13,6 @@ import net.minecraft.world.level.WorldDataConfiguration;
 import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
 import net.minecraftforge.fml.loading.FMLLoader;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author TT432
  */
-@NullMarked
 public final class AIDebugServer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AIDebugServer.class);

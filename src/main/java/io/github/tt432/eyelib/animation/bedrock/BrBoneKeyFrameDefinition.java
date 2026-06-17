@@ -2,14 +2,11 @@ package io.github.tt432.eyelib.animation.bedrock;
 
 import io.github.tt432.eyelib.animation.AnimationKeyframeDefinition;
 import io.github.tt432.eyelib.molang.MolangValue3;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.List;
 
 /**
  * @author TT432
  */
-@NullMarked
 public record BrBoneKeyFrameDefinition(
         float timestamp,
         List<MolangValue3> dataPoints,

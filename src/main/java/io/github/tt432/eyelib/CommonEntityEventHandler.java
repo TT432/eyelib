@@ -20,8 +20,6 @@ import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -29,7 +27,6 @@ import java.util.Optional;
  * @author TT432
  */
 @Mod.EventBusSubscriber(modid = Eyelib.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-@NullMarked
 public final class CommonEntityEventHandler {
     private CommonEntityEventHandler() {
     }

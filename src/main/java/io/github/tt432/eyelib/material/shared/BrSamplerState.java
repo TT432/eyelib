@@ -3,14 +3,11 @@ package io.github.tt432.eyelib.material.shared;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.util.PortStringRepresentable;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * 单个采样器状态条目的纯数据记录。
  *
  * @author TT432
  */
-@NullMarked
 public record BrSamplerState(
         int samplerIndex,
         TextureFilter textureFilter,

@@ -2,14 +2,11 @@ package io.github.tt432.eyelib.molang.compiler;
 
 import io.github.tt432.eyelib.molang.compiler.binding.BindDiagnosticsMode;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Set;
 
 /**
  * @author TT432
  */
-@NullMarked
 public record CompileContext(
         MolangMappingTree mappingTree,
         BindDiagnosticsMode diagnosticsMode,

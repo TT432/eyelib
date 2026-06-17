@@ -14,6 +14,7 @@ import java.util.function.Function;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.jspecify.annotations.Nullable;
 
 /** @author TT432 */
 @org.jspecify.annotations.NullMarked
@@ -66,7 +67,7 @@ final class BbModelCodecs {
     private static final class RecursiveCodec<T> implements Codec<T> {
         private final String name;
         private final Function<Codec<T>, Codec<T>> wrapped;
-        private Codec<T> delegate;
+        private @Nullable Codec<T> delegate;
 
         private RecursiveCodec(String name, Function<Codec<T>, Codec<T>> wrapped) {
             this.name = name;

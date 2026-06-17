@@ -2,11 +2,8 @@ package io.github.tt432.eyelib.importer.camera;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import org.jspecify.annotations.NullMarked;
-
 /** bedrock camera_preset 定义的 import 层表示。
  * @author TT432 */
-@NullMarked
 public record BrCameraPreset(
         String formatVersion,
         String identifier

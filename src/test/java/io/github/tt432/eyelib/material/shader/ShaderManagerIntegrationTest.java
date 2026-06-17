@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.material.shader;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -21,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author TT432
  */
-@NullMarked
 class ShaderManagerIntegrationTest {
 
     private static final String VERT_RESOURCE = "assets/eyelibmaterial/shaders/pass_through.vert";

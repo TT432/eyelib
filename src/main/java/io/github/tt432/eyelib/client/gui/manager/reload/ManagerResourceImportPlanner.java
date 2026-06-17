@@ -32,7 +32,6 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraftforge.common.MinecraftForge;
 import org.apache.commons.io.IOUtils;
-import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +47,6 @@ import java.util.*;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@NullMarked
 public final class ManagerResourceImportPlanner {
     private static final Gson GSON = new Gson();
     private static final Logger LOGGER = LoggerFactory.getLogger(ManagerResourceImportPlanner.class);

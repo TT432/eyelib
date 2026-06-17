@@ -5,7 +5,6 @@ import io.github.tt432.eyelib.molang.mapping.MolangMath;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.MolangClass;
 import io.github.tt432.eyelib.molang.type.MolangObject;
-import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author TT432
  */
-@NullMarked
 class MolangSpecTest {
 
     private MolangCompilerImpl compiler;

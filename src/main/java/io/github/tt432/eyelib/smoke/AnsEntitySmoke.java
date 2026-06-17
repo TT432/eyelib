@@ -14,6 +14,7 @@ import io.github.tt432.eyelib.molang.type.MolangObject;
 import io.github.tt432.eyelib.molang.type.MolangString;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,7 +89,7 @@ public class AnsEntitySmoke {
         }
     }
 
-    private void validateEntity(String entityId, BrClientEntity entity, List<String> errors) {
+    private void validateEntity(String entityId, @Nullable BrClientEntity entity, List<String> errors) {
         MolangScope scope = new MolangScope();
 
         validateGeometryRefs(entityId, entity, errors);
@@ -100,7 +101,8 @@ public class AnsEntitySmoke {
     /**
      * geometry map 的 value（geometry identifier）必须在 ModelManager 中存在。
      */
-    private void validateGeometryRefs(String entityId, BrClientEntity entity, List<String> errors) {
+    private void validateGeometryRefs(String entityId, @Nullable BrClientEntity entity, List<String> errors) {
+        if (entity == null) return;
         var geometryMap = entity.geometry();
         if (geometryMap.isEmpty()) {
             return;
@@ -117,7 +119,8 @@ public class AnsEntitySmoke {
     /**
      * textures map 的 value（纹理路径）必须可被解析为 ResourceLocation。
      */
-    private void validateTextureRefs(String entityId, BrClientEntity entity, List<String> errors) {
+    private void validateTextureRefs(String entityId, @Nullable BrClientEntity entity, List<String> errors) {
+        if (entity == null) return;
         var textureMap = entity.textures();
         if (textureMap.isEmpty()) {
             return;
@@ -135,8 +138,9 @@ public class AnsEntitySmoke {
      * renderControllerConditions 中的 MolangValue 必须能 evalAsBool；
      * 每个 RC 的 geometry/textures/materials/part_visibility MolangValue 必须 initArrays 后能 getObject 不崩溃。
      */
-    private void validateRenderControllers(String entityId, BrClientEntity entity,
+    private void validateRenderControllers(String entityId, @Nullable BrClientEntity entity,
                                             MolangScope scope, List<String> errors) {
+        if (entity == null) return;
         var rcList = entity.render_controllers();
         var rcConditions = entity.renderControllerConditions();
 
@@ -183,8 +187,9 @@ public class AnsEntitySmoke {
      * scripts 中的 MolangValue 必须能 eval（initialize, pre_animation, scale, scaleX/Y/Z），
      * animate map 中的每个 MolangValue 也必须能 eval。
      */
-    private void validateScripts(String entityId, BrClientEntity entity,
+    private void validateScripts(String entityId, @Nullable BrClientEntity entity,
                                   MolangScope scope, List<String> errors) {
+        if (entity == null) return;
         Optional<BrClientEntityScripts> scriptsOpt = entity.scripts();
         if (scriptsOpt.isEmpty()) {
             return;

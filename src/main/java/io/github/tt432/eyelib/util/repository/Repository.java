@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.util.repository;
 
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
@@ -13,7 +12,6 @@ import java.util.Map;
  * @param <T> 值类型
  * @author TT432
  */
-@NullMarked
 public interface Repository<T> {
     /**
      * 通过字符串标识符查找条目。

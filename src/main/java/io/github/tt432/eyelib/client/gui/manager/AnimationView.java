@@ -30,7 +30,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLLoader;
 import org.joml.Vector2f;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -45,7 +44,6 @@ import java.util.stream.Stream;
  * @author TT432
  */
 @Mod.EventBusSubscriber(Dist.CLIENT)
-@NullMarked
 public class AnimationView extends ModalWorksurfaceScreen {
     @Nullable
     private String selectedAnimationName = null;

@@ -3,8 +3,6 @@ package io.github.tt432.eyelib.material.material;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.util.PortStringRepresentable;
-import org.jspecify.annotations.NullMarked;
-
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL46.GL_MAX_TEXTURE_MAX_ANISOTROPY;
 import static org.lwjgl.opengl.GL46.GL_TEXTURE_MAX_ANISOTROPY;
@@ -12,7 +10,6 @@ import static org.lwjgl.opengl.GL46.GL_TEXTURE_MAX_ANISOTROPY;
 /**
  * @author TT432
  */
-@NullMarked
 public record BrSamplerState(
         int samplerIndex,
         TextureFilter textureFilter,

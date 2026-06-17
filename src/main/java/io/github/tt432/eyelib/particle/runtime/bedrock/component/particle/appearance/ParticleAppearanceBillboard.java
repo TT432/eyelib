@@ -15,6 +15,8 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
+import java.util.Objects;
+
 /** @author TT432 */
 public record ParticleAppearanceBillboard(
         MolangValue2 size,
@@ -99,15 +101,19 @@ public record ParticleAppearanceBillboard(
             ).apply(ins, Flipbook::new));
 
             public Vector4f get(MolangScope scope, float lifetime, float time) {
-                int max = (int) Math.floor(maxFrame.eval(scope)) - 1;
+                // 调用方契约：仅在非 EMPTY 实例上调用（getUV line 77 已用 isEmpty 守卫）
+                MolangValue2 buv = Objects.requireNonNull(baseUV);
+                MolangValue2 suv = Objects.requireNonNull(stepUV);
+                MolangValue2 szuv = Objects.requireNonNull(sizeUV);
+                int max = (int) Math.floor(Objects.requireNonNull(maxFrame).eval(scope)) - 1;
                 int frame = stretchToLifetime
                         ? (int) Math.floor((time / lifetime) * max)
-                        : (int) Math.floor(framesPerSecond.eval(scope) * time);
+                        : (int) Math.floor(Objects.requireNonNull(framesPerSecond).eval(scope) * time);
                 if (frame > max) {
                     frame = loop ? frame % (max + 1) : max;
                 }
-                Vector2f base = baseUV.eval(scope).add(stepUV.eval(scope).mul(frame));
-                return new Vector4f(base.x, base.y, sizeUV.getX(scope), sizeUV.getY(scope));
+                Vector2f base = buv.eval(scope).add(suv.eval(scope).mul(frame));
+                return new Vector4f(base.x, base.y, szuv.getX(scope), szuv.getY(scope));
             }
 
             public boolean isEmpty() {

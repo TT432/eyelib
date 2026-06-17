@@ -2,12 +2,9 @@ package io.github.tt432.eyelib.importer.animation.bedrock;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Map;
 
 /** @author TT432 */
-@NullMarked
 public record BrAnimationSet(
         Map<String, BrAnimationEntrySchema> animations
 ) {

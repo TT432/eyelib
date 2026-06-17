@@ -15,7 +15,6 @@ import lombok.Getter;
 import net.minecraftforge.common.MinecraftForge;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
@@ -24,7 +23,6 @@ import java.util.Map;
 /**
  * @author TT432
  */
-@NullMarked
 public class RenderHelper {
     @Getter
     private final ModelVisitContext context = new ModelVisitContext();

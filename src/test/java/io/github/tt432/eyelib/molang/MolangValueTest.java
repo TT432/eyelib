@@ -8,7 +8,6 @@ import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.molang.type.MolangFloat;
 import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;
-import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author TT432
  */
-@NullMarked
 class MolangValueTest {
 
     @Test

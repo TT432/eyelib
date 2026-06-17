@@ -4,15 +4,12 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.NullMarked;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 /** .bbmodel 文件的磁盘加载器。
  * @author TT432 */
-@NullMarked
 @Slf4j
 public class BBModelLoader {
     private static final Gson GSON = new Gson();

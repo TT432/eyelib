@@ -3,14 +3,11 @@ package io.github.tt432.eyelib.molang.mapping;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * Molang 数学函数映射（math.*）。
  *
  * @author TT432
  */
-@NullMarked
 @MolangMapping("math")
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @SuppressWarnings("unused")

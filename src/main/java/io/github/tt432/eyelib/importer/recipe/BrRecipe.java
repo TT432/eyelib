@@ -6,7 +6,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -19,7 +18,6 @@ import java.util.function.Function;
  *
  * @author TT432
  */
-@NullMarked
 public sealed interface BrRecipe
         permits BrRecipe.Shaped, BrRecipe.Shapeless, BrRecipe.Furnace,
                 BrRecipe.BrewingMix, BrRecipe.BrewingContainer,
@@ -44,9 +42,9 @@ public sealed interface BrRecipe
         public <T> DataResult<Pair<BrRecipe, T>> decode(DynamicOps<T> ops, T input) {
             var mapResult = ops.getMap(input);
             if (mapResult.error().isPresent()) {
-                return DataResult.error(() -> "Not a JSON object: " + mapResult.error().get().message());
+                return DataResult.error(() -> "Not a JSON object: " + mapResult.error().orElseThrow().message());
             }
-            var map = mapResult.result().get();
+            var map = mapResult.result().orElseThrow();
             for (var entry : CODEC_BY_KEY.entrySet()) {
                 var val = map.get(entry.getKey());
                 if (val != null) {
@@ -71,7 +69,7 @@ public sealed interface BrRecipe
                 return encoded;
             }
             var mapBuilder = ops.mapBuilder();
-            mapBuilder.add(ops.createString(key), encoded.result().get());
+            mapBuilder.add(ops.createString(key), encoded.result().orElseThrow());
             return mapBuilder.build(prefix);
         }
     };

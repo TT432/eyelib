@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.bridge.molang;
 
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
@@ -11,7 +10,6 @@ import java.util.Map;
  *
  * @author TT432
  */
-@NullMarked
 public final class ComponentStore {
     private final Map<String, Object> values = new HashMap<>();
 

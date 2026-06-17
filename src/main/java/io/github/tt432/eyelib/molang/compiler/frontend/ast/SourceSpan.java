@@ -1,12 +1,10 @@
 package io.github.tt432.eyelib.molang.compiler.frontend.ast;
 
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 /**
  * @author TT432
  */
-@NullMarked
 public record SourceSpan(
         int startIndex,
         int stopIndexInclusive,

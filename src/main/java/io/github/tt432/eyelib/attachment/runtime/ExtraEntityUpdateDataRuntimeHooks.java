@@ -15,14 +15,11 @@ import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Mod.EventBusSubscriber(modid = "eyelib", bus = Mod.EventBusSubscriber.Bus.FORGE)
-@NullMarked
 public final class ExtraEntityUpdateDataRuntimeHooks {
     @SubscribeEvent
     public static void onLivingDamage(LivingDamageEvent event) {

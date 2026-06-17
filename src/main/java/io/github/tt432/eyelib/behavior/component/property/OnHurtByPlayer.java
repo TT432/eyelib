@@ -3,14 +3,11 @@ package io.github.tt432.eyelib.behavior.component.property;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * minecraft:on_hurt_by_player — 实体被玩家伤害时触发事件。
  *
  * @author TT432
  */
-@NullMarked
 public record OnHurtByPlayer(
         String event,
         String target

@@ -1,12 +1,9 @@
 package io.github.tt432.eyelib.molang.type;
 
 import io.github.tt432.eyelib.molang.MolangScope;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * @author TT432
  */
-@NullMarked
 public record MolangFloatSupplierObject(
         MolangScope.FloatSupplier supplier
 ) implements MolangObject {

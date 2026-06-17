@@ -1,13 +1,10 @@
 package io.github.tt432.eyelib.client.gui;
 
 import lombok.experimental.UtilityClass;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * @author TT432
  */
 @UtilityClass
-@NullMarked
 public class EyelibGuis {
     @FunctionalInterface
     public interface DrawStringAction {

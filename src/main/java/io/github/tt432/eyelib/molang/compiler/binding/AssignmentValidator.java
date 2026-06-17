@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.molang.compiler.binding;
 
 import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
@@ -11,7 +10,6 @@ import java.util.Optional;
  *
  * @author TT432
  */
-@NullMarked
 public final class AssignmentValidator {
     private AssignmentValidator() {
     }

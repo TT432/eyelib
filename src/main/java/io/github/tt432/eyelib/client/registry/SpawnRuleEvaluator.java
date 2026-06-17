@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.client.registry;
 
 import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
 import io.github.tt432.eyelib.importer.addon.BrSpawnRule;
-import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +25,6 @@ import java.util.Set;
  *
  * @author TT432
  */
-@NullMarked
 public final class SpawnRuleEvaluator {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpawnRuleEvaluator.class);
 

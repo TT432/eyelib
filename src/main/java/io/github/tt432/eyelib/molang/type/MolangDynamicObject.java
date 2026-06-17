@@ -1,13 +1,10 @@
 package io.github.tt432.eyelib.molang.type;
 
-import org.jspecify.annotations.NullMarked;
-
 import java.util.function.Supplier;
 
 /**
  * @author TT432
  */
-@NullMarked
 public record MolangDynamicObject(
         Supplier<MolangObject> supplier
 ) implements MolangObject {

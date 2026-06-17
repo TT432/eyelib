@@ -3,13 +3,10 @@ package io.github.tt432.eyelib.importer.animation.bedrock.controller;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.MolangValue;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Optional;
 
 /** 动画控制器中的粒子效果定义。
  * @author TT432 */
-@NullMarked
 public record BrAcParticleEffect(
         Optional<String> effect,
         Optional<String> locator,

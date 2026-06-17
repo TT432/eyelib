@@ -6,12 +6,9 @@ import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * @author TT432
  */
-@NullMarked
 public class ARBakedVisitor extends HighSpeedRenderModelVisitor {
     @Override
     public void visitPreBone(RenderParams renderParams, ModelVisitContext context, Model.Bone bone, ModelRuntimeData data) {

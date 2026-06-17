@@ -4,7 +4,6 @@ import io.github.tt432.eyelib.animation.Animation;
 import io.github.tt432.eyelib.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcStateDefinition;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -14,7 +13,6 @@ import java.util.Map;
 /**
  * @author TT432
  */
-@NullMarked
 final class BrControllerStateOwner {
     private float startTick = -1;
     private float currentTick;

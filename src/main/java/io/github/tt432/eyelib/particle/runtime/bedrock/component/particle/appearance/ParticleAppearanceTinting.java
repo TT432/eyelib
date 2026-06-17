@@ -13,6 +13,7 @@ import org.joml.Vector4f;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 /** @author TT432 */
@@ -32,10 +33,12 @@ public record ParticleAppearanceTinting(
 
     public int getColor(ParticleAccess particle) {
         if (!isGradient) {
-            Vector4f mul = staticColor.eval(particle.molangScope()).mul(255);
+            // 不变量：!isGradient 时 staticColor 必非空（CODEC 工厂保证）
+            Vector4f mul = Objects.requireNonNull(staticColor).eval(particle.molangScope()).mul(255);
             return 0xFF_00_00_00 | ((int) mul.x) << 16 | ((int) mul.y) << 8 | ((int) mul.z);
         }
-        return gradientColor.getColor(particle.molangScope());
+        // 不变量：isGradient 时 gradientColor 必非空（CODEC 工厂保证）
+        return Objects.requireNonNull(gradientColor).getColor(particle.molangScope());
     }
 
     public record Color(

@@ -11,7 +11,6 @@ import io.github.tt432.eyelib.importer.model.bbmodel.Group;
 import io.github.tt432.eyelib.importer.model.bbmodel.Outliner;
 import io.github.tt432.eyelib.importer.model.bbmodel.Texture;
 import it.unimi.dsi.fastutil.objects.ObjectList;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
@@ -27,7 +26,6 @@ import java.util.stream.Collectors;
 
 /** 从 Blockbench 或 Bedrock 源数据转换得到的中间模型表示，支持纹理重打包。
  * @author TT432 */
-@NullMarked
 public record ImportedModelData(
         String name,
         VisibleBox visibleBox,

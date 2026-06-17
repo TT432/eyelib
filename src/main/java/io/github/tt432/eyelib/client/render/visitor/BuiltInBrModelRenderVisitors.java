@@ -2,13 +2,10 @@ package io.github.tt432.eyelib.client.render.visitor;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@NullMarked
 public class BuiltInBrModelRenderVisitors {
 
     public static final RenderModelVisitor BLANK = new RenderModelVisitor();

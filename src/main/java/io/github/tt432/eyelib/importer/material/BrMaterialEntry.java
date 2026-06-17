@@ -5,8 +5,6 @@ import io.github.tt432.eyelib.material.shared.DepthFunc;
 import io.github.tt432.eyelib.material.shared.MsaaSupport;
 import io.github.tt432.eyelib.material.shared.PrimitiveMode;
 import io.github.tt432.eyelib.material.shared.VertexFormatElementEnum;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +14,6 @@ import java.util.stream.Collectors;
 
 /** CODEC 委托给共享纯数据类型的 import 层材料条目。
  * @author TT432 */
-@NullMarked
 public record BrMaterialEntry(
         String base,
         String name,

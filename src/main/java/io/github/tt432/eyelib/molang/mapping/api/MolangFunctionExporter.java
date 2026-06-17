@@ -2,8 +2,6 @@ package io.github.tt432.eyelib.molang.mapping.api;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.NullMarked;
-
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -12,7 +10,6 @@ import java.io.IOException;
  *
  * @author TT432
  */
-@NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MolangFunctionExporter {
     public static void export() {

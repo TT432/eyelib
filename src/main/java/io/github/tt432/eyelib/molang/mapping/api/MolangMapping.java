@@ -1,7 +1,5 @@
 package io.github.tt432.eyelib.molang.mapping.api;
 
-import org.jspecify.annotations.NullMarked;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -13,7 +11,6 @@ import java.lang.annotation.Target;
  *
  * @author TT432
  */
-@NullMarked
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface MolangMapping {

@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.animation;
 
 import io.github.tt432.eyelib.util.repository.Repository;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashMap;
@@ -12,7 +11,6 @@ import java.util.Map;
  *
  * @author TT432
  */
-@NullMarked
 public final class AnimationManager implements Repository<Animation> {
     private final Map<String, Animation> store = new LinkedHashMap<>();
     public static final AnimationManager INSTANCE = new AnimationManager();

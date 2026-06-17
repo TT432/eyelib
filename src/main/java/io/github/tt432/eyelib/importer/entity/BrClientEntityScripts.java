@@ -5,8 +5,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +13,6 @@ import java.util.Optional;
 /**
  * @author TT432
  */
-@NullMarked
 public record BrClientEntityScripts(
         MolangValue initialize,
         MolangValue pre_animation,

@@ -2,14 +2,11 @@ package io.github.tt432.eyelib.material.shared;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * 模板面的纯数据记录，对应四个Bedrock模板操作字段。
  *
  * @author TT432
  */
-@NullMarked
 public record Face(
         StencilDepthFailOp stencilDepthFailOp,
         StencilFailOp stencilFailOp,

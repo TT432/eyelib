@@ -5,8 +5,6 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.List;
 
 /**
@@ -14,7 +12,6 @@ import java.util.List;
  *
  * @author TT432
  */
-@NullMarked
 public record HurtOnCondition(
         List<DamageCondition> damage_conditions
 ) implements Component {
@@ -26,7 +23,6 @@ public record HurtOnCondition(
     /**
      * 伤害条件配置。
      */
-    @NullMarked
     public record DamageCondition(
             JsonObject filters,
             String cause,

@@ -8,8 +8,6 @@ import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.RegistryVersi
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.PublicationSignature;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -23,7 +21,6 @@ import java.util.stream.Collectors;
  *
  * @author TT432
  */
-@NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FingerprintCalculator {
 

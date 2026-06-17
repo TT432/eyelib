@@ -10,7 +10,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceList;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
@@ -19,7 +18,6 @@ import java.util.regex.Pattern;
 /**
  * @author TT432
  */
-@NullMarked
 public class RenderControllerRuntime {
     @Nullable
     private Int2ObjectMap<ReferenceList<MolangValue>> partVisibility;

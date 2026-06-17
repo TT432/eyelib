@@ -2,13 +2,11 @@ package io.github.tt432.eyelib.material.gl;
 
 import com.mojang.serialization.Codec;
 import io.github.tt432.eyelib.util.PortStringRepresentable;
-import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 
 /**
  * @author TT432
  */
-@NullMarked
 public enum BlendFactor implements PortStringRepresentable {
     DestColor(GL11.GL_DST_COLOR),
     SourceColor(GL11.GL_SRC_COLOR),

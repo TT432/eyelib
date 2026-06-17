@@ -8,8 +8,6 @@ import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.material.render.BrRenderState;
 import io.github.tt432.eyelib.material.render.BrRenderStateFactory;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -20,7 +18,6 @@ import java.util.function.Function;
  *
  * @author TT432
  */
-@NullMarked
 public final class RenderTypeResolver {
     private RenderTypeResolver() {
     }

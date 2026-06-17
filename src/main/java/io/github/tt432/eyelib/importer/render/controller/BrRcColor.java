@@ -4,15 +4,12 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * Bedrock render controller 的 color 字段（RGBA Molang 表达式）。
  * 求值后作为 vertex color 应用到渲染管线。
  *
  * @author TT432
  */
-@NullMarked
 public record BrRcColor(
         MolangValue r,
         MolangValue g,

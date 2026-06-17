@@ -3,14 +3,11 @@ package io.github.tt432.eyelib.behavior.component.property;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * minecraft:on_friendly_anger — 友方生物被激怒时触发事件。
  *
  * @author TT432
  */
-@NullMarked
 public record OnFriendlyAnger(
         String event,
         String target

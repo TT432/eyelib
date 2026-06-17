@@ -40,7 +40,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import io.github.tt432.eyelib.bridge.molang.ComponentStore;
@@ -54,7 +53,6 @@ import static io.github.tt432.eyelib.molang.MolangValue.TRUE;
  *
  * @author TT432
  */
-@NullMarked
 @MolangMapping(value = "query", pureFunction = false)
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @SuppressWarnings("unused")

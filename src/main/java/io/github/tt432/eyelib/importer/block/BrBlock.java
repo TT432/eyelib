@@ -4,8 +4,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
 import io.github.tt432.eyelib.importer.util.ImporterCodecUtil;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * Bedrock 方块定义的数据结构。<br>
  * 对应 JSON 格式：
@@ -20,7 +18,6 @@ import org.jspecify.annotations.NullMarked;
  * </pre>
  * @author TT432
  */
-@NullMarked
 public record BrBlock(
         String formatVersion,
         String identifier,

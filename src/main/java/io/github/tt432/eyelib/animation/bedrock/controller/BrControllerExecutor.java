@@ -13,7 +13,6 @@ import io.github.tt432.eyelib.molang.MolangScope;
 
 import io.github.tt432.eyelib.util.math.MathHelper;
 import net.minecraft.world.entity.Entity;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
@@ -22,7 +21,6 @@ import java.util.UUID;
 /**
  * @author TT432
  */
-@NullMarked
 final class BrControllerExecutor {
     private BrControllerExecutor() {
     }

@@ -8,14 +8,11 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
-@NullMarked
 public final class ManagerScreenOpenEvents {
     @SubscribeEvent
     public static void onEvent(TickEvent.ClientTickEvent event) {

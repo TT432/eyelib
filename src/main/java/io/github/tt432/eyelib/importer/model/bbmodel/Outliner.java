@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.importer.model.bbmodel;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -11,7 +10,6 @@ import java.util.Optional;
 
 /** BBModel 大纲层级，包含子节点和立方体引用。
  * @author TT432 */
-@NullMarked
 @SuppressWarnings("NullAway")
 public record Outliner(
         String uuid,

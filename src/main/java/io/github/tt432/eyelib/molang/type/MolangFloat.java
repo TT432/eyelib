@@ -1,11 +1,8 @@
 package io.github.tt432.eyelib.molang.type;
 
-import org.jspecify.annotations.NullMarked;
-
 /**
  * @author TT432
  */
-@NullMarked
 public record MolangFloat(
         float value
 ) implements MolangObject {

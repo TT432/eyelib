@@ -12,7 +12,6 @@ import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraftforge.common.MinecraftForge;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +32,6 @@ import java.util.concurrent.Executor;
  *
  * @author TT432
  */
-@NullMarked
 final class BedrockAddonAutoLoader implements PreparableReloadListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BedrockAddonAutoLoader.class);

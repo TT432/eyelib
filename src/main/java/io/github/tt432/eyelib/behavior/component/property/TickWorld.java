@@ -3,14 +3,11 @@ package io.github.tt432.eyelib.behavior.component.property;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * minecraft:tick_world — 世界刻处理组件，控制实体所在区块的加载。
  *
  * @author TT432
  */
-@NullMarked
 public record TickWorld(
         int radius,
         int distance_to_players,

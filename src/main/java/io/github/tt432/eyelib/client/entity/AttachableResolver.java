@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -16,7 +15,6 @@ import org.jspecify.annotations.Nullable;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@NullMarked
 public final class AttachableResolver {
     @Nullable
     public static BrClientEntity resolve(LivingEntity holder, ItemStack stack) {

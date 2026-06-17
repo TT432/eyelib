@@ -1,7 +1,5 @@
 package io.github.tt432.eyelib.molang.mapping.api;
 
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Optional;
 
 /**
@@ -9,7 +7,6 @@ import java.util.Optional;
  *
  * @author TT432
  */
-@NullMarked
 public interface HostContext {
     /**
      * Looks up a host object by its HostRole.

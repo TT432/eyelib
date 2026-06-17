@@ -11,7 +11,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.gui.widget.ScrollPanel;
 import org.apache.commons.lang3.StringUtils;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -21,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 /**
  * @author TT432
  */
-@NullMarked
 public class EntitiesListPanel extends ScrollPanel {
 
     static EyelibManagerScreen.@Nullable EntityButton lastSelected;

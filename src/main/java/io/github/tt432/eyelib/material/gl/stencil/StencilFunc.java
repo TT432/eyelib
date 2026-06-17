@@ -2,13 +2,11 @@ package io.github.tt432.eyelib.material.gl.stencil;
 
 import com.mojang.serialization.Codec;
 import io.github.tt432.eyelib.util.PortStringRepresentable;
-import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 
 /**
  * @author TT432
  */
-@NullMarked
 public enum StencilFunc implements PortStringRepresentable {
     /**
      * 总是通过模板测试

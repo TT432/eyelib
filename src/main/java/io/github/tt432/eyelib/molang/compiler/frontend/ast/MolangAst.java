@@ -1,13 +1,12 @@
 package io.github.tt432.eyelib.molang.compiler.frontend.ast;
 
-import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
 /**
  * @author TT432
  */
-@NullMarked
 public final class MolangAst {
     private MolangAst() {
     }
@@ -104,9 +103,9 @@ public final class MolangAst {
     public record ReturnStmt(SourceSpan span, Expr expression) implements Stmt {
     }
 
-    public record BreakStmt(SourceSpan span, Expr valueExpr) implements Stmt {
+    public record BreakStmt(SourceSpan span, @Nullable Expr valueExpr) implements Stmt {
     }
 
-    public record ContinueStmt(SourceSpan span, Expr valueExpr) implements Stmt {
+    public record ContinueStmt(SourceSpan span, @Nullable Expr valueExpr) implements Stmt {
     }
 }

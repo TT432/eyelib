@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.molang.compiler.frontend;
 
 import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
 import io.github.tt432.eyelib.molang.compiler.frontend.ast.SourceSpan;
-import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,6 @@ import java.util.Optional;
  *
  * @author TT432
  */
-@NullMarked
 public final class HandwrittenMolangAstParserFrontend implements MolangParserFrontend {
     public static final HandwrittenMolangAstParserFrontend INSTANCE = new HandwrittenMolangAstParserFrontend();
 
@@ -331,7 +330,7 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
             return new MolangAst.LoopExpr(SourceSpan.covering(span(loopToken), span(rightParen)), count, body);
         }
 
-        private MolangAst.Expr parseOptionalControlFlowValue(TokenKind terminator) {
+        private MolangAst.@Nullable Expr parseOptionalControlFlowValue(TokenKind terminator) {
             if (check(TokenKind.SEMICOLON) || check(terminator) || check(TokenKind.RIGHT_PAREN) || check(TokenKind.EOF)) {
                 return null;
             }

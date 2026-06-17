@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.material.shared;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.serialization.JsonOps;
-import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,7 +16,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author TT432
  */
-@NullMarked
 class VertexFormatElementEnumTest {
 
     static Stream<VertexFormatElementEnum> enumSource() {

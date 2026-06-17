@@ -5,8 +5,6 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.List;
 
 /**
@@ -14,7 +12,6 @@ import java.util.List;
  *
  * @author TT432
  */
-@NullMarked
 public record SpawnEntity(
         List<SpawnEntry> entities
 ) implements Component {
@@ -26,7 +23,6 @@ public record SpawnEntity(
     /**
      * 生成条目配置。
      */
-    @NullMarked
     public record SpawnEntry(
             JsonObject filters,
             int max_wait_time,

@@ -3,8 +3,6 @@ package io.github.tt432.eyelib.molang.compiler;
 import io.github.tt432.eyelib.molang.MolangCompiledFunction;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.type.MolangObject;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Set;
 
 /**
@@ -12,7 +10,6 @@ import java.util.Set;
  *
  * @author TT432
  */
-@NullMarked
 public interface CompiledMolangExpression extends MolangCompiledFunction {
     MolangObject evaluate(MolangScope scope);
 

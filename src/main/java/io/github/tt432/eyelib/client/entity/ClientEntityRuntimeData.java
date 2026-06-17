@@ -6,7 +6,6 @@ import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.model.entity.ModelResolver;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
@@ -15,7 +14,6 @@ import java.util.Collections;
 /**
  * @author TT432
  */
-@NullMarked
 public class ClientEntityRuntimeData {
     private final ModelResolver modelResolver;
     final Object2ObjectMap<String, Model> models = new Object2ObjectOpenHashMap<>();

@@ -11,7 +11,6 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
-import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
@@ -23,7 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author TT432
  */
-@NullMarked
 public final class BrRenderTypeFactory {
     private static final Map<Key, RenderType> CACHE = new ConcurrentHashMap<>();
 

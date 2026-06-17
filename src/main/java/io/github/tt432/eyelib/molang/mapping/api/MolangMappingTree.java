@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.molang.mapping.api;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Field;
@@ -16,7 +15,6 @@ import java.util.stream.Collectors;
  *
  * @author TT432
  */
-@NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MolangMappingTree {
     public static final MolangMappingTree INSTANCE = new MolangMappingTree();

@@ -10,7 +10,6 @@ import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
-import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -21,7 +20,6 @@ import java.util.Map;
 /**
  * @author TT432
  */
-@NullMarked
 public abstract class SimpleJsonWithSuffixResourceReloadListener extends SimplePreparableReloadListener<Map<ResourceLocation, JsonElement>> {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final Gson gson;

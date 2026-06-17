@@ -2,15 +2,12 @@ package io.github.tt432.eyelib.animation;
 
 import io.github.tt432.eyelib.molang.MolangScope;
 import org.apache.logging.log4j.util.TriConsumer;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.List;
 import java.util.TreeMap;
 
 /**
  * @author TT432
  */
-@NullMarked
 public record AnimationEffect<V>(
         TreeMap<Float, List<V>> data,
         TriConsumer<MolangScope, Float, V> action

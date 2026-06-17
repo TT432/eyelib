@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.client.gui.manager.reload;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -21,7 +20,6 @@ import java.util.function.Predicate;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@NullMarked
 public final class ManagerResourceBatchPlanner {
     @FunctionalInterface
     public interface FileParser<T> {

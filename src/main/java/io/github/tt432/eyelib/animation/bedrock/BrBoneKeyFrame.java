@@ -20,8 +20,6 @@ import io.github.tt432.eyelib.util.math.EyeMath;
 import io.github.tt432.eyelib.util.PortStringRepresentable;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +27,6 @@ import java.util.Optional;
 /**
  * @author TT432
  */
-@NullMarked
 public record BrBoneKeyFrame(
         float timestamp,
         List<MolangValue3> dataPoints,

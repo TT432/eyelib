@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.molang;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
-import org.jspecify.annotations.NullMarked;
 import org.joml.Vector3f;
 
 import java.util.HashMap;
@@ -14,7 +13,6 @@ import java.util.function.Function;
 /**
  * @author TT432
  */
-@NullMarked
 public record MolangValue3(
         MolangValue x,
         MolangValue y,

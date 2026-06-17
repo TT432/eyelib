@@ -5,14 +5,11 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.animation.AnimationKeyframeDefinition;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrEffectsKeyFrame;
 import io.github.tt432.eyelib.molang.MolangValue;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Optional;
 
 /**
  * @author TT432
  */
-@NullMarked
 public record BrEffectsKeyFrameDefinition(
         float timestamp,
         String effect,

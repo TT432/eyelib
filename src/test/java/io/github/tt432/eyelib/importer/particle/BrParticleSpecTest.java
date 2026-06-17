@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.importer.particle;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
-import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +16,6 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author TT432
  */
-@NullMarked
 class BrParticleSpecTest {
 
     /**

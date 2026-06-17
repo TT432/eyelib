@@ -34,7 +34,6 @@ G1: 编译隔离 ──→ G2: 行为正确 ──→ G3: 集成不退化
 在 domain 模块 test 中添加，排除 @Mod bootstrap 类和已知 MC 依赖：
 
 ```java
-@NullMarked
 class ArchitectureRules {
     private static final JavaClasses classes = new ClassFileImporter()
             .importPackages("io.github.tt432.eyelibmaterial");

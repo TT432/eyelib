@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.mixin;
 import io.github.tt432.eyelib.client.model.RootModelPartModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -17,7 +16,6 @@ import java.util.function.Function;
  * @author TT432
  */
 @Mixin(HumanoidModel.class)
-@NullMarked
 public class HumanoidModelMixin implements RootModelPartModel {
     @Unique
     private @Nullable ModelPart eyelib$part;

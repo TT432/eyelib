@@ -15,7 +15,6 @@ import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationC
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.apache.commons.io.IOUtils;
-import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 
 import java.io.FileInputStream;
@@ -28,7 +27,6 @@ import java.util.function.Consumer;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@NullMarked
 public final class ManagerImportActions {
     private static final Gson GSON = new Gson();
 

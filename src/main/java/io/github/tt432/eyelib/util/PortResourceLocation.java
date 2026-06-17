@@ -1,13 +1,10 @@
 package io.github.tt432.eyelib.util;
 
-import org.jspecify.annotations.NullMarked;
-
 /**
  * 替代 Minecraft ResourceLocation 的纯数据资源标识。
  *
  * @author TT432
  */
-@NullMarked
 public record PortResourceLocation(String namespace, String path) {
 
     public static PortResourceLocation of(String namespace, String path) {

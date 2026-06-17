@@ -7,8 +7,6 @@ import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
 import io.github.tt432.eyelib.importer.addon.BedrockVersionValue;
 import io.github.tt432.eyelib.importer.util.ImporterCodecUtil;
 import io.github.tt432.eyelib.molang.MolangValue;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +19,6 @@ import com.google.gson.JsonElement;
 /**
  * @author TT432
  */
-@NullMarked
 public record BrClientEntity(
         String identifier,
         Optional<BedrockVersionValue> min_engine_version,

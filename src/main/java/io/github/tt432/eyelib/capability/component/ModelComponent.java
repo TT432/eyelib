@@ -15,7 +15,6 @@ import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.Getter;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
@@ -24,13 +23,11 @@ import java.util.Objects;
  * @author TT432
  */
 @Getter
-@NullMarked
 public class ModelComponent {
     @Nullable
     ModelComponentInfo serializableInfo;
     private boolean ignoreLighting;
-    @Nullable
-    private float[] rcColor;
+    private float @Nullable [] rcColor;
 
     public boolean serializable() {
         return serializableInfo != null
@@ -49,7 +46,7 @@ public class ModelComponent {
         this.ignoreLighting = ignoreLighting;
     }
 
-    public void setRcColor(@Nullable float[] rcColor) {
+    public void setRcColor(float @Nullable [] rcColor) {
         this.rcColor = rcColor;
     }
 

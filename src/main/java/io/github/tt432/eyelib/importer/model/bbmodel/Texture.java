@@ -4,7 +4,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
@@ -12,7 +11,6 @@ import java.io.IOException;
 import java.util.Base64;
 
 /** @author TT432 */
-@NullMarked
 public record Texture(
         String name,
         String path,
@@ -122,11 +120,10 @@ public record Texture(
     }));
 
     public Texture(String name, String path, String folder, String namespace, String id, String group, int width, int height, int uvWidth, int uvHeight, boolean particle, boolean useAsDefault, boolean layersEnabled, boolean syncToProject, String renderMode, String renderSides, String pbrChannel, int frameTime, String frameOrderType, String frameOrder, boolean frameInterpolate, boolean visible, boolean internal, boolean saved, String uuid, String source) throws IOException {
-        this(name, path, folder, namespace, id, group, width, height, uvWidth, uvHeight, particle, useAsDefault, layersEnabled, syncToProject, renderMode, renderSides, pbrChannel, frameTime, frameOrderType, frameOrder, frameInterpolate, visible, internal, saved, uuid, source, ImportedImageData.decodePng(getBytes(source)));
+        this(name, path, folder, namespace, id, group, width, height, uvWidth, uvHeight, particle, useAsDefault, layersEnabled, syncToProject, renderMode, renderSides, pbrChannel, frameTime, frameOrderType, frameOrder, frameInterpolate, visible, internal, saved, uuid, source, decodePngNullable(getBytes(source)));
     }
 
-    @Nullable
-    private static byte[] getBytes(String source) {
+    private static byte @Nullable [] getBytes(String source) {
         if (source != null && !source.isEmpty()) {
             try {
                 String base64 = source;
@@ -140,6 +137,14 @@ public record Texture(
         }
 
         return null;
+    }
+
+    private static ImportedImageData decodePngNullable(byte @Nullable [] bytes) throws IOException {
+        if (bytes == null) {
+            return ImportedImageData.empty(1, 1);
+        }
+        ImportedImageData decoded = ImportedImageData.decodePng(bytes);
+        return decoded != null ? decoded : ImportedImageData.empty(1, 1);
     }
 
     public int imageWidth() {

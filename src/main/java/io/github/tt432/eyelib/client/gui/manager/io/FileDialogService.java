@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.client.gui.manager.io;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryUtil;
@@ -20,7 +19,6 @@ import java.util.concurrent.Executors;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@NullMarked
 public final class FileDialogService {
     private static final ExecutorService FILE_DIALOG_EXECUTOR = Executors.newSingleThreadExecutor();
     @Nullable

@@ -3,8 +3,6 @@ package io.github.tt432.eyelib.molang.compiler.binding;
 import io.github.tt432.eyelib.molang.compiler.common.MolangRootAliasCanonicalizer;
 import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
 import io.github.tt432.eyelib.molang.compiler.frontend.ast.SourceSpan;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.ArrayList;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -17,7 +15,6 @@ import java.util.Optional;
  *
  * @author TT432
  */
-@NullMarked
 public final class MolangBinder {
     public BindResult bind(MolangAst.ExprSet ast) {
         return bind(ast, BindDiagnosticsMode.NORMAL);

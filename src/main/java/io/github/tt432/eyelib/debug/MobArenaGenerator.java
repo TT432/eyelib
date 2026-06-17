@@ -6,8 +6,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.animal.WaterAnimal;
 import net.minecraft.world.level.block.Blocks;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.*;
 
 /**
@@ -15,7 +13,6 @@ import java.util.*;
  *
  * @author TT432
  */
-@NullMarked
 public final class MobArenaGenerator {
 
     private static final int MAX_ROW_WIDTH = 60;

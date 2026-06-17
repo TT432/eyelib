@@ -2,12 +2,9 @@ package io.github.tt432.eyelib.material.gl.stencil;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * @author TT432
  */
-@NullMarked
 public record Face(
         StencilDepthFailOp stencilDepthFailOp,
         StencilFailOp stencilFailOp,

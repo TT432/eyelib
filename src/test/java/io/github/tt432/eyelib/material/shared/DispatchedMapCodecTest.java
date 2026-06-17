@@ -4,7 +4,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.PrimitiveCodec;
 import io.github.tt432.eyelib.util.codec.DispatchedMapCodec;
-import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +14,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author TT432
  */
-@NullMarked
 class DispatchedMapCodecTest {
 
     @Test

@@ -4,14 +4,12 @@ import com.google.gson.annotations.SerializedName;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import lombok.With;
-import org.jspecify.annotations.NullMarked;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.util.List;
 
 /** @author TT432 */
-@NullMarked
 @With
 public record Element(
         String name,

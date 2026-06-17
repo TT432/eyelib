@@ -23,8 +23,6 @@ import io.github.tt432.eyelib.util.texture.TexturePaths;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.*;
 
 /**
@@ -32,7 +30,6 @@ import java.util.*;
  *
  * @author TT432
  */
-@NullMarked
 public record RenderControllerEntry(
         MolangValue geometry,
         List<MolangValue> textures,
@@ -214,9 +211,8 @@ public record RenderControllerEntry(
      * overlay_color 和 color 每帧应用。
      * 优先级：is_hurt &gt; on_fire &gt; overlay &gt; color。
      */
-    @org.jspecify.annotations.Nullable
     @SuppressWarnings("deprecation")
-    private float[] evalRcColor(MolangScope scope) {
+    private float @org.jspecify.annotations.Nullable [] evalRcColor(MolangScope scope) {
         net.minecraft.world.entity.LivingEntity entity = scope.getHostContext()
                 .get(io.github.tt432.eyelib.capability.RenderData.class)
                 .map(rd -> rd.getOwner())

@@ -11,8 +11,6 @@ import net.minecraft.client.model.geom.PartPose;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +20,6 @@ import java.util.Map;
  *
  * @author TT432
  */
-@NullMarked
 public record ModelPartModel(
         String name,
         ModelPart modelPart,

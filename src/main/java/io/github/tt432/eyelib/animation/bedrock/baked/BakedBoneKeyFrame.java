@@ -2,8 +2,6 @@ package io.github.tt432.eyelib.animation.bedrock.baked;
 
 import io.github.tt432.eyelib.importer.animation.bedrock.BrBoneKeyFrameSchema;
 import io.github.tt432.eyelib.molang.MolangValue3;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.List;
 
 /**
@@ -11,7 +9,6 @@ import java.util.List;
  *
  * @author TT432
  */
-@NullMarked
 public record BakedBoneKeyFrame(
         float timestamp,
         List<MolangValue3> dataPoints,

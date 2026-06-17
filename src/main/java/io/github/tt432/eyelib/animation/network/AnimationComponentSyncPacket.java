@@ -4,12 +4,9 @@ import io.github.tt432.eyelib.attachment.capability.AnimationComponentInfo;
 import io.github.tt432.eyelib.util.streamcodec.EyelibStreamCodecs;
 import io.github.tt432.eyelib.util.streamcodec.StreamCodec;
 import net.minecraft.network.FriendlyByteBuf;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * @author TT432
  */
-@NullMarked
 public record AnimationComponentSyncPacket(
         int entityId,
         AnimationComponentInfo animationInfo

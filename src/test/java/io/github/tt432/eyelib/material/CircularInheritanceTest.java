@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.material;
 
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
-import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +13,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author TT432
  */
-@NullMarked
 class CircularInheritanceTest {
 
     @Test

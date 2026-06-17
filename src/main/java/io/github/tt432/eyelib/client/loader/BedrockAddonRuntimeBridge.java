@@ -19,7 +19,6 @@ import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSchema;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSet;
-import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +27,6 @@ import java.util.*;
 /**
  * @author TT432
  */
-@NullMarked
 public final class BedrockAddonRuntimeBridge {
     private static final Logger LOGGER = LoggerFactory.getLogger(BedrockAddonRuntimeBridge.class);
     private static final String ADDON_SOURCE_KEY = "bedrock-addon";

@@ -4,7 +4,7 @@ import io.github.tt432.eyelib.material.gl.BlendFactor;
 import io.github.tt432.eyelib.material.gl.DepthFunc;
 import io.github.tt432.eyelib.material.gl.GLStates;
 import io.github.tt432.eyelib.material.gl.stencil.Face;
-import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -18,7 +18,6 @@ import java.util.Set;
  *
  * @author TT432
  */
-@NullMarked
 public final class BrMaterialResolver {
     private BrMaterialResolver() {
     }
@@ -95,7 +94,7 @@ public final class BrMaterialResolver {
         return find(materials, name, null);
     }
 
-    private static Optional<BrMaterialEntry> find(Map<String, BrMaterialEntry> materials, String name, BrMaterialEntry excluded) {
+    private static Optional<BrMaterialEntry> find(Map<String, BrMaterialEntry> materials, String name, @Nullable BrMaterialEntry excluded) {
         if (name == null || name.isEmpty()) {
             return Optional.empty();
         }

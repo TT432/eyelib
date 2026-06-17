@@ -7,12 +7,9 @@ import io.github.tt432.eyelib.particle.network.RemoveParticlePacket;
 import io.github.tt432.eyelib.particle.network.SpawnParticlePacket;
 import io.github.tt432.eyelib.animation.network.AnimationComponentSyncPacket;
 import io.github.tt432.eyelib.model.network.packet.ModelComponentSyncPacket;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * @author TT432
  */
-@NullMarked
 public class NetClientHandlers {
     // <editor-fold desc="Client handlers">
 

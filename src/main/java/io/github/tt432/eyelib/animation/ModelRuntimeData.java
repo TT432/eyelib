@@ -8,14 +8,11 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import org.jspecify.annotations.NullMarked;
-
 /**
  * 模型运行时变换数据，按骨骼 ID 存储位置/旋转/缩放偏移。
  *
  * @author TT432
  */
-@NullMarked
 public final class ModelRuntimeData {
     public static final ModelRuntimeData EMPTY = new ModelRuntimeData();
 

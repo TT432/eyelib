@@ -4,8 +4,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.util.codec.DispatchedMapCodec;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.*;
 import java.util.function.Function;
 
@@ -14,7 +12,6 @@ import java.util.function.Function;
  *
  * @author TT432
  */
-@NullMarked
 public record BrMaterialEntry(
         String base,
         String name,

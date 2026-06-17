@@ -3,14 +3,11 @@ package io.github.tt432.eyelib.behavior.component.property;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * minecraft:combat_regeneration — 战斗状态下的生命恢复。
  *
  * @author TT432
  */
-@NullMarked
 public record CombatRegeneration(
         boolean can_regenerate,
         int regeneration_delay,

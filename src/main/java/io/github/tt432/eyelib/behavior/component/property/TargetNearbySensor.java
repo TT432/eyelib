@@ -3,14 +3,11 @@ package io.github.tt432.eyelib.behavior.component.property;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * minecraft:target_nearby_sensor — 目标距离传感器，检测目标进入/离开范围。
  *
  * @author TT432
  */
-@NullMarked
 public record TargetNearbySensor(
         float inside_range,
         float outside_range,
@@ -21,7 +18,6 @@ public record TargetNearbySensor(
     /**
      * 范围事件配置。
      */
-    @NullMarked
     public record OnRangeEvent(
             String event,
             String target

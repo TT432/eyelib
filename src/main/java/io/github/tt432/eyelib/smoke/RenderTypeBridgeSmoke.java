@@ -42,8 +42,8 @@ public class RenderTypeBridgeSmoke {
 
         // === S1: entity → SOLID ===
         {
-            BrMaterialEntry entry = materials.get("entity");
-            require(entry != null, "entity not found in MaterialManager");
+            BrMaterialEntry entry = java.util.Objects.requireNonNull(materials.get("entity"),
+                    "entity not found in MaterialManager");
 
             PortRenderPass pass = RenderTypeResolver.resolve(
                     PortResourceLocation.of("minecraft", "textures/entity/test"),
@@ -63,8 +63,8 @@ public class RenderTypeBridgeSmoke {
         {
             // entity_nocull 在 Bedrock 中只加 DisableCulling，不加 ALPHA_TEST
             // ALPHA_TEST 由 render controller 在运行时选择材质
-            BrMaterialEntry entry = materials.get("entity_nocull:entity");
-            require(entry != null, "entity_nocull:entity not found in MaterialManager");
+            BrMaterialEntry entry = java.util.Objects.requireNonNull(materials.get("entity_nocull:entity"),
+                    "entity_nocull:entity not found in MaterialManager");
 
             PortRenderPass pass = RenderTypeResolver.resolve(
                     PortResourceLocation.of("minecraft", "textures/entity/slime"),
@@ -78,8 +78,8 @@ public class RenderTypeBridgeSmoke {
 
         // === S3: entity_alphablend → TRANSLUCENT + cull=true ===
         {
-            BrMaterialEntry entry = materials.get("entity_alphablend:entity");
-            require(entry != null, "entity_alphablend:entity not found in MaterialManager");
+            BrMaterialEntry entry = java.util.Objects.requireNonNull(materials.get("entity_alphablend:entity"),
+                    "entity_alphablend:entity not found in MaterialManager");
 
             PortRenderPass pass = RenderTypeResolver.resolve(
                     PortResourceLocation.of("minecraft", "textures/entity/ghast"),
@@ -100,8 +100,8 @@ public class RenderTypeBridgeSmoke {
 
         // === S4: entity_alphatest → ALPHA_TEST + cull=true ===
         {
-            BrMaterialEntry entry = materials.get("entity_alphatest:entity");
-            require(entry != null, "entity_alphatest:entity not found in MaterialManager");
+            BrMaterialEntry entry = java.util.Objects.requireNonNull(materials.get("entity_alphatest:entity"),
+                    "entity_alphatest:entity not found in MaterialManager");
 
             PortRenderPass pass = RenderTypeResolver.resolve(
                     PortResourceLocation.of("minecraft", "textures/entity/test_alphatest"),

@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.client.gui.manager.reload;
 import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.tt432.eyelib.client.gui.manager.io.FileDialogService;
 import lombok.Getter;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -12,7 +11,6 @@ import java.nio.file.Path;
 /**
  * @author TT432
  */
-@NullMarked
 public final class ManagerFolderSession {
     private final ManagerResourceFolderWatcher folderWatcher = new ManagerResourceFolderWatcher();
     private boolean monitoredFolderUsesAddonBridge;

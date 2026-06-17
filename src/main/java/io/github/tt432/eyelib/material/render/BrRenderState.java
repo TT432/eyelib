@@ -3,8 +3,6 @@ package io.github.tt432.eyelib.material.render;
 import io.github.tt432.eyelib.material.gl.BlendFactor;
 import io.github.tt432.eyelib.material.gl.DepthFunc;
 import io.github.tt432.eyelib.material.material.ResolvedBrMaterial;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Optional;
 import java.util.Set;
 
@@ -13,7 +11,6 @@ import java.util.Set;
  *
  * @author TT432
  */
-@NullMarked
 public record BrRenderState(
         SurfaceClass surfaceClass,
         boolean cull,

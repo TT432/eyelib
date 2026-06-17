@@ -1,12 +1,9 @@
 package io.github.tt432.eyelib.importer.animation.bedrock.controller;
 
 import io.github.tt432.eyelib.molang.MolangValue;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Optional;
 
 /** @author TT432 */
-@NullMarked
 public record BrAcParticleEffectDefinition(
         Optional<String> effect,
         Optional<String> locator,

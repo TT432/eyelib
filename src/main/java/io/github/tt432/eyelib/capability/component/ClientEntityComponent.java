@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.capability.component;
 import io.github.tt432.eyelib.client.entity.ClientEntityRuntimeData;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.model.Model;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
@@ -11,7 +10,6 @@ import java.util.Collection;
 /**
  * @author TT432
  */
-@NullMarked
 public class ClientEntityComponent {
     @Nullable
     private BrClientEntity clientEntity;

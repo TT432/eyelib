@@ -7,7 +7,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.forgespi.language.ModFileScanData;
-import org.jspecify.annotations.NullMarked;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +18,6 @@ import java.util.Objects;
  * @author TT432
  */
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
-@NullMarked
 public final class ClientLoaderLifecycleHooks {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientLoaderLifecycleHooks.class);
 

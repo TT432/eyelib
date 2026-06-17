@@ -7,8 +7,6 @@ import io.github.tt432.eyelib.molang.type.MolangObject;
 import io.github.tt432.eyelib.molang.type.MolangString;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Optional;
 
 /**
@@ -16,7 +14,6 @@ import java.util.Optional;
  *
  * @author TT432
  */
-@NullMarked
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class MolangConstantExpressionEvaluator {
     /**

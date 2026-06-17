@@ -8,7 +8,6 @@ import io.github.tt432.eyelib.molang.type.MolangFloat;
 import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;
 import it.unimi.dsi.fastutil.floats.Float2ObjectOpenHashMap;
-import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +20,6 @@ import java.util.Objects;
  *
  * @author TT432
  */
-@NullMarked
 public record MolangValue(
         String context,
         MolangFunction method

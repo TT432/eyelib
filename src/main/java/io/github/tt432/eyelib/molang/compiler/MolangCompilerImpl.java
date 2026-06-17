@@ -8,8 +8,6 @@ import io.github.tt432.eyelib.molang.compiler.frontend.MolangParserFrontendResul
 import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.type.MolangObject;
-import org.jspecify.annotations.NullMarked;
-
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup.ClassOption;
@@ -22,7 +20,6 @@ import java.util.Set;
  *
  * @author TT432
  */
-@NullMarked
 public final class MolangCompilerImpl implements MolangCompiler {
     private static final MolangBinder BINDER = new MolangBinder();
 

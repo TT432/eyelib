@@ -9,7 +9,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.apache.commons.lang3.StringUtils;
-import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +24,6 @@ import java.util.stream.Stream;
  */
 @Slf4j
 @ResourceLoader
-@NullMarked
 public class BrAttachableLoader extends BrResourcesLoader implements Searchable<BrClientEntity> {
     private static final Logger LOGGER = LoggerFactory.getLogger(BrAttachableLoader.class);
 

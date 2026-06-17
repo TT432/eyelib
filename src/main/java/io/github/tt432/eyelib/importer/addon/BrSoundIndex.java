@@ -4,14 +4,15 @@ import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.importer.util.ImporterCodecUtil;
+import org.jspecify.annotations.Nullable;
 
 /** @author TT432 */
 @org.jspecify.annotations.NullMarked
 public record BrSoundIndex(
-        BedrockResourceValue.ObjectValue entitySounds,
-        BedrockResourceValue.ObjectValue blockSounds,
-        BedrockResourceValue.ObjectValue interactiveBlockSounds,
-        BedrockResourceValue.ObjectValue individualEventSounds,
+        BedrockResourceValue.@Nullable ObjectValue entitySounds,
+        BedrockResourceValue.@Nullable ObjectValue blockSounds,
+        BedrockResourceValue.@Nullable ObjectValue interactiveBlockSounds,
+        BedrockResourceValue.@Nullable ObjectValue individualEventSounds,
         BedrockResourceValue.ObjectValue extras
 ) {
     public static final Codec<BrSoundIndex> CODEC = RecordCodecBuilder.create(ins -> ins.group(
@@ -36,7 +37,7 @@ public record BrSoundIndex(
                 (BedrockResourceValue.ObjectValue) BedrockResourceValue.fromJsonElement(extras));
     }
 
-    private static BedrockResourceValue.ObjectValue getObject(JsonObject root, String key) {
+    private static BedrockResourceValue.@Nullable ObjectValue getObject(JsonObject root, String key) {
         if (!root.has(key)) {
             return null;
         }

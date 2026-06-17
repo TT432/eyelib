@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.animation;
 
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
@@ -10,7 +9,6 @@ import java.util.Map;
  *
  * @author TT432
  */
-@NullMarked
 public interface AnimationClipDefinition<I, T, LOOP, V> {
     String name();
 

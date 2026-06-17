@@ -1,13 +1,10 @@
 package io.github.tt432.eyelib.molang.mapping.api;
 
-import org.jspecify.annotations.NullMarked;
-
 /**
  * 环境相关 Molang 查询值的运行时适配接口。
  *
  * @author TT432
  */
-@NullMarked
 public interface MolangQueryRuntime {
     MolangQueryRuntime NOOP = new MolangQueryRuntime() {
         @Override

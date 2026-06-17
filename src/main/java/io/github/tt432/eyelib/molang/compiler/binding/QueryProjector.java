@@ -1,7 +1,5 @@
 package io.github.tt432.eyelib.molang.compiler.binding;
 
-import org.jspecify.annotations.NullMarked;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -11,7 +9,6 @@ import java.util.Optional;
  *
  * @author TT432
  */
-@NullMarked
 public final class QueryProjector {
     private QueryProjector() {
     }

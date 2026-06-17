@@ -10,12 +10,10 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 /** @author TT432 */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@NullMarked
 public final class ClientRenderSyncService {
     public static void sync(RenderData<?> data) {
         var components = RenderSyncApplyOps.collectSerializableModelInfo(data.getModelComponents());

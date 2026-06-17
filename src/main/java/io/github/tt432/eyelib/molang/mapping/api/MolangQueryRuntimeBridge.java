@@ -1,14 +1,11 @@
 package io.github.tt432.eyelib.molang.mapping.api;
 
 import io.github.tt432.eyelib.molang.MolangScope;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * MC 侧安装查询运行时适配的静态桥接。
  *
  * @author TT432
  */
-@NullMarked
 public final class MolangQueryRuntimeBridge {
     private static volatile MolangQueryRuntime runtime = MolangQueryRuntime.NOOP;
 

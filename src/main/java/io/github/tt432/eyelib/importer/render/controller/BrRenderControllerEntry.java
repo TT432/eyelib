@@ -4,12 +4,9 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.MolangMapEntry;
 import io.github.tt432.eyelib.molang.MolangValue;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.*;
 
 /** @author TT432 */
-@NullMarked
 public record BrRenderControllerEntry(
         MolangValue geometry,
         List<MolangValue> textures,

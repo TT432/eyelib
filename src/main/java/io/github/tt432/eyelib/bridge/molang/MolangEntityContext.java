@@ -1,13 +1,10 @@
 package io.github.tt432.eyelib.bridge.molang;
 
-import org.jspecify.annotations.NullMarked;
-
 /**
  * Molang 求值上下文，提供实体运行时组件的访问入口。
  *
  * @author TT432
  */
-@NullMarked
 public final class MolangEntityContext {
     private final ComponentStore componentStore;
 

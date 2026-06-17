@@ -3,13 +3,10 @@ package io.github.tt432.eyelib.importer.animation.bedrock;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.MolangValue;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Optional;
 
 /** Bedrock 效果关键帧，定义特定时间点的粒子或声音效果。
  * @author TT432 */
-@NullMarked
 public record BrEffectsKeyFrame(
         float timestamp,
         String effect,

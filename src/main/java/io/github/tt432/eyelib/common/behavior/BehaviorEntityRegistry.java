@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.common.behavior;
 import io.github.tt432.eyelib.behavior.BehaviorEntity;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashMap;
@@ -16,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@NullMarked
 public final class BehaviorEntityRegistry {
     private static final Map<String, BehaviorEntity> ENTITIES = new ConcurrentHashMap<>();
 

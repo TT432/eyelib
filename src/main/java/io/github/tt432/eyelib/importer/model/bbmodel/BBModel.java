@@ -5,12 +5,9 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import lombok.With;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.List;
 
 /** @author TT432 */
-@NullMarked
 @With
 @SuppressWarnings("NullAway")
 public record BBModel(

@@ -6,7 +6,6 @@ import io.github.tt432.eyelib.importer.addon.BedrockAddonWarning;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.server.MinecraftServer;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +23,6 @@ import java.util.Locale;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@NullMarked
 public final class BehaviorPackAutoLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(BehaviorPackAutoLoader.class);
     private static final String[] BEHAVIOR_PACK_DIRS = {

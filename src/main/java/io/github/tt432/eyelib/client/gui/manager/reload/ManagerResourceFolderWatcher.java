@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +14,6 @@ import java.util.function.Consumer;
 
 /** @author TT432 */
 @Slf4j
-@NullMarked
 public final class ManagerResourceFolderWatcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(ManagerResourceFolderWatcher.class);
 

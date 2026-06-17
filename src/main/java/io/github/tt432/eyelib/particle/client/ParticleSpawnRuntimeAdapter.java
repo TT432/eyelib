@@ -10,8 +10,6 @@ import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleEmitter;
 import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleRuntime;
 import io.github.tt432.eyelib.particle.runtime.bedrock.ParticleRuntimeEnvironment;
 import org.joml.Vector3f;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -23,7 +21,6 @@ import java.util.function.Supplier;
  *
  * @author TT432
  */
-@NullMarked
 public final class ParticleSpawnRuntimeAdapter implements ParticleSpawnApi {
     private static volatile Supplier<Optional<ParticleRuntimeEnvironment>> environmentSupplier = Optional::empty;
     private static volatile Supplier<Optional<MolangScope>> parentScopeSupplier = Optional::empty;

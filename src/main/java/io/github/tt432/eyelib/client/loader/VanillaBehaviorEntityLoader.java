@@ -1,7 +1,5 @@
 package io.github.tt432.eyelib.client.loader;
 
-import org.jspecify.annotations.NullMarked;
-
 import java.nio.file.Paths;
 
 /**
@@ -10,7 +8,6 @@ import java.nio.file.Paths;
  * @author TT432
  */
 @Deprecated(forRemoval = false)
-@NullMarked
 public final class VanillaBehaviorEntityLoader {
     private static volatile boolean loaded;
 

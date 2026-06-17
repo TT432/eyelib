@@ -34,7 +34,6 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLLoader;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -47,7 +46,6 @@ import java.util.Map;
  *
  * @author TT432
  */
-@NullMarked
 public class ModelPreviewScreen extends ModalWorksurfaceScreen {
     @Mod.EventBusSubscriber(Dist.CLIENT)
     public static final class Events {

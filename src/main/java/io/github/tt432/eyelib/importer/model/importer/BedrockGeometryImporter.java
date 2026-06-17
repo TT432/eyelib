@@ -4,8 +4,6 @@ import com.google.gson.JsonObject;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.importer.model.bedrock.BedrockGeometryModel;
 import io.github.tt432.eyelib.importer.model.bedrock.BedrockModelLoader;
-import org.jspecify.annotations.NullMarked;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -13,7 +11,6 @@ import java.util.Map;
 
 /** Bedrock 几何模型的导入器，解析 JSON 并构建中间表示。
  * @author TT432 */
-@NullMarked
 public final class BedrockGeometryImporter {
     private BedrockGeometryImporter() {
     }

@@ -4,7 +4,6 @@ import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingDiscovery;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.ModFileScanData;
-import org.jspecify.annotations.NullMarked;
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +18,6 @@ import java.util.Objects;
  *
  * @author TT432
  */
-@NullMarked
 public final class ForgeMolangMappingDiscovery implements MolangMappingDiscovery {
     private static final Logger LOGGER = LoggerFactory.getLogger(ForgeMolangMappingDiscovery.class);
 

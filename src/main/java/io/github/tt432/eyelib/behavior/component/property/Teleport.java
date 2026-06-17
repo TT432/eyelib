@@ -3,14 +3,11 @@ package io.github.tt432.eyelib.behavior.component.property;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * minecraft:teleport — 传送组件，控制实体的瞬移行为。
  *
  * @author TT432
  */
-@NullMarked
 public record Teleport(
         float dark_teleport_chance,
         float light_teleport_chance,

@@ -1,14 +1,11 @@
 package io.github.tt432.eyelib.molang.type;
 
 import io.github.tt432.eyelib.molang.util.CalledByGeneratedMethod;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * Molang 对象工厂，将 Java 对象转为 MolangObject。
  *
  * @author TT432
  */
-@NullMarked
 public class MolangObjects {
     @CalledByGeneratedMethod
     public static MolangObject valueOf(Object value) {

@@ -5,14 +5,11 @@ import io.github.tt432.eyelib.client.render.bake.EmissiveModelBakeInfo;
 import io.github.tt432.eyelib.client.render.bake.TwoSideModelBakeInfo;
 import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
 import net.minecraftforge.common.MinecraftForge;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author TT432
  */
-@NullMarked
 public final class ModelBakeInvalidationHooks {
     private static final AtomicBoolean INSTALLED = new AtomicBoolean(false);
 

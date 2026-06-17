@@ -1,7 +1,5 @@
 package io.github.tt432.eyelib.molang.mapping.api;
 
-import org.jspecify.annotations.NullMarked;
-
 import java.util.List;
 
 /**
@@ -9,7 +7,6 @@ import java.util.List;
  *
  * @author TT432
  */
-@NullMarked
 @FunctionalInterface
 public interface MolangMappingDiscovery {
     List<MolangMappingClassEntry> discover();

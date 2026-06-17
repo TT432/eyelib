@@ -7,14 +7,12 @@ import io.github.tt432.eyelib.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;
 import lombok.Setter;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 /**
  * @author TT432
  */
 @Setter
-@NullMarked
 public class HighSpeedRenderModelVisitor extends ModelVisitor {
     @Override
     public void visitPreModel(RenderParams params, ModelVisitContext context, ModelRuntimeData infos, Model model) {
@@ -52,12 +50,12 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
         bakedBone.transformNormal(last.normal());
 
         if (renderParams.consumer() != null) {
-            float[] tint = renderParams.tintColor();
+            float @Nullable [] tint = renderParams.tintColor();
             visitVertex(bakedBone, renderParams.consumer(), renderParams.overlay(), renderParams.light(), tint);
         }
     }
 
-    static void visitVertex(BakedModel.BakedBone bakedBone, VertexConsumer consumer, int overlay, int light, @Nullable float[] tintColor) {
+    static void visitVertex(BakedModel.BakedBone bakedBone, VertexConsumer consumer, int overlay, int light, float @Nullable [] tintColor) {
         float r = 1.0F, g = 1.0F, b = 1.0F, a = 1.0F;
         if (tintColor != null) {
             r = Math.max(0, Math.min(1, tintColor[0]));

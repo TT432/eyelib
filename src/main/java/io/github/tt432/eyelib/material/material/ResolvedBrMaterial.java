@@ -4,8 +4,6 @@ import io.github.tt432.eyelib.material.gl.BlendFactor;
 import io.github.tt432.eyelib.material.gl.DepthFunc;
 import io.github.tt432.eyelib.material.gl.GLStates;
 import io.github.tt432.eyelib.material.gl.stencil.Face;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -15,7 +13,6 @@ import java.util.Set;
  *
  * @author TT432
  */
-@NullMarked
 public record ResolvedBrMaterial(
         String name,
         List<String> inheritanceChain,

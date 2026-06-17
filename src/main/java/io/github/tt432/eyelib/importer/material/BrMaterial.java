@@ -1,14 +1,11 @@
 package io.github.tt432.eyelib.importer.material;
 
 import com.mojang.serialization.Codec;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Map;
 import java.util.stream.Collectors;
 
 /** CODEC 委托给共享纯数据类型的 import 层材料。
  * @author TT432 */
-@NullMarked
 public record BrMaterial(
         Map<String, BrMaterialEntry> materials
 ) {

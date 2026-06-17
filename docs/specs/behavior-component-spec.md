@@ -124,4 +124,4 @@ cmd.exe /c "cd /d E:\_ideaProjects\qylEyelib && gradlew.bat :eyelib-behavior:tes
 1. 编译零错误
 2. CODEC 能正确反序列化一个最小 Bedrock JSON 示例（往返测试）
 3. `id()` 返回值与 `minecraft:` key 后缀一致
-4. `@NullMarked` 和 `@author TT432` 存在
+4. `@author TT432` 类级 Javadoc 存在；包内 `package-info.java` 带 `@NullMarked`

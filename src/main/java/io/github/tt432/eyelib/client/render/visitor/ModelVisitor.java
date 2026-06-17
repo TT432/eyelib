@@ -13,15 +13,12 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector2fc;
 import org.joml.Vector3fc;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Deque;
 import java.util.List;
 
 /**
  * @author TT432
  */
-@NullMarked
 public class ModelVisitor {
     private static final float R180 = 180 * EyeMath.DEGREES_TO_RADIANS;
 

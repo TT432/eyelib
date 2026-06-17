@@ -5,7 +5,7 @@ import io.github.dmlloyd.classfile.CodeBuilder;
 import io.github.dmlloyd.classfile.Label;
 import io.github.tt432.eyelib.molang.compiler.binding.BoundMolang;
 import io.github.tt432.eyelib.molang.type.MolangObject;
-import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.constant.ClassDesc;
 import java.lang.constant.MethodTypeDesc;
@@ -19,7 +19,6 @@ import java.util.List;
  *
  * @author TT432
  */
-@NullMarked
 public final class MolangBytecodeEmitter {
 
     private static final int ACC_PUBLIC = 0x0001;
@@ -566,7 +565,7 @@ public final class MolangBytecodeEmitter {
         }
     }
 
-    private static String resolveAssignmentTargetName(BoundMolang.BoundExpr target) {
+    private static @Nullable String resolveAssignmentTargetName(BoundMolang.BoundExpr target) {
         if (target instanceof BoundMolang.BoundIdentifierExpr id) {
             return id.name();
         }

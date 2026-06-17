@@ -2,8 +2,6 @@ package io.github.tt432.eyelib.client.gui.manager.reload;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.jspecify.annotations.NullMarked;
-
 import java.nio.file.Path;
 import java.util.Locale;
 
@@ -12,7 +10,6 @@ import java.util.Locale;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@NullMarked
 public final class ManagerResourceReloadPlan {
     public enum ReloadTarget {
         ANIMATION_JSON,

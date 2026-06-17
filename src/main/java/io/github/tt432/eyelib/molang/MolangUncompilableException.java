@@ -1,13 +1,10 @@
 package io.github.tt432.eyelib.molang;
 
-import org.jspecify.annotations.NullMarked;
-
 /**
  * Molang 表达式不可编译异常。
  *
  * @author TT432
  */
-@NullMarked
 public class MolangUncompilableException extends RuntimeException {
     public MolangUncompilableException() {
     }

@@ -3,8 +3,6 @@ package io.github.tt432.eyelib.behavior.component.property;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.List;
 
 /**
@@ -12,7 +10,6 @@ import java.util.List;
  *
  * @author TT432
  */
-@NullMarked
 public record Timer(
         boolean looping,
         boolean randomInterval,
@@ -22,7 +19,6 @@ public record Timer(
     /**
      * 倒计时事件配置。
      */
-    @NullMarked
     public record TimeDownEvent(
             String event,
             String target

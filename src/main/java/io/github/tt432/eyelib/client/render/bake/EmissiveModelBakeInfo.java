@@ -10,8 +10,6 @@ import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +18,6 @@ import java.util.Map;
 /**
  * @author TT432
  */
-@NullMarked
 public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.Info> {
     public static final EmissiveModelBakeInfo INSTANCE = new EmissiveModelBakeInfo();
 

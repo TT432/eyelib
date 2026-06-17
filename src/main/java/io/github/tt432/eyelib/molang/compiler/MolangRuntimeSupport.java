@@ -11,7 +11,7 @@ import io.github.tt432.eyelib.molang.type.MolangFloat;
 import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;
 import io.github.tt432.eyelib.molang.type.MolangString;
-import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +30,6 @@ import java.util.Set;
  *
  * @author TT432
  */
-@NullMarked
 public final class MolangRuntimeSupport {
     private static final Logger LOGGER = LoggerFactory.getLogger(MolangRuntimeSupport.class);
     private static final Set<String> WARNED_MISSING = Collections.synchronizedSet(new HashSet<>());
@@ -227,7 +226,7 @@ public final class MolangRuntimeSupport {
         return value;
     }
 
-    private static Object defaultPrimitive(Class<?> type) {
+    private static @Nullable Object defaultPrimitive(Class<?> type) {
         if (type == boolean.class) return false;
         if (type == byte.class) return (byte) 0;
         if (type == short.class) return (short) 0;

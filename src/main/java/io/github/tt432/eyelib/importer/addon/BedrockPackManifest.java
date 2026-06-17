@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.importer.addon;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashMap;
@@ -13,7 +12,6 @@ import java.util.Optional;
 
 /** Bedrock 附加包的清单文件数据结构。
  * @author TT432 */
-@NullMarked
 public record BedrockPackManifest(
         int formatVersion,
         Header header,

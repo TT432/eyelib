@@ -24,7 +24,6 @@ import io.github.tt432.eyelib.importer.render.controller.BrRenderControllerEntry
 import io.github.tt432.eyelib.importer.render.controller.BrRenderControllers;
 import io.github.tt432.eyelib.importer.trading.BrTrading;
 import io.github.tt432.eyelib.model.Model;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +47,6 @@ import java.util.zip.ZipFile;
  *
  * @author TT432
  */
-@NullMarked
 public final class BedrockAddonLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(BedrockAddonLoader.class);
 
@@ -211,7 +209,8 @@ public final class BedrockAddonLoader {
                     if (modelFile == null) {
                         modelFile = Files.createTempFile("eyelib-model-", ".json");
                         try {
-                            Files.write(modelFile, entry.dataSupplier().get());
+                            // FileEntry 不变量：file 为 null 时 dataSupplier 必非空（fromZipRef 工厂保证）
+                            Files.write(modelFile, Objects.requireNonNull(entry.dataSupplier()).get());
                         } catch (IOException ex) {
                             Files.deleteIfExists(modelFile);
                             throw ex;
@@ -271,7 +270,6 @@ public final class BedrockAddonLoader {
     // Pack 资源累加器
 
     /** 单个包加载过程中的资源容器。 */
-    @NullMarked
     static final class PackAccumulator {
         final String sourceName;
         final List<BedrockAddonWarning> warnings = new ArrayList<>();
@@ -429,7 +427,8 @@ public final class BedrockAddonLoader {
                 Files.deleteIfExists(tempFile);
             }
         } else {
-            jsonBytes = BrArchiveDecoder.extractJson(entry.file());
+            // FileEntry 不变量：dataSupplier 为 null 时 file 必非空（fromPath 工厂保证）
+            jsonBytes = BrArchiveDecoder.extractJson(Objects.requireNonNull(entry.file()));
         }
 
         if (jsonBytes.length == 0) {
@@ -902,7 +901,8 @@ public final class BedrockAddonLoader {
         if (entry.dataSupplier() != null) {
             return JsonParser.parseString(new String(entry.dataSupplier().get(), StandardCharsets.UTF_8)).getAsJsonObject();
         }
-        return readJsonFile(entry.file());
+        // FileEntry 不变量：dataSupplier 为 null 时 file 必非空（fromPath 工厂保证）
+        return readJsonFile(Objects.requireNonNull(entry.file()));
     }
 
     /** 从 FileEntry 读取任意 JSON 元素。优先从 Supplier 获取数据，否则读磁盘文件。 */
@@ -910,7 +910,8 @@ public final class BedrockAddonLoader {
         if (entry.dataSupplier() != null) {
             return JsonParser.parseString(new String(entry.dataSupplier().get(), StandardCharsets.UTF_8));
         }
-        return readJsonElement(entry.file());
+        // FileEntry 不变量：dataSupplier 为 null 时 file 必非空（fromPath 工厂保证）
+        return readJsonElement(Objects.requireNonNull(entry.file()));
     }
 
     /** 从 FileEntry 读取 UTF-8 字符串。优先从 Supplier 获取数据，否则读磁盘文件。 */

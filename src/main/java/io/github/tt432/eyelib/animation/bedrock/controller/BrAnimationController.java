@@ -11,7 +11,6 @@ import io.github.tt432.eyelib.animation.AnimationEffects;
 import io.github.tt432.eyelib.animation.StateMachineAnimation;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.molang.MolangScope;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
@@ -19,7 +18,6 @@ import java.util.Map;
 /**
  * @author TT432
  */
-@NullMarked
 public record BrAnimationController(
         io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerDefinition definition
 ) implements StateMachineAnimation<BrAcStateDefinition> {

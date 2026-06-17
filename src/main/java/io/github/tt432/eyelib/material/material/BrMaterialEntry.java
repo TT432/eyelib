@@ -24,7 +24,6 @@ import net.minecraft.client.renderer.RenderStateShard;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.util.PortStringRepresentable;
-import org.jspecify.annotations.NullMarked;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.slf4j.Logger;
@@ -40,7 +39,6 @@ import static org.lwjgl.opengl.GL20.*;
  *
  * @author TT432
  */
-@NullMarked
 public record BrMaterialEntry(
         String base,
         String name,
@@ -771,11 +769,14 @@ public record BrMaterialEntry(
     }
 
     private int getOrCompileShader() {
+        // 调用方契约：仅在 vertexShader/fragmentShader 均 isPresent 时进入（见 line 641/746 的前置检查）
+        String vert = vertexShader.orElseThrow(() -> new IllegalStateException("vertexShader required"));
+        String frag = fragmentShader.orElseThrow(() -> new IllegalStateException("fragmentShader required"));
         List<String> defineList = BrMaterialEntry.this.defines.base().orElse(List.of());
-        String key = vertexShader.get() + "|" + fragmentShader.get() + "|" + String.join(",", defineList);
+        String key = vert + "|" + frag + "|" + String.join(",", defineList);
         return SHADER_PROGRAM_CACHE.computeIfAbsent(key, k -> {
-            String vertSrc = loadShaderSource(vertexShader.get());
-            String fragSrc = loadShaderSource(fragmentShader.get());
+            String vertSrc = loadShaderSource(vert);
+            String fragSrc = loadShaderSource(frag);
             return ShaderManager.compileAndLink(vertSrc, fragSrc, defineList);
         });
     }

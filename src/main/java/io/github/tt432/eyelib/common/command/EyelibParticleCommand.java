@@ -21,7 +21,6 @@ import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.joml.Vector3f;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
@@ -31,7 +30,6 @@ import java.util.concurrent.CompletableFuture;
  * @author TT432
  */
 @Mod.EventBusSubscriber
-@NullMarked
 public final class EyelibParticleCommand {
     @SubscribeEvent
     public static void onRegister(final RegisterCommandsEvent event) {

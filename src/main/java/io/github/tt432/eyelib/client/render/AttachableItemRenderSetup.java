@@ -23,7 +23,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.EnumMap;
@@ -36,7 +35,6 @@ import java.util.Map;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@NullMarked
 public final class AttachableItemRenderSetup {
     private static final Map<LivingEntity, EnumMap<InteractionHand, RenderData<ItemStack>>> CACHE = new HashMap<>();
 

@@ -1,14 +1,11 @@
 package io.github.tt432.eyelib.molang.type;
 
-import org.jspecify.annotations.NullMarked;
-
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author TT432
  */
-@NullMarked
 public record MolangArray<T extends MolangObject>(
         List<T> value
 ) implements MolangObject {

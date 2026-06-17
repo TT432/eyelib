@@ -14,7 +14,6 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.world.entity.Entity;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -25,7 +24,6 @@ import java.util.Optional;
  * @author TT432
  */
 @Getter
-@NullMarked
 public class RenderData<T> {
     public static <T> Codec<RenderData<T>> codec() {
         return RecordCodecBuilder.create(ins -> ins.group(

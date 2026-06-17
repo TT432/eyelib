@@ -1,7 +1,6 @@
 package io.github.tt432.eyelib.molang;
 
 import com.mojang.serialization.Codec;
-import org.jspecify.annotations.NullMarked;
 import org.joml.Vector4f;
 
 import java.util.List;
@@ -9,7 +8,6 @@ import java.util.List;
 /**
  * @author TT432
  */
-@NullMarked
 public record MolangValue4(
         MolangValue x,
         MolangValue y,

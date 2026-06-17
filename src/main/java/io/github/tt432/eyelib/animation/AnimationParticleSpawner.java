@@ -1,15 +1,12 @@
 package io.github.tt432.eyelib.animation;
 
 import org.joml.Vector3f;
-import org.jspecify.annotations.NullMarked;
-
 /**
  * 粒子生成接口，作为 animation 模块与 particle 模块的边界。
  * animation 侧通过此接口发射粒子，不接触 particle 内部类型。
  *
  * @author TT432
  */
-@NullMarked
 public interface AnimationParticleSpawner {
     /**
      * 生成一个粒子效果。

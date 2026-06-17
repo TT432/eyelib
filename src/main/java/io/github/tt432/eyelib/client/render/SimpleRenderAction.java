@@ -18,7 +18,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.item.DyeColor;
 import net.minecraftforge.client.event.RenderLivingEvent;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
@@ -73,8 +72,7 @@ public record SimpleRenderAction<T>(
     /**
      * 从实体提取 Bedrock color mask 使用的染色颜色。
      */
-    @Nullable
-    private float[] entityTintColor() {
+    private float @Nullable [] entityTintColor() {
         if (entity instanceof Sheep sheep) {
             var dyeColor = sheep.getColor();
             if (dyeColor != null) {
@@ -93,7 +91,6 @@ public record SimpleRenderAction<T>(
         return tickedInfos != null && effects != null;
     }
 
-    @NullMarked
     public static class Builder<T> {
         // required
         MultiBufferSource multiBufferSource;

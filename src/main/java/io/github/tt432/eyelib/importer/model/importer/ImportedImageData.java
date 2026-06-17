@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.importer.model.importer;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import javax.imageio.ImageIO;
@@ -16,7 +15,6 @@ import java.util.Arrays;
 
 /** 导入的图片数据，含宽高和 ARGB 像素数组。
  * @author TT432 */
-@NullMarked
 public final class ImportedImageData {
 
     public static final Codec<ImportedImageData> CODEC = RecordCodecBuilder.create(ins -> ins.group(

@@ -10,8 +10,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import org.joml.Vector3f;
-import org.jspecify.annotations.NullMarked;
-
 import java.util.Optional;
 
 /**
@@ -19,7 +17,6 @@ import java.util.Optional;
  *
  * @author TT432
  */
-@NullMarked
 public record MinecraftParticleRuntimeEnvironment(Level level) implements ParticleRuntimeEnvironment {
     @Override
     public int ticks() {
