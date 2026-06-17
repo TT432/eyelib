@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.track.mixin.common;
+package io.github.tt432.eyelib.mixin.track.common;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;

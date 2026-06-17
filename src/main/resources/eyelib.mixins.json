@@ -2,15 +2,20 @@
   "required": true,
   "minVersion": "0.8",
   "package": "io.github.tt432.eyelib.mixin",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_17",
   "refmap": "eyelib.refmap.json",
   "mixins": [
+    "track.common.ItemStackMixin",
+    "track.common.AbstractContainerMenuMixin",
+    "track.common.InventoryMixin",
+    "track.common.LivingEntityMixin"
   ],
   "client": [
     "HumanoidModelMixin",
     "LivingEntityRendererAccessor",
     "client.ItemRendererMixin",
-    "client.ItemInHandRendererMixin"
+    "client.ItemInHandRendererMixin",
+    "attachment.MultiPlayerGameModeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.track.mixin.common;
+package io.github.tt432.eyelib.mixin.track.common;
 
 import io.github.tt432.eyelib.track.api.ItemTrackApi;
 import io.github.tt432.eyelib.track.api.TrackableItem;

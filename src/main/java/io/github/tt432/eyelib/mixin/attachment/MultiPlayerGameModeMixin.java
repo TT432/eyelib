@@ -1,4 +1,4 @@
-package io.github.tt432.eyelib.attachment.mixin;
+package io.github.tt432.eyelib.mixin.attachment;
 
 import io.github.tt432.eyelib.attachment.network.UpdateDestroyInfoPacket;
 import io.github.tt432.eyelib.network.EyelibNetworkTransport;
