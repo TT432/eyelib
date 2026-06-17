@@ -289,13 +289,29 @@ async def _poll_until_gone(timeout: float = 30.0) -> bool:
 
 # ── Server state queries (stateless) ────────────────────────────
 
+async def _proc_alive() -> bool:
+    """Return True if the tracked process is still running."""
+    if _proc is None:
+        return False
+    try:
+        await asyncio.wait_for(_proc.wait(), timeout=0.01)
+        return False  # exited
+    except asyncio.TimeoutError:
+        return True  # still running
+
+
 async def _read_game_state() -> dict:
     """Read the full game state from AIDebugServer endpoints."""
     ping = await _http_get("/ping")
     if ping is None:
-        # Game was started but is unreachable → likely crashed
+        # Game unreachable. Distinguish three cases:
+        #  1. nothing tracked → idle
+        #  2. tracked process already exited → idle (stale handle, clean up)
+        #  3. tracked process still running but server not up yet → loading
         if _proc is not None:
-            return {"state": "crashed", "ping": False, "loaded": False, "in_world": False, "dimension": None}
+            if await _proc_alive():
+                return {"state": "loading", "ping": False, "loaded": False, "in_world": False, "dimension": None}
+            return {"state": "idle", "ping": False, "loaded": False, "in_world": False, "dimension": None}
         return {"state": "idle", "ping": False, "loaded": False, "in_world": False, "dimension": None}
 
     loaded_data = await _http_get("/loaded")
@@ -351,6 +367,12 @@ async def eyelib_debug_launch(timeout: int = 120) -> str:
     ping = await _http_get("/ping")
     if ping is not None:
         return "❌ Game is already running (port 25999 responds). Use eyelib_debug_close first."
+
+    # Reset stale process handle if the tracked process already died
+    global _proc, _launch_time
+    if _proc is not None and not await _proc_alive():
+        _proc = None
+        _launch_time = 0.0
 
     if not os.path.exists(RUN_CLIENT_CMD):
         return "❌ runClient.cmd is missing. Run eyelib_debug_build first."
@@ -517,6 +539,9 @@ async def eyelib_debug_close() -> str:
 
     ping = await _http_get("/ping")
     if ping is None:
+        # Even if ping is down, clear any stale handle so a later call isn't poisoned
+        _proc = None
+        _launch_time = 0.0
         return "Already idle (no game running)."
 
     await _http_post("/close")
