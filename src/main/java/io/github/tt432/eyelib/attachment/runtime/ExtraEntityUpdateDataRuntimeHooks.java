@@ -21,7 +21,7 @@ import org.jspecify.annotations.NullMarked;
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-@Mod.EventBusSubscriber(modid = "eyelibattachment", bus = Mod.EventBusSubscriber.Bus.FORGE)
+@Mod.EventBusSubscriber(modid = "eyelib", bus = Mod.EventBusSubscriber.Bus.FORGE)
 @NullMarked
 public final class ExtraEntityUpdateDataRuntimeHooks {
     @SubscribeEvent

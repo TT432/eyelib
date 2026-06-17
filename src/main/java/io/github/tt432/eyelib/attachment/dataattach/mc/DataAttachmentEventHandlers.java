@@ -10,7 +10,7 @@ import net.minecraftforge.fml.common.Mod;
  *
  * @author TT432
  */
-@Mod.EventBusSubscriber(modid = "eyelibattachment")
+@Mod.EventBusSubscriber(modid = "eyelib")
 public class DataAttachmentEventHandlers {
 
     @SubscribeEvent

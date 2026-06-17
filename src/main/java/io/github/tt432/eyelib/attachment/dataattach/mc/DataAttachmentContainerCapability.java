@@ -23,7 +23,7 @@ public class DataAttachmentContainerCapability {
     public static final Capability<IDataAttachmentContainer> INSTANCE = CapabilityManager.get(new CapabilityToken<>() {
     });
 
-    @Mod.EventBusSubscriber(modid = "eyelibattachment", bus = Mod.EventBusSubscriber.Bus.MOD)
+    @Mod.EventBusSubscriber(modid = "eyelib", bus = Mod.EventBusSubscriber.Bus.MOD)
     public static class ModBusHandlers {
         @SubscribeEvent
         public static void onRegister(RegisterCapabilitiesEvent event) {
@@ -31,7 +31,7 @@ public class DataAttachmentContainerCapability {
         }
     }
 
-    @Mod.EventBusSubscriber(modid = "eyelibattachment")
+    @Mod.EventBusSubscriber(modid = "eyelib")
     public static class GameBusHandlers {
         @SubscribeEvent
         public static void onAttachCapability(AttachCapabilitiesEvent<Entity> event) {
