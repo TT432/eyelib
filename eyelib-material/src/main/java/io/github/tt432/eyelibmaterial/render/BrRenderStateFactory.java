@@ -70,7 +70,7 @@ public final class BrRenderStateFactory {
             return BrRenderState.SurfaceClass.ADDITIVE;
         }
         if (transparency == BrRenderState.Transparency.BLEND) {
-            return BrRenderState.SurfaceClass.TRANSLUCENT;
+            return emissive ? BrRenderState.SurfaceClass.TRANSLUCENT_EMISSIVE : BrRenderState.SurfaceClass.TRANSLUCENT;
         }
         if (transparency == BrRenderState.Transparency.ALPHA_TEST) {
             return emissive ? BrRenderState.SurfaceClass.EMISSIVE_CUTOUT : BrRenderState.SurfaceClass.CUTOUT;

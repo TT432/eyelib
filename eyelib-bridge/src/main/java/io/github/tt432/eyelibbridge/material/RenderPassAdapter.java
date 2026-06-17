@@ -16,6 +16,9 @@ public final class RenderPassAdapter {
     private RenderPassAdapter() {}
 
     public static RenderType toRenderType(PortRenderPass pass, PortResourceLocation texture) {
+        if (pass instanceof BridgeRenderPass bridgePass) {
+            return bridgePass.renderType();
+        }
         return switch (pass.transparency()) {
             case SOLID -> RenderType.entitySolid(ResourceLocationBridge.toMc(texture));
             case ALPHA_TEST -> pass.disableCulling()
@@ -24,6 +27,7 @@ public final class RenderPassAdapter {
             case TRANSLUCENT -> pass.disableCulling()
                     ? RenderType.entityTranslucent(ResourceLocationBridge.toMc(texture))
                     : RenderType.entityTranslucentCull(ResourceLocationBridge.toMc(texture));
+            case TRANSLUCENT_EMISSIVE -> RenderType.entityTranslucentEmissive(ResourceLocationBridge.toMc(texture));
             case ADDITIVE -> RenderType.entityTranslucent(ResourceLocationBridge.toMc(texture));
         };
     }

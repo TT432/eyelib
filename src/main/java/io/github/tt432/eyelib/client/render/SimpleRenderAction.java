@@ -58,10 +58,14 @@ public record SimpleRenderAction<T>(
         if (colorMask != null) {
             builder = builder.colorMaskTexture(multiBufferSource, modelComponent, colorMask);
         }
+        float[] rcColor = modelComponent.getRcColor();
+        if (rcColor != null) {
+            builder = builder.tintColor(rcColor);
+        }
         return builder
                 .entity(entity)
                 .overlay(overlay)
-                .light(packedLight)
+                .light(modelComponent.isIgnoreLighting() ? LightTexture.FULL_BRIGHT : packedLight)
                 .partVisibility(modelComponent.getPartVisibility())
                 .build();
     }

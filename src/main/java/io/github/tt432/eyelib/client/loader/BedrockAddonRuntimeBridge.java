@@ -131,7 +131,12 @@ public final class BedrockAddonRuntimeBridge {
                 entry.textures(),
                 entry.arrays(),
                 entry.materials(),
-                entry.partVisibility()
+                entry.partVisibility(),
+                entry.ignoreLighting(),
+                entry.color(),
+                entry.isHurtColor(),
+                entry.onFireColor(),
+                entry.overlayColor()
         );
     }
 

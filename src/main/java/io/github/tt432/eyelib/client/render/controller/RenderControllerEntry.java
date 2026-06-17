@@ -10,6 +10,7 @@ import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
 import io.github.tt432.eyelib.client.render.texture.TextureLayerMerger;
 import io.github.tt432.eyelibattachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelibimporter.entity.BrClientEntity;
+import io.github.tt432.eyelibimporter.render.controller.BrRcColor;
 import io.github.tt432.eyelibmaterial.material.BrMaterialEntry;
 import io.github.tt432.eyelibmaterial.material.BrMaterialResolver;
 import io.github.tt432.eyelibmodel.GlobalBoneIdHandler;
@@ -37,7 +38,12 @@ public record RenderControllerEntry(
         List<MolangValue> textures,
         Map<String, Map<String, List<String>>> arrays,
         List<MolangMapEntry> materials,
-        Map<String, MolangValue> part_visibility
+        Map<String, MolangValue> part_visibility,
+        boolean ignoreLighting,
+        Optional<BrRcColor> color,
+        Optional<BrRcColor> isHurtColor,
+        Optional<BrRcColor> onFireColor,
+        Optional<BrRcColor> overlayColor
 ) {
     public static final Codec<RenderControllerEntry> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             MolangValue.CODEC.optionalFieldOf("geometry", MolangValue.ZERO).forGetter(RenderControllerEntry::geometry),
@@ -45,8 +51,8 @@ public record RenderControllerEntry(
                              .optionalFieldOf("textures", List.of())
                              .forGetter(RenderControllerEntry::textures),
             Codec.unboundedMap(Codec.STRING, Codec.unboundedMap(Codec.STRING, Codec.STRING.listOf()))
-                 .optionalFieldOf("arrays", Map.of())
-                 .forGetter(RenderControllerEntry::arrays),
+                  .optionalFieldOf("arrays", Map.of())
+                  .forGetter(RenderControllerEntry::arrays),
             Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).listOf().xmap(
                     RenderControllerEntry::toMolangMapEntries,
                     RenderControllerEntry::fromMolangMapEntries
@@ -60,7 +66,12 @@ public record RenderControllerEntry(
                         return result;
                     },
                     List::of
-            ).optionalFieldOf("part_visibility", Map.of()).forGetter(RenderControllerEntry::part_visibility)
+            ).optionalFieldOf("part_visibility", Map.of()).forGetter(RenderControllerEntry::part_visibility),
+            Codec.BOOL.optionalFieldOf("ignore_lighting", false).forGetter(RenderControllerEntry::ignoreLighting),
+            BrRcColor.CODEC.optionalFieldOf("color").forGetter(RenderControllerEntry::color),
+            BrRcColor.CODEC.optionalFieldOf("is_hurt_color").forGetter(RenderControllerEntry::isHurtColor),
+            BrRcColor.CODEC.optionalFieldOf("on_fire_color").forGetter(RenderControllerEntry::onFireColor),
+            BrRcColor.CODEC.optionalFieldOf("overlay_color").forGetter(RenderControllerEntry::overlayColor)
     ).apply(ins, RenderControllerEntry::new));
 
     private static List<MolangMapEntry> toMolangMapEntries(List<Map<String, MolangValue>> list) {
@@ -166,16 +177,20 @@ public record RenderControllerEntry(
 
         boolean needReloadTexture = renderControllerSlot.needsTextureReload();
 
+        float[] rcColor = evalRcColor(scope);
+
         // 每个唯一材质创建一个 ModelComponent
         for (var groupEntry : materialBoneGroups.entrySet()) {
             String materialName = groupEntry.getKey();
             Set<Integer> visibleBones = groupEntry.getValue();
 
             ResourceLocation matTexture = resolveSlotTexture(scope, entity, materialName,
-                                                             needReloadTexture, syncedActions);
+                                                              needReloadTexture, syncedActions);
 
             ModelComponent comp = new ModelComponent();
             comp.setInfo(new ModelComponentInfo(geometryResult, matTexture, new ResourceLocation(materialName)));
+            comp.setIgnoreLighting(ignoreLighting);
+            comp.setRcColor(rcColor);
 
             Int2BooleanOpenHashMap vis = buildVisibility(allBoneIds, visibleBones);
             renderControllerSlot.runtime().evalPartVisibility(vis, scope);
@@ -189,6 +204,34 @@ public record RenderControllerEntry(
         }
 
         return components;
+    }
+
+    /**
+     * 求值 RC 的 color 系列字段，返回 vertex color。
+     *
+     * is_hurt_color 仅在实体受伤时（hurtTime &gt; 0）应用，
+     * on_fire_color 仅在实体着火时应用，
+     * overlay_color 和 color 每帧应用。
+     * 优先级：is_hurt &gt; on_fire &gt; overlay &gt; color。
+     */
+    @org.jspecify.annotations.Nullable
+    @SuppressWarnings("deprecation")
+    private float[] evalRcColor(MolangScope scope) {
+        net.minecraft.world.entity.LivingEntity entity = scope.getHostContext()
+                .get(io.github.tt432.eyelib.capability.RenderData.class)
+                .map(rd -> rd.getOwner())
+                .filter(net.minecraft.world.entity.LivingEntity.class::isInstance)
+                .map(net.minecraft.world.entity.LivingEntity.class::cast)
+                .orElse(null);
+
+        boolean isHurt = entity != null && entity.hurtTime > 0;
+        boolean isOnFire = entity != null && entity.displayFireAnimation();
+
+        if (isHurt && isHurtColor.isPresent()) return isHurtColor.get().eval(scope);
+        if (isOnFire && onFireColor.isPresent()) return onFireColor.get().eval(scope);
+        if (overlayColor.isPresent()) return overlayColor.get().eval(scope);
+        if (color.isPresent()) return color.get().eval(scope);
+        return null;
     }
 
     /**

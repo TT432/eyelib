@@ -55,6 +55,7 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
                             ? net.minecraft.client.renderer.RenderType.entityCutoutNoCull(texture)
                             : net.minecraft.client.renderer.RenderType.entityCutout(texture);
                     case TRANSLUCENT, ADDITIVE -> net.minecraft.client.renderer.RenderType.entityTranslucent(texture);
+                    case TRANSLUCENT_EMISSIVE -> net.minecraft.client.renderer.RenderType.entityTranslucentEmissive(texture);
                 }
         );
         render(particle, poseStack, buffer);

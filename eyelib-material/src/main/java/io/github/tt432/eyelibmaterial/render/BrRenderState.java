@@ -32,8 +32,7 @@ public record BrRenderState(
     }
 
     public boolean needsCustomRenderType() {
-        return customShader
-                || blend.filter(value -> !value.isDefaultTranslucent()).isPresent()
+        return blend.filter(value -> !value.isDefaultTranslucent()).isPresent()
                 || depth.func().filter(func -> func != DepthFunc.LessEqual).isPresent()
                 || !depth.test()
                 || !writeMask.writeColor()
@@ -45,6 +44,7 @@ public record BrRenderState(
         OPAQUE,
         CUTOUT,
         TRANSLUCENT,
+        TRANSLUCENT_EMISSIVE,
         ADDITIVE,
         EMISSIVE,
         EMISSIVE_CUTOUT,

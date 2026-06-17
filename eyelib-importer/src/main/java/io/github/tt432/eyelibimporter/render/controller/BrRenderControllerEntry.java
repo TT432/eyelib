@@ -15,7 +15,12 @@ public record BrRenderControllerEntry(
         List<MolangValue> textures,
         Map<String, Map<String, List<String>>> arrays,
         List<MolangMapEntry> materials,
-        Map<String, MolangValue> partVisibility
+        Map<String, MolangValue> partVisibility,
+        boolean ignoreLighting,
+        Optional<BrRcColor> color,
+        Optional<BrRcColor> isHurtColor,
+        Optional<BrRcColor> onFireColor,
+        Optional<BrRcColor> overlayColor
 ) {
     public static final Codec<BrRenderControllerEntry> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             MolangValue.CODEC.optionalFieldOf("geometry", MolangValue.ZERO).forGetter(BrRenderControllerEntry::geometry),
@@ -30,7 +35,12 @@ public record BrRenderControllerEntry(
             Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).listOf().xmap(
                     BrRenderControllerEntry::flattenMolangMaps,
                     List::of
-            ).optionalFieldOf("part_visibility", Map.of()).forGetter(BrRenderControllerEntry::partVisibility)
+            ).optionalFieldOf("part_visibility", Map.of()).forGetter(BrRenderControllerEntry::partVisibility),
+            Codec.BOOL.optionalFieldOf("ignore_lighting", false).forGetter(BrRenderControllerEntry::ignoreLighting),
+            BrRcColor.CODEC.optionalFieldOf("color").forGetter(BrRenderControllerEntry::color),
+            BrRcColor.CODEC.optionalFieldOf("is_hurt_color").forGetter(BrRenderControllerEntry::isHurtColor),
+            BrRcColor.CODEC.optionalFieldOf("on_fire_color").forGetter(BrRenderControllerEntry::onFireColor),
+            BrRcColor.CODEC.optionalFieldOf("overlay_color").forGetter(BrRenderControllerEntry::overlayColor)
     ).apply(instance, BrRenderControllerEntry::new));
 
     private static List<MolangMapEntry> toMolangMapEntries(List<Map<String, MolangValue>> list) {

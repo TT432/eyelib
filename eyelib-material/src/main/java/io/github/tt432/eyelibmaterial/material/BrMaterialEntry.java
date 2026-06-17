@@ -255,7 +255,7 @@ public record BrMaterialEntry(
             }
             var base = materials.get(material.base());
             try {
-                return blendSrc.orElseGet(() -> base != null ? base.blend.sblendDst(base, materials, visited) : BlendFactor.OneMinusSrcAlpha);
+                return blendDst.orElseGet(() -> base != null ? base.blend.sblendDst(base, materials, visited) : BlendFactor.OneMinusSrcAlpha);
             } finally {
                 visited.remove(material.name());
             }
@@ -267,7 +267,7 @@ public record BrMaterialEntry(
             }
             var base = materials.get(material.base());
             try {
-                return blendSrc.orElseGet(() -> base != null ? base.blend.salphaSrc(base, materials, visited) : BlendFactor.One);
+                return alphaSrc.orElseGet(() -> base != null ? base.blend.salphaSrc(base, materials, visited) : BlendFactor.One);
             } finally {
                 visited.remove(material.name());
             }
@@ -279,7 +279,7 @@ public record BrMaterialEntry(
             }
             var base = materials.get(material.base());
             try {
-                return blendSrc.orElseGet(() -> base != null ? base.blend.salphaDst(base, materials, visited) : BlendFactor.OneMinusSrcAlpha);
+                return alphaDst.orElseGet(() -> base != null ? base.blend.salphaDst(base, materials, visited) : BlendFactor.OneMinusSrcAlpha);
             } finally {
                 visited.remove(material.name());
             }

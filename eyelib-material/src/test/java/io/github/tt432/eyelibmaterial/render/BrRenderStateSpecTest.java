@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * <ul>
  *   <li>BrRenderState.Transparency.NONE → PortRenderPass.SOLID</li>
  *   <li>BrRenderState.Transparency.BLEND → PortRenderPass.TRANSLUCENT</li>
+ *   <li>BrRenderState.SurfaceClass.TRANSLUCENT_EMISSIVE → PortRenderPass.TRANSLUCENT_EMISSIVE</li>
  *   <li>BrRenderState.Transparency.ALPHA_TEST → PortRenderPass.ALPHA_TEST</li>
  *   <li>BrRenderState.Transparency.ADDITIVE → PortRenderPass.ADDITIVE</li>
  *   <li>BrRenderState.cull=false → disableCulling=true</li>
@@ -63,7 +65,7 @@ class BrRenderStateSpecTest {
                         Optional.of(blendSrc), Optional.of(blendDst),
                         Optional.empty(), Optional.empty()),
                 new BrMaterialEntry.Stencil(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
-                        Optional.empty(), Optional.empty()),
+                                            Optional.empty(), Optional.empty()),
                 Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
                 Optional.empty(), Optional.empty(), Optional.empty(),
                 List.of()
@@ -103,7 +105,7 @@ class BrRenderStateSpecTest {
                 "entity");
 
         assertEquals(BrRenderState.Transparency.NONE, state.transparency(),
-                "entity 无 Blending 无 ALPHA_TEST → Transparency.NONE");
+                     "entity 无 Blending 无 ALPHA_TEST → Transparency.NONE");
         assertTrue(state.cull(), "entity 无 DisableCulling → cull=true");
         assertTrue(state.isSolid(), "NONE + writeDepth → isSolid=true");
     }
@@ -117,12 +119,12 @@ class BrRenderStateSpecTest {
                 Map.of(
                         "entity", entry("entity", defines(), states()),
                         "entity_alphablend:entity", entry("entity_alphablend:entity",
-                                defines(), states(null, List.of(GLStates.Blending), null))
+                                                          defines(), states(null, List.of(GLStates.Blending), null))
                 ),
                 "entity_alphablend:entity");
 
         assertEquals(BrRenderState.Transparency.BLEND, state.transparency(),
-                "Blending → Transparency.BLEND");
+                     "Blending → Transparency.BLEND");
         assertTrue(state.cull(), "无 DisableCulling → cull=true");
         assertFalse(state.isSolid(), "BLEND → isSolid=false");
     }
@@ -138,13 +140,13 @@ class BrRenderStateSpecTest {
                 Map.of(
                         "entity", entry("entity", defines(), states()),
                         "entity_nocull:entity", entry("entity_nocull:entity",
-                                defines(), // 无 ALPHA_TEST
-                                states(null, List.of(GLStates.DisableCulling), null))
+                                                      defines(), // 无 ALPHA_TEST
+                                                      states(null, List.of(GLStates.DisableCulling), null))
                 ),
                 "entity_nocull:entity");
 
         assertEquals(BrRenderState.Transparency.NONE, state.transparency(),
-                "真实 entity_nocull 无 ALPHA_TEST 无 Blending → Transparency.NONE");
+                     "真实 entity_nocull 无 ALPHA_TEST 无 Blending → Transparency.NONE");
         assertFalse(state.cull(), "DisableCulling → cull=false");
     }
 
@@ -157,13 +159,13 @@ class BrRenderStateSpecTest {
                 Map.of(
                         "entity", entry("entity", defines(), states()),
                         "entity_nocull:entity", entry("entity_nocull:entity",
-                                defines(null, List.of("ALPHA_TEST"), null),
-                                states(null, List.of(GLStates.DisableCulling), null))
+                                                      defines(null, List.of("ALPHA_TEST"), null),
+                                                      states(null, List.of(GLStates.DisableCulling), null))
                 ),
                 "entity_nocull:entity");
 
         assertEquals(BrRenderState.Transparency.ALPHA_TEST, state.transparency(),
-                "ALPHA_TEST define → Transparency.ALPHA_TEST");
+                     "ALPHA_TEST define → Transparency.ALPHA_TEST");
         assertFalse(state.cull(), "DisableCulling → cull=false");
     }
 
@@ -176,23 +178,23 @@ class BrRenderStateSpecTest {
                 Map.of(
                         "entity", entry("entity", defines(), states()),
                         "entity_alphablend:entity", entry("entity_alphablend:entity",
-                                defines(), states(null, List.of(GLStates.Blending), null),
-                                BlendFactor.SourceAlpha, BlendFactor.OneMinusSrcAlpha),
+                                                          defines(), states(null, List.of(GLStates.Blending), null),
+                                                          BlendFactor.SourceAlpha, BlendFactor.OneMinusSrcAlpha),
                         "entity_beam_additive:entity_alphablend",
                         entry("entity_beam_additive:entity_alphablend",
-                                defines(null, List.of("COLOR_BASED", "NO_TEXTURE"), null),
-                                states(null, List.of(GLStates.Blending, GLStates.DisableCulling, GLStates.DisableDepthWrite), null),
-                                BlendFactor.SourceAlpha, BlendFactor.One)
+                              defines(null, List.of("COLOR_BASED", "NO_TEXTURE"), null),
+                              states(null, List.of(GLStates.Blending, GLStates.DisableCulling, GLStates.DisableDepthWrite), null),
+                              BlendFactor.SourceAlpha, BlendFactor.One)
                 ),
                 "entity_beam_additive:entity_alphablend");
 
         assertEquals(BrRenderState.Transparency.ADDITIVE, state.transparency(),
-                "Blending + blendDst=One → isAdditive=true → Transparency.ADDITIVE");
+                     "Blending + blendDst=One → isAdditive=true → Transparency.ADDITIVE");
         assertFalse(state.cull(), "DisableCulling → cull=false");
         assertFalse(state.writeMask().writeDepth(),
-                "DisableDepthWrite → writeDepth=false");
+                    "DisableDepthWrite → writeDepth=false");
         assertEquals(BrRenderState.SurfaceClass.ADDITIVE, state.surfaceClass(),
-                "ADDITIVE transparency 应对应 ADDITIVE surfaceClass");
+                     "ADDITIVE transparency 应对应 ADDITIVE surfaceClass");
     }
 
     // === S5: entity_alphatest → ALPHA_TEST, cull=true ===
@@ -204,15 +206,15 @@ class BrRenderStateSpecTest {
                 Map.of(
                         "entity", entry("entity", defines(), states()),
                         "entity_alphatest:entity", entry("entity_alphatest:entity",
-                                defines(null, List.of("ALPHA_TEST"), null), states())
+                                                         defines(null, List.of("ALPHA_TEST"), null), states())
                 ),
                 "entity_alphatest:entity");
 
         assertEquals(BrRenderState.Transparency.ALPHA_TEST, state.transparency(),
-                "ALPHA_TEST define → Transparency.ALPHA_TEST");
+                     "ALPHA_TEST define → Transparency.ALPHA_TEST");
         assertTrue(state.cull(), "无 DisableCulling → cull=true");
         assertEquals(BrRenderState.SurfaceClass.CUTOUT, state.surfaceClass(),
-                "ALPHA_TEST + no emissive → SurfaceClass.CUTOUT");
+                     "ALPHA_TEST + no emissive → SurfaceClass.CUTOUT");
     }
 
     // === S6: USE_EMISSIVE → EMISSIVE_CUTOUT ===
@@ -224,12 +226,12 @@ class BrRenderStateSpecTest {
                 Map.of(
                         "entity", entry("entity", defines(), states()),
                         "emissive:entity", entry("emissive:entity",
-                                defines(null, List.of("USE_EMISSIVE", "ALPHA_TEST"), null), states())
+                                                 defines(null, List.of("USE_EMISSIVE", "ALPHA_TEST"), null), states())
                 ),
                 "emissive:entity");
 
         assertEquals(BrRenderState.SurfaceClass.EMISSIVE_CUTOUT, state.surfaceClass(),
-                "ALPHA_TEST + USE_EMISSIVE → SurfaceClass.EMISSIVE_CUTOUT (区别于 CUTOUT)");
+                     "ALPHA_TEST + USE_EMISSIVE → SurfaceClass.EMISSIVE_CUTOUT (区别于 CUTOUT)");
     }
 
     // === S7: GLINT → SurfaceClass.GLINT ===
@@ -241,12 +243,12 @@ class BrRenderStateSpecTest {
                 Map.of(
                         "entity", entry("entity", defines(), states()),
                         "entity_glint:entity", entry("entity_glint:entity",
-                                defines(null, List.of("GLINT"), null), states())
+                                                     defines(null, List.of("GLINT"), null), states())
                 ),
                 "entity_glint:entity");
 
         assertEquals(BrRenderState.SurfaceClass.GLINT, state.surfaceClass(),
-                "GLINT define → SurfaceClass.GLINT（优先级最高）");
+                     "GLINT define → SurfaceClass.GLINT（优先级最高）");
     }
 
     // === S8: standalone material → NONE ===
@@ -275,14 +277,14 @@ class BrRenderStateSpecTest {
                 Map.of(
                         "entity", entry("entity", defines(), states()),
                         "entity_nocull:entity", entry("entity_nocull:entity",
-                                defines(),
-                                states(null, List.of(GLStates.DisableCulling), null))
+                                                      defines(),
+                                                      states(null, List.of(GLStates.DisableCulling), null))
                 ),
                 "entity_nocull:entity");
 
         // DisableCulling 只改变 cull → needsCustomRenderType=false
         assertFalse(state.needsCustomRenderType(),
-                "entity_nocull 仅改 cull → needsCustomRenderType=false（cull 改变不触发 custom RT）");
+                    "entity_nocull 仅改 cull → needsCustomRenderType=false（cull 改变不触发 custom RT）");
     }
 
     @Test
@@ -292,18 +294,86 @@ class BrRenderStateSpecTest {
                 Map.of(
                         "entity", entry("entity", defines(), states()),
                         "entity_alphablend:entity", entry("entity_alphablend:entity",
-                                defines(), states(null, List.of(GLStates.Blending), null),
-                                BlendFactor.SourceAlpha, BlendFactor.OneMinusSrcAlpha),
+                                                          defines(), states(null, List.of(GLStates.Blending), null),
+                                                          BlendFactor.SourceAlpha, BlendFactor.OneMinusSrcAlpha),
                         "entity_beam_additive:entity_alphablend",
                         entry("entity_beam_additive:entity_alphablend",
-                                defines(null, List.of("COLOR_BASED"), null),
-                                states(null, List.of(GLStates.Blending, GLStates.DisableCulling, GLStates.DisableDepthWrite), null),
-                                BlendFactor.SourceAlpha, BlendFactor.One)
+                              defines(null, List.of("COLOR_BASED"), null),
+                              states(null, List.of(GLStates.Blending, GLStates.DisableCulling, GLStates.DisableDepthWrite), null),
+                              BlendFactor.SourceAlpha, BlendFactor.One)
                 ),
                 "entity_beam_additive:entity_alphablend");
 
         assertTrue(state.needsCustomRenderType(),
-                "entity_beam_additive blendDst=One（非默认 blend）→ needsCustomRenderType=true");
+                   "entity_beam_additive blendDst=One（非默认 blend）→ needsCustomRenderType=true");
+    }
+
+    @Test
+    @DisplayName("Render §shader 字段不单独触发 custom render type")
+    void shaderFieldsDoNotRequireCustomRenderType() {
+        ResolvedBrMaterial material = new ResolvedBrMaterial(
+                "entity",
+                List.of("entity"),
+                Optional.of("eyelibmaterial:shaders/render.vert"),
+                Optional.of("eyelibmaterial:shaders/render.frag"),
+                Set.of(),
+                Set.of(),
+                List.of(),
+                Optional.empty(),
+                ResolvedBrMaterial.BlendState.DEFAULT,
+                ResolvedBrMaterial.StencilState.DEFAULT,
+                List.of()
+        );
+
+        BrRenderState state = BrRenderStateFactory.from(material);
+
+        assertTrue(state.customShader());
+        assertFalse(state.needsCustomRenderType(),
+                    "仅存在 Bedrock shader 字段时仍应复用普通实体 RenderType");
+    }
+
+    @Test
+    @DisplayName("Render §charged_creeper: One/One Blending → ADDITIVE + custom render type")
+    void chargedCreeperUsesAdditiveCustomRenderType() {
+        BrRenderState state = resolve(
+                Map.of(
+                        "entity", entry("entity", defines(), states()),
+                        "entity_static:entity", entry("entity_static:entity", defines(), states()),
+                        "charged_creeper:entity_static", entry("charged_creeper:entity_static",
+                                                               defines(null, List.of("USE_UV_ANIM", "ALPHA_TEST"), null),
+                                                               states(null, List.of(GLStates.Blending, GLStates.DisableCulling), null),
+                                                               BlendFactor.One, BlendFactor.One)
+                ),
+                "charged_creeper:entity_static");
+
+        assertEquals(BrRenderState.Transparency.ADDITIVE, state.transparency());
+        assertFalse(state.cull());
+        assertTrue(state.blend().isPresent());
+        assertEquals(BlendFactor.One, state.blend().orElseThrow().blendSrc());
+        assertEquals(BlendFactor.One, state.blend().orElseThrow().blendDst());
+        assertTrue(state.needsCustomRenderType(),
+                   "charged_creeper 的 One/One 混合必须保留为自定义 RenderType");
+    }
+
+    @Test
+    @DisplayName("Render §warden_bioluminescent_layer: USE_EMISSIVE + Blending → TRANSLUCENT_EMISSIVE")
+    void wardenBioluminescentLayerUsesTranslucentEmissiveSurface() {
+        BrRenderState state = resolve(
+                Map.of(
+                        "entity", entry("entity", defines(), states()),
+                        "entity_alphablend:entity", entry("entity_alphablend:entity",
+                                                          defines(), states(null, List.of(GLStates.Blending), null),
+                                                          BlendFactor.SourceAlpha, BlendFactor.OneMinusSrcAlpha),
+                        "warden_bioluminescent_layer:entity_alphablend",
+                        entry("warden_bioluminescent_layer:entity_alphablend",
+                              defines(null, List.of("USE_EMISSIVE"), null),
+                              states(null, List.of(GLStates.Blending), null),
+                              BlendFactor.SourceAlpha, BlendFactor.OneMinusSrcAlpha)
+                ),
+                "warden_bioluminescent_layer:entity_alphablend");
+
+        assertEquals(BrRenderState.Transparency.BLEND, state.transparency());
+        assertEquals(BrRenderState.SurfaceClass.TRANSLUCENT_EMISSIVE, state.surfaceClass());
     }
 
     // === S10: DisableColorWrite → writeColor=false ===
@@ -315,13 +385,13 @@ class BrRenderStateSpecTest {
                 Map.of(
                         "entity", entry("entity", defines(), states()),
                         "no_color:entity", entry("no_color:entity",
-                                defines(), states(null, List.of(GLStates.DisableColorWrite), null))
+                                                 defines(), states(null, List.of(GLStates.DisableColorWrite), null))
                 ),
                 "no_color:entity");
 
         assertFalse(state.writeMask().writeColor(),
-                "DisableColorWrite → writeMask.writeColor=false");
+                    "DisableColorWrite → writeMask.writeColor=false");
         assertTrue(state.writeMask().writeDepth(),
-                "无 DisableDepthWrite → writeMask.writeDepth=true（默认）");
+                   "无 DisableDepthWrite → writeMask.writeDepth=true（默认）");
     }
 }

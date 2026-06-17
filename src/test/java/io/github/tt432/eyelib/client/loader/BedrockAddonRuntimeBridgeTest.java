@@ -31,6 +31,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** @author TT432 */
 class BedrockAddonRuntimeBridgeTest {
@@ -48,45 +49,47 @@ class BedrockAddonRuntimeBridgeTest {
     @Test
     void replaceFromResourcePackPublishesBridgeableFamiliesToRuntimeManagers() {
         BrAnimationSet animationSet = BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
-                {
-                  "animations": {
-                    "animation.test.idle": {}
-                  }
-                }
+                                                                                                                  {
+                                                                                                                    "animations": {
+                                                                                                                      "animation.test.idle": {}
+                                                                                                                    }
+                                                                                                                  }
                 """)).getOrThrow(false, AssertionError::new);
         BrAnimationControllerSet controllerSet = BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
-                {
-                  "animation_controllers": {
-                    "controller.animation.test": {
-                      "initial_state": "default",
-                      "states": {
-                        "default": {
-                          "animations": ["animation.test.idle"]
-                        }
-                      }
-                    }
-                  }
-                }
+                                                                                                                                       {
+                                                                                                                                         "animation_controllers": {
+                                                                                                                                           "controller.animation.test": {
+                                                                                                                                             "initial_state": "default",
+                                                                                                                                             "states": {
+                                                                                                                                               "default": {
+                                                                                                                                                 "animations": ["animation.test.idle"]
+                                                                                                                                               }
+                                                                                                                                             }
+                                                                                                                                           }
+                                                                                                                                         }
+                                                                                                                                       }
                 """)).getOrThrow(false, AssertionError::new);
         BrMaterial material = BrMaterial.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
-                {
-                  "materials": {
-                    "entity_alphatest": {
-                      "defines": {},
-                      "samplerStates": {},
-                      "states": {},
-                      "blend": {},
-                      "stencil": {}
-                    }
-                  }
-                }
+                                                                                                      {
+                                                                                                        "materials": {
+                                                                                                          "entity_alphatest": {
+                                                                                                            "defines": {},
+                                                                                                            "samplerStates": {},
+                                                                                                            "states": {},
+                                                                                                            "blend": {},
+                                                                                                            "stencil": {}
+                                                                                                          }
+                                                                                                        }
+                                                                                                      }
                 """)).getOrThrow(false, AssertionError::new);
         BrRenderControllers renderControllers = BrRenderControllers.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
-                {
-                  "render_controllers": {
-                    "controller.render.test": {}
-                  }
-                }
+                                                                                                                                 {
+                                                                                                                                   "render_controllers": {
+                    "controller.render.test": {
+                      "ignore_lighting": true
+                    }
+                                                                                                                                   }
+                                                                                                                                 }
                 """)).getOrThrow(false, AssertionError::new);
 
         BrClientEntity clientEntity = testEntity("eyelib:client_entity");
@@ -132,6 +135,7 @@ class BedrockAddonRuntimeBridgeTest {
         assertEquals(model, ModelManager.INSTANCE.get(model.name()));
         assertNotNull(MaterialManager.INSTANCE.get("entity_alphatest"));
         assertNotNull(RenderControllerManager.INSTANCE.get("controller.render.test"));
+        assertTrue(RenderControllerManager.INSTANCE.get("controller.render.test").ignoreLighting());
     }
 
     private static BrClientEntity testEntity(String identifier) {

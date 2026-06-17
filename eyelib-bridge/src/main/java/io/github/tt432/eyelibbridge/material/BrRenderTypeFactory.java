@@ -43,9 +43,9 @@ public final class BrRenderTypeFactory {
         if (!state.needsCustomRenderType()) {
             return toPortPass(state);
         }
-        // 确保 MC RenderType 被缓存（副作用），返回语义化 PortRenderPass
-        CACHE.computeIfAbsent(new Key(texture, state), key -> custom(mcTex, state));
-        return toPortPass(state);
+        RenderType renderType = CACHE.computeIfAbsent(new Key(texture, state), key -> custom(mcTex, state));
+        PortRenderPass pass = toPortPass(state);
+        return new BridgeRenderPass(pass.transparency(), pass.disableCulling(), renderType);
     }
 
     private static PortRenderPass toPortPass(BrRenderState state) {
@@ -53,7 +53,9 @@ public final class BrRenderTypeFactory {
                 switch (state.transparency()) {
                     case NONE -> PortRenderPass.Transparency.SOLID;
                     case ALPHA_TEST -> PortRenderPass.Transparency.ALPHA_TEST;
-                    case BLEND -> PortRenderPass.Transparency.TRANSLUCENT;
+                    case BLEND -> state.surfaceClass() == BrRenderState.SurfaceClass.TRANSLUCENT_EMISSIVE
+                            ? PortRenderPass.Transparency.TRANSLUCENT_EMISSIVE
+                            : PortRenderPass.Transparency.TRANSLUCENT;
                     case ADDITIVE -> PortRenderPass.Transparency.ADDITIVE;
                 },
                 !state.cull()
@@ -87,7 +89,7 @@ public final class BrRenderTypeFactory {
     private static RenderStateShard.ShaderStateShard shaderState(BrRenderState state) {
         return new RenderStateShard.ShaderStateShard(() -> switch (state.surfaceClass()) {
             case CUTOUT -> GameRenderer.getRendertypeEntityCutoutShader();
-            case EMISSIVE_CUTOUT -> GameRenderer.getRendertypeEntityTranslucentEmissiveShader();
+            case EMISSIVE_CUTOUT, TRANSLUCENT_EMISSIVE -> GameRenderer.getRendertypeEntityTranslucentEmissiveShader();
             case TRANSLUCENT, ADDITIVE -> GameRenderer.getRendertypeEntityTranslucentShader();
             case GLINT -> GameRenderer.getRendertypeEntityGlintShader();
             default -> GameRenderer.getRendertypeEntitySolidShader();

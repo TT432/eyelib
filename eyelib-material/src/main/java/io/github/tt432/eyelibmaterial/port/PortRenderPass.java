@@ -46,6 +46,7 @@ public interface PortRenderPass {
         SOLID,
         ALPHA_TEST,
         TRANSLUCENT,
+        TRANSLUCENT_EMISSIVE,
         ADDITIVE
     }
 }

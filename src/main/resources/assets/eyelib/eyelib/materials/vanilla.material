@@ -34,6 +34,14 @@
       "states": [],
       "variants": []
     },
+    "entity_static:entity": {
+      "vertexShader": "eyelibmaterial:shaders/render.vert",
+      "fragmentShader": "eyelibmaterial:shaders/render.frag",
+      "defines": [],
+      "samplerStates": [],
+      "states": [],
+      "variants": []
+    },
     "entity_alphatest:entity": {
       "vertexShader": "eyelibmaterial:shaders/render.vert",
       "fragmentShader": "eyelibmaterial:shaders/render.frag",
@@ -64,6 +72,36 @@
       "vertexShader": "eyelibmaterial:shaders/render.vert",
       "fragmentShader": "eyelibmaterial:shaders/render.frag",
       "defines": [],
+      "samplerStates": [],
+      "+states": ["Blending"],
+      "blendSrc": "SourceAlpha",
+      "blendDst": "OneMinusSrcAlpha",
+      "variants": []
+    },
+    "charged_creeper:entity_static": {
+      "vertexShader": "eyelibmaterial:shaders/render.vert",
+      "fragmentShader": "eyelibmaterial:shaders/render.frag",
+      "+defines": ["USE_UV_ANIM", "ALPHA_TEST"],
+      "+states": ["Blending", "DisableCulling"],
+      "blendSrc": "One",
+      "blendDst": "One",
+      "+samplerStates": [
+        {"samplerIndex": 0, "textureWrap": "Repeat"}
+      ],
+      "variants": []
+    },
+    "warden:entity": {
+      "vertexShader": "eyelibmaterial:shaders/render.vert",
+      "fragmentShader": "eyelibmaterial:shaders/render.frag",
+      "defines": [],
+      "samplerStates": [],
+      "states": [],
+      "variants": []
+    },
+    "warden_bioluminescent_layer:entity_alphablend": {
+      "vertexShader": "eyelibmaterial:shaders/render.vert",
+      "fragmentShader": "eyelibmaterial:shaders/render.frag",
+      "+defines": ["USE_EMISSIVE"],
       "samplerStates": [],
       "+states": ["Blending"],
       "blendSrc": "SourceAlpha",

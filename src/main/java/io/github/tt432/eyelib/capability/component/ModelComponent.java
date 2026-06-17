@@ -28,6 +28,9 @@ import java.util.Objects;
 public class ModelComponent {
     @Nullable
     ModelComponentInfo serializableInfo;
+    private boolean ignoreLighting;
+    @Nullable
+    private float[] rcColor;
 
     public boolean serializable() {
         return serializableInfo != null
@@ -40,6 +43,14 @@ public class ModelComponent {
         if (Objects.equals(serializableInfo, this.serializableInfo)) return;
 
         this.serializableInfo = serializableInfo;
+    }
+
+    public void setIgnoreLighting(boolean ignoreLighting) {
+        this.ignoreLighting = ignoreLighting;
+    }
+
+    public void setRcColor(@Nullable float[] rcColor) {
+        this.rcColor = rcColor;
     }
 
     public boolean readyForRendering() {

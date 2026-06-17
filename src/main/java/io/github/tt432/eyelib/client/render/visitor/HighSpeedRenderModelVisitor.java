@@ -60,7 +60,10 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
     static void visitVertex(BakedModel.BakedBone bakedBone, VertexConsumer consumer, int overlay, int light, @Nullable float[] tintColor) {
         float r = 1.0F, g = 1.0F, b = 1.0F, a = 1.0F;
         if (tintColor != null) {
-            r = tintColor[0]; g = tintColor[1]; b = tintColor[2]; a = tintColor[3];
+            r = Math.max(0, Math.min(1, tintColor[0]));
+            g = Math.max(0, Math.min(1, tintColor[1]));
+            b = Math.max(0, Math.min(1, tintColor[2]));
+            a = Math.max(0, Math.min(1, tintColor[3]));
         }
         for (int nIdx = 0; nIdx < bakedBone.vertexSize(); nIdx++) {
             consumer.vertex(
