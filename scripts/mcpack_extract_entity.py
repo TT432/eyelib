@@ -4,25 +4,28 @@ mcpack_extract_entity.py — 从 .mcpack 中提取单个 client_entity 及所有
 
 用法:
     python3 scripts/mcpack_extract_entity.py <mcpack_path> <entity_id> [-o output.md]
+    python3 scripts/mcpack_extract_entity.py <mcpack_path> <entity_id> --raw  # 只输出 entity JSON 到 stdout
 
 示例:
-    python3 scripts/mcpack_extract_entity.py run/resourcepacks/Actions-and-Stuff.mcpack minecraft:slime
+    python3 scripts/mcpack_extract_entity.py run/resourcepacks/Actions-and-Stuff.mcpack minecraft:creeper
+    python3 scripts/mcpack_extract_entity.py run/resourcepacks/Actions-and-Stuff.mcpack minecraft:warden --raw
 
 依赖:
-    - br-ar >= 1.21.124 (https://github.com/Torrekie/br-ar)
-    - repomix >= 1.14  (npm install -g repomix)
-    - Python 3.10+
+    - Python 3.10+（brarchive 解码为纯 Python 实现，对齐 Java BrArchiveDecoder）
+    - repomix >= 1.14  (npm install -g repomix)  — 仅完整模式需要
 
 支持:
-    - Marketplace 包 (__brarchive/*.brarchive)
+    - Marketplace 包 (__brarchive/*.brarchive) — 纯 Python 解码
     - 开发包 (plain JSON)
     - Subpacks (取含 animation_controllers 的最完整层)
 """
 
 import argparse
+import io
 import json
 import os
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
@@ -31,21 +34,119 @@ from pathlib import Path
 
 
 # ═══════════════════════════════════════════════════════════════
-# 配置
+# brarchive 纯 Python 解码（对齐 BrArchiveDecoder.java）
 # ═══════════════════════════════════════════════════════════════
 
-BRARCHIVE_CLI = "/tmp/usr/bin/brarchive-cli"  # br-ar 解码工具路径
+BRARCHIVE_MAGIC = 0x267052A0B125277D
+BRARCHIVE_HEADER_SIZE = 16  # 8B magic + 4B entryCount + 4B version
+BRARCHIVE_RECORD_SIZE = 256
 
 
-def find_brarchive_cli():
-    """查找 brarchive-cli，先检查配置路径，再搜 PATH。"""
-    if os.path.isfile(BRARCHIVE_CLI):
-        return BRARCHIVE_CLI
-    for name in ["brarchive-cli", "br-ar"]:
-        p = shutil.which(name)
-        if p:
-            return p
-    return None
+def decode_brarchive(archive_path):
+    """解码 .brarchive 文件，返回 {entry_name: json_str} 字典。
+
+    格式对齐 BrArchiveDecoder.java：
+      8B magic(LE) + 4B entryCount(LE) + 4B version(LE)
+      + entryCount * 256B entry records
+      + 合并 JSON body
+
+    entry record 第 1 字节是 nameLen，其后是 UTF-8 name。
+    JSON body 是多个 JSON 对象直接拼接。
+    """
+    data = Path(archive_path).read_bytes()
+    if len(data) < BRARCHIVE_HEADER_SIZE:
+        raise ValueError(f"brarchive too short: {archive_path} ({len(data)} bytes)")
+
+    magic, entry_count, version = struct.unpack_from("<QII", data, 0)
+    if magic != BRARCHIVE_MAGIC:
+        raise ValueError(f"Invalid brarchive magic: 0x{magic:X}")
+
+    content_start = BRARCHIVE_HEADER_SIZE + entry_count * BRARCHIVE_RECORD_SIZE
+    if content_start >= len(data):
+        return {}  # 空内容
+
+    # 提取 entry names（用于调试，实际解析靠 JSON body）
+    entries = []
+    for i in range(entry_count):
+        rec_off = BRARCHIVE_HEADER_SIZE + i * BRARCHIVE_RECORD_SIZE
+        name_len = data[rec_off]
+        if name_len > 0:
+            name = data[rec_off + 1: rec_off + 1 + min(name_len, len(data) - rec_off - 1)].decode("utf-8", errors="replace")
+        else:
+            name = ""
+        entries.append(name)
+
+    json_body = data[content_start:].decode("utf-8", errors="replace")
+
+    # JSON body 是多个顶层对象拼接，用流式解析拆分
+    return _parse_concatenated_json(json_body)
+
+
+def _parse_concatenated_json(text):
+    """解析直接拼接的多个顶层 JSON 对象。
+
+    用 raw decoder 逐个解析，对齐 Java 的拼接格式。
+    """
+    decoder = json.JSONDecoder()
+    result = {}
+    idx = 0
+    text_len = len(text)
+    while idx < text_len:
+        # 跳过空白
+        while idx < text_len and text[idx] in " \t\r\n":
+            idx += 1
+        if idx >= text_len:
+            break
+        try:
+            obj, end = decoder.raw_decode(text, idx)
+        except json.JSONDecodeError:
+            # 尝试跳过非 JSON 字符
+            idx += 1
+            continue
+        if isinstance(obj, dict):
+            # 判断这是什么类型的对象，提取 key
+            _index_object(obj, result)
+        idx = end
+    return result
+
+
+def _index_object(obj, result):
+    """识别对象类型并索引到 result。
+
+    Bedrock client_entity 格式: {"minecraft:client_entity": {"description": {"identifier": "minecraft:xxx", ...}}}
+    动画格式: {"format_version": "...", "animations": {"id": {...}}}
+    AC 格式: {"format_version": "...", "animation_controllers": {"id": {...}}}
+    RC 格式: {"format_version": "...", "render_controllers": {"id": {...}}}
+    几何格式: {"minecraft:geometry": [{"description": {"identifier": "..."}}]}
+    """
+    # client_entity
+    if "minecraft:client_entity" in obj:
+        desc = obj["minecraft:client_entity"].get("description", {})
+        ident = desc.get("identifier")
+        if ident:
+            result.setdefault("_entities", {})[ident] = obj
+        return
+
+    # geometry（数组形式）
+    if "minecraft:geometry" in obj:
+        for geom in obj["minecraft:geometry"]:
+            gid = geom.get("description", {}).get("identifier")
+            if gid:
+                result.setdefault("_geometry", {})[gid] = geom
+        return
+
+    # format_version 系（animations / animation_controllers / render_controllers / particles）
+    for top_key in ("animations", "animation_controllers", "render_controllers", "particle_effects", "particles"):
+        if top_key in obj and isinstance(obj[top_key], dict):
+            bucket = "_" + top_key
+            for kid, v in obj[top_key].items():
+                result.setdefault(bucket, {})[kid] = v
+            return
+
+    # 兜底：无法识别的对象，按可能的 identifier 字段索引
+    ident = obj.get("identifier") or obj.get("description", {}).get("identifier") if isinstance(obj.get("description"), dict) else None
+    if ident:
+        result.setdefault("_unknown", {})[ident] = obj
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -65,70 +166,22 @@ def has_brarchive(mcpack_dir):
     return (Path(mcpack_dir) / "__brarchive").is_dir()
 
 
-def decode_brarchive(archive_path, output_dir):
-    """解码单个 .brarchive 文件。"""
-    cli = find_brarchive_cli()
-    if not cli:
-        raise RuntimeError("br-ar 未安装。请从 https://github.com/Torrekie/br-ar/releases 下载。")
-    os.makedirs(output_dir, exist_ok=True)
-    run([cli, "decode", str(archive_path), str(output_dir)])
-
-
-def find_entity_file(entity_dir, entity_id):
-    """在 entity JSON 目录中搜索目标 entity_id。
-    
-    返回 (file_path, description_dict) 或 None。
-    """
-    # 尝试直接文件名匹配（开发包）
-    direct = Path(entity_dir) / f"{entity_id.replace(':', '_')}.json"
-    if direct.is_file():
-        return direct
-
-    # brarchive 后文件名是 hash 的，需要 grep
-    for f in Path(entity_dir).glob("*.json"):
-        try:
-            data = json.loads(f.read_text())
-            ce = data.get("minecraft:client_entity", {})
-            desc = ce.get("description", {})
-            if desc.get("identifier") == entity_id:
-                return f
-        except (json.JSONDecodeError, KeyError):
-            continue
-    return None
-
-
 # ═══════════════════════════════════════════════════════════════
-# 引用提取
+# 引用提取（从 client_entity JSON）
 # ═══════════════════════════════════════════════════════════════
 
-def extract_refs_from_entity(entity_json_path):
+def extract_refs_from_entity(entity_json):
     """从 client_entity JSON 中提取所有引用 ID。
-    
+
     返回:
-        refs: {
-            'animations': [full_id, ...],       # "animation.xxx.yyy"
-            'animation_controllers': [full_id, ...],  # "controller.animation.xxx.yyy"
-            'render_controllers': [full_id, ...],
-            'particles': [full_id, ...],
-            'sounds': [full_id, ...],
-            'geometry': [full_id, ...],
-            'textures': [path, ...],
-            'materials': [name, ...],
-        }
-        anim_map: {short_name: full_id}  # 用于从 AC short names 反查
+        refs: {animations, animation_controllers, render_controllers, particles, sounds, geometry, textures, materials}
+        anim_map: {short_name: full_id}
     """
-    data = json.loads(Path(entity_json_path).read_text())
-    ce = data["minecraft:client_entity"]["description"]
+    ce = entity_json["minecraft:client_entity"]["description"]
 
     refs = {
-        "animations": [],
-        "animation_controllers": [],
-        "render_controllers": [],
-        "particles": [],
-        "sounds": [],
-        "geometry": [],
-        "textures": [],
-        "materials": [],
+        "animations": [], "animation_controllers": [], "render_controllers": [],
+        "particles": [], "sounds": [], "geometry": [], "textures": [], "materials": [],
     }
 
     anim_map = ce.get("animations", {})
@@ -138,108 +191,43 @@ def extract_refs_from_entity(entity_json_path):
         else:
             refs["animations"].append(full_id)
 
-    # render_controllers
     for rc in ce.get("render_controllers", []):
         if isinstance(rc, str):
             refs["render_controllers"].append(rc)
         elif isinstance(rc, dict):
             refs["render_controllers"].extend(rc.keys())
 
-    # geometry
     refs["geometry"].extend(
         v if isinstance(v, str) else str(v)
         for v in ce.get("geometry", {}).values()
     )
-
-    # textures
     refs["textures"].extend(
         v if isinstance(v, str) else str(v)
         for v in ce.get("textures", {}).values()
     )
-
-    # materials
     refs["materials"].extend(ce.get("materials", {}).values())
 
-    # particles
     for section in ["particle_effects", "particle_emitters"]:
-        refs["particles"].extend(
-            v for v in ce.get(section, {}).values()
-        )
-
-    # sounds
-    refs["sounds"].extend(
-        v for v in ce.get("sound_effects", {}).values()
-    )
+        refs["particles"].extend(v for v in ce.get(section, {}).values())
+    refs["sounds"].extend(v for v in ce.get("sound_effects", {}).values())
 
     return refs, anim_map
 
 
-def resolve_ac_animations(ac_dir, ac_ids, anim_map, entity_anims):
-    """从 AC 文件中递归提取被引用的 animation short names，
-    通过 anim_map 展开为 full_id，加回 entity_anims 集合。
-    """
-    extra_anims = set()
-    for f in Path(ac_dir).glob("*.json"):
-        data = json.loads(f.read_text())
-        controllers = data.get("animation_controllers", {})
-        for cid, cdata in controllers.items():
-            if cid not in ac_ids:
-                continue
-            for sdata in cdata.get("states", {}).values():
-                for a in sdata.get("animations", []):
-                    short = a if isinstance(a, str) else next(iter(a))
-                    full = anim_map.get(short, short)
-                    if full not in entity_anims:
-                        extra_anims.add(full)
-    return entity_anims | extra_anims
-
-
-# ═══════════════════════════════════════════════════════════════
-# JSON 字段级裁剪
-# ═══════════════════════════════════════════════════════════════
-
-def filter_json_file(input_pattern, target_ids, key_name, format_version, output_path):
-    """从一组 JSON 文件中提取匹配 target_ids 的条目。
-    
-    Args:
-        input_pattern: glob 模式或单文件路径
-        target_ids: set of full IDs to keep
-        key_name: 顶层 key 名 (如 'animations', 'animation_controllers')
-        format_version: 输出的 format_version 值
-        output_path: 输出路径
-    """
-    result = {}
-    pattern = Path(input_pattern)
-    if "*" in str(input_pattern):
-        files = list(pattern.parent.glob(pattern.name)) if pattern.is_absolute() else list(Path().glob(str(pattern)))
-    else:
-        files = [pattern]
-    for f in files:
-        if not f.is_file():
+def resolve_ac_animations(ac_indexed, ac_ids, anim_map, entity_anims):
+    """从已解码的 AC 中递归提取被引用的 animation short names，展开为 full_id。"""
+    extra = set()
+    for cid in ac_ids:
+        cdata = ac_indexed.get(cid)
+        if not cdata:
             continue
-        data = json.loads(f.read_text())
-        for k, v in data.get(key_name, {}).items():
-            if k in target_ids:
-                result[k] = v
-
-    if result:
-        out = {"format_version": format_version, key_name: result}
-        Path(output_path).write_text(json.dumps(out, indent=2, ensure_ascii=False))
-        return len(result)
-    return 0
-
-
-def find_brarchive_path(pack_root, tmpdir_root, br_name):
-    """在 pack_root 和 tmpdir_root(根包) 之间查找 .brarchive 文件。
-    优先 pack_root，不存在或不完整时回退到 root。
-    """
-    archive = pack_root / "__brarchive" / br_name
-    if archive.is_file() and archive.stat().st_size > 100:
-        return archive
-    fallback = tmpdir_root / "__brarchive" / br_name
-    if fallback.is_file():
-        return fallback
-    return None
+        for sdata in cdata.get("states", {}).values():
+            for a in sdata.get("animations", []):
+                short = a if isinstance(a, str) else next(iter(a))
+                full = anim_map.get(short, short)
+                if full not in entity_anims:
+                    extra.add(full)
+    return entity_anims | extra
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -248,229 +236,205 @@ def find_brarchive_path(pack_root, tmpdir_root, br_name):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="从 .mcpack 中提取单个 client_entity 及所有引用，输出为单一 markdown"
+        description="从 .mcpack 中提取单个 client_entity 及所有引用"
     )
     parser.add_argument("mcpack", help=".mcpack 文件路径")
-    parser.add_argument("entity_id", help="entity identifier，如 minecraft:slime")
+    parser.add_argument("entity_id", help="entity identifier，如 minecraft:creeper")
     parser.add_argument("-o", "--output", default=None,
                         help="输出 markdown 路径（默认: <entity_id>.md）")
     parser.add_argument("--subpack", default=None,
-                        help="手动指定子包 (如 SP0, SP1, SP2) 或 'root'；默认自动选择含 animation_controllers 的最完整层")
-    parser.add_argument("--keep-temp", action="store_true",
-                        help="保留临时文件")
+                        help="手动指定子包 (SP0/SP1/SP2/root)；默认自动选择含 animation_controllers 的最完整层")
+    parser.add_argument("--keep-temp", action="store_true", help="保留临时文件")
+    parser.add_argument("--raw", action="store_true",
+                        help="只输出 client_entity JSON 到 stdout（不做引用裁剪、不调 repomix）")
     args = parser.parse_args()
 
     mcpack_path = Path(args.mcpack).resolve()
     entity_id = args.entity_id
-    output = Path(args.output) if args.output else Path(f"{entity_id.replace(':', '_')}.md")
-    output = output.resolve()
 
     if not mcpack_path.is_file():
-        print(f"❌ 文件不存在: {mcpack_path}", file=sys.stderr)
+        print(f"ERROR: 文件不存在: {mcpack_path}", file=sys.stderr)
         sys.exit(1)
 
     # ── 1. 解包 ──
     tmpdir = Path(tempfile.mkdtemp(prefix="mcpack-extract-"))
-    print(f"📦 解压 {mcpack_path.name} → {tmpdir}")
+    print(f"解压 {mcpack_path.name} -> {tmpdir}", file=sys.stderr)
 
     with zipfile.ZipFile(mcpack_path) as zf:
         zf.extractall(tmpdir)
 
     # ── 2. 读取 manifest，确定子包 ──
     manifest = json.loads((tmpdir / "manifest.json").read_text())
-    print(f"   包名: {manifest['header']['name']}")
-    print(f"   版本: {manifest['header']['version']}")
+    print(f"   包名: {manifest['header']['name']}", file=sys.stderr)
 
-    # 选子包
     pack_root = tmpdir
     subpacks = manifest.get("subpacks", [])
 
     if args.subpack:
         if args.subpack.lower() == "root":
             pack_root = tmpdir
-            print(f"   子包: root (手动指定)")
+            print(f"   子包: root (手动)", file=sys.stderr)
         else:
             sp_dir = tmpdir / "subpacks" / args.subpack
             if sp_dir.is_dir():
                 pack_root = sp_dir
-                print(f"   子包: {args.subpack} (手动指定)")
+                print(f"   子包: {args.subpack} (手动)", file=sys.stderr)
             else:
-                print(f"⚠ 子包 {args.subpack} 不存在，使用 root")
+                print(f"   WARN 子包 {args.subpack} 不存在，使用 root", file=sys.stderr)
     elif subpacks:
-        # 优先选含 __brarchive/animation_controllers.brarchive 的子包
         for sp in subpacks:
             sp_dir = tmpdir / "subpacks" / sp["folder_name"]
             if (sp_dir / "__brarchive" / "animation_controllers.brarchive").is_file():
                 pack_root = sp_dir
-                print(f"   子包: {sp['folder_name']} ({sp.get('name', '')})")
+                print(f"   子包: {sp['folder_name']} ({sp.get('name', '')})", file=sys.stderr)
                 break
         else:
-            # fallback: 用 root
-            print(f"   子包: 无动画层，使用 root")
+            print(f"   子包: 无动画层，使用 root", file=sys.stderr)
 
-    # ── 3. 定位 entity ──
+    # ── 3. 解码 entity ──
+    entity_indexed = {}  # {identifier: json_obj}
+
     if has_brarchive(pack_root):
-        print("🔓 解码 brarchive...")
-        entity_dir = tmpdir / "_extracted_entity"
-        decode_brarchive(pack_root / "__brarchive" / "entity.brarchive", entity_dir)
+        entity_br = pack_root / "__brarchive" / "entity.brarchive"
+        if not entity_br.is_file():
+            # fallback root
+            entity_br = tmpdir / "__brarchive" / "entity.brarchive"
+        if entity_br.is_file():
+            print(f"解码 {entity_br.name}...", file=sys.stderr)
+            decoded = decode_brarchive(entity_br)
+            entity_indexed = decoded.get("_entities", {})
     else:
+        # 开发包：读 entity/*.json
         entity_dir = pack_root / "entity"
+        for f in entity_dir.glob("*.json"):
+            data = json.loads(f.read_text())
+            ce = data.get("minecraft:client_entity", {})
+            ident = ce.get("description", {}).get("identifier")
+            if ident:
+                entity_indexed[ident] = data
 
-    entity_file = find_entity_file(entity_dir, entity_id)
-    if not entity_file:
-        print(f"❌ 未找到 entity: {entity_id}", file=sys.stderr)
+    if entity_id not in entity_indexed:
+        print(f"ERROR: 未找到 entity: {entity_id}", file=sys.stderr)
+        print(f"   已知实体 ({len(entity_indexed)}): {', '.join(sorted(entity_indexed)[:20])}...", file=sys.stderr)
         sys.exit(1)
-    print(f"🎯 找到 entity: {entity_file.name} → {entity_id}")
+
+    entity_json = entity_indexed[entity_id]
+    print(f"找到 entity: {entity_id}", file=sys.stderr)
+
+    # ── raw 模式：直接输出 ──
+    if args.raw:
+        print(json.dumps(entity_json, indent=2, ensure_ascii=False))
+        if not args.keep_temp:
+            shutil.rmtree(tmpdir)
+        return
 
     # ── 4. 提取引用 ──
-    refs, anim_map = extract_refs_from_entity(entity_file)
-    print(f"   动画: {len(refs['animations'])}")
-    print(f"   动画控制器: {len(refs['animation_controllers'])}")
-    print(f"   渲染控制器: {len(refs['render_controllers'])}")
-    print(f"   粒子: {len(refs['particles'])}")
-    print(f"   声音: {len(refs['sounds'])}")
+    refs, anim_map = extract_refs_from_entity(entity_json)
+    print(f"   动画: {len(refs['animations'])}", file=sys.stderr)
+    print(f"   动画控制器: {len(refs['animation_controllers'])}", file=sys.stderr)
+    print(f"   渲染控制器: {len(refs['render_controllers'])}", file=sys.stderr)
+    print(f"   粒子: {len(refs['particles'])}", file=sys.stderr)
 
     # ── 5. 递归解析 AC 中的动画引用 ──
+    ac_indexed = {}
     if refs["animation_controllers"]:
-        ac_archive = find_brarchive_path(pack_root, tmpdir, "animation_controllers.brarchive")
-        if ac_archive:
-            ac_dir = tmpdir / "_extracted_ac"
-            decode_brarchive(ac_archive, ac_dir)
+        ac_br = pack_root / "__brarchive" / "animation_controllers.brarchive"
+        if not ac_br.is_file():
+            ac_br = tmpdir / "__brarchive" / "animation_controllers.brarchive"
+        if ac_br.is_file():
+            ac_decoded = decode_brarchive(ac_br)
+            ac_indexed = ac_decoded.get("_animation_controllers", {})
             all_anims = resolve_ac_animations(
-                ac_dir, set(refs["animation_controllers"]), anim_map, set(refs["animations"])
+                ac_indexed, set(refs["animation_controllers"]), anim_map, set(refs["animations"])
             )
             refs["animations"] = sorted(all_anims)
-            print(f"   AC 递归后动画: {len(refs['animations'])}")
+            print(f"   AC 递归后动画: {len(refs['animations'])}", file=sys.stderr)
 
     # ── 6. 解码并裁剪各 brarchive ──
     collected = tmpdir / "collected"
     collected.mkdir(exist_ok=True)
 
-    # entity — pretty-print 以便子代理可读
-    entity_data = json.loads(Path(entity_file).read_text())
-    Path(collected / "entity.json").write_text(json.dumps(entity_data, indent=2, ensure_ascii=False))
-    # manifest
+    Path(collected / "entity.json").write_text(json.dumps(entity_json, indent=2, ensure_ascii=False))
     shutil.copy(tmpdir / "manifest.json", collected / "manifest.json")
 
-    brarchive_map = {
-        "animations": ("animations.brarchive", "animations", "1.8.0", "animations.json"),
-        "animation_controllers": ("animation_controllers.brarchive", "animation_controllers", "1.19.60", "animation_controllers.json"),
-        "render_controllers": ("render_controllers.brarchive", "render_controllers", "1.10.0", "render_controllers.json"),
-    }
+    def decode_br_safe(br_name):
+        """优先子包，回退 root，返回 _bucket 字典。"""
+        for root in [pack_root, tmpdir]:
+            p = root / "__brarchive" / br_name
+            if p.is_file() and p.stat().st_size > 100:
+                return decode_brarchive(p)
+        return {}
 
-    for ref_key, (br_name, key_name, fmt_ver, out_name) in brarchive_map.items():
-        ids = set(refs[ref_key])
-        if not ids:
-            continue
+    # render_controllers
+    if refs["render_controllers"]:
+        rc_decoded = decode_br_safe("render_controllers.brarchive")
+        rc_bucket = rc_decoded.get("_render_controllers", {})
+        rc_ids = set(refs["render_controllers"])
+        filtered = {k: v for k, v in rc_bucket.items() if k in rc_ids}
+        if filtered:
+            Path(collected / "render_controllers.json").write_text(
+                json.dumps({"format_version": "1.10.0", "render_controllers": filtered}, indent=2, ensure_ascii=False))
+            print(f"   render_controllers: {len(filtered)}/{len(rc_ids)}", file=sys.stderr)
 
-        # 先尝试子包，再回退到 root
-        count = 0
-        for source_root in [pack_root, tmpdir]:  # pack_root = 子包, tmpdir = 根包
-            archive = source_root / "__brarchive" / br_name
-            if not archive.is_file() or archive.stat().st_size <= 100:
-                continue
-            extract_dir = tmpdir / f"_extracted_{ref_key}"
-            if extract_dir.exists():
-                shutil.rmtree(extract_dir)
-            decode_brarchive(archive, extract_dir)
-            count += filter_json_file(
-                str(extract_dir / "*.json"), ids, key_name, fmt_ver,
-                collected / out_name
-            )
-            if count >= len(ids):
-                break  # 全部找到，不需要继续
+    # animation_controllers
+    if ac_indexed:
+        ac_ids = set(refs["animation_controllers"])
+        filtered = {k: v for k, v in ac_indexed.items() if k in ac_ids}
+        if filtered:
+            Path(collected / "animation_controllers.json").write_text(
+                json.dumps({"format_version": "1.19.60", "animation_controllers": filtered}, indent=2, ensure_ascii=False))
+            print(f"   animation_controllers: {len(filtered)}/{len(ac_ids)}", file=sys.stderr)
 
-        if count > 0:
-            print(f"   裁剪 {br_name}: {count}/{len(ids)} 匹配")
-        else:
-            # 开发包：直接读目录
-            src_dir = pack_root / ref_key.rstrip("s")
-            if src_dir.is_dir():
-                count = filter_json_file(
-                    str(src_dir / "*.json"), ids, key_name, fmt_ver,
-                    collected / out_name
-                )
-                print(f"   直接读取 {src_dir.name}/: {count}/{len(ids)} 匹配")
-            else:
-                print(f"   ⚠ {br_name}: 未找到匹配 ({len(ids)} 个 ID)")
+    # animations
+    if refs["animations"]:
+        anim_decoded = decode_br_safe("animations.brarchive")
+        anim_bucket = anim_decoded.get("_animations", {})
+        anim_ids = set(refs["animations"])
+        filtered = {k: v for k, v in anim_bucket.items() if k in anim_ids}
+        if filtered:
+            Path(collected / "animations.json").write_text(
+                json.dumps({"format_version": "1.8.0", "animations": filtered}, indent=2, ensure_ascii=False))
+            print(f"   animations: {len(filtered)}/{len(anim_ids)}", file=sys.stderr)
+
+    # geometry
+    if refs["geometry"]:
+        geo_ids = set(refs["geometry"])
+        geo_result = []
+        for br_file in ["models/entity.brarchive", "models.brarchive"]:
+            decoded = decode_br_safe(br_file)
+            geo_bucket = decoded.get("_geometry", {})
+            for gid in geo_ids:
+                if gid in geo_bucket and geo_bucket[gid] not in geo_result:
+                    geo_result.append(geo_bucket[gid])
+            if len(geo_result) >= len(geo_ids):
+                break
+        if geo_result:
+            Path(collected / "geometry.json").write_text(
+                json.dumps({"minecraft:geometry": geo_result}, indent=2, ensure_ascii=False))
+            print(f"   geometry: {len(geo_result)}/{len(geo_ids)}", file=sys.stderr)
 
     # particles
     if refs["particles"]:
-        archive = find_brarchive_path(pack_root, tmpdir, "particles.brarchive")
-        if archive:
-            extract_dir = tmpdir / "_extracted_particles"
-            decode_brarchive(archive, extract_dir)
-            count = filter_json_file(
-                str(extract_dir / "*.json"), set(refs["particles"]),
-                "particle_effects", "1.10.0", collected / "particles.json"
-            )
-            print(f"   裁剪 particles.brarchive: {count}")
-
-    # models / geometry — 注意: 实体几何在 models/entity.brarchive，不是 models.brarchive
-    if refs["geometry"]:
-        count = 0
-        result = {}
-        for br_file in ["models/entity.brarchive", "models.brarchive"]:
-            for source_root in [pack_root, tmpdir]:
-                archive = source_root / "__brarchive" / br_file
-                if not archive.is_file() or archive.stat().st_size <= 100:
-                    continue
-                extract_dir = tmpdir / "_extracted_models"
-                if extract_dir.exists():
-                    shutil.rmtree(extract_dir)
-                decode_brarchive(archive, extract_dir)
-                for f in Path(extract_dir).glob("*.json"):
-                    data = json.loads(f.read_text())
-                    # 支持两种格式: {"minecraft:geometry": [...]} 和 {"格式版本": [...]}
-                    for k, v in data.items():
-                        if isinstance(v, list):
-                            for geom in v:
-                                gid = geom.get("description", {}).get("identifier", "")
-                                if gid in set(refs["geometry"]):
-                                    result.setdefault(k, []).append(geom)
-                                    count += 1
-                if count >= len(refs["geometry"]):
-                    break
-            if count >= len(refs["geometry"]):
-                break
-
-        if result:
-            Path(collected / "geometry.json").write_text(
-                json.dumps(result, indent=2, ensure_ascii=False)
-            )
-        print(f"   裁剪 geometry: {count}/{len(refs['geometry'])} 匹配")
-
-    # materials
-    mat_archive = find_brarchive_path(pack_root, tmpdir, "materials.brarchive")
-    if mat_archive:
-        mat_dir = tmpdir / "_extracted_materials"
-        decode_brarchive(mat_archive, mat_dir)
-        for f in Path(mat_dir).glob("*.json"):
-            shutil.copy(f, collected / f.name)
-        print(f"   材质: {len(list(Path(mat_dir).glob('*.json')))} 个文件")
-    else:
-        mat_dir = pack_root / "materials"
-        if mat_dir.is_dir():
-            for f in mat_dir.glob("*.json"):
-                shutil.copy(f, collected / f"material_{f.name}")
-            print(f"   材质: 已复制")
+        pt_decoded = decode_br_safe("particles.brarchive")
+        pt_bucket = pt_decoded.get("_particle_effects", {}) or pt_decoded.get("_particles", {})
+        pt_ids = set(refs["particles"])
+        filtered = {k: v for k, v in pt_bucket.items() if k in pt_ids}
+        if filtered:
+            Path(collected / "particles.json").write_text(
+                json.dumps({"format_version": "1.10.0", "particle_effects": filtered}, indent=2, ensure_ascii=False))
+            print(f"   particles: {len(filtered)}/{len(pt_ids)}", file=sys.stderr)
 
     # ── 7. repomix 打包 ──
-    print(f"\n📝 repomix 打包...")
+    output = Path(args.output).resolve() if args.output else Path(f"{entity_id.replace(':', '_')}.md").resolve()
+    print(f"\nrepomix 打包...", file=sys.stderr)
     run(["repomix", "--style", "markdown", "--output", str(output),
          "--include", "**", "--no-default-patterns", str(collected)])
 
-    # ── 8. 统计 ──
     size_kb = output.stat().st_size / 1024
-    print(f"\n✅ 完成!")
-    print(f"   输出: {output}")
-    print(f"   大小: {size_kb:.0f} KB")
-    print(f"   文件: {len(list(collected.iterdir()))} 个")
+    print(f"\n完成! 输出: {output} ({size_kb:.0f} KB)", file=sys.stderr)
 
-    # ── 清理 ──
     if not args.keep_temp:
         shutil.rmtree(tmpdir)
-        print(f"   临时文件已清理")
 
 
 if __name__ == "__main__":
