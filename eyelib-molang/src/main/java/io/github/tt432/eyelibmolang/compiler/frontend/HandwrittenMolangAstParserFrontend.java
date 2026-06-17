@@ -62,7 +62,7 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
             SourceSpan exprSetSpan = topLevel.statements.isEmpty()
                     ? SourceSpan.unknown()
                     : SourceSpan.covering(topLevel.statements.get(0).span(), topLevel.statements.get(topLevel.statements.size() - 1).span());
-            MolangAst.BlockExpr blockExpr = new MolangAst.BlockExpr(exprSetSpan, topLevel.statements);
+            MolangAst.BlockExpr blockExpr = new MolangAst.BlockExpr(exprSetSpan, topLevel.statements, true);
             return new MolangAst.ExprSet(blockExpr.span(), blockExpr);
         }
 
@@ -82,9 +82,15 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
                     SourceSpan returnSpan = SourceSpan.covering(span(returnToken), returnExpression.span());
                     statements.add(new MolangAst.ReturnStmt(returnSpan, returnExpression));
                 } else if (match(TokenKind.BREAK)) {
-                    statements.add(new MolangAst.BreakStmt(span(previous())));
+                    Token breakToken = previous();
+                    MolangAst.Expr valueExpr = parseOptionalControlFlowValue(terminator);
+                    SourceSpan breakSpan = valueExpr == null ? span(breakToken) : SourceSpan.covering(span(breakToken), valueExpr.span());
+                    statements.add(new MolangAst.BreakStmt(breakSpan, valueExpr));
                 } else if (match(TokenKind.CONTINUE)) {
-                    statements.add(new MolangAst.ContinueStmt(span(previous())));
+                    Token continueToken = previous();
+                    MolangAst.Expr valueExpr = parseOptionalControlFlowValue(terminator);
+                    SourceSpan continueSpan = valueExpr == null ? span(continueToken) : SourceSpan.covering(span(continueToken), valueExpr.span());
+                    statements.add(new MolangAst.ContinueStmt(continueSpan, valueExpr));
                 } else {
                     MolangAst.Expr expression = parseExpression();
                     statements.add(new MolangAst.ExprStmt(expression.span(), expression));
@@ -306,11 +312,11 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
             }
 
             if (match(TokenKind.BREAK)) {
-                return new MolangAst.UnknownExpr(span(previous()), previous().lexeme);
+                return new MolangAst.BreakExpr(span(previous()));
             }
 
             if (match(TokenKind.CONTINUE)) {
-                return new MolangAst.UnknownExpr(span(previous()), previous().lexeme);
+                return new MolangAst.ContinueExpr(span(previous()));
             }
 
             throw error("Unexpected token: " + peek().kind);
@@ -319,11 +325,17 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
         private MolangAst.LoopExpr parseLoopControlForm(Token loopToken) {
             consume(TokenKind.LEFT_PAREN, "Expected '(' after loop.");
             MolangAst.Expr count = parseExpression();
-            String countText = source.substring(count.span().startIndex(), count.span().stopIndexInclusive() + 1);
             consume(TokenKind.COMMA, "Expected ',' after loop iteration count.");
             MolangAst.BlockExpr body = parseBlockExpression();
             Token rightParen = consume(TokenKind.RIGHT_PAREN, "Expected ')' after loop body.");
-            return new MolangAst.LoopExpr(SourceSpan.covering(span(loopToken), span(rightParen)), countText, body);
+            return new MolangAst.LoopExpr(SourceSpan.covering(span(loopToken), span(rightParen)), count, body);
+        }
+
+        private MolangAst.Expr parseOptionalControlFlowValue(TokenKind terminator) {
+            if (check(TokenKind.SEMICOLON) || check(terminator) || check(TokenKind.RIGHT_PAREN) || check(TokenKind.EOF)) {
+                return null;
+            }
+            return parseExpression();
         }
 
         private MolangAst.ForEachExpr parseForEachControlForm(Token forEachToken) {

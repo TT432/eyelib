@@ -158,8 +158,7 @@ class MolangBinderTest {
         BindResult bindResult = bind("loop(3, {variable.counter = variable.counter + 1;})");
 
         BoundMolang.BoundLoopExpr loopExpr = assertInstanceOf(BoundMolang.BoundLoopExpr.class, bindResult.root().root());
-        assertEquals("3", loopExpr.iterationCountRawText());
-        // deferredReason 为 null 表示 loop 已完全实现，未被 defer
+        assertInstanceOf(BoundMolang.BoundNumberLiteralExpr.class, loopExpr.countExpr());
 
         BoundMolang.BoundExprStmt bodyStatement = assertInstanceOf(BoundMolang.BoundExprStmt.class, loopExpr.body().statements().get(0));
         BoundMolang.BoundAssignmentExpr assignmentExpr = assertInstanceOf(BoundMolang.BoundAssignmentExpr.class, bodyStatement.expression());
@@ -194,7 +193,7 @@ class MolangBinderTest {
     }
 
     @Test
-    void bindsForEachToExplicitForEachContractWithDeferral() {
+    void bindsForEachToExplicitForEachContract() {
         String source = "for_each(t.pig, query.get_nearby_entities(4, 'minecraft:pig'), {variable.counter = variable.counter + 1;})";
         MolangParserFrontendResult parseResult = MolangParserFrontends.active().parseExprSet(source);
         MolangAst.ExprSet ast = parseResult.ast().orElseThrow();
@@ -202,7 +201,6 @@ class MolangBinderTest {
         BindResult bindResult = binder.bind(ast, BindDiagnosticsMode.NORMAL);
 
         BoundMolang.BoundForEachExpr forEachExpr = assertInstanceOf(BoundMolang.BoundForEachExpr.class, bindResult.root().root());
-        assertEquals(BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, forEachExpr.deferredReason());
 
         BoundMolang.BoundMemberAccessExpr variableAccess = assertInstanceOf(BoundMolang.BoundMemberAccessExpr.class, forEachExpr.variable());
         BoundMolang.BoundIdentifierExpr variableRoot = assertInstanceOf(BoundMolang.BoundIdentifierExpr.class, variableAccess.owner());
@@ -214,49 +212,36 @@ class MolangBinderTest {
         BoundMolang.BoundExprStmt bodyStatement = assertInstanceOf(BoundMolang.BoundExprStmt.class, forEachExpr.body().statements().get(0));
         assertInstanceOf(BoundMolang.BoundAssignmentExpr.class, bodyStatement.expression());
 
-        assertTrue(bindResult.deferredNotes().stream().anyMatch(note ->
-                note.reason() == BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
-                && note.sourceFamily().equals("ForEachExpr")
-        ));
-        assertDeferredUnsupportedWarning(bindResult, "ForEachExpr");
+        assertTrue(bindResult.deferredNotes().stream().noneMatch(note -> note.sourceFamily().equals("ForEachExpr")));
     }
 
     @Test
-    void bindsLoopBreakAndContinueAsDedicatedBoundStatementsWithDeferredNotes() {
-        BindResult bindResult = bindFromHandwrittenFrontend("loop(2, {break; continue;})");
+    void bindsLoopBreakAndContinueAsDedicatedBoundStatements() {
+        BindResult bindResult = bindFromHandwrittenFrontend("loop(2, {break 1.0; continue t.x;})");
 
         BoundMolang.BoundLoopExpr loopExpr = assertInstanceOf(BoundMolang.BoundLoopExpr.class, bindResult.root().root());
-        assertEquals("2", loopExpr.iterationCountRawText());
-        // deferredReason 为 null 表示 loop 已完全实现
+        assertInstanceOf(BoundMolang.BoundNumberLiteralExpr.class, loopExpr.countExpr());
 
         assertEquals(2, loopExpr.body().statements().size());
         BoundMolang.BoundBreakStmt breakStmt = assertInstanceOf(BoundMolang.BoundBreakStmt.class, loopExpr.body().statements().get(0));
         BoundMolang.BoundContinueStmt continueStmt = assertInstanceOf(BoundMolang.BoundContinueStmt.class, loopExpr.body().statements().get(1));
-        assertEquals(BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, breakStmt.deferredReason());
-        assertEquals(BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, continueStmt.deferredReason());
+        assertInstanceOf(BoundMolang.BoundNumberLiteralExpr.class, breakStmt.valueExpr());
+        assertInstanceOf(BoundMolang.BoundMemberAccessExpr.class, continueStmt.valueExpr());
 
-        assertTrue(bindResult.deferredNotes().stream().anyMatch(note ->
-                note.reason() == BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
-                && note.sourceFamily().equals("BreakStmt")
-        ));
-        assertTrue(bindResult.deferredNotes().stream().anyMatch(note ->
-                note.reason() == BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
-                && note.sourceFamily().equals("ContinueStmt")
-        ));
-        assertDeferredUnsupportedWarning(bindResult, "BreakStmt");
-        assertDeferredUnsupportedWarning(bindResult, "ContinueStmt");
+        assertTrue(bindResult.deferredNotes().stream().noneMatch(note -> note.sourceFamily().equals("BreakStmt")));
+        assertTrue(bindResult.deferredNotes().stream().noneMatch(note -> note.sourceFamily().equals("ContinueStmt")));
     }
 
     @Test
-    void strictModeEmitsDeferredWarningsForLoopBreakAndContinueBinding() {
+    void strictModeDoesNotEmitDeferredWarningsForLoopBreakAndContinueBinding() {
         BindResult bindResult = bindFromHandwrittenFrontend("loop(2, {break; continue;})", BindDiagnosticsMode.STRICT);
 
-        assertTrue(bindResult.diagnostics().stream().anyMatch(diagnostic ->
+        assertTrue(bindResult.diagnostics().stream().noneMatch(diagnostic ->
                 diagnostic.severity() == BindDiagnostic.Severity.WARNING
                 && diagnostic.code().equals("BIND_STRICT_UNSUPPORTED_DEFERRED")
                 && diagnostic.message().contains("BreakStmt")
         ));
-        assertTrue(bindResult.diagnostics().stream().anyMatch(diagnostic ->
+        assertTrue(bindResult.diagnostics().stream().noneMatch(diagnostic ->
                 diagnostic.severity() == BindDiagnostic.Severity.WARNING
                 && diagnostic.code().equals("BIND_STRICT_UNSUPPORTED_DEFERRED")
                 && diagnostic.message().contains("ContinueStmt")
@@ -264,18 +249,35 @@ class MolangBinderTest {
     }
 
     @Test
-    void debugModeEmitsDeferredInfoForLoopBreakAndContinueBinding() {
+    void debugModeDoesNotEmitDeferredInfoForLoopBreakAndContinueBinding() {
         BindResult bindResult = bindFromHandwrittenFrontend("loop(2, {break; continue;})", BindDiagnosticsMode.DEBUG);
 
-        assertTrue(bindResult.diagnostics().stream().anyMatch(diagnostic ->
+        assertTrue(bindResult.diagnostics().stream().noneMatch(diagnostic ->
                 diagnostic.severity() == BindDiagnostic.Severity.INFO
                 && diagnostic.code().equals("BIND_DEBUG_DEFERRED_NOTE")
                 && diagnostic.message().contains("BreakStmt")
         ));
-        assertTrue(bindResult.diagnostics().stream().anyMatch(diagnostic ->
+        assertTrue(bindResult.diagnostics().stream().noneMatch(diagnostic ->
                 diagnostic.severity() == BindDiagnostic.Severity.INFO
                 && diagnostic.code().equals("BIND_DEBUG_DEFERRED_NOTE")
                 && diagnostic.message().contains("ContinueStmt")
+        ));
+    }
+
+    @Test
+    void reportsBreakAndContinueOutsideLoopAsErrors() {
+        BindResult breakResult = bindFromHandwrittenFrontend("break");
+        BindResult continueResult = bindFromHandwrittenFrontend("continue");
+
+        assertTrue(breakResult.hasErrors());
+        assertTrue(continueResult.hasErrors());
+        assertTrue(breakResult.diagnostics().stream().anyMatch(diagnostic ->
+                diagnostic.severity() == BindDiagnostic.Severity.ERROR
+                && diagnostic.message().contains("break outside of loop")
+        ));
+        assertTrue(continueResult.diagnostics().stream().anyMatch(diagnostic ->
+                diagnostic.severity() == BindDiagnostic.Severity.ERROR
+                && diagnostic.message().contains("continue outside of loop")
         ));
     }
 

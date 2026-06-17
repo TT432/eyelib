@@ -8,6 +8,5 @@ assertions:
   - parse-accept
   - bind-normalize
   - bind-diagnostics
-  - deferred-note
 ---
 for_each(t.item, query.get_equipped_item_name, { v.count = v.count + 1; });

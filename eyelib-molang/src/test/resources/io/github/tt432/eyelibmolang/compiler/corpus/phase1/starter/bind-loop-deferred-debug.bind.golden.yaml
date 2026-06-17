@@ -1,6 +1,7 @@
 root: BoundLoopExpr
 contains:
-  - loop-iteration-count-raw:3
+  - loop-count-expr
+  - BoundNumberLiteralExpr
   - BoundBlockExpr
   - BoundAssignmentExpr
   - assign-root:variable

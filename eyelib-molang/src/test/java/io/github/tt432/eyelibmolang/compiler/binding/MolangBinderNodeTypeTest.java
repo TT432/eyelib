@@ -162,12 +162,11 @@ class MolangBinderNodeTypeTest {
             assertTrue(r.deferredNotes().isEmpty(),
                     "Loop must not produce deferred notes");
         }
-        @Test void forEachIsStillDeferred() {
+        @Test void forEachIsNotDeferred() {
             var r = bind("for_each(t.x,arr,{})");
             assertInstanceOf(BoundMolang.BoundForEachExpr.class, r.root().root());
-            // for_each 仍应产生 deferred note（Phase 4 才实现）
-            assertFalse(r.deferredNotes().isEmpty(),
-                    "for_each should still produce deferred notes");
+            assertTrue(r.deferredNotes().isEmpty(),
+                    "For_each must not produce deferred notes");
         }
     }
 
@@ -199,18 +198,16 @@ class MolangBinderNodeTypeTest {
     class DiagnosticsModes {
         @Test void normalModeWarnsOnDeferredUnsupported() {
             var r = bind("for_each(t.x,arr,{})", BindDiagnosticsMode.NORMAL);
-            // for_each 产生 BIND_DEFERRED_UNSUPPORTED warning
             assertTrue(r.diagnostics().stream()
-                    .anyMatch(d -> d.message().contains("UNSUPPORTED")));
+                    .noneMatch(d -> d.message().contains("UNSUPPORTED")));
         }
         @Test void strictModeAddsOverlayDiagnostics() {
             var r = bind("for_each(t.x,arr,{})", BindDiagnosticsMode.STRICT);
-            // strict 模式应有额外诊断
-            assertTrue(r.diagnostics().size() >= 1);
+            assertTrue(r.diagnostics().isEmpty());
         }
         @Test void debugModeProducesTraceableOutput() {
             var r = bind("for_each(t.x,arr,{})", BindDiagnosticsMode.DEBUG);
-            assertTrue(r.diagnostics().size() >= 1);
+            assertTrue(r.diagnostics().stream().noneMatch(d -> d.message().contains("UNSUPPORTED")));
         }
     }
 }

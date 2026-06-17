@@ -1,5 +1,1 @@
-trace:
-  - diagnostic-code:BIND_DEBUG_DEFERRED_NOTE
-  - diagnostic-severity:INFO
-  - deferred-note-reason:UNSUPPORTED_IN_THIS_SLICE
-  - deferred-note-source-family:ForEachExpr
+trace: []

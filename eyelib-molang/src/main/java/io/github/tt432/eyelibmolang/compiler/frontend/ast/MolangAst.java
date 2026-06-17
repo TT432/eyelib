@@ -40,6 +40,12 @@ public final class MolangAst {
     public record ThisExpr(SourceSpan span) implements Expr {
     }
 
+    public record BreakExpr(SourceSpan span) implements Expr {
+    }
+
+    public record ContinueExpr(SourceSpan span) implements Expr {
+    }
+
     public record UnaryExpr(SourceSpan span, String operator, Expr expression) implements Expr {
     }
 
@@ -70,13 +76,17 @@ public final class MolangAst {
     public record GroupingExpr(SourceSpan span, Expr expression) implements Expr {
     }
 
-    public record BlockExpr(SourceSpan span, List<Stmt> statements) implements Expr {
+    public record BlockExpr(SourceSpan span, List<Stmt> statements, boolean returnsLastValue) implements Expr {
         public BlockExpr {
             statements = List.copyOf(statements);
         }
+
+        public BlockExpr(SourceSpan span, List<Stmt> statements) {
+            this(span, statements, false);
+        }
     }
 
-    public record LoopExpr(SourceSpan span, String iterationCountRawText, BlockExpr body) implements Expr {
+    public record LoopExpr(SourceSpan span, Expr count, BlockExpr body) implements Expr {
     }
 
     public record ForEachExpr(SourceSpan span, Expr variable, Expr collection, BlockExpr body) implements Expr {
@@ -94,9 +104,9 @@ public final class MolangAst {
     public record ReturnStmt(SourceSpan span, Expr expression) implements Stmt {
     }
 
-    public record BreakStmt(SourceSpan span) implements Stmt {
+    public record BreakStmt(SourceSpan span, Expr valueExpr) implements Stmt {
     }
 
-    public record ContinueStmt(SourceSpan span) implements Stmt {
+    public record ContinueStmt(SourceSpan span, Expr valueExpr) implements Stmt {
     }
 }

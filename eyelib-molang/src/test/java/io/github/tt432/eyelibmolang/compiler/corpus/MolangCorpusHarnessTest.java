@@ -80,7 +80,9 @@ class MolangCorpusHarnessTest {
         }
         assertEquals(36, report.summary().totalCases());
         assertTrue(report.summary().passCount() >= 35,
-                "All non-deferred cases pass; loop deferred-note removed per full implementation");
+                "All non-deferred cases pass; summary=" + report.summary() + ", failures=" + report.caseReports().stream()
+                        .filter(item -> item.resultType() != MolangResultType.PASS)
+                        .toList());
         assertEquals(0, report.summary().corpusErrorCount());
         assertEquals(0, report.summary().engineFailureCount());
         assertTrue(report.summary().assertionFailureCount() <= 1,
@@ -261,9 +263,8 @@ class MolangCorpusHarnessTest {
 
         assertTrue(bindShape.contains().contains("stmt:break"));
         assertTrue(bindShape.contains().contains("stmt:continue"));
-        assertTrue(bindShape.contains().contains("stmt:break:deferred-reason:UNSUPPORTED_IN_THIS_SLICE"));
-        assertTrue(bindShape.contains().contains("stmt:continue:deferred-reason:UNSUPPORTED_IN_THIS_SLICE"));
-        assertTrue(bindShape.contains().contains("deferred-note-reason:UNSUPPORTED_IN_THIS_SLICE"));
+        assertTrue(bindShape.contains().stream().noneMatch(token -> token.contains("deferred-reason")));
+        assertTrue(bindResult.deferredNotes().isEmpty());
     }
 
     private BindResult bindFromHandwrittenFrontend(String source, BindDiagnosticsMode diagnosticsMode) {

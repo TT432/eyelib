@@ -938,21 +938,27 @@ final class MolangCorpusHarness {
                     collectBindTokens(returnStmt.expression(), contains);
                 } else if (statement instanceof BoundMolang.BoundBreakStmt breakStmt) {
                     contains.add("stmt:break");
-                    contains.add("stmt:break:deferred-reason:" + breakStmt.deferredReason().name());
+                    if (breakStmt.valueExpr() != null) {
+                        contains.add("stmt:break:value");
+                        collectBindTokens(breakStmt.valueExpr(), contains);
+                    }
                 } else if (statement instanceof BoundMolang.BoundContinueStmt continueStmt) {
                     contains.add("stmt:continue");
-                    contains.add("stmt:continue:deferred-reason:" + continueStmt.deferredReason().name());
+                    if (continueStmt.valueExpr() != null) {
+                        contains.add("stmt:continue:value");
+                        collectBindTokens(continueStmt.valueExpr(), contains);
+                    }
                 }
             }
             return;
         }
         if (expression instanceof BoundMolang.BoundLoopExpr loopExpr) {
-            contains.add("loop-iteration-count-raw:" + loopExpr.iterationCountRawText());
+            contains.add("loop-count-expr");
+            collectBindTokens(loopExpr.countExpr(), contains);
             collectBindTokens(loopExpr.body(), contains);
             return;
         }
         if (expression instanceof BoundMolang.BoundForEachExpr forEachExpr) {
-            contains.add("foreach:deferred-reason:" + forEachExpr.deferredReason().name());
             collectBindTokens(forEachExpr.variable(), contains);
             collectBindTokens(forEachExpr.collection(), contains);
             collectBindTokens(forEachExpr.body(), contains);

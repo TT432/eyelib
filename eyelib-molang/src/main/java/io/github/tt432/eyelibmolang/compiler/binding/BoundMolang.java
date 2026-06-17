@@ -2,6 +2,7 @@ package io.github.tt432.eyelibmolang.compiler.binding;
 
 import io.github.tt432.eyelibmolang.compiler.frontend.ast.SourceSpan;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +48,12 @@ public final class BoundMolang {
     }
 
     public record BoundThisExpr(SourceSpan span) implements BoundExpr {
+    }
+
+    public record BoundBreakExpr(SourceSpan span) implements BoundExpr {
+    }
+
+    public record BoundContinueExpr(SourceSpan span) implements BoundExpr {
     }
 
     public record BoundUnaryExpr(SourceSpan span, String operator, BoundExpr expression) implements BoundExpr {
@@ -99,17 +106,20 @@ public final class BoundMolang {
         }
     }
 
-    public record BoundBlockExpr(SourceSpan span, List<BoundStmt> statements) implements BoundExpr {
+    public record BoundBlockExpr(SourceSpan span, List<BoundStmt> statements, boolean returnsLastValue) implements BoundExpr {
         public BoundBlockExpr {
             statements = List.copyOf(statements);
+        }
+
+        public BoundBlockExpr(SourceSpan span, List<BoundStmt> statements) {
+            this(span, statements, false);
         }
     }
 
     public record BoundLoopExpr(
             SourceSpan span,
-            String iterationCountRawText,
-            BoundBlockExpr body,
-            BindDeferredNote.Reason deferredReason
+            BoundExpr countExpr,
+            BoundBlockExpr body
     ) implements BoundExpr {
     }
 
@@ -117,8 +127,7 @@ public final class BoundMolang {
             SourceSpan span,
             BoundExpr variable,
             BoundExpr collection,
-            BoundBlockExpr body,
-            BindDeferredNote.Reason deferredReason
+            BoundBlockExpr body
     ) implements BoundExpr {
     }
 
@@ -145,13 +154,13 @@ public final class BoundMolang {
 
     public record BoundBreakStmt(
             SourceSpan span,
-            BindDeferredNote.Reason deferredReason
+            @Nullable BoundExpr valueExpr
     ) implements BoundStmt {
     }
 
     public record BoundContinueStmt(
             SourceSpan span,
-            BindDeferredNote.Reason deferredReason
+            @Nullable BoundExpr valueExpr
     ) implements BoundStmt {
     }
 }

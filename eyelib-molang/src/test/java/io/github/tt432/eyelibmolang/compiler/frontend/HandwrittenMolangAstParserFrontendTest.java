@@ -81,7 +81,8 @@ class HandwrittenMolangAstParserFrontendTest {
         MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
 
         MolangAst.LoopExpr loop = assertInstanceOf(MolangAst.LoopExpr.class, ast.root());
-        assertEquals("3", loop.iterationCountRawText());
+        MolangAst.NumberLiteralExpr count = assertInstanceOf(MolangAst.NumberLiteralExpr.class, loop.count());
+        assertEquals("3", count.rawText());
         assertEquals(1, loop.body().statements().size());
 
         MolangAst.ExprStmt bodyStatement = assertInstanceOf(MolangAst.ExprStmt.class, loop.body().statements().get(0));
@@ -109,14 +110,16 @@ class HandwrittenMolangAstParserFrontendTest {
 
     @Test
     void parsesBreakAndContinueAsControlFlowStatements() {
-        String source = "loop(2, {break; continue;})";
+        String source = "loop(2, {break 1.0; continue t.x;})";
 
         MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
 
         MolangAst.LoopExpr loop = assertInstanceOf(MolangAst.LoopExpr.class, ast.root());
         assertEquals(2, loop.body().statements().size());
-        assertInstanceOf(MolangAst.BreakStmt.class, loop.body().statements().get(0));
-        assertInstanceOf(MolangAst.ContinueStmt.class, loop.body().statements().get(1));
+        MolangAst.BreakStmt breakStmt = assertInstanceOf(MolangAst.BreakStmt.class, loop.body().statements().get(0));
+        MolangAst.ContinueStmt continueStmt = assertInstanceOf(MolangAst.ContinueStmt.class, loop.body().statements().get(1));
+        assertInstanceOf(MolangAst.NumberLiteralExpr.class, breakStmt.valueExpr());
+        assertInstanceOf(MolangAst.MemberAccessExpr.class, continueStmt.valueExpr());
     }
 
     @Test

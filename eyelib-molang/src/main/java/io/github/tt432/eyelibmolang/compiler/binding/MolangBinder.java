@@ -6,6 +6,8 @@ import io.github.tt432.eyelibmolang.compiler.frontend.ast.SourceSpan;
 import org.jspecify.annotations.NullMarked;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -44,6 +46,26 @@ public final class MolangBinder {
             boundExpr = new BoundMolang.BoundStringLiteralExpr(stringLiteralExpr.span(), stringLiteralExpr.rawText());
         } else if (expr instanceof MolangAst.ThisExpr thisExpr) {
             boundExpr = new BoundMolang.BoundThisExpr(thisExpr.span());
+        } else if (expr instanceof MolangAst.BreakExpr breakExpr) {
+            if (state.loopScopes.isEmpty()) {
+                state.diagnostics.add(new BindDiagnostic(
+                        breakExpr.span(),
+                        BindDiagnostic.Severity.ERROR,
+                        "BIND_CONTROL_FLOW_OUTSIDE_LOOP",
+                        "break outside of loop"
+                ));
+            }
+            boundExpr = new BoundMolang.BoundBreakExpr(breakExpr.span());
+        } else if (expr instanceof MolangAst.ContinueExpr continueExpr) {
+            if (state.loopScopes.isEmpty()) {
+                state.diagnostics.add(new BindDiagnostic(
+                        continueExpr.span(),
+                        BindDiagnostic.Severity.ERROR,
+                        "BIND_CONTROL_FLOW_OUTSIDE_LOOP",
+                        "continue outside of loop"
+                ));
+            }
+            boundExpr = new BoundMolang.BoundContinueExpr(continueExpr.span());
         } else if (expr instanceof MolangAst.UnaryExpr unaryExpr) {
             boundExpr = new BoundMolang.BoundUnaryExpr(
                     unaryExpr.span(),
@@ -117,7 +139,7 @@ public final class MolangBinder {
             for (MolangAst.Stmt statement : blockExpr.statements()) {
                 statements.add(bindStmt(statement, state));
             }
-            boundExpr = new BoundMolang.BoundBlockExpr(blockExpr.span(), statements);
+            boundExpr = new BoundMolang.BoundBlockExpr(blockExpr.span(), statements, blockExpr.returnsLastValue());
         } else if (expr instanceof MolangAst.LoopExpr loopExpr) {
             boundExpr = bindLoopExpr(loopExpr, state);
         } else if (expr instanceof MolangAst.ForEachExpr forEachExpr) {
@@ -152,12 +174,32 @@ public final class MolangBinder {
             return new BoundMolang.BoundReturnStmt(returnStmt.span(), bindExpr(returnStmt.expression(), state, true));
         }
         if (statement instanceof MolangAst.BreakStmt breakStmt) {
-            addDeferredNote(state, breakStmt.span(), BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, "BreakStmt");
-            return new BoundMolang.BoundBreakStmt(breakStmt.span(), BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE);
+            if (state.loopScopes.isEmpty()) {
+                state.diagnostics.add(new BindDiagnostic(
+                        breakStmt.span(),
+                        BindDiagnostic.Severity.ERROR,
+                        "BIND_CONTROL_FLOW_OUTSIDE_LOOP",
+                        "break outside of loop"
+                ));
+            }
+            return new BoundMolang.BoundBreakStmt(
+                    breakStmt.span(),
+                    breakStmt.valueExpr() == null ? null : bindExpr(breakStmt.valueExpr(), state, true)
+            );
         }
         if (statement instanceof MolangAst.ContinueStmt continueStmt) {
-            addDeferredNote(state, continueStmt.span(), BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, "ContinueStmt");
-            return new BoundMolang.BoundContinueStmt(continueStmt.span(), BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE);
+            if (state.loopScopes.isEmpty()) {
+                state.diagnostics.add(new BindDiagnostic(
+                        continueStmt.span(),
+                        BindDiagnostic.Severity.ERROR,
+                        "BIND_CONTROL_FLOW_OUTSIDE_LOOP",
+                        "continue outside of loop"
+                ));
+            }
+            return new BoundMolang.BoundContinueStmt(
+                    continueStmt.span(),
+                    continueStmt.valueExpr() == null ? null : bindExpr(continueStmt.valueExpr(), state, true)
+            );
         }
 
         addDeferredNote(state, statement.span(), BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, statement.getClass().getSimpleName());
@@ -181,32 +223,34 @@ public final class MolangBinder {
     }
 
     private BoundMolang.BoundExpr bindLoopExpr(MolangAst.LoopExpr loopExpr, BindingState state) {
+        BoundMolang.BoundExpr countExpr = bindExpr(loopExpr.count(), state, true);
         List<BoundMolang.BoundStmt> statements = new ArrayList<>();
+        state.loopScopes.push(new LoopScope());
         for (MolangAst.Stmt statement : loopExpr.body().statements()) {
             statements.add(bindStmt(statement, state));
         }
+        state.loopScopes.pop();
         return new BoundMolang.BoundLoopExpr(
                 loopExpr.span(),
-                loopExpr.iterationCountRawText(),
-                new BoundMolang.BoundBlockExpr(loopExpr.body().span(), statements),
-                null
+                countExpr,
+                new BoundMolang.BoundBlockExpr(loopExpr.body().span(), statements)
         );
     }
 
     private BoundMolang.BoundExpr bindForEachExpr(MolangAst.ForEachExpr forEachExpr, BindingState state) {
-        addDeferredNote(state, forEachExpr.span(), BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE, "ForEachExpr");
         BoundMolang.BoundExpr variable = bindExpr(forEachExpr.variable(), state, true);
         BoundMolang.BoundExpr collection = bindExpr(forEachExpr.collection(), state, true);
         List<BoundMolang.BoundStmt> statements = new ArrayList<>();
+        state.loopScopes.push(new LoopScope());
         for (MolangAst.Stmt statement : forEachExpr.body().statements()) {
             statements.add(bindStmt(statement, state));
         }
+        state.loopScopes.pop();
         return new BoundMolang.BoundForEachExpr(
                 forEachExpr.span(),
                 variable,
                 collection,
-                new BoundMolang.BoundBlockExpr(forEachExpr.body().span(), statements),
-                BindDeferredNote.Reason.UNSUPPORTED_IN_THIS_SLICE
+                new BoundMolang.BoundBlockExpr(forEachExpr.body().span(), statements)
         );
     }
 
@@ -255,9 +299,13 @@ public final class MolangBinder {
         final BindDiagnosticsMode diagnosticsMode;
         final List<BindDiagnostic> diagnostics = new ArrayList<>();
         final List<BindDeferredNote> deferredNotes = new ArrayList<>();
+        final Deque<LoopScope> loopScopes = new ArrayDeque<>();
 
         BindingState(BindDiagnosticsMode diagnosticsMode) {
             this.diagnosticsMode = diagnosticsMode;
         }
+    }
+
+    private record LoopScope() {
     }
 }
