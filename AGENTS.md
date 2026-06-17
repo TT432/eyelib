@@ -130,8 +130,8 @@ package ...;
 - Skills must be kept in sync with AGENTS.md: if a rule changes here, check whether skill docs need the same change.
 
 ## Molang Roadmap
-- Read :eyelib-molang/ROADMAP.md: before planning or implementing Molang refactor work.
-- Update :eyelib-molang/ROADMAP.md: in the same change when Molang phase status, milestones, gates, ownership, verification commands, corpus layers, binder/runtime semantics, host/query behavior, policy/specialization/cache behavior, or cutover posture changes.
+- Read :docs/molang/ROADMAP.md: before planning or implementing Molang refactor work.
+- Update :docs/molang/ROADMAP.md: in the same change when Molang phase status, milestones, gates, ownership, verification commands, corpus layers, binder/runtime semantics, host/query behavior, policy/specialization/cache behavior, or cutover posture changes.
 
 ## Pitfall Records
 - Operational troubleshooting knowledge lives in the relevant skill (e.g. `eyelib-build` for build issues, `eyelib-debug` for rendering issues).

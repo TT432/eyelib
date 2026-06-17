@@ -8,7 +8,7 @@
 
 ### 证据 E1 — ROADMAP 声称但缺失的3个文件
 
-文件：`eyelib-molang/ROADMAP.md`，第122-128行
+文件：`docs/molang/ROADMAP.md`，第122-128行
 
 ```markdown
 | 声称存在的文件 | 实际状态 | 严重性 |
@@ -63,7 +63,7 @@ ls eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/compiler/diagnostic/
 ```java
 @Test
 void allRoadmapFilePathsExist() throws Exception {
-    Path roadmap = Path.of("eyelib-molang/ROADMAP.md");
+    Path roadmap = Path.of("docs/molang/ROADMAP.md");
     String content = Files.readString(roadmap);
     
     // 提取反引号中的文件路径
@@ -168,7 +168,7 @@ class RoadmapDocVerificationTest {
     
     @Test
     void roadmapDoesNotReferenceMolangOwnerSet() {
-        String content = Files.readString(Path.of("eyelib-molang/ROADMAP.md"));
+        String content = Files.readString(Path.of("docs/molang/ROADMAP.md"));
         assertThat(content).doesNotContain("MolangOwnerSet.java");
     }
     

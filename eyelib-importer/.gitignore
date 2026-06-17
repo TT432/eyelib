@@ -1,9 +1,0 @@
-/build/
-/bin/
-/.settings/
-/.classpath
-/.project
-/.factorypath
-/.cache/
-/logs/
-/hs_err_pid*.log

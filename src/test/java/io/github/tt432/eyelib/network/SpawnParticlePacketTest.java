@@ -6,13 +6,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import org.joml.Vector3f;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.regex.Pattern;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** @author TT432 */
 class SpawnParticlePacketTest {
@@ -48,21 +42,5 @@ class SpawnParticlePacketTest {
         } finally {
             buf.release();
         }
-    }
-
-    @Test
-    void packetCodecOwnershipStaysInParticleModule() throws IOException {
-        String source = Files.readString(Path.of(
-                "eyelib-particle/src/main/java/io/github/tt432/eyelibparticle/network/SpawnParticlePacket.java"
-        ));
-
-        assertTrue(Pattern.compile("record\\s+SpawnParticlePacket\\s*\\(\\s*String\\s+spawnId,\\s*String\\s+particleId,\\s*Vector3f\\s+position", Pattern.DOTALL)
-                .matcher(source)
-                .find());
-        assertTrue(source.contains("buf.writeUtf(packet.spawnId);"));
-        assertTrue(source.contains("buf.writeUtf(packet.particleId);"));
-        assertTrue(source.contains("String spawnId = buf.readUtf();"));
-        assertTrue(source.contains("String particleId = buf.readUtf();"));
-        assertTrue(source.contains("import net.minecraft.network.FriendlyByteBuf;"));
     }
 }

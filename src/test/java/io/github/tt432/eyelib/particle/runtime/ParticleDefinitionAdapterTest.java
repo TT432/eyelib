@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /** @author TT432 */
 class ParticleDefinitionAdapterTest {
     private static final String WITCHSPELL_FIXTURE =
-            "io/github/tt432/eyelibparticle/runtime/fixtures/witchspell.json";
+            "io/github/tt432/eyelib/particle/runtime/fixtures/witchspell.json";
     private static final String PARTICLE_WITH_EVENTS_FIXTURE = """
             {
               "format_version": "1.10.0",
@@ -50,7 +50,7 @@ class ParticleDefinitionAdapterTest {
 
     @Test
     void witchspellFixturePreservesParityCriticalSchemaFields() throws IOException {
-        // Source fixture copied from eyelib-importer/src/test/resources/io/github/tt432/eyelibimporter/addon/fixtures/
+        // Source fixture copied from src/test/resources/io/github/tt432/eyelib/importer/addon/fixtures/
         // microsoft-shapeshifter/resource_pack/shapeshifter/particles/witchspell.json.
         BrParticle schema = decodeImporterFixture(WITCHSPELL_FIXTURE);
 

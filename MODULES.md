@@ -1,4 +1,4 @@
-﻿# Eyelib Module Inventory
+# Eyelib Module Inventory
 
 ## Purpose
 - This file is the canonical module inventory for the repository.
@@ -34,7 +34,7 @@
 || Generated code policy | generated-vs-handwritten Molang rule set | `docs/decisions/0004-generated-code-policy.md` | governs parser regeneration/isolation |
 || Key decisions | historical record of architecture decisions | `docs/decisions/0006-key-architecture-decisions.md` | reference for why critical boundary choices were made |
 || Known pitfalls | 8 documented anti-patterns discovered during module separation | `docs/decisions/0007-known-pitfalls.md` | must read before any boundary-crossing refactor work |
-|| Molang roadmap and refactor plan docs | current-state Molang roadmap plus dependency-ordered rewrite plan, entry gates, parity matrix, and cutover guidance | `eyelib-molang/ROADMAP.md`, `eyelib-molang/refactor-plan/` | `ROADMAP.md` is the current-state source of truth and must be updated when Molang phase status changes |
+|| Molang roadmap and refactor plan docs | current-state Molang roadmap plus dependency-ordered rewrite plan, entry gates, parity matrix, and cutover guidance | `docs/molang/ROADMAP.md`, `docs/molang/refactor-plan/` | `ROADMAP.md` is the current-state source of truth and must be updated when Molang phase status changes |
 ||| Util index | navigation for shared helper modules | `docs/decisions/` | points to util subtree and split destinations; merged into ADR context |
 | Attachment subproject | Typed data attachment contracts, storage, and root-independent attachment packet contracts owned by the attachment functional module | `eyelib-attachment/build.gradle`, `eyelib-attachment/src/main/java/io/github/tt432/eyelibattachment/` | root still owns transitional attachment registry and sync dispatch until those are moved by feature |
 | Utility subproject | `:eyelib-util` is a Forge shared utility leaf module | `eyelib-util/build.gradle`, `eyelib-util/src/main/java/io/github/tt432/eyelibutil/` | zero project-internal dependencies, must not depend on root or sibling Gradle projects |
@@ -148,7 +148,7 @@ FM-005 particle compatibility note: root legacy `client/particle/bedrock/**`, `P
 3. If a change adds a new module or removes an existing module, update this file in the same change.
 4. If a change alters module boundaries, also update `docs/decisions/0002-module-boundaries.md` and any relevant package-info.java files.
 5. If a change affects packet/data-attachment/client-side applicability, also re-check `docs/decisions/0002-module-boundaries.md`.
-6. If a change affects Molang phase status, milestones, gates, ownership, verification commands, corpus layers, binder/runtime semantics, host/query behavior, policy/specialization/cache behavior, or cutover posture, update `eyelib-molang/ROADMAP.md` in the same change.
+6. If a change affects Molang phase status, milestones, gates, ownership, verification commands, corpus layers, binder/runtime semantics, host/query behavior, policy/specialization/cache behavior, or cutover posture, update `docs/molang/ROADMAP.md` in the same change.
 
 ## Architecture Adapter Modules
 

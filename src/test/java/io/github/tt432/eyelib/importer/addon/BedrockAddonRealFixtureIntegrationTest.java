@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /** @author TT432 */
 class BedrockAddonRealFixtureIntegrationTest {
-    private static final String FIXTURE_ROOT = "/io/github/tt432/eyelibimporter/addon/fixtures/microsoft-shapeshifter";
+    private static final String FIXTURE_ROOT = "/io/github/tt432/eyelib/importer/addon/fixtures/microsoft-shapeshifter";
 
     @TempDir
     Path tempDir;

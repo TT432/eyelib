@@ -3,8 +3,8 @@
 ## Purpose
 
 - This file is the single current-state roadmap for `:eyelib-molang` refactor work.
-- Use the design drafts in `eyelib-molang/design/` for rationale and vocabulary.
-- Use the phase plans in `eyelib-molang/refactor-plan/` for detailed execution gates.
+- Use the design drafts in `docs/molang/design/` for rationale and vocabulary.
+- Use the phase plans in `docs/molang/refactor-plan/` for detailed execution gates.
 - Use this roadmap to decide what is done, what is active now, what is blocked, and what must be updated when Molang work changes direction.
 
 ## Roadmap Update Rule
@@ -23,9 +23,9 @@ If a Molang code change does not update this roadmap, it must be because the cha
 
 When documents disagree, resolve them in this order:
 
-1. `eyelib-molang/ROADMAP.md` for current progress and next actions.
-2. `eyelib-molang/refactor-plan/README.md` and phase files for gates and phase-level acceptance criteria.
-3. `eyelib-molang/design/README.md` and design drafts for rationale and candidate architecture.
+1. `docs/molang/ROADMAP.md` for current progress and next actions.
+2. `docs/molang/refactor-plan/README.md` and phase files for gates and phase-level acceptance criteria.
+3. `docs/molang/design/README.md` and design drafts for rationale and candidate architecture.
 4. `docs/decisions/`, `MODULES.md`, and package READMEs for navigation and ownership summaries.
 
 Design drafts are not implementation commitments until this roadmap or the refactor plan promotes them.
@@ -77,7 +77,7 @@ Evidence from the current tree:
 
 - Preserve stable corpus case IDs, lint errors, result classes, effective diagnostics mode, and effective policy-pack reporting.
 - Keep phase1 corpus resources valid and runnable through `jetbrain_run_gradle_tasks :eyelib-molang:test`. Starter corpus: 33 rows (≥30 KR ✅), covering unary, comparison, for_each, return, member dot-chain, grouping, strings, array-literal reject, and binary-conditional.
-- Do not promote corpus rows to cutover evidence unless they reference the V1 compatibility matrix in `eyelib-molang/refactor-plan/README.md`.
+- Do not promote corpus rows to cutover evidence unless they reference the V1 compatibility matrix in `docs/molang/refactor-plan/README.md`.
 
 ### M2 - Widen parser/AST only with corpus-backed slices
 

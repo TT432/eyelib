@@ -34,12 +34,12 @@ class MolangCorpusHarnessTest {
     private static final boolean RECORD_MODE = Boolean.getBoolean("molang.corpus.record");
     private static final Map<String, String> GOLDEN_BUFFER = new HashMap<>();
 
-    private static final String STARTER_CORPUS_RESOURCE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/starter";
-    private static final String INVALID_PARSE_GOLDEN_RESOURCE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/invalid-parse-golden";
-    private static final String INVALID_ADJACENT_GOLDEN_RESOURCE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/invalid-adjacent-golden";
-    private static final String INVALID_DIAGNOSTICS_GOLDEN_RESOURCE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/invalid-diagnostics-golden";
-    private static final String INVALID_DEBUG_TRACE_GOLDEN_RESOURCE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/invalid-debug-trace-golden";
-    private static final String INVALID_DEBUG_TRACE_MISMATCH_GOLDEN_RESOURCE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/invalid-debug-trace-mismatch";
+    private static final String STARTER_CORPUS_RESOURCE = "io/github/tt432/eyelib/molang/compiler/corpus/phase1/starter";
+    private static final String INVALID_PARSE_GOLDEN_RESOURCE = "io/github/tt432/eyelib/molang/compiler/corpus/phase1/invalid-parse-golden";
+    private static final String INVALID_ADJACENT_GOLDEN_RESOURCE = "io/github/tt432/eyelib/molang/compiler/corpus/phase1/invalid-adjacent-golden";
+    private static final String INVALID_DIAGNOSTICS_GOLDEN_RESOURCE = "io/github/tt432/eyelib/molang/compiler/corpus/phase1/invalid-diagnostics-golden";
+    private static final String INVALID_DEBUG_TRACE_GOLDEN_RESOURCE = "io/github/tt432/eyelib/molang/compiler/corpus/phase1/invalid-debug-trace-golden";
+    private static final String INVALID_DEBUG_TRACE_MISMATCH_GOLDEN_RESOURCE = "io/github/tt432/eyelib/molang/compiler/corpus/phase1/invalid-debug-trace-mismatch";
 
     @BeforeEach
     void setUp() {

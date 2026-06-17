@@ -518,7 +518,7 @@ class BedrockImportedModelDataTest {
     }
 
     private static Path fixturePath(String relativePath) throws URISyntaxException {
-        return Path.of(Objects.requireNonNull(BedrockImportedModelDataTest.class.getResource("/io/github/tt432/eyelib/client/model/importer/" + relativePath)).toURI());
+        return Path.of(Objects.requireNonNull(BedrockImportedModelDataTest.class.getResource("/io/github/tt432/eyelib/importer/model/importer/" + relativePath)).toURI());
     }
 
     private static String boneName(ImportedBoneData bone) {

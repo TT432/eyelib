@@ -8,7 +8,7 @@
 
 ### 证据 E1 — 设计文档的规定
 
-文件：`eyelib-molang/design/shared-vocabulary-and-phase-ownership-draft.md`
+文件：`docs/molang/design/shared-vocabulary-and-phase-ownership-draft.md`
 
 关键引用（需验证原文）：
 - `HostRole<T>` 被定义为规范语义术语

@@ -111,7 +111,7 @@ class BrParticleSpecTest {
     }
 
     private static String loadFixture(String name) throws Exception {
-        String path = "/io/github/tt432/eyelibimporter/addon/fixtures/microsoft-shapeshifter/resource_pack/shapeshifter/particles/" + name;
+        String path = "/io/github/tt432/eyelib/importer/addon/fixtures/microsoft-shapeshifter/resource_pack/shapeshifter/particles/" + name;
         try (InputStream in = BrParticleSpecTest.class.getResourceAsStream(path)) {
             assertNotNull(in, "Fixture not found: " + path);
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);

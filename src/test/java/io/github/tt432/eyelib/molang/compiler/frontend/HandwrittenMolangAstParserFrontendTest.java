@@ -17,9 +17,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** @author TT432 */
 class HandwrittenMolangAstParserFrontendTest {
-    private static final String SIMPLE_EXPRESSION_CASE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/starter/simple-expression.molangcase";
-    private static final String ASSIGN_RETURN_CASE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/starter/assign-return.molangcase";
-    private static final String LOOP_COUNTER_CASE = "io/github/tt432/eyelibmolang/compiler/corpus/phase1/starter/loop-counter.molangcase";
+    private static final String SIMPLE_EXPRESSION_CASE = "io/github/tt432/eyelib/molang/compiler/corpus/phase1/starter/simple-expression.molangcase";
+    private static final String ASSIGN_RETURN_CASE = "io/github/tt432/eyelib/molang/compiler/corpus/phase1/starter/assign-return.molangcase";
+    private static final String LOOP_COUNTER_CASE = "io/github/tt432/eyelib/molang/compiler/corpus/phase1/starter/loop-counter.molangcase";
 
     @Test
     void parsesSimpleExpressionCaseIntoCallWithMultiplyArgument() throws IOException {

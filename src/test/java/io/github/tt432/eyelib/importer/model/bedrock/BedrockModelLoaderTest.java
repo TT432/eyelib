@@ -56,7 +56,7 @@ class BedrockModelLoaderTest {
     }
 
     private static Path fixturePath(String relativePath) throws URISyntaxException {
-        return Path.of(Objects.requireNonNull(BedrockModelLoaderTest.class.getResource("/io/github/tt432/eyelib/client/model/importer/" + relativePath)).toURI());
+        return Path.of(Objects.requireNonNull(BedrockModelLoaderTest.class.getResource("/io/github/tt432/eyelib/importer/model/importer/" + relativePath)).toURI());
     }
 
     private static void assertVector(Vector3f actual, float x, float y, float z) {

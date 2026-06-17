@@ -26,6 +26,6 @@ class ImportedModelTextureRepackerTest {
     }
 
     private static Path fixturePath(String relativePath) throws URISyntaxException {
-        return Path.of(ImportedModelTextureRepackerTest.class.getResource("/io/github/tt432/eyelib/client/model/importer/" + relativePath).toURI());
+        return Path.of(ImportedModelTextureRepackerTest.class.getResource("/io/github/tt432/eyelib/importer/model/importer/" + relativePath).toURI());
     }
 }
