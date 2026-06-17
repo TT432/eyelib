@@ -351,8 +351,8 @@ class BedrockGeometryImporterTest {
     }
 
     private static Path fixturePath(String relativePath) {
-        return Path.of("eyelib-importer", "src", "test", "resources",
-                "io", "github", "tt432", "eyelib", "client", "model", "importer", relativePath);
+        return Path.of("src", "test", "resources",
+                "io", "github", "tt432", "eyelib", "importer", "model", "importer", relativePath);
     }
 
     private static void assertContainsUvBox(Model.Cube cube, float u0, float v0, float u1, float v1) {

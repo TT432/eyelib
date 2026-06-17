@@ -42,7 +42,7 @@ class BlockbenchModelImporterTest {
     }
 
     private static Path fixturePath(String relativePath) {
-        return Path.of("eyelib-importer", "src", "test", "resources",
-                "io", "github", "tt432", "eyelib", "client", "model", "importer", relativePath);
+        return Path.of("src", "test", "resources",
+                "io", "github", "tt432", "eyelib", "importer", "model", "importer", relativePath);
     }
 }

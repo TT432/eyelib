@@ -44,7 +44,7 @@ public final class MolangBytecodeEmitter {
     private static final ClassDesc CD_FLOAT = ClassDesc.ofDescriptor("F");
     private static final ClassDesc CD_BOOL = ClassDesc.ofDescriptor("Z");
     private static final ClassDesc CD_MOLANG_OBJECT_ARRAY =
-            ClassDesc.ofDescriptor("[Lio/github/tt432/eyelibmolang/type/MolangObject;");
+            ClassDesc.ofDescriptor("[Lio/github/tt432/eyelib/molang/type/MolangObject;");
     private static final ClassDesc CD_INT = ClassDesc.ofDescriptor("I");
     private static final ClassDesc CD_VOID = ClassDesc.ofDescriptor("V");
 
@@ -68,7 +68,7 @@ public final class MolangBytecodeEmitter {
         BoundMolang.BoundExpr rootExpr = input.root().root();
 
         // 隐藏类必须与查找类（MolangCompilerImpl）在同一个运行时包中
-        String internalName = "io/github/tt432/eyelibmolang/compiler/Molang$Expr$"
+        String internalName = "io/github/tt432/eyelib/molang/compiler/Molang$Expr$"
                 + Integer.toHexString(sourceExpr.hashCode());
         ClassDesc thisClass = ClassDesc.ofDescriptor("L" + internalName + ";");
         ClassDesc cdString = ClassDesc.of("java.lang.String");
