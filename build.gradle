@@ -272,6 +272,9 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation 'com.h2database:h2:2.4.240'
+    testImplementation 'com.tngtech.archunit:archunit:1.3.0'
+    testImplementation 'com.tngtech.archunit:archunit-junit5-api:1.3.0'
+    testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:1.3.0'
     testImplementation sourceSets.main.output
 }
 
@@ -434,6 +437,8 @@ tasks.named('test').configure {
     // Stonecutter centralScript 下 :<version> 子项目的工作目录是 versions/<ver>/，
     // 但源码在 root。测试用相对路径 Path.of("src/...") 访问 fixture，需回指 root。
     workingDir = rootProject.projectDir
+    // ArchUnit freeze store 需按版本隔离（1.20.1/1.21.1 因 //? 条件化有不同违规集合）
+    systemProperty 'archunit.freeze.store.default.path', "build/archunit_store/${project.name}"
 }
 
 // IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.
