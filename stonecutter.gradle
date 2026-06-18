@@ -1,0 +1,23 @@
+plugins {
+    id 'dev.kikugie.stonecutter'
+    id 'net.neoforged.moddev.legacyforge' version '2.0.91' apply false
+    id 'net.neoforged.moddev' version '2.0.91' apply false
+    id 'io.freefair.lombok' version '8.6' apply false
+    id 'net.ltgt.errorprone' version '4.4.0' apply false
+    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0' apply false
+}
+
+apply plugin: 'io.github.gradle-nexus.publish-plugin'
+
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri('https://ossrh-staging-api.central.sonatype.com/service/local/'))
+            snapshotRepositoryUrl.set(uri('https://central.sonatype.com/repository/maven-snapshots/'))
+            username = project.findProperty('ossrhUsername')
+            password = project.findProperty('ossrhPassword')
+        }
+    }
+}
+
+stonecutter.active '1.20.1'
