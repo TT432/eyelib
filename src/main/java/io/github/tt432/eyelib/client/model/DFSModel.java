@@ -67,7 +67,13 @@ public record DFSModel(
                 frames.add(new LocatorFrame(bone, locator));
             }
         }.visitModel(new RenderParams(
-                null, new PoseStack.Pose(new Matrix4f(), new Matrix3f()), new PoseStack(),
+                null,
+                //? if <1.20.6 {
+                new PoseStack.Pose(new Matrix4f(), new Matrix3f()),
+                //?} else {
+                io.github.tt432.eyelib.util.ReflectAccess.createPose(new Matrix4f(), new Matrix3f()),
+                //?}
+                new PoseStack(),
                 null, null, false, null, 0,
                 OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap(), null
         ), new ModelVisitContext(), new ModelRuntimeData(), model);

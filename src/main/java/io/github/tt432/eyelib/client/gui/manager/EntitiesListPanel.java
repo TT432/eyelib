@@ -6,10 +6,14 @@ import io.github.tt432.eyelib.client.ClientTickHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+//? if <1.20.6 {
 import net.minecraftforge.client.gui.widget.ScrollPanel;
+//?}
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 
@@ -20,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * @author TT432
  */
+//? if <1.20.6 {
 public class EntitiesListPanel extends ScrollPanel {
 
     static EyelibManagerScreen.@Nullable EntityButton lastSelected;
@@ -34,8 +39,13 @@ public class EntitiesListPanel extends ScrollPanel {
                 allEntitiesList.add(new EyelibManagerScreen.EntityButton(
                         resourceLocation.toString(),
                         BuiltInRegistries.ENTITY_TYPE.get(resourceLocation).getDescription(),
+                        //? if <1.20.6 {
                         new ResourceLocation(Eyelib.MOD_ID, "icons/entities/" + resourceLocation.toString()
-                                                                                                .replace(":", "/"))
+                                                                                                 .replace(":", "/"))
+                        //?} else {
+                        ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/entities/" + resourceLocation.toString()
+                                                                                                 .replace(":", "/"))
+                        //?}
                 ));
             }
             filtedEntitiesList.addAll(allEntitiesList);
@@ -121,7 +131,13 @@ public class EntitiesListPanel extends ScrollPanel {
                         float a;
 
                         if (lastSelected != entityButton) {
-                            a = entityButton.animator.getTime(ClientTickHandler.getTick(), Minecraft.getInstance().timer.partialTick, hover);
+                            a = entityButton.animator.getTime(ClientTickHandler.getTick(),
+                                    //? if <1.20.6 {
+                                    Minecraft.getInstance().timer.partialTick
+                                    //?} else {
+                                    Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true)
+                                    //?}
+                                    , hover);
                         } else {
                             a = 1;
                         }
@@ -175,3 +191,38 @@ public class EntitiesListPanel extends ScrollPanel {
 
     }
 }
+//?} else {
+public class EntitiesListPanel extends AbstractWidget {
+    static EyelibManagerScreen.@Nullable EntityButton lastSelected;
+
+    public EntitiesListPanel(Minecraft client, int width, int height, int top, int left) {
+        this(client, width, height, top, left, 0);
+    }
+
+    public EntitiesListPanel(Minecraft client, int width, int height, int top, int left, int border) {
+        super(left, top, width, height, Component.empty());
+        throw new UnsupportedOperationException("NeoForge 1.21.1 ScrollPanel 已删除，需用 vanilla 方案重写");
+    }
+
+    public EntitiesListPanel(Minecraft client, int width, int height, int top, int left, int border, int barWidth) {
+        this(client, width, height, top, left, border);
+    }
+
+    public EntitiesListPanel(Minecraft client, int width, int height, int top, int left, int border, int barWidth, int barBgColor, int barColor, int barBorderColor) {
+        this(client, width, height, top, left, border);
+    }
+
+    void onEdited(String input) {
+        throw new UnsupportedOperationException("NeoForge 1.21.1 ScrollPanel 已删除，需用 vanilla 方案重写");
+    }
+
+    @Override
+    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // TODO: NeoForge 1.21.1 ScrollPanel 已删除，需用 vanilla 方案重写
+    }
+
+    @Override
+    protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+    }
+}
+//?}

@@ -25,7 +25,11 @@ public record MinecraftParticleRuntimeEnvironment(Level level) implements Partic
 
     @Override
     public float partialTick() {
+        //? if <1.20.6 {
         return Minecraft.getInstance().timer.partialTick;
+        //?} else {
+        return Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
+        //?}
     }
 
     @Override

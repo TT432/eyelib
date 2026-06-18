@@ -14,12 +14,21 @@ import java.util.EnumSet;
  * @author TT432
  */
 public enum VertexFormatElementEnum implements PortStringRepresentable {
+    //? if <1.20.6 {
     Position(DefaultVertexFormat.ELEMENT_POSITION),
     Normal(DefaultVertexFormat.ELEMENT_NORMAL),
     UV0(DefaultVertexFormat.ELEMENT_UV0),
     UV1(DefaultVertexFormat.ELEMENT_UV1),
     Color(DefaultVertexFormat.ELEMENT_COLOR),
     BoneId0(DefaultVertexFormat.ELEMENT_UV2);
+    //?} else {
+    Position(VertexFormatElement.POSITION),
+    Normal(VertexFormatElement.NORMAL),
+    UV0(VertexFormatElement.UV0),
+    UV1(VertexFormatElement.UV1),
+    Color(VertexFormatElement.COLOR),
+    BoneId0(VertexFormatElement.UV2);
+    //?}
 
     public static final Codec<VertexFormatElementEnum> CODEC =
             PortStringRepresentable.fromEnum(VertexFormatElementEnum::values);
@@ -39,11 +48,23 @@ public enum VertexFormatElementEnum implements PortStringRepresentable {
      * @return a new VertexFormat containing the mapped elements
      */
     public static VertexFormat fromFields(EnumSet<VertexFormatElementEnum> fields) {
+        //? if <1.20.6 {
         ImmutableMap.Builder<String, VertexFormatElement> elements = ImmutableMap.builder();
+        //?} else {
+        VertexFormat.Builder elements = VertexFormat.builder();
+        //?}
         for (VertexFormatElementEnum field : fields) {
+            //? if <1.20.6 {
             elements.put(field.getSerializedName(), field.element);
+            //?} else {
+            elements.add(field.getSerializedName(), field.element);
+            //?}
         }
+        //? if <1.20.6 {
         return new VertexFormat(elements.buildOrThrow());
+        //?} else {
+        return elements.build();
+        //?}
     }
 
     @Override

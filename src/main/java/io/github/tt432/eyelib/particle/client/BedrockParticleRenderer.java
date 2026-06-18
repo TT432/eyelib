@@ -46,7 +46,11 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
     public void render(BedrockParticleInstance particle) {
         String material = particle.emitter().definition().material();
         RenderTypeResolver.EntityRenderTypeData factory = RenderTypeResolver.resolveParticle(material);
+        //? if <1.20.6 {
         net.minecraft.resources.ResourceLocation texture = new net.minecraft.resources.ResourceLocation(particle.emitter().definition().texture()).withSuffix(".png");
+        //?} else {
+        net.minecraft.resources.ResourceLocation texture = net.minecraft.resources.ResourceLocation.parse(particle.emitter().definition().texture()).withSuffix(".png");
+        //?}
         PortRenderPass pass = factory.factory().apply(PortResourceLocation.of(texture.getNamespace(), texture.getPath()));
         VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(
                 switch (pass.transparency()) {
@@ -88,7 +92,10 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
                     Minecraft.getInstance().gameRenderer.getMainCamera().rotation(),
                     cameraPos
             );
+            //? if <1.20.6
             pose.rotate(billboard.getRotation(particle, camera, Minecraft.getInstance().getPartialTick()));
+            //? if >=1.20.6
+            pose.rotate(billboard.getRotation(particle, camera, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true)));
         }
 
         pose.rotateZ((float) Math.toRadians(particle.rotation()));
@@ -117,6 +124,7 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
     }
 
     private static void vertex(VertexConsumer vertexConsumer, Vector3f position, int color, float u, float v, int light, Vector3f normal) {
+        //? if <1.20.6 {
         vertexConsumer.vertex(position.x, position.y, position.z,
                 FastColor.ABGR32.red(color),
                 FastColor.ABGR32.green(color),
@@ -124,6 +132,19 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
                 FastColor.ABGR32.alpha(color),
                 u, v,
                 OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
+        //?} else {
+        vertexConsumer.addVertex(position.x, position.y, position.z)
+                .setColor(
+                        FastColor.ABGR32.red(color),
+                        FastColor.ABGR32.green(color),
+                        FastColor.ABGR32.blue(color),
+                        FastColor.ABGR32.alpha(color)
+                )
+                .setUv(u, v)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(light)
+                .setNormal(normal.x, normal.y, normal.z);
+        //?}
     }
 
     private static int getLight(BedrockParticleInstance particle, @Nullable ParticleAppearanceLighting lighting) {

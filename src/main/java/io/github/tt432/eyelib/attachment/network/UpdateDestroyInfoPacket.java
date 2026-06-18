@@ -8,7 +8,7 @@ import net.minecraft.network.FriendlyByteBuf;
  */
 public record UpdateDestroyInfoPacket(
         boolean dig
-) {
+) /*? if >=1.20.6 {*/ implements net.minecraft.network.protocol.common.custom.CustomPacketPayload /*?}*/ {
     public static final StreamCodec<UpdateDestroyInfoPacket> STREAM_CODEC = new StreamCodec<>() {
         @Override
         public void encode(UpdateDestroyInfoPacket obj, FriendlyByteBuf buf) {
@@ -21,4 +21,15 @@ public record UpdateDestroyInfoPacket(
             return new UpdateDestroyInfoPacket(dig);
         }
     };
+
+    //? if >=1.20.6 {
+    public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<UpdateDestroyInfoPacket> TYPE =
+            new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("eyelib", "update_destroy_info"));
+
+    @Override
+    public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
+        return TYPE;
+    }
+    //?}
 }

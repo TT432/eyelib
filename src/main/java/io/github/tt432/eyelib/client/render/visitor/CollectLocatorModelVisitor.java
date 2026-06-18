@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.model.locator.LocatorEntry;
 import org.joml.Matrix4f;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,8 +33,14 @@ public class CollectLocatorModelVisitor extends ModelVisitor {
         last.normal().rotateZYX(rotation.z(), rotation.y(), rotation.x());
         last.pose().rotateZYX(rotation.z(), rotation.y(), rotation.x());
 
+        Matrix4f locatorPose;
+        //? if <1.20.6 {
+        locatorPose = new Matrix4f(poseStack.poseStack.getLast().pose());
+        //?} else {
+        locatorPose = new Matrix4f(((io.github.tt432.eyelib.mixin.PoseStackAccessor) poseStack).eyelib$getPoseStackDeque().getLast().pose());
+        //?}
         context.<Map<String, Matrix4f>>orCreate("locators", new HashMap<>())
-               .put(locator.name(), new Matrix4f(poseStack.poseStack.getLast().pose()));
+               .put(locator.name(), locatorPose);
         poseStack.popPose();
     }
 }

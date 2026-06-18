@@ -5,7 +5,7 @@ import net.minecraft.network.FriendlyByteBuf;
 /** @author TT432 */
 public record RemoveParticlePacket(
         String removeId
-) {
+) /*? if >=1.20.6 {*/ implements net.minecraft.network.protocol.common.custom.CustomPacketPayload /*?}*/ {
     public static final ParticleStreamCodec<RemoveParticlePacket> STREAM_CODEC = new ParticleStreamCodec<>() {
         @Override
         public void encode(RemoveParticlePacket packet, FriendlyByteBuf buf) {
@@ -18,4 +18,15 @@ public record RemoveParticlePacket(
             return new RemoveParticlePacket(removeId);
         }
     };
+
+    //? if >=1.20.6 {
+    public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<RemoveParticlePacket> TYPE =
+            new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("eyelib", "remove_particle"));
+
+    @Override
+    public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
+        return TYPE;
+    }
+    //?}
 }

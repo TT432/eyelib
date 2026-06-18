@@ -185,7 +185,13 @@ public record RenderControllerEntry(
                                                               needReloadTexture, syncedActions);
 
             ModelComponent comp = new ModelComponent();
-            comp.setInfo(new ModelComponentInfo(geometryResult, matTexture, new ResourceLocation(materialName)));
+            comp.setInfo(new ModelComponentInfo(geometryResult, matTexture,
+                    //? if <1.20.6 {
+                    new ResourceLocation(materialName)
+                    //?} else {
+                    ResourceLocation.parse(materialName)
+                    //?}
+            ));
             comp.setIgnoreLighting(ignoreLighting);
             comp.setRcColor(rcColor);
 
@@ -297,15 +303,21 @@ public record RenderControllerEntry(
      * alphatest 材质使用此副本以避免低 alpha 像素被 MC cutout shader 丢弃。
      */
     private static ResourceLocation clampedTexture(ResourceLocation original, List<ResourceLocation> layers,
-                                                   List<Runnable> syncedActions, boolean needReload) {
-        ResourceLocation clamped = new ResourceLocation(original.getNamespace(),
-                                                        "clamped/" + original.getPath());
+                                                    List<Runnable> syncedActions, boolean needReload) {
+        //? if <1.20.6 {
+        ResourceLocation clamped = new ResourceLocation(original.getNamespace(), "clamped/" + original.getPath());
+        //?} else {
+        ResourceLocation clamped = ResourceLocation.fromNamespaceAndPath(original.getNamespace(), "clamped/" + original.getPath());
+        //?}
         if (needReload) {
             syncedActions.add(() -> {
                 List<ResourceLocation> clampedLayers = new java.util.ArrayList<>();
                 for (ResourceLocation layer : layers) {
-                    ResourceLocation clampedLayer = new ResourceLocation(layer.getNamespace(),
-                                                                         "_tmp_clamped/" + layer.getPath());
+                    //? if <1.20.6 {
+                    ResourceLocation clampedLayer = new ResourceLocation(layer.getNamespace(), "_tmp_clamped/" + layer.getPath());
+                    //?} else {
+                    ResourceLocation clampedLayer = ResourceLocation.fromNamespaceAndPath(layer.getNamespace(), "_tmp_clamped/" + layer.getPath());
+                    //?}
                     NativeImage img = NativeImageIO.download(layer, NativeImageIO::copyImage);
                     if (img != null) {
                         NativeImageIO.clampAlphaToBinary(img);
@@ -425,7 +437,11 @@ public record RenderControllerEntry(
         for (String layerPath : layerPaths) {
             pathBuilder.append(layerPath);
         }
+        //? if <1.20.6 {
         return new ResourceLocation("complex", pathBuilder.toString().replace(":", "_") + suffix);
+        //?} else {
+        return ResourceLocation.fromNamespaceAndPath("complex", pathBuilder.toString().replace(":", "_") + suffix);
+        //?}
     }
 
     private List<String> resolveTextureLayerPaths(MolangScope scope, BrClientEntity entity) {
@@ -447,7 +463,11 @@ public record RenderControllerEntry(
     private List<ResourceLocation> toResourceLocations(List<String> layerPaths) {
         List<ResourceLocation> resourceLocations = new ArrayList<>(layerPaths.size());
         for (String layerPath : layerPaths) {
+            //? if <1.20.6 {
             resourceLocations.add(new ResourceLocation(layerPath));
+            //?} else {
+            resourceLocations.add(ResourceLocation.parse(layerPath));
+            //?}
         }
         return resourceLocations;
     }

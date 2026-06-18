@@ -1,3 +1,4 @@
+//? if <1.20.6 {
 package io.github.tt432.eyelib.attachment.dataattach.mc;
 
 import io.github.tt432.eyelib.attachment.dataattach.IDataAttachmentContainer;
@@ -36,3 +37,4 @@ public class DataAttachmentContainerProvider implements ICapabilitySerializable<
         container.deserializeNBT(nbt);
     }
 }
+//?}

@@ -123,9 +123,16 @@ public final class BehaviorPackPublication {
             @SuppressWarnings("unchecked")
             var compMap = (Map<String, Component>) ComponentGroup.DISPATCH_CODEC
                     .parse(JsonOps.INSTANCE, bedrockObjectToJson(obj))
+                    //? if <1.20.6 {
                     .getOrThrow(false, message -> {
                         throw new IllegalArgumentException(message);
-                    });
+                    })
+                    //?} else {
+                    .getOrThrow(message -> {
+                        return new IllegalArgumentException(message);
+                    })
+                    //?}
+                    ;
             if (compMap.isEmpty()) {
                 return java.util.Optional.empty();
             }
@@ -177,9 +184,16 @@ public final class BehaviorPackPublication {
             @SuppressWarnings("unchecked")
             var resultMap = (Map<String, Component>) ComponentGroup.DISPATCH_CODEC
                     .parse(JsonOps.INSTANCE, wrapper)
+                    //? if <1.20.6 {
                     .getOrThrow(false, message -> {
                         throw new IllegalArgumentException(message);
-                    });
+                    })
+                    //?} else {
+                    .getOrThrow(message -> {
+                        return new IllegalArgumentException(message);
+                    })
+                    //?}
+                    ;
             Component typedParsed = resultMap.get(key);
             if (typedParsed != null && !(typedParsed instanceof EmptyComponent)) {
                 return typedParsed;
@@ -272,9 +286,16 @@ public final class BehaviorPackPublication {
                 try {
                     var parsed = LogicNode.CODEC.codec()
                                                 .parse(JsonOps.INSTANCE, bedrockObjectToJson(obj))
+                                                //? if <1.20.6 {
                                                 .getOrThrow(false, message -> {
                                                     throw new IllegalArgumentException(message);
-                                                });
+                                                })
+                                                //?} else {
+                                                .getOrThrow(message -> {
+                                                    return new IllegalArgumentException(message);
+                                                })
+                                                //?}
+                                                ;
                     result.put(entry.getKey(), parsed);
                 } catch (RuntimeException exception) {
                     logger.warn("Failed to parse behavior event: {}", entry.getKey(), exception);

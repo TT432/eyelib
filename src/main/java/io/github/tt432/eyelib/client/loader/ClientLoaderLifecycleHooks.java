@@ -1,12 +1,21 @@
 package io.github.tt432.eyelib.client.loader;
 
 import net.minecraft.server.packs.resources.PreparableReloadListener;
+//? if <1.20.6 {
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.forgespi.language.ModFileScanData;
+//?} else {
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.neoforgespi.language.ModFileScanData;
+//?}
 import org.objectweb.asm.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +26,11 @@ import java.util.Objects;
 /**
  * @author TT432
  */
+//? if <1.20.6 {
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+//?} else {
+@EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+//?}
 public final class ClientLoaderLifecycleHooks {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientLoaderLifecycleHooks.class);
 

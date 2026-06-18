@@ -49,9 +49,16 @@ public final class ImporterCodecUtil {
                         try {
                             T value = codecFactory.apply(entry.getKey())
                                     .parse(JsonOps.INSTANCE, entry.getValue())
+                                    //? if <1.20.6 {
                                     .getOrThrow(false, message -> {
                                         throw new IllegalArgumentException(message);
-                                    });
+                                    })
+                                    //?} else {
+                                    .getOrThrow(message -> {
+                                        return new IllegalArgumentException(message);
+                                    })
+                                    //?}
+                                    ;
                             parsed.put(entry.getKey(), value);
                         } catch (RuntimeException exception) {
                             return DataResult.error(() -> exception.getMessage());
@@ -65,9 +72,16 @@ public final class ImporterCodecUtil {
                         try {
                             JsonElement jsonElement = codecFactory.apply(entry.getKey())
                                     .encodeStart(JsonOps.INSTANCE, entry.getValue())
+                                    //? if <1.20.6 {
                                     .getOrThrow(false, message -> {
                                         throw new IllegalArgumentException(message);
-                                    });
+                                    })
+                                    //?} else {
+                                    .getOrThrow(message -> {
+                                        return new IllegalArgumentException(message);
+                                    })
+                                    //?}
+                                    ;
                             encoded.put(entry.getKey(), jsonElement);
                         } catch (RuntimeException exception) {
                             return DataResult.error(() -> exception.getMessage());

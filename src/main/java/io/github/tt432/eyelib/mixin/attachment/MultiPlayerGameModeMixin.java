@@ -5,8 +5,13 @@ import io.github.tt432.eyelib.network.EyelibNetworkTransport;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+//? if <1.20.6 {
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
+//?} else {
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+//?}
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -77,8 +82,16 @@ public class MultiPlayerGameModeMixin {
     @Unique
     private static void eyelib$scheduleNextTick(Runnable task) {
         var executed = new boolean[]{false};
+        //? if <1.20.6 {
         MinecraftForge.EVENT_BUS.addListener((TickEvent.ClientTickEvent event) -> {
+        //?} else {
+        NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> {
+        //?}
+            //? if <1.20.6 {
             if (!executed[0] && event.phase == TickEvent.Phase.END) {
+            //?} else {
+            if (!executed[0]) {
+            //?}
                 executed[0] = true;
                 task.run();
             }

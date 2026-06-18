@@ -39,6 +39,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -51,6 +52,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.WoolCarpetBlock;
 import net.minecraft.world.phys.Vec3;
+//? if <1.20.6 {
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
@@ -60,6 +62,16 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
+//?} else {
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.RenderLivingEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
+//?}
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 
@@ -74,7 +86,11 @@ import static net.minecraft.client.Minecraft.getInstance;
 /**
  * @author TT432
  */
+//? if <1.20.6 {
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
+//?} else {
+@EventBusSubscriber(value = Dist.CLIENT)
+//?}
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EntityRenderSystem {
     @SubscribeEvent
@@ -86,7 +102,11 @@ public class EntityRenderSystem {
             cap.init(entity);
         }
 
+        //? if <1.20.6 {
         MinecraftForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
+        //?} else {
+        NeoForge.EVENT_BUS.post(new InitComponentEvent(entity, cap));
+        //?}
     }
 
     private static Stream<Entity> entities() {
@@ -109,7 +129,11 @@ public class EntityRenderSystem {
                 .toList()
                 .forEach(Runnable::run);
 
+        //? if <1.20.6 {
         float partialTick = event.getPartialTick();
+        //?} else {
+        float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+        //?}
 
         entities().forEach(e -> {
             var cap = RenderData.getComponent(e);
@@ -157,10 +181,18 @@ public class EntityRenderSystem {
     }
 
     @SubscribeEvent
+    //? if <1.20.6 {
     public static void onEvent(LivingEvent.LivingTickEvent event) {
+    //?} else {
+    public static void onEvent(EntityTickEvent event) {
+    //?}
         var entity = event.getEntity();
         if (entity instanceof Bee bee) {
+            //? if <1.20.6 {
             bee.updateSwingTime();
+            //?} else {
+            ((io.github.tt432.eyelib.mixin.LivingEntityAccessor) bee).eyelib$invokeUpdateSwingTime();
+            //?}
         }
     }
 
@@ -212,14 +244,22 @@ public class EntityRenderSystem {
                              .<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>());
         var offHandPose = locators.get(leftitem);
         if (offHandPose != null) {
+            //? if <1.20.6 {
             poseStack.poseStack.addLast(offHandPose);
+            //?} else {
+            ((io.github.tt432.eyelib.mixin.PoseStackAccessor) poseStack).eyelib$getPoseStackDeque().addLast(offHandPose);
+            //?}
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.OFF_HAND);
             renderHandItemOrAttachable(bufferSource, renderTarget, itemInHand, ItemDisplayContext.THIRD_PERSON_LEFT_HAND, light, poseStack, true, InteractionHand.OFF_HAND);
         }
 
         var mainHandPose = locators.get(rightitem);
         if (mainHandPose != null) {
+            //? if <1.20.6 {
             poseStack.poseStack.addLast(mainHandPose);
+            //?} else {
+            ((io.github.tt432.eyelib.mixin.PoseStackAccessor) poseStack).eyelib$getPoseStackDeque().addLast(mainHandPose);
+            //?}
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.MAIN_HAND);
             renderHandItemOrAttachable(bufferSource, renderTarget, itemInHand, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, poseStack, false, InteractionHand.MAIN_HAND);
         }
@@ -353,7 +393,11 @@ public class EntityRenderSystem {
 
     public static void setupExtraMolang(Entity entity, MolangScope scope, float partialTick) {
         if (entity instanceof Llama llama) {
+            //? if <1.20.6 {
             if (llama.inventory.getItem(AbstractHorse.INV_SLOT_ARMOR)
+            //?} else {
+            if (llama.getInventory().getItem(AbstractHorse.EQUIPMENT_SLOT_OFFSET)
+            //?}
                                .getItem() instanceof BlockItem bi && bi.getBlock() instanceof WoolCarpetBlock wc) {
                 scope.set("variable.decortextureindex", wc.getColor().getId() + 1);
             } else {
@@ -386,7 +430,11 @@ public class EntityRenderSystem {
             cap.init(entity);
         }
 
+        //? if <1.20.6 {
         return setupClientEntity(ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()), cap);
+        //?} else {
+        return setupClientEntity(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()), cap);
+        //?}
     }
 
     public static List<Runnable> setupClientEntity(ResourceLocation entityId, RenderData<?> cap) {

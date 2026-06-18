@@ -36,7 +36,11 @@ public class BrAttachableLoader extends BrResourcesLoader implements Searchable<
         Map<ResourceLocation, BrClientEntity> parsedAttachables = LoaderParsingOps.parseAndTranslate(
                 object,
                 BrClientEntity.ATTACHABLE_CODEC,
+                //? if <1.20.6 {
                 (sourceLocation, entity) -> new ResourceLocation(entity.identifier()),
+                //?} else {
+                (sourceLocation, entity) -> ResourceLocation.parse(entity.identifier()),
+                //?}
                 LOGGER,
                 "entity"
         );

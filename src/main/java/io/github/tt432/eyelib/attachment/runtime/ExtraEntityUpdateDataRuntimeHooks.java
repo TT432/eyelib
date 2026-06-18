@@ -11,18 +11,33 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
+//? if <1.20.6 {
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+//?} else {
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
+//?}
 /**
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+//? if <1.20.6 {
 @Mod.EventBusSubscriber(modid = "eyelib", bus = Mod.EventBusSubscriber.Bus.FORGE)
+//?} else {
+@EventBusSubscriber(modid = "eyelib", bus = EventBusSubscriber.Bus.GAME)
+//?}
 public final class ExtraEntityUpdateDataRuntimeHooks {
     @SubscribeEvent
+    //? if <1.20.6 {
     public static void onLivingDamage(LivingDamageEvent event) {
+    //?} else {
+    public static void onLivingDamage(LivingDamageEvent.Pre event) {
+    //?}
         Entity directEntity = event.getSource().getDirectEntity();
 
         if (directEntity != null) {
@@ -44,7 +59,11 @@ public final class ExtraEntityUpdateDataRuntimeHooks {
     }
 
     @SubscribeEvent
+    //? if <1.20.6 {
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
+    //?} else {
+    public static void onLivingTick(EntityTickEvent event) {
+    //?}
         Entity entity = event.getEntity();
         var key = DataAttachmentTypeRegistry.EXTRA_ENTITY_UPDATE.get();
         ExtraEntityUpdateData data = DataAttachmentHelper.getOrCreate(key, entity);

@@ -2,7 +2,11 @@ package io.github.tt432.eyelib.client.compat.ar;
 
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bake.BakedModel;
+//? if <1.20.6 {
 import net.minecraftforge.fml.loading.LoadingModList;
+//?} else {
+import net.neoforged.fml.loading.LoadingModList;
+//?}
 /**
  * 加速渲染（AR）兼容性外观类。
  * 检测加速渲染模组是否已安装，并委托实际渲染逻辑。

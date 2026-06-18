@@ -1,6 +1,8 @@
 package io.github.tt432.eyelib.client.render.bake;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
+//? if >=1.20.6
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.joml.Matrix3f;
@@ -47,15 +49,30 @@ public record BakedModel(
                          float[] u, float[] v) {
             this(xList.length, merge(xList, yList, zList), merge(nxList, nyList, nzList),
                  merge(xListResult, yListResult, zListResult), merge(nxListResult, nyListResult, nzListResult),
-                 u, v, new BufferBuilder(NEW_ENTITY.getVertexSize() * xList.length));
+                 u, v,
+                 //? if <1.20.6
+                 new BufferBuilder(NEW_ENTITY.getVertexSize() * xList.length));
+                 //? if >=1.20.6
+                 new BufferBuilder(new ByteBufferBuilder(NEW_ENTITY.getVertexSize() * xList.length), VertexFormat.Mode.QUADS, NEW_ENTITY));
+            //? if <1.20.6
             vertices.begin(VertexFormat.Mode.QUADS, NEW_ENTITY);
             for (int i = 0; i < xList.length; i++) {
+                //? if <1.20.6 {
                 vertices.vertex(xList[i], yList[i], zList[i],
                                 1, 1, 1, 1,
                                 u[i], v[i], 0, 0,
                                 nxList[i], nyList[i], nzList[i]);
+                //?} else {
+                vertices.addVertex(xList[i], yList[i], zList[i],
+                                   0xFFFFFFFF,
+                                   u[i], v[i], 0, 0,
+                                   nxList[i], nyList[i], nzList[i]);
+                //?}
             }
+            //? if <1.20.6
             vertices.end();
+            //? if >=1.20.6
+            vertices.build();
         }
 
         public void transformPos(Matrix4f m4) {

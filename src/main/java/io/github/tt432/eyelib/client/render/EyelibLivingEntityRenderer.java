@@ -23,7 +23,11 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
 
     @Override
     public ResourceLocation getTextureLocation(T entity) {
+        //? if <1.20.6 {
         return new ResourceLocation("eyelib", "empty");
+        //?} else {
+        return ResourceLocation.fromNamespaceAndPath("eyelib", "empty");
+        //?}
     }
 
     @Override
@@ -51,8 +55,14 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
         }
 
         @Override
+        //? if <1.20.6 {
         public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
 
         }
+        //?} else {
+        public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
+
+        }
+        //?}
     }
 }

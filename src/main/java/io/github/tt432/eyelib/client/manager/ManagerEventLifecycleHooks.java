@@ -6,14 +6,25 @@ import io.github.tt432.eyelib.client.particle.MinecraftParticleRuntimeEnvironmen
 import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelib.particle.client.ParticleSpawnRuntimeAdapter;
 import net.minecraft.client.Minecraft;
+//? if <1.20.6 {
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+//?} else {
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+//?}
 import java.util.Optional;
 
 /** @author TT432 */
+//? if <1.20.6 {
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+//?} else {
+@EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+//?}
 public final class ManagerEventLifecycleHooks {
     private ManagerEventLifecycleHooks() {
     }

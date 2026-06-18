@@ -64,6 +64,7 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
             a = Math.max(0, Math.min(1, tintColor[3]));
         }
         for (int nIdx = 0; nIdx < bakedBone.vertexSize(); nIdx++) {
+            //? if <1.20.6 {
             consumer.vertex(
                     bakedBone.positionResult()[nIdx * 3],
                     bakedBone.positionResult()[nIdx * 3 + 1],
@@ -74,6 +75,22 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
                     bakedBone.normalResult()[nIdx * 3 + 1],
                     bakedBone.normalResult()[nIdx * 3 + 2]
             );
+            //?} else {
+            consumer.addVertex(
+                            bakedBone.positionResult()[nIdx * 3],
+                            bakedBone.positionResult()[nIdx * 3 + 1],
+                            bakedBone.positionResult()[nIdx * 3 + 2]
+                    )
+                    .setColor((int) (r * 255), (int) (g * 255), (int) (b * 255), (int) (a * 255))
+                    .setUv(bakedBone.u()[nIdx], bakedBone.v()[nIdx])
+                    .setOverlay(overlay)
+                    .setLight(light)
+                    .setNormal(
+                            bakedBone.normalResult()[nIdx * 3],
+                            bakedBone.normalResult()[nIdx * 3 + 1],
+                            bakedBone.normalResult()[nIdx * 3 + 2]
+                    );
+            //?}
         }
     }
 

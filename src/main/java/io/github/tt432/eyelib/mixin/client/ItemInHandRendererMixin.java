@@ -45,7 +45,10 @@ public class ItemInHandRendererMixin {
 
         AnimationComponent ac = rd.getAnimationComponent();
         if (ac.getSerializableInfo() != null && ac.tickedInfos == null) {
+            //? if <1.20.6
             float partialTick = net.minecraft.client.Minecraft.getInstance().getFrameTime();
+            //? if >=1.20.6
+            float partialTick = net.minecraft.client.Minecraft.getInstance().getTimer().getRealtimeDeltaTicks();
             rd.getScope().set("variable.partial_tick", partialTick);
 
             AnimationEffects effects = new AnimationEffects();

@@ -32,7 +32,11 @@ public final class BehaviorPackAutoLoader {
     };
 
     public static void load(MinecraftServer server) {
+        //? if <1.20.6 {
         Path serverDirectory = server.getServerDirectory().toPath();
+        //?} else {
+        Path serverDirectory = server.getServerDirectory();
+        //?}
         BehaviorEntityRegistry.clear();
         SpawnRuleRegistry.clear();
         VanillaBehaviorEntityLoader.mergeIntoRegistry(serverDirectory);

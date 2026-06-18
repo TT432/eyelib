@@ -31,7 +31,11 @@ public class NativeImageIO {
     }
 
     public void upload(String texture, NativeImage image) {
+        //? if <1.20.6 {
         upload(new ResourceLocation(texture), image);
+        //?} else {
+        upload(ResourceLocation.parse(texture), image);
+        //?}
     }
 
     @Nullable
@@ -91,8 +95,11 @@ public class NativeImageIO {
             return cached;
         }
 
-        ResourceLocation generated = new ResourceLocation(texture.getNamespace(),
-                                                          "_color_mask/" + colorKey(color) + "/" + texture.getPath());
+        //? if <1.20.6 {
+        ResourceLocation generated = new ResourceLocation(texture.getNamespace(), "_color_mask/" + colorKey(color) + "/" + texture.getPath());
+        //?} else {
+        ResourceLocation generated = ResourceLocation.fromNamespaceAndPath(texture.getNamespace(), "_color_mask/" + colorKey(color) + "/" + texture.getPath());
+        //?}
         NativeImage image = download(texture, NativeImageIO::copyImage);
         if (image == null) {
             return null;

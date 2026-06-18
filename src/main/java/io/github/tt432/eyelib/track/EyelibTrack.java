@@ -16,6 +16,10 @@ public final class EyelibTrack {
     }
 
     public static ResourceLocation id(String path) {
+        //? if <1.20.6 {
         return new ResourceLocation(MOD_ID, path);
+        //?} else {
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
+        //?}
     }
 }

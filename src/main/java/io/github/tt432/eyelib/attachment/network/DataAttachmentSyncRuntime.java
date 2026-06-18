@@ -55,12 +55,17 @@ public final class DataAttachmentSyncRuntime {
             return;
         }
 
+        //? if <1.20.6 {
         var cap = entity.getCapability(DataAttachmentContainerCapability.INSTANCE);
         cap.ifPresent(container -> {
             if (container instanceof McDataAttachmentContainer mcContainer) {
                 mcContainer.deserializeNBT(packet.data());
             }
         });
+        //?} else {
+        McDataAttachmentContainer mcContainer = entity.getData(DataAttachmentContainerCapability.ATTACHMENT);
+        mcContainer.deserializeNBT(entity.level().registryAccess(), packet.data());
+        //?}
     }
 
     public static void handleDestroyInfoUpdate(UpdateDestroyInfoPacket packet, ServerPlayer player) {

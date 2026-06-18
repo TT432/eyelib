@@ -46,6 +46,9 @@ public final class ItemTrackRenderer {
      * 获取渲染用的 partialTick。
      */
     public static float getPartialTick() {
+        //? if <1.20.6
         return Minecraft.getInstance().getFrameTime();
+        //? if >=1.20.6
+        return Minecraft.getInstance().getTimer().getRealtimeDeltaTicks();
     }
 }

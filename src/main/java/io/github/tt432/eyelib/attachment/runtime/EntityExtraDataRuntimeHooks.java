@@ -11,17 +11,28 @@ import net.minecraft.world.entity.ai.goal.EatBlockGoal;
 import net.minecraft.world.entity.ai.goal.RangedAttackGoal;
 import net.minecraft.world.entity.ai.goal.RangedBowAttackGoal;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
+//? if <1.20.6 {
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+//?} else {
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+//?}
 
 /**
  * 额外实体数据运行时的 Forge 事件钩子。
  *
  * @author TT432
  */
+//? if <1.20.6 {
 @Mod.EventBusSubscriber
+//?} else {
+@EventBusSubscriber
+//?}
 public final class EntityExtraDataRuntimeHooks {
     private EntityExtraDataRuntimeHooks() {
     }
@@ -36,7 +47,11 @@ public final class EntityExtraDataRuntimeHooks {
     }
 
     @SubscribeEvent
+    //? if <1.20.6 {
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
+    //?} else {
+    public static void onLivingTick(EntityTickEvent event) {
+    //?}
         if (event.getEntity().level().isClientSide || !(event.getEntity() instanceof Mob mob)) {
             return;
         }
@@ -58,17 +73,30 @@ public final class EntityExtraDataRuntimeHooks {
         boolean isGrazing = false;
 
         for (WrappedGoal availableGoal : mob.goalSelector.getAvailableGoals()) {
-            if (availableGoal.isRunning()
-                    && ((availableGoal.getGoal() instanceof RangedAttackGoal rangedAttackGoal
-                    && rangedAttackGoal.attackTime > 0)
-                    || (availableGoal.getGoal() instanceof RangedBowAttackGoal && mob.getTicksUsingItem() < 19))) {
-                facingTargetToRangeAttack = true;
+            if (availableGoal.isRunning()) {
+                boolean rangedAttackGoalActive = false;
+                if (availableGoal.getGoal() instanceof RangedAttackGoal rangedAttackGoal) {
+                    //? if <1.20.6 {
+                    rangedAttackGoalActive = rangedAttackGoal.attackTime > 0;
+                    //?} else {
+                    rangedAttackGoalActive = ((io.github.tt432.eyelib.mixin.RangedAttackGoalAccessor) rangedAttackGoal).eyelib$getAttackTime() > 0;
+                    //?}
+                }
+                if (rangedAttackGoalActive
+                        || (availableGoal.getGoal() instanceof RangedBowAttackGoal && mob.getTicksUsingItem() < 19)) {
+                    facingTargetToRangeAttack = true;
+                }
             }
             if (availableGoal.getGoal() instanceof AvoidEntityGoal<?> avoid) {
-                if (avoid.toAvoid instanceof Mob) {
+                //? if <1.20.6 {
+                var toAvoid = avoid.toAvoid;
+                //?} else {
+                var toAvoid = io.github.tt432.eyelib.util.ReflectAccess.readField(avoid, "toAvoid");
+                //?}
+                if (toAvoid instanceof Mob) {
                     isAvoidingMobs = true;
                 }
-                if (avoid.toAvoid != null) {
+                if (toAvoid != null) {
                     isAvoid = true;
                 }
             }

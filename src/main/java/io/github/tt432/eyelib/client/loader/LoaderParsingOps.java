@@ -36,7 +36,14 @@ public final class LoaderParsingOps {
 
         source.forEach((sourceKey, jsonElement) -> {
             try {
+                //? if <1.20.6 {
                 T value = codec.parse(JsonOps.INSTANCE, jsonElement).getOrThrow(false, logger::warn);
+                //?} else {
+                T value = codec.parse(JsonOps.INSTANCE, jsonElement).getOrThrow(message -> {
+                    logger.warn(message);
+                    return new RuntimeException(message);
+                });
+                //?}
                 parsed.put(keyTranslator.apply(sourceKey, value), value);
             } catch (Exception e) {
                 logger.error("can't load {} {}", assetType, sourceKey, e);

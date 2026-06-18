@@ -33,7 +33,11 @@ public class BrClientEntityLoader extends BrResourcesLoader {
         Map<ResourceLocation, BrClientEntity> parsedEntities = LoaderParsingOps.parseAndTranslate(
                 object,
                 BrClientEntity.CODEC,
+                //? if <1.20.6 {
                 (sourceLocation, entity) -> new ResourceLocation(entity.identifier()),
+                //?} else {
+                (sourceLocation, entity) -> ResourceLocation.parse(entity.identifier()),
+                //?}
                 LOGGER,
                 "entity"
         );

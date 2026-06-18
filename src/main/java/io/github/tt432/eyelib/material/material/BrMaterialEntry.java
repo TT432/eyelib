@@ -734,7 +734,10 @@ public record BrMaterialEntry(
     private VertexFormat getFormat() {
         EnumSet<VertexFormatElementEnum> fields = vertexFields.orElse(EnumSet.noneOf(VertexFormatElementEnum.class));
         if (fields.isEmpty()) {
+            //? if <1.20.6
             return DefaultVertexFormat.POSITION_COLOR_TEX;
+            //? if >=1.20.6
+            return DefaultVertexFormat.POSITION_TEX_COLOR;
         }
         return VertexFormatElementEnum.fromFields(fields);
     }
@@ -743,7 +746,11 @@ public record BrMaterialEntry(
         // ensure shader is compiled and cached
         getOrCompileShader();
 
+        //? if <1.20.6 {
         net.minecraft.resources.ResourceLocation mcTex = new net.minecraft.resources.ResourceLocation(texture.namespace(), texture.path());
+        //?} else {
+        net.minecraft.resources.ResourceLocation mcTex = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(texture.namespace(), texture.path());
+        //?}
         VertexFormat format = getFormat();
         boolean translucent = hasBlending(materials);
 

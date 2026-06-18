@@ -29,11 +29,19 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+//? if <1.20.6 {
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLLoader;
+//?} else {
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+//?}
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -47,10 +55,18 @@ import java.util.Map;
  * @author TT432
  */
 public class ModelPreviewScreen extends ModalWorksurfaceScreen {
+    //? if <1.20.6 {
     @Mod.EventBusSubscriber(Dist.CLIENT)
+    //?} else {
+    @EventBusSubscriber(Dist.CLIENT)
+    //?}
     public static final class Events {
         @SubscribeEvent
+        //? if <1.20.6 {
         public static void onEvent(TickEvent.ClientTickEvent event) {
+        //?} else {
+        public static void onEvent(ClientTickEvent.Pre event) {
+        //?}
             if (FMLLoader.isProduction()) return;
             if (Minecraft.getInstance().screen == null
                     && InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_V)) {
@@ -174,7 +190,11 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         if (currentModel != null) {
             // Setup RenderParams
             MultiBufferSource.BufferSource bufferSource = guiGraphics.bufferSource();
+            //? if <1.20.6 {
             ResourceLocation texture = new ResourceLocation(currentModel.atlasTexture().id());
+            //?} else {
+            ResourceLocation texture = ResourceLocation.parse(currentModel.atlasTexture().id());
+            //?}
 
             RenderType renderType = RenderType.entitySolid(texture);
             VertexConsumer buffer = bufferSource.getBuffer(renderType);
@@ -275,10 +295,20 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY,
+                                 //? if <1.20.6 {
+                                 double delta
+                                 //?} else {
+                                 double scrollDeltaX, double scrollDelta
+                                 //?}
+    ) {
         // Adjust scale
         float scrollSensitivity = 0.1f;
+        //? if <1.20.6 {
         this.scale += (float) (delta * scrollSensitivity);
+        //?} else {
+        this.scale += (float) (scrollDelta * scrollSensitivity);
+        //?}
 
         // Clamp scale
         this.scale = Math.min(2.0f, this.scale);
@@ -295,8 +325,13 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
                 BBModel model = new BBModelLoader().load(path);
                 this.currentModel = previewModel(model, ModelImporter.importBlockbench(model));
                 var model1 = currentModel.model();
+                //? if <1.20.6 {
                 var info = TwoSideModelBakeInfo.INSTANCE.getBakeInfo(model1, true, new ResourceLocation(currentModel.atlasTexture()
-                                                                                                                    .id()));
+                                                                                                                     .id()));
+                //?} else {
+                var info = TwoSideModelBakeInfo.INSTANCE.getBakeInfo(model1, true, ResourceLocation.parse(currentModel.atlasTexture()
+                                                                                                                      .id()));
+                //?}
                 bakedModel = TwoSideModelBakeInfo.INSTANCE.bake(model1, info);
                 dfsModel = DFSModel.create(model1);
                 this.statusMessage = "";

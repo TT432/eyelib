@@ -9,6 +9,10 @@ import org.joml.Matrix4f;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class PoseCopies {
     public static PoseStack.Pose copy(PoseStack.Pose pose) {
+        //? if <1.20.6 {
         return new PoseStack.Pose(new Matrix4f(pose.pose()), new Matrix3f(pose.normal()));
+        //?} else {
+        return pose.copy();
+        //?}
     }
 }

@@ -40,6 +40,7 @@ public class AcceleratedBakedBoneRenderer implements IAcceleratedRenderer<BakedM
                     var meshBuilder = extension.decorate(culledMeshCollector);
 
                     for (int nIdx = 0; nIdx < bakedBone.vertexSize(); nIdx++) {
+                        //? if <1.20.6 {
                         meshBuilder.vertex(
                                 bakedBone.position()[nIdx * 3],
                                 bakedBone.position()[nIdx * 3 + 1],
@@ -50,6 +51,22 @@ public class AcceleratedBakedBoneRenderer implements IAcceleratedRenderer<BakedM
                                 bakedBone.normal()[nIdx * 3 + 1],
                                 bakedBone.normal()[nIdx * 3 + 2]
                         );
+                        //?} else {
+                        meshBuilder.addVertex(
+                                        bakedBone.position()[nIdx * 3],
+                                        bakedBone.position()[nIdx * 3 + 1],
+                                        bakedBone.position()[nIdx * 3 + 2]
+                                )
+                                .setColor(255, 255, 255, 255)
+                                .setUv(bakedBone.u()[nIdx], bakedBone.v()[nIdx])
+                                .setOverlay(overlay)
+                                .setLight(0)
+                                .setNormal(
+                                        bakedBone.normal()[nIdx * 3],
+                                        bakedBone.normal()[nIdx * 3 + 1],
+                                        bakedBone.normal()[nIdx * 3 + 2]
+                                );
+                        //?}
                     }
 
                     culledMeshCollector.flush();

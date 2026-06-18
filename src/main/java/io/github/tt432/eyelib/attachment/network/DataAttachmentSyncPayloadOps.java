@@ -23,7 +23,7 @@ public final class DataAttachmentSyncPayloadOps {
     }
 
     public static <T> AttachmentUpdate<T> from(UniDataUpdatePacket<T> packet) {
-        return new AttachmentUpdate<>(packet.entityId(), packet.type(), packet.data());
+        return new AttachmentUpdate<>(packet.entityId(), packet.attachmentType(), packet.data());
     }
 
     public static AttachmentUpdate<ExtraEntityData> from(ExtraEntityDataPacket packet) {

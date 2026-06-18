@@ -35,7 +35,10 @@ public final class MinecraftMolangQueryRuntime implements MolangQueryRuntime {
 
     @Override
     public float partialTick() {
+        //? if <1.20.6
         return Minecraft.getInstance().getFrameTime();
+        //? if >=1.20.6
+        return Minecraft.getInstance().getTimer().getRealtimeDeltaTicks();
     }
 
     @Override

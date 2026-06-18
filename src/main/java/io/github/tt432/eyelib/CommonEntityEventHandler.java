@@ -15,18 +15,29 @@ import io.github.tt432.eyelib.behavior.component.property.Scale;
 import io.github.tt432.eyelib.behavior.event.logic.LogicNode;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+//? if <1.20.6 {
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
+//?} else {
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
+//?}
+import net.minecraft.core.registries.BuiltInRegistries;
 import java.util.ArrayList;
 import java.util.Optional;
 
 /**
  * @author TT432
  */
+//? if <1.20.6 {
 @Mod.EventBusSubscriber(modid = Eyelib.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+//?} else {
+@EventBusSubscriber(modid = Eyelib.MOD_ID, bus = EventBusSubscriber.Bus.GAME)
+//?}
 public final class CommonEntityEventHandler {
     private CommonEntityEventHandler() {
     }
@@ -42,7 +53,7 @@ public final class CommonEntityEventHandler {
         if (entity.level().isClientSide()) return;
         if (!(entity instanceof LivingEntity living)) return;
 
-        var key = ForgeRegistries.ENTITY_TYPES.getKey(living.getType());
+        var key = BuiltInRegistries.ENTITY_TYPE.getKey(living.getType());
         if (key == null) return;
 
         BehaviorEntity be = BehaviorEntityRegistry.get(key.toString());

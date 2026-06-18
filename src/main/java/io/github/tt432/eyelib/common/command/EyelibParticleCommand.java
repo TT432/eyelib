@@ -17,9 +17,15 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.phys.Vec3;
+//? if <1.20.6 {
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+//?} else {
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+//?}
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
@@ -29,7 +35,11 @@ import java.util.concurrent.CompletableFuture;
 /**
  * @author TT432
  */
+//? if <1.20.6 {
 @Mod.EventBusSubscriber
+//?} else {
+@EventBusSubscriber
+//?}
 public final class EyelibParticleCommand {
     @SubscribeEvent
     public static void onRegister(final RegisterCommandsEvent event) {
@@ -60,7 +70,11 @@ public final class EyelibParticleCommand {
 
     private static boolean isValidResourceLocation(String id) {
         try {
+            //? if <1.20.6 {
             new ResourceLocation(id);
+            //?} else {
+            ResourceLocation.parse(id);
+            //?}
             return true;
         } catch (Exception ignored) {
             return false;

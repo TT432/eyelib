@@ -9,7 +9,8 @@ import net.minecraft.network.FriendlyByteBuf;
 /**
  * @author TT432
  */
-public record DataAttachmentUpdatePacket<C>(int entityId, DataAttachmentType<C> attachment, C value) {
+public record DataAttachmentUpdatePacket<C>(int entityId, DataAttachmentType<C> attachment, C value)
+        /*? if >=1.20.6 {*/ implements net.minecraft.network.protocol.common.custom.CustomPacketPayload /*?}*/ {
     public static final StreamCodec<DataAttachmentUpdatePacket<Object>> STREAM_CODEC = new StreamCodec<>() {
         @Override
         public void encode(DataAttachmentUpdatePacket<Object> obj, FriendlyByteBuf buf) {
@@ -36,4 +37,15 @@ public record DataAttachmentUpdatePacket<C>(int entityId, DataAttachmentType<C> 
             return new DataAttachmentUpdatePacket<>(entityId, attachment, value);
         }
     };
+
+    //? if >=1.20.6 {
+    public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<DataAttachmentUpdatePacket> TYPE =
+            new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("eyelib", "data_attachment_update"));
+
+    @Override
+    public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
+        return TYPE;
+    }
+    //?}
 }

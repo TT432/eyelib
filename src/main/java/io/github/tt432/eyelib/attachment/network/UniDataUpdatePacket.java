@@ -9,21 +9,22 @@ import net.minecraft.network.FriendlyByteBuf;
 /**
  * @author TT432
  */
-public record UniDataUpdatePacket<T>(int entityId, DataAttachmentType<T> type, T data) {
+public record UniDataUpdatePacket<T>(int entityId, DataAttachmentType<T> attachmentType, T data)
+        /*? if >=1.20.6 {*/ implements net.minecraft.network.protocol.common.custom.CustomPacketPayload /*?}*/ {
 
     public static <T> UniDataUpdatePacket<T> crate(int entityId, DataAttachmentType<T> type, T data) {
         return new UniDataUpdatePacket<>(entityId, type, data);
     }
 
     private void encode(FriendlyByteBuf buf) {
-        type.getStreamCodec().encode(data, buf);
+        attachmentType.getStreamCodec().encode(data, buf);
     }
 
     public static final StreamCodec<UniDataUpdatePacket<?>> STREAM_CODEC = new StreamCodec<>() {
         @Override
         public void encode(UniDataUpdatePacket<?> obj, FriendlyByteBuf buf) {
             EyelibStreamCodecs.VAR_INT.encode(obj.entityId, buf);
-            EyelibStreamCodecs.STRING.encode(obj.type.id(), buf);
+            EyelibStreamCodecs.STRING.encode(obj.attachmentType.id(), buf);
             obj.encode(buf);
         }
 
@@ -37,4 +38,15 @@ public record UniDataUpdatePacket<T>(int entityId, DataAttachmentType<T> type, T
             return new UniDataUpdatePacket(entityId, type, data);
         }
     };
+
+    //? if >=1.20.6 {
+    public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<UniDataUpdatePacket> TYPE =
+            new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("eyelib", "uni_data_update"));
+
+    @Override
+    public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
+        return TYPE;
+    }
+    //?}
 }

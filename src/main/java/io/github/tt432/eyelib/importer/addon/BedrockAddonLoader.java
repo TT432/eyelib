@@ -194,7 +194,12 @@ public final class BedrockAddonLoader {
             case PARTICLE ->                acc.parseAndStore(entry, BrParticle.CODEC, acc.particleFiles);
             case RENDER_CONTROLLER -> {
                 BrRenderControllers controllers = BrRenderControllers.CODEC.parse(JsonOps.INSTANCE,
-                        readJsonElement(entry)).getOrThrow(false, IllegalArgumentException::new);
+                        readJsonElement(entry))
+                        //? if <1.20.6 {
+                        .getOrThrow(false, IllegalArgumentException::new);
+                        //?} else {
+                        .getOrThrow(IllegalArgumentException::new);
+                        //?}
                 mergeRenderControllers(acc.renderControllerFiles, entry.effectivePath(), controllers.renderControllers());
             }
             case MODEL -> {

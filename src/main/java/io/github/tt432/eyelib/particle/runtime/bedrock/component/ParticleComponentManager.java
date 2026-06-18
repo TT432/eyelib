@@ -109,7 +109,11 @@ public final class ParticleComponentManager {
             return Optional.empty();
         }
         return Optional.of(info.codec().parse(JsonOps.INSTANCE, toJson(value))
+                //? if <1.20.6 {
                 .getOrThrow(false, IllegalArgumentException::new));
+                //?} else {
+                .getOrThrow(IllegalArgumentException::new));
+                //?}
     }
 
     public static boolean classSourceMentionsRawComponents() {

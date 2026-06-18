@@ -9,9 +9,14 @@ import lombok.NoArgsConstructor;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+//? if <1.20.6 {
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.RegistryBuilder;
+//?} else {
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.RegistryBuilder;
+//?}
 
 import java.util.function.Supplier;
 
@@ -23,13 +28,22 @@ import java.util.function.Supplier;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class DataAttachmentTypeRegistry {
     private static final ResourceKey<Registry<DataAttachmentType<?>>> DATA_ATTACHMENTS_KEY =
+            //? if <1.20.6 {
             ResourceKey.createRegistryKey(new ResourceLocation("eyelib", "data_attachments"));
+            //?} else {
+            ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath("eyelib", "data_attachments"));
+            //?}
 
     public static final DeferredRegister<DataAttachmentType<?>> DATA_ATTACHMENTS =
             DeferredRegister.create(DATA_ATTACHMENTS_KEY, "eyelib");
 
+    //? if <1.20.6 {
     public static final Supplier<IForgeRegistry<DataAttachmentType<?>>> REGISTRY =
             DATA_ATTACHMENTS.makeRegistry(RegistryBuilder::new);
+    //?} else {
+    public static final Registry<DataAttachmentType<?>> REGISTRY =
+            DATA_ATTACHMENTS.makeRegistry(builder -> {});
+    //?}
 
     public static final Supplier<DataAttachmentType<EntityStatistics>> ENTITY_STATISTICS =
             DATA_ATTACHMENTS.register("entity_statistics",
@@ -47,7 +61,11 @@ public class DataAttachmentTypeRegistry {
                             ExtraEntityData::empty, ExtraEntityData.CODEC, ExtraEntityData.STREAM_CODEC));
 
     public static DataAttachmentType<?> getById(String id) {
+        //? if <1.20.6 {
         var optional = REGISTRY.get().getValue(new ResourceLocation(id));
+        //?} else {
+        var optional = REGISTRY.get(ResourceLocation.parse(id));
+        //?}
         if (optional != null) {
             return optional;
         } else {

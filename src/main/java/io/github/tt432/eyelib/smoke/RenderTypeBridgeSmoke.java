@@ -90,7 +90,11 @@ public class RenderTypeBridgeSmoke {
             require(!pass.disableCulling(),
                     "entity_alphablend no DisableCulling → disableCulling=false");
 
+            //? if <1.20.6 {
             ResourceLocation mcTex = new ResourceLocation("minecraft", "textures/entity/ghast");
+            //?} else {
+            ResourceLocation mcTex = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/entity/ghast");
+            //?}
             RenderType expected = RenderType.entityTranslucentCull(mcTex);
             RenderType actual = RenderPassAdapter.toRenderType(pass,
                     PortResourceLocation.of("minecraft", "textures/entity/ghast"));

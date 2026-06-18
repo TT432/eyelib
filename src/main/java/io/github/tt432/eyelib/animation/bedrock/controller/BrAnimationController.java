@@ -34,6 +34,7 @@ public record BrAnimationController(
         ));
     }
 
+    //? if <1.20.6 {
     public static final Codec<BrAnimationController> CODEC = Codec.STRING.dispatchStable(
             BrAnimationController::name,
             name -> BrAnimationControllerSchema.CODEC.xmap(
@@ -41,6 +42,15 @@ public record BrAnimationController(
                     BrAnimationController::toSchema
             )
     );
+    //?} else {
+    public static final Codec<BrAnimationController> CODEC = Codec.STRING.dispatchStable(
+            BrAnimationController::name,
+            name -> BrAnimationControllerSchema.CODEC.xmap(
+                    schema -> fromSchema(name, schema),
+                    BrAnimationController::toSchema
+            ).fieldOf("value")
+    );
+    //?}
 
     public static BrAnimationController fromSchema(String name, BrAnimationControllerSchema schema) {
         return new BrAnimationController(io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerDefinition.fromSchema(name, schema));

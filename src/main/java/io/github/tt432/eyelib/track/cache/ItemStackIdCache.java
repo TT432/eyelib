@@ -3,6 +3,10 @@ package io.github.tt432.eyelib.track.cache;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.track.EyelibTrack;
+//? if <1.20.6 {
+//?} else {
+import net.minecraft.core.HolderLookup;
+//?}
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -21,14 +25,22 @@ public final class ItemStackIdCache extends SavedData {
         this.lastId = 0;
     }
 
+    //? if <1.20.6 {
     private static ItemStackIdCache load(CompoundTag tag) {
+    //?} else {
+    private static ItemStackIdCache load(CompoundTag tag, HolderLookup.Provider provider) {
+    //?}
         ItemStackIdCache cache = new ItemStackIdCache();
         cache.lastId = tag.getLong("lastId");
         return cache;
     }
 
     @Override
+    //? if <1.20.6 {
     public CompoundTag save(CompoundTag tag) {
+    //?} else {
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
+    //?}
         tag.putLong("lastId", lastId);
         return tag;
     }
@@ -39,7 +51,11 @@ public final class ItemStackIdCache extends SavedData {
     public static long getFreeId(ServerLevel level) {
         ItemStackIdCache cache = level.getServer().overworld()
                 .getDataStorage()
+                //? if <1.20.6 {
                 .computeIfAbsent(ItemStackIdCache::load, ItemStackIdCache::new, DATA_KEY);
+                //?} else {
+                .computeIfAbsent(new SavedData.Factory<>(ItemStackIdCache::new, ItemStackIdCache::load), DATA_KEY);
+                //?}
 
         return cache.getNextId();
     }

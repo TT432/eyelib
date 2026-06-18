@@ -14,7 +14,7 @@ import java.util.List;
 public record ModelComponentSyncPacket(
         int entityId,
         List<RenderModelSyncPayload> modelInfo
-) {
+) /*? if >=1.20.6 {*/ implements net.minecraft.network.protocol.common.custom.CustomPacketPayload /*?}*/ {
     public static final StreamCodec<ModelComponentSyncPacket> STREAM_CODEC = new StreamCodec<>() {
         private static final StreamCodec<RenderModelSyncPayload> MODEL_INFO_CODEC = new StreamCodec<>() {
             @Override
@@ -47,4 +47,15 @@ public record ModelComponentSyncPacket(
             return new ModelComponentSyncPacket(entityId, modelInfo);
         }
     };
+
+    //? if >=1.20.6 {
+    public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ModelComponentSyncPacket> TYPE =
+            new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("eyelib", "model_component_sync"));
+
+    @Override
+    public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
+        return TYPE;
+    }
+    //?}
 }

@@ -12,7 +12,11 @@ import org.jspecify.annotations.Nullable;
  */
 public class DataAttachmentHelper {
     private static IDataAttachmentContainer get(Entity entity) {
+        //? if <1.20.6 {
         return entity.getCapability(DataAttachmentContainerCapability.INSTANCE).orElseGet(McDataAttachmentContainer::new);
+        //?} else {
+        return entity.getData(DataAttachmentContainerCapability.ATTACHMENT);
+        //?}
     }
 
     public static <C> C getOrCreate(DataAttachmentType<C> attachment, Entity entity) {

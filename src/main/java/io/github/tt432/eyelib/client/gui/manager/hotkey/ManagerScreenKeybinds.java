@@ -3,17 +3,28 @@ package io.github.tt432.eyelib.client.gui.manager.hotkey;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.KeyMapping;
+//? if <1.20.6 {
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+//?} else {
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+//?}
 import org.lwjgl.glfw.GLFW;
 
 /**
  * @author TT432
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+//? if <1.20.6 {
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
+//?} else {
+@EventBusSubscriber(value = Dist.CLIENT)
+//?}
 public final class ManagerScreenKeybinds {
     public static final KeyMapping OPEN_SCREEN = new KeyMapping("Open Eyelib Manager Screen", GLFW.GLFW_KEY_I, "Eyelib");
 

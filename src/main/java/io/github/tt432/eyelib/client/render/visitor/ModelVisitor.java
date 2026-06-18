@@ -149,13 +149,18 @@ public class ModelVisitor {
                        var scale = data.scale(bone);
                        poseStack.scale(scale.x(), scale.y(), scale.z());
 
-                       m4.translate(-renderPivot.x(), -renderPivot.y(), -renderPivot.z());
-                       return PoseCopies.copy(last);
-                   } else {
-                       Deque<PoseStack.Pose> stack = poseStack.poseStack;
-                       stack.removeLast();
-                       stack.addLast(pose);
-                       return pose;
+                        m4.translate(-renderPivot.x(), -renderPivot.y(), -renderPivot.z());
+                        return PoseCopies.copy(last);
+                    } else {
+                        Deque<PoseStack.Pose> stack;
+                        //? if <1.20.6 {
+                        stack = poseStack.poseStack;
+                        //?} else {
+                        stack = ((io.github.tt432.eyelib.mixin.PoseStackAccessor) poseStack).eyelib$getPoseStackDeque();
+                        //?}
+                        stack.removeLast();
+                        stack.addLast(pose);
+                        return pose;
                    }
                });
     }

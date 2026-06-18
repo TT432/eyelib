@@ -11,7 +11,7 @@ import net.minecraft.network.FriendlyByteBuf;
 public record ExtraEntityDataPacket(
         int entityId,
         ExtraEntityData data
-) {
+) /*? if >=1.20.6 {*/ implements net.minecraft.network.protocol.common.custom.CustomPacketPayload /*?}*/ {
     public static final StreamCodec<ExtraEntityDataPacket> STREAM_CODEC = new StreamCodec<>() {
         @Override
         public void encode(ExtraEntityDataPacket obj, FriendlyByteBuf buf) {
@@ -26,4 +26,15 @@ public record ExtraEntityDataPacket(
             return new ExtraEntityDataPacket(entityId, data);
         }
     };
+
+    //? if >=1.20.6 {
+    public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ExtraEntityDataPacket> TYPE =
+            new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("eyelib", "extra_entity_data"));
+
+    @Override
+    public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
+        return TYPE;
+    }
+    //?}
 }

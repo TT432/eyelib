@@ -4,9 +4,12 @@ import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+//? if <1.20.6 {
 import net.minecraftforge.registries.ForgeRegistries;
+//?}
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -22,7 +25,11 @@ public final class AttachableResolver {
             return null;
         }
 
+        //? if <1.20.6 {
         var itemKey = ForgeRegistries.ITEMS.getKey(stack.getItem());
+        //?} else {
+        var itemKey = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        //?}
         if (itemKey == null) {
             return null;
         }

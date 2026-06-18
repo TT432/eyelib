@@ -27,10 +27,19 @@ public class RenderModelVisitor extends ModelVisitor {
         if (consumer == null) {
             return;
         }
+        //? if <1.20.6 {
         consumer.vertex(tPosition.x, tPosition.y, tPosition.z,
                         1, 1, 1, 1,
                         uv.x(), uv.y(),
                         renderParams.overlay(), renderParams.light(),
                         tNormal.x, tNormal.y, tNormal.z);
+        //?} else {
+        consumer.addVertex(tPosition.x, tPosition.y, tPosition.z)
+                .setColor(255, 255, 255, 255)
+                .setUv(uv.x(), uv.y())
+                .setOverlay(renderParams.overlay())
+                .setLight(renderParams.light())
+                .setNormal(tNormal.x, tNormal.y, tNormal.z);
+        //?}
     }
 }

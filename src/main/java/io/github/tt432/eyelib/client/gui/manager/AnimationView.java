@@ -23,12 +23,20 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
+//? if <1.20.6 {
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.gui.widget.ScrollPanel;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLLoader;
+//?} else {
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+//?}
 import org.joml.Vector2f;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -43,7 +51,11 @@ import java.util.stream.Stream;
 /**
  * @author TT432
  */
+//? if <1.20.6 {
 @Mod.EventBusSubscriber(Dist.CLIENT)
+//?} else {
+@EventBusSubscriber(Dist.CLIENT)
+//?}
 public class AnimationView extends ModalWorksurfaceScreen {
     @Nullable
     private String selectedAnimationName = null;
@@ -59,9 +71,15 @@ public class AnimationView extends ModalWorksurfaceScreen {
     }
 
     @SubscribeEvent
+    //? if <1.20.6 {
     public static void onEvent(TickEvent.ClientTickEvent event) {
         if (FMLLoader.isProduction()) return;
         if (event.phase == TickEvent.Phase.START || Minecraft.getInstance().level == null) return;
+    //?} else {
+    public static void onEvent(ClientTickEvent.Post event) {
+        if (FMLLoader.isProduction()) return;
+        if (Minecraft.getInstance().level == null) return;
+    //?}
 
         if (GLFW.glfwGetKey(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_G) == GLFW.GLFW_PRESS
                 && Minecraft.getInstance().screen == null) {
@@ -151,6 +169,7 @@ public class AnimationView extends ModalWorksurfaceScreen {
     public interface RenderableEventListener extends Renderable, GuiEventListener {
     }
 
+    //? if <1.20.6 {
     static class StringsScrollPanel extends ScrollPanel implements Refreshable {
         private final Supplier<Stream<String>> strings;
         @Nullable
@@ -215,7 +234,10 @@ public class AnimationView extends ModalWorksurfaceScreen {
             for (int i = 0; i < buttons.size(); i++) {
                 var button = buttons.get(i);
                 button.setPosition(left + border, relativeY + (i * buttonHeight));
+                //? if <1.20.6
                 button.render(guiGraphics, mouseX, mouseY, Minecraft.getInstance().getPartialTick());
+                //? if >=1.20.6
+                button.render(guiGraphics, mouseX, mouseY, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true));
             }
         }
 
@@ -225,6 +247,34 @@ public class AnimationView extends ModalWorksurfaceScreen {
                     || (buttons != null && buttons.stream().anyMatch(b -> b.mouseClicked(mouseX, mouseY, button)));
         }
     }
+    //?} else {
+    static class StringsScrollPanel extends AbstractWidget implements Refreshable {
+        public StringsScrollPanel(Supplier<Stream<String>> strings,
+                                  int width, int height, int top, int left, int border,
+                                  OnPress onPress) {
+            super(left, top, width, height, Component.empty());
+            throw new UnsupportedOperationException("NeoForge 1.21.1 ScrollPanel 已删除，需用 vanilla 方案重写");
+        }
+
+        @Override
+        public void refresh() {
+            throw new UnsupportedOperationException("NeoForge 1.21.1 ScrollPanel 已删除，需用 vanilla 方案重写");
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+            // TODO: NeoForge 1.21.1 ScrollPanel 已删除，需用 vanilla 方案重写
+        }
+
+        @Override
+        protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+        }
+
+        public interface OnPress {
+            void onPress(String name, Button button);
+        }
+    }
+    //?}
 
     private Stream<String> bones() {
         if (selectedAnimationName != null) {
@@ -377,9 +427,14 @@ public class AnimationView extends ModalWorksurfaceScreen {
                         var next = points.get(i + 1);
 
                         for (Vector2f vector2f : createRectangleFromLine(curr, next, 2)) {
+                            //? if <1.20.6 {
                             buffer.vertex(vector2f.x, vector2f.y, 0)
                                   .color(0xFFFF0000)
                                   .endVertex();
+                            //?} else {
+                            buffer.addVertex(vector2f.x, vector2f.y, 0)
+                                  .setColor(0xFFFF0000);
+                            //?}
                         }
                     }
                 }
@@ -391,9 +446,14 @@ public class AnimationView extends ModalWorksurfaceScreen {
 
                 for (Vector2f keyframePoint : keyframePoints) {
                     for (Vector2f vector2f : createSquareFromCenter(keyframePoint, 5)) {
+                        //? if <1.20.6 {
                         buffer.vertex(vector2f.x, vector2f.y, 0)
                               .color(0xFF0000FF)
                               .endVertex();
+                        //?} else {
+                        buffer.addVertex(vector2f.x, vector2f.y, 0)
+                              .setColor(0xFF0000FF);
+                        //?}
                     }
                 }
 

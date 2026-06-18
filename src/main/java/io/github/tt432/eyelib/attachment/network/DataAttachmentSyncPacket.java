@@ -8,7 +8,8 @@ import net.minecraft.network.FriendlyByteBuf;
 /**
  * @author TT432
  */
-public record DataAttachmentSyncPacket(int entityId, CompoundTag data) {
+public record DataAttachmentSyncPacket(int entityId, CompoundTag data)
+        /*? if >=1.20.6 {*/ implements net.minecraft.network.protocol.common.custom.CustomPacketPayload /*?}*/ {
     public static final StreamCodec<DataAttachmentSyncPacket> STREAM_CODEC = new StreamCodec<>() {
         @Override
         public void encode(DataAttachmentSyncPacket obj, FriendlyByteBuf buf) {
@@ -23,4 +24,15 @@ public record DataAttachmentSyncPacket(int entityId, CompoundTag data) {
             return new DataAttachmentSyncPacket(entityId, data);
         }
     };
+
+    //? if >=1.20.6 {
+    public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<DataAttachmentSyncPacket> TYPE =
+            new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("eyelib", "data_attachment_sync"));
+
+    @Override
+    public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
+        return TYPE;
+    }
+    //?}
 }

@@ -47,7 +47,11 @@ public class EyelibStreamCodecs {
         @Override
         public ResourceLocation decode(FriendlyByteBuf buf) {
             var str = STRING.decode(buf);
+            //? if <1.20.6 {
             return new ResourceLocation(str);
+            //?} else {
+            return ResourceLocation.parse(str);
+            //?}
         }
     };
 
@@ -151,11 +155,31 @@ public class EyelibStreamCodecs {
     // </editor-fold>
 
     public static <T> io.github.tt432.eyelib.util.streamcodec.StreamCodec<T> fromCodec(Codec<T> codec) {
+        //? if <1.20.6 {
         return fromCodec(codec, () -> new NbtAccounter(2097152L));
+        //?} else {
+        return fromCodec(codec, () -> new NbtAccounter(2097152L, 0));
+        //?}
     }
 
     public static <T> io.github.tt432.eyelib.util.streamcodec.StreamCodec<T> fromCodec(Codec<T> codec, Supplier<NbtAccounter> supplier) {
-        return tag(supplier).map(o -> codec.encodeStart(NbtOps.INSTANCE, o).getOrThrow(false, s -> LOGGER.error("Failed to encode: {} {}", s, o)),
-                tag -> codec.parse(NbtOps.INSTANCE, tag).getOrThrow(false, s -> LOGGER.error("Failed to decode: {} {}", s, tag)));
+        return tag(supplier).map(o -> codec.encodeStart(NbtOps.INSTANCE, o)
+                        //? if <1.20.6 {
+                        .getOrThrow(false, s -> LOGGER.error("Failed to encode: {} {}", s, o)),
+                        //?} else {
+                        .getOrThrow(s -> {
+                            LOGGER.error("Failed to encode: {} {}", s, o);
+                            return new RuntimeException(s);
+                        }),
+                        //?}
+                tag -> codec.parse(NbtOps.INSTANCE, tag)
+                        //? if <1.20.6 {
+                        .getOrThrow(false, s -> LOGGER.error("Failed to decode: {} {}", s, tag)));
+                        //?} else {
+                        .getOrThrow(s -> {
+                            LOGGER.error("Failed to decode: {} {}", s, tag);
+                            return new RuntimeException(s);
+                        }));
+                        //?}
     }
 }

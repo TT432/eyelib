@@ -11,7 +11,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+//? if <1.20.6 {
 import net.minecraftforge.common.MinecraftForge;
+//?} else {
+import net.neoforged.neoforge.common.NeoForge;
+//?}
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,7 +109,11 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
                 LOGGER.error("Failed to upload addon texture: {}", relativePath, e);
             }
         });
+        //? if <1.20.6 {
         MinecraftForge.EVENT_BUS.post(new TextureChangedEvent());
+        //?} else {
+        NeoForge.EVENT_BUS.post(new TextureChangedEvent());
+        //?}
     }
 
     private void logWarnings(BedrockAddon addon) {

@@ -29,7 +29,11 @@ public abstract sealed class BaseFilter<T> implements Filter permits ActorHealth
             },
             s -> {
                 if (s.equals("actor_health")) {
+                    //? if <1.20.6 {
                     return ActorHealth.CODEC.codec();
+                    //?} else {
+                    return ActorHealth.CODEC.fieldOf("value");
+                    //?}
                 } else {
                     throw new IllegalStateException("Unexpected value: " + s);
                 }

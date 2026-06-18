@@ -98,6 +98,7 @@ public record Model(
             @Nullable String material,
             List<TextureMesh> textureMeshes
     ) {
+        //? if <1.20.6 {
         public static final Codec<Bone> CODEC = net.minecraft.util.ExtraCodecs.lazyInitializedCodec(() -> RecordCodecBuilder.create(ins -> ins.group(
                 Codec.INT.fieldOf("id").forGetter(Bone::id),
                 Codec.INT.fieldOf("parent").forGetter(Bone::parent),
@@ -113,6 +114,23 @@ public record Model(
                 Codec.STRING.optionalFieldOf("material", null).forGetter(Bone::material),
                 TextureMesh.CODEC.listOf().optionalFieldOf("texture_meshes", List.of()).forGetter(Bone::textureMeshes)
         ).apply(ins, Bone::new)));
+        //?} else {
+        public static final Codec<Bone> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+                Codec.INT.fieldOf("id").forGetter(Bone::id),
+                Codec.INT.fieldOf("parent").forGetter(Bone::parent),
+                ImporterCodecs.VECTOR3FC.fieldOf("pivot").forGetter(Bone::pivot),
+                ImporterCodecs.VECTOR3FC.fieldOf("rotation").forGetter(Bone::rotation),
+                ImporterCodecs.VECTOR3FC.fieldOf("position").forGetter(Bone::position),
+                ImporterCodecs.VECTOR3FC.fieldOf("scale").forGetter(Bone::scale),
+                Codec.STRING.optionalFieldOf("binding", null).forGetter(Bone::binding),
+                GlobalBoneIdHandler.map(Bone.CODEC).fieldOf("children").forGetter(Bone::children),
+                Cube.CODEC.listOf().fieldOf("cubes").forGetter(Bone::cubes),
+                GroupLocator.CODEC.fieldOf("locator").forGetter(Bone::locator),
+                Codec.BOOL.optionalFieldOf("reset", false).forGetter(Bone::reset),
+                Codec.STRING.optionalFieldOf("material", null).forGetter(Bone::material),
+                TextureMesh.CODEC.listOf().optionalFieldOf("texture_meshes", List.of()).forGetter(Bone::textureMeshes)
+        ).apply(ins, Bone::new));
+        //?}
 
         public Bone(
                 int id,

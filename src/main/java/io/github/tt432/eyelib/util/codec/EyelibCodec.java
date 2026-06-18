@@ -100,7 +100,12 @@ public class EyelibCodec {
             @Override
             public <T> DataResult<S> decode(DynamicOps<T> ops, MapLike<T> input) {
                 var result = input.entries()
-                        .map(p -> p.mapFirst(k -> ops.getStringValue(k).getOrThrow(false, IllegalArgumentException::new)))
+                        .map(p -> p.mapFirst(k -> ops.getStringValue(k)
+                                //? if <1.20.6 {
+                                .getOrThrow(false, IllegalArgumentException::new)))
+                                //?} else {
+                                .getOrThrow(IllegalArgumentException::new)))
+                                //?}
                         .filter(p -> get().containsKey(p.getFirst()))
                         .findFirst()
                         .map(p -> {

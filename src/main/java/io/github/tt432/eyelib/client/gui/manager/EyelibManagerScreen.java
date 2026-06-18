@@ -71,10 +71,18 @@ public class EyelibManagerScreen extends ModalWorksurfaceScreen {
     }
 
     public static void renderEntityButton(GuiGraphics guiGraphics, int x, int y, int s, float a, EntityButton entityButton) {
+        //? if <1.20.6 {
         guiGraphics.blit(new ResourceLocation(Eyelib.MOD_ID, "gui_bg_nine"), x, y, 0, 0, s, s);
+        //?} else {
+        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "gui_bg_nine"), x, y, 0, 0, s, s);
+        //?}
         RenderSystem.enableBlend();
         RenderSystem.setShaderColor(1, 1, 1, a);
+        //? if <1.20.6 {
         guiGraphics.blit(new ResourceLocation(Eyelib.MOD_ID, "gui_bg_nine_selected"), x, y, 0, 0, s, s);
+        //?} else {
+        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "gui_bg_nine_selected"), x, y, 0, 0, s, s);
+        //?}
         RenderSystem.disableBlend();
         RenderSystem.setShaderColor(1, 1, 1, 1);
 
@@ -116,26 +124,46 @@ public class EyelibManagerScreen extends ModalWorksurfaceScreen {
         int y3 = Math.round(board + padding * 2 + h * 2);
 
         widgets = List.of(
+                //? if <1.20.6 {
                 action(x1, y1, w, h, Component.literal("动画"), new ResourceLocation(Eyelib.MOD_ID, "icons/animation"),
+                //?} else {
+                action(x1, y1, w, h, Component.literal("动画"), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/animation"),
+                //?}
                        () -> ManagerImportActions.importAnimation(LOGGER)),
+                //? if <1.20.6 {
                 action(x1, y2, w, h, Component.literal("动画控制器"), new ResourceLocation(Eyelib.MOD_ID, "icons/animation_controller"),
+                //?} else {
+                action(x1, y2, w, h, Component.literal("动画控制器"), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/animation_controller"),
+                //?}
                        () -> ManagerImportActions.importAnimationController(LOGGER)),
+                //? if <1.20.6 {
                 new DragTargetWidget(x2, y1, w, h, new GuiAnimator(5), new ResourceLocation(Eyelib.MOD_ID, "icons/folder"), Component.literal("监控资源文件夹"),
-                                     (mx, my, b) -> {
-                                         if (hover(x2, y1, w, h, mx, my)) {
-                                             folderSession.chooseFolder(LOGGER);
+                //?} else {
+                new DragTargetWidget(x2, y1, w, h, new GuiAnimator(5), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/folder"), Component.literal("监控资源文件夹"),
+                //?}
+                                      (mx, my, b) -> {
+                                          if (hover(x2, y1, w, h, mx, my)) {
+                                              folderSession.chooseFolder(LOGGER);
                                              return true;
                                          }
 
-                                         return false;
-                                     }),
+                                          return false;
+                                      }),
+                //? if <1.20.6 {
                 action(x2, y2, w, h, Component.literal("渲染控制器"), new ResourceLocation(Eyelib.MOD_ID, "icons/render_controller"),
+                //?} else {
+                action(x2, y2, w, h, Component.literal("渲染控制器"), ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/render_controller"),
+                //?}
                        () -> ManagerImportActions.importRenderController(LOGGER)),
                 new DragTargetWidget(x2, y3, w, h, new GuiAnimator(5),
-                                     new ResourceLocation(Eyelib.MOD_ID, "icons/entity"),
-                                     Component.literal("客户端实体"),
-                                     (mx, my, b) -> {
-                                         Minecraft.getInstance().setScreen(new EntitiesScreen());
+                                      //? if <1.20.6 {
+                                      new ResourceLocation(Eyelib.MOD_ID, "icons/entity"),
+                                      //?} else {
+                                      ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "icons/entity"),
+                                      //?}
+                                      Component.literal("客户端实体"),
+                                      (mx, my, b) -> {
+                                          Minecraft.getInstance().setScreen(new EntitiesScreen());
                                          return true;
                                      })
         );

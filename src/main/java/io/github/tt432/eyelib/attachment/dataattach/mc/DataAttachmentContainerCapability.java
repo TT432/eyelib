@@ -1,7 +1,9 @@
 package io.github.tt432.eyelib.attachment.dataattach.mc;
 
 import io.github.tt432.eyelib.attachment.dataattach.IDataAttachmentContainer;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+//? if <1.20.6 {
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityManager;
@@ -11,14 +13,22 @@ import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+//?} else {
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
+import java.util.function.Supplier;
+//?}
 
 /**
- * 数据附属容器的 Minecraft Forge Capability 系统集成。
+ * 数据附属容器的 Minecraft 平台集成。
  *
  * @author TT432
  */
+//? if <1.20.6 {
 public class DataAttachmentContainerCapability {
-    public static final ResourceLocation ID = new ResourceLocation("eyelibattachment", "data_attachments");
+    public static final ResourceLocation ID = new ResourceLocation("eyelib", "data_attachments");
 
     public static final Capability<IDataAttachmentContainer> INSTANCE = CapabilityManager.get(new CapabilityToken<>() {
     });
@@ -55,3 +65,19 @@ public class DataAttachmentContainerCapability {
         }
     }
 }
+//?} else {
+public class DataAttachmentContainerCapability {
+    private static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
+            DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, "eyelib");
+
+    public static final Supplier<AttachmentType<McDataAttachmentContainer>> ATTACHMENT =
+            ATTACHMENT_TYPES.register("data_attachments", () ->
+                    AttachmentType.<CompoundTag, McDataAttachmentContainer>serializable(McDataAttachmentContainer::new)
+                            .copyOnDeath()
+                            .build());
+
+    public static void register(IEventBus bus) {
+        ATTACHMENT_TYPES.register(bus);
+    }
+}
+//?}

@@ -30,7 +30,11 @@ import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.particle.loading.ParticleResourcePublication;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+//? if <1.20.6 {
 import net.minecraftforge.common.MinecraftForge;
+//?} else {
+import net.neoforged.neoforge.common.NeoForge;
+//?}
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +89,14 @@ public final class ManagerResourceImportPlanner {
                 "animations",
                 ".json",
                 jsonFile -> parseJsonFile(jsonFile, jo -> BrAnimation.fromSchemaSet(
+                        //? if <1.20.6 {
                         BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)
+                        //?} else {
+                        BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(message -> {
+                            logger.warn(message);
+                            return new RuntimeException(message);
+                        })
+                        //?}
                 )),
                 LOGGER
         );
@@ -95,7 +106,14 @@ public final class ManagerResourceImportPlanner {
                 "animation_controllers",
                 ".json",
                 jsonFile -> parseJsonFile(jsonFile, jo -> BrAnimationControllers.fromSchemaSet(
+                        //? if <1.20.6 {
                         BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)
+                        //?} else {
+                        BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(message -> {
+                            logger.warn(message);
+                            return new RuntimeException(message);
+                        })
+                        //?}
                 )),
                 LOGGER
         );
@@ -107,8 +125,15 @@ public final class ManagerResourceImportPlanner {
                 "render_controllers",
                 ".json",
                 jsonFile -> parseJsonFile(jsonFile,
-                                          jo -> RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo)
-                                                                       .getOrThrow(false, logger::warn)),
+                                           jo -> RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo)
+                                                                        //? if <1.20.6 {
+                                                                        .getOrThrow(false, logger::warn)),
+                                                                        //?} else {
+                                                                        .getOrThrow(message -> {
+                                                                            logger.warn(message);
+                                                                            return new RuntimeException(message);
+                                                                        })),
+                                                                        //?}
                 LOGGER
         );
         // 替换渲染控制器
@@ -140,8 +165,15 @@ public final class ManagerResourceImportPlanner {
                 "entity",
                 ".json",
                 jsonFile -> parseJsonFile(jsonFile,
-                                          jo -> BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo)
-                                                                    .getOrThrow(false, logger::warn)),
+                                           jo -> BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo)
+                                                                     //? if <1.20.6 {
+                                                                     .getOrThrow(false, logger::warn)),
+                                                                     //?} else {
+                                                                     .getOrThrow(message -> {
+                                                                         logger.warn(message);
+                                                                         return new RuntimeException(message);
+                                                                     })),
+                                                                     //?}
                 LOGGER
         );
         // 替换客户端实体
@@ -156,8 +188,15 @@ public final class ManagerResourceImportPlanner {
                 "attachables",
                 ".json",
                 jsonFile -> parseJsonFile(jsonFile,
-                                          jo -> BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, jo)
-                                                                               .getOrThrow(false, logger::warn)),
+                                           jo -> BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, jo)
+                                                                                //? if <1.20.6 {
+                                                                                .getOrThrow(false, logger::warn)),
+                                                                                //?} else {
+                                                                                .getOrThrow(message -> {
+                                                                                    logger.warn(message);
+                                                                                    return new RuntimeException(message);
+                                                                                })),
+                                                                                //?}
                 LOGGER
         );
         // 替换附着物
@@ -178,8 +217,15 @@ public final class ManagerResourceImportPlanner {
                 "materials",
                 ".material",
                 jsonFile -> parseJsonFile(jsonFile,
-                                          jo -> BrMaterial.CODEC.parse(JsonOps.INSTANCE, jo)
-                                                                .getOrThrow(false, logger::warn)),
+                                           jo -> BrMaterial.CODEC.parse(JsonOps.INSTANCE, jo)
+                                                                 //? if <1.20.6 {
+                                                                 .getOrThrow(false, logger::warn)),
+                                                                 //?} else {
+                                                                 .getOrThrow(message -> {
+                                                                     logger.warn(message);
+                                                                     return new RuntimeException(message);
+                                                                 })),
+                                                                 //?}
                 LOGGER
         );
         // 替换材质
@@ -207,7 +253,11 @@ public final class ManagerResourceImportPlanner {
             }
         });
 
+        //? if <1.20.6 {
         MinecraftForge.EVENT_BUS.post(new TextureChangedEvent());
+        //?} else {
+        NeoForge.EVENT_BUS.post(new TextureChangedEvent());
+        //?}
     }
 
     public static void loadSingleFile(Path basePath, Path file, Logger logger) {
@@ -229,20 +279,41 @@ public final class ManagerResourceImportPlanner {
                     switch (target) {
                         case ANIMATION_JSON -> {
                             var animation = BrAnimation.fromSchemaSet(
+                                    //? if <1.20.6 {
                                     BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)
+                                    //?} else {
+                                    BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(message -> {
+                                        logger.warn(message);
+                                        return new RuntimeException(message);
+                                    })
+                                    //?}
                             );
                             AnimationAssetRegistry.publishAnimation(animation);
                         }
                         case ANIMATION_CONTROLLER_JSON -> {
                             var animation = BrAnimationControllers.fromSchemaSet(
                                     BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, jo)
+                                                                  //? if <1.20.6 {
                                                                   .getOrThrow(false, logger::warn)
+                                                                  //?} else {
+                                                                  .getOrThrow(message -> {
+                                                                      logger.warn(message);
+                                                                      return new RuntimeException(message);
+                                                                  })
+                                                                  //?}
                             );
                             AnimationAssetRegistry.publishAnimationController(animation);
                         }
                         case RENDER_CONTROLLER_JSON -> {
                             var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo)
+                                                                    //? if <1.20.6 {
                                                                     .getOrThrow(false, logger::warn);
+                                                                    //?} else {
+                                                                    .getOrThrow(message -> {
+                                                                        logger.warn(message);
+                                                                        return new RuntimeException(message);
+                                                                    });
+                                                                    //?}
                             // publishRenderController
                             controller.render_controllers().forEach((key, entry) -> {
                                 RenderControllerEntry existing = RenderControllerManager.INSTANCE.get(key);
@@ -254,12 +325,26 @@ public final class ManagerResourceImportPlanner {
                         }
                         case ENTITY_JSON -> {
                             var entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo)
+                                                             //? if <1.20.6 {
                                                              .getOrThrow(false, logger::warn);
+                                                             //?} else {
+                                                             .getOrThrow(message -> {
+                                                                 logger.warn(message);
+                                                                 return new RuntimeException(message);
+                                                             });
+                                                             //?}
                             ClientEntityManager.INSTANCE.put(entity.identifier(), entity);
                         }
                         case ATTACHABLE_JSON -> {
                             var attachable = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, jo)
+                                                                            //? if <1.20.6 {
                                                                             .getOrThrow(false, logger::warn);
+                                                                            //?} else {
+                                                                            .getOrThrow(message -> {
+                                                                                logger.warn(message);
+                                                                                return new RuntimeException(message);
+                                                                            });
+                                                                            //?}
                             AttachableManager.INSTANCE.put(attachable.identifier(), attachable);
                         }
                         case PARTICLE_JSON -> {
@@ -274,7 +359,14 @@ public final class ManagerResourceImportPlanner {
                 case MATERIAL_FILE -> {
                     try (InputStream inputStream = Files.newInputStream(file)) {
                         JsonObject jo = GSON.fromJson(IOUtils.toString(inputStream, StandardCharsets.UTF_8), JsonObject.class);
+                        //? if <1.20.6 {
                         var material = BrMaterial.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
+                        //?} else {
+                        var material = BrMaterial.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(message -> {
+                            logger.warn(message);
+                            return new RuntimeException(message);
+                        });
+                        //?}
                         material.materials().forEach(MaterialManager.INSTANCE::put);
                     }
                 }
@@ -283,7 +375,11 @@ public final class ManagerResourceImportPlanner {
                         NativeImage nativeImage = NativeImageIO.load(inputStream);
                         NativeImageIO.upload(ManagerResourceReloadPlan.toTextureKey(basePath, file), nativeImage);
                     }
+                    //? if <1.20.6 {
                     MinecraftForge.EVENT_BUS.post(new TextureChangedEvent());
+                    //?} else {
+                    NeoForge.EVENT_BUS.post(new TextureChangedEvent());
+                    //?}
                 }
                 case UNSUPPORTED -> {
                 }
@@ -306,7 +402,11 @@ public final class ManagerResourceImportPlanner {
         });
 
         if (!pngFiles.isEmpty()) {
+            //? if <1.20.6 {
             MinecraftForge.EVENT_BUS.post(new TextureChangedEvent());
+            //?} else {
+            NeoForge.EVENT_BUS.post(new TextureChangedEvent());
+            //?}
         }
     }
 

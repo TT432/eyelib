@@ -12,7 +12,11 @@ public final class ResourceLocationBridge {
     private ResourceLocationBridge() {}
 
     public static ResourceLocation toMc(PortResourceLocation port) {
+        //? if <1.20.6 {
         return new ResourceLocation(port.namespace(), port.path());
+        //?} else {
+        return ResourceLocation.fromNamespaceAndPath(port.namespace(), port.path());
+        //?}
     }
 
     public static PortResourceLocation fromMc(ResourceLocation mc) {

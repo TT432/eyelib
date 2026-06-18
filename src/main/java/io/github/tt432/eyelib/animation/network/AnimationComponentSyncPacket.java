@@ -10,7 +10,7 @@ import net.minecraft.network.FriendlyByteBuf;
 public record AnimationComponentSyncPacket(
         int entityId,
         AnimationComponentInfo animationInfo
-) {
+) /*? if >=1.20.6 {*/ implements net.minecraft.network.protocol.common.custom.CustomPacketPayload /*?}*/ {
     public static final StreamCodec<AnimationComponentSyncPacket> STREAM_CODEC = new StreamCodec<>() {
         @Override
         public void encode(AnimationComponentSyncPacket obj, FriendlyByteBuf buf) {
@@ -25,4 +25,15 @@ public record AnimationComponentSyncPacket(
             return new AnimationComponentSyncPacket(entityId, animationInfo);
         }
     };
+
+    //? if >=1.20.6 {
+    public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<AnimationComponentSyncPacket> TYPE =
+            new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("eyelib", "animation_component_sync"));
+
+    @Override
+    public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
+        return TYPE;
+    }
+    //?}
 }

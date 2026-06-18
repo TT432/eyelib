@@ -11,9 +11,12 @@ import net.minecraft.client.model.geom.PartPose;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 基于ModelPart的模型实现。
@@ -28,7 +31,7 @@ public record ModelPartModel(
 ) {
     public ModelPartModel(String name, ModelPart modelPart) {
         this(name, modelPart, new Int2ObjectOpenHashMap<>(), new Int2ObjectOpenHashMap<>());
-        modelPart.children.forEach((k, v) -> toplevelBones.put(GlobalBoneIdHandler.get(k), new Bone(k, v, -1)));
+        childrenOf(modelPart).forEach((k, v) -> toplevelBones.put(GlobalBoneIdHandler.get(k), new Bone(k, v, -1)));
         toplevelBones.values().forEach(b -> b.add(allBones));
     }
 
@@ -48,7 +51,7 @@ public record ModelPartModel(
         }
 
         void init(ModelPart part) {
-            for (Map.Entry<String, ModelPart> entry : part.children.entrySet()) {
+            for (Map.Entry<String, ModelPart> entry : childrenOf(part).entrySet()) {
                 parts.put(GlobalBoneIdHandler.get(entry.getKey()), entry.getValue());
 
                 init(entry.getValue());
@@ -118,8 +121,8 @@ public record ModelPartModel(
     ) {
         public Bone(String name, ModelPart modelPart, int parent) {
             this(GlobalBoneIdHandler.get(name), parent, modelPart, new ArrayList<>(), new Int2ObjectOpenHashMap<>());
-            modelPart.cubes.forEach(c -> cubes.add(createCube(c)));
-            modelPart.children.forEach((k, v) -> children.put(GlobalBoneIdHandler.get(k), new Bone(k, v, id)));
+            cubesOf(modelPart).forEach(c -> cubes.add(createCube(c)));
+            childrenOf(modelPart).forEach((k, v) -> children.put(GlobalBoneIdHandler.get(k), new Bone(k, v, id)));
         }
 
         public void add(Int2ObjectMap<Bone> bones) {
@@ -148,6 +151,7 @@ public record ModelPartModel(
 
     public static Model.Cube createCube(ModelPart.Cube cube) {
         List<Model.Face> faces = new ArrayList<>();
+        //? if <1.20.6 {
         ModelPart.Polygon[] polygons = cube.polygons;
 
         for (ModelPart.Polygon polygon : polygons) {
@@ -159,7 +163,70 @@ public record ModelPartModel(
 
             faces.add(new Model.Face(vertices, polygon.normal));
         }
+        //?} else {
+        for (Object polygon : polygons(cube)) {
+            List<Model.Vertex> vertices = new ArrayList<>();
+            Vector3f normal = polygonNormal(polygon);
+
+            for (Object vertex : polygonVertices(polygon)) {
+                vertices.add(new Model.Vertex(vertexPos(vertex), new Vector2f(vertexU(vertex), vertexV(vertex)), normal));
+            }
+
+            faces.add(new Model.Face(vertices, normal));
+        }
+        //?}
 
         return new Model.Cube(faces);
+    }
+
+    private static Map<String, ModelPart> childrenOf(ModelPart modelPart) {
+        //? if <1.20.6 {
+        return modelPart.children;
+        //?} else {
+        return (Map<String, ModelPart>) readField(modelPart, "children");
+        //?}
+    }
+
+    private static List<ModelPart.Cube> cubesOf(ModelPart modelPart) {
+        //? if <1.20.6 {
+        return modelPart.cubes;
+        //?} else {
+        return (List<ModelPart.Cube>) readField(modelPart, "cubes");
+        //?}
+    }
+
+    private static Object[] polygons(ModelPart.Cube cube) {
+        return (Object[]) readField(cube, "polygons");
+    }
+
+    private static Object[] polygonVertices(Object polygon) {
+        return (Object[]) readField(polygon, "vertices");
+    }
+
+    private static Vector3f polygonNormal(Object polygon) {
+        return (Vector3f) readField(polygon, "normal");
+    }
+
+    private static Vector3f vertexPos(Object vertex) {
+        return (Vector3f) readField(vertex, "pos");
+    }
+
+    private static float vertexU(Object vertex) {
+        return (float) readField(vertex, "u");
+    }
+
+    private static float vertexV(Object vertex) {
+        return (float) readField(vertex, "v");
+    }
+
+    private static Object readField(Object owner, String name) {
+        try {
+            // 1.21.1 的 Polygon/Vertex 是 package-private，只能按字段名读取。
+            Field field = owner.getClass().getDeclaredField(name);
+            field.setAccessible(true);
+            return Objects.requireNonNull(field.get(owner));
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Cannot access ModelPart field " + name, e);
+        }
     }
 }

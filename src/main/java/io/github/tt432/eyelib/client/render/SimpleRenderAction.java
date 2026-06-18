@@ -17,7 +17,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.item.DyeColor;
+//? if <1.20.6 {
 import net.minecraftforge.client.event.RenderLivingEvent;
+//?} else {
+import net.neoforged.neoforge.client.event.RenderLivingEvent;
+//?}
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
@@ -76,8 +80,18 @@ public record SimpleRenderAction<T>(
         if (entity instanceof Sheep sheep) {
             var dyeColor = sheep.getColor();
             if (dyeColor != null) {
+                //? if <1.20.6 {
                 float[] diffuse = dyeColor.getTextureDiffuseColors();
                 return new float[]{diffuse[0], diffuse[1], diffuse[2], 1.0F};
+                //?} else {
+                int diffuse = dyeColor.getTextureDiffuseColor();
+                return new float[]{
+                        net.minecraft.util.FastColor.ARGB32.red(diffuse) / 255.0F,
+                        net.minecraft.util.FastColor.ARGB32.green(diffuse) / 255.0F,
+                        net.minecraft.util.FastColor.ARGB32.blue(diffuse) / 255.0F,
+                        1.0F
+                };
+                //?}
             }
         }
         return null;

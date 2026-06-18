@@ -181,7 +181,11 @@ public final class MolangBuiltInQuery {
             var itemKey = BuiltInRegistries.ITEM.getKey(getItemBySlot(l, hand.toString(), (int) index).getItem());
 
             for (Object item : items) {
+                //? if <1.20.6 {
                 if (new ResourceLocation(item.toString()).equals(itemKey)) {
+                //?} else {
+                if (ResourceLocation.parse(item.toString()).equals(itemKey)) {
+                //?}
                     return true;
                 }
             }
@@ -215,7 +219,14 @@ public final class MolangBuiltInQuery {
 
     @MolangFunction(value = "main_hand_item_use_duration", description = "主手物品使用时间")
     public static float mainHandItemUseDuration(MolangScope scope) {
-        return livingFloat(scope, living -> (float) living.getTicksUsingItem() / living.getUseItem().getUseDuration());
+        return livingFloat(scope, living -> {
+            //? if <1.20.6 {
+            int useDuration = living.getUseItem().getUseDuration();
+            //?} else {
+            int useDuration = living.getUseItem().getUseDuration(living);
+            //?}
+            return (float) living.getTicksUsingItem() / useDuration;
+        });
     }
 
     @MolangFunction(value = "is_tamed", description = "驯服了")

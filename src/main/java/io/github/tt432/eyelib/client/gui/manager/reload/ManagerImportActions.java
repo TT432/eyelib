@@ -33,18 +33,39 @@ public final class ManagerImportActions {
     public static void importAnimation(Logger logger) {
         importJson("读取文件", json -> AnimationAssetRegistry.publishAnimation(
                 BrAnimation.fromSchemaSet(BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, json)
+                                                              //? if <1.20.6 {
                                                               .getOrThrow(false, logger::warn))));
+                                                              //?} else {
+                                                              .getOrThrow(message -> {
+                                                                  logger.warn(message);
+                                                                  return new RuntimeException(message);
+                                                              }))));
+                                                              //?}
     }
 
     public static void importAnimationController(Logger logger) {
         importJson("读取文件", json -> AnimationAssetRegistry.publishAnimationController(
                 BrAnimationControllers.fromSchemaSet(BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, json)
+                                                                                   //? if <1.20.6 {
                                                                                    .getOrThrow(false, logger::warn))));
+                                                                                   //?} else {
+                                                                                   .getOrThrow(message -> {
+                                                                                       logger.warn(message);
+                                                                                       return new RuntimeException(message);
+                                                                                   }))));
+                                                                                   //?}
     }
 
     public static void importRenderController(Logger logger) {
         importJson("读取文件", json -> {
+            //? if <1.20.6 {
             var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow(false, logger::warn);
+            //?} else {
+            var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, json).getOrThrow(message -> {
+                logger.warn(message);
+                return new RuntimeException(message);
+            });
+            //?}
             controller.render_controllers().forEach((key, entry) -> {
                 RenderControllerEntry existing = RenderControllerManager.INSTANCE.get(key);
                 if (existing != null && existing.part_visibility().size() > entry.part_visibility().size()) {

@@ -12,7 +12,11 @@ import net.minecraft.world.level.LevelSettings;
 import net.minecraft.world.level.WorldDataConfiguration;
 import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
+//? if <1.20.6 {
 import net.minecraftforge.fml.loading.FMLLoader;
+//?} else {
+import net.neoforged.fml.loading.FMLLoader;
+//?}
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,12 +117,22 @@ public final class AIDebugServer {
                                 finalName, GameType.CREATIVE, false, Difficulty.NORMAL,
                                 true, new GameRules(), WorldDataConfiguration.DEFAULT);
                         WorldOptions worldOptions = new WorldOptions(0L, true, false);
+                        //? if <1.20.6 {
                         mc.createWorldOpenFlows().createFreshLevel(
                                 finalName, levelSettings, worldOptions,
                                 registry -> registry.registryOrThrow(Registries.WORLD_PRESET)
                                                     .getHolderOrThrow(WorldPresets.FLAT)
                                                     .value()
                                                     .createWorldDimensions());
+                        //?} else {
+                        mc.createWorldOpenFlows().createFreshLevel(
+                                finalName, levelSettings, worldOptions,
+                                registry -> registry.registryOrThrow(Registries.WORLD_PRESET)
+                                                    .getHolderOrThrow(WorldPresets.FLAT)
+                                                    .value()
+                                                    .createWorldDimensions(),
+                                null);
+                        //?}
                         future.complete("World creation initiated: " + finalName);
                     } catch (Exception e) {
                         future.complete("Failed to enter world: " + e.getMessage());
