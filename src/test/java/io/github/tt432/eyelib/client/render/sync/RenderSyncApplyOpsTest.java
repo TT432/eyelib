@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.attachment.capability.AnimationComponentInfo;
 import io.github.tt432.eyelib.attachment.capability.ModelComponentInfo;
 import io.github.tt432.eyelib.attachment.sync.RenderModelSyncPayload;
 import io.github.tt432.eyelib.molang.MolangValue;
-import io.github.tt432.eyelib.util.resource.ResourceLocations;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -24,8 +24,8 @@ class RenderSyncApplyOpsTest {
     void collectSerializableModelInfoFiltersOutNonSerializableEntries() {
         ModelComponentInfo info = new ModelComponentInfo(
                 "test:model",
-                ResourceLocations.of("eyelib", "textures/test"),
-                ResourceLocations.of("eyelib", "render/solid")
+                PortResourceLocation.of("eyelib", "textures/test"),
+                PortResourceLocation.of("eyelib", "render/solid")
         );
 
         ModelComponent serializable = new ModelComponent();
@@ -56,16 +56,16 @@ class RenderSyncApplyOpsTest {
         ModelComponent old = new ModelComponent();
         old.setInfo(new ModelComponentInfo(
                 firstInfo.model(),
-                ResourceLocations.of(firstInfo.texture()),
-                ResourceLocations.of(firstInfo.renderType())
+                PortResourceLocation.parse(firstInfo.texture()),
+                PortResourceLocation.parse(firstInfo.renderType())
         ));
         List<ModelComponent> target = new ArrayList<>();
         target.add(old);
 
         RenderSyncApplyOps.replaceModelComponents(target, List.of(firstInfo, secondInfo), payload -> new ModelComponentInfo(
                 payload.model(),
-                ResourceLocations.of(payload.texture()),
-                ResourceLocations.of(payload.renderType())
+                PortResourceLocation.parse(payload.texture()),
+                PortResourceLocation.parse(payload.renderType())
         ));
 
         ModelComponentInfo rebuiltFirst = target.get(0).getSerializableInfo();

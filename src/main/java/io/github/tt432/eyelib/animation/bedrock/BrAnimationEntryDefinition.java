@@ -4,7 +4,6 @@ import io.github.tt432.eyelib.animation.AnimationClipDefinition;
 import io.github.tt432.eyelib.animation.AnimationEffect;
 import io.github.tt432.eyelib.animation.RuntimeParticlePlayData;
 import io.github.tt432.eyelib.animation.AnimationParticleSpawner;
-import io.github.tt432.eyelib.util.resource.ResourceLocations;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrLoopType;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
@@ -13,11 +12,10 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 
 import io.github.tt432.eyelib.animation.SoundPlayer;
+import io.github.tt432.eyelib.molang.port.PortEntity;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.world.entity.Entity;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
@@ -42,8 +40,21 @@ public record BrAnimationEntryDefinition(
 ) implements AnimationClipDefinition<Integer, BrBoneAnimation, BrLoopType, MolangValue> {
     private static SoundPlayer soundPlayer = (id, x, y, z, v, p) -> {};
 
+    private static LocatorPositionProvider locatorProvider = (scope, locatorName) ->
+            scope.getHostContext().get(PortEntity.class)
+                    .map(e -> new Vector3f(e.getX(), e.getY(), e.getZ()))
+                    .orElse(new Vector3f());
+
     public static void installSoundPlayer(SoundPlayer sp) {
         soundPlayer = sp;
+    }
+
+    public static void installLocatorProvider(LocatorPositionProvider provider) {
+        locatorProvider = provider;
+    }
+
+    public static Vector3f resolveLocator(MolangScope scope, @Nullable String locatorName) {
+        return locatorProvider.resolve(scope, locatorName);
     }
 
     public static BrAnimationEntryDefinition fromSchema(String name, BrAnimationEntrySchema schema) {
@@ -80,7 +91,7 @@ public record BrAnimationEntryDefinition(
 
     public static AnimationEffect<BrEffectsKeyFrameDefinition> soundEffect(TreeMap<Float, List<BrEffectsKeyFrameDefinition>> data) {
         return new AnimationEffect<>(data, (scope, ticks, frame) -> {
-            scope.getHostContext().get(Entity.class).ifPresent(e ->
+            scope.getHostContext().get(PortEntity.class).ifPresent(e ->
                 scope.getHostContext().get(BrClientEntity.class).ifPresent(clientEntity -> {
                     String s = clientEntity.sound_effects().get(frame.effect());
 
@@ -94,7 +105,7 @@ public record BrAnimationEntryDefinition(
 
     public static AnimationEffect<BrEffectsKeyFrameDefinition> particleEffect(TreeMap<Float, List<BrEffectsKeyFrameDefinition>> data) {
         return new AnimationEffect<>(data, (scope, ticks, frame) -> {
-            scope.getHostContext().get(Entity.class).ifPresent(entity ->
+            scope.getHostContext().get(PortEntity.class).ifPresent(entity ->
                 scope.getHostContext().get(BrAnimationEntry.Data.class).ifPresent(animationData ->
                     scope.getHostContext().get(BrClientEntity.class).ifPresent(clientEntity -> {
                         String s = clientEntity.particle_effects().get(frame.effect());
@@ -103,7 +114,7 @@ public record BrAnimationEntryDefinition(
                                 AnimationParticleSpawner spawner = scope.getHostContext().get(AnimationParticleSpawner.class).orElse(null);
                                 if (spawner != null) {
                                     String uuid = UUID.randomUUID().toString();
-                                    org.joml.Vector3f position = resolveLocatorPosition(scope, frame.locator().orElse(null), entity);
+                                    Vector3f position = locatorProvider.resolve(scope, frame.locator().orElse(null));
                                     spawner.spawn(uuid, s, position);
                                     animationData.owner().particles().add(new RuntimeParticlePlayData(uuid, frame.locator().orElse(null), ticks));
                                 }
@@ -112,42 +123,6 @@ public record BrAnimationEntryDefinition(
                 )
             );
         });
-    }
-
-    /**
-     * 从 scope 中解析 locator 的世界坐标。
-     * 如果找不到 locator，退回到实体坐标。
-     */
-    public static org.joml.Vector3f resolveLocatorPosition(MolangScope scope, @Nullable String locatorName, Entity entity) {
-        org.joml.Vector3f fallback = entity.position().toVector3f();
-        if (locatorName == null || locatorName.isEmpty()) {
-            return fallback;
-        }
-        try {
-            Object cap = Class.forName("io.github.tt432.eyelib.capability.RenderData")
-                    .getMethod("getComponent", Entity.class)
-                    .invoke(null, entity);
-            if (cap == null) return fallback;
-            java.util.List<?> comps = (java.util.List<?>) cap.getClass()
-                    .getMethod("getModelComponents").invoke(cap);
-            if (comps.isEmpty()) return fallback;
-            Object model = comps.get(0).getClass().getMethod("getModel").invoke(comps.get(0));
-            if (model == null) return fallback;
-            java.util.Map<?, ?> bones = (java.util.Map<?, ?>) model.getClass()
-                    .getMethod("allBones").invoke(model);
-            for (Object bone : bones.values()) {
-                Object locator = bone.getClass().getMethod("locator").invoke(bone);
-                java.util.Map<?, ?> offsets = (java.util.Map<?, ?>) locator.getClass()
-                        .getMethod("offsets").invoke(locator);
-                if (offsets.containsKey(locatorName)) {
-                    org.joml.Vector3fc offset = (org.joml.Vector3fc) offsets.get(locatorName);
-                    // locator offset 是骨骼局部坐标，叠加到实体坐标上作为近似
-                    return fallback.add(offset.x(), offset.y(), offset.z(), new org.joml.Vector3f());
-                }
-            }
-        } catch (Exception ignored) {
-        }
-        return fallback;
     }
 
     public static AnimationEffect<MolangValue> timelineEffect(TreeMap<Float, List<MolangValue>> data) {

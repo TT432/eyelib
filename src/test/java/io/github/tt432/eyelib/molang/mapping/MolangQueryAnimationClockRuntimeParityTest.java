@@ -4,6 +4,7 @@ import io.github.tt432.eyelib.animation.AnimationEffects;
 import io.github.tt432.eyelib.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrLoopType;
+import io.github.tt432.eyelib.bridge.molang.MolangQuery;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;

@@ -22,4 +22,13 @@ public final class ResourceLocationBridge {
     public static PortResourceLocation fromMc(ResourceLocation mc) {
         return PortResourceLocation.of(mc.getNamespace(), mc.getPath());
     }
+
+    public static ResourceLocation parseMc(String value) {
+        //? if <1.20.6 {
+        return new ResourceLocation(value);
+        //?} else {
+        return ResourceLocation.parse(value);
+
+        //?}
+    }
 }

@@ -16,13 +16,22 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class PortEntityContractTest {
 
+    private static PortEntity entity(Map<String, Object> props) {
+        return new PortEntity() {
+            public Map<String, Object> getQueryProperties() { return props; }
+            public float getX() { return 0; }
+            public float getY() { return 0; }
+            public float getZ() { return 0; }
+        };
+    }
+
     // === PortEntity ===
 
     @Test
     @DisplayName("PortEntity: is_baby 布尔约定 (Boolean → true/false)")
     void portEntityIsBaby() {
-        PortEntity baby = () -> Map.of("is_baby", true);
-        PortEntity adult = () -> Map.of("is_baby", false);
+        PortEntity baby = entity(Map.of("is_baby", true));
+        PortEntity adult = entity(Map.of("is_baby", false));
 
         assertTrue((Boolean) baby.getQueryProperties().get("is_baby"));
         assertFalse((Boolean) adult.getQueryProperties().get("is_baby"));
@@ -31,9 +40,9 @@ class PortEntityContractTest {
     @Test
     @DisplayName("PortEntity: is_sheep 和 is_sheared 类型检查")
     void portEntitySheepAttributes() {
-        PortEntity sheep = () -> Map.of("is_sheep", true, "is_sheared", false);
-        PortEntity shearedSheep = () -> Map.of("is_sheep", true, "is_sheared", true);
-        PortEntity wolf = () -> Map.of("is_sheep", false);
+        PortEntity sheep = entity(Map.of("is_sheep", true, "is_sheared", false));
+        PortEntity shearedSheep = entity(Map.of("is_sheep", true, "is_sheared", true));
+        PortEntity wolf = entity(Map.of("is_sheep", false));
 
         assertTrue((Boolean) sheep.getQueryProperties().get("is_sheep"));
         assertFalse((Boolean) sheep.getQueryProperties().get("is_sheared"));
@@ -44,8 +53,8 @@ class PortEntityContractTest {
     @Test
     @DisplayName("PortEntity: is_on_ground 布尔属性")
     void portEntityOnGround() {
-        PortEntity grounded = () -> Map.of("is_on_ground", true);
-        PortEntity airborne = () -> Map.of("is_on_ground", false);
+        PortEntity grounded = entity(Map.of("is_on_ground", true));
+        PortEntity airborne = entity(Map.of("is_on_ground", false));
 
         assertTrue((Boolean) grounded.getQueryProperties().get("is_on_ground"));
         assertFalse((Boolean) airborne.getQueryProperties().get("is_on_ground"));
@@ -54,18 +63,18 @@ class PortEntityContractTest {
     @Test
     @DisplayName("PortEntity: is_in_water")
     void portEntityInWater() {
-        PortEntity inWater = () -> Map.of("is_in_water", true);
+        PortEntity inWater = entity(Map.of("is_in_water", true));
         assertTrue((Boolean) inWater.getQueryProperties().get("is_in_water"));
     }
 
     @Test
     @DisplayName("PortEntity: 属性 Map 不可变且 key/value 不为 null")
     void portEntityMapIsWellFormed() {
-        PortEntity entity = () -> Map.of(
+        PortEntity entity = entity(Map.of(
                 "is_sheep", true,
                 "is_baby", false,
                 "pos_x", 10.0f
-        );
+        ));
 
         Map<String, Object> props = entity.getQueryProperties();
         assertNotNull(props);
@@ -79,7 +88,7 @@ class PortEntityContractTest {
     @Test
     @DisplayName("PortEntity: pos_x/pos_y/pos_z 返回 Float")
     void portEntityPositionIsFloat() {
-        PortEntity entity = () -> Map.of("pos_x", 1.5f, "pos_y", 64.0f, "pos_z", -3.0f);
+        PortEntity entity = entity(Map.of("pos_x", 1.5f, "pos_y", 64.0f, "pos_z", -3.0f));
 
         assertEquals(1.5f, (Float) entity.getQueryProperties().get("pos_x"), 0.001f);
         assertEquals(64.0f, (Float) entity.getQueryProperties().get("pos_y"), 0.001f);
@@ -89,7 +98,7 @@ class PortEntityContractTest {
     @Test
     @DisplayName("PortEntity: EntityPortAdapter 18 属性一致性检查 — key 命名用 snake_case")
     void portEntityKeysUseSnakeCase() {
-        PortEntity entity = () -> Map.of(
+        PortEntity entity = entity(Map.of(
                 "is_sheep", true,
                 "is_wolf", false,
                 "is_creeper", false,
@@ -100,7 +109,7 @@ class PortEntityContractTest {
                 "is_on_ground", true,
                 "is_in_water", false,
                 "is_riding", false
-        );
+        ));
 
         Map<String, Object> props = entity.getQueryProperties();
         // 所有 key 应为 lower_snake_case（Bedrock 约定）

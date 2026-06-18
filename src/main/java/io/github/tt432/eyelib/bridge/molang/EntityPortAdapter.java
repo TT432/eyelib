@@ -62,5 +62,20 @@ public final class EntityPortAdapter {
             props.put("pos_z", (float) entity.getZ());
             return props;
         }
+
+        @Override
+        public float getX() {
+            return (float) entity.getX();
+        }
+
+        @Override
+        public float getY() {
+            return (float) entity.getY();
+        }
+
+        @Override
+        public float getZ() {
+            return (float) entity.getZ();
+        }
     }
 }

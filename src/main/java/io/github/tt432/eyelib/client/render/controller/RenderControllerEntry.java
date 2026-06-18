@@ -9,6 +9,7 @@ import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
 import io.github.tt432.eyelib.client.render.texture.TextureLayerMerger;
 import io.github.tt432.eyelib.attachment.capability.ModelComponentInfo;
+import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.importer.render.controller.BrRcColor;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
@@ -19,6 +20,7 @@ import io.github.tt432.eyelib.molang.MolangMapEntry;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.type.*;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.util.texture.TexturePaths;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
@@ -185,12 +187,8 @@ public record RenderControllerEntry(
                                                               needReloadTexture, syncedActions);
 
             ModelComponent comp = new ModelComponent();
-            comp.setInfo(new ModelComponentInfo(geometryResult, matTexture,
-                    //? if <1.20.6 {
-                    new ResourceLocation(materialName)
-                    //?} else {
-                    ResourceLocation.parse(materialName)
-                    //?}
+            comp.setInfo(new ModelComponentInfo(geometryResult, ResourceLocationBridge.fromMc(matTexture),
+                    PortResourceLocation.parse(materialName)
             ));
             comp.setIgnoreLighting(ignoreLighting);
             comp.setRcColor(rcColor);

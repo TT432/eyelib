@@ -9,7 +9,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.util.ExtraCodecs;
-import net.minecraft.world.phys.AABB;
 import org.joml.*;
 import org.jspecify.annotations.Nullable;
 
@@ -33,13 +32,6 @@ public class EyelibCodec {
 
     public static final Codec<Vector2fc> VEC2FC = VEC2F.xmap(v -> v, Vector2f::new);
     public static final Codec<Vector3fc> VEC3FC = ExtraCodecs.VECTOR3F.xmap(v -> v, Vector3f::new);
-    public static final Codec<AABB> AABB_CODEC = Codec.DOUBLE.listOf().comapFlatMap(
-            l -> l.size() == 6
-                    ? DataResult.success(new AABB(l.get(0), l.get(1), l.get(2), l.get(3), l.get(4), l.get(5)))
-                    : DataResult.error(() -> "expected 6 values for AABB, got " + l.size()),
-            aabb -> List.of(aabb.minX, aabb.minY, aabb.minZ, aabb.maxX, aabb.maxY, aabb.maxZ)
-    );
-
     public static final Codec<Vector2f> FLOATS2VEC2F_CODEC = Codec.FLOAT.listOf().xmap(
             l -> new Vector2f(l.get(0), l.get(1)),
             v -> List.of(v.x, v.y)

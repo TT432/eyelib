@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.molang.mapping.api.MolangQueryRuntimeBridge;
 import io.github.tt432.eyelib.molang.port.PortEntity;
-import io.github.tt432.eyelib.util.resource.ResourceLocations;
+import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -849,7 +849,7 @@ public final class MolangBuiltInQuery {
             if (vehicle == null) return FALSE;
             ResourceLocation vehicleKey = BuiltInRegistries.ENTITY_TYPE.getKey(vehicle.getType());
             for (String type : types) {
-                if (ResourceLocations.of(type).equals(vehicleKey)) {
+                if (ResourceLocationBridge.parseMc(type).equals(vehicleKey)) {
                     return TRUE;
                 }
             }
@@ -862,7 +862,7 @@ public final class MolangBuiltInQuery {
         return livingBool(scope, l -> {
             ItemStack item = getItemBySlot(l, slot, 0);
             for (String tag : tags) {
-                var tagKey = net.minecraft.tags.TagKey.create(Registries.ITEM, ResourceLocations.of(tag));
+                var tagKey = net.minecraft.tags.TagKey.create(Registries.ITEM, ResourceLocationBridge.parseMc(tag));
                 if (item.is(tagKey)) {
                     return true;
                 }
@@ -885,7 +885,7 @@ public final class MolangBuiltInQuery {
             var pos = entity.blockPosition().offset((int) relX, (int) relY, (int) relZ);
             var blockState = level.getBlockState(pos);
             for (String tag : tags) {
-                var tagKey = net.minecraft.tags.TagKey.create(Registries.BLOCK, ResourceLocations.of(tag));
+                var tagKey = net.minecraft.tags.TagKey.create(Registries.BLOCK, ResourceLocationBridge.parseMc(tag));
                 if (blockState.is(tagKey)) {
                     return true;
                 }
@@ -944,7 +944,7 @@ public final class MolangBuiltInQuery {
         return scope.getHostContext().get(Entity.class).map(entity -> {
             ResourceLocation entityKey = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
             for (String id : identifiers) {
-                if (ResourceLocations.of(id).equals(entityKey)) {
+                if (ResourceLocationBridge.parseMc(id).equals(entityKey)) {
                     return TRUE;
                 }
             }
@@ -1010,7 +1010,7 @@ public final class MolangBuiltInQuery {
             for (String object : objects) {
                 if (Objects.equals(
                         BuiltInRegistries.ITEM.getKey(handItem.getItem()),
-                        ResourceLocations.of(object))) {
+                        ResourceLocationBridge.parseMc(object))) {
                     return TRUE;
                 }
             }
@@ -1022,7 +1022,7 @@ public final class MolangBuiltInQuery {
     private static float slotGetter(MolangScope scope, EquipmentSlot slot, String... objects) {
         return scope.getHostContext().get(LivingEntity.class).map(livingEntity -> {
             for (String object : objects) {
-                if (ResourceLocations.of(object)
+                if (ResourceLocationBridge.parseMc(object)
                                      .equals(BuiltInRegistries.ITEM.getKey(livingEntity.getItemBySlot(slot)
                                                                                        .getItem()))) {
                     return TRUE;

@@ -5,7 +5,6 @@ import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import io.github.tt432.eyelib.material.shared.VertexFormatElementEnum;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
-import net.minecraft.client.renderer.RenderType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -98,31 +97,33 @@ class BrMaterialEntryRenderTypeTest {
     }
 
     @Test
-    @DisplayName("With shader + opaque → enters buildCustomRenderType -> IllegalStateException from render thread check")
-    void withShaderOpaque_entersCustomPath() {
+    @DisplayName("With shader + opaque → SOLID transparency (shader compilation moved to bridge)")
+    void withShaderOpaque_returnsSolid() {
         BrMaterialEntry material = createShaderEntry("custom_opaque", false, null);
 
-        assertThrows(IllegalStateException.class, () -> material.getRenderType(TEST_TEXTURE),
-                "Should attempt the custom shader compilation path (requires GL context) -> IllegalStateException");
+        PortRenderPass pass = material.getRenderType(TEST_TEXTURE);
+        assertEquals(PortRenderPass.Transparency.SOLID, pass.transparency(),
+                "opaque 材质应返回 SOLID");
     }
 
     @Test
-    @DisplayName("With shader + blending → enters buildCustomRenderType -> IllegalStateException from render thread check")
-    void withShaderBlending_entersCustomPath() {
+    @DisplayName("With shader + blending → TRANSLUCENT transparency")
+    void withShaderBlending_returnsTranslucent() {
         BrMaterialEntry material = createShaderEntry("custom_translucent", true, null);
 
-        assertThrows(IllegalStateException.class, () -> material.getRenderType(TEST_TEXTURE),
-                "Should attempt the custom shader compilation path with translucent state -> IllegalStateException");
+        PortRenderPass pass = material.getRenderType(TEST_TEXTURE);
+        assertEquals(PortRenderPass.Transparency.TRANSLUCENT, pass.transparency(),
+                "blending 材质应返回 TRANSLUCENT");
     }
 
     @Test
-    @DisplayName("Empty vertexFields + shaders → enters buildCustomRenderType -> IllegalStateException from render thread check")
-    void emptyVertexFields_entersCustomPath() {
+    @DisplayName("Empty vertexFields + shaders → SOLID transparency")
+    void emptyVertexFields_returnsSolid() {
         BrMaterialEntry material = createShaderEntry("empty_vfmt", false,
                 EnumSet.noneOf(VertexFormatElementEnum.class));
 
-        assertThrows(IllegalStateException.class, () -> material.getRenderType(TEST_TEXTURE),
-                "Should enter the custom shader path (where getFormat() returns DefaultVertexFormat)" +
-                " -> IllegalStateException from render thread check");
+        PortRenderPass pass = material.getRenderType(TEST_TEXTURE);
+        assertEquals(PortRenderPass.Transparency.SOLID, pass.transparency(),
+                "无 blending 时应返回 SOLID");
     }
 }

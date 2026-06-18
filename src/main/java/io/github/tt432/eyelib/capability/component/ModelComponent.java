@@ -61,7 +61,7 @@ public class ModelComponent {
     }
 
     @Nullable
-    public ResourceLocation getTexture() {
+    public PortResourceLocation getTexture() {
         if (serializableInfo == null) return null;
         return serializableInfo.texture();
     }
@@ -70,13 +70,13 @@ public class ModelComponent {
     public RenderType getRenderType(ResourceLocation texture) {
         if (serializableInfo == null) return null;
         var matMap = MaterialManager.INSTANCE.getAllData();
-        var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().getPath()).orElse(null);
+        var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().path()).orElse(null);
         if (entry != null) {
             PortResourceLocation portTex = ResourceLocationBridge.fromMc(texture);
             PortRenderPass pass = RenderTypeResolver.resolve(portTex, entry, matMap);
             return RenderPassAdapter.toRenderType(pass, portTex);
         }
-        PortResourceLocation portId = ResourceLocationBridge.fromMc(serializableInfo.renderType());
+        PortResourceLocation portId = serializableInfo.renderType();
         PortResourceLocation portTex = ResourceLocationBridge.fromMc(texture);
         var data = RenderTypeResolver.resolve(portId);
         PortRenderPass pass = data.factory().apply(portTex);
@@ -86,18 +86,18 @@ public class ModelComponent {
     public boolean isSolid() {
         if (serializableInfo == null) return true;
         var matMap = MaterialManager.INSTANCE.getAllData();
-        var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().getPath()).orElse(null);
+        var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().path()).orElse(null);
         if (entry != null) {
             return RenderTypeResolver.isSolid(entry, matMap);
         }
-        PortResourceLocation portId = ResourceLocationBridge.fromMc(serializableInfo.renderType());
+        PortResourceLocation portId = serializableInfo.renderType();
         return RenderTypeResolver.resolve(portId).isSolid();
     }
 
     public boolean usesColorMask() {
         if (serializableInfo == null) return false;
         var matMap = MaterialManager.INSTANCE.getAllData();
-        var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().getPath()).orElse(null);
+        var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().path()).orElse(null);
         if (entry == null) {
             return false;
         }

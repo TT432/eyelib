@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.util.streamcodec;
 
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.EncoderException;
 import net.minecraft.nbt.*;
@@ -50,10 +51,16 @@ public class EyelibStreamCodecs {
             //? if <1.20.6 {
             return new ResourceLocation(str);
             //?} else {
-            return ResourceLocation.parse(str);
+            return ResourceLocation.parse(str);
+
             //?}
         }
     };
+
+    public static final io.github.tt432.eyelib.util.streamcodec.StreamCodec<PortResourceLocation> PORT_RESOURCE_LOCATION =
+            io.github.tt432.eyelib.util.streamcodec.StreamCodec.create(
+                    (obj, buf) -> STRING.encode(obj.toString(), buf),
+                    buf -> PortResourceLocation.parse(STRING.decode(buf)));
 
     public static final io.github.tt432.eyelib.util.streamcodec.StreamCodec<Vector3f> VECTOR_3_F = new io.github.tt432.eyelib.util.streamcodec.StreamCodec<>() {
         @Override

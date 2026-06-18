@@ -12,7 +12,6 @@ import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.molang.MolangScope;
 
 import io.github.tt432.eyelib.util.math.MathHelper;
-import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
@@ -77,21 +76,19 @@ final class BrControllerExecutor {
         }
 
         currState.onEntry().eval(scope);
-        scope.getHostContext().get(Entity.class).ifPresent(entity ->
-            scope.getHostContext().get(BrClientEntity.class).ifPresent(clientEntity -> {
-                for (io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcParticleEffectDefinition particleEffect : currState.particleEffects()) {
-                    String uuid = UUID.randomUUID().toString();
-                    particleEffect.effect().map(clientEntity.particle_effects()::get).ifPresent(effect -> {
-                        AnimationParticleSpawner spawner = scope.getHostContext().get(AnimationParticleSpawner.class).orElse(null);
-                        if (spawner != null) {
-                            org.joml.Vector3f position = io.github.tt432.eyelib.animation.bedrock.BrAnimationEntryDefinition.resolveLocatorPosition(scope, particleEffect.locator().orElse(null), entity);
-                            spawner.spawn(uuid, effect, position);
-                            data.owner().particles().add(new RuntimeParticlePlayData(uuid, particleEffect.locator().orElse(null), ticks));
-                        }
-                    });
-                }
-            })
-        );
+        scope.getHostContext().get(BrClientEntity.class).ifPresent(clientEntity -> {
+            for (io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcParticleEffectDefinition particleEffect : currState.particleEffects()) {
+                String uuid = UUID.randomUUID().toString();
+                particleEffect.effect().map(clientEntity.particle_effects()::get).ifPresent(effect -> {
+                    AnimationParticleSpawner spawner = scope.getHostContext().get(AnimationParticleSpawner.class).orElse(null);
+                    if (spawner != null) {
+                        org.joml.Vector3f position = io.github.tt432.eyelib.animation.bedrock.BrAnimationEntryDefinition.resolveLocator(scope, particleEffect.locator().orElse(null));
+                        spawner.spawn(uuid, effect, position);
+                        data.owner().particles().add(new RuntimeParticlePlayData(uuid, particleEffect.locator().orElse(null), ticks));
+                    }
+                });
+            }
+        });
 
         data.setCurrState(currState);
         data.setStartTick(ticks);

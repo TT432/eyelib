@@ -1,14 +1,10 @@
 package io.github.tt432.eyelib.material.material;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.mojang.logging.LogUtils;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -16,11 +12,9 @@ import io.github.tt432.eyelib.material.gl.BlendFactor;
 import io.github.tt432.eyelib.material.gl.DepthFunc;
 import io.github.tt432.eyelib.material.gl.GLStates;
 import io.github.tt432.eyelib.material.gl.stencil.Face;
-import io.github.tt432.eyelib.material.shader.ShaderManager;
 import io.github.tt432.eyelib.material.shared.MsaaSupport;
 import io.github.tt432.eyelib.material.shared.PrimitiveMode;
 import io.github.tt432.eyelib.material.shared.VertexFormatElementEnum;
-import net.minecraft.client.renderer.RenderStateShard;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.util.PortStringRepresentable;
@@ -623,8 +617,6 @@ public record BrMaterialEntry(
         return !variants.isEmpty();
     }
 
-    private static final Map<String, Integer> SHADER_PROGRAM_CACHE = new ConcurrentHashMap<>();
-
     /**
      * 为当前材质条目生成{@link PortRenderPass}，描述渲染所需的半透明与剔除语义。
      *
@@ -636,9 +628,6 @@ public record BrMaterialEntry(
     }
 
     public PortRenderPass getRenderType(PortResourceLocation texture, Map<String, BrMaterialEntry> materials) {
-        if (vertexShader.isPresent() && fragmentShader.isPresent()) {
-            getOrCompileShader();
-        }
         return computeRenderPass(materials);
     }
 
@@ -688,131 +677,5 @@ public record BrMaterialEntry(
 
     private boolean hasState(GLStates target) {
         return states.toList(this, Map.of()).contains(target);
-    }
-
-    private RenderStateShard.TransparencyStateShard getTransparencyState(Map<String, BrMaterialEntry> materials) {
-        if (hasBlending(materials)) {
-            return new RenderStateShard.TransparencyStateShard(
-                    "translucent_transparency",
-                    () -> {
-                        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-                    },
-                    () -> {
-                        com.mojang.blaze3d.systems.RenderSystem.disableBlend();
-                    }
-            );
-        }
-        return new RenderStateShard.TransparencyStateShard(
-                "no_transparency",
-                () -> {},
-                () -> {}
-        );
-    }
-
-    private RenderStateShard.DepthTestStateShard getDepthTestState() {
-        if (hasState(GLStates.DisableDepthTest)) {
-            return new RenderStateShard.DepthTestStateShard("no_depth_test", GL11.GL_ALWAYS);
-        }
-        return new RenderStateShard.DepthTestStateShard("lequal_depth_test", GL11.GL_LEQUAL);
-    }
-
-    private RenderStateShard.CullStateShard getCullState() {
-        if (hasState(GLStates.DisableCulling)) {
-            return new RenderStateShard.CullStateShard(false);
-        }
-        return new RenderStateShard.CullStateShard(true);
-    }
-
-    private RenderStateShard.WriteMaskStateShard getWriteMaskState() {
-        boolean writeColor = !hasState(GLStates.DisableColorWrite);
-        boolean writeDepth = !hasState(GLStates.DisableDepthWrite);
-        return new RenderStateShard.WriteMaskStateShard(writeColor, writeDepth);
-    }
-
-    // format builder
-
-    private VertexFormat getFormat() {
-        EnumSet<VertexFormatElementEnum> fields = vertexFields.orElse(EnumSet.noneOf(VertexFormatElementEnum.class));
-        if (fields.isEmpty()) {
-            //? if <1.20.6
-            return DefaultVertexFormat.POSITION_COLOR_TEX;
-            //? if >=1.20.6
-            return DefaultVertexFormat.POSITION_TEX_COLOR;
-        }
-        return VertexFormatElementEnum.fromFields(fields);
-    }
-
-    private net.minecraft.client.renderer.RenderType buildCustomRenderType(PortResourceLocation texture, Map<String, BrMaterialEntry> materials) {
-        // ensure shader is compiled and cached
-        getOrCompileShader();
-
-        //? if <1.20.6 {
-        net.minecraft.resources.ResourceLocation mcTex = new net.minecraft.resources.ResourceLocation(texture.namespace(), texture.path());
-        //?} else {
-        net.minecraft.resources.ResourceLocation mcTex = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(texture.namespace(), texture.path());
-        //?}
-        VertexFormat format = getFormat();
-        boolean translucent = hasBlending(materials);
-
-        return net.minecraft.client.renderer.RenderType.create(
-                name + "_" + texture.namespace() + "_" + texture.path(),
-                format,
-                VertexFormat.Mode.QUADS,
-                256,
-                false, // affectsCrumbling
-                translucent, // sortOnUpload
-                net.minecraft.client.renderer.RenderType.CompositeState.builder()
-                        .setShaderState(new RenderStateShard.ShaderStateShard(
-                                net.minecraft.client.renderer.GameRenderer::getRendertypeEntitySolidShader))
-                        .setTextureState(new RenderStateShard.TextureStateShard(mcTex, false, false))
-                        .setTransparencyState(getTransparencyState(materials))
-                        .setDepthTestState(getDepthTestState())
-                        .setCullState(getCullState())
-                        .setWriteMaskState(getWriteMaskState())
-                        .setLightmapState(new RenderStateShard.LightmapStateShard(true))
-                        .setOverlayState(new RenderStateShard.OverlayStateShard(true))
-                        .createCompositeState(false)
-        );
-    }
-
-    private int getOrCompileShader() {
-        // 调用方契约：仅在 vertexShader/fragmentShader 均 isPresent 时进入（见 line 641/746 的前置检查）
-        String vert = vertexShader.orElseThrow(() -> new IllegalStateException("vertexShader required"));
-        String frag = fragmentShader.orElseThrow(() -> new IllegalStateException("fragmentShader required"));
-        List<String> defineList = BrMaterialEntry.this.defines.base().orElse(List.of());
-        String key = vert + "|" + frag + "|" + String.join(",", defineList);
-        return SHADER_PROGRAM_CACHE.computeIfAbsent(key, k -> {
-            String vertSrc = loadShaderSource(vert);
-            String fragSrc = loadShaderSource(frag);
-            return ShaderManager.compileAndLink(vertSrc, fragSrc, defineList);
-        });
-    }
-
-    private String loadShaderSource(String shaderPath) {
-        return ShaderManager.loadFromResource(resolveAssetPath(shaderPath));
-    }
-
-    static String resolveAssetPath(String shaderPath) {
-        int colonIdx = shaderPath.indexOf(':');
-        if (colonIdx < 0) {
-            return "assets/" + shaderPath;
-        }
-        String namespace = shaderPath.substring(0, colonIdx);
-        String path = shaderPath.substring(colonIdx + 1);
-        return "assets/" + namespace + "/" + path;
-    }
-
-    /**
-     * 返回此材质的已编译ARB着色器程序；若无着色器定义则返回0。
-     *
-     * @return OpenGL程序ID，无则为0
-     */
-    public int getCompiledShaderProgram() {
-        if (vertexShader.isEmpty() || fragmentShader.isEmpty()) {
-            return 0;
-        }
-        List<String> defineList = BrMaterialEntry.this.defines.base().orElse(List.of());
-        String key = vertexShader.get() + "|" + fragmentShader.get() + "|" + String.join(",", defineList);
-        return SHADER_PROGRAM_CACHE.getOrDefault(key, 0);
     }
 }

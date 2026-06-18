@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
+import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
 import io.github.tt432.eyelib.util.texture.TexturePaths;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
@@ -55,11 +56,12 @@ public record RenderParams(
     }
 
     public static Builder builder(PoseStack poseStack, MultiBufferSource multiBufferSource, ModelComponent modelComponent) {
-        var texture = modelComponent.getTexture();
-        if (texture == null) {
+        var portTexture = modelComponent.getTexture();
+        if (portTexture == null) {
             return builder(poseStack, null, modelComponent.isSolid(), null, null)
                     .partVisibility(modelComponent.getPartVisibility());
         }
+        ResourceLocation texture = ResourceLocationBridge.toMc(portTexture);
         RenderType renderType = modelComponent.getRenderType(texture);
         if (renderType == null) {
             return builder(poseStack, null, modelComponent.isSolid(), texture, null)

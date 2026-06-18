@@ -2,6 +2,7 @@ package io.github.tt432.eyelib;
 
 import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentContainerCapability;
 import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.bridge.animation.AnimationLocatorResolver;
 import io.github.tt432.eyelib.network.EyelibNetworkManager;
 //? if <1.20.6 {
 import net.minecraftforge.fml.common.Mod;
@@ -28,6 +29,7 @@ public class Eyelib {
     //?}
 
         DataAttachmentTypeRegistry.DATA_ATTACHMENTS.register(bus);
+        AnimationLocatorResolver.install();
         //? if >=1.20.6
         DataAttachmentContainerCapability.register(bus);
         //? if <1.20.6 {

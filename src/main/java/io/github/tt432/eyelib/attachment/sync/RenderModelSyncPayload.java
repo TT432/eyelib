@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.attachment.sync;
 
 import io.github.tt432.eyelib.attachment.capability.ModelComponentInfo;
-import io.github.tt432.eyelib.util.resource.ResourceLocations;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 
 /**
  * @author TT432
@@ -22,8 +22,8 @@ public record RenderModelSyncPayload(
     public ModelComponentInfo toInfo() {
         return new ModelComponentInfo(
                 model(),
-                ResourceLocations.of(texture()),
-                ResourceLocations.of(renderType())
+                PortResourceLocation.parse(texture()),
+                PortResourceLocation.parse(renderType())
         );
     }
 }

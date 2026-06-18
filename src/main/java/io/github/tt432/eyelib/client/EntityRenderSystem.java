@@ -29,6 +29,7 @@ import io.github.tt432.eyelib.bridge.molang.MolangEntityContext;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.AccessLevel;
@@ -504,8 +505,8 @@ public class EntityRenderSystem {
                     if (defaultTexture != null) {
                         var modelComponent = new ModelComponent();
                         modelComponent.setInfo(new ModelComponentInfo(
-                                entry.getValue(), ResourceLocation.tryParse(defaultTexture),
-                                ResourceLocation.tryParse("entity_translucent")));
+                                entry.getValue(), PortResourceLocation.parse(defaultTexture),
+                                PortResourceLocation.parse("entity_translucent")));
                         components.add(modelComponent);
                     }
                 }
