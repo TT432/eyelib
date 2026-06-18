@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.importer.particle;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +32,7 @@ class BrParticleSpecTest {
         assertTrue(result.result().isPresent(),
                 "真实 Bedrock 粒子 JSON 应成功解析: " + result.result());
 
-        var particle = result.getOrThrow(false, s -> { throw new AssertionError(s); });
+        var particle = TestCodecUtil.unwrap(result);
         assertEquals("1.10.0", particle.formatVersion());
 
         var effect = particle.particleEffect();
@@ -58,8 +59,7 @@ class BrParticleSpecTest {
     void componentsParsed() throws Exception {
         String json = loadFixture("witchspell.json");
 
-        var particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> { throw new AssertionError(s); });
+        var particle = TestCodecUtil.unwrap(BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         var components = particle.particleEffect().components();
         assertFalse(components.isEmpty(),
@@ -80,8 +80,7 @@ class BrParticleSpecTest {
     void identifierHasNamespaceFormat() throws Exception {
         String json = loadFixture("witchspell.json");
 
-        var particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> { throw new AssertionError(s); });
+        var particle = TestCodecUtil.unwrap(BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         String identifier = particle.particleEffect().description().identifier();
         assertTrue(identifier.contains(":"),
@@ -100,8 +99,7 @@ class BrParticleSpecTest {
     void curvesOptionalDefaultsToEmpty() throws Exception {
         String json = loadFixture("witchspell.json");
 
-        var particle = BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> { throw new AssertionError(s); });
+        var particle = TestCodecUtil.unwrap(BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         var curves = particle.particleEffect().curves();
         assertNotNull(curves);

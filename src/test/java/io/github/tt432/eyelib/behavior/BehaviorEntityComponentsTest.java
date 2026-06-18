@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.behavior;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.behavior.component.Health;
 import io.github.tt432.eyelib.behavior.component.RawComponent;
 import org.junit.jupiter.api.Test;
@@ -27,8 +28,7 @@ class BehaviorEntityComponentsTest {
         var json = """
                 { "value": 20, "max": 20 }
                 """;
-        var parsed = Health.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> {});
+        var parsed = TestCodecUtil.unwrap(Health.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
         assertEquals(20, parsed.value());
         assertEquals(20, parsed.max());
     }
@@ -38,8 +38,7 @@ class BehaviorEntityComponentsTest {
         var json = """
                 { "value": 10 }
                 """;
-        var parsed = Health.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> {});
+        var parsed = TestCodecUtil.unwrap(Health.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
         assertEquals(10, parsed.value());
         assertEquals(20, parsed.max());  // 默认值
     }

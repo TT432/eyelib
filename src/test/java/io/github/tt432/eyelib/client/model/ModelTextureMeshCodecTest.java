@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.model;
 
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.model.Model;
 
 import com.google.gson.JsonElement;
@@ -23,10 +24,7 @@ class ModelTextureMeshCodecTest {
                 new Vector3f(0.25F, 0.5F, 0.75F)
         );
 
-        JsonElement encoded = Model.TextureMesh.CODEC.encodeStart(JsonOps.INSTANCE, source)
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                });
+        JsonElement encoded = TestCodecUtil.unwrap(Model.TextureMesh.CODEC.encodeStart(JsonOps.INSTANCE, source));
 
         assertTrue(encoded.isJsonObject());
         JsonObject object = encoded.getAsJsonObject();
@@ -35,10 +33,7 @@ class ModelTextureMeshCodecTest {
         assertTrue(object.get("local_pivot").isJsonArray());
         assertTrue(object.get("scale").isJsonArray());
 
-        Model.TextureMesh decoded = Model.TextureMesh.CODEC.decode(JsonOps.INSTANCE, encoded)
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                })
+        Model.TextureMesh decoded = TestCodecUtil.unwrap(Model.TextureMesh.CODEC.decode(JsonOps.INSTANCE, encoded))
                 .getFirst();
 
         assertEquals(source.texture(), decoded.texture());
@@ -53,10 +48,7 @@ class ModelTextureMeshCodecTest {
         JsonObject payload = new JsonObject();
         payload.addProperty("texture", "atlas");
 
-        Model.TextureMesh decoded = Model.TextureMesh.CODEC.decode(JsonOps.INSTANCE, payload)
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                })
+        Model.TextureMesh decoded = TestCodecUtil.unwrap(Model.TextureMesh.CODEC.decode(JsonOps.INSTANCE, payload))
                 .getFirst();
 
         assertEquals(new Vector3f(), decoded.position());

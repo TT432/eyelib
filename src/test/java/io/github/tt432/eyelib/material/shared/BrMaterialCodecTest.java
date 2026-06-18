@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.material.shared;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -117,15 +118,15 @@ class BrMaterialCodecTest {
         var jsonObject = jsonElement.getAsJsonObject();
 
         var firstResult = BrMaterial.CODEC.parse(JsonOps.INSTANCE, jsonObject);
-        var first = firstResult.getOrThrow(false,
+        var first = TestCodecUtil.unwrap(firstResult,
                 msg -> new AssertionError("First decode failed: " + msg));
 
         var encodedResult = BrMaterial.CODEC.encodeStart(JsonOps.INSTANCE, first);
-        var encoded = encodedResult.getOrThrow(false,
+        var encoded = TestCodecUtil.unwrap(encodedResult,
                 msg -> new AssertionError("Re-encode failed: " + msg));
 
         var secondResult = BrMaterial.CODEC.parse(JsonOps.INSTANCE, encoded);
-        var second = secondResult.getOrThrow(false,
+        var second = TestCodecUtil.unwrap(secondResult,
                 msg -> new AssertionError("Second decode failed: " + msg));
 
         assertEquals(first, second,
@@ -147,7 +148,7 @@ class BrMaterialCodecTest {
         var jsonObject = jsonElement.getAsJsonObject();
 
         var result = BrMaterial.CODEC.parse(JsonOps.INSTANCE, jsonObject);
-        var material = result.getOrThrow(false,
+        var material = TestCodecUtil.unwrap(result,
                 msg -> new AssertionError("Parse failed: " + msg));
 
         var entry = material.materials().get(entryKey);

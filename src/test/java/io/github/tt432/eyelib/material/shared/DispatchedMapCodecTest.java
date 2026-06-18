@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.material.shared;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.PrimitiveCodec;
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.util.codec.DispatchedMapCodec;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,10 +27,10 @@ class DispatchedMapCodecTest {
 
         Map<String, String> input = Map.of("a", "hello", "b", "world");
 
-        var encoded = codec.encodeStart(JsonOps.INSTANCE, input)
-                .getOrThrow(false, msg -> new AssertionError("Encode failed: " + msg));
-        var decoded = codec.parse(JsonOps.INSTANCE, encoded)
-                .getOrThrow(false, msg -> new AssertionError("Decode failed: " + msg));
+        var encoded = TestCodecUtil.unwrap(codec.encodeStart(JsonOps.INSTANCE, input),
+                msg -> new AssertionError("Encode failed: " + msg));
+        var decoded = TestCodecUtil.unwrap(codec.parse(JsonOps.INSTANCE, encoded),
+                msg -> new AssertionError("Decode failed: " + msg));
 
         assertEquals(2, decoded.size(), "Map must have 2 entries");
         assertEquals("hello", decoded.get("a"), "Value for key 'a' should be 'hello'");

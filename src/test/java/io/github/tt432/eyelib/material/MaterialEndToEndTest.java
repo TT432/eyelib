@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.material;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.material.material.BrMaterial;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import org.junit.jupiter.api.Test;
@@ -127,9 +128,8 @@ class MaterialEndToEndTest {
 
     private static BrMaterial parseVanillaMaterial() {
         JsonElement json = JsonParser.parseString(VANILLA_JSON);
-        return BrMaterial.CODEC
-                .parse(JsonOps.INSTANCE, json)
-                .getOrThrow(false, RuntimeException::new);
+        return TestCodecUtil.unwrap(BrMaterial.CODEC
+                .parse(JsonOps.INSTANCE, json), RuntimeException::new);
     }
 
     @Test
@@ -168,14 +168,12 @@ class MaterialEndToEndTest {
         BrMaterial original = parseVanillaMaterial();
 
         // 编码回 JSON
-        JsonElement encoded = BrMaterial.CODEC
-                .encodeStart(JsonOps.INSTANCE, original)
-                .getOrThrow(false, RuntimeException::new);
+        JsonElement encoded = TestCodecUtil.unwrap(BrMaterial.CODEC
+                .encodeStart(JsonOps.INSTANCE, original), RuntimeException::new);
 
         // 再解码 JSON 回 BrMaterial
-        BrMaterial decoded = BrMaterial.CODEC
-                .parse(JsonOps.INSTANCE, encoded)
-                .getOrThrow(false, RuntimeException::new);
+        BrMaterial decoded = TestCodecUtil.unwrap(BrMaterial.CODEC
+                .parse(JsonOps.INSTANCE, encoded), RuntimeException::new);
 
         // 验证结构相等性
         assertEquals(original.materials().size(), decoded.materials().size(),

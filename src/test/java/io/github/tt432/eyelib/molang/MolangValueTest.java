@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.molang.type.MolangFloat;
 import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;
@@ -70,7 +71,7 @@ class MolangValueTest {
     void codec解析字符串表达式() {
         JsonElement json = JsonParser.parseString("\"1+2\"");
         DataResult<MolangValue> result = MolangValue.CODEC.parse(JsonOps.INSTANCE, json);
-        MolangValue v = result.getOrThrow(false, msg -> {});
+        MolangValue v = TestCodecUtil.unwrap(result);
         assertEquals(3.0f, v.eval(new MolangScope()), 0.0001f);
     }
 
@@ -78,7 +79,7 @@ class MolangValueTest {
     void codec解析字符串列表() {
         JsonElement json = JsonParser.parseString("[\"part1\",\"part2\"]");
         DataResult<MolangValue> result = MolangValue.CODEC.parse(JsonOps.INSTANCE, json);
-        MolangValue v = result.getOrThrow(false, msg -> {});
+        MolangValue v = TestCodecUtil.unwrap(result);
         assertEquals("part1part2", v.context());
     }
 
@@ -86,7 +87,7 @@ class MolangValueTest {
     void codec解析浮点数() {
         JsonElement json = JsonParser.parseString("1.5");
         DataResult<MolangValue> result = MolangValue.CODEC.parse(JsonOps.INSTANCE, json);
-        MolangValue v = result.getOrThrow(false, msg -> {});
+        MolangValue v = TestCodecUtil.unwrap(result);
         assertEquals(1.5f, v.eval(new MolangScope()), 0.0001f);
     }
 
@@ -94,7 +95,7 @@ class MolangValueTest {
     void codec解析布尔值True() {
         JsonElement json = JsonParser.parseString("true");
         DataResult<MolangValue> result = MolangValue.CODEC.parse(JsonOps.INSTANCE, json);
-        MolangValue v = result.getOrThrow(false, msg -> {});
+        MolangValue v = TestCodecUtil.unwrap(result);
         // Boolean true → "1" → NumberLiteral 1 → eval 1.0
         assertEquals(1.0f, v.eval(new MolangScope()), 0.0001f);
     }
@@ -103,7 +104,7 @@ class MolangValueTest {
     void codec解析布尔值False() {
         JsonElement json = JsonParser.parseString("false");
         DataResult<MolangValue> result = MolangValue.CODEC.parse(JsonOps.INSTANCE, json);
-        MolangValue v = result.getOrThrow(false, msg -> {});
+        MolangValue v = TestCodecUtil.unwrap(result);
         // Boolean false → "0" → NumberLiteral 0 → eval 0.0
         assertEquals(0.0f, v.eval(new MolangScope()), 0.0001f);
     }

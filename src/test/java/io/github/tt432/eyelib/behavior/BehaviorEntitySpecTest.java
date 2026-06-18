@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.behavior;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.behavior.component.Component;
 import io.github.tt432.eyelib.behavior.component.Health;
 import io.github.tt432.eyelib.behavior.component.group.ComponentGroup;
@@ -56,7 +57,7 @@ class BehaviorEntitySpecTest {
 
         var result = BehaviorEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json));
         assertTrue(result.result().isPresent(), "CODEC 解析应成功: " + result.result());
-        var entity = result.getOrThrow(false, s -> { throw new AssertionError(s); });
+        var entity = TestCodecUtil.unwrap(result);
 
         assertEquals("test:spec", entity.identifier().toString(),
                 "Mojang 文档: identifier 是命名空间:名称格式");
@@ -85,8 +86,7 @@ class BehaviorEntitySpecTest {
                 }
                 """;
 
-        var entity = BehaviorEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> { throw new AssertionError(s); });
+        var entity = TestCodecUtil.unwrap(BehaviorEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         var components = entity.components().components();
         assertEquals(4, components.size());
@@ -125,8 +125,7 @@ class BehaviorEntitySpecTest {
                 }
                 """;
 
-        var entity = BehaviorEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> { throw new AssertionError(s); });
+        var entity = TestCodecUtil.unwrap(BehaviorEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         // 顶层组件只有 health
         assertEquals(1, entity.components().components().size());
@@ -174,8 +173,7 @@ class BehaviorEntitySpecTest {
                 }
                 """;
 
-        var entity = BehaviorEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> { throw new AssertionError(s); });
+        var entity = TestCodecUtil.unwrap(BehaviorEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         var events = entity.events();
         // Mojang 文档: 2 个事件
@@ -209,8 +207,7 @@ class BehaviorEntitySpecTest {
                 }
                 """;
 
-        var entity = BehaviorEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> { throw new AssertionError(s); });
+        var entity = TestCodecUtil.unwrap(BehaviorEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         assertTrue(entity.component_groups().isEmpty(),
                 "未定义 component_groups 时应为空 Map");

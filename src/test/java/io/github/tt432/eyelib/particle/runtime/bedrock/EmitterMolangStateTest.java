@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.particle.runtime.bedrock;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.particle.runtime.ParticleDefinition;
 import io.github.tt432.eyelib.particle.runtime.ParticleDefinitionAdapter;
@@ -55,10 +56,9 @@ class EmitterMolangStateTest {
                   }
                 }
                 """.formatted(componentsJson);
-        return ParticleDefinitionAdapter.fromSchema(
-                io.github.tt432.eyelib.importer.particle.BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                        .getOrThrow(false, AssertionError::new)
-        ).getOrThrow(false, AssertionError::new);
+        return TestCodecUtil.unwrap(ParticleDefinitionAdapter.fromSchema(
+                TestCodecUtil.unwrap(io.github.tt432.eyelib.importer.particle.BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)))
+        ));
     }
 
     private static final class FakeEnvironment implements ParticleRuntimeEnvironment {

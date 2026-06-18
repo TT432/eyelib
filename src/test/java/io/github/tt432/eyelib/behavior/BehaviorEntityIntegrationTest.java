@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.behavior;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.behavior.component.Component;
 import io.github.tt432.eyelib.behavior.component.Health;
 import io.github.tt432.eyelib.behavior.component.group.ComponentGroup;
@@ -98,7 +99,7 @@ class BehaviorEntityIntegrationTest {
         var result = BehaviorEntity.CODEC.parse(JsonOps.INSTANCE,
                 JsonParser.parseString(FULL_ENTITY_JSON));
         assertTrue(result.result().isPresent(), "解析应成功: " + result.result());
-        var entity = result.getOrThrow(false, s -> { throw new AssertionError(s); });
+        var entity = TestCodecUtil.unwrap(result);
         assertEquals("test:robot", entity.identifier().toString());
     }
 
@@ -185,8 +186,7 @@ class BehaviorEntityIntegrationTest {
                     }
                 }
                 """;
-        var entity = BehaviorEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> { throw new AssertionError(s); });
+        var entity = TestCodecUtil.unwrap(BehaviorEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
         assertEquals("test:minimal", entity.identifier().toString());
         assertTrue(entity.components().components().isEmpty());
         assertTrue(entity.component_groups().isEmpty());
@@ -209,8 +209,7 @@ class BehaviorEntityIntegrationTest {
                     }
                 }
                 """;
-        var entity = BehaviorEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> { throw new AssertionError(s); });
+        var entity = TestCodecUtil.unwrap(BehaviorEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
         assertEquals("test:simple", entity.identifier().toString());
         assertTrue(entity.component_groups().isEmpty());
         assertTrue(entity.events().isEmpty());
@@ -230,16 +229,14 @@ class BehaviorEntityIntegrationTest {
                     }
                 }
                 """;
-        var entity = BehaviorEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> { throw new AssertionError(s); });
+        var entity = TestCodecUtil.unwrap(BehaviorEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
         assertEquals("test:opt", entity.identifier().toString());
         assertTrue(entity.component_groups().isEmpty());
         assertTrue(entity.events().isEmpty());
     }
 
     private static BehaviorEntity parseEntity() {
-        return BehaviorEntity.CODEC.parse(JsonOps.INSTANCE,
-                        JsonParser.parseString(FULL_ENTITY_JSON))
-                .getOrThrow(false, s -> { throw new AssertionError(s); });
+        return TestCodecUtil.unwrap(BehaviorEntity.CODEC.parse(JsonOps.INSTANCE,
+                JsonParser.parseString(FULL_ENTITY_JSON)));
     }
 }

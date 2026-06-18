@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.particle.runtime;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
 import io.github.tt432.eyelib.importer.particle.BrParticle;
 import org.junit.jupiter.api.Test;
@@ -54,10 +55,7 @@ class ParticleDefinitionAdapterTest {
         // microsoft-shapeshifter/resource_pack/shapeshifter/particles/witchspell.json.
         BrParticle schema = decodeImporterFixture(WITCHSPELL_FIXTURE);
 
-        ParticleDefinition definition = ParticleDefinitionAdapter.fromSchema(schema)
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                });
+        ParticleDefinition definition = TestCodecUtil.unwrap(ParticleDefinitionAdapter.fromSchema(schema));
 
         assertEquals("1.10.0", definition.formatVersion());
         assertEquals("sample:witchspell_emitter", definition.identifier());
@@ -102,10 +100,7 @@ class ParticleDefinitionAdapterTest {
     void eventfulFixturePreservesRawEventDataThroughAdapter() {
         BrParticle schema = decodeStringFixture(PARTICLE_WITH_EVENTS_FIXTURE);
 
-        ParticleDefinition definition = ParticleDefinitionAdapter.fromSchema(schema)
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                });
+        ParticleDefinition definition = TestCodecUtil.unwrap(ParticleDefinitionAdapter.fromSchema(schema));
 
         assertSame(schema.particleEffect().events(), definition.events());
         BedrockResourceValue.ObjectValue event = assertObjectValue(definition.events().values().get("particle_expired"));
@@ -167,18 +162,12 @@ class ParticleDefinitionAdapterTest {
             throw new IOException("Missing test fixture: " + path);
         }
         try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
-            return BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseReader(reader))
-                    .getOrThrow(false, message -> {
-                        throw new AssertionError(message);
-            });
+            return TestCodecUtil.unwrap(BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseReader(reader)));
         }
     }
 
     private static BrParticle decodeStringFixture(String json) {
-        return BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                });
+        return TestCodecUtil.unwrap(BrParticle.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
     }
 
     private static BrParticle particle(String identifier, BrParticle.BasicRenderParameters renderParameters) {

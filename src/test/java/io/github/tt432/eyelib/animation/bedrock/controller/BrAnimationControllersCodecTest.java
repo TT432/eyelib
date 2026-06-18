@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.animation.bedrock.controller;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.importer.animation.NamedTrackContainerDefinition;
 import io.github.tt432.eyelib.animation.StateMachineAnimation;
 import io.github.tt432.eyelib.importer.animation.StateMachineAnimationDefinition;
@@ -31,10 +32,7 @@ class BrAnimationControllersCodecTest {
                 }
                 """;
 
-        BrAnimationControllers controllers = BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                });
+        BrAnimationControllers controllers = TestCodecUtil.unwrap(BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         BrAnimationController controller = controllers.animationControllers().get("controller.animation.test");
         assertNotNull(controller);

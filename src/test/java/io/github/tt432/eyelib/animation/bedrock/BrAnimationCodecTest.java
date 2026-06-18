@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.animation.bedrock;
 
 import io.github.tt432.eyelib.animation.AnimationClipDefinition;
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.importer.animation.NamedTrackContainerDefinition;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrLoopType;
 
@@ -37,10 +38,7 @@ class BrAnimationCodecTest {
                 }
                 """;
 
-        BrAnimation animation = BrAnimation.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                });
+        BrAnimation animation = TestCodecUtil.unwrap(BrAnimation.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         BrAnimationEntry entry = animation.animations().get("animation.test.idle");
         assertNotNull(entry);

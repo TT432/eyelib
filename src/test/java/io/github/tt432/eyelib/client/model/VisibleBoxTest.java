@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.model;
 
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.model.VisibleBox;
 
 import com.google.gson.JsonArray;
@@ -50,19 +51,13 @@ class VisibleBoxTest {
     void roundTripsCodecWithLegacySixDoubleShape() {
         VisibleBox source = new VisibleBox(-1D, -2D, -3D, 4D, 5D, 6D);
 
-        JsonElement encoded = VisibleBox.CODEC.encodeStart(JsonOps.INSTANCE, source)
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                });
+        JsonElement encoded = TestCodecUtil.unwrap(VisibleBox.CODEC.encodeStart(JsonOps.INSTANCE, source));
 
         assertTrue(encoded.isJsonArray());
         JsonArray encodedArray = encoded.getAsJsonArray();
         assertEquals(6, encodedArray.size());
 
-        VisibleBox decoded = VisibleBox.CODEC.decode(JsonOps.INSTANCE, encoded)
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                })
+        VisibleBox decoded = TestCodecUtil.unwrap(VisibleBox.CODEC.decode(JsonOps.INSTANCE, encoded))
                 .getFirst();
 
         assertEquals(source, decoded);

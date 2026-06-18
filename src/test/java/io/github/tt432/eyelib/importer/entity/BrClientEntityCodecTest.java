@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.importer.entity;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,10 +27,7 @@ class BrClientEntityCodecTest {
                 }
                 """;
 
-        BrClientEntity entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                });
+        BrClientEntity entity = TestCodecUtil.unwrap(BrClientEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         assertEquals("eyelib:test_entity", entity.identifier());
         assertEquals("geometry.test", entity.geometry().get("default"));
@@ -59,10 +57,7 @@ class BrClientEntityCodecTest {
                 }
                 """;
 
-        BrClientEntity entity = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                });
+        BrClientEntity entity = TestCodecUtil.unwrap(BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         assertEquals("eyelib:test_attachable", entity.identifier());
         assertEquals("geometry.attachable", entity.geometry().get("default"));
@@ -87,10 +82,7 @@ class BrClientEntityCodecTest {
                 }
                 """;
 
-        BrClientEntity entity = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                });
+        BrClientEntity entity = TestCodecUtil.unwrap(BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         assertEquals(1, entity.item().size());
         assertTrue(entity.item().containsKey("minecraft:stick"));
@@ -113,10 +105,7 @@ class BrClientEntityCodecTest {
                 }
                 """;
 
-        BrClientEntity entity = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                });
+        BrClientEntity entity = TestCodecUtil.unwrap(BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         assertEquals(1, entity.item().size());
         assertTrue(entity.item().containsKey("minecraft:stick"));
@@ -137,10 +126,7 @@ class BrClientEntityCodecTest {
                 }
                 """;
 
-        BrClientEntity entity = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                });
+        BrClientEntity entity = TestCodecUtil.unwrap(BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         assertTrue(entity.enable_attachables());
     }
@@ -161,10 +147,7 @@ class BrClientEntityCodecTest {
                 }
                 """;
 
-        BrClientEntity entity = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                });
+        BrClientEntity entity = TestCodecUtil.unwrap(BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         assertTrue(entity.scripts().isPresent());
         assertEquals("variable.chest_layer_visible = 0.0;", entity.scripts().orElseThrow().parent_setup().toString());
@@ -190,10 +173,7 @@ class BrClientEntityCodecTest {
                 }
                 """;
 
-        BrClientEntity entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                });
+        BrClientEntity entity = TestCodecUtil.unwrap(BrClientEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
 
         assertEquals("1.20.80", entity.min_engine_version().orElseThrow().semanticString());
         assertEquals("controller.animation.test", entity.animation_controllers().get(0).get("idle"));

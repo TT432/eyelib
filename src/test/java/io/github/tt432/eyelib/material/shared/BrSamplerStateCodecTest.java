@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.material.shared;
 
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -48,10 +49,10 @@ class BrSamplerStateCodecTest {
     void samplerStateRoundtrip() {
         var input = new BrSamplerState(0, BrSamplerState.TextureFilter.Point, BrSamplerState.TextureWrap.Clamp);
 
-        var encoded = BrSamplerState.CODEC.encodeStart(JsonOps.INSTANCE, input)
-                .getOrThrow(false, msg -> new AssertionError("Encode failed: " + msg));
-        var decoded = BrSamplerState.CODEC.parse(JsonOps.INSTANCE, encoded)
-                .getOrThrow(false, msg -> new AssertionError("Decode failed: " + msg));
+        var encoded = TestCodecUtil.unwrap(BrSamplerState.CODEC.encodeStart(JsonOps.INSTANCE, input),
+                msg -> new AssertionError("Encode failed: " + msg));
+        var decoded = TestCodecUtil.unwrap(BrSamplerState.CODEC.parse(JsonOps.INSTANCE, encoded),
+                msg -> new AssertionError("Decode failed: " + msg));
 
         assertEquals(input, decoded, "BrSamplerState roundtrip mismatch");
     }
@@ -59,10 +60,10 @@ class BrSamplerStateCodecTest {
     // --- Generic roundtrip helper ---
 
     private static <T> void assertRoundtrip(T value, com.mojang.serialization.Codec<T> codec) {
-        var encoded = codec.encodeStart(JsonOps.INSTANCE, value)
-                .getOrThrow(false, msg -> new AssertionError("Encode failed for " + value + ": " + msg));
-        var decoded = codec.parse(JsonOps.INSTANCE, encoded)
-                .getOrThrow(false, msg -> new AssertionError("Decode failed for " + value + ": " + msg));
+        var encoded = TestCodecUtil.unwrap(codec.encodeStart(JsonOps.INSTANCE, value),
+                msg -> new AssertionError("Encode failed for " + value + ": " + msg));
+        var decoded = TestCodecUtil.unwrap(codec.parse(JsonOps.INSTANCE, encoded),
+                msg -> new AssertionError("Decode failed for " + value + ": " + msg));
         assertEquals(value, decoded,
                 "Roundtrip mismatch for " + value.getClass().getSimpleName() + "." + value);
     }

@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.animation.AnimationLookup;
 import io.github.tt432.eyelib.animation.AnimationLookup;
 import io.github.tt432.eyelib.animation.AnimationManager;
@@ -48,16 +49,16 @@ class BedrockAddonRuntimeBridgeTest {
 
     @Test
     void replaceFromResourcePackPublishesBridgeableFamiliesToRuntimeManagers() {
-        BrAnimationSet animationSet = BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
-                                                                                                                  {
-                                                                                                                    "animations": {
-                                                                                                                      "animation.test.idle": {}
-                                                                                                                    }
-                                                                                                                  }
-                """)).getOrThrow(false, AssertionError::new);
-        BrAnimationControllerSet controllerSet = BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
-                                                                                                                                       {
-                                                                                                                                         "animation_controllers": {
+        BrAnimationSet animationSet = TestCodecUtil.unwrap(BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
+                                                                                                                   {
+                                                                                                                     "animations": {
+                                                                                                                       "animation.test.idle": {}
+                                                                                                                     }
+                                                                                                                   }
+                """)));
+        BrAnimationControllerSet controllerSet = TestCodecUtil.unwrap(BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
+                                                                                                                                        {
+                                                                                                                                          "animation_controllers": {
                                                                                                                                            "controller.animation.test": {
                                                                                                                                              "initial_state": "default",
                                                                                                                                              "states": {
@@ -66,12 +67,12 @@ class BedrockAddonRuntimeBridgeTest {
                                                                                                                                                }
                                                                                                                                              }
                                                                                                                                            }
-                                                                                                                                         }
-                                                                                                                                       }
-                """)).getOrThrow(false, AssertionError::new);
-        BrMaterial material = BrMaterial.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
-                                                                                                      {
-                                                                                                        "materials": {
+                                                                                                                                          }
+                                                                                                                                        }
+                """)));
+        BrMaterial material = TestCodecUtil.unwrap(BrMaterial.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
+                                                                                                       {
+                                                                                                         "materials": {
                                                                                                           "entity_alphatest": {
                                                                                                             "defines": {},
                                                                                                             "samplerStates": {},
@@ -79,18 +80,18 @@ class BedrockAddonRuntimeBridgeTest {
                                                                                                             "blend": {},
                                                                                                             "stencil": {}
                                                                                                           }
-                                                                                                        }
-                                                                                                      }
-                """)).getOrThrow(false, AssertionError::new);
-        BrRenderControllers renderControllers = BrRenderControllers.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
-                                                                                                                                 {
-                                                                                                                                   "render_controllers": {
+                                                                                                         }
+                                                                                                       }
+                """)));
+        BrRenderControllers renderControllers = TestCodecUtil.unwrap(BrRenderControllers.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
+                                                                                                                                  {
+                                                                                                                                    "render_controllers": {
                     "controller.render.test": {
                       "ignore_lighting": true
                     }
-                                                                                                                                   }
-                                                                                                                                 }
-                """)).getOrThrow(false, AssertionError::new);
+                                                                                                                                    }
+                                                                                                                                  }
+                """)));
 
         BrClientEntity clientEntity = testEntity("eyelib:client_entity");
         BrClientEntity attachable = testEntity("eyelib:test_attachable");

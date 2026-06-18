@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.behavior;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.behavior.component.property.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,8 +23,7 @@ class BehaviorCodecSpecTest {
     @DisplayName("Mojang §CollisionBox: width/height 往返")
     void collisionBoxRoundTrip() {
         var json = "{\"width\": 0.6, \"height\": 1.8}";
-        var parsed = CollisionBox.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> { throw new AssertionError(s); });
+        var parsed = TestCodecUtil.unwrap(CollisionBox.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
         assertEquals(0.6f, parsed.width(), 0.001f);
         assertEquals(1.8f, parsed.height(), 0.001f);
     }
@@ -43,8 +43,7 @@ class BehaviorCodecSpecTest {
                     "fire_affected_by_griefing": true
                 }
                 """;
-        var parsed = Explode.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> { throw new AssertionError(s); });
+        var parsed = TestCodecUtil.unwrap(Explode.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
         assertEquals(3.0f, parsed.fuse_length(), 0.001f);
         assertTrue(parsed.fuse_lit());
         assertEquals(4.0f, parsed.power(), 0.001f);
@@ -67,8 +66,7 @@ class BehaviorCodecSpecTest {
                     "inhale_time": 0.0
                 }
                 """;
-        var parsed = Breathable.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> { throw new AssertionError(s); });
+        var parsed = TestCodecUtil.unwrap(Breathable.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
         assertEquals(15, parsed.total_supply());
         assertEquals(-20, parsed.suffocate_time());
         assertTrue(parsed.breathes_air());
@@ -83,8 +81,7 @@ class BehaviorCodecSpecTest {
     void canClimbMarkerComponent() {
         assertNotNull(CanClimb.CODEC);
         var json = "{}";
-        var parsed = CanClimb.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json))
-                .getOrThrow(false, s -> { throw new AssertionError(s); });
+        var parsed = TestCodecUtil.unwrap(CanClimb.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
         assertNotNull(parsed);
     }
 }

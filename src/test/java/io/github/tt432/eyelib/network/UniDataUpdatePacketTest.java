@@ -21,8 +21,8 @@ class UniDataUpdatePacketTest {
         UniDataUpdatePacket<Integer> packet = UniDataUpdatePacket.crate(12, attachment, 34);
 
         assertEquals(12, packet.entityId());
-        assertSame(attachment, packet.type());
-        assertEquals("eyelib:entity_statistics", packet.type().id());
+        assertSame(attachment, packet.attachmentType());
+        assertEquals("eyelib:entity_statistics", packet.attachmentType().id());
         assertEquals(34, packet.data());
     }
 }

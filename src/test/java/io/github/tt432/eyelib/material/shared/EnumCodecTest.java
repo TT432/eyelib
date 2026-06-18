@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.material.shared;
 
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -135,10 +136,10 @@ class EnumCodecTest {
     // --- Generic roundtrip helper ---
 
     private static <T> void assertRoundtrip(T value, com.mojang.serialization.Codec<T> codec) {
-        var encoded = codec.encodeStart(JsonOps.INSTANCE, value)
-                .getOrThrow(false, msg -> new AssertionError("Encode failed for " + value + ": " + msg));
-        var decoded = codec.parse(JsonOps.INSTANCE, encoded)
-                .getOrThrow(false, msg -> new AssertionError("Decode failed for " + value + ": " + msg));
+        var encoded = TestCodecUtil.unwrap(codec.encodeStart(JsonOps.INSTANCE, value),
+                msg -> new AssertionError("Encode failed for " + value + ": " + msg));
+        var decoded = TestCodecUtil.unwrap(codec.parse(JsonOps.INSTANCE, encoded),
+                msg -> new AssertionError("Decode failed for " + value + ": " + msg));
         assertEquals(value, decoded,
                 "Roundtrip mismatch for " + value.getClass().getSimpleName() + "." + value);
     }

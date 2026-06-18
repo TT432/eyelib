@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.registry;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.animation.AnimationLookup;
 import io.github.tt432.eyelib.animation.bedrock.BrAnimation;
 import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationControllers;
@@ -23,14 +24,14 @@ class ClientAssetRegistryTest {
 
     @Test
     void replaceAnimationAssetsKeepsAnimationsAndControllersTogether() {
-        BrAnimation animation = BrAnimation.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
+        BrAnimation animation = TestCodecUtil.unwrap(BrAnimation.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
                 {
                   "animations": {
                     "animation.test.idle": {}
                   }
                 }
-                """)).getOrThrow(false, AssertionError::new);
-        BrAnimationControllers controllers = BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
+                """)));
+        BrAnimationControllers controllers = TestCodecUtil.unwrap(BrAnimationControllers.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
                 {
                   "animation_controllers": {
                     "controller.animation.test": {
@@ -43,7 +44,7 @@ class ClientAssetRegistryTest {
                     }
                   }
                 }
-                """)).getOrThrow(false, AssertionError::new);
+                """)));
 
         AnimationAssetRegistry.stageAnimations(Map.of("animations", animation));
         AnimationAssetRegistry.stageControllers(Map.of("controllers", controllers));

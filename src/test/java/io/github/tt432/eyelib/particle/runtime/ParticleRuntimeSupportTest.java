@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.particle.runtime;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.particle.runtime.support.ParticleBlackboard;
 import io.github.tt432.eyelib.particle.runtime.support.ParticleMath;
@@ -105,16 +106,12 @@ class ParticleRuntimeSupportTest {
     }
 
     private static ParticleDefinition minimalDefinition() {
-        return ParticleDefinitionAdapter.fromSchema(
-                io.github.tt432.eyelib.importer.particle.BrParticle.CODEC.parse(
+        return TestCodecUtil.unwrap(ParticleDefinitionAdapter.fromSchema(
+                TestCodecUtil.unwrap(io.github.tt432.eyelib.importer.particle.BrParticle.CODEC.parse(
                         JsonOps.INSTANCE,
                         JsonParser.parseString(MINIMAL_PARTICLE_FIXTURE)
-                ).getOrThrow(false, message -> {
-                    throw new AssertionError(message);
-                })
-        ).getOrThrow(false, message -> {
-            throw new AssertionError(message);
-        });
+                ))
+        ));
     }
 
     private static final class FakeTimeSource implements ParticleRuntimeServices.TimeSource {

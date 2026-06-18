@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.material.shared;
 
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -74,7 +75,7 @@ class BrMaterialNewFieldsTest {
 
         // 首次解码: JSON → BrMaterial
         var firstResult = BrMaterial.CODEC.parse(JsonOps.INSTANCE, jsonObject);
-        var first = firstResult.getOrThrow(false,
+        var first = TestCodecUtil.unwrap(firstResult,
                 msg -> new AssertionError("First decode failed: " + msg));
 
         var entry = first.materials().get("cutout");
@@ -101,12 +102,12 @@ class BrMaterialNewFieldsTest {
 
         // 重新编码: BrMaterial → JSON
         var encodedResult = BrMaterial.CODEC.encodeStart(JsonOps.INSTANCE, first);
-        var encoded = encodedResult.getOrThrow(false,
+        var encoded = TestCodecUtil.unwrap(encodedResult,
                 msg -> new AssertionError("Re-encode failed: " + msg));
 
         // 二次解码: JSON → BrMaterial
         var secondResult = BrMaterial.CODEC.parse(JsonOps.INSTANCE, encoded);
-        var second = secondResult.getOrThrow(false,
+        var second = TestCodecUtil.unwrap(secondResult,
                 msg -> new AssertionError("Second decode failed: " + msg));
 
         // 验证结构相等性
@@ -121,7 +122,7 @@ class BrMaterialNewFieldsTest {
         var jsonObject = jsonElement.getAsJsonObject();
 
         var result = BrMaterial.CODEC.parse(JsonOps.INSTANCE, jsonObject);
-        var material = result.getOrThrow(false,
+        var material = TestCodecUtil.unwrap(result,
                 msg -> new AssertionError("Decode failed for vanilla material: " + msg));
 
         // 验证所有条目均存在
