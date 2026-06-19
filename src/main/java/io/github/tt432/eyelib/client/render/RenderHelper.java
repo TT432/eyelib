@@ -115,7 +115,7 @@ public class RenderHelper {
                 poseStack.poseStack.addLast(new PoseStack.Pose(new Matrix4f(matrix), new Matrix3f(matrix)));
                 //?} else {
                 ((io.github.tt432.eyelib.mixin.PoseStackAccessor) poseStack).eyelib$getPoseStackDeque()
-                                                                 .addLast(io.github.tt432.eyelib.util.ReflectAccess.createPose(new Matrix4f(matrix), new Matrix3f(matrix)));
+                                                                 .addLast(io.github.tt432.eyelib.mixin.PoseStackPoseAccessor.eyelib$create(new Matrix4f(matrix), new Matrix3f(matrix)));
                 //?}
                 render(params.withPoseStack(poseStack), model, infos);
             }

@@ -1,5 +1,11 @@
 package io.github.tt432.eyelib.client.model;
 
+//? if >=1.20.6 {
+import io.github.tt432.eyelib.mixin.ModelPartCubeAccessor;
+import io.github.tt432.eyelib.mixin.ModelPartAccessor;
+import io.github.tt432.eyelib.mixin.ModelPartPolygonAccessor;
+import io.github.tt432.eyelib.mixin.ModelPartVertexAccessor;
+//?}
 import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.model.locator.GroupLocator;
@@ -12,11 +18,9 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * 基于ModelPart的模型实现。
@@ -164,12 +168,14 @@ public record ModelPartModel(
             faces.add(new Model.Face(vertices, polygon.normal));
         }
         //?} else {
-        for (Object polygon : polygons(cube)) {
+        for (Object polygon : ((ModelPartCubeAccessor) (Object) cube).eyelib$getPolygons()) {
+            ModelPartPolygonAccessor poly = (ModelPartPolygonAccessor) polygon;
             List<Model.Vertex> vertices = new ArrayList<>();
-            Vector3f normal = polygonNormal(polygon);
+            Vector3f normal = poly.eyelib$getNormal();
 
-            for (Object vertex : polygonVertices(polygon)) {
-                vertices.add(new Model.Vertex(vertexPos(vertex), new Vector2f(vertexU(vertex), vertexV(vertex)), normal));
+            for (Object vertex : poly.eyelib$getVertices()) {
+                ModelPartVertexAccessor vtx = (ModelPartVertexAccessor) vertex;
+                vertices.add(new Model.Vertex(vtx.eyelib$getPos(), new Vector2f(vtx.eyelib$getU(), vtx.eyelib$getV()), normal));
             }
 
             faces.add(new Model.Face(vertices, normal));
@@ -183,7 +189,7 @@ public record ModelPartModel(
         //? if <1.20.6 {
         return modelPart.children;
         //?} else {
-        return (Map<String, ModelPart>) readField(modelPart, "children");
+        return ((ModelPartAccessor) (Object) modelPart).eyelib$getChildren();
         //?}
     }
 
@@ -191,42 +197,7 @@ public record ModelPartModel(
         //? if <1.20.6 {
         return modelPart.cubes;
         //?} else {
-        return (List<ModelPart.Cube>) readField(modelPart, "cubes");
+        return ((ModelPartAccessor) (Object) modelPart).eyelib$getCubes();
         //?}
-    }
-
-    private static Object[] polygons(ModelPart.Cube cube) {
-        return (Object[]) readField(cube, "polygons");
-    }
-
-    private static Object[] polygonVertices(Object polygon) {
-        return (Object[]) readField(polygon, "vertices");
-    }
-
-    private static Vector3f polygonNormal(Object polygon) {
-        return (Vector3f) readField(polygon, "normal");
-    }
-
-    private static Vector3f vertexPos(Object vertex) {
-        return (Vector3f) readField(vertex, "pos");
-    }
-
-    private static float vertexU(Object vertex) {
-        return (float) readField(vertex, "u");
-    }
-
-    private static float vertexV(Object vertex) {
-        return (float) readField(vertex, "v");
-    }
-
-    private static Object readField(Object owner, String name) {
-        try {
-            // 1.21.1 的 Polygon/Vertex 是 package-private，只能按字段名读取。
-            Field field = owner.getClass().getDeclaredField(name);
-            field.setAccessible(true);
-            return Objects.requireNonNull(field.get(owner));
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Cannot access ModelPart field " + name, e);
-        }
     }
 }

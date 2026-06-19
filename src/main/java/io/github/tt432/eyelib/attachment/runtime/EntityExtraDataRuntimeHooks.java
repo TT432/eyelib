@@ -91,7 +91,7 @@ public final class EntityExtraDataRuntimeHooks {
                 //? if <1.20.6 {
                 var toAvoid = avoid.toAvoid;
                 //?} else {
-                var toAvoid = io.github.tt432.eyelib.util.ReflectAccess.readField(avoid, "toAvoid");
+                var toAvoid = ((io.github.tt432.eyelib.mixin.AvoidEntityGoalAccessor) avoid).eyelib$getToAvoid();
                 //?}
                 if (toAvoid instanceof Mob) {
                     isAvoidingMobs = true;

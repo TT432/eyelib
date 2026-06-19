@@ -71,7 +71,7 @@ public record DFSModel(
                 //? if <1.20.6 {
                 new PoseStack.Pose(new Matrix4f(), new Matrix3f()),
                 //?} else {
-                io.github.tt432.eyelib.util.ReflectAccess.createPose(new Matrix4f(), new Matrix3f()),
+                io.github.tt432.eyelib.mixin.PoseStackPoseAccessor.eyelib$create(new Matrix4f(), new Matrix3f()),
                 //?}
                 new PoseStack(),
                 null, null, false, null, 0,
