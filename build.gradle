@@ -15,9 +15,36 @@ def isLegacyForge = stonecutter.eval(mcVersion, '<1.20.6')
 // Stonecutter 0.7.x centralScript 不自动替换 sourceSet：compileJava 默认编译 src/main/java，
 // 但加了 //? 注释后原始源码有裸露的 else 分支导致语法错误。
 // 必须让 sourceSet 指向 stonecutterGenerate 的生成目录。
-def stonecutterGenerated = layout.buildDirectory.dir('generated/stonecutter/main/java')
-sourceSets.main.java.srcDirs = [stonecutterGenerated]
+def stonecutterMainBase = layout.buildDirectory.dir('generated/stonecutter/main')
+sourceSets.main.java.srcDirs = [stonecutterMainBase.map { it.dir('java') }]
+sourceSets.main.resources.srcDirs = [stonecutterMainBase.map { it.dir('resources') }]
 compileJava.dependsOn 'stonecutterGenerate'
+processResources.dependsOn 'stonecutterGenerate'
+
+// Stonecutter 不处理 .json 文件的 //? 注释，需手动注入版本特定 mixin。
+def injectVersionSpecificMixins = tasks.register('injectVersionSpecificMixins') {
+    dependsOn 'stonecutterGenerate'
+    doLast {
+        def file = stonecutterMainBase.get().dir('resources').file('eyelib.mixins.json').asFile
+        if (!file.exists()) return
+        if (!isLegacyForge) {
+            // 1.21.1-only mixin（整文件级 //? if >=1.20.6 条件化，1.20.1 不生成 class）
+            def extraMixins = [
+                'PoseStackPoseAccessor', 'AvoidEntityGoalAccessor',
+                'ModelPartAccessor', 'ModelPartCubeAccessor',
+                'ModelPartPolygonAccessor', 'ModelPartVertexAccessor'
+            ]
+            def text = file.text
+            def insertBlock = extraMixins.collect { "    \"$it\"," }.join('\n') + '\n'
+            text = text.replace(
+                '    "RangedAttackGoalAccessor",',
+                "    \"RangedAttackGoalAccessor\",\n${insertBlock}"
+            )
+            file.text = text
+        }
+    }
+}
+processResources.dependsOn injectVersionSpecificMixins
 
 // 同理，test sourceSet 也需指向 stonecutterGenerateTest 的生成目录。
 def stonecutterTestGenerated = layout.buildDirectory.dir('generated/stonecutter/test/java')
@@ -321,9 +348,10 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
     ]
     inputs.properties replaceProperties
     expand replaceProperties
-    from "src/main/templates"
+    from stonecutterMainBase.map { it.dir('templates') }
     into "build/generated/sources/modMetadata"
 }
+generateModMetadata.configure { dependsOn 'stonecutterGenerate' }
 // Include the output of "generateModMetadata" as an input directory for the build
 // this works with both building through Gradle and the IDE.
 sourceSets.main.resources.srcDir generateModMetadata
