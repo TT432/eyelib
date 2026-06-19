@@ -5,7 +5,7 @@
 **Author:** @TT432
 **Amends:** ADR-0010（恢复 ArchUnit 强制；`//?` 注释栖息地从「bridge 唯一」扩展为「L1 散布 + L2/L3 集中 bridge」）、ADR-0014（单 Gradle project 单版本 → 单 Gradle project + Stonecutter 多 node）
 **Related:** ADR-0002（模块边界仍按包名约定，新增 bridge 版本目录结构规则）
-**Implementation:** Stonecutter **0.7.11**（非 0.5.x placeholder；0.8+ 要求 Gradle 9，但 ModDevGradle legacyforge 不支持 Gradle 9，故锁 0.7.x + Gradle 8.12.1）。详见 `docs/superpowers/specs/2026-06-17-stonecutter-migration-design.md` 与 `docs/stonecutter-migration-handoff.md`。
+**Implementation:** Stonecutter **0.7.11**（非 0.5.x placeholder；0.8+ 要求 Gradle 9，但 ModDevGradle legacyforge 不支持 Gradle 9，故锁 0.7.x + Gradle 8.12.1）。详见 `docs/stonecutter-migration-handoff.md`。
 
 ## Context
 
@@ -100,8 +100,6 @@ ADR-0014 合并了 12 个 Gradle 子项目为单 project，降低了模块隔离
 Phase 1-4 用临时门控（`if (sc.current.version == "1.20.1")` 仅 1.20.1 node 依赖 clientsmoke）。Phase 5 升级 clientsmoke 为独立 Stonecutter tree，三 node 都支持。
 
 ### 9. Phase 路线图（概要）
-
-详细任务分解见 `docs/superpowers/specs/2026-06-17-stonecutter-migration-design.md`。
 
 | Phase | 成果 | 前置 |
 |---|---|---|

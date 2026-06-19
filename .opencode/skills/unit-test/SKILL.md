@@ -1,4 +1,4 @@
----
+﻿---
 name: unit-test
 description: Write and run JUnit 5 unit tests. Use for structural invariants, boundary enforcement, codec round-trips, and null safety checks that do NOT require a running Minecraft client.
 ---
@@ -9,7 +9,8 @@ JUnit Jupiter 5.10.2. No custom runners, no Mockito, no base classes.
 
 Tests are run via Gradle `test` tasks using JetBrains MCP — never `./gradlew` in shell:
 ```
-jetbrain_run_gradle_tasks with taskNames [":subproject:test"]
+jetbrain_run_gradle_tasks with taskNames ["test"]    # 全 project
+jetbrain_run_gradle_tasks with taskNames [":1.20.1:test"]  # Stonecutter active node
 ```
 
 ## Test File Conventions
@@ -83,7 +84,7 @@ void spawnServiceDoesNotImportRootParticleTypes() throws IOException {
     String source = Files.readString(Path.of(
         "src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java"
     ));
-    assertTrue(source.contains("import io.github.tt432.eyelibparticle.api.ParticleSpawnRequest;"));
+    assertTrue(source.contains("import io.github.tt432.eyelib.particle.api.ParticleSpawnRequest;"));
     assertFalse(source.contains("import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;"));
 }
 ```

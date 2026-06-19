@@ -1,4 +1,4 @@
-# 材质继承链运行时诊断
+﻿# 材质继承链运行时诊断
 
 通过 `/eval` 对运行中客户端做程序化材质继承链诊断，不依赖肉眼观察。
 
@@ -20,7 +20,7 @@ java.util.Map matMap = new java.util.HashMap(allData);
 Object[] entries = allData.entrySet().toArray();
 for (int i = 0; i < entries.length; i++) {
     java.util.Map.Entry e = (java.util.Map.Entry) entries[i];
-    io.github.tt432.eyelibmaterial.material.BrMaterialEntry val = (io.github.tt432.eyelibmaterial.material.BrMaterialEntry) e.getValue();
+    io.github.tt432.eyelib.material.material.BrMaterialEntry val = (io.github.tt432.eyelib.material.material.BrMaterialEntry) e.getValue();
     matMap.putIfAbsent(val.name(), val);
     String key = (String) e.getKey();
     int colon = key.lastIndexOf(':');
@@ -28,7 +28,7 @@ for (int i = 0; i < entries.length; i++) {
         matMap.putIfAbsent(key.substring(colon + 1), val);
     }
 }
-io.github.tt432.eyelibmaterial.material.BrMaterialEntry entry = (io.github.tt432.eyelibmaterial.material.BrMaterialEntry) matMap.get("kipfdc");
+io.github.tt432.eyelib.material.material.BrMaterialEntry entry = (io.github.tt432.eyelib.material.material.BrMaterialEntry) matMap.get("kipfdc");
 boolean hb = entry.hasBlending(matMap);
 return "name=" + entry.name() + " base=" + entry.base() + " hb=" + hb;
 ```
@@ -38,7 +38,7 @@ return "name=" + entry.name() + " base=" + entry.base() + " hb=" + hb;
 ```java
 io.github.tt432.eyelib.client.manager.MaterialManager mm = io.github.tt432.eyelib.client.manager.MaterialManager.INSTANCE;
 java.util.Map mats = mm.all();
-io.github.tt432.eyelibmaterial.material.BrMaterialEntry eab = (io.github.tt432.eyelibmaterial.material.BrMaterialEntry) mats.get("entity_alphablend:entity");
+io.github.tt432.eyelib.material.material.BrMaterialEntry eab = (io.github.tt432.eyelib.material.material.BrMaterialEntry) mats.get("entity_alphablend:entity");
 boolean hb = eab.hasBlending(mats);
 return "entity_alphablend hasBlending=" + hb;
 ```

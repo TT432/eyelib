@@ -1,4 +1,4 @@
-# P6：HostContext 设计对齐 — 解决 Class<?> vs HostRole<T> 鸿沟
+﻿# P6：HostContext 设计对齐 — 解决 Class<?> vs HostRole<T> 鸿沟
 
 ## 问题类型
 
@@ -17,7 +17,7 @@
 
 ### 证据 E2 — 实现违背设计
 
-文件：`eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/mapping/api/HostContext.java`
+文件：`src/main/java/io/github/tt432/eyelib/molang/mapping/api/HostContext.java`
 
 ```java
 public final class HostContext {
@@ -40,7 +40,7 @@ public final class HostContext {
 
 ### 证据 E3 — MolangScope 仍保留旧的 owner 模式
 
-文件：`eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/MolangScope.java`
+文件：`src/main/java/io/github/tt432/eyelib/molang/MolangScope.java`
 
 包含：
 ```java
@@ -160,10 +160,10 @@ public final class HostContext {
 
 ### Step 2（如选方向A）：定义 `HostRole<T>`
 
-在 `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/mapping/api/` 下创建：
+在 `src/main/java/io/github/tt432/eyelib/molang/mapping/api/` 下创建：
 
 ```java
-package io.github.tt432.eyelibmolang.mapping.api;
+package io.github.tt432.eyelib.molang.mapping.api;
 
 /**
  * 类型安全的宿主角色标识符。
@@ -207,7 +207,7 @@ Phase 4 MolangOwnerSet→HostContext migration (deferred, not yet performed)
 ### Step 7：运行验证
 
 ```bash
-jetbrain_run_gradle_tasks :eyelib-molang:test
+jetbrain_run_gradle_tasks :1.20.1:test
 ```
 
 ## Check-list
@@ -218,5 +218,5 @@ jetbrain_run_gradle_tasks :eyelib-molang:test
 - [ ] 如选A → Step 4：迁移调用方
 - [ ] 如选B → Step 5：更新设计文档
 - [ ] Step 6：更新 ROADMAP.md MolangOwnerSet 状态
-- [ ] Step 7：`jetbrain_run_gradle_tasks :eyelib-molang:test` 通过
+- [ ] Step 7：`jetbrain_run_gradle_tasks :1.20.1:test` 通过
 - [ ] 确认 `MolangScope.owner()` 是否可移除

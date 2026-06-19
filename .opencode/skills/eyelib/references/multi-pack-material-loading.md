@@ -41,7 +41,7 @@ BedrockAddonAutoLoader 扫描 resourcepacks/*.mcpack / *.mcaddon
 
 ### Bedrock 多文件合并规则
 
-来源：`/mnt/e/_____基岩版文档/bedrock-wiki/docs/documentation/material-config-description.md`
+来源：`E:\_____基岩版文档\bedrock-wiki\docs\documentation\material-config-description.md`
 
 Bedrock 通过 `fancy.json`/`sad.json`/`common.json` 等质量配置文件显式列出要加载的 .material 文件列表。当同一材质名称出现在多个文件中时：
 

@@ -1,4 +1,4 @@
-# Molang 字节码语义验证
+﻿# Molang 字节码语义验证
 
 > 2026-06-10 formal proof session
 
@@ -65,7 +65,7 @@ if ("==".equals(operator)) {
 
 用 `/eval` 编译并求值表达式验证修复：
 ```java
-io.github.tt432.eyelibmolang.compiler.MolangCompilerImpl compiler = new ...();
+io.github.tt432.eyelib.molang.compiler.MolangCompilerImpl compiler = new ...();
 compiler.compile("'a' == 'b'", CompileContext.defaults()).evaluate(new MolangScope()).asFloat();
 // 预期: 0.0
 ```

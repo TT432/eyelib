@@ -1,6 +1,6 @@
 # Bedrock Box UV: cube size 被 floor 处理
 
-来源：`/mnt/e/_____基岩版文档/bedrock-wiki/docs/visuals/bedrock-modeling.md:16`
+来源：`E:\_____基岩版文档\bedrock-wiki\docs\visuals\bedrock-modeling.md:16`
 
 > Sometimes the texture on some (smaller) faces is glitched or invisible. This is because **the size of cubes is floored for the UV map calculation**. This means that any size smaller than 1 will result in a 0 pixel wide UV map, which will look glitchy.
 

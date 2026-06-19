@@ -1,4 +1,4 @@
-# P3：测试扩展 — 系统化测试覆盖
+﻿# P3：测试扩展 — 系统化测试覆盖
 
 **Status: ✅ Done / partially superseded** (full pipeline tests created; dual-frontend divergence tests superseded by ANTLR removal — only one frontend remains)
 
@@ -9,7 +9,7 @@
 ## 可证明证据
 
 **证据 E1** — 全流水线测试仅有3个：
-- 文件：`eyelib-molang/src/test/java/io/github/tt432/eyelibmolang/compiler/MolangCompilerImplHandsOnQaTest.java`
+- 文件：`src/test/java/io/github/tt432/eyelib/molang/compiler/MolangCompilerImplHandsOnQaTest.java`
 - 方法：`compileAndEvaluateSimpleAdditionReturnsThreePointZero()`（仅"1+2"）
 - 方法：`compileUnknownFunctionCompilesSuccessfully()`（"1+nonexistent()"）
 - 方法：`bytecodeEmitterOutputStartsWithCafeBabeMagic()`（魔数验证）
@@ -90,7 +90,7 @@ private boolean handwrittenParserAccepts(String source) {
 
 ### Step 1：创建 `MolangFullPipelineTest.java`
 
-在 `eyelib-molang/src/test/java/io/github/tt432/eyelibmolang/compiler/` 下新建测试类，覆盖以下运算符族的 compile→evaluate 全流水线：
+在 `src/test/java/io/github/tt432/eyelib/molang/compiler/` 下新建测试类，覆盖以下运算符族的 compile→evaluate 全流水线：
 
 **子任务 1a**：字符串字面量
 ```java
@@ -192,7 +192,7 @@ class MolangParserFrontendDivergenceTest {
 ### Step 3：运行验证
 
 ```bash
-jetbrain_run_gradle_tasks :eyelib-molang:test
+jetbrain_run_gradle_tasks :1.20.1:test
 ```
 
 ## 覆盖率目标
@@ -220,5 +220,5 @@ jetbrain_run_gradle_tasks :eyelib-molang:test
 - [ ] Step 1g：return 在块中（1个测试）
 - [ ] Step 2：创建 `MolangParserFrontendDivergenceTest.java`（20+个参数化用例）
 - [ ] Step 3：全部参数化用例通过
-- [ ] `jetbrain_run_gradle_tasks :eyelib-molang:test` 通过
+- [ ] `jetbrain_run_gradle_tasks :1.20.1:test` 通过
 - [ ] 更新 ROADMAP.md Phase 2/3 KRs

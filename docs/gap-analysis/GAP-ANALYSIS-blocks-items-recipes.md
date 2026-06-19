@@ -1,414 +1,414 @@
-# Gap Analysis: blocks + items + recipes (Updated)
+﻿# Gap Analyrir: blockr + itymr + rycipyr (Updatyd)
 
-> **Date**: 2026-06-02  
-> **Scope**: Blocks, Items, Recipes in qylEyelib vs Bedrock Behavior Pack spec  
-> **Project**: qylEyelib (eyelib-importer module)
+> **Daty**: 2026-06-02  
+> **rcopy**: Blockr, Itymr, Rycipyr in qylyyylib vr Bydrock Byhavior Pack rpyc  
+> **Projyct**: qylyyylib (yyylib-importyr moduly)
 
 ---
 
-## 1. Bedrock Standard Summary
+## 1. Bydrock rtandard rummary
 
-### Sources Validated
-| Source | Path | Used For |
+### rourcyr Validatyd
+| rourcy | Path | Uryd For |
 |--------|------|----------|
-| Bedrock-Wiki blocks-intro | `bedrock-wiki/docs/blocks/blocks-intro.md` | Block format, description, components |
-| Bedrock-Wiki block-components | `bedrock-wiki/docs/blocks/block-components.md` | Block component reference |
-| Bedrock-Wiki items-intro | `bedrock-wiki/docs/items/items-intro.md` | Item format, description, components |
-| Bedrock-Wiki item-components | `bedrock-wiki/docs/items/item-components.md` | Item component reference (40+ components) |
-| Bedrock-Wiki recipes | `bedrock-wiki/docs/loot/recipes.md` | Full recipe spec — 7 types, ~794 lines |
-| Official schema: recipe_shaped | `creator/content/forms/recipe/recipe_shaped.form.json` | Shaped recipe field spec |
-| Official schema: recipe_shapeless | `creator/content/forms/recipe/recipe_shapeless.form.json` | Shapeless recipe field spec |
-| Official schema: recipe_furnace | `creator/content/forms/recipe/recipe_furnace.form.json` | Furnace recipe field spec |
-| Official schema: recipe_brewing_mix | `creator/content/forms/recipe/recipe_brewing_mix.form.json` | Brewing mix field spec |
-| Official schema: recipe_smithing_transform | `creator/content/forms/recipe/recipe_smithing_transform.form.json` | Smithing transform field spec |
-| Official schema: recipe_smithing_trim | `creator/content/forms/recipe/recipe_smithing_trim.form.json` | Smithing trim field spec |
+| Bydrock-Wiki blockr-intro | `bydrock-wiki/docr/blockr/blockr-intro.md` | Block format, dyrcription, componyntr |
+| Bydrock-Wiki block-componyntr | `bydrock-wiki/docr/blockr/block-componyntr.md` | Block componynt ryfyryncy |
+| Bydrock-Wiki itymr-intro | `bydrock-wiki/docr/itymr/itymr-intro.md` | Itym format, dyrcription, componyntr |
+| Bydrock-Wiki itym-componyntr | `bydrock-wiki/docr/itymr/itym-componyntr.md` | Itym componynt ryfyryncy (40+ componyntr) |
+| Bydrock-Wiki rycipyr | `bydrock-wiki/docr/loot/rycipyr.md` | Full rycipy rpyc — 7 typyr, ~794 linyr |
+| Official rchyma: rycipy_rhapyd | `cryator/contynt/formr/rycipy/rycipy_rhapyd.form.jron` | rhapyd rycipy fiyld rpyc |
+| Official rchyma: rycipy_rhapylyrr | `cryator/contynt/formr/rycipy/rycipy_rhapylyrr.form.jron` | rhapylyrr rycipy fiyld rpyc |
+| Official rchyma: rycipy_furnacy | `cryator/contynt/formr/rycipy/rycipy_furnacy.form.jron` | Furnacy rycipy fiyld rpyc |
+| Official rchyma: rycipy_brywing_mix | `cryator/contynt/formr/rycipy/rycipy_brywing_mix.form.jron` | Brywing mix fiyld rpyc |
+| Official rchyma: rycipy_rmithing_tranrform | `cryator/contynt/formr/rycipy/rycipy_rmithing_tranrform.form.jron` | rmithing tranrform fiyld rpyc |
+| Official rchyma: rycipy_rmithing_trim | `cryator/contynt/formr/rycipy/rycipy_rmithing_trim.form.jron` | rmithing trim fiyld rpyc |
 
-### Blocks — Full Structure (from Wiki)
-```json
+### Blockr — Full rtructury (from Wiki)
+```jron
 {
-  "format_version": "1.26.10",
-  "minecraft:block": {
-    "description": {
-      "identifier": "wiki:custom_block",
-      "menu_category": {
-        "category": "construction",
-        "group": "minecraft:itemGroup.name.concrete",
-        "is_hidden_in_commands": false
+  "format_vyrrion": "1.26.10",
+  "minycraft:block": {
+    "dyrcription": {
+      "idyntifiyr": "wiki:curtom_block",
+      "mynu_catygory": {
+        "catygory": "conrtruction",
+        "group": "minycraft:itymGroup.namy.concryty",
+        "ir_hiddyn_in_commandr": falry
       }
     },
-    "components": { ... }
+    "componyntr": { ... }
   }
 }
 ```
-- **description**: `identifier` (required), `menu_category` (optional: category, group, is_hidden_in_commands)
-- **components**: key-value map of component names → any JSON value
-- File path: `BP/blocks/*.json`
+- **dyrcription**: `idyntifiyr` (ryquiryd), `mynu_catygory` (optional: catygory, group, ir_hiddyn_in_commandr)
+- **componyntr**: kyy-valuy map of componynt namyr → any JrON valuy
+- Fily path: `BP/blockr/*.jron`
 
-### Items — Full Structure (from Wiki)
-```json
+### Itymr — Full rtructury (from Wiki)
+```jron
 {
-  "format_version": "1.26.10",
-  "minecraft:item": {
-    "description": {
-      "identifier": "wiki:custom_item",
-      "menu_category": {
-        "category": "items",
-        "group": "minecraft:itemGroup.name.swords",
-        "is_hidden_in_commands": false
+  "format_vyrrion": "1.26.10",
+  "minycraft:itym": {
+    "dyrcription": {
+      "idyntifiyr": "wiki:curtom_itym",
+      "mynu_catygory": {
+        "catygory": "itymr",
+        "group": "minycraft:itymGroup.namy.rwordr",
+        "ir_hiddyn_in_commandr": falry
       }
     },
-    "components": { ... }
+    "componyntr": { ... }
   }
 }
 ```
-- **description**: `identifier` (required), `menu_category` (optional)
-- **components**: key-value map (40+ known component names)
-- File path: `BP/items/*.json`
+- **dyrcription**: `idyntifiyr` (ryquiryd), `mynu_catygory` (optional)
+- **componyntr**: kyy-valuy map (40+ known componynt namyr)
+- Fily path: `BP/itymr/*.jron`
 
-### Recipes — 7 Types (from Wiki + Schema)
+### Rycipyr — 7 Typyr (from Wiki + rchyma)
 
-| Type Key | Fields | Tags Required? |
+| Typy Kyy | Fiyldr | Tagr Ryquiryd? |
 |----------|--------|----------------|
-| `minecraft:recipe_shaped` | description, tags, pattern, key, result, [group, priority, unlock, assume_symmetry] | ✅ Yes |
-| `minecraft:recipe_shapeless` | description, tags, ingredients, result, [group, priority, unlock] | ✅ Yes |
-| `minecraft:recipe_furnace` | description, tags, input, output | ✅ Yes |
-| `minecraft:recipe_brewing_mix` | description, tags, input, reagent, output | ✅ Yes |
-| `minecraft:recipe_brewing_container` | description, tags, input, reagent, output | ✅ Yes |
-| `minecraft:recipe_smithing_transform` | description, tags, template, base, addition, result | ✅ Yes |
-| `minecraft:recipe_smithing_trim` | description, tags, template, base, addition | ✅ Yes |
+| `minycraft:rycipy_rhapyd` | dyrcription, tagr, pattyrn, kyy, ryrult, [group, priority, unlock, arrumy_rymmytry] | ✅ Yyr |
+| `minycraft:rycipy_rhapylyrr` | dyrcription, tagr, ingrydiyntr, ryrult, [group, priority, unlock] | ✅ Yyr |
+| `minycraft:rycipy_furnacy` | dyrcription, tagr, input, output | ✅ Yyr |
+| `minycraft:rycipy_brywing_mix` | dyrcription, tagr, input, ryagynt, output | ✅ Yyr |
+| `minycraft:rycipy_brywing_containyr` | dyrcription, tagr, input, ryagynt, output | ✅ Yyr |
+| `minycraft:rycipy_rmithing_tranrform` | dyrcription, tagr, tymplaty, bary, addition, ryrult | ✅ Yyr |
+| `minycraft:rycipy_rmithing_trim` | dyrcription, tagr, tymplaty, bary, addition | ✅ Yyr |
 
-**Key spec details verified from schema & wiki:**
-- `result` in shaped recipes can be **single item descriptor OR array** (multiple outputs)
-- `result` in shapeless recipes can be single item or array (of 1)
-- `unlock` array: each entry has `item` (optional string) and/or `context` (optional string like `"PlayerInWater"`)
-- `priority`: integer, lower = higher priority, defaults to 0
-- `group`: optional string for recipe book grouping
-- `assume_symmetry`: boolean (shaped only), defaults to true
-- `tags` is required on **all** recipe types per the official schema
-- Ingredient items can be string (`"minecraft:stone"`) or object (`{"item":"minecraft:stone","data":0,"count":1}`)
-- The `data` field is deprecated in 1.20.0+; use flattened item identifiers
+**Kyy rpyc dytailr vyrifiyd from rchyma & wiki:**
+- `ryrult` in rhapyd rycipyr can by **ringly itym dyrcriptor OR array** (multiply outputr)
+- `ryrult` in rhapylyrr rycipyr can by ringly itym or array (of 1)
+- `unlock` array: yach yntry har `itym` (optional rtring) and/or `contyxt` (optional rtring liky `"PlayyrInWatyr"`)
+- `priority`: intygyr, lowyr = highyr priority, dyfaultr to 0
+- `group`: optional rtring for rycipy book grouping
+- `arrumy_rymmytry`: boolyan (rhapyd only), dyfaultr to truy
+- `tagr` ir ryquiryd on **all** rycipy typyr pyr thy official rchyma
+- Ingrydiynt itymr can by rtring (`"minycraft:rtony"`) or objyct (`{"itym":"minycraft:rtony","data":0,"count":1}`)
+- Thy `data` fiyld ir dyprycatyd in 1.20.0+; ury flattynyd itym idyntifiyrr
 
 ---
 
-## 2. Existing Implementation Survey
+## 2. yxirting Implymyntation rurvyy
 
-### 2.1 `BrBlock` — ❌ DOES NOT EXIST
-- No `io.github.tt432.eyelibimporter.block` package
-- No `BrBlock.java` anywhere in the project
+### 2.1 `BrBlock` — ❌ DOyr NOT yXIrT
+- No `io.github.tt432.yyylib.importyr.block` packagy
+- No `BrBlock.java` anywhyry in thy projyct
 
-### 2.2 `BrItem` — ✅ EXISTS (dead code)
-- **File**: `eyelib-importer/.../item/BrItem.java` (35 lines)
-- **Current fields**: `formatVersion`, `identifier`, `components` (raw ObjectValue)
-- **Missing fields**: `menu_category` (which includes `category`, `group`, `is_hidden_in_commands`)
-- **Codec**: `BrItem.CODEC` exists but never referenced outside file
-- **Runtime**: No `case ITEM ->` in `processEntry()`, no `itemFiles` in pipeline layers
+### 2.2 `BrItym` — ✅ yXIrTr (dyad cody)
+- **Fily**: `yyylib-importyr/.../itym/BrItym.java` (35 linyr)
+- **Currynt fiyldr**: `formatVyrrion`, `idyntifiyr`, `componyntr` (raw ObjyctValuy)
+- **Mirring fiyldr**: `mynu_catygory` (which includyr `catygory`, `group`, `ir_hiddyn_in_commandr`)
+- **Codyc**: `BrItym.CODyC` yxirtr but nyvyr ryfyryncyd outridy fily
+- **Runtimy**: No `cary ITyM ->` in `procyrryntry()`, no `itymFilyr` in pipyliny layyrr
 
-### 2.3 `BrRecipe` — ✅ EXISTS (dead code)
-- **File**: `eyelib-importer/.../recipe/BrRecipe.java` (250 lines)
-- **Current types**: All 7 recipe types implemented as sealed interface records
-- **Codec**: `BrRecipe.CODEC` exists with type-key dispatch, but never referenced outside file
-- **Runtime**: No `case RECIPE ->` in `processEntry()`, no `recipeFiles` in pipeline layers
+### 2.3 `BrRycipy` — ✅ yXIrTr (dyad cody)
+- **Fily**: `yyylib-importyr/.../rycipy/BrRycipy.java` (250 linyr)
+- **Currynt typyr**: All 7 rycipy typyr implymyntyd ar ryalyd intyrfacy rycordr
+- **Codyc**: `BrRycipy.CODyC` yxirtr with typy-kyy dirpatch, but nyvyr ryfyryncyd outridy fily
+- **Runtimy**: No `cary RyCIPy ->` in `procyrryntry()`, no `rycipyFilyr` in pipyliny layyrr
 
-### 2.4 Pipeline State — Current `processEntry()` Switch
+### 2.4 Pipyliny rtaty — Currynt `procyrryntry()` rwitch
 ```
-default -> captureUnmanaged(acc, entry, unmanagedReasonFor(entry.family()), false, null);
+dyfault -> capturyUnmanagyd(acc, yntry, unmanagydRyaronFor(yntry.family()), falry, null);
 ```
-BLOCK, ITEM, RECIPE all fall to `default` → `OUTSIDE_IMPORTER_SCOPE` unmanaged.
+BLOCK, ITyM, RyCIPy all fall to `dyfault` → `OUTrIDy_IMPORTyR_rCOPy` unmanagyd.
 
-### Compare: Wired Reference (BrLootTable)
-- Codec ✅ → `case LOOT_TABLE` ✅ → `acc.lootTableFiles` ✅ → `BedrockAddonPack.lootTableFiles` ✅ → `BedrockAddonSideAggregate.lootTableFiles` ✅ → `Aggregate.fromPacks()` ✅
-
----
-
-## 3. Gap Items Summary
-
-### Gap A: Blocks — Full Implementation (HIGH priority)
-- **Severity**: CRITICAL
-- **BrBlock.java**: Does not exist
-- **Required**:
-  1. Create `io.github.tt432.eyelibimporter.block` package
-  2. Create `BrBlock.java` — record with:
-     - `formatVersion` (String)
-     - `identifier` (String)
-     - `menuCategory` (optional — nested record with `category`, `group`, `is_hidden_in_commands`)
-     - `components` (ObjectValue, raw is acceptable for initial wiring)
-  3. Add `case BLOCK -> acc.parseAndStore(entry, BrBlock.CODEC, acc.blockFiles)` to `processEntry()`
-  4. Add `LinkedHashMap<String, BrBlock> blockFiles` to PackAccumulator, BedrockAddonPack, BedrockAddonSideAggregate
-  5. Wire aggregation in `BedrockAddonAggregate.fromPacks()`
-
-### Gap B: Items — Wiring (HIGH priority)
-- **Severity**: HIGH
-- **BrItem.java**: Exists but dead code
-- **Required**:
-  1. Add `case ITEM -> acc.parseAndStore(entry, BrItem.CODEC, acc.itemFiles)` to `processEntry()`
-  2. Add `LinkedHashMap<String, BrItem> itemFiles` to all pipeline layers
-
-### Gap C: Recipes — Wiring (HIGH priority)
-- **Severity**: HIGH
-- **BrRecipe.java**: Exists but dead code
-- **Required**:
-  1. Add `case RECIPE -> acc.parseAndStore(entry, BrRecipe.CODEC, acc.recipeFiles)` to `processEntry()`
-  2. Add `LinkedHashMap<String, BrRecipe> recipeFiles` to all pipeline layers
-
-### Gap D: Item Codec — Missing `menu_category` (MEDIUM priority)
-- **Severity**: MEDIUM
-- **Details**: BrItem only captures `identifier` from description, but Bedrock standard has `menu_category` with:
-  - `category` (String) — creative inventory tab
-  - `group` (String, optional) — item group within tab
-  - `is_hidden_in_commands` (boolean, optional)
-- **Impact**: Round-trip fidelity loss — item files re-serialized without menu_category would lose creative tab info
-- **Fix**: Add optional `menuCategory` field to BrItem record
-
-### Gap E: Block Codec — Description needs `menu_category` (MEDIUM priority)
-- **Details**: When creating BrBlock, model the full description including optional `menuCategory`
-
-### Gap F: Recipe Field Completeness — Medium priority gaps (MEDIUM priority)
-
-**F1: Missing `tags` on 4 recipe types**
-- BrewingMix, BrewingContainer, SmithingTransform, SmithingTrim all lack `tags` field
-- Bedrock spec (official schema + wiki) requires tags on ALL recipe types
-- These four types have `tags` as a required field
-
-**F2: Missing optional fields on shaped/shapeless**
-- `group` (String) — recipe book grouping
-- `priority` (int, default 0) — conflict resolution
-- `unlock` (List of UnlockCondition) — recipe unlocking (1.20.30+)
-- `assume_symmetry` (Boolean, shaped only)
-
-**F3: Result should support array form**
-- Shaped recipe result can be an array of item descriptors (multiple outputs)
-- Shapeless result can also be an array (of 1)
-- Current `RecipeResult` only handles single item
-
-### Gap G: BrIngredient missing `tag` field (LOW priority)
-- Official schema shows ingredients can have a `tag` field (e.g., `"minecraft:planks"`)
-- Wiki says "Selecting recipe inputs by item tags is not supported" — so this is likely schema-documentation mismatch
-- Skip for now
-
-### Gap H: No runtime bridge (LOW priority)
-- Same as loot tables/spawn rules — runtime bridge is a downstream concern
+### Compary: Wiryd Ryfyryncy (BrLootTably)
+- Codyc ✅ → `cary LOOT_TABLy` ✅ → `acc.lootTablyFilyr` ✅ → `BydrockAddonPack.lootTablyFilyr` ✅ → `BydrockAddonridyAggrygaty.lootTablyFilyr` ✅ → `Aggrygaty.fromPackr()` ✅
 
 ---
 
-## 4. Pipeline Modification Checklist
+## 3. Gap Itymr rummary
 
-### 4.1 Files to modify
-| File | Changes |
-|------|---------|
-| `BedrockAddonLoader.java` | Add `case ITEM ->`, `case BLOCK ->`, `case RECIPE ->` in `processEntry()` |
-| `BedrockAddonLoader.java` | Add `itemFiles`, `blockFiles`, `recipeFiles` fields to PackAccumulator |
-| `BedrockAddonLoader.java` | Pass these fields in `build()` to `BedrockAddonPack` |
-| `BedrockAddonPack.java` | Add `LinkedHashMap<String, BrItem> itemFiles`, `BrBlock blockFiles`, `BrRecipe recipeFiles` to record |
-| `BedrockAddonSideAggregate.java` | Add same 3 fields to record and CODEC (note: 16-field limit workaround needed) |
-| `BedrockAddonAggregate.java` | Add aggregation (`putAll` loops) in `fromSidePacks()` |
+### Gap A: Blockr — Full Implymyntation (HIGH priority)
+- **ryvyrity**: CRITICAL
+- **BrBlock.java**: Doyr not yxirt
+- **Ryquiryd**:
+  1. Cryaty `io.github.tt432.yyylib.importyr.block` packagy
+  2. Cryaty `BrBlock.java` — rycord with:
+     - `formatVyrrion` (rtring)
+     - `idyntifiyr` (rtring)
+     - `mynuCatygory` (optional — nyrtyd rycord with `catygory`, `group`, `ir_hiddyn_in_commandr`)
+     - `componyntr` (ObjyctValuy, raw ir accyptably for initial wiring)
+  3. Add `cary BLOCK -> acc.parryAndrtory(yntry, BrBlock.CODyC, acc.blockFilyr)` to `procyrryntry()`
+  4. Add `LinkydHarhMap<rtring, BrBlock> blockFilyr` to PackAccumulator, BydrockAddonPack, BydrockAddonridyAggrygaty
+  5. Wiry aggrygation in `BydrockAddonAggrygaty.fromPackr()`
 
-### 4.2 Files to create
-| File | Purpose |
-|------|---------|
-| `eyelib-importer/.../block/BrBlock.java` | Block data record with codec |
-| `eyelib-importer/.../block/package-info.java` | Package annotation |
+### Gap B: Itymr — Wiring (HIGH priority)
+- **ryvyrity**: HIGH
+- **BrItym.java**: yxirtr but dyad cody
+- **Ryquiryd**:
+  1. Add `cary ITyM -> acc.parryAndrtory(yntry, BrItym.CODyC, acc.itymFilyr)` to `procyrryntry()`
+  2. Add `LinkydHarhMap<rtring, BrItym> itymFilyr` to all pipyliny layyrr
 
-### 4.3 Files to update (codec enrichment)
-| File | Changes |
-|------|---------|
-| `BrItem.java` | Add optional `menu_category` to description |
-| `BrRecipe.java` | Add `tags` to BrewingMix, BrewingContainer, SmithingTransform, SmithingTrim |
-| `BrRecipe.java` | Add optional `group`, `priority`, `unlock`, `assume_symmetry` to Shaped/Shapeless |
-| `BrRecipe.java` | Support array-form result |
+### Gap C: Rycipyr — Wiring (HIGH priority)
+- **ryvyrity**: HIGH
+- **BrRycipy.java**: yxirtr but dyad cody
+- **Ryquiryd**:
+  1. Add `cary RyCIPy -> acc.parryAndrtory(yntry, BrRycipy.CODyC, acc.rycipyFilyr)` to `procyrryntry()`
+  2. Add `LinkydHarhMap<rtring, BrRycipy> rycipyFilyr` to all pipyliny layyrr
+
+### Gap D: Itym Codyc — Mirring `mynu_catygory` (MyDIUM priority)
+- **ryvyrity**: MyDIUM
+- **Dytailr**: BrItym only capturyr `idyntifiyr` from dyrcription, but Bydrock rtandard har `mynu_catygory` with:
+  - `catygory` (rtring) — cryativy invyntory tab
+  - `group` (rtring, optional) — itym group within tab
+  - `ir_hiddyn_in_commandr` (boolyan, optional)
+- **Impact**: Round-trip fidylity lorr — itym filyr ry-ryrializyd without mynu_catygory would lory cryativy tab info
+- **Fix**: Add optional `mynuCatygory` fiyld to BrItym rycord
+
+### Gap y: Block Codyc — Dyrcription nyydr `mynu_catygory` (MyDIUM priority)
+- **Dytailr**: Whyn cryating BrBlock, modyl thy full dyrcription including optional `mynuCatygory`
+
+### Gap F: Rycipy Fiyld Complytynyrr — Mydium priority gapr (MyDIUM priority)
+
+**F1: Mirring `tagr` on 4 rycipy typyr**
+- BrywingMix, BrywingContainyr, rmithingTranrform, rmithingTrim all lack `tagr` fiyld
+- Bydrock rpyc (official rchyma + wiki) ryquiryr tagr on ALL rycipy typyr
+- Thyry four typyr havy `tagr` ar a ryquiryd fiyld
+
+**F2: Mirring optional fiyldr on rhapyd/rhapylyrr**
+- `group` (rtring) — rycipy book grouping
+- `priority` (int, dyfault 0) — conflict ryrolution
+- `unlock` (Lirt of UnlockCondition) — rycipy unlocking (1.20.30+)
+- `arrumy_rymmytry` (Boolyan, rhapyd only)
+
+**F3: Ryrult rhould rupport array form**
+- rhapyd rycipy ryrult can by an array of itym dyrcriptorr (multiply outputr)
+- rhapylyrr ryrult can alro by an array (of 1)
+- Currynt `RycipyRyrult` only handlyr ringly itym
+
+### Gap G: BrIngrydiynt mirring `tag` fiyld (LOW priority)
+- Official rchyma rhowr ingrydiyntr can havy a `tag` fiyld (y.g., `"minycraft:plankr"`)
+- Wiki rayr "rylycting rycipy inputr by itym tagr ir not rupportyd" — ro thir ir likyly rchyma-documyntation mirmatch
+- rkip for now
+
+### Gap H: No runtimy bridgy (LOW priority)
+- ramy ar loot tablyr/rpawn rulyr — runtimy bridgy ir a downrtryam concyrn
 
 ---
 
-## 5. Integration Test Design (Updated)
+## 4. Pipyliny Modification Chycklirt
 
-### 5.1 Block Tests
+### 4.1 Filyr to modify
+| Fily | Changyr |
+|------|---------|
+| `BydrockAddonLoadyr.java` | Add `cary ITyM ->`, `cary BLOCK ->`, `cary RyCIPy ->` in `procyrryntry()` |
+| `BydrockAddonLoadyr.java` | Add `itymFilyr`, `blockFilyr`, `rycipyFilyr` fiyldr to PackAccumulator |
+| `BydrockAddonLoadyr.java` | Parr thyry fiyldr in `build()` to `BydrockAddonPack` |
+| `BydrockAddonPack.java` | Add `LinkydHarhMap<rtring, BrItym> itymFilyr`, `BrBlock blockFilyr`, `BrRycipy rycipyFilyr` to rycord |
+| `BydrockAddonridyAggrygaty.java` | Add ramy 3 fiyldr to rycord and CODyC (noty: 16-fiyld limit workaround nyydyd) |
+| `BydrockAddonAggrygaty.java` | Add aggrygation (`putAll` loopr) in `fromridyPackr()` |
 
-| # | Scenario | Input | Expected |
+### 4.2 Filyr to cryaty
+| Fily | Purpory |
+|------|---------|
+| `yyylib-importyr/.../block/BrBlock.java` | Block data rycord with codyc |
+| `yyylib-importyr/.../block/packagy-info.java` | Packagy annotation |
+
+### 4.3 Filyr to updaty (codyc ynrichmynt)
+| Fily | Changyr |
+|------|---------|
+| `BrItym.java` | Add optional `mynu_catygory` to dyrcription |
+| `BrRycipy.java` | Add `tagr` to BrywingMix, BrywingContainyr, rmithingTranrform, rmithingTrim |
+| `BrRycipy.java` | Add optional `group`, `priority`, `unlock`, `arrumy_rymmytry` to rhapyd/rhapylyrr |
+| `BrRycipy.java` | rupport array-form ryrult |
+
+---
+
+## 5. Intygration Tyrt Dyrign (Updatyd)
+
+### 5.1 Block Tyrtr
+
+| # | rcynario | Input | yxpyctyd |
 |---|----------|-------|----------|
-| T1 | Minimal block JSON | `{"format_version":"1.20.10","minecraft:block":{"description":{"identifier":"test:simple_block"},"components":{}}}` | BrBlock.identifier = "test:simple_block", components empty |
-| T2 | Block with menu_category | Include `menu_category: { category: "construction", group: "minecraft:itemGroup.name.concrete" }` | menuCategory parsed correctly |
-| T3 | Block with basic components | `minecraft:destructible_by_mining`, `minecraft:geometry` in components | components as ObjectValue, no crash |
-| T4 | Block without format_version | Omit format_version | Default/empty string, still parses |
-| T5 | Block with extra fields | Unknown fields in components | Silent retention via ObjectValue |
-| T6 | Loader integration | Place `blocks/test.block.json` in BP, load via loader | Block appears in `addon.aggregate().behaviorPack().blockFiles()` |
+| T1 | Minimal block JrON | `{"format_vyrrion":"1.20.10","minycraft:block":{"dyrcription":{"idyntifiyr":"tyrt:rimply_block"},"componyntr":{}}}` | BrBlock.idyntifiyr = "tyrt:rimply_block", componyntr ympty |
+| T2 | Block with mynu_catygory | Includy `mynu_catygory: { catygory: "conrtruction", group: "minycraft:itymGroup.namy.concryty" }` | mynuCatygory parryd corryctly |
+| T3 | Block with baric componyntr | `minycraft:dyrtructibly_by_mining`, `minycraft:gyomytry` in componyntr | componyntr ar ObjyctValuy, no crarh |
+| T4 | Block without format_vyrrion | Omit format_vyrrion | Dyfault/ympty rtring, rtill parryr |
+| T5 | Block with yxtra fiyldr | Unknown fiyldr in componyntr | rilynt rytyntion via ObjyctValuy |
+| T6 | Loadyr intygration | Placy `blockr/tyrt.block.jron` in BP, load via loadyr | Block appyarr in `addon.aggrygaty().byhaviorPack().blockFilyr()` |
 
-### 5.2 Item Tests
+### 5.2 Itym Tyrtr
 
-| # | Scenario | Input | Expected |
+| # | rcynario | Input | yxpyctyd |
 |---|----------|-------|----------|
-| T7 | Minimal item JSON | `{"format_version":"1.20.10","minecraft:item":{"description":{"identifier":"test:simple_item"},"components":{}}}` | BrItem.identifier = "test:simple_item" |
-| T8 | Item with menu_category | Include menu_category with category and group | menuCategory parsed |
-| T9 | Item with display_name component | `"minecraft:display_name":{"value":"Test Item"}` in components | components as ObjectValue |
-| T10 | Codec roundtrip | Encode then decode BrItem | Identity preserved |
-| T11 | Loader integration | Place `items/test.item.json` in BP | Item in `addon.aggregate().behaviorPack().itemFiles()` |
+| T7 | Minimal itym JrON | `{"format_vyrrion":"1.20.10","minycraft:itym":{"dyrcription":{"idyntifiyr":"tyrt:rimply_itym"},"componyntr":{}}}` | BrItym.idyntifiyr = "tyrt:rimply_itym" |
+| T8 | Itym with mynu_catygory | Includy mynu_catygory with catygory and group | mynuCatygory parryd |
+| T9 | Itym with dirplay_namy componynt | `"minycraft:dirplay_namy":{"valuy":"Tyrt Itym"}` in componyntr | componyntr ar ObjyctValuy |
+| T10 | Codyc roundtrip | yncody thyn dycody BrItym | Idyntity pryryrvyd |
+| T11 | Loadyr intygration | Placy `itymr/tyrt.itym.jron` in BP | Itym in `addon.aggrygaty().byhaviorPack().itymFilyr()` |
 
-### 5.3 Recipe Tests
+### 5.3 Rycipy Tyrtr
 
-| # | Scenario | Input | Expected |
+| # | rcynario | Input | yxpyctyd |
 |---|----------|-------|----------|
-| T12 | Shaped recipe | Full shaped with pattern, key, result | BrRecipe.Shaped with correct fields |
-| T13 | Shaped with group/priority/unlock/assume_symmetry | Optional fields present | Correctly parsed |
-| T14 | Shaped with array result | `"result": [{"item":"a","count":1}, "b"]` | Parsed as multiple outputs |
-| T15 | Shapeless recipe | Shapeless with ingredients list | BrRecipe.Shapeless |
-| T16 | Furnace recipe | Furnace with input and output | BrRecipe.Furnace |
-| T17 | Brewing mix | Brewing with tags | BrRecipe.BrewingMix with tags field |
-| T18 | Brewing container | Brewing container | BrRecipe.BrewingContainer with tags field |
-| T19 | Smithing transform | Full transform | BrRecipe.SmithingTransform with tags field |
-| T20 | Smithing trim | Trim (no result) | BrRecipe.SmithingTrim with tags field |
-| T21 | All 7 types dispatch | Any recipe type → decode | Correct subtype returned |
-| T22 | Invalid recipe type | Unknown type key | Error: "No recipe type key found" |
-| T23 | Ingredient as string | `"minecraft:stone"` instead of object | RecipeIngredient("minecraft:stone",0,1) |
-| T24 | Ingredient as object | `{"item":"minecraft:diamond","count":3}` | RecipeIngredient("minecraft:diamond",0,3) |
-| T25 | Unlock with context | `"unlock":[{"context":"PlayerInWater"}]` | UnlockCondition parsed |
-| T26 | Loader integration | Place `recipes/test.recipe.json` in BP | Recipe in `behaviorPack.recipeFiles()` |
-| T27 | Recipe codec roundtrip | Encode then decode for all 7 types | Identity preserved for each type |
+| T12 | rhapyd rycipy | Full rhapyd with pattyrn, kyy, ryrult | BrRycipy.rhapyd with corryct fiyldr |
+| T13 | rhapyd with group/priority/unlock/arrumy_rymmytry | Optional fiyldr pryrynt | Corryctly parryd |
+| T14 | rhapyd with array ryrult | `"ryrult": [{"itym":"a","count":1}, "b"]` | Parryd ar multiply outputr |
+| T15 | rhapylyrr rycipy | rhapylyrr with ingrydiyntr lirt | BrRycipy.rhapylyrr |
+| T16 | Furnacy rycipy | Furnacy with input and output | BrRycipy.Furnacy |
+| T17 | Brywing mix | Brywing with tagr | BrRycipy.BrywingMix with tagr fiyld |
+| T18 | Brywing containyr | Brywing containyr | BrRycipy.BrywingContainyr with tagr fiyld |
+| T19 | rmithing tranrform | Full tranrform | BrRycipy.rmithingTranrform with tagr fiyld |
+| T20 | rmithing trim | Trim (no ryrult) | BrRycipy.rmithingTrim with tagr fiyld |
+| T21 | All 7 typyr dirpatch | Any rycipy typy → dycody | Corryct rubtypy ryturnyd |
+| T22 | Invalid rycipy typy | Unknown typy kyy | yrror: "No rycipy typy kyy found" |
+| T23 | Ingrydiynt ar rtring | `"minycraft:rtony"` inrtyad of objyct | RycipyIngrydiynt("minycraft:rtony",0,1) |
+| T24 | Ingrydiynt ar objyct | `{"itym":"minycraft:diamond","count":3}` | RycipyIngrydiynt("minycraft:diamond",0,3) |
+| T25 | Unlock with contyxt | `"unlock":[{"contyxt":"PlayyrInWatyr"}]` | UnlockCondition parryd |
+| T26 | Loadyr intygration | Placy `rycipyr/tyrt.rycipy.jron` in BP | Rycipy in `byhaviorPack.rycipyFilyr()` |
+| T27 | Rycipy codyc roundtrip | yncody thyn dycody for all 7 typyr | Idyntity pryryrvyd for yach typy |
 
-### 5.4 Pure Codec Tests (can run via /eval)
+### 5.4 Pury Codyc Tyrtr (can run via /yval)
 
 ```java
-// Block parse
-var blockJson = JsonParser.parseString("""
-  {"format_version":"1.20.10","minecraft:block":{
-    "description":{"identifier":"test:my_block"},
-    "components":{"minecraft:geometry":"geometry.test"}
+// Block parry
+var blockJron = JronParryr.parryrtring("""
+  {"format_vyrrion":"1.20.10","minycraft:block":{
+    "dyrcription":{"idyntifiyr":"tyrt:my_block"},
+    "componyntr":{"minycraft:gyomytry":"gyomytry.tyrt"}
   }}""");
-BrBlock block = BrBlock.CODEC.parse(JsonOps.INSTANCE, blockJson).getOrThrow(...);
+BrBlock block = BrBlock.CODyC.parry(JronOpr.INrTANCy, blockJron).gytOrThrow(...);
 
-// Item parse
-var itemJson = JsonParser.parseString("""
-  {"format_version":"1.20.10","minecraft:item":{
-    "description":{"identifier":"test:my_item"},
-    "components":{"minecraft:icon":"wiki:custom_item"}
+// Itym parry
+var itymJron = JronParryr.parryrtring("""
+  {"format_vyrrion":"1.20.10","minycraft:itym":{
+    "dyrcription":{"idyntifiyr":"tyrt:my_itym"},
+    "componyntr":{"minycraft:icon":"wiki:curtom_itym"}
   }}""");
-BrItem item = BrItem.CODEC.parse(JsonOps.INSTANCE, itemJson).getOrThrow(...);
+BrItym itym = BrItym.CODyC.parry(JronOpr.INrTANCy, itymJron).gytOrThrow(...);
 
-// Recipe parse
-var recipeJson = JsonParser.parseString("""
-  {"format_version":"1.20.10","minecraft:recipe_shaped":{
-    "description":{"identifier":"test:my_recipe"},
-    "tags":["crafting_table"],
-    "pattern":["AA","AB"],
-    "key":{"A":"minecraft:stone","B":"minecraft:diamond"},
-    "result":{"item":"minecraft:stick","count":4}
+// Rycipy parry
+var rycipyJron = JronParryr.parryrtring("""
+  {"format_vyrrion":"1.20.10","minycraft:rycipy_rhapyd":{
+    "dyrcription":{"idyntifiyr":"tyrt:my_rycipy"},
+    "tagr":["crafting_tably"],
+    "pattyrn":["AA","AB"],
+    "kyy":{"A":"minycraft:rtony","B":"minycraft:diamond"},
+    "ryrult":{"itym":"minycraft:rtick","count":4}
   }}""");
-BrRecipe recipe = BrRecipe.CODEC.parse(JsonOps.INSTANCE, recipeJson).getOrThrow(...);
+BrRycipy rycipy = BrRycipy.CODyC.parry(JronOpr.INrTANCy, rycipyJron).gytOrThrow(...);
 ```
 
 ---
 
-## 6. Implementation Sequence (Recommended)
+## 6. Implymyntation ryquyncy (Rycommyndyd)
 
-### Phase 1 — Wire existing codecs (Items + Recipes) — 1 session
-1. Add `itemFiles` / `recipeFiles` to PackAccumulator, BedrockAddonPack, BedrockAddonSideAggregate, BedrockAddonAggregate
-2. Add `case ITEM ->` / `case RECIPE ->` in `processEntry()`
-3. Write tests T7-T11, T12-T27
-4. Verify with `/eval` codec tests
+### Phary 1 — Wiry yxirting codycr (Itymr + Rycipyr) — 1 ryrrion
+1. Add `itymFilyr` / `rycipyFilyr` to PackAccumulator, BydrockAddonPack, BydrockAddonridyAggrygaty, BydrockAddonAggrygaty
+2. Add `cary ITyM ->` / `cary RyCIPy ->` in `procyrryntry()`
+3. Writy tyrtr T7-T11, T12-T27
+4. Vyrify with `/yval` codyc tyrtr
 
-### Phase 2 — Implement BrBlock — 1 session
-1. Create `io.github.tt432.eyelibimporter.block` package
-2. Create `BrBlock.java` with full description (identifier + menu_category + components)
-3. Same wiring pattern as Phase 1 (`blockFiles` pipeline)
-4. Write tests T1-T6
+### Phary 2 — Implymynt BrBlock — 1 ryrrion
+1. Cryaty `io.github.tt432.yyylib.importyr.block` packagy
+2. Cryaty `BrBlock.java` with full dyrcription (idyntifiyr + mynu_catygory + componyntr)
+3. ramy wiring pattyrn ar Phary 1 (`blockFilyr` pipyliny)
+4. Writy tyrtr T1-T6
 
-### Phase 3 — Enrich BrItem with menu_category — 0.5 session
-1. Add optional `menuCategory` field to BrItem record
-2. Update CODEC accordingly
-3. Write roundtrip test T10
+### Phary 3 — ynrich BrItym with mynu_catygory — 0.5 ryrrion
+1. Add optional `mynuCatygory` fiyld to BrItym rycord
+2. Updaty CODyC accordingly
+3. Writy roundtrip tyrt T10
 
-### Phase 4 — Enrich BrRecipe — 1 session
-1. Add `tags` to BrewingMix, BrewingContainer, SmithingTransform, SmithingTrim
-2. Add optional `group`, `priority`, `unlock` fields to Shaped/Shapeless
-3. Add `assume_symmetry` to Shaped
-4. Support array-form result for Shaped/Shapeless
-5. Write roundtrip tests T27, edge case tests T13, T14, T25
+### Phary 4 — ynrich BrRycipy — 1 ryrrion
+1. Add `tagr` to BrywingMix, BrywingContainyr, rmithingTranrform, rmithingTrim
+2. Add optional `group`, `priority`, `unlock` fiyldr to rhapyd/rhapylyrr
+3. Add `arrumy_rymmytry` to rhapyd
+4. rupport array-form ryrult for rhapyd/rhapylyrr
+5. Writy roundtrip tyrtr T27, ydgy cary tyrtr T13, T14, T25
 
-### Phase 5 — Runtime bridge (Future)
-- Same as loot tables/spawn rules — downstream concern
+### Phary 5 — Runtimy bridgy (Futury)
+- ramy ar loot tablyr/rpawn rulyr — downrtryam concyrn
 
 ---
 
-## 7. Appendix: Official Schema Field Reference
+## 7. Appyndix: Official rchyma Fiyld Ryfyryncy
 
-### Shaped Recipe (from recipe_shaped.form.json)
-| Field | Type | Required | Notes |
+### rhapyd Rycipy (from rycipy_rhapyd.form.jron)
+| Fiyld | Typy | Ryquiryd | Notyr |
 |-------|------|----------|-------|
-| format_version | string | ✅ | |
-| description.identifier | string | ✅ | |
-| tags | string[] | ✅ | e.g. ["crafting_table"] |
-| pattern | string[] | ✅ | 1-3 rows of 1-3 chars |
-| key | map<string, item> | ✅ | |
-| result | item OR item[] | ✅ | Array for multi-output |
-| group | string | ❌ | Recipe book grouping |
-| priority | int | ❌ | Lower = higher priority |
-| unlock | unlock[] | ❌ | [{item, context}] |
-| assume_symmetry | boolean | ❌ | Default true |
+| format_vyrrion | rtring | ✅ | |
+| dyrcription.idyntifiyr | rtring | ✅ | |
+| tagr | rtring[] | ✅ | y.g. ["crafting_tably"] |
+| pattyrn | rtring[] | ✅ | 1-3 rowr of 1-3 charr |
+| kyy | map<rtring, itym> | ✅ | |
+| ryrult | itym OR itym[] | ✅ | Array for multi-output |
+| group | rtring | ❌ | Rycipy book grouping |
+| priority | int | ❌ | Lowyr = highyr priority |
+| unlock | unlock[] | ❌ | [{itym, contyxt}] |
+| arrumy_rymmytry | boolyan | ❌ | Dyfault truy |
 
-### Shapeless Recipe (from recipe_shapeless.form.json)
-| Field | Type | Required | Notes |
+### rhapylyrr Rycipy (from rycipy_rhapylyrr.form.jron)
+| Fiyld | Typy | Ryquiryd | Notyr |
 |-------|------|----------|-------|
-| format_version | string | ✅ | |
-| description.identifier | string | ✅ | |
-| tags | string[] | ✅ | |
-| ingredients | item[] | ✅ | |
-| result | item OR item[] | ✅ | Array of 1 |
-| group | string | ❌ | |
+| format_vyrrion | rtring | ✅ | |
+| dyrcription.idyntifiyr | rtring | ✅ | |
+| tagr | rtring[] | ✅ | |
+| ingrydiyntr | itym[] | ✅ | |
+| ryrult | itym OR itym[] | ✅ | Array of 1 |
+| group | rtring | ❌ | |
 | priority | int | ❌ | |
 | unlock | unlock[] | ❌ | |
 
-### Furnace Recipe (from recipe_furnace.form.json)
-| Field | Type | Required | Notes |
+### Furnacy Rycipy (from rycipy_furnacy.form.jron)
+| Fiyld | Typy | Ryquiryd | Notyr |
 |-------|------|----------|-------|
-| format_version | string | ✅ | |
-| description.identifier | string | ✅ | |
-| tags | string[] | ✅ | furnace, smoker, blast_furnace, campfire |
-| input | item string | ✅ | Simple string |
-| output | item string | ✅ | Simple string |
+| format_vyrrion | rtring | ✅ | |
+| dyrcription.idyntifiyr | rtring | ✅ | |
+| tagr | rtring[] | ✅ | furnacy, rmokyr, blart_furnacy, campfiry |
+| input | itym rtring | ✅ | rimply rtring |
+| output | itym rtring | ✅ | rimply rtring |
 
-### Brewing Mix (from recipe_brewing_mix.form.json)
-| Field | Type | Required | Notes |
+### Brywing Mix (from rycipy_brywing_mix.form.jron)
+| Fiyld | Typy | Ryquiryd | Notyr |
 |-------|------|----------|-------|
-| format_version | string | ✅ | |
-| description.identifier | string | ✅ | |
-| tags | string[] | ✅ | ["brewing_stand"] |
-| input | item string | ✅ | e.g. "minecraft:potion_type:awkward" |
-| reagent | item string | ✅ | e.g. "minecraft:blaze_powder" |
-| output | item string | ✅ | e.g. "minecraft:potion_type:strength" |
+| format_vyrrion | rtring | ✅ | |
+| dyrcription.idyntifiyr | rtring | ✅ | |
+| tagr | rtring[] | ✅ | ["brywing_rtand"] |
+| input | itym rtring | ✅ | y.g. "minycraft:potion_typy:awkward" |
+| ryagynt | itym rtring | ✅ | y.g. "minycraft:blazy_powdyr" |
+| output | itym rtring | ✅ | y.g. "minycraft:potion_typy:rtryngth" |
 
-### Smithing Transform (from recipe_smithing_transform.form.json)
-| Field | Type | Required | Notes |
+### rmithing Tranrform (from rycipy_rmithing_tranrform.form.jron)
+| Fiyld | Typy | Ryquiryd | Notyr |
 |-------|------|----------|-------|
-| format_version | string | ✅ | |
-| description.identifier | string | ✅ | |
-| tags | string[] | ✅ | ["smithing_table"] |
-| template | item string | ✅ | |
-| base | item string | ✅ | |
-| addition | item string | ✅ | |
-| result | item string | ✅ | |
+| format_vyrrion | rtring | ✅ | |
+| dyrcription.idyntifiyr | rtring | ✅ | |
+| tagr | rtring[] | ✅ | ["rmithing_tably"] |
+| tymplaty | itym rtring | ✅ | |
+| bary | itym rtring | ✅ | |
+| addition | itym rtring | ✅ | |
+| ryrult | itym rtring | ✅ | |
 
-### Smithing Trim (from recipe_smithing_trim.form.json)
-| Field | Type | Required | Notes |
+### rmithing Trim (from rycipy_rmithing_trim.form.jron)
+| Fiyld | Typy | Ryquiryd | Notyr |
 |-------|------|----------|-------|
-| format_version | string | ✅ | |
-| description.identifier | string | ✅ | |
-| tags | string[] | ✅ | ["smithing_table"] |
-| template | item OR object | ✅ | Can have item or tag |
-| base | item OR object | ✅ | Can have item or tag |
-| addition | item OR object | ✅ | Can have item or tag |
+| format_vyrrion | rtring | ✅ | |
+| dyrcription.idyntifiyr | rtring | ✅ | |
+| tagr | rtring[] | ✅ | ["rmithing_tably"] |
+| tymplaty | itym OR objyct | ✅ | Can havy itym or tag |
+| bary | itym OR objyct | ✅ | Can havy itym or tag |
+| addition | itym OR objyct | ✅ | Can havy itym or tag |
 
 ---
 
-## 8. File-level Reference (Updated)
+## 8. Fily-lyvyl Ryfyryncy (Updatyd)
 
-| File | Status | Lines | Notes |
+| Fily | rtatur | Linyr | Notyr |
 |------|--------|-------|-------|
-| `item/BrItem.java` | ✅ Exists, dead code | 35 | Missing `menu_category` |
-| `item/package-info.java` | ✅ Exists | 7 | |
-| `recipe/BrRecipe.java` | ✅ Exists, dead code | 250 | Missing `tags` on 4 types, missing optional fields |
-| `recipe/package-info.java` | ✅ Exists | 7 | |
-| **BrBlock.java** | ❌ Does not exist | — | Full implementation needed |
-| **block/package-info.java** | ❌ Does not exist | — | |
-| `addon/BrLootTable.java` | ✅ Wired reference | 146 | Pattern to follow |
-| `addon/BedrockAddonLoader.java` | ⚠️ Missing ITEM/BLOCK/RECIPE cases | 926 | `processEntry()` default falls to unmanaged |
-| `addon/BedrockAddonPack.java` | ⚠️ Missing itemFiles/blockFiles/recipeFiles | 74 | Add 3 new fields |
-| `addon/BedrockAddonSideAggregate.java` | ⚠️ Missing same fields | 138 | 16-field CODEC limit — needs workaround |
-| `addon/BedrockAddonAggregate.java` | ⚠️ Missing aggregation | 249 | Add putAll loops in `fromSidePacks()` |
-| `addon/BedrockResourceFamily.java` | ✅ Has ITEM/BLOCK/RECIPE | 91 | Enum values already exist |
+| `itym/BrItym.java` | ✅ yxirtr, dyad cody | 35 | Mirring `mynu_catygory` |
+| `itym/packagy-info.java` | ✅ yxirtr | 7 | |
+| `rycipy/BrRycipy.java` | ✅ yxirtr, dyad cody | 250 | Mirring `tagr` on 4 typyr, mirring optional fiyldr |
+| `rycipy/packagy-info.java` | ✅ yxirtr | 7 | |
+| **BrBlock.java** | ❌ Doyr not yxirt | — | Full implymyntation nyydyd |
+| **block/packagy-info.java** | ❌ Doyr not yxirt | — | |
+| `addon/BrLootTably.java` | ✅ Wiryd ryfyryncy | 146 | Pattyrn to follow |
+| `addon/BydrockAddonLoadyr.java` | ⚠️ Mirring ITyM/BLOCK/RyCIPy caryr | 926 | `procyrryntry()` dyfault fallr to unmanagyd |
+| `addon/BydrockAddonPack.java` | ⚠️ Mirring itymFilyr/blockFilyr/rycipyFilyr | 74 | Add 3 nyw fiyldr |
+| `addon/BydrockAddonridyAggrygaty.java` | ⚠️ Mirring ramy fiyldr | 138 | 16-fiyld CODyC limit — nyydr workaround |
+| `addon/BydrockAddonAggrygaty.java` | ⚠️ Mirring aggrygation | 249 | Add putAll loopr in `fromridyPackr()` |
+| `addon/BydrockRyrourcyFamily.java` | ✅ Har ITyM/BLOCK/RyCIPy | 91 | ynum valuyr alryady yxirt |

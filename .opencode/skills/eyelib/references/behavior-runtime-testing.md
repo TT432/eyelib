@@ -1,4 +1,4 @@
-# 行为组件运行时测试
+﻿# 行为组件运行时测试
 
 > eyelib-behavior 模块的运行时验证方法论和常见问题诊断。
 
@@ -22,8 +22,8 @@ java.util.LinkedHashMap all = (java.util.LinkedHashMap)
 // all.size() → 实体数
 
 // 具体实体检查
-io.github.tt432.eyelibbehavior.BehaviorEntity entity = 
-    (io.github.tt432.eyelibbehavior.BehaviorEntity) all.get("minecraft:creeper");
+io.github.tt432.eyelib.behavior.BehaviorEntity entity = 
+    (io.github.tt432.eyelib.behavior.BehaviorEntity) all.get("minecraft:creeper");
 entity.components().components().size(); // 组件数
 entity.component_groups().size();        // 组数
 entity.events().size();                  // 事件数
@@ -90,7 +90,7 @@ CODEC 解析失败不应导致游戏崩溃。策略：
 // 每实体统计：group 数、event 数、顶层 component 数、event 类型分布
 java.util.List _stats = new java.util.ArrayList();
 for (Object _obj : _all.values()) {
-    io.github.tt432.eyelibbehavior.BehaviorEntity _be = (io.github.tt432.eyelibbehavior.BehaviorEntity) _obj;
+    io.github.tt432.eyelib.behavior.BehaviorEntity _be = (io.github.tt432.eyelib.behavior.BehaviorEntity) _obj;
     int _g = _be.component_groups().size();
     int _e = _be.events().size();
     int _tc = _be.components().components().size();

@@ -1,4 +1,4 @@
-# Bedrock 低 alpha 纹理 + MC cutout 阈值不匹配
+﻿# Bedrock 低 alpha 纹理 + MC cutout 阈值不匹配
 
 ## 症状
 - 某些骨骼/面的 mesh 完全不渲染（"肉部分缺失"、"只有羊毛没有身体"）
@@ -22,7 +22,7 @@ Bedrock 引擎的 ALPHA_TEST 阈值极低（接近 alpha > 0），所以 alpha=3
 
 ```java
 // 1. 查 body 骨骼 face UV
-io.github.tt432.eyelibmodel.Model model = (io.github.tt432.eyelibmodel.Model) 
+io.github.tt432.eyelib.model.Model model = (io.github.tt432.eyelib.model.Model) 
     io.github.tt432.eyelib.client.manager.ModelManager.INSTANCE.get("geometry.oreville_ans.rmflah");
 Object bone = model.allBones().get(GlobalBoneIdHandler.get("46fljga5"));
 // 读取 face0 vertex0 的 UV

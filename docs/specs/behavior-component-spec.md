@@ -1,6 +1,6 @@
 # 行为组件实现规范
 
-> 本文档定义 eyelib-behavior 模块中 Bedrock 实体组件的实现契约。
+> 本文档定义 eyelib 中 `io.github.tt432.eyelib.behavior` 包下 Bedrock 实体组件的实现契约。
 > 所有组件（已有和新增）必须符合此规范。违反规范的代码是 bug。
 
 ## 基本模式
@@ -18,7 +18,7 @@ Bedrock JSON 中仅作为存在性标记，无数据字段。
  * @author TT432
  */
 @org.jspecify.annotations.NullMarked
-public record Xxx() implements io.github.tt432.eyelibbehavior.component.Component {
+public record Xxx() implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Xxx INSTANCE = new Xxx();
     public static final com.mojang.serialization.Codec<Xxx> CODEC = com.mojang.serialization.Codec.unit(INSTANCE);
 
@@ -29,7 +29,7 @@ public record Xxx() implements io.github.tt432.eyelibbehavior.component.Componen
 
 **强制约束:**
 - `INSTANCE` 必须 `public static final`
-- 必须 import `com.mojang.serialization.Codec`，不 import `io.github.tt432.eyelibbehavior.component.Component`（用全限定名避免与 property 子包命名冲突）
+- 必须 import `com.mojang.serialization.Codec`，不 import `io.github.tt432.eyelib.behavior.component.Component`（用全限定名避免与 property 子包命名冲突）
 
 ### 模式 B: 数据组件（有字段）
 
@@ -43,7 +43,7 @@ public record Xxx() implements io.github.tt432.eyelibbehavior.component.Componen
 public record Xxx(
         String requiredField,
         int optionalField
-) implements io.github.tt432.eyelibbehavior.component.Component {
+) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final com.mojang.serialization.Codec<Xxx> CODEC =
             com.mojang.serialization.codecs.RecordCodecBuilder.create(ins -> ins.group(
                     com.mojang.serialization.Codec.STRING.fieldOf("required_field").forGetter(Xxx::requiredField),
@@ -97,7 +97,7 @@ private static final Codec<JsonObject> JSON_FIELD = Codec.STRING.xmap(
 
 ### 禁止项
 - 禁止在 switch 中使用 lambda `{}` 块（`default -> { ...; return ...; }` 除外）
-- 禁止 import `Component` 接口（用全限定名 `io.github.tt432.eyelibbehavior.component.Component`，避免同名冲突）
+- 禁止 import `Component` 接口（用全限定名 `io.github.tt432.eyelib.behavior.component.Component`，避免同名冲突）
 - 禁止 `INSTANCE` 为 private
 - 禁止在非目标文件中写入无关代码
 
@@ -111,13 +111,10 @@ default 分支保留 `EmptyComponent` 日志+兜底逻辑。
 
 ## 验证命令
 
-```bash
-# 编译（Windows 侧 — WSL Gradle 在 /mnt/e 上超时）
-cmd.exe /c "cd /d E:\_ideaProjects\qylEyelib && gradlew.bat :eyelib-behavior:compileJava --no-configuration-cache 2>&1 | grep -E '错误|BUILD'"
+通过 JetBrains MCP 调用(见 AGENTS.md Tooling Restrictions + `eyelib-build` SKILL):
 
-# 测试
-cmd.exe /c "cd /d E:\_ideaProjects\qylEyelib && gradlew.bat :eyelib-behavior:test --no-configuration-cache 2>&1 | grep -E 'PASS|FAIL|BUILD|tests'"
-```
+- 编译: `jetbrain_build_project`(或 `jetbrain_run_gradle_tasks(["compileJava"])`)
+- 测试: `jetbrain_run_gradle_tasks([":1.20.1:test"])`,active Stonecutter node 前缀见 `stonecutter.gradle`
 
 ## 验收标准
 

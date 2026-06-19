@@ -1,4 +1,4 @@
-# Host Injection API Draft
+﻿# Host Injection API Draft
 
 ## Purpose
 - This document refines the host-side part of `molang-ast-and-semantics-draft.md`.
@@ -16,9 +16,9 @@
 - This document only defines the **host injection contract**.
 
 ## Repository Boundary Reminder
-- Engine-side abstractions belong in `:eyelib-molang`.
+- Engine-side abstractions belong in `molang` package.
 - Minecraft/Forge objects may appear as examples here, but platform-specific publication and lifecycle wiring still belong in root `src/main/java/io/github/tt432/eyelib/mc/impl/molang/**`.
-- This document does not authorize moving platform bindings into `:eyelib-molang`.
+- This document does not authorize moving platform bindings into `molang` package.
 
 ---
 

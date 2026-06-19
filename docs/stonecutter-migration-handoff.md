@@ -84,7 +84,7 @@ new:        stonecutter.gradle    (root 构建脚本)
 new:        versions/1.20.1/gradle.properties
 new:        versions/1.21.1/gradle.properties
 new:        docs/decisions/0015-stonecutter-multi-version.md
-new:        docs/superpowers/specs/2026-06-17-stonecutter-migration-design.md
+deleted:    docs/superpowers/specs/2026-06-17-stonecutter-migration-design.md  (superpowers/ 目录整体清理,2026-06-19)
 new:        docs/stonecutter-migration-handoff.md  (本文件)
 modified:   src/main/resources/eyelib.mixins.json  (加 3 个 accessor mixin)
 new:        src/main/java/.../mixin/PoseStackAccessor.java

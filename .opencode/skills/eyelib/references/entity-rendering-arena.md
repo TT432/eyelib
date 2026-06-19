@@ -29,5 +29,5 @@ Class.forName("io.github.tt432.eyelib.debug.MobArenaGenerator")
 ### 陷阱
 
 - 某些实体无法在 overworld 创建（Warden 需要 sculk shrieker）→ classificiation 中 try-catch 跳过
-- 某些实体 addFreshEntity 时触发 eyelibbehavior ClassCastException → summonAll 中 try-catch 跳过
+- 某些实体 addFreshEntity 时触发 `io.github.tt432.eyelib.behavior` ClassCastException → summonAll 中 try-catch 跳过
 - 注意 Janino 访问限制：根模块类不能用 Class.forName()，但反射调用可以（已是加载的 class）

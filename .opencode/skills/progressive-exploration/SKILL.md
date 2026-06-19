@@ -1,4 +1,4 @@
----
+﻿---
 name: progressive-exploration
 description: Interactive runtime state exploration via the AI debug HTTP server in a running Minecraft client. Use to probe screens, inspect game state, navigate UI, or test hypotheses before writing code.
 ---
@@ -104,7 +104,7 @@ for (Object child : minecraft.screen.children()) {
 
 ```java
 // Dump registered particle definitions
-return io.github.tt432.eyelibparticle.runtime.ParticleDefinitionRegistry
+return io.github.tt432.eyelib.particle.runtime.ParticleDefinitionRegistry
     .publisher().entries().keySet().toString();
 
 // Check an entity's current animation

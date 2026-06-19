@@ -1,4 +1,4 @@
-# Gap Analysis: loot_tables + trading + spawn_rules + structures
+﻿# Gap Analysis: loot_tables + trading + spawn_rules + structures
 
 > 调查日期：2026-06-02（v2 — 代码级验证 + 对照 E 盘文档）
 > 范围：eyelib 实现 vs 基岩版行为包规范（Bedrock Wiki + MS Creator 官方参考）
@@ -22,8 +22,8 @@
 
 ### 2.1 现有实现（已代码确认）
 
-- **文件**: `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BrLootTable.java`（146 行）
-- **包**: `io.github.tt432.eyelibimporter.addon`
+- **文件**: `src/main/java/io/github/tt432/eyelib/importer/addon/BrLootTable.java`（146 行）
+- **包**: `io.github.tt432.eyelib.importer.addon`
 - **顶层结构**: `BrLootTable` → `pools: List<BrLootTablePool>`
 - **Pool 结构**: `rolls`（Either<Integer, Range>）+ `entries` + `conditions`（raw）+ `functions`（raw）
 - **Entry 结构**: `type` + `name` + `weight` + `quality` + `conditions`（raw）+ `functions`（raw）
@@ -92,8 +92,8 @@ E 盘文档源：
 
 ### 3.1 现有实现（已代码确认）
 
-- **文件**: `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/trading/BrTrading.java`（139 行）
-- **包**: `io.github.tt432.eyelibimporter.trading`（注意：**非** addon 包，与 BrLootTable 等不在同一包）
+- **文件**: `src/main/java/io/github/tt432/eyelib/importer/trading/BrTrading.java`（139 行）
+- **包**: `io.github.tt432.eyelib.importer.trading`（注意：**非** addon 包，与 BrLootTable 等不在同一包）
 - **顶层结构**: `BrTrading` → `tiers: List<BrTier>`
 - **接线**: ❌ **未接线** — `processEntry` switch 中**没有** `case TRADING`（第 178-225 行）
 - **目前状态**: 落入 `default → captureUnmanaged` 分支 → `OUTSIDE_IMPORTER_SCOPE`
@@ -210,8 +210,8 @@ E 盘文档源：
 
 ### 4.1 现有实现（已代码确认）
 
-- **文件**: `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BrSpawnRule.java`（38 行）
-- **包**: `io.github.tt432.eyelibimporter.addon`
+- **文件**: `src/main/java/io/github/tt432/eyelib/importer/addon/BrSpawnRule.java`（38 行）
+- **包**: `io.github.tt432.eyelib.importer.addon`
 - **顶层结构**: `BrSpawnRule` → `formatVersion` + `identifier` + `populationControl` + `conditions`
 - **接线**: `processEntry` 第 204-205 行 → `acc.spawnRulesFiles.put(entry.effectivePath(), BrSpawnRule.parse(readJsonFile(entry.file())))`
 - **注意**: 使用 `parse()` 方法，**不**使用 `CODEC`（因为 CODEC 路径有误）

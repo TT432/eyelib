@@ -1,4 +1,4 @@
-# Host Adapter Registry Draft
+﻿# Host Adapter Registry Draft
 
 ## Purpose
 - This document specifies how raw host objects are turned into stable, engine-visible host roles.
@@ -11,7 +11,7 @@
 - This document defines how those roles are produced.
 
 ## Repository Boundary Reminder
-- Engine-side adapter contracts may live in `:eyelib-molang`.
+- Engine-side adapter contracts may live in `molang` package.
 - Concrete adapters for Minecraft/Forge runtime types remain platform-side unless intentionally extracted.
 
 ---

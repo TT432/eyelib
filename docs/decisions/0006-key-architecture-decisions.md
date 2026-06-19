@@ -1,6 +1,6 @@
 # ADR-0006: Key Architecture Decisions
 
-**Status:** Accepted  
+**Status:** Accepted — **Amended by [ADR-0014](0014-flat-merge.md)** (independent Gradle subprojects 改为单 project + 包边界;"runtime dependency" 等概念不再适用,但决策的历史参考价值保留)  
 **Context:** Throughout the module separation milestones, multiple architectural decisions were made to guide the project's evolution. A historical record is needed to understand why critical boundary choices were made.  
 **Decision:** Maintain a table of key decisions with rationale and validation phase references. This document serves as an architecture changelog.  
 **Consequences:** Contributors can trace why specific patterns (independent Gradle subprojects, runtime dependency, `@ClientSmoke` annotation) were chosen over alternatives.

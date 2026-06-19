@@ -8,9 +8,9 @@
 
 ## Oracle 优先级
 
-1. **Mojang Creator 文档**（`/mnt/e/_____基岩版文档/minecraft-creator/creator/Documents/`）— 权威
+1. **Mojang Creator 文档**（`E:\_____基岩版文档\minecraft-creator\creator\Documents\`）— 权威
 2. **真实 .mcpack 数据**（`run/resourcepacks/*.mcpack`）或 Microsoft 官方示例 fixture — 权威
-3. **Bedrock Wiki**（`/mnt/e/_____基岩版文档/bedrock-wiki/docs/`）
+3. **Bedrock Wiki**（`E:\_____基岩版文档\bedrock-wiki\docs\`）
 4. **项目内部 pitfall/ADR/reference** — 二次加工，可能滞后，仅作参考不作出处
 
 ## 已在项目中建立的 spec-based 测试

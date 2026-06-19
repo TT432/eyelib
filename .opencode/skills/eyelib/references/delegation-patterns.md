@@ -28,9 +28,9 @@
 <关键约束或特性>
 
 ## 可用资源
-- 项目路径 /mnt/e/_ideaProjects/qylEyelib
-- MC 源码 /mnt/e/_ideaProjects/qylEyelib/.mc-source/
-- Bedrock 文档 /mnt/e/_____基岩版文档/
+- 项目路径 E:\_ideaProjects\qylEyelib
+- MC 源码 E:\_ideaProjects\qylEyelib\.mc-source\
+- Bedrock 文档 E:\_____基岩版文档\
 ```
 
 ## 短名映射规则示例

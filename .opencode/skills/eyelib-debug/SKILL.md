@@ -30,7 +30,7 @@ eyelib-debug MCP server 封装了整个调试流程。工具以 `eyelib_debug_*`
 
 ### 设计原则
 - **无状态**：所有状态从 AIDebugServer 端点实时查询
-- **launch 自动重建**：先 `gradlew.bat :compileJava createLaunchScripts` 再启动
+- **launch 自动重建**：内部跑 `:compileJava` + `createLaunchScripts` 后再启动
 
 ### 典型流程
 
@@ -54,19 +54,19 @@ eyelib_debug_close()
 
 ### fallback shell（MCP 不可用时）
 
-```bash
-# 查占用
-cmd.exe /c "netstat -ano | findstr 25999"
+```powershell
+# 查端口占用
+netstat -ano | findstr 25999
 
-# 手动启动
-cd /mnt/e/_ideaProjects/qylEyelib && unset JAVA_HOME && WSLENV= \
-  /mnt/e/RenderDoc/renderdoccmd.exe capture \
-  -c eyelib_capture --opt-hook-children \
-  E:\\_ideaProjects\\qylEyelib\\build\\moddev\\runClient.cmd &
+# 手动启动 RenderDoc capture (PowerShell, 不走 WSL)
+Set-Location E:\_ideaProjects\qylEyelib
+& "E:\RenderDoc\renderdoccmd.exe" capture `
+    -c eyelib_capture --opt-hook-children `
+    "E:\_ideaProjects\qylEyelib\build\moddev\runClient.cmd"
 
-# curl 交互
-echo 'return "hello";' | curl -s --proxy http://127.0.0.1:10808 \
-  -X POST http://localhost:25999/eval -H "Content-Type: text/plain" -d @-
+# curl 交互 (Windows 自带 curl.exe; PowerShell 别名需显式调用)
+'return "hello";' | curl.exe -s --proxy http://127.0.0.1:10808 `
+    -X POST http://localhost:25999/eval -H "Content-Type: text/plain" -d "@-"
 ```
 
 ## 跨模块调试：委派模式

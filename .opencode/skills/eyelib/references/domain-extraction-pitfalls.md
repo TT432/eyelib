@@ -28,27 +28,33 @@
 
 ## Bridge 模块
 
-### Forge dev 环境要求
+> ⚠️ 本节描述 ADR-0014 前的 multi-project 时代。ADR-0014 后 bridge 是 `io.github.tt432.eyelib.bridge` 包,共享 root 的 mod 声明,无独立 `mods.toml` 或 `@Mod` 注解类。
 
-`eyelib-bridge` 是一个完整的 Forge 子项目，不是纯库 JAR。必须在 `mods.toml` 中声明 `[[mods]]` 部分，并提供一个 `@Mod("eyelibbridge")` 标注的空类。否则 Forge 的 mod 扫描器会拒绝加载。
+### Forge dev 环境要求(历史)
 
-### 依赖方向
+~~`eyelib-bridge` 是一个完整的 Forge 子项目,不是纯库 JAR。必须在 `mods.toml` 中声明 `[[mods]]` 部分,并提供一个 `@Mod("eyelibbridge")` 标注的空类。~~ ADR-0014 后此要求已不适用。
+
+### 依赖方向(仍适用)
 
 - bridge → domain ✅
-- domain → bridge ❌ （循环依赖）
-- domain 内部通过 eyelib-util 共享 Port ✅
+- domain → bridge ❌ （循环依赖,包之间也禁止）
+- domain 内部通过 util 包共享 Port ✅
 
 如果 domain 或下游模块（particle）需要桥接功能，在 domain 层保留使用 Port 类型的 RenderTypeResolver，在 bridge 层保留使用 MC 类型的版本。两套并行。
 
 ## 编译
 
-### WSL 环境只用 cmd.exe /c gradlew.bat
+### 必须经 JetBrains MCP 跑 Gradle
 
-WSL 下的 `./gradlew` / `java -cp ... GradleWrapperMain` 经常超时（>120s）。Windows 原生 `gradlew.bat` 始终在 5-20s 完成。
+历史教训: WSL 下 `./gradlew` / `java -cp ... GradleWrapperMain` 经常超时(>120s); Windows 侧 `cmd.exe /c gradlew.bat` 虽然快(5-20s)但已禁止。
 
-```bash
-cmd.exe /c "cd /d E:\_ideaProjects\qylEyelib && gradlew.bat :eyelib-material:compileJava --no-configuration-cache"
+现行规则(AGENTS.md Tooling Restrictions): 唯一允许的 Gradle 入口是 JetBrains MCP。
+
 ```
+jetbrain_run_gradle_tasks(taskNames=["compileJava"])
+```
+
+(ADR-0014 后是单 Gradle project,不再有 `:eyelib-material:compileJava` 这种子项目 task 路径。)
 
 ## 提取顺序（按风险递增）
 

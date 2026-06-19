@@ -1,4 +1,4 @@
-# Query Variant Registry Draft
+﻿# Query Variant Registry Draft
 
 ## Purpose
 - This document refines the query dispatch part of `molang-ast-and-semantics-draft.md`.
@@ -10,7 +10,7 @@
 - This document defines how host-backed queries consume that published context.
 
 ## Repository Boundary Reminder
-- Query registry contracts may live in `:eyelib-molang`.
+- Query registry contracts may live in `molang` package.
 - Minecraft-specific query implementations and lifecycle wiring still belong in root-side platform modules unless explicitly extracted.
 
 ---

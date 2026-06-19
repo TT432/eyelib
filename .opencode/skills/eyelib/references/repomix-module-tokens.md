@@ -6,7 +6,7 @@ eyelib 各模块 main-only repomix 输出（DeepSeek tokenizer）。用于预估
 ```bash
 repomix --style markdown --output /tmp/eyelib-module-xxx.md \
   --include "src/main/**" --ignore "build/**,.gradle/**" \
-  /mnt/e/_ideaProjects/qylEyelib/<name>
+  E:\_ideaProjects\qylEyelib\<name>
 ```
 
 | 模块 | 文件数 | o200k_base tokens | DeepSeek tokens | 大小 |

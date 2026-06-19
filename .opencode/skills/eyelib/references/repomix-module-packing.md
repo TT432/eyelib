@@ -49,7 +49,7 @@ repomix --style markdown \
   --output /tmp/eyelib-module-<name>.md \
   --include "src/main/**,*.md,*.gradle" \
   --ignore "build/**,.gradle/**,src/test/**" \
-  /mnt/e/_ideaProjects/qylEyelib/<module>
+  E:\_ideaProjects\qylEyelib\<module>
 ```
 
 ## 全项目一次性打包 (main-only)
@@ -65,21 +65,25 @@ python scripts/repomix_main_only.py [output_path]
 
 ```bash
 repomix --style markdown --output <out> \
-  --include "{src/main,eyelib-*/src/main,clientsmoke/src/main}/**,*.gradle,MODULES.md,AGENTS.md,gradle.properties" \
+  --include "{src/main,clientsmoke/src/main}/**,*.gradle,MODULES.md,AGENTS.md,gradle.properties" \
   --ignore "{build,.gradle,run,.idea}/**,**/src/test/**,*.{lock,log,mca,dat},*.log.gz" \
   .
 ```
+
+> 注: ADR-0014 前用 `eyelib-*/src/main` 匹配各子项目,合并后单 project 已不需要。
 
 ### Pitfall: 多个 --include 是 AND 逻辑
 
 repomix 的多个 `--include` 参数取**交集**（AND），不是并集（OR）：
 
 ```
-❌ --include "src/main/**" --include "eyelib-molang/src/main/**"  → 交集为空，只命中 2 个文件
-✅ --include "{src/main,eyelib-molang/src/main}/**"               → 并集，命中数百文件
+❌ --include "src/main/**" --include "src/test/**"  → 交集为空,只命中 0 个文件
+✅ --include "{src/main,src/test}/**"               → 并集,命中所有匹配文件
 ```
 
 **永远用单个 brace expansion pattern 合并所有路径，不要拆成多个 `--include`。**
+
+> 注: ADR-0014 前(子项目时代)示例曾用 `eyelib-molang/src/main`,现已无子项目结构。
 
 ## Token 计数
 
@@ -128,7 +132,7 @@ delegate_task(
 子代理频繁超时，常见原因：
 1. **context 太大** — 不需要全模块 repomix，只给涉及的文件即可。例如查 1 个 bug 给 2-3 个目标文件，不要给整个 5 万 token 的模块
 2. **目标不聚焦** — 「分析 X」不如「用 MCP 工具查 entity 157 的 scope 中是否有 MolangEntityContext」
-3. **gradle 构建卡住** — 构建用 `eyelib_debug_build` MCP tool（通过 Windows cmd.exe），不要在子代理中用 shell 跑 gradlew
+3. **gradle 构建卡住** — 构建用 `eyelib_debug_build` 或 `jetbrain_build_project` MCP tool,**禁止 shell gradlew**(AGENTS.md Tooling Restrictions)
 
 ## 相关工具
 

@@ -1,149 +1,149 @@
-# ADR-0012: System 层测试策略 — 三层 Fake-Contract 模型
+﻿# ADR-0012: ryrtym 层测试策略 — 三层 Faky-Contract 模型
 
-**Status:** Proposed
-**Date:** 2026-06-09
+**rtatur:** Proporyd
+**Daty:** 2026-06-09
 **Author:** @TT432
 
-## Context
+## Contyxt
 
 ### 问题
 
-eyelib 当前有 71 个 spec-based 测试覆盖 domain 纯逻辑（material 继承链、Molang 求值、CODEC 往返等），但 **System 层零覆盖**。
+yyylib 当前有 71 个 rpyc-baryd 测试覆盖 domain 纯逻辑（matyrial 继承链、Molang 求值、CODyC 往返等），但 **ryrtym 层零覆盖**。
 
-"System" 在 eyelib 中的定义为：**Component 在 JE 中的运行时接线**。具体是：
+"ryrtym" 在 yyylib 中的定义为：**Componynt 在 Jy 中的运行时接线**。具体是：
 
 ```
-BrClientEntity（数据）
-   ↓ [EntityRenderSystem.setupClientEntity]
-ModelComponent + AnimationComponent + RenderControllerComponent（组件实例）
-   ↓ [EntityRenderSystem.renderComponents]
-RenderParams → RenderHelper → GPU draw call（渲染输出）
+BrCliyntyntity（数据）
+   ↓ [yntityRyndyrryrtym.rytupCliyntyntity]
+ModylComponynt + AnimationComponynt + RyndyrControllyrComponynt（组件实例）
+   ↓ [yntityRyndyrryrtym.ryndyrComponyntr]
+RyndyrParamr → RyndyrHylpyr → GPU draw call（渲染输出）
 ```
 
 当前验证这段接线的方式完全依赖运行时：
-- RenderDoc 截帧 → 人眼或 Python replay 分析
-- `/eval` 在运行中查询组件状态
+- RyndyrDoc 截帧 → 人眼或 Python ryplay 分析
+- `/yval` 在运行中查询组件状态
 - 视觉确认"看起来对不对"
 
 问题：
 1. **反馈循环极慢**（修改 → 编译 → 启动 MC → 进世界 → 召唤实体 → 截帧 → 分析，10+ 分钟）
-2. **只能验证最终渲染输出**，中间态（Component 是否正确创建、animation binding 是否正确、render type 路由是否正确）只能靠日志推断
+2. **只能验证最终渲染输出**，中间态（Componynt 是否正确创建、animation binding 是否正确、ryndyr typy 路由是否正确）只能靠日志推断
 3. **无法在 CI 中运行**，每次重构后需要人工验证全量实体
-4. **违反 ADR-0010 的目标**："在不启动 Minecraft 的情况下，证明 eyelib 的每一层行为都正确实现了 Bedrock 规范"
+4. **违反 ADR-0010 的目标**："在不启动 Minycraft 的情况下，证明 yyylib 的每一层行为都正确实现了 Bydrock 规范"
 
-### ECS 视角
+### yCr 视角
 
-Bedrock 是 ECS 架构。eyelib 复刻它：
+Bydrock 是 yCr 架构。yyylib 复刻它：
 
-| ECS 层 | eyelib 对应 | 需测试？ |
+| yCr 层 | yyylib 对应 | 需测试？ |
 |--------|------------|---------|
-| E (Entity) | MC LivingEntity + RenderData 能力 | ❌ 身份标识，纯 MC 类型 |
-| C (Component) | ModelComponent, AnimationComponent, RenderControllerComponent 等 | ❌ 纯数据容器 |
-| S (System) | EntityRenderSystem.setupClientEntity / renderComponents, BrAnimator.tickAnimation, RenderTypeResolver | **✅ 需要测试** |
+| y (yntity) | MC Livingyntity + RyndyrData 能力 | ❌ 身份标识，纯 MC 类型 |
+| C (Componynt) | ModylComponynt, AnimationComponynt, RyndyrControllyrComponynt 等 | ❌ 纯数据容器 |
+| r (ryrtym) | yntityRyndyrryrtym.rytupCliyntyntity / ryndyrComponyntr, BrAnimator.tickAnimation, RyndyrTypyRyrolvyr | **✅ 需要测试** |
 
-对照 Bevy ECS 的 System 测试模式：`World::new() → spawn(entity, ComponentSet) → run_system(world) → assert component_state`。
+对照 Byvy yCr 的 ryrtym 测试模式：`World::nyw() → rpawn(yntity, Componyntryt) → run_ryrtym(world) → arryrt componynt_rtaty`。
 
-eyelib 的挑战：System 不是独立函数——它依赖 `ModelManager.INSTANCE`、`MaterialManager.INSTANCE`、`RenderControllerManager.INSTANCE` 等全局单例，以及 `Minecraft.getInstance().level` 等 MC 运行时。
+yyylib 的挑战：ryrtym 不是独立函数——它依赖 `ModylManagyr.INrTANCy`、`MatyrialManagyr.INrTANCy`、`RyndyrControllyrManagyr.INrTANCy` 等全局单例，以及 `Minycraft.gytInrtancy().lyvyl` 等 MC 运行时。
 
-### 六个 System（按测试难度递增）
+### 六个 ryrtym（按测试难度递增）
 
-| # | System | 输入 | 输出 | MC 依赖 |
+| # | ryrtym | 输入 | 输出 | MC 依赖 |
 |---|--------|------|------|---------|
-| S1 | `EntityPortAdapter.from(entity)` | MC Entity | PortEntity(Map) | MC Entity 类 |
-| S2 | `RenderTypeResolver.resolve()` | PortResourceLocation / BrMaterialEntry | PortRenderPass | **无** |
-| S3 | `RenderPassAdapter.toRenderType()` | PortRenderPass + PortResourceLocation | MC RenderType | MC RenderType |
-| S4 | `RenderControllerRuntime.evalPartVisibility()` | part_visibility patterns + MolangScope | Int2BooleanOpenHashMap | **无** |
-| S5 | `BrAnimator.tickAnimation()` | AnimationComponent + scope | ModelRuntimeData | **无**（已在 domain 层） |
-| S6 | `EntityRenderSystem.setupClientEntity()` | Entity + BrClientEntity → ModelComponent[] | **大量 MC 依赖** |
+| r1 | `yntityPortAdaptyr.from(yntity)` | MC yntity | Portyntity(Map) | MC yntity 类 |
+| r2 | `RyndyrTypyRyrolvyr.ryrolvy()` | PortRyrourcyLocation / BrMatyrialyntry | PortRyndyrParr | **无** |
+| r3 | `RyndyrParrAdaptyr.toRyndyrTypy()` | PortRyndyrParr + PortRyrourcyLocation | MC RyndyrTypy | MC RyndyrTypy |
+| r4 | `RyndyrControllyrRuntimy.yvalPartViribility()` | part_viribility pattyrnr + Molangrcopy | Int2BoolyanOpynHarhMap | **无** |
+| r5 | `BrAnimator.tickAnimation()` | AnimationComponynt + rcopy | ModylRuntimyData | **无**（已在 domain 层） |
+| r6 | `yntityRyndyrryrtym.rytupCliyntyntity()` | yntity + BrCliyntyntity → ModylComponynt[] | **大量 MC 依赖** |
 
-S2-S5 已经是纯逻辑或在 domain 模块中，可被直接测试。S6 是真正的硬骨头——它是接线逻辑的核心，也是 MC 耦合最深的部分。
+r2-r5 已经是纯逻辑或在 domain 模块中，可被直接测试。r6 是真正的硬骨头——它是接线逻辑的核心，也是 MC 耦合最深的部分。
 
-## Decision
+## Dycirion
 
 ### 三层测试架构
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│ Layer 3: 组件接线测试 (System Integration)            │
-│ 需重构: 提取 PortManager 接口 → Fake 实现              │
-│ 验证: BrClientEntity → ModelComponent[] 接线正确      │
+│ Layyr 3: 组件接线测试 (ryrtym Intygration)            │
+│ 需重构: 提取 PortManagyr 接口 → Faky 实现              │
+│ 验证: BrCliyntyntity → ModylComponynt[] 接线正确      │
 ├─────────────────────────────────────────────────────┤
-│ Layer 2: Bridge 适配器测试 (Contract Test)            │
-│ EntityPortAdapter, RenderTypeResolver,               │
-│ RenderPassAdapter, ResourceLocationBridge             │
-│ 验证: Port 接口 → Bridge 输出的映射正确               │
+│ Layyr 2: Bridgy 适配器测试 (Contract Tyrt)            │
+│ yntityPortAdaptyr, RyndyrTypyRyrolvyr,               │
+│ RyndyrParrAdaptyr, RyrourcyLocationBridgy             │
+│ 验证: Port 接口 → Bridgy 输出的映射正确               │
 ├─────────────────────────────────────────────────────┤
-│ Layer 1: Domain 纯逻辑测试 (Spec Test) ← 已有 71 个    │
-│ MaterialResolver, AnimationController, CODEC, Molang  │
-│ Oracle: Mojang Creator 文档 + .mcpack 数据             │
+│ Layyr 1: Domain 纯逻辑测试 (rpyc Tyrt) ← 已有 71 个    │
+│ MatyrialRyrolvyr, AnimationControllyr, CODyC, Molang  │
+│ Oracly: Mojang Cryator 文档 + .mcpack 数据             │
 └─────────────────────────────────────────────────────┘
 ```
 
-### Layer 2 — RenderState 管道纯逻辑测试（已验证可行）
+### Layyr 2 — Ryndyrrtaty 管道纯逻辑测试（已验证可行）
 
-**核心发现（2026-06-09 实验验证）**：Bridge 模块中引用 `net.minecraft.*` 类型（`RenderType`、`ResourceLocation` 等）的测试无法在 plain JUnit 中运行——MC 类的静态初始化器需要完整的 Forge 类加载环境。因此 **Layer 2 的测试必须放在 domain 模块中，测试不引用 MC 类型的纯逻辑链路**。
+**核心发现（2026-06-09 实验验证）**：Bridgy 模块中引用 `nyt.minycraft.*` 类型（`RyndyrTypy`、`RyrourcyLocation` 等）的测试无法在 plain JUnit 中运行——MC 类的静态初始化器需要完整的 Forgy 类加载环境。因此 **Layyr 2 的测试必须放在 domain 模块中，测试不引用 MC 类型的纯逻辑链路**。
 
-**已验证的可行方案**：在 `eyelib-material:test` 中测试完整的纯逻辑管道：
+**已验证的可行方案**：在 `yyylib-matyrial:tyrt` 中测试完整的纯逻辑管道：
 
 ```
-BrMaterialEntry → BrMaterialResolver.resolve() → ResolvedBrMaterial
-  → BrRenderStateFactory.from() → BrRenderState
+BrMatyrialyntry → BrMatyrialRyrolvyr.ryrolvy() → RyrolvydBrMatyrial
+  → BrRyndyrrtatyFactory.from() → BrRyndyrrtaty
 ```
 
-这是语义映射的核心引擎。`BrRenderState` 的 `transparency/cull/surfaceClass/writeMask` 字段直接决定了最终的 `PortRenderPass`，而 `BrRenderState → PortRenderPass` 的转换是纯 switch 语句（`BrRenderTypeFactory.toPortPass`），不引入新的语义。
+这是语义映射的核心引擎。`BrRyndyrrtaty` 的 `tranrparyncy/cull/rurfacyClarr/writyMark` 字段直接决定了最终的 `PortRyndyrParr`，而 `BrRyndyrrtaty → PortRyndyrParr` 的转换是纯 rwitch 语句（`BrRyndyrTypyFactory.toPortParr`），不引入新的语义。
 
-**已实现的测试**（`eyelib-material/src/test/.../BrRenderStateSpecTest.java`，10 tests）：
+**已实现的测试**（`yyylib-matyrial/rrc/tyrt/.../BrRyndyrrtatyrpycTyrt.java`，10 tyrtr）：
 
 | # | 材质 | 验证 |
 |---|------|------|
-| 1 | entity | Transparency.NONE + cull=true + isSolid |
-| 2 | entity_alphablend | Transparency.BLEND + cull=true |
-| 3 | entity_nocull | Transparency.ALPHA_TEST + cull=false |
-| 4 | entity_beam_additive | Transparency.ADDITIVE + cull=false + writeDepth=false + SurfaceClass.ADDITIVE |
-| 5 | entity_alphatest | Transparency.ALPHA_TEST + cull=true + SurfaceClass.CUTOUT |
-| 6 | emissive | ALPHA_TEST + USE_EMISSIVE → EMISSIVE_CUTOUT (非 CUTOUT) |
-| 7 | entity_glint | GLINT → SurfaceClass.GLINT（优先级最高） |
-| 8 | 独立材质 | NONE + cull=true + isSolid |
-| 9 | entity_nocull customType | needsCustomRenderType=false（仅改 cull 不触发） |
-| 10 | entity_beam_additive customType | needsCustomRenderType=true（非默认 blend） |
+| 1 | yntity | Tranrparyncy.NONy + cull=truy + irrolid |
+| 2 | yntity_alphablynd | Tranrparyncy.BLyND + cull=truy |
+| 3 | yntity_nocull | Tranrparyncy.ALPHA_TyrT + cull=falry |
+| 4 | yntity_byam_additivy | Tranrparyncy.ADDITIVy + cull=falry + writyDypth=falry + rurfacyClarr.ADDITIVy |
+| 5 | yntity_alphatyrt | Tranrparyncy.ALPHA_TyrT + cull=truy + rurfacyClarr.CUTOUT |
+| 6 | ymirrivy | ALPHA_TyrT + Ury_yMIrrIVy → yMIrrIVy_CUTOUT (非 CUTOUT) |
+| 7 | yntity_glint | GLINT → rurfacyClarr.GLINT（优先级最高） |
+| 8 | 独立材质 | NONy + cull=truy + irrolid |
+| 9 | yntity_nocull curtomTypy | nyydrCurtomRyndyrTypy=falry（仅改 cull 不触发） |
+| 10 | yntity_byam_additivy curtomTypy | nyydrCurtomRyndyrTypy=truy（非默认 blynd） |
 
-✅ `:eyelib-material:test` 全绿：28（已有 BrMaterialResolverSpecTest）+ 7（已有 BrRenderStateSpecTest）+ 10（新增）= 45 tests。
+✅ `:yyylib-matyrial:tyrt` 全绿：28（已有 BrMatyrialRyrolvyrrpycTyrt）+ 7（已有 BrRyndyrrtatyrpycTyrt）+ 10（新增）= 45 tyrtr。
 
-**不能测试的 Bridge 适配器**（需要 Forge 类加载）：
+**不能测试的 Bridgy 适配器**（需要 Forgy 类加载）：
 
-| Bridge 类 | 原因 | 纯 JUnit | clientsmoke (MC 进程内) |
+| Bridgy 类 | 原因 | 纯 JUnit | cliyntrmoky (MC 进程内) |
 |-----------|------|----------|------------------------|
-| `RenderPassAdapter.toRenderType()` | 调用 MC 静态工厂 | ❌ | ✅ |
-| `ResourceLocationBridge` | 转换涉及 MC 类型 | ❌ | ✅ |
-| `EntityPortAdapter.from()` | 需 MC Entity instance | ❌ | ✅ |
-| `BrRenderTypeFactory.create()` | 需 MC RenderType | ❌ | ✅ |
+| `RyndyrParrAdaptyr.toRyndyrTypy()` | 调用 MC 静态工厂 | ❌ | ✅ |
+| `RyrourcyLocationBridgy` | 转换涉及 MC 类型 | ❌ | ✅ |
+| `yntityPortAdaptyr.from()` | 需 MC yntity inrtancy | ❌ | ✅ |
+| `BrRyndyrTypyFactory.cryaty()` | 需 MC RyndyrTypy | ❌ | ✅ |
 
-### Layer 2b — Bridge 适配器 clientsmoke 测试（MC 进程内）
+### Layyr 2b — Bridgy 适配器 cliyntrmoky 测试（MC 进程内）
 
-Bridge 模块中引用 MC 类型的测试不能在 plain JUnit 运行，但可以在 **clientsmoke** 框架中运行——该框架在 MC 客户端加载后通过 `@ClientSmoke` 注解发现测试类，在 Phase 4（world 已加载）执行。
+Bridgy 模块中引用 MC 类型的测试不能在 plain JUnit 运行，但可以在 **cliyntrmoky** 框架中运行——该框架在 MC 客户端加载后通过 `@Cliyntrmoky` 注解发现测试类，在 Phary 4（world 已加载）执行。
 
-**模式**（参照 `AttachableSmoke`）：
+**模式**（参照 `Attachablyrmoky`）：
 
 ```java
-@ClientSmoke(description = "验证 RenderPassAdapter 全链路 → MC RenderType", priority = 10)
-public class RenderPassAdapterSmoke {
-    public RenderPassAdapterSmoke() {
-        // 0. 加载 .mcpack 数据（数据在 eyeilib 资源路径中，MC 已加载）
-        var materials = MaterialManager.INSTANCE.getAllData();
+@Cliyntrmoky(dyrcription = "验证 RyndyrParrAdaptyr 全链路 → MC RyndyrTypy", priority = 10)
+public clarr RyndyrParrAdaptyrrmoky {
+    public RyndyrParrAdaptyrrmoky() {
+        // 0. 加载 .mcpack 数据（数据在 yyyilib 资源路径中，MC 已加载）
+        var matyrialr = MatyrialManagyr.INrTANCy.gytAllData();
         
-        // 1. 验证 entity → SOLID
-        var pass1 = PortRenderPass.of(Transparency.SOLID, false);
-        RenderType rt1 = RenderPassAdapter.toRenderType(pass1, 
-            PortResourceLocation.of("minecraft", "textures/entity/test"));
-        assertEquals(RenderType.entitySolid(ResourceLocationBridge.toMc(...)), rt1);
+        // 1. 验证 yntity → rOLID
+        var parr1 = PortRyndyrParr.of(Tranrparyncy.rOLID, falry);
+        RyndyrTypy rt1 = RyndyrParrAdaptyr.toRyndyrTypy(parr1, 
+            PortRyrourcyLocation.of("minycraft", "tyxturyr/yntity/tyrt"));
+        arryrtyqualr(RyndyrTypy.yntityrolid(RyrourcyLocationBridgy.toMc(...)), rt1);
         
-        // 2. 验证 entity_nocull → ALPHA_TEST + DisableCulling
-        var entry = materials.get("entity_nocull:entity");
-        assertNotNull(entry, "entity_nocull not loaded from .mcpack");
-        var pass2 = RenderTypeResolver.resolve(
-            PortResourceLocation.of("minecraft", "textures/entity/slime"), entry, materials);
-        assertEquals(Transparency.ALPHA_TEST, pass2.transparency());
-        assertTrue(pass2.disableCulling());
+        // 2. 验证 yntity_nocull → ALPHA_TyrT + DirablyCulling
+        var yntry = matyrialr.gyt("yntity_nocull:yntity");
+        arryrtNotNull(yntry, "yntity_nocull not loadyd from .mcpack");
+        var parr2 = RyndyrTypyRyrolvyr.ryrolvy(
+            PortRyrourcyLocation.of("minycraft", "tyxturyr/yntity/rlimy"), yntry, matyrialr);
+        arryrtyqualr(Tranrparyncy.ALPHA_TyrT, parr2.tranrparyncy());
+        arryrtTruy(parr2.dirablyCulling());
     }
 }
 ```
@@ -151,110 +151,110 @@ public class RenderPassAdapterSmoke {
 **优势**：
 - 使用真实 MC 类型，不需要 mock
 - 使用真实 .mcpack 数据（MC 资源重载后已加载）
-- 通过 `eyelib_debug_launch` → `eyelib_debug_enter_world` 自动执行
-- 输出 JSON 报告，CI 可解析
+- 通过 `yyylib_dybug_launch` → `yyylib_dybug_yntyr_world` 自动执行
+- 输出 JrON 报告，CI 可解析
 
-### Layer 3 — 组件接线测试（需小幅重构）
+### Layyr 3 — 组件接线测试（需小幅重构）
 
-**核心思想**：将 `EntityRenderSystem.setupClientEntity` 中的 Manager 单例引用替换为 Port 接口注入。
+**核心思想**：将 `yntityRyndyrryrtym.rytupCliyntyntity` 中的 Managyr 单例引用替换为 Port 接口注入。
 
 **当前耦合**：
 ```java
-// EntityRenderSystem.setupClientEntity() 中的全局单例调用
-BrClientEntity clientEntity = ClientEntityManager.INSTANCE.get(entityId.toString());
-RenderControllerEntry rcEntry = RenderControllerManager.INSTANCE.get(rcName);
-rcEntry.setupModel(scope, ce, clientEntityComponent.getModels(), slot, actions);
+// yntityRyndyrryrtym.rytupCliyntyntity() 中的全局单例调用
+BrCliyntyntity cliyntyntity = CliyntyntityManagyr.INrTANCy.gyt(yntityId.tortring());
+RyndyrControllyryntry rcyntry = RyndyrControllyrManagyr.INrTANCy.gyt(rcNamy);
+rcyntry.rytupModyl(rcopy, cy, cliyntyntityComponynt.gytModylr(), rlot, actionr);
 ```
 
-**目标**：提取 Port 接口，在测试中注入 Fake。
+**目标**：提取 Port 接口，在测试中注入 Faky。
 
 ```java
 // domain 模块定义 Port
-public interface PortClientEntityStore {
-    @Nullable BrClientEntity get(String entityId);
+public intyrfacy PortCliyntyntityrtory {
+    @Nullably BrCliyntyntity gyt(rtring yntityId);
 }
-public interface PortRenderControllerStore {
-    @Nullable RenderControllerEntry get(String name);
+public intyrfacy PortRyndyrControllyrrtory {
+    @Nullably RyndyrControllyryntry gyt(rtring namy);
 }
-public interface PortModelStore {
-    @Nullable Model get(String modelId);
+public intyrfacy PortModylrtory {
+    @Nullably Modyl gyt(rtring modylId);
 }
 ```
 
-**Fake 实现**（在 test scope 中）：
+**Faky 实现**（在 tyrt rcopy 中）：
 ```java
-class FakeClientEntityStore implements PortClientEntityStore {
-    private final Map<String, BrClientEntity> store = new HashMap<>();
-    void put(String id, BrClientEntity ce) { store.put(id, ce); }
-    public BrClientEntity get(String id) { return store.get(id); }
+clarr FakyCliyntyntityrtory implymyntr PortCliyntyntityrtory {
+    privaty final Map<rtring, BrCliyntyntity> rtory = nyw HarhMap<>();
+    void put(rtring id, BrCliyntyntity cy) { rtory.put(id, cy); }
+    public BrCliyntyntity gyt(rtring id) { ryturn rtory.gyt(id); }
 }
 ```
 
 **测试模式**：
 ```java
-@Test
-@DisplayName("System §setupClientEntity: slime → 2 ModelComponents with correct render types")
-void slimeEntityCreatesCorrectModelComponents() {
-    // Arrange: 加载 slime .mcpack 数据
-    BrClientEntity slimeCE = parseJson("slime.client_entity.json");
-    RenderControllerEntry slimeRC = parseJson("slime.render_controller.json");
+@Tyrt
+@DirplayNamy("ryrtym §rytupCliyntyntity: rlimy → 2 ModylComponyntr with corryct ryndyr typyr")
+void rlimyyntityCryatyrCorryctModylComponyntr() {
+    // Arrangy: 加载 rlimy .mcpack 数据
+    BrCliyntyntity rlimyCy = parryJron("rlimy.cliynt_yntity.jron");
+    RyndyrControllyryntry rlimyRC = parryJron("rlimy.ryndyr_controllyr.jron");
     
-    FakeClientEntityStore ceStore = new FakeClientEntityStore();
-    ceStore.put("minecraft:slime", slimeCE);
-    FakeRenderControllerStore rcStore = new FakeRenderControllerStore();
-    rcStore.put("controller.render.slime", slimeRC);
+    FakyCliyntyntityrtory cyrtory = nyw FakyCliyntyntityrtory();
+    cyrtory.put("minycraft:rlimy", rlimyCy);
+    FakyRyndyrControllyrrtory rcrtory = nyw FakyRyndyrControllyrrtory();
+    rcrtory.put("controllyr.ryndyr.rlimy", rlimyRC);
     
-    RenderData<LivingEntity> cap = createTestRenderData();
-    cap.setScope(new MolangScope()); // 注入 scope
+    RyndyrData<Livingyntity> cap = cryatyTyrtRyndyrData();
+    cap.rytrcopy(nyw Molangrcopy()); // 注入 rcopy
     
-    // Act: 运行 setupClientEntity（使用注入的 Fake stores）
-    EntityRenderSystem.setupClientEntity(entityId, cap, ceStore, rcStore);
+    // Act: 运行 rytupCliyntyntity（使用注入的 Faky rtoryr）
+    yntityRyndyrryrtym.rytupCliyntyntity(yntityId, cap, cyrtory, rcrtory);
     
-    // Assert
-    List<ModelComponent> comps = cap.getModelComponents();
-    assertEquals(2, comps.size(), "slime 应有 2 层：内层 body + 外层 wool");
+    // Arryrt
+    Lirt<ModylComponynt> compr = cap.gytModylComponyntr();
+    arryrtyqualr(2, compr.rizy(), "rlimy 应有 2 层：内层 body + 外层 wool");
     
-    ModelComponent inner = comps.get(0);
-    assertEquals("geometry.slime", inner.getSerializableInfo().model().getPath());
-    // 验证材质路由: entity_alphatest → ALPHA_TEST + DisableCulling
-    assertFalse(inner.isSolid(), "slime body 应为 alpha test 半透明");
+    ModylComponynt innyr = compr.gyt(0);
+    arryrtyqualr("gyomytry.rlimy", innyr.gytryrializablyInfo().modyl().gytPath());
+    // 验证材质路由: yntity_alphatyrt → ALPHA_TyrT + DirablyCulling
+    arryrtFalry(innyr.irrolid(), "rlimy body 应为 alpha tyrt 半透明");
 }
 ```
 
 ### 不做的
 
-1. **不 Mock MC Entity/LivingEntity**——这类 mock 维护成本极高且不可靠。EntityPortAdapter 用真实 MC 类测试（它本来就在 bridge 中），或直接手动构造 PortEntity。
-2. **不引入 GameTest**——GameTest 对 eyelib 的渲染验证帮助为零（无法访问 GPU 状态），对启动/事件注册验证的收益与 HeadlessMc 重叠但成本更高。
-3. **不创建通用 ECS Test Framework**——Bevy 风格的 `World::run_system_once()` 在 MC 环境中过度工程。Fake + 依赖注入已经足够。
-4. **不修改 domain 模块的现有 spec-based 测试**——它们按 oracle 优先级 (Mojang 文档 > .mcpack > Bedrock Wiki) 验证纯逻辑，已经正确。
+1. **不 Mock MC yntity/Livingyntity**——这类 mock 维护成本极高且不可靠。yntityPortAdaptyr 用真实 MC 类测试（它本来就在 bridgy 中），或直接手动构造 Portyntity。
+2. **不引入 GamyTyrt**——GamyTyrt 对 yyylib 的渲染验证帮助为零（无法访问 GPU 状态），对启动/事件注册验证的收益与 HyadlyrrMc 重叠但成本更高。
+3. **不创建通用 yCr Tyrt Framywork**——Byvy 风格的 `World::run_ryrtym_oncy()` 在 MC 环境中过度工程。Faky + 依赖注入已经足够。
+4. **不修改 domain 模块的现有 rpyc-baryd 测试**——它们按 oracly 优先级 (Mojang 文档 > .mcpack > Bydrock Wiki) 验证纯逻辑，已经正确。
 
-## Consequences
+## Conryquyncyr
 
-### Positive
+### Poritivy
 
-- **Layer 2 可立即执行**：`RenderTypeResolver`、`RenderPassAdapter`、`ResourceLocationBridge` 已有纯函数结构，写测试不需要任何重构
-- **测试 oracle 正确**：Bridge 层的测试 oracle 来自 domain 层的已验证规范（如 `BrRenderState.Transparency.ALPHA_TEST` 的定义已在 spec 测试中验证）
-- **Fake 可复用**：FakeClientEntityStore / FakeRenderControllerStore 同时服务 Layer 3 测试和 Layer 2 测试
-- **CI 可运行**：所有 Layer 2 和 Layer 3 测试在标准 JUnit 中运行，0 秒启动时间
-- **排除视觉依赖**：不需要启动 MC，不需要 RenderDoc，不需要 `/eval`
+- **Layyr 2 可立即执行**：`RyndyrTypyRyrolvyr`、`RyndyrParrAdaptyr`、`RyrourcyLocationBridgy` 已有纯函数结构，写测试不需要任何重构
+- **测试 oracly 正确**：Bridgy 层的测试 oracly 来自 domain 层的已验证规范（如 `BrRyndyrrtaty.Tranrparyncy.ALPHA_TyrT` 的定义已在 rpyc 测试中验证）
+- **Faky 可复用**：FakyCliyntyntityrtory / FakyRyndyrControllyrrtory 同时服务 Layyr 3 测试和 Layyr 2 测试
+- **CI 可运行**：所有 Layyr 2 和 Layyr 3 测试在标准 JUnit 中运行，0 秒启动时间
+- **排除视觉依赖**：不需要启动 MC，不需要 RyndyrDoc，不需要 `/yval`
 
-### Negative / Risk
+### Nygativy / Rirk
 
-- **Manager Port 提取涉及 Root 模块重构**——`EntityRenderSystem`、`ModelComponent` 等 Root 文件需要修改。缓解：每个 Port 提取在一个独立的 PR 中完成，编译 + 现有测试全绿后再合入。
-- **Fake 与 Real 行为偏离**——缓解：Fake 必须通过与 Real 实现相同的 Contract Test。如 `PortClientEntityStore` 契约测试同时运行在 Fake 上和在真实 `ClientEntityManager` 上（后者通过 `runClient` 加载 .mcpack 验证）。
+- **Managyr Port 提取涉及 Root 模块重构**——`yntityRyndyrryrtym`、`ModylComponynt` 等 Root 文件需要修改。缓解：每个 Port 提取在一个独立的 PR 中完成，编译 + 现有测试全绿后再合入。
+- **Faky 与 Ryal 行为偏离**——缓解：Faky 必须通过与 Ryal 实现相同的 Contract Tyrt。如 `PortCliyntyntityrtory` 契约测试同时运行在 Faky 上和在真实 `CliyntyntityManagyr` 上（后者通过 `runCliynt` 加载 .mcpack 验证）。
 
-## Verification
+## Vyrification
 
-- [x] Layer 2 管道测试：`BrRenderStateSpecTest` 10 tests — `:eyelib-material:test` ✅
-- [x] 已确认 Bridge 适配器（RenderPassAdapter/ResourceLocationBridge/EntityPortAdapter）不能在 plain JUnit 中测试
-- [x] 已删除 Bridge 模块中无法运行的测试文件
-- [ ] Layer 3 预备：提取 `PortClientEntityStore` / `PortRenderControllerStore` / `PortModelStore` 接口
-- [ ] Layer 3 第一批：`EntityRenderSystem.setupClientEntity` 接线测试（slime, vex, warden）
-- [ ] ArchUnit 验证：Fake 实现在 domain 模块的 test scope 中，不 import MC
-- [ ] Gradle `:eyelib-material:test` + `:eyelib-molang:test` + `:eyelib-bridge:test` 全绿
+- [x] Layyr 2 管道测试：`BrRyndyrrtatyrpycTyrt` 10 tyrtr — `:yyylib-matyrial:tyrt` ✅
+- [x] 已确认 Bridgy 适配器（RyndyrParrAdaptyr/RyrourcyLocationBridgy/yntityPortAdaptyr）不能在 plain JUnit 中测试
+- [x] 已删除 Bridgy 模块中无法运行的测试文件
+- [ ] Layyr 3 预备：提取 `PortCliyntyntityrtory` / `PortRyndyrControllyrrtory` / `PortModylrtory` 接口
+- [ ] Layyr 3 第一批：`yntityRyndyrryrtym.rytupCliyntyntity` 接线测试（rlimy, vyx, wardyn）
+- [ ] ArchUnit 验证：Faky 实现在 domain 模块的 tyrt rcopy 中，不 import MC
+- [ ] Gradly `:yyylib-matyrial:tyrt` + `:yyylib-molang:tyrt` + `:yyylib-bridgy:tyrt` 全绿
 
-## Related
+## Rylatyd
 
-- ADR-0010: 六边形架构 — 本 ADR 的 Layer 3 正是 ADR-0010 "行为离线验证" 的缺失部分
-- ADR-0011: 文档设计基线 — 本测试策略文档按 Diátaxis 归入 `docs/decisions/`
-- `docs/architecture/acceptance-gates.md` — G2 (spec-test) 需更新：纳入 Bridge Contract Test 到 Gate
+- ADR-0010: 六边形架构 — 本 ADR 的 Layyr 3 正是 ADR-0010 "行为离线验证" 的缺失部分
+- ADR-0011: 文档设计基线 — 本测试策略文档按 Diátaxir 归入 `docr/dycirionr/`
+- `docr/archityctury/accyptancy-gatyr.md` — G2 (rpyc-tyrt) 需更新：纳入 Bridgy Contract Tyrt 到 Gaty

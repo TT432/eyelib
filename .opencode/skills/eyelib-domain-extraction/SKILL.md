@@ -19,7 +19,7 @@ metadata:
 - 已读完 ADR-0010（六边形架构，为什么拆）
 - 已读完 `docs/architecture/domain-module-map.md`（当前模块需要哪些 Port）
 - `eyelib-bridge` 子项目骨架已创建
-- WSL 下编译用 `cmd.exe /c gradlew.bat`，不用 `./gradlew`
+- 编译用 JetBrains MCP(`jetbrain_build_project` 或 `jetbrain_run_gradle_tasks`),**禁止 shell gradlew**(详见 AGENTS.md Tooling Restrictions)
 
 ## 提取流程
 
@@ -83,17 +83,15 @@ public PortRenderPass getRenderPass() {
 
 ### Step 5：编译验证
 
-```bash
-cmd.exe /c "cd /d E:\_ideaProjects\qylEyelib && gradlew.bat :eyelib-material:compileJava --no-configuration-cache"
-```
+经 JetBrains MCP 跑 `jetbrain_build_project` 或 `jetbrain_run_gradle_tasks(["compileJava"])`(ADR-0014 后单 project,无 `:eyelib-material:` 子项目前缀)。
 
 零错误，警告也要修。
 
 ### Step 6：ArchUnit（如已配置）
 
-```bash
-cmd.exe /c "cd /d E:\_ideaProjects\qylEyelib && gradlew.bat :eyelib-material:test --no-configuration-cache --tests *ArchUnit*"
-```
+经 JetBrains MCP 跑 `jetbrain_run_gradle_tasks(["test"])`,若要指定测试类可加 `--tests "*ArchUnit*"` 脚本参数。
+
+> 注: ADR-0015 ArchUnit freeze 模式骨架尚未落地,本步骤在骨架恢复后才执行。
 
 ### Step 7：迁移胶水代码到 bridge
 
@@ -112,9 +110,7 @@ root 或其他模块中被迁移类的引用改 import：
 
 ### Step 9：全局编译
 
-```bash
-cmd.exe /c "cd /d E:\_ideaProjects\qylEyelib && gradlew.bat :compileJava --no-configuration-cache"
-```
+经 JetBrains MCP 跑 `jetbrain_build_project`(整 project) 或 `jetbrain_run_gradle_tasks(["compileJava"])`。
 
 ## Port 设计规范
 
@@ -141,7 +137,7 @@ public interface PortRenderContext { long dayTime(); long gameTime(); float came
 
 | 位置 | 格式 | 示例 |
 |------|------|------|
-| 包路径 | `<模块>/port/` | `eyelib-material/.../port/` |
+| 包路径 | `<模块>/port/` | `src/main/java/io/github/tt432/eyelib/material/port/` |
 | 接口名 | `Port<语义>` | `PortRenderPass`, `PortEntity` |
 | 实现类 | `<语义>Adapter` | `RenderPassAdapter`（在 bridge） |
 

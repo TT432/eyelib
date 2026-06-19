@@ -1,4 +1,4 @@
-# Gap Analysis: behavior_entities
+﻿# Gap Analysis: behavior_entities
 
 **Date:** 2026-06-02
 **Scope:** Bedrock Add-On `minecraft:entity` (behavior entities) + `minecraft:spawn_rules`
@@ -196,7 +196,7 @@
 | `minecraft:entity.events` | ▢ raw | Raw ObjectValue 保留，无 typed sub-structure |
 | `minecraft:entity.extras` | ▢ raw | 所有未建模字段存入 extras ObjectValue |
 
-**代码位置:** `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BrBehaviorEntityFile.java`
+**代码位置:** `src/main/java/io/github/tt432/eyelib/importer/addon/BrBehaviorEntityFile.java`
 
 #### BrSpawnRule (eyelib-importer)
 
@@ -207,7 +207,7 @@
 | `description.population_control` | ✔ 已解析 | Typed string |
 | `conditions[*]` | ▢ raw | Raw `BedrockResourceValue.ObjectValue` list，所有 sub-components 无 typed 解析 |
 
-**代码位置:** `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BrSpawnRule.java`
+**代码位置:** `src/main/java/io/github/tt432/eyelib/importer/addon/BrSpawnRule.java`
 
 ### 2.2 Runtime 层面
 
@@ -229,7 +229,7 @@ public record BehaviorEntity(
 | `components` (顶层) | ✗ 缺失 | BehaviorEntity record 没有此字段，完全被丢弃 |
 | `description` | ✗ 缺失 | 非 identifier 的 description 字段全被丢弃 |
 
-**代码位置:** `eyelib-behavior/src/main/java/io/github/tt432/eyelibbehavior/BehaviorEntity.java`
+**代码位置:** `src/main/java/io/github/tt432/eyelib/behavior/BehaviorEntity.java`
 
 #### Registered Component Implementations
 
@@ -244,7 +244,7 @@ public record BehaviorEntity(
 | `minecraft:ambient_sound_interval` | ✗ 仅标记类 | `AmbientSoundInterval` | 无 CODEC (空 class) | ✗ 未注册 |
 | 其余 ~200+ 组件 | ✗ 未实现 | — | — | 均落入 `EmptyComponent` fallback |
 
-**代码位置:** `eyelib-behavior/src/main/java/io/github/tt432/eyelibbehavior/component/group/ComponentGroup.java` (dispatch table lines 27-43)
+**代码位置:** `src/main/java/io/github/tt432/eyelib/behavior/component/group/ComponentGroup.java` (dispatch table lines 27-43)
 
 #### Event Logic Node Types (LogicNode.CODEC dispatch)
 
@@ -268,7 +268,7 @@ public record BehaviorEntity(
 | `execute_event_on_home_block` | ✗ 未实现 | — |
 | `reset_target` | ✗ 未实现 | — |
 
-**代码位置:** `eyelib-behavior/src/main/java/io/github/tt432/eyelibbehavior/event/logic/LogicNode.java`
+**代码位置:** `src/main/java/io/github/tt432/eyelib/behavior/event/logic/LogicNode.java`
 
 #### Filter System (eyelib-behavior)
 
@@ -294,7 +294,7 @@ public record BehaviorEntity(
 | `EntityEvent` class | ✗ 空标记 | 无实际功能 |
 | `EntitySpawned` class | ✗ 空标记 | 无实际功能 |
 
-**代码位置:** `eyelib-behavior/src/main/java/io/github/tt432/eyelibbehavior/EntityBehaviorData.java`
+**代码位置:** `src/main/java/io/github/tt432/eyelib/behavior/EntityBehaviorData.java`
 
 ### 2.3 Runtime Bridge (BehaviorEntityAssetRegistry → BehaviorEntityManager)
 
@@ -324,15 +324,15 @@ public record BehaviorEntity(
 | Runtime manager | ✗ 未实现 | 无 `SpawnRuleManager` 用于查询 |
 | Spawn execution | ✗ 未实现 | 无任何 spawn logic |
 
-**代码位置:** `eyelib-importer/src/main/java/io/github/tt432/eyelibimporter/addon/BrSpawnRule.java`
+**代码位置:** `src/main/java/io/github/tt432/eyelib/importer/addon/BrSpawnRule.java`
 
 ### 2.5 Test Coverage
 
 | Module | Test files for behavior entities | Status |
 |--------|--------------------------------|--------|
-| `eyelib-behavior/src/test/` | Directory does not exist | ✗ 无 |
+| `src/test/java/io/github/tt432/eyelib/behavior/` | Directory does not exist | ✗ 无 |
 | `src/test/java/` | 0 files matching behavior entity patterns | ✗ 无 |
-| `eyelib-importer/src/test/` | 0 files for behavior entities | ✗ 无 |
+| `src/test/java/io/github/tt432/eyelib/importer/` | 0 files for behavior entities | ✗ 无 |
 
 ---
 
@@ -460,7 +460,7 @@ public record BehaviorEntity(
 
 **严重程度:** 根本性
 
-**描述:** 整个 behavior entity 子系统没有任何单元测试或集成测试。`eyelib-behavior/src/test/` 目录不存在。`eyelib-importer` 和 `src/test` 中也没有与 behavior entity 相关的测试。
+**描述:** 整个 behavior entity 子系统没有任何单元测试或集成测试。`src/test/java/io/github/tt432/eyelib/behavior/` 目录不存在。`eyelib-importer` 和 `src/test` 中也没有与 behavior entity 相关的测试。
 
 ---
 
@@ -511,12 +511,12 @@ return "BehaviorEntity fields: " + String.join(", ", fieldNames);
 **请求体:**
 ```java
 import io.github.tt432.eyelib.client.manager.BehaviorEntityManager;
-import io.github.tt432.eyelibbehavior.BehaviorEntity;
-import io.github.tt432.eyelibbehavior.component.Component;
+import io.github.tt432.eyelib.behavior.BehaviorEntity;
+import io.github.tt432.eyelib.behavior.component.Component;
 
 var mgr = BehaviorEntityManager.INSTANCE;
 // 检查已注册的所有 Component 类型
-var registry = io.github.tt432.eyelibbehavior.component.group.ComponentGroup.CODEC;
+var registry = io.github.tt432.eyelib.behavior.component.group.ComponentGroup.CODEC;
 // 通过反射获取 dispatch 注册的具体类型
 return "Component dispatch is codec-based; checking known components...";
 ```
@@ -531,7 +531,7 @@ return "Component dispatch is codec-based; checking known components...";
 ```java
 // 尝试构建带 trigger 的事件
 try {
-    var triggerCodec = io.github.tt432.eyelibbehavior.event.logic.LogicNode.CODEC;
+    var triggerCodec = io.github.tt432.eyelib.behavior.event.logic.LogicNode.CODEC;
     // 只有 add/remove/sequence/randomize 四种
     return "LogicNode dispatch types: add, remove, sequence, randomize";
 } catch (Exception e) {
@@ -548,7 +548,7 @@ try {
 **请求体:**
 ```java
 import io.github.tt432.eyelib.client.manager.BehaviorEntityManager;
-import io.github.tt432.eyelibbehavior.component.EmptyComponent;
+import io.github.tt432.eyelib.behavior.component.EmptyComponent;
 
 var mgr = BehaviorEntityManager.INSTANCE;
 var entity = mgr.get("minecraft:zombie");
@@ -579,7 +579,7 @@ return "Total components in groups: " + total + ", EmptyComponent: " + emptyCoun
 **请求体:**
 ```java
 // spawn rules 存储在 BedrockAddonPack 中但不发布到运行时
-var packs = io.github.tt432.eyelibimporter.addon.BedrockAddonLoader.getLoadedAddons();
+var packs = io.github.tt432.eyelib.importer.addon.BedrockAddonLoader.getLoadedAddons();
 if (packs == null || packs.isEmpty()) return "NO_ADDONS";
 int count = 0;
 for (var pack : packs) {
@@ -615,7 +615,7 @@ return "Loaded spawn_rules=" + count + ", runtime_registry_exists=" + hasRuntime
    - 设计可扩展的 component 注册机制（类似 Minecraft 的 `DeferredRegister`）
 
 3. **GAP-BE-010: 创建基础测试覆盖**
-   - `eyelib-behavior/src/test/` 创建单元测试目录
+   - `src/test/java/io/github/tt432/eyelib/behavior/` 创建单元测试目录
    - Codec 解析测试、LogicNode eval 测试、EntityBehaviorData 测试
 
 ### P1 — 严重的功能差距
@@ -683,16 +683,16 @@ return "Loaded spawn_rules=" + count + ", runtime_registry_exists=" + hasRuntime
 | Mojang Creator 文档：`/mnt/e/_____基岩版文档/minecraft-creator/` | 官方 Creator 参考 |
 | Bedrock Wiki：`/mnt/e/_____基岩版文档/bedrock-wiki/docs/` | 社区整理的行为实体参考 |
 | `/eval` endpoint（见 `eyelib-debug` skill） | 调试 /eval HTTP endpoint 使用 |
-| `eyelib-importer/.../BrBehaviorEntityFile.java` | Importer 端 Behavior Entity codec |
-| `eyelib-importer/.../BrSpawnRule.java` | Importer 端 Spawn Rule codec |
-| `eyelib-behavior/.../BehaviorEntity.java` | Runtime Behavior Entity 模型 |
-| `eyelib-behavior/.../EntityBehaviorData.java` | 运行时行为数据容器 |
-| `eyelib-behavior/.../component/group/ComponentGroup.java` | ComponentGroup codec (dispatch table) |
-| `eyelib-behavior/.../component/Component.java` | 组件接口 |
-| `eyelib-behavior/.../event/logic/LogicNode.java` | 事件节点 dispatch |
-| `eyelib-behavior/.../event/filter/Filter.java` | 过滤器接口 |
-| `eyelib-behavior/.../event/filter/base/BaseFilter.java` | 过滤器基类 |
-| `eyelib-behavior/.../event/filter/ComplexFilter.java` | 复合过滤器 |
+| `src/main/java/io/github/tt432/eyelib/importer/BrBehaviorEntityFile.java` | Importer 端 Behavior Entity codec |
+| `src/main/java/io/github/tt432/eyelib/importer/BrSpawnRule.java` | Importer 端 Spawn Rule codec |
+| `src/main/java/io/github/tt432/eyelib/behavior/BehaviorEntity.java` | Runtime Behavior Entity 模型 |
+| `src/main/java/io/github/tt432/eyelib/behavior/EntityBehaviorData.java` | 运行时行为数据容器 |
+| `src/main/java/io/github/tt432/eyelib/behavior/component/group/ComponentGroup.java` | ComponentGroup codec (dispatch table) |
+| `src/main/java/io/github/tt432/eyelib/behavior/component/Component.java` | 组件接口 |
+| `src/main/java/io/github/tt432/eyelib/behavior/event/logic/LogicNode.java` | 事件节点 dispatch |
+| `src/main/java/io/github/tt432/eyelib/behavior/event/filter/Filter.java` | 过滤器接口 |
+| `src/main/java/io/github/tt432/eyelib/behavior/event/filter/base/BaseFilter.java` | 过滤器基类 |
+| `src/main/java/io/github/tt432/eyelib/behavior/event/filter/ComplexFilter.java` | 复合过滤器 |
 | `src/main/java/.../registry/BehaviorEntityAssetRegistry.java` | Runtime bridge 转换 |
 | `src/main/java/.../loader/VanillaBehaviorEntityLoader.java` | Vanilla 实体加载器 |
 | `src/main/java/.../manager/BehaviorEntityManager.java` | Runtime 管理器 |

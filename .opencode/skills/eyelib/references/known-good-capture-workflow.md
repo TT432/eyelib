@@ -4,22 +4,24 @@
 
 ## 前置条件
 
-- `build/moddev/runClient.cmd` 已通过 `createLaunchScripts` 生成
+- `build/moddev/runClient.cmd` 已通过 `createLaunchScripts` 生成(经 JetBrains MCP)
 - 无僵尸进程占用 port 25999
 
-```bash
-cmd.exe /c "netstat -ano | findstr 25999"  # 查僵尸
+```powershell
+netstat -ano | findstr 25999  # 查僵尸
 ```
 
 ## 完整命令序列
 
+> 以下 curl 步骤既可在 PowerShell(`curl.exe ...`) 也可在 WSL bash(`curl ...`)执行。MCP 工具(`eyelib_debug_*`) 是首选,本文是 fallback。
+
 ### 1. 启动 RenderDoc capture 模式
 
-```bash
-cd /mnt/e/_ideaProjects/qylEyelib && unset JAVA_HOME && WSLENV= \
-  /mnt/e/RenderDoc/renderdoccmd.exe capture \
-  -c eyelib_capture --opt-hook-children \
-  "E:\\_ideaProjects\\qylEyelib\\build\\moddev\\runClient.cmd"
+```powershell
+Set-Location E:\_ideaProjects\qylEyelib
+& "E:\RenderDoc\renderdoccmd.exe" capture `
+    -c eyelib_capture --opt-hook-children `
+    "E:\_ideaProjects\qylEyelib\build\moddev\runClient.cmd"
 ```
 
 使用 `background=true, notify_on_complete=false`（永不退出的长进程，静默运行正确）。
@@ -112,8 +114,10 @@ return "done";' | curl ...
 
 ### 8. 确认 .rdc 生成
 
-```bash
-find /mnt/e/_ideaProjects/qylEyelib/ -name "*.rdc" -newer /mnt/e/_ideaProjects/qylEyelib/ -maxdepth 3
+```powershell
+Get-ChildItem -Path E:\_ideaProjects\qylEyelib -Filter "*.rdc" -Recurse -Depth 3 |
+    Where-Object { $_.LastWriteTime -gt (Get-Date).AddMinutes(-5) } |
+    Select-Object FullName, LastWriteTime
 ```
 
 ## 陷阱
@@ -123,7 +127,7 @@ find /mnt/e/_ideaProjects/qylEyelib/ -name "*.rdc" -newer /mnt/e/_ideaProjects/q
 | 暂停未取消 | 截到黑屏/冻结帧 | `mc.setScreen(null)` |
 | 史莱姆掉进虚空 | pos.y=负数, shouldRender=true 但不可见 | `setPos` 用玩家 y 值 |
 | Zombie 端口 | /ping 秒回, GPU=llvmpipe | `taskkill /F /PID` |
-| JAVA_HOME 泄漏 | Linux GLFW, GPU 不对 | `unset JAVA_HOME` |
+| JAVA_HOME 泄漏 (历史, WSL 时代) | Linux GLFW, GPU 不对 | Windows PowerShell 已无此问题 |
 
 ## 典型耗时
 

@@ -1,7 +1,7 @@
-# Molang AST And Semantics Draft
+﻿# Molang AST And Semantics Draft
 
 ## Purpose
-- This document turns `molang-syntax-baseline.md` into a draft architecture for the next-generation `eyelib-molang` frontend and semantic core.
+- This document turns `molang-syntax-baseline.md` into a draft architecture for the next-generation `molang` frontend and semantic core.
 - It focuses on:
   - AST shape,
   - semantic binding,
@@ -16,10 +16,10 @@
 - If the two conflict, the syntax baseline wins unless we explicitly revise it.
 
 ## Repository-Specific Boundary Constraints
-- Active engine ownership is `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/`.
-- `src/main/java/io/github/tt432/eyelib/molang/` remains a legacy marker/handoff path only and is not the destination for new handwritten engine design.
-- `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/` was the generated parser zone; it has been removed. The handwritten recursive-descent parser is now the sole frontend.
-- Platform/query/lifecycle wiring stays root-owned under `src/main/java/io/github/tt432/eyelib/mc/impl/molang/**`; host injection examples in this document describe engine-side contracts, not permission to move Minecraft/Forge bindings into `:eyelib-molang`.
+- Active engine ownership is `src/main/java/io/github/tt432/eyelib/molang/`.
+- ADR-0014 flat-merge 后，原 `eyelib-molang` 子项目已合并为单 project 下的 `molang` 包。
+- Minecraft/Forge 平台桥接代码在 `src/main/java/io/github/tt432/eyelib/bridge/molang/`（参见 [ADR-0010](../../decisions/0010-hexagonal-architecture.md) Port 设计 + [ADR-0015](../../decisions/0015-stonecutter-multi-version.md) `//?` 注释栖息地）。
+- 引擎代码内部不再有 `generated/` 区（ANTLR 已删除，手写递归下降解析器是唯一前端）。
 - If future design work changes engine/platform ownership, `MODULES.md`, `docs/decisions/`, and architecture boundary docs must be updated together.
 
 ---
@@ -393,7 +393,7 @@ flowchart TD
 ## 14. Proposed Package-Level Direction
 
 ```text
-io.github.tt432.eyelibmolang
+io.github.tt432.eyelib.molang
 ├── syntax/
 │   ├── lexer/
 │   ├── parser/

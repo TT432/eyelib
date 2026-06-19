@@ -1,4 +1,4 @@
-# Callable Discovery And Annotation Draft
+﻿# Callable Discovery And Annotation Draft
 
 ## Purpose
 - This document defines how implementation methods become engine-visible callable descriptors.
@@ -16,7 +16,7 @@
   - how one discovered declaration becomes either a host callable or a query variant.
 
 ## Repository Boundary Reminder
-- Discovery contracts may live in `:eyelib-molang`.
+- Discovery contracts may live in `molang` package.
 - Platform-specific discovery wiring still belongs in root-side bootstrap/lifecycle code.
 - This draft does not require reflection-based scanning to happen inside core engine code; it only defines the shape of what discovery must produce.
 

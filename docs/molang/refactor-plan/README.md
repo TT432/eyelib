@@ -1,4 +1,4 @@
-# Eyelib Molang 语法解析器重构计划
+﻿# Eyelib Molang 语法解析器重构计划
 
 ## 目的
 
@@ -34,8 +34,8 @@
 
 1. **可证明性**：每个修复必须有对应的测试，测试失败则修复不完整
 2. **JetBrains MCP 强制**：所有 Gradle 命令必须通过 `jetbrain_run_gradle_tasks` 执行
-3. ~~**generated/ 只读**：不得编辑 `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/`~~ (历史规则：该目录已随 ANTLR 移除而删除)
-4. **增量修改**：每步修改后运行 `jetbrain_run_gradle_tasks :eyelib-molang:test` 验证
+3. ~~**generated/ 只读**：不得编辑 `src/main/java/io/github/tt432/eyelib/molang/generated/`~~ (历史规则：该目录已随 ANTLR 移除而删除)
+4. **增量修改**：每步修改后运行 `jetbrain_run_gradle_tasks :1.20.1:test` 验证
 5. **测试先行**：每个问题先写失败的测试，再修复代码
 6. **ROADMAP 同步**：每次修改涉及 phase status/milestones/evidence 时更新 ROADMAP.md
 
@@ -50,5 +50,5 @@ P2（前端统一）──┘                P6（交叉验证）
 
 ## 验证命令
 
-- 单模块：`jetbrain_run_gradle_tasks :eyelib-molang:test`
-- 全量：`jetbrain_run_gradle_tasks :eyelib-molang:test :eyelib-importer:test :eyelib-preprocessing:test :test`
+- 单模块：`jetbrain_run_gradle_tasks :1.20.1:test`
+- 全量：`jetbrain_run_gradle_tasks :1.20.1:test :eyelib-importer:test :eyelib-preprocessing:test :test`

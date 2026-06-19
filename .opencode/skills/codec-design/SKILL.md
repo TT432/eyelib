@@ -1,4 +1,4 @@
----
+﻿---
 name: codec-design
 description: Design and implement Codec-based data transformations. Use when creating/refactoring Codecs for serialization, making loader/schema code Codec-driven, or separating I/O from data parsing. Reference NeoForge Codec docs at https://docs.neoforged.net/docs/datastorage/codecs
 ---
@@ -481,7 +481,7 @@ codec.parse(ops, json);
 
 ## 项目内 Codec 工具引用
 
-本项目的通用 Codec 工具位于 `eyelib-util/src/main/java/io/github/tt432/eyelibutil/codec/`：
+本项目的通用 Codec 工具位于 `src/main/java/io/github/tt432/eyelib/util/codec/`：
 
 | 工具 | 用途 |
 |------|------|

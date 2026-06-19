@@ -2,22 +2,24 @@
 
 ## Start Here
 - Read :docs/README.md: for the full documentation system navigation.
-- Read :MODULES.md: before planning structural or multi-module changes.
+- Read :MODULES.md: before planning structural or multi-module changes. (Auto-generated from `*/package-info.java`; regenerate via `:generateModulesMd`.)
 - Read the nearest `package-info.java` for package-level orientation.
 - For boundary decisions, read :docs/decisions/0002-module-boundaries.md:.
 
 ## Repository Shape
-- Single-project :Gradle + Java 17 + Forge: codebase. All source under `src/main/java/io/github/tt432/eyelib/<module>/`, modules separated by package convention (see :docs/decisions/0014-flat-merge.md:). `clientsmoke/` is a composite build (smoke test framework), not part of the main project.
-- The authoritative module inventory is :MODULES.md:. Package boundaries (`io.github.tt432.eyelib.<module>`) define the real architecture.
-- Preserve existing core patterns: manager, loader, visitor, and codec.
+- **实际架构**: 六边形(Ports & Adapters) + 包边界模块化单体 + ECS + Stonecutter 多版本。**不是 DDD** —— 无 Aggregate/Repository/Domain Event 等战术模式;是 Bedrock 规范复刻,战略 DDD 的限界上下文思想体现在包边界上。详见 :docs/decisions/0002-module-boundaries.md:。
+- **构建模型**: 单 Gradle project(:docs/decisions/0014-flat-merge.md:),通过 :Stonecutter: `centralScript` 同时维护多版本 MC(当前 `1.20.1` legacyforge + `1.21.1` neoforge)。`clientsmoke/` 是 composite build(烟雾测试框架),不属于主 project。
+- **源码布局**: 全部源码在 `src/main/java/io/github/tt432/eyelib/<module>/`,包边界(`io.github.tt432.eyelib.<module>`)定义真实架构。模块包不得依赖 root 编排包(`io.github.tt432.eyelib.client`、`io.github.tt432.eyelib.common`)。
+- **模块清单**: :MODULES.md: 由 `:generateModulesMd` 从 `src/main/java/io/github/tt432/eyelib/*/package-info.java` **自动生成**,不得手编。
+- **核心模式**: 保留现有的 manager / loader / visitor / codec 模式。
 
 ## Editing Rules
 - Do not touch unrelated uncommitted changes.
 - Prefer narrow edits over broad package churn.
 - Do not add code to ambiguous areas without first documenting the destination responsibility.
-- Before each change, identify which modules in :MODULES.md: are affected. Update :MODULES.md: in the same change if responsibility, paths, or interactions change.
-- If a module is added or removed, update :MODULES.md: and any impacted docs in the same change.
-- Package boundaries (`io.github.tt432.eyelib.<module>`) define the real architecture. A module package must not depend on root orchestration packages (`io.github.tt432.eyelib.client`, `io.github.tt432.eyelib.common`).
+- Before each change, identify which modules in :MODULES.md: are affected.
+- Module responsibility lives in each `package-info.java`'s first Javadoc paragraph. To update MODULES.md, edit the relevant `package-info.java` and run `:generateModulesMd` (via JetBrains MCP, never shell `gradlew`). Never hand-edit MODULES.md.
+- If a module is added or removed (a new top-level package under `eyelib/`), its `package-info.java` is mandatory — `:generateModulesMd` fails on missing files. Update any impacted docs in the same change.
 
 ## Comment Rules
 
@@ -110,14 +112,33 @@ import org.jspecify.annotations.NullMarked;
 - **Structure/code changes:** build via JetBrains MCP and require exit code :0: before claiming completion.
 - **Runtime-sensitive changes:** compile first, then use the existing dev client flow for smoke checks.
 
-## Generated Code (Historical — ANTLR Removed)
-- `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/` has been removed along with all ANTLR-generated parser artifacts. The handwritten recursive-descent parser is the sole frontend.
-- `src/main/java/io/github/tt432/eyelib/molang/mapping/MolangQuery.java` holds root-coupled query functions (animation controller, variant) that cannot move to `eyelib-molang`.
+## Documentation Sync Rules
+
+代码改动类型 → 必须同步的文档:
+
+| 代码改动 | 必须同步检查 |
+|---|---|
+| 新增/删除/重命名包 | 该包 `package-info.java`、`:MODULES.md:`(跑 `:generateModulesMd` 重生成)、`:docs/decisions/0002-module-boundaries.md:` |
+| 新增/删除/重命名顶层模块 | `:MODULES.md:`、`:docs/README.md:`、AGENTS.md Repository Shape |
+| 新增 ADR | `:docs/README.md:` ADR 索引、被修订的旧 ADR 头部加 `amended/superseded by` 标注 |
+| 改 `build.gradle` 依赖图 / `settings.gradle` / Stonecutter node | AGENTS.md Tooling Restrictions、`:docs/README.md:`(若结构变) |
+| Molang 阶段/里程碑/闸门变化 | `:docs/molang/ROADMAP.md:` |
+| 删除/重命名文件被 docs 引用 | grep 全 `docs/` + `AGENTS.md` + `MODULES.md` + 所有 `SKILL.md` |
+| 新增/删除 Skill | `:docs/README.md:` Skill 索引、AGENTS.md Skill Usage |
+
+提交前自检:
+1. 改动是否触发了上表任何一行? → 是 → 必须同步
+2. 同步后,grep 全仓库验证没有旧路径残留
+3. 文档-only PR:必须 grep 验证每个引用路径存在
 
 ## Tooling Restrictions
 - IntelliJ IDEA is the sole IDE. VS Code and Eclipse artifacts must never be committed.
 - **JDTLS is explicitly prohibited.** All tooling integration uses JetBrains MCP.
 - All Gradle commands must use JetBrains MCP (`jetbrain_build_project`, `jetbrain_run_gradle_tasks`). Never run `./gradlew` in shell.
+- **Stonecutter 多版本**:
+  - `build.gradle` 是 `centralScript`,每个 version node(`:1.20.1`、`:1.21.1`)都跑一次。版本特定代码用 `//?` 注释切分,放在 `versions/<mc-version>/` 下。
+  - active version 在 `stonecutter.gradle` 里(`stonecutter.active '1.20.1'`)。跑 task 用 node 前缀:`:1.20.1:test`、`:1.20.1:generateModulesMd` 等。
+  - 切 active version 后必须 sync IDE,否则 source set 显示错位。
 - **Game restarts**: close running clients via debug HTTP `/eval` → `minecraft.stop()`, never `kill` java processes from shell.
 - **Game startup**: use `jetbrain_run_gradle_tasks` with `["runClient"]`. Before starting, check port 25999 is free; if occupied, close the old instance first.
 
@@ -132,10 +153,6 @@ import org.jspecify.annotations.NullMarked;
 - When a recurring pitfall or workflow is discovered, decide which skill domain it belongs to (build, debug, renderdoc, clientsmoke). If no existing skill fits, create a new focused one.
 - Skills must be kept in sync with AGENTS.md: if a rule changes here, check whether skill docs need the same change.
 
-## Molang Roadmap
-- Read :docs/molang/ROADMAP.md: before planning or implementing Molang refactor work.
-- Update :docs/molang/ROADMAP.md: in the same change when Molang phase status, milestones, gates, ownership, verification commands, corpus layers, binder/runtime semantics, host/query behavior, policy/specialization/cache behavior, or cutover posture changes.
-
 ## Pitfall Records
 - Operational troubleshooting knowledge lives in the relevant skill (e.g. `eyelib-build` for build issues, `eyelib-debug` for rendering issues).
 - Each skill's "Common Pitfalls" section covers one class of problem per entry.
@@ -145,5 +162,5 @@ import org.jspecify.annotations.NullMarked;
 1. :AGENTS.md: (this file) — rules and conventions
 2. :docs/README.md: — documentation system navigation
 3. :MODULES.md: — module inventory and ownership
-4. Nearest package :README.md: (if exists)
+4. Nearest `package-info.java` for package-level orientation
 5. Only then the code files you need to change

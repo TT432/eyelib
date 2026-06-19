@@ -12,7 +12,7 @@ metadata:
 
 # Eyelib 开发
 
-项目路径 `/mnt/e/_ideaProjects/qylEyelib`，MC 1.20.1 / Forge 47.1.3 / Java 17。
+项目根 `E:\_ideaProjects\qylEyelib`。MC 1.20.1 / Forge 47.1.3 / Java 17,Stonecutter active = `1.20.1` + node `1.21.1`(详见 `eyelib-build` SKILL)。
 
 ## Skill 导航
 
@@ -29,9 +29,9 @@ metadata:
 
 写 spec-based 测试时，正确答案的来源排序（由高到低）：
 
-1. **Mojang Creator 文档** — `/mnt/e/_____基岩版文档/minecraft-creator/creator/Documents/`
+1. **Mojang Creator 文档** — `E:\_____基岩版文档\minecraft-creator\creator\Documents\`
 2. **.mcpack 真实数据** — `run/resourcepacks/*.mcpack`
-3. **Bedrock Wiki** — `/mnt/e/_____基岩版文档/bedrock-wiki/docs/`
+3. **Bedrock Wiki** — `E:\_____基岩版文档\bedrock-wiki\docs\`
 4. **项目内部 pitfall/ADR** — 二次加工，可能有滞后或偏差
 
 ## 跨域约束
@@ -47,21 +47,22 @@ metadata:
 
 ## Repomix 模块打包
 
-将模块源码打包为 AI 上下文：
+将模块源码打包为 AI 上下文:
 
-```bash
-# 单模块
-repomix --style markdown --output /tmp/eyelib-module-xxx.md \
-  --include "src/main/**" --ignore "build/**,.gradle/**" \
-  /mnt/e/_ideaProjects/qylEyelib/eyelib-xxx
+```powershell
+# 单包(取 src/main/java/io/github/tt432/eyelib/<pkg>/)
+repomix --style markdown --output <out.md> `
+  --include "src/main/java/io/github/tt432/eyelib/<pkg>/**" `
+  --ignore "build/**,.gradle/**" `
+  E:\_ideaProjects\qylEyelib
 
-# 全项目 (main-only, ~465K tokens)
-python scripts/repomix_main_only.py [/path/to/output.md]
+# 全项目 main-only (脚本自动发现 src/main 目录)
+python scripts\repomix_main_only.py [output.md]
 ```
 
-> ⚠️ repomix 的 `--include` 是 **AND** 逻辑，多个模式取交集。必须用 brace expansion 合并：`{src/main,eyelib-*/src/main}/**`，不要拆成多个 `--include`。
+> ⚠️ repomix 的 `--include` 是 **AND** 逻辑,多个模式取交集。需要并集时用 brace expansion 合并: `{src/main,clientsmoke/src/main}/**`,不要拆成多个 `--include`。
 
-模块→token 对照表详见 `references/repomix-module-packing.md`。
+ADR-0014 后是单 project,只有 `src/main` 一个根模块源集 + `clientsmoke/src/main`(composite build)。包粒度(`io.github.tt432.eyelib.<pkg>`)在 `src/main/java/...` 目录下。详见 `references/repomix-module-packing.md`(注:该 reference 内 token 表是 ADR-0014 之前 14 子项目时代数据,结构数据已过期,但脚本与 pitfall 仍适用)。
 
 ## ECS 架构：ComponentStore 模式
 
@@ -106,7 +107,7 @@ ComponentStore  ← 所有 System 的唯一数据交汇点
 - **Alpha/颜色**：`references/bedrock-alpha-cutout-threshold.md`、`references/alpha-clamp-two-path.md`、`references/vertex-color-hardcoding.md`、`references/bedrock-box-uv-floor.md`
 - **RenderDoc**：`references/known-good-capture-workflow.md`、`references/renderdoc-mcp.md`、`references/renderdoc-windows-replay.md`
 - **Behavior**：`references/behavior-component-pitfalls.md`、`references/behavior-runtime-testing.md`、`references/behavior-component-spec-location.md`
-- **Molang**：`references/molang-spec-driven-testing.md`、`references/molang-antlr-removal.md`、`references/molang-scope-eval-debugging.md`、`references/molang-junit-testing.md`、`references/molang-bytecode-semantics.md`、`references/molang-formal-proof.md`
+- **Molang**：`references/molang-spec-driven-testing.md`、`references/molang-scope-eval-debugging.md`、`references/molang-junit-testing.md`、`references/molang-bytecode-semantics.md`、`references/molang-formal-proof.md`
 - **网络/ClassLoader**：`references/network-cce-classloader-root-cause.md`、`references/cross-classloader-network-diagnostics.md`、`references/forge-transformer-network-channel.md`
 - **架构/Domain**：`references/domain-extraction-pitfalls.md`、`references/hexagonal-port-extraction.md`、`references/port-extraction-lessons.md`、`references/stonecutter-multiversion-patterns.md`
 - **文档**：`references/doc-audit-checklist.md`、`references/documentation-design-baseline.md`

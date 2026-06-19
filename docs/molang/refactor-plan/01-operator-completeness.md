@@ -1,4 +1,4 @@
-# P1：运算符完整性 — 补全缺失的比较运算符
+﻿# P1：运算符完整性 — 补全缺失的比较运算符
 
 **Status: ✅ Done** (all 6 comparison operators added to handwritten parser; ANTLR-generated parser no longer exists for differential testing)
 
@@ -9,7 +9,7 @@
 ## 可证明证据
 
 **证据链 E1** — 手写词法分析器 `TokenKind` 枚举：
-- 文件：`eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/compiler/frontend/HandwrittenMolangAstParserFrontend.java`
+- 文件：`src/main/java/io/github/tt432/eyelib/molang/compiler/frontend/HandwrittenMolangAstParserFrontend.java`
 - 行602-633：定义25种TokenKind，包含 `GREATER`、`EQUAL_EQUAL`、`BANG_EQUAL`，**不包含 `LESS`、`LESS_EQUAL`、`GREATER_EQUAL`**
 
 **证据链 E2** — 手写解析器 `parseComparison()` 方法：
@@ -20,12 +20,12 @@ while (match(TokenKind.GREATER, TokenKind.EQUAL_EQUAL, TokenKind.BANG_EQUAL)) {
 仅匹配三种比较运算符。
 
 **证据链 E3** — ANTLR语法中的比较运算符（历史参考：该文件已随 ANTLR 移除而删除）：
-- 文件：`eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/MolangParser.java`
+- 文件：`src/main/java/io/github/tt432/eyelib/molang/generated/MolangParser.java`
 - 行19-24：`T__11='<'`, `T__12='<='`, `T__13='>='`, `T__14='>'`
 - 行638-653：`ComparisonOperatorContext` 匹配全部四种运算符
 
 **证据链 E4** — 字节码发射器已就绪：
-- 文件：`eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/compiler/MolangBytecodeEmitter.java`
+- 文件：`src/main/java/io/github/tt432/eyelib/molang/compiler/MolangBytecodeEmitter.java`
 - 行297-315：`emitComparison()` 方法包含 `<`、`<=`、`>`、`>=` 四个case：
 ```java
 case "<" -> code.iflt(trueLabel);
@@ -137,7 +137,7 @@ while (match(TokenKind.LESS, TokenKind.LESS_EQUAL, TokenKind.GREATER, TokenKind.
 
 ### Step 4：验证
 
-运行：`jetbrain_run_gradle_tasks :eyelib-molang:test`
+运行：`jetbrain_run_gradle_tasks :1.20.1:test`
 预期：六个参数化测试全部通过 + 现有测试无回归。
 
 ### Step 5：添加差异测试
@@ -153,6 +153,6 @@ while (match(TokenKind.LESS, TokenKind.LESS_EQUAL, TokenKind.GREATER, TokenKind.
 - [ ] Step 2：TokenKind 枚举添加 LESS、LESS_EQUAL、GREATER_EQUAL
 - [ ] Step 2：readPunctuationOrOperator() 添加 "<=", ">=", "<" 分支
 - [ ] Step 3：parseComparison() 的 match 调用包含全部6个运算符
-- [ ] Step 4：`jetbrain_run_gradle_tasks :eyelib-molang:test` 通过
+- [ ] Step 4：`jetbrain_run_gradle_tasks :1.20.1:test` 通过
 - [ ] Step 5：差异测试类创建并通过
 - [ ] 更新 ROADMAP.md Phase 2 KR 状态

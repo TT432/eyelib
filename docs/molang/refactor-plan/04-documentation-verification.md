@@ -1,4 +1,4 @@
-# P4：文档验证 — 消除文档漂移
+﻿# P4：文档验证 — 消除文档漂移
 
 ## 问题类型
 
@@ -21,19 +21,13 @@
 验证命令：
 ```bash
 # 在 E:\_ideaProjects\qylEyelib 下执行
-ls eyelib-molang/src/test/java/io/github/tt432/eyelibmolang/mapping/MolangQueryBindLinkContractTest.java
+ls src/test/java/io/github/tt432/eyelib/molang/mapping/MolangQueryBindLinkContractTest.java
 # → File not found
 ```
 
-### 证据 E2 — 路径漂移
+### 证据 E2 — 路径漂移（已修复）
 
-ROADMAP 提到以下文件在 `eyelibmolang/` 根包，实际在 `eyelibmolang/compiler/` 下：
-
-| ROADMAP 声称路径 | 实际路径 |
-|---|---|
-| `eyelibmolang/MolangBytecodeEmitter.java` | `eyelibmolang/compiler/MolangBytecodeEmitter.java` |
-| `eyelibmolang/MolangCompilerImpl.java` | `eyelibmolang/compiler/MolangCompilerImpl.java` |
-| `eyelibmolang/MolangRuntimeSupport.java` | `eyelibmolang/compiler/MolangRuntimeSupport.java` |
+历史问题：ROADMAP 旧版曾把 `MolangBytecodeEmitter.java`、`MolangCompilerImpl.java`、`MolangRuntimeSupport.java` 标在 `eyelibmolang/` 根包，实际它们一直在 `eyelibmolang/compiler/` 下。ADR-0014 flat-merge 后这些文件统一在 `src/main/java/io/github/tt432/eyelib/molang/compiler/`，ROADMAP 已同步更新。
 
 ### 证据 E3 — 状态矛盾
 
@@ -43,12 +37,12 @@ ROADMAP 第113行：`"MolangOwnerSet→HostContext migration (deferred, not yet 
 
 ### 证据 E4 — 死文档指针
 
-`docs/index/molang.md` 和 `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/README.md` 引用了不存在的 `compiler/diagnostic/` 目录。
+`docs/index/molang.md` 和 `src/main/java/io/github/tt432/eyelib/molang/README.md` 引用了不存在的 `compiler/diagnostic/` 目录。
 
 ### 证据 E5 — `compiler/diagnostic/` 目录不存在
 
 ```bash
-ls eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/compiler/diagnostic/
+ls src/main/java/io/github/tt432/eyelib/molang/compiler/diagnostic/
 # → 目录不存在
 ```
 
@@ -152,14 +146,14 @@ is not yet implemented. Partial migration: file deleted, semantic model pending.
 ### Step 4：删除死文档指针
 
 - 从 `docs/index/molang.md` 中移除 `compiler/diagnostic/` 引用
-- 从 `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/README.md` 中移除相应行
+- 从 `src/main/java/io/github/tt432/eyelib/molang/README.md` 中移除相应行
 
 ### Step 5：创建 `RoadmapDocVerificationTest.java`
 
 新增测试类，自动验证 ROADMAP.md 中的所有文件路径引用：
 
 ```java
-// 路径：eyelib-molang/src/test/java/io/github/tt432/eyelibmolang/doc/RoadmapDocVerificationTest.java
+// 路径：src/test/java/io/github/tt432/eyelib/molang/doc/RoadmapDocVerificationTest.java
 class RoadmapDocVerificationTest {
     @Test
     void allRoadmapFileClaimsExist() throws Exception {
@@ -182,7 +176,7 @@ class RoadmapDocVerificationTest {
 ### Step 6：运行验证
 
 ```bash
-jetbrain_run_gradle_tasks :eyelib-molang:test
+jetbrain_run_gradle_tasks :1.20.1:test
 ```
 
 ## 防漂移机制
@@ -198,7 +192,7 @@ jetbrain_run_gradle_tasks :eyelib-molang:test
 - [ ] Step 2：修复 ROADMAP.md 中3个缺失文件引用（选项C）
 - [ ] Step 3：更新 MolangOwnerSet 迁移状态描述
 - [ ] Step 4：从 docs/index/molang.md 移除 compiler/diagnostic/ 引用
-- [ ] Step 4：从 eyelib-molang README.md 移除 compiler/diagnostic/ 引用
+- [ ] Step 4：从 `molang/` 包 README（若存在）移除 compiler/diagnostic/ 引用
 - [ ] Step 5：创建 `RoadmapDocVerificationTest.java`
-- [ ] Step 6：`jetbrain_run_gradle_tasks :eyelib-molang:test` 通过
+- [ ] Step 6：`jetbrain_run_gradle_tasks :1.20.1:test` 通过
 - [ ] 确认 ROADMAP.md 不再引用不存在的文件

@@ -1,4 +1,4 @@
-# 结构文件格式对比：Bedrock .mcstructure vs Java Edition .nbt
+﻿# 结构文件格式对比：Bedrock .mcstructure vs Java Edition .nbt
 
 > 调查日期：2026-06-02
 > 范围：Bedrock `.mcstructure` NBT 格式 vs Java Edition `.nbt` 结构模板格式
@@ -211,11 +211,11 @@ blocks[3]: {
 
 | 组件 | 状态 | 路径 |
 |------|------|------|
-| `BedrockResourceFamily.classify` | ✅ `structures/` → `STRUCTURE` | `eyelib-importer/.../BedrockResourceFamily.java` |
-| `unmanagedReasonFor(STRUCTURE)` | ✅ `OUTSIDE_IMPORTER_SCOPE` | `eyelib-importer/.../BedrockAddonLoader.java:645` |
+| `BedrockResourceFamily.classify` | ✅ `structures/` → `STRUCTURE` | `src/main/java/io/github/tt432/eyelib/importer/BedrockResourceFamily.java` |
+| `unmanagedReasonFor(STRUCTURE)` | ✅ `OUTSIDE_IMPORTER_SCOPE` | `src/main/java/io/github/tt432/eyelib/importer/BedrockAddonLoader.java:645` |
 | 二进制资源捕获 | ✅ 落入 `captureUnmanaged` 分支 | `BedrockAddonLoader.java:822` |
-| `BedrockBinaryAsset` | ✅ 记录二进制文件 | `eyelib-importer/.../BedrockBinaryAsset.java` |
-| NBT 工具 | ✅ `EyelibStreamCodecs`（CompoundTag/Tag 编解码） | `eyelib-util/.../EyelibStreamCodecs.java` |
+| `BedrockBinaryAsset` | ✅ 记录二进制文件 | `src/main/java/io/github/tt432/eyelib/importer/BedrockBinaryAsset.java` |
+| NBT 工具 | ✅ `EyelibStreamCodecs`（CompoundTag/Tag 编解码） | `src/main/java/io/github/tt432/eyelib/util/EyelibStreamCodecs.java` |
 
 ### 4.2 缺失
 

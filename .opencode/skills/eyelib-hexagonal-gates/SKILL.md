@@ -1,4 +1,4 @@
----
+﻿---
 name: eyelib-hexagonal-gates
 description: Verify a hexagonal architecture refactoring batch — run ArchUnit isolation, spec-based tests, and RenderDoc integration checks per the G1→G2→G3 gate pipeline.
 license: MIT
@@ -36,7 +36,7 @@ G1: 编译隔离 ──→ G2: 行为正确 ──→ G3: 集成不退化
 ```java
 class ArchitectureRules {
     private static final JavaClasses classes = new ClassFileImporter()
-            .importPackages("io.github.tt432.eyelibmaterial");
+            .importPackages("io.github.tt432.eyelib.material");
 
     @Test
     void domainLayerHasNoMcDependency() {
@@ -44,7 +44,7 @@ class ArchitectureRules {
                 .that(DescribedPredicate.describe("not excluded",
                         c -> !(c.getSimpleName().equals("EyelibMaterialMod")
                                 || c.getSimpleName().equals("BrShaderMapping"))))
-                .and().resideInAPackage("io.github.tt432.eyelibmaterial..")
+                .and().resideInAPackage("io.github.tt432.eyelib.material..")
                 .should().dependOnClassesThat()
                 .resideInAPackage("net.minecraft..")
                 .check(classes);
@@ -54,9 +54,7 @@ class ArchitectureRules {
 
 ### 编译验证
 
-```bash
-cmd.exe /c "cd /d E:\_ideaProjects\qylEyelib && gradlew.bat :eyelib-material:compileJava --no-configuration-cache"
-```
+经 JetBrains MCP 跑 `jetbrain_build_project` 或 `jetbrain_run_gradle_tasks(["compileJava"])`(ADR-0014 后单 project,无 `:eyelib-material:` 子项目前缀)。
 
 判定：exit code 0 且无 `import net.minecraft` 错误。
 
@@ -95,10 +93,7 @@ void inheritOrder_lastWins() {
 
 ### 验证命令
 
-```bash
-cmd.exe /c "cd /d E:\_ideaProjects\qylEyelib && gradlew.bat :eyelib-material:test --no-configuration-cache"
-cmd.exe /c "cd /d E:\_ideaProjects\qylEyelib && gradlew.bat :eyelib-material:test --no-configuration-cache --tests \"*BrMaterialResolverTest\""
-```
+经 JetBrains MCP 跑 `jetbrain_run_gradle_tasks(["test"])`,若要指定测试类可加 `--tests "*BrMaterialResolverTest"` 脚本参数。
 
 判定：全部 GREEN。`UP-TO-DATE` 可接受（源码未变时 Gradle 跳过）。
 
@@ -137,6 +132,6 @@ List comps = (List) cap.getClass().getMethod("getModelComponents").invoke(cap);
 
 1. **ArchUnit 规则未在 build.gradle 加依赖** — 先确认 `testImplementation 'com.tngtech.archunit:archunit-junit5'`
 2. **@Mod bootstrap 类触发误报** — 在 ArchUnit 规则中用 `DescribedPredicate` 排除
-3. **WSL 下误用 `./gradlew`** — 必须用 Windows 侧 `gradlew.bat`，否则极慢
+3. **在 shell 跑 gradlew** — 必须经 JetBrains MCP(`jetbrain_build_project` / `jetbrain_run_gradle_tasks`),AGENTS.md 明确禁止任何形式的 shell gradlew(含 WSL `./gradlew` 和 Windows `gradlew.bat`)
 4. **Spec-based 测试 oracle 来自当前实现** — 这不是测试，是 pin 了 bug。oracle 必须来自规范
 5. **G3 在每批次都跑** — G3 只在最终集成时跑一次，日常不跑

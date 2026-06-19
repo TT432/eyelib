@@ -1,4 +1,4 @@
-# Molang Design Notes
+﻿# Molang Design Notes
 
 ## Documents
 - `molang-syntax-baseline.md`: source-backed syntax baseline and acceptance corpus for the rewrite discussion.
@@ -43,11 +43,10 @@
 19. `specialization-cache-contract-draft.md`
 
 ## Repository Context
-- Active engine code lives in `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/`.
-- `src/main/java/io/github/tt432/eyelib/molang/` is a legacy marker/handoff path only.
-- `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/` is generated/read-only during normal work.
-- Root `src/main/java/io/github/tt432/eyelib/mc/impl/molang/**` remains the platform wiring area; design work here should not blur engine-vs-platform ownership.
+- Active engine code lives in `src/main/java/io/github/tt432/eyelib/molang/`.
+- ADR-0014 flat-merge 后，原 `eyelib-molang` 子项目已合并为单 project 下的 `molang` 包。Minecraft/Forge 平台桥接代码在 `src/main/java/io/github/tt432/eyelib/bridge/molang/`（参见 [ADR-0010](../../decisions/0010-hexagonal-architecture.md) Port 设计）。
+- 引擎代码内部不再有 `generated/` 区（ANTLR 已删除，只剩手写递归下降解析器）。
 
 ## Scope
-- These documents are design drafts for the future `eyelib-molang` rewrite.
+- These documents are design drafts for the future `molang` package rewrite.
 - They are discussion artifacts, not implementation commitments.

@@ -1,4 +1,4 @@
-# P5：延迟语义 — 处理解析但未实现的构造
+﻿# P5：延迟语义 — 处理解析但未实现的构造
 
 ## 问题类型
 
@@ -8,7 +8,7 @@
 
 ### 证据 E1 — 绑定层标记延迟
 
-文件：`eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/compiler/binding/MolangBinder.java`
+文件：`src/main/java/io/github/tt432/eyelib/molang/compiler/binding/MolangBinder.java`
 
 | 行号 | AST输入 | 绑定输出 | 延迟原因 |
 |---|---|---|---|
@@ -21,7 +21,7 @@
 
 ### 证据 E2 — 字节码层静默返回null
 
-文件：`eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/compiler/MolangBytecodeEmitter.java`
+文件：`src/main/java/io/github/tt432/eyelib/molang/compiler/MolangBytecodeEmitter.java`
 
 行187-188：
 ```java
@@ -168,7 +168,7 @@ void deferredConstructsProduceNullAtRuntime(String source) {
 ### Step 4：运行验证
 
 ```bash
-jetbrain_run_gradle_tasks :eyelib-molang:test
+jetbrain_run_gradle_tasks :1.20.1:test
 ```
 
 ### 决策点
@@ -188,7 +188,7 @@ jetbrain_run_gradle_tasks :eyelib-molang:test
 - [ ] Step 1：NORMAL 模式对延迟构造产生 WARNING
 - [ ] Step 2：延迟构造运行时返回 null 的测试
 - [ ] Step 3：箭头访问代码添加语义注释
-- [ ] Step 4：`jetbrain_run_gradle_tasks :eyelib-molang:test` 通过
+- [ ] Step 4：`jetbrain_run_gradle_tasks :1.20.1:test` 通过
 - [ ] 决策：三元条件 `?:` → 实现或移除解析器支持
 - [ ] 决策：二元条件 `?` → 实现或移除
 - [ ] 决策：`loop()` → 实现或移除

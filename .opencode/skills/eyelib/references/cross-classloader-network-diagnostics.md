@@ -1,6 +1,8 @@
 # 跨 ClassLoader 网络注册诊断
 
-## 问题特征
+> ⚠️ **ADR-0014 后状态**: 本文档描述的根因(multi-project 时代 TRANSFORMER classloader 分裂)已**结构性消失**。`EyelibNetworkTransport` 现在在单 project 单 JAR 中,所有调用方共享同一份 class 与 static 状态。文档保留作为历史记录与反射诊断脚本的可复用参考。
+
+## 问题特征(ADR-0014 前)
 
 `ClassCastException: ExtraEntityUpdateDataPacket cannot be cast to AnimationComponentSyncPacket`
 发生在 `IndexedMessageCodec.tryEncode:121`（`encoder.accept(message, target)`）。

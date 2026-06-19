@@ -1,6 +1,6 @@
 # ADR-0004: Generated Code Policy
 
-**Status:** Superseded (ANTLR removed)  
+**Status:** Superseded (ANTLR removed) — **Also amended by [ADR-0014](0014-flat-merge.md)** (`eyelib-molang/` 子项目不再存在,路径 `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/` 已失效)  
 **Context:** The Molang parser generates code that should be visually and structurally distinct from handwritten compiler/runtime code to prevent accidental edits.  
 **Decision:** Isolate generated parser artifacts under `eyelib-molang/src/main/java/io/github/tt432/eyelibmolang/generated/`. Do not hand-edit generated files during normal work. Regeneration requires a clearly scoped task.  
 **Consequences:** Contributors and AI assistants can distinguish generated from handwritten code at a glance. The root `MolangQuery.java` stays root-coupled.

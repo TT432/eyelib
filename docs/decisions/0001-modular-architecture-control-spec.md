@@ -1,6 +1,6 @@
 # ADR-0001: Modular Architecture Control Spec
 
-**Status:** Accepted  
+**Status:** Accepted — **Amended by [ADR-0014](0014-flat-merge.md)** (multi-project 结构 → 单 Gradle project;模块边界仍由包边界 `io.github.tt432.eyelib.<module>` 维护)  
 **Context:** Eyelib is a bounded multi-project Forge project with one runtime root module plus focused functional subprojects. The codebase needs clear rules to govern refactoring work without causing architectural drift.  
 **Decision:** Adopt a refactor control spec defining scope, non-goals, execution rules, and forbidden moves.  
 **Consequences:** All structural changes must stay within the defined scope. Non-goals (full rewrite, opportunistic renaming, test-harness invention) are explicitly out of bounds.

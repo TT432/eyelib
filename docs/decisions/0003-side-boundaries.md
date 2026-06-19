@@ -1,6 +1,6 @@
 # ADR-0003: Side Boundaries (Client/Server Separation)
 
-**Status:** Accepted  
+**Status:** Accepted — **Amended by [ADR-0014](0014-flat-merge.md)** (`eyelib-network/` 子项目不再存在;network 改为 `io.github.tt432.eyelib.network` 包;Side 边界本身仍适用)  
 **Context:** Minecraft's client/server split requires clear side ownership to prevent classloader issues and accidental server-side rendering references.  
 **Decision:** Establish explicit client/server separation rules. All rendering, GUI, and model loading lives under `client/`. Common/shared logic under `common/`. Network transport under `network/`.  
 **Consequences:** Subprojects must not depend on root. Root may depend on subprojects for feature-owned side-specific logic.

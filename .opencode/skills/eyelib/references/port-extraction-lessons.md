@@ -1,4 +1,4 @@
-# Port 提取验证运行：经验教训
+﻿# Port 提取验证运行：经验教训
 
 > 2026-06-08，批次 1（eyelib-material）完成后的总结。
 
@@ -22,16 +22,15 @@
 
 ## 踩过的坑
 
-### 1. Forge dev 新子项目陷阱
+### 1. Forge dev 新子项目陷阱(ADR-0014 前历史)
 
-新建 `eyelib-bridge` 后启动游戏，Forge 报 `Missing mods list` 或 `constructed 0 mods but had 1 mods specified`。
+~~新建 `eyelib-bridge` 后启动游戏,Forge 报 `Missing mods list` 或 `constructed 0 mods but had 1 mods specified`。~~
 
-根因：Forge dev 的 classpath scanner 扫描所有 JAR，要求每个 JAR 有合法的 `[[mods]]` 声明 + `@Mod` 注解类。
+~~根因: Forge dev 的 classpath scanner 扫描所有 JAR,要求每个 JAR 有合法的 `[[mods]]` 声明 + `@Mod` 注解类。~~
 
-修复：
-- `mods.toml` 中保留 `[[mods]]` 和 `modId`
-- 添加 `@Mod("eyelibbridge")` 的空类
-- 根 `build.gradle` 加 `api`/`modImplementation`/`jarJar`
+~~修复: `mods.toml` 中保留 `[[mods]]` 和 `modId`、添加 `@Mod("eyelibbridge")` 的空类、根 `build.gradle` 加 `api`/`modImplementation`/`jarJar`。~~
+
+ADR-0014 后: bridge 是包,共享 root mod 声明,此陷阱已永久消失。
 
 ### 2. 循环依赖：domain → bridge ❌
 
@@ -52,10 +51,12 @@ eyelib-material 的 smoke test（MaterialPipelineSmoke）和 particle 的 Bedroc
 
 ### 4. 子代理导入错误的模块
 
-子代理在 BrMaterialEntry 中添加了 `import io.github.tt432.eyelibbridge.material.RenderTypeResolver`——违反了架构规则。domain 模块不能引用 bridge。
+子代理在 BrMaterialEntry 中添加了 `import io.github.tt432.eyelib.bridge.material.RenderTypeResolver`——违反了架构规则。domain 模块不能引用 bridge。
 
 教训：复杂任务中，关键约束（domain 不能依赖 bridge）需要在 task 描述中明确重复。
 
-### 5. 编译命令：WSL vs Windows
+### 5. 编译命令：必须经 JetBrains MCP
 
-WSL 下的 `./gradlew` 和 `java -cp ... GradleWrapperMain` 对 `/mnt/e/` 路径超时/挂死。Windows 侧的 `cmd.exe /c "cd /d E:\... && gradlew.bat ..."` 快 5-20×。
+历史教训: WSL 下的 `./gradlew` 和 `java -cp ... GradleWrapperMain` 对 `/mnt/e/` 路径超时/挂死; Windows 侧 `cmd.exe /c "... && gradlew.bat ..."` 虽然快但仍违反 AGENTS.md。
+
+现行规则(ADR-0014 + AGENTS.md Tooling Restrictions): **唯一允许的 Gradle 入口是 JetBrains MCP**(`jetbrain_build_project`、`jetbrain_run_gradle_tasks`),禁止任何形式的 shell gradlew。

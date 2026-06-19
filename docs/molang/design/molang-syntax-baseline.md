@@ -1,7 +1,7 @@
-# Molang Syntax Baseline
+﻿# Molang Syntax Baseline
 
 ## Purpose
-- This document defines the current baseline for discussing a future `eyelib-molang` rewrite.
+- This document defines the current baseline for discussing a future `molang` package rewrite.
 - It is **not** a formal grammar.
 - It separates:
   - **officially documented constructs**,

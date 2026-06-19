@@ -1,6 +1,6 @@
 # ADR-0008: ItemStack Track & Animation Rendering Design
 
-**Status:** Accepted  
+**Status:** Accepted — **Amended by [ADR-0014](0014-flat-merge.md)** (`eyelib-track` 子项目不再存在;track 改为 `io.github.tt432.eyelib.track` 包;per-ItemStack 追踪设计本身仍适用)  
 **Context:** ItemStack instances of the same type need per-instance animation state tracking (e.g. two swords each with independent animation progress). Item animation rendering also needs to integrate with the eyelib model rendering pipeline.  
 **Decision:** Create `eyelib-track` subproject for tracking ID infrastructure, with root module owning the cache and renderer. Use a `TrackableItem` interface for item declarations, lazy model loading, and cancellable Mixin-based item renderer integration.  
 **Consequences:** Per-ItemStack animation state is possible without server-side awareness of animation. Root-owned `ItemTrackRenderer` bridges the tracking layer and the rendering pipeline.

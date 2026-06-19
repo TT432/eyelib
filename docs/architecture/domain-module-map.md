@@ -1,4 +1,4 @@
-# Domain 模块映射：Port 清单、提取状态
+﻿# Domain 模块映射：Port 清单、提取状态
 
 > 配合 ADR-0010 使用。此文件记录当前 Port 接口的位置和提取进度。
 
@@ -43,10 +43,10 @@
 | `PortStringRepresentable` | eyelib-util | 替代 MC StringRepresentable，含 `fromEnum()` |
 | `PortResourceLocation` | eyelib-util | 纯数据 record（`of()`, `parse()`, `toString()`） |
 | `PortFriendlyByteBuf` | eyelib-util | 接口保留（暂未使用，StreamCodec 要求 MC 类型） |
-| `PortRenderPass` | eyelib-material/port/ | 渲染语义（`transparency()`, `disableCulling()`, `of()` 工厂） |
-| `PortEntity` | eyelib-molang/port/ | 实体属性查询 `Map<String, Object>` |
-| `PortLevel` | eyelib-molang/port/ | 世界属性（dayTime, gameTime, playerCount, moonPhase） |
-| `PortItemStack` | eyelib-molang/port/ | 物品栈属性（count, maxStackSize） |
+| `PortRenderPass` | src/main/java/io/github/tt432/eyelib/material/port/ | 渲染语义（`transparency()`, `disableCulling()`, `of()` 工厂） |
+| `PortEntity` | src/main/java/io/github/tt432/eyelib/molang/port/ | 实体属性查询 `Map<String, Object>` |
+| `PortLevel` | src/main/java/io/github/tt432/eyelib/molang/port/ | 世界属性（dayTime, gameTime, playerCount, moonPhase） |
+| `PortItemStack` | src/main/java/io/github/tt432/eyelib/molang/port/ | 物品栈属性（count, maxStackSize） |
 
 ## Port 复用矩阵
 

@@ -11,7 +11,7 @@
 
 ## 配置
 
-在 `~/.hermes/profiles/qyleyelib/config.yaml` 的 `mcp_servers` 下添加：
+在 opencode MCP 配置(`opencode.json` / `opencode.jsonc`,详见 `customize-opencode` skill)的 `mcp_servers` 段添加:
 
 ```yaml
 renderdoc:
@@ -23,7 +23,7 @@ renderdoc:
   timeout: 60
 ```
 
-重启 Hermes Agent 后工具以 `mcp_renderdoc_*` 前缀注册。
+重启 opencode 后工具以 `mcp_renderdoc_*` 前缀注册。
 
 ## 核心工具速查
 

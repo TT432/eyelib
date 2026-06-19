@@ -1,6 +1,8 @@
 # 网络 ClassCastException 根因与修复
 
-## 症状
+> ⚠️ **ADR-0014 后状态**: 本文档描述的根因(multi-project 时代 TRANSFORMER classloader 分裂)已**结构性消失**。`EyelibNetworkTransport` 现在在单 project 单 JAR 中,所有调用方共享同一份 class 与 static 状态,不会再出现"多份 EyelibNetworkTransport 各自 registerClientPacket"的场景。文档保留作为历史记录;`EyelibNetworkManager.register()` 集中注册的设计模式仍然适用。
+
+## 症状(ADR-0014 前)
 
 ```
 ClassCastException: ExtraEntityUpdateDataPacket cannot be cast to AnimationComponentSyncPacket

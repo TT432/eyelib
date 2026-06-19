@@ -93,7 +93,7 @@ Actions & Stuff 史莱姆 RC：
 
 | 文件 | 改动 |
 |---|---|
-| `eyelib-molang/.../MolangMapEntry.java` | **新建** — 有序键值对 record |
+| `src/main/java/io/github/tt432/eyelib/molang/.../MolangMapEntry.java` | **新建** — 有序键值对 record |
 | `RenderControllerEntry.java` | `materials` 字段 Map→List<MolangMapEntry>，`setupModel()` 简化 |
 | `BrRenderControllerEntry.java` | CODEC 保留顺序和重复键 |
 | `EntityRenderSystem.java` | `add` → `addAll` |

@@ -61,9 +61,9 @@ print(f"\neyelib contributed: {d_off - d_on} draws (cancelled vanilla)")
 
 ## 从 WSL 调用 Windows Python
 
-```bash
+```powershell
 # 先 write_file 写脚本，再执行
-cmd.exe /c C:\\Users\\<user>\\AppData\\Local\\Programs\\Python\\Python313\\python.exe E:\\path\\to\\script.py
+& "C:\Users\<user>\AppData\Local\Programs\Python\Python313\python.exe" E:\path\to\script.py
 ```
 
-注意 bash 转义——推荐先 `write_file` 写 Python 脚本到 `/mnt/e/...`，再 `cmd.exe /c` 执行。
+推荐先 `write_file` 写 Python 脚本到 `E:\...`,再用上面的命令执行。
