@@ -219,21 +219,12 @@ if (isLegacyForge) {
     }
 }
 
-// Fix ObfuscationExtension.reobfuscate() variant replacement (ModDevGradle ObfuscationExtension.java:123-147)
-// The original apiElements/runtimeElements are skipped and replaced with dependency-free reobf variants.
-// Restore proper dependency inheritance so published POMs carry correct transitive dependencies.
-allprojects {
-    afterEvaluate { p ->
-        p.configurations.matching { it.name == 'reobfApiElements' }.all { c ->
-            def apiCfg = p.configurations.findByName('api')
-            if (apiCfg) c.extendsFrom(apiCfg)
-        }
-        p.configurations.matching { it.name == 'reobfRuntimeElements' }.all { c ->
-            def rtCfg = p.configurations.findByName('runtimeClasspath')
-            if (rtCfg) c.extendsFrom(rtCfg)
-        }
-    }
-}
+// ModDevGradle ObfuscationExtension.reobfuscate() replaces apiElements/runtimeElements with
+// dependency-free reobf variants. This is correct for Forge mod distribution:
+// MC/Forge/mappings are provided by the game, jarJar deps are bundled in the jar.
+// Do NOT make reobfRuntimeElements extendFrom runtimeClasspath — it leaks MC internals
+// (mcp_config zip, forge artifacts) which break composite build consumers with variant
+// attribute conflicts (minecraft_mappings.v2 = 'srg').
 
 dependencies {
     // 显式添加 Lombok：neoForge plugin 的 ModDevGradle 可能重配置 annotationProcessorPath，
