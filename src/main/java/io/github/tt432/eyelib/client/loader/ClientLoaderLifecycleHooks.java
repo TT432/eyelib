@@ -8,14 +8,19 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.forgespi.language.ModFileScanData;
+//?} elif <26.1 {
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.neoforgespi.language.ModFileScanData;
 //?} else {
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
-//? if <26.1 {
-import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
-//?}
+import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforgespi.language.ModFileScanData;
 //?}
 import org.objectweb.asm.Type;
@@ -42,6 +47,23 @@ public final class ClientLoaderLifecycleHooks {
     //? if <26.1 {
     @SubscribeEvent
     public static void onRegisterClientReloadListeners(RegisterClientReloadListenersEvent event) {
+        registerAnnotatedListeners((key, listener) -> event.registerReloadListener(listener));
+        event.registerReloadListener(new BedrockAddonAutoLoader());
+    }
+    //?} else {
+    @SubscribeEvent
+    public static void onAddClientReloadListeners(AddClientReloadListenersEvent event) {
+        registerAnnotatedListeners((key, listener) ->
+                event.addListener(net.minecraft.resources.Identifier.fromNamespaceAndPath("eyelib", key), listener));
+        event.addListener(net.minecraft.resources.Identifier.fromNamespaceAndPath("eyelib", "bedrock_addon_auto_loader"), new BedrockAddonAutoLoader());
+    }
+    //?}
+
+    private interface ReloadListenerRegistrar {
+        void register(String key, PreparableReloadListener listener);
+    }
+
+    private static void registerAnnotatedListeners(ReloadListenerRegistrar registrar) {
         Type annotationType = Type.getType(ResourceLoader.class);
 
         for (ModFileScanData scanData : ModList.get().getAllScanData()) {
@@ -61,14 +83,11 @@ public final class ClientLoaderLifecycleHooks {
 
                     PreparableReloadListener instance = (PreparableReloadListener) clazz.getDeclaredConstructor()
                                                                                         .newInstance();
-                    event.registerReloadListener(instance);
+                    registrar.register(clazz.getSimpleName(), instance);
                 } catch (Exception | LinkageError e) {
                     LOGGER.error("[ResourceLoader] Failed to load: {}", memberName, e);
                 }
             }
         }
-
-        event.registerReloadListener(new BedrockAddonAutoLoader());
     }
-    //?}
 }

@@ -195,7 +195,7 @@ public class EntityRenderSystem {
         if (entity instanceof Bee bee) {
             //? if <1.20.6 {
             bee.updateSwingTime();
-            //?} else {
+            //?} elif <26.1 {
             ((io.github.tt432.eyelib.mixin.LivingEntityAccessor) bee).eyelib$invokeUpdateSwingTime();
             //?}
         }

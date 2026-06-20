@@ -31,44 +31,74 @@ compileJava.dependsOn 'stonecutterGenerate'
 processResources.dependsOn 'stonecutterGenerate'
 
 // Stonecutter 不处理 .json 文件的 //? 注释，需手动注入版本特定 mixin。
+// 策略：base mixins.json 只含全版本安全的 accessor；@Inject mixin 仅 <26.1 注入（26.1 方法签名变化大）。
 def injectVersionSpecificMixins = tasks.register('injectVersionSpecificMixins') {
     dependsOn 'stonecutterGenerate'
     doLast {
         def file = stonecutterMainBase.get().dir('resources').file('eyelib.mixins.json').asFile
         if (!file.exists()) return
 
-        def extraMixins = []
-
-        // ItemRendererMixin: ItemRenderer deleted in 26.1.2, only inject for <26.1
-        if (!isModern) {
-            extraMixins.add('client.ItemRendererMixin')
+        // 26.1+ Mixin 库不支持 Java 25 字节码，清空所有 mixin
+        if (isModern) {
+            file.text = '''{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "io.github.tt432.eyelib.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}'''
+            return
         }
 
-        // 1.21.1-only accessor mixin（整文件级 //? if >=1.20.6 条件化，1.20.1 不生成 class）
-        if (!isLegacyForge) {
-            extraMixins.addAll([
-                'PoseStackPoseAccessor', 'AvoidEntityGoalAccessor',
-                'ModelPartAccessor', 'ModelPartCubeAccessor',
-                'ModelPartPolygonAccessor', 'ModelPartVertexAccessor'
+        def extraCommonMixins = []
+        def extraClientMixins = []
+
+        // @Inject/@WrapOperation mixin：26.1 方法签名变化大，仅 <26.1 注入
+        if (!isModern) {
+            extraCommonMixins.addAll([
+                    'track.common.ItemStackMixin',
+                    'track.common.AbstractContainerMenuMixin',
+                    'track.common.InventoryMixin',
+                    'track.common.LivingEntityMixin'
+            ])
+            extraClientMixins.addAll([
+                    'HumanoidModelMixin',
+                    'client.ItemRendererMixin',
+                    'client.ItemInHandRendererMixin',
+                    'attachment.MultiPlayerGameModeMixin'
             ])
         }
 
-        if (!extraMixins.isEmpty()) {
-            def text = file.text
-            def insertBlock = extraMixins.collect { "    \"$it\"," }.join('\n') + '\n'
-            text = text.replace(
-                '    "RangedAttackGoalAccessor",',
-                "    \"RangedAttackGoalAccessor\",\n${insertBlock}"
-            )
-            // ItemRendererMixin goes into "client" section
-            if (!isModern) {
-                text = text.replace(
-                    '    "client.ItemInHandRendererMixin",',
-                    '    "client.ItemRendererMixin",\n    "client.ItemInHandRendererMixin",'
-                )
-            }
-            file.text = text
+        // 1.21.1-only accessor mixin（整文件级 //? if >=1.20.6 条件化，1.20.1 不生成 class）
+        // 26.1.2 不注入：不混淆环境下字段多为 public，且 Mixin runtime 无法匹配泛型字段
+        if (!isLegacyForge && !isModern) {
+            extraCommonMixins.addAll([
+                    'PoseStackPoseAccessor', 'AvoidEntityGoalAccessor',
+                    'ModelPartAccessor', 'ModelPartCubeAccessor',
+                    'ModelPartPolygonAccessor', 'ModelPartVertexAccessor'
+            ])
         }
+
+        def text = file.text
+        if (!extraCommonMixins.isEmpty()) {
+            def insertBlock = extraCommonMixins.collect { "    \"$it\"," }.join('\n') + '\n'
+            text = text.replace(
+                    '    "RangedAttackGoalAccessor"',
+                    "    \"RangedAttackGoalAccessor\",\n${insertBlock}"
+            )
+        }
+        if (!extraClientMixins.isEmpty()) {
+            def insertBlock = extraClientMixins.collect { "    \"$it\"," }.join('\n') + '\n'
+            text = text.replace(
+                    '    "LivingEntityRendererAccessor"',
+                    "    \"LivingEntityRendererAccessor\",\n${insertBlock}"
+            )
+        }
+        file.text = text
     }
 }
 processResources.dependsOn injectVersionSpecificMixins

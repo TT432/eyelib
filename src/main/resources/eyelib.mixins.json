@@ -7,17 +7,10 @@
   "mixins": [
     "PoseStackAccessor",
     "LivingEntityAccessor",
-    "RangedAttackGoalAccessor",
-    "track.common.ItemStackMixin",
-    "track.common.AbstractContainerMenuMixin",
-    "track.common.InventoryMixin",
-    "track.common.LivingEntityMixin"
+    "RangedAttackGoalAccessor"
   ],
   "client": [
-    "HumanoidModelMixin",
-    "LivingEntityRendererAccessor",
-    "client.ItemInHandRendererMixin",
-    "attachment.MultiPlayerGameModeMixin"
+    "LivingEntityRendererAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

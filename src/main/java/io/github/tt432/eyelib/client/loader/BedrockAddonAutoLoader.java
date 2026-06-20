@@ -8,8 +8,8 @@ import io.github.tt432.eyelib.importer.addon.BedrockAddonWarning;
 import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
 import io.github.tt432.eyelib.particle.loading.ParticleResourcePublication;
 import net.minecraft.client.Minecraft;
-//? if <26.1 {
 import net.minecraft.server.packs.resources.PreparableReloadListener;
+//? if <26.1 {
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 //?}
@@ -38,11 +38,7 @@ import java.util.concurrent.Executor;
  *
  * @author TT432
  */
-//? if <26.1 {
 final class BedrockAddonAutoLoader implements PreparableReloadListener {
-//?} else {
-final class BedrockAddonAutoLoader {
-//?}
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BedrockAddonAutoLoader.class);
 
@@ -58,6 +54,21 @@ final class BedrockAddonAutoLoader {
                                         bridgeAndPublish(addon);
                                     }
                                 }, gameExecutor);
+    }
+    //?} else {
+    @Override
+    public CompletableFuture<Void> reload(
+            PreparableReloadListener.SharedState currentReload,
+            Executor taskExecutor,
+            PreparableReloadListener.PreparationBarrier preparationBarrier,
+            Executor reloadExecutor) {
+        return CompletableFuture.supplyAsync(this::loadAllAddons, reloadExecutor)
+                                .thenCompose(preparationBarrier::wait)
+                                .thenAcceptAsync(addons -> {
+                                    for (BedrockAddon addon : addons) {
+                                        bridgeAndPublish(addon);
+                                    }
+                                }, taskExecutor);
     }
     //?}
 

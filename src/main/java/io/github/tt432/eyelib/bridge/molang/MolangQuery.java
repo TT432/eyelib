@@ -151,8 +151,10 @@ public final class MolangQuery {
         return livingBool(scope, entity -> {
             //? if <1.20.6 {
             return entity.jumping;
-            //?} else {
+            //?} elif <26.1 {
             return ((io.github.tt432.eyelib.mixin.LivingEntityAccessor) entity).eyelib$isJumping();
+            //?} else {
+            return entity.isJumping();
             //?}
         });
     }
