@@ -11,6 +11,15 @@ plugins {
 // 0.7.x 无 sc 别名与 parsed，用 stonecutter.current.version + stonecutter.eval 比较。
 def mcVersion = stonecutter.current.version
 def isLegacyForge = stonecutter.eval(mcVersion, '<1.20.6')
+def isModern = stonecutter.eval(mcVersion, '>=26.1')
+// 26.1+ 移除了 additionalRuntimeClasspath 配置（模块层系统变更）
+def hasAdditionalRuntimeClasspath = stonecutter.eval(mcVersion, '<26.1')
+
+// Stonecutter 常量：源码中用 //? if legacy / //? if modern 做三路分支
+stonecutter {
+    constants['legacy'] = isLegacyForge
+    constants['modern'] = isModern
+}
 
 // Stonecutter 0.7.x centralScript 不自动替换 sourceSet：compileJava 默认编译 src/main/java，
 // 但加了 //? 注释后原始源码有裸露的 else 分支导致语法错误。
@@ -27,24 +36,128 @@ def injectVersionSpecificMixins = tasks.register('injectVersionSpecificMixins') 
     doLast {
         def file = stonecutterMainBase.get().dir('resources').file('eyelib.mixins.json').asFile
         if (!file.exists()) return
+
+        def extraMixins = []
+
+        // ItemRendererMixin: ItemRenderer deleted in 26.1.2, only inject for <26.1
+        if (!isModern) {
+            extraMixins.add('client.ItemRendererMixin')
+        }
+
+        // 1.21.1-only accessor mixin（整文件级 //? if >=1.20.6 条件化，1.20.1 不生成 class）
         if (!isLegacyForge) {
-            // 1.21.1-only mixin（整文件级 //? if >=1.20.6 条件化，1.20.1 不生成 class）
-            def extraMixins = [
+            extraMixins.addAll([
                 'PoseStackPoseAccessor', 'AvoidEntityGoalAccessor',
                 'ModelPartAccessor', 'ModelPartCubeAccessor',
                 'ModelPartPolygonAccessor', 'ModelPartVertexAccessor'
-            ]
+            ])
+        }
+
+        if (!extraMixins.isEmpty()) {
             def text = file.text
             def insertBlock = extraMixins.collect { "    \"$it\"," }.join('\n') + '\n'
             text = text.replace(
                 '    "RangedAttackGoalAccessor",',
                 "    \"RangedAttackGoalAccessor\",\n${insertBlock}"
             )
+            // ItemRendererMixin goes into "client" section
+            if (!isModern) {
+                text = text.replace(
+                    '    "client.ItemInHandRendererMixin",',
+                    '    "client.ItemRendererMixin",\n    "client.ItemInHandRendererMixin",'
+                )
+            }
             file.text = text
         }
     }
 }
 processResources.dependsOn injectVersionSpecificMixins
+
+// 26.1.2 纯类名/包名重命名兼容层：ResourceLocation → Identifier 等。
+// 这些是 Mojang 的 blanket rename，API 完全一致，没有语义差异。
+// domain 层已迁移到 PortResourceLocation，不影响适配器隔离。
+// 只对 >=26.1 node 生效，在 stonecutterGenerate 后、compileJava 前执行。
+def migrate26Renames = tasks.register('migrate26Renames') {
+    dependsOn 'stonecutterGenerate'
+    doLast {
+        if (!isModern) return
+        def base = stonecutterMainBase.get().dir('java').asFile
+        int count = 0
+        base.eachFileRecurse { f ->
+            if (f.name.endsWith('.java')) {
+                def text = f.text
+                def newText = text
+                // \b 确保不替换 ResourceLocationBridge 等复合名
+                newText = newText.replaceAll('\\bResourceLocation\\b', 'Identifier')
+                // FastColor.ABGR32 / FastColor.ARGB32 → ARGB（26.1.2 删除了内部类，方法合并到 ARGB）
+                // 必须在 \bFastColor\b → ARGB 规则之前执行
+                newText = newText.replaceAll('FastColor\\.ABGR32\\.', 'ARGB.')
+                newText = newText.replaceAll('FastColor\\.ARGB32\\.', 'ARGB.')
+                // FastColor → ARGB（同类包，类名重命名）
+                newText = newText.replaceAll('\\bFastColor\\b', 'ARGB')
+                // DefaultVertexFormat.NEW_ENTITY → ENTITY（同时处理裸引用）
+                newText = newText.replaceAll('DefaultVertexFormat\\.NEW_ENTITY', 'DefaultVertexFormat.ENTITY')
+                newText = newText.replaceAll('\\bNEW_ENTITY\\b', 'ENTITY')
+                // Minecraft.tell() → submit()
+                newText = newText.replace('Minecraft.getInstance().tell(', 'Minecraft.getInstance().submit(')
+                // Minecraft.getTimer() → getDeltaTracker()
+                newText = newText.replace('Minecraft.getInstance().getTimer()', 'Minecraft.getInstance().getDeltaTracker()')
+                // GlStateManager 移包 blaze3d.systems/platform → blaze3d.opengl
+                newText = newText.replace('com.mojang.blaze3d.systems.GlStateManager', 'com.mojang.blaze3d.opengl.GlStateManager')
+                newText = newText.replace('com.mojang.blaze3d.platform.GlStateManager', 'com.mojang.blaze3d.opengl.GlStateManager')
+                // RenderType 移包 client.renderer → client.renderer.rendertype
+                newText = newText.replace('net.minecraft.client.renderer.RenderType', 'net.minecraft.client.renderer.rendertype.RenderType')
+                // RenderType 工厂方法移到 RenderTypes 类（plural）
+                newText = newText.replaceAll('RenderType\\.(entity\\w+)\\(', 'RenderTypes.$1(')
+                // 实体类移子包（去掉 ; 后缀以同时匹配 import 和全限定名）
+                newText = newText.replace('net.minecraft.world.entity.animal.Sheep', 'net.minecraft.world.entity.animal.sheep.Sheep')
+                newText = newText.replace('net.minecraft.world.entity.animal.Wolf', 'net.minecraft.world.entity.animal.wolf.Wolf')
+                newText = newText.replace('net.minecraft.world.entity.animal.horse.', 'net.minecraft.world.entity.animal.equine.')
+                // SavedData 移包 level.storage → level.saveddata
+                newText = newText.replace('net.minecraft.world.level.storage.SavedData', 'net.minecraft.world.level.saveddata.SavedData')
+                // BuiltInRegistries 移子包 core → core.registries
+                newText = newText.replace('net.minecraft.core.BuiltInRegistries', 'net.minecraft.core.registries.BuiltInRegistries')
+                // 26.1.2 更多移包（去掉 ; 后缀）
+                newText = newText.replace('net.minecraft.world.entity.npc.Villager', 'net.minecraft.world.entity.npc.villager.Villager')
+                newText = newText.replace('net.minecraft.world.entity.animal.Bee', 'net.minecraft.world.entity.animal.bee.Bee')
+                newText = newText.replace('net.minecraft.world.entity.animal.WaterAnimal', 'net.minecraft.world.entity.animal.fish.WaterAnimal')
+                newText = newText.replace('net.minecraft.world.level.GameRules', 'net.minecraft.world.level.gamerules.GameRules')
+                // mc.tell( → mc.submit(（短形式，不只是 Minecraft.getInstance().tell()）
+                newText = newText.replaceAll('\\bmc\\.tell\\(', 'mc.submit(')
+                newText = newText.replaceAll('\\.tell\\(\\(\\) ->', '.submit(() ->')
+                // UseAnim 重命名
+                newText = newText.replaceAll('\\bUseAnim\\b', 'ItemUseAnimation')
+                // EventBusSubscriber: 26.1+ 删除 bus 参数（自动推断总线）
+                newText = newText.replaceAll(', bus = EventBusSubscriber\\.Bus\\.\\w+', '')
+                newText = newText.replaceAll('\\(bus = EventBusSubscriber\\.Bus\\.\\w+\\)', '()')
+                // ResourceLocationArgument → IdentifierArgument
+                newText = newText.replaceAll('\\bResourceLocationArgument\\b', 'IdentifierArgument')
+                // LightTexture 在 26.1 完全删除，FULL_BRIGHT 是 0xF000F0
+                newText = newText.replaceAll('LightTexture\\.FULL_BRIGHT', '0xF000F0')
+                // DFU 9 移除了 Codec.unit()，重定向到 EyelibCodec.unit()
+                // (?<![a-zA-Z]) 避免匹配 EyelibCodec.unit(
+                newText = newText.replaceAll('(?<![a-zA-Z])Codec\\.unit\\(', 'io.github.tt432.eyelib.util.codec.EyelibCodec.unit(')
+                // CompoundTag.getAllKeys() → keySet()
+                newText = newText.replaceAll('\\.getAllKeys\\(\\)', '.keySet()')
+                // Minecraft.cameraEntity (field) → getCameraEntity() (method)
+                newText = newText.replaceAll('\\.cameraEntity\\b', '.getCameraEntity()')
+                // 如果文件用了 RenderTypes.xxx() 但没 import RenderTypes，补 import
+                if (newText.contains('RenderTypes.') && !newText.contains('import net.minecraft.client.renderer.rendertype.RenderTypes;')) {
+                    newText = newText.replaceFirst(
+                        '(import net\\.minecraft\\.client\\.renderer\\.rendertype\\.RenderType;)',
+                        '$1\nimport net.minecraft.client.renderer.rendertype.RenderTypes;'
+                    )
+                }
+                if (text != newText) {
+                    f.text = newText
+                    count++
+                }
+            }
+        }
+        logger.lifecycle("migrate26Renames: applied 26.1 renames in ${count} files")
+    }
+}
+compileJava.dependsOn migrate26Renames
 
 // 同理，test sourceSet 也需指向 stonecutterGenerateTest 的生成目录。
 def stonecutterTestGenerated = layout.buildDirectory.dir('generated/stonecutter/test/java')
@@ -172,9 +285,12 @@ legacyForge {
 neoForge {
     version = project.neoforge_version
 
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
+    // 26.1+ 去混淆，无需 parchment
+    if (stonecutter.eval(mcVersion, '<26.1')) {
+        parchment {
+            mappingsVersion = project.parchment_mappings_version
+            minecraftVersion = project.parchment_minecraft_version
+        }
     }
 
     runs {
@@ -256,8 +372,8 @@ if (isLegacyForge) {
 dependencies {
     // 显式添加 Lombok：neoForge plugin 的 ModDevGradle 可能重配置 annotationProcessorPath，
     // 覆盖 freefair lombok 插件自动添加的处理器。显式声明确保 Lombok 在所有 node 生效。
-    compileOnly 'org.projectlombok:lombok:1.18.36'
-    annotationProcessor 'org.projectlombok:lombok:1.18.36'
+    compileOnly 'org.projectlombok:lombok:1.18.46'
+    annotationProcessor 'org.projectlombok:lombok:1.18.46'
 
     compileOnly("maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha")
 
@@ -266,14 +382,24 @@ dependencies {
     localRuntime "io.github.tt432:clientsmoke:${version}"
 
     // AI Debug Server — dev-only runtime Java execution, gated by FMLLoader.isProduction()
-    additionalRuntimeClasspath(implementation('org.codehaus.janino:janino:3.1.12'))
+    if (hasAdditionalRuntimeClasspath) {
+        additionalRuntimeClasspath(implementation('org.codehaus.janino:janino:3.1.12'))
+    } else {
+        implementation('org.codehaus.janino:janino:3.1.12')
+    }
 
-    jarJar additionalRuntimeClasspath(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))
-    jarJar additionalRuntimeClasspath(implementation('com.h2database:h2:2.4.240'))
+    if (hasAdditionalRuntimeClasspath) {
+        jarJar additionalRuntimeClasspath(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))
+        jarJar additionalRuntimeClasspath(implementation('com.h2database:h2:2.4.240'))
+    } else {
+        jarJar(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))
+        jarJar(implementation('com.h2database:h2:2.4.240'))
+    }
+
     compileOnly 'org.jspecify:jspecify:1.0.0'
     errorprone 'com.google.errorprone:error_prone_core:2.42.0'
     errorprone 'com.uber.nullaway:nullaway:0.13.7'
-    nullawayProcessor 'org.projectlombok:lombok:1.18.36'
+    nullawayProcessor 'org.projectlombok:lombok:1.18.46'
     nullawayProcessor 'com.google.guava:guava:33.4.0-jre'
     nullawayProcessor 'com.google.errorprone:error_prone_core:2.42.0'
     nullawayProcessor 'com.uber.nullaway:nullaway:0.13.7'
@@ -290,9 +416,9 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation 'com.h2database:h2:2.4.240'
-    testImplementation 'com.tngtech.archunit:archunit:1.3.0'
-    testImplementation 'com.tngtech.archunit:archunit-junit5-api:1.3.0'
-    testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:1.3.0'
+    testImplementation 'com.tngtech.archunit:archunit:1.4.2'
+    testImplementation 'com.tngtech.archunit:archunit-junit5-api:1.4.2'
+    testRuntimeOnly 'com.tngtech.archunit:archunit-junit5-engine:1.4.2'
     testImplementation sourceSets.main.output
 }
 
@@ -419,7 +545,7 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += ['-Xmaxerrs', '1000', '-Xmaxwarns', '100']
     // Java 21 javac 模块封装阻止 Lombok 访问内部 API，需 --add-opens
     def lombokJar = configurations.detachedConfiguration(
-            dependencies.create('org.projectlombok:lombok:1.18.36')
+            dependencies.create('org.projectlombok:lombok:1.18.46')
     ).singleFile
     options.fork = true
     options.forkOptions.jvmArgs += "-javaagent:${lombokJar.absolutePath}".toString()
@@ -454,11 +580,20 @@ tasks.named('check').configure {
 tasks.named('test').configure {
     useJUnitPlatform()
     // Stonecutter centralScript 下 :<version> 子项目的工作目录是 versions/<ver>/，
-    // 但源码在 root。测试用相对路径 Path.of("src/...") 访问 fixture，需回指 root。
+    // 但源码在 root。测试用相对路径 Path.Of("src/...") 访问 fixture，需回指 root。
     workingDir = rootProject.projectDir
     // ArchUnit freeze store 需按版本隔离（1.20.1/1.21.1 因 //? 条件化有不同违规集合）
     systemProperty 'archunit.freeze.store.default.path', "build/archunit_store/${project.name}"
 }
+
+// 测试源码不使用任何 annotation processor（无 Lombok/Mixin AP/NullAway）。
+// 禁用 annotation processing 避免不必要的 processor 初始化，同时解决 Lombok 1.18.46
+// 在 Java 25 javac 上 Javac.<clinit> 访问已删除的 TypeTag.UNKNOWN 字段导致的崩溃。
+tasks.named('compileTestJava').configure {
+    options.compilerArgs += '-proc:none'
+}
+
+
 
 // IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.
 idea {

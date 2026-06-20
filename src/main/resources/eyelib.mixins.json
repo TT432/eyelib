@@ -16,7 +16,6 @@
   "client": [
     "HumanoidModelMixin",
     "LivingEntityRendererAccessor",
-    "client.ItemRendererMixin",
     "client.ItemInHandRendererMixin",
     "attachment.MultiPlayerGameModeMixin"
   ],
