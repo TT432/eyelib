@@ -44,24 +44,29 @@ def _moddev_dir(version: str) -> str:
 
 def _run_artifacts(version: str) -> list[str]:
     d = _moddev_dir(version)
-    return [
+    artifacts = [
         os.path.join(d, "runClient.cmd"),
         os.path.join(d, "clientRunClasspath.txt"),
         os.path.join(d, "clientRunVmArgs.txt"),
         os.path.join(d, "clientRunProgramArgs.txt"),
-        os.path.join(d, "clientLegacyClasspath.txt"),
     ]
+    # clientLegacyClasspath.txt only exists for legacy forge (1.20.1)
+    if version == "1.20.1":
+        artifacts.append(os.path.join(d, "clientLegacyClasspath.txt"))
+    return artifacts
 
 
 def _smoke_artifacts(version: str) -> list[str]:
     d = _moddev_dir(version)
-    return [
+    artifacts = [
         os.path.join(d, "runClientSmoke.cmd"),
         os.path.join(d, "clientSmokeRunClasspath.txt"),
         os.path.join(d, "clientSmokeRunVmArgs.txt"),
         os.path.join(d, "clientSmokeRunProgramArgs.txt"),
-        os.path.join(d, "clientSmokeLegacyClasspath.txt"),
     ]
+    if version == "1.20.1":
+        artifacts.append(os.path.join(d, "clientSmokeLegacyClasspath.txt"))
+    return artifacts
 
 
 def _validate_version(version: str) -> Optional[str]:
@@ -239,6 +244,7 @@ async def _poll_until_loaded(
 ) -> tuple[Optional[str], Optional[str]]:
     start = time.time()
     consecutive_ping_fails = 0
+    consecutive_loaded_fails = 0
     max_ping_fails = 3
     last_ping = None
     last_loaded = None
@@ -261,6 +267,14 @@ async def _poll_until_loaded(
         if loaded and loaded.get("loaded") is True:
             elapsed = time.time() - start
             return None, f"Loaded after {elapsed:.0f}s"
+        if loaded is None:
+            consecutive_loaded_fails += 1
+            if consecutive_loaded_fails >= 2:
+                crash = _check_crash_report(_proc_version)
+                if crash:
+                    return "crash", crash
+        else:
+            consecutive_loaded_fails = 0
         await asyncio.sleep(interval)
     return "timeout", f"Loading timed out after {timeout}s (last ping={last_ping}, last loaded={last_loaded})"
 
@@ -287,6 +301,37 @@ async def _proc_alive() -> bool:
         return True
 
 
+def _check_crash_report(version: Optional[str]) -> Optional[str]:
+    """Check for recent crash report. Returns crash summary if found within 10 min."""
+    versions = [version] if version else list(SUPPORTED_VERSIONS)
+    for ver in versions:
+        if not ver:
+            continue
+        crash_dir = os.path.join(PROJECT_DIR, "versions", ver, "run", "crash-reports")
+        if not os.path.isdir(crash_dir):
+            continue
+        try:
+            files = sorted(
+                [f for f in os.listdir(crash_dir) if f.endswith(".txt")],
+                key=lambda f: os.path.getmtime(os.path.join(crash_dir, f)),
+                reverse=True,
+            )
+        except OSError:
+            continue
+        if not files:
+            continue
+        latest = os.path.join(crash_dir, files[0])
+        if time.time() - os.path.getmtime(latest) > 600:
+            continue
+        try:
+            with open(latest, "r", encoding="utf-8", errors="replace") as f:
+                lines = [f.readline() for _ in range(15)]
+            return f"[{ver}/{files[0]}]\n" + "".join(lines).strip()
+        except OSError:
+            continue
+    return None
+
+
 async def _read_game_state() -> dict:
     ping = await _http_get("/ping")
     if ping is None:
@@ -294,8 +339,17 @@ async def _read_game_state() -> dict:
             return {"state": "loading", "version": _proc_version}
         return {"state": "idle", "version": _proc_version}
 
+    version_data = await _http_get("/version")
+    http_version = version_data.get("version") if version_data else None
+
     loaded_data = await _http_get("/loaded")
-    loaded = loaded_data.get("loaded") is True if loaded_data else False
+    if loaded_data is None:
+        crash = _check_crash_report(http_version or _proc_version)
+        if crash:
+            return {"state": "crashed", "version": http_version or _proc_version, "crash": crash}
+        return {"state": "loading", "version": http_version or _proc_version}
+
+    loaded = loaded_data.get("loaded") is True
 
     if loaded:
         enter_data = await _http_get("/enterdworld")
@@ -321,7 +375,10 @@ def _state_summary(gs: dict) -> str:
         parts.append(f"version={gs['version']}")
     if gs.get("dimension"):
         parts.append(f"dimension={gs['dimension']}")
-    return " | ".join(parts)
+    summary = " | ".join(parts)
+    if gs.get("crash"):
+        summary += f"\n{gs['crash']}"
+    return summary
 
 
 # ── MCP Server ─────────────────────────────────────────────────
@@ -354,9 +411,10 @@ async def eyelib_debug_build(version: str = "1.20.1") -> str:
     tasks = [
         _gradle_task(version, "compileJava"),
         _gradle_task(version, "prepareClientRun"),
-        _gradle_task(version, "writeClientLegacyClasspath"),
-        _gradle_task(version, "createClientLaunchScript"),
     ]
+    if version == "1.20.1":
+        tasks.append(_gradle_task(version, "writeClientLegacyClasspath"))
+    tasks.append(_gradle_task(version, "createClientLaunchScript"))
 
     try:
         result = await _run_gradle(tasks, 900)
@@ -504,13 +562,16 @@ async def eyelib_debug_status(info: str = "summary") -> str:
     """
     gs = await _read_game_state()
     if info == "all":
-        return (
-            f"MCP version: {MCP_VERSION}\n"
-            f"State: {gs['state']}\n"
-            f"Version: {gs.get('version', 'N/A')}\n"
-            f"Dimension: {gs.get('dimension') or 'N/A'}\n"
-            f"Tracked process alive: {await _proc_alive()}"
-        )
+        parts = [
+            f"MCP version: {MCP_VERSION}",
+            f"State: {gs['state']}",
+            f"Version: {gs.get('version', 'N/A')}",
+            f"Dimension: {gs.get('dimension') or 'N/A'}",
+            f"Tracked process alive: {await _proc_alive()}",
+        ]
+        if gs.get("crash"):
+            parts.append(f"\n--- CRASH ---\n{gs['crash']}")
+        return "\n".join(parts)
     return f"mcp={MCP_VERSION} | {_state_summary(gs)}"
 
 
@@ -519,28 +580,23 @@ async def eyelib_debug_close() -> str:
     """
     Close the MC client via /close.
     Waits for port 25999 to become unreachable before returning.
+    Falls back to killing the process if /close doesn't work (e.g. MC crashed).
     """
-    global _proc, _proc_version
-
     ping = await _http_get("/ping")
     if ping is None:
-        _proc = None
-        _proc_version = None
         return "Already idle (no game running)."
 
     await _http_post("/close")
 
-    gone = await _poll_until_gone(timeout=30)
-    if not gone and _proc and _proc.returncode is None:
-        _proc.kill()
-        try:
-            await asyncio.wait_for(_proc.wait(), timeout=5)
-        except asyncio.TimeoutError:
-            pass
+    gone = await _poll_until_gone(timeout=5)
+    if not gone:
+        subprocess.run(
+            'powershell -Command "(Get-NetTCPConnection -LocalPort 25999 -ErrorAction SilentlyContinue).OwningProcess | Sort-Object -Unique | ForEach-Object { taskkill /F /T /PID $_ }"',
+            shell=True, capture_output=True, timeout=10, stdin=subprocess.DEVNULL,
+        )
+        gone = await _poll_until_gone(timeout=5)
 
-    _proc = None
-    _proc_version = None
-    return "✅ Client stopped." if gone else "⚠️ Client force-stopped (did not shut down within 30s)."
+    return "✅ Client stopped." if gone else "⚠️ Client force-stopped."
 
 
 @mcp.tool()
@@ -568,9 +624,10 @@ async def eyelib_debug_clientsmoke(timeout: int = 120, version: str = "1.20.1") 
     build_tasks = [
         _gradle_task(version, "compileJava"),
         _gradle_task(version, "prepareClientSmokeRun"),
-        _gradle_task(version, "writeClientSmokeLegacyClasspath"),
-        _gradle_task(version, "createClientSmokeLaunchScript"),
     ]
+    if version == "1.20.1":
+        build_tasks.append(_gradle_task(version, "writeClientSmokeLegacyClasspath"))
+    build_tasks.append(_gradle_task(version, "createClientSmokeLaunchScript"))
     try:
         result = await _run_gradle(build_tasks, 900)
     except subprocess.TimeoutExpired:

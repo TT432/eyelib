@@ -114,9 +114,9 @@ public class EntityRenderSystem {
         return StreamSupport.stream(getInstance().level.entitiesForRendering().spliterator(), true);
     }
 
+    //? if <26.1 {
     @SubscribeEvent
     public static void onEvent(RenderLevelStageEvent event) {
-        //? if <26.1 {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY) return;
 
         Vec3 position = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
@@ -180,16 +180,16 @@ public class EntityRenderSystem {
                 AttachableItemRenderSetup.tickForEntity(entity, partialTick);
             }
         });
-        //?} else {
-        throw new UnsupportedOperationException("26.1 migration");
-        //?}
     }
+    //?}
 
     @SubscribeEvent
     //? if <1.20.6 {
     public static void onEvent(LivingEvent.LivingTickEvent event) {
-    //?} else {
+    //?} elif <26.1 {
     public static void onEvent(EntityTickEvent event) {
+    //?} else {
+    public static void onEvent(EntityTickEvent.Pre event) {
     //?}
         var entity = event.getEntity();
         if (entity instanceof Bee bee) {

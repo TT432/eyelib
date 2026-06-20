@@ -95,6 +95,18 @@ public final class AIDebugServer {
                 exchange.getResponseBody().write(resp);
                 exchange.close();
             });
+            server.createContext("/version", exchange -> {
+                //? if <1.20.6 {
+                byte[] resp = "{\"version\":\"1.20.1\"}".getBytes(StandardCharsets.UTF_8);
+                //?} elif <26.1 {
+                byte[] resp = "{\"version\":\"1.21.1\"}".getBytes(StandardCharsets.UTF_8);
+                //?} else {
+                byte[] resp = "{\"version\":\"26.1.2\"}".getBytes(StandardCharsets.UTF_8);
+                //?}
+                exchange.sendResponseHeaders(200, resp.length);
+                exchange.getResponseBody().write(resp);
+                exchange.close();
+            });
             server.createContext("/enterworld", exchange -> {
                 if (!"POST".equals(exchange.getRequestMethod())) {
                     byte[] resp = "{\"success\":false,\"error\":\"Only POST supported\"}".getBytes(StandardCharsets.UTF_8);

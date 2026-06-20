@@ -61,8 +61,10 @@ public final class ExtraEntityUpdateDataRuntimeHooks {
     @SubscribeEvent
     //? if <1.20.6 {
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
-    //?} else {
+    //?} elif <26.1 {
     public static void onLivingTick(EntityTickEvent event) {
+    //?} else {
+    public static void onLivingTick(EntityTickEvent.Pre event) {
     //?}
         Entity entity = event.getEntity();
         var key = DataAttachmentTypeRegistry.EXTRA_ENTITY_UPDATE.get();

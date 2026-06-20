@@ -475,6 +475,12 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
     inputs.properties replaceProperties
     expand replaceProperties
     from stonecutterMainBase.map { it.dir('templates') }
+    // NeoForge 1.20.6+ requires neoforge.mods.toml; Forge 1.20.1 requires mods.toml
+    if (isLegacyForge) {
+        exclude 'META-INF/neoforge.mods.toml'
+    } else {
+        exclude 'META-INF/mods.toml'
+    }
     into "build/generated/sources/modMetadata"
 }
 generateModMetadata.configure { dependsOn 'stonecutterGenerate' }

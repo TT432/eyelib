@@ -88,6 +88,9 @@ public class DataAttachmentContainerCapability {
     public static final Supplier<AttachmentType<McDataAttachmentContainer>> ATTACHMENT =
             ATTACHMENT_TYPES.register("data_attachments", () ->
                     AttachmentType.builder(McDataAttachmentContainer::new)
+                            .serialize(CompoundTag.CODEC.fieldOf("data").xmap(
+                                    tag -> { var c = new McDataAttachmentContainer(); c.deserializeNBT(null, tag); return c; },
+                                    container -> container.serializeNBT(null)))
                             .copyOnDeath()
                             .build());
 
