@@ -51,7 +51,7 @@ public final class EntityPortAdapter {
                 props.put("is_saddled", le instanceof net.minecraft.world.entity.animal.horse.AbstractHorse ah && ah.isSaddled());
                 props.put("is_carrying_block", le instanceof net.minecraft.world.entity.monster.EnderMan em && em.getCarriedBlock() != null);
                 props.put("is_chested", le instanceof net.minecraft.world.entity.animal.horse.AbstractChestedHorse ach && ach.hasChest());
-                props.put("is_powered", le instanceof net.minecraft.world.entity.PowerableMob pm && pm.isPowered());
+                props.put("is_powered", isPowered(le));
                 props.put("is_standing", le instanceof net.minecraft.world.entity.animal.horse.AbstractHorse ah && ah.isStanding());
                 props.put("is_charging", le instanceof net.minecraft.world.entity.monster.Vex v && v.isCharging());
                 props.put("is_tamed", le instanceof net.minecraft.world.entity.TamableAnimal ta && ta.isTame());
@@ -76,6 +76,14 @@ public final class EntityPortAdapter {
         @Override
         public float getZ() {
             return (float) entity.getZ();
+        }
+
+        private static boolean isPowered(net.minecraft.world.entity.LivingEntity entity) {
+            //? if <26.1 {
+            return entity instanceof net.minecraft.world.entity.PowerableMob powerableMob && powerableMob.isPowered();
+            //?} else {
+            return false;
+            //?}
         }
     }
 }

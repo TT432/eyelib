@@ -39,8 +39,17 @@ public final class ItemTrackApi {
         CompoundTag tag = customData != null ? customData.copyTag() : null;
         //?}
 
-        if (tag != null && tag.contains(EyelibTrack.TRACK_ID_KEY, Tag.TAG_LONG)) {
+        if (tag != null && //? if <26.1 {
+            tag.contains(EyelibTrack.TRACK_ID_KEY, Tag.TAG_LONG)
+            //?} else {
+            tag.contains(EyelibTrack.TRACK_ID_KEY)
+            //?}
+        ) {
+            //? if <26.1 {
             return tag.getLong(EyelibTrack.TRACK_ID_KEY);
+            //?} else {
+            return tag.getLong(EyelibTrack.TRACK_ID_KEY).orElse(0L);
+            //?}
         }
 
         return (long) stack.hashCode();
@@ -56,13 +65,22 @@ public final class ItemTrackApi {
         CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
         //?}
 
-        if (!tag.contains(EyelibTrack.TRACK_ID_KEY, Tag.TAG_LONG)) {
+        if (!(//? if <26.1 {
+            tag.contains(EyelibTrack.TRACK_ID_KEY, Tag.TAG_LONG)
+            //?} else {
+            tag.contains(EyelibTrack.TRACK_ID_KEY)
+            //?}
+        )) {
             tag.putLong(EyelibTrack.TRACK_ID_KEY, ItemStackIdCache.getFreeId(level));
             //? if >=1.20.6
             stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
         }
 
+        //? if <26.1 {
         return tag.getLong(EyelibTrack.TRACK_ID_KEY);
+        //?} else {
+        return tag.getLong(EyelibTrack.TRACK_ID_KEY).orElse(0L);
+        //?}
     }
 
     /**
@@ -83,7 +101,12 @@ public final class ItemTrackApi {
         CompoundTag tag = customData != null ? customData.copyTag() : null;
         //?}
 
-        if (tag != null && tag.contains(EyelibTrack.TRACK_ID_KEY)) {
+        if (tag != null && //? if <26.1 {
+            tag.contains(EyelibTrack.TRACK_ID_KEY)
+            //?} else {
+            tag.contains(EyelibTrack.TRACK_ID_KEY)
+            //?}
+        ) {
             tag.remove(EyelibTrack.TRACK_ID_KEY);
 
             if (tag.isEmpty()) {

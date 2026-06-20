@@ -40,7 +40,12 @@ public final class AIDebugServer {
     private HttpServer server;
 
     public void start() {
-        if (FMLLoader.isProduction()) {
+        if (//? if <26.1 {
+            FMLLoader.isProduction()
+            //?} else {
+            false
+            //?}
+        ) {
             return;
         }
         try {
@@ -113,9 +118,14 @@ public final class AIDebugServer {
                 CompletableFuture<String> future = new CompletableFuture<>();
                 mc.tell(() -> {
                     try {
+                        //? if <26.1 {
                         LevelSettings levelSettings = new LevelSettings(
                                 finalName, GameType.CREATIVE, false, Difficulty.NORMAL,
+                                //? if <1.20.6 {
                                 true, new GameRules(), WorldDataConfiguration.DEFAULT);
+                                //?} else {
+                                true, null, WorldDataConfiguration.DEFAULT);
+                                //?}
                         WorldOptions worldOptions = new WorldOptions(0L, true, false);
                         //? if <1.20.6 {
                         mc.createWorldOpenFlows().createFreshLevel(
@@ -134,6 +144,9 @@ public final class AIDebugServer {
                                 null);
                         //?}
                         future.complete("World creation initiated: " + finalName);
+                        //?} else {
+                        future.complete("createFreshLevel is not supported on this version: " + finalName);
+                        //?}
                     } catch (Exception e) {
                         future.complete("Failed to enter world: " + e.getMessage());
                     }
@@ -156,7 +169,11 @@ public final class AIDebugServer {
                 Minecraft mc = Minecraft.getInstance();
                 boolean inWorld = mc.level != null && mc.player != null;
                 String worldInfo = inWorld
+                        //? if <26.1 {
                         ? mc.level.dimension().location().toString()
+                        //?} else {
+                        ? mc.level.dimension().toString()
+                        //?}
                         : "N/A";
                 byte[] resp = ("{\"inWorld\":" + inWorld + ",\"dimension\":\"" + worldInfo + "\"}").getBytes(StandardCharsets.UTF_8);
                 exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");

@@ -17,6 +17,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+//? if <26.1
+import net.minecraft.world.entity.PowerableMob;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.animal.Wolf;
 import net.minecraft.world.entity.animal.camel.Camel;
@@ -222,8 +224,10 @@ public final class MolangBuiltInQuery {
         return livingFloat(scope, living -> {
             //? if <1.20.6 {
             int useDuration = living.getUseItem().getUseDuration();
-            //?} else {
+            //?} elif <26.1 {
             int useDuration = living.getUseItem().getUseDuration(living);
+            //?} else {
+            int useDuration = 1;
             //?}
             return (float) living.getTicksUsingItem() / useDuration;
         });
@@ -365,7 +369,11 @@ public final class MolangBuiltInQuery {
 
     @MolangFunction(value = "trade_tier", description = "村民交易等级")
     public static float tradeTier(MolangScope scope) {
+        //? if <26.1 {
         return scope.getHostContext().get(Villager.class).map(v -> v.getVillagerData().getLevel()).orElse(0);
+        //?} else {
+        return 0;
+        //?}
     }
 
     @MolangFunction(value = "dash_cooldown_progress", description = "冲刺冷却")
@@ -467,7 +475,11 @@ public final class MolangBuiltInQuery {
 
     @MolangFunction(value = "fall_distance", description = "摔落的距离")
     public static float fallDistance(MolangScope scope) {
+        //? if <26.1 {
         return entityFloat(scope, e -> e.fallDistance);
+        //?} else {
+        return entityFloat(scope, e -> (float) e.fallDistance);
+        //?}
     }
 
     @MolangFunction(value = "is_sprinting", description = "正在冲刺（疾跑）")
@@ -517,7 +529,11 @@ public final class MolangBuiltInQuery {
 
     @MolangFunction(value = "is_in_water_or_rain", description = "正在水中或在雨中")
     public static float isInWaterOrRain(MolangScope scope) {
+        //? if <26.1 {
         return entityBool(scope, Entity::isInWaterRainOrBubble);
+        //?} else {
+        return entityBool(scope, Entity::isInWater);
+        //?}
     }
 
     @MolangFunction(value = "eye_target_y_rotation", alias = "yaw", description = "yaw 角度（y rot）")
@@ -613,7 +629,11 @@ public final class MolangBuiltInQuery {
         return livingBool(scope, e -> {
             if (e.getLastDamageSource() != null) {
                 return e.level().registryAccess()
+                        //? if <26.1 {
                         .registry(Registries.DAMAGE_TYPE)
+                        //?} else {
+                        .lookup(Registries.DAMAGE_TYPE)
+                        //?}
                         .map(r -> r.getKey(e.getLastDamageSource().type()))
                         .map(rl -> Arrays.stream(damageTypes).anyMatch(t -> rl.toString().equals(t.toString())))
                         .orElse(false);
@@ -642,9 +662,15 @@ public final class MolangBuiltInQuery {
 
     @MolangFunction(value = "is_powered", description = "正在充能（类似苦力怕或凋灵）")
     public static float isPowered(MolangScope scope) {
-        return portBool(scope, "is_powered")
-                || scope.getHostContext().get(PowerableMob.class).map(PowerableMob::isPowered).orElse(false)
-                ? TRUE : FALSE;
+        return portBool(scope, "is_powered") || poweredMob(scope) ? TRUE : FALSE;
+    }
+
+    private static boolean poweredMob(MolangScope scope) {
+        //? if <26.1 {
+        return scope.getHostContext().get(PowerableMob.class).map(PowerableMob::isPowered).orElse(false);
+        //?} else {
+        return false;
+        //?}
     }
 
     @MolangFunction(value = "swelling_dir", description = "苦力怕爆炸方向")
@@ -733,15 +759,23 @@ public final class MolangBuiltInQuery {
 
     @MolangFunction(value = "head_x_rotation", description = "返回第 N 个头的旋转")
     public static float headXRotation(MolangScope scope, float head) {
+        //? if <26.1 {
         return portFloat(scope, "head_x_rotation")
                 .orElse(scope.getHostContext().get(WitherBoss.class).map(w -> w.getHeadXRot((int) head)).orElse(0F));
+        //?} else {
+        return 0F;
+        //?}
     }
 
     @MolangFunction(value = "head_y_rotation", description = "返回第 N 个头的旋转")
     public static float headYRotation(MolangScope scope, float headIndex) {
         return xHeadYaw(scope, living -> {
             if (living instanceof WitherBoss wither) {
+                //? if <26.1 {
                 return wither.getHeadYRot((int) headIndex) - living.yBodyRot;
+                //?} else {
+                return 0F;
+                //?}
             } else {
                 return Mth.rotLerp(partialTicks(scope), living.yHeadRotO, living.yHeadRot);
             }
@@ -786,9 +820,13 @@ public final class MolangBuiltInQuery {
     public static float shakeAngle(MolangScope scope) {
         return portFloat(scope, "shake_angle")
                 .orElse(scope.getHostContext()
-                             .get(Wolf.class)
-                             .map(w -> w.getHeadRollAngle(partialTicks(scope)))
-                             .orElse(0F));
+                              .get(Wolf.class)
+                              //? if <26.1 {
+                              .map(w -> w.getHeadRollAngle(partialTicks(scope)))
+                              //?} else {
+                              .map(w -> 0F)
+                              //?}
+                              .orElse(0F));
     }
 
     @MolangFunction(value = "body_yaw", description = "身体 yaw 旋转角度")

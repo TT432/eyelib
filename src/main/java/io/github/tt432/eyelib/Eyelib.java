@@ -38,7 +38,12 @@ public class Eyelib {
         bus.addListener(io.github.tt432.eyelib.network.EyelibNetworkTransport::onRegisterPayloads);
         //?}
 
-        if (!FMLLoader.isProduction()) {
+        if (!(//? if <26.1 {
+            FMLLoader.isProduction()
+            //?} else {
+            false
+            //?}
+        )) {
             try {
                 Class<?> serverClass = Class.forName("io.github.tt432.eyelib.common.debug.AIDebugServer");
                 Object server = serverClass.getDeclaredConstructor().newInstance();

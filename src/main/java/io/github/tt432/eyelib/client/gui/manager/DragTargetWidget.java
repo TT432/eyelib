@@ -4,8 +4,15 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.ClientTickHandler;
 import net.minecraft.client.Minecraft;
+//? if >=26.1 {
+import net.minecraft.client.input.MouseButtonEvent;
+//?}
 import net.minecraft.client.gui.Font;
+//? if <26.1 {
 import net.minecraft.client.gui.GuiGraphics;
+//?} else {
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+//?}
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.events.AbstractContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -48,12 +55,21 @@ final class DragTargetWidget extends AbstractContainerEventHandler implements Re
         return mouseX > x && mouseX < x + w && mouseY > y && mouseY < y + h;
     }
 
+    //? if <26.1 {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (super.mouseClicked(mouseX, mouseY, button)) return true;
         return hover(mouseX, mouseY) && onClicked.apply(mouseX, mouseY, button);
     }
+    //?} else {
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (super.mouseClicked(event, doubleClick)) return true;
+        return hover(event.x(), event.y()) && onClicked.apply(event.x(), event.y(), event.button());
+    }
+    //?}
 
+    //? if <26.1 {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         var a = animator.getTime(ClientTickHandler.getTick(), partialTick, hover(mouseX, mouseY));
@@ -87,6 +103,12 @@ final class DragTargetWidget extends AbstractContainerEventHandler implements Re
         int tw = font.width(titleString);
         guiGraphics.drawString(font, titleString, x + w / 2 - tw / 2, y + h / 2 - th / 2 + iconOffset - th / 4, 0xFFFFFFFF);
     }
+    //?} else {
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor graphicsExtractor, int mouseX, int mouseY, float partialTick) {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+    }
+    //?}
 
     @Override
     public List<? extends GuiEventListener> children() {

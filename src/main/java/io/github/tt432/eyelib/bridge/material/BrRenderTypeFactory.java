@@ -1,18 +1,24 @@
 package io.github.tt432.eyelib.bridge.material;
 
+//? if <26.1 {
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+//?}
 import io.github.tt432.eyelib.material.gl.BlendFactor;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.material.render.BrRenderState;
+//? if <26.1 {
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
+//?}
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
+//? if <26.1 {
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
+//?}
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,9 +47,13 @@ public final class BrRenderTypeFactory {
         if (!state.needsCustomRenderType()) {
             return toPortPass(state);
         }
+        //? if <26.1 {
         RenderType renderType = CACHE.computeIfAbsent(new Key(texture, state), key -> custom(mcTex, state));
         PortRenderPass pass = toPortPass(state);
         return new BridgeRenderPass(pass.transparency(), pass.disableCulling(), renderType);
+        //?} else {
+        throw new UnsupportedOperationException("Custom render types not yet supported in 26.1+");
+        //?}
     }
 
     private static PortRenderPass toPortPass(BrRenderState state) {
@@ -60,6 +70,7 @@ public final class BrRenderTypeFactory {
         );
     }
 
+    //? if <26.1 {
     private static RenderType custom(ResourceLocation texture, BrRenderState state) {
         return RenderType.create(
                 "eyelib_material_" + state.surfaceClass().name().toLowerCase() + "_" + texture,
@@ -130,6 +141,7 @@ public final class BrRenderTypeFactory {
                 state.depth().func().map(func -> func.value).orElse(GL11.GL_LEQUAL)
         );
     }
+    //?}
 
     private record Key(PortResourceLocation texture, BrRenderState state) {
     }

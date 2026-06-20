@@ -7,7 +7,11 @@ import io.github.tt432.eyelib.client.gui.manager.reload.ManagerFolderSession;
 import io.github.tt432.eyelib.client.gui.manager.reload.ManagerImportActions;
 import io.github.tt432.eyelib.util.math.MathHelper;
 import net.minecraft.client.Minecraft;
+//? if <26.1 {
 import net.minecraft.client.gui.GuiGraphics;
+//?} else {
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+//?}
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.Nullable;
@@ -70,6 +74,7 @@ public class EyelibManagerScreen extends ModalWorksurfaceScreen {
         }
     }
 
+    //? if <26.1 {
     public static void renderEntityButton(GuiGraphics guiGraphics, int x, int y, int s, float a, EntityButton entityButton) {
         //? if <1.20.6 {
         guiGraphics.blit(new ResourceLocation(Eyelib.MOD_ID, "gui_bg_nine"), x, y, 0, 0, s, s);
@@ -88,6 +93,11 @@ public class EyelibManagerScreen extends ModalWorksurfaceScreen {
 
         guiGraphics.blit(entityButton.icon, x + 4, y + 4, 0, 0, s - 8, s - 8);
     }
+    //?} else {
+    public static void renderEntityButton(int x, int y, int s, float a, EntityButton entityButton) {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+    }
+    //?}
 
     public static boolean hover(double x, double y, double w, double h, double mouseX, double mouseY) {
         return mouseX > x && mouseX < x + w && mouseY > y && mouseY < y + h;
@@ -172,6 +182,7 @@ public class EyelibManagerScreen extends ModalWorksurfaceScreen {
         }
     }
 
+    //? if <26.1 {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
@@ -185,6 +196,12 @@ public class EyelibManagerScreen extends ModalWorksurfaceScreen {
             guiGraphics.drawString(font, display, px, py, 0xFFFFFFFF);
         }
     }
+    //?} else {
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor graphicsExtractor, int mouseX, int mouseY, float partialTick) {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+    }
+    //?}
 
     @Override
     public boolean isPauseScreen() {

@@ -26,7 +26,11 @@ import org.lwjgl.glfw.GLFW;
 @EventBusSubscriber(value = Dist.CLIENT)
 //?}
 public final class ManagerScreenKeybinds {
+    //? if <26.1 {
     public static final KeyMapping OPEN_SCREEN = new KeyMapping("Open Eyelib Manager Screen", GLFW.GLFW_KEY_I, "Eyelib");
+    //?} else {
+    public static final KeyMapping OPEN_SCREEN = new KeyMapping("Open Eyelib Manager Screen", GLFW.GLFW_KEY_I, KeyMapping.Category.MISC);
+    //?}
 
     @SubscribeEvent
     public static void onEvent(RegisterKeyMappingsEvent event) {

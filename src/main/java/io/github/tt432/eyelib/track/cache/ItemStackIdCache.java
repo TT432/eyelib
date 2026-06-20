@@ -31,11 +31,17 @@ public final class ItemStackIdCache extends SavedData {
     private static ItemStackIdCache load(CompoundTag tag, HolderLookup.Provider provider) {
     //?}
         ItemStackIdCache cache = new ItemStackIdCache();
+        //? if <26.1 {
         cache.lastId = tag.getLong("lastId");
+        //?} else {
+        cache.lastId = tag.getLong("lastId").orElse(0L);
+        //?}
         return cache;
     }
 
+    //? if <26.1 {
     @Override
+    //?}
     //? if <1.20.6 {
     public CompoundTag save(CompoundTag tag) {
     //?} else {
@@ -49,6 +55,7 @@ public final class ItemStackIdCache extends SavedData {
      * 分配一个新的全局唯一追踪 ID。
      */
     public static long getFreeId(ServerLevel level) {
+        //? if <26.1 {
         ItemStackIdCache cache = level.getServer().overworld()
                 .getDataStorage()
                 //? if <1.20.6 {
@@ -56,6 +63,9 @@ public final class ItemStackIdCache extends SavedData {
                 //?} else {
                 .computeIfAbsent(new SavedData.Factory<>(ItemStackIdCache::new, ItemStackIdCache::load), DATA_KEY);
                 //?}
+        //?} else {
+        ItemStackIdCache cache = new ItemStackIdCache();
+        //?}
 
         return cache.getNextId();
     }

@@ -1,3 +1,4 @@
+//? if <26.1 {
 package io.github.tt432.eyelib.mixin.client;
 
 import io.github.tt432.eyelib.capability.RenderData;
@@ -51,3 +52,4 @@ public class ItemRendererMixin {
         ac.effects = effects;
     }
 }
+//?}

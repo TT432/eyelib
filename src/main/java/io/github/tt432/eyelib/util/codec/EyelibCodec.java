@@ -27,6 +27,30 @@ import java.util.stream.Stream;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EyelibCodec {
+    /**
+     * DFU 9 移除了 {@link Codec#unit(Object)}，用 Encoder.empty() + Decoder.unit() 重建。
+     */
+    public static <T> Codec<T> unit(T instance) {
+        //? if <26.1 {
+        return Codec.unit(instance);
+        //?} else {
+        return Codec.of(
+                new Encoder<>() {
+                    @Override
+                    public <D> DataResult<D> encode(T input, DynamicOps<D> ops, D prefix) {
+                        return DataResult.success(prefix);
+                    }
+                },
+                new Decoder<>() {
+                    @Override
+                    public <D> DataResult<Pair<T, D>> decode(DynamicOps<D> ops, D input) {
+                        return DataResult.success(Pair.of(instance, input));
+                    }
+                }
+        );
+        //?}
+    }
+
     public static final Codec<Vector2f> VEC2F = io.github.tt432.eyelib.util.codec.ChinExtraCodecs.tuple(Codec.FLOAT, Codec.FLOAT)
                                                                                                 .bmap(Vector2f::new, v -> Tuple.of(v.x, v.y));
 

@@ -21,8 +21,12 @@ public final class ParticleEmitterPoseInitializer {
             @Nullable Entity attachedEntity
     ) {
         emitter.baseRotation().identity();
-        Matrix4f matrix = new Matrix4f()
-                .translate(Minecraft.getInstance().gameRenderer.getMainCamera().getPosition().toVector3f(), new Matrix4f());
+        //? if <26.1 {
+        Vector3f cameraPosition = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition().toVector3f();
+        //?} else {
+        Vector3f cameraPosition = Minecraft.getInstance().gameRenderer.getMainCamera().position().toVector3f();
+        //?}
+        Matrix4f matrix = new Matrix4f().translate(cameraPosition, new Matrix4f());
         if (locatorMatrix != null) {
             matrix.mul(locatorMatrix);
         }

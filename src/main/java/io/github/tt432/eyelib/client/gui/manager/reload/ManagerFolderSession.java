@@ -25,7 +25,7 @@ public final class ManagerFolderSession {
 
     public void chooseFolder(Logger logger) {
         FileDialogService.selectFolder("打开资源包文件夹", Path.of("/")).whenComplete((path, throwable) ->
-                                                                                              RenderSystem.recordRenderCall(() -> path.ifPresent(selected -> bindFolder(selected.toAbsolutePath(), logger))));
+                                                                                               runRenderCall(() -> path.ifPresent(selected -> bindFolder(selected.toAbsolutePath(), logger))));
     }
 
     private void bindFolder(Path absolutePath, Logger logger) {
@@ -38,7 +38,7 @@ public final class ManagerFolderSession {
         monitoredFolderPath = absolutePath;
         monitoredFolderPathText = absolutePath.toString();
         monitoredFolderUsesAddonBridge = ManagerResourceImportPlanner.loadResourceFolder(absolutePath, logger);
-        folderWatcher.start(absolutePath, changedPath -> RenderSystem.recordRenderCall(() -> {
+        folderWatcher.start(absolutePath, changedPath -> runRenderCall(() -> {
             if (monitoredFolderPath != null) {
                 if (monitoredFolderUsesAddonBridge) {
                     monitoredFolderUsesAddonBridge = ManagerResourceImportPlanner.loadResourceFolder(monitoredFolderPath, logger);
@@ -47,6 +47,14 @@ public final class ManagerFolderSession {
                 }
             }
         }));
+    }
+
+    private void runRenderCall(Runnable runnable) {
+        //? if <26.1 {
+        RenderSystem.recordRenderCall(runnable::run);
+        //?} else {
+        throw new UnsupportedOperationException("26.1 migration");
+        //?}
     }
 
     public void stop() {

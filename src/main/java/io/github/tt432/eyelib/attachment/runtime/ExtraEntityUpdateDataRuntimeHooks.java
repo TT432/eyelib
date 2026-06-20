@@ -69,7 +69,11 @@ public final class ExtraEntityUpdateDataRuntimeHooks {
         ExtraEntityUpdateData data = DataAttachmentHelper.getOrCreate(key, entity);
         ExtraEntityUpdateData updated = updateFromEntity(data, entity);
 
+        //? if <26.1 {
         if (!entity.level().isClientSide && data != updated) {
+        //?} else {
+        if (!entity.level().isClientSide() && data != updated) {
+        //?}
             DataAttachmentHelper.setLocal(key, entity, updated);
             EyelibNetworkTransport.sendToTrackedAndSelf(entity, new ExtraEntityUpdateDataPacket(entity.getId(), updated));
         }
@@ -79,7 +83,11 @@ public final class ExtraEntityUpdateDataRuntimeHooks {
         var updated = data;
 
         if (entity instanceof Mob targeting) {
+            //? if <26.1 {
             if (!entity.level().isClientSide) {
+            //?} else {
+            if (!entity.level().isClientSide()) {
+            //?}
                 if (targeting.getTarget() != null) {
                     updated = updated.withTargetId(targeting.getTarget().getId());
                 } else {
@@ -91,7 +99,11 @@ public final class ExtraEntityUpdateDataRuntimeHooks {
             }
         }
 
+        //? if <26.1 {
         if (entity instanceof Mob mob && !entity.level().isClientSide) {
+        //?} else {
+        if (entity instanceof Mob mob && !entity.level().isClientSide()) {
+        //?}
             float speed;
 
             if (!mob.getNavigation().isDone()) {

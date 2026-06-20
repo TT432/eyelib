@@ -69,7 +69,7 @@ public sealed class ImmutableFloatTreeMap<V> {
                     return of(floatArray, new Float2ObjectOpenHashMap<>(newMap));
                 }, map -> {
                     Map<String, V> newMap = new HashMap<>();
-                    map.data.forEach((k, v) -> newMap.put(k.toString(), v));
+                    map.data.forEach((k, v) -> newMap.put(String.valueOf(k), v));
                     return newMap;
                 });
     }
@@ -84,7 +84,7 @@ public sealed class ImmutableFloatTreeMap<V> {
                     return of(floatArray, new Float2ObjectOpenHashMap<>(newMap));
                 }, map -> {
                     Map<String, V> newMap = new HashMap<>();
-                    map.data.forEach((k, v) -> newMap.put(k.toString(), v));
+                    map.data.forEach((k, v) -> newMap.put(String.valueOf(k), v));
                     return newMap;
                 });
     }

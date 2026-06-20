@@ -8,9 +8,11 @@ import io.github.tt432.eyelib.importer.addon.BedrockAddonWarning;
 import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
 import io.github.tt432.eyelib.particle.loading.ParticleResourcePublication;
 import net.minecraft.client.Minecraft;
+//? if <26.1 {
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+//?}
 //? if <1.20.6 {
 import net.minecraftforge.common.MinecraftForge;
 //?} else {
@@ -36,10 +38,15 @@ import java.util.concurrent.Executor;
  *
  * @author TT432
  */
+//? if <26.1 {
 final class BedrockAddonAutoLoader implements PreparableReloadListener {
+//?} else {
+final class BedrockAddonAutoLoader {
+//?}
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BedrockAddonAutoLoader.class);
 
+    //? if <26.1 {
     @Override
     public CompletableFuture<Void> reload(PreparationBarrier barrier, ResourceManager resourceManager,
                                           ProfilerFiller preparationsProfiler, ProfilerFiller reloadProfiler,
@@ -52,6 +59,7 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
                                     }
                                 }, gameExecutor);
     }
+    //?}
 
     private List<BedrockAddon> loadAllAddons() {
         var addons = new ArrayList<BedrockAddon>();

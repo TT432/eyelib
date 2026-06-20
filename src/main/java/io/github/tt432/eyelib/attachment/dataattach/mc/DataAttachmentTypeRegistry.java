@@ -7,6 +7,8 @@ import io.github.tt432.eyelib.attachment.dataattach.DataAttachmentType;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.core.Registry;
+//? if >=26.1
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 //? if <1.20.6 {
@@ -62,12 +64,14 @@ public class DataAttachmentTypeRegistry {
 
     public static DataAttachmentType<?> getById(String id) {
         //? if <1.20.6 {
-        var optional = REGISTRY.get().getValue(new ResourceLocation(id));
+        var value = REGISTRY.get().getValue(new ResourceLocation(id));
+        //?} elif <26.1 {
+        var value = REGISTRY.get(ResourceLocation.parse(id));
         //?} else {
-        var optional = REGISTRY.get(ResourceLocation.parse(id));
+        var value = REGISTRY.get(Identifier.parse(id)).map(r -> r.value()).orElse(null);
         //?}
-        if (optional != null) {
-            return optional;
+        if (value != null) {
+            return value;
         } else {
             throw new IllegalStateException("Unknown attachment type: " + id);
         }

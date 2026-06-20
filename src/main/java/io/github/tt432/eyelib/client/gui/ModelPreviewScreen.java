@@ -21,9 +21,19 @@ import io.github.tt432.eyelib.importer.model.bbmodel.Texture;
 import io.github.tt432.eyelib.importer.model.importer.ModelImporter;
 import io.github.tt432.eyelib.model.Model;
 import net.minecraft.client.Minecraft;
+//? if >=26.1 {
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+//?}
+//? if <26.1 {
 import net.minecraft.client.gui.GuiGraphics;
+//?} else {
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+//?}
 import net.minecraft.client.gui.components.EditBox;
+//? if <26.1 {
 import net.minecraft.client.renderer.LightTexture;
+//?}
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -35,11 +45,16 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLLoader;
-//?} else {
+//?} elif <26.1 {
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+//?} else {
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 //?}
 import org.jspecify.annotations.Nullable;
@@ -64,12 +79,28 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         @SubscribeEvent
         //? if <1.20.6 {
         public static void onEvent(TickEvent.ClientTickEvent event) {
+        //?} elif <26.1 {
+        public static void onEvent(ClientTickEvent.Pre event) {
         //?} else {
         public static void onEvent(ClientTickEvent.Pre event) {
         //?}
-            if (FMLLoader.isProduction()) return;
+            //? if <26.1 {
+            if (//? if <26.1 {
+                FMLLoader.isProduction()
+                //?} else {
+                false
+                //?}
+            ) return;
+            //?} else {
+            if (false) return;
+            //?}
             if (Minecraft.getInstance().screen == null
-                    && InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_V)) {
+                    && //? if <26.1 {
+                    InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_V)
+                    //?} else {
+                    false
+                    //?}
+            ) {
                 Minecraft.getInstance().setScreen(new ModelPreviewScreen());
             }
         }
@@ -121,6 +152,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
 
     }
 
+    //? if <26.1 {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         // Render search box
@@ -155,6 +187,12 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
+    //?} else {
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor graphicsExtractor, int mouseX, int mouseY, float partialTick) {
+        throw new UnsupportedOperationException("26.1 migration");
+    }
+    //?}
 
     /**
      * Renders the model in the specified viewport using the entity render pipeline.
@@ -166,6 +204,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
      * @param h           Viewport Height
      * @param partialTick Partial tick for interpolation
      */
+    //? if <26.1 {
     private void renderModelInViewport(GuiGraphics guiGraphics, int x, int y, int w, int h, float partialTick) {
         // Enable scissor to clip rendering to viewport
         guiGraphics.enableScissor(x, y, x + w, y + h);
@@ -225,7 +264,9 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         poseStack.popPose();
         guiGraphics.disableScissor();
     }
+    //?}
 
+    //? if <26.1 {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
@@ -236,6 +277,18 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
+    //?} else {
+    @Override
+    public boolean keyPressed(KeyEvent event) {
+        if (event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER) {
+            if (this.searchBox != null) {
+                performSearch(this.searchBox.getValue());
+            }
+            return true;
+        }
+        return super.keyPressed(event);
+    }
+    //?}
 
     private void performSearch(String query) {
         if (query == null || query.trim().isEmpty()) {
@@ -279,6 +332,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
 //        }
     }
 
+    //? if <26.1 {
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         if (button == 0) { // Left click drag
@@ -293,6 +347,21 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         }
         return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
+    //?} else {
+    @Override
+    public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+        if (event.button() == 0) {
+            this.rotateY += (float) dragX;
+            this.rotateX += (float) dragY;
+            return true;
+        } else if (event.button() == 1) {
+            this.translateX += (float) dragX;
+            this.translateY += (float) dragY;
+            return true;
+        }
+        return super.mouseDragged(event, dragX, dragY);
+    }
+    //?}
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY,

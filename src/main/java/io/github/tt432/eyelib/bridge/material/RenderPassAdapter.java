@@ -18,14 +18,32 @@ public final class RenderPassAdapter {
         }
         return switch (pass.transparency()) {
             case SOLID -> RenderType.entitySolid(ResourceLocationBridge.toMc(texture));
-            case ALPHA_TEST -> pass.disableCulling()
-                    ? RenderType.entityCutoutNoCull(ResourceLocationBridge.toMc(texture))
-                    : RenderType.entityCutout(ResourceLocationBridge.toMc(texture));
-            case TRANSLUCENT -> pass.disableCulling()
-                    ? RenderType.entityTranslucent(ResourceLocationBridge.toMc(texture))
-                    : RenderType.entityTranslucentCull(ResourceLocationBridge.toMc(texture));
+            case ALPHA_TEST -> {
+                if (pass.disableCulling()) {
+                    //? if <26.1 {
+                    yield RenderType.entityCutoutNoCull(ResourceLocationBridge.toMc(texture));
+                    //?} else {
+                    yield unsupported26RenderType();
+                    //?}
+                }
+                yield RenderType.entityCutout(ResourceLocationBridge.toMc(texture));
+            }
+            case TRANSLUCENT -> {
+                if (pass.disableCulling()) {
+                    yield RenderType.entityTranslucent(ResourceLocationBridge.toMc(texture));
+                }
+                //? if <26.1 {
+                yield RenderType.entityTranslucentCull(ResourceLocationBridge.toMc(texture));
+                //?} else {
+                yield unsupported26RenderType();
+                //?}
+            }
             case TRANSLUCENT_EMISSIVE -> RenderType.entityTranslucentEmissive(ResourceLocationBridge.toMc(texture));
             case ADDITIVE -> RenderType.entityTranslucent(ResourceLocationBridge.toMc(texture));
         };
+    }
+
+    private static RenderType unsupported26RenderType() {
+        throw new UnsupportedOperationException("26.1 migration");
     }
 }

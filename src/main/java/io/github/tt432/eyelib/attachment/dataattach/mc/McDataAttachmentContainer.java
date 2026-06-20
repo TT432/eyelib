@@ -10,7 +10,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 //? if <1.20.6 {
 import net.minecraftforge.common.util.INBTSerializable;
-//?} else {
+//?} elif <26.1 {
 import net.neoforged.neoforge.common.util.INBTSerializable;
 //?}
 import org.slf4j.Logger;
@@ -21,12 +21,18 @@ import org.slf4j.LoggerFactory;
  *
  * @author TT432
  */
-public class McDataAttachmentContainer extends DataAttachmentContainer implements INBTSerializable<CompoundTag> {
+public class McDataAttachmentContainer extends DataAttachmentContainer
+        //? if <26.1
+        implements INBTSerializable<CompoundTag>
+{
     private static final Logger LOGGER = LoggerFactory.getLogger(McDataAttachmentContainer.class);
 
-    @Override
     //? if <1.20.6 {
+    @Override
     public CompoundTag serializeNBT() {
+    //?} elif <26.1 {
+    @Override
+    public CompoundTag serializeNBT(HolderLookup.Provider provider) {
     //?} else {
     public CompoundTag serializeNBT(HolderLookup.Provider provider) {
     //?}
@@ -37,9 +43,12 @@ public class McDataAttachmentContainer extends DataAttachmentContainer implement
         return tag;
     }
 
-    @Override
     //? if <1.20.6 {
+    @Override
     public void deserializeNBT(CompoundTag nbt) {
+    //?} elif <26.1 {
+    @Override
+    public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
     //?} else {
     public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
     //?}

@@ -56,10 +56,14 @@ public final class ParticleRenderHooks {
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
+        //? if <26.1 {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
             return;
         }
         ParticleRenderManager.INSTANCE.renderAfterEntities(new BedrockParticleRenderer(event.getPoseStack()));
+        //?} else {
+        throw new UnsupportedOperationException("26.1 migration");
+        //?}
     }
 
     @SubscribeEvent

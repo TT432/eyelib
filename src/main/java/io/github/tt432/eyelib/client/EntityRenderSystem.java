@@ -116,6 +116,7 @@ public class EntityRenderSystem {
 
     @SubscribeEvent
     public static void onEvent(RenderLevelStageEvent event) {
+        //? if <26.1 {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY) return;
 
         Vec3 position = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
@@ -179,6 +180,9 @@ public class EntityRenderSystem {
                 AttachableItemRenderSetup.tickForEntity(entity, partialTick);
             }
         });
+        //?} else {
+        throw new UnsupportedOperationException("26.1 migration");
+        //?}
     }
 
     @SubscribeEvent
@@ -197,6 +201,7 @@ public class EntityRenderSystem {
         }
     }
 
+    //? if <26.1 {
     @SubscribeEvent
     public static <E extends LivingEntity, M extends EntityModel<E>> void onEvent(RenderLivingEvent.Pre<E, M> event) {
         LivingEntity entity = event.getEntity();
@@ -213,6 +218,7 @@ public class EntityRenderSystem {
             event.setCanceled(true);
         }
     }
+    //?}
 
     public static <T> boolean renderEntity(SimpleRenderAction<T> data) {
         var entity = data.entity();
@@ -292,10 +298,14 @@ public class EntityRenderSystem {
             poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
             poseStack.translate(-0.25, 0.1, -1.15);
+            //? if <26.1 {
             Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer()
-                     .renderItem(le, item, context, left, poseStack, bufferSource, light);
+                      .renderItem(le, item, context, left, poseStack, bufferSource, light);
 
             poseStack.popPose();
+            //?} else {
+            throw new UnsupportedOperationException("26.1 migration");
+            //?}
         }
     }
 

@@ -13,7 +13,9 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.EventBusSubscriber;
+//? if <26.1 {
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+//?}
 import net.neoforged.neoforgespi.language.ModFileScanData;
 //?}
 import org.objectweb.asm.Type;
@@ -37,6 +39,7 @@ public final class ClientLoaderLifecycleHooks {
     private ClientLoaderLifecycleHooks() {
     }
 
+    //? if <26.1 {
     @SubscribeEvent
     public static void onRegisterClientReloadListeners(RegisterClientReloadListenersEvent event) {
         Type annotationType = Type.getType(ResourceLoader.class);
@@ -67,4 +70,5 @@ public final class ClientLoaderLifecycleHooks {
 
         event.registerReloadListener(new BedrockAddonAutoLoader());
     }
+    //?}
 }

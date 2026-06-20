@@ -9,7 +9,9 @@ import io.github.tt432.eyelib.animation.AnimationComponent;
 import io.github.tt432.eyelib.animation.AnimationEffects;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import lombok.With;
+//? if <26.1 {
 import net.minecraft.client.renderer.LightTexture;
+//?}
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -42,6 +44,7 @@ public record SimpleRenderAction<T>(
         @Nullable AnimationEffects effects,
         Builder.ExtraRender<T> extraRender
 ) {
+    //? if <26.1 {
     public static <T extends LivingEntity> Builder<T> builder(RenderLivingEvent<T, ?> event) {
         LivingEntity entity = Objects.requireNonNull(event.getEntity());
 
@@ -50,6 +53,7 @@ public record SimpleRenderAction<T>(
                                  .overlay(LivingEntityRenderer.getOverlayCoords(entity, ((LivingEntityRendererAccessor) (event.getRenderer())).callGetWhiteOverlayProgress(entity, event.getPartialTick())))
                                  .light(event.getPackedLight());
     }
+    //?}
 
     public static <T> Builder<T> builder(MultiBufferSource multiBufferSource, PoseStack poseStack, RenderData<T> renderData, float partialTick) {
         return new Builder<>(multiBufferSource, poseStack, renderData, partialTick);
@@ -68,7 +72,10 @@ public record SimpleRenderAction<T>(
         return builder
                 .entity(entity)
                 .overlay(overlay)
+                //? if <26.1
                 .light(modelComponent.isIgnoreLighting() ? LightTexture.FULL_BRIGHT : packedLight)
+                //? if >=26.1
+                .light(modelComponent.isIgnoreLighting() ? 0xF000F0 : packedLight)
                 .partVisibility(modelComponent.getPartVisibility())
                 .build();
     }
@@ -113,7 +120,10 @@ public record SimpleRenderAction<T>(
         float partialTick;
 
         // optional
+        //? if <26.1
         private int light = LightTexture.FULL_BRIGHT;
+        //? if >=26.1
+        private int light = 0xF000F0;
         private int overlay = OverlayTexture.NO_OVERLAY;
         @Nullable Entity entity;
         @Nullable ModelRuntimeData tickedInfos = ModelRuntimeData.EMPTY;

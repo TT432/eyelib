@@ -138,8 +138,10 @@ public final class EyelibNetworkTransport {
     public static void sendToServer(Object packet) {
         //? if <1.20.6 {
         CHANNEL.sendToServer(packet);
-        //?} else {
+        //?} elif <26.1 {
         PacketDistributor.sendToServer((CustomPacketPayload) packet);
+        //?} else {
+        throw new UnsupportedOperationException("26.1 migration");
         //?}
     }
 

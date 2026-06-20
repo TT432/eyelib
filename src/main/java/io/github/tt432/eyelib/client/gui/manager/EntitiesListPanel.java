@@ -5,7 +5,11 @@ import io.github.tt432.eyelib.Eyelib;
 import io.github.tt432.eyelib.client.ClientTickHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+//? if <26.1 {
 import net.minecraft.client.gui.GuiGraphics;
+//?} else {
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+//?}
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -105,6 +109,7 @@ public class EntitiesListPanel extends ScrollPanel {
 
     private EyelibManagerScreen.@Nullable EntityButton hoverButton;
 
+    //? if <26.1 {
     @Override
     protected void drawPanel(GuiGraphics guiGraphics, int entryRight, int relativeY, Tesselator tess, int mouseX, int mouseY) {
         if (!finished) {
@@ -151,6 +156,11 @@ public class EntitiesListPanel extends ScrollPanel {
             }
         }
     }
+    //?} else {
+    protected void drawPanel() {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+    }
+    //?}
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -164,6 +174,7 @@ public class EntitiesListPanel extends ScrollPanel {
         return false;
     }
 
+    //? if <26.1 {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
@@ -172,7 +183,14 @@ public class EntitiesListPanel extends ScrollPanel {
             guiGraphics.renderTooltip(Minecraft.getInstance().font, hoverButton.name, mouseX, mouseY);
         }
     }
+    //?} else {
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor graphicsExtractor, int mouseX, int mouseY, float partialTick) {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+    }
+    //?}
 
+    //? if <26.1 {
     private static void centeredString(GuiGraphics guiGraphics, String string, int x, int y, int w, int h) {
         Font font = Minecraft.getInstance().font;
         int th = font.lineHeight;
@@ -180,6 +198,7 @@ public class EntitiesListPanel extends ScrollPanel {
         int tw = font.width(string);
         guiGraphics.drawString(font, string, x + w / 2 - tw / 2, y + h / 2 - th / 2, 0xFFFFFFFF);
     }
+    //?}
 
     @Override
     public NarrationPriority narrationPriority() {
@@ -216,10 +235,17 @@ public class EntitiesListPanel extends AbstractWidget {
         throw new UnsupportedOperationException("NeoForge 1.21.1 ScrollPanel 已删除，需用 vanilla 方案重写");
     }
 
+    //? if <26.1 {
     @Override
     protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         // TODO: NeoForge 1.21.1 ScrollPanel 已删除，需用 vanilla 方案重写
     }
+    //?} else {
+    @Override
+    protected void extractWidgetRenderState(GuiGraphicsExtractor graphicsExtractor, int mouseX, int mouseY, float partialTick) {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+    }
+    //?}
 
     @Override
     protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {

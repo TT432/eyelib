@@ -52,7 +52,11 @@ public final class EntityExtraDataRuntimeHooks {
     //?} else {
     public static void onLivingTick(EntityTickEvent event) {
     //?}
+        //? if <26.1 {
         if (event.getEntity().level().isClientSide || !(event.getEntity() instanceof Mob mob)) {
+        //?} else {
+        if (event.getEntity().level().isClientSide() || !(event.getEntity() instanceof Mob mob)) {
+        //?}
             return;
         }
 

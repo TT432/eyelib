@@ -39,6 +39,7 @@ public abstract class ModelBakeInfo<Info> {
     }
 
     protected void downloadTexture(ResourceLocation texture, Consumer<NativeImage> imageConsumer) {
+        //? if <26.1 {
         Minecraft.getInstance().getTextureManager().getTexture(texture).bind();
 
         int[] width = new int[1];
@@ -53,6 +54,9 @@ public abstract class ModelBakeInfo<Info> {
                 imageConsumer.accept(nativeimage);
             }
         }
+        //?} else {
+        throw new UnsupportedOperationException("26.1 texture API");
+        //?}
     }
 
     protected void processBone(Model.Bone bone, NativeImage intBuffer, Int2BooleanFunction f, BoneDataConsumer consumer) {
@@ -99,7 +103,12 @@ public abstract class ModelBakeInfo<Info> {
 
         for (int j = minY; j < maxY; j++) {
             for (int k = minX; k < maxX; k++) {
-                if (f.get(buffer.getPixelRGBA(k, j))) {
+                //? if <26.1 {
+                int pixel = buffer.getPixelRGBA(k, j);
+                //?} else {
+                int pixel = buffer.getPixel(k, j);
+                //?}
+                if (f.get(pixel)) {
                     return true;
                 }
             }

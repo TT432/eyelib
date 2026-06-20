@@ -9,7 +9,9 @@ import io.github.tt432.eyelib.util.texture.TexturePaths;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.With;
 import net.minecraft.client.Minecraft;
+//? if <26.1 {
 import net.minecraft.client.renderer.LightTexture;
+//?}
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.AbstractTexture;
@@ -74,6 +76,7 @@ public record RenderParams(
     }
 
     public RenderParams asEmissive(MultiBufferSource multiBufferSource, ModelComponent modelComponent) {
+        //? if <26.1 {
         if (texture == null) {
             return withTexture(MissingTextureAtlasSprite.getLocation());
         }
@@ -90,10 +93,16 @@ public record RenderParams(
             return withRenderType(emissiveRenderType)
                     .withConsumer(emissiveBuffer)
                     .withTexture(emissiveTextureLocation)
+                    //? if <26.1
                     .withLight(LightTexture.FULL_BRIGHT);
+                    //? if >=26.1
+                    .withLight(0xF000F0);
         }
 
         return withTexture(MissingTextureAtlasSprite.getLocation());
+        //?} else {
+        throw new UnsupportedOperationException("26.1 migration");
+        //?}
     }
 
     public boolean textureMissing() {
@@ -115,7 +124,10 @@ public record RenderParams(
         // optional
         @Nullable
         private Entity renderTarget;
+        //? if <26.1
         private int light = LightTexture.FULL_BRIGHT;
+        //? if >=26.1
+        private int light = 0xF000F0;
         private int overlay = OverlayTexture.NO_OVERLAY;
         private Int2BooleanOpenHashMap partVisibility = new Int2BooleanOpenHashMap();
         private float @Nullable [] tintColor = null;

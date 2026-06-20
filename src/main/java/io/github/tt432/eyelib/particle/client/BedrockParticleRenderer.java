@@ -14,7 +14,9 @@ import io.github.tt432.eyelib.particle.runtime.bedrock.component.particle.appear
 import io.github.tt432.eyelib.particle.runtime.bedrock.component.particle.appearance.ParticleAppearanceTinting;
 import io.github.tt432.eyelib.particle.runtime.support.ParticleMath;
 import net.minecraft.client.Minecraft;
+//? if <26.1 {
 import net.minecraft.client.renderer.LightTexture;
+//?}
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -52,6 +54,7 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
         net.minecraft.resources.ResourceLocation texture = net.minecraft.resources.ResourceLocation.parse(particle.emitter().definition().texture()).withSuffix(".png");
         //?}
         PortRenderPass pass = factory.factory().apply(PortResourceLocation.of(texture.getNamespace(), texture.getPath()));
+        //? if <26.1 {
         VertexConsumer buffer = Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(
                 switch (pass.transparency()) {
                     case SOLID -> net.minecraft.client.renderer.RenderType.entitySolid(texture);
@@ -63,6 +66,9 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
                 }
         );
         render(particle, poseStack, buffer);
+        //?} else {
+        throw new UnsupportedOperationException("26.1 migration");
+        //?}
     }
 
     private static void render(BedrockParticleInstance particle, PoseStack poseStack, VertexConsumer vertexConsumer) {
@@ -73,7 +79,11 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
         ParticleAppearanceTinting tinting = component(components, ParticleAppearanceTinting.class);
 
         poseStack.pushPose();
+        //? if <26.1 {
         Vector3f cameraPos = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition().toVector3f();
+        //?} else {
+        Vector3f cameraPos = Minecraft.getInstance().gameRenderer.getMainCamera().position().toVector3f();
+        //?}
 
         PoseStack.Pose last = poseStack.last();
         Matrix4f pose = last.pose();
@@ -149,21 +159,33 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
 
     private static int getLight(BedrockParticleInstance particle, @Nullable ParticleAppearanceLighting lighting) {
         if (lighting != null) {
-            return LightTexture.FULL_BRIGHT;
+            return fullBrightLight();
         }
         Level level = Minecraft.getInstance().level;
         if (level == null) {
-            return LightTexture.FULL_BRIGHT;
+            return fullBrightLight();
         }
         BlockPos blockPosition = new BlockPos(
                 Mth.floor(particle.position().x),
                 Mth.floor(particle.position().y),
                 Mth.floor(particle.position().z)
         );
+        //? if <26.1 {
         return LightTexture.pack(
                 level.getBrightness(LightLayer.BLOCK, blockPosition),
                 level.getBrightness(LightLayer.SKY, blockPosition)
         );
+        //?} else {
+        return 0xF000F0;
+        //?}
+    }
+
+    private static int fullBrightLight() {
+        //? if <26.1 {
+        return LightTexture.FULL_BRIGHT;
+        //?} else {
+        return 0xF000F0;
+        //?}
     }
 
     @Nullable

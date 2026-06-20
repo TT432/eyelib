@@ -70,7 +70,13 @@ public record ModelPartModel(
 
         public Vector3fc initPosition(ModelPartModel.Bone model) {
             PartPose initialPose = model.modelPart().getInitialPose();
-            return new Vector3f(-initialPose.x * POS_MULTIPLIER, initialPose.y * POS_MULTIPLIER, initialPose.z * POS_MULTIPLIER);
+            return new Vector3f(
+                    //? if <26.1 {
+                    -initialPose.x * POS_MULTIPLIER, initialPose.y * POS_MULTIPLIER, initialPose.z * POS_MULTIPLIER
+                    //?} else {
+                    -initialPose.x() * POS_MULTIPLIER, initialPose.y() * POS_MULTIPLIER, initialPose.z() * POS_MULTIPLIER
+                    //?}
+            );
         }
 
         public Vector3fc position(ModelPartModel.Bone model) {
@@ -86,7 +92,13 @@ public record ModelPartModel(
         public Vector3fc initRotation(ModelPartModel.Bone model) {
             var part = model.modelPart();
             PartPose initialPose = part.getInitialPose();
-            return new Vector3f(-initialPose.xRot, -initialPose.yRot, initialPose.zRot);
+            return new Vector3f(
+                    //? if <26.1 {
+                    -initialPose.xRot, -initialPose.yRot, initialPose.zRot
+                    //?} else {
+                    -initialPose.xRot(), -initialPose.yRot(), initialPose.zRot()
+                    //?}
+            );
         }
 
         public Vector3fc rotation(ModelPartModel.Bone model) {

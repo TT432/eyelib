@@ -4,6 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.*;
+//? if <26.1
+import net.minecraft.world.entity.FlyingMob;
 import net.minecraft.world.entity.animal.WaterAnimal;
 import net.minecraft.world.level.block.Blocks;
 import java.util.*;
@@ -72,7 +74,11 @@ public final class MobArenaGenerator {
 
             Entity entity;
             try {
+                //? if <26.1 {
                 entity = type.create(level);
+                //?} else {
+                entity = type.create(level, EntitySpawnReason.NATURAL);
+                //?}
                 if (!(entity instanceof LivingEntity)) continue;
             } catch (Exception e) {
                 continue; // 某些类型无法在 overworld 创建（如 Warden 需要 sculk）
@@ -88,14 +94,14 @@ public final class MobArenaGenerator {
                 int cageH = (int) Math.ceil(bh) + 1;
                 int cageD = (int) Math.ceil(bw) + 1; // 宽=深
 
-                if (entity instanceof FlyingMob || type == EntityType.GHAST) cageH = Math.max(cageH, 3);
+                if (isFlyingMob(entity) || type == EntityType.GHAST) cageH = Math.max(cageH, 3);
 
                 Cage cage = new Cage(type, cageW, cageH, cageD);
 
                 if (entity instanceof WaterAnimal || type == EntityType.SQUID
                         || type == EntityType.GLOW_SQUID || type == EntityType.AXOLOTL) {
                     aquatic.add(cage);
-                } else if (entity instanceof FlyingMob || type == EntityType.GHAST
+                } else if (isFlyingMob(entity) || type == EntityType.GHAST
                         || type == EntityType.BLAZE || type == EntityType.VEX
                         || type == EntityType.ALLAY) {
                     flying.add(cage);
@@ -110,6 +116,14 @@ public final class MobArenaGenerator {
                 entity.discard();
             }
         }
+    }
+
+    private static boolean isFlyingMob(Entity entity) {
+        //? if <26.1 {
+        return entity instanceof FlyingMob;
+        //?} else {
+        return false;
+        //?}
     }
 
     // ---------- cage building ----------
@@ -222,7 +236,11 @@ public final class MobArenaGenerator {
     private static void summonAll(ServerLevel level, List<Cage> cages, BlockPos tierOrigin) {
         for (Cage cage : cages) {
             try {
+                //? if <26.1 {
                 Entity entity = cage.type.create(level);
+                //?} else {
+                Entity entity = cage.type.create(level, EntitySpawnReason.NATURAL);
+                //?}
                 entity.setPos(cage.x + cage.w / 2.0, cage.y + 0.5, cage.z + cage.d / 2.0);
                 level.addFreshEntity(entity);
             } catch (Exception e) {

@@ -95,11 +95,13 @@ public class RenderTypeBridgeSmoke {
             //?} else {
             ResourceLocation mcTex = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/entity/ghast");
             //?}
+            //? if <26.1 {
             RenderType expected = RenderType.entityTranslucentCull(mcTex);
             RenderType actual = RenderPassAdapter.toRenderType(pass,
                     PortResourceLocation.of("minecraft", "textures/entity/ghast"));
             require(expected.equals(actual),
                     "entity_alphablend → entityTranslucentCull");
+            //?}
         }
 
         // === S4: entity_alphatest → ALPHA_TEST + cull=true ===

@@ -65,7 +65,7 @@ public class DataAttachmentContainerCapability {
         }
     }
 }
-//?} else {
+//?} elif <26.1 {
 public class DataAttachmentContainerCapability {
     private static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
             DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, "eyelib");
@@ -73,6 +73,21 @@ public class DataAttachmentContainerCapability {
     public static final Supplier<AttachmentType<McDataAttachmentContainer>> ATTACHMENT =
             ATTACHMENT_TYPES.register("data_attachments", () ->
                     AttachmentType.<CompoundTag, McDataAttachmentContainer>serializable(McDataAttachmentContainer::new)
+                            .copyOnDeath()
+                            .build());
+
+    public static void register(IEventBus bus) {
+        ATTACHMENT_TYPES.register(bus);
+    }
+}
+//?} else {
+public class DataAttachmentContainerCapability {
+    private static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
+            DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, "eyelib");
+
+    public static final Supplier<AttachmentType<McDataAttachmentContainer>> ATTACHMENT =
+            ATTACHMENT_TYPES.register("data_attachments", () ->
+                    AttachmentType.builder(McDataAttachmentContainer::new)
                             .copyOnDeath()
                             .build());
 

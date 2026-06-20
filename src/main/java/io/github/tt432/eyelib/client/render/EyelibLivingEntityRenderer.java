@@ -15,6 +15,7 @@ import static io.github.tt432.eyelib.client.EntityRenderSystem.renderItemInHand;
 /**
  * @author TT432
  */
+//? if <26.1 {
 public class EyelibLivingEntityRenderer<T extends LivingEntity>
         extends LivingEntityRenderer<T, EyelibLivingEntityRenderer.EmptyEntityModel<T>> {
     public EyelibLivingEntityRenderer(EntityRendererProvider.Context context, float shadowRadius) {
@@ -41,7 +42,6 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
                           .overlay(overlay)
                           .extraRender((helper, action) -> {
                               renderItemInHand(helper, buffer, entity, packedLight);
-                              // TODO: 修改成使用 layer
                           })
                           .build()
                           .render();
@@ -66,3 +66,10 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
         //?}
     }
 }
+//?} else {
+public class EyelibLivingEntityRenderer<T extends LivingEntity> {
+    public EyelibLivingEntityRenderer(EntityRendererProvider.Context context, float shadowRadius) {
+        throw new UnsupportedOperationException("26.1.2 entity rendering is not yet supported");
+    }
+}
+//?}

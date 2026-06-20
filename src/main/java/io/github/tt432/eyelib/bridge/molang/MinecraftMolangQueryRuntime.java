@@ -22,7 +22,11 @@ public final class MinecraftMolangQueryRuntime implements MolangQueryRuntime {
         if (Minecraft.getInstance().level == null) {
             return 0;
         }
+        //? if <26.1 {
         return Minecraft.getInstance().level.getDayTime() / 24000F;
+        //?} else {
+        throw new UnsupportedOperationException("26.1 migration");
+        //?}
     }
 
     @Override
@@ -30,7 +34,11 @@ public final class MinecraftMolangQueryRuntime implements MolangQueryRuntime {
         if (Minecraft.getInstance().level == null) {
             return 0;
         }
+        //? if <26.1 {
         return Minecraft.getInstance().level.getMoonPhase();
+        //?} else {
+        throw new UnsupportedOperationException("26.1 migration");
+        //?}
     }
 
     @Override

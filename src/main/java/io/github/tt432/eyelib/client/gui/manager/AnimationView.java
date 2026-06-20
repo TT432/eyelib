@@ -12,7 +12,11 @@ import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import net.minecraft.client.Minecraft;
+//? if <26.1 {
 import net.minecraft.client.gui.GuiGraphics;
+//?} else {
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+//?}
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Renderable;
@@ -22,6 +26,8 @@ import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+//? if >=26.1
+import net.minecraft.client.renderer.RenderTypes;
 import net.minecraft.network.chat.Component;
 //? if <1.20.6 {
 import net.minecraftforge.api.distmarker.Dist;
@@ -30,11 +36,16 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLLoader;
-//?} else {
+//?} elif <26.1 {
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+//?} else {
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 //?}
 import org.joml.Vector2f;
@@ -73,15 +84,33 @@ public class AnimationView extends ModalWorksurfaceScreen {
     @SubscribeEvent
     //? if <1.20.6 {
     public static void onEvent(TickEvent.ClientTickEvent event) {
-        if (FMLLoader.isProduction()) return;
+        if (//? if <26.1 {
+            FMLLoader.isProduction()
+            //?} else {
+            false
+            //?}
+        ) return;
         if (event.phase == TickEvent.Phase.START || Minecraft.getInstance().level == null) return;
+    //?} elif <26.1 {
+    public static void onEvent(ClientTickEvent.Post event) {
+        if (//? if <26.1 {
+            FMLLoader.isProduction()
+            //?} else {
+            false
+            //?}
+        ) return;
+        if (Minecraft.getInstance().level == null) return;
     //?} else {
     public static void onEvent(ClientTickEvent.Post event) {
-        if (FMLLoader.isProduction()) return;
+        if (false) return;
         if (Minecraft.getInstance().level == null) return;
     //?}
 
-        if (GLFW.glfwGetKey(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_G) == GLFW.GLFW_PRESS
+        if (//? if <26.1 {
+            GLFW.glfwGetKey(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_G) == GLFW.GLFW_PRESS
+            //?} else {
+            false
+            //?}
                 && Minecraft.getInstance().screen == null) {
             Minecraft.getInstance().setScreen(new AnimationView(Component.empty()));
         }
@@ -148,12 +177,19 @@ public class AnimationView extends ModalWorksurfaceScreen {
             return children;
         }
 
+        //? if <26.1 {
         @Override
         public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
             for (var child : children) {
                 ((Renderable) child).render(guiGraphics, mouseX, mouseY, partialTick);
             }
         }
+        //?} else {
+        @Override
+        public void extractRenderState(GuiGraphicsExtractor graphicsExtractor, int mouseX, int mouseY, float partialTick) {
+            throw new UnsupportedOperationException("26.1 migration");
+        }
+        //?}
 
         @Override
         public NarrationPriority narrationPriority() {
@@ -226,6 +262,7 @@ public class AnimationView extends ModalWorksurfaceScreen {
             return AnimationLookup.size() * buttonHeight;
         }
 
+        //? if <26.1 {
         @Override
         protected void drawPanel(GuiGraphics guiGraphics, int entryRight, int relativeY, Tesselator tess, int mouseX, int mouseY) {
             if (buttons == null) {
@@ -240,6 +277,11 @@ public class AnimationView extends ModalWorksurfaceScreen {
                 button.render(guiGraphics, mouseX, mouseY, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true));
             }
         }
+        //?} else {
+        protected void drawPanel() {
+            throw new UnsupportedOperationException("26.1 migration");
+        }
+        //?}
 
         @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -261,10 +303,17 @@ public class AnimationView extends ModalWorksurfaceScreen {
             throw new UnsupportedOperationException("NeoForge 1.21.1 ScrollPanel 已删除，需用 vanilla 方案重写");
         }
 
+        //? if <26.1 {
         @Override
         protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
             // TODO: NeoForge 1.21.1 ScrollPanel 已删除，需用 vanilla 方案重写
         }
+        //?} else {
+        @Override
+        protected void extractWidgetRenderState(GuiGraphicsExtractor graphicsExtractor, int mouseX, int mouseY, float partialTick) {
+            throw new UnsupportedOperationException("26.1 migration");
+        }
+        //?}
 
         @Override
         protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
@@ -343,6 +392,7 @@ public class AnimationView extends ModalWorksurfaceScreen {
 
     private RenderableEventListener curvePanel(int initPosY, int interval, int rightPanelStartY, Axis axis) {
         return new RenderableEventListener() {
+            //? if <26.1 {
             @Override
             public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
                 if (animationChanelButtonGroup == null || animationChanelButtonGroup.selectedButtonName == null) return;
@@ -380,6 +430,12 @@ public class AnimationView extends ModalWorksurfaceScreen {
                     sample.render(new PoseStack(), lineLeft, (top + down) / 2, 150, scale);
                 }
             }
+            //?} else {
+            @Override
+            public void extractRenderState(GuiGraphicsExtractor graphicsExtractor, int mouseX, int mouseY, float partialTick) {
+                throw new UnsupportedOperationException("26.1 migration");
+            }
+            //?}
 
             @Override
             public void setFocused(boolean focused) {
@@ -393,6 +449,7 @@ public class AnimationView extends ModalWorksurfaceScreen {
         };
     }
 
+    //? if <26.1 {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
@@ -402,6 +459,12 @@ public class AnimationView extends ModalWorksurfaceScreen {
 
         guiGraphics.drawString(font, "当前动画：" + (selectedAnimationName != null ? selectedAnimationName : "空"), 110, 20, 0xFFFFFF);
     }
+    //?} else {
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor graphicsExtractor, int mouseX, int mouseY, float partialTick) {
+        throw new UnsupportedOperationException("26.1 migration");
+    }
+    //?}
 
     @Override
     public boolean isPauseScreen() {
@@ -414,8 +477,11 @@ public class AnimationView extends ModalWorksurfaceScreen {
                 List<Vector2f> samplePoints
         ) {
             public void render(PoseStack poseStack, int startX, int startY, int xScale, int yScale) {
+                //? if <26.1 {
                 MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-                VertexConsumer buffer = bufferSource.getBuffer(RenderType.gui());
+                VertexConsumer buffer = bufferSource.getBuffer(
+                        RenderType.gui()
+                );
 
                 var points = samplePoints.stream()
                                          .map(v -> new Vector2f(v).mul(xScale, yScale).add(startX, startY))
@@ -457,7 +523,10 @@ public class AnimationView extends ModalWorksurfaceScreen {
                     }
                 }
 
-                bufferSource.endBatch(RenderType.gui());
+                bufferSource.endBatch(
+                        RenderType.gui()
+                );
+                //?}
             }
         }
 

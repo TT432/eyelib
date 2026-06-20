@@ -58,6 +58,7 @@ public class TextureLayerMerger {
             return new NativeImage(16, 16, false);
         }
         // 过滤掉纹理管理器中不存在的纹理，避免 FileNotFoundException
+        //? if <26.1 {
         List<ResourceLocation> validTextures = filterExisting(textures);
         if (validTextures.isEmpty()) {
             return new NativeImage(16, 16, false);
@@ -119,9 +120,13 @@ public class TextureLayerMerger {
         }
 
         return finalImage;
+        //?} else {
+        throw new UnsupportedOperationException("26.1 migration");
+        //?}
     }
 
     private static List<ResourceLocation> filterExisting(List<ResourceLocation> textures) {
+        //? if <26.1 {
         List<ResourceLocation> valid = new ArrayList<>(textures.size());
         for (ResourceLocation resourceLocation : textures) {
             try {
@@ -133,6 +138,9 @@ public class TextureLayerMerger {
             }
         }
         return valid;
+        //?} else {
+        throw new UnsupportedOperationException("26.1 migration");
+        //?}
     }
 
     private static int getComputeProgram() {

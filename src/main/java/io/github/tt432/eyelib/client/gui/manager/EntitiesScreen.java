@@ -2,7 +2,11 @@ package io.github.tt432.eyelib.client.gui.manager;
 
 import io.github.tt432.eyelib.client.gui.ModalWorksurfaceScreen;
 import net.minecraft.client.Minecraft;
+//? if <26.1 {
 import net.minecraft.client.gui.GuiGraphics;
+//?} else {
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+//?}
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
@@ -40,6 +44,7 @@ public class EntitiesScreen extends ModalWorksurfaceScreen {
         }
     }
 
+    //? if <26.1 {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         super.render(guiGraphics, mouseX, mouseY, partialTick);
@@ -48,6 +53,12 @@ public class EntitiesScreen extends ModalWorksurfaceScreen {
             EyelibManagerScreen.renderEntityButton(guiGraphics, width - size - border, border, size, 0, EntitiesListPanel.lastSelected);
         }
     }
+    //?} else {
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor graphicsExtractor, int mouseX, int mouseY, float partialTick) {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+    }
+    //?}
 
     @Override
     public boolean isPauseScreen() {
