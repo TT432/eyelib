@@ -5,7 +5,10 @@
       "type": "local",
       "command": ["python", "scripts/eyelib_debug_mcp.py"],
       "enabled": true,
-      "timeout": 120000
+      "timeout": 900000
     }
+  },
+  "experimental": {
+    "mcp_timeout": 900000
   }
 }
