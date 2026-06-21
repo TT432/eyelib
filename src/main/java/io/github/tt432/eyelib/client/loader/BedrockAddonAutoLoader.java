@@ -64,11 +64,13 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
             Executor reloadExecutor) {
         return CompletableFuture.supplyAsync(this::loadAllAddons, reloadExecutor)
                                 .thenCompose(preparationBarrier::wait)
-                                .thenAcceptAsync(addons -> {
-                                    for (BedrockAddon addon : addons) {
-                                        bridgeAndPublish(addon);
-                                    }
-                                }, taskExecutor);
+                                .thenComposeAsync(addons ->
+                                        Minecraft.getInstance().submit(() -> {
+                                            for (BedrockAddon addon : addons) {
+                                                bridgeAndPublish(addon);
+                                            }
+                                        })
+                                , taskExecutor);
     }
     //?}
 

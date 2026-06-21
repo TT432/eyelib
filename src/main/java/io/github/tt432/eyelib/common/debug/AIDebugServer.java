@@ -130,23 +130,22 @@ public final class AIDebugServer {
                 CompletableFuture<String> future = new CompletableFuture<>();
                 mc.tell(() -> {
                     try {
-                        //? if <26.1 {
+                        //? if <1.20.6 {
                         LevelSettings levelSettings = new LevelSettings(
                                 finalName, GameType.CREATIVE, false, Difficulty.NORMAL,
-                                //? if <1.20.6 {
                                 true, new GameRules(), WorldDataConfiguration.DEFAULT);
-                                //?} else {
-                                true, null, WorldDataConfiguration.DEFAULT);
-                                //?}
                         WorldOptions worldOptions = new WorldOptions(0L, true, false);
-                        //? if <1.20.6 {
                         mc.createWorldOpenFlows().createFreshLevel(
                                 finalName, levelSettings, worldOptions,
                                 registry -> registry.registryOrThrow(Registries.WORLD_PRESET)
                                                     .getHolderOrThrow(WorldPresets.FLAT)
                                                     .value()
                                                     .createWorldDimensions());
-                        //?} else {
+                        //?} elif <26.1 {
+                        LevelSettings levelSettings = new LevelSettings(
+                                finalName, GameType.CREATIVE, false, Difficulty.NORMAL,
+                                true, null, WorldDataConfiguration.DEFAULT);
+                        WorldOptions worldOptions = new WorldOptions(0L, true, false);
                         mc.createWorldOpenFlows().createFreshLevel(
                                 finalName, levelSettings, worldOptions,
                                 registry -> registry.registryOrThrow(Registries.WORLD_PRESET)
@@ -154,11 +153,21 @@ public final class AIDebugServer {
                                                     .value()
                                                     .createWorldDimensions(),
                                 null);
+                        //?} else {
+                        LevelSettings levelSettings = new LevelSettings(
+                                finalName, GameType.CREATIVE,
+                                new LevelSettings.DifficultySettings(Difficulty.NORMAL, false, false),
+                                true, WorldDataConfiguration.DEFAULT);
+                        WorldOptions worldOptions = new WorldOptions(0L, true, false);
+                        mc.createWorldOpenFlows().createFreshLevel(
+                                finalName, levelSettings, worldOptions,
+                                registry -> registry.lookupOrThrow(Registries.WORLD_PRESET)
+                                                    .getOrThrow(WorldPresets.FLAT)
+                                                    .value()
+                                                    .createWorldDimensions(),
+                                null);
                         //?}
                         future.complete("World creation initiated: " + finalName);
-                        //?} else {
-                        future.complete("createFreshLevel is not supported on this version: " + finalName);
-                        //?}
                     } catch (Exception e) {
                         future.complete("Failed to enter world: " + e.getMessage());
                     }

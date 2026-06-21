@@ -83,7 +83,7 @@ public final class ClientLoaderLifecycleHooks {
 
                     PreparableReloadListener instance = (PreparableReloadListener) clazz.getDeclaredConstructor()
                                                                                         .newInstance();
-                    registrar.register(clazz.getSimpleName(), instance);
+                    registrar.register(clazz.getSimpleName().toLowerCase(java.util.Locale.ROOT), instance);
                 } catch (Exception | LinkageError e) {
                     LOGGER.error("[ResourceLoader] Failed to load: {}", memberName, e);
                 }
