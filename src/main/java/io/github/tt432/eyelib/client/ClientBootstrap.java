@@ -2,9 +2,13 @@ package io.github.tt432.eyelib.client;
 
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelib.bridge.client.gui.ModelPreviewScreenHook;
+import io.github.tt432.eyelib.bridge.client.gui.manager.AnimationViewHook;
+import io.github.tt432.eyelib.bridge.ui.ScreenPort;
 import io.github.tt432.eyelib.capability.AttachableDataTypes;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.client.gui.ModelPreviewScreen;
+import io.github.tt432.eyelib.client.gui.manager.AnimationView;
+import io.github.tt432.eyelib.client.gui.manager.EyelibManagerScreen;
 import io.github.tt432.eyelib.client.particle.MinecraftParticleRuntimeEnvironment;
 import io.github.tt432.eyelib.client.render.EntityRenderOrchestrator;
 import io.github.tt432.eyelib.particle.ParticleSpawnRuntimeAdapter;
@@ -29,6 +33,8 @@ public final class ClientBootstrap {
             throw new RuntimeException(e);
         }
         ModelPreviewScreenHook.openScreenSupplier = ModelPreviewScreen::new;
+        AnimationViewHook.openScreenSupplier = AnimationView::new;
+        ScreenPort.register(EyelibManagerScreen::create);
 
         ParticleSpawnRuntimeAdapter.configure(
                 () -> {

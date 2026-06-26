@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.bridge.client.gui.manager.hotkey;
 
-import io.github.tt432.eyelib.bridge.client.gui.manager.EyelibManagerScreen;
+import io.github.tt432.eyelib.bridge.ui.ScreenPort;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
@@ -32,7 +32,7 @@ public final class ManagerScreenOpenEvents {
     public static void onEvent(ClientTickEvent.Pre event) {
     //?}
         if (ManagerScreenKeybinds.OPEN_SCREEN.isDown() && Minecraft.getInstance().screen == null) {
-            Minecraft.getInstance().setScreen(EyelibManagerScreen.create());
+            ScreenPort.openManagerScreen();
         }
     }
 }

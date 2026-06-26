@@ -1,5 +1,5 @@
 /**
- * 管理器界面组件桥接：extends Forge ScrollPanel、依赖 blaze3d RenderSystem 的 GUI 控件。
+ * 管理器界面桥接入口：承接 MC 事件并打开 application 层管理器屏幕。
  *
  * @author TT432
  */
