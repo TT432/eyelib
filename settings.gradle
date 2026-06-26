@@ -25,3 +25,5 @@ stonecutter {
 rootProject.name = "eyelib"
 
 includeBuild("clientsmoke")
+includeBuild("clientsmokeannotation")
+includeBuild("clientsmoke-neoforge")

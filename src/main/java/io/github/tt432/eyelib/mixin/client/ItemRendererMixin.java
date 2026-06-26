@@ -2,7 +2,7 @@
 package io.github.tt432.eyelib.mixin.client;
 
 import io.github.tt432.eyelib.capability.RenderData;
-import io.github.tt432.eyelib.client.ClientTickHandler;
+import io.github.tt432.eyelib.bridge.client.ClientTickHandler;
 import io.github.tt432.eyelib.client.track.ItemTrackRenderer;
 import io.github.tt432.eyelib.animation.AnimationComponent;
 import io.github.tt432.eyelib.animation.AnimationEffects;

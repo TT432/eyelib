@@ -1,26 +1,31 @@
 package io.github.tt432.eyelib.client.gui;
 
 
-import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import io.github.tt432.eyelib.client.gui.preview.ModelPreviewAsset;
-import io.github.tt432.eyelib.client.model.DFSModel;
+import io.github.tt432.eyelib.bridge.client.EntityRenderSystem;
+import io.github.tt432.eyelib.bridge.client.gui.ModalWorksurfaceScreen;
 import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
+import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
+import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.client.render.bake.TwoSideModelBakeInfo;
 import io.github.tt432.eyelib.client.render.visitor.ActiveModelRenderVisitors;
-import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.importer.model.bbmodel.BBModel;
 import io.github.tt432.eyelib.importer.model.bbmodel.BBModelLoader;
 import io.github.tt432.eyelib.importer.model.bbmodel.Texture;
 import io.github.tt432.eyelib.importer.model.importer.ModelImporter;
 import io.github.tt432.eyelib.model.Model;
-import net.minecraft.client.Minecraft;
+import io.github.tt432.eyelib.model.ModelPreviewAsset;
+import io.github.tt432.eyelib.model.ModelVisitContext;
+//? if >=26.1 {
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+//?}
 //? if >=26.1 {
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -31,32 +36,11 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 //?}
 import net.minecraft.client.gui.components.EditBox;
-//? if <26.1 {
-import net.minecraft.client.renderer.LightTexture;
-//?}
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-//? if <1.20.6 {
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.loading.FMLLoader;
-//?} elif <26.1 {
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.loading.FMLLoader;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-//?} else {
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-//?}
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -70,42 +54,6 @@ import java.util.Map;
  * @author TT432
  */
 public class ModelPreviewScreen extends ModalWorksurfaceScreen {
-    //? if <1.20.6 {
-    @Mod.EventBusSubscriber(Dist.CLIENT)
-    //?} else {
-    @EventBusSubscriber(Dist.CLIENT)
-    //?}
-    public static final class Events {
-        @SubscribeEvent
-        //? if <1.20.6 {
-        public static void onEvent(TickEvent.ClientTickEvent event) {
-        //?} elif <26.1 {
-        public static void onEvent(ClientTickEvent.Pre event) {
-        //?} else {
-        public static void onEvent(ClientTickEvent.Pre event) {
-        //?}
-            //? if <26.1 {
-            if (//? if <26.1 {
-                FMLLoader.isProduction()
-                //?} else {
-                false
-                //?}
-            ) return;
-            //?} else {
-            if (false) return;
-            //?}
-            if (Minecraft.getInstance().screen == null
-                    && //? if <26.1 {
-                    InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), GLFW.GLFW_KEY_V)
-                    //?} else {
-                    false
-                    //?}
-            ) {
-                Minecraft.getInstance().setScreen(new ModelPreviewScreen());
-            }
-        }
-    }
-
     @Nullable
     private EditBox searchBox;
     @Nullable
@@ -229,17 +177,13 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         if (currentModel != null) {
             // Setup RenderParams
             MultiBufferSource.BufferSource bufferSource = guiGraphics.bufferSource();
-            //? if <1.20.6 {
-            ResourceLocation texture = new ResourceLocation(currentModel.atlasTexture().id());
-            //?} else {
-            ResourceLocation texture = ResourceLocation.parse(currentModel.atlasTexture().id());
-            //?}
+            ResourceLocation texture = ResourceLocationBridge.parseMc(currentModel.atlasTexture().id());
 
             RenderType renderType = RenderType.entitySolid(texture);
             VertexConsumer buffer = bufferSource.getBuffer(renderType);
 
             RenderParams params = RenderParams.builder(poseStack, renderType, true, texture, buffer)
-                                              .light(LightTexture.FULL_BRIGHT) // Full bright for preview
+                                              .light(EntityRenderSystem.FULL_BRIGHT) // Full bright for preview
                                               .overlay(OverlayTexture.NO_OVERLAY)
                                               .build();
 
@@ -394,13 +338,8 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
                 BBModel model = new BBModelLoader().load(path);
                 this.currentModel = previewModel(model, ModelImporter.importBlockbench(model));
                 var model1 = currentModel.model();
-                //? if <1.20.6 {
-                var info = TwoSideModelBakeInfo.INSTANCE.getBakeInfo(model1, true, new ResourceLocation(currentModel.atlasTexture()
+                var info = TwoSideModelBakeInfo.INSTANCE.getBakeInfo(model1, true, ResourceLocationBridge.parseMc(currentModel.atlasTexture()
                                                                                                                      .id()));
-                //?} else {
-                var info = TwoSideModelBakeInfo.INSTANCE.getBakeInfo(model1, true, ResourceLocation.parse(currentModel.atlasTexture()
-                                                                                                                      .id()));
-                //?}
                 bakedModel = TwoSideModelBakeInfo.INSTANCE.bake(model1, info);
                 dfsModel = DFSModel.create(model1);
                 this.statusMessage = "";

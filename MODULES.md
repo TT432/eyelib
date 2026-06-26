@@ -16,16 +16,15 @@
 | `eyelib.client` | Client runtime: rendering, models, animations, particles, loaders, managers, and dev-oriented screens. |
 | `eyelib.common` | 共享的行为/运行时逻辑和确定性运行时更新辅助。 |
 | `eyelib.debug` | 生物展示场地程序化生成。 |
-| `eyelib.event` | Eyelib 自定义 Forge 事件定义。 |
 | `eyelib.importer` | 导入器/数据格式模块：Bedrock 资源导入、数据格式编解码、解析、附加包发现及标准化。 |
 | `eyelib.material` | 材质模块：Bedrock 材质定义、GL 状态管理、着色器管线及材质渲染工具。 |
 | `eyelib.mixin` | 共享的 Mixin 配置和技术性 Sponge Mixin 连线。 |
 | `eyelib.model` | 模型定义模块。 |
 | `eyelib.molang` | Molang 引擎：Molang 值/运行时封装、作用域、编译器、代码缓存、映射 API 及类型系统。 |
-| `eyelib.network` | 精简的共享通道入口点、传输委派和同步路由的无上下文处理器分发。 |
+| `eyelib.network` | 网络包在客户端的接收/分发处理（不持版本特定 MC API；版本差异的通道注册由 bridge/network 负责）。 |
 | `eyelib.particle` | 粒子模块：粒子定义、运行时、组件系统、加载管线与客户端渲染的整合入口。 |
 | `eyelib.smoke` | Clientsmoke 入口类集合，承担 mcpack 数据的运行时完整性验证。 |
 | `eyelib.track` | 追踪模块：为 ItemStack 提供单调递增 ID 分配、NBT 持久化及基于 ID 的通用缓存容器基础设施。 |
 | `eyelib.util` | 共享工具模块，提供 Eyelib 的基础工具类集合。 |
 
-(19 modules)
+(18 modules)

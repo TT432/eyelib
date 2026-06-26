@@ -1,4 +1,5 @@
 package io.github.tt432.eyelib.client.render.visitor;
+import io.github.tt432.eyelib.model.ModelVisitContext;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;

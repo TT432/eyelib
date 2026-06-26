@@ -124,7 +124,7 @@ def _run_gradle_sync(tasks: list[str], timeout: int = 900) -> subprocess.Complet
         with open(log_path, "a", encoding="utf-8") as f:
             f.write(f"{time.strftime('%H:%M:%S')} {msg}\n")
 
-    cmd = f'cd /d {PROJECT_DIR} && gradlew.bat {task_str}'
+    cmd = f'cd /d {PROJECT_DIR} && gradlew.bat {task_str} --stacktrace'
 
     _log(f"START subprocess.run: {task_str}")
     t0 = time.time()
@@ -671,20 +671,24 @@ async def eyelib_debug_clientsmoke(timeout: int = 120, version: str = "1.20.1") 
         exit_msg = await _process_exit_message("Client")
         return f"❌ {msg}\n{exit_msg or ''}"
 
-    # Wait for report or process exit
+    # Wait for a report newer than this invocation (or process exit).
+    # Polling must reject stale reports left over from previous runs — otherwise
+    # the loop sees an old mtime and breaks immediately without running tests.
     report_dir = os.path.join(PROJECT_DIR, "run", "clientsmoke-reports")
-    start = time.time()
-    while time.time() - start < timeout:
+    invocation_start = time.time()
+    while time.time() - invocation_start < timeout:
         exit_msg = await _process_exit_message("Client")
         if exit_msg:
             break
         try:
             json_files = sorted(
                 [f for f in os.listdir(report_dir) if f.startswith("report-") and f.endswith(".json")],
+                key=lambda f: os.path.getmtime(os.path.join(report_dir, f)),
                 reverse=True)
             if json_files:
                 rp = os.path.join(report_dir, json_files[0])
-                if time.time() - os.path.getmtime(rp) > 2:
+                rp_mtime = os.path.getmtime(rp)
+                if rp_mtime > invocation_start and time.time() - rp_mtime > 2:
                     await asyncio.sleep(3)
                     break
         except (FileNotFoundError, OSError):

@@ -1,8 +1,9 @@
 /**
- * 客户端实体查询、RenderData 集成及渲染和模型系统使用的过渡类型。
+ * 客户端实体运行时数据与渲染控制器状态载体（版本无关数据类）。
+ *
+ * @author TT432
  */
 @NullMarked
 package io.github.tt432.eyelib.client.entity;
 
 import org.jspecify.annotations.NullMarked;
-

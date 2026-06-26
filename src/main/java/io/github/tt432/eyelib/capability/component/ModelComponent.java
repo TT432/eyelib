@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.capability.component;
 
 import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
-import io.github.tt432.eyelib.attachment.capability.ModelComponentInfo;
+import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
 import io.github.tt432.eyelib.bridge.material.RenderPassAdapter;
 import io.github.tt432.eyelib.bridge.material.RenderTypeResolver;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;

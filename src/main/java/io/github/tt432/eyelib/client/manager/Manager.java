@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.manager;
 
+import io.github.tt432.eyelib.util.manager.ManagerEventPublishBridge;
 import io.github.tt432.eyelib.util.manager.ManagerStorage;
 import io.github.tt432.eyelib.util.repository.Repository;
 import org.jspecify.annotations.Nullable;

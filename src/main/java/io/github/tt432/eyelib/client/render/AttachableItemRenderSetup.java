@@ -3,10 +3,10 @@ package io.github.tt432.eyelib.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
-import io.github.tt432.eyelib.client.ClientTickHandler;
+import io.github.tt432.eyelib.bridge.client.ClientTickHandler;
 import io.github.tt432.eyelib.client.particle.RootAnimationParticleSpawner;
-import io.github.tt432.eyelib.client.EntityRenderSystem;
-import io.github.tt432.eyelib.particle.client.ParticleSpawnRuntimeAdapter;
+
+import io.github.tt432.eyelib.bridge.particle.ParticleRuntimeBridge;
 import io.github.tt432.eyelib.client.entity.AttachableResolver;
 import io.github.tt432.eyelib.animation.AnimationComponent;
 import io.github.tt432.eyelib.animation.AnimationEffects;
@@ -68,7 +68,7 @@ public final class AttachableItemRenderSetup {
         }
 
         rd.getClientEntityComponent().setClientEntity(attachable);
-        EntityRenderSystem.setupClientEntity(attachable, rd);
+        EntityRenderOrchestrator.setupClientEntity(attachable, rd);
 
         handMap.put(hand, rd);
         return rd;
@@ -88,7 +88,7 @@ public final class AttachableItemRenderSetup {
             scope.set("variable.partial_tick", partialTick);
 
             AnimationEffects effects = new AnimationEffects();
-            scope.getHostContext().put(AnimationParticleSpawner.class, new RootAnimationParticleSpawner(ParticleSpawnRuntimeAdapter.INSTANCE));
+            scope.getHostContext().put(AnimationParticleSpawner.class, new RootAnimationParticleSpawner(ParticleRuntimeBridge.SPAWN_ADAPTER));
             ac.tickedInfos = BrAnimator.tickAnimation(ac, scope, effects,
                                                       (ClientTickHandler.getTick() + partialTick) / 20, () -> {
                         var ce = rd.getClientEntityComponent().getClientEntity();

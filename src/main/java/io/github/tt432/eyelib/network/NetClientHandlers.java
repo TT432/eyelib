@@ -2,11 +2,11 @@ package io.github.tt432.eyelib.network;
 
 import io.github.tt432.eyelib.client.render.sync.ClientRenderSyncService;
 import io.github.tt432.eyelib.particle.api.ParticleSpawnRequest;
-import io.github.tt432.eyelib.particle.client.ParticleSpawnRuntimeAdapter;
-import io.github.tt432.eyelib.particle.network.RemoveParticlePacket;
-import io.github.tt432.eyelib.particle.network.SpawnParticlePacket;
-import io.github.tt432.eyelib.animation.network.AnimationComponentSyncPacket;
-import io.github.tt432.eyelib.model.network.packet.ModelComponentSyncPacket;
+import io.github.tt432.eyelib.bridge.particle.ParticleRuntimeBridge;
+import io.github.tt432.eyelib.bridge.network.particle.RemoveParticlePacket;
+import io.github.tt432.eyelib.bridge.network.particle.SpawnParticlePacket;
+import io.github.tt432.eyelib.bridge.network.animation.AnimationComponentSyncPacket;
+import io.github.tt432.eyelib.bridge.network.model.ModelComponentSyncPacket;
 /**
  * @author TT432
  */
@@ -22,11 +22,11 @@ public class NetClientHandlers {
     }
 
     public static void onRemoveParticlePacket(RemoveParticlePacket packet) {
-        ParticleSpawnRuntimeAdapter.INSTANCE.remove(packet.removeId());
+        ParticleRuntimeBridge.SPAWN_ADAPTER.remove(packet.removeId());
     }
 
     public static void onSpawnParticlePacket(SpawnParticlePacket packet) {
-        ParticleSpawnRuntimeAdapter.INSTANCE.spawn(
+        ParticleRuntimeBridge.SPAWN_ADAPTER.spawn(
                 new ParticleSpawnRequest(packet.spawnId(), packet.particleId(), packet.position())
         );
     }

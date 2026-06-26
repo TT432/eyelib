@@ -1,5 +1,7 @@
 package io.github.tt432.eyelib.common.debug;
 
+import io.github.tt432.eyelib.bridge.ForgeEnvironment;
+import io.github.tt432.eyelib.common.debug.ScriptEvalService;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpServer;
@@ -12,11 +14,6 @@ import net.minecraft.world.level.LevelSettings;
 import net.minecraft.world.level.WorldDataConfiguration;
 import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
-//? if <1.20.6 {
-import net.minecraftforge.fml.loading.FMLLoader;
-//?} else {
-import net.neoforged.fml.loading.FMLLoader;
-//?}
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,11 +37,7 @@ public final class AIDebugServer {
     private HttpServer server;
 
     public void start() {
-        if (//? if <26.1 {
-            FMLLoader.isProduction()
-            //?} else {
-            false
-            //?}
+        if (ForgeEnvironment.isProduction()
         ) {
             return;
         }

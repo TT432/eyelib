@@ -160,6 +160,15 @@ def migrate26Renames = tasks.register('migrate26Renames') {
                 // EventBusSubscriber: 26.1+ 删除 bus 参数（自动推断总线）
                 newText = newText.replaceAll(', bus = EventBusSubscriber\\.Bus\\.\\w+', '')
                 newText = newText.replaceAll('\\(bus = EventBusSubscriber\\.Bus\\.\\w+\\)', '()')
+                // 26.1+ 空 modid 的 @EventBusSubscriber 不被自动注册，注入 modid
+                // 先展开省略形式 @EventBusSubscriber(Dist.X) → @EventBusSubscriber(value = Dist.X)
+                newText = newText.replaceAll(/@EventBusSubscriber\(Dist\./, '@EventBusSubscriber(value = Dist.')
+                // 先处理空括号 @EventBusSubscriber() → @EventBusSubscriber(modid = "eyelib")
+                newText = newText.replaceAll(/@EventBusSubscriber\(\)/, '@EventBusSubscriber(modid = "eyelib")')
+                // 有参数但无 modid：注入 modid（排除空括号和已有 modid）
+                newText = newText.replaceAll(/@EventBusSubscriber\((?!modid\b)(?!\))/, '@EventBusSubscriber(modid = "eyelib", ')
+                // 无括号形式
+                newText = newText.replaceAll(/@EventBusSubscriber(?!\()/, '@EventBusSubscriber(modid = "eyelib")')
                 // ResourceLocationArgument → IdentifierArgument
                 newText = newText.replaceAll('\\bResourceLocationArgument\\b', 'IdentifierArgument')
                 // LightTexture 在 26.1 完全删除，FULL_BRIGHT 是 0xF000F0
@@ -188,6 +197,11 @@ def migrate26Renames = tasks.register('migrate26Renames') {
     }
 }
 compileJava.dependsOn migrate26Renames
+// migrate26Renames 修改生成源码但 Gradle 的 UP-TO-DATE 检查可能不感知，
+// 26.1 node 强制 compileJava 每次重编译
+if (isModern) {
+    compileJava.outputs.upToDateWhen { false }
+}
 
 // 同理，test sourceSet 也需指向 stonecutterGenerateTest 的生成目录。
 def stonecutterTestGenerated = layout.buildDirectory.dir('generated/stonecutter/test/java')
@@ -407,16 +421,8 @@ dependencies {
 
     compileOnly("maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha")
 
-    // Client Smoke Test is supplied by the composite build in ./clientsmoke.
-    compileOnly "io.github.tt432:clientsmoke:${version}"
-    localRuntime "io.github.tt432:clientsmoke:${version}"
-
-    // AI Debug Server — dev-only runtime Java execution, gated by FMLLoader.isProduction()
-    if (hasAdditionalRuntimeClasspath) {
-        additionalRuntimeClasspath(implementation('org.codehaus.janino:janino:3.1.12'))
-    } else {
-        implementation('org.codehaus.janino:janino:3.1.12')
-    }
+    compileOnly 'io.github.tt432:clientsmokeannotation:1.0.0'
+    localRuntime "io.github.tt432:${isModern ? 'clientsmoke-neoforge' : 'clientsmoke'}:${version}"
 
     if (hasAdditionalRuntimeClasspath) {
         jarJar additionalRuntimeClasspath(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))

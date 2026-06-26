@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.render.visitor;
 
-import io.github.tt432.eyelib.client.compat.ar.ARCompat;
+import io.github.tt432.eyelib.bridge.client.compat.ar.ARCompat;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 /**

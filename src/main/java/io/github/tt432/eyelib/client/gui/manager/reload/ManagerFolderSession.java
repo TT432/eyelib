@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.gui.manager.reload;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import io.github.tt432.eyelib.bridge.client.RenderCallRecorder;
 import io.github.tt432.eyelib.client.gui.manager.io.FileDialogService;
 import lombok.Getter;
 import org.jspecify.annotations.Nullable;
@@ -50,11 +50,7 @@ public final class ManagerFolderSession {
     }
 
     private void runRenderCall(Runnable runnable) {
-        //? if <26.1 {
-        RenderSystem.recordRenderCall(runnable::run);
-        //?} else {
-        throw new UnsupportedOperationException("26.1 migration");
-        //?}
+        RenderCallRecorder.record(runnable);
     }
 
     public void stop() {

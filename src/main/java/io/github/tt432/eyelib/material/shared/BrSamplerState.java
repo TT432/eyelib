@@ -15,8 +15,8 @@ public record BrSamplerState(
 ) {
     public static final Codec<BrSamplerState> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.INT.fieldOf("samplerIndex").forGetter(BrSamplerState::samplerIndex),
-            TextureFilter.CODEC.fieldOf("textureFilter").forGetter(BrSamplerState::textureFilter),
-            TextureWrap.CODEC.fieldOf("textureWrap").forGetter(BrSamplerState::textureWrap)
+            TextureFilter.CODEC.optionalFieldOf("textureFilter", TextureFilter.Point).forGetter(BrSamplerState::textureFilter),
+            TextureWrap.CODEC.optionalFieldOf("textureWrap", TextureWrap.Repeat).forGetter(BrSamplerState::textureWrap)
     ).apply(ins, BrSamplerState::new));
 
     public enum TextureFilter implements PortStringRepresentable {

@@ -7,9 +7,9 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.render.sync.ClientRenderSyncService;
 import io.github.tt432.eyelib.animation.AnimationComponent;
-import io.github.tt432.eyelib.attachment.capability.AnimationComponentInfo;
-import io.github.tt432.eyelib.attachment.capability.ModelComponentInfo;
-import io.github.tt432.eyelib.attachment.dataattach.mc.DataAttachmentHelper;
+import io.github.tt432.eyelib.animation.AnimationComponentInfo;
+import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
+import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelib.molang.MolangScope;
 import lombok.Getter;
 import lombok.Setter;
@@ -50,7 +50,7 @@ public class RenderData<T> {
 
     @SuppressWarnings("unchecked")
     public static <T> RenderData<T> getComponent(Entity entity) {
-        return (RenderData<T>) DataAttachmentHelper.getOrCreate(EyelibAttachableData.RENDER_DATA.get(), entity);
+        return (RenderData<T>) DataAttachmentHelper.getOrCreate(AttachableDataTypes.RENDER_DATA.get(), entity);
     }
 
     @Nullable

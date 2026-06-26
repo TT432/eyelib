@@ -1,14 +1,12 @@
 package io.github.tt432.eyelib.client.render.bake;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
-//? if >=1.20.6 && <26.1
+//? if >=1.20.6
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
-//? if <26.1
 import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-//? if <26.1
 import static com.mojang.blaze3d.vertex.DefaultVertexFormat.NEW_ENTITY;
 
 /**
@@ -52,9 +50,9 @@ public record BakedModel(
             this(xList.length, merge(xList, yList, zList), merge(nxList, nyList, nzList),
                  merge(xListResult, yListResult, zListResult), merge(nxListResult, nyListResult, nzListResult),
                  u, v, createVertices(xList.length));
-            //? if <26.1 {
-            //? if <1.20.6
+            //? if <1.20.6 {
             vertices.begin(VertexFormat.Mode.QUADS, NEW_ENTITY);
+            //?}
             for (int i = 0; i < xList.length; i++) {
                 //? if <1.20.6 {
                 vertices.vertex(xList[i], yList[i], zList[i],
@@ -70,20 +68,15 @@ public record BakedModel(
             }
             //? if <1.20.6
             vertices.end();
-            //? if >=1.20.6 && <26.1
+            //? if >=1.20.6
             vertices.build();
-            //?}
         }
 
         private static BufferBuilder createVertices(int vertexCount) {
             //? if <1.20.6 {
             return new BufferBuilder(NEW_ENTITY.getVertexSize() * vertexCount);
             //?} else {
-            //? if <26.1 {
             return new BufferBuilder(new ByteBufferBuilder(NEW_ENTITY.getVertexSize() * vertexCount), VertexFormat.Mode.QUADS, NEW_ENTITY);
-            //?} else {
-            throw new UnsupportedOperationException("26.1 migration");
-            //?}
             //?}
         }
 

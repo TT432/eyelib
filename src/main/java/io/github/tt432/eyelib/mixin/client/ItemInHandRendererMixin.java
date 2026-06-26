@@ -53,7 +53,7 @@ public class ItemInHandRendererMixin {
 
             AnimationEffects effects = new AnimationEffects();
             ModelRuntimeData tickedInfos = BrAnimator.tickAnimation(ac, rd.getScope(), effects,
-                    (io.github.tt432.eyelib.client.ClientTickHandler.getTick() + partialTick) / 20, () -> {
+                    (io.github.tt432.eyelib.bridge.client.ClientTickHandler.getTick() + partialTick) / 20, () -> {
                         var ce = rd.getClientEntityComponent().getClientEntity();
                         if (ce != null) {
                             ce.scripts().ifPresent(s -> s.pre_animation().eval(rd.getScope()));

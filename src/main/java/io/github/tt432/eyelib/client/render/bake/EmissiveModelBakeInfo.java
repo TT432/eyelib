@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.render.bake;
 
+import io.github.tt432.eyelib.bridge.client.render.bake.ModelBakeInfo;
 import com.google.common.collect.Lists;
 import io.github.tt432.eyelib.model.Model;
 import it.unimi.dsi.fastutil.booleans.BooleanList;

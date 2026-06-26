@@ -8,6 +8,7 @@ import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.behavior.BehaviorComponents;
 import io.github.tt432.eyelib.behavior.BehaviorEntity;
+import io.github.tt432.eyelib.behavior.BehaviorEntityRegistry;
 import io.github.tt432.eyelib.behavior.component.Component;
 import io.github.tt432.eyelib.behavior.component.EmptyComponent;
 import io.github.tt432.eyelib.behavior.component.Health;

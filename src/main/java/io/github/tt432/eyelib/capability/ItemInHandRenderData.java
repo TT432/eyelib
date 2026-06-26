@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.capability;
 
+import io.github.tt432.eyelib.capability.RenderData;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.molang.type.MolangString;

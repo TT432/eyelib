@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.common.behavior;
 
+import io.github.tt432.eyelib.behavior.BehaviorEntityRegistry;
 import io.github.tt432.eyelib.importer.addon.BedrockAddon;
 import io.github.tt432.eyelib.importer.addon.BedrockAddonLoader;
 import io.github.tt432.eyelib.importer.addon.BedrockAddonWarning;

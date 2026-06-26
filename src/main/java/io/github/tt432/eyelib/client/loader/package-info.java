@@ -1,8 +1,9 @@
 /**
- * 资源重载监听器，以及动画、材质、粒子、渲染控制器、实体等相关资源的解析入口。
+ * Bedrock 资源加载器主逻辑：动画/材质/模型/粒子等资源的解析与重载（不订阅 Forge 事件）。
+ *
+ * @author TT432
  */
 @NullMarked
 package io.github.tt432.eyelib.client.loader;
 
 import org.jspecify.annotations.NullMarked;
-

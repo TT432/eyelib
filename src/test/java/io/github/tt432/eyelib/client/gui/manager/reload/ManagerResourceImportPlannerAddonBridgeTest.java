@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.gui.manager.reload;
 
 import io.github.tt432.eyelib.animation.AnimationLookup;
 import io.github.tt432.eyelib.animation.AnimationManager;
+import io.github.tt432.eyelib.client.gui.manager.reload.ManagerResourceImportPlanner;
 import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import io.github.tt432.eyelib.client.manager.MaterialManager;

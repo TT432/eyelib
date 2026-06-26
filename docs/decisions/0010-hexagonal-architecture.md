@@ -1,6 +1,6 @@
 # ADR-0010: 六边形架构 — Domain/Bridge 分层与 Working Core 提取
 
-**Status:** Implemented (partially — domain isolation is now convention-only per ADR-0014; ArchUnit rules removed)
+**Status:** Implemented (partially — domain isolation is now enforced again by ArchUnit freeze baseline per [ADR-0015](0015-stonecutter-multi-version.md) and [ADR-0016](0016-bridge-extraction-standard.md); bridge extraction completed with all version-specific MC moved to `bridge/`; 5 ArchUnit rules + 1 `//?` source-scan rule guard the layer boundaries)
 **Date:** 2026-06-08
 **Author:** @TT432
 

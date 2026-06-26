@@ -4,7 +4,6 @@ import io.github.tt432.eyelib.animation.Animation;
 import io.github.tt432.eyelib.animation.AnimationEffects;
 import io.github.tt432.eyelib.animation.AnimationLookup;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
-import io.github.tt432.eyelib.attachment.capability.AnimationComponentInfo;
 import io.github.tt432.eyelib.molang.MolangValue;
 import lombok.Getter;
 

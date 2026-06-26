@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.render;
 
 import io.github.tt432.eyelib.client.render.visitor.ModelRenderVisitorList;
-import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
+import io.github.tt432.eyelib.model.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;

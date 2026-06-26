@@ -1,23 +1,19 @@
 package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.tt432.eyelib.bridge.client.EntityRenderSystem;
+import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
+import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEvent;
+import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEventPublisher;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.model.DFSModel;
-import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
 import io.github.tt432.eyelib.client.render.bake.TwoSideModelBakeInfo;
 import io.github.tt432.eyelib.client.render.visitor.ActiveModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
-import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
-import io.github.tt432.eyelib.event.ManagerEntryChangedEvent;
+import io.github.tt432.eyelib.model.ModelVisitContext;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;
 import lombok.Getter;
-//? if <1.20.6 {
-import net.minecraftforge.common.MinecraftForge;
-//?} else {
-import net.neoforged.neoforge.common.NeoForge;
-//?}
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 
@@ -59,11 +55,7 @@ public class RenderHelper {
     }
 
     {
-        //? if <1.20.6 {
-        MinecraftForge.EVENT_BUS.<ManagerEntryChangedEvent>addListener(e -> {
-        //?} else {
-        NeoForge.EVENT_BUS.<ManagerEntryChangedEvent>addListener(e -> {
-        //?}
+        ManagerEntryChangedEventPublisher.addListener(e -> {
             if (e.getManagerName().equals(ModelManager.class.getSimpleName()))
                 dfsModels.remove(e.getEntryName());
         });
@@ -110,13 +102,7 @@ public class RenderHelper {
 
         locators.forEach((name, matrix) -> {
             if (name.split("_t_")[0].equals(visitorName)) {
-                PoseStack poseStack = new PoseStack();
-                //? if <1.20.6 {
-                poseStack.poseStack.addLast(new PoseStack.Pose(new Matrix4f(matrix), new Matrix3f(matrix)));
-                //?} else {
-                ((io.github.tt432.eyelib.mixin.PoseStackAccessor) poseStack).eyelib$getPoseStackDeque()
-                                                                 .addLast(io.github.tt432.eyelib.mixin.PoseStackPoseAccessor.eyelib$create(new Matrix4f(matrix), new Matrix3f(matrix)));
-                //?}
+                PoseStack poseStack = EntityRenderSystem.createPoseStackFromMatrix(matrix);
                 render(params.withPoseStack(poseStack), model, infos);
             }
         });

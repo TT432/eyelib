@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.client.model;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.render.RenderParams;
-import io.github.tt432.eyelib.client.render.visitor.ModelVisitContext;
+import io.github.tt432.eyelib.model.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;
@@ -70,8 +70,10 @@ public record DFSModel(
                 null,
                 //? if <1.20.6 {
                 new PoseStack.Pose(new Matrix4f(), new Matrix3f()),
-                //?} else {
+                //?} elif <26.1 {
                 io.github.tt432.eyelib.mixin.PoseStackPoseAccessor.eyelib$create(new Matrix4f(), new Matrix3f()),
+                //?} else {
+                new PoseStack().last(),
                 //?}
                 new PoseStack(),
                 null, null, false, null, 0,

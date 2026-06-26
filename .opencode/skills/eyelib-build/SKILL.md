@@ -70,3 +70,16 @@ additionalRuntimeClasspath(implementation('group:artifact:version'))
 ### 资源路径硬编码 "eyelib/" 前缀
 
 `BrResourcesLoader` 构造函数硬编码 `"eyelib/"` 前缀,导致资源必须放在 `assets/<namespace>/eyelib/<type>/` 路径下。路径模板 `assets/<namespace>/eyelib/<resource_type>/<filename>.json`。本 mod 内部资源放 `assets/eyelib/eyelib/<type>/`,外部资源放 `assets/<your-namespace>/eyelib/<type>/`。
+
+### eyelib_debug_build 报错被截断拿不到编译错误
+
+`eyelib_debug_build` MCP 工具失败时只返回状态(如 "BUILD FAILED in 6m 6s"),错误行被截断到 20 行且按字符串匹配 `error:` 过滤,中文/非标准输出会漏掉。
+
+实际完整 Gradle 输出已落盘到三处(每次 build 覆盖):
+- `build/_mcp_gradle_out.txt` — Gradle stdout(任务执行日志 + 编译错误)
+- `build/_mcp_gradle_err.txt` — Gradle stderr(JVM warning + 编译错误回显)
+- `build/_mcp_gradle.log` — MCP 自己的运行日志(每次调用的 task 列表 + 耗时)
+
+`build` 失败时直接 `read` 这两个文件即可拿到完整错误,不需要走 JetBrains MCP 或 shell gradlew。这是 eyelib-debug mcp(`scripts/eyelib_debug_mcp.py` `_run_gradle_sync`)写盘的实现细节。
+
+JetBrains MCP(`jetbrain_build_project` / `jetbrain_run_gradle_tasks`)走不同链路,失败时错误在 IDE Build 工具窗口,不会写到上述文件。两者互不干扰。

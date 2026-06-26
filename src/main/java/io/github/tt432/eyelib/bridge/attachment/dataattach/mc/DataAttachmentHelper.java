@@ -1,0 +1,35 @@
+package io.github.tt432.eyelib.bridge.attachment.dataattach.mc;
+
+import io.github.tt432.eyelib.util.dataattach.DataAttachmentType;
+import io.github.tt432.eyelib.util.dataattach.IDataAttachmentContainer;
+import net.minecraft.world.entity.Entity;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * 数据附属的便捷读写工具。
+ *
+ * @author TT432
+ */
+public class DataAttachmentHelper {
+    private static IDataAttachmentContainer get(Entity entity) {
+        //? if <1.20.6 {
+        return entity.getCapability(DataAttachmentContainerCapability.INSTANCE).orElseGet(McDataAttachmentContainer::new);
+        //?} else {
+        return entity.getData(DataAttachmentContainerCapability.ATTACHMENT);
+        //?}
+    }
+
+    public static <C> C getOrCreate(DataAttachmentType<C> attachment, Entity entity) {
+        return get(entity).getOrCreate(attachment);
+    }
+
+    public static <C> @Nullable C getOrNull(DataAttachmentType<C> attachment, Entity entity) {
+        var container = get(entity);
+        return container.get(attachment);
+    }
+
+    public static <C> void setLocal(DataAttachmentType<C> attachment, Entity entity, C value) {
+        var container = get(entity);
+        container.set(attachment, value);
+    }
+}

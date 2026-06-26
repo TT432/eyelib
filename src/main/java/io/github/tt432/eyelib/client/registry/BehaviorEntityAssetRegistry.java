@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.registry;
 
 import io.github.tt432.eyelib.client.manager.BehaviorEntityManager;
-import io.github.tt432.eyelib.common.behavior.BehaviorEntityRegistry;
+import io.github.tt432.eyelib.behavior.BehaviorEntityRegistry;
 import io.github.tt432.eyelib.common.behavior.BehaviorPackPublication;
 import io.github.tt432.eyelib.importer.addon.BrBehaviorEntityFile;
 import lombok.AccessLevel;

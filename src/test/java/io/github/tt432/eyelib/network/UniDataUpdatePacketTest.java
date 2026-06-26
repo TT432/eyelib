@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.network;
 
-import io.github.tt432.eyelib.attachment.network.UniDataUpdatePacket;
-import io.github.tt432.eyelib.attachment.dataattach.DataAttachmentType;
+import io.github.tt432.eyelib.bridge.attachment.network.UniDataUpdatePacket;
+import io.github.tt432.eyelib.util.dataattach.DataAttachmentType;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -7,7 +7,6 @@ import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.EncoderException;
 import net.minecraft.nbt.*;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
 
@@ -38,24 +37,6 @@ public class EyelibStreamCodecs {
     // </editor-fold>
 
     // <editor-fold desc="Minecraft types">
-
-    public static final io.github.tt432.eyelib.util.streamcodec.StreamCodec<ResourceLocation> RESOURCE_LOCATION = new io.github.tt432.eyelib.util.streamcodec.StreamCodec<>() {
-        @Override
-        public void encode(ResourceLocation obj, FriendlyByteBuf buf) {
-            STRING.encode(obj.toString(), buf);
-        }
-
-        @Override
-        public ResourceLocation decode(FriendlyByteBuf buf) {
-            var str = STRING.decode(buf);
-            //? if <1.20.6 {
-            return new ResourceLocation(str);
-            //?} else {
-            return ResourceLocation.parse(str);
-
-            //?}
-        }
-    };
 
     public static final io.github.tt432.eyelib.util.streamcodec.StreamCodec<PortResourceLocation> PORT_RESOURCE_LOCATION =
             io.github.tt432.eyelib.util.streamcodec.StreamCodec.create(

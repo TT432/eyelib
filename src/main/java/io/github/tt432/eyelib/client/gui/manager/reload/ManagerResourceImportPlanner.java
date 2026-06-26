@@ -2,8 +2,11 @@ package io.github.tt432.eyelib.client.gui.manager.reload;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.animation.bedrock.BrAnimation;
+import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationControllers;
+import io.github.tt432.eyelib.bridge.client.render.texture.NativeImageIO;
+import io.github.tt432.eyelib.bridge.event.TextureChangedEventPublisher;
+import io.github.tt432.eyelib.bridge.util.CodecOps;
 import io.github.tt432.eyelib.client.loader.BedrockAddonRuntimeBridge;
 import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
@@ -13,10 +16,6 @@ import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
-import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
-import io.github.tt432.eyelib.event.TextureChangedEvent;
-import io.github.tt432.eyelib.animation.bedrock.BrAnimation;
-import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationControllers;
 import io.github.tt432.eyelib.importer.addon.BedrockAddon;
 import io.github.tt432.eyelib.importer.addon.BedrockAddonLoader;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationSet;
@@ -30,11 +29,6 @@ import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.particle.loading.ParticleResourcePublication;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-//? if <1.20.6 {
-import net.minecraftforge.common.MinecraftForge;
-//?} else {
-import net.neoforged.neoforge.common.NeoForge;
-//?}
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,14 +83,7 @@ public final class ManagerResourceImportPlanner {
                 "animations",
                 ".json",
                 jsonFile -> parseJsonFile(jsonFile, jo -> BrAnimation.fromSchemaSet(
-                        //? if <1.20.6 {
-                        BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)
-                        //?} else {
-                        BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(message -> {
-                            logger.warn(message);
-                            return new RuntimeException(message);
-                        })
-                        //?}
+                        CodecOps.parseOrThrow(BrAnimationSet.CODEC, jo, logger)
                 )),
                 LOGGER
         );
@@ -106,14 +93,7 @@ public final class ManagerResourceImportPlanner {
                 "animation_controllers",
                 ".json",
                 jsonFile -> parseJsonFile(jsonFile, jo -> BrAnimationControllers.fromSchemaSet(
-                        //? if <1.20.6 {
-                        BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)
-                        //?} else {
-                        BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(message -> {
-                            logger.warn(message);
-                            return new RuntimeException(message);
-                        })
-                        //?}
+                        CodecOps.parseOrThrow(BrAnimationControllerSet.CODEC, jo, logger)
                 )),
                 LOGGER
         );
@@ -125,15 +105,7 @@ public final class ManagerResourceImportPlanner {
                 "render_controllers",
                 ".json",
                 jsonFile -> parseJsonFile(jsonFile,
-                                           jo -> RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo)
-                                                                        //? if <1.20.6 {
-                                                                        .getOrThrow(false, logger::warn)),
-                                                                        //?} else {
-                                                                        .getOrThrow(message -> {
-                                                                            logger.warn(message);
-                                                                            return new RuntimeException(message);
-                                                                        })),
-                                                                        //?}
+                                           jo -> CodecOps.parseOrThrow(RenderControllers.CODEC, jo, logger)),
                 LOGGER
         );
         // 替换渲染控制器
@@ -165,15 +137,7 @@ public final class ManagerResourceImportPlanner {
                 "entity",
                 ".json",
                 jsonFile -> parseJsonFile(jsonFile,
-                                           jo -> BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo)
-                                                                     //? if <1.20.6 {
-                                                                     .getOrThrow(false, logger::warn)),
-                                                                     //?} else {
-                                                                     .getOrThrow(message -> {
-                                                                         logger.warn(message);
-                                                                         return new RuntimeException(message);
-                                                                     })),
-                                                                     //?}
+                                           jo -> CodecOps.parseOrThrow(BrClientEntity.CODEC, jo, logger)),
                 LOGGER
         );
         // 替换客户端实体
@@ -188,15 +152,7 @@ public final class ManagerResourceImportPlanner {
                 "attachables",
                 ".json",
                 jsonFile -> parseJsonFile(jsonFile,
-                                           jo -> BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, jo)
-                                                                                //? if <1.20.6 {
-                                                                                .getOrThrow(false, logger::warn)),
-                                                                                //?} else {
-                                                                                .getOrThrow(message -> {
-                                                                                    logger.warn(message);
-                                                                                    return new RuntimeException(message);
-                                                                                })),
-                                                                                //?}
+                                           jo -> CodecOps.parseOrThrow(BrClientEntity.ATTACHABLE_CODEC, jo, logger)),
                 LOGGER
         );
         // 替换附着物
@@ -217,15 +173,7 @@ public final class ManagerResourceImportPlanner {
                 "materials",
                 ".material",
                 jsonFile -> parseJsonFile(jsonFile,
-                                           jo -> BrMaterial.CODEC.parse(JsonOps.INSTANCE, jo)
-                                                                 //? if <1.20.6 {
-                                                                 .getOrThrow(false, logger::warn)),
-                                                                 //?} else {
-                                                                 .getOrThrow(message -> {
-                                                                     logger.warn(message);
-                                                                     return new RuntimeException(message);
-                                                                 })),
-                                                                 //?}
+                                           jo -> CodecOps.parseOrThrow(BrMaterial.CODEC, jo, logger)),
                 LOGGER
         );
         // 替换材质
@@ -247,17 +195,13 @@ public final class ManagerResourceImportPlanner {
 
         textures.forEach((relativePath, imageData) -> {
             try {
-                NativeImageIO.upload(relativePath.toLowerCase(Locale.ROOT), NativeImageIO.fromImportedImageData(imageData));
+                NativeImageIO.uploadFromImportedImageData(relativePath.toLowerCase(Locale.ROOT), imageData);
             } catch (RuntimeException exception) {
                 LOGGER.error("can't upload addon texture {}.", relativePath, exception);
             }
         });
 
-        //? if <1.20.6 {
-        MinecraftForge.EVENT_BUS.post(new TextureChangedEvent());
-        //?} else {
-        NeoForge.EVENT_BUS.post(new TextureChangedEvent());
-        //?}
+        TextureChangedEventPublisher.post();
     }
 
     public static void loadSingleFile(Path basePath, Path file, Logger logger) {
@@ -279,41 +223,18 @@ public final class ManagerResourceImportPlanner {
                     switch (target) {
                         case ANIMATION_JSON -> {
                             var animation = BrAnimation.fromSchemaSet(
-                                    //? if <1.20.6 {
-                                    BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn)
-                                    //?} else {
-                                    BrAnimationSet.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(message -> {
-                                        logger.warn(message);
-                                        return new RuntimeException(message);
-                                    })
-                                    //?}
+                                    CodecOps.parseOrThrow(BrAnimationSet.CODEC, jo, logger)
                             );
                             AnimationAssetRegistry.publishAnimation(animation);
                         }
                         case ANIMATION_CONTROLLER_JSON -> {
                             var animation = BrAnimationControllers.fromSchemaSet(
-                                    BrAnimationControllerSet.CODEC.parse(JsonOps.INSTANCE, jo)
-                                                                  //? if <1.20.6 {
-                                                                  .getOrThrow(false, logger::warn)
-                                                                  //?} else {
-                                                                  .getOrThrow(message -> {
-                                                                      logger.warn(message);
-                                                                      return new RuntimeException(message);
-                                                                  })
-                                                                  //?}
+                                    CodecOps.parseOrThrow(BrAnimationControllerSet.CODEC, jo, logger)
                             );
                             AnimationAssetRegistry.publishAnimationController(animation);
                         }
                         case RENDER_CONTROLLER_JSON -> {
-                            var controller = RenderControllers.CODEC.parse(JsonOps.INSTANCE, jo)
-                                                                    //? if <1.20.6 {
-                                                                    .getOrThrow(false, logger::warn);
-                                                                    //?} else {
-                                                                    .getOrThrow(message -> {
-                                                                        logger.warn(message);
-                                                                        return new RuntimeException(message);
-                                                                    });
-                                                                    //?}
+                            var controller = CodecOps.parseOrThrow(RenderControllers.CODEC, jo, logger);
                             // publishRenderController
                             controller.render_controllers().forEach((key, entry) -> {
                                 RenderControllerEntry existing = RenderControllerManager.INSTANCE.get(key);
@@ -324,27 +245,11 @@ public final class ManagerResourceImportPlanner {
                             });
                         }
                         case ENTITY_JSON -> {
-                            var entity = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, jo)
-                                                             //? if <1.20.6 {
-                                                             .getOrThrow(false, logger::warn);
-                                                             //?} else {
-                                                             .getOrThrow(message -> {
-                                                                 logger.warn(message);
-                                                                 return new RuntimeException(message);
-                                                             });
-                                                             //?}
+                            var entity = CodecOps.parseOrThrow(BrClientEntity.CODEC, jo, logger);
                             ClientEntityManager.INSTANCE.put(entity.identifier(), entity);
                         }
                         case ATTACHABLE_JSON -> {
-                            var attachable = BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, jo)
-                                                                            //? if <1.20.6 {
-                                                                            .getOrThrow(false, logger::warn);
-                                                                            //?} else {
-                                                                            .getOrThrow(message -> {
-                                                                                logger.warn(message);
-                                                                                return new RuntimeException(message);
-                                                                            });
-                                                                            //?}
+                            var attachable = CodecOps.parseOrThrow(BrClientEntity.ATTACHABLE_CODEC, jo, logger);
                             AttachableManager.INSTANCE.put(attachable.identifier(), attachable);
                         }
                         case PARTICLE_JSON -> {
@@ -359,27 +264,15 @@ public final class ManagerResourceImportPlanner {
                 case MATERIAL_FILE -> {
                     try (InputStream inputStream = Files.newInputStream(file)) {
                         JsonObject jo = GSON.fromJson(IOUtils.toString(inputStream, StandardCharsets.UTF_8), JsonObject.class);
-                        //? if <1.20.6 {
-                        var material = BrMaterial.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(false, logger::warn);
-                        //?} else {
-                        var material = BrMaterial.CODEC.parse(JsonOps.INSTANCE, jo).getOrThrow(message -> {
-                            logger.warn(message);
-                            return new RuntimeException(message);
-                        });
-                        //?}
+                        var material = CodecOps.parseOrThrow(BrMaterial.CODEC, jo, logger);
                         material.materials().forEach(MaterialManager.INSTANCE::put);
                     }
                 }
                 case TEXTURE_PNG -> {
                     try (InputStream inputStream = Files.newInputStream(file)) {
-                        NativeImage nativeImage = NativeImageIO.load(inputStream);
-                        NativeImageIO.upload(ManagerResourceReloadPlan.toTextureKey(basePath, file), nativeImage);
+                        NativeImageIO.loadAndUpload(ManagerResourceReloadPlan.toTextureKey(basePath, file), inputStream);
                     }
-                    //? if <1.20.6 {
-                    MinecraftForge.EVENT_BUS.post(new TextureChangedEvent());
-                    //?} else {
-                    NeoForge.EVENT_BUS.post(new TextureChangedEvent());
-                    //?}
+                    TextureChangedEventPublisher.post();
                 }
                 case UNSUPPORTED -> {
                 }
@@ -394,19 +287,14 @@ public final class ManagerResourceImportPlanner {
 
         pngFiles.forEach(pngFile -> {
             try (InputStream inputStream = Files.newInputStream(pngFile)) {
-                NativeImage nativeImage = NativeImageIO.load(inputStream);
-                NativeImageIO.upload(ManagerResourceReloadPlan.toTextureKey(basePath, pngFile), nativeImage);
+                NativeImageIO.loadAndUpload(ManagerResourceReloadPlan.toTextureKey(basePath, pngFile), inputStream);
             } catch (IOException e) {
                 LOGGER.error("can't load file.", e);
             }
         });
 
         if (!pngFiles.isEmpty()) {
-            //? if <1.20.6 {
-            MinecraftForge.EVENT_BUS.post(new TextureChangedEvent());
-            //?} else {
-            NeoForge.EVENT_BUS.post(new TextureChangedEvent());
-            //?}
+            TextureChangedEventPublisher.post();
         }
     }
 

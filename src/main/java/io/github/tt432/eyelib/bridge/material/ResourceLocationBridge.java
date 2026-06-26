@@ -31,4 +31,13 @@ public final class ResourceLocationBridge {
 
         //?}
     }
+
+    public static ResourceLocation fromParts(String namespace, String path) {
+        //? if <1.20.6 {
+        return new ResourceLocation(namespace, path);
+        //?} else {
+        return ResourceLocation.fromNamespaceAndPath(namespace, path);
+
+        //?}
+    }
 }

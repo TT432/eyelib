@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
-import io.github.tt432.eyelib.client.render.texture.NativeImageIO;
+import io.github.tt432.eyelib.bridge.client.render.texture.NativeImageIO;
 import io.github.tt432.eyelib.util.texture.TexturePaths;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.With;
@@ -101,7 +101,7 @@ public record RenderParams(
 
         return withTexture(MissingTextureAtlasSprite.getLocation());
         //?} else {
-        throw new UnsupportedOperationException("26.1 migration");
+        return this;
         //?}
     }
 

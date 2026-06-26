@@ -14,9 +14,9 @@ public record Face(
         StencilPassOp stencilPassOp
 ) {
     public static final Codec<Face> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            StencilDepthFailOp.CODEC.fieldOf("stencilDepthFailOp").forGetter(Face::stencilDepthFailOp),
-            StencilFailOp.CODEC.fieldOf("stencilFailOp").forGetter(Face::stencilFailOp),
-            StencilFunc.CODEC.fieldOf("stencilFunc").forGetter(Face::stencilFunc),
-            StencilPassOp.CODEC.fieldOf("stencilPassOp").forGetter(Face::stencilPassOp)
+            StencilDepthFailOp.CODEC.optionalFieldOf("stencilDepthFailOp", StencilDepthFailOp.Keep).forGetter(Face::stencilDepthFailOp),
+            StencilFailOp.CODEC.optionalFieldOf("stencilFailOp", StencilFailOp.Keep).forGetter(Face::stencilFailOp),
+            StencilFunc.CODEC.optionalFieldOf("stencilFunc", StencilFunc.Always).forGetter(Face::stencilFunc),
+            StencilPassOp.CODEC.optionalFieldOf("stencilPassOp", StencilPassOp.Keep).forGetter(Face::stencilPassOp)
     ).apply(ins, Face::new));
 }
