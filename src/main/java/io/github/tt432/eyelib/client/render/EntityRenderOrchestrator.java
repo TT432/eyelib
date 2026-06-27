@@ -35,13 +35,22 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+//? if <26.1 {
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.animal.horse.Llama;
+//?} else {
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.Llama;
+//?}
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -378,11 +387,19 @@ public final class EntityRenderOrchestrator {
             ((RenderData) cap).init(entity);
         }
 
+        //? if <26.1 {
         ResourceLocation entityId = EntityRenderSystem.getEntityTypeId(entity);
+        //?} else {
+        Identifier entityId = EntityRenderSystem.getEntityTypeId(entity);
+        //?}
         return setupClientEntity(entityId, cap);
     }
 
+    //? if <26.1 {
     static List<Runnable> setupClientEntity(ResourceLocation entityId, RenderData<?> cap) {
+    //?} else {
+    static List<Runnable> setupClientEntity(Identifier entityId, RenderData<?> cap) {
+    //?}
         ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
         BrClientEntity clientEntity = clientEntityComponent.getClientEntity();
 

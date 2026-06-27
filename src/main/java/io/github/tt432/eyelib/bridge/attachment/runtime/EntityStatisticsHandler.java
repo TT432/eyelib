@@ -25,7 +25,7 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 //? if <1.20.6 {
 @Mod.EventBusSubscriber
 //?} else {
-@EventBusSubscriber
+@EventBusSubscriber(modid = "eyelib")
 //?}
 public class EntityStatisticsHandler {
     @SubscribeEvent

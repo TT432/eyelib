@@ -5,7 +5,11 @@ import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
@@ -23,7 +27,11 @@ public final class AttachableResolver {
             return null;
         }
 
+        //? if <26.1 {
         ResourceLocation itemKey = ItemKeyResolver.getItemKey(stack);
+        //?} else {
+        Identifier itemKey = ItemKeyResolver.getItemKey(stack);
+        //?}
         if (itemKey == null) {
             return null;
         }

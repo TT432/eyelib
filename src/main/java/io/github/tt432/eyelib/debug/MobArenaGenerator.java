@@ -6,7 +6,11 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.*;
 //? if <26.1
 import net.minecraft.world.entity.FlyingMob;
+//? if <26.1 {
 import net.minecraft.world.entity.animal.WaterAnimal;
+//?} else {
+import net.minecraft.world.entity.animal.fish.WaterAnimal;
+//?}
 import net.minecraft.world.level.block.Blocks;
 import java.util.*;
 

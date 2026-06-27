@@ -8,7 +8,11 @@ import com.sun.net.httpserver.HttpServer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.Difficulty;
+//? if <26.1 {
 import net.minecraft.world.level.GameRules;
+//?} else {
+import net.minecraft.world.level.gamerules.GameRules;
+//?}
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LevelSettings;
 import net.minecraft.world.level.WorldDataConfiguration;
@@ -65,7 +69,11 @@ public final class AIDebugServer {
             server.createContext("/loaded", exchange -> {
                 Minecraft mc = Minecraft.getInstance();
                 CompletableFuture<String> future = new CompletableFuture<>();
+                //? if <26.1 {
                 mc.tell(() -> {
+                //?} else {
+                mc.submit(() -> {
+                //?}
                     @Nullable String overlay = mc.getOverlay() == null ? null : mc.getOverlay().getClass().getName();
                     @Nullable String screen = mc.screen == null ? null : mc.screen.getClass().getName();
                     boolean inWorld = mc.level != null && mc.player != null;
@@ -121,7 +129,11 @@ public final class AIDebugServer {
                 String finalName = worldName;
                 Minecraft mc = Minecraft.getInstance();
                 CompletableFuture<String> future = new CompletableFuture<>();
+                //? if <26.1 {
                 mc.tell(() -> {
+                //?} else {
+                mc.submit(() -> {
+                //?}
                     try {
                         //? if <1.20.6 {
                         LevelSettings levelSettings = new LevelSettings(
@@ -204,7 +216,11 @@ public final class AIDebugServer {
                     return;
                 }
                 Minecraft mc = Minecraft.getInstance();
+                //? if <26.1 {
                 mc.tell(() -> mc.stop());
+                //?} else {
+                mc.submit(() -> mc.stop());
+                //?}
                 byte[] resp = "{\"success\":true,\"message\":\"Stopping client\"}".getBytes(StandardCharsets.UTF_8);
                 exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
                 exchange.sendResponseHeaders(200, resp.length);
@@ -222,7 +238,11 @@ public final class AIDebugServer {
             LOGGER.error("Failed to start AI Debug Server", e);
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (mc != null) {
+                //? if <26.1 {
                 mc.tell(() -> mc.stop());
+                //?} else {
+                mc.submit(() -> mc.stop());
+                //?}
             }
         }
     }

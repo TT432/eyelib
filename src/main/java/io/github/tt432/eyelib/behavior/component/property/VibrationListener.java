@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
+import io.github.tt432.eyelib.util.codec.EyelibCodec;
 import io.github.tt432.eyelib.behavior.component.Component;
 /**
  * minecraft:vibration_listener — 振动监听器（标记组件）。
@@ -10,7 +11,7 @@ import io.github.tt432.eyelib.behavior.component.Component;
 public record VibrationListener() implements Component {
     public static final VibrationListener INSTANCE = new VibrationListener();
 
-    public static final Codec<VibrationListener> CODEC = Codec.unit(INSTANCE);
+    public static final Codec<VibrationListener> CODEC = EyelibCodec.unit(INSTANCE);
 
     @Override
     public String id() {

@@ -10,7 +10,11 @@ import net.minecraft.core.Registry;
 //? if >=26.1
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 //? if <1.20.6 {
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.IForgeRegistry;
@@ -33,7 +37,8 @@ public class DataAttachmentTypeRegistry {
             //? if <1.20.6 {
             ResourceKey.createRegistryKey(new ResourceLocation("eyelib", "data_attachments"));
             //?} else {
-            ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath("eyelib", "data_attachments"));
+            ResourceKey.createRegistryKey(Identifier.fromNamespaceAndPath("eyelib", "data_attachments"));
+
             //?}
 
     public static final DeferredRegister<DataAttachmentType<?>> DATA_ATTACHMENTS =

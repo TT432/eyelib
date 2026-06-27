@@ -37,10 +37,19 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 //?}
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.renderer.MultiBufferSource;
+//? if <26.1 {
 import net.minecraft.client.renderer.RenderType;
+//?} else {
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+//?}
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -179,7 +188,11 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             MultiBufferSource.BufferSource bufferSource = guiGraphics.bufferSource();
             ResourceLocation texture = ResourceLocationBridge.parseMc(currentModel.atlasTexture().id());
 
+            //? if <26.1 {
             RenderType renderType = RenderType.entitySolid(texture);
+            //?} else {
+            RenderType renderType = RenderTypes.entitySolid(texture);
+            //?}
             VertexConsumer buffer = bufferSource.getBuffer(renderType);
 
             RenderParams params = RenderParams.builder(poseStack, renderType, true, texture, buffer)

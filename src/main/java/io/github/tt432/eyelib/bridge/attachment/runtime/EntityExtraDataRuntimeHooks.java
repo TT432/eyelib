@@ -32,7 +32,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 //? if <1.20.6 {
 @Mod.EventBusSubscriber
 //?} else {
-@EventBusSubscriber
+@EventBusSubscriber(modid = "eyelib")
 //?}
 public final class EntityExtraDataRuntimeHooks {
     private EntityExtraDataRuntimeHooks() {

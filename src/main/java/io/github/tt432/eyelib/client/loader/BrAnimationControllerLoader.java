@@ -4,7 +4,11 @@ import com.google.gson.JsonElement;
 import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
 import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationControllers;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSet;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.slf4j.Logger;
@@ -28,10 +32,22 @@ public class BrAnimationControllerLoader extends BrResourcesLoader {
     }
 
     @Override
+    //? if <26.1 {
     protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
+    //?} else {
+    protected void apply(Map<Identifier, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
+    //?}
+        //? if <26.1 {
         Map<ResourceLocation, BrAnimationControllerSet> parsedSchemaSets =
+        //?} else {
+        Map<Identifier, BrAnimationControllerSet> parsedSchemaSets =
+        //?}
                 LoaderParsingOps.parseBySourceKey(pObject, BrAnimationControllerSet.CODEC, LOGGER, "animation controller");
+        //? if <26.1 {
         LinkedHashMap<ResourceLocation, BrAnimationControllers> parsedControllers = new LinkedHashMap<>();
+        //?} else {
+        LinkedHashMap<Identifier, BrAnimationControllers> parsedControllers = new LinkedHashMap<>();
+        //?}
         parsedSchemaSets.forEach((location, schemaSet) -> parsedControllers.put(location, BrAnimationControllers.fromSchemaSet(schemaSet)));
         AnimationAssetRegistry.stageControllers(parsedControllers);
     }

@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
+import io.github.tt432.eyelib.util.codec.EyelibCodec;
 
 /**
  * minecraft:can_power_jump — marker component.
@@ -11,7 +12,7 @@ import com.mojang.serialization.Codec;
 public record CanPowerJump() implements io.github.tt432.eyelib.behavior.component.Component {
     private static final CanPowerJump INSTANCE = new CanPowerJump();
 
-    public static final Codec<CanPowerJump> CODEC = Codec.unit(INSTANCE);
+    public static final Codec<CanPowerJump> CODEC = EyelibCodec.unit(INSTANCE);
 
     @Override
     public String id() {

@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
+import io.github.tt432.eyelib.util.codec.EyelibCodec;
 
 /**
  * minecraft:leashable_to — marker component.
@@ -11,7 +12,7 @@ import com.mojang.serialization.Codec;
 public record LeashableTo() implements io.github.tt432.eyelib.behavior.component.Component {
     private static final LeashableTo INSTANCE = new LeashableTo();
 
-    public static final Codec<LeashableTo> CODEC = Codec.unit(INSTANCE);
+    public static final Codec<LeashableTo> CODEC = EyelibCodec.unit(INSTANCE);
 
     @Override
     public String id() {

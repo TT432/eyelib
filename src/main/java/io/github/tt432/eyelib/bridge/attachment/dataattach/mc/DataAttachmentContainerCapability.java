@@ -2,7 +2,11 @@ package io.github.tt432.eyelib.bridge.attachment.dataattach.mc;
 
 import io.github.tt432.eyelib.util.dataattach.IDataAttachmentContainer;
 import net.minecraft.nbt.CompoundTag;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 //? if <1.20.6 {
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.capabilities.Capability;

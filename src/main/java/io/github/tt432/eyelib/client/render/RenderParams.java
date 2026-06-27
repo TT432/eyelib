@@ -13,11 +13,19 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 //?}
 import net.minecraft.client.renderer.MultiBufferSource;
+//? if <26.1 {
 import net.minecraft.client.renderer.RenderType;
+//?} else {
+import net.minecraft.client.renderer.rendertype.RenderType;
+//?}
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.Nullable;
 
@@ -30,7 +38,11 @@ public record RenderParams(
         PoseStack.Pose pose0,
         PoseStack poseStack,
         @Nullable RenderType renderType,
+        //? if <26.1 {
         @Nullable ResourceLocation texture,
+        //?} else {
+        @Nullable Identifier texture,
+        //?}
         boolean isSolid,
         @Nullable VertexConsumer consumer,
         int light,
@@ -53,7 +65,11 @@ public record RenderParams(
         );
     }
 
+    //? if <26.1 {
     public static Builder builder(PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable ResourceLocation texture, @Nullable VertexConsumer consumer) {
+    //?} else {
+    public static Builder builder(PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable Identifier texture, @Nullable VertexConsumer consumer) {
+    //?}
         return new Builder(PoseCopies.copy(poseStack.last()), poseStack, renderType, isSolid, texture, consumer);
     }
 
@@ -63,7 +79,11 @@ public record RenderParams(
             return builder(poseStack, null, modelComponent.isSolid(), null, null)
                     .partVisibility(modelComponent.getPartVisibility());
         }
+        //? if <26.1 {
         ResourceLocation texture = ResourceLocationBridge.toMc(portTexture);
+        //?} else {
+        Identifier texture = ResourceLocationBridge.toMc(portTexture);
+        //?}
         RenderType renderType = modelComponent.getRenderType(texture);
         if (renderType == null) {
             return builder(poseStack, null, modelComponent.isSolid(), texture, null)
@@ -116,7 +136,11 @@ public record RenderParams(
         @Nullable
         private RenderType renderType;
         @Nullable
+        //? if <26.1 {
         private ResourceLocation texture;
+        //?} else {
+        private Identifier texture;
+        //?}
         private boolean isSolid;
         @Nullable
         private VertexConsumer consumer;
@@ -132,7 +156,11 @@ public record RenderParams(
         private Int2BooleanOpenHashMap partVisibility = new Int2BooleanOpenHashMap();
         private float @Nullable [] tintColor = null;
 
+        //? if <26.1 {
         public Builder(PoseStack.Pose pose0, PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable ResourceLocation texture, @Nullable VertexConsumer consumer) {
+        //?} else {
+        public Builder(PoseStack.Pose pose0, PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable Identifier texture, @Nullable VertexConsumer consumer) {
+        //?}
             this.pose0 = pose0;
             this.poseStack = poseStack;
             this.texture = texture;
@@ -170,7 +198,11 @@ public record RenderParams(
             if (texture == null) {
                 return this;
             }
+            //? if <26.1 {
             ResourceLocation colorMaskTexture = NativeImageIO.colorMaskTexture(texture, color);
+            //?} else {
+            Identifier colorMaskTexture = NativeImageIO.colorMaskTexture(texture, color);
+            //?}
             if (colorMaskTexture == null) {
                 return this;
             }

@@ -5,7 +5,11 @@ import com.mojang.blaze3d.platform.NativeImage;
 import io.github.tt432.eyelib.model.Model;
 import it.unimi.dsi.fastutil.ints.Int2BooleanFunction;
 import net.minecraft.client.Minecraft;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -16,9 +20,17 @@ import static org.lwjgl.opengl.GL11.*;
  * @author TT432
  */
 public abstract class ModelBakeInfo<Info> {
+    //? if <26.1 {
     private final Map<String, HashMap<ResourceLocation, BakedModel>> modelCache = new HashMap<>();
+    //?} else {
+    private final Map<String, HashMap<Identifier, BakedModel>> modelCache = new HashMap<>();
+    //?}
 
+    //? if <26.1 {
     public BakedModel getBakedModel(Model model, boolean isSolid, ResourceLocation texture) {
+    //?} else {
+    public BakedModel getBakedModel(Model model, boolean isSolid, Identifier texture) {
+    //?}
         return modelCache.computeIfAbsent(model.name(), s -> new HashMap<>())
                          .computeIfAbsent(texture, i -> {
                              Info bakeInfo = getBakeInfo(model, isSolid, texture);
@@ -30,7 +42,11 @@ public abstract class ModelBakeInfo<Info> {
         modelCache.remove(modelName);
     }
 
+    //? if <26.1 {
     protected abstract Info getBakeInfo(Model model, boolean isSolid, ResourceLocation texture);
+    //?} else {
+    protected abstract Info getBakeInfo(Model model, boolean isSolid, Identifier texture);
+    //?}
 
     protected abstract BakedModel bake(Model model, Info info);
 
@@ -39,7 +55,11 @@ public abstract class ModelBakeInfo<Info> {
         void execute(int boneId, boolean[] data);
     }
 
+    //? if <26.1 {
     protected void downloadTexture(ResourceLocation texture, Consumer<NativeImage> imageConsumer) {
+    //?} else {
+    protected void downloadTexture(Identifier texture, Consumer<NativeImage> imageConsumer) {
+    //?}
         //? if <26.1 {
         Minecraft.getInstance().getTextureManager().getTexture(texture).bind();
 

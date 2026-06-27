@@ -13,7 +13,11 @@ import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;
 import io.github.tt432.eyelib.molang.type.MolangString;
 import net.minecraft.core.registries.BuiltInRegistries;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +47,11 @@ public class AnsEntitySmoke {
         var clientEntities = ClientEntityManager.INSTANCE.getAllData();
 
         Set<String> mcEntityIds = new TreeSet<>();
+        //? if <26.1 {
         for (ResourceLocation rl : BuiltInRegistries.ENTITY_TYPE.keySet()) {
+        //?} else {
+        for (Identifier rl : BuiltInRegistries.ENTITY_TYPE.keySet()) {
+        //?}
             mcEntityIds.add(rl.toString());
         }
 
@@ -127,8 +135,16 @@ public class AnsEntitySmoke {
         }
         for (var entry : textureMap.entrySet()) {
             String texPath = entry.getValue();
+            //? if <26.1 {
             if (ResourceLocation.tryParse(texPath) == null) {
+            //?} else {
+            if (Identifier.tryParse(texPath) == null) {
+            //?}
+                //? if <26.1 {
                 errors.add(entityId + ": texture[" + entry.getKey() + "]=\"" + texPath + "\" 无法解析为 ResourceLocation");
+                //?} else {
+                errors.add(entityId + ": texture[" + entry.getKey() + "]=\"" + texPath + "\" 无法解析为 Identifier");
+                //?}
             }
         }
     }

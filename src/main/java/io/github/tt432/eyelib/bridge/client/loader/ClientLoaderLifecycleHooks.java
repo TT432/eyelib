@@ -37,7 +37,7 @@ import java.util.Objects;
 //? if <1.20.6 {
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 //?} else {
-@EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = "eyelib", value = Dist.CLIENT)
 //?}
 public final class ClientLoaderLifecycleHooks {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientLoaderLifecycleHooks.class);

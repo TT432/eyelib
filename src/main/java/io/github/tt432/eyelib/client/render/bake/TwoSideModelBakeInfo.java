@@ -4,8 +4,16 @@ import io.github.tt432.eyelib.bridge.client.render.bake.ModelBakeInfo;
 import io.github.tt432.eyelib.model.Model;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
+//? if <26.1 {
 import net.minecraft.util.FastColor;
+//?} else {
+import net.minecraft.util.ARGB;
+//?}
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
@@ -18,10 +26,18 @@ import java.util.*;
 public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.TwoSideInfoMap> {
     public static final TwoSideModelBakeInfo INSTANCE = new TwoSideModelBakeInfo();
 
+    //? if <26.1 {
     private final Map<String, Map<ResourceLocation, TwoSideInfoMap>> cache = new HashMap<>();
+    //?} else {
+    private final Map<String, Map<Identifier, TwoSideInfoMap>> cache = new HashMap<>();
+    //?}
 
     @Override
+    //? if <26.1 {
     public TwoSideInfoMap getBakeInfo(Model model, boolean isSolid, ResourceLocation texture) {
+    //?} else {
+    public TwoSideInfoMap getBakeInfo(Model model, boolean isSolid, Identifier texture) {
+    //?}
         return cache.computeIfAbsent(model.name(), ___ -> new HashMap<>())
                     .computeIfAbsent(texture, __ -> {
                         Int2ObjectMap<TwoSideInfo> builder = new Int2ObjectOpenHashMap<>();
@@ -29,7 +45,11 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
                         downloadTexture(texture, nativeimage ->
                                 model.toplevelBones().forEach((boneName, bone) ->
                                                                       processBone(bone, nativeimage,
+                                                                                  //? if <26.1 {
                                                                                   color -> ((FastColor.ABGR32.alpha(color) & 0xFF) == 0xFF) == isSolid,
+                                                                                  //?} else {
+                                                                                  color -> ((ARGB.alpha(color) & 0xFF) == 0xFF) == isSolid,
+                                                                                  //?}
                                                                                   (n, d) -> builder.put(n, new TwoSideInfo(n, d)))));
 
                         return new TwoSideInfoMap(builder);

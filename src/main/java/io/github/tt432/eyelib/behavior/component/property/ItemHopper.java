@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
+import io.github.tt432.eyelib.util.codec.EyelibCodec;
 
 /**
  * minecraft:item_hopper — marker component.
@@ -11,7 +12,7 @@ import com.mojang.serialization.Codec;
 public record ItemHopper() implements io.github.tt432.eyelib.behavior.component.Component {
     private static final ItemHopper INSTANCE = new ItemHopper();
 
-    public static final Codec<ItemHopper> CODEC = Codec.unit(INSTANCE);
+    public static final Codec<ItemHopper> CODEC = EyelibCodec.unit(INSTANCE);
 
     @Override
     public String id() {

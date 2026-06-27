@@ -11,14 +11,25 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.LightTexture;
 //?}
 import net.minecraft.core.registries.BuiltInRegistries;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+//? if <26.1 {
 import net.minecraft.world.entity.animal.Bee;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.animal.horse.Llama;
+//?} else {
+import net.minecraft.world.entity.animal.bee.Bee;
+import net.minecraft.world.entity.animal.sheep.Sheep;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.Llama;
+//?}
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -56,7 +67,7 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 //? if <1.20.6 {
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 //?} else {
-@EventBusSubscriber(value = Dist.CLIENT)
+@EventBusSubscriber(modid = "eyelib", value = Dist.CLIENT)
 //?}
 public final class EntityRenderSystem {
     public static volatile int renderCount = 0;
@@ -193,7 +204,11 @@ public final class EntityRenderSystem {
     }
     //?}
 
+    //? if <26.1 {
     public static ResourceLocation getEntityTypeId(Entity entity) {
+    //?} else {
+    public static Identifier getEntityTypeId(Entity entity) {
+    //?}
         //? if <1.20.6 {
         return ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
         //?} else {
@@ -252,12 +267,21 @@ public final class EntityRenderSystem {
                 return new float[]{diffuse[0], diffuse[1], diffuse[2], 1.0F};
                 //?} else {
                 int diffuse = dyeColor.getTextureDiffuseColor();
+                //? if <26.1 {
                 return new float[]{
                         net.minecraft.util.FastColor.ARGB32.red(diffuse) / 255.0F,
                         net.minecraft.util.FastColor.ARGB32.green(diffuse) / 255.0F,
                         net.minecraft.util.FastColor.ARGB32.blue(diffuse) / 255.0F,
                         1.0F
                 };
+                //?} else {
+                return new float[]{
+                        net.minecraft.util.ARGB.red(diffuse) / 255.0F,
+                        net.minecraft.util.ARGB.green(diffuse) / 255.0F,
+                        net.minecraft.util.ARGB.blue(diffuse) / 255.0F,
+                        1.0F
+                };
+                //?}
                 //?}
             }
         }

@@ -8,8 +8,17 @@ import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.material.port.PortRenderPass.Transparency;
 import io.github.tt432.eyelib.util.PortResourceLocation;
+//? if <26.1 {
 import net.minecraft.client.renderer.RenderType;
+//?} else {
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+//?}
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +102,8 @@ public class RenderTypeBridgeSmoke {
             //? if <1.20.6 {
             ResourceLocation mcTex = new ResourceLocation("minecraft", "textures/entity/ghast");
             //?} else {
-            ResourceLocation mcTex = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/entity/ghast");
+            Identifier mcTex = Identifier.fromNamespaceAndPath("minecraft", "textures/entity/ghast");
+
             //?}
             //? if <26.1 {
             RenderType expected = RenderType.entityTranslucentCull(mcTex);
@@ -102,7 +112,7 @@ public class RenderTypeBridgeSmoke {
             require(expected.equals(actual),
                     "entity_alphablend → entityTranslucentCull");
             //?} else {
-            RenderType expected = RenderType.entityTranslucentCullItemTarget(mcTex);
+            RenderType expected = RenderTypes.entityTranslucentCullItemTarget(mcTex);
             RenderType actual = RenderPassAdapter.toRenderType(pass,
                     PortResourceLocation.of("minecraft", "textures/entity/ghast"));
             require(expected.equals(actual),

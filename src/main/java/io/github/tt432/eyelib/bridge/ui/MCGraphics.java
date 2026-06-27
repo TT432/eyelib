@@ -8,7 +8,11 @@ import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
+//? if <26.1 {
 import net.minecraft.client.renderer.RenderType;
+//?} else {
+import net.minecraft.client.renderer.rendertype.RenderType;
+//?}
 import net.minecraft.network.chat.Component;
 import org.joml.Vector2f;
 //? if <26.1 {

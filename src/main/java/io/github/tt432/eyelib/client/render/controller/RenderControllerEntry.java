@@ -24,7 +24,11 @@ import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.util.texture.TexturePaths;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import java.util.*;
 
 /**
@@ -113,11 +117,19 @@ public record RenderControllerEntry(
         });
     }
 
+    //? if <26.1 {
     public ResourceLocation getTexture(MolangScope scope, BrClientEntity entity) {
+    //?} else {
+    public Identifier getTexture(MolangScope scope, BrClientEntity entity) {
+    //?}
         return composeTextureLocation(resolveTextureLayerPaths(scope, entity), "");
     }
 
+    //? if <26.1 {
     public ResourceLocation getEmissiveTexture(MolangScope scope, BrClientEntity entity) {
+    //?} else {
+    public Identifier getEmissiveTexture(MolangScope scope, BrClientEntity entity) {
+    //?}
         List<String> layerPaths = resolveTextureLayerPaths(scope, entity);
         return composeTextureLocation(toEmissiveTextureLayerPaths(layerPaths), "");
     }
@@ -183,7 +195,11 @@ public record RenderControllerEntry(
             String materialName = groupEntry.getKey();
             Set<Integer> visibleBones = groupEntry.getValue();
 
+            //? if <26.1 {
             ResourceLocation matTexture = resolveSlotTexture(scope, entity, materialName,
+            //?} else {
+            Identifier matTexture = resolveSlotTexture(scope, entity, materialName,
+            //?}
                                                               needReloadTexture, syncedActions);
 
             ModelComponent comp = new ModelComponent();
@@ -238,7 +254,11 @@ public record RenderControllerEntry(
      * 按当前材质名解析纹理。注入 {@code texture.material} 到 scope 中，
      * 使得 Bedrock 的 {@code "textures": ["texture.material"]} 表达式能按材质槽动态求值。
      */
+    //? if <26.1 {
     private ResourceLocation resolveSlotTexture(MolangScope scope, BrClientEntity entity,
+    //?} else {
+    private Identifier resolveSlotTexture(MolangScope scope, BrClientEntity entity,
+    //?}
                                                 String materialName, boolean needReload,
                                                 List<Runnable> syncedActions) {
         if (textures.isEmpty()) {
@@ -260,20 +280,40 @@ public record RenderControllerEntry(
 
         try {
             List<String> textureLayerPaths = resolveTextureLayerPaths(scope, entity);
+            //? if <26.1 {
             ResourceLocation texture = getTexture(scope, entity);
+            //?} else {
+            Identifier texture = getTexture(scope, entity);
+            //?}
+            //? if <26.1 {
             List<ResourceLocation> textureLayers = toResourceLocations(textureLayerPaths);
+            //?} else {
+            List<Identifier> textureLayers = toResourceLocations(textureLayerPaths);
+            //?}
             if (textureLayers.size() == 1) {
                 texture = textureLayers.get(0);
             }
 
             if (needReload) {
+                //? if <26.1 {
                 ResourceLocation uploadTexture = texture;
+                //?} else {
+                Identifier uploadTexture = texture;
+                //?}
                 if (textureLayers.size() > 1) {
                     syncedActions.add(() -> NativeImageIO.upload(uploadTexture, TextureLayerMerger.merge(textureLayers)));
                 }
 
+                //? if <26.1 {
                 ResourceLocation emissiveTexture = getEmissiveTexture(scope, entity);
+                //?} else {
+                Identifier emissiveTexture = getEmissiveTexture(scope, entity);
+                //?}
+                //? if <26.1 {
                 List<ResourceLocation> emissiveTextureLayers = toResourceLocations(toEmissiveTextureLayerPaths(textureLayerPaths));
+                //?} else {
+                List<Identifier> emissiveTextureLayers = toResourceLocations(toEmissiveTextureLayerPaths(textureLayerPaths));
+                //?}
                 if (emissiveTextureLayers.size() > 1) {
                     syncedActions.add(() -> NativeImageIO.upload(emissiveTexture, TextureLayerMerger.merge(emissiveTextureLayers)));
                 }
@@ -300,21 +340,35 @@ public record RenderControllerEntry(
      * 避免 regular merge 的 premultiplied alpha 把低 alpha 颜色乘成黑色。
      * alphatest 材质使用此副本以避免低 alpha 像素被 MC cutout shader 丢弃。
      */
+    //? if <26.1 {
     private static ResourceLocation clampedTexture(ResourceLocation original, List<ResourceLocation> layers,
+    //?} else {
+    private static Identifier clampedTexture(Identifier original, List<Identifier> layers,
+    //?}
                                                     List<Runnable> syncedActions, boolean needReload) {
         //? if <1.20.6 {
         ResourceLocation clamped = new ResourceLocation(original.getNamespace(), "clamped/" + original.getPath());
         //?} else {
-        ResourceLocation clamped = ResourceLocation.fromNamespaceAndPath(original.getNamespace(), "clamped/" + original.getPath());
+        Identifier clamped = Identifier.fromNamespaceAndPath(original.getNamespace(), "clamped/" + original.getPath());
+
         //?}
         if (needReload) {
             syncedActions.add(() -> {
+                //? if <26.1 {
                 List<ResourceLocation> clampedLayers = new java.util.ArrayList<>();
+                //?} else {
+                List<Identifier> clampedLayers = new java.util.ArrayList<>();
+                //?}
+                //? if <26.1 {
                 for (ResourceLocation layer : layers) {
+                //?} else {
+                for (Identifier layer : layers) {
+                //?}
                     //? if <1.20.6 {
                     ResourceLocation clampedLayer = new ResourceLocation(layer.getNamespace(), "_tmp_clamped/" + layer.getPath());
                     //?} else {
-                    ResourceLocation clampedLayer = ResourceLocation.fromNamespaceAndPath(layer.getNamespace(), "_tmp_clamped/" + layer.getPath());
+                    Identifier clampedLayer = Identifier.fromNamespaceAndPath(layer.getNamespace(), "_tmp_clamped/" + layer.getPath());
+
                     //?}
                     NativeImage img = NativeImageIO.download(layer, NativeImageIO::copyImage);
                     if (img != null) {
@@ -430,7 +484,11 @@ public record RenderControllerEntry(
         }
     }
 
+    //? if <26.1 {
     private ResourceLocation composeTextureLocation(List<String> layerPaths, String suffix) {
+    //?} else {
+    private Identifier composeTextureLocation(List<String> layerPaths, String suffix) {
+    //?}
         StringBuilder pathBuilder = new StringBuilder();
         for (String layerPath : layerPaths) {
             pathBuilder.append(layerPath);
@@ -438,7 +496,8 @@ public record RenderControllerEntry(
         //? if <1.20.6 {
         return new ResourceLocation("complex", pathBuilder.toString().replace(":", "_") + suffix);
         //?} else {
-        return ResourceLocation.fromNamespaceAndPath("complex", pathBuilder.toString().replace(":", "_") + suffix);
+        return Identifier.fromNamespaceAndPath("complex", pathBuilder.toString().replace(":", "_") + suffix);
+
         //?}
     }
 
@@ -458,13 +517,22 @@ public record RenderControllerEntry(
         return emissiveLayerPaths;
     }
 
+    //? if <26.1 {
     private List<ResourceLocation> toResourceLocations(List<String> layerPaths) {
+    //?} else {
+    private List<Identifier> toResourceLocations(List<String> layerPaths) {
+    //?}
+        //? if <26.1 {
         List<ResourceLocation> resourceLocations = new ArrayList<>(layerPaths.size());
+        //?} else {
+        List<Identifier> resourceLocations = new ArrayList<>(layerPaths.size());
+        //?}
         for (String layerPath : layerPaths) {
             //? if <1.20.6 {
             resourceLocations.add(new ResourceLocation(layerPath));
             //?} else {
-            resourceLocations.add(ResourceLocation.parse(layerPath));
+            resourceLocations.add(Identifier.parse(layerPath));
+
             //?}
         }
         return resourceLocations;

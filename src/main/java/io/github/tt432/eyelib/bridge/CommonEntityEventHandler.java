@@ -36,7 +36,7 @@ import java.util.Optional;
 //? if <1.20.6 {
 @Mod.EventBusSubscriber(modid = Eyelib.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 //?} else {
-@EventBusSubscriber(modid = Eyelib.MOD_ID, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = Eyelib.MOD_ID)
 //?}
 public final class CommonEntityEventHandler {
     private CommonEntityEventHandler() {

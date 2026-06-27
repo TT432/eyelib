@@ -11,7 +11,11 @@ import lombok.NoArgsConstructor;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.*;
@@ -19,21 +23,37 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 //? if <26.1
 import net.minecraft.world.entity.PowerableMob;
+//? if <26.1 {
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.animal.Wolf;
 import net.minecraft.world.entity.animal.camel.Camel;
 import net.minecraft.world.entity.animal.horse.AbstractChestedHorse;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
+//?} else {
+import net.minecraft.world.entity.animal.sheep.Sheep;
+import net.minecraft.world.entity.animal.wolf.Wolf;
+import net.minecraft.world.entity.animal.camel.Camel;
+import net.minecraft.world.entity.animal.equine.AbstractChestedHorse;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
+//?}
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.monster.Vex;
 import net.minecraft.world.entity.monster.warden.Warden;
+//? if <26.1 {
 import net.minecraft.world.entity.npc.Villager;
+//?} else {
+import net.minecraft.world.entity.npc.villager.Villager;
+//?}
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.item.ItemStack;
+//? if <26.1 {
 import net.minecraft.world.item.UseAnim;
+//?} else {
+import net.minecraft.world.item.ItemUseAnimation;
+//?}
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
@@ -186,7 +206,8 @@ public final class MolangBuiltInQuery {
                 //? if <1.20.6 {
                 if (new ResourceLocation(item.toString()).equals(itemKey)) {
                 //?} else {
-                if (ResourceLocation.parse(item.toString()).equals(itemKey)) {
+                if (Identifier.parse(item.toString()).equals(itemKey)) {
+
                 //?}
                     return true;
                 }
@@ -504,12 +525,20 @@ public final class MolangBuiltInQuery {
 
     @MolangFunction(value = "is_eating", description = "正在食用物品")
     public static float isEating(MolangScope scope) {
+        //? if <26.1 {
         return livingBool(scope, p -> p.isUsingItem() && p.getUseItem().getUseAnimation() == UseAnim.EAT);
+        //?} else {
+        return livingBool(scope, p -> p.isUsingItem() && p.getUseItem().getUseAnimation() == ItemUseAnimation.EAT);
+        //?}
     }
 
     @MolangFunction(value = "is_drinking", description = "正在饮用物品")
     public static float isDrinking(MolangScope scope) {
+        //? if <26.1 {
         return livingBool(scope, p -> p.isUsingItem() && p.getUseItem().getUseAnimation() == UseAnim.DRINK);
+        //?} else {
+        return livingBool(scope, p -> p.isUsingItem() && p.getUseItem().getUseAnimation() == ItemUseAnimation.DRINK);
+        //?}
     }
 
     @MolangFunction(value = "is_main_hand_swing", description = "主手正在挥动")
@@ -885,7 +914,11 @@ public final class MolangBuiltInQuery {
         return scope.getHostContext().get(Entity.class).map(entity -> {
             Entity vehicle = entity.getVehicle();
             if (vehicle == null) return FALSE;
+            //? if <26.1 {
             ResourceLocation vehicleKey = BuiltInRegistries.ENTITY_TYPE.getKey(vehicle.getType());
+            //?} else {
+            Identifier vehicleKey = BuiltInRegistries.ENTITY_TYPE.getKey(vehicle.getType());
+            //?}
             for (String type : types) {
                 if (ResourceLocationBridge.parseMc(type).equals(vehicleKey)) {
                     return TRUE;
@@ -980,7 +1013,11 @@ public final class MolangBuiltInQuery {
     @MolangFunction(value = "is_owner_identifier_any", description = "检查根实体标识符是否与任一指定字符串匹配")
     public static float isOwnerIdentifierAny(MolangScope scope, String... identifiers) {
         return scope.getHostContext().get(Entity.class).map(entity -> {
+            //? if <26.1 {
             ResourceLocation entityKey = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+            //?} else {
+            Identifier entityKey = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+            //?}
             for (String id : identifiers) {
                 if (ResourceLocationBridge.parseMc(id).equals(entityKey)) {
                     return TRUE;

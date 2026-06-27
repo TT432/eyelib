@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
+import io.github.tt432.eyelib.util.codec.EyelibCodec;
 
 /**
  * minecraft:cannot_be_attacked — marker component.
@@ -11,7 +12,7 @@ import com.mojang.serialization.Codec;
 public record CannotBeAttacked() implements io.github.tt432.eyelib.behavior.component.Component {
     private static final CannotBeAttacked INSTANCE = new CannotBeAttacked();
 
-    public static final Codec<CannotBeAttacked> CODEC = Codec.unit(INSTANCE);
+    public static final Codec<CannotBeAttacked> CODEC = EyelibCodec.unit(INSTANCE);
 
     @Override
     public String id() {

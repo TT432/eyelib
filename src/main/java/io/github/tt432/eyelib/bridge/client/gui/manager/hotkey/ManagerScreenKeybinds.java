@@ -23,7 +23,7 @@ import org.lwjgl.glfw.GLFW;
 //? if <1.20.6 {
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 //?} else {
-@EventBusSubscriber(value = Dist.CLIENT)
+@EventBusSubscriber(modid = "eyelib", value = Dist.CLIENT)
 //?}
 public final class ManagerScreenKeybinds {
     //? if <26.1 {

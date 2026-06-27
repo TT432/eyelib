@@ -27,8 +27,10 @@ public record MinecraftParticleRuntimeEnvironment(Level level) implements Partic
     public float partialTick() {
         //? if <1.20.6 {
         return Minecraft.getInstance().timer.partialTick;
-        //?} else {
+        //?} else if <26.1 {
         return Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
+        //?} else {
+        return Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
         //?}
     }
 

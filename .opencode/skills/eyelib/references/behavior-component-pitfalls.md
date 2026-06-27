@@ -39,7 +39,7 @@ private static final Codec<JsonObject> JSON_FIELD = Codec.STRING.xmap(
 @org.jspecify.annotations.NullMarked
 public record Xxx() implements Component {
     public static final Xxx INSTANCE = new Xxx();
-    public static final Codec<Xxx> CODEC = Codec.unit(INSTANCE);
+    public static final Codec<Xxx> CODEC = io.github.tt432.eyelib.util.codec.EyelibCodec.unit(INSTANCE);
     @Override public String id() { return "xxx"; }
 }
 ```

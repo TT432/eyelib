@@ -5,7 +5,11 @@ import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
 import lombok.extern.slf4j.Slf4j;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.slf4j.Logger;
@@ -29,8 +33,16 @@ public class BrRenderControllerLoader extends BrResourcesLoader {
     }
 
     @Override
+    //? if <26.1 {
     protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
+    //?} else {
+    protected void apply(Map<Identifier, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
+    //?}
+        //? if <26.1 {
         Map<ResourceLocation, RenderControllers> parsedRenderControllers =
+        //?} else {
+        Map<Identifier, RenderControllers> parsedRenderControllers =
+        //?}
                 LoaderParsingOps.parseBySourceKey(pObject, RenderControllers.CODEC, LOGGER, "render controller");
         for (RenderControllers value : parsedRenderControllers.values()) {
             value.render_controllers().forEach((key, entry) -> {

@@ -20,8 +20,16 @@ import net.minecraft.client.renderer.LightTexture;
 //?}
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
+//? if <26.1 {
 import net.minecraft.util.FastColor;
+//?} else {
+import net.minecraft.util.ARGB;
+//?}
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
@@ -52,7 +60,7 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
         //? if <1.20.6 {
         net.minecraft.resources.ResourceLocation texture = new net.minecraft.resources.ResourceLocation(particle.emitter().definition().texture()).withSuffix(".png");
         //?} else {
-        net.minecraft.resources.ResourceLocation texture = net.minecraft.resources.ResourceLocation.parse(particle.emitter().definition().texture()).withSuffix(".png");
+        net.minecraft.resources.Identifier texture = net.minecraft.resources.Identifier.parse(particle.emitter().definition().texture()).withSuffix(".png");
         //?}
         PortRenderPass pass = factory.factory().apply(PortResourceLocation.of(texture.getNamespace(), texture.getPath()));
         //? if <26.1 {
@@ -115,8 +123,10 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
             );
             //? if <1.20.6
             pose.rotate(billboard.getRotation(particle, camera, Minecraft.getInstance().getPartialTick()));
-            //? if >=1.20.6
+            //? if >=1.20.6 && <26.1
             pose.rotate(billboard.getRotation(particle, camera, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true)));
+            //? if >=26.1
+            pose.rotate(billboard.getRotation(particle, camera, Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true)));
         }
 
         pose.rotateZ((float) Math.toRadians(particle.rotation()));
@@ -156,10 +166,17 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
         //?} else {
         vertexConsumer.addVertex(position.x, position.y, position.z)
                 .setColor(
+                        //? if <26.1 {
                         FastColor.ABGR32.red(color),
                         FastColor.ABGR32.green(color),
                         FastColor.ABGR32.blue(color),
                         FastColor.ABGR32.alpha(color)
+                        //?} else {
+                        ARGB.red(color),
+                        ARGB.green(color),
+                        ARGB.blue(color),
+                        ARGB.alpha(color)
+                        //?}
                 )
                 .setUv(u, v)
                 .setOverlay(OverlayTexture.NO_OVERLAY)

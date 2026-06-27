@@ -62,7 +62,7 @@
 | 1.20.1 / 1.21.1 | `LightTexture.FULL_BRIGHT`(int)+ `Brightness.FULL_BRIGHT`(record) |
 | 26.1.2 | `LightCoordsUtil.FULL_BRIGHT`(int)+ `Brightness.FULL_BRIGHT`(record)。**没有** `LightTexture.FULL_BRIGHT`(类已删) |
 
-项目 build.gradle 的 `migrate26Renames` task 已经把 `LightTexture.FULL_BRIGHT` → `0xF000F0` 字面量替换,所以数值正确,但**项目里可能仍有地方引用 `LightTexture.pack` / `LightTexture.block` / `LightTexture.sky`**,这些需要改到 `LightCoordsUtil` 或 `Brightness`。
+项目用 `//?` 条件注释处理此差异（`<26.1` 分支用 `LightTexture.FULL_BRIGHT`，`>=26.1` 分支用 `0xF000F0` 字面量）。但**项目里可能仍有地方引用 `LightTexture.pack` / `LightTexture.block` / `LightTexture.sky`**,这些需要改到 `LightCoordsUtil` 或 `Brightness`。
 
 ---
 
@@ -114,7 +114,7 @@
 | 1.20.1 / 1.21.1 | `net.minecraft.client.renderer.RenderType` |
 | 26.1.2 | `net.minecraft.client.renderer.rendertype.RenderType` + `RenderTypes`(工厂) |
 
-项目 build.gradle 的 `migrate26Renames` 已经把 `RenderType.entity\w+(` → `RenderTypes.entity\w+(` 替换,但**静态工厂方法的命名可能不完全对应**(例如 `entityCutoutNoCull` 在 26.1.2 是否还叫这个名字,需要核对 `RenderTypes.java`)。
+项目用 `//?` 条件注释处理此差异（`<26.1` 分支用 `RenderType.entity*(`，`>=26.1` 分支用 `RenderTypes.entity*(`）。但**静态工厂方法的命名可能不完全对应**(例如 `entityCutoutNoCull` 在 26.1.2 是否还叫这个名字,需要核对 `RenderTypes.java`)。
 
 ### LIGHTMAP vs NO_LIGHTMAP 的 RenderType(跨版本一致)
 
@@ -175,10 +175,10 @@
 1. **`LightTexture.pack` / `block` / `sky` 引用**:在 26.1.2 编译会失败(类已删)。需改用 `LightCoordsUtil` 或 `Brightness` record。
    - 搜索:`grep -r "LightTexture\." src/`
 
-2. **`LightTexture.FULL_BRIGHT` / `FULL_SKY` 引用**:`migrate26Renames` 已替换为 `0xF000F0` 字面量,但**项目自定义代码**可能仍引用。需核对。
+2. **`LightTexture.FULL_BRIGHT` / `FULL_SKY` 引用**:项目用 `//?` 条件注释在 `>=26.1` 分支用 `0xF000F0` 字面量,但**项目自定义代码**可能仍引用。需核对。
    - 搜索:`grep -r "LightTexture.FULL" src/`
 
-3. **`RenderType.entity*(...)` 静态工厂调用**:26.1.2 移到 `RenderTypes`(注意 s),且部分工厂签名可能变。`migrate26Renames` 做了正则替换,但要核对边缘情况。
+3. **`RenderType.entity*(...)` 静态工厂调用**:26.1.2 移到 `RenderTypes`(注意 s),且部分工厂签名可能变。项目用 `//?` 条件注释处理,但要核对边缘情况。
    - 搜索:`grep -rE "RenderType\.(entity|armor|item|eyes|leash|text|lightning|beacon|end)" src/`
 
 4. **`gameRenderer.lightTexture()` 调用**:26.1.2 该方法已删,改为 `gameRenderer.lightmap()`(返回 `GpuTextureView` 而非 `LightTexture` 实例)。

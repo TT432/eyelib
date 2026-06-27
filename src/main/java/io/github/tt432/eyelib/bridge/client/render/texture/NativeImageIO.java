@@ -7,7 +7,11 @@ import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import org.jspecify.annotations.Nullable;
 //? if >=26.1 {
 import com.mojang.blaze3d.opengl.GlTexture;
@@ -30,9 +34,17 @@ import static org.lwjgl.opengl.GL11.*;
  */
 @UtilityClass
 public class NativeImageIO {
+    //? if <26.1 {
     private static final Map<String, ResourceLocation> COLOR_MASK_CACHE = new HashMap<>();
+    //?} else {
+    private static final Map<String, Identifier> COLOR_MASK_CACHE = new HashMap<>();
+    //?}
 
+    //? if <26.1 {
     public void upload(ResourceLocation texture, NativeImage image) {
+    //?} else {
+    public void upload(Identifier texture, NativeImage image) {
+    //?}
         //? if <26.1 {
         DynamicTexture dynamicTexture = new DynamicTexture(image);
         //?} else {
@@ -45,12 +57,17 @@ public class NativeImageIO {
         //? if <1.20.6 {
         upload(new ResourceLocation(texture), image);
         //?} else {
-        upload(ResourceLocation.parse(texture), image);
+        upload(Identifier.parse(texture), image);
+
         //?}
     }
 
     @Nullable
+    //? if <26.1 {
     public <R> R download(ResourceLocation texture, Function<NativeImage, R> imageFunction) {
+    //?} else {
+    public <R> R download(Identifier texture, Function<NativeImage, R> imageFunction) {
+    //?}
         //? if <26.1 {
         Minecraft.getInstance().getTextureManager().getTexture(texture).bind();
 
@@ -162,9 +179,17 @@ public class NativeImageIO {
     }
 
     @Nullable
+    //? if <26.1 {
     public ResourceLocation colorMaskTexture(ResourceLocation texture, float[] color) {
+    //?} else {
+    public Identifier colorMaskTexture(Identifier texture, float[] color) {
+    //?}
         String cacheKey = texture + "/" + colorKey(color);
+        //? if <26.1 {
         ResourceLocation cached = COLOR_MASK_CACHE.get(cacheKey);
+        //?} else {
+        Identifier cached = COLOR_MASK_CACHE.get(cacheKey);
+        //?}
         if (cached != null) {
             return cached;
         }
@@ -172,7 +197,8 @@ public class NativeImageIO {
         //? if <1.20.6 {
         ResourceLocation generated = new ResourceLocation(texture.getNamespace(), "_color_mask/" + colorKey(color) + "/" + texture.getPath());
         //?} else {
-        ResourceLocation generated = ResourceLocation.fromNamespaceAndPath(texture.getNamespace(), "_color_mask/" + colorKey(color) + "/" + texture.getPath());
+        Identifier generated = Identifier.fromNamespaceAndPath(texture.getNamespace(), "_color_mask/" + colorKey(color) + "/" + texture.getPath());
+
         //?}
         NativeImage image = download(texture, NativeImageIO::copyImage);
         if (image == null) {

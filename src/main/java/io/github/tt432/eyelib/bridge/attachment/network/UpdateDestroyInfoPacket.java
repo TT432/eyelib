@@ -25,7 +25,7 @@ public record UpdateDestroyInfoPacket(
     //? if >=1.20.6 {
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<UpdateDestroyInfoPacket> TYPE =
             new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("eyelib", "update_destroy_info"));
+                    net.minecraft.resources.Identifier.fromNamespaceAndPath("eyelib", "update_destroy_info"));
 
     @Override
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {

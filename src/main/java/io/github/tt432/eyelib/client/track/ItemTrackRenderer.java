@@ -48,7 +48,9 @@ public final class ItemTrackRenderer {
     public static float getPartialTick() {
         //? if <1.20.6
         return Minecraft.getInstance().getFrameTime();
-        //? if >=1.20.6
+        //? if >=1.20.6 && <26.1
         return Minecraft.getInstance().getTimer().getRealtimeDeltaTicks();
+        //? if >=26.1
+        return Minecraft.getInstance().getDeltaTracker().getRealtimeDeltaTicks();
     }
 }

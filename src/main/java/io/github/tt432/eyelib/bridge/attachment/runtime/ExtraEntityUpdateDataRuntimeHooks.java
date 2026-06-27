@@ -29,7 +29,7 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 //? if <1.20.6 {
 @Mod.EventBusSubscriber(modid = "eyelib", bus = Mod.EventBusSubscriber.Bus.FORGE)
 //?} else {
-@EventBusSubscriber(modid = "eyelib", bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = "eyelib")
 //?}
 public final class ExtraEntityUpdateDataRuntimeHooks {
     @SubscribeEvent

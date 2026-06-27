@@ -2,6 +2,19 @@ package io.github.tt432.eyelib.bridge.molang;
 
 import io.github.tt432.eyelib.molang.port.PortEntity;
 import net.minecraft.world.entity.Entity;
+//? if <26.1 {
+import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.animal.Wolf;
+import net.minecraft.world.entity.animal.horse.AbstractChestedHorse;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
+import net.minecraft.world.entity.npc.Villager;
+//?} else {
+import net.minecraft.world.entity.animal.sheep.Sheep;
+import net.minecraft.world.entity.animal.wolf.Wolf;
+import net.minecraft.world.entity.animal.equine.AbstractChestedHorse;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.npc.villager.Villager;
+//?}
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,12 +36,12 @@ public final class EntityPortAdapter {
         public Map<String, Object> getQueryProperties() {
             Map<String, Object> props = new HashMap<>();
             // 实体类型标记
-            props.put("is_sheep", entity instanceof net.minecraft.world.entity.animal.Sheep);
-            props.put("is_wolf", entity instanceof net.minecraft.world.entity.animal.Wolf);
+            props.put("is_sheep", entity instanceof Sheep);
+            props.put("is_wolf", entity instanceof Wolf);
             props.put("is_creeper", entity instanceof net.minecraft.world.entity.monster.Creeper);
             props.put("is_vex", entity instanceof net.minecraft.world.entity.monster.Vex);
             props.put("is_warden", entity instanceof net.minecraft.world.entity.monster.warden.Warden);
-            props.put("is_villager", entity instanceof net.minecraft.world.entity.npc.Villager);
+            props.put("is_villager", entity instanceof Villager);
             props.put("is_camel", entity instanceof net.minecraft.world.entity.animal.camel.Camel);
             props.put("is_wither", entity instanceof net.minecraft.world.entity.boss.wither.WitherBoss);
             props.put("is_enderman", entity instanceof net.minecraft.world.entity.monster.EnderMan);
@@ -46,13 +59,13 @@ public final class EntityPortAdapter {
             // 实体特定行为属性
             if (living) {
                 var le = (net.minecraft.world.entity.LivingEntity) entity;
-                props.put("is_sheared", le instanceof net.minecraft.world.entity.animal.Sheep s && s.isSheared());
+                props.put("is_sheared", le instanceof Sheep s && s.isSheared());
                 props.put("is_angry", le instanceof net.minecraft.world.entity.NeutralMob nm && nm.isAngry());
-                props.put("is_saddled", le instanceof net.minecraft.world.entity.animal.horse.AbstractHorse ah && ah.isSaddled());
+                props.put("is_saddled", le instanceof AbstractHorse ah && ah.isSaddled());
                 props.put("is_carrying_block", le instanceof net.minecraft.world.entity.monster.EnderMan em && em.getCarriedBlock() != null);
-                props.put("is_chested", le instanceof net.minecraft.world.entity.animal.horse.AbstractChestedHorse ach && ach.hasChest());
+                props.put("is_chested", le instanceof AbstractChestedHorse ach && ach.hasChest());
                 props.put("is_powered", isPowered(le));
-                props.put("is_standing", le instanceof net.minecraft.world.entity.animal.horse.AbstractHorse ah && ah.isStanding());
+                props.put("is_standing", le instanceof AbstractHorse ah && ah.isStanding());
                 props.put("is_charging", le instanceof net.minecraft.world.entity.monster.Vex v && v.isCharging());
                 props.put("is_tamed", le instanceof net.minecraft.world.entity.TamableAnimal ta && ta.isTame());
             }

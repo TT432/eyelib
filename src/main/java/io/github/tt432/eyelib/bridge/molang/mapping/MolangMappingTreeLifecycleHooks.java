@@ -18,7 +18,7 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 //? if <1.20.6 {
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 //?} else {
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = "eyelib")
 //?}
 public final class MolangMappingTreeLifecycleHooks {
     private MolangMappingTreeLifecycleHooks() {

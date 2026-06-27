@@ -52,6 +52,7 @@
 | 0014 | 模块扁平合并 — 取消 Gradle 子项目 | Accepted (2026-06-17) |
 | 0015 | Stonecutter 多版本改造与 ArchUnit 恢复 | Accepted (2026-06-18) |
 | 0016 | 库隔离标准 — DDD 分层与 ACL 职责边界 | Accepted (2026-06-25) |
+| 0017 | 移除 migrate26Renames 文本替换，统一用 `//?` 条件注释 | Accepted (2026-06-28) |
 
 ## 核心原则
 

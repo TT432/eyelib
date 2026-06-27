@@ -6,7 +6,11 @@ import io.github.tt432.eyelib.model.Model;
 import it.unimi.dsi.fastutil.booleans.BooleanList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import org.joml.Vector2f;
 import org.joml.Vector2fc;
 import org.joml.Vector3f;
@@ -27,10 +31,18 @@ public class EmissiveModelBakeInfo extends ModelBakeInfo<EmissiveModelBakeInfo.I
     ) {
     }
 
+    //? if <26.1 {
     private final Map<String, Map<ResourceLocation, Info>> cache = new HashMap<>();
+    //?} else {
+    private final Map<String, Map<Identifier, Info>> cache = new HashMap<>();
+    //?}
 
     @Override
+    //? if <26.1 {
     public Info getBakeInfo(Model model, boolean isSolid, ResourceLocation texture) {
+    //?} else {
+    public Info getBakeInfo(Model model, boolean isSolid, Identifier texture) {
+    //?}
         return cache.computeIfAbsent(model.name(), ___ -> new HashMap<>())
                     .computeIfAbsent(texture, __ -> {
                         Int2ObjectMap<BooleanList> builder = new Int2ObjectOpenHashMap<>();

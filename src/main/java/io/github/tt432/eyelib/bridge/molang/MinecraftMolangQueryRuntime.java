@@ -45,16 +45,26 @@ public final class MinecraftMolangQueryRuntime implements MolangQueryRuntime {
     public float partialTick() {
         //? if <1.20.6
         return Minecraft.getInstance().getFrameTime();
-        //? if >=1.20.6
+        //? if >=1.20.6 && <26.1
         return Minecraft.getInstance().getTimer().getRealtimeDeltaTicks();
+        //? if >=26.1
+        return Minecraft.getInstance().getDeltaTracker().getRealtimeDeltaTicks();
     }
 
     @Override
     public float distanceFromCamera(Object entity) {
+        //? if <26.1 {
         if (!(entity instanceof Entity e) || Minecraft.getInstance().cameraEntity == null) {
+        //?} else {
+        if (!(entity instanceof Entity e) || Minecraft.getInstance().getCameraEntity() == null) {
+        //?}
             return 0;
         }
 
+        //? if <26.1 {
         return Minecraft.getInstance().cameraEntity.distanceTo(e);
+        //?} else {
+        return Minecraft.getInstance().getCameraEntity().distanceTo(e);
+        //?}
     }
 }

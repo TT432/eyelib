@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.behavior.component.property;
 
 import com.mojang.serialization.Codec;
+import io.github.tt432.eyelib.util.codec.EyelibCodec;
 
 /**
  * minecraft:scale_by_age — marker component.
@@ -11,7 +12,7 @@ import com.mojang.serialization.Codec;
 public record ScaleByAge() implements io.github.tt432.eyelib.behavior.component.Component {
     private static final ScaleByAge INSTANCE = new ScaleByAge();
 
-    public static final Codec<ScaleByAge> CODEC = Codec.unit(INSTANCE);
+    public static final Codec<ScaleByAge> CODEC = EyelibCodec.unit(INSTANCE);
 
     @Override
     public String id() {

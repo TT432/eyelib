@@ -52,7 +52,11 @@ public class McDataAttachmentContainer extends DataAttachmentContainer
     //?} else {
     public void deserializeNBT(HolderLookup.Provider provider, CompoundTag nbt) {
     //?}
+        //? if <26.1 {
         for (var key : nbt.getAllKeys()) {
+        //?} else {
+        for (var key : nbt.keySet()) {
+        //?}
             var value = nbt.get(key);
             if (value == null) {
                 continue;

@@ -13,8 +13,16 @@ import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.model.Model;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.Getter;
+//? if <26.1 {
 import net.minecraft.client.renderer.RenderType;
+//?} else {
+import net.minecraft.client.renderer.rendertype.RenderType;
+//?}
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
@@ -67,7 +75,11 @@ public class ModelComponent {
     }
 
     @Nullable
+    //? if <26.1 {
     public RenderType getRenderType(ResourceLocation texture) {
+    //?} else {
+    public RenderType getRenderType(Identifier texture) {
+    //?}
         if (serializableInfo == null) return null;
         var matMap = MaterialManager.INSTANCE.getAllData();
         var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().path()).orElse(null);

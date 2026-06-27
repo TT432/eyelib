@@ -30,8 +30,16 @@ import io.github.tt432.eyelib.material.render.BrRenderState;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
 //?}
+//? if <26.1 {
 import net.minecraft.client.renderer.RenderType;
+//?} else {
+import net.minecraft.client.renderer.rendertype.RenderType;
+//?}
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 //? if <26.1 {
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
@@ -73,7 +81,7 @@ public final class BrRenderTypeFactory {
         PortRenderPass pass = toPortPass(state);
         return new BridgeRenderPass(pass.transparency(), pass.disableCulling(), renderType);
         //?} else {
-        ResourceLocation mcTex = ResourceLocationBridge.toMc(texture);
+        Identifier mcTex = ResourceLocationBridge.toMc(texture);
         if (!state.needsCustomRenderType()) {
             return toPortPass(state);
         }
@@ -169,7 +177,7 @@ public final class BrRenderTypeFactory {
         );
     }
     //?} else {
-    private static RenderType custom(ResourceLocation texture, BrRenderState state) {
+    private static RenderType custom(Identifier texture, BrRenderState state) {
         RenderPipeline pipeline = PIPELINE_CACHE.computeIfAbsent(state, BrRenderTypeFactory::buildPipeline);
         RenderSetup.RenderSetupBuilder builder = RenderSetup.builder(pipeline)
                 .withTexture("Sampler0", texture);
@@ -194,7 +202,7 @@ public final class BrRenderTypeFactory {
                 ? RenderPipelines.ENTITY_EMISSIVE_SNIPPET
                 : RenderPipelines.ENTITY_SNIPPET;
         RenderPipeline.Builder builder = RenderPipeline.builder(baseSnippet)
-                .withLocation(ResourceLocation.parse("eyelib:material_" + Integer.toHexString(state.hashCode())))
+                .withLocation(Identifier.parse("eyelib:material_" + Integer.toHexString(state.hashCode())))
                 .withCull(state.cull())
                 .withColorTargetState(buildColorTargetState(state))
                 .withDepthStencilState(Optional.of(buildDepthStencilState(state)));

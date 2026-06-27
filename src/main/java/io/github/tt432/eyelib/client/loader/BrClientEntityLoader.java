@@ -4,7 +4,11 @@ import com.google.gson.JsonElement;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import lombok.extern.slf4j.Slf4j;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.slf4j.Logger;
@@ -29,14 +33,23 @@ public class BrClientEntityLoader extends BrResourcesLoader {
     }
 
     @Override
+    //? if <26.1 {
     protected void apply(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
+    //?} else {
+    protected void apply(Map<Identifier, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
+    //?}
+        //? if <26.1 {
         Map<ResourceLocation, BrClientEntity> parsedEntities = LoaderParsingOps.parseAndTranslate(
+        //?} else {
+        Map<Identifier, BrClientEntity> parsedEntities = LoaderParsingOps.parseAndTranslate(
+        //?}
                 object,
                 BrClientEntity.CODEC,
                 //? if <1.20.6 {
                 (sourceLocation, entity) -> new ResourceLocation(entity.identifier()),
                 //?} else {
-                (sourceLocation, entity) -> ResourceLocation.parse(entity.identifier()),
+                (sourceLocation, entity) -> Identifier.parse(entity.identifier()),
+
                 //?}
                 LOGGER,
                 "entity"

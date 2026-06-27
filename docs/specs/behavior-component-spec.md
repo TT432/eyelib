@@ -20,7 +20,7 @@ Bedrock JSON 中仅作为存在性标记，无数据字段。
 @org.jspecify.annotations.NullMarked
 public record Xxx() implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Xxx INSTANCE = new Xxx();
-    public static final com.mojang.serialization.Codec<Xxx> CODEC = com.mojang.serialization.Codec.unit(INSTANCE);
+    public static final com.mojang.serialization.Codec<Xxx> CODEC = io.github.tt432.eyelib.util.codec.EyelibCodec.unit(INSTANCE);
 
     @Override
     public String id() { return "xxx"; }

@@ -29,7 +29,7 @@ public record AnimationComponentSyncPacket(
     //? if >=1.20.6 {
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<AnimationComponentSyncPacket> TYPE =
             new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("eyelib", "animation_component_sync"));
+                    net.minecraft.resources.Identifier.fromNamespaceAndPath("eyelib", "animation_component_sync"));
 
     @Override
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {

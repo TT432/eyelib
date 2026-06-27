@@ -30,7 +30,7 @@ public record ExtraEntityDataPacket(
     //? if >=1.20.6 {
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<ExtraEntityDataPacket> TYPE =
             new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("eyelib", "extra_entity_data"));
+                    net.minecraft.resources.Identifier.fromNamespaceAndPath("eyelib", "extra_entity_data"));
 
     @Override
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {

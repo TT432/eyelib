@@ -1,7 +1,11 @@
 package io.github.tt432.eyelib.bridge.client.entity;
 
 import net.minecraft.core.registries.BuiltInRegistries;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +22,11 @@ public final class EntityRegistryBridge {
 
     public static List<EntityTypeEntry> getEntries() {
         List<EntityTypeEntry> entries = new ArrayList<>();
+        //? if <26.1 {
         for (ResourceLocation resourceLocation : BuiltInRegistries.ENTITY_TYPE.keySet()) {
+        //?} else {
+        for (Identifier resourceLocation : BuiltInRegistries.ENTITY_TYPE.keySet()) {
+        //?}
             entries.add(new EntityTypeEntry(
                     resourceLocation.toString(),
                     //? if <26.1 {

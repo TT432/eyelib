@@ -7,7 +7,11 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+//? if <26.1 {
 import static com.mojang.blaze3d.vertex.DefaultVertexFormat.NEW_ENTITY;
+//?} else {
+import static com.mojang.blaze3d.vertex.DefaultVertexFormat.ENTITY;
+//?}
 
 /**
  * 预烘焙的模型数据。
@@ -76,7 +80,11 @@ public record BakedModel(
             //? if <1.20.6 {
             return new BufferBuilder(NEW_ENTITY.getVertexSize() * vertexCount);
             //?} else {
+            //? if <26.1 {
             return new BufferBuilder(new ByteBufferBuilder(NEW_ENTITY.getVertexSize() * vertexCount), VertexFormat.Mode.QUADS, NEW_ENTITY);
+            //?} else {
+            return new BufferBuilder(new ByteBufferBuilder(ENTITY.getVertexSize() * vertexCount), VertexFormat.Mode.QUADS, ENTITY);
+            //?}
             //?}
         }
 

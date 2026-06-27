@@ -6,7 +6,11 @@ import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 //? if <26.1 {
 import com.mojang.blaze3d.platform.GlStateManager;
 //?} else {
@@ -59,7 +63,11 @@ public class TextureLayerMerger {
 
     private static int computeProgram = -1;
 
+    //? if <26.1 {
     public NativeImage merge(List<ResourceLocation> textures) {
+    //?} else {
+    public NativeImage merge(List<Identifier> textures) {
+    //?}
         if (textures.isEmpty() || textures.size() > 16) {
             return new NativeImage(16, 16, false);
         }
@@ -128,7 +136,7 @@ public class TextureLayerMerger {
         return finalImage;
         //?} else {
         List<NativeImage> images = new ArrayList<>(textures.size());
-        for (ResourceLocation resourceLocation : textures) {
+        for (Identifier resourceLocation : textures) {
             NativeImage image = NativeImageIO.download(resourceLocation, NativeImageIO::copyImage);
             if (image != null) {
                 images.add(image);
@@ -182,7 +190,11 @@ public class TextureLayerMerger {
         //?}
     }
 
+    //? if <26.1 {
     private static List<ResourceLocation> filterExisting(List<ResourceLocation> textures) {
+    //?} else {
+    private static List<Identifier> filterExisting(List<Identifier> textures) {
+    //?}
         //? if <26.1 {
         List<ResourceLocation> valid = new ArrayList<>(textures.size());
         for (ResourceLocation resourceLocation : textures) {

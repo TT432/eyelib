@@ -19,7 +19,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 //? if <1.20.6 {
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 //?} else {
-@EventBusSubscriber(value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
+@EventBusSubscriber(modid = "eyelib", value = Dist.CLIENT)
 //?}
 public final class CapabilityComponentRuntimeHooks {
     private CapabilityComponentRuntimeHooks() {

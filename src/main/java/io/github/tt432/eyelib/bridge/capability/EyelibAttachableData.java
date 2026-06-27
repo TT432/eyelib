@@ -8,7 +8,11 @@ import io.github.tt432.eyelib.behavior.EntityBehaviorData;
 import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 //? if <1.20.6 {
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.RegistryObject;
@@ -30,22 +34,30 @@ import java.util.function.Supplier;
 //? if <1.20.6 {
 @Mod.EventBusSubscriber
 //?} else {
-@EventBusSubscriber
+@EventBusSubscriber(modid = "eyelib")
 //?}
 public class EyelibAttachableData {
 
+    //? if <26.1 {
     private static final ResourceLocation ENTITY_BEHAVIOR_DATA_ID =
+    //?} else {
+    private static final Identifier ENTITY_BEHAVIOR_DATA_ID =
+    //?}
             //? if <1.20.6 {
             new ResourceLocation(Eyelib.MOD_ID, "entity_behavior_data");
             //?} else {
-            ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "entity_behavior_data");
+            Identifier.fromNamespaceAndPath(Eyelib.MOD_ID, "entity_behavior_data");
 
             //?}
+    //? if <26.1 {
     private static final ResourceLocation SYNCED_BEHAVIOR_STATE_ID =
+    //?} else {
+    private static final Identifier SYNCED_BEHAVIOR_STATE_ID =
+    //?}
             //? if <1.20.6 {
             new ResourceLocation(Eyelib.MOD_ID, "synced_behavior_state");
             //?} else {
-            ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "synced_behavior_state");
+            Identifier.fromNamespaceAndPath(Eyelib.MOD_ID, "synced_behavior_state");
 
             //?}
 

@@ -22,7 +22,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 //? if <1.20.6 {
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 //?} else {
-@EventBusSubscriber(value = Dist.CLIENT)
+@EventBusSubscriber(modid = "eyelib", value = Dist.CLIENT)
 //?}
 public final class ManagerScreenOpenEvents {
     @SubscribeEvent

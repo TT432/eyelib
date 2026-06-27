@@ -8,7 +8,11 @@ import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+//? if <26.1 {
 import net.minecraft.resources.ResourceLocation;
+//?} else {
+import net.minecraft.resources.Identifier;
+//?}
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import static io.github.tt432.eyelib.client.render.EntityRenderOrchestrator.renderItemInHand;
@@ -19,7 +23,11 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.client.model.geom.ModelPart;
+//? if <26.1 {
 import net.minecraft.client.renderer.RenderType;
+//?} else {
+import net.minecraft.client.renderer.rendertype.RenderType;
+//?}
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
@@ -45,7 +53,8 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
         //? if <1.20.6 {
         return new ResourceLocation("eyelib", "empty");
         //?} else {
-        return ResourceLocation.fromNamespaceAndPath("eyelib", "empty");
+        return ResourceLocation.fromNamespaceAndPath("eyelib", "empty");
+
         //?}
     }
 
@@ -103,8 +112,8 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
     }
 
     @Override
-    public ResourceLocation getTextureLocation(EyelibEntityRenderState state) {
-        return ResourceLocation.fromNamespaceAndPath("eyelib", "empty");
+    public Identifier getTextureLocation(EyelibEntityRenderState state) {
+        return Identifier.fromNamespaceAndPath("eyelib", "empty");
     }
 
     @Override
@@ -148,7 +157,7 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
 
             var portTexture = mc.getTexture();
             if (portTexture == null) continue;
-            ResourceLocation texture = ResourceLocationBridge.toMc(portTexture);
+            Identifier texture = ResourceLocationBridge.toMc(portTexture);
             RenderType renderType = mc.getRenderType(texture);
             if (renderType == null) continue;
 

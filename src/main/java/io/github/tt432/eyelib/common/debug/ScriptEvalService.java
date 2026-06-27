@@ -125,7 +125,11 @@ public final class ScriptEvalService {
 
             Minecraft mc = Minecraft.getInstance();
             CompletableFuture<Object> future = new CompletableFuture<>();
+            //? if <26.1 {
             mc.tell(() -> {
+            //?} else {
+            mc.submit(() -> {
+            //?}
                 if (mc.screen == null && mc.level == null) {
                     future.complete("Game not ready yet — wait for the title screen to appear");
                     return;
