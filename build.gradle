@@ -183,8 +183,8 @@ def migrate26Renames = tasks.register('migrate26Renames') {
                 // 如果文件用了 RenderTypes.xxx() 但没 import RenderTypes，补 import
                 if (newText.contains('RenderTypes.') && !newText.contains('import net.minecraft.client.renderer.rendertype.RenderTypes;')) {
                     newText = newText.replaceFirst(
-                        '(import net\\.minecraft\\.client\\.renderer\\.rendertype\\.RenderType;)',
-                        '$1\nimport net.minecraft.client.renderer.rendertype.RenderTypes;'
+                            '(import net\\.minecraft\\.client\\.renderer\\.rendertype\\.RenderType;)',
+                            '$1\nimport net.minecraft.client.renderer.rendertype.RenderTypes;'
                     )
                 }
                 if (text != newText) {
@@ -246,141 +246,143 @@ base {
 java.toolchain.languageVersion = JavaLanguageVersion.of(property('java_version') as int)
 
 if (isLegacyForge) {
-legacyForge {
-    // Specify the version of MinecraftForge to use.
-    version = project.minecraft_version + '-' + project.forge_version
+    legacyForge {
+        // Specify the version of MinecraftForge to use.
+        version = project.minecraft_version + '-' + project.forge_version
 
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
-
-    // This line is optional. Access Transformers are automatically detected
-    // accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
-
-    // Default run configurations.
-    // These can be tweaked, removed, or duplicated as needed.
-    runs {
-        client {
-            client()
-
-            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
-            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
-
-            systemProperty 'eyelib.preventMouseGrab', 'true'
-            systemProperty 'eyelib.minimizeWindow', 'true'
-        }
-
-        clientSmoke {
-            client()
-            gameDirectory = project.file('run/clientsmoke')
-            systemProperty 'forge.enabledGameTestNamespaces', 'clientsmoke'
-            systemProperty 'clientsmoke.enabled', 'true'
-            systemProperty 'clientsmoke.autoExit', 'true'
-        }
-
-        server {
-            server()
-            programArgument '--nogui'
-            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
-        }
-
-        // This run config launches GameTestServer and runs all registered gametests, then exits.
-        // By default, the server will crash when no gametests are provided.
-        // The gametest system is also enabled by default for other run configs under the /test command.
-        gameTestServer {
-            type = "gameTestServer"
-            systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
-        }
-
-        data {
-            data()
-
-            // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
-            // gameDirectory = project.file('run-data')
-
-            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-        }
-
-        // applies to all the run configs above
-        configureEach {
-            // Recommended logging data for a userdev environment
-            // The markers can be added/remove as needed separated by commas.
-            // "SCAN": For mods scan.
-            // "REGISTRIES": For firing of registry events.
-            // "REGISTRYDUMP": For getting the contents of all registries.
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-
-            // Recommended logging level for the console
-            // You can set various levels here.
-            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
-            logLevel = org.slf4j.event.Level.DEBUG
-        }
-    }
-
-    mods {
-        "${mod_id}" {
-            sourceSet(sourceSets.main)
-        }
-    }
-}
-} else {
-neoForge {
-    version = project.neoforge_version
-
-    // 26.1+ 去混淆，无需 parchment
-    if (stonecutter.eval(mcVersion, '<26.1')) {
         parchment {
             mappingsVersion = project.parchment_mappings_version
             minecraftVersion = project.parchment_minecraft_version
         }
+
+        // This line is optional. Access Transformers are automatically detected
+        // accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
+
+        // Default run configurations.
+        // These can be tweaked, removed, or duplicated as needed.
+        runs {
+            client {
+                client()
+
+                // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
+                systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+
+                systemProperty 'eyelib.preventMouseGrab', 'true'
+                systemProperty 'eyelib.minimizeWindow', 'true'
+            }
+
+            clientSmoke {
+                client()
+                gameDirectory = project.file('run/clientsmoke')
+                systemProperty 'forge.enabledGameTestNamespaces', 'clientsmoke'
+                systemProperty 'clientsmoke.enabled', 'true'
+                systemProperty 'clientsmoke.autoExit', 'true'
+            }
+
+            server {
+                server()
+                programArgument '--nogui'
+                systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+            }
+
+            // This run config launches GameTestServer and runs all registered gametests, then exits.
+            // By default, the server will crash when no gametests are provided.
+            // The gametest system is also enabled by default for other run configs under the /test command.
+            gameTestServer {
+                type = "gameTestServer"
+                systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+            }
+
+            data {
+                data()
+
+                // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
+                // gameDirectory = project.file('run-data')
+
+                // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
+                programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+            }
+
+            // applies to all the run configs above
+            configureEach {
+                // Recommended logging data for a userdev environment
+                // The markers can be added/remove as needed separated by commas.
+                // "SCAN": For mods scan.
+                // "REGISTRIES": For firing of registry events.
+                // "REGISTRYDUMP": For getting the contents of all registries.
+                systemProperty 'forge.logging.markers', 'REGISTRIES'
+
+                // Recommended logging level for the console
+                // You can set various levels here.
+                // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+                logLevel = org.slf4j.event.Level.DEBUG
+            }
+        }
+
+        mods {
+            "${mod_id}" {
+                sourceSet(sourceSets.main)
+            }
+        }
     }
+} else {
+    neoForge {
+        version = project.neoforge_version
 
-    runs {
-        client {
-            client()
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-            systemProperty 'eyelib.preventMouseGrab', 'true'
-            systemProperty 'eyelib.minimizeWindow', 'true'
+        // 26.1+ 去混淆，无需 parchment
+        if (stonecutter.eval(mcVersion, '<26.1')) {
+            parchment {
+                mappingsVersion = project.parchment_mappings_version
+                minecraftVersion = project.parchment_minecraft_version
+            }
         }
 
-        clientSmoke {
-            client()
-            gameDirectory = project.file('run/clientsmoke')
-            systemProperty 'neoforge.enabledGameTestNamespaces', 'clientsmoke'
-            systemProperty 'clientsmoke.enabled', 'true'
-            systemProperty 'clientsmoke.autoExit', 'true'
+        runs {
+            client {
+                client()
+                systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+                systemProperty 'eyelib.preventMouseGrab', 'true'
+                systemProperty 'eyelib.minimizeWindow', 'true'
+            }
+
+            clientSmoke {
+                client()
+                gameDirectory = project.file('run/clientsmoke')
+                systemProperty 'neoforge.enabledGameTestNamespaces', 'clientsmoke'
+                systemProperty 'clientsmoke.enabled', 'true'
+                systemProperty 'clientsmoke.autoExit', 'true'
+            }
+
+            server {
+                server()
+                programArgument '--nogui'
+                systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            }
+
+            gameTestServer {
+                type = "gameTestServer"
+                systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            }
+
+            if (!isModern) {
+                data {
+                    data()
+                    programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+                }
+            }
+
+            configureEach {
+                systemProperty 'forge.logging.markers', 'REGISTRIES'
+                logLevel = org.slf4j.event.Level.DEBUG
+            }
         }
 
-        server {
-            server()
-            programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        }
-
-        gameTestServer {
-            type = "gameTestServer"
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        }
-
-        data {
-            data()
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-        }
-
-        configureEach {
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-            logLevel = org.slf4j.event.Level.DEBUG
+        mods {
+            "${mod_id}" {
+                sourceSet(sourceSets.main)
+            }
         }
     }
-
-    mods {
-        "${mod_id}" {
-            sourceSet(sourceSets.main)
-        }
-    }
-}
 }
 
 // Include resources generated by data generators.
@@ -495,18 +497,18 @@ tasks.named('javadoc', Javadoc).configure {
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
     var replaceProperties = [
-            minecraft_version        : minecraft_version,
-            minecraft_version_range  : minecraft_version_range,
-            forge_version            : findProperty('forge_version') ?: '',
-            forge_version_range      : findProperty('forge_version_range') ?: '',
-            loader_version_range     : findProperty('loader_version_range') ?: '',
-            neoforge_version         : findProperty('neoforge_version') ?: '',
-            mod_id                   : mod_id,
-            mod_name                 : mod_name,
-            mod_license              : mod_license,
-            mod_version              : mod_version,
-            mod_authors              : mod_authors,
-            mod_description          : mod_description
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            forge_version          : findProperty('forge_version') ?: '',
+            forge_version_range    : findProperty('forge_version_range') ?: '',
+            loader_version_range   : findProperty('loader_version_range') ?: '',
+            neoforge_version       : findProperty('neoforge_version') ?: '',
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description
     ]
     inputs.properties replaceProperties
     expand replaceProperties
@@ -579,7 +581,6 @@ publishing {
 }
 
 
-
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.errorprone.enabled = false
@@ -634,7 +635,6 @@ tasks.named('test').configure {
 tasks.named('compileTestJava').configure {
     options.compilerArgs += '-proc:none'
 }
-
 
 
 // IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.

@@ -83,9 +83,8 @@ public class NativeImageIO {
             AbstractTexture abstractTexture = Minecraft.getInstance().getTextureManager().getTexture(texture);
             var gpuTexture = abstractTexture.getTexture();
             if (gpuTexture instanceof GlTexture glTexture) {
-                try (NativeImage image = readBackTexture(glTexture.glId(), glTexture.getWidth(0), glTexture.getHeight(0))) {
-                    return imageFunction.apply(image);
-                }
+                NativeImage image = readBackTexture(glTexture.glId(), glTexture.getWidth(0), glTexture.getHeight(0));
+                return imageFunction.apply(image);
             }
         } catch (Exception ignored) {
         }
@@ -108,7 +107,7 @@ public class NativeImageIO {
                 int g = Byte.toUnsignedInt(buffer.get(offset + 1));
                 int b = Byte.toUnsignedInt(buffer.get(offset + 2));
                 int a = Byte.toUnsignedInt(buffer.get(offset + 3));
-                image.setPixel(x, y, (a << 24) | (r << 16) | (g << 8) | b);
+                image.setPixel(x, y, (a << 24) | (b << 16) | (g << 8) | r);
             }
         }
 

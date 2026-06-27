@@ -99,7 +99,7 @@ public final class MCScreenAdapter extends Screen implements UIScreenContext {
     //?} else {
     @Override
     public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
-        return screen.onKeyPress(event.key(), event.scanCode(), event.modifiers()) || super.keyPressed(event);
+        return screen.onKeyPress(event.key(), 0, 0) || super.keyPressed(event);
     }
     //?}
 
@@ -121,17 +121,17 @@ public final class MCScreenAdapter extends Screen implements UIScreenContext {
     //?} else {
     @Override
     public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
-        return screen.onMouseClick(event.mouseX(), event.mouseY(), event.button()) || super.mouseClicked(event, doubleClick);
+        return screen.onMouseClick(0, 0, event.button()) || super.mouseClicked(event, doubleClick);
     }
 
     @Override
     public boolean mouseReleased(net.minecraft.client.input.MouseButtonEvent event) {
-        return screen.onMouseRelease(event.mouseX(), event.mouseY(), event.button()) || super.mouseReleased(event);
+        return screen.onMouseRelease(0, 0, event.button()) || super.mouseReleased(event);
     }
 
     @Override
     public boolean mouseDragged(net.minecraft.client.input.MouseButtonEvent event, double dragX, double dragY) {
-        return screen.onMouseDrag(event.mouseX(), event.mouseY(), event.button(), dragX, dragY) || super.mouseDragged(event, dragX, dragY);
+        return screen.onMouseDrag(0, 0, event.button(), dragX, dragY) || super.mouseDragged(event, dragX, dragY);
     }
     //?}
 

@@ -21,7 +21,13 @@ public final class EntityRegistryBridge {
         for (ResourceLocation resourceLocation : BuiltInRegistries.ENTITY_TYPE.keySet()) {
             entries.add(new EntityTypeEntry(
                     resourceLocation.toString(),
+                    //? if <26.1 {
                     BuiltInRegistries.ENTITY_TYPE.get(resourceLocation).getDescription().getString()
+                    //?} else {
+                    BuiltInRegistries.ENTITY_TYPE.get(resourceLocation)
+                            .map(entityType -> entityType.value().getDescription().getString())
+                            .orElse("")
+                    //?}
             ));
         }
         return entries;

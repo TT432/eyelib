@@ -13,8 +13,10 @@ public final class ForgeEnvironment {
     public static boolean isProduction() {
         //? if <1.20.6 {
         return net.minecraftforge.fml.loading.FMLLoader.isProduction();
-        //?} else {
+        //?} elif <26.1 {
         return net.neoforged.fml.loading.FMLLoader.isProduction();
+        //?} else {
+        return false;
         //?}
     }
 }

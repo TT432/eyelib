@@ -127,64 +127,58 @@ public class TextureLayerMerger {
 
         return finalImage;
         //?} else {
-        List<ResourceLocation> validTextures = filterExisting(textures);
-        if (validTextures.isEmpty()) {
+        List<NativeImage> images = new ArrayList<>(textures.size());
+        for (ResourceLocation resourceLocation : textures) {
+            NativeImage image = NativeImageIO.download(resourceLocation, NativeImageIO::copyImage);
+            if (image != null) {
+                images.add(image);
+            }
+        }
+
+        if (images.isEmpty()) {
             return new NativeImage(16, 16, false);
+        }
+        if (images.size() == 1) {
+            return images.get(0);
         }
 
         int maxX = 16;
         int maxY = 16;
-        List<GlTexture> glTextures = new ArrayList<>(validTextures.size());
+        for (NativeImage image : images) {
+            if (image.getWidth() > maxX) maxX = image.getWidth();
+            if (image.getHeight() > maxY) maxY = image.getHeight();
+        }
 
-        for (ResourceLocation resourceLocation : validTextures) {
-            try {
-                AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(resourceLocation);
-                var gpuTexture = texture.getTexture();
-                if (!(gpuTexture instanceof GlTexture glTexture)) continue;
-                glTextures.add(glTexture);
-                if (glTexture.getWidth(0) > maxX) maxX = glTexture.getWidth(0);
-                if (glTexture.getHeight(0) > maxY) maxY = glTexture.getHeight(0);
-            } catch (Exception ignored) {
+        NativeImage finalImage = new NativeImage(NativeImage.Format.RGBA, maxX, maxY, false);
+        for (NativeImage image : images) {
+            for (int y = 0; y < image.getHeight(); y++) {
+                for (int x = 0; x < image.getWidth(); x++) {
+                    int srcPixel = image.getPixel(x, y);
+                    int dstPixel = finalImage.getPixel(x, y);
+
+                    int srcA = (srcPixel >>> 24) & 0xFF;
+                    int srcR = srcPixel & 0xFF;
+                    int srcG = (srcPixel >>> 8) & 0xFF;
+                    int srcB = (srcPixel >>> 16) & 0xFF;
+                    int dstA = (dstPixel >>> 24) & 0xFF;
+                    int dstR = dstPixel & 0xFF;
+                    int dstG = (dstPixel >>> 8) & 0xFF;
+                    int dstB = (dstPixel >>> 16) & 0xFF;
+
+                    int outA = srcA + dstA * (255 - srcA) / 255;
+                    if (outA == 0) {
+                        finalImage.setPixel(x, y, 0);
+                    } else {
+                        int outR = (srcR * srcA + dstR * dstA * (255 - srcA) / 255) / outA;
+                        int outG = (srcG * srcA + dstG * dstA * (255 - srcA) / 255) / outA;
+                        int outB = (srcB * srcA + dstB * dstA * (255 - srcA) / 255) / outA;
+                        finalImage.setPixel(x, y, (outA << 24) | (outB << 16) | (outG << 8) | outR);
+                    }
+                }
             }
         }
-        if (glTextures.isEmpty()) {
-            return new NativeImage(16, 16, false);
-        }
 
-        int program = 0;
-        int outputTexture = -1;
-
-        try {
-            program = getComputeProgram();
-            GL20.glUseProgram(program);
-
-            outputTexture = GL11.glGenTextures();
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, outputTexture);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
-            GL20.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL30.GL_RGBA8, maxX, maxY, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (IntBuffer) null);
-            glBindImageTexture(0, outputTexture, 0, false, 0, GL15.GL_WRITE_ONLY, GL30.GL_RGBA8);
-
-            int validCount = glTextures.size();
-            int[] samplers = new int[validCount];
-            for (int i = 0; i < validCount; i++) {
-                GL13.glActiveTexture(GL_TEXTURE0 + i + 1);
-                GL11.glBindTexture(GL11.GL_TEXTURE_2D, glTextures.get(i).glId());
-                samplers[i] = i + 1;
-            }
-
-            GL20.glUniform1iv(GL20.glGetUniformLocation(program, "u_Textures"), samplers);
-            GL20.glUniform1i(GL20.glGetUniformLocation(program, "u_TextureCount"), validCount);
-
-            glDispatchCompute((maxX + 7) / 8, (maxY + 7) / 8, 1);
-            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-
-            return NativeImageIO.readBackTexture(outputTexture, maxX, maxY);
-        } finally {
-            if (program != 0) GL20.glUseProgram(0);
-            if (outputTexture != -1) GL11.glDeleteTextures(outputTexture);
-            GL13.glActiveTexture(GL_TEXTURE0);
-        }
+        return finalImage;
         //?}
     }
 

@@ -23,21 +23,29 @@ public final class MCWidgetAdapter extends AbstractWidget {
         return new MCWidgetAdapter(widget, 0, 0, widget.getWidth(), widget.getHeight());
     }
 
-    @Override
     //? if <26.1 {
+    @Override
     public void renderWidget(net.minecraft.client.gui.GuiGraphics gg, int mouseX, int mouseY, float partialTick) {
         widget.render(new MCGraphics(gg), mouseX, mouseY, partialTick);
     }
     //?} else {
-    public void extractWidgetRenderState(net.minecraft.client.gui.GuiGraphicsExtractor gg, int mouseX, int mouseY, float partialTick) {
-        widget.render(new MCGraphics(gg), mouseX, mouseY, partialTick);
+    @Override
+    protected void extractWidgetRenderState(net.minecraft.client.gui.GuiGraphicsExtractor gg, int mouseX, int mouseY, float partialTick) {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
     }
     //?}
 
+    //? if <26.1 {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         return widget.mouseClicked(mouseX, mouseY, button);
     }
+    //?} else {
+    @Override
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        return widget.mouseClicked(event.x(), event.y(), event.button());
+    }
+    //?}
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY,

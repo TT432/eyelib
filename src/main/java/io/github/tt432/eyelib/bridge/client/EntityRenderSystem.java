@@ -217,7 +217,7 @@ public final class EntityRenderSystem {
     public static void pushPoseRaw(PoseStack poseStack, PoseStack.Pose pose) {
         //? if <1.20.6 {
         poseStack.poseStack.addLast(pose);
-        //?} else {
+        //?} elif <26.1 {
         ((io.github.tt432.eyelib.mixin.PoseStackAccessor) poseStack).eyelib$getPoseStackDeque().addLast(pose);
         //?}
     }

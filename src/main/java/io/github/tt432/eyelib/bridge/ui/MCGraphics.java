@@ -56,12 +56,20 @@ public final class MCGraphics implements UIGraphics {
 
     @Override
     public void drawText(String text, int x, int y, int color) {
+        //? if <26.1 {
         gg.drawString(font, text, x, y, color);
+        //?} else {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+        //?}
     }
 
     @Override
     public void drawCenteredText(String text, int x, int y, int color) {
+        //? if <26.1 {
         gg.drawCenteredString(font, text, x, y, color);
+        //?} else {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+        //?}
     }
 
     @Override
@@ -71,10 +79,14 @@ public final class MCGraphics implements UIGraphics {
 
     @Override
     public void blit(PortResourceLocation texture, int x, int y, int u, int v, int w, int h) {
+        //? if <26.1 {
         //? if <1.20.6 {
         gg.blit(new ResourceLocation(texture.namespace(), texture.path()), x, y, u, v, w, h);
         //?} else {
         gg.blit(ResourceLocation.fromNamespaceAndPath(texture.namespace(), texture.path()), x, y, u, v, w, h);
+        //?}
+        //?} else {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
         //?}
     }
 
@@ -90,6 +102,7 @@ public final class MCGraphics implements UIGraphics {
 
     @Override
     public void drawLine(float x1, float y1, float x2, float y2, float thickness, int color) {
+        //? if <26.1 {
         MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
         VertexConsumer buffer = bufferSource.getBuffer(RenderType.gui());
         Vector2f[] points = createRectangleFromLine(new Vector2f(x1, y1), new Vector2f(x2, y2), thickness);
@@ -97,6 +110,9 @@ public final class MCGraphics implements UIGraphics {
             writeVertex(buffer, point, color);
         }
         bufferSource.endBatch(RenderType.gui());
+        //?} else {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+        //?}
     }
 
     @Override
@@ -111,22 +127,38 @@ public final class MCGraphics implements UIGraphics {
 
     @Override
     public void enableBlend() {
+        //? if <26.1 {
         RenderSystem.enableBlend();
+        //?} else {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+        //?}
     }
 
     @Override
     public void disableBlend() {
+        //? if <26.1 {
         RenderSystem.disableBlend();
+        //?} else {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+        //?}
     }
 
     @Override
     public void setShaderColor(float r, float g, float b, float a) {
+        //? if <26.1 {
         RenderSystem.setShaderColor(r, g, b, a);
+        //?} else {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+        //?}
     }
 
     @Override
     public void renderTooltip(String text, int x, int y) {
+        //? if <26.1 {
         gg.renderTooltip(font, Component.literal(text), x, y);
+        //?} else {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+        //?}
     }
 
     @Override
