@@ -5,13 +5,20 @@ import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
 import io.github.tt432.eyelib.util.color.ColorEncodings;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.Nullable;
+//? if >=26.1 {
+import com.mojang.blaze3d.opengl.GlTexture;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
+//?}
 
 import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -71,9 +78,43 @@ public class NativeImageIO {
         } catch (IOException e) {
             // fall through
         }
+
+        try {
+            AbstractTexture abstractTexture = Minecraft.getInstance().getTextureManager().getTexture(texture);
+            var gpuTexture = abstractTexture.getTexture();
+            if (gpuTexture instanceof GlTexture glTexture) {
+                try (NativeImage image = readBackTexture(glTexture.glId(), glTexture.getWidth(0), glTexture.getHeight(0))) {
+                    return imageFunction.apply(image);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
         return null;
         //?}
     }
+
+    //? if >=26.1 {
+    static NativeImage readBackTexture(int glId, int width, int height) {
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, glId);
+        ByteBuffer buffer = BufferUtils.createByteBuffer(width * height * 4);
+        GL11.glGetTexImage(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
+        NativeImage image = new NativeImage(NativeImage.Format.RGBA, width, height, false);
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int offset = (x + y * width) * 4;
+                int r = Byte.toUnsignedInt(buffer.get(offset));
+                int g = Byte.toUnsignedInt(buffer.get(offset + 1));
+                int b = Byte.toUnsignedInt(buffer.get(offset + 2));
+                int a = Byte.toUnsignedInt(buffer.get(offset + 3));
+                image.setPixel(x, y, (a << 24) | (r << 16) | (g << 8) | b);
+            }
+        }
+
+        return image;
+    }
+    //?}
 
     public NativeImage load(InputStream inputStream) throws IOException {
         var bufferedImage = ImageIO.read(inputStream);

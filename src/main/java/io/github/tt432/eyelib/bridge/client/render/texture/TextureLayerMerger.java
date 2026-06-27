@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.bridge.client.render.texture;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import lombok.experimental.UtilityClass;
@@ -8,6 +7,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
+//? if <26.1 {
+import com.mojang.blaze3d.platform.GlStateManager;
+//?} else {
+import com.mojang.blaze3d.opengl.GlTexture;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
+//?}
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
@@ -121,8 +127,64 @@ public class TextureLayerMerger {
 
         return finalImage;
         //?} else {
-        // TODO: 26.1 GPU API 迁移需 GlTexture.glId() + copyTextureToBuffer 替代 bind/downloadTexture
-        return new NativeImage(16, 16, false);
+        List<ResourceLocation> validTextures = filterExisting(textures);
+        if (validTextures.isEmpty()) {
+            return new NativeImage(16, 16, false);
+        }
+
+        int maxX = 16;
+        int maxY = 16;
+        List<GlTexture> glTextures = new ArrayList<>(validTextures.size());
+
+        for (ResourceLocation resourceLocation : validTextures) {
+            try {
+                AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(resourceLocation);
+                var gpuTexture = texture.getTexture();
+                if (!(gpuTexture instanceof GlTexture glTexture)) continue;
+                glTextures.add(glTexture);
+                if (glTexture.getWidth(0) > maxX) maxX = glTexture.getWidth(0);
+                if (glTexture.getHeight(0) > maxY) maxY = glTexture.getHeight(0);
+            } catch (Exception ignored) {
+            }
+        }
+        if (glTextures.isEmpty()) {
+            return new NativeImage(16, 16, false);
+        }
+
+        int program = 0;
+        int outputTexture = -1;
+
+        try {
+            program = getComputeProgram();
+            GL20.glUseProgram(program);
+
+            outputTexture = GL11.glGenTextures();
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, outputTexture);
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+            GL20.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL30.GL_RGBA8, maxX, maxY, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (IntBuffer) null);
+            glBindImageTexture(0, outputTexture, 0, false, 0, GL15.GL_WRITE_ONLY, GL30.GL_RGBA8);
+
+            int validCount = glTextures.size();
+            int[] samplers = new int[validCount];
+            for (int i = 0; i < validCount; i++) {
+                GL13.glActiveTexture(GL_TEXTURE0 + i + 1);
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, glTextures.get(i).glId());
+                samplers[i] = i + 1;
+            }
+
+            GL20.glUniform1iv(GL20.glGetUniformLocation(program, "u_Textures"), samplers);
+            GL20.glUniform1i(GL20.glGetUniformLocation(program, "u_TextureCount"), validCount);
+
+            glDispatchCompute((maxX + 7) / 8, (maxY + 7) / 8, 1);
+            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+            return NativeImageIO.readBackTexture(outputTexture, maxX, maxY);
+        } finally {
+            if (program != 0) GL20.glUseProgram(0);
+            if (outputTexture != -1) GL11.glDeleteTextures(outputTexture);
+            GL13.glActiveTexture(GL_TEXTURE0);
+        }
         //?}
     }
 
