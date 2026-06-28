@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelib.bridge.client.EntityRenderSystem;
+import io.github.tt432.eyelib.bridge.client.render.adapter.RenderPorts;
 import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
 import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEvent;
 import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEventPublisher;
@@ -102,7 +102,7 @@ public class RenderHelper {
 
         locators.forEach((name, matrix) -> {
             if (name.split("_t_")[0].equals(visitorName)) {
-                PoseStack poseStack = EntityRenderSystem.createPoseStackFromMatrix(matrix);
+                PoseStack poseStack = RenderPorts.get().renderSystemPort.createPoseStackFromMatrix(matrix);
                 render(params.withPoseStack(poseStack), model, infos);
             }
         });

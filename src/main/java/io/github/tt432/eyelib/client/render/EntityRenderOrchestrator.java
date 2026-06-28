@@ -10,7 +10,7 @@ import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelib.bridge.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.capability.RenderData;
-import io.github.tt432.eyelib.bridge.client.EntityRenderSystem;
+import io.github.tt432.eyelib.bridge.client.EntityRenderPorts;
 import io.github.tt432.eyelib.bridge.client.ClientTickHandler;
 import io.github.tt432.eyelib.bridge.client.RenderEntityParams;
 import io.github.tt432.eyelib.bridge.client.render.adapter.RenderPorts;
@@ -36,11 +36,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-//? if <26.1 {
-import net.minecraft.resources.ResourceLocation;
-//?} else {
-import net.minecraft.resources.Identifier;
-//?}
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -67,14 +62,18 @@ import java.util.stream.StreamSupport;
 import static net.minecraft.client.Minecraft.getInstance;
 
 /**
- * 实体渲染编排逻辑，由 bridge EntityRenderSystem 通过 {@link EntityRenderPorts} 回调触发。
- * 本类只做渲染编排（遍历实体、组织组件、调度渲染器），版本差异由 bridge 翻译方法（{@link EntityRenderSystem}）屏蔽。
+ * 实体渲染编排逻辑，由 bridge adapter 通过 {@link EntityRenderPorts} 回调触发。
+ * 本类只做渲染编排（遍历实体、组织组件、调度渲染器），版本差异由 {@link EntityRenderPorts.RenderSystemPort} 屏蔽。
  *
  * @author TT432
  */
 public final class EntityRenderOrchestrator {
     private static final int leftitem = GlobalBoneIdHandler.get("leftitem");
     private static final int rightitem = GlobalBoneIdHandler.get("rightitem");
+
+    private static volatile int renderCount = 0;
+    private static volatile int errorCount = 0;
+    private static volatile @Nullable String lastError = null;
 
     private EntityRenderOrchestrator() {
     }
@@ -164,14 +163,14 @@ public final class EntityRenderOrchestrator {
                                   .animation(cap.getAnimationComponent())
                                   .build()
                                   .render();
-                EntityRenderSystem.renderCount++;
+                renderCount++;
                 rootPoseStack.popPose();
             } catch (Throwable t) {
-                EntityRenderSystem.errorCount++;
-                if (EntityRenderSystem.errorCount <= 1) {
+                errorCount++;
+                if (errorCount <= 1) {
                     var sw = new java.io.StringWriter();
                     t.printStackTrace(new java.io.PrintWriter(sw));
-                    EntityRenderSystem.lastError = sw.toString();
+                    lastError = sw.toString();
                 }
                 try { rootPoseStack.popPose(); } catch (Throwable ignored2) {}
                 try { bufferSource.endBatch(); } catch (Throwable ignored3) {}
@@ -231,7 +230,7 @@ public final class EntityRenderOrchestrator {
                               .<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>());
         var offHandPose = locators.get(leftitem);
         if (offHandPose != null) {
-            EntityRenderSystem.pushPoseRaw(poseStack, offHandPose);
+            RenderPorts.get().renderSystemPort.pushPoseRaw(poseStack, offHandPose);
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.OFF_HAND);
             renderHandItemOrAttachable(action.multiBufferSource(), renderTarget, itemInHand,
                     ItemDisplayContext.THIRD_PERSON_LEFT_HAND, light, poseStack, true, InteractionHand.OFF_HAND);
@@ -239,7 +238,7 @@ public final class EntityRenderOrchestrator {
 
         var mainHandPose = locators.get(rightitem);
         if (mainHandPose != null) {
-            EntityRenderSystem.pushPoseRaw(poseStack, mainHandPose);
+            RenderPorts.get().renderSystemPort.pushPoseRaw(poseStack, mainHandPose);
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.MAIN_HAND);
             renderHandItemOrAttachable(action.multiBufferSource(), renderTarget, itemInHand,
                     ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, poseStack, false, InteractionHand.MAIN_HAND);
@@ -274,7 +273,7 @@ public final class EntityRenderOrchestrator {
             poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
             poseStack.translate(-0.25, 0.1, -1.15);
-            EntityRenderSystem.renderItemDirect(le, item, context, left, poseStack, bufferSource, light);
+            RenderPorts.get().renderSystemPort.renderItemDirect(le, item, context, left, poseStack, bufferSource, light);
             poseStack.popPose();
         }
     }
@@ -322,7 +321,7 @@ public final class EntityRenderOrchestrator {
 
                                                                             data.extraRender().render(renderHelper.getContext(), data);
 
-                                                                           EntityRenderSystem.flushBuffer(multiBufferSource);
+                                                                           RenderPorts.get().renderSystemPort.flushBuffer(multiBufferSource);
 
                                                                            RenderParams emissiveRenderParams = renderParams.asEmissive(multiBufferSource, modelComponent);
 
@@ -360,7 +359,7 @@ public final class EntityRenderOrchestrator {
 
     static void setupExtraMolang(Entity entity, MolangScope scope, float partialTick) {
         if (entity instanceof Llama llama) {
-            int decorIndex = EntityRenderSystem.getLlamaDecorColorIndex(llama);
+            int decorIndex = RenderPorts.get().renderSystemPort.getLlamaDecorColorIndex(llama);
             scope.set("variable.decortextureindex", decorIndex);
         }
 
@@ -389,19 +388,11 @@ public final class EntityRenderOrchestrator {
             ((RenderData) cap).init(entity);
         }
 
-        //? if <26.1 {
-        ResourceLocation entityId = EntityRenderSystem.getEntityTypeId(entity);
-        //?} else {
-        Identifier entityId = EntityRenderSystem.getEntityTypeId(entity);
-        //?}
+        String entityId = RenderPorts.get().renderSystemPort.getEntityTypeId(entity);
         return setupClientEntity(entityId, cap);
     }
 
-    //? if <26.1 {
-    static List<Runnable> setupClientEntity(ResourceLocation entityId, RenderData<?> cap) {
-    //?} else {
-    static List<Runnable> setupClientEntity(Identifier entityId, RenderData<?> cap) {
-    //?}
+    static List<Runnable> setupClientEntity(String entityId, RenderData<?> cap) {
         ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
         BrClientEntity clientEntity = clientEntityComponent.getClientEntity();
 
@@ -493,7 +484,7 @@ public final class EntityRenderOrchestrator {
 
     private static RenderParams buildRenderParams(SimpleRenderAction<?> data, ModelComponent modelComponent) {
         RenderParams.Builder builder = RenderParams.builder(data.poseStack(), data.multiBufferSource(), modelComponent);
-        float[] colorMask = modelComponent.usesColorMask() ? EntityRenderSystem.getEntityTintColor(data.entity()) : null;
+        float[] colorMask = modelComponent.usesColorMask() ? RenderPorts.get().renderSystemPort.getEntityTintColor(data.entity()) : null;
         if (colorMask != null) {
             builder = builder.colorMaskTexture(data.multiBufferSource(), modelComponent, colorMask);
         }
@@ -504,7 +495,7 @@ public final class EntityRenderOrchestrator {
         return builder
                 .entity(data.entity())
                 .overlay(data.overlay())
-                .light(modelComponent.isIgnoreLighting() ? EntityRenderSystem.FULL_BRIGHT : data.packedLight())
+                .light(modelComponent.isIgnoreLighting() ? EntityRenderPorts.RenderSystemPort.FULL_BRIGHT : data.packedLight())
                 .partVisibility(modelComponent.getPartVisibility())
                 .build();
     }

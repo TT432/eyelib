@@ -4,7 +4,7 @@ package io.github.tt432.eyelib.client.gui;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import io.github.tt432.eyelib.bridge.client.EntityRenderSystem;
+import io.github.tt432.eyelib.bridge.client.EntityRenderPorts;
 import io.github.tt432.eyelib.bridge.client.gui.ModalWorksurfaceScreen;
 import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
@@ -196,7 +196,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             VertexConsumer buffer = bufferSource.getBuffer(renderType);
 
             RenderParams params = RenderParams.builder(poseStack, renderType, true, texture, buffer)
-                                              .light(EntityRenderSystem.FULL_BRIGHT) // Full bright for preview
+                                              .light(EntityRenderPorts.RenderSystemPort.FULL_BRIGHT) // Full bright for preview
                                               .overlay(OverlayTexture.NO_OVERLAY)
                                               .build();
 

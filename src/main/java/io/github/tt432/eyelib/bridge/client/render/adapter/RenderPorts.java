@@ -19,6 +19,7 @@ public final class RenderPorts {
             (p, x, y, z, ps, bs) -> {};
     public EntityRenderPorts.RenderEntityPort renderEntityPort = params -> false;
     public EntityRenderPorts.SetupClientEntityPort setupClientEntityPort = e -> List.of();
+    public EntityRenderPorts.RenderSystemPort renderSystemPort = new EntityRenderSystem();
 
     private RenderPorts() {
     }

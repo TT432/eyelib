@@ -1,16 +1,12 @@
-package io.github.tt432.eyelib.bridge.client;
+package io.github.tt432.eyelib.bridge.client.render.adapter;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.tt432.eyelib.bridge.client.EntityRenderPorts;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-//? if <26.1 {
-import net.minecraft.client.renderer.LightTexture;
-//?}
 import net.minecraft.core.registries.BuiltInRegistries;
-//? if <26.1 {
+//? if <1.20.6 {
 import net.minecraft.resources.ResourceLocation;
-//?} else {
-import net.minecraft.resources.Identifier;
 //?}
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -34,32 +30,27 @@ import net.minecraftforge.registries.ForgeRegistries;
 //?}
 
 /**
- * 实体渲染的 MC 翻译层：提供版本无关的 helper 静态方法供 application 层调用。
- * Forge 事件订阅已迁移到 {@code bridge.client.render.adapter} 下的各适配器类。
+ * {@link EntityRenderPorts.RenderSystemPort} 的 Forge 平台实现，
+ * 屏蔽版本差异与 mixin accessor 细节，供 application 层通过 Port 接口调用。
  *
  * @author TT432
  */
-public final class EntityRenderSystem {
-    public static volatile int renderCount = 0;
-    public static volatile int errorCount = 0;
-    public static volatile String lastError = null;
-
-    private EntityRenderSystem() {
+public final class EntityRenderSystem implements EntityRenderPorts.RenderSystemPort {
+    public EntityRenderSystem() {
     }
 
-    //? if <26.1 {
-    public static ResourceLocation getEntityTypeId(Entity entity) {
-    //?} else {
-    public static Identifier getEntityTypeId(Entity entity) {
-    //?}
+    @Override
+    public String getEntityTypeId(Entity entity) {
         //? if <1.20.6 {
-        return ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
+        ResourceLocation key = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
         //?} else {
-        return BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+        var key = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
         //?}
+        return key == null ? "" : key.toString();
     }
 
-    public static int getLlamaDecorColorIndex(Llama llama) {
+    @Override
+    public int getLlamaDecorColorIndex(Llama llama) {
         //? if <1.20.6 {
         if (llama.inventory.getItem(AbstractHorse.INV_SLOT_ARMOR)
         //?} else {
@@ -72,7 +63,8 @@ public final class EntityRenderSystem {
         }
     }
 
-    public static void pushPoseRaw(PoseStack poseStack, PoseStack.Pose pose) {
+    @Override
+    public void pushPoseRaw(PoseStack poseStack, PoseStack.Pose pose) {
         //? if <1.20.6 {
         poseStack.poseStack.addLast(pose);
         //?} elif <26.1 {
@@ -80,15 +72,17 @@ public final class EntityRenderSystem {
         //?}
     }
 
-    public static void renderItemDirect(LivingEntity le, ItemStack item, ItemDisplayContext context,
-                                        boolean left, PoseStack poseStack, MultiBufferSource bufferSource, int light) {
+    @Override
+    public void renderItemDirect(LivingEntity le, ItemStack item, ItemDisplayContext context,
+                                 boolean left, PoseStack poseStack, MultiBufferSource bufferSource, int light) {
         //? if <26.1 {
         Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer()
                   .renderItem(le, item, context, left, poseStack, bufferSource, light);
         //?}
     }
 
-    public static void flushBuffer(MultiBufferSource source) {
+    @Override
+    public void flushBuffer(MultiBufferSource source) {
         //? if <26.1 {
         if (source instanceof MultiBufferSource.BufferSource bs) {
             bs.endBatch();
@@ -96,12 +90,8 @@ public final class EntityRenderSystem {
         //?}
     }
 
-    //? if <26.1
-    public static final int FULL_BRIGHT = LightTexture.FULL_BRIGHT;
-    //? if >=26.1
-    public static final int FULL_BRIGHT = 0xF000F0;
-
-    public static float @Nullable [] getEntityTintColor(@Nullable Entity entity) {
+    @Override
+    public float @Nullable [] getEntityTintColor(@Nullable Entity entity) {
         if (entity instanceof Sheep sheep) {
             DyeColor dyeColor = sheep.getColor();
             if (dyeColor != null) {
@@ -131,7 +121,8 @@ public final class EntityRenderSystem {
         return null;
     }
 
-    public static PoseStack createPoseStackFromMatrix(org.joml.Matrix4f matrix) {
+    @Override
+    public PoseStack createPoseStackFromMatrix(org.joml.Matrix4f matrix) {
         PoseStack poseStack = new PoseStack();
         //? if <1.20.6 {
         poseStack.poseStack.addLast(new PoseStack.Pose(new org.joml.Matrix4f(matrix), new org.joml.Matrix3f(matrix)));

@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelib.bridge.client.EntityRenderSystem;
+import io.github.tt432.eyelib.bridge.client.EntityRenderPorts;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.animation.AnimationComponent;
 import io.github.tt432.eyelib.animation.AnimationEffects;
@@ -47,7 +47,7 @@ public record SimpleRenderAction<T>(
         RenderData<T> renderData;
         float partialTick;
 
-        int light = EntityRenderSystem.FULL_BRIGHT;
+        int light = EntityRenderPorts.RenderSystemPort.FULL_BRIGHT;
         private int overlay = OverlayTexture.NO_OVERLAY;
         @Nullable Entity entity;
         @Nullable ModelRuntimeData tickedInfos = ModelRuntimeData.EMPTY;

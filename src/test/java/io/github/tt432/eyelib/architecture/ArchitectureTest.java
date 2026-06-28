@@ -259,7 +259,7 @@ class ArchitectureTest {
             noClasses().that(APPLICATION_CLASSES)
                     .should().dependOnClassesThat(BRIDGE_CONCRETE_CLASSES)
                     .because("ADR-0018 I-5: Application 只能依赖 Port 接口 + 反射调度注解（机制 E）；"
-                            + "禁止直接调用 bridge 具体类（EntityRenderSystem 静态 helper 等）")
+                            + "禁止直接调用 bridge 具体类（adapter 实现类等）")
     );
 
     /**
