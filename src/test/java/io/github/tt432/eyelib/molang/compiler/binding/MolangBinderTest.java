@@ -408,7 +408,7 @@ class MolangBinderTest {
     }
 
     private BindResult bindFromHandwrittenFrontend(String source, BindDiagnosticsMode diagnosticsMode) {
-        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+        MolangAst.ExprSet ast = new HandwrittenMolangAstParserFrontend().parseExprSetAst(source).orElseThrow();
         return binder.bind(ast, diagnosticsMode);
     }
 

@@ -268,7 +268,7 @@ class MolangCorpusHarnessTest {
     }
 
     private BindResult bindFromHandwrittenFrontend(String source, BindDiagnosticsMode diagnosticsMode) {
-        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+        MolangAst.ExprSet ast = new HandwrittenMolangAstParserFrontend().parseExprSetAst(source).orElseThrow();
         return new MolangBinder().bind(ast, diagnosticsMode);
     }
 

@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.molang.compiler;
 
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.mapping.MolangMath;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.MolangClass;
 import io.github.tt432.eyelib.molang.type.MolangObject;
@@ -25,8 +26,8 @@ class MolangSpecTest {
     void setUp() {
         compiler = new MolangCompilerImpl();
         // 注册 math.* 映射（在纯 JUnit 中运行时需要手动注册）
-        if (MolangMappingTree.INSTANCE.findClasses("math").isEmpty()) {
-            MolangMappingTree.INSTANCE.addNode("math", new MolangClass(MolangMath.class, true));
+        if (MolangMappingRegistries.mappingTree().findClasses("math").isEmpty()) {
+            MolangMappingRegistries.mappingTree().addNode("math", new MolangClass(MolangMath.class, true));
         }
     }
 

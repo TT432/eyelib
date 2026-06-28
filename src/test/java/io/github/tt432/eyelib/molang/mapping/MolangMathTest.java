@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.molang.mapping;
 
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingDiscovery;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class MolangMathTest {
     @AfterEach
     void tearDown() {
-        MolangMappingTree.INSTANCE.clear();
+        MolangMappingRegistries.mappingTree().clear();
     }
 
     @Test
@@ -49,7 +50,7 @@ class MolangMathTest {
                 new MolangMappingDiscovery.MolangMappingClassEntry("math", MolangMath.class, true)
         ));
 
-        MolangMappingTree.Node mathNode = MolangMappingTree.INSTANCE.toplevelNode.children.get("math");
+        MolangMappingTree.Node mathNode = MolangMappingRegistries.mappingTree().toplevelNode.children.get("math");
         assertNotNull(mathNode, "math node should exist");
 
         long molangMathCount = mathNode.actualClasses.stream()
@@ -58,7 +59,7 @@ class MolangMathTest {
         assertEquals(1, molangMathCount, "MolangMath should be registered exactly once");
 
         MolangMappingTree.FunctionInfo variant = assertDoesNotThrow(
-                () -> MolangMappingTree.INSTANCE.selectQueryVariant(
+                () -> MolangMappingRegistries.mappingTree().selectQueryVariant(
                         "math.random",
                         List.of(MolangMappingTree.VisibleArgumentKind.NUMBER, MolangMappingTree.VisibleArgumentKind.NUMBER),
                         Set.of()

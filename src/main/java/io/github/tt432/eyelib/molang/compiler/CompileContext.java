@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.molang.compiler;
 
 import io.github.tt432.eyelib.molang.compiler.binding.BindDiagnosticsMode;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import java.util.Set;
 
@@ -13,6 +14,6 @@ public record CompileContext(
         Set<String> availableHostRoles
 ) {
     public static CompileContext defaults() {
-        return new CompileContext(MolangMappingTree.INSTANCE, BindDiagnosticsMode.NORMAL, Set.of());
+        return new CompileContext(MolangMappingRegistries.mappingTree(), BindDiagnosticsMode.NORMAL, Set.of());
     }
 }

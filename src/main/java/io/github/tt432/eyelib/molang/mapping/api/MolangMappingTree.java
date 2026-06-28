@@ -1,7 +1,5 @@
 package io.github.tt432.eyelib.molang.mapping.api;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Field;
@@ -15,17 +13,9 @@ import java.util.stream.Collectors;
  *
  * @author TT432
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class MolangMappingTree {
-    public static final MolangMappingTree INSTANCE = new MolangMappingTree();
-
     public record RegistryVersionRef(String value) {
     }
-
-    private static final Comparator<MolangMappingDiscovery.MolangMappingClassEntry> MAPPING_ENTRY_ORDER = Comparator
-            .comparing((MolangMappingDiscovery.MolangMappingClassEntry entry) -> entry.mappingName().toLowerCase(Locale.ROOT))
-            .thenComparing(entry -> entry.mappingClass().getName())
-            .thenComparing(MolangMappingDiscovery.MolangMappingClassEntry::pureFunction);
 
     static final Comparator<MolangClass> CLASS_PUBLICATION_ORDER = Comparator
             .comparing((MolangClass molangClass) -> molangClass.classInstance().getName())
@@ -45,11 +35,7 @@ public class MolangMappingTree {
             .thenComparing(functionInfo -> Arrays.stream(functionInfo.method().getParameterTypes()).map(Class::getName).collect(Collectors.joining(",")));
 
     public static void setupMolangMappingTree(MolangMappingDiscovery discovery) {
-        INSTANCE.clear();
-        for (var entry : discovery.discover().stream().sorted(MAPPING_ENTRY_ORDER).toList()) {
-            INSTANCE.addNode(entry.mappingName(), new MolangClass(entry.mappingClass(), entry.pureFunction()));
-        }
-        INSTANCE.normalizeAndValidatePublicationOrder();
+        MolangMappingRegistries.setupMappingTree(discovery);
     }
 
     public record MolangClass(
@@ -82,6 +68,9 @@ public class MolangMappingTree {
 
     public final Node toplevelNode = new Node();
     private RegistryVersionRef registryVersionRef = new RegistryVersionRef("0");
+
+    MolangMappingTree() {
+    }
 
     public void clear() {
         toplevelNode.children.clear();
@@ -144,7 +133,7 @@ public class MolangMappingTree {
         return new PublicationSignature(varArgs, (int) visibleArgCount);
     }
 
-    private void normalizeAndValidatePublicationOrder() {
+    void normalizeAndValidatePublicationOrder() {
         FingerprintCalculator.normalizeAndValidateNode(toplevelNode, "", CLASS_PUBLICATION_ORDER, FUNCTION_PUBLICATION_ORDER);
         registryVersionRef = FingerprintCalculator.buildRegistryVersionRef(toplevelNode);
     }

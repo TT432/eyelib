@@ -4,6 +4,7 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingDiscovery;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelib.molang.mapping.api.MolangQueryRuntime;
 import io.github.tt432.eyelib.molang.mapping.api.MolangQueryRuntimeBridge;
@@ -21,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 class MolangMcAdapterSeamTest {
     @AfterEach
     void tearDown() {
-        MolangMappingTree.INSTANCE.clear();
+        MolangMappingRegistries.mappingTree().clear();
         MolangQueryRuntimeBridge.reset();
     }
 
@@ -31,24 +32,24 @@ class MolangMcAdapterSeamTest {
                 new MolangMappingDiscovery.MolangMappingClassEntry("query", SampleMapping.class, false)
         ));
 
-        MolangMappingTree.MethodData methodData = MolangMappingTree.INSTANCE.findMethod("query.sample");
+        MolangMappingTree.MethodData methodData = MolangMappingRegistries.mappingTree().findMethod("query.sample");
         assertNotNull(methodData);
         assertEquals(1, methodData.functionInfos().size());
         assertSame(SampleMapping.class, methodData.functionInfos().get(0).molangClass().classInstance());
         assertEquals("sample", methodData.functionInfos().get(0).molangFunction().value());
         assertEquals("sample", methodData.functionInfos().get(0).method().getName());
 
-        MolangMappingTree.MethodData aliasMethod = MolangMappingTree.INSTANCE.findMethod("query.sample_alias");
+        MolangMappingTree.MethodData aliasMethod = MolangMappingRegistries.mappingTree().findMethod("query.sample_alias");
         assertNotNull(aliasMethod);
         assertEquals("sample", aliasMethod.functionInfos().get(0).method().getName());
 
-        MolangMappingTree.FieldData fieldData = MolangMappingTree.INSTANCE.findField("query.COUNTER");
+        MolangMappingTree.FieldData fieldData = MolangMappingRegistries.mappingTree().findField("query.COUNTER");
         assertNotNull(fieldData);
         assertEquals("COUNTER", fieldData.field().getName());
 
         MolangMappingTree.setupMolangMappingTree(() -> List.of());
-        assertNull(MolangMappingTree.INSTANCE.findMethod("query.sample"));
-        assertNull(MolangMappingTree.INSTANCE.findField("query.COUNTER"));
+        assertNull(MolangMappingRegistries.mappingTree().findMethod("query.sample"));
+        assertNull(MolangMappingRegistries.mappingTree().findField("query.COUNTER"));
     }
 
     @Test

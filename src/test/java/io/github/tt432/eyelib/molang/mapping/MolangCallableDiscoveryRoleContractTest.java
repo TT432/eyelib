@@ -4,6 +4,7 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingDiscovery;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -18,14 +19,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MolangCallableDiscoveryRoleContractTest {
     @AfterEach
     void tearDown() {
-        MolangMappingTree.INSTANCE.clear();
+        MolangMappingRegistries.mappingTree().clear();
     }
 
     @Test
     void callableDiscoveryPreservesExplicitSpecialRoleMetadata() {
         MolangMappingTree.setupMolangMappingTree(() -> java.util.List.of(entry(ExplicitSpecialRoleMapping.class)));
 
-        MolangMappingTree.MethodData methodData = MolangMappingTree.INSTANCE.findMethod("query.explicit_special");
+        MolangMappingTree.MethodData methodData = MolangMappingRegistries.mappingTree().findMethod("query.explicit_special");
         assertNotNull(methodData);
         assertEquals(1, methodData.functionInfos().size());
 
@@ -41,7 +42,7 @@ class MolangCallableDiscoveryRoleContractTest {
     void callableDiscoveryInfersReceiverFromFirstUnambiguousNonSpecialHostParameter() {
         MolangMappingTree.setupMolangMappingTree(() -> java.util.List.of(entry(UnambiguousReceiverMapping.class)));
 
-        MolangMappingTree.MethodData methodData = MolangMappingTree.INSTANCE.findMethod("query.receiver_inferred");
+        MolangMappingTree.MethodData methodData = MolangMappingRegistries.mappingTree().findMethod("query.receiver_inferred");
         assertNotNull(methodData);
         assertEquals(1, methodData.functionInfos().size());
 

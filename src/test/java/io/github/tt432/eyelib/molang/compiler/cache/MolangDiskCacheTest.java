@@ -10,6 +10,7 @@ import io.github.tt432.eyelib.molang.compiler.binding.BindResult;
 import io.github.tt432.eyelib.molang.compiler.binding.MolangBinder;
 import io.github.tt432.eyelib.molang.compiler.frontend.HandwrittenMolangAstParserFrontend;
 import io.github.tt432.eyelib.molang.compiler.frontend.ast.MolangAst;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,7 +51,7 @@ class MolangDiskCacheTest {
     @BeforeEach
     void setUp() {
         diskCache = new MolangDiskCache(tempDir);
-        registryRef = MolangMappingTree.INSTANCE.registryVersionRef().value();
+        registryRef = MolangMappingRegistries.mappingTree().registryVersionRef().value();
     }
 
     @Test
@@ -145,7 +146,7 @@ class MolangDiskCacheTest {
 
     @Test
     void l1MemoryHitNoDiskIo() {
-        MolangCompileCache cache = new MolangCompileCache(MolangMappingTree.INSTANCE, tempDir);
+        MolangCompileCache cache = new MolangCompileCache(MolangMappingRegistries.mappingTree(), tempDir);
         AtomicInteger supplierCalls = new AtomicInteger(0);
 
         CompiledMolangExpression first = cache.getOrCompile("1+2", () -> {
@@ -198,7 +199,7 @@ class MolangDiskCacheTest {
     }
 
     private static byte[] emitBytecode(String expression) {
-        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE
+        MolangAst.ExprSet ast = new HandwrittenMolangAstParserFrontend()
                 .parseExprSetAst(expression)
                 .orElseThrow(() -> new AssertionError("Expected parser to accept expression: " + expression));
 

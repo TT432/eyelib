@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class MolangSpecDrivenTest {
     private static final MolangCompilerImpl compiler = new MolangCompilerImpl();
-    private static final HandwrittenMolangAstParserFrontend parser = HandwrittenMolangAstParserFrontend.INSTANCE;
+    private static final HandwrittenMolangAstParserFrontend parser = new HandwrittenMolangAstParserFrontend();
 
     // ============================================================
     // §1 词法层 — Tokenizer 覆盖

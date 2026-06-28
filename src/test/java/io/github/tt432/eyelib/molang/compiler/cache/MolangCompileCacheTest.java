@@ -4,6 +4,7 @@ import io.github.tt432.eyelib.molang.compiler.CompiledMolangExpression;
 import io.github.tt432.eyelib.molang.compiler.CompileContext;
 import io.github.tt432.eyelib.molang.compiler.ExpressionCompileException;
 import io.github.tt432.eyelib.molang.compiler.MolangCompilerImpl;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -122,9 +123,9 @@ class MolangCompileCacheTest {
             // 使用自定义 mapping tree 模拟 registry version 变化
             // 直接验证：不同 version 下的 cache 行为
             MolangCompileCache cache1 = new MolangCompileCache(
-                    MolangMappingTree.INSTANCE, null);
+                    MolangMappingRegistries.mappingTree(), null);
             MolangCompileCache cache2 = new MolangCompileCache(
-                    MolangMappingTree.INSTANCE, null);
+                    MolangMappingRegistries.mappingTree(), null);
 
             // 同一个 expression，不同 cache 实例应产生不同结果（因为 registryVersionRef 被包含在 key 中）
             CompiledMolangExpression e1 = cache1.getOrCompile("42",

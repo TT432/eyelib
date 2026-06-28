@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.molang;
 import com.mojang.serialization.Codec;
 import io.github.tt432.eyelib.molang.compiler.*;
 import io.github.tt432.eyelib.molang.compiler.cache.MolangCompileCache;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelib.molang.type.MolangFloat;
 import io.github.tt432.eyelib.molang.type.MolangNull;
@@ -27,7 +28,7 @@ public record MolangValue(
     private static final Logger log = LoggerFactory.getLogger(MolangValue.class);
 
     private static final MolangCompileCache compileCache = new MolangCompileCache(
-            MolangMappingTree.INSTANCE,
+            MolangMappingRegistries.mappingTree(),
             resolveCacheDirectory()
     );
 

@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.molang.mapping;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingDiscovery;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class MolangHostPublicationDeterminismConflictTest {
     @AfterEach
     void tearDown() {
-        MolangMappingTree.INSTANCE.clear();
+        MolangMappingRegistries.mappingTree().clear();
     }
 
     @Test
@@ -44,7 +45,7 @@ class MolangHostPublicationDeterminismConflictTest {
                 entry(EqualTieConflictRightMapping.class)
         ));
 
-        MolangMappingTree.MethodData methodData = MolangMappingTree.INSTANCE.findMethod("query.conflict");
+        MolangMappingTree.MethodData methodData = MolangMappingRegistries.mappingTree().findMethod("query.conflict");
         assertNotNull(methodData);
         assertEquals(1, methodData.functionInfos().size());
         assertEquals(
@@ -55,7 +56,7 @@ class MolangHostPublicationDeterminismConflictTest {
 
     private static List<String> publishedCallableOrder(List<MolangMappingDiscovery.MolangMappingClassEntry> entries) {
         MolangMappingTree.setupMolangMappingTree(() -> entries);
-        MolangMappingTree.MethodData methodData = MolangMappingTree.INSTANCE.findMethod("query.stable");
+        MolangMappingTree.MethodData methodData = MolangMappingRegistries.mappingTree().findMethod("query.stable");
         assertNotNull(methodData);
 
         return methodData.functionInfos()

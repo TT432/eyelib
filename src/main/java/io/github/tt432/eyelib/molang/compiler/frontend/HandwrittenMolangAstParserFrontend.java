@@ -14,9 +14,8 @@ import java.util.Optional;
  * @author TT432
  */
 public final class HandwrittenMolangAstParserFrontend implements MolangParserFrontend {
-    public static final HandwrittenMolangAstParserFrontend INSTANCE = new HandwrittenMolangAstParserFrontend();
 
-    private HandwrittenMolangAstParserFrontend() {
+    public HandwrittenMolangAstParserFrontend() {
     }
 
     @Override

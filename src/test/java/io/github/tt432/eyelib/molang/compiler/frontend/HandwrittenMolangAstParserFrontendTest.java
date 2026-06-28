@@ -25,7 +25,7 @@ class HandwrittenMolangAstParserFrontendTest {
     void parsesSimpleExpressionCaseIntoCallWithMultiplyArgument() throws IOException {
         String source = loadCaseSource(SIMPLE_EXPRESSION_CASE);
 
-        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+        MolangAst.ExprSet ast = new HandwrittenMolangAstParserFrontend().parseExprSetAst(source).orElseThrow();
 
         MolangAst.CallExpr functionCall = assertInstanceOf(MolangAst.CallExpr.class, ast.root());
         MolangAst.MemberAccessExpr callee = assertInstanceOf(MolangAst.MemberAccessExpr.class, functionCall.callee());
@@ -44,7 +44,7 @@ class HandwrittenMolangAstParserFrontendTest {
     void parsesAssignReturnCaseIntoBlockWithReturnAndGroupedNullCoalesce() throws IOException {
         String source = loadCaseSource(ASSIGN_RETURN_CASE);
 
-        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+        MolangAst.ExprSet ast = new HandwrittenMolangAstParserFrontend().parseExprSetAst(source).orElseThrow();
 
         MolangAst.BlockExpr block = assertInstanceOf(MolangAst.BlockExpr.class, ast.root());
         assertEquals(3, block.statements().size());
@@ -78,7 +78,7 @@ class HandwrittenMolangAstParserFrontendTest {
     void parsesLoopCaseIntoLoopExprWithCounterAssignmentBody() throws IOException {
         String source = loadCaseSource(LOOP_COUNTER_CASE);
 
-        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+        MolangAst.ExprSet ast = new HandwrittenMolangAstParserFrontend().parseExprSetAst(source).orElseThrow();
 
         MolangAst.LoopExpr loop = assertInstanceOf(MolangAst.LoopExpr.class, ast.root());
         MolangAst.NumberLiteralExpr count = assertInstanceOf(MolangAst.NumberLiteralExpr.class, loop.count());
@@ -98,7 +98,7 @@ class HandwrittenMolangAstParserFrontendTest {
     void parsesForEachAsDedicatedControlForm() {
         String source = "for_each(t.pig, query.get_nearby_entities(4, 'minecraft:pig'), {v.x = v.x + 1;})";
 
-        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+        MolangAst.ExprSet ast = new HandwrittenMolangAstParserFrontend().parseExprSetAst(source).orElseThrow();
 
         MolangAst.ForEachExpr forEach = assertInstanceOf(MolangAst.ForEachExpr.class, ast.root());
         MolangAst.MemberAccessExpr variable = assertInstanceOf(MolangAst.MemberAccessExpr.class, forEach.variable());
@@ -112,7 +112,7 @@ class HandwrittenMolangAstParserFrontendTest {
     void parsesBreakAndContinueAsControlFlowStatements() {
         String source = "loop(2, {break 1.0; continue t.x;})";
 
-        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+        MolangAst.ExprSet ast = new HandwrittenMolangAstParserFrontend().parseExprSetAst(source).orElseThrow();
 
         MolangAst.LoopExpr loop = assertInstanceOf(MolangAst.LoopExpr.class, ast.root());
         assertEquals(2, loop.body().statements().size());
@@ -126,7 +126,7 @@ class HandwrittenMolangAstParserFrontendTest {
     void parsesLogicalAndWithHigherPrecedenceThanNullCoalesce() {
         String source = "query.a && query.b ?? query.c";
 
-        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+        MolangAst.ExprSet ast = new HandwrittenMolangAstParserFrontend().parseExprSetAst(source).orElseThrow();
 
         MolangAst.NullCoalesceExpr nullCoalesce = assertInstanceOf(MolangAst.NullCoalesceExpr.class, ast.root());
         MolangAst.BinaryExpr andExpr = assertInstanceOf(MolangAst.BinaryExpr.class, nullCoalesce.left());
@@ -138,7 +138,7 @@ class HandwrittenMolangAstParserFrontendTest {
     void parsesControlKeywordsCaseInsensitively() {
         String source = "LOOP(2, {BREAK; Continue;})";
 
-        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source).orElseThrow();
+        MolangAst.ExprSet ast = new HandwrittenMolangAstParserFrontend().parseExprSetAst(source).orElseThrow();
 
         MolangAst.LoopExpr loop = assertInstanceOf(MolangAst.LoopExpr.class, ast.root());
         assertEquals(2, loop.body().statements().size());
@@ -284,7 +284,7 @@ class HandwrittenMolangAstParserFrontendTest {
     }
 
     private Optional<MolangAst.ExprSet> parse(String source) {
-        return HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(source);
+        return new HandwrittenMolangAstParserFrontend().parseExprSetAst(source);
     }
 
     private String loadCaseSource(String resourcePath) throws IOException {

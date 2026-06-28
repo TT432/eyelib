@@ -10,6 +10,7 @@ import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingDiscovery;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.junit.jupiter.api.AfterEach;
@@ -26,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class MolangQueryAnimationClockRuntimeParityTest {
     @AfterEach
     void tearDown() {
-        MolangMappingTree.INSTANCE.clear();
+        MolangMappingRegistries.mappingTree().clear();
     }
 
     @Test
@@ -91,7 +92,7 @@ class MolangQueryAnimationClockRuntimeParityTest {
     }
 
     private static float evaluateRuntimeQuery(String symbolicQueryName, MolangScope scope) {
-        MolangMappingTree.MethodData methodData = MolangMappingTree.INSTANCE.findMethod(symbolicQueryName);
+        MolangMappingTree.MethodData methodData = MolangMappingRegistries.mappingTree().findMethod(symbolicQueryName);
         assertNotNull(methodData);
 
         Method method = methodData.functionInfos().stream()

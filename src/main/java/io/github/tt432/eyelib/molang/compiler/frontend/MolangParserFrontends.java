@@ -6,7 +6,7 @@ package io.github.tt432.eyelib.molang.compiler.frontend;
  * @author TT432
  */
 public final class MolangParserFrontends {
-    private static final MolangParserFrontend ACTIVE = HandwrittenMolangAstParserFrontend.INSTANCE;
+    private static final MolangParserFrontend ACTIVE = new HandwrittenMolangAstParserFrontend();
 
     private MolangParserFrontends() {
     }

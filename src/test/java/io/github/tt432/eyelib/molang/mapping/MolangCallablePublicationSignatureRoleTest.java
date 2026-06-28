@@ -4,6 +4,7 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingDiscovery;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class MolangCallablePublicationSignatureRoleTest {
     @AfterEach
     void tearDown() {
-        MolangMappingTree.INSTANCE.clear();
+        MolangMappingRegistries.mappingTree().clear();
     }
 
     @Test
@@ -47,7 +48,7 @@ class MolangCallablePublicationSignatureRoleTest {
                 entry(RoleResolvedTieRightMapping.class)
         ));
 
-        MolangMappingTree.MethodData methodData = MolangMappingTree.INSTANCE.findMethod("query.role_conflict");
+        MolangMappingTree.MethodData methodData = MolangMappingRegistries.mappingTree().findMethod("query.role_conflict");
         assertNotNull(methodData);
         assertEquals(1, methodData.functionInfos().size());
         assertEquals(
@@ -72,7 +73,7 @@ class MolangCallablePublicationSignatureRoleTest {
 
     private static List<String> publishedCallableOrder(String qualifiedMethod, List<MolangMappingDiscovery.MolangMappingClassEntry> entries) {
         MolangMappingTree.setupMolangMappingTree(() -> entries);
-        MolangMappingTree.MethodData methodData = MolangMappingTree.INSTANCE.findMethod(qualifiedMethod);
+        MolangMappingTree.MethodData methodData = MolangMappingRegistries.mappingTree().findMethod(qualifiedMethod);
         assertNotNull(methodData);
 
         return methodData.functionInfos().stream()

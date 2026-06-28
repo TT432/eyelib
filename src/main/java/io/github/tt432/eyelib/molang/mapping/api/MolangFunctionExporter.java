@@ -14,7 +14,7 @@ import java.io.IOException;
 public class MolangFunctionExporter {
     public static void export() {
         try (var fw = new FileWriter("./exportedMolang.csv")) {
-            visitNode(MolangMappingTree.INSTANCE.toplevelNode, fw);
+            visitNode(MolangMappingRegistries.mappingTree().toplevelNode, fw);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

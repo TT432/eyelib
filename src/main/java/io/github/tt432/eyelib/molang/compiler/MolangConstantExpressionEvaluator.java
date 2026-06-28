@@ -16,17 +16,19 @@ import java.util.Optional;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class MolangConstantExpressionEvaluator {
+    private static final HandwrittenMolangAstParserFrontend PARSER = new HandwrittenMolangAstParserFrontend();
+
     /**
      * 尝试在编译期求值纯常量 Molang 表达式。
      */
     public static Optional<MolangObject> tryEvaluate(String expression) {
-        return HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(expression)
-                                                          .flatMap(ast -> evaluateConstantExpr(ast.root()));
+        return PARSER.parseExprSetAst(expression)
+                     .flatMap(ast -> evaluateConstantExpr(ast.root()));
     }
 
     public static Optional<Float> tryEvaluateNumber(String expression) {
-        return HandwrittenMolangAstParserFrontend.INSTANCE.parseExprSetAst(expression)
-                                                          .flatMap(ast -> evaluateNumber(ast.root()));
+        return PARSER.parseExprSetAst(expression)
+                     .flatMap(ast -> evaluateNumber(ast.root()));
     }
 
     private static Optional<Float> evaluateNumber(MolangAst.Expr expr) {

@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.molang.mapping;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingDiscovery;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class MolangQueryVariantSelectionMatrixContractTest {
     @AfterEach
     void tearDown() {
-        MolangMappingTree.INSTANCE.clear();
+        MolangMappingRegistries.mappingTree().clear();
     }
 
     @Test
@@ -29,7 +30,7 @@ class MolangQueryVariantSelectionMatrixContractTest {
                 entry(NoDefaultRoleSpecificVariantMapping.class)
         ));
 
-        MolangMappingTree.FunctionInfo specific = MolangMappingTree.INSTANCE.selectQueryVariant(
+        MolangMappingTree.FunctionInfo specific = MolangMappingRegistries.mappingTree().selectQueryVariant(
                 "query.default_by_role",
                 List.of(MolangMappingTree.VisibleArgumentKind.NUMBER),
                 Set.of(MolangFunction.ParameterRole.RECEIVER)
@@ -37,7 +38,7 @@ class MolangQueryVariantSelectionMatrixContractTest {
         assertNotNull(specific);
         assertEquals(DefaultRoleSpecificVariantMapping.class, specific.molangClass().classInstance());
 
-        MolangMappingTree.FunctionInfo explicitDefault = MolangMappingTree.INSTANCE.selectQueryVariant(
+        MolangMappingTree.FunctionInfo explicitDefault = MolangMappingRegistries.mappingTree().selectQueryVariant(
                 "query.default_by_role",
                 List.of(MolangMappingTree.VisibleArgumentKind.NUMBER),
                 Set.of()
@@ -47,7 +48,7 @@ class MolangQueryVariantSelectionMatrixContractTest {
         assertEquals(DefaultRoleFallbackVariantMapping.class, explicitDefault.molangClass().classInstance());
         assertEquals(Integer.MIN_VALUE, explicitDefault.molangFunction().specificity());
 
-        MolangMappingTree.FunctionInfo noImplicitFallback = MolangMappingTree.INSTANCE.selectQueryVariant(
+        MolangMappingTree.FunctionInfo noImplicitFallback = MolangMappingRegistries.mappingTree().selectQueryVariant(
                 "query.no_default_by_role",
                 List.of(MolangMappingTree.VisibleArgumentKind.NUMBER),
                 Set.of()
@@ -62,7 +63,7 @@ class MolangQueryVariantSelectionMatrixContractTest {
                 entry(CompatibilitySpecificityFilteredMapping.class)
         ));
 
-        MolangMappingTree.FunctionInfo selected = MolangMappingTree.INSTANCE.selectQueryVariant(
+        MolangMappingTree.FunctionInfo selected = MolangMappingRegistries.mappingTree().selectQueryVariant(
                 "query.compatibility_first",
                 List.of(MolangMappingTree.VisibleArgumentKind.NUMBER),
                 Set.of()
@@ -81,7 +82,7 @@ class MolangQueryVariantSelectionMatrixContractTest {
                 entry(AmbiguousVarArgVariantMapping.class)
         ));
 
-        MolangMappingTree.FunctionInfo selected = MolangMappingTree.INSTANCE.selectQueryVariant(
+        MolangMappingTree.FunctionInfo selected = MolangMappingRegistries.mappingTree().selectQueryVariant(
                 "query.ambiguous_tie",
                 List.of(MolangMappingTree.VisibleArgumentKind.NUMBER),
                 Set.of()

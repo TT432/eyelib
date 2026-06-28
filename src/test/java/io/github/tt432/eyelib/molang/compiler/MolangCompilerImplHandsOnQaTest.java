@@ -38,7 +38,7 @@ class MolangCompilerImplHandsOnQaTest {
 
     @Test
     void bytecodeEmitterOutputStartsWithCafeBabeMagic() {
-        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE
+        MolangAst.ExprSet ast = new HandwrittenMolangAstParserFrontend()
                 .parseExprSetAst("1+2")
                 .orElseThrow(() -> new AssertionError("Expected parser to accept expression 1+2"));
 

@@ -22,7 +22,7 @@ class MolangBinderNodeTypeTest {
     }
 
     private BindResult bind(String source, BindDiagnosticsMode mode) {
-        MolangAst.ExprSet ast = HandwrittenMolangAstParserFrontend.INSTANCE
+        MolangAst.ExprSet ast = new HandwrittenMolangAstParserFrontend()
                 .parseExprSetAst(source).orElseThrow();
         return binder.bind(ast, mode);
     }
