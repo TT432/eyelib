@@ -118,5 +118,6 @@ Domain 模块的 Port 接口清单、MC import 渗透情况和剩余工作记录
 | [0013 附录 A](../decisions/0013a-bedrock-animation-query-functions.md) | 基岩版 `query.*` 函数清单(316 个) |
 | [0014](../decisions/0014-flat-merge.md) | 子项目 flat-merge 为单 project |
 | [0015](../decisions/0015-stonecutter-multi-version.md) | Stonecutter 多版本 + ArchUnit 恢复 |
+| [0018](../decisions/0018-isolated-quiescent-fragments.md) | 孤立静止片段架构（IQF）—— Application 层形状判据 + ArchUnit 扩展 |
 
 > 注:0013 主文档与 [0013a 附录 A](../decisions/0013a-bedrock-animation-query-functions.md)(基岩版 query.* 函数清单)共享同一 ADR 编号,0013a 是 0013 的附录而非独立 ADR。

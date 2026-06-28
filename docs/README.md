@@ -53,6 +53,7 @@
 | 0015 | Stonecutter 多版本改造与 ArchUnit 恢复 | Accepted (2026-06-18) |
 | 0016 | 库隔离标准 — DDD 分层与 ACL 职责边界 | Accepted (2026-06-25) |
 | 0017 | 移除 migrate26Renames 文本替换，统一用 `//?` 条件注释 | Accepted (2026-06-28) |
+| 0018 | 孤立静止片段架构（IQF）—— 片段形状判据 + ACL 开放契约（反射调度） | Accepted (2026-06-28) |
 
 ## 核心原则
 

@@ -1,6 +1,6 @@
 # ADR-0015: Stonecutter 多版本改造与 ArchUnit 恢复
 
-**Status:** Accepted (Phase 1 implemented — 1.20.1 node live; Phase 2+ pending)
+**Status:** Accepted (Phase 1 implemented — 1.20.1 node live; Phase 2+ pending; §4 ArchUnit freeze framework extended by [ADR-0018](0018-isolated-quiescent-fragments.md) with 4 new IQF rules joining the same freeze baseline)
 **Date:** 2026-06-17
 **Author:** @TT432
 **Amends:** ADR-0010（恢复 ArchUnit 强制；`//?` 注释栖息地从「bridge 唯一」扩展为「L1 散布 + L2/L3 集中 bridge」）、ADR-0014（单 Gradle project 单版本 → 单 Gradle project + Stonecutter 多 node）

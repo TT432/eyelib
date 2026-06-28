@@ -1,6 +1,6 @@
 # ADR-0016: 库隔离标准 — DDD 分层与 ACL 职责边界
 
-**Status:** Accepted
+**Status:** Accepted — **Amended by [ADR-0018](0018-isolated-quiescent-fragments.md)** (Application-layer shape criteria added: mechanism E — ACL only exposes interface (Port) + reflective dispatch annotation; bridge Forge discovery via `ModFileScanData`; §3 表「ACL 做」从"具体类做"收紧为"adapter 做，对外仅 Port+注解可见")
 **Date:** 2026-06-25
 **Author:** @TT432
 **Related:** 补充 [ADR-0010](0010-hexagonal-architecture.md)、[ADR-0015](0015-stonecutter-multi-version.md)
@@ -70,6 +70,8 @@ ACL(Anti-Corruption Layer)的唯一职责是**翻译**(translation):
 | MC API 调用代理(纹理上传、顶点写入、事件注册) | 决定"何时渲染什么"的编排决策 |
 
 **判定标准**:一个类属于 ACL 当且仅当它的核心职责是**在两种语言之间翻译**。如果它定义了"Bedrock 规范说什么"→ Domain;如果它决定了"什么时候执行"→ Application;如果它做了"MC 概念 ↔ Domain 概念的转换"→ ACL。
+
+> **本节补强（[ADR-0018](0018-isolated-quiescent-fragments.md) §3 机制 E）**：ACL 对 Application 的开放形式**只能是接口（Port）与反射调度注解**，不暴露任何具体类、不暴露任何 MC 原生类型。Forge 事件订阅归 ACL adapter；Application 用反射调度注解声明事件处理；adapter 借助 (Neo)Forge 反射系统——具体为 `ModList.get().getAllScanData()` + `ModFileScanData.AnnotationData`，与现有 `ForgeMolangMappingDiscovery` 同实现形态——发现注解、在 Forge 生命周期事件中触发装配，订阅游戏事件后翻译为 Application 级参数回调——**不是 Java SPI（`ServiceLoader`）**。本节表「ACL 做」一列的具体行为均由 adapter 内部完成，对 Application 不可见。详见 ADR-0018 §3 机制 E、§7 `aclPublicApiMustBeInterfaceOrAnnotation` 规则。
 
 ### 4. 通用语言(Ubiquitous Language)分离
 
