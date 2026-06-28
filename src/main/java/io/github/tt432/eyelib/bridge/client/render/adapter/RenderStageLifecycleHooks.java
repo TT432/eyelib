@@ -27,6 +27,10 @@ public final class RenderStageLifecycleHooks {
 
     @SubscribeEvent
     public static void onCommonSetup(FMLCommonSetupEvent event) {
+        try {
+            Class.forName("io.github.tt432.eyelib.client.ClientBootstrap");
+        } catch (ClassNotFoundException ignored) {
+        }
         RenderStageRegistries.setupRenderStage(new ForgeRenderStageSubscriberDiscovery());
     }
 }
