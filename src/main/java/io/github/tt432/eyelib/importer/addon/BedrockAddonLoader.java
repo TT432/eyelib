@@ -56,8 +56,9 @@ public final class BedrockAddonLoader {
     public static BedrockAddon load(Path source) throws IOException {
         List<PackFiles> packFilesList = new ArrayList<>();
         List<ZipFile> openZips = new ArrayList<>();
+        List<Path> tempFiles = new ArrayList<>();
         try {
-            collectPackRoots(source, packFilesList, openZips);
+            collectPackRoots(source, packFilesList, openZips, tempFiles);
             packFilesList.sort(Comparator.comparing(pf -> pf.sourceName()));
 
             List<BedrockAddonPack> unsortedPacks = new ArrayList<>();
@@ -83,6 +84,9 @@ public final class BedrockAddonLoader {
         } finally {
             for (ZipFile zf : openZips) {
                 try { zf.close(); } catch (IOException ignored) {}
+            }
+            for (Path temp : tempFiles) {
+                try { Files.deleteIfExists(temp); } catch (IOException ignored) {}
             }
         }
     }
@@ -212,7 +216,8 @@ public final class BedrockAddonLoader {
                     // fallback: 写入临时文件后调用 ModelImporter.importFile
                     Path modelFile = entry.file();
                     if (modelFile == null) {
-                        modelFile = Files.createTempFile("eyelib-model-", ".json");
+                        String ext = entry.relativePath().endsWith(".bbmodel") ? ".bbmodel" : ".json";
+                        modelFile = Files.createTempFile("eyelib-model-", ext);
                         try {
                             // FileEntry 不变量：file 为 null 时 dataSupplier 必非空（fromZipRef 工厂保证）
                             Files.write(modelFile, Objects.requireNonNull(entry.dataSupplier()).get());
@@ -973,7 +978,8 @@ public final class BedrockAddonLoader {
      * 对于压缩包（zip/mcpack/mcaddon），使用 ZipFile 流式读取，内容按需加载。
      * 对于目录，递归搜索含有 manifest.json 的包根目录。
      */
-    private static void collectPackRoots(Path source, List<PackFiles> packFilesList, List<ZipFile> openZips)
+    private static void collectPackRoots(Path source, List<PackFiles> packFilesList,
+                                         List<ZipFile> openZips, List<Path> tempFiles)
             throws IOException {
         if (!Files.exists(source)) {
             throw new IOException("Source does not exist: " + source);
@@ -990,7 +996,7 @@ public final class BedrockAddonLoader {
             }
             if (isArchive(fileName)) {
                 // 使用 ZipFile 流式读取，不解压到磁盘
-                collectFilesFromZip(source, packFilesList, openZips);
+                collectFilesFromZip(source, packFilesList, openZips, tempFiles);
                 return;
             }
             throw new IOException("Unsupported Bedrock addon source: " + source);
@@ -1006,7 +1012,9 @@ public final class BedrockAddonLoader {
         }
         children.sort(Comparator.comparing(path -> path.getFileName().toString().toLowerCase(Locale.ROOT)));
         for (Path child : children) {
-            collectPackRoots(child, packFilesList, openZips);
+            if (Files.isDirectory(child) || isArchive(child.getFileName().toString().toLowerCase(Locale.ROOT))) {
+                collectPackRoots(child, packFilesList, openZips, tempFiles);
+            }
         }
     }
 
@@ -1036,7 +1044,8 @@ public final class BedrockAddonLoader {
      * - .mcpack 风格：根目录含 manifest.json，所有 entry 属于同一个包
      * - .mcaddon 风格：子目录（behavior_pack/、resource_pack/）各自含 manifest.json
      */
-    private static void collectFilesFromZip(Path source, List<PackFiles> packFilesList, List<ZipFile> openZips) throws IOException {
+    private static void collectFilesFromZip(Path source, List<PackFiles> packFilesList,
+                                            List<ZipFile> openZips, List<Path> tempFiles) throws IOException {
         String archiveName = source.getFileName().toString();
         String baseName = archiveName.contains(".")
                 ? archiveName.substring(0, archiveName.lastIndexOf('.'))
@@ -1069,28 +1078,52 @@ public final class BedrockAddonLoader {
             return;
         }
 
-        // mcaddon 风格：按顶级目录分组，各组独立含 manifest.json
-        Map<String, List<ZipEntry>> groups = new LinkedHashMap<>();
-        for (ZipEntry ze : allEntries) {
-            String name = normalize(ze.getName());
-            String topDir = topLevelDir(name);
-            groups.computeIfAbsent(topDir, k -> new ArrayList<>()).add(ze);
+        // 嵌套压缩包（.mcaddon 内含 .mcpack/.zip）：提取到临时文件并递归处理
+        List<ZipEntry> nestedArchives = allEntries.stream()
+                .filter(ze -> isArchive(normalize(ze.getName())))
+                .toList();
+        if (!nestedArchives.isEmpty()) {
+            for (ZipEntry nested : nestedArchives) {
+                byte[] data = readZipEntryBytes(zf, nested);
+                Path tempFile = Files.createTempFile("eyelib-nested-", ".zip");
+                Files.write(tempFile, data);
+                tempFiles.add(tempFile);
+                collectFilesFromZip(tempFile, packFilesList, openZips, tempFiles);
+            }
+            allEntries.removeIf(ze -> isArchive(normalize(ze.getName())));
         }
-        for (Map.Entry<String, List<ZipEntry>> group : groups.entrySet()) {
-            String prefix = group.getKey();
-            boolean hasManifest = group.getValue().stream()
-                    .anyMatch(e -> normalize(stripPrefix(e.getName(), prefix)).equals("manifest.json"));
-            if (!hasManifest) continue;
+
+        // mcaddon 风格：找到所有 manifest.json，按其父路径作为 pack 根
+        List<ZipEntry> manifestEntries = allEntries.stream()
+                .filter(e -> {
+                    String name = normalize(e.getName());
+                    int lastSlash = name.lastIndexOf('/');
+                    String fileName = lastSlash < 0 ? name : name.substring(lastSlash + 1);
+                    return fileName.equals("manifest.json");
+                })
+                .toList();
+
+        for (ZipEntry manifestZe : manifestEntries) {
+            String manifestPath = normalize(manifestZe.getName());
+            int lastSlash = manifestPath.lastIndexOf('/');
+            String packPrefix = lastSlash < 0 ? "" : manifestPath.substring(0, lastSlash);
 
             List<FileEntry> entries = new ArrayList<>();
-            for (ZipEntry ze : group.getValue()) {
-                String relativePath = normalize(ze.getName());
-                String innerPath = stripPrefix(relativePath, prefix);
+            for (ZipEntry ze : allEntries) {
+                String name = normalize(ze.getName());
+                boolean samePack = packPrefix.isEmpty()
+                        ? name.indexOf('/') < 0
+                        : name.startsWith(packPrefix + "/");
+                if (!samePack) continue;
+
+                String relativePath = name;
+                String innerPath = packPrefix.isEmpty() ? name : stripPrefix(name, packPrefix);
                 String effectivePath = stripSubpackPrefix(innerPath);
                 entries.add(FileEntry.fromZipRef(zf, ze, relativePath, effectivePath));
             }
             entries.sort(Comparator.comparing(e -> e.relativePath()));
-            packFilesList.add(new PackFiles(baseName + "/" + prefix, entries));
+            String packName = packPrefix.isEmpty() ? baseName : baseName + "/" + packPrefix;
+            packFilesList.add(new PackFiles(packName, entries));
         }
     }
 
