@@ -5,6 +5,7 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,7 @@ public final class AnimationLocatorResolver {
     }
 
     @SuppressWarnings("unchecked")
-    private static Vector3f resolve(MolangScope scope, String locatorName) {
+    private static Vector3f resolve(MolangScope scope, @Nullable String locatorName) {
         Entity entity = scope.getHostContext().get(Entity.class).orElse(null);
         if (entity == null) return new Vector3f();
 

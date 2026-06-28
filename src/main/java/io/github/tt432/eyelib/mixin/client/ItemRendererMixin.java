@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.animation.AnimationComponent;
 import io.github.tt432.eyelib.animation.AnimationEffects;
 import io.github.tt432.eyelib.animation.BrAnimator;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.molang.MolangScope;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -43,9 +44,11 @@ public class ItemRendererMixin {
 
         AnimationEffects effects = new AnimationEffects();
         float partialTick = ItemTrackRenderer.getPartialTick();
-        rd.getScope().set("variable.partial_tick", partialTick);
+        MolangScope scope = rd.getScope();
+        if (scope == null) return;
+        scope.set("variable.partial_tick", partialTick);
 
-        ModelRuntimeData tickedInfos = BrAnimator.tickAnimation(ac, rd.getScope(), effects,
+        ModelRuntimeData tickedInfos = BrAnimator.tickAnimation(ac, scope, effects,
                                                                 (ClientTickHandler.getTick() + partialTick) / 20, () -> {
                 });
         ac.tickedInfos = tickedInfos;

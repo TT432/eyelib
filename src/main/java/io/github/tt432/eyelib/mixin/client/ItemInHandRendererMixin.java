@@ -9,6 +9,7 @@ import io.github.tt432.eyelib.animation.AnimationEffects;
 import io.github.tt432.eyelib.animation.BrAnimator;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.molang.MolangScope;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.InteractionHand;
@@ -51,14 +52,16 @@ public class ItemInHandRendererMixin {
             float partialTick = net.minecraft.client.Minecraft.getInstance().getTimer().getRealtimeDeltaTicks();
             //? if >=26.1
             float partialTick = net.minecraft.client.Minecraft.getInstance().getDeltaTracker().getRealtimeDeltaTicks();
-            rd.getScope().set("variable.partial_tick", partialTick);
+            MolangScope scope = rd.getScope();
+            if (scope == null) return;
+            scope.set("variable.partial_tick", partialTick);
 
             AnimationEffects effects = new AnimationEffects();
-            ModelRuntimeData tickedInfos = BrAnimator.tickAnimation(ac, rd.getScope(), effects,
+            ModelRuntimeData tickedInfos = BrAnimator.tickAnimation(ac, scope, effects,
                     (io.github.tt432.eyelib.bridge.client.ClientTickHandler.getTick() + partialTick) / 20, () -> {
                         var ce = rd.getClientEntityComponent().getClientEntity();
                         if (ce != null) {
-                            ce.scripts().ifPresent(s -> s.pre_animation().eval(rd.getScope()));
+                            ce.scripts().ifPresent(s -> s.pre_animation().eval(scope));
                         }
                     });
             ac.tickedInfos = tickedInfos;
