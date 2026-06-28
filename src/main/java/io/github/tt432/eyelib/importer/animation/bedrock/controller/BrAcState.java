@@ -8,7 +8,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+
 import java.util.function.Function;
 
 /**
@@ -36,37 +36,28 @@ public record BrAcState(
         ).xmap(BrAcState::unwrap, Either::left);
     }
 
+    private static Codec<Map<String, MolangValue>> mapOrListedMap(Codec<Map<String, MolangValue>> elementCodec) {
+        return Codec.either(
+                elementCodec,
+                elementCodec.listOf().xmap(BrAcState::mergeMaps, List::of)
+        ).xmap(BrAcState::unwrap, Either::left);
+    }
+
+    private static Map<String, MolangValue> mergeMaps(List<Map<String, MolangValue>> list) {
+        Map<String, MolangValue> result = new Object2ObjectOpenHashMap<>();
+        for (Map<String, MolangValue> map : list) {
+            result.putAll(map);
+        }
+        return result;
+    }
+
     public static final Codec<BrAcState> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            animationEntryCodec().listOf().xmap(
-                    l -> {
-                        Map<String, MolangValue> result = new Object2ObjectOpenHashMap<>();
-                        for (Map<String, MolangValue> stringMolangValueMap : l) {
-                            Set<Map.Entry<String, MolangValue>> entrySet = stringMolangValueMap.entrySet();
-                            for (Map.Entry<String, MolangValue> entry : entrySet) {
-                                result.put(entry.getKey(), entry.getValue());
-                            }
-                        }
-                        return result;
-                    },
-                    List::of
-            ).optionalFieldOf("animations", Map.of()).forGetter(o -> o.animations),
+            mapOrListedMap(animationEntryCodec()).optionalFieldOf("animations", Map.of()).forGetter(o -> o.animations),
             MolangValue.CODEC.optionalFieldOf("on_entry", MolangValue.ZERO).forGetter(o -> o.onEntry),
             MolangValue.CODEC.optionalFieldOf("on_exit", MolangValue.ZERO).forGetter(o -> o.onExit),
             BrAcParticleEffect.CODEC.listOf().optionalFieldOf("particle_effects", List.of()).forGetter(o -> o.particleEffects),
-            Codec.STRING.listOf().optionalFieldOf("sound_effects", List.of()).forGetter(o -> o.soundEffects),
-            Codec.unboundedMap(Codec.STRING, MolangValue.CODEC).listOf().xmap(
-                    l -> {
-                        Map<String, MolangValue> map = new Object2ObjectOpenHashMap<>();
-                        for (Map<String, MolangValue> stringMolangValueMap : l) {
-                            Set<Map.Entry<String, MolangValue>> entrySet = stringMolangValueMap.entrySet();
-                            for (Map.Entry<String, MolangValue> entry : entrySet) {
-                                map.put(entry.getKey(), entry.getValue());
-                            }
-                        }
-                        return map;
-                    },
-                    List::of
-            ).optionalFieldOf("transitions", Map.of()).forGetter(o -> o.transitions),
+            Codec.STRING.fieldOf("effect").codec().listOf().optionalFieldOf("sound_effects", List.of()).forGetter(o -> o.soundEffects),
+            mapOrListedMap(Codec.unboundedMap(Codec.STRING, MolangValue.CODEC)).optionalFieldOf("transitions", Map.of()).forGetter(o -> o.transitions),
             Codec.FLOAT.optionalFieldOf("blend_transition", 0F).forGetter(o -> o.blendTransition),
             Codec.BOOL.optionalFieldOf("blend_via_shortest_path", false).forGetter(o -> o.blendViaShortestPath)
     ).apply(ins, BrAcState::new));
