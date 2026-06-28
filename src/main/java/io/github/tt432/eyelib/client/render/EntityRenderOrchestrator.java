@@ -10,10 +10,10 @@ import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelib.bridge.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.capability.RenderData;
-import io.github.tt432.eyelib.bridge.client.EntityRenderPorts;
 import io.github.tt432.eyelib.bridge.client.EntityRenderSystem;
 import io.github.tt432.eyelib.bridge.client.ClientTickHandler;
 import io.github.tt432.eyelib.bridge.client.RenderEntityParams;
+import io.github.tt432.eyelib.bridge.client.render.adapter.RenderPorts;
 import io.github.tt432.eyelib.model.ModelVisitContext;
 import io.github.tt432.eyelib.bridge.molang.ComponentStore;
 import io.github.tt432.eyelib.bridge.molang.MolangEntityContext;
@@ -80,9 +80,10 @@ public final class EntityRenderOrchestrator {
     }
 
     static {
-        EntityRenderPorts.renderBufferPort = EntityRenderOrchestrator::renderEntities;
-        EntityRenderPorts.renderEntityPort = EntityRenderOrchestrator::renderEntityFromParams;
-        EntityRenderPorts.setupClientEntityPort = EntityRenderOrchestrator::setup;
+        RenderPorts ports = RenderPorts.install();
+        ports.renderBufferPort = EntityRenderOrchestrator::renderEntities;
+        ports.renderEntityPort = EntityRenderOrchestrator::renderEntityFromParams;
+        ports.setupClientEntityPort = EntityRenderOrchestrator::setup;
     }
 
     private static Stream<Entity> entities() {

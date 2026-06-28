@@ -7,19 +7,13 @@ import net.minecraft.world.entity.Entity;
 import java.util.List;
 
 /**
- * 渲染编排 Port，由 application 层 EntityRenderOrchestrator 注册实现。
- * bridge EntityRenderSystem 订阅 Forge 事件、翻译版本差异参数后通过这些 Port 回调编排逻辑，
- * 使 bridge 只保留 MC 翻译职责，编排决策归 application。
+ * 渲染编排 Port 接口容器，由 application 层 EntityRenderOrchestrator 注册实现。
+ * bridge adapter 通过 {@code RenderPorts} 实例持有这些 Port 的运行时实现。
  *
  * @author TT432
  */
 public final class EntityRenderPorts {
     private EntityRenderPorts() {
-    }
-
-    @FunctionalInterface
-    public interface RenderStagePort {
-        void onRenderStage(float partialTick, double camX, double camY, double camZ);
     }
 
     @FunctionalInterface
@@ -37,9 +31,4 @@ public final class EntityRenderPorts {
     public interface SetupClientEntityPort {
         List<Runnable> setup(Entity entity);
     }
-
-    public static RenderStagePort renderStagePort = (p, x, y, z) -> {};
-    public static RenderBufferPort renderBufferPort = (p, x, y, z, ps, bs) -> {};
-    public static RenderEntityPort renderEntityPort = params -> false;
-    public static SetupClientEntityPort setupClientEntityPort = e -> List.of();
 }

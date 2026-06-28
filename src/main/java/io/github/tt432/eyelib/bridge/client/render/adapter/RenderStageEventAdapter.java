@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.bridge.client.render.adapter;
 
-import io.github.tt432.eyelib.bridge.client.EntityRenderPorts;
 import io.github.tt432.eyelib.util.event.api.RenderStageRegistries;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -57,7 +56,7 @@ public final class RenderStageEventAdapter {
 
         var sharedBuffer = new com.mojang.blaze3d.vertex.ByteBufferBuilder(786432);
         MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(sharedBuffer);
-        EntityRenderPorts.renderBufferPort.renderEntities(
+        RenderPorts.get().renderBufferPort.renderEntities(
                 partialTick, position.x, position.y, position.z, event.getPoseStack(), bufferSource);
         try { bufferSource.endBatch(); } catch (Throwable ignored) {}
         sharedBuffer.close();

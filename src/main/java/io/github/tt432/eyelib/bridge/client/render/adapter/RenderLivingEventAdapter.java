@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.bridge.client.render.adapter;
 
-import io.github.tt432.eyelib.bridge.client.EntityRenderPorts;
 import io.github.tt432.eyelib.bridge.client.RenderEntityParams;
 //? if <26.1 {
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -52,7 +51,7 @@ public final class RenderLivingEventAdapter {
 
         var params = new RenderEntityParams(entity, event.getMultiBufferSource(), event.getPoseStack(),
                                             event.getPackedLight(), event.getPartialTick(), overlay);
-        if (EntityRenderPorts.renderEntityPort.render(params)) {
+        if (RenderPorts.get().renderEntityPort.render(params)) {
             event.setCanceled(true);
         }
     }
@@ -69,7 +68,7 @@ public final class RenderLivingEventAdapter {
 
         var params = new RenderEntityParams(entity, bufferSource, event.getPoseStack(),
                                             state.lightCoords, event.getPartialTick(), OverlayTexture.NO_OVERLAY);
-        boolean rendered = EntityRenderPorts.renderEntityPort.render(params);
+        boolean rendered = RenderPorts.get().renderEntityPort.render(params);
 
         bufferSource.endBatch();
         byteBufferBuilder.close();

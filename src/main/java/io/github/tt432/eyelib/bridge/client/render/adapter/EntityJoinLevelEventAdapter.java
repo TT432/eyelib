@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.bridge.client.render.adapter;
 
-import io.github.tt432.eyelib.bridge.client.EntityRenderPorts;
 import net.minecraft.world.entity.Entity;
 //? if <1.20.6 {
 import net.minecraftforge.api.distmarker.Dist;
@@ -31,6 +30,6 @@ public final class EntityJoinLevelEventAdapter {
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
         Entity entity = event.getEntity();
-        EntityRenderPorts.setupClientEntityPort.setup(entity);
+        RenderPorts.get().setupClientEntityPort.setup(entity);
     }
 }
