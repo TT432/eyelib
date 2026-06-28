@@ -42,7 +42,11 @@ public record UniDataUpdatePacket<T>(int entityId, DataAttachmentType<T> attachm
     //? if >=1.20.6 {
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<UniDataUpdatePacket> TYPE =
             new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(
+                    //? if <26.1 {
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("eyelib", "uni_data_update"));
+                    //?} else {
                     net.minecraft.resources.Identifier.fromNamespaceAndPath("eyelib", "uni_data_update"));
+                    //?}
 
     @Override
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {

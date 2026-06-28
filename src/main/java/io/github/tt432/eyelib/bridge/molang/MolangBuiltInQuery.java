@@ -205,6 +205,8 @@ public final class MolangBuiltInQuery {
             for (Object item : items) {
                 //? if <1.20.6 {
                 if (new ResourceLocation(item.toString()).equals(itemKey)) {
+                //?} elif <26.1 {
+                if (ResourceLocation.parse(item.toString()).equals(itemKey)) {
                 //?} else {
                 if (Identifier.parse(item.toString()).equals(itemKey)) {
 

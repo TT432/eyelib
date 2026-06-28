@@ -45,6 +45,8 @@ public class EyelibAttachableData {
     //?}
             //? if <1.20.6 {
             new ResourceLocation(Eyelib.MOD_ID, "entity_behavior_data");
+            //?} elif <26.1 {
+            ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "entity_behavior_data");
             //?} else {
             Identifier.fromNamespaceAndPath(Eyelib.MOD_ID, "entity_behavior_data");
 
@@ -56,6 +58,8 @@ public class EyelibAttachableData {
     //?}
             //? if <1.20.6 {
             new ResourceLocation(Eyelib.MOD_ID, "synced_behavior_state");
+            //?} elif <26.1 {
+            ResourceLocation.fromNamespaceAndPath(Eyelib.MOD_ID, "synced_behavior_state");
             //?} else {
             Identifier.fromNamespaceAndPath(Eyelib.MOD_ID, "synced_behavior_state");
 

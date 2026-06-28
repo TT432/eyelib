@@ -22,7 +22,11 @@ public record RemoveParticlePacket(
     //? if >=1.20.6 {
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<RemoveParticlePacket> TYPE =
             new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(
+                    //? if <26.1 {
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("eyelib", "remove_particle"));
+                    //?} else {
                     net.minecraft.resources.Identifier.fromNamespaceAndPath("eyelib", "remove_particle"));
+                    //?}
 
     @Override
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {

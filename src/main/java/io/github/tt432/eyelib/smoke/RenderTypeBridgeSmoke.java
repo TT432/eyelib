@@ -101,6 +101,8 @@ public class RenderTypeBridgeSmoke {
 
             //? if <1.20.6 {
             ResourceLocation mcTex = new ResourceLocation("minecraft", "textures/entity/ghast");
+            //?} elif <26.1 {
+            ResourceLocation mcTex = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/entity/ghast");
             //?} else {
             Identifier mcTex = Identifier.fromNamespaceAndPath("minecraft", "textures/entity/ghast");
 

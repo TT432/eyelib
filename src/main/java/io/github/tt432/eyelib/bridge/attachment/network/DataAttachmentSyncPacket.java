@@ -28,7 +28,11 @@ public record DataAttachmentSyncPacket(int entityId, CompoundTag data)
     //? if >=1.20.6 {
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<DataAttachmentSyncPacket> TYPE =
             new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(
+                    //? if <26.1 {
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("eyelib", "data_attachment_sync"));
+                    //?} else {
                     net.minecraft.resources.Identifier.fromNamespaceAndPath("eyelib", "data_attachment_sync"));
+                    //?}
 
     @Override
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {

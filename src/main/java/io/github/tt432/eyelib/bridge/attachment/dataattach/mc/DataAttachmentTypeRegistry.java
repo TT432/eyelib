@@ -36,6 +36,8 @@ public class DataAttachmentTypeRegistry {
     private static final ResourceKey<Registry<DataAttachmentType<?>>> DATA_ATTACHMENTS_KEY =
             //? if <1.20.6 {
             ResourceKey.createRegistryKey(new ResourceLocation("eyelib", "data_attachments"));
+            //?} elif <26.1 {
+            ResourceKey.createRegistryKey(ResourceLocation.fromNamespaceAndPath("eyelib", "data_attachments"));
             //?} else {
             ResourceKey.createRegistryKey(Identifier.fromNamespaceAndPath("eyelib", "data_attachments"));
 

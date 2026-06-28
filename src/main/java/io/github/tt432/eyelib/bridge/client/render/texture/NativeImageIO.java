@@ -56,6 +56,8 @@ public class NativeImageIO {
     public void upload(String texture, NativeImage image) {
         //? if <1.20.6 {
         upload(new ResourceLocation(texture), image);
+        //?} elif <26.1 {
+        upload(ResourceLocation.parse(texture), image);
         //?} else {
         upload(Identifier.parse(texture), image);
 
@@ -196,6 +198,8 @@ public class NativeImageIO {
 
         //? if <1.20.6 {
         ResourceLocation generated = new ResourceLocation(texture.getNamespace(), "_color_mask/" + colorKey(color) + "/" + texture.getPath());
+        //?} elif <26.1 {
+        ResourceLocation generated = ResourceLocation.fromNamespaceAndPath(texture.getNamespace(), "_color_mask/" + colorKey(color) + "/" + texture.getPath());
         //?} else {
         Identifier generated = Identifier.fromNamespaceAndPath(texture.getNamespace(), "_color_mask/" + colorKey(color) + "/" + texture.getPath());
 

@@ -348,6 +348,8 @@ public record RenderControllerEntry(
                                                     List<Runnable> syncedActions, boolean needReload) {
         //? if <1.20.6 {
         ResourceLocation clamped = new ResourceLocation(original.getNamespace(), "clamped/" + original.getPath());
+        //?} elif <26.1 {
+        ResourceLocation clamped = ResourceLocation.fromNamespaceAndPath(original.getNamespace(), "clamped/" + original.getPath());
         //?} else {
         Identifier clamped = Identifier.fromNamespaceAndPath(original.getNamespace(), "clamped/" + original.getPath());
 
@@ -366,6 +368,8 @@ public record RenderControllerEntry(
                 //?}
                     //? if <1.20.6 {
                     ResourceLocation clampedLayer = new ResourceLocation(layer.getNamespace(), "_tmp_clamped/" + layer.getPath());
+                    //?} elif <26.1 {
+                    ResourceLocation clampedLayer = ResourceLocation.fromNamespaceAndPath(layer.getNamespace(), "_tmp_clamped/" + layer.getPath());
                     //?} else {
                     Identifier clampedLayer = Identifier.fromNamespaceAndPath(layer.getNamespace(), "_tmp_clamped/" + layer.getPath());
 
@@ -495,6 +499,8 @@ public record RenderControllerEntry(
         }
         //? if <1.20.6 {
         return new ResourceLocation("complex", pathBuilder.toString().replace(":", "_") + suffix);
+        //?} elif <26.1 {
+        return ResourceLocation.fromNamespaceAndPath("complex", pathBuilder.toString().replace(":", "_") + suffix);
         //?} else {
         return Identifier.fromNamespaceAndPath("complex", pathBuilder.toString().replace(":", "_") + suffix);
 
@@ -530,6 +536,8 @@ public record RenderControllerEntry(
         for (String layerPath : layerPaths) {
             //? if <1.20.6 {
             resourceLocations.add(new ResourceLocation(layerPath));
+            //?} elif <26.1 {
+            resourceLocations.add(ResourceLocation.parse(layerPath));
             //?} else {
             resourceLocations.add(Identifier.parse(layerPath));
 

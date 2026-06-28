@@ -50,6 +50,8 @@ public class BrAttachableLoader extends BrResourcesLoader implements Searchable<
                 BrClientEntity.ATTACHABLE_CODEC,
                 //? if <1.20.6 {
                 (sourceLocation, entity) -> new ResourceLocation(entity.identifier()),
+                //?} elif <26.1 {
+                (sourceLocation, entity) -> ResourceLocation.parse(entity.identifier()),
                 //?} else {
                 (sourceLocation, entity) -> Identifier.parse(entity.identifier()),
 

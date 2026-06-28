@@ -47,6 +47,8 @@ public class BrClientEntityLoader extends BrResourcesLoader {
                 BrClientEntity.CODEC,
                 //? if <1.20.6 {
                 (sourceLocation, entity) -> new ResourceLocation(entity.identifier()),
+                //?} elif <26.1 {
+                (sourceLocation, entity) -> ResourceLocation.parse(entity.identifier()),
                 //?} else {
                 (sourceLocation, entity) -> Identifier.parse(entity.identifier()),
 

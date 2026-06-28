@@ -59,6 +59,8 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
         RenderTypeResolver.EntityRenderTypeData factory = RenderTypeResolver.resolveParticle(material);
         //? if <1.20.6 {
         net.minecraft.resources.ResourceLocation texture = new net.minecraft.resources.ResourceLocation(particle.emitter().definition().texture()).withSuffix(".png");
+        //?} elif <26.1 {
+        net.minecraft.resources.ResourceLocation texture = net.minecraft.resources.ResourceLocation.parse(particle.emitter().definition().texture()).withSuffix(".png");
         //?} else {
         net.minecraft.resources.Identifier texture = net.minecraft.resources.Identifier.parse(particle.emitter().definition().texture()).withSuffix(".png");
         //?}

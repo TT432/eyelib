@@ -22,6 +22,8 @@ public final class ResourceLocationBridge {
     //?}
         //? if <1.20.6 {
         return new ResourceLocation(port.namespace(), port.path());
+        //?} elif <26.1 {
+        return ResourceLocation.fromNamespaceAndPath(port.namespace(), port.path());
         //?} else {
         return Identifier.fromNamespaceAndPath(port.namespace(), port.path());
 
@@ -43,6 +45,8 @@ public final class ResourceLocationBridge {
     //?}
         //? if <1.20.6 {
         return new ResourceLocation(value);
+        //?} elif <26.1 {
+        return ResourceLocation.parse(value);
         //?} else {
         return Identifier.parse(value);
 
@@ -56,6 +60,8 @@ public final class ResourceLocationBridge {
     //?}
         //? if <1.20.6 {
         return new ResourceLocation(namespace, path);
+        //?} elif <26.1 {
+        return ResourceLocation.fromNamespaceAndPath(namespace, path);
         //?} else {
         return Identifier.fromNamespaceAndPath(namespace, path);
 

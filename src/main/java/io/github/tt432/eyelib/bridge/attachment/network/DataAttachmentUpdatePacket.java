@@ -41,7 +41,11 @@ public record DataAttachmentUpdatePacket<C>(int entityId, DataAttachmentType<C> 
     //? if >=1.20.6 {
     public static final net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<DataAttachmentUpdatePacket> TYPE =
             new net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<>(
+                    //? if <26.1 {
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("eyelib", "data_attachment_update"));
+                    //?} else {
                     net.minecraft.resources.Identifier.fromNamespaceAndPath("eyelib", "data_attachment_update"));
+                    //?}
 
     @Override
     public net.minecraft.network.protocol.common.custom.CustomPacketPayload.Type<? extends net.minecraft.network.protocol.common.custom.CustomPacketPayload> type() {
