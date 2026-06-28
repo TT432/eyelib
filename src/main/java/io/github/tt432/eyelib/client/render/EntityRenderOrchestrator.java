@@ -25,6 +25,11 @@ import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelib.client.particle.RootAnimationParticleSpawner;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
+import io.github.tt432.eyelib.client.render.pipeline.EntitySetupResult;
+import io.github.tt432.eyelib.client.render.pipeline.EntityTickResult;
+import io.github.tt432.eyelib.client.render.pipeline.FramePlan;
+import io.github.tt432.eyelib.client.render.pipeline.FramePipeline;
+import io.github.tt432.eyelib.client.render.pipeline.FrameStage;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
@@ -89,59 +94,87 @@ public final class EntityRenderOrchestrator {
         return StreamSupport.stream(getInstance().level.entitiesForRendering().spliterator(), false);
     }
 
+    private static final FramePipeline PIPELINE = new FramePipeline(List.of(
+            new SetupStage(),
+            new EffectCommitStage(),
+            new TickStage()
+    ));
+
     @OnRenderStage
     public static void onRenderStage(float partialTick, double camX, double camY, double camZ) {
-        entities()
-                .filter(entity -> entity.shouldRender(camX, camY, camZ))
-                .map(EntityRenderOrchestrator::setup)
-                .flatMap(Collection::stream)
-                .toList()
-                .forEach(Runnable::run);
+        PIPELINE.run(new FramePlan(partialTick, camX, camY, camZ));
+    }
 
-        entities().forEach(e -> {
-            var cap = RenderData.getComponent(e);
+    static final class SetupStage implements FrameStage {
+        @Override
+        public void apply(FramePlan plan) {
+            entities()
+                    .filter(entity -> entity.shouldRender(plan.camX(), plan.camY(), plan.camZ()))
+                    .forEach(entity -> {
+                        List<Runnable> effects = setup(entity);
+                        plan.setupResults().add(new EntitySetupResult(entity, effects));
+                        plan.deferredEffects().addAll(effects);
+                    });
+        }
+    }
 
-            if (e instanceof LivingEntity entity && cap != null) {
-                if (cap.getOwner() != entity) {
-                    cap.init(entity);
+    static final class EffectCommitStage implements FrameStage {
+        @Override
+        public void apply(FramePlan plan) {
+            plan.deferredEffects().forEach(Runnable::run);
+        }
+    }
+
+    static final class TickStage implements FrameStage {
+        @Override
+        public void apply(FramePlan plan) {
+            entities().forEach(e -> {
+                var cap = RenderData.getComponent(e);
+
+                if (e instanceof LivingEntity entity && cap != null) {
+                    if (cap.getOwner() != entity) {
+                        cap.init(entity);
+                    }
+
+                    MolangScope scope = cap.getScope();
+                    if (scope == null) {
+                        return;
+                    }
+
+                    setupSyncedBehaviorContext(entity, scope);
+
+                    ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
+
+                    AnimationEffects effects = new AnimationEffects();
+                    scope.set("variable.partial_tick", plan.partialTick());
+                    scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
+
+                    scope.getHostContext()
+                         .put(AnimationParticleSpawner.class,
+                                 new RootAnimationParticleSpawner(ParticleRuntimeBridge.SPAWN_ADAPTER));
+
+                    ModelRuntimeData tickedInfos;
+                    if (cap.getAnimationComponent().getSerializableInfo() != null) {
+                        tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
+                                (ClientTickHandler.getTick() + plan.partialTick()) / 20, () -> {
+                                    if (clientEntityComponent.getClientEntity() != null) {
+                                        clientEntityComponent.getClientEntity().scripts().ifPresent(scripts -> {
+                                            scripts.pre_animation().eval(scope);
+                                        });
+                                    }
+                                });
+                    } else {
+                        tickedInfos = ModelRuntimeData.EMPTY;
+                    }
+                    cap.getAnimationComponent().tickedInfos = tickedInfos;
+                    cap.getAnimationComponent().effects = effects;
+
+                    AttachableItemRenderSetup.tickForEntity(entity, plan.partialTick());
+
+                    plan.tickResults().add(new EntityTickResult(entity, tickedInfos, effects));
                 }
-
-                MolangScope scope = cap.getScope();
-                if (scope == null) {
-                    return;
-                }
-
-                setupSyncedBehaviorContext(entity, scope);
-
-                ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
-
-                AnimationEffects effects = new AnimationEffects();
-                scope.set("variable.partial_tick", partialTick);
-                scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
-
-                scope.getHostContext()
-                     .put(AnimationParticleSpawner.class,
-                             new RootAnimationParticleSpawner(ParticleRuntimeBridge.SPAWN_ADAPTER));
-
-                ModelRuntimeData tickedInfos;
-                if (cap.getAnimationComponent().getSerializableInfo() != null) {
-                    tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
-                            (ClientTickHandler.getTick() + partialTick) / 20, () -> {
-                                if (clientEntityComponent.getClientEntity() != null) {
-                                    clientEntityComponent.getClientEntity().scripts().ifPresent(scripts -> {
-                                        scripts.pre_animation().eval(scope);
-                                    });
-                                }
-                            });
-                } else {
-                    tickedInfos = ModelRuntimeData.EMPTY;
-                }
-                cap.getAnimationComponent().tickedInfos = tickedInfos;
-                cap.getAnimationComponent().effects = effects;
-
-                AttachableItemRenderSetup.tickForEntity(entity, partialTick);
-            }
-        });
+            });
+        }
     }
 
     static void renderEntities(float partialTick, double camX, double camY, double camZ,
