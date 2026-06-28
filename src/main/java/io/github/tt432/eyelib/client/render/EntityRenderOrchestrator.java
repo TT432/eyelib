@@ -30,6 +30,7 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
+import io.github.tt432.eyelib.util.event.api.OnRenderStage;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
@@ -79,7 +80,6 @@ public final class EntityRenderOrchestrator {
     }
 
     static {
-        EntityRenderPorts.renderStagePort = EntityRenderOrchestrator::onRenderStage;
         EntityRenderPorts.renderBufferPort = EntityRenderOrchestrator::renderEntities;
         EntityRenderPorts.renderEntityPort = EntityRenderOrchestrator::renderEntityFromParams;
         EntityRenderPorts.setupClientEntityPort = EntityRenderOrchestrator::setup;
@@ -89,7 +89,8 @@ public final class EntityRenderOrchestrator {
         return StreamSupport.stream(getInstance().level.entitiesForRendering().spliterator(), false);
     }
 
-    static void onRenderStage(float partialTick, double camX, double camY, double camZ) {
+    @OnRenderStage
+    public static void onRenderStage(float partialTick, double camX, double camY, double camZ) {
         entities()
                 .filter(entity -> entity.shouldRender(camX, camY, camZ))
                 .map(EntityRenderOrchestrator::setup)

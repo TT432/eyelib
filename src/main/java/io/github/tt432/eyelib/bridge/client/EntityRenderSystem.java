@@ -35,11 +35,9 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.WoolCarpetBlock;
-import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 //? if <1.20.6 {
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
@@ -51,7 +49,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.RenderLivingEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
@@ -88,42 +85,6 @@ public final class EntityRenderSystem {
     public static void onEvent(EntityJoinLevelEvent event) {
         EntityRenderPorts.setupClientEntityPort.setup(event.getEntity());
     }
-
-    //? if <26.1 {
-    @SubscribeEvent
-    public static void onEvent(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY) return;
-
-        //? if <1.20.6 {
-        Vec3 position = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-        float partialTick = event.getPartialTick();
-        //?} else {
-        Vec3 position = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-        float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
-        //?}
-
-        EntityRenderPorts.renderStagePort.onRenderStage(partialTick, position.x, position.y, position.z);
-    }
-    //?} else {
-    @SubscribeEvent
-    public static void onEvent(RenderLevelStageEvent.AfterOpaqueBlocks event) {
-        //? if <1.20.6 {
-        Vec3 position = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-        //?} else {
-        Vec3 position = Minecraft.getInstance().gameRenderer.getMainCamera().position();
-        //?}
-        float partialTick = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
-
-        EntityRenderPorts.renderStagePort.onRenderStage(partialTick, position.x, position.y, position.z);
-
-        var sharedBuffer = new com.mojang.blaze3d.vertex.ByteBufferBuilder(786432);
-        MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(sharedBuffer);
-        EntityRenderPorts.renderBufferPort.renderEntities(
-                partialTick, position.x, position.y, position.z, event.getPoseStack(), bufferSource);
-        try { bufferSource.endBatch(); } catch (Throwable ignored) {}
-        sharedBuffer.close();
-    }
-    //?}
 
     @SubscribeEvent
     //? if <1.20.6 {
