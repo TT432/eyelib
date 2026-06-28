@@ -228,10 +228,11 @@ class ArchitectureTest {
      */
     private static final DescribedPredicate<JavaClass> BRIDGE_PUBLIC_TOP_LEVEL_CLASSES =
             resideInAnyPackage("io.github.tt432.eyelib.bridge..")
+                    .and(DescribedPredicate.not(resideInAnyPackage("io.github.tt432.eyelib.bridge..adapter..")))
                     .and(DescribedPredicate.describe("public top-level",
                             jc -> jc.getModifiers().contains(JavaModifier.PUBLIC)
                                     && !jc.getName().contains("$")))
-                    .as("bridge 包内的 public 顶层类");
+                    .as("bridge 包内的 public 顶层类（排除 adapter/ 子包）");
 
     /**
      * ADR-0018 规则 6（判据 I-2）：Domain 包不得暴露服务定位器（{@code public static final Xxx INSTANCE}）。

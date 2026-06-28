@@ -1,7 +1,5 @@
 /**
- * 实体渲染桥接：把 Forge RenderLivingEvent 翻译为 application 的 RenderParams / RenderAction 调用。
- *
- * @author TT432
+ * Bridge 渲染阶段订阅者顶层包，Forge 平台具体实现在 {@code adapter/} 子包。
  */
 @NullMarked
 package io.github.tt432.eyelib.bridge.client.render;
