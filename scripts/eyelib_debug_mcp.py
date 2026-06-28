@@ -21,7 +21,7 @@ from typing import Optional, Callable
 from mcp.server.fastmcp import FastMCP
 
 
-MCP_VERSION = "1.4.3"
+MCP_VERSION = "1.5.0"
 
 
 # ── Configuration ──────────────────────────────────────────────
@@ -433,6 +433,68 @@ async def eyelib_debug_build(version: str = "1.20.1") -> str:
     if artifact_error:
         return f"⚠️ {desc} — BUILD SUCCESSFUL, but artifacts missing:\n{artifact_error}\n\n{status}"
     return f"✅ {desc} — BUILD SUCCESSFUL\n\n{status}"
+
+
+@mcp.tool()
+async def eyelib_debug_test(version: str = "1.20.1", test_filter: str = "") -> str:
+    """
+    Run eyelib unit tests for a Stonecutter version node.
+    Executes Gradle :{version}:test and reports pass/fail summary.
+    Full stdout/stderr persisted to build/_mcp_gradle_out.txt and build/_mcp_gradle_err.txt.
+
+    Args:
+        version: MC version node: "1.20.1", "1.21.1", or "26.1.2".
+        test_filter: Optional Gradle --tests filter (e.g. "io.github.tt432.eyelib.architecture.*").
+                     Empty string runs all tests.
+    """
+    err = _validate_version(version)
+    if err:
+        return f"❌ {err}"
+
+    desc = f"Test ({version}" + (f", filter={test_filter}" if test_filter else "") + ")"
+    tasks = [_gradle_task(version, "test")]
+    if test_filter:
+        tasks.append(f'--tests "{test_filter}"')
+
+    try:
+        result = await _run_gradle(tasks, 900)
+    except subprocess.TimeoutExpired:
+        return f"⏰ {desc} timed out after 900s"
+
+    # Gradle test 报告目录：versions/{version}/build/reports/tests/test/index.html
+    report_dir = os.path.join(
+        PROJECT_DIR, "versions", version, "build", "reports", "tests", "test"
+    )
+
+    if result.returncode != 0:
+        error_lines = [
+            line.strip() for line in (result.stdout + result.stderr).split("\n")
+            if line.strip() and (
+                "error:" in line.lower()
+                or "BUILD FAILED" in line
+                or "FAILURE:" in line
+                or "FAILED" in line
+            )
+        ]
+        return (
+            f"❌ {desc} — BUILD/TEST FAILED\n"
+            + "\n".join(error_lines[:30])
+            + f"\n\nFull output: build/_mcp_gradle_out.txt\nHTML report: {report_dir}/index.html"
+        )
+
+    summary_lines = [
+        line.strip() for line in result.stdout.split("\n")
+        if line.strip() and (
+            "tests completed" in line.lower()
+            or "tests:" in line.lower()
+            or "BUILD SUCCESSFUL" in line
+        )
+    ]
+    return (
+        f"✅ {desc} — BUILD/TEST SUCCESSFUL\n"
+        + "\n".join(summary_lines[:10])
+        + f"\n\nHTML report: {report_dir}/index.html"
+    )
 
 
 @mcp.tool()

@@ -3,14 +3,23 @@ package io.github.tt432.eyelib.architecture;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaField;
+import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
+
+import java.util.Set;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.*;
 import static com.tngtech.archunit.library.freeze.FreezingArchRule.freeze;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 
 /**
  * 架构约束规则（ADR-0016 四层模型）。首次运行 freeze 模式记录 baseline 违规，后续只检测新违规。
@@ -201,4 +210,98 @@ class ArchitectureTest {
                     .because("ADR-0016 §2: Domain 内部实现（*.internal.. 子包）是 Domain 私有，"
                             + "Application 必须通过 Domain 公开 API 访问")
     );
+
+    // ===== ADR-0018 IQF 规则（片段形状判据）=====
+
+    /**
+     * bridge 具体类：包路径在 {@code bridge..} 但不是接口（含注解类型，Java 反射里注解 isInterface() 返回 true）。
+     * 用于规则 7：Application 不得依赖 bridge 具体类。
+     */
+    private static final DescribedPredicate<JavaClass> BRIDGE_CONCRETE_CLASSES =
+            resideInAnyPackage("io.github.tt432.eyelib.bridge..")
+                    .and(DescribedPredicate.not(JavaClass.Predicates.INTERFACES))
+                    .as("bridge 具体类（非接口、非注解）");
+
+    /**
+     * bridge 包内的 public 顶层类（排除内部类）。
+     * 用于规则 8：bridge 公开 API 必须是接口或注解。P2 阶段引入 {@code adapter/} 子包后收紧为"bridge 直接子级"。
+     */
+    private static final DescribedPredicate<JavaClass> BRIDGE_PUBLIC_TOP_LEVEL_CLASSES =
+            resideInAnyPackage("io.github.tt432.eyelib.bridge..")
+                    .and(DescribedPredicate.describe("public top-level",
+                            jc -> jc.getModifiers().contains(JavaModifier.PUBLIC)
+                                    && !jc.getName().contains("$")))
+                    .as("bridge 包内的 public 顶层类");
+
+    /**
+     * ADR-0018 规则 6（判据 I-2）：Domain 包不得暴露服务定位器（{@code public static final Xxx INSTANCE}）。
+     * 首次跑全部记入 baseline；P3 阶段 review 分类：服务定位器型必删、null object 型（如
+     * {@code MolangNull.INSTANCE} / {@code EmptyComponent.INSTANCE}）可保留。
+     * 用 {@code noFields()} API 让 condition 直接作用于 JavaField，避免 JavaClass.getFields() 的歧义。
+     */
+    @ArchTest
+    static final ArchRule domainMustNotUseSingletonInstance = freeze(
+            noFields()
+                    .that(declaredInDomainClasses())
+                    .should(bePublicStaticFinalInstanceField())
+                    .because("ADR-0018 I-2: domain 不得暴露服务定位器（INSTANCE singleton）；"
+                            + "不可变 null object（MolangNull/EmptyComponent 等）通过 baseline 区分，P3 review")
+    );
+
+    /**
+     * ADR-0018 规则 7（判据 I-5 + ADR-0016 §5）：Application 层不得依赖 ACL（bridge）的具体类。
+     * 仅允许依赖 Port 接口（{@code *Port}）、反射调度注解（{@code On*}）、domain 层契约（{@code *Discovery} 等）。
+     * 对齐 {@code molang/mapping/} 范式（机制 E）。
+     */
+    @ArchTest
+    static final ArchRule applicationMustNotDependOnBridgeConcreteClasses = freeze(
+            noClasses().that(APPLICATION_CLASSES)
+                    .should().dependOnClassesThat(BRIDGE_CONCRETE_CLASSES)
+                    .because("ADR-0018 I-5: Application 只能依赖 Port 接口 + 反射调度注解（机制 E）；"
+                            + "禁止直接调用 bridge 具体类（EntityRenderSystem 静态 helper 等）")
+    );
+
+    /**
+     * ADR-0018 规则 8（判据 I-5 反向校验）：ACL（bridge）对 Application 仅暴露接口与反射调度注解。
+     * bridge 包内的 public 顶层类必须是 interface 或 {@code @interface}（注解类型 {@code isInterface()} 返回 true）。
+     * P2 阶段引入 {@code adapter/} 子包后，规则收紧为"bridge 直接子级"（排除 adapter/）。
+     */
+    @ArchTest
+    static final ArchRule aclPublicApiMustBeInterfaceOrAnnotation = freeze(
+            classes().that(BRIDGE_PUBLIC_TOP_LEVEL_CLASSES)
+                    .should().beInterfaces()
+                    .because("ADR-0018 I-5: ACL 开放契约——bridge 对 Application 仅暴露接口与注解，"
+                            + "具体实现收到 adapter/ 子包（机制 E）；注解类型 isInterface() 返回 true，被本规则允许")
+    );
+
+    /**
+     * 字段谓词：字段声明在 Domain 类中。
+     * 用于规则 6：把 {@link #DOMAIN_CLASSES} 类谓词转成字段谓词。
+     */
+    private static DescribedPredicate<JavaField> declaredInDomainClasses() {
+        return DescribedPredicate.describe("declared in domain classes",
+                f -> DOMAIN_CLASSES.test(f.getOwner()));
+    }
+
+    /**
+     * 字段 condition：字段名为 INSTANCE 且修饰符为 public static final（服务定位器模式）。
+     * 用 {@code SimpleConditionEvent.satisfied} 而非 {@code violated}：因为外层是
+     * {@code noFields().should(this)}，语义为"没有字段应该满足此 condition"，
+     * 满足时需产生 satisfied event 才能被 noFields 判定为违规。
+     */
+    private static ArchCondition<JavaField> bePublicStaticFinalInstanceField() {
+        return new ArchCondition<JavaField>("be a public static final field named INSTANCE (service locator)") {
+            @Override
+            public void check(JavaField field, ConditionEvents events) {
+                Set<JavaModifier> mods = field.getModifiers();
+                if ("INSTANCE".equals(field.getName())
+                        && mods.contains(JavaModifier.PUBLIC)
+                        && mods.contains(JavaModifier.STATIC)
+                        && mods.contains(JavaModifier.FINAL)) {
+                    events.add(SimpleConditionEvent.satisfied(field,
+                            field.getOwner().getSimpleName() + "." + field.getName()));
+                }
+            }
+        };
+    }
 }
