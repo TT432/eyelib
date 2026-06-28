@@ -72,15 +72,19 @@ class BedrockAddonRuntimeBridgeTest {
                 """)));
         BrMaterial material = TestCodecUtil.unwrap(BrMaterial.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""
                                                                                                        {
-                                                                                                         "materials": {
-                                                                                                          "entity_alphatest": {
-                                                                                                            "defines": {},
-                                                                                                            "samplerStates": {},
-                                                                                                            "states": {},
-                                                                                                            "blend": {},
-                                                                                                            "stencil": {}
+                                                                                                          "materials": {
+                                                                                                           "entity_alphatest": {
+                                                                                                             "defines": [],
+                                                                                                             "+defines": [],
+                                                                                                             "-defines": [],
+                                                                                                             "samplerStates": [],
+                                                                                                             "+samplerStates": [],
+                                                                                                             "-samplerStates": [],
+                                                                                                             "states": [],
+                                                                                                             "+states": [],
+                                                                                                             "-states": []
+                                                                                                           }
                                                                                                           }
-                                                                                                         }
                                                                                                        }
                 """)));
         BrRenderControllers renderControllers = TestCodecUtil.unwrap(BrRenderControllers.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("""

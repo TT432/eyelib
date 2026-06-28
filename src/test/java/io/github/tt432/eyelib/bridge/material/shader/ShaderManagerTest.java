@@ -96,9 +96,8 @@ class ShaderManagerTest {
     @Test
     @DisplayName("loadFromResource with valid path returns non-empty string")
     void loadFromResource_validPath_returnsContent() {
-        // mods.toml is guaranteed to exist in the eyelib-material resource tree
-        String content = ShaderManager.loadFromResource("META-INF/mods.toml");
-        assertTrue(!content.isBlank(), "Should load mods.toml content");
+        String content = ShaderManager.loadFromResource("assets/eyelibmaterial/shaders/smoke.vert");
+        assertTrue(!content.isBlank(), "Should load shader content");
     }
 
     @Test
