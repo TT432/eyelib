@@ -45,8 +45,8 @@ public final class ForgeRenderStageSubscriberDiscovery implements RenderStageSub
 
                 String memberName = annotationData.memberName();
                 try {
-                    String className = extractClassName(memberName);
-                    String methodName = extractMethodName(memberName);
+                    String className = annotationData.clazz().getClassName();
+                    String methodName = stripDescriptor(memberName);
 
                     Class<?> clazz = Class.forName(className);
                     MethodHandle handle = LOOKUP.findStatic(clazz, methodName, SIGNATURE);
@@ -58,18 +58,6 @@ public final class ForgeRenderStageSubscriberDiscovery implements RenderStageSub
         }
 
         return entries;
-    }
-
-    private static String extractClassName(String memberName) {
-        String nameWithoutDesc = stripDescriptor(memberName);
-        int lastDot = nameWithoutDesc.lastIndexOf('.');
-        return nameWithoutDesc.substring(0, lastDot);
-    }
-
-    private static String extractMethodName(String memberName) {
-        String nameWithoutDesc = stripDescriptor(memberName);
-        int lastDot = nameWithoutDesc.lastIndexOf('.');
-        return nameWithoutDesc.substring(lastDot + 1);
     }
 
     private static String stripDescriptor(String memberName) {
