@@ -30,9 +30,7 @@ public final class ItemTrackRenderCache {
         long id = ItemTrackApi.getId(stack);
         RenderData<ItemStack> rd = CACHE.getOrCreate(id);
 
-        if (rd.getOwner() != stack) {
-            rd.init(stack);
-        }
+        rd.ensureOwner(stack);
 
         return rd;
     }

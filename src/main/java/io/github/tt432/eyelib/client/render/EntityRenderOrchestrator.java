@@ -132,9 +132,7 @@ public final class EntityRenderOrchestrator {
                 var cap = RenderData.getComponent(e);
 
                 if (e instanceof LivingEntity entity && cap != null) {
-                    if (cap.getOwner() != entity) {
-                        cap.init(entity);
-                    }
+                    cap.ensureOwner(entity);
 
                     MolangScope scope = cap.getScope();
                     if (scope == null) {
@@ -228,9 +226,7 @@ public final class EntityRenderOrchestrator {
 
     static List<Runnable> setup(Entity entity) {
         var cap = RenderData.getComponent(entity);
-        if (cap.getOwner() != entity) {
-            ((RenderData) cap).init(entity);
-        }
+        cap.ensureOwner(entity);
         return setupClientEntity(entity, cap);
     }
 
@@ -241,9 +237,7 @@ public final class EntityRenderOrchestrator {
         }
         var cap = data.renderData();
 
-        if (cap.getOwner() != entity) {
-            ((RenderData) cap).init(entity);
-        }
+        cap.ensureOwner(entity);
 
         if (cap.getScope() == null) {
             return false;
@@ -417,9 +411,7 @@ public final class EntityRenderOrchestrator {
     }
 
     static List<Runnable> setupClientEntity(Entity entity, RenderData<?> cap) {
-        if (cap.getOwner() != entity) {
-            ((RenderData) cap).init(entity);
-        }
+        cap.ensureOwner(entity);
 
         String entityId = RenderPorts.get().renderSystemPort.getEntityTypeId(entity);
         return setupClientEntity(entityId, cap);

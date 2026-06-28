@@ -81,6 +81,17 @@ public class RenderData<T> {
         return Optional.empty();
     }
 
+    /**
+     * 确保 owner 已绑定到当前对象；未绑定或绑定了别的对象时重新初始化。
+     * 这是 lazy-init 守卫的唯一合法位置（IQF 判据 Q-4），调用方不应再自行做 getOwner 比较。
+     */
+    @SuppressWarnings("unchecked")
+    public void ensureOwner(Object owner) {
+        if (getOwner() != owner) {
+            init((T) owner);
+        }
+    }
+
     @SuppressWarnings("unchecked")
     public void init(T owner) {
         this.owner = owner;
