@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.animation.bedrock.controller;
 
-import io.github.tt432.eyelib.animation.AnimationManager;
+import io.github.tt432.eyelib.animation.AnimationRegistries;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcParticleEffect;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcState;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSchema;
@@ -25,7 +25,7 @@ class BrAnimationControllerSpecTest {
 
     @AfterEach
     void tearDown() {
-        AnimationManager.INSTANCE.clear();
+        AnimationRegistries.animation().clear();
     }
 
     /** Mojang: initial_state 指定控制器的起始状态。不存在则回退到 "default"。 */

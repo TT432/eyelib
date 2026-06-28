@@ -45,7 +45,7 @@ public class RenderTypeBridgeSmoke {
     }
 
     public RenderTypeBridgeSmoke() {
-        Map<String, BrMaterialEntry> materials = MaterialManager.INSTANCE.getAllData();
+        Map<String, BrMaterialEntry> materials = MaterialManager.INSTANCE.all();
         LOGGER.info("[RenderTypeBridgeSmoke] Loaded {} materials", materials.size());
         require(!materials.isEmpty(), "No materials loaded from .mcpack");
 

@@ -1,10 +1,10 @@
 package io.github.tt432.eyelib.util.manager;
 
-import io.github.tt432.eyelib.client.manager.Manager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /** @author TT432 */
 class ManagerEventPublishBridgeTest {
@@ -14,12 +14,11 @@ class ManagerEventPublishBridgeTest {
     }
 
     @Test
-    void managerPutPublishesThroughInstalledPublisher() {
+    void publishManagerEntryChangedCallsInstalledPublisher() {
         RecordingPublisher publisher = new RecordingPublisher();
         ManagerEventPublishBridge.install(publisher);
 
-        TestManager manager = new TestManager();
-        manager.put("entry", "value");
+        ManagerEventPublishBridge.publishManagerEntryChanged("TestManager", "entry", "value");
 
         assertEquals("TestManager", publisher.managerName);
         assertEquals("entry", publisher.entryName);
@@ -30,11 +29,18 @@ class ManagerEventPublishBridgeTest {
     void installNullFallsBackToNoopPublisher() {
         ManagerEventPublishBridge.install(null);
 
-        TestManager manager = new TestManager();
-        manager.put("entry", "value");
+        ManagerEventPublishBridge.publishManagerEntryChanged("TestManager", "entry", "value");
     }
 
-    private static final class TestManager extends Manager<String> {
+    @Test
+    void resetClearsInstalledPublisher() {
+        RecordingPublisher publisher = new RecordingPublisher();
+        ManagerEventPublishBridge.install(publisher);
+        ManagerEventPublishBridge.reset();
+
+        ManagerEventPublishBridge.publishManagerEntryChanged("TestManager", "entry", "value");
+
+        assertNull(publisher.managerName);
     }
 
     private static final class RecordingPublisher implements ManagerEventPublisher {

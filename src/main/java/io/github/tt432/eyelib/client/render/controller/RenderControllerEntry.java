@@ -391,7 +391,7 @@ public record RenderControllerEntry(
      * 丢弃 Bedrock 低 alpha 像素的问题。
      */
     private static boolean isAlphatestMaterial(String materialName) {
-        var matMap = MaterialManager.INSTANCE.getAllData();
+        var matMap = MaterialManager.INSTANCE.all();
         var entry = matMap.get(materialName);
         if (entry == null) {
             // 尝试 suffix 查找
@@ -417,7 +417,7 @@ public record RenderControllerEntry(
     }
 
     private static boolean usesColorMask(String materialName) {
-        var matMap = MaterialManager.INSTANCE.getAllData();
+        var matMap = MaterialManager.INSTANCE.all();
         var entry = BrMaterialResolver.find(matMap, materialName).orElse(null);
         if (entry == null) {
             return false;

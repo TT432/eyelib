@@ -4,9 +4,9 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.animation.AnimationLookup;
+import io.github.tt432.eyelib.animation.AnimationRegistries;
 import io.github.tt432.eyelib.animation.bedrock.BrAnimation;
 import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationControllers;
-import io.github.tt432.eyelib.animation.AnimationManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class ClientAssetRegistryTest {
     @AfterEach
     void tearDown() {
-        AnimationManager.INSTANCE.clear();
+        AnimationRegistries.animation().clear();
     }
 
     @Test

@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.animation.bedrock.controller;
 
 import io.github.tt432.eyelib.animation.Animation;
 import io.github.tt432.eyelib.animation.AnimationEffects;
-import io.github.tt432.eyelib.animation.AnimationManager;
+import io.github.tt432.eyelib.animation.AnimationRegistries;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcState;
 import io.github.tt432.eyelib.molang.MolangScope;
@@ -23,14 +23,14 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 class BrAnimationControllerStateOwnerTest {
     @AfterEach
     void tearDown() {
-        AnimationManager.INSTANCE.clear();
+        AnimationRegistries.animation().clear();
     }
 
     @Test
     void tickAnimationInitializesControllerState() {
         AtomicInteger createdStates = new AtomicInteger();
         TestAnimation child = new TestAnimation("animation.test.child", createdStates);
-        AnimationManager.INSTANCE.put(child.name(), child);
+        AnimationRegistries.animation().put(child.name(), child);
 
         BrAcState state = new BrAcState(
                 Map.of("slot.main", MolangValue.ONE),
@@ -58,7 +58,7 @@ class BrAnimationControllerStateOwnerTest {
     void tickAnimationCachesChildAnimationState() {
         AtomicInteger createdStates = new AtomicInteger();
         TestAnimation child = new TestAnimation("animation.test.child", createdStates);
-        AnimationManager.INSTANCE.put(child.name(), child);
+        AnimationRegistries.animation().put(child.name(), child);
 
         BrAcState state = new BrAcState(
                 Map.of("slot.main", MolangValue.ONE),

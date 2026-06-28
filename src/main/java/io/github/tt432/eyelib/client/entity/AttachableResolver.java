@@ -41,7 +41,7 @@ public final class AttachableResolver {
 
     @Nullable
     public static BrClientEntity resolveByItemId(String itemId) {
-        for (BrClientEntity attachable : AttachableManager.INSTANCE.getAllData().values()) {
+        for (BrClientEntity attachable : AttachableManager.INSTANCE.all().values()) {
             if (attachable.item().containsKey(itemId)) {
                 return attachable;
             }

@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.animation.bedrock.controller;
 import io.github.tt432.eyelib.animation.Animation;
 import io.github.tt432.eyelib.animation.AnimationEffects;
 import io.github.tt432.eyelib.animation.AnimationLookup;
-import io.github.tt432.eyelib.animation.AnimationManager;
+import io.github.tt432.eyelib.animation.AnimationRegistries;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcState;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSchema;
@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class BrAnimationControllerBehaviorTest {
     @AfterEach
     void tearDown() {
-        AnimationManager.INSTANCE.clear();
+        AnimationRegistries.animation().clear();
     }
 
     @Test
@@ -48,7 +48,7 @@ class BrAnimationControllerBehaviorTest {
     @Test
     void allAnimationFinishedDelegatesToChildAllAnimationFinished() {
         TestAnimation child = new TestAnimation("animation.test.idle", true, false);
-        AnimationManager.INSTANCE.put(child.name(), child);
+        AnimationRegistries.animation().put(child.name(), child);
 
         BrAcState state = new BrAcState(
                 Map.of("slot.main", MolangValue.ONE),

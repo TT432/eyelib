@@ -81,7 +81,7 @@ public class ModelComponent {
     public RenderType getRenderType(Identifier texture) {
     //?}
         if (serializableInfo == null) return null;
-        var matMap = MaterialManager.INSTANCE.getAllData();
+        var matMap = MaterialManager.INSTANCE.all();
         var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().path()).orElse(null);
         if (entry != null) {
             PortResourceLocation portTex = ResourceLocationBridge.fromMc(texture);
@@ -97,7 +97,7 @@ public class ModelComponent {
 
     public boolean isSolid() {
         if (serializableInfo == null) return true;
-        var matMap = MaterialManager.INSTANCE.getAllData();
+        var matMap = MaterialManager.INSTANCE.all();
         var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().path()).orElse(null);
         if (entry != null) {
             return RenderTypeResolver.isSolid(entry, matMap);
@@ -108,7 +108,7 @@ public class ModelComponent {
 
     public boolean usesColorMask() {
         if (serializableInfo == null) return false;
-        var matMap = MaterialManager.INSTANCE.getAllData();
+        var matMap = MaterialManager.INSTANCE.all();
         var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().path()).orElse(null);
         if (entry == null) {
             return false;

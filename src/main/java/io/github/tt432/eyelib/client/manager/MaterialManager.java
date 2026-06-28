@@ -1,12 +1,14 @@
 package io.github.tt432.eyelib.client.manager;
 
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-/**
- * @author TT432
- */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class MaterialManager extends Manager<BrMaterialEntry> {
-    public static final MaterialManager INSTANCE = new MaterialManager();
+import io.github.tt432.eyelib.util.manager.ManagerEventPublishBridge;
+import io.github.tt432.eyelib.util.registry.Registry;
+
+/** @author TT432 */
+public final class MaterialManager {
+    public static final Registry<BrMaterialEntry> INSTANCE =
+            new Registry<>("MaterialManager", ManagerEventPublishBridge::publishManagerEntryChanged);
+
+    private MaterialManager() {
+    }
 }

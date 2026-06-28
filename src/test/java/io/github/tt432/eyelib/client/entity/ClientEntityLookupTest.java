@@ -31,7 +31,7 @@ class ClientEntityLookupTest {
 
     @Test
     void managerNameExposesUnderlyingClientEntityManagerName() {
-        assertEquals("ClientEntityManager", ClientEntityManager.INSTANCE.getManagerName());
+        assertEquals("ClientEntityManager", ClientEntityManager.INSTANCE.managerName());
     }
 
     private static BrClientEntity testEntity() {

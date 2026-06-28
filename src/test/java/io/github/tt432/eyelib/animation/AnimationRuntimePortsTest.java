@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.animation;
 
 import io.github.tt432.eyelib.animation.AnimationComponent;
-import io.github.tt432.eyelib.animation.AnimationManager;
+import io.github.tt432.eyelib.animation.AnimationRegistries;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 class AnimationRuntimePortsTest {
     @AfterEach
     void tearDown() {
-        AnimationManager.INSTANCE.clear();
+        AnimationRegistries.animation().clear();
     }
 
     @Test
@@ -58,7 +58,7 @@ class AnimationRuntimePortsTest {
                 tickCalls.incrementAndGet();
             }
         };
-        AnimationManager.INSTANCE.put(animation.name(), animation);
+        AnimationRegistries.animation().put(animation.name(), animation);
 
         AnimationComponent component = new AnimationComponent();
         component.setup(Map.of("controller.main", animation.name()), Map.of("controller.main", MolangValue.ONE));

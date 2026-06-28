@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.animation;
 
-import io.github.tt432.eyelib.animation.AnimationManager;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.molang.MolangScope;
 
@@ -13,7 +12,7 @@ import java.util.Map;
 public interface Animation {
     /**
      * @return name
-     * @see AnimationManager
+     * @see AnimationRegistries
      */
     String name();
 

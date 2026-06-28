@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.capability.component;
 import io.github.tt432.eyelib.animation.Animation;
 import io.github.tt432.eyelib.animation.AnimationComponent;
 import io.github.tt432.eyelib.animation.AnimationEffects;
-import io.github.tt432.eyelib.animation.AnimationManager;
+import io.github.tt432.eyelib.animation.AnimationRegistries;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
@@ -20,13 +20,13 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 class AnimationComponentSerializableInfoTest {
     @AfterEach
     void tearDown() {
-        AnimationManager.INSTANCE.clear();
+        AnimationRegistries.animation().clear();
     }
 
     @Test
     void setInfoCarriesBindingsButRecreatesRuntimeAnimationState() {
         TestAnimation animation = new TestAnimation("animation.test.walk");
-        AnimationManager.INSTANCE.put(animation.name(), animation);
+        AnimationRegistries.animation().put(animation.name(), animation);
 
         AnimationComponent source = new AnimationComponent();
         source.setup(

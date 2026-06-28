@@ -1,9 +1,10 @@
 package io.github.tt432.eyelib.client.registry;
 
 import io.github.tt432.eyelib.animation.Animation;
-import io.github.tt432.eyelib.animation.AnimationManager;
+import io.github.tt432.eyelib.animation.AnimationRegistries;
 import io.github.tt432.eyelib.animation.bedrock.BrAnimation;
 import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationControllers;
+import io.github.tt432.eyelib.util.registry.Registry;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import java.util.LinkedHashMap;
@@ -34,14 +35,16 @@ public final class AnimationAssetRegistry {
         for (BrAnimationControllers value : stagedControllers.values()) {
             value.animationControllers().forEach(flattened::put);
         }
-        AnimationManager.INSTANCE.replaceAll(flattened);
+        AnimationRegistries.animation().replaceAll(flattened);
     }
 
     public static void publishAnimation(BrAnimation animation) {
-        animation.animations().forEach(AnimationManager.INSTANCE::put);
+        Registry<Animation> registry = AnimationRegistries.animation();
+        animation.animations().forEach(registry::put);
     }
 
     public static void publishAnimationController(BrAnimationControllers controller) {
-        controller.animationControllers().forEach(AnimationManager.INSTANCE::put);
+        Registry<Animation> registry = AnimationRegistries.animation();
+        controller.animationControllers().forEach(registry::put);
     }
 }

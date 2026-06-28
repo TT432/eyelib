@@ -1,10 +1,14 @@
 package io.github.tt432.eyelib.client.manager;
 
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import io.github.tt432.eyelib.util.manager.ManagerEventPublishBridge;
+import io.github.tt432.eyelib.util.registry.Registry;
+
 /** @author TT432 */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class AttachableManager extends Manager<BrClientEntity> {
-    public static final AttachableManager INSTANCE = new AttachableManager();
+public final class AttachableManager {
+    public static final Registry<BrClientEntity> INSTANCE =
+            new Registry<>("AttachableManager", ManagerEventPublishBridge::publishManagerEntryChanged);
+
+    private AttachableManager() {
+    }
 }

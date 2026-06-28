@@ -44,7 +44,7 @@ public class AnsEntitySmoke {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnsEntitySmoke.class);
 
     public AnsEntitySmoke() {
-        var clientEntities = ClientEntityManager.INSTANCE.getAllData();
+        var clientEntities = ClientEntityManager.INSTANCE.all();
 
         Set<String> mcEntityIds = new TreeSet<>();
         //? if <26.1 {
@@ -115,7 +115,7 @@ public class AnsEntitySmoke {
         if (geometryMap.isEmpty()) {
             return;
         }
-        var models = ModelManager.INSTANCE.getAllData();
+        var models = ModelManager.INSTANCE.all();
         for (var entry : geometryMap.entrySet()) {
             String geoId = entry.getValue();
             if (!models.containsKey(geoId)) {

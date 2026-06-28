@@ -4,7 +4,7 @@ import io.github.tt432.eyelib.animation.Animation;
 import io.github.tt432.eyelib.animation.AnimationComponent;
 import io.github.tt432.eyelib.animation.AnimationEffects;
 import io.github.tt432.eyelib.animation.AnimationLookup;
-import io.github.tt432.eyelib.animation.AnimationManager;
+import io.github.tt432.eyelib.animation.AnimationRegistries;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
@@ -20,12 +20,12 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class AnimationComponentRuntimeInvalidationTest {
     @AfterEach
     void tearDown() {
-        AnimationManager.INSTANCE.clear();
+        AnimationRegistries.animation().clear();
     }
 
     @Test
     void managerEventInvalidatesSerializableInfoOnlyForMatchingAnimationEntry() {
-        AnimationManager.INSTANCE.put("animation.walk", new TestAnimation("animation.walk"));
+        AnimationRegistries.animation().put("animation.walk", new TestAnimation("animation.walk"));
 
         AnimationComponent component = new AnimationComponent();
         component.setup(

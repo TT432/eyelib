@@ -64,7 +64,7 @@ public class BrAttachableLoader extends BrResourcesLoader implements Searchable<
 
     @Override
     public Stream<Map.Entry<String, BrClientEntity>> search(String searchStr) {
-        return AttachableManager.INSTANCE.getAllData().entrySet().stream()
+        return AttachableManager.INSTANCE.all().entrySet().stream()
                                 .filter(entry -> StringUtils.contains(entry.getKey(), searchStr))
                                 .map(entry -> Map.entry(entry.getKey(), entry.getValue()));
     }
