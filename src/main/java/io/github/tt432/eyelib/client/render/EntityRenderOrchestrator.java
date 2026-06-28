@@ -83,7 +83,7 @@ public final class EntityRenderOrchestrator {
     private EntityRenderOrchestrator() {
     }
 
-    static {
+    public static void wirePorts() {
         RenderPorts ports = RenderPorts.install();
         ports.renderBufferPort = EntityRenderOrchestrator::renderEntities;
         ports.renderEntityPort = EntityRenderOrchestrator::renderEntityFromParams;

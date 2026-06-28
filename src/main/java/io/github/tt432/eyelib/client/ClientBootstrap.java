@@ -25,13 +25,8 @@ public final class ClientBootstrap {
     private ClientBootstrap() {
     }
 
-    static {
-        try {
-            Class.forName(EntityRenderOrchestrator.class.getName(), true,
-                    EntityRenderOrchestrator.class.getClassLoader());
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+    public static void wire() {
+        EntityRenderOrchestrator.wirePorts();
         ModelPreviewScreenHook.openScreenSupplier = ModelPreviewScreen::new;
         AnimationViewHook.openScreenSupplier = AnimationView::new;
         ScreenPort.register(EyelibManagerScreen::create);
