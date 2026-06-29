@@ -35,6 +35,7 @@ public class ItemStackMixin {
     /**
      * 堆叠比较时忽略追踪 ID NBT 标签，避免不同 ID 的同种物品无法堆叠。
      */
+    //? if <1.20.6 {
     @WrapOperation(method = "isSameItemSameTags", at = @At(value = "INVOKE", target = "Ljava/util/Objects;equals(Ljava/lang/Object;Ljava/lang/Object;)Z"))
     private static boolean removeTrackIdOnTagCompare(Object a, Object b, Operation<Boolean> original) {
         if (original.call(a, b)) {
@@ -51,4 +52,5 @@ public class ItemStackMixin {
 
         return false;
     }
+    //?}
 }

@@ -17,7 +17,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.RegistryObject;
 //?} else {
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.registries.DeferredHolder;
 //?}
 
@@ -33,8 +32,6 @@ import java.util.function.Supplier;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 //? if <1.20.6 {
 @Mod.EventBusSubscriber
-//?} else {
-@EventBusSubscriber(modid = "eyelib")
 //?}
 public class EyelibAttachableData {
 

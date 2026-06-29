@@ -50,8 +50,6 @@ public final class EntityExtraDataRuntimeHooks {
     @SubscribeEvent
     //? if <1.20.6 {
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
-    //?} elif <26.1 {
-    public static void onLivingTick(EntityTickEvent event) {
     //?} else {
     public static void onLivingTick(EntityTickEvent.Pre event) {
     //?}

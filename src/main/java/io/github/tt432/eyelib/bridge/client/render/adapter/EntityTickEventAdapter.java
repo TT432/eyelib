@@ -10,11 +10,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-//?} elif <26.1 {
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.tick.EntityTickEvent;
 //?} else {
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -39,8 +34,6 @@ public final class EntityTickEventAdapter {
     @SubscribeEvent
     //? if <1.20.6 {
     public static void onEvent(LivingEvent.LivingTickEvent event) {
-    //?} elif <26.1 {
-    public static void onEvent(EntityTickEvent event) {
     //?} else {
     public static void onEvent(EntityTickEvent.Pre event) {
     //?}

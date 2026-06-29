@@ -30,6 +30,9 @@ public class Eyelib {
 
         try {
             Class.forName("io.github.tt432.eyelib.capability.AttachableDataTypes");
+            //? if >=1.20.6 {
+            Class.forName("io.github.tt432.eyelib.bridge.capability.EyelibAttachableData");
+            //?}
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }

@@ -21,7 +21,7 @@ from typing import Optional, Callable
 from mcp.server.fastmcp import FastMCP
 
 
-MCP_VERSION = "1.5.0"
+MCP_VERSION = "1.5.1"
 
 
 # ── Configuration ──────────────────────────────────────────────
@@ -266,7 +266,10 @@ async def _poll_until_loaded(
         last_loaded = loaded
         if loaded and loaded.get("loaded") is True:
             elapsed = time.time() - start
-            return None, f"Loaded after {elapsed:.0f}s"
+            screen = loaded.get("screen")
+            if screen and ("Error" in screen or "Crash" in screen or "Fatal" in screen):
+                return "broken", f"Broken mod state: screen={screen}"
+            return None, f"Loaded after {elapsed:.0f}s (screen={screen})"
         if loaded is None:
             consecutive_loaded_fails += 1
             if consecutive_loaded_fails >= 2:
@@ -350,6 +353,7 @@ async def _read_game_state() -> dict:
         return {"state": "loading", "version": http_version or _proc_version}
 
     loaded = loaded_data.get("loaded") is True
+    screen = loaded_data.get("screen")
 
     if loaded:
         enter_data = await _http_get("/enterdworld")
@@ -366,7 +370,10 @@ async def _read_game_state() -> dict:
     else:
         state = "loading"
 
-    return {"state": state, "version": _proc_version, "dimension": dimension}
+    result = {"state": state, "version": _proc_version, "dimension": dimension}
+    if screen:
+        result["screen"] = screen
+    return result
 
 
 def _state_summary(gs: dict) -> str:
@@ -375,6 +382,8 @@ def _state_summary(gs: dict) -> str:
         parts.append(f"version={gs['version']}")
     if gs.get("dimension"):
         parts.append(f"dimension={gs['dimension']}")
+    if gs.get("screen"):
+        parts.append(f"screen={gs['screen']}")
     summary = " | ".join(parts)
     if gs.get("crash"):
         summary += f"\n{gs['crash']}"
@@ -549,7 +558,8 @@ async def eyelib_debug_launch(timeout: int = 120, version: str = "1.20.1") -> st
 
     err_type, err_msg = await _poll_until_loaded(timeout=max(timeout - 5, 30), interval=3)
     if err_type:
-        return f"❌ Game {'crashed' if err_type == 'crash' else 'timed out'} during loading. {err_msg}"
+        label = {"crash": "crashed", "timeout": "timed out", "broken": "in broken state"}.get(err_type, err_type)
+        return f"❌ Game {label} during loading. {err_msg}"
 
     ping = await _http_get("/ping")
     if ping is None:
@@ -628,6 +638,7 @@ async def eyelib_debug_status(info: str = "summary") -> str:
             f"MCP version: {MCP_VERSION}",
             f"State: {gs['state']}",
             f"Version: {gs.get('version', 'N/A')}",
+            f"Screen: {gs.get('screen', 'N/A')}",
             f"Dimension: {gs.get('dimension') or 'N/A'}",
             f"Tracked process alive: {await _proc_alive()}",
         ]

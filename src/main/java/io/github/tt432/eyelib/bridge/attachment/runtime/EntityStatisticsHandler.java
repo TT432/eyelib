@@ -31,8 +31,6 @@ public class EntityStatisticsHandler {
     @SubscribeEvent
     //? if <1.20.6 {
     public static void onEvent(LivingEvent.LivingTickEvent event) {
-    //?} elif <26.1 {
-    public static void onEvent(EntityTickEvent event) {
     //?} else {
     public static void onEvent(EntityTickEvent.Pre event) {
     //?}
