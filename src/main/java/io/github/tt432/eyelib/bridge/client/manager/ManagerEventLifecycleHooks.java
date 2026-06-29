@@ -16,8 +16,10 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 /** @author TT432 */
 //? if <1.20.6 {
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
-//?} else {
+//?} elif <26.1 {
 @EventBusSubscriber(modid = "eyelib", value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+//?} else {
+@EventBusSubscriber(modid = "eyelib", value = Dist.CLIENT)
 //?}
 public final class ManagerEventLifecycleHooks {
     private ManagerEventLifecycleHooks() {

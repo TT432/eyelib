@@ -22,8 +22,10 @@ import org.lwjgl.glfw.GLFW;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 //? if <1.20.6 {
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
-//?} else {
+//?} elif <26.1 {
 @EventBusSubscriber(modid = "eyelib", value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+//?} else {
+@EventBusSubscriber(modid = "eyelib", value = Dist.CLIENT)
 //?}
 public final class ManagerScreenKeybinds {
     //? if <26.1 {

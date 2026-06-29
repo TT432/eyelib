@@ -18,8 +18,10 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
  */
 //? if <1.20.6 {
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
-//?} else {
+//?} elif <26.1 {
 @EventBusSubscriber(modid = "eyelib", bus = EventBusSubscriber.Bus.MOD)
+//?} else {
+@EventBusSubscriber(modid = "eyelib")
 //?}
 public final class RenderStageLifecycleHooks {
     private RenderStageLifecycleHooks() {
