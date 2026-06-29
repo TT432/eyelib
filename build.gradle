@@ -324,7 +324,11 @@ dependencies {
     compileOnly("maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha")
 
     compileOnly 'io.github.tt432:clientsmokeannotation:1.0.0'
-    localRuntime "io.github.tt432:${isModern ? 'clientsmoke-neoforge' : 'clientsmoke'}:${version}"
+    if (isLegacyForge) {
+        localRuntime "io.github.tt432:clientsmoke:${version}"
+    } else if (isModern) {
+        localRuntime "io.github.tt432:clientsmoke-neoforge:${version}"
+    }
 
     if (hasAdditionalRuntimeClasspath) {
         jarJar additionalRuntimeClasspath(implementation('io.github.dmlloyd:jdk-classfile-backport:24.0'))

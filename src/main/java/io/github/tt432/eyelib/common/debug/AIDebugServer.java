@@ -149,7 +149,7 @@ public final class AIDebugServer {
                         //?} elif <26.1 {
                         LevelSettings levelSettings = new LevelSettings(
                                 finalName, GameType.CREATIVE, false, Difficulty.NORMAL,
-                                true, null, WorldDataConfiguration.DEFAULT);
+                                true, new GameRules(), WorldDataConfiguration.DEFAULT);
                         WorldOptions worldOptions = new WorldOptions(0L, true, false);
                         mc.createWorldOpenFlows().createFreshLevel(
                                 finalName, levelSettings, worldOptions,
