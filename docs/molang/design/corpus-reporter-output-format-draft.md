@@ -7,7 +7,6 @@
 ## Relationship To Other Docs
 - `corpus-linter-runner-draft.md` defines the execution flow.
 - `strict-debug-diagnostics-mode-draft.md` defines diagnostic structures that reports may include.
-- `policy-pack-selection-configuration-draft.md` defines effective pack-selection metadata that reports should expose.
 
 ## Repository Boundary Reminder
 - This is a report contract draft, not a final UI/CLI presentation design.

@@ -27,7 +27,7 @@ S 测试：往 ComponentStore 塞数据 → 调 System → 断言输出。不需
 ## Component 存储
 
 ```java
-// eyelib-bridge: ComponentStore.java
+// bridge.molang 包: ComponentStore.java
 public final class ComponentStore {
     private final Map<String, Object> values = new HashMap<>();
     public void put(String key, Object value) { values.put(key, value); }

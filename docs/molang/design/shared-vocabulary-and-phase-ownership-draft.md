@@ -7,7 +7,7 @@
 ## Relationship To Other Docs
 - `molang-ast-and-semantics-draft.md` defines the high-level semantic split.
 - `host-injection-api-draft.md`, `host-adapter-registry-draft.md`, `callable-discovery-annotation-draft.md`, and `query-variant-registry-draft.md` all consume the vocabulary here.
-- `binder-normalization-contract-draft.md` and `runtime-specialization-contract-draft.md` consume the phase-ownership rules here.
+- `binder-normalization-contract-draft.md` consumes the phase-ownership rules here.
 
 ---
 

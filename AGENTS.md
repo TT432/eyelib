@@ -8,7 +8,7 @@
 
 ## Repository Shape
 - **实际架构**: 六边形(Ports & Adapters) + 包边界模块化单体 + ECS + Stonecutter 多版本。**不是 DDD** —— 无 Aggregate/Repository/Domain Event 等战术模式;是 Bedrock 规范复刻,战略 DDD 的限界上下文思想体现在包边界上。详见 :docs/decisions/0002-module-boundaries.md:。
-- **构建模型**: 单 Gradle project(:docs/decisions/0014-flat-merge.md:),通过 :Stonecutter: `centralScript` 同时维护多版本 MC(当前 `1.20.1` legacyforge + `1.21.1` neoforge)。`clientsmoke/` 是 composite build(烟雾测试框架),不属于主 project。
+- **构建模型**: 单 Gradle project(:docs/decisions/0014-flat-merge.md:),通过 :Stonecutter: `centralScript` 同时维护多版本 MC(注册 `1.20.1`(legacyforge,active)、`1.21.1`(neoforge)、`26.1.2` 三节点,详见 :docs/decisions/0015-stonecutter-multi-version.md:)。`clientsmoke/` 是 composite build(烟雾测试框架),不属于主 project。
 - **源码布局**: 全部源码在 `src/main/java/io/github/tt432/eyelib/<module>/`,包边界(`io.github.tt432.eyelib.<module>`)定义真实架构。模块包不得依赖 root 编排包(`io.github.tt432.eyelib.client`、`io.github.tt432.eyelib.common`)。
 - **模块清单**: :MODULES.md: 由 `:generateModulesMd` 从 `src/main/java/io/github/tt432/eyelib/*/package-info.java` **自动生成**,不得手编。
 - **核心模式**: 保留现有的 manager / loader / visitor / codec 模式。
@@ -136,7 +136,7 @@ import org.jspecify.annotations.NullMarked;
 - **JDTLS is explicitly prohibited.** All tooling integration uses JetBrains MCP.
 - All Gradle commands must use JetBrains MCP (`jetbrain_build_project`, `jetbrain_run_gradle_tasks`). Never run `./gradlew` in shell.
 - **Stonecutter 多版本**:
-  - `build.gradle` 是 `centralScript`,每个 version node(`:1.20.1`、`:1.21.1`)都跑一次。版本特定代码用 `//?` 注释切分,放在 `versions/<mc-version>/` 下。
+  - `build.gradle` 是 `centralScript`,每个 version node(`:1.20.1`、`:1.21.1`、`:26.1.2`)都跑一次。版本特定代码用 `//?` 注释切分,放在 `versions/<mc-version>/` 下。
   - active version 在 `stonecutter.gradle` 里(`stonecutter.active '1.20.1'`)。跑 task 用 node 前缀:`:1.20.1:test`、`:1.20.1:generateModulesMd` 等。
   - 切 active version 后必须 sync IDE,否则 source set 显示错位。
 - **Game restarts**: close running clients via debug HTTP `/eval` → `minecraft.stop()`, never `kill` java processes from shell.

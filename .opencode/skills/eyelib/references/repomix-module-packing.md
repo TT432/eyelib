@@ -17,29 +17,9 @@ python3 -m venv /tmp/ds-tokenizer
 
 **DeepSeek V3/V4 上下文窗口 = 1M tokens**。128K 是过时信息。
 
-## 全模块 Token 表 (2026-06, main-only)
+## 全模块 Token 估算
 
-DeepSeek 分词器，不含 test 和 build 产物，14 模块:
-
-| 模块 | DS tokens | 1M 占比 | 大小 | 文件数 |
-|---|---|---|---|---|
-| root (主模块) | 131,883 | 13.2% | 550 KB | 180 |
-| eyelib-importer | 80,088 | 8.0% | 339 KB | 104 |
-| eyelib-behavior | 62,156 | 6.2% | 238 KB | 211 |
-| eyelib-molang | 56,123 | 5.6% | 244 KB | 81 |
-| eyelib-particle | 38,461 | 3.8% | 160 KB | 87 |
-| eyelib-util | 34,194 | 3.4% | 118 KB | 57 |
-| eyelib-material | 28,336 | 2.8% | 119 KB | 45 |
-| eyelib-animation | 24,603 | 2.5% | 107 KB | 49 |
-| clientsmoke | 19,072 | 1.9% | 80 KB | 15 |
-| eyelib-bridge | 17,507 | 1.8% | 72 KB | 14 |
-| eyelib-attachment | 15,920 | 1.6% | 67 KB | 45 |
-| eyelib-model | 7,702 | 0.8% | 29 KB | 24 |
-| eyelib-track | 5,208 | 0.5% | 19 KB | 18 |
-| eyelib-network | 2,161 | 0.2% | 9 KB | 6 |
-| **合计** | **523,414** | **52.3%** | **2.1 MB** | **936** |
-
-全量 14 模块加起来仅占 1M 的 52%，可以一次性全部装入上下文。
+ADR-0014 前(14 子项目时代)全量约 523K DS tokens(1M 的 52%)。ADR-0014 flat-merge 后单 project 结构相近，可用 `scripts/repomix_main_only.py` 重新统计(默认输出 ~465K tokens)。
 
 ## 单模块打包
 
@@ -109,8 +89,8 @@ print(f'DeepSeek tokens: {len(ds_token.encode(text)):,}')
 
 ```
 delegate_task(
-  goal="分析 eyelib-molang 模块架构",
-  context="模块打包文件在 /tmp/eyelib-module-eyelib-molang.md，用 read_file 读取",
+  goal="分析 molang 模块架构",
+  context="模块打包文件在 /tmp/eyelib-module-molang.md，用 read_file 读取",
   toolsets=["terminal", "file"]
 )
 ```

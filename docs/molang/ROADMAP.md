@@ -62,7 +62,7 @@ Evidence from the current tree:
 
 | Phase | Status | Evidence | Current rule |
 |---|---|---|---|
-| Phase 0 - Overview and boundaries | `Done / maintain` | `refactor-plan/00-overview-and-boundaries.md`, `docs/decisions/0002-module-boundaries.md`, generated-code policy | Keep boundary docs aligned when ownership changes. |
+| Phase 0 - Overview and boundaries | `Done / maintain` | `docs/decisions/0002-module-boundaries.md`, generated-code policy | Keep boundary docs aligned when ownership changes. |
 | Phase 1 - Corpus and harness | `Current / partial` | corpus loader, linter, harness, parse runner, phase1 resources, corpus tests | Continue using `./gradlew :1.20.1:test`; add dedicated runner command only when it exists. |
 | Phase 2 - Parser and AST | `Done` | `compiler/frontend/ast/`, handwritten frontend, frontend tests; ANTLR-generated parser removed | Handwritten parser is the sole frontend; all parser work is AST-driven. |
 | Phase 3 - Binder and diagnostics | `Current / partial` | `compiler/binding/`, `src/test/java/io/github/tt432/eyelib/molang/compiler/binding/MolangBinderTest.java` for typed deferred loop break/continue coverage in normal/strict/debug modes, normal deferred unsupported warnings, alias canonicalization coverage for all four roots (`q/t/v/c`), bind-shape/diagnostics/debug-trace corpus support, 5 deferred reason types (`UNSUPPORTED_IN_THIS_SLICE`, `HOST_SHAPE_DEPENDENT`, `QUERY_VARIANT_SELECTION_DEPENDENT`, `COMPATIBILITY_POLICY_DEPENDENT`, `DIAGNOSTICS_OVERLAY_OWNED_FOLLOWUP`) | Widen binder families through tests; keep unsupported semantics explicit via deferred notes plus normal warnings, and keep the typed deferred break/continue lane narrow until broader Phase 3 widening is separately planned. |
@@ -93,7 +93,7 @@ Evidence from the current tree:
 
 ### M4 - Resolve Phase 4 host/query gates before implementation
 
-Before host/query bridge implementation starts, keep this roadmap and `refactor-plan/04-host-and-query-bridge.md` aligned with the recorded Phase 4 decisions and required pre-implementation test surfaces:
+Before host/query bridge implementation starts, keep this roadmap and `refactor-plan/06-host-context-alignment.md` aligned with the recorded Phase 4 decisions and required pre-implementation test surfaces:
 
 - Bounded callable parameter-role inference, with explicit metadata required for injected and special engine arguments.
 - One unified host publication registry with internal adapter categories, not separate service-specific registries.

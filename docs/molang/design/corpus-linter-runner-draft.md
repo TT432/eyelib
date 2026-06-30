@@ -7,7 +7,6 @@
 ## Relationship To Other Docs
 - `executable-corpus-format-draft.md` defines the on-disk case format.
 - `strict-debug-diagnostics-mode-draft.md` defines mode-aware expectations.
-- `compatibility-policy-pack-draft.md` defines policy-pack-aware execution.
 - `binder-normalization-contract-draft.md` defines what bind-phase assertions should inspect.
 
 ## Repository Boundary Reminder

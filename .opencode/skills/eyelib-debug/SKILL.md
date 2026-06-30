@@ -185,9 +185,9 @@ org.apache.logging.log4j.core.config.Configurator.setLevel(
 
 ## 已知限制
 
-- **Bridge 模块 Forge dev 声明要求** — 新建 Forge 子项目必须：1) `mods.toml` 含完整 `[[mods]]`；2) 至少一个 `@Mod` 注解类；3) 根模块 `build.gradle` 加 `api`/`modImplementation`/`jarJar` 三行
+- **Bridge 模块 Forge dev 声明要求** — 根模块必须：1) `mods.toml` 含完整 `[[mods]]`；2) 至少一个 `@Mod` 注解类；3) `build.gradle` 加 `api`/`modImplementation`/`jarJar` 三行
 - **Bridge → Domain 单向依赖，禁止反向**
-- **Port 共享规则** — 多 domain 模块共享的 Port 移至 `eyelib-util`
+- **Port 共享规则** — 多 domain 模块共享的 Port 移至 `util` 包
 - **PortFriendlyByteBuf 不可用于 StreamCodec** — Mojang 的 `StreamCodec<T>` 强制要求 `FriendlyByteBuf`
 
 ## Common Pitfalls

@@ -4,11 +4,11 @@
 
 ## Port 设计
 
-### 1. Port 必须用 public，放在 eyelib-util
+### 1. Port 必须用 public，放在 util 包
 
-包级可见（不加 public）的 Port 接口无法跨模块使用。eyelib-behavior 依赖 eyelib-material 但看不到 material/port/ 的包私有接口 → 编译失败。**所有 Port 接口/record 必须声明为 `public`。** `port-design-template.md` 中"不加 public"的规则是错误的——已在 pitfall 中记录。
+包级可见（不加 public）的 Port 接口无法跨模块使用。behavior 依赖 material 但看不到 material/port/ 的包私有接口 → 编译失败。**所有 Port 接口/record 必须声明为 `public`。** `port-design-template.md` 中"不加 public"的规则是错误的——已在 pitfall 中记录。
 
-**正确做法：** 被多个模块需要的 Port 放在 `eyelib-util` 中，声明为 `public`。eyelib-util 零依赖，所有模块都可引用。
+**正确做法：** 被多个模块需要的 Port 放在 `util` 包中，声明为 `public`。util 包零依赖，所有模块都可引用。
 
 迁移到 util 的 Port：`PortStringRepresentable`、`PortResourceLocation`。
 

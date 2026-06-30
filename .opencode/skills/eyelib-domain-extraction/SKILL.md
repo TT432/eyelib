@@ -18,7 +18,7 @@ metadata:
 
 - 已读完 ADR-0010（六边形架构，为什么拆）
 - 已读完 `docs/architecture/domain-module-map.md`（当前模块需要哪些 Port）
-- `eyelib-bridge` 子项目骨架已创建
+- `bridge` 包已存在（ADR-0014 后为包非子项目）
 - 编译用 JetBrains MCP(`jetbrain_build_project` 或 `jetbrain_run_gradle_tasks`),**禁止 shell gradlew**(详见 AGENTS.md Tooling Restrictions)
 
 ## 提取流程
@@ -26,7 +26,7 @@ metadata:
 ### Step 1：确认目标任务
 
 从 `domain-module-map.md` 取出待处理 Port。例：
-> 任务：为 `eyelib-material` 创建 `PortStringRepresentable`，替换所有 `net.minecraft.util.StringRepresentable`
+> 任务：为 `material` 模块创建 `PortStringRepresentable`，替换所有 `net.minecraft.util.StringRepresentable`
 
 ### Step 2：定位所有 MC 接触点
 
@@ -40,7 +40,7 @@ grep -rn "import net.minecraft" src/main/java/ --include="*.java"
 - **渲染类型**（`RenderType`, `RenderStateShard`）→ 改用 Port 接口
 - 其他 → 判断是否新建 Port 或直接迁移到 bridge
 
-**重复枚举检查：** eyelib-material 的 `gl/` 和 `shared/` 两处有同名枚举（BlendFactor、GLStates、DepthFunc）。`shared/` 是抽象版（CODEC 用），`gl/` 映射 GL 常量。两处都需要改 implements。
+**重复枚举检查：** material 模块的 `gl/` 和 `shared/` 两处有同名枚举（BlendFactor、GLStates、DepthFunc）。`shared/` 是抽象版（CODEC 用），`gl/` 映射 GL 常量。两处都需要改 implements。
 
 ### Step 3：创建 Port 接口
 
@@ -131,7 +131,7 @@ public interface PortRenderContext { long dayTime(); long gameTime(); float came
 
 ### 返回值类型
 
-只能用 Java 标准库、`eyelib-util` 类型、或同 domain 模块类型。禁止 `Object`。
+只能用 Java 标准库、`util` 包类型、或同 domain 模块类型。禁止 `Object`。
 
 ### 命名规范
 
@@ -187,7 +187,7 @@ public interface PortStringRepresentable {
 
 1. **Port 接口 import 了 MC 类型** — `grep "import net.minecraft"` 验证
 2. **枚举改了 implements 忘了改 codec** — `StringRepresentable.fromEnum()` → `PortStringRepresentable.fromEnum()`
-3. **bridge 的 build.gradle 缺 domain 依赖** — `implementation project(':eyelib-material')`
+3. ~~**bridge 的 build.gradle 缺 domain 依赖** — `implementation project(':eyelib-material')`~~（ADR-0014 前子项目时代踩坑，当前单 project 无此问题）
 4. **bridge 中重新发明 Port** — bridge 只能实现 domain 已有 Port，不能定义新的
 5. **一次改太多模块** — 每次只改一个模块的一个 Port。PortStringRepresentable 涉及 3 模块 → 分 3 次
 6. **忘了重复枚举** — material 的 `gl/` 和 `shared/` 同名枚举两处都要改

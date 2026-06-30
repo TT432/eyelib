@@ -48,7 +48,7 @@
 
 ## Port 共享策略
 
-被多个 domain 模块需要的 Port → 放在 `eyelib-util`。
+被多个 domain 模块需要的 Port → 放在 `util` 包。
 
 示例：`PortStringRepresentable` 从 `eyelib-material` 移到 `eyelib-util`，消除 `eyelib-behavior` → `eyelib-material` 的不必要依赖。
 

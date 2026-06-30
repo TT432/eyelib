@@ -13,7 +13,7 @@ Bedrock RC 的 `materials` 数组支持骨骼级材质分配 pattern（如 `armo
 
 ### 数据结构
 
-`materials` 字段类型为 `List<MolangMapEntry>`（`MolangMapEntry` 在 `eyelib-molang` 包），保留 JSON `objectArray` 的顺序和重复键。
+`materials` 字段类型为 `List<MolangMapEntry>`（`MolangMapEntry` 在 `molang` 包），保留 JSON `objectArray` 的顺序和重复键。
 
 ### RenderControllerEntry.setupModel()
 

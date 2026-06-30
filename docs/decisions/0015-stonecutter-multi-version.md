@@ -5,7 +5,7 @@
 **Author:** @TT432
 **Amends:** ADR-0010（恢复 ArchUnit 强制；`//?` 注释栖息地从「bridge 唯一」扩展为「L1 散布 + L2/L3 集中 bridge」）、ADR-0014（单 Gradle project 单版本 → 单 Gradle project + Stonecutter 多 node）
 **Related:** ADR-0002（模块边界仍按包名约定，新增 bridge 版本目录结构规则）
-**Implementation:** Stonecutter **0.7.11**（非 0.5.x placeholder；0.8+ 要求 Gradle 9，但 ModDevGradle legacyforge 不支持 Gradle 9，故锁 0.7.x + Gradle 8.12.1）。详见 `docs/stonecutter-migration-handoff.md`。
+**Implementation:** Stonecutter **0.7.11**（非 0.5.x placeholder；0.8+ 要求 Gradle 9，但 ModDevGradle legacyforge 不支持 Gradle 9，故锁 0.7.x + Gradle 8.12.1）。
 
 ## Context
 

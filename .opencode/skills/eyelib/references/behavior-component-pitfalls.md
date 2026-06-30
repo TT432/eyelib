@@ -1,6 +1,6 @@
 # 行为组件实现陷阱
 
-> eyelib-behavior 组件实现中发现的 CODEC 陷阱和修复记录。
+> behavior 模块组件实现中发现的 CODEC 陷阱和修复记录。
 
 ## DFU RecordCodecBuilder.group() 最多 16 个类型参数
 

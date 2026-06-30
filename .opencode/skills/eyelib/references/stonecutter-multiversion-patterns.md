@@ -145,7 +145,7 @@ public static final String MC_VERSION = /*$ mc_version*/ "1.20.1";
 | IDE 体验 | 各自子项目独立索引 | 单项目，切换 `.sc_active_version` |
 | 适用规模 | 大量平台特定代码 | 平台差异少 |
 
-**eyelib 建议**: 已是 10 子模块多模块项目，合理做法是核心库 (eyelib-util, eyelib-molang 等) 作为 common，loader 胶水在 `eyelib-forge`/`eyelib-neoforge` 中。Stonecutter 注释只出现在 bridge 层。
+**eyelib 现状**: ADR-0014 后已 flat-merge 为单 Gradle project，包边界(`io.github.tt432.eyelib.<module>`)定义模块。Stonecutter 注释只出现在 bridge 层（详见 ADR-0015）。
 
 ---
 

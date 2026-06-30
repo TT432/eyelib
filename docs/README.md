@@ -13,10 +13,8 @@
 | 系统架构总览（构建布局 + 模块分层） | [concepts/architecture.md](concepts/architecture.md) |
 | 行为规格（测试 oracle） | [specs/](specs/) |
 | Bedrock 差距分析 | [gap-analysis/](gap-analysis/) |
-| 测试计划 | [tests/](tests/) |
 | 六边形架构 Port 清单与提取进度 | [architecture/domain-module-map.md](architecture/domain-module-map.md) |
 | Molang 重构路线图 | [molang/ROADMAP.md](molang/ROADMAP.md) |
-| Stonecutter 多版本迁移状态 | [stonecutter-migration-handoff.md](stonecutter-migration-handoff.md) |
 
 ## Skill 索引
 
@@ -31,6 +29,13 @@
 | `eyelib-renderdoc` | GPU 调试——RenderDoc 截帧、headless 回放 |
 | `eyelib-hexagonal-gates` | 六边形架构验收闸门——G1(ArchUnit)→G2(spec-test)→G3(RenderDoc) |
 | `eyelib-domain-extraction` | Domain Port 提取操作手册——定位 MC 接触点、创建 Port、迁移 bridge |
+| `codec-design` | Codec 数据转换设计与实现——序列化、loader/schema Codec 化 |
+| `mixin-writing` | Mixin accessor/injector 编写——反射替换、vanilla 注入、双版本模式 |
+| `molang-refactor-supervisor` | molang 包重构切片协调——子代理设计/实现/审查/验证 |
+| `progressive-exploration` | 运行时状态交互式探索——probe 屏幕、检查游戏状态、UI 导航 |
+| `smoke-test` | ClientSmoke 视觉行为测试——渲染输出、GL 状态、纹理正确性 |
+| `testing` | 测试策略决策框架——progressive / unit / smoke 选择 |
+| `unit-test` | JUnit 5 单元测试——结构不变量、边界、codec 往返、null 安全 |
 
 ## ADR 索引
 

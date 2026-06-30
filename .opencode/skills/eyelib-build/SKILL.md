@@ -83,3 +83,12 @@ additionalRuntimeClasspath(implementation('group:artifact:version'))
 `build` 失败时直接 `read` 这两个文件即可拿到完整错误,不需要走 JetBrains MCP 或 shell gradlew。这是 eyelib-debug mcp(`scripts/eyelib_debug_mcp.py` `_run_gradle_sync`)写盘的实现细节。
 
 JetBrains MCP(`jetbrain_build_project` / `jetbrain_run_gradle_tasks`)走不同链路,失败时错误在 IDE Build 工具窗口,不会写到上述文件。两者互不干扰。
+
+### Stonecutter `//?` 注释语法踩坑
+
+centralScript 模式下 `//?` 版本条件注释的实战限制(官方语法文档未明确):
+
+- **闭合标记必须 `//?}`**:块条件 `//? if <1.20.6 { ... //?} else { ... //?}`,闭合不能用 `//}`。
+- **行条件不支持 else**:`//? if <1.20.6\n<代码>\n//?} else` 是错误语法,需要 else 时必须用块条件。
+- **`//?` 块内禁放纯注释**:Stonecutter 在 else 分支激活时会剥离注释包裹,纯注释变成裸文本导致编译错误。块内需要占位时用 `throw new UnsupportedOperationException("...")`。
+- **sourceSet 需手动替换**:Stonecutter 0.7.x centralScript 不自动替换 sourceSet,需在 `build.gradle` 手动 `sourceSets.main.java.srcDirs = [stonecutterGenerated]`。

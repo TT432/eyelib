@@ -2,7 +2,7 @@
 
 规范文档位置: `docs/specs/behavior-component-spec.md`
 
-该文档定义 eyelib-behavior 模块中 Bedrock 实体组件的实现契约：
+该文档定义 behavior 模块中 Bedrock 实体组件的实现契约：
 - 模式 A: 标记组件（空字段 `{}`）
 - 模式 B: 数据组件（有字段）
 - 模式 C: 含 JSON 保留字段的组件

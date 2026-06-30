@@ -16,7 +16,7 @@
 
 **旧 CODEC**：`Codec.unboundedMap(...).listOf().xmap(putAll merge)` 折叠为 `{ "*": "b" }`。
 
-**修复**：新增 `MolangMapEntry(String key, MolangValue value)` record（在 `eyelib-molang` 包）。`materials` 字段类型从 `Map<String, MolangValue>` 改为 `List<MolangMapEntry>`，保留顺序和重复键。
+**修复**：新增 `MolangMapEntry(String key, MolangValue value)` record（在 `molang` 包）。`materials` 字段类型从 `Map<String, MolangValue>` 改为 `List<MolangMapEntry>`，保留顺序和重复键。
 
 ## F3（已修复）：`BrMaterialEntry.getRenderType(materials)` 缺少 alphatest 检查
 

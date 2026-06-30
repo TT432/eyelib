@@ -44,6 +44,8 @@ docs/
 └── research-*.md            ← 研究笔记
 ```
 
+> **注**：此目录树为 ADR-0011 发布时（2026-06-09）的设计快照。后续 ADR-0014（flat-merge）、ADR-0015（stonecutter 多版本）及文档演化已改变实际结构（`reference/` 迁移至 `.opencode/skills/`、`pitfalls/`/`guides/` 已移除、`tests/` 已删、`concepts/module-map.md` 重命名为 `architecture/domain-module-map.md`）。当前文档结构以 `docs/README.md` 和 `MODULES.md` 为权威源。
+
 ### 文件变更
 
 | 变更 | 旧位置 | 新位置 |
