@@ -137,6 +137,19 @@ repositories {
             includeGroup "maven.modrinth"
         }
     }
+    // CurseMaven：通过 CurseForge project/file ID 提供 mod jar。
+    // 用于引入 SRG-compiled 的第三方 Forge mod（如 spark），由 localRuntime 触发 ModDevGradle 自动 remap。
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "CurseMaven"
+                url = "https://cursemaven.com/"
+            }
+        }
+        filter {
+            includeGroup "curse.maven"
+        }
+    }
 }
 
 base {
@@ -328,6 +341,14 @@ dependencies {
         localRuntime "io.github.tt432:clientsmoke:${version}"
     } else if (isModern) {
         localRuntime "io.github.tt432:clientsmoke-neoforge:${version}"
+    }
+
+    // spark 性能剖析工具（dev-only，localRuntime 不进发布 jar）。
+    // 必须用 modLocalRuntime（由 obfuscation.createRemappingConfiguration 创建），
+    // ModDevGradle 会自动 SRG→Mojmap remap；加到 localRuntime 不 remap，会因 SRG 名 NoSuchMethodError 崩溃。
+    // CurseForge file 4738952 = spark-1.10.53-forge.jar，1.20.1 forge 唯一兼容版本。
+    if (isLegacyForge) {
+        modLocalRuntime "curse.maven:spark-361579:4738952"
     }
 
     if (hasAdditionalRuntimeClasspath) {
