@@ -52,6 +52,16 @@ public interface Repository<T> {
     void replaceAll(Map<String, ? extends T> replacement);
 
     /**
+     * 批量注册或替换条目（合并语义：覆盖同 key，加入新 key）。
+     * 默认逐条 {@link #put}；实现可覆盖以做单次 copy-on-write 合并与单次事件发布。
+     *
+     * @param entries 以字符串为键的条目映射
+     */
+    default void putAll(Map<String, ? extends T> entries) {
+        entries.forEach(this::put);
+    }
+
+    /**
      * 清除所有条目。
      */
     void clear();

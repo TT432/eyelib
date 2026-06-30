@@ -5,6 +5,7 @@ import io.github.tt432.eyelib.util.repository.Repository;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -44,6 +45,19 @@ public final class Registry<T> implements Repository<T> {
     public void put(String id, T value) {
         ref.updateAndGet(snap -> snap.with(id, value));
         publisher.publishManagerEntryChanged(managerName, id, value);
+    }
+
+    @Override
+    public void putAll(Map<String, ? extends T> entries) {
+        if (entries.isEmpty()) {
+            return;
+        }
+        ref.updateAndGet(snap -> {
+            Map<String, T> merged = new LinkedHashMap<>(snap.all());
+            merged.putAll(entries);
+            return RegistrySnapshot.copyOf(merged);
+        });
+        publisher.publishManagerReplaced(managerName);
     }
 
     @Override

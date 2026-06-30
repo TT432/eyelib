@@ -11,4 +11,12 @@ public interface ManagerEventPublisher {
     };
 
     void publishManagerEntryChanged(String managerName, String entryName, Object entryData);
+
+    /**
+     * 通知某管理器发生批量替换（条目集被合并写入）。
+     * 默认空实现以保持 {@code @FunctionalInterface} 与 NOOP lambda 兼容；
+     * 关心整体失效的订阅者应覆盖此方法。
+     */
+    default void publishManagerReplaced(String managerName) {
+    }
 }

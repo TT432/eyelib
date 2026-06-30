@@ -21,4 +21,8 @@ public final class ManagerEventPublishBridge {
     public static void publishManagerEntryChanged(String managerName, String entryName, Object entryData) {
         publisher.publishManagerEntryChanged(managerName, entryName, entryData);
     }
+
+    public static void publishManagerReplaced(String managerName) {
+        publisher.publishManagerReplaced(managerName);
+    }
 }

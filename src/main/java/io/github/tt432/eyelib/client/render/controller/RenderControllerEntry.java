@@ -449,11 +449,19 @@ public record RenderControllerEntry(
      * {@code *}后缀表示前缀匹配，无后缀表示精确匹配。
      * {@code *}单独出现时匹配全部骨骼。
      */
-    private static Set<Integer> matchBonePattern(String pattern, Collection<Model> models) {
-        Set<Integer> result = new HashSet<>();
+    /**
+     * 判定骨骼名是否匹配 Bedrock 模式。
+     * 后缀 {@code *} 表示前缀匹配，单独 {@code *} 或空前缀匹配全部，否则精确匹配。
+     */
+    public static boolean matchesBonePattern(String pattern, String boneName) {
         boolean isPrefix = pattern.endsWith("*");
         String lookup = isPrefix ? pattern.substring(0, pattern.length() - 1) : pattern;
+        return pattern.equals("*") || lookup.isEmpty()
+                || (isPrefix ? boneName.startsWith(lookup) : boneName.equals(lookup));
+    }
 
+    private static Set<Integer> matchBonePattern(String pattern, Collection<Model> models) {
+        Set<Integer> result = new HashSet<>();
         for (Model model : models) {
             if (model == null) continue;
             for (var boneEntry : model.allBones().int2ObjectEntrySet()) {
@@ -461,10 +469,7 @@ public record RenderControllerEntry(
                 if (boneId < 0) continue;
                 String boneName = GlobalBoneIdHandler.get(boneId);
                 if (boneName == null) continue;
-                // 纯 "*" 匹配全部，空前缀也匹配全部
-                boolean match = pattern.equals("*") || lookup.isEmpty()
-                        || (isPrefix ? boneName.startsWith(lookup) : boneName.equals(lookup));
-                if (match) {
+                if (matchesBonePattern(pattern, boneName)) {
                     result.add(boneId);
                 }
             }

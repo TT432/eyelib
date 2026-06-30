@@ -13,7 +13,6 @@ import it.unimi.dsi.fastutil.objects.ReferenceList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.regex.Pattern;
 
 /**
  * @author TT432
@@ -48,7 +47,7 @@ public class RenderControllerRuntime {
             model.allBones().int2ObjectEntrySet().forEach(entry -> {
                 String boneName = GlobalBoneIdHandler.get(entry.getIntKey());
                 renderController.part_visibility().forEach((k, v) -> {
-                    if (boneName != null && Pattern.compile(k.replace("*", ".*")).matcher(boneName).matches()) {
+                    if (boneName != null && RenderControllerEntry.matchesBonePattern(k, boneName)) {
                         part.computeIfAbsent(entry.getIntKey(), __ -> new ReferenceArrayList<>()).add(v);
                     }
                 });

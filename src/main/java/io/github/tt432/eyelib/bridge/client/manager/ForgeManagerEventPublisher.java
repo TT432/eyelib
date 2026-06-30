@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.bridge.client.manager;
 
 import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEvent;
+import io.github.tt432.eyelib.bridge.event.ManagerReplacedEvent;
 import io.github.tt432.eyelib.util.manager.ManagerEventPublisher;
 //? if <1.20.6 {
 import net.minecraftforge.common.MinecraftForge;
@@ -17,6 +18,15 @@ public final class ForgeManagerEventPublisher implements ManagerEventPublisher {
         MinecraftForge.EVENT_BUS.post(new ManagerEntryChangedEvent(managerName, entryName, entryData));
         //?} else {
         NeoForge.EVENT_BUS.post(new ManagerEntryChangedEvent(managerName, entryName, entryData));
+        //?}
+    }
+
+    @Override
+    public void publishManagerReplaced(String managerName) {
+        //? if <1.20.6 {
+        MinecraftForge.EVENT_BUS.post(new ManagerReplacedEvent(managerName));
+        //?} else {
+        NeoForge.EVENT_BUS.post(new ManagerReplacedEvent(managerName));
         //?}
     }
 }

@@ -76,6 +76,7 @@ public class MolangMappingTree {
         toplevelNode.children.clear();
         toplevelNode.actualClasses.clear();
         toplevelNode.actualFunctions.clear();
+        toplevelNode.cachedFields.clear();
         registryVersionRef = FingerprintCalculator.buildRegistryVersionRef(toplevelNode);
     }
 
@@ -87,6 +88,7 @@ public class MolangMappingTree {
         public final Map<String, Node> children = new HashMap<>();
         public final List<MolangClass> actualClasses = new ArrayList<>();
         public final Map<String, List<FunctionInfo>> actualFunctions = new HashMap<>();
+        public final Map<String, FieldData> cachedFields = new HashMap<>();
     }
 
     public void addNode(String name, MolangClass actualClass) {
@@ -105,6 +107,10 @@ public class MolangMappingTree {
         }
 
         last.actualClasses.add(actualClass);
+        // 预建字段缓存：putIfAbsent 保证先注册类的同名字段优先，与原 findField 顺序遍历语义一致。
+        for (Field field : actualClass.classInstance().getFields()) {
+            last.cachedFields.putIfAbsent(field.getName(), new FieldData(actualClass.classInstance(), field));
+        }
         List<Method> methods = Arrays.stream(actualClass.classInstance().getMethods())
                 .filter(method -> Modifier.isStatic(method.getModifiers()))
                 .sorted(METHOD_DISCOVERY_ORDER)
@@ -158,19 +164,7 @@ public class MolangMappingTree {
         }
 
         Node node = findNode(scopeName);
-        List<MolangClass> classes = node == null ? List.of() : node.actualClasses;
-
-        for (var classData : classes) {
-            var aClass = classData.classInstance;
-
-            try {
-                return new FieldData(aClass, aClass.getField(fieldName));
-            } catch (NoSuchFieldException ignored) {
-                // 未在此类中找到字段；继续尝试其他映射的类
-            }
-        }
-
-        return null;
+        return node == null ? null : node.cachedFields.get(fieldName);
     }
 
     public record MethodData(

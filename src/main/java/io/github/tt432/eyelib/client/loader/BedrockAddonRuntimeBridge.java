@@ -60,22 +60,26 @@ public final class BedrockAddonRuntimeBridge {
         // 替换材质（叠加而非替换，保留 BrMaterialLoader 加载的 vanilla 条目）
         {
             var materials = toRuntimeMaterials(resourcePack.materialFiles());
+            Map<String, BrMaterialEntry> materialBatch = new LinkedHashMap<>();
             for (BrMaterial value : materials.values()) {
-                value.materials().forEach(MaterialManager.INSTANCE::put);
+                value.materials().forEach(materialBatch::put);
             }
+            MaterialManager.INSTANCE.putAll(materialBatch);
         }
         // 替换渲染控制器
         {
             var controllers = toRuntimeRenderControllers(resourcePack.renderControllerFiles());
+            Map<String, RenderControllerEntry> controllerBatch = new LinkedHashMap<>();
             for (RenderControllers value : controllers.values()) {
                 value.render_controllers().forEach((key, entry) -> {
-                    RenderControllerEntry existing = RenderControllerManager.INSTANCE.get(key);
+                    RenderControllerEntry existing = controllerBatch.getOrDefault(key, RenderControllerManager.INSTANCE.get(key));
                     if (existing != null && existing.part_visibility().size() > entry.part_visibility().size()) {
                         return;
                     }
-                    RenderControllerManager.INSTANCE.put(key, entry);
+                    controllerBatch.put(key, entry);
                 });
             }
+            RenderControllerManager.INSTANCE.putAll(controllerBatch);
         }
     }
 
