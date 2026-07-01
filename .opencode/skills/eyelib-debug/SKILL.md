@@ -21,6 +21,7 @@ eyelib-debug MCP server 封装了整个调试流程。工具以 `eyelib_debug_*`
 | `eyelib_debug_launch(timeout=120)` | RenderDoc capture 模式启动客户端。内部：重建 → 杀僵尸 → renderdoccmd capture → 轮询就绪 |
 | `eyelib_debug_enter_world(world_name="Debug World", timeout=60)` | 进入单人世界 |
 | `eyelib_debug_execute(code)` | 在 JVM 内执行 Java 方法体（同 /eval） |
+| `eyelib_debug_send_command(side, command_text)` | 发送 slash 命令；side="client" 走玩家网络包，side="server" 在 integrated server 直接执行（仅单人） |
 | `eyelib_debug_capture_frame()` | 程序化截帧 |
 | `eyelib_debug_status(info="summary")` | 查询会话状态 |
 | `eyelib_debug_close()` | 关闭客户端 |

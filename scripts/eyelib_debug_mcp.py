@@ -21,7 +21,7 @@ from typing import Optional, Callable
 from mcp.server.fastmcp import FastMCP
 
 
-MCP_VERSION = "1.5.1"
+MCP_VERSION = "1.6.0"
 
 
 # ── Configuration ──────────────────────────────────────────────
@@ -621,6 +621,39 @@ async def eyelib_debug_execute(code: str) -> str:
         return f"✅ {result.get('result', 'ok')}"
     else:
         return f"❌ {result.get('error', 'unknown error')}"
+
+
+@mcp.tool()
+async def eyelib_debug_send_command(side: str, command_text: str) -> str:
+    """
+    Send a slash command to the running MC client/world.
+    side="client" sends it as the local player (goes through the network packet layer);
+    side="server" executes it directly on the integrated server (singleplayer only, bypasses network).
+
+    Command feedback (e.g. "Set the time to...") appears in-game chat, not in the return value.
+    The command_text may include or omit a leading '/'.
+
+    Args:
+        side: "client" or "server".
+        command_text: The command text (e.g. "time set day" or "/gamemode creative").
+    """
+    side_l = side.strip().lower()
+    if side_l not in ("client", "server"):
+        return f"❌ Invalid side '{side}'. Must be 'client' or 'server'."
+
+    gs = await _read_game_state()
+    if gs["state"] != "in_world":
+        return f"❌ Game must be in a world to send commands. Currently: {_state_summary(gs)}"
+
+    body = json.dumps({"side": side_l, "command": command_text})
+    result = await _http_post("/command", body)
+    if result is None:
+        return "❌ /command HTTP failed — client may have crashed."
+
+    if result.get("success"):
+        return f"✅ [{side_l}] {result.get('result', 'ok')}"
+    else:
+        return f"❌ [{side_l}] {result.get('error', 'unknown error')}"
 
 
 @mcp.tool()

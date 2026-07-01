@@ -66,6 +66,80 @@ public final class AIDebugServer {
                 exchange.getResponseBody().write(resp);
                 exchange.close();
             });
+            server.createContext("/command", exchange -> {
+                if (!"POST".equals(exchange.getRequestMethod())) {
+                    byte[] resp = "{\"success\":false,\"error\":\"Only POST supported\"}".getBytes(StandardCharsets.UTF_8);
+                    exchange.sendResponseHeaders(405, resp.length);
+                    exchange.getResponseBody().write(resp);
+                    exchange.close();
+                    return;
+                }
+                String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                String side = "client";
+                String command = "";
+                try {
+                    JsonObject json = JsonParser.parseString(body).getAsJsonObject();
+                    if (json.has("side")) side = json.get("side").getAsString();
+                    if (json.has("command")) command = json.get("command").getAsString();
+                } catch (Exception ignored) {
+                    command = body.strip();
+                }
+                String normalized = command;
+                while (normalized.startsWith("/")) {
+                    normalized = normalized.substring(1);
+                }
+                final String cmd = normalized;
+                final String sideFinal = side;
+                Minecraft mc = Minecraft.getInstance();
+                CompletableFuture<String> future = new CompletableFuture<>();
+                //? if <26.1 {
+                mc.tell(() -> {
+                //?} else {
+                mc.submit(() -> {
+                //?}
+                    try {
+                        if ("server".equalsIgnoreCase(sideFinal)) {
+                            var integrated = mc.getSingleplayerServer();
+                            if (integrated == null) {
+                                future.complete("No integrated server available (singleplayer only)");
+                                return;
+                            }
+                            if (mc.player == null) {
+                                future.complete("No local player available");
+                                return;
+                            }
+                            var serverPlayer = integrated.getPlayerList().getPlayer(mc.player.getUUID());
+                            var source = serverPlayer != null
+                                    ? serverPlayer.createCommandSourceStack()
+                                    : integrated.createCommandSourceStack();
+                            int n = integrated.getCommands().performPrefixedCommand(source, cmd);
+                            future.complete("executed on server (result=" + n + ")");
+                        } else {
+                            if (mc.player == null || mc.player.connection == null) {
+                                future.complete("No player/connection available");
+                                return;
+                            }
+                            mc.player.connection.sendCommand(cmd);
+                            future.complete("sent as player");
+                        }
+                    } catch (Throwable t) {
+                        future.complete("Error: " + t);
+                    }
+                });
+                try {
+                    String msg = future.get(10, TimeUnit.SECONDS);
+                    byte[] resp = ("{\"success\":true,\"result\":\"" + escapeJson(msg) + "\"}").getBytes(StandardCharsets.UTF_8);
+                    exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+                    exchange.sendResponseHeaders(200, resp.length);
+                    exchange.getResponseBody().write(resp);
+                } catch (Exception e) {
+                    byte[] resp = ("{\"success\":false,\"error\":\"" + escapeJson(e.getMessage()) + "\"}").getBytes(StandardCharsets.UTF_8);
+                    exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
+                    exchange.sendResponseHeaders(500, resp.length);
+                    exchange.getResponseBody().write(resp);
+                }
+                exchange.close();
+            });
             server.createContext("/loaded", exchange -> {
                 Minecraft mc = Minecraft.getInstance();
                 CompletableFuture<String> future = new CompletableFuture<>();
