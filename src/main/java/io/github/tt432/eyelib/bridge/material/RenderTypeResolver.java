@@ -58,6 +58,14 @@ public final class RenderTypeResolver {
         }
     }
 
+    public static PortRenderPass resolve(PortResourceLocation texture, ResolvedBrMaterial material) {
+        return BrRenderTypeFactory.create(texture, BrRenderStateFactory.from(material));
+    }
+
+    public static boolean isSolid(ResolvedBrMaterial material) {
+        return BrRenderStateFactory.from(material).isSolid();
+    }
+
     public static boolean isSolid(BrMaterialEntry entry, Map<String, BrMaterialEntry> materials) {
         try {
             ResolvedBrMaterial material = BrMaterialResolver.resolve(entry, materials);

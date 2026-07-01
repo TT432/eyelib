@@ -5,7 +5,9 @@ import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
 import io.github.tt432.eyelib.bridge.material.RenderPassAdapter;
 import io.github.tt432.eyelib.bridge.material.RenderTypeResolver;
+import io.github.tt432.eyelib.bridge.material.RenderTypeResolver.EntityRenderTypeData;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
+import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import io.github.tt432.eyelib.material.material.BrMaterialResolver;
 import io.github.tt432.eyelib.material.material.ResolvedBrMaterial;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
@@ -25,6 +27,7 @@ import net.minecraft.resources.Identifier;
 //?}
 import org.jspecify.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -37,6 +40,17 @@ public class ModelComponent {
     private boolean ignoreLighting;
     private float @Nullable [] rcColor;
 
+    @Nullable
+    private Map<String, BrMaterialEntry> matMapRef;
+    @Nullable
+    private BrMaterialEntry cachedEntry;
+    private boolean entryResolved;
+    @Nullable
+    private ResolvedBrMaterial cachedMaterial;
+    private boolean materialResolved;
+    @Nullable
+    private EntityRenderTypeData cachedFallback;
+
     public boolean serializable() {
         return serializableInfo != null
                 && serializableInfo.model() != null
@@ -48,6 +62,7 @@ public class ModelComponent {
         if (Objects.equals(serializableInfo, this.serializableInfo)) return;
 
         this.serializableInfo = serializableInfo;
+        this.matMapRef = null;
     }
 
     public void setIgnoreLighting(boolean ignoreLighting) {
@@ -80,42 +95,49 @@ public class ModelComponent {
     //?} else {
     public RenderType getRenderType(Identifier texture) {
     //?}
-        if (serializableInfo == null) return null;
-        var matMap = MaterialManager.INSTANCE.all();
-        var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().path()).orElse(null);
+        ModelComponentInfo info = serializableInfo;
+        if (info == null) return null;
+        Map<String, BrMaterialEntry> matMap = currentMaterialMap();
+        BrMaterialEntry entry = resolveEntry(matMap, info.renderType().path());
         if (entry != null) {
             PortResourceLocation portTex = ResourceLocationBridge.fromMc(texture);
-            PortRenderPass pass = RenderTypeResolver.resolve(portTex, entry, matMap);
+            ResolvedBrMaterial material = resolveCachedMaterial(entry, matMap);
+            PortRenderPass pass = material != null
+                    ? RenderTypeResolver.resolve(portTex, material)
+                    : RenderTypeResolver.resolve(portTex, entry, matMap);
             return RenderPassAdapter.toRenderType(pass, portTex);
         }
-        PortResourceLocation portId = serializableInfo.renderType();
+        EntityRenderTypeData fallback = resolveFallback(info.renderType());
         PortResourceLocation portTex = ResourceLocationBridge.fromMc(texture);
-        var data = RenderTypeResolver.resolve(portId);
-        PortRenderPass pass = data.factory().apply(portTex);
-        return RenderPassAdapter.toRenderType(pass, portTex);
+        return RenderPassAdapter.toRenderType(fallback.factory().apply(portTex), portTex);
     }
 
     public boolean isSolid() {
-        if (serializableInfo == null) return true;
-        var matMap = MaterialManager.INSTANCE.all();
-        var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().path()).orElse(null);
+        ModelComponentInfo info = serializableInfo;
+        if (info == null) return true;
+        Map<String, BrMaterialEntry> matMap = currentMaterialMap();
+        BrMaterialEntry entry = resolveEntry(matMap, info.renderType().path());
         if (entry != null) {
-            return RenderTypeResolver.isSolid(entry, matMap);
+            ResolvedBrMaterial material = resolveCachedMaterial(entry, matMap);
+            return material != null ? RenderTypeResolver.isSolid(material) : RenderTypeResolver.isSolid(entry, matMap);
         }
-        PortResourceLocation portId = serializableInfo.renderType();
-        return RenderTypeResolver.resolve(portId).isSolid();
+        return resolveFallback(info.renderType()).isSolid();
     }
 
     public boolean usesColorMask() {
-        if (serializableInfo == null) return false;
-        var matMap = MaterialManager.INSTANCE.all();
-        var entry = BrMaterialResolver.find(matMap, serializableInfo.renderType().path()).orElse(null);
+        ModelComponentInfo info = serializableInfo;
+        if (info == null) return false;
+        Map<String, BrMaterialEntry> matMap = currentMaterialMap();
+        BrMaterialEntry entry = resolveEntry(matMap, info.renderType().path());
         if (entry == null) {
             return false;
         }
-        try {
-            ResolvedBrMaterial material = BrMaterialResolver.resolve(entry, matMap);
+        ResolvedBrMaterial material = resolveCachedMaterial(entry, matMap);
+        if (material != null) {
             return material.hasDefine("USE_COLOR_MASK");
+        }
+        try {
+            return BrMaterialResolver.resolve(entry, matMap).hasDefine("USE_COLOR_MASK");
         } catch (IllegalStateException exception) {
             return entry.defines()
                         .add()
@@ -123,6 +145,48 @@ public class ModelComponent {
                         .flatMap(java.util.Collection::stream)
                         .anyMatch("USE_COLOR_MASK"::equals);
         }
+    }
+
+    private Map<String, BrMaterialEntry> currentMaterialMap() {
+        Map<String, BrMaterialEntry> current = MaterialManager.INSTANCE.all();
+        if (current != matMapRef) {
+            matMapRef = current;
+            cachedEntry = null;
+            entryResolved = false;
+            cachedMaterial = null;
+            materialResolved = false;
+            cachedFallback = null;
+        }
+        return current;
+    }
+
+    @Nullable
+    private BrMaterialEntry resolveEntry(Map<String, BrMaterialEntry> matMap, String path) {
+        if (!entryResolved) {
+            entryResolved = true;
+            cachedEntry = BrMaterialResolver.find(matMap, path).orElse(null);
+        }
+        return cachedEntry;
+    }
+
+    @Nullable
+    private ResolvedBrMaterial resolveCachedMaterial(BrMaterialEntry entry, Map<String, BrMaterialEntry> matMap) {
+        if (!materialResolved) {
+            materialResolved = true;
+            try {
+                cachedMaterial = BrMaterialResolver.resolve(entry, matMap);
+            } catch (IllegalStateException e) {
+                cachedMaterial = null;
+            }
+        }
+        return cachedMaterial;
+    }
+
+    private EntityRenderTypeData resolveFallback(PortResourceLocation portId) {
+        if (cachedFallback == null) {
+            cachedFallback = RenderTypeResolver.resolve(portId);
+        }
+        return cachedFallback;
     }
 
     final Int2BooleanOpenHashMap partVisibility = new Int2BooleanOpenHashMap();
