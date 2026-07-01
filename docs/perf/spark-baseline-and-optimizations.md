@@ -33,6 +33,33 @@
 - **方案**:新增 `ManagerReplacedEvent` + `publishManagerReplaced`,`Registry` 覆盖 `putAll`(一次 copy-on-write + 一次事件),bridge 收集后批量 putAll。
 - **事件订阅者核实**(实施前已确认安全):3 个 `ManagerEntryChangedEvent` 订阅者均只关心 `ModelManager` / 动画管理器,对材质/RC 的事件零依赖。
 
+### Opt4 · ModelComponent 材质解析缓存
+
+- **文件**:`capability/component/ModelComponent.java`、`bridge/material/RenderTypeResolver.java`
+- **根因**:`getRenderType`/`isSolid`/`usesColorMask` 三方法每帧每实体各自 `MaterialManager.INSTANCE.all()` → `BrMaterialResolver.find`(O(n)×2) → `RenderTypeResolver.resolve`(内含 `BrMaterialResolver.resolve` 继承链归并)。同一 entry 每帧被 find 3 次 + resolve 3 次,占稳态渲染 ~2.5% (1484ms)。
+- **方案**:ModelComponent 缓存 `cachedEntry` + `cachedMaterial`(ResolvedBrMaterial),按 `matMap == matMapRef` identity 失效。资源重载时 `Registry` snapshot 原子替换 → map identity 变化 → 缓存自动失效。RenderTypeResolver 新增接受 ResolvedBrMaterial 的重载,避免内部重复 resolve。
+- **语义保持**:resolve 成功路径复用缓存;resolve 异常路径走旧 fallback;entry==null 路径惰性缓存 fallback。
+- **验证**:ModelComponent 路径 find/resolve 从 ~1484ms 降到 12ms,每实体 find 成本下降 36%。
+
+### Opt5 · BrMaterialResolver.resolve 全局缓存
+
+- **文件**:`material/material/BrMaterialResolver.java`
+- **根因**:Opt4 覆盖 ModelComponent 路径后,RenderControllerEntry 路径(isAlphaTest/usesColorMask)仍每帧重复调 resolve。resolve 是纯函数,但内部 collectChain 走继承链 → 每层 findBase → find(O(n)×2),且每次分配 ArrayList/LinkedHashSet/ResolvedBrMaterial record。find 的 1064ms self-time 全在继承链递归内部。
+- **方案**:BrMaterialResolver 增 `static volatile` 缓存:`IdentityHashMap<BrMaterialEntry, ResolvedBrMaterial>`,按 matMap identity 失效(与 Opt4 同机制)。resolve 命中缓存返回,miss 调 computeResolve(原 resolve 体)并 put。BrMaterialEntry 是 record(不可变),缓存安全。
+- **语义保持**:异常路径(循环继承 IllegalStateException)不缓存,直接传播;非线程安全 IdentityHashMap 但 Render thread 单线程访问,重载不调 resolve。
+- **验证**:find self-time 1064→480ms(-55%),resolve self-time 120→0ms(-100%),RenderControllerEntry 路径 resolve total 990→4ms(-99%),resolveCache 18 entries 全命中。
+
+### Opt6 · Molang 求值链分配消除
+
+- **文件**:`molang/mapping/api/VariantSelector.java`、`molang/compiler/MolangRuntimeSupport.java`
+- **根因**:稳态渲染 Molang 求值链占 ~4600ms(7.7%)。三处分配热点:① `CompileContext.defaults()` 每次新建 record + `Set.of()`,但只用 mappingTree 字段;② `selectQueryVariant` 5 次连续 stream filter pipeline 各分配 ArrayList;③ `computeAvailableHostRoles` 每次 `EnumSet.noneOf` + add,稳态时结果固定。
+- **方案**:
+  - Opt-B:resolveCall/resolveMemberAccess 直接引用 `MolangMappingRegistries.mappingTree()`(稳定 volatile),消除 CompileContext.defaults() 分配。
+  - Opt-A:selectQueryVariant 5 步 stream → 单次 for 遍历 + (specificity, priority) 在线打分,消除 5 个 ArrayList。
+  - Opt-C:computeAvailableHostRoles 改返回两个不可变常量 Set(HOST_ROLES_FULL/MINIMAL)。
+- **语义保持**:selectQueryVariant 等价语义(最高 specificity 中最高 priority 的最后一个候选);hostRoles 只读 contains,不可变 Set 安全。
+- **验证**:MolangRuntimeSupport self 1844→556ms(-70%),VariantSelector self 1648→172ms(-90%),selectQueryVariant 几乎归零。
+
 ## 验证证据(优化前 → 优化后)
 
 ### T2 · 稳态渲染(60s)
@@ -46,6 +73,29 @@
 - 优化前:https://spark.lucko.me/YsDkEySi5t(59 slime)
 - 优化后:https://spark.lucko.me/QgxEIFFBhJ(83 实体,eyelib 接管率 100%)
 - 优化后 TOP15 转为 OpenGL 驱动 + stream 开销,均为渲染固有成本。
+
+### T2b · 稳态渲染材质/Molang 求值链(第二轮, 60s 采样)
+
+逐迭代追踪每个优化的方法级 self-time。实体集合因采样时场景自然演化而不同(基线 sheep+slime,中后期多种怪物),绝对值不可跨采样直接比;**方法级 self-time 归一化到每实体后可比**。
+
+| 热点(self-time) | 基线 (SubTask1) | Opt4 后 (SubTask2) | Opt5 后 (SubTask3) | Opt6 后 (SubTask5) |
+|---|---|---|---|---|
+| `BrMaterialResolver.find` | 1484ms | 1064ms | 480ms | 212ms |
+| `BrMaterialResolver.resolve` | (含于 find) | 120ms | **0ms** | **0ms** |
+| `MolangRuntimeSupport` | 1948ms | 1844ms | 1844ms | **556ms** |
+| `VariantSelector.selectQueryVariant` | 176ms | 1648ms | 1648ms | **~20ms** |
+| `Molang$Expr$*.evaluate` | 2124ms | 1472ms | 1140ms | 588ms |
+| ModelComponent 路径 find | (in 1484) | **12ms** | **0ms** | **0ms** |
+| RenderControllerEntry 路径 resolve total | — | ~990ms | **4ms** | — |
+
+- 基线:https://spark.lucko.me/JxI1zQR418(83 实体,sheep+slime,eyelib 接管 100%)
+- Opt4 后:https://spark.lucko.me/FBYXqDfIjr(101 实体)
+- Opt5 后:https://spark.lucko.me/KqVu8m2XSn(101 实体)
+- Opt6 后:https://spark.lucko.me/fg0vFLPZAK(83 实体)
+
+每实体归一化(控制实体数差异):基线 eyelib self 10136ms/83 = 122ms/实体 → Opt6 后 2964ms/83 = 36ms/实体(**-71%**)。
+
+> Opt6 后 TOP self-time 转为非 eyelib 成本(LinkedHashMap.forEach / Int2ObjectOpenHashMap / HashMap.putVal / GL 驱动),eyelib 最大残留热点 `Expr.evaluate`(字节码动态生成类求值)接近 Molang 固有成本,ROI 不足继续优化。
 
 ### T3 · 资源重载(90s)
 
