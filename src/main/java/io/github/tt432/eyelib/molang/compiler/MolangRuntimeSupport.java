@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.molang.compiler;
 
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
+import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.FunctionInfo;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.FunctionParameterRole;
@@ -34,6 +35,15 @@ public final class MolangRuntimeSupport {
     private static final Logger LOGGER = LoggerFactory.getLogger(MolangRuntimeSupport.class);
     private static final Set<String> WARNED_MISSING = Collections.synchronizedSet(new HashSet<>());
 
+    private static final Set<MolangFunction.ParameterRole> HOST_ROLES_FULL =
+            Collections.unmodifiableSet(EnumSet.of(
+                    MolangFunction.ParameterRole.RECEIVER,
+                    MolangFunction.ParameterRole.INJECTED_HOST,
+                    MolangFunction.ParameterRole.SPECIAL_ENGINE_ARG
+            ));
+    private static final Set<MolangFunction.ParameterRole> HOST_ROLES_MINIMAL =
+            Collections.unmodifiableSet(EnumSet.of(MolangFunction.ParameterRole.SPECIAL_ENGINE_ARG));
+
     private MolangRuntimeSupport() {
     }
 
@@ -42,7 +52,7 @@ public final class MolangRuntimeSupport {
             return MolangNull.INSTANCE;
         }
 
-        MolangMappingTree mappingTree = CompileContext.defaults().mappingTree();
+        MolangMappingTree mappingTree = MolangMappingRegistries.mappingTree();
 
         MolangObject scopeValue = scope.get(dottedName);
         if (!(scopeValue instanceof MolangNull)) {
@@ -81,7 +91,7 @@ public final class MolangRuntimeSupport {
             return MolangNull.INSTANCE;
         }
 
-        MolangMappingTree mappingTree = CompileContext.defaults().mappingTree();
+        MolangMappingTree mappingTree = MolangMappingRegistries.mappingTree();
 
         List<MolangObject> visibleArgs = new ArrayList<>();
         List<VisibleArgumentKind> callShape = new ArrayList<>();
@@ -133,13 +143,9 @@ public final class MolangRuntimeSupport {
     }
 
     private static Set<MolangFunction.ParameterRole> computeAvailableHostRoles(MolangScope scope) {
-        Set<MolangFunction.ParameterRole> roles = EnumSet.noneOf(MolangFunction.ParameterRole.class);
-        if (scope.getHostContext().get(Object.class).isPresent()) {
-            roles.add(MolangFunction.ParameterRole.RECEIVER);
-            roles.add(MolangFunction.ParameterRole.INJECTED_HOST);
-        }
-        roles.add(MolangFunction.ParameterRole.SPECIAL_ENGINE_ARG);
-        return roles;
+        return scope.getHostContext().get(Object.class).isPresent()
+                ? HOST_ROLES_FULL
+                : HOST_ROLES_MINIMAL;
     }
 
     private static MolangObject invokeMethod(FunctionInfo functionInfo, MolangScope scope, List<MolangObject> visibleArgValues) {

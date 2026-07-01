@@ -32,45 +32,34 @@ public class VariantSelector {
             return null;
         }
 
-        List<FunctionInfo> arityCandidates = methodData.functionInfos().stream()
-                .filter(functionInfo -> visibleArityMatches(functionInfo, visibleArgumentCallShape.size()))
-                .toList();
-        if (arityCandidates.isEmpty()) {
-            return null;
+        FunctionInfo result = null;
+        int bestSpecificity = Integer.MIN_VALUE;
+        int bestPriority = Integer.MIN_VALUE;
+        int visibleArity = visibleArgumentCallShape.size();
+
+        for (FunctionInfo candidate : methodData.functionInfos()) {
+            if (!visibleArityMatches(candidate, visibleArity)) {
+                continue;
+            }
+            if (!visibleArgumentsCompatible(candidate, visibleArgumentCallShape)) {
+                continue;
+            }
+            if (!requiredHostRolesAvailable(candidate, availableHostRoles)) {
+                continue;
+            }
+            int specificity = variantSpecificity(candidate);
+            int priority = variantPriority(candidate);
+            if (specificity > bestSpecificity) {
+                bestSpecificity = specificity;
+                bestPriority = priority;
+                result = candidate;
+            } else if (specificity == bestSpecificity && priority >= bestPriority) {
+                bestPriority = priority;
+                result = candidate;
+            }
         }
 
-        List<FunctionInfo> compatibilityCandidates = arityCandidates.stream()
-                .filter(functionInfo -> visibleArgumentsCompatible(functionInfo, visibleArgumentCallShape))
-                .toList();
-        if (compatibilityCandidates.isEmpty()) {
-            return null;
-        }
-
-        Set<MolangFunction.ParameterRole> hostRoles = availableHostRoles;
-        List<FunctionInfo> hostRoleCandidates = compatibilityCandidates.stream()
-                .filter(functionInfo -> requiredHostRolesAvailable(functionInfo, hostRoles))
-                .toList();
-        if (hostRoleCandidates.isEmpty()) {
-            return null;
-        }
-
-        int highestSpecificity = hostRoleCandidates.stream()
-                .mapToInt(VariantSelector::variantSpecificity)
-                .max()
-                .orElse(Integer.MIN_VALUE);
-        List<FunctionInfo> specificityCandidates = hostRoleCandidates.stream()
-                .filter(functionInfo -> variantSpecificity(functionInfo) == highestSpecificity)
-                .toList();
-
-        int highestPriority = specificityCandidates.stream()
-                .mapToInt(VariantSelector::variantPriority)
-                .max()
-                .orElse(Integer.MIN_VALUE);
-        List<FunctionInfo> priorityCandidates = specificityCandidates.stream()
-                .filter(functionInfo -> variantPriority(functionInfo) == highestPriority)
-                .toList();
-
-        return priorityCandidates.get(priorityCandidates.size() - 1);
+        return result;
     }
 
     private static boolean visibleArityMatches(FunctionInfo functionInfo, int visibleArity) {

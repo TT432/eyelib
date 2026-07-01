@@ -46,12 +46,9 @@ eyelib_debug_close()
 
 ## /eval 语法
 
-- **只传方法体**，不包 `Object run(...) { }`。服务端自动包装
-- **禁用 `var`**（Janino 限制），全显式类型
-- **禁用 `Map.of()`**：用 `new java.util.HashMap()` 或 `Collections.emptyMap()`
-- **`while` 循环报 "Method must return a value"**：改用 `for` 遍历数组
-- **变量不跨调用**（Janino 累积变量名，重复声明报错）
-- **禁止多行 `if (...) return ...;`** — Janino 在非尾部 return 报错。用单行三目表达式或拆多次调用
+- **只传方法体**，不包 `Object run(...) { }`。服务端自动包装，签名注入 `Minecraft minecraft, LocalPlayer player, ClientLevel level` 三参数，直接用不要重新声明
+- AIDebugServer 使用 **JDK 自带编译器**（非 Janino），支持完整 Java 语法：`var`、lambda、`Map.of()`、`while`、多行 `if return` 均可
+- 代码在游戏工作目录（`versions/<node>/run/`）执行，访问项目文件用绝对路径
 
 ### fallback shell（MCP 不可用时）
 
