@@ -15,6 +15,7 @@
 | Bedrock 差距分析 | [gap-analysis/](gap-analysis/) |
 | 六边形架构 Port 清单与提取进度 | [architecture/domain-module-map.md](architecture/domain-module-map.md) |
 | Molang 重构路线图 | [molang/ROADMAP.md](molang/ROADMAP.md) |
+| Spark 性能基线与优化 | [perf/spark-baseline-and-optimizations.md](perf/spark-baseline-and-optimizations.md) |
 
 ## Skill 索引
 
