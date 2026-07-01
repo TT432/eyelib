@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.material.gl.stencil.Face;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,35 @@ public final class BrMaterialResolver {
     private BrMaterialResolver() {
     }
 
+    private static volatile Map<String, BrMaterialEntry> cachedMatMap;
+    private static volatile Map<BrMaterialEntry, ResolvedBrMaterial> resolveCache;
+
+    /**
+     * 解析材质继承链并缓存结果。稳态渲染期间 materials map 不变，缓存命中后跳过继承链遍历与分配。
+     * 仅 Render thread 调用；资源重载时 map 实例替换（Registry copy-on-write），缓存自然失效。
+     */
     public static ResolvedBrMaterial resolve(BrMaterialEntry entry, Map<String, BrMaterialEntry> materials) {
+        Map<BrMaterialEntry, ResolvedBrMaterial> cache = resolveCacheFor(materials);
+        ResolvedBrMaterial cached = cache.get(entry);
+        if (cached != null) {
+            return cached;
+        }
+        ResolvedBrMaterial result = computeResolve(entry, materials);
+        cache.put(entry, result);
+        return result;
+    }
+
+    private static Map<BrMaterialEntry, ResolvedBrMaterial> resolveCacheFor(Map<String, BrMaterialEntry> materials) {
+        if (materials != cachedMatMap) {
+            cachedMatMap = materials;
+            Map<BrMaterialEntry, ResolvedBrMaterial> fresh = new IdentityHashMap<>();
+            resolveCache = fresh;
+            return fresh;
+        }
+        return resolveCache;
+    }
+
+    private static ResolvedBrMaterial computeResolve(BrMaterialEntry entry, Map<String, BrMaterialEntry> materials) {
         List<BrMaterialEntry> chain = new ArrayList<>();
         collectChain(entry, materials, new LinkedHashSet<>(), chain);
 
