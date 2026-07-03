@@ -112,8 +112,13 @@ public final class AIDebugServer {
                             var source = serverPlayer != null
                                     ? serverPlayer.createCommandSourceStack()
                                     : integrated.createCommandSourceStack();
+                            //? if legacy {
                             int n = integrated.getCommands().performPrefixedCommand(source, cmd);
                             future.complete("executed on server (result=" + n + ")");
+                            //?} else {
+                            integrated.getCommands().performPrefixedCommand(source, cmd);
+                            future.complete("executed on server");
+                            //?}
                         } else {
                             if (mc.player == null || mc.player.connection == null) {
                                 future.complete("No player/connection available");

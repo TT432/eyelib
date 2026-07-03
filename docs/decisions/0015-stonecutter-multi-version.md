@@ -5,7 +5,24 @@
 **Author:** @TT432
 **Amends:** ADR-0010（恢复 ArchUnit 强制；`//?` 注释栖息地从「bridge 唯一」扩展为「L1 散布 + L2/L3 集中 bridge」）、ADR-0014（单 Gradle project 单版本 → 单 Gradle project + Stonecutter 多 node）
 **Related:** ADR-0002（模块边界仍按包名约定，新增 bridge 版本目录结构规则）
-**Implementation:** Stonecutter **0.7.11**（非 0.5.x placeholder；0.8+ 要求 Gradle 9，但 ModDevGradle legacyforge 不支持 Gradle 9，故锁 0.7.x + Gradle 8.12.1）。
+**Implementation:** Stonecutter **0.9.6**（2026-07-03 从 0.7.11 升级，见下方升级记录）。要求 Gradle 9.0+（使用 9.6.1）。
+
+> **勘误 (2026-07-03)**：原文本断言「ModDevGradle legacyforge 不支持 Gradle 9，故锁 0.7.x + Gradle 8.12.1」。该断言经实测推翻：ModDevGradle legacyforge **2.0.91** 在 Gradle **9.6.1** 下，配置阶段、`createMinecraftArtifacts`（NFRT 全流程）、`compileJava`（含 Mixin AP）全部 `BUILD SUCCESSFUL`；ModDevGradle issue #281 担心的 Gradle 9 `RootComponentIdentifier` 兼容问题在本项目未复现。故「被 ModDevGradle 阻塞」不成立。当前保留 0.7.x + Gradle 8.12.1 属保守现状；升级至 Stonecutter 0.8/0.9 + Gradle 9 的技术通路已打开，属独立决策。
+
+> **升级记录 (2026-07-03)**：上述「独立决策」已执行——升级至 Stonecutter **0.9.6** + Gradle **9.6.1**。
+>
+> **动机**：获取 0.8+ file handler 特性，用声明式 `//?` 替代 `injectVersionSpecificMixins`（70 行命令式 Groovy 字符串注入，痛点①）。
+>
+> **关键变更**：
+> 1. Gradle 8.12.1→9.6.1：实测 ModDevGradle legacyforge 2.0.91 / moddev 2.0.141 全兼容（三节点 BUILD SUCCESSFUL）。
+> 2. Stonecutter 0.7.11→0.9.6：DSL 完全兼容，仅改 settings.gradle 版本号。
+> 3. file handler：`stonecutter.gradle` 注册 `stonecutter.handlers { inherit 'java', 'json' }`，Stonecutter 直接处理 `eyelib.mixins.json` 的 `//?` 条件。删除 `injectVersionSpecificMixins` task（70 行）。
+> 4. cleanGeneratedJson 后处理：Stonecutter comment-out 对 .json 产出 json5（含 `//` + `/* */` 注释），加轻量 task 剥离注释→纯 JSON（~15 行通用清理），确保 Mixin runtime Gson 解析不回归。
+> 5. AT 显式配置修复：ModDevGradle 默认 AT 自动检测路径相对 node project dir（`versions/<ver>/src/...`），Stonecutter node 无 src → 失效。`legacyForge{}` + `neoForge{}` 块显式 `accessTransformers.from rootProject.file(...)`（此 bug 之前被 compileJava UP-TO-DATE 增量掩盖，1.21.1/26.1.2 从未真正编译通过）。
+> 6. 源码 bug 修复：`AIDebugServer.performPrefixedCommand` 返回类型 MC 1.20.6+ 从 int 改 void，用 `//? if legacy` 条件化。
+> 7. Structured Properties（centralized properties）：`stonecutter.properties.toml`（TOML quoted key `["1.20.1"]`，因版本号含点号）合并三 node 版本属性，删除 `versions/*/gradle.properties`。属性经 `sc.current.project` tag 加到 Gradle `extra` extension，build.gradle 现有 `project.xxx`/`property()`/`findProperty()` 透明访问，零改动。
+>
+> **验证**：三节点编译 + runClient（1.20.1）烟雾通过，eyelib.mixins.json 成功加载（日志确认 mixin 配置解析）。
 
 ## Context
 
@@ -45,7 +62,7 @@ ADR-0014 合并了 12 个 Gradle 子项目为单 project，降低了模块隔离
 
 - **单 root branch 三 node**（root branch 隐式 `""`），不引入多 branch
 - versions: `"1.20.1"`, `"1.21.1"`, `"26.1.2"`（不加 loader 后缀，单 loader 系）
-- 默认 active = `"1.21.1"`
+- 默认 active = `"1.20.1"`（legacy，首个迁移完成的 node）
 - `src/` 共享源码 = active version，靠 `//?` 注释切版本
 
 ### 2. 差异分级标准
@@ -93,7 +110,7 @@ ADR-0014 合并了 12 个 Gradle 子项目为单 project，降低了模块隔离
 
 ### 7. Mixin 跨版本
 
-三 node 共用 Spongepowered Mixin 0.8.5 + MixinExtras 0.5.0。**26.1.2 游戏类不混淆，无 refmap**：26.1.2 node 的 `eyelib.mixins.json` 移除 `"refmap"` 字段，`mixin { add sourceSets.main, "${mod_id}.refmap.json" }` 配置跳过。Mixin 运行时字节码修改本身仍支持。
+三 node 共用 Spongepowered Mixin 0.8.5 + MixinExtras 0.5.0。`eyelib.mixins.json` 用 `//?` 条件注释表达版本差异（modern 空数组 / !modern 含 mixin / !legacy 额外 accessor），由 Stonecutter file handler 处理（见升级记录③④）。**26.1.2 游戏类不混淆，无 refmap**：`//? if !modern` 块排除 refmap 字段。
 
 ### 8. clientsmoke 跨版本
 
@@ -133,7 +150,7 @@ Phase 3 可与 Phase 2/4 并行；Phase 5 依赖 Phase 4。
 ### 中性
 
 - **新增依赖**：Stonecutter Gradle 插件 + IDEA 插件
-- **目录结构**：新增 `versions/<ver>/gradle.properties`、`stonecutter.gradle`
+- **目录结构**：新增 `stonecutter.properties.toml`（版本属性集中管理）、`stonecutter.gradle`
 
 ## Verification
 

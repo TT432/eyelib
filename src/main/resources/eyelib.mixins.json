@@ -1,16 +1,42 @@
 {
+  //? if modern {
+  "required": false,
+  //?} else {
   "required": true,
+  //?}
   "minVersion": "0.8",
   "package": "io.github.tt432.eyelib.mixin",
   "compatibilityLevel": "JAVA_17",
+  //? if !modern {
   "refmap": "eyelib.refmap.json",
+  //?}
   "mixins": [
+    //? if !modern {
     "PoseStackAccessor",
     "LivingEntityAccessor",
-    "RangedAttackGoalAccessor"
+    "RangedAttackGoalAccessor",
+    "track.common.ItemStackMixin",
+    "track.common.AbstractContainerMenuMixin",
+    "track.common.InventoryMixin",
+    "track.common.LivingEntityMixin",
+    //? if !legacy {
+    "PoseStackPoseAccessor",
+    "AvoidEntityGoalAccessor",
+    "ModelPartAccessor",
+    "ModelPartCubeAccessor",
+    "ModelPartPolygonAccessor",
+    "ModelPartVertexAccessor",
+    //?}
+    //?}
   ],
   "client": [
-    "LivingEntityRendererAccessor"
+    //? if !modern {
+    "LivingEntityRendererAccessor",
+    "HumanoidModelMixin",
+    "client.ItemRendererMixin",
+    "client.ItemInHandRendererMixin",
+    "attachment.MultiPlayerGameModeMixin",
+    //?}
   ],
   "injectors": {
     "defaultRequire": 1

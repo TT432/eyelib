@@ -30,78 +30,23 @@ sourceSets.main.resources.srcDirs = [stonecutterMainBase.map { it.dir('resources
 compileJava.dependsOn 'stonecutterGenerate'
 processResources.dependsOn 'stonecutterGenerate'
 
-// Stonecutter 不处理 .json 文件的 //? 注释，需手动注入版本特定 mixin。
-// 策略：base mixins.json 只含全版本安全的 accessor；@Inject mixin 仅 <26.1 注入（26.1 方法签名变化大）。
-def injectVersionSpecificMixins = tasks.register('injectVersionSpecificMixins') {
+// Stonecutter file handler 处理 eyelib.mixins.json 的 //? 版本条件（见 stonecutter.gradle 注册 inherit java→json）。
+// comment-out 策略产出含注释的 json5，剥离为纯 JSON 供 Mixin 运行时解析。
+def cleanGeneratedJson = tasks.register('cleanGeneratedJson') {
     dependsOn 'stonecutterGenerate'
     doLast {
         def file = stonecutterMainBase.get().dir('resources').file('eyelib.mixins.json').asFile
         if (!file.exists()) return
-
-        // 26.1+ Mixin 库不支持 Java 25 字节码，清空所有 mixin
-        if (isModern) {
-            file.text = '''{
-  "required": false,
-  "minVersion": "0.8",
-  "package": "io.github.tt432.eyelib.mixin",
-  "compatibilityLevel": "JAVA_17",
-  "mixins": [],
-  "client": [],
-  "injectors": {
-    "defaultRequire": 1
-  }
-}'''
-            return
-        }
-
-        def extraCommonMixins = []
-        def extraClientMixins = []
-
-        // @Inject/@WrapOperation mixin：26.1 方法签名变化大，仅 <26.1 注入
-        if (!isModern) {
-            extraCommonMixins.addAll([
-                    'track.common.ItemStackMixin',
-                    'track.common.AbstractContainerMenuMixin',
-                    'track.common.InventoryMixin',
-                    'track.common.LivingEntityMixin'
-            ])
-            extraClientMixins.addAll([
-                    'HumanoidModelMixin',
-                    'client.ItemRendererMixin',
-                    'client.ItemInHandRendererMixin',
-                    'attachment.MultiPlayerGameModeMixin'
-            ])
-        }
-
-        // 1.21.1-only accessor mixin（整文件级 //? if >=1.20.6 条件化，1.20.1 不生成 class）
-        // 26.1.2 不注入：不混淆环境下字段多为 public，且 Mixin runtime 无法匹配泛型字段
-        if (!isLegacyForge && !isModern) {
-            extraCommonMixins.addAll([
-                    'PoseStackPoseAccessor', 'AvoidEntityGoalAccessor',
-                    'ModelPartAccessor', 'ModelPartCubeAccessor',
-                    'ModelPartPolygonAccessor', 'ModelPartVertexAccessor'
-            ])
-        }
-
         def text = file.text
-        if (!extraCommonMixins.isEmpty()) {
-            def insertBlock = extraCommonMixins.collect { "    \"$it\"," }.join('\n') + '\n'
-            text = text.replace(
-                    '    "RangedAttackGoalAccessor"',
-                    "    \"RangedAttackGoalAccessor\",\n${insertBlock}"
-            )
-        }
-        if (!extraClientMixins.isEmpty()) {
-            def insertBlock = extraClientMixins.collect { "    \"$it\"," }.join('\n') + '\n'
-            text = text.replace(
-                    '    "LivingEntityRendererAccessor"',
-                    "    \"LivingEntityRendererAccessor\",\n${insertBlock}"
-            )
-        }
-        file.text = text
+        text = text.replaceAll(/(?s)\/\*.*?\*\//, '')
+        text = text.replaceAll(/\/\/[^\r\n]*/, '')
+        text = text.replaceAll(/,(\s*[\]\}])/, '$1')
+        file.text = groovy.json.JsonOutput.prettyPrint(
+                groovy.json.JsonOutput.toJson(new groovy.json.JsonSlurper().parseText(text))
+        )
     }
 }
-processResources.dependsOn injectVersionSpecificMixins
+processResources.dependsOn cleanGeneratedJson
 
 // 同理，test sourceSet 也需指向 stonecutterGenerateTest 的生成目录。
 def stonecutterTestGenerated = layout.buildDirectory.dir('generated/stonecutter/test/java')
@@ -168,8 +113,8 @@ if (isLegacyForge) {
             minecraftVersion = project.parchment_minecraft_version
         }
 
-        // This line is optional. Access Transformers are automatically detected
-        // accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
+        // ModDevGradle 默认检测 AT 的路径相对 node project dir (versions/<ver>/)，node 下无 src，需显式指向 root
+        accessTransformers.from rootProject.file('src/main/resources/META-INF/accesstransformer.cfg')
 
         // Default run configurations.
         // These can be tweaked, removed, or duplicated as needed.
@@ -241,6 +186,9 @@ if (isLegacyForge) {
 } else {
     neoForge {
         version = project.neoforge_version
+
+        // ModDevGradle 默认检测 AT 的路径相对 node project dir (versions/<ver>/)，node 下无 src，需显式指向 root
+        accessTransformers.from rootProject.file('src/main/resources/META-INF/accesstransformer.cfg')
 
         // 26.1+ 去混淆，无需 parchment
         if (stonecutter.eval(mcVersion, '<26.1')) {
