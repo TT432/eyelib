@@ -115,9 +115,22 @@ public record BakedModel(
                 var ny = normal[i * 3 + 1];
                 var nz = normal[i * 3 + 2];
 
-                normalResult[i * 3] = m00 * nx + (m10 * ny + (m20 * nz));
-                normalResult[i * 3 + 1] = m01 * nx + (m11 * ny + (m21 * nz));
-                normalResult[i * 3 + 2] = m02 * nx + (m12 * ny + (m22 * nz));
+                float rx = m00 * nx + (m10 * ny + (m20 * nz));
+                float ry = m01 * nx + (m11 * ny + (m21 * nz));
+                float rz = m02 * nx + (m12 * ny + (m22 * nz));
+
+                // light.glsl 不 normalize normal，需在此保证单位长度，对齐原版 PoseStack.Pose.transformNormal。
+                float lenSq = rx * rx + ry * ry + rz * rz;
+                if (lenSq > 1.0E-8F) {
+                    float inv = 1.0F / (float) Math.sqrt(lenSq);
+                    normalResult[i * 3] = rx * inv;
+                    normalResult[i * 3 + 1] = ry * inv;
+                    normalResult[i * 3 + 2] = rz * inv;
+                } else {
+                    normalResult[i * 3] = rx;
+                    normalResult[i * 3 + 1] = ry;
+                    normalResult[i * 3 + 2] = rz;
+                }
             }
         }
     }

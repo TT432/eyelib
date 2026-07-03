@@ -23,6 +23,10 @@ public class RenderModelVisitor extends ModelVisitor {
 
         last.pose().transformAffine(vertex.x(), vertex.y(), vertex.z(), 1, tPosition);
         last.normal().transform(normal, tNormal);
+        // light.glsl 不 normalize normal，需在此保证单位长度，对齐原版 PoseStack.Pose.transformNormal。
+        if (tNormal.lengthSquared() > 1.0E-8F) {
+            tNormal.normalize();
+        }
 
         VertexConsumer consumer = renderParams.consumer();
         if (consumer == null) {
