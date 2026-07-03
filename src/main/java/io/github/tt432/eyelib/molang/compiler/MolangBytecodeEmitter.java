@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.molang.compiler;
 
 import io.github.dmlloyd.classfile.ClassFile;
+import io.github.dmlloyd.classfile.ClassHierarchyResolver;
 import io.github.dmlloyd.classfile.CodeBuilder;
 import io.github.dmlloyd.classfile.Label;
 import io.github.tt432.eyelib.molang.compiler.binding.BoundMolang;
@@ -80,7 +81,17 @@ public final class MolangBytecodeEmitter {
 
         ClassDesc cdCollections = ClassDesc.of("java.util.Collections");
 
-        return ClassFile.of().build(thisClass, classBuilder -> {
+        // prod 环境下 Forge 的 TransformingClassLoader 隔离了 mod 类，
+        // ClassFile.of() 默认的 ClassHierarchyResolver 走 system classloader，
+        // 无法解析 eyelib 自定义类型（MolangFloat 等），导致 StackMapGenerator 抛
+        // "Could not resolve class MolangFloat"。这里用加载 eyelib 自身的 classloader
+        // 来解析层级，dev / prod 行为一致。
+        ClassFile classFile = ClassFile.of(
+                ClassFile.ClassHierarchyResolverOption.of(
+                        ClassHierarchyResolver.ofClassLoading(MolangBytecodeEmitter.class.getClassLoader())
+                )
+        );
+        return classFile.build(thisClass, classBuilder -> {
             // 固定为 Java 17（主版本号 61）以保证 Forge 兼容性
             classBuilder.withVersion(61, 0);
             classBuilder.withFlags(ClassFile.ACC_PUBLIC | ClassFile.ACC_SUPER);
