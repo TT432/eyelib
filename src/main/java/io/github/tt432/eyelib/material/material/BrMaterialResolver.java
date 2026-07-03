@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.HashMap;
 
 /**
  * 将 Bedrock material entry 继承链归并为稳定的运行时材质描述。
@@ -23,8 +24,8 @@ public final class BrMaterialResolver {
     private BrMaterialResolver() {
     }
 
-    private static volatile Map<String, BrMaterialEntry> cachedMatMap;
-    private static volatile Map<BrMaterialEntry, ResolvedBrMaterial> resolveCache;
+    private static volatile Map<String, BrMaterialEntry> cachedMatMap = new HashMap<>();
+    private static volatile Map<BrMaterialEntry, ResolvedBrMaterial> resolveCache = new HashMap<>();
 
     /**
      * 解析材质继承链并缓存结果。稳态渲染期间 materials map 不变，缓存命中后跳过继承链遍历与分配。
