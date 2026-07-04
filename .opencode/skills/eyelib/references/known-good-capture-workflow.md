@@ -4,7 +4,7 @@
 
 ## 前置条件
 
-- `build/moddev/runClient.cmd` 已通过 `createLaunchScripts` 生成(经 JetBrains MCP)
+- `build/moddev/runClient.cmd` 已通过 `createLaunchScripts` 生成(经 `eyelib_debug_build`)
 - 无僵尸进程占用 port 25999
 
 ```powershell

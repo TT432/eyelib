@@ -7,10 +7,10 @@ description: Write and run JUnit 5 unit tests. Use for structural invariants, bo
 
 JUnit Jupiter 5.10.2. No custom runners, no Mockito, no base classes.
 
-Tests are run via Gradle `test` tasks using JetBrains MCP — never `./gradlew` in shell:
+Tests are run via Gradle `test` tasks using `eyelib_debug_test`:
 ```
-jetbrain_run_gradle_tasks with taskNames ["test"]    # 全 project
-jetbrain_run_gradle_tasks with taskNames [":1.20.1:test"]  # Stonecutter active node
+eyelib_debug_test              # 全 project
+eyelib_debug_test version="1.20.1"  # Stonecutter active node
 ```
 
 ## Test File Conventions
@@ -110,6 +110,6 @@ void loadsAddonFixture() throws Exception {
 
 All modules run JUnit via the standard Gradle `test` task. To verify changes:
 
-1. Sync the Gradle project if any `build.gradle` was modified
-2. Build the project via `jetbrain_build_project`
-3. Run the relevant test via `jetbrain_run_gradle_tasks` with `[":module:test"]`
+1. 在 IDEA 里手动 Gradle sync(reimport)（如果修改了 `build.gradle`）
+2. Build the project via `eyelib_debug_build`
+3. Run the relevant test via `eyelib_debug_test`

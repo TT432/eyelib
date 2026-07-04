@@ -176,7 +176,7 @@ class RoadmapDocVerificationTest {
 ### Step 6：运行验证
 
 ```bash
-jetbrain_run_gradle_tasks :1.20.1:test
+eyelib_debug_test
 ```
 
 ## 防漂移机制
@@ -194,5 +194,5 @@ jetbrain_run_gradle_tasks :1.20.1:test
 - [ ] Step 4：从 docs/index/molang.md 移除 compiler/diagnostic/ 引用
 - [ ] Step 4：从 `molang/` 包 README（若存在）移除 compiler/diagnostic/ 引用
 - [ ] Step 5：创建 `RoadmapDocVerificationTest.java`
-- [ ] Step 6：`jetbrain_run_gradle_tasks :1.20.1:test` 通过
+- [ ] Step 6：`eyelib_debug_test` 通过
 - [ ] 确认 ROADMAP.md 不再引用不存在的文件

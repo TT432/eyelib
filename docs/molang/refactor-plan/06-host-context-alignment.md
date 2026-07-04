@@ -207,7 +207,7 @@ Phase 4 MolangOwnerSet→HostContext migration (deferred, not yet performed)
 ### Step 7：运行验证
 
 ```bash
-jetbrain_run_gradle_tasks :1.20.1:test
+eyelib_debug_test
 ```
 
 ## Check-list
@@ -218,5 +218,5 @@ jetbrain_run_gradle_tasks :1.20.1:test
 - [ ] 如选A → Step 4：迁移调用方
 - [ ] 如选B → Step 5：更新设计文档
 - [ ] Step 6：更新 ROADMAP.md MolangOwnerSet 状态
-- [ ] Step 7：`jetbrain_run_gradle_tasks :1.20.1:test` 通过
+- [ ] Step 7：`eyelib_debug_test` 通过
 - [ ] 确认 `MolangScope.owner()` 是否可移除

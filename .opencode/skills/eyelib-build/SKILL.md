@@ -1,6 +1,6 @@
 ---
 name: eyelib-build
-description: Eyelib 构建、测试、环境——Gradle(Stonecutter 多版本) + JetBrains MCP 全流程。Use when building, testing, or troubleshooting Gradle builds for the eyelib project.
+description: Eyelib 构建、测试、环境——Gradle(Stonecutter 多版本) + eyelib-debug MCP 全流程。Use when building, testing, or troubleshooting Gradle builds for the eyelib project.
 license: MIT
 compatibility: opencode
 metadata:
@@ -16,44 +16,44 @@ metadata:
 
 ## 工具链与硬约束
 
-- **唯一允许的 Gradle 调用方式**: JetBrains MCP(`jetbrain_build_project`、`jetbrain_run_gradle_tasks`、`jetbrain_sync_gradle_projects`)。**禁止在 shell 跑 `gradlew`/`gradlew.bat`**(AGENTS.md Tooling Restrictions)。
+- **Gradle 调用方式**: 编译/测试/NullAway/clientsmoke/启停客户端统一走 `eyelib-debug` MCP(`eyelib_debug_build`、`eyelib_debug_test`、`eyelib_debug_nullaway`、`eyelib_debug_clientsmoke`、`eyelib_debug_launch`、`eyelib_debug_close`)；任意其它 Gradle task(generateModulesMd、compileJava、各 node test、Gradle sync)通过 bash 跑 `gradlew`。
 - **唯一允许的 IDE**: IntelliJ IDEA。JDTLS / VS Code / Eclipse 全部禁用。
 - **Stonecutter 多版本**:
   - `build.gradle` 是 `centralScript`,每个 version node(`:1.20.1`、`:1.21.1`)都跑一次。版本特定代码用 `//?` 注释切分,放在 `versions/<mc-version>/` 下。
   - active version 在 `stonecutter.gradle` 里(`stonecutter.active '1.20.1'`)。跑 task 用 node 前缀:`:1.20.1:test`、`:1.20.1:generateModulesMd` 等。
-  - **切 active version 后必须 `jetbrain_sync_gradle_projects`**,否则 source set 显示错位。
+  - **切 active version 后必须在 IDEA 里 Gradle sync(reimport)**,否则 source set 显示错位。
 
 ## 常用任务
 
 | 任务 | 调用 |
 |---|---|
-| 编译 active node | `jetbrain_build_project` 或 `jetbrain_run_gradle_tasks(["compileJava"])` |
-| 编译指定 node | `jetbrain_run_gradle_tasks([":1.21.1:compileJava"])` |
-| 测试 active node | `jetbrain_run_gradle_tasks([":1.20.1:test"])` |
-| 重生成模块清单 | `jetbrain_run_gradle_tasks([":1.20.1:generateModulesMd"])`(详见 AGENTS.md Documentation Sync Rules) |
-| 启动客户端 | `jetbrain_run_gradle_tasks(["runClient"])` —— **启动前必须确认端口 25999 未被占用**(eyelib-debug SKILL) |
-| 关停客户端 | 通过 eyelib-debug MCP `/close`,或 `/eval` → `minecraft.stop()`。**禁止从 shell `kill` java 进程** |
-| NullAway 检查 | 通过 eyelib-debug MCP `eyelib_debug_nullaway` |
+| 编译 active node | `eyelib_debug_build`(或 bash `gradlew compileJava`) |
+| 编译指定 node | bash `gradlew :1.21.1:compileJava` |
+| 测试 active node | `eyelib_debug_test`(等同 `:1.20.1:test`) |
+| 重生成模块清单 | bash `gradlew :1.20.1:generateModulesMd`(详见 AGENTS.md 文档同步规则) |
+| 启动客户端 | `eyelib_debug_launch` —— **启动前必须确认端口 25999 未被占用**(eyelib-debug SKILL) |
+| 关停客户端 | `eyelib_debug_close`,或 `/eval` → `minecraft.stop()`。**禁止从 shell `kill` java 进程** |
+| NullAway 检查 | `eyelib_debug_nullaway` |
 
 ## 关键约束
 
 - **`FROM-CACHE` / `UP-TO-DATE` 是可接受的**: Gradle 输入跟踪可靠。仅当你改了测试源但 Gradle 报 UP-TO-DATE 时,清掉对应模块的 `build/` 目录再跑。
 - **禁止 `--no-build-cache`**: 会强制 MC Forge artifacts 全量重建。需要清缓存时只清相关模块的 `build/`。
-- **结构/代码改动**: 完成后必须 `jetbrain_build_project`,exit code = 0 才算完成。
+- **结构/代码改动**: 完成后必须 `eyelib_debug_build`,exit code = 0 才算完成。
 - **runtime-sensitive 改动**: 先编译,再用 dev client(eyelib-debug)做 smoke check。
-- **`build.gradle` 改动后**: 必须调 `jetbrain_sync_gradle_projects` 让 IDE 重新感知。
+- **`build.gradle` 改动后**: 必须在 IDEA 里 Gradle sync(reimport) 让 IDE 重新感知。
 
 ## Common Pitfalls
 
 ### 修改 build.gradle 后 IDE 不感知
 
-`build.gradle` / `settings.gradle` / `stonecutter.gradle` 改动后,IDE 不会自动重读。必须显式调 `jetbrain_sync_gradle_projects`(JetBrains MCP),否则 IDE 显示的依赖图、source set、模块结构都是旧的。
+`build.gradle` / `settings.gradle` / `stonecutter.gradle` 改动后,IDE 不会自动重读。必须在 IDEA 里手动 Gradle sync(reimport),否则 IDE 显示的依赖图、source set、模块结构都是旧的。
 
 ### 切 Stonecutter active version 后看不到新源码
 
 `stonecutter.active` 改了之后,IDE source set 还是上次的。流程:
 1. 改 `stonecutter.gradle` 里的 active。
-2. `jetbrain_sync_gradle_projects`。
+2. 在 IDEA 里 Gradle sync(reimport)。
 3. 等同步完成再读 source。
 
 ### 非 Mod 库运行时 ClassNotFoundException
@@ -80,9 +80,9 @@ additionalRuntimeClasspath(implementation('group:artifact:version'))
 - `build/_mcp_gradle_err.txt` — Gradle stderr(JVM warning + 编译错误回显)
 - `build/_mcp_gradle.log` — MCP 自己的运行日志(每次调用的 task 列表 + 耗时)
 
-`build` 失败时直接 `read` 这两个文件即可拿到完整错误,不需要走 JetBrains MCP 或 shell gradlew。这是 eyelib-debug mcp(`scripts/eyelib_debug_mcp.py` `_run_gradle_sync`)写盘的实现细节。
+`build` 失败时直接 `read` 这两个文件即可拿到完整错误。这是 eyelib-debug mcp(`scripts/eyelib_debug_mcp.py` `_run_gradle_sync`)写盘的实现细节。
 
-JetBrains MCP(`jetbrain_build_project` / `jetbrain_run_gradle_tasks`)走不同链路,失败时错误在 IDE Build 工具窗口,不会写到上述文件。两者互不干扰。
+> 若用 bash 跑 `gradlew`,输出直接在终端,不会落盘到上述文件——两者执行链路不同。
 
 ### Stonecutter `//?` 注释语法踩坑
 

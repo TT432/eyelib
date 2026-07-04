@@ -54,7 +54,7 @@ class ArchitectureRules {
 
 ### 编译验证
 
-经 JetBrains MCP 跑 `jetbrain_build_project` 或 `jetbrain_run_gradle_tasks(["compileJava"])`(ADR-0014 后单 project,无 `:eyelib-material:` 子项目前缀)。
+通过 `eyelib_debug_build` 或 bash 跑 `gradlew compileJava`(ADR-0014 后单 project,无 `:eyelib-material:` 子项目前缀)。
 
 判定：exit code 0 且无 `import net.minecraft` 错误。
 
@@ -93,7 +93,7 @@ void inheritOrder_lastWins() {
 
 ### 验证命令
 
-经 JetBrains MCP 跑 `jetbrain_run_gradle_tasks(["test"])`,若要指定测试类可加 `--tests "*BrMaterialResolverTest"` 脚本参数。
+通过 `eyelib_debug_test` 或 bash 跑 `gradlew test`,若要指定测试类可加 `--tests "*BrMaterialResolverTest"` 脚本参数。
 
 判定：全部 GREEN。`UP-TO-DATE` 可接受（源码未变时 Gradle 跳过）。
 
@@ -134,6 +134,6 @@ List comps = (List) cap.getClass().getMethod("getModelComponents").invoke(cap);
 
 1. **ArchUnit 规则未在 build.gradle 加依赖** — 先确认 `testImplementation 'com.tngtech.archunit:archunit-junit5'`
 2. **@Mod bootstrap 类触发误报** — 在 ArchUnit 规则中用 `DescribedPredicate` 排除
-3. **在 shell 跑 gradlew** — 必须经 JetBrains MCP(`jetbrain_build_project` / `jetbrain_run_gradle_tasks`),AGENTS.md 明确禁止任何形式的 shell gradlew(含 WSL `./gradlew` 和 Windows `gradlew.bat`)
+3. **构建入口** — 通过 `eyelib_debug_build` / `eyelib_debug_test` 或 bash 跑 `gradlew`
 4. **Spec-based 测试 oracle 来自当前实现** — 这不是测试，是 pin 了 bug。oracle 必须来自规范
 5. **G3 在每批次都跑** — G3 只在最终集成时跑一次，日常不跑

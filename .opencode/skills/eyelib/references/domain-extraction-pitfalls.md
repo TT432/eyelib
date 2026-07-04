@@ -44,15 +44,11 @@
 
 ## 编译
 
-### 必须经 JetBrains MCP 跑 Gradle
+### 通过 eyelib-debug MCP 或 bash 跑 Gradle
 
-历史教训: WSL 下 `./gradlew` / `java -cp ... GradleWrapperMain` 经常超时(>120s); Windows 侧 `cmd.exe /c gradlew.bat` 虽然快(5-20s)但已禁止。
+历史教训: WSL 下 `./gradlew` / `java -cp ... GradleWrapperMain` 经常超时(>120s); Windows 侧 `cmd.exe /c gradlew.bat` 快(5-20s)。
 
-现行规则(AGENTS.md Tooling Restrictions): 唯一允许的 Gradle 入口是 JetBrains MCP。
-
-```
-jetbrain_run_gradle_tasks(taskNames=["compileJava"])
-```
+编译: `eyelib_debug_build`(通过 eyelib-debug MCP),或 bash `gradlew compileJava`。
 
 (ADR-0014 后是单 Gradle project,不再有 `:eyelib-material:compileJava` 这种子项目 task 路径。)
 

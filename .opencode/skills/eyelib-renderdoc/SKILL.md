@@ -32,7 +32,7 @@ Set-Location E:\_ideaProjects\qylEyelib
     "E:\_ideaProjects\qylEyelib\build\moddev\runClient.cmd"
 ```
 
-**前置**: `build/moddev/runClient.cmd` 需先由 `createLaunchScripts` 生成(经 JetBrains MCP)。
+**前置**: `build/moddev/runClient.cmd` 需先由 `createLaunchScripts` 生成(经 `eyelib_debug_build`)。
 
 推荐用 `eyelib_debug_launch()`（MCP 工具），自动完成上述步骤。
 

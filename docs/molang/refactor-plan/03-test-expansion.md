@@ -192,7 +192,7 @@ class MolangParserFrontendDivergenceTest {
 ### Step 3：运行验证
 
 ```bash
-jetbrain_run_gradle_tasks :1.20.1:test
+eyelib_debug_test
 ```
 
 ## 覆盖率目标
@@ -220,5 +220,5 @@ jetbrain_run_gradle_tasks :1.20.1:test
 - [ ] Step 1g：return 在块中（1个测试）
 - [ ] Step 2：创建 `MolangParserFrontendDivergenceTest.java`（20+个参数化用例）
 - [ ] Step 3：全部参数化用例通过
-- [ ] `jetbrain_run_gradle_tasks :1.20.1:test` 通过
+- [ ] `eyelib_debug_test` 通过
 - [ ] 更新 ROADMAP.md Phase 2/3 KRs

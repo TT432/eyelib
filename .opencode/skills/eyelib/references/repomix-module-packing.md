@@ -112,7 +112,7 @@ delegate_task(
 子代理频繁超时，常见原因：
 1. **context 太大** — 不需要全模块 repomix，只给涉及的文件即可。例如查 1 个 bug 给 2-3 个目标文件，不要给整个 5 万 token 的模块
 2. **目标不聚焦** — 「分析 X」不如「用 MCP 工具查 entity 157 的 scope 中是否有 MolangEntityContext」
-3. **gradle 构建卡住** — 构建用 `eyelib_debug_build` 或 `jetbrain_build_project` MCP tool,**禁止 shell gradlew**(AGENTS.md Tooling Restrictions)
+3. **gradle 构建卡住** — 构建用 `eyelib_debug_build` MCP tool,或 bash `gradlew`(AGENTS.md Tooling Restrictions)
 
 ## 相关工具
 

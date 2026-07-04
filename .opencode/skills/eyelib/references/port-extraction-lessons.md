@@ -55,8 +55,8 @@ eyelib-material 的 smoke test（MaterialPipelineSmoke）和 particle 的 Bedroc
 
 教训：复杂任务中，关键约束（domain 不能依赖 bridge）需要在 task 描述中明确重复。
 
-### 5. 编译命令：必须经 JetBrains MCP
+### 5. 编译命令：通过 eyelib-debug MCP 或 bash 跑 Gradle
 
-历史教训: WSL 下的 `./gradlew` 和 `java -cp ... GradleWrapperMain` 对 `/mnt/e/` 路径超时/挂死; Windows 侧 `cmd.exe /c "... && gradlew.bat ..."` 虽然快但仍违反 AGENTS.md。
+历史教训: WSL 下的 `./gradlew` 和 `java -cp ... GradleWrapperMain` 对 `/mnt/e/` 路径超时/挂死; Windows 侧 `cmd.exe /c "... && gradlew.bat ..."` 快且合法。
 
-现行规则(ADR-0014 + AGENTS.md Tooling Restrictions): **唯一允许的 Gradle 入口是 JetBrains MCP**(`jetbrain_build_project`、`jetbrain_run_gradle_tasks`),禁止任何形式的 shell gradlew。
+编译: `eyelib_debug_build`(通过 eyelib-debug MCP),或 bash `gradlew compileJava`。测试: `eyelib_debug_test`,或其他 Gradle task 通过 bash `gradlew <task>`。

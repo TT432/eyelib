@@ -168,7 +168,7 @@ void deferredConstructsProduceNullAtRuntime(String source) {
 ### Step 4：运行验证
 
 ```bash
-jetbrain_run_gradle_tasks :1.20.1:test
+eyelib_debug_test
 ```
 
 ### 决策点
@@ -188,7 +188,7 @@ jetbrain_run_gradle_tasks :1.20.1:test
 - [ ] Step 1：NORMAL 模式对延迟构造产生 WARNING
 - [ ] Step 2：延迟构造运行时返回 null 的测试
 - [ ] Step 3：箭头访问代码添加语义注释
-- [ ] Step 4：`jetbrain_run_gradle_tasks :1.20.1:test` 通过
+- [ ] Step 4：`eyelib_debug_test` 通过
 - [ ] 决策：三元条件 `?:` → 实现或移除解析器支持
 - [ ] 决策：二元条件 `?` → 实现或移除
 - [ ] 决策：`loop()` → 实现或移除

@@ -107,7 +107,7 @@ MolangAst.ExprSet ast = result.ast()
 
 ### Step 4：验证
 
-运行：`jetbrain_run_gradle_tasks :1.20.1:test`
+运行：`eyelib_debug_test`
 预期：所有现有测试通过，生产编译器通过统一入口获取解析器。
 
 ## Check-list
@@ -116,5 +116,5 @@ MolangAst.ExprSet ast = result.ast()
 - [ ] Step 2：评估 `active()` 应指向哪个实现（推荐选项B）
 - [ ] Step 3：修改 `MolangCompilerImpl.java` 第26行使用 `active()`
 - [ ] Step 3：修改 `MolangConstantExpressionEvaluator.java`（如果存在同样问题）
-- [ ] Step 4：`jetbrain_run_gradle_tasks :1.20.1:test` 通过
+- [ ] Step 4：`eyelib_debug_test` 通过
 - [ ] 更新 ROADMAP.md 相关条目

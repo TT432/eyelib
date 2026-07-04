@@ -19,7 +19,7 @@ metadata:
 - 已读完 ADR-0010（六边形架构，为什么拆）
 - 已读完 `docs/architecture/domain-module-map.md`（当前模块需要哪些 Port）
 - `bridge` 包已存在（ADR-0014 后为包非子项目）
-- 编译用 JetBrains MCP(`jetbrain_build_project` 或 `jetbrain_run_gradle_tasks`),**禁止 shell gradlew**(详见 AGENTS.md Tooling Restrictions)
+- 编译用 `eyelib_debug_build` 或 bash 跑 `gradlew`
 
 ## 提取流程
 
@@ -83,13 +83,13 @@ public PortRenderPass getRenderPass() {
 
 ### Step 5：编译验证
 
-经 JetBrains MCP 跑 `jetbrain_build_project` 或 `jetbrain_run_gradle_tasks(["compileJava"])`(ADR-0014 后单 project,无 `:eyelib-material:` 子项目前缀)。
+通过 `eyelib_debug_build` 或 bash 跑 `gradlew compileJava`(ADR-0014 后单 project,无 `:eyelib-material:` 子项目前缀)。
 
 零错误，警告也要修。
 
 ### Step 6：ArchUnit（如已配置）
 
-经 JetBrains MCP 跑 `jetbrain_run_gradle_tasks(["test"])`,若要指定测试类可加 `--tests "*ArchUnit*"` 脚本参数。
+通过 `eyelib_debug_test` 或 bash 跑 `gradlew test`,若要指定测试类可加 `--tests "*ArchUnit*"` 脚本参数。
 
 > 注: ADR-0015 ArchUnit freeze 模式骨架尚未落地,本步骤在骨架恢复后才执行。
 
@@ -110,7 +110,7 @@ root 或其他模块中被迁移类的引用改 import：
 
 ### Step 9：全局编译
 
-经 JetBrains MCP 跑 `jetbrain_build_project`(整 project) 或 `jetbrain_run_gradle_tasks(["compileJava"])`。
+通过 `eyelib_debug_build` 或 bash 跑 `gradlew compileJava`。
 
 ## Port 设计规范
 

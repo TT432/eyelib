@@ -76,7 +76,7 @@ Evidence from the current tree:
 ### M1 - Keep phase 1 corpus harness reliable
 
 - Preserve stable corpus case IDs, lint errors, result classes, effective diagnostics mode, and effective policy-pack reporting.
-- Keep phase1 corpus resources valid and runnable through `jetbrain_run_gradle_tasks :1.20.1:test`. Starter corpus: 33 rows (≥30 KR ✅), covering unary, comparison, for_each, return, member dot-chain, grouping, strings, array-literal reject, and binary-conditional.
+- Keep phase1 corpus resources valid and runnable through `eyelib_debug_test`. Starter corpus: 33 rows (≥30 KR ✅), covering unary, comparison, for_each, return, member dot-chain, grouping, strings, array-literal reject, and binary-conditional.
 - Do not promote corpus rows to cutover evidence unless they reference the V1 compatibility matrix in `docs/molang/refactor-plan/README.md`.
 
 ### M2 - Widen parser/AST only with corpus-backed slices
@@ -194,8 +194,8 @@ Target thresholds establish what "done" means before phase promotion.
 ## Verification Gates
 
 - Docs-only roadmap changes: verify every referenced path still exists.
-- **ALL Gradle commands must use JetBrains MCP** (`jetbrain_build_project`, `jetbrain_run_gradle_tasks`). Never run `./gradlew` in shell.
-- All phase verification: `jetbrain_run_gradle_tasks :1.20.1:test`(单 Gradle project,ADR-0014 后无 `:eyelib-importer` / `:eyelib-preprocessing` 等子项目 task)。
+- **通过 eyelib-debug MCP 或 bash 跑 `gradlew`** (`eyelib_debug_build`, `eyelib_debug_test` 等) 执行所有 Gradle 命令。
+- 所有 phase 验证：`eyelib_debug_test`（单 Gradle project，ADR-0014 后无 `:eyelib-importer` / `:eyelib-preprocessing` 等子项目 task）。
 
 ## Anti-Drift Checklist
 

@@ -137,7 +137,7 @@ while (match(TokenKind.LESS, TokenKind.LESS_EQUAL, TokenKind.GREATER, TokenKind.
 
 ### Step 4：验证
 
-运行：`jetbrain_run_gradle_tasks :1.20.1:test`
+运行：`eyelib_debug_test`
 预期：六个参数化测试全部通过 + 现有测试无回归。
 
 ### Step 5：添加差异测试
@@ -153,6 +153,6 @@ while (match(TokenKind.LESS, TokenKind.LESS_EQUAL, TokenKind.GREATER, TokenKind.
 - [ ] Step 2：TokenKind 枚举添加 LESS、LESS_EQUAL、GREATER_EQUAL
 - [ ] Step 2：readPunctuationOrOperator() 添加 "<=", ">=", "<" 分支
 - [ ] Step 3：parseComparison() 的 match 调用包含全部6个运算符
-- [ ] Step 4：`jetbrain_run_gradle_tasks :1.20.1:test` 通过
+- [ ] Step 4：`eyelib_debug_test` 通过
 - [ ] Step 5：差异测试类创建并通过
 - [ ] 更新 ROADMAP.md Phase 2 KR 状态

@@ -201,8 +201,9 @@ if (isLegacyForge) {
 ```
 
 ```bash
-# JetBrains MCP（不在 shell 跑 gradle）
-jetbrain_run_gradle_tasks: [":1.20.1:compileJava", ":1.21.1:compileJava"]
+# 通过 eyelib-debug MCP 或 bash gradlew 编译
+eyelib_debug_build version="1.20.1"
+# 或 bash: gradlew :1.20.1:compileJava :1.21.1:compileJava
 ```
 
 如果 Mixin AP 报错：

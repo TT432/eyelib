@@ -21,7 +21,7 @@
 1. **语义保持**：不破坏 Bedrock 规范复刻的正确性（参照已合入优化的语义保持约定，如 Opt1 的 putIfAbsent 先注册优先、Opt2 的 startsWith 语义对齐）。
 2. **多版本兼容**：Stonecutter 三节点（1.20.1 / 1.21.1 / 26.1.2），版本特定代码用 `//?` 放 `versions/<ver>/`。
 3. **架构边界**：不破坏六边形（domain 不反向依赖 bridge）、不静默简化设计。
-4. **编译**：JetBrains MCP build exit 0。
+4. **编译**：`eyelib_debug_build` exit 0。
 5. **不掩盖问题**：异常路径要查根因，不靠吞异常/改参数绕过。
 
 ## 迭代过程
@@ -35,7 +35,7 @@
 ```
 
 ### 验证方法（每个迭代）
-1. **编译**：JetBrains MCP `jetbrain_build_project` exit 0（先决条件）。
+1. **编译**：`eyelib_debug_build` exit 0（先决条件）。
 2. **复测对比**：重跑 sparkc profiler（相同负载、相同 60s 采样窗口），对比目标热点 self-time。
    - 优化生效判定：目标热点 self-time 数量级下降或归零，且无新热点因优化而上升超过原值。
 3. **正确性**：smoke / 单测覆盖改动点（若存在），或 progressive-exploration 目视确认。

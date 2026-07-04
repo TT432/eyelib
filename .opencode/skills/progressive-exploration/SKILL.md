@@ -143,20 +143,15 @@ minecraft.stop();
 
 ## Debugger Workflow
 
-When investigating rendering or logic issues, use the JetBrains debugger in combination with progressive exploration:
+> **`jetbrain_xdebug_*` MCP 工具已废弃**，当前 session 无断点调试 MCP 能力。断点调试只能在 IDEA 中手动操作（agent 无法直接设断点）。需要运行时数据时，用 progressive exploration 的 `/eval`（`eyelib_debug_execute`）作为替代。
 
-1. **Set a breakpoint** via `jetbrain_xdebug_set_breakpoint` at the suspect line
-2. **Start debug session** via `jetbrain_xdebug_start_debugger_session`
-3. **Wait for pause** via `jetbrain_xdebug_control_session(action=WAIT_FOR_PAUSE)`
-4. **Inspect values** via `jetbrain_xdebug_get_frame_values` to see locals/parameters
-5. **Step into** via `jetbrain_xdebug_control_session(action=STEP_INTO)` to trace execution
-6. **Resume** via `jetbrain_xdebug_control_session(action=RESUME)` after inspection
+`/eval` 一次就能拿到真实的运行时数据：在可疑代码路径上调用方法、读字段、打印状态，验证假设后再改代码。不要退回"猜 → 改代码 → 重建 → 重启"的循环——`/eval` 等价于一次可编程的断点检视。
 
-Never skip the debugger in favor of "guess → change code → rebuild → restart". A breakpoint hit proves the code path is reached and shows real data.
+Never skip runtime verification in favor of "guess → change code → rebuild → restart". An `/eval` probe proves the code path is reached and shows real data.
 
 ### Janino class name gotcha
 
-The Janino compiler auto-imports only `Minecraft`, `LocalPlayer`, `ClientLevel`. All other classes need fully qualified names. **Before writing an eval, verify the class path** — don't guess package names. Use `jetbrain_search_file` to find the correct path.
+The Janino compiler auto-imports only `Minecraft`, `LocalPlayer`, `ClientLevel`. All other classes need fully qualified names. **Before writing an eval, verify the class path** — don't guess package names. Use `glob`/`grep` 查找类路径。
 
 ## Limitations
 

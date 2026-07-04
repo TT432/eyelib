@@ -24,7 +24,7 @@
 | Skill | 用途 |
 |-------|------|
 | `eyelib` | 项目总索引——概览、Skill 导航、跨域约束 |
-| `eyelib-build` | 构建、测试、环境——Gradle(Stonecutter 多版本) + JetBrains MCP 全流程 |
+| `eyelib-build` | 构建、测试、环境——Gradle(Stonecutter 多版本) + eyelib-debug MCP 全流程 |
 | `eyelib-debug` | MCP 调试——启动客户端、/eval 执行代码、渲染诊断 Phase |
 | `eyelib-clientsmoke` | Clientsmoke 客户端烟雾测试 |
 | `eyelib-renderdoc` | GPU 调试——RenderDoc 截帧、headless 回放 |
