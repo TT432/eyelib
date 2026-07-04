@@ -1,5 +1,36 @@
-# Disable autocrlf on generated files, they always generate with LF
-# Add any extra files or paths here to make git stop saying they
-# are changed when only line endings change.
+# 默认：文本文件在仓库内统一用 LF 存储
+# checkout 时由 autocrlf 按平台转换，保证仓库内一致性
+* text=auto eol=lf
+
+# Windows 批处理必须 CRLF，否则老式 cmd 可能解析异常
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Unix shell 脚本显式 LF
+*.sh text eol=lf
+gradlew text eol=lf
+
+# 二进制资源：禁止任何换行/编码转换，避免 git 误判“仅换行变更”
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.tga binary
+*.ogg binary
+*.wav binary
+*.mp3 binary
+*.zip binary
+*.jar binary
+*.nbt binary
+*.mcpack binary
+*.pdf binary
+*.dat binary
+*.bin binary
+*.ttf binary
+*.otf binary
+
+# 生成文件始终 LF（避免 autocrlf 误报“仅换行变更”）
 src/generated/**/.cache/cache text eol=lf
 src/generated/**/*.json text eol=lf
