@@ -170,7 +170,7 @@ import org.jspecify.annotations.NullMarked;
    重生成，**禁止手编**，产物需随改动一起提交。
 5. **文档同步**: 见上文"文档同步规则"，grep 全仓库验证无旧路径残留、所有引用路径可解析。
 6. **clientsmoke**: `eyelib_debug_clientsmoke`。验证 MC 客户端加载后的接线行为(Bridge/接线层)，报告输出到
-   `run/clientsmoke-reports/`。写法见 `eyelib-clientsmoke` SKILL。
+   `versions/<version>/run/clientsmoke/clientsmoke-reports/`（gameDirectory 由 build.gradle clientSmoke run config 决定）。写法见 `eyelib-clientsmoke` SKILL。
 
 ### 提交前 Checklist（代码/结构/运行时变更）
 

@@ -780,7 +780,9 @@ async def eyelib_debug_clientsmoke(timeout: int = 120, version: str = "1.20.1") 
     # Wait for a report newer than this invocation (or process exit).
     # Polling must reject stale reports left over from previous runs — otherwise
     # the loop sees an old mtime and breaks immediately without running tests.
-    report_dir = os.path.join(PROJECT_DIR, "run", "clientsmoke-reports")
+    # clientsmoke 的 gameDirectory = versions/{version}/run/clientsmoke（build.gradle clientSmoke run config），
+    # 报告写到 {gameDir}/clientsmoke-reports，不是项目根的 run/clientsmoke-reports
+    report_dir = os.path.join(PROJECT_DIR, "versions", version, "run", "clientsmoke", "clientsmoke-reports")
     invocation_start = time.time()
     while time.time() - invocation_start < timeout:
         exit_msg = await _process_exit_message("Client")

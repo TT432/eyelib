@@ -63,10 +63,10 @@ eyelib_debug_launch(timeout=180)     # 启动 + 自动编译
 # 等待 ~30s → 状态机 INIT → CONFIG_LOAD → SCAN → WORLD_CREATE → STABILIZE → TEST_EXEC → REPORT
 ```
 
-输出：
-- `run/clientsmoke-reports/report-YYYYMMDD-HHmmss.json`
-- `run/clientsmoke-reports/junit-YYYYMMDD-HHmmss.xml`
-- `run/clientsmoke-reports/screenshots/` — 每测试一张截图
+输出（gameDir = `versions/<version>/run/clientsmoke`，由 build.gradle clientSmoke run config 决定）：
+- `versions/<version>/run/clientsmoke/clientsmoke-reports/report-YYYYMMDD-HHmmss.json`
+- `versions/<version>/run/clientsmoke/clientsmoke-reports/junit-YYYYMMDD-HHmmss.xml`
+- `versions/<version>/run/clientsmoke/clientsmoke-reports/screenshots/` — 每测试一张截图
 
 ## 常见陷阱
 
