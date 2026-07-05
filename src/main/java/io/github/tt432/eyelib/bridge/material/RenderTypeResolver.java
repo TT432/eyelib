@@ -8,9 +8,9 @@ import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.material.render.BrRenderState;
 import io.github.tt432.eyelib.material.render.BrRenderStateFactory;
+import io.github.tt432.eyelib.material.render.RenderTypeResolver.EntityRenderTypeData;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * 根据资源路径将材质名称解析为对应的 PortRenderPass 工厂。
@@ -20,13 +20,6 @@ import java.util.function.Function;
  */
 public final class RenderTypeResolver {
     private RenderTypeResolver() {
-    }
-
-    public record EntityRenderTypeData(
-            PortResourceLocation id,
-            boolean isSolid,
-            Function<PortResourceLocation, PortRenderPass> factory
-    ) {
     }
 
     public static EntityRenderTypeData resolve(PortResourceLocation id) {

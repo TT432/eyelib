@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
 import io.github.tt432.eyelib.bridge.material.RenderPassAdapter;
 import io.github.tt432.eyelib.bridge.material.RenderTypeResolver;
-import io.github.tt432.eyelib.bridge.material.RenderTypeResolver.EntityRenderTypeData;
+import io.github.tt432.eyelib.material.render.RenderTypeResolver.EntityRenderTypeData;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import io.github.tt432.eyelib.material.material.BrMaterialResolver;
