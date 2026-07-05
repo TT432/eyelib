@@ -1,6 +1,6 @@
 # 着色器系统 — 1.20.1 (Forge)
 
-> 基于 `.local_ref/mc/1.20.1/sources/` 提取源码。
+> 基于 `.local_ref/mc/1.20.1/sources/` 提取源码。 源码树由 `scripts/extract-mc-source.py` 重建。
 > 所有路径相对于该目录。类路径前缀为 `net/minecraft/client/renderer/`。
 
 ## 目录

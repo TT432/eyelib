@@ -1,6 +1,6 @@
 # Minecraft 1.21.1 (NeoForge) Vanilla Lighting Model
 
-> **Source tree**: `.local_ref/mc/1.21.1/sources/`
+> **Source tree**: `.local_ref/mc/1.21.1/sources/` 源码树由 `scripts/extract-mc-source.py` 重建。
 > **Purpose**: Reference for Eyelib rendering integration; document pixel‑accurate lightmap generation, the packed‑light vertex pipeline, and entity/block dispatch.
 
 ---

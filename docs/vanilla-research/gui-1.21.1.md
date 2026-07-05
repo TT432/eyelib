@@ -1,6 +1,6 @@
 # 1.21.1 (NeoForge) Minecraft Vanilla GUI/Screen 渲染系统分析报告
 
-> 基于 `.local_ref/mc/1.21.1/sources/` 提取源码。  
+> 基于 `.local_ref/mc/1.21.1/sources/` 提取源码。 源码树由 `scripts/extract-mc-source.py` 重建。
 > 1.21.1 仍是 `GuiGraphics + PoseStack + MultiBufferSource` 即时渲染，但 HUD 分层、GUI sprite 元数据和 `DeltaTracker` 已经为后续 26.1.2 重构铺路。
 
 ## 目录

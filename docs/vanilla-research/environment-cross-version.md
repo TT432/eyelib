@@ -1,6 +1,6 @@
 # Minecraft 环境渲染系统三版本对比(1.20.1 / 1.21.1 / 26.1.2)
 
-> 基于 `.local_ref/mc/{version}/sources/` 源码分析。
+> 基于 `.local_ref/mc/{version}/sources/` 源码分析。 源码树由 `scripts/extract-mc-source.py` 重建。
 > 本文是对比摘要,详细代码级分析参见各版本独立文档。
 
 ## 目录

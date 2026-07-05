@@ -1,6 +1,6 @@
 # 1.20.1 (Forge) Minecraft Vanilla GUI/Screen 渲染系统分析报告
 
-> 基于 `.local_ref/mc/1.20.1/sources/` 提取源码。  
+> 基于 `.local_ref/mc/1.20.1/sources/` 提取源码。 源码树由 `scripts/extract-mc-source.py` 重建。
 > 所有路径相对于该目录。GUI 在 1.20.1 已经使用 `GuiGraphics`，但 HUD 仍由 `Gui.render()` 单体顺序绘制。
 
 ## 目录

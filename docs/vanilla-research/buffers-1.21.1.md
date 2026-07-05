@@ -1,6 +1,6 @@
 # 缓冲区与顶点系统 — 1.21.1 (NeoForge)
 
-> 基于 `.local_ref/mc/1.21.1/sources/` 提取源码,所有路径相对于该目录。
+> 基于 `.local_ref/mc/1.21.1/sources/` 提取源码,所有路径相对于该目录。 源码树由 `scripts/extract-mc-source.py` 重建。
 > 全量 `com.mojang.blaze3d.vertex.*` 包 + `net.minecraft.client.renderer.MultiBufferSource`/`BufferUploader`。
 
 ## 目录

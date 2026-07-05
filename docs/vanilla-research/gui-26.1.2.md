@@ -1,6 +1,6 @@
 # 26.1.2 (NeoForge) Minecraft Vanilla GUI/Screen 渲染系统分析报告
 
-> 基于 `.local_ref/mc/26.1.2/sources/` 提取源码。  
+> 基于 `.local_ref/mc/26.1.2/sources/` 提取源码。 源码树由 `scripts/extract-mc-source.py` 重建。
 > 26.1.2 的 GUI 是渲染重构周期的一部分：HUD/Screen 调用不再直接写 GPU 顶点，而是通过 `GuiGraphicsExtractor` 收集 `GuiRenderState`，最后由 `GuiRenderer` 排序、合批、提交到 `RenderPipeline`/`RenderPass`。
 
 ## 目录

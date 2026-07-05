@@ -1,6 +1,6 @@
 # RenderType System — 1.21.1 (NeoForge)
 
-> 基于 `.local_ref/mc/1.21.1/sources/` 提取源码。所有路径相对于该目录。
+> 基于 `.local_ref/mc/1.21.1/sources/` 提取源码。所有路径相对于该目录。 源码树由 `scripts/extract-mc-source.py` 重建。
 
 ## 目录
 

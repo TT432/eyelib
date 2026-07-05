@@ -29,7 +29,6 @@
 
 ## 可用资源
 - 项目路径 E:\_ideaProjects\qylEyelib
-- MC 源码 E:\_ideaProjects\qylEyelib\.mc-source\
 - Bedrock 文档 E:\_____基岩版文档\
 ```
 

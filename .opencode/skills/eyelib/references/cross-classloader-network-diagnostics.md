@@ -15,7 +15,7 @@ Forge TRANSFORMER 为每个 JAR 创建独立 classloader。若 `EyelibNetworkTra
 
 ### 1. 读 Forge 源码确认 crash 位置
 
-`.mc-source/net/minecraftforge/network/simple/IndexedMessageCodec.java`：
+`IndexedMessageCodec.java`（Forge `net.minecraftforge.network.simple` 包）：
 
 ```java
 // build() line 129: types.get(message.getClass()) → class-based lookup

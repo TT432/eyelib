@@ -1,6 +1,6 @@
 # 着色器系统 — 26.1.2 (NeoForge, RenderPipeline 时代)
 
-> 基于 `.local_ref/mc/26.1.2/sources/` 提取源码。
+> 基于 `.local_ref/mc/26.1.2/sources/` 提取源码。 源码树由 `scripts/extract-mc-source.py` 重建。
 > 所有路径相对于该目录。
 
 ## 目录

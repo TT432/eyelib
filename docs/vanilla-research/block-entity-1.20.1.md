@@ -1,6 +1,6 @@
 # 1.20.1 (Forge) 方块实体渲染系统分析
 
-> 基于 `.local_ref/mc/1.20.1/sources/` 提取源码。所有路径相对于该目录。
+> 基于 `.local_ref/mc/1.20.1/sources/` 提取源码。所有路径相对于该目录。 源码树由 `scripts/extract-mc-source.py` 重建。
 
 ## 目录
 

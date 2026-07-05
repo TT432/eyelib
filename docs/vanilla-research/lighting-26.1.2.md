@@ -1,6 +1,6 @@
 # Minecraft 26.1.2 (NeoForge) Vanilla Lighting Model Analysis
 
-> Report generated from sources at `.local_ref/mc/26.1.2/sources/`
+> Report generated from sources at `.local_ref/mc/26.1.2/sources/` 源码树由 `scripts/extract-mc-source.py` 重建。
 
 ---
 

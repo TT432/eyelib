@@ -136,7 +136,7 @@ submit: GuiRenderer prepare -> sort -> batch -> RenderPass draw
 
 ## ⑦ 验证命令(grep 清单)
 
-以下命令只用于验证源码存在性：
+以下命令只用于验证源码存在性（源码树由 `scripts/extract-mc-source.py` 重建）：
 
 ```powershell
 rg "class Gui|extractRenderState|registerVanillaLayers" .local_ref\mc\26.1.2\sources\net\minecraft\client\gui\Gui.java
