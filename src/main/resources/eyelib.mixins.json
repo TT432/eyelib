@@ -35,6 +35,7 @@
     "HumanoidModelMixin",
     "client.ItemRendererMixin",
     "client.ItemInHandRendererMixin",
+    "client.HumanoidArmorLayerMixin",
     "attachment.MultiPlayerGameModeMixin",
     //?}
   ],

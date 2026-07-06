@@ -109,7 +109,7 @@ public final class AttachableItemRenderSetup {
     /**
      * 判断实体是否为本地玩家且当前处于第一人称视角，用于设置 {@code context.is_first_person}。
      */
-    private static boolean isLocalPlayerFirstPerson(Entity entity) {
+    public static boolean isLocalPlayerFirstPerson(Entity entity) {
         var mc = Minecraft.getInstance();
         var player = mc.player;
         return player != null && player == entity && mc.options.getCameraType().isFirstPerson();
@@ -124,7 +124,10 @@ public final class AttachableItemRenderSetup {
 
     public static void tickForEntity(LivingEntity entity, float partialTick) {
         boolean isFirstPerson = isLocalPlayerFirstPerson(entity);
-        for (EquipmentSlot slot : new EquipmentSlot[]{ EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND }) {
+        for (EquipmentSlot slot : new EquipmentSlot[]{
+                EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND,
+                EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET
+        }) {
             var rd = getOrPrepare(entity, slot, isFirstPerson);
             if (rd == null) continue;
 
