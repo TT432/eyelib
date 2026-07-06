@@ -73,6 +73,14 @@ public final class AttachableItemRenderSetup {
         rd.getClientEntityComponent().setClientEntity(attachable);
         EntityRenderOrchestrator.setupClientEntity(attachable, rd);
 
+        // parent_setup 在 holder（父实体）的 scope 上执行，用于初始化 holder 的渲染变量
+        // （如 variable.chest_layer_visible = 0.0）。仅在 attachable 首次绑定时走到此路径。
+        attachable.scripts().ifPresent(s -> {
+            var holderRd = RenderData.getComponent(entity);
+            holderRd.ensureOwner(entity);
+            s.parent_setup().eval(holderRd.requireScope());
+        });
+
         handMap.put(hand, rd);
         return rd;
     }
