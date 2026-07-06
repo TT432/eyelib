@@ -281,7 +281,7 @@ public final class EntityRenderOrchestrator {
             return;
         }
 
-        var rd = AttachableItemRenderSetup.getOrPrepare(le, hand);
+        var rd = AttachableItemRenderSetup.getOrPrepare(le, hand, false);
         if (rd != null) {
             poseStack.pushPose();
             AttachableItemRenderSetup.renderAttachable(rd, poseStack, bufferSource, le, light, OverlayTexture.NO_OVERLAY);

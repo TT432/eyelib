@@ -18,6 +18,7 @@ import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.molang.type.MolangString;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -39,7 +40,7 @@ public final class AttachableItemRenderSetup {
     private static final Map<LivingEntity, EnumMap<InteractionHand, RenderData<ItemStack>>> CACHE = new HashMap<>();
 
     @Nullable
-    public static RenderData<ItemStack> getOrPrepare(LivingEntity entity, InteractionHand hand) {
+    public static RenderData<ItemStack> getOrPrepare(LivingEntity entity, InteractionHand hand, boolean isFirstPerson) {
         ItemStack item = entity.getItemInHand(hand);
         BrClientEntity attachable = AttachableResolver.resolve(entity, item);
         if (attachable == null) {
@@ -51,6 +52,7 @@ public final class AttachableItemRenderSetup {
         var existing = handMap.get(hand);
 
         if (existing != null && existing.getOwner() == item) {
+            updateFirstPerson(existing, isFirstPerson);
             return existing;
         }
 
@@ -65,6 +67,7 @@ public final class AttachableItemRenderSetup {
                     io.github.tt432.eyelib.bridge.molang.EntityPortAdapter.from(entity));
             scope.set("context.item_slot", new MolangString(
                     hand == InteractionHand.OFF_HAND ? "off_hand" : "main_hand"));
+            scope.set("context.is_first_person", isFirstPerson ? 1F : 0F);
         }
 
         rd.getClientEntityComponent().setClientEntity(attachable);
@@ -74,9 +77,26 @@ public final class AttachableItemRenderSetup {
         return rd;
     }
 
+    /**
+     * 判断实体是否为本地玩家且当前处于第一人称视角，用于设置 {@code context.is_first_person}。
+     */
+    private static boolean isLocalPlayerFirstPerson(Entity entity) {
+        var mc = Minecraft.getInstance();
+        var player = mc.player;
+        return player != null && player == entity && mc.options.getCameraType().isFirstPerson();
+    }
+
+    private static void updateFirstPerson(RenderData<?> rd, boolean isFirstPerson) {
+        var scope = rd.getScope();
+        if (scope != null) {
+            scope.set("context.is_first_person", isFirstPerson ? 1F : 0F);
+        }
+    }
+
     public static void tickForEntity(LivingEntity entity, float partialTick) {
+        boolean isFirstPerson = isLocalPlayerFirstPerson(entity);
         for (InteractionHand hand : InteractionHand.values()) {
-            var rd = getOrPrepare(entity, hand);
+            var rd = getOrPrepare(entity, hand, isFirstPerson);
             if (rd == null) continue;
 
             var scope = rd.getScope();

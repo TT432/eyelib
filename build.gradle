@@ -502,6 +502,9 @@ tasks.named('test').configure {
     workingDir = rootProject.projectDir
     // ArchUnit freeze store 需按版本隔离（1.20.1/1.21.1 因 //? 条件化有不同违规集合）
     systemProperty 'archunit.freeze.store.default.path', "build/archunit_store/${project.name}"
+    // 自定义 freeze 匹配器：忽略违规描述中的行号，避免源码编辑导致 baseline 失效。
+    // 见 IgnoreLineNumberViolationMatcher。
+    systemProperty 'archunit.freeze.lineMatcher', 'io.github.tt432.eyelib.architecture.IgnoreLineNumberViolationMatcher'
 }
 
 // 测试源码不使用任何 annotation processor（无 Lombok/Mixin AP/NullAway）。

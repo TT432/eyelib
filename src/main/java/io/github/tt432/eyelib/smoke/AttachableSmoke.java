@@ -48,7 +48,7 @@ public class AttachableSmoke {
             throw new AssertionError("Attachable not auto-loaded for minecraft:stick");
         }
 
-        RenderData<ItemStack> rd = AttachableItemRenderSetup.getOrPrepare(player, InteractionHand.MAIN_HAND);
+        RenderData<ItemStack> rd = AttachableItemRenderSetup.getOrPrepare(player, InteractionHand.MAIN_HAND, true);
         if (rd == null) {
             throw new AssertionError("RenderData not created");
         }

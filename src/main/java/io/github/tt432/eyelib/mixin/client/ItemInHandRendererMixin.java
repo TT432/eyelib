@@ -39,7 +39,7 @@ public class ItemInHandRendererMixin {
         }
 
         InteractionHand hand = left ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
-        RenderData<ItemStack> rd = AttachableItemRenderSetup.getOrPrepare(entity, hand);
+        RenderData<ItemStack> rd = AttachableItemRenderSetup.getOrPrepare(entity, hand, true);
         if (rd == null) {
             return;
         }
