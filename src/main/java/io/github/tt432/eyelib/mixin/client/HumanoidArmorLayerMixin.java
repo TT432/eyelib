@@ -14,25 +14,25 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * 注入 HumanoidArmorLayer，为盔甲槽 attachable 提供渲染路径。
- * 按 EquipmentSlot 独立拦截 renderArmorPiece，有 attachable 则替代 vanilla 盔甲渲染。
+ * 注入 copyPropertiesTo 之后（此时 armor model 已通过 ModelPart.copyFrom 同步 parent model 的骨骼动画），
+ * 有 attachable 则替代 vanilla 盔甲渲染。
  *
  * @author TT432
  */
 @Mixin(HumanoidArmorLayer.class)
 public abstract class HumanoidArmorLayerMixin {
 
-    @Shadow
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    abstract HumanoidModel getContextModel();
-
-    @Inject(method = "renderArmorPiece", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderArmorPiece",
+            at = @At(value = "INVOKE",
+                    target = "Lnet/minecraft/client/model/HumanoidModel;copyPropertiesTo(Lnet/minecraft/client/model/HumanoidModel;)V",
+                    shift = At.Shift.AFTER),
+            cancellable = true)
     private void eyelib$onRenderArmorPiece(PoseStack poseStack, MultiBufferSource buffer,
                                             LivingEntity entity, EquipmentSlot slot, int light,
                                             HumanoidModel model, CallbackInfo ci) {
@@ -52,8 +52,7 @@ public abstract class HumanoidArmorLayerMixin {
             return;
         }
 
-        HumanoidModel contextModel = getContextModel();
-        ModelPart part = eyelib$getArmorPart(contextModel, slot);
+        ModelPart part = eyelib$getArmorPart(model, slot);
 
         poseStack.pushPose();
         part.translateAndRotate(poseStack);
