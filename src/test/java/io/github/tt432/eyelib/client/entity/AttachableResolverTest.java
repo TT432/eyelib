@@ -11,7 +11,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** @author TT432 */
 class AttachableResolverTest {
@@ -106,7 +108,28 @@ class AttachableResolverTest {
         assertNull(AttachableResolver.resolveByItemId("demo:other", scope));
     }
 
+    @Test
+    void isAttachableEnabledReturnsTrueWhenHolderCeIsNull() {
+        assertTrue(AttachableResolver.isAttachableEnabled(null));
+    }
+
+    @Test
+    void isAttachableEnabledReturnsTrueWhenEnableAttachablesIsTrue() {
+        BrClientEntity ce = testAttachableWithFlag("eyelib:custom", Map.of("demo:item", "1.0"), true);
+        assertTrue(AttachableResolver.isAttachableEnabled(ce));
+    }
+
+    @Test
+    void isAttachableEnabledReturnsFalseWhenEnableAttachablesIsFalse() {
+        BrClientEntity ce = testAttachable("eyelib:custom", Map.of("demo:item", "1.0"));
+        assertFalse(AttachableResolver.isAttachableEnabled(ce));
+    }
+
     private static BrClientEntity testAttachable(String identifier, Map<String, String> item) {
+        return testAttachableWithFlag(identifier, item, false);
+    }
+
+    private static BrClientEntity testAttachableWithFlag(String identifier, Map<String, String> item, boolean enableAttachables) {
         return new BrClientEntity(
                 identifier,
                 Optional.empty(),
@@ -122,7 +145,7 @@ class AttachableResolverTest {
                 Optional.empty(),
                 Optional.empty(),
                 item,
-                false
+                enableAttachables
         );
     }
 }

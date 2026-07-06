@@ -42,7 +42,19 @@ public final class AttachableResolver {
         RenderData<?> renderData = RenderData.getComponent(holder);
         renderData.ensureOwner(holder);
 
+        if (!isAttachableEnabled(renderData.getClientEntityComponent().getClientEntity())) {
+            return null;
+        }
+
         return resolveByItemId(itemKey.toString(), renderData.requireScope());
+    }
+
+    /**
+     * 判断 holder 的 client entity 是否允许 attachable。
+     * holder 无 client entity 定义（vanilla 实体）时默认允许。
+     */
+    static boolean isAttachableEnabled(@Nullable BrClientEntity holderCe) {
+        return holderCe == null || holderCe.enable_attachables();
     }
 
     @Nullable
