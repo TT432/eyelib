@@ -23,6 +23,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
@@ -37,19 +38,24 @@ import java.util.Map;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class AttachableItemRenderSetup {
-    private static final Map<LivingEntity, EnumMap<InteractionHand, RenderData<ItemStack>>> CACHE = new HashMap<>();
+    private static final Map<LivingEntity, EnumMap<EquipmentSlot, RenderData<ItemStack>>> CACHE = new HashMap<>();
 
     @Nullable
     public static RenderData<ItemStack> getOrPrepare(LivingEntity entity, InteractionHand hand, boolean isFirstPerson) {
-        ItemStack item = entity.getItemInHand(hand);
+        return getOrPrepare(entity, hand == InteractionHand.OFF_HAND ? EquipmentSlot.OFFHAND : EquipmentSlot.MAINHAND, isFirstPerson);
+    }
+
+    @Nullable
+    public static RenderData<ItemStack> getOrPrepare(LivingEntity entity, EquipmentSlot slot, boolean isFirstPerson) {
+        ItemStack item = entity.getItemBySlot(slot);
         BrClientEntity attachable = AttachableResolver.resolve(entity, item);
         if (attachable == null) {
-            invalidate(entity, hand);
+            invalidate(entity, slot);
             return null;
         }
 
-        var handMap = CACHE.computeIfAbsent(entity, k -> new EnumMap<>(InteractionHand.class));
-        var existing = handMap.get(hand);
+        var slotMap = CACHE.computeIfAbsent(entity, k -> new EnumMap<>(EquipmentSlot.class));
+        var existing = slotMap.get(slot);
 
         if (existing != null && existing.getOwner() == item) {
             updateFirstPerson(existing, isFirstPerson);
@@ -65,8 +71,7 @@ public final class AttachableItemRenderSetup {
             scope.getHostContext().put(Entity.class, entity);
             scope.getHostContext().put(io.github.tt432.eyelib.molang.port.PortEntity.class,
                     io.github.tt432.eyelib.bridge.molang.EntityPortAdapter.from(entity));
-            scope.set("context.item_slot", new MolangString(
-                    hand == InteractionHand.OFF_HAND ? "off_hand" : "main_hand"));
+            scope.set("context.item_slot", new MolangString(slotName(slot)));
             scope.set("context.is_first_person", isFirstPerson ? 1F : 0F);
         }
 
@@ -81,8 +86,24 @@ public final class AttachableItemRenderSetup {
             s.parent_setup().eval(holderRd.requireScope());
         });
 
-        handMap.put(hand, rd);
+        slotMap.put(slot, rd);
         return rd;
+    }
+
+    /**
+     * 将 {@link EquipmentSlot} 映射为 BE 规范定义的 {@code context.item_slot} 字符串。
+     * 手持槽对应 {@code main_hand}/{@code off_hand}，盔甲槽对应 {@code slot.armor.*}。
+     * {@code itemSlotToBoneName} 对盔甲槽原样透传作为骨骼名用于绑定。
+     */
+    private static String slotName(EquipmentSlot slot) {
+        return switch (slot) {
+            case MAINHAND -> "main_hand";
+            case OFFHAND -> "off_hand";
+            case HEAD -> "slot.armor.head";
+            case CHEST -> "slot.armor.chest";
+            case LEGS -> "slot.armor.legs";
+            case FEET -> "slot.armor.feet";
+        };
     }
 
     /**
@@ -103,8 +124,8 @@ public final class AttachableItemRenderSetup {
 
     public static void tickForEntity(LivingEntity entity, float partialTick) {
         boolean isFirstPerson = isLocalPlayerFirstPerson(entity);
-        for (InteractionHand hand : InteractionHand.values()) {
-            var rd = getOrPrepare(entity, hand, isFirstPerson);
+        for (EquipmentSlot slot : new EquipmentSlot[]{ EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND }) {
+            var rd = getOrPrepare(entity, slot, isFirstPerson);
             if (rd == null) continue;
 
             var scope = rd.getScope();
@@ -160,11 +181,11 @@ public final class AttachableItemRenderSetup {
         CACHE.remove(entity);
     }
 
-    private static void invalidate(LivingEntity entity, InteractionHand hand) {
-        var handMap = CACHE.get(entity);
-        if (handMap != null) {
-            handMap.remove(hand);
-            if (handMap.isEmpty()) {
+    private static void invalidate(LivingEntity entity, EquipmentSlot slot) {
+        var slotMap = CACHE.get(entity);
+        if (slotMap != null) {
+            slotMap.remove(slot);
+            if (slotMap.isEmpty()) {
                 CACHE.remove(entity);
             }
         }
