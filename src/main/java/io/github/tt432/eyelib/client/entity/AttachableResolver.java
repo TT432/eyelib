@@ -60,7 +60,7 @@ public final class AttachableResolver {
     @Nullable
     public static BrClientEntity resolveByItemId(String itemId) {
         for (BrClientEntity attachable : AttachableManager.INSTANCE.all().values()) {
-            if (attachable.item().containsKey(itemId)) {
+            if (attachable.item().containsKey(itemId) || attachable.identifier().equals(itemId)) {
                 return attachable;
             }
         }
@@ -69,12 +69,18 @@ public final class AttachableResolver {
 
     /**
      * 按 holder 作用域评估 item molang 条件，仅 truthy 才匹配。
+     * 当 attachable 未声明 item 字段时，回退到 identifier 直接匹配（BE 规范：
+     * identifier 本身是物品 ID 时，无需 item 字段即可直接绑定）。
      */
     @Nullable
     public static BrClientEntity resolveByItemId(String itemId, MolangScope scope) {
         for (BrClientEntity attachable : AttachableManager.INSTANCE.all().values()) {
             String condition = attachable.item().get(itemId);
-            if (condition != null && new MolangValue(condition).evalAsBool(scope)) {
+            if (condition != null) {
+                if (new MolangValue(condition).evalAsBool(scope)) {
+                    return attachable;
+                }
+            } else if (attachable.identifier().equals(itemId)) {
                 return attachable;
             }
         }

@@ -109,6 +109,32 @@ class AttachableResolverTest {
     }
 
     @Test
+    void resolveByItemIdFallsBackToIdentifierMatch() {
+        BrClientEntity spawnEgg = testAttachable("minecraft:slime_spawn_egg", Map.of());
+        AttachableManager.INSTANCE.put(spawnEgg.identifier(), spawnEgg);
+
+        assertEquals(spawnEgg, AttachableResolver.resolveByItemId("minecraft:slime_spawn_egg"));
+    }
+
+    @Test
+    void resolveByItemIdWithScopeFallsBackToIdentifierMatch() {
+        BrClientEntity spawnEgg = testAttachable("minecraft:slime_spawn_egg", Map.of());
+        AttachableManager.INSTANCE.put(spawnEgg.identifier(), spawnEgg);
+
+        MolangScope scope = new MolangScope();
+        assertEquals(spawnEgg, AttachableResolver.resolveByItemId("minecraft:slime_spawn_egg", scope));
+    }
+
+    @Test
+    void resolveByItemIdWithScopePrefersItemFieldConditionOverIdentifierMatch() {
+        BrClientEntity attachable = testAttachable("demo:wrench", Map.of("demo:wrench", "0.0"));
+        AttachableManager.INSTANCE.put(attachable.identifier(), attachable);
+
+        MolangScope scope = new MolangScope();
+        assertNull(AttachableResolver.resolveByItemId("demo:wrench", scope));
+    }
+
+    @Test
     void isAttachableEnabledReturnsTrueWhenHolderCeIsNull() {
         assertTrue(AttachableResolver.isAttachableEnabled(null));
     }
