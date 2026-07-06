@@ -103,4 +103,16 @@ public class RenderData<T> {
 
         scope.set("variable.scale", 1);
     }
+
+    /**
+     * 返回已初始化的 scope；未 init 时抛 IllegalStateException。
+     * 用于必须保证 scope 可用的调用点（如 AttachableResolver 评估 item molang 条件）。
+     */
+    public MolangScope requireScope() {
+        MolangScope s = scope;
+        if (s == null) {
+            throw new IllegalStateException("RenderData scope not initialized; call ensureOwner first");
+        }
+        return s;
+    }
 }

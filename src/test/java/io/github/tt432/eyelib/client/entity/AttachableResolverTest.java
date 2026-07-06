@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.entity;
 
 import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.molang.MolangScope;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -62,6 +63,47 @@ class AttachableResolverTest {
 
         assertEquals(tool, AttachableResolver.resolveByItemId("demo:pickaxe"));
         assertEquals(tool, AttachableResolver.resolveByItemId("demo:axe"));
+    }
+
+    @Test
+    void resolveByItemIdWithScopeMatchesConstantTrueCondition() {
+        BrClientEntity wrench = testAttachable("eyelib:wrench", Map.of("demo:wrench", "1.0"));
+        AttachableManager.INSTANCE.put(wrench.identifier(), wrench);
+
+        MolangScope scope = new MolangScope();
+        assertEquals(wrench, AttachableResolver.resolveByItemId("demo:wrench", scope));
+    }
+
+    @Test
+    void resolveByItemIdWithScopeRejectsConstantFalseCondition() {
+        BrClientEntity wrench = testAttachable("eyelib:wrench", Map.of("demo:wrench", "0.0"));
+        AttachableManager.INSTANCE.put(wrench.identifier(), wrench);
+
+        MolangScope scope = new MolangScope();
+        assertNull(AttachableResolver.resolveByItemId("demo:wrench", scope));
+    }
+
+    @Test
+    void resolveByItemIdWithScopeEvaluatesVariableCondition() {
+        BrClientEntity flag = testAttachable("eyelib:flag", Map.of("demo:flag", "variable.flag"));
+        AttachableManager.INSTANCE.put(flag.identifier(), flag);
+
+        MolangScope truthy = new MolangScope();
+        truthy.set("variable.flag", 1);
+        assertEquals(flag, AttachableResolver.resolveByItemId("demo:flag", truthy));
+
+        MolangScope falsy = new MolangScope();
+        falsy.set("variable.flag", 0);
+        assertNull(AttachableResolver.resolveByItemId("demo:flag", falsy));
+    }
+
+    @Test
+    void resolveByItemIdWithScopeReturnsNullWhenConditionItemMissing() {
+        BrClientEntity wrench = testAttachable("eyelib:wrench", Map.of("demo:wrench", "1.0"));
+        AttachableManager.INSTANCE.put(wrench.identifier(), wrench);
+
+        MolangScope scope = new MolangScope();
+        assertNull(AttachableResolver.resolveByItemId("demo:other", scope));
     }
 
     private static BrClientEntity testAttachable(String identifier, Map<String, String> item) {

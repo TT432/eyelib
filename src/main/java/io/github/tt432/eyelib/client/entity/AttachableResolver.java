@@ -1,8 +1,11 @@
 package io.github.tt432.eyelib.client.entity;
 
 import io.github.tt432.eyelib.bridge.client.entity.ItemKeyResolver;
+import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.MolangValue;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 //? if <26.1 {
@@ -36,13 +39,30 @@ public final class AttachableResolver {
             return null;
         }
 
-        return resolveByItemId(itemKey.toString());
+        RenderData<?> renderData = RenderData.getComponent(holder);
+        renderData.ensureOwner(holder);
+
+        return resolveByItemId(itemKey.toString(), renderData.requireScope());
     }
 
     @Nullable
     public static BrClientEntity resolveByItemId(String itemId) {
         for (BrClientEntity attachable : AttachableManager.INSTANCE.all().values()) {
             if (attachable.item().containsKey(itemId)) {
+                return attachable;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 按 holder 作用域评估 item molang 条件，仅 truthy 才匹配。
+     */
+    @Nullable
+    public static BrClientEntity resolveByItemId(String itemId, MolangScope scope) {
+        for (BrClientEntity attachable : AttachableManager.INSTANCE.all().values()) {
+            String condition = attachable.item().get(itemId);
+            if (condition != null && new MolangValue(condition).evalAsBool(scope)) {
                 return attachable;
             }
         }
