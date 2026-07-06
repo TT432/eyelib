@@ -55,8 +55,8 @@ public final class BedrockAddonRuntimeBridge {
                         .forEach(attachable -> flattened.put(attachable.identifier(), attachable));
             AttachableManager.INSTANCE.putAll(flattened);
         }
-        // 替换模型
-        ModelManager.INSTANCE.replaceAll(new java.util.LinkedHashMap<>(resourcePack.modelsView()));
+        // 叠加模型（与材质一致，保留 BrModelLoader 加载的 mod 自带条目）
+        ModelManager.INSTANCE.putAll(resourcePack.modelsView());
         // 替换材质（叠加而非替换，保留 BrMaterialLoader 加载的 vanilla 条目）
         {
             var materials = toRuntimeMaterials(resourcePack.materialFiles());
