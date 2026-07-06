@@ -76,7 +76,9 @@ public final class AttachableItemRenderSetup {
         }
 
         rd.getClientEntityComponent().setClientEntity(attachable);
-        EntityRenderOrchestrator.setupClientEntity(attachable, rd);
+        // 执行 setupClientEntity 返回的同步动作（含 clamped texture upload 等），
+        // 否则 alphatest 材质的 clamped 纹理不会被上传，导致显示为紫色 MissingTexture 方块。
+        EntityRenderOrchestrator.setupClientEntity(attachable, rd).forEach(Runnable::run);
 
         // parent_setup 在 holder（父实体）的 scope 上执行，用于初始化 holder 的渲染变量
         // （如 variable.chest_layer_visible = 0.0）。仅在 attachable 首次绑定时走到此路径。
