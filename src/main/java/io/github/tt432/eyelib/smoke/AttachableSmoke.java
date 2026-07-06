@@ -35,10 +35,17 @@ public class AttachableSmoke {
 
         var all = AttachableManager.INSTANCE.all();
         LOGGER.info("[AttachableSmoke] auto-loaded attachables: {}", all.size());
-        all.forEach((k, v) -> LOGGER.info("[AttachableSmoke]   {} item={}", k, v.item()));
 
         if (all.isEmpty()) {
             throw new AssertionError("No attachables auto-loaded");
+        }
+
+        // 显式验证 mod 自带 attachable 未被 .mcpack 数据覆盖丢弃
+        if (!all.containsKey("eyelib:test_stick")) {
+            throw new AssertionError("eyelib:test_stick missing — mod attachable likely overwritten by .mcpack replaceAll");
+        }
+        if (!all.containsKey("eyelib:test_helmet")) {
+            throw new AssertionError("eyelib:test_helmet missing — mod attachable likely overwritten by .mcpack replaceAll");
         }
 
         verifyHandAttachable(player);

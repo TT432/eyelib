@@ -47,13 +47,13 @@ public final class BedrockAddonRuntimeBridge {
             resourcePack.clientEntities().values().forEach(entity -> flattened.put(entity.identifier(), entity));
             ClientEntityManager.INSTANCE.replaceAll(flattened);
         }
-        // 替换附着物
+        // 叠加附着物（与材质一致，保留 BrAttachableLoader 加载的 mod 自带条目）
         {
             java.util.LinkedHashMap<String, BrClientEntity> flattened = new java.util.LinkedHashMap<>();
             resourcePack.attachables()
                         .values()
                         .forEach(attachable -> flattened.put(attachable.identifier(), attachable));
-            AttachableManager.INSTANCE.replaceAll(flattened);
+            AttachableManager.INSTANCE.putAll(flattened);
         }
         // 替换模型
         ModelManager.INSTANCE.replaceAll(new java.util.LinkedHashMap<>(resourcePack.modelsView()));
