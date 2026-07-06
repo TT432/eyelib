@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ClientEntityRuntimeDataTest {
     @Test
     void syncUsesLookupPortToResolveGeometryModels() {
-        Model resolved = new Model("geometry.test", new Int2ObjectOpenHashMap<>());
+        Model resolved = Model.of("geometry.test", new Int2ObjectOpenHashMap<>());
         ClientEntityRuntimeData runtimeData = new ClientEntityRuntimeData(modelName ->
                 "geometry.test".equals(modelName) ? resolved : null);
 
@@ -63,7 +63,7 @@ class ClientEntityRuntimeDataTest {
 
     @Test
     void syncToNullClearsResolvedModels() {
-        Model resolved = new Model("geometry.test", new Int2ObjectOpenHashMap<>());
+        Model resolved = Model.of("geometry.test", new Int2ObjectOpenHashMap<>());
         ClientEntityRuntimeData runtimeData = new ClientEntityRuntimeData(modelName -> resolved);
         BrClientEntity clientEntity = new BrClientEntity(
                 "eyelib:test",

@@ -37,11 +37,11 @@ class ClientLookupFacadeTest {
 
     @Test
     void modelLookupAllReturnsSnapshotContainingStoredModel() {
-        Model model = new Model("geometry.test", new Int2ObjectOpenHashMap<>());
+        Model model = Model.of("geometry.test", new Int2ObjectOpenHashMap<>());
         ModelManager.INSTANCE.put("geometry.test", model);
 
         Map<String, Model> snapshot = ModelManager.INSTANCE.all();
-        ModelManager.INSTANCE.put("geometry.other", new Model("geometry.other", new Int2ObjectOpenHashMap<>()));
+        ModelManager.INSTANCE.put("geometry.other", Model.of("geometry.other", new Int2ObjectOpenHashMap<>()));
 
         assertEquals(Set.of("geometry.test"), snapshot.keySet());
         assertSame(model, snapshot.get("geometry.test"));

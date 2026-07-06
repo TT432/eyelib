@@ -99,7 +99,7 @@ class BedrockAddonRuntimeBridgeTest {
 
         BrClientEntity clientEntity = testEntity("eyelib:client_entity");
         BrClientEntity attachable = testEntity("eyelib:test_attachable");
-        Model model = new Model("geometry.test", new Int2ObjectOpenHashMap<>());
+        Model model = Model.of("geometry.test", new Int2ObjectOpenHashMap<>());
 
         BedrockAddonSideAggregate resourcePack = new BedrockAddonSideAggregate(
                 new LinkedHashMap<>(animationSet.animations()),

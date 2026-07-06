@@ -5,7 +5,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.model.locator.GroupLocator;
 import io.github.tt432.eyelib.model.locator.ModelLocator;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.With;
 import org.jspecify.annotations.Nullable;
 import org.joml.Vector2fc;
@@ -19,71 +18,47 @@ import java.util.List;
  *
  * @author TT432
  */
-@With
-public record Model(
-        String name,
-        Int2ObjectMap<Bone> toplevelBones,
-        Int2ObjectMap<Bone> allBones,
-        ModelLocator locator,
-        VisibleBox visibleBox
-) {
-    public static final VisibleBox EMPTY_VISIBLE_BOX = VisibleBox.EMPTY;
-    private static final Codec<Vector3f> VECTOR3F_CODEC = ImporterCodecs.VECTOR3F;
+public interface Model {
+    VisibleBox EMPTY_VISIBLE_BOX = VisibleBox.EMPTY;
+    private static Codec<Vector3f> vector3fCodec() {
+        return ImporterCodecs.VECTOR3F;
+    }
 
-    public static final Codec<Model> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+    Codec<Model> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.STRING.fieldOf("name").forGetter(Model::name),
             GlobalBoneIdHandler.map(Bone.CODEC).fieldOf("all_bones").forGetter(Model::allBones),
             ModelLocator.CODEC.fieldOf("locator").forGetter(Model::locator),
             VisibleBox.CODEC.optionalFieldOf("visible_box", EMPTY_VISIBLE_BOX).forGetter(Model::visibleBox)
-    ).apply(ins, Model::new));
+    ).apply(ins, SimpleModel::of));
 
-    public Model(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator, VisibleBox visibleBox) {
-        this(name, new Int2ObjectOpenHashMap<>(), allBones, locator, visibleBox);
-
-        allBones.forEach((integer, bone) -> {
-            if (bone.parent == -1) {
-                toplevelBones.put(integer, bone);
-            } else {
-                allBones.get(bone.parent).children.put(bone.id, bone);
-            }
-        });
+    static Model of(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator, VisibleBox visibleBox) {
+        return SimpleModel.of(name, allBones, locator, visibleBox);
     }
 
-    public Model(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator) {
-        this(name, allBones, locator, EMPTY_VISIBLE_BOX);
+    static Model of(String name, Int2ObjectMap<Bone> allBones, ModelLocator locator) {
+        return SimpleModel.of(name, allBones, locator);
     }
 
-    public Model(String name, Int2ObjectMap<Bone> allBones, VisibleBox visibleBox) {
-        this(name, new Int2ObjectOpenHashMap<>(), allBones, new ModelLocator(new Int2ObjectOpenHashMap<>()), visibleBox);
-
-        allBones.forEach((integer, bone) -> {
-            if (bone.parent == -1) {
-                toplevelBones.put(integer, bone);
-            } else {
-                allBones.get(bone.parent).children.put(bone.id, bone);
-            }
-        });
-
-        for (Int2ObjectMap.Entry<Bone> entry : toplevelBones.int2ObjectEntrySet()) {
-            locator.groupLocatorMap().put(entry.getIntKey(), entry.getValue().locator());
-            initLocator(entry.getValue());
-        }
+    static Model of(String name, Int2ObjectMap<Bone> allBones, VisibleBox visibleBox) {
+        return SimpleModel.of(name, allBones, visibleBox);
     }
 
-    public Model(String name, Int2ObjectMap<Bone> allBones) {
-        this(name, allBones, EMPTY_VISIBLE_BOX);
+    static Model of(String name, Int2ObjectMap<Bone> allBones) {
+        return SimpleModel.of(name, allBones);
     }
 
-    private static void initLocator(Bone bone) {
-        var groupLocator = bone.locator;
-        for (Int2ObjectMap.Entry<Bone> entry : bone.children.int2ObjectEntrySet()) {
-            groupLocator.children().put(entry.getIntKey(), entry.getValue().locator);
-            initLocator(entry.getValue());
-        }
-    }
+    String name();
+
+    Int2ObjectMap<Bone> toplevelBones();
+
+    Int2ObjectMap<Bone> allBones();
+
+    ModelLocator locator();
+
+    VisibleBox visibleBox();
 
     @With
-    public record Bone(
+    record Bone(
             int id,
             int parent,
             Vector3fc pivot,
@@ -149,7 +124,7 @@ public record Model(
     }
 
     @With
-    public record Cube(
+    record Cube(
             List<Face> faces
     ) {
         public static final Codec<Cube> CODEC = RecordCodecBuilder.create(ins -> ins.group(
@@ -158,7 +133,7 @@ public record Model(
     }
 
     @With
-    public record Face(
+    record Face(
             List<Vertex> vertexes,
             Vector3fc normal,
             @Nullable String materialInstance
@@ -199,7 +174,7 @@ public record Model(
     }
 
     @With
-    public record Vertex(
+    record Vertex(
             Vector3fc position,
             Vector2fc uv,
             Vector3fc normal
@@ -212,7 +187,7 @@ public record Model(
     }
 
     @With
-    public record TextureMesh(
+    record TextureMesh(
             String texture,
             Vector3f position,
             Vector3f rotation,
@@ -221,10 +196,10 @@ public record Model(
     ) {
         public static final Codec<TextureMesh> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 Codec.STRING.fieldOf("texture").forGetter(TextureMesh::texture),
-                VECTOR3F_CODEC.optionalFieldOf("position", new Vector3f()).forGetter(TextureMesh::position),
-                VECTOR3F_CODEC.optionalFieldOf("rotation", new Vector3f()).forGetter(TextureMesh::rotation),
-                VECTOR3F_CODEC.optionalFieldOf("local_pivot", new Vector3f()).forGetter(TextureMesh::localPivot),
-                VECTOR3F_CODEC.optionalFieldOf("scale", new Vector3f(1)).forGetter(TextureMesh::scale)
+                vector3fCodec().optionalFieldOf("position", new Vector3f()).forGetter(TextureMesh::position),
+                vector3fCodec().optionalFieldOf("rotation", new Vector3f()).forGetter(TextureMesh::rotation),
+                vector3fCodec().optionalFieldOf("local_pivot", new Vector3f()).forGetter(TextureMesh::localPivot),
+                vector3fCodec().optionalFieldOf("scale", new Vector3f(1)).forGetter(TextureMesh::scale)
         ).apply(ins, TextureMesh::new));
     }
 }

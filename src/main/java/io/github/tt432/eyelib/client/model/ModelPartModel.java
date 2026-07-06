@@ -40,7 +40,7 @@ public record ModelPartModel(
     }
 
     public Model createModel() {
-        return new Model(name, allBones.int2ObjectEntrySet()
+        return Model.of(name, allBones.int2ObjectEntrySet()
                                        .stream()
                                        .map(e -> Map.entry(e.getIntKey(), e.getValue().createBone()))
                                        .collect(EntryStreams.collect(Int2ObjectOpenHashMap::new)));
