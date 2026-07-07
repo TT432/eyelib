@@ -27,7 +27,7 @@ public record BBBone(
     }
 
     public Model.Bone createBone() {
-        return new Model.Bone(id, parent, origin, rotation, new Vector3f(), new Vector3f(1), null,
+        return Model.Bone.of(id, parent, origin, rotation, new Vector3f(), new Vector3f(1), null,
                 new Int2ObjectOpenHashMap<>(), cubes, locator);
     }
 }

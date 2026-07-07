@@ -57,24 +57,35 @@ public interface Model {
 
     VisibleBox visibleBox();
 
-    @With
-    record Bone(
-            int id,
-            int parent,
-            Vector3fc pivot,
-            Vector3fc rotation,
-            Vector3fc position,
-            Vector3fc scale,
-            @Nullable String binding,
-            Int2ObjectMap<Bone> children,
-            List<Model.Cube> cubes,
-            GroupLocator locator,
-            boolean reset,
-            @Nullable String material,
-            List<TextureMesh> textureMeshes
-    ) {
+    interface Bone {
+        int id();
+
+        int parent();
+
+        Vector3fc pivot();
+
+        Vector3fc rotation();
+
+        Vector3fc position();
+
+        Vector3fc scale();
+
+        @Nullable String binding();
+
+        Int2ObjectMap<Bone> children();
+
+        List<Model.Cube> cubes();
+
+        GroupLocator locator();
+
+        boolean reset();
+
+        @Nullable String material();
+
+        List<TextureMesh> textureMeshes();
+
         //? if <1.20.6 {
-        public static final Codec<Bone> CODEC = net.minecraft.util.ExtraCodecs.lazyInitializedCodec(() -> RecordCodecBuilder.create(ins -> ins.group(
+        Codec<Bone> CODEC = net.minecraft.util.ExtraCodecs.lazyInitializedCodec(() -> RecordCodecBuilder.create(ins -> ins.group(
                 Codec.INT.fieldOf("id").forGetter(Bone::id),
                 Codec.INT.fieldOf("parent").forGetter(Bone::parent),
                 ImporterCodecs.VECTOR3FC.fieldOf("pivot").forGetter(Bone::pivot),
@@ -88,9 +99,9 @@ public interface Model {
                 Codec.BOOL.optionalFieldOf("reset", false).forGetter(Bone::reset),
                 Codec.STRING.optionalFieldOf("material", null).forGetter(Bone::material),
                 TextureMesh.CODEC.listOf().optionalFieldOf("texture_meshes", List.of()).forGetter(Bone::textureMeshes)
-        ).apply(ins, Bone::new)));
+        ).apply(ins, SimpleBone::new)));
         //?} else {
-        public static final Codec<Bone> CODEC = RecordCodecBuilder.create(ins -> ins.group(
+        Codec<Bone> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 Codec.INT.fieldOf("id").forGetter(Bone::id),
                 Codec.INT.fieldOf("parent").forGetter(Bone::parent),
                 ImporterCodecs.VECTOR3FC.fieldOf("pivot").forGetter(Bone::pivot),
@@ -104,10 +115,28 @@ public interface Model {
                 Codec.BOOL.optionalFieldOf("reset", false).forGetter(Bone::reset),
                 Codec.STRING.optionalFieldOf("material", null).forGetter(Bone::material),
                 TextureMesh.CODEC.listOf().optionalFieldOf("texture_meshes", List.of()).forGetter(Bone::textureMeshes)
-        ).apply(ins, Bone::new));
+        ).apply(ins, SimpleBone::new));
         //?}
 
-        public Bone(
+        static Bone of(
+                int id,
+                int parent,
+                Vector3fc pivot,
+                Vector3fc rotation,
+                Vector3fc position,
+                Vector3fc scale,
+                @Nullable String binding,
+                Int2ObjectMap<Bone> children,
+                List<Model.Cube> cubes,
+                GroupLocator locator,
+                boolean reset,
+                @Nullable String material,
+                List<TextureMesh> textureMeshes
+        ) {
+            return new SimpleBone(id, parent, pivot, rotation, position, scale, binding, children, cubes, locator, reset, material, textureMeshes);
+        }
+
+        static Bone of(
                 int id,
                 int parent,
                 Vector3fc pivot,
@@ -119,7 +148,35 @@ public interface Model {
                 List<Model.Cube> cubes,
                 GroupLocator locator
         ) {
-            this(id, parent, pivot, rotation, position, scale, binding, children, cubes, locator, false, null, List.of());
+            return new SimpleBone(id, parent, pivot, rotation, position, scale, binding, children, cubes, locator);
+        }
+
+        static Bone withId(Bone bone, int newId) {
+            return new SimpleBone(newId, bone.parent(), bone.pivot(), bone.rotation(),
+                    bone.position(), bone.scale(), bone.binding(), bone.children(),
+                    bone.cubes(), bone.locator(), bone.reset(), bone.material(),
+                    bone.textureMeshes());
+        }
+
+        static Bone withParent(Bone bone, int newParent) {
+            return new SimpleBone(bone.id(), newParent, bone.pivot(), bone.rotation(),
+                    bone.position(), bone.scale(), bone.binding(), bone.children(),
+                    bone.cubes(), bone.locator(), bone.reset(), bone.material(),
+                    bone.textureMeshes());
+        }
+
+        static Bone withCubes(Bone bone, List<Model.Cube> newCubes) {
+            return new SimpleBone(bone.id(), bone.parent(), bone.pivot(), bone.rotation(),
+                    bone.position(), bone.scale(), bone.binding(), bone.children(),
+                    newCubes, bone.locator(), bone.reset(), bone.material(),
+                    bone.textureMeshes());
+        }
+
+        static Bone withChildren(Bone bone, Int2ObjectMap<Bone> newChildren) {
+            return new SimpleBone(bone.id(), bone.parent(), bone.pivot(), bone.rotation(),
+                    bone.position(), bone.scale(), bone.binding(), newChildren,
+                    bone.cubes(), bone.locator(), bone.reset(), bone.material(),
+                    bone.textureMeshes());
         }
     }
 

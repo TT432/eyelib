@@ -8,8 +8,9 @@ import io.github.tt432.eyelib.mixin.ModelPartVertexAccessor;
 //?}
 import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.model.Model;
+import io.github.tt432.eyelib.model.VisibleBox;
 import io.github.tt432.eyelib.model.locator.GroupLocator;
-import io.github.tt432.eyelib.util.collection.EntryStreams;
+import io.github.tt432.eyelib.model.locator.ModelLocator;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.model.geom.ModelPart;
@@ -17,6 +18,7 @@ import net.minecraft.client.model.geom.PartPose;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,20 +32,23 @@ import java.util.Map;
 public record ModelPartModel(
         String name,
         ModelPart modelPart,
-        Int2ObjectMap<Bone> toplevelBones,
-        Int2ObjectMap<Bone> allBones
-) {
+        Int2ObjectMap<Model.Bone> toplevelBones,
+        Int2ObjectMap<Model.Bone> allBones
+) implements Model {
     public ModelPartModel(String name, ModelPart modelPart) {
         this(name, modelPart, new Int2ObjectOpenHashMap<>(), new Int2ObjectOpenHashMap<>());
         childrenOf(modelPart).forEach((k, v) -> toplevelBones.put(GlobalBoneIdHandler.get(k), new Bone(k, v, -1)));
-        toplevelBones.values().forEach(b -> b.add(allBones));
+        toplevelBones.values().forEach(b -> ((Bone) b).add(allBones));
     }
 
-    public Model createModel() {
-        return Model.of(name, allBones.int2ObjectEntrySet()
-                                       .stream()
-                                       .map(e -> Map.entry(e.getIntKey(), e.getValue().createBone()))
-                                       .collect(EntryStreams.collect(Int2ObjectOpenHashMap::new)));
+    @Override
+    public ModelLocator locator() {
+        return new ModelLocator(new Int2ObjectOpenHashMap<>());
+    }
+
+    @Override
+    public VisibleBox visibleBox() {
+        return EMPTY_VISIBLE_BOX;
     }
 
     public record Data(
@@ -128,40 +133,100 @@ public record ModelPartModel(
         }
     }
 
-    public record Bone(
-            int id,
-            int parent,
-            ModelPart modelPart,
-            List<Model.Cube> cubes,
-            Int2ObjectMap<Bone> children
-    ) {
+    public static final class Bone implements Model.Bone {
+        private static final Vector3fc ZERO = new Vector3f();
+        private static final Vector3fc ONE = new Vector3f(1);
+
+        private final int id;
+        private final int parent;
+        private final ModelPart modelPart;
+        private final List<Model.Cube> cubes;
+        private final Int2ObjectMap<Model.Bone> children;
+
         public Bone(String name, ModelPart modelPart, int parent) {
-            this(GlobalBoneIdHandler.get(name), parent, modelPart, new ArrayList<>(), new Int2ObjectOpenHashMap<>());
-            cubesOf(modelPart).forEach(c -> cubes.add(createCube(c)));
-            childrenOf(modelPart).forEach((k, v) -> children.put(GlobalBoneIdHandler.get(k), new Bone(k, v, id)));
+            this.id = GlobalBoneIdHandler.get(name);
+            this.parent = parent;
+            this.modelPart = modelPart;
+            this.cubes = new ArrayList<>();
+            this.children = new Int2ObjectOpenHashMap<>();
+            cubesOf(modelPart).forEach(c -> this.cubes.add(createCube(c)));
+            childrenOf(modelPart).forEach((k, v) -> this.children.put(GlobalBoneIdHandler.get(k), new Bone(k, v, this.id)));
         }
 
-        public void add(Int2ObjectMap<Bone> bones) {
+        public ModelPart modelPart() {
+            return modelPart;
+        }
+
+        public void add(Int2ObjectMap<Model.Bone> bones) {
             bones.put(id, this);
-            children.values().forEach(e -> e.add(bones));
+            children.values().forEach(e -> ((Bone) e).add(bones));
         }
 
-        public Model.Bone createBone() {
-            return new Model.Bone(
-                    id,
-                    parent,
-                    new Vector3f(),
-                    new Vector3f(),
-                    new Vector3f(),
-                    new Vector3f(1),
-                    null,
-                    children.int2ObjectEntrySet()
-                            .stream()
-                            .map(e -> Map.entry(e.getIntKey(), e.getValue().createBone()))
-                            .collect(EntryStreams.collect(Int2ObjectOpenHashMap::new)),
-                    cubes,
-                    new GroupLocator(new Int2ObjectOpenHashMap<>(), new ArrayList<>())
-            );
+        @Override
+        public int id() {
+            return id;
+        }
+
+        @Override
+        public int parent() {
+            return parent;
+        }
+
+        @Override
+        public Vector3fc pivot() {
+            return ZERO;
+        }
+
+        @Override
+        public Vector3fc rotation() {
+            return ZERO;
+        }
+
+        @Override
+        public Vector3fc position() {
+            return ZERO;
+        }
+
+        @Override
+        public Vector3fc scale() {
+            return ONE;
+        }
+
+        @Override
+        @Nullable
+        public String binding() {
+            return null;
+        }
+
+        @Override
+        public Int2ObjectMap<Model.Bone> children() {
+            return children;
+        }
+
+        @Override
+        public List<Model.Cube> cubes() {
+            return cubes;
+        }
+
+        @Override
+        public GroupLocator locator() {
+            return new GroupLocator(new Int2ObjectOpenHashMap<>(), new ArrayList<>());
+        }
+
+        @Override
+        public boolean reset() {
+            return false;
+        }
+
+        @Override
+        @Nullable
+        public String material() {
+            return null;
+        }
+
+        @Override
+        public List<Model.TextureMesh> textureMeshes() {
+            return List.of();
         }
     }
 

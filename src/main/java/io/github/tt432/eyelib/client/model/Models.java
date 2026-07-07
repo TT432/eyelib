@@ -56,7 +56,7 @@ public class Models {
                         mergedCubes.add(cube);
                     }
                 }
-                bonesMap.put(currentId, existingBone.withCubes(mergedCubes));
+                bonesMap.put(currentId, Model.Bone.withCubes(existingBone, mergedCubes));
             } else {
                 String newName = GlobalBoneIdHandler.get(currentId);
                 do {
@@ -66,12 +66,12 @@ public class Models {
 
                 idRemap.put(currentId, newId);
 
-                bonesMap.put(newId, boneB.withId(newId).withParent(newParentId));
+                bonesMap.put(newId, Model.Bone.withParent(Model.Bone.withId(boneB, newId), newParentId));
             }
         } else {
             var newBone = boneB;
             if (newParentId != boneB.parent()) {
-                newBone = newBone.withParent(newParentId);
+                newBone = Model.Bone.withParent(newBone, newParentId);
             }
             bonesMap.put(newId, newBone);
         }
@@ -89,11 +89,11 @@ public class Models {
 
         modelA.allBones().int2ObjectEntrySet().forEach(entry -> {
             if (modelB.allBones().containsKey(entry.getIntKey())) {
-                newBones.put(entry.getIntKey(), entry.getValue()
-                                                     .withCubes(new ArrayList<>())
-                                                     .withChildren(new Int2ObjectOpenHashMap<>()));
+                newBones.put(entry.getIntKey(), Model.Bone.withChildren(
+                        Model.Bone.withCubes(entry.getValue(), new ArrayList<>()),
+                        new Int2ObjectOpenHashMap<>()));
             } else {
-                newBones.put(entry.getIntKey(), entry.getValue().withChildren(new Int2ObjectOpenHashMap<>()));
+                newBones.put(entry.getIntKey(), Model.Bone.withChildren(entry.getValue(), new Int2ObjectOpenHashMap<>()));
             }
         });
 

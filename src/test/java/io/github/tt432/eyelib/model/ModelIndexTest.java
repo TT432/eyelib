@@ -90,7 +90,7 @@ class ModelIndexTest {
     }
 
     private static Model.Bone bone(int id, int parent) {
-        return new Model.Bone(
+        return Model.Bone.of(
                 id,
                 parent,
                 new Vector3f(),

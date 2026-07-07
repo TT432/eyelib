@@ -33,7 +33,7 @@ final class ImportedModelBuilder {
                         new Vector3f(tm.scale())
                 ))
                 .toList();
-        return new Model.Bone(
+        return Model.Bone.of(
                 bone.id(),
                 bone.parentId(),
                 new Vector3f(bone.pivot()),
