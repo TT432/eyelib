@@ -5,7 +5,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelib.bridge.util.CodecOps;
+import io.github.tt432.eyelib.util.codec.CodecOps;
 import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
 import java.util.LinkedHashMap;
 import java.util.Map;

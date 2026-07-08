@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.behavior.event.filter.base;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
-import io.github.tt432.eyelib.bridge.util.CodecOps;
+import io.github.tt432.eyelib.util.codec.CodecOps;
 import io.github.tt432.eyelib.behavior.EntityBehaviorData;
 import io.github.tt432.eyelib.behavior.event.filter.Filter;
 import io.github.tt432.eyelib.behavior.event.filter.Operator;

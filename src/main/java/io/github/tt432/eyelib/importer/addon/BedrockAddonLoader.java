@@ -6,7 +6,7 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelib.bridge.util.CodecOps;
+import io.github.tt432.eyelib.util.codec.CodecOps;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSchema;

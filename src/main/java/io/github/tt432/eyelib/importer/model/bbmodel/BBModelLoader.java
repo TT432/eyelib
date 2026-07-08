@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.importer.model.bbmodel;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
-import io.github.tt432.eyelib.bridge.util.CodecOps;
+import io.github.tt432.eyelib.util.codec.CodecOps;
 import lombok.extern.slf4j.Slf4j;
 import java.io.*;
 import java.nio.charset.StandardCharsets;

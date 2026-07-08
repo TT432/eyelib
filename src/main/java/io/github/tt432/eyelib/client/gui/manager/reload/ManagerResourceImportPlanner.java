@@ -6,7 +6,7 @@ import io.github.tt432.eyelib.animation.bedrock.BrAnimation;
 import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationControllers;
 import io.github.tt432.eyelib.bridge.client.render.texture.NativeImagePort;
 import io.github.tt432.eyelib.bridge.event.TextureChangedEventPublisher;
-import io.github.tt432.eyelib.bridge.util.CodecOps;
+import io.github.tt432.eyelib.util.codec.CodecOps;
 import io.github.tt432.eyelib.client.loader.BedrockAddonRuntimeBridge;
 import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;

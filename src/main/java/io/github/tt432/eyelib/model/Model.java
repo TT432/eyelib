@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.model;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import io.github.tt432.eyelib.bridge.util.CodecOps;
+import io.github.tt432.eyelib.util.codec.CodecOps;
 import io.github.tt432.eyelib.model.locator.GroupLocator;
 import io.github.tt432.eyelib.model.locator.ModelLocator;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
