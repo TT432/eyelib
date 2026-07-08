@@ -32,7 +32,9 @@ public class Eyelib {
         try {
             Class.forName("io.github.tt432.eyelib.capability.AttachableDataTypes");
             Class<?> implClass = Class.forName("io.github.tt432.eyelib.client.lifecycle.ApplicationLifecyclePortImpl");
-            ApplicationLifecyclePort.install((ApplicationLifecyclePort) implClass.getDeclaredConstructor().newInstance());
+            var lifecycleConstructor = implClass.getDeclaredConstructor();
+            lifecycleConstructor.setAccessible(true);
+            ApplicationLifecyclePort.install((ApplicationLifecyclePort) lifecycleConstructor.newInstance());
             //? if >=1.20.6 {
             Class.forName("io.github.tt432.eyelib.bridge.capability.EyelibAttachableData");
             //?}
