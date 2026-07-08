@@ -6,11 +6,6 @@ import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.material.material.BrMaterial;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import lombok.extern.slf4j.Slf4j;
-//? if <26.1 {
-import net.minecraft.resources.ResourceLocation;
-//?} else {
-import net.minecraft.resources.Identifier;
-//?}
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.slf4j.Logger;
@@ -35,16 +30,8 @@ public class BrMaterialLoader extends BrResourcesLoader {
     }
 
     @Override
-    //? if <26.1 {
-    protected void apply(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
-    //?} else {
-    protected void apply(Map<Identifier, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
-    //?}
-        //? if <26.1 {
-        Map<ResourceLocation, BrMaterial> parsedMaterials =
-        //?} else {
-        Map<Identifier, BrMaterial> parsedMaterials =
-        //?}
+    protected void applyJson(Map<String, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
+        Map<String, BrMaterial> parsedMaterials =
                 LoaderParsingOps.parseBySourceKey(object, BrMaterial.CODEC, LOGGER, "material");
         LinkedHashMap<String, BrMaterialEntry> flattened = new LinkedHashMap<>();
         for (BrMaterial value : parsedMaterials.values()) {

@@ -6,11 +6,6 @@ import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.util.search.Searchable;
 import lombok.extern.slf4j.Slf4j;
-//? if <26.1 {
-import net.minecraft.resources.ResourceLocation;
-//?} else {
-import net.minecraft.resources.Identifier;
-//?}
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.apache.commons.lang3.StringUtils;
@@ -37,26 +32,11 @@ public class BrAttachableLoader extends BrResourcesLoader implements Searchable<
     }
 
     @Override
-    //? if <26.1 {
-    protected void apply(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
-    //?} else {
-    protected void apply(Map<Identifier, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
-    //?}
-        //? if <26.1 {
-        Map<ResourceLocation, BrClientEntity> parsedAttachables = LoaderParsingOps.parseAndTranslate(
-        //?} else {
-        Map<Identifier, BrClientEntity> parsedAttachables = LoaderParsingOps.parseAndTranslate(
-        //?}
+    protected void applyJson(Map<String, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
+        Map<String, BrClientEntity> parsedAttachables = LoaderParsingOps.parseAndTranslate(
                 object,
                 BrClientEntity.ATTACHABLE_CODEC,
-                //? if <1.20.6 {
-                (sourceLocation, entity) -> new ResourceLocation(entity.identifier()),
-                //?} elif <26.1 {
-                (sourceLocation, entity) -> ResourceLocation.parse(entity.identifier()),
-                //?} else {
-                (sourceLocation, entity) -> Identifier.parse(entity.identifier()),
-
-                //?}
+                (sourceLocation, entity) -> entity.identifier(),
                 LOGGER,
                 "entity"
         );

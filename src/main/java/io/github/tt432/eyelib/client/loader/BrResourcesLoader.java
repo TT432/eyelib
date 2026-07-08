@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.client.loader;
 
 import com.google.gson.GsonBuilder;
+import io.github.tt432.eyelib.bridge.client.loader.SimpleJsonWithSuffixResourceReloadListener;
 /**
  * @author TT432
  */

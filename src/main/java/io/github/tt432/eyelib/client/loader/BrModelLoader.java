@@ -5,11 +5,6 @@ import com.google.gson.JsonElement;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.importer.model.importer.BedrockGeometryImporter;
 import io.github.tt432.eyelib.model.Model;
-//? if <26.1 {
-import net.minecraft.resources.ResourceLocation;
-//?} else {
-import net.minecraft.resources.Identifier;
-//?}
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.slf4j.Logger;
@@ -33,20 +28,12 @@ public class BrModelLoader extends BrResourcesLoader {
     }
 
     @Override
-    //? if <26.1 {
-    protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
-    //?} else {
-    protected void apply(Map<Identifier, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
-    //?}
+    protected void applyJson(Map<String, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
         LinkedHashMap<String, Model> loadedModels = parseLoadedModels(pObject);
         ModelManager.INSTANCE.replaceAll(new LinkedHashMap<>(loadedModels));
     }
 
-    //? if <26.1 {
-    static LinkedHashMap<String, Model> parseLoadedModels(Map<ResourceLocation, JsonElement> sourceModels) {
-    //?} else {
-    static LinkedHashMap<String, Model> parseLoadedModels(Map<Identifier, JsonElement> sourceModels) {
-    //?}
+    static LinkedHashMap<String, Model> parseLoadedModels(Map<String, JsonElement> sourceModels) {
         LinkedHashMap<String, Model> loadedModels = new LinkedHashMap<>();
 
         sourceModels.forEach((key, json) -> {

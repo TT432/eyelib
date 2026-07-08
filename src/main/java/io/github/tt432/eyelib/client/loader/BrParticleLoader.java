@@ -9,7 +9,6 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 
@@ -31,11 +30,7 @@ public class BrParticleLoader extends BrResourcesLoader {
     }
 
     @Override
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    protected void apply(Map pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
-        Map<String, JsonElement> resources = new LinkedHashMap<>();
-        Map<?, JsonElement> typed = pObject;
-        typed.forEach((key, value) -> resources.put(key.toString(), value));
-        ParticleResourcePublication.replaceFromJsonResources(resources, LOGGER);
+    protected void applyJson(Map<String, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
+        ParticleResourcePublication.replaceFromJsonResources(pObject, LOGGER);
     }
 }
