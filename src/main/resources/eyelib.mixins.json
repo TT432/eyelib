@@ -22,10 +22,6 @@
     //? if !legacy {
     "PoseStackPoseAccessor",
     "AvoidEntityGoalAccessor",
-    "ModelPartAccessor",
-    "ModelPartCubeAccessor",
-    "ModelPartPolygonAccessor",
-    "ModelPartVertexAccessor",
     //?}
     //?}
   ],

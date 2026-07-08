@@ -1,11 +1,5 @@
 package io.github.tt432.eyelib.client.model;
 
-//? if >=1.20.6 {
-import io.github.tt432.eyelib.mixin.ModelPartCubeAccessor;
-import io.github.tt432.eyelib.mixin.ModelPartAccessor;
-import io.github.tt432.eyelib.mixin.ModelPartPolygonAccessor;
-import io.github.tt432.eyelib.mixin.ModelPartVertexAccessor;
-//?}
 import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.model.VisibleBox;
@@ -232,10 +226,8 @@ public record ModelPartModel(
 
     public static Model.Cube createCube(ModelPart.Cube cube) {
         List<Model.Face> faces = new ArrayList<>();
-        //? if <1.20.6 {
-        ModelPart.Polygon[] polygons = cube.polygons;
-
-        for (ModelPart.Polygon polygon : polygons) {
+        //? if <26.1 {
+        for (ModelPart.Polygon polygon : cube.polygons) {
             List<Model.Vertex> vertices = new ArrayList<>();
 
             for (ModelPart.Vertex vertex : polygon.vertices) {
@@ -245,14 +237,12 @@ public record ModelPartModel(
             faces.add(new Model.Face(vertices, polygon.normal));
         }
         //?} else {
-        for (Object polygon : ((ModelPartCubeAccessor) (Object) cube).eyelib$getPolygons()) {
-            ModelPartPolygonAccessor poly = (ModelPartPolygonAccessor) polygon;
+        for (ModelPart.Polygon polygon : cube.polygons) {
             List<Model.Vertex> vertices = new ArrayList<>();
-            Vector3f normal = poly.eyelib$getNormal();
+            Vector3fc normal = polygon.normal();
 
-            for (Object vertex : poly.eyelib$getVertices()) {
-                ModelPartVertexAccessor vtx = (ModelPartVertexAccessor) vertex;
-                vertices.add(new Model.Vertex(vtx.eyelib$getPos(), new Vector2f(vtx.eyelib$getU(), vtx.eyelib$getV()), normal));
+            for (ModelPart.Vertex vertex : polygon.vertices()) {
+                vertices.add(new Model.Vertex(new Vector3f(vertex.x(), vertex.y(), vertex.z()), new Vector2f(vertex.u(), vertex.v()), normal));
             }
 
             faces.add(new Model.Face(vertices, normal));
@@ -263,18 +253,10 @@ public record ModelPartModel(
     }
 
     private static Map<String, ModelPart> childrenOf(ModelPart modelPart) {
-        //? if <1.20.6 {
         return modelPart.children;
-        //?} else {
-        return ((ModelPartAccessor) (Object) modelPart).eyelib$getChildren();
-        //?}
     }
 
     private static List<ModelPart.Cube> cubesOf(ModelPart modelPart) {
-        //? if <1.20.6 {
         return modelPart.cubes;
-        //?} else {
-        return ((ModelPartAccessor) (Object) modelPart).eyelib$getCubes();
-        //?}
     }
 }
