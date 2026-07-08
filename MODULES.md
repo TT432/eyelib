@@ -9,7 +9,6 @@
 | Package | Responsibility |
 |---|---|
 | `eyelib.animation` | 动画模块：动画运行时、Bedrock 动画片段/控制器状态机、关键帧插值。 |
-| `eyelib.attachment` | 附加数据模块：类型化附加数据存储契约和附加数据网络包契约。 |
 | `eyelib.behavior` | 行为模块：Bedrock 实体行为组件模型。 |
 | `eyelib.bridge` | MC/Forge 桥接模块：实现 domain 层定义的 Port 接口，集中所有 Minecraft API 依赖。 |
 | `eyelib.capability` | 与 attachment 相关的能力注册和数据。 |
@@ -25,6 +24,7 @@
 | `eyelib.particle` | 粒子模块：粒子定义、运行时、组件系统、加载管线与客户端渲染的整合入口。 |
 | `eyelib.smoke` | Clientsmoke 入口类集合，承担 mcpack 数据的运行时完整性验证。 |
 | `eyelib.track` | 追踪模块：为 ItemStack 提供单调递增 ID 分配、NBT 持久化及基于 ID 的通用缓存容器基础设施。 |
+| `eyelib.ui` | MC 无关的 GUI 抽象接口，由 bridge/ui/ 提供 MC 适配实现。 |
 | `eyelib.util` | 共享工具模块，提供 Eyelib 的基础工具类集合。 |
 
 (18 modules)

@@ -282,7 +282,10 @@ dependencies {
     compileOnly 'org.projectlombok:lombok:1.18.46'
     annotationProcessor 'org.projectlombok:lombok:1.18.46'
 
-    compileOnly("maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha")
+    // AR mod 仅 < 26.1 有兼容 jar；26.1+ VertexConsumer API 变更导致 @ExtensionMethod 失配。
+    if (!isModern) {
+        compileOnly("maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha")
+    }
 
     compileOnly 'io.github.tt432:clientsmokeannotation:1.0.0'
     if (isLegacyForge) {
@@ -475,6 +478,10 @@ tasks.withType(JavaCompile).configureEach {
 tasks.register('nullawayMain', JavaCompile) {
     group = 'verification'
     description = 'Runs NullAway/Error Prone on main Java sources with an isolated processor path.'
+
+    // 自定义 JavaCompile 任务不继承 java extension 的 toolchain，会回退到 daemon JDK。
+    // 26.1+ 的 MC class 是 Java 25 (version 69.0)，daemon 若为 Java 21 会报 "类文件具有错误的版本"。
+    javaCompiler = javaToolchains.compilerFor(java.toolchain)
 
     source = sourceSets.main.java
     classpath = sourceSets.main.compileClasspath
