@@ -1,5 +1,7 @@
 package io.github.tt432.eyelib.bridge.material.shader;
 
+import io.github.tt432.eyelib.bridge.material.shader.adapter.ShaderManager;
+
 import com.mojang.blaze3d.systems.RenderSystem;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;

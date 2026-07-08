@@ -1,5 +1,7 @@
 package io.github.tt432.eyelib.material.render;
 
+import io.github.tt432.eyelib.bridge.material.adapter.BrRenderTypeFactory;
+
 import io.github.tt432.eyelib.material.gl.BlendFactor;
 import io.github.tt432.eyelib.material.gl.GLStates;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
@@ -393,3 +395,4 @@ class BrRenderStateSpecTest {
                    "无 DisableDepthWrite → writeMask.writeDepth=true（默认）");
     }
 }
+

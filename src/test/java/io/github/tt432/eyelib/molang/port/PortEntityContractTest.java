@@ -1,4 +1,5 @@
 package io.github.tt432.eyelib.molang.port;
+import io.github.tt432.eyelib.bridge.molang.adapter.EntityPortAdapter;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -161,3 +162,4 @@ class PortEntityContractTest {
                 "count 不应超过 maxStackSize");
     }
 }
+
