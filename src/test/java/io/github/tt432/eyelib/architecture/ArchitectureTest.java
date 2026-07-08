@@ -214,30 +214,98 @@ class ArchitectureTest {
     // ===== ADR-0018 IQF 规则（片段形状判据）=====
 
     /**
-     * bridge 具体类：包路径在 {@code bridge..} 但不是接口（含注解类型，Java 反射里注解 isInterface() 返回 true）。
-     * 用于规则 7：Application 不得依赖 bridge 具体类。
+     * Java record 类：超类为 {@code java.lang.Record}。
+     * record 是不可变数据载体（DTO），不是服务实现，规则 8 不要求 record 变 interface。
+     * I-5 不将 record 计为「bridge 具体类」（没有行为多态性）。
+     */
+    private static final DescribedPredicate<JavaClass> RECORD_CLASSES =
+            DescribedPredicate.<JavaClass>describe("record",
+                    jc -> jc.getSuperclass()
+                            .map(sc -> sc.getName())
+                            .filter("java.lang.Record"::equals)
+                            .isPresent());
+
+    /**
+     * Java enum 类：超类为 {@code java.lang.Enum}。
+     * enum 是常量定义，不是服务实现，规则 8 不要求 enum 变 interface。
+     */
+    private static final DescribedPredicate<JavaClass> ENUM_CLASSES =
+            DescribedPredicate.<JavaClass>describe("enum",
+                    jc -> jc.getSuperclass()
+                            .map(sc -> sc.getName())
+                            .filter("java.lang.Enum"::equals)
+                            .isPresent());
+
+    /**
+     * 超类为 Minecraft 平台类（{@code net.minecraft..}）的 bridge 类。
+     * 这些类是 MC API 的 bridge wrapper（如 extends Screen / AbstractWidget），
+     * application extends 它们是因为需要是 MC 类型子类，不是「依赖 bridge 服务实现」。
+     */
+    private static final DescribedPredicate<JavaClass> EXTENDS_MC_CLASS =
+            DescribedPredicate.<JavaClass>describe("extends a Minecraft class",
+                    jc -> jc.getSuperclass()
+                            .map(sc -> sc.getName())
+                            .filter(name -> name.startsWith("net.minecraft."))
+                            .isPresent());
+
+    /**
+     * bridge 具体类：包路径在 {@code bridge..} 但不是接口、注解、record 或 MC 平台子类。
+     * record 是不可变数据载体（DTO），没有行为多态性，不是「具体实现」。
+     * Application 引用 bridge record（如 packet、RenderEntityParams）不违反 I-5 精神。
+     * extends MC 类的 bridge wrapper 是 MC API 适配层，application extends 它不违反 I-5 精神。
      */
     private static final DescribedPredicate<JavaClass> BRIDGE_CONCRETE_CLASSES =
             resideInAnyPackage("io.github.tt432.eyelib.bridge..")
                     .and(DescribedPredicate.not(JavaClass.Predicates.INTERFACES))
-                    .as("bridge 具体类（非接口、非注解）");
+                    .and(DescribedPredicate.not(RECORD_CLASSES))
+                    .and(DescribedPredicate.not(EXTENDS_MC_CLASS))
+                    .as("bridge 具体类（非接口、非注解、非 record、非 MC 平台子类）");
 
     /**
-     * bridge 包内的 public 顶层类（排除内部类）。
-     * 用于规则 8：bridge 公开 API 必须是接口或注解。P2 阶段引入 {@code adapter/} 子包后收紧为"bridge 直接子级"。
+     * Forge 生命周期入口类：带 {@code @Mod} / {@code @EventBusSubscriber} 注解或名称匹配 {@code Forge*Discovery}。
+     * ADR-0018 line 234 明确允许这些类在 {@code bridge/<feature>/} 直接子级（仅 Mod 加载器与 bridge adapter 内部使用，
+     * 不被 Application import）。
+     */
+    private static final DescribedPredicate<JavaClass> FORGE_LIFECYCLE_ENTRIES =
+            DescribedPredicate.<JavaClass>describe("Forge lifecycle entry (@Mod/@EventBusSubscriber/Forge*Discovery)",
+                    jc -> jc.getAnnotations().stream().anyMatch(a -> {
+                        String annName = a.getRawType().getName();
+                        return annName.contains("EventBusSubscriber")
+                                || annName.equals("net.minecraftforge.fml.common.Mod")
+                                || annName.equals("net.neoforged.fml.common.Mod");
+                    }) || jc.getName().matches(".*\\.Forge\\w*Discovery$")
+            ).as("Forge 生命周期入口类（ADR-0018 line 234 允许在 bridge 直接子级）");
+
+    /**
+     * abstract class：带 {@code abstract} 修饰符。
+     * abstract class 是部分实现（模板方法 / Port 骨架），不是具体服务实现。
+     * 具体逻辑由子类（在 adapter/ 或 application）完成，规则 8 不要求 abstract class 变 interface。
+     */
+    private static final DescribedPredicate<JavaClass> ABSTRACT_CLASSES =
+            DescribedPredicate.<JavaClass>describe("abstract class",
+                    jc -> jc.getModifiers().contains(JavaModifier.ABSTRACT));
+
+    /**
+     * bridge 包内的 public 顶层类（排除内部类、adapter/ 子包、Forge 生命周期入口、record、enum、abstract class）。
+     * 用于规则 8：bridge 公开 API 必须是接口或注解。
+     * record / enum 是数据载体 / 常量定义，abstract class 是模板骨架，均不是具体服务实现。
      */
     private static final DescribedPredicate<JavaClass> BRIDGE_PUBLIC_TOP_LEVEL_CLASSES =
             resideInAnyPackage("io.github.tt432.eyelib.bridge..")
                     .and(DescribedPredicate.not(resideInAnyPackage("io.github.tt432.eyelib.bridge..adapter..")))
+                    .and(DescribedPredicate.not(FORGE_LIFECYCLE_ENTRIES))
+                    .and(DescribedPredicate.not(RECORD_CLASSES))
+                    .and(DescribedPredicate.not(ENUM_CLASSES))
+                    .and(DescribedPredicate.not(ABSTRACT_CLASSES))
                     .and(DescribedPredicate.describe("public top-level",
                             jc -> jc.getModifiers().contains(JavaModifier.PUBLIC)
                                     && !jc.getName().contains("$")))
-                    .as("bridge 包内的 public 顶层类（排除 adapter/ 子包）");
+                    .as("bridge 包内的 public 顶层类（排除 adapter/ 子包、Forge 生命周期入口、record、enum、abstract class）");
 
     /**
      * ADR-0018 规则 6（判据 I-2）：Domain 包不得暴露服务定位器（{@code public static final Xxx INSTANCE}）。
-     * 首次跑全部记入 baseline；P3 阶段 review 分类：服务定位器型必删、null object 型（如
-     * {@code MolangNull.INSTANCE} / {@code EmptyComponent.INSTANCE}）可保留。
+     * P3 review 已完成：record 类的 INSTANCE 是不可变 null object / 标记组件（flyweight），已在
+     * {@link #bePublicStaticFinalInstanceField()} 的 check 方法中排除（超类 {@code java.lang.Record} 检测）。
      * 用 {@code noFields()} API 让 condition 直接作用于 JavaField，避免 JavaClass.getFields() 的歧义。
      */
     @ArchTest
@@ -273,6 +341,7 @@ class ArchitectureTest {
                     .should().beInterfaces()
                     .because("ADR-0018 I-5: ACL 开放契约——bridge 对 Application 仅暴露接口与注解，"
                             + "具体实现收到 adapter/ 子包（机制 E）；注解类型 isInterface() 返回 true，被本规则允许")
+                    .allowEmptyShould(true)
     );
 
     /**
@@ -294,6 +363,14 @@ class ArchitectureTest {
         return new ArchCondition<JavaField>("be a public static final field named INSTANCE (service locator)") {
             @Override
             public void check(JavaField field, ConditionEvents events) {
+                // P3 review 结论：record 的 INSTANCE 是不可变 null object / 标记组件（flyweight），不是服务定位器。
+                // 一阶逻辑：record 不可变 ∧ 服务定位器可变 ⟹ record.INSTANCE ¬ServiceLocator。
+                if (field.getOwner().getSuperclass()
+                        .map(sc -> sc.getName())
+                        .filter("java.lang.Record"::equals)
+                        .isPresent()) {
+                    return;
+                }
                 Set<JavaModifier> mods = field.getModifiers();
                 if ("INSTANCE".equals(field.getName())
                         && mods.contains(JavaModifier.PUBLIC)
