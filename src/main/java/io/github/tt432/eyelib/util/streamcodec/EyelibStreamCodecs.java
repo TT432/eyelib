@@ -91,7 +91,8 @@ public class EyelibStreamCodecs {
 
         @Override
         public CompoundTag decode(FriendlyByteBuf buf) {
-            return buf.readNbt();
+            CompoundTag nbt = buf.readNbt();
+            return nbt != null ? nbt : new CompoundTag();
         }
     };
 

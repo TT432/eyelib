@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.client.model;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.tt432.eyelib.bridge.client.render.PoseStackPort;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.model.ModelVisitContext;
 import io.github.tt432.eyelib.client.render.visitor.ModelVisitor;
@@ -68,13 +69,7 @@ public record DFSModel(
             }
         }.visitModel(new RenderParams(
                 null,
-                //? if <1.20.6 {
-                new PoseStack.Pose(new Matrix4f(), new Matrix3f()),
-                //?} elif <26.1 {
-                io.github.tt432.eyelib.mixin.PoseStackPoseAccessor.eyelib$create(new Matrix4f(), new Matrix3f()),
-                //?} else {
-                new PoseStack().last(),
-                //?}
+                PoseStackPort.identity(),
                 new PoseStack(),
                 null, null, false, null, 0,
                 OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap(), null

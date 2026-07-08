@@ -3,8 +3,9 @@ import io.github.tt432.eyelib.model.ModelVisitContext;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.tt432.eyelib.bridge.client.render.VertexConsumerPort;
 import io.github.tt432.eyelib.client.render.RenderParams;
-import io.github.tt432.eyelib.client.render.bake.BakedModel;
+import io.github.tt432.eyelib.bridge.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;
 import lombok.Setter;
@@ -65,8 +66,7 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
             a = Math.max(0, Math.min(1, tintColor[3]));
         }
         for (int nIdx = 0; nIdx < bakedBone.vertexSize(); nIdx++) {
-            //? if <1.20.6 {
-            consumer.vertex(
+            VertexConsumerPort.vertex(consumer,
                     bakedBone.positionResult()[nIdx * 3],
                     bakedBone.positionResult()[nIdx * 3 + 1],
                     bakedBone.positionResult()[nIdx * 3 + 2],
@@ -76,22 +76,6 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
                     bakedBone.normalResult()[nIdx * 3 + 1],
                     bakedBone.normalResult()[nIdx * 3 + 2]
             );
-            //?} else {
-            consumer.addVertex(
-                            bakedBone.positionResult()[nIdx * 3],
-                            bakedBone.positionResult()[nIdx * 3 + 1],
-                            bakedBone.positionResult()[nIdx * 3 + 2]
-                    )
-                    .setColor((int) (r * 255), (int) (g * 255), (int) (b * 255), (int) (a * 255))
-                    .setUv(bakedBone.u()[nIdx], bakedBone.v()[nIdx])
-                    .setOverlay(overlay)
-                    .setLight(light)
-                    .setNormal(
-                            bakedBone.normalResult()[nIdx * 3],
-                            bakedBone.normalResult()[nIdx * 3 + 1],
-                            bakedBone.normalResult()[nIdx * 3 + 2]
-                    );
-            //?}
         }
     }
 

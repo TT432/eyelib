@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelib.bridge.client.EntityRenderPorts;
+import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.animation.AnimationComponent;
 import io.github.tt432.eyelib.animation.AnimationEffects;
@@ -101,3 +101,4 @@ public record SimpleRenderAction<T>(
         }
     }
 }
+

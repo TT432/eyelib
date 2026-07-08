@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import io.github.tt432.eyelib.bridge.util.CodecOps;
 import java.util.function.BiFunction;
 
 /**
@@ -36,14 +37,7 @@ public final class LoaderParsingOps {
 
         source.forEach((sourceKey, jsonElement) -> {
             try {
-                //? if <1.20.6 {
-                T value = codec.parse(JsonOps.INSTANCE, jsonElement).getOrThrow(false, logger::warn);
-                //?} else {
-                T value = codec.parse(JsonOps.INSTANCE, jsonElement).getOrThrow(message -> {
-                    logger.warn(message);
-                    return new RuntimeException(message);
-                });
-                //?}
+                T value = CodecOps.getOrThrowLog(codec.parse(JsonOps.INSTANCE, jsonElement), logger);
                 parsed.put(keyTranslator.apply(sourceKey, value), value);
             } catch (Exception e) {
                 logger.error("can't load {} {}", assetType, sourceKey, e);

@@ -1,18 +1,13 @@
 package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.tt432.eyelib.bridge.client.render.PoseStackPort;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 /** @author TT432 */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class PoseCopies {
     public static PoseStack.Pose copy(PoseStack.Pose pose) {
-        //? if <1.20.6 {
-        return new PoseStack.Pose(new Matrix4f(pose.pose()), new Matrix3f(pose.normal()));
-        //?} else {
-        return pose.copy();
-        //?}
+        return PoseStackPort.copy(pose);
     }
 }

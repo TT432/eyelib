@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
-import io.github.tt432.eyelib.bridge.client.render.texture.NativeImageIO;
+import io.github.tt432.eyelib.bridge.client.render.texture.NativeImagePort;
 import io.github.tt432.eyelib.util.texture.TexturePaths;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.With;
@@ -199,9 +199,9 @@ public record RenderParams(
                 return this;
             }
             //? if <26.1 {
-            ResourceLocation colorMaskTexture = NativeImageIO.colorMaskTexture(texture, color);
+            ResourceLocation colorMaskTexture = NativeImagePort.colorMaskTexture(texture, color);
             //?} else {
-            Identifier colorMaskTexture = NativeImageIO.colorMaskTexture(texture, color);
+            Identifier colorMaskTexture = NativeImagePort.colorMaskTexture(texture, color);
             //?}
             if (colorMaskTexture == null) {
                 return this;
@@ -222,3 +222,4 @@ public record RenderParams(
         }
     }
 }
+

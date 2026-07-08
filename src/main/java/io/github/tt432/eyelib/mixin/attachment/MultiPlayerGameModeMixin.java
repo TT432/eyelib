@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.mixin.attachment;
 
 import io.github.tt432.eyelib.bridge.attachment.network.UpdateDestroyInfoPacket;
-import io.github.tt432.eyelib.bridge.network.EyelibNetworkTransport;
+import io.github.tt432.eyelib.bridge.network.adapter.EyelibNetworkTransport;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -98,3 +98,4 @@ public class MultiPlayerGameModeMixin {
         });
     }
 }
+

@@ -3,10 +3,12 @@ package io.github.tt432.eyelib.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
-import io.github.tt432.eyelib.bridge.client.ClientTickHandler;
+import io.github.tt432.eyelib.bridge.client.ClientTickPort;
+import io.github.tt432.eyelib.bridge.client.render.adapter.RenderPorts;
+import io.github.tt432.eyelib.bridge.molang.EntityPort;
 import io.github.tt432.eyelib.client.particle.RootAnimationParticleSpawner;
 
-import io.github.tt432.eyelib.bridge.particle.ParticleRuntimeBridge;
+import io.github.tt432.eyelib.bridge.particle.ParticlePort;
 import io.github.tt432.eyelib.client.entity.AttachableResolver;
 import io.github.tt432.eyelib.animation.AnimationComponent;
 import io.github.tt432.eyelib.animation.AnimationEffects;
@@ -70,7 +72,7 @@ public final class AttachableItemRenderSetup {
             scope.getHostContext().put(LivingEntity.class, entity);
             scope.getHostContext().put(Entity.class, entity);
             scope.getHostContext().put(io.github.tt432.eyelib.molang.port.PortEntity.class,
-                    io.github.tt432.eyelib.bridge.molang.EntityPortAdapter.from(entity));
+                    EntityPort.from(entity));
             scope.set("context.item_slot", new MolangString(slotName(slot)));
             scope.set("context.is_first_person", isFirstPerson ? 1F : 0F);
         }
@@ -98,14 +100,7 @@ public final class AttachableItemRenderSetup {
      * {@code itemSlotToBoneName} 对盔甲槽原样透传作为骨骼名用于绑定。
      */
     private static String slotName(EquipmentSlot slot) {
-        return switch (slot) {
-            case MAINHAND -> "main_hand";
-            case OFFHAND -> "off_hand";
-            case HEAD -> "slot.armor.head";
-            case CHEST -> "slot.armor.chest";
-            case LEGS -> "slot.armor.legs";
-            case FEET -> "slot.armor.feet";
-        };
+        return RenderPorts.get().renderSystemPort().slotName(slot);
     }
 
     /**
@@ -142,9 +137,9 @@ public final class AttachableItemRenderSetup {
             scope.set("variable.partial_tick", partialTick);
 
             AnimationEffects effects = new AnimationEffects();
-            scope.getHostContext().put(AnimationParticleSpawner.class, new RootAnimationParticleSpawner(ParticleRuntimeBridge.SPAWN_ADAPTER));
+            scope.getHostContext().put(AnimationParticleSpawner.class, new RootAnimationParticleSpawner(ParticlePort.getSpawnAdapter()));
             ac.tickedInfos = BrAnimator.tickAnimation(ac, scope, effects,
-                                                      (ClientTickHandler.getTick() + partialTick) / 20, () -> {
+                                                      (ClientTickPort.getTick() + partialTick) / 20, () -> {
                         var ce = rd.getClientEntityComponent().getClientEntity();
                         if (ce != null) {
                             ce.scripts().ifPresent(s -> s.pre_animation().eval(scope));

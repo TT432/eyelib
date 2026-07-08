@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.network;
 
 import io.github.tt432.eyelib.client.render.sync.ClientRenderSyncService;
 import io.github.tt432.eyelib.particle.api.ParticleSpawnRequest;
-import io.github.tt432.eyelib.bridge.particle.ParticleRuntimeBridge;
+import io.github.tt432.eyelib.bridge.particle.ParticlePort;
 import io.github.tt432.eyelib.bridge.network.particle.RemoveParticlePacket;
 import io.github.tt432.eyelib.bridge.network.particle.SpawnParticlePacket;
 import io.github.tt432.eyelib.bridge.network.animation.AnimationComponentSyncPacket;
@@ -22,14 +22,15 @@ public class NetClientHandlers {
     }
 
     public static void onRemoveParticlePacket(RemoveParticlePacket packet) {
-        ParticleRuntimeBridge.SPAWN_ADAPTER.remove(packet.removeId());
+        ParticlePort.getSpawnAdapter().remove(packet.removeId());
     }
 
     public static void onSpawnParticlePacket(SpawnParticlePacket packet) {
-        ParticleRuntimeBridge.SPAWN_ADAPTER.spawn(
+        ParticlePort.getSpawnAdapter().spawn(
                 new ParticleSpawnRequest(packet.spawnId(), packet.particleId(), packet.position())
         );
     }
 
     // </editor-fold>
 }
+

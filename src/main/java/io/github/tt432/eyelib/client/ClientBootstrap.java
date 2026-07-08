@@ -1,9 +1,8 @@
 package io.github.tt432.eyelib.client;
 
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelib.bridge.client.gui.ModelPreviewScreenHook;
-import io.github.tt432.eyelib.bridge.client.gui.manager.AnimationViewHook;
-import io.github.tt432.eyelib.bridge.ui.ScreenPort;
+import io.github.tt432.eyelib.bridge.client.gui.GuiHookPort;
+import io.github.tt432.eyelib.bridge.ui.UiPort;
 import io.github.tt432.eyelib.capability.AttachableDataTypes;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.client.gui.ModelPreviewScreen;
@@ -27,9 +26,9 @@ public final class ClientBootstrap {
 
     public static void wire() {
         EntityRenderOrchestrator.wirePorts();
-        ModelPreviewScreenHook.openScreenSupplier = ModelPreviewScreen::new;
-        AnimationViewHook.openScreenSupplier = AnimationView::new;
-        ScreenPort.register(EyelibManagerScreen::create);
+        GuiHookPort.setModelPreviewScreenHook(ModelPreviewScreen::new);
+        GuiHookPort.setAnimationViewHook(AnimationView::new);
+        UiPort.register(EyelibManagerScreen::create);
 
         ParticleSpawnRuntimeAdapter.configure(
                 () -> {
@@ -49,3 +48,6 @@ public final class ClientBootstrap {
         );
     }
 }
+
+
+

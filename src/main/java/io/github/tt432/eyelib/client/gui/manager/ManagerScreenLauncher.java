@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.gui.manager;
 
-import io.github.tt432.eyelib.bridge.ui.ScreenPort;
+import io.github.tt432.eyelib.bridge.ui.UiPort;
 import net.minecraft.client.Minecraft;
 
 /**
@@ -12,6 +12,7 @@ public final class ManagerScreenLauncher {
     private ManagerScreenLauncher() {}
 
     public static void openEntitiesScreen() {
-        Minecraft.getInstance().setScreen(ScreenPort.wrap(new EntitiesScreen()));
+        Minecraft.getInstance().setScreen(UiPort.wrap(new EntitiesScreen()));
     }
 }
+

@@ -1,5 +1,7 @@
 package io.github.tt432.eyelib.particle;
 
+import io.github.tt432.eyelib.bridge.particle.adapter.ParticleRuntimeBridge;
+
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.particle.api.ParticleSpawnApi;
 import io.github.tt432.eyelib.particle.api.ParticleSpawnRequest;
@@ -133,3 +135,4 @@ public final class ParticleSpawnRuntimeAdapter implements ParticleSpawnApi {
         );
     }
 }
+

@@ -8,16 +8,17 @@ import io.github.tt432.eyelib.animation.BrAnimator;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelib.bridge.capability.EyelibAttachableData;
+import io.github.tt432.eyelib.bridge.capability.DataAttachmentPort;
 import io.github.tt432.eyelib.capability.RenderData;
-import io.github.tt432.eyelib.bridge.client.EntityRenderPorts;
-import io.github.tt432.eyelib.bridge.client.ClientTickHandler;
+import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
+import io.github.tt432.eyelib.bridge.client.ClientTickPort;
 import io.github.tt432.eyelib.bridge.client.RenderEntityParams;
 import io.github.tt432.eyelib.bridge.client.render.adapter.RenderPorts;
 import io.github.tt432.eyelib.model.ModelVisitContext;
-import io.github.tt432.eyelib.bridge.molang.ComponentStore;
-import io.github.tt432.eyelib.bridge.molang.MolangEntityContext;
-import io.github.tt432.eyelib.bridge.particle.ParticleRuntimeBridge;
+import io.github.tt432.eyelib.bridge.molang.ComponentStoreView;
+import io.github.tt432.eyelib.bridge.molang.MolangContextPort;
+import io.github.tt432.eyelib.bridge.molang.MolangEntityContextView;
+import io.github.tt432.eyelib.bridge.particle.ParticlePort;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
@@ -45,13 +46,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-//? if <26.1 {
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
-import net.minecraft.world.entity.animal.horse.Llama;
-//?} else {
-import net.minecraft.world.entity.animal.equine.AbstractHorse;
-import net.minecraft.world.entity.animal.equine.Llama;
-//?}
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -84,14 +78,16 @@ public final class EntityRenderOrchestrator {
     }
 
     public static void wirePorts() {
-        RenderPorts ports = RenderPorts.install();
-        ports.renderBufferPort = EntityRenderOrchestrator::renderEntities;
-        ports.renderEntityPort = EntityRenderOrchestrator::renderEntityFromParams;
-        ports.setupClientEntityPort = EntityRenderOrchestrator::setup;
+        RenderPorts.install(
+                EntityRenderOrchestrator::renderEntities,
+                EntityRenderOrchestrator::renderEntityFromParams,
+                EntityRenderOrchestrator::setup
+        );
     }
 
     private static Stream<Entity> entities() {
-        return StreamSupport.stream(getInstance().level.entitiesForRendering().spliterator(), false);
+        net.minecraft.client.multiplayer.ClientLevel level = getInstance().level;
+        return level != null ? StreamSupport.stream(level.entitiesForRendering().spliterator(), false) : Stream.empty();
     }
 
     private static final FramePipeline PIPELINE = new FramePipeline(List.of(
@@ -149,12 +145,12 @@ public final class EntityRenderOrchestrator {
 
                     scope.getHostContext()
                          .put(AnimationParticleSpawner.class,
-                                 new RootAnimationParticleSpawner(ParticleRuntimeBridge.SPAWN_ADAPTER));
+                                 new RootAnimationParticleSpawner(ParticlePort.getSpawnAdapter()));
 
                     ModelRuntimeData tickedInfos;
                     if (cap.getAnimationComponent().getSerializableInfo() != null) {
                         tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
-                                (ClientTickHandler.getTick() + plan.partialTick()) / 20, () -> {
+                                (ClientTickPort.getTick() + plan.partialTick()) / 20, () -> {
                                     if (clientEntityComponent.getClientEntity() != null) {
                                         clientEntityComponent.getClientEntity().scripts().ifPresent(scripts -> {
                                             scripts.pre_animation().eval(scope);
@@ -257,7 +253,7 @@ public final class EntityRenderOrchestrator {
                               .<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>());
         var offHandPose = locators.get(leftitem);
         if (offHandPose != null) {
-            RenderPorts.get().renderSystemPort.pushPoseRaw(poseStack, offHandPose);
+            RenderPorts.get().renderSystemPort().pushPoseRaw(poseStack, offHandPose);
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.OFF_HAND);
             renderHandItemOrAttachable(action.multiBufferSource(), renderTarget, itemInHand,
                     ItemDisplayContext.THIRD_PERSON_LEFT_HAND, light, poseStack, true, InteractionHand.OFF_HAND);
@@ -265,7 +261,7 @@ public final class EntityRenderOrchestrator {
 
         var mainHandPose = locators.get(rightitem);
         if (mainHandPose != null) {
-            RenderPorts.get().renderSystemPort.pushPoseRaw(poseStack, mainHandPose);
+            RenderPorts.get().renderSystemPort().pushPoseRaw(poseStack, mainHandPose);
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.MAIN_HAND);
             renderHandItemOrAttachable(action.multiBufferSource(), renderTarget, itemInHand,
                     ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, poseStack, false, InteractionHand.MAIN_HAND);
@@ -300,7 +296,7 @@ public final class EntityRenderOrchestrator {
             poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
             poseStack.translate(-0.25, 0.1, -1.15);
-            RenderPorts.get().renderSystemPort.renderItemDirect(le, item, context, left, poseStack, bufferSource, light);
+            RenderPorts.get().renderSystemPort().renderItemDirect(le, item, context, left, poseStack, bufferSource, light);
             poseStack.popPose();
         }
     }
@@ -348,7 +344,7 @@ public final class EntityRenderOrchestrator {
 
                                                                             data.extraRender().render(renderHelper.getContext(), data);
 
-                                                                           RenderPorts.get().renderSystemPort.flushBuffer(multiBufferSource);
+                                                                           RenderPorts.get().renderSystemPort().flushBuffer(multiBufferSource);
 
                                                                            RenderParams emissiveRenderParams = renderParams.asEmissive(multiBufferSource, modelComponent);
 
@@ -385,10 +381,7 @@ public final class EntityRenderOrchestrator {
     }
 
     static void setupExtraMolang(Entity entity, MolangScope scope, float partialTick) {
-        if (entity instanceof Llama llama) {
-            int decorIndex = RenderPorts.get().renderSystemPort.getLlamaDecorColorIndex(llama);
-            scope.set("variable.decortextureindex", decorIndex);
-        }
+        RenderPorts.get().renderSystemPort().setupLlamaDecor(entity, scope);
 
         scope.set("variable.partial_tick", partialTick);
         if (entity instanceof LivingEntity livingEntity)
@@ -397,23 +390,23 @@ public final class EntityRenderOrchestrator {
 
     private static void setupSyncedBehaviorContext(LivingEntity entity, MolangScope scope) {
         SyncedBehaviorState synced = DataAttachmentHelper.getOrNull(
-                EyelibAttachableData.syncedBehaviorState(), entity);
+                DataAttachmentPort.syncedBehaviorState(), entity);
         if (synced == null) {
-            scope.getHostContext().remove(MolangEntityContext.class);
+            scope.getHostContext().remove(MolangEntityContextView.class);
             return;
         }
 
-        ComponentStore store = new ComponentStore();
+        ComponentStoreView store = MolangContextPort.newComponentStore();
         store.put("minecraft:variant", synced.variant());
         store.put("minecraft:mark_variant", synced.markVariant());
         store.put("minecraft:scale", synced.scale());
-        scope.getHostContext().put(MolangEntityContext.class, new MolangEntityContext(store));
+        scope.getHostContext().put(MolangEntityContextView.class, MolangContextPort.newMolangEntityContext(store));
     }
 
     static List<Runnable> setupClientEntity(Entity entity, RenderData<?> cap) {
         cap.ensureOwner(entity);
 
-        String entityId = RenderPorts.get().renderSystemPort.getEntityTypeId(entity);
+        String entityId = RenderPorts.get().renderSystemPort().getEntityTypeId(entity);
         return setupClientEntity(entityId, cap);
     }
 
@@ -509,7 +502,7 @@ public final class EntityRenderOrchestrator {
 
     private static RenderParams buildRenderParams(SimpleRenderAction<?> data, ModelComponent modelComponent) {
         RenderParams.Builder builder = RenderParams.builder(data.poseStack(), data.multiBufferSource(), modelComponent);
-        float[] colorMask = modelComponent.usesColorMask() ? RenderPorts.get().renderSystemPort.getEntityTintColor(data.entity()) : null;
+        float[] colorMask = modelComponent.usesColorMask() ? RenderPorts.get().renderSystemPort().getEntityTintColor(data.entity()) : null;
         if (colorMask != null) {
             builder = builder.colorMaskTexture(data.multiBufferSource(), modelComponent, colorMask);
         }

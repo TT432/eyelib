@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.common.debug;
 
-import io.github.tt432.eyelib.bridge.ForgeEnvironment;
+import io.github.tt432.eyelib.bridge.EnvironmentPort;
 import io.github.tt432.eyelib.common.debug.ScriptEvalService;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -41,7 +41,7 @@ public final class AIDebugServer {
     private HttpServer server;
 
     public void start() {
-        if (ForgeEnvironment.isProduction()
+        if (EnvironmentPort.isProduction()
         ) {
             return;
         }
@@ -249,7 +249,8 @@ public final class AIDebugServer {
                                                     .getOrThrow(WorldPresets.FLAT)
                                                     .value()
                                                     .createWorldDimensions(),
-                                null);
+                                new net.minecraft.client.gui.screens.GenericMessageScreen(
+                                        net.minecraft.network.chat.Component.translatable("selectWorld.data_read")));
                         //?}
                         future.complete("World creation initiated: " + finalName);
                     } catch (Exception e) {
@@ -272,14 +273,17 @@ public final class AIDebugServer {
             });
             server.createContext("/enterdworld", exchange -> {
                 Minecraft mc = Minecraft.getInstance();
-                boolean inWorld = mc.level != null && mc.player != null;
-                String worldInfo = inWorld
-                        //? if <26.1 {
-                        ? mc.level.dimension().location().toString()
-                        //?} else {
-                        ? mc.level.dimension().toString()
-                        //?}
-                        : "N/A";
+                net.minecraft.world.level.Level level = mc.level;
+                String worldInfo = "N/A";
+                boolean inWorld = false;
+                if (level != null && mc.player != null) {
+                    //? if <26.1 {
+                    worldInfo = level.dimension().location().toString();
+                    //?} else {
+                    worldInfo = level.dimension().toString();
+                    //?}
+                    inWorld = true;
+                }
                 byte[] resp = ("{\"inWorld\":" + inWorld + ",\"dimension\":\"" + worldInfo + "\"}").getBytes(StandardCharsets.UTF_8);
                 exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
                 exchange.sendResponseHeaders(200, resp.length);
@@ -367,3 +371,4 @@ public final class AIDebugServer {
         exchange.close();
     }
 }
+

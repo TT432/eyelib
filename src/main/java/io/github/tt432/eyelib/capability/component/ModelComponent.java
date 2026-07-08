@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.capability.component;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
-import io.github.tt432.eyelib.bridge.material.RenderPassAdapter;
+import io.github.tt432.eyelib.bridge.material.MaterialPort;
 import io.github.tt432.eyelib.bridge.material.RenderTypeResolver;
 import io.github.tt432.eyelib.material.render.RenderTypeResolver.EntityRenderTypeData;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
@@ -105,11 +105,11 @@ public class ModelComponent {
             PortRenderPass pass = material != null
                     ? RenderTypeResolver.resolve(portTex, material)
                     : RenderTypeResolver.resolve(portTex, entry, matMap);
-            return RenderPassAdapter.toRenderType(pass, portTex);
+            return MaterialPort.toRenderType(pass, portTex);
         }
         EntityRenderTypeData fallback = resolveFallback(info.renderType());
         PortResourceLocation portTex = ResourceLocationBridge.fromMc(texture);
-        return RenderPassAdapter.toRenderType(fallback.factory().apply(portTex), portTex);
+        return MaterialPort.toRenderType(fallback.factory().apply(portTex), portTex);
     }
 
     public boolean isSolid() {
@@ -191,3 +191,4 @@ public class ModelComponent {
 
     final Int2BooleanOpenHashMap partVisibility = new Int2BooleanOpenHashMap();
 }
+

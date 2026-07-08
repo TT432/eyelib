@@ -2,7 +2,7 @@ package io.github.tt432.eyelib.smoke;
 
 import io.github.tt432.clientsmokeannotation.ClientSmoke;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
-import io.github.tt432.eyelib.bridge.material.RenderPassAdapter;
+import io.github.tt432.eyelib.bridge.material.adapter.RenderPassAdapter;
 import io.github.tt432.eyelib.bridge.material.RenderTypeResolver;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
@@ -140,3 +140,4 @@ public class RenderTypeBridgeSmoke {
         LOGGER.info("[RenderTypeBridgeSmoke] All 4 bridge adapter paths passed");
     }
 }
+

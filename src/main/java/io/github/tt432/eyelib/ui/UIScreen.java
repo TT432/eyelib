@@ -1,4 +1,5 @@
 package io.github.tt432.eyelib.ui;
+import io.github.tt432.eyelib.bridge.ui.adapter.MCScreenAdapter;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -45,3 +46,4 @@ public interface UIScreen {
 
     default void onTick() {}
 }
+

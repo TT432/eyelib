@@ -1,9 +1,9 @@
 package io.github.tt432.eyelib.client.track;
 
+import io.github.tt432.eyelib.bridge.client.ClientFrameTimePort;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.type.MolangString;
-import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
@@ -46,11 +46,6 @@ public final class ItemTrackRenderer {
      * 获取渲染用的 partialTick。
      */
     public static float getPartialTick() {
-        //? if <1.20.6
-        return Minecraft.getInstance().getFrameTime();
-        //? if >=1.20.6 && <26.1
-        return Minecraft.getInstance().getTimer().getRealtimeDeltaTicks();
-        //? if >=26.1
-        return Minecraft.getInstance().getDeltaTracker().getRealtimeDeltaTicks();
+        return ClientFrameTimePort.getFrameTime();
     }
 }

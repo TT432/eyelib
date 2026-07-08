@@ -1,10 +1,9 @@
 package io.github.tt432.eyelib.client.model;
 
-import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEvent;
+import io.github.tt432.eyelib.bridge.event.ManagerEventPort;
 import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEventPublisher;
 import io.github.tt432.eyelib.client.manager.ModelManager;
-import io.github.tt432.eyelib.client.render.bake.EmissiveModelBakeInfo;
-import io.github.tt432.eyelib.client.render.bake.TwoSideModelBakeInfo;
+import io.github.tt432.eyelib.bridge.client.render.bake.ModelBakePort;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -22,13 +21,14 @@ public final class ModelBakeInvalidationHooks {
             return;
         }
 
-        ManagerEntryChangedEventPublisher.addListener(event -> {
+        ManagerEntryChangedEventPublisher.<ManagerEventPort>addListener(event -> {
             if (!ModelManager.class.getSimpleName().equals(event.getManagerName())) {
                 return;
             }
 
-            EmissiveModelBakeInfo.INSTANCE.invalidateModel(event.getEntryName());
-            TwoSideModelBakeInfo.INSTANCE.invalidateModel(event.getEntryName());
+            ModelBakePort.emissiveInvalidateModel(event.getEntryName());
+            ModelBakePort.twoSideInvalidateModel(event.getEntryName());
         });
     }
 }
+

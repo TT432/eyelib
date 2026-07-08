@@ -1,13 +1,9 @@
 package io.github.tt432.eyelib.client.loader;
 
+import io.github.tt432.eyelib.bridge.client.loader.ResourceLoader;
 import com.google.gson.JsonElement;
 import io.github.tt432.eyelib.particle.loading.ParticleResourcePublication;
 import lombok.extern.slf4j.Slf4j;
-//? if <26.1 {
-import net.minecraft.resources.ResourceLocation;
-//?} else {
-import net.minecraft.resources.Identifier;
-//?}
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.slf4j.Logger;
@@ -35,13 +31,11 @@ public class BrParticleLoader extends BrResourcesLoader {
     }
 
     @Override
-    //? if <26.1 {
-    protected void apply(Map<ResourceLocation, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
-    //?} else {
-    protected void apply(Map<Identifier, JsonElement> pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
-    //?}
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    protected void apply(Map pObject, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
         Map<String, JsonElement> resources = new LinkedHashMap<>();
-        pObject.entrySet().forEach(entry -> resources.put(entry.getKey().toString(), entry.getValue()));
+        Map<?, JsonElement> typed = pObject;
+        typed.forEach((key, value) -> resources.put(key.toString(), value));
         ParticleResourcePublication.replaceFromJsonResources(resources, LOGGER);
     }
 }

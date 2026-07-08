@@ -87,7 +87,8 @@ public class RenderData<T> {
      */
     @SuppressWarnings("unchecked")
     public void ensureOwner(Object owner) {
-        if (getOwner() != owner) {
+        T currentOwner = getOwner();
+        if (currentOwner != owner) {
             init((T) owner);
         }
     }

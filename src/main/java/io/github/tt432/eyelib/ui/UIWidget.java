@@ -1,4 +1,5 @@
 package io.github.tt432.eyelib.ui;
+import io.github.tt432.eyelib.bridge.ui.adapter.MCWidgetAdapter;
 
 /**
  * MC 无关的 widget 接口，由 bridge {@code MCWidgetAdapter} 包装为 MC Renderable + GuiEventListener。
@@ -26,3 +27,4 @@ public interface UIWidget {
         return 0;
     }
 }
+

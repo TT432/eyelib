@@ -3,11 +3,11 @@ package io.github.tt432.eyelib.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.bridge.client.render.adapter.RenderPorts;
 import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
-import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEvent;
+import io.github.tt432.eyelib.bridge.event.ManagerEventPort;
 import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEventPublisher;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.model.DFSModel;
-import io.github.tt432.eyelib.client.render.bake.TwoSideModelBakeInfo;
+import io.github.tt432.eyelib.bridge.client.render.bake.ModelBakePort;
 import io.github.tt432.eyelib.client.render.visitor.ActiveModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.model.ModelVisitContext;
@@ -55,7 +55,7 @@ public class RenderHelper {
     }
 
     {
-        ManagerEntryChangedEventPublisher.addListener(e -> {
+        ManagerEntryChangedEventPublisher.<ManagerEventPort>addListener(e -> {
             if (e.getManagerName().equals(ModelManager.class.getSimpleName()))
                 dfsModels.remove(e.getEntryName());
         });
@@ -64,7 +64,7 @@ public class RenderHelper {
     public RenderHelper render(RenderParams params, Model model, ModelRuntimeData infos) {
         this.params = params;
         if (params.texture() != null) {
-            context.put("BackedModel", TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, params.isSolid(), params.texture()));
+            context.put("BackedModel", ModelBakePort.twoSideGetBakedModel(model, params.isSolid(), params.texture()));
         }
 
         dfsModel(model).visit(params, context, ActiveModelRenderVisitors.RENDER_VISITOR, infos, new DFSModel.StateMachine());
@@ -102,9 +102,10 @@ public class RenderHelper {
 
         locators.forEach((name, matrix) -> {
             if (name.split("_t_")[0].equals(visitorName)) {
-                PoseStack poseStack = RenderPorts.get().renderSystemPort.createPoseStackFromMatrix(matrix);
+                PoseStack poseStack = RenderPorts.get().renderSystemPort().createPoseStackFromMatrix(matrix);
                 render(params.withPoseStack(poseStack), model, infos);
             }
         });
     }
 }
+

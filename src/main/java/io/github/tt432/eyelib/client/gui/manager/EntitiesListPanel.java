@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.gui.manager;
 
-import io.github.tt432.eyelib.bridge.client.ClientTickHandler;
+import io.github.tt432.eyelib.bridge.client.ClientTickPort;
 import io.github.tt432.eyelib.bridge.client.entity.EntityRegistryBridge;
 import io.github.tt432.eyelib.ui.UIGraphics;
 import io.github.tt432.eyelib.ui.UIScrollPanel;
@@ -81,7 +81,7 @@ public final class EntitiesListPanel extends UIScrollPanel {
                 EntityButton entityButton = filteredEntitiesList.get(index);
                 boolean hover = EyelibManagerScreen.hover(buttonX, buttonY, slotSize, slotSize, mouseX, mouseY);
                 float alpha = lastSelected == entityButton ? 1 : entityButton.animator().getTime(
-                        ClientTickHandler.getTick(), partialTick, hover);
+                        ClientTickPort.getTick(), partialTick, hover);
 
                 EntityButtonRenderer.render(gfx, buttonX, buttonY, size, alpha, entityButton);
                 if (EyelibManagerScreen.hover(buttonX, buttonY, iconSize, iconSize, mouseX, mouseY)) {

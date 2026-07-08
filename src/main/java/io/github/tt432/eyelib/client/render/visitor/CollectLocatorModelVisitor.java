@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.render.visitor;
 import io.github.tt432.eyelib.model.ModelVisitContext;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.tt432.eyelib.bridge.client.render.PoseStackPort;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;
@@ -34,14 +35,7 @@ public class CollectLocatorModelVisitor extends ModelVisitor {
         last.normal().rotateZYX(rotation.z(), rotation.y(), rotation.x());
         last.pose().rotateZYX(rotation.z(), rotation.y(), rotation.x());
 
-        Matrix4f locatorPose;
-        //? if <1.20.6 {
-        locatorPose = new Matrix4f(poseStack.poseStack.getLast().pose());
-        //?} elif <26.1 {
-        locatorPose = new Matrix4f(((io.github.tt432.eyelib.mixin.PoseStackAccessor) poseStack).eyelib$getPoseStackDeque().getLast().pose());
-        //?} else {
-        locatorPose = new Matrix4f(poseStack.last().pose());
-        //?}
+        Matrix4f locatorPose = PoseStackPort.getLastPoseMatrix(poseStack);
         context.<Map<String, Matrix4f>>orCreate("locators", new HashMap<>())
                .put(locator.name(), locatorPose);
         poseStack.popPose();

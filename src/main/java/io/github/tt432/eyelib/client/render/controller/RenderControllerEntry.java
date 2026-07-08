@@ -6,8 +6,8 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
-import io.github.tt432.eyelib.bridge.client.render.texture.NativeImageIO;
-import io.github.tt432.eyelib.bridge.client.render.texture.TextureLayerMerger;
+import io.github.tt432.eyelib.bridge.client.render.texture.NativeImagePort;
+import io.github.tt432.eyelib.bridge.client.render.texture.TextureMergePort;
 import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
@@ -301,7 +301,7 @@ public record RenderControllerEntry(
                 Identifier uploadTexture = texture;
                 //?}
                 if (textureLayers.size() > 1) {
-                    syncedActions.add(() -> NativeImageIO.upload(uploadTexture, TextureLayerMerger.merge(textureLayers)));
+                    syncedActions.add(() -> NativeImagePort.upload(uploadTexture, TextureMergePort.merge(textureLayers)));
                 }
 
                 //? if <26.1 {
@@ -315,7 +315,7 @@ public record RenderControllerEntry(
                 List<Identifier> emissiveTextureLayers = toResourceLocations(toEmissiveTextureLayerPaths(textureLayerPaths));
                 //?}
                 if (emissiveTextureLayers.size() > 1) {
-                    syncedActions.add(() -> NativeImageIO.upload(emissiveTexture, TextureLayerMerger.merge(emissiveTextureLayers)));
+                    syncedActions.add(() -> NativeImagePort.upload(emissiveTexture, TextureMergePort.merge(emissiveTextureLayers)));
                 }
             }
 
@@ -374,15 +374,15 @@ public record RenderControllerEntry(
                     Identifier clampedLayer = Identifier.fromNamespaceAndPath(layer.getNamespace(), "_tmp_clamped/" + layer.getPath());
 
                     //?}
-                    NativeImage img = NativeImageIO.download(layer, NativeImageIO::copyImage);
+                    NativeImage img = NativeImagePort.download(layer, NativeImagePort::copyImage);
                     if (img != null) {
-                        NativeImageIO.clampAlphaToBinary(img);
-                        NativeImageIO.upload(clampedLayer, img);
+                        NativeImagePort.clampAlphaToBinary(img);
+                        NativeImagePort.upload(clampedLayer, img);
                         clampedLayers.add(clampedLayer);
                     }
                 }
                 if (!clampedLayers.isEmpty()) {
-                    NativeImageIO.upload(clamped, TextureLayerMerger.merge(clampedLayers));
+                    NativeImagePort.upload(clamped, TextureMergePort.merge(clampedLayers));
                 }
             });
         }
@@ -551,3 +551,5 @@ public record RenderControllerEntry(
         return resourceLocations;
     }
 }
+
+

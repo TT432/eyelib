@@ -1,11 +1,11 @@
 package io.github.tt432.eyelib.client.molang;
 
-import io.github.tt432.eyelib.bridge.capability.EyelibAttachableData;
+import io.github.tt432.eyelib.bridge.capability.DataAttachmentPort;
 import io.github.tt432.eyelib.client.entity.AttachableResolver;
 import io.github.tt432.eyelib.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationController;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.DataAttachmentTypeRegistry;
 import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
 import io.github.tt432.eyelib.behavior.component.MarkVariant;
 import io.github.tt432.eyelib.behavior.component.Variant;
@@ -62,11 +62,11 @@ public final class MolangQuery {
     public static float variant(MolangScope scope) {
         return livingFloat(scope, l -> {
             SyncedBehaviorState synced = DataAttachmentHelper.getOrNull(
-                    EyelibAttachableData.syncedBehaviorState(), l);
+                    DataAttachmentPort.syncedBehaviorState(), l);
             if (synced != null) {
                 return (float) synced.variant();
             }
-            Variant component = DataAttachmentHelper.getOrCreate(EyelibAttachableData.entityBehaviorData(), l)
+            Variant component = DataAttachmentHelper.getOrCreate(DataAttachmentPort.entityBehaviorData(), l)
                                                     .component(Variant.class);
             return component != null ? (float) component.value() : 0;
         });
@@ -76,11 +76,11 @@ public final class MolangQuery {
     public static float markVariant(MolangScope scope) {
         return livingFloat(scope, l -> {
             SyncedBehaviorState synced = DataAttachmentHelper.getOrNull(
-                    EyelibAttachableData.syncedBehaviorState(), l);
+                    DataAttachmentPort.syncedBehaviorState(), l);
             if (synced != null) {
                 return (float) synced.markVariant();
             }
-            MarkVariant component = DataAttachmentHelper.getOrCreate(EyelibAttachableData.entityBehaviorData(), l)
+            MarkVariant component = DataAttachmentHelper.getOrCreate(DataAttachmentPort.entityBehaviorData(), l)
                                                         .component(MarkVariant.class);
             return component != null ? (float) component.value() : 0;
         });
@@ -207,3 +207,4 @@ public final class MolangQuery {
         boolean apply(K key);
     }
 }
+

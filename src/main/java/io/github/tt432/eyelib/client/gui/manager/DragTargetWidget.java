@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.client.gui.manager;
 
-import io.github.tt432.eyelib.bridge.client.ClientTickHandler;
+import io.github.tt432.eyelib.bridge.client.ClientTickPort;
 import io.github.tt432.eyelib.ui.UIGraphics;
 import io.github.tt432.eyelib.ui.UIWidget;
 import io.github.tt432.eyelib.util.PortResourceLocation;
@@ -54,7 +54,7 @@ final class DragTargetWidget implements UIWidget {
 
     @Override
     public void render(UIGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        var a = animator.getTime(ClientTickHandler.getTick(), partialTick, hover(mouseX, mouseY));
+        var a = animator.getTime(ClientTickPort.getTick(), partialTick, hover(mouseX, mouseY));
 
         gfx.blit(PortResourceLocation.parse("eyelib:gui_bg_nine"), x, y, 0, 0, w, h);
         gfx.enableBlend();

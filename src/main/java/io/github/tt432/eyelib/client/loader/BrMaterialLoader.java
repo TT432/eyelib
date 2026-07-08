@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.loader;
 
+import io.github.tt432.eyelib.bridge.client.loader.ResourceLoader;
 import com.google.gson.JsonElement;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.material.material.BrMaterial;

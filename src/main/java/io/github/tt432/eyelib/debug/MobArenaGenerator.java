@@ -245,8 +245,10 @@ public final class MobArenaGenerator {
                 //?} else {
                 Entity entity = cage.type.create(level, EntitySpawnReason.NATURAL);
                 //?}
-                entity.setPos(cage.x + cage.w / 2.0, cage.y + 0.5, cage.z + cage.d / 2.0);
-                level.addFreshEntity(entity);
+                if (entity != null) {
+                    entity.setPos(cage.x + cage.w / 2.0, cage.y + 0.5, cage.z + cage.d / 2.0);
+                    level.addFreshEntity(entity);
+                }
             } catch (Exception e) {
                 // 跳过无法生成的实体（如 Warden 需要 sculk shrieker 触发等）
             }

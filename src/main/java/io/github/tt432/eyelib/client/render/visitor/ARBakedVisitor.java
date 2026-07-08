@@ -2,9 +2,9 @@ package io.github.tt432.eyelib.client.render.visitor;
 import io.github.tt432.eyelib.model.ModelVisitContext;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelib.client.compat.ar.ARCompatImpl;
+import io.github.tt432.eyelib.bridge.client.compat.ar.ARCompat;
 import io.github.tt432.eyelib.client.render.RenderParams;
-import io.github.tt432.eyelib.client.render.bake.BakedModel;
+import io.github.tt432.eyelib.bridge.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;
 /**
@@ -28,7 +28,11 @@ public class ARBakedVisitor extends HighSpeedRenderModelVisitor {
         }
 
         if (renderParams.partVisibility().getOrDefault(bone.id(), true)) {
-            if (ARCompatImpl.renderWithAR(bakedBone, renderParams)) {
+            if (ARCompat.renderWithAR(
+                    renderParams.consumer(), renderParams.poseStack().last(),
+                    bakedBone.position(), bakedBone.u(), bakedBone.v(), bakedBone.normal(),
+                    bakedBone.vertexSize(), renderParams.light(), renderParams.overlay()
+            )) {
                 return;
             }
             renderBakedBone(renderParams, bakedBone);

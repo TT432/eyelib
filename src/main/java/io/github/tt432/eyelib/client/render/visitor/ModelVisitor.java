@@ -3,6 +3,7 @@ import io.github.tt432.eyelib.model.ModelVisitContext;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.client.render.PoseCopies;
+import io.github.tt432.eyelib.bridge.client.render.PoseStackPort;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;
@@ -153,19 +154,8 @@ public class ModelVisitor {
                         m4.translate(-renderPivot.x(), -renderPivot.y(), -renderPivot.z());
                         return PoseCopies.copy(last);
                     } else {
-                        //? if <26.1 {
-                         Deque<PoseStack.Pose> stack;
-                         //? if <1.20.6 {
-                         stack = poseStack.poseStack;
-                         //?} else {
-                         stack = ((io.github.tt432.eyelib.mixin.PoseStackAccessor) poseStack).eyelib$getPoseStackDeque();
-                         //?}
-                         stack.removeLast();
-                         stack.addLast(pose);
-                        //?} else {
-                        poseStack.last().set(pose);
-                        //?}
-                         return pose;
+                        PoseStackPort.replaceLast(poseStack, pose);
+                        return pose;
                     }
                });
     }

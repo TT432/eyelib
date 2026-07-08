@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.client.particle;
 
-import io.github.tt432.eyelib.bridge.client.ClientTickHandler;
+import io.github.tt432.eyelib.bridge.client.ClientFrameTimePort;
+import io.github.tt432.eyelib.bridge.client.ClientTickPort;
 import io.github.tt432.eyelib.particle.runtime.bedrock.ParticleRuntimeEnvironment;
 import io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.EmitterParticleComponent;
 import net.minecraft.client.Minecraft;
@@ -20,18 +21,12 @@ import java.util.Optional;
 public record MinecraftParticleRuntimeEnvironment(Level level) implements ParticleRuntimeEnvironment {
     @Override
     public int ticks() {
-        return ClientTickHandler.getTick();
+        return ClientTickPort.getTick();
     }
 
     @Override
     public float partialTick() {
-        //? if <1.20.6 {
-        return Minecraft.getInstance().timer.partialTick;
-        //?} else if <26.1 {
-        return Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true);
-        //?} else {
-        return Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(true);
-        //?}
+        return ClientFrameTimePort.getGameTimeDeltaPartialTick();
     }
 
     @Override

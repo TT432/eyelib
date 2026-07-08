@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import io.github.tt432.eyelib.animation.bedrock.BrAnimation;
 import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationControllers;
-import io.github.tt432.eyelib.bridge.client.render.texture.NativeImageIO;
+import io.github.tt432.eyelib.bridge.client.render.texture.NativeImagePort;
 import io.github.tt432.eyelib.bridge.event.TextureChangedEventPublisher;
 import io.github.tt432.eyelib.bridge.util.CodecOps;
 import io.github.tt432.eyelib.client.loader.BedrockAddonRuntimeBridge;
@@ -195,7 +195,7 @@ public final class ManagerResourceImportPlanner {
 
         textures.forEach((relativePath, imageData) -> {
             try {
-                NativeImageIO.uploadFromImportedImageData(relativePath.toLowerCase(Locale.ROOT), imageData);
+                NativeImagePort.uploadFromImportedImageData(relativePath.toLowerCase(Locale.ROOT), imageData);
             } catch (RuntimeException exception) {
                 LOGGER.error("can't upload addon texture {}.", relativePath, exception);
             }
@@ -270,7 +270,7 @@ public final class ManagerResourceImportPlanner {
                 }
                 case TEXTURE_PNG -> {
                     try (InputStream inputStream = Files.newInputStream(file)) {
-                        NativeImageIO.loadAndUpload(ManagerResourceReloadPlan.toTextureKey(basePath, file), inputStream);
+                        NativeImagePort.loadAndUpload(ManagerResourceReloadPlan.toTextureKey(basePath, file), inputStream);
                     }
                     TextureChangedEventPublisher.post();
                 }
@@ -287,7 +287,7 @@ public final class ManagerResourceImportPlanner {
 
         pngFiles.forEach(pngFile -> {
             try (InputStream inputStream = Files.newInputStream(pngFile)) {
-                NativeImageIO.loadAndUpload(ManagerResourceReloadPlan.toTextureKey(basePath, pngFile), inputStream);
+                NativeImagePort.loadAndUpload(ManagerResourceReloadPlan.toTextureKey(basePath, pngFile), inputStream);
             } catch (IOException e) {
                 LOGGER.error("can't load file.", e);
             }
@@ -309,3 +309,4 @@ public final class ManagerResourceImportPlanner {
         }
     }
 }
+

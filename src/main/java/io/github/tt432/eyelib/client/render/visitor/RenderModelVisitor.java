@@ -3,6 +3,7 @@ import io.github.tt432.eyelib.model.ModelVisitContext;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.tt432.eyelib.bridge.client.render.VertexConsumerPort;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.model.Model;
 import org.joml.Vector2fc;
@@ -32,19 +33,10 @@ public class RenderModelVisitor extends ModelVisitor {
         if (consumer == null) {
             return;
         }
-        //? if <1.20.6 {
-        consumer.vertex(tPosition.x, tPosition.y, tPosition.z,
-                        1, 1, 1, 1,
-                        uv.x(), uv.y(),
-                        renderParams.overlay(), renderParams.light(),
-                        tNormal.x, tNormal.y, tNormal.z);
-        //?} else {
-        consumer.addVertex(tPosition.x, tPosition.y, tPosition.z)
-                .setColor(255, 255, 255, 255)
-                .setUv(uv.x(), uv.y())
-                .setOverlay(renderParams.overlay())
-                .setLight(renderParams.light())
-                .setNormal(tNormal.x, tNormal.y, tNormal.z);
-        //?}
+        VertexConsumerPort.vertex(consumer, tPosition.x, tPosition.y, tPosition.z,
+                1, 1, 1, 1,
+                uv.x(), uv.y(),
+                renderParams.overlay(), renderParams.light(),
+                tNormal.x, tNormal.y, tNormal.z);
     }
 }

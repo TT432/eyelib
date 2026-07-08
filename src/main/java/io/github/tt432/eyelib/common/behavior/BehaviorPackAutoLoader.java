@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.common.behavior;
 
 import io.github.tt432.eyelib.behavior.BehaviorEntityRegistry;
+import io.github.tt432.eyelib.bridge.util.ServerDirectoryPort;
 import io.github.tt432.eyelib.importer.addon.BedrockAddon;
 import io.github.tt432.eyelib.importer.addon.BedrockAddonLoader;
 import io.github.tt432.eyelib.importer.addon.BedrockAddonWarning;
@@ -33,11 +34,7 @@ public final class BehaviorPackAutoLoader {
     };
 
     public static void load(MinecraftServer server) {
-        //? if <1.20.6 {
-        Path serverDirectory = server.getServerDirectory().toPath();
-        //?} else {
-        Path serverDirectory = server.getServerDirectory();
-        //?}
+        Path serverDirectory = ServerDirectoryPort.getServerDirectory(server);
         BehaviorEntityRegistry.clear();
         SpawnRuleRegistry.clear();
         VanillaBehaviorEntityLoader.mergeIntoRegistry(serverDirectory);

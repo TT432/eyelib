@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.loader;
 
+import io.github.tt432.eyelib.bridge.client.loader.ResourceLoader;
 import com.google.gson.JsonElement;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.importer.model.importer.BedrockGeometryImporter;

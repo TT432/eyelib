@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.bridge.network.animation.AnimationComponentSyncPac
 import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
 import io.github.tt432.eyelib.util.entitydata.RenderModelSyncPayload;
 import io.github.tt432.eyelib.bridge.network.model.ModelComponentSyncPacket;
-import io.github.tt432.eyelib.bridge.network.EyelibNetworkTransport;
+import io.github.tt432.eyelib.bridge.network.adapter.EyelibNetworkTransport;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
@@ -64,3 +64,4 @@ public final class ClientRenderSyncService {
         return payload.toInfo();
     }
 }
+

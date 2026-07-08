@@ -4,15 +4,15 @@ package io.github.tt432.eyelib.client.gui;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import io.github.tt432.eyelib.bridge.client.EntityRenderPorts;
-import io.github.tt432.eyelib.bridge.client.gui.ModalWorksurfaceScreen;
+import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
+import io.github.tt432.eyelib.bridge.client.gui.adapter.ModalWorksurfaceScreen;
 import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.render.RenderParams;
-import io.github.tt432.eyelib.client.render.bake.BakedModel;
-import io.github.tt432.eyelib.client.render.bake.TwoSideModelBakeInfo;
+import io.github.tt432.eyelib.bridge.client.render.bake.BakedModel;
+import io.github.tt432.eyelib.bridge.client.render.bake.ModelBakePort;
 import io.github.tt432.eyelib.client.render.visitor.ActiveModelRenderVisitors;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.importer.model.bbmodel.BBModel;
@@ -351,9 +351,9 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
                 BBModel model = new BBModelLoader().load(path);
                 this.currentModel = previewModel(model, ModelImporter.importBlockbench(model));
                 var model1 = currentModel.model();
-                var info = TwoSideModelBakeInfo.INSTANCE.getBakeInfo(model1, true, ResourceLocationBridge.parseMc(currentModel.atlasTexture()
-                                                                                                                     .id()));
-                bakedModel = TwoSideModelBakeInfo.INSTANCE.bake(model1, info);
+                var info = ModelBakePort.twoSideGetBakeInfo(model1, true, ResourceLocationBridge.parseMc(currentModel.atlasTexture()
+                                                                                                                      .id()));
+                bakedModel = ModelBakePort.twoSideBake(model1, info);
                 dfsModel = DFSModel.create(model1);
                 this.statusMessage = "";
 
@@ -392,3 +392,5 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         super.onClose();
     }
 }
+
+
