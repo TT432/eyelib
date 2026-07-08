@@ -2,16 +2,9 @@ package io.github.tt432.eyelib.track.api;
 
 import io.github.tt432.eyelib.track.EyelibTrack;
 import io.github.tt432.eyelib.track.cache.ItemStackIdCache;
-//? if >=1.20.6 {
-import net.minecraft.core.component.DataComponents;
-//?}
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
+import io.github.tt432.eyelib.bridge.track.ItemTrackTagPort;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-//? if >=1.20.6 {
-import net.minecraft.world.item.component.CustomData;
-//?}
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
@@ -32,55 +25,21 @@ public final class ItemTrackApi {
      * @return 已分配 ID，或 {@code stack.hashCode()} 兜底
      */
     public static long getId(ItemStack stack) {
-        //? if <1.20.6 {
-        CompoundTag tag = stack.getTag();
-        //?} else {
-        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
-        CompoundTag tag = customData != null ? customData.copyTag() : null;
-        //?}
-
-        if (tag != null && //? if <26.1 {
-            tag.contains(EyelibTrack.TRACK_ID_KEY, Tag.TAG_LONG)
-            //?} else {
-            tag.contains(EyelibTrack.TRACK_ID_KEY)
-            //?}
-        ) {
-            //? if <26.1 {
-            return tag.getLong(EyelibTrack.TRACK_ID_KEY);
-            //?} else {
-            return tag.getLong(EyelibTrack.TRACK_ID_KEY).orElse(0L);
-            //?}
-        }
-
-        return (long) stack.hashCode();
+        Long id = ItemTrackTagPort.getLongOrNull(stack, EyelibTrack.TRACK_ID_KEY);
+        return id != null ? id : (long) stack.hashCode();
     }
 
     /**
      * 读取或分配追踪 ID（仅服务端调用）。
      */
     public static long getOrAssignId(ItemStack stack, ServerLevel level) {
-        //? if <1.20.6 {
-        CompoundTag tag = stack.getOrCreateTag();
-        //?} else {
-        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
-        //?}
-
-        if (!(//? if <26.1 {
-            tag.contains(EyelibTrack.TRACK_ID_KEY, Tag.TAG_LONG)
-            //?} else {
-            tag.contains(EyelibTrack.TRACK_ID_KEY)
-            //?}
-        )) {
-            tag.putLong(EyelibTrack.TRACK_ID_KEY, ItemStackIdCache.getFreeId(level));
-            //? if >=1.20.6
-            stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        Long id = ItemTrackTagPort.getLongOrNull(stack, EyelibTrack.TRACK_ID_KEY);
+        if (id == null) {
+            long freeId = ItemStackIdCache.getFreeId(level);
+            ItemTrackTagPort.putLong(stack, EyelibTrack.TRACK_ID_KEY, freeId);
+            return freeId;
         }
-
-        //? if <26.1 {
-        return tag.getLong(EyelibTrack.TRACK_ID_KEY);
-        //?} else {
-        return tag.getLong(EyelibTrack.TRACK_ID_KEY).orElse(0L);
-        //?}
+        return id;
     }
 
     /**
@@ -94,31 +53,6 @@ public final class ItemTrackApi {
      * 从 ItemStack NBT 中移除追踪 ID。
      */
     public static void removeTrackId(ItemStack stack) {
-        //? if <1.20.6 {
-        CompoundTag tag = stack.getTag();
-        //?} else {
-        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
-        CompoundTag tag = customData != null ? customData.copyTag() : null;
-        //?}
-
-        if (tag != null && //? if <26.1 {
-            tag.contains(EyelibTrack.TRACK_ID_KEY)
-            //?} else {
-            tag.contains(EyelibTrack.TRACK_ID_KEY)
-            //?}
-        ) {
-            tag.remove(EyelibTrack.TRACK_ID_KEY);
-
-            if (tag.isEmpty()) {
-                //? if <1.20.6
-                stack.setTag(null);
-                //? if >=1.20.6
-                stack.remove(DataComponents.CUSTOM_DATA);
-            //? if >=1.20.6 {
-            } else {
-                stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
-            //?}
-            }
-        }
+        ItemTrackTagPort.remove(stack, EyelibTrack.TRACK_ID_KEY);
     }
 }

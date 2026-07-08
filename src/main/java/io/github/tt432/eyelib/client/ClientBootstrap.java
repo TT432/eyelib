@@ -5,7 +5,7 @@ import io.github.tt432.eyelib.bridge.client.gui.GuiHookPort;
 import io.github.tt432.eyelib.bridge.ui.UiPort;
 import io.github.tt432.eyelib.capability.AttachableDataTypes;
 import io.github.tt432.eyelib.capability.RenderData;
-import io.github.tt432.eyelib.client.gui.ModelPreviewScreen;
+import io.github.tt432.eyelib.debug.client.gui.ModelPreviewScreen;
 import io.github.tt432.eyelib.client.gui.manager.AnimationView;
 import io.github.tt432.eyelib.client.gui.manager.EyelibManagerScreen;
 import io.github.tt432.eyelib.client.particle.MinecraftParticleRuntimeEnvironment;

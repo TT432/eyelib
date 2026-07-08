@@ -2,6 +2,8 @@ package io.github.tt432.eyelib.bridge.client.render.texture;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import io.github.tt432.eyelib.bridge.client.render.texture.adapter.NativeImageIO;
+import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.importer.model.importer.ImportedImageData;
 import org.jspecify.annotations.Nullable;
 //? if <26.1 {
@@ -51,6 +53,20 @@ public interface NativeImagePort {
     static Identifier colorMaskTexture(Identifier texture, float[] color) {
     //?}
         return NativeImageIO.colorMaskTexture(texture, color);
+    }
+    static void upload(PortResourceLocation texture, NativeImage image) {
+        NativeImageIO.upload(texture.toString(), image);
+    }
+
+    @Nullable
+    static <R> R download(PortResourceLocation texture, Function<NativeImage, R> imageFunction) {
+        return NativeImageIO.download(texture.toString(), imageFunction);
+    }
+
+    @Nullable
+    static PortResourceLocation colorMaskTexture(PortResourceLocation texture, float[] color) {
+        var mc = NativeImageIO.colorMaskTexture(ResourceLocationBridge.toMc(texture), color);
+        return mc == null ? null : ResourceLocationBridge.fromMc(mc);
     }
 
     static void uploadFromImportedImageData(String textureKey, ImportedImageData imageData) {

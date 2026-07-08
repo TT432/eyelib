@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.molang;
 
+import io.github.tt432.eyelib.bridge.molang.EntityStatePort;
 import io.github.tt432.eyelib.bridge.capability.DataAttachmentPort;
 import io.github.tt432.eyelib.client.entity.AttachableResolver;
 import io.github.tt432.eyelib.animation.bedrock.BrAnimationEntry;
@@ -149,24 +150,14 @@ public final class MolangQuery {
     @MolangFunction(value = "is_jumping", description = "正在跳跃")
     public static float isJumping(MolangScope scope) {
         return livingBool(scope, entity -> {
-            //? if <1.20.6 {
-            return entity.jumping;
-            //?} elif <26.1 {
-            return ((io.github.tt432.eyelib.mixin.LivingEntityAccessor) entity).eyelib$isJumping();
-            //?} else {
-            return entity.isJumping();
-            //?}
+            return EntityStatePort.isJumping(entity);
         });
     }
 
     @MolangFunction(value = "creeper_swell", alias = "swell_amount", description = "苦力怕爆炸计时")
     public static float creeperSwell(MolangScope scope) {
         return scope.getHostContext().get(Creeper.class).map(creeper -> {
-                    //? if <1.20.6 {
-                    return creeper.swell / 30F;
-                    //?} else {
-                    return creeper.getSwelling(1F);
-                    //?}
+                    return EntityStatePort.creeperSwell(creeper);
                 })
                     .orElse(Float.valueOf(scope.getHostContext()
                                                 .get(WitherBoss.class)

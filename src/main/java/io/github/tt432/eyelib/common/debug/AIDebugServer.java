@@ -6,18 +6,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpServer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.world.Difficulty;
-//? if <26.1 {
-import net.minecraft.world.level.GameRules;
-//?} else {
-import net.minecraft.world.level.gamerules.GameRules;
-//?}
-import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.LevelSettings;
-import net.minecraft.world.level.WorldDataConfiguration;
-import net.minecraft.world.level.levelgen.WorldOptions;
-import net.minecraft.world.level.levelgen.presets.WorldPresets;
+import io.github.tt432.eyelib.bridge.client.ClientTaskPort;
+import io.github.tt432.eyelib.bridge.client.DebugServerPort;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,33 +82,10 @@ public final class AIDebugServer {
                 final String sideFinal = side;
                 Minecraft mc = Minecraft.getInstance();
                 CompletableFuture<String> future = new CompletableFuture<>();
-                //? if <26.1 {
-                mc.tell(() -> {
-                //?} else {
-                mc.submit(() -> {
-                //?}
+                ClientTaskPort.execute(() -> {
                     try {
                         if ("server".equalsIgnoreCase(sideFinal)) {
-                            var integrated = mc.getSingleplayerServer();
-                            if (integrated == null) {
-                                future.complete("No integrated server available (singleplayer only)");
-                                return;
-                            }
-                            if (mc.player == null) {
-                                future.complete("No local player available");
-                                return;
-                            }
-                            var serverPlayer = integrated.getPlayerList().getPlayer(mc.player.getUUID());
-                            var source = serverPlayer != null
-                                    ? serverPlayer.createCommandSourceStack()
-                                    : integrated.createCommandSourceStack();
-                            //? if legacy {
-                            int n = integrated.getCommands().performPrefixedCommand(source, cmd);
-                            future.complete("executed on server (result=" + n + ")");
-                            //?} else {
-                            integrated.getCommands().performPrefixedCommand(source, cmd);
-                            future.complete("executed on server");
-                            //?}
+                            future.complete(DebugServerPort.executeServerCommand(mc, cmd));
                         } else {
                             if (mc.player == null || mc.player.connection == null) {
                                 future.complete("No player/connection available");
@@ -148,11 +115,7 @@ public final class AIDebugServer {
             server.createContext("/loaded", exchange -> {
                 Minecraft mc = Minecraft.getInstance();
                 CompletableFuture<String> future = new CompletableFuture<>();
-                //? if <26.1 {
-                mc.tell(() -> {
-                //?} else {
-                mc.submit(() -> {
-                //?}
+                ClientTaskPort.execute(() -> {
                     @Nullable String overlay = mc.getOverlay() == null ? null : mc.getOverlay().getClass().getName();
                     @Nullable String screen = mc.screen == null ? null : mc.screen.getClass().getName();
                     boolean inWorld = mc.level != null && mc.player != null;
@@ -176,13 +139,7 @@ public final class AIDebugServer {
                 exchange.close();
             });
             server.createContext("/version", exchange -> {
-                //? if <1.20.6 {
-                byte[] resp = "{\"version\":\"1.20.1\"}".getBytes(StandardCharsets.UTF_8);
-                //?} elif <26.1 {
-                byte[] resp = "{\"version\":\"1.21.1\"}".getBytes(StandardCharsets.UTF_8);
-                //?} else {
-                byte[] resp = "{\"version\":\"26.1.2\"}".getBytes(StandardCharsets.UTF_8);
-                //?}
+                byte[] resp = ("{\"version\":\"" + DebugServerPort.minecraftVersion() + "\"}").getBytes(StandardCharsets.UTF_8);
                 exchange.sendResponseHeaders(200, resp.length);
                 exchange.getResponseBody().write(resp);
                 exchange.close();
@@ -208,50 +165,9 @@ public final class AIDebugServer {
                 String finalName = worldName;
                 Minecraft mc = Minecraft.getInstance();
                 CompletableFuture<String> future = new CompletableFuture<>();
-                //? if <26.1 {
-                mc.tell(() -> {
-                //?} else {
-                mc.submit(() -> {
-                //?}
+                ClientTaskPort.execute(() -> {
                     try {
-                        //? if <1.20.6 {
-                        LevelSettings levelSettings = new LevelSettings(
-                                finalName, GameType.CREATIVE, false, Difficulty.NORMAL,
-                                true, new GameRules(), WorldDataConfiguration.DEFAULT);
-                        WorldOptions worldOptions = new WorldOptions(0L, true, false);
-                        mc.createWorldOpenFlows().createFreshLevel(
-                                finalName, levelSettings, worldOptions,
-                                registry -> registry.registryOrThrow(Registries.WORLD_PRESET)
-                                                    .getHolderOrThrow(WorldPresets.FLAT)
-                                                    .value()
-                                                    .createWorldDimensions());
-                        //?} elif <26.1 {
-                        LevelSettings levelSettings = new LevelSettings(
-                                finalName, GameType.CREATIVE, false, Difficulty.NORMAL,
-                                true, new GameRules(), WorldDataConfiguration.DEFAULT);
-                        WorldOptions worldOptions = new WorldOptions(0L, true, false);
-                        mc.createWorldOpenFlows().createFreshLevel(
-                                finalName, levelSettings, worldOptions,
-                                registry -> registry.registryOrThrow(Registries.WORLD_PRESET)
-                                                    .getHolderOrThrow(WorldPresets.FLAT)
-                                                    .value()
-                                                    .createWorldDimensions(),
-                                null);
-                        //?} else {
-                        LevelSettings levelSettings = new LevelSettings(
-                                finalName, GameType.CREATIVE,
-                                new LevelSettings.DifficultySettings(Difficulty.NORMAL, false, false),
-                                true, WorldDataConfiguration.DEFAULT);
-                        WorldOptions worldOptions = new WorldOptions(0L, true, false);
-                        mc.createWorldOpenFlows().createFreshLevel(
-                                finalName, levelSettings, worldOptions,
-                                registry -> registry.lookupOrThrow(Registries.WORLD_PRESET)
-                                                    .getOrThrow(WorldPresets.FLAT)
-                                                    .value()
-                                                    .createWorldDimensions(),
-                                new net.minecraft.client.gui.screens.GenericMessageScreen(
-                                        net.minecraft.network.chat.Component.translatable("selectWorld.data_read")));
-                        //?}
+                        DebugServerPort.createFlatLevel(mc, finalName);
                         future.complete("World creation initiated: " + finalName);
                     } catch (Exception e) {
                         future.complete("Failed to enter world: " + e.getMessage());
@@ -277,11 +193,7 @@ public final class AIDebugServer {
                 String worldInfo = "N/A";
                 boolean inWorld = false;
                 if (level != null && mc.player != null) {
-                    //? if <26.1 {
-                    worldInfo = level.dimension().location().toString();
-                    //?} else {
-                    worldInfo = level.dimension().toString();
-                    //?}
+                    worldInfo = DebugServerPort.dimensionString(level);
                     inWorld = true;
                 }
                 byte[] resp = ("{\"inWorld\":" + inWorld + ",\"dimension\":\"" + worldInfo + "\"}").getBytes(StandardCharsets.UTF_8);
@@ -299,11 +211,7 @@ public final class AIDebugServer {
                     return;
                 }
                 Minecraft mc = Minecraft.getInstance();
-                //? if <26.1 {
-                mc.tell(() -> mc.stop());
-                //?} else {
-                mc.submit(() -> mc.stop());
-                //?}
+                ClientTaskPort.execute(() -> mc.stop());
                 byte[] resp = "{\"success\":true,\"message\":\"Stopping client\"}".getBytes(StandardCharsets.UTF_8);
                 exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
                 exchange.sendResponseHeaders(200, resp.length);
@@ -321,11 +229,7 @@ public final class AIDebugServer {
             LOGGER.error("Failed to start AI Debug Server", e);
             var mc = net.minecraft.client.Minecraft.getInstance();
             if (mc != null) {
-                //? if <26.1 {
-                mc.tell(() -> mc.stop());
-                //?} else {
-                mc.submit(() -> mc.stop());
-                //?}
+                ClientTaskPort.execute(() -> mc.stop());
             }
         }
     }

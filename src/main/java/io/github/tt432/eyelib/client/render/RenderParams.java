@@ -2,30 +2,23 @@ package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.tt432.eyelib.capability.component.ModelComponent;
-import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
+import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
 import io.github.tt432.eyelib.bridge.client.render.texture.NativeImagePort;
+import io.github.tt432.eyelib.bridge.client.render.texture.TexturePresencePort;
+import io.github.tt432.eyelib.bridge.material.MaterialPort;
+import io.github.tt432.eyelib.capability.component.ModelComponent;
+import io.github.tt432.eyelib.material.port.PortRenderPass;
+import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.util.texture.TexturePaths;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.With;
-import net.minecraft.client.Minecraft;
-//? if <26.1 {
-import net.minecraft.client.renderer.LightTexture;
-//?}
 import net.minecraft.client.renderer.MultiBufferSource;
 //? if <26.1 {
 import net.minecraft.client.renderer.RenderType;
 //?} else {
 import net.minecraft.client.renderer.rendertype.RenderType;
 //?}
-import net.minecraft.client.renderer.texture.AbstractTexture;
-import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-//? if <26.1 {
-import net.minecraft.resources.ResourceLocation;
-//?} else {
-import net.minecraft.resources.Identifier;
-//?}
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.Nullable;
 
@@ -38,11 +31,7 @@ public record RenderParams(
         PoseStack.Pose pose0,
         PoseStack poseStack,
         @Nullable RenderType renderType,
-        //? if <26.1 {
-        @Nullable ResourceLocation texture,
-        //?} else {
-        @Nullable Identifier texture,
-        //?}
+        @Nullable PortResourceLocation texture,
         boolean isSolid,
         @Nullable VertexConsumer consumer,
         int light,
@@ -65,11 +54,7 @@ public record RenderParams(
         );
     }
 
-    //? if <26.1 {
-    public static Builder builder(PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable ResourceLocation texture, @Nullable VertexConsumer consumer) {
-    //?} else {
-    public static Builder builder(PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable Identifier texture, @Nullable VertexConsumer consumer) {
-    //?}
+    public static Builder builder(PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable PortResourceLocation texture, @Nullable VertexConsumer consumer) {
         return new Builder(PoseCopies.copy(poseStack.last()), poseStack, renderType, isSolid, texture, consumer);
     }
 
@@ -79,54 +64,46 @@ public record RenderParams(
             return builder(poseStack, null, modelComponent.isSolid(), null, null)
                     .partVisibility(modelComponent.getPartVisibility());
         }
-        //? if <26.1 {
-        ResourceLocation texture = ResourceLocationBridge.toMc(portTexture);
-        //?} else {
-        Identifier texture = ResourceLocationBridge.toMc(portTexture);
-        //?}
-        RenderType renderType = modelComponent.getRenderType(texture);
+        PortRenderPass renderPass = modelComponent.getRenderType(portTexture);
+        RenderType renderType = renderPass != null ? MaterialPort.toRenderType(renderPass, portTexture) : null;
         if (renderType == null) {
-            return builder(poseStack, null, modelComponent.isSolid(), texture, null)
+            return builder(poseStack, null, modelComponent.isSolid(), portTexture, null)
                     .partVisibility(modelComponent.getPartVisibility());
         }
         VertexConsumer buffer = multiBufferSource.getBuffer(renderType);
 
-        return builder(poseStack, renderType, modelComponent.isSolid(), texture, buffer)
+        return builder(poseStack, renderType, modelComponent.isSolid(), portTexture, buffer)
                 .partVisibility(modelComponent.getPartVisibility());
     }
 
     public RenderParams asEmissive(MultiBufferSource multiBufferSource, ModelComponent modelComponent) {
+        // 26.1 尚未迁移 emissive 重渲染（TextureManager / render-state API 差异），保留原 no-op。
         //? if <26.1 {
         if (texture == null) {
-            return withTexture(MissingTextureAtlasSprite.getLocation());
+            return withTexture(TexturePresencePort.missingLocation());
         }
-        ResourceLocation emissiveTextureLocation = texture.withPath(TexturePaths::emissivePath);
-        AbstractTexture emissiveTexture = Minecraft.getInstance().getTextureManager()
-                                                   .getTexture(emissiveTextureLocation, MissingTextureAtlasSprite.getTexture());
-
-        if (emissiveTexture != MissingTextureAtlasSprite.getTexture()) {
-            var emissiveRenderType = modelComponent.getRenderType(emissiveTextureLocation);
-            if (emissiveRenderType == null) {
-                return withTexture(MissingTextureAtlasSprite.getLocation());
-            }
-            VertexConsumer emissiveBuffer = multiBufferSource.getBuffer(emissiveRenderType);
-            return withRenderType(emissiveRenderType)
-                    .withConsumer(emissiveBuffer)
-                    .withTexture(emissiveTextureLocation)
-                    //? if <26.1
-                    .withLight(LightTexture.FULL_BRIGHT);
-                    //? if >=26.1
-                    .withLight(0xF000F0);
+        PortResourceLocation emissivePortTexture = PortResourceLocation.of(
+                texture.namespace(), TexturePaths.emissivePath(texture.path()));
+        if (!TexturePresencePort.isLoaded(emissivePortTexture)) {
+            return withTexture(TexturePresencePort.missingLocation());
         }
-
-        return withTexture(MissingTextureAtlasSprite.getLocation());
+        PortRenderPass emissiveRenderPass = modelComponent.getRenderType(emissivePortTexture);
+        if (emissiveRenderPass == null) {
+            return withTexture(TexturePresencePort.missingLocation());
+        }
+        RenderType emissiveRenderType = MaterialPort.toRenderType(emissiveRenderPass, emissivePortTexture);
+        VertexConsumer emissiveBuffer = multiBufferSource.getBuffer(emissiveRenderType);
+        return withRenderType(emissiveRenderType)
+                .withConsumer(emissiveBuffer)
+                .withTexture(emissivePortTexture)
+                .withLight(EntityRenderPorts.RenderSystemPort.FULL_BRIGHT);
         //?} else {
         return this;
         //?}
     }
 
     public boolean textureMissing() {
-        return texture == null || texture.equals(MissingTextureAtlasSprite.getLocation());
+        return texture == null || texture.equals(TexturePresencePort.missingLocation());
     }
 
     public static final class Builder {
@@ -136,11 +113,7 @@ public record RenderParams(
         @Nullable
         private RenderType renderType;
         @Nullable
-        //? if <26.1 {
-        private ResourceLocation texture;
-        //?} else {
-        private Identifier texture;
-        //?}
+        private PortResourceLocation texture;
         private boolean isSolid;
         @Nullable
         private VertexConsumer consumer;
@@ -148,19 +121,12 @@ public record RenderParams(
         // optional
         @Nullable
         private Entity renderTarget;
-        //? if <26.1
-        private int light = LightTexture.FULL_BRIGHT;
-        //? if >=26.1
-        private int light = 0xF000F0;
+        private int light = EntityRenderPorts.RenderSystemPort.FULL_BRIGHT;
         private int overlay = OverlayTexture.NO_OVERLAY;
         private Int2BooleanOpenHashMap partVisibility = new Int2BooleanOpenHashMap();
         private float @Nullable [] tintColor = null;
 
-        //? if <26.1 {
-        public Builder(PoseStack.Pose pose0, PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable ResourceLocation texture, @Nullable VertexConsumer consumer) {
-        //?} else {
-        public Builder(PoseStack.Pose pose0, PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable Identifier texture, @Nullable VertexConsumer consumer) {
-        //?}
+        public Builder(PoseStack.Pose pose0, PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable PortResourceLocation texture, @Nullable VertexConsumer consumer) {
             this.pose0 = pose0;
             this.poseStack = poseStack;
             this.texture = texture;
@@ -198,18 +164,15 @@ public record RenderParams(
             if (texture == null) {
                 return this;
             }
-            //? if <26.1 {
-            ResourceLocation colorMaskTexture = NativeImagePort.colorMaskTexture(texture, color);
-            //?} else {
-            Identifier colorMaskTexture = NativeImagePort.colorMaskTexture(texture, color);
-            //?}
+            PortResourceLocation colorMaskTexture = NativeImagePort.colorMaskTexture(texture, color);
             if (colorMaskTexture == null) {
                 return this;
             }
-            RenderType colorMaskRenderType = modelComponent.getRenderType(colorMaskTexture);
-            if (colorMaskRenderType == null) {
+            PortRenderPass colorMaskPass = modelComponent.getRenderType(colorMaskTexture);
+            if (colorMaskPass == null) {
                 return this;
             }
+            RenderType colorMaskRenderType = MaterialPort.toRenderType(colorMaskPass, colorMaskTexture);
             texture = colorMaskTexture;
             renderType = colorMaskRenderType;
             consumer = multiBufferSource.getBuffer(colorMaskRenderType);
@@ -222,4 +185,3 @@ public record RenderParams(
         }
     }
 }
-

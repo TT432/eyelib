@@ -60,11 +60,11 @@ public class EyelibStreamCodecs {
         }
     };
 
-    public static io.github.tt432.eyelib.util.streamcodec.StreamCodec<Tag> tag(final Supplier<NbtAccounter> supplier) {
+    public static io.github.tt432.eyelib.util.streamcodec.StreamCodec<Tag> tag() {
         return new io.github.tt432.eyelib.util.streamcodec.StreamCodec<>() {
             @Override
             public Tag decode(FriendlyByteBuf buf) {
-                Tag tag = buf.readNbt(supplier.get());
+                Tag tag = buf.readNbt();
                 if (tag == null) {
                     throw new DecoderException("Expected non-null compound tag");
                 } else {
@@ -144,31 +144,14 @@ public class EyelibStreamCodecs {
     // </editor-fold>
 
     public static <T> io.github.tt432.eyelib.util.streamcodec.StreamCodec<T> fromCodec(Codec<T> codec) {
-        //? if <1.20.6 {
-        return fromCodec(codec, () -> new NbtAccounter(2097152L));
-        //?} else {
-        return fromCodec(codec, () -> new NbtAccounter(2097152L, 0));
-        //?}
-    }
-
-    public static <T> io.github.tt432.eyelib.util.streamcodec.StreamCodec<T> fromCodec(Codec<T> codec, Supplier<NbtAccounter> supplier) {
-        return tag(supplier).map(o -> codec.encodeStart(NbtOps.INSTANCE, o)
-                        //? if <1.20.6 {
-                        .getOrThrow(false, s -> LOGGER.error("Failed to encode: {} {}", s, o)),
-                        //?} else {
-                        .getOrThrow(s -> {
-                            LOGGER.error("Failed to encode: {} {}", s, o);
-                            return new RuntimeException(s);
-                        }),
-                        //?}
-                tag -> codec.parse(NbtOps.INSTANCE, tag)
-                        //? if <1.20.6 {
-                        .getOrThrow(false, s -> LOGGER.error("Failed to decode: {} {}", s, tag)));
-                        //?} else {
-                        .getOrThrow(s -> {
-                            LOGGER.error("Failed to decode: {} {}", s, tag);
-                            return new RuntimeException(s);
-                        }));
-                        //?}
+        return tag().map(o -> {
+                    var result = codec.encodeStart(NbtOps.INSTANCE, o);
+                    return result.resultOrPartial(s -> LOGGER.error("Failed to encode: {} {}", s, o))
+                            .orElseThrow(() -> new RuntimeException(result.error().map(e -> e.message()).orElse("encode error")));
+                }, tag -> {
+                    var result = codec.parse(NbtOps.INSTANCE, tag);
+                    return result.resultOrPartial(s -> LOGGER.error("Failed to decode: {} {}", s, tag))
+                            .orElseThrow(() -> new RuntimeException(result.error().map(e -> e.message()).orElse("decode error")));
+                });
     }
 }

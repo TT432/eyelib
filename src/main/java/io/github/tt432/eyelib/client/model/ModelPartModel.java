@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.model;
 
+import io.github.tt432.eyelib.bridge.client.model.ModelPartPort;
 import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.model.VisibleBox;
@@ -9,7 +10,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
-import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import org.jspecify.annotations.Nullable;
@@ -69,13 +69,8 @@ public record ModelPartModel(
 
         public Vector3fc initPosition(ModelPartModel.Bone model) {
             PartPose initialPose = model.modelPart().getInitialPose();
-            return new Vector3f(
-                    //? if <26.1 {
-                    -initialPose.x * POS_MULTIPLIER, initialPose.y * POS_MULTIPLIER, initialPose.z * POS_MULTIPLIER
-                    //?} else {
-                    -initialPose.x() * POS_MULTIPLIER, initialPose.y() * POS_MULTIPLIER, initialPose.z() * POS_MULTIPLIER
-                    //?}
-            );
+            Vector3f pose = ModelPartPort.posePosition(initialPose);
+            return new Vector3f(-pose.x * POS_MULTIPLIER, pose.y * POS_MULTIPLIER, pose.z * POS_MULTIPLIER);
         }
 
         public Vector3fc position(ModelPartModel.Bone model) {
@@ -91,13 +86,8 @@ public record ModelPartModel(
         public Vector3fc initRotation(ModelPartModel.Bone model) {
             var part = model.modelPart();
             PartPose initialPose = part.getInitialPose();
-            return new Vector3f(
-                    //? if <26.1 {
-                    -initialPose.xRot, -initialPose.yRot, initialPose.zRot
-                    //?} else {
-                    -initialPose.xRot(), -initialPose.yRot(), initialPose.zRot()
-                    //?}
-            );
+            Vector3f pose = ModelPartPort.poseRotation(initialPose);
+            return new Vector3f(-pose.x, -pose.y, pose.z);
         }
 
         public Vector3fc rotation(ModelPartModel.Bone model) {
@@ -225,31 +215,7 @@ public record ModelPartModel(
     }
 
     public static Model.Cube createCube(ModelPart.Cube cube) {
-        List<Model.Face> faces = new ArrayList<>();
-        //? if <26.1 {
-        for (ModelPart.Polygon polygon : cube.polygons) {
-            List<Model.Vertex> vertices = new ArrayList<>();
-
-            for (ModelPart.Vertex vertex : polygon.vertices) {
-                vertices.add(new Model.Vertex(vertex.pos, new Vector2f(vertex.u, vertex.v), polygon.normal));
-            }
-
-            faces.add(new Model.Face(vertices, polygon.normal));
-        }
-        //?} else {
-        for (ModelPart.Polygon polygon : cube.polygons) {
-            List<Model.Vertex> vertices = new ArrayList<>();
-            Vector3fc normal = polygon.normal();
-
-            for (ModelPart.Vertex vertex : polygon.vertices()) {
-                vertices.add(new Model.Vertex(new Vector3f(vertex.x(), vertex.y(), vertex.z()), new Vector2f(vertex.u(), vertex.v()), normal));
-            }
-
-            faces.add(new Model.Face(vertices, normal));
-        }
-        //?}
-
-        return new Model.Cube(faces);
+        return ModelPartPort.createCube(cube);
     }
 
     private static Map<String, ModelPart> childrenOf(ModelPart modelPart) {

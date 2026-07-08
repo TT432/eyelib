@@ -63,6 +63,17 @@ public class NativeImageIO {
 
         //?}
     }
+    @Nullable
+    public <R> R download(String texture, Function<NativeImage, R> imageFunction) {
+        //? if <1.20.6 {
+        return download(new ResourceLocation(texture), imageFunction);
+        //?} elif <26.1 {
+        return download(ResourceLocation.parse(texture), imageFunction);
+        //?} else {
+        return download(Identifier.parse(texture), imageFunction);
+
+        //?}
+    }
 
     @Nullable
     //? if <26.1 {

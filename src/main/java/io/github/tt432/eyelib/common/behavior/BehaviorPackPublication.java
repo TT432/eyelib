@@ -121,19 +121,12 @@ public final class BehaviorPackPublication {
             Logger logger
     ) {
         try {
+            var compResult = ComponentGroup.DISPATCH_CODEC
+                    .parse(JsonOps.INSTANCE, bedrockObjectToJson(obj));
             @SuppressWarnings("unchecked")
-            var compMap = (Map<String, Component>) ComponentGroup.DISPATCH_CODEC
-                    .parse(JsonOps.INSTANCE, bedrockObjectToJson(obj))
-                    //? if <1.20.6 {
-                    .getOrThrow(false, message -> {
-                        throw new IllegalArgumentException(message);
-                    })
-                    //?} else {
-                    .getOrThrow(message -> {
-                        return new IllegalArgumentException(message);
-                    })
-                    //?}
-                    ;
+            var compMap = (Map<String, Component>) compResult.result().orElseThrow(() ->
+                    new IllegalArgumentException(compResult.error().map(e -> e.message())
+                            .orElse("Failed to parse behavior component group")));
             if (compMap.isEmpty()) {
                 return java.util.Optional.empty();
             }
@@ -182,19 +175,12 @@ public final class BehaviorPackPublication {
         JsonObject wrapper = new JsonObject();
         wrapper.add(key, jsonObj);
         try {
+            var dispatchResult = ComponentGroup.DISPATCH_CODEC
+                    .parse(JsonOps.INSTANCE, wrapper);
             @SuppressWarnings("unchecked")
-            var resultMap = (Map<String, Component>) ComponentGroup.DISPATCH_CODEC
-                    .parse(JsonOps.INSTANCE, wrapper)
-                    //? if <1.20.6 {
-                    .getOrThrow(false, message -> {
-                        throw new IllegalArgumentException(message);
-                    })
-                    //?} else {
-                    .getOrThrow(message -> {
-                        return new IllegalArgumentException(message);
-                    })
-                    //?}
-                    ;
+            var resultMap = (Map<String, Component>) dispatchResult.result().orElseThrow(() ->
+                    new IllegalArgumentException(dispatchResult.error().map(e -> e.message())
+                            .orElse("Failed to parse dispatch component")));
             Component typedParsed = resultMap.get(key);
             if (typedParsed != null && !(typedParsed instanceof EmptyComponent)) {
                 return typedParsed;
@@ -285,18 +271,11 @@ public final class BehaviorPackPublication {
         for (var entry : events.values().entrySet()) {
             if (entry.getValue() instanceof BedrockResourceValue.ObjectValue obj) {
                 try {
-                    var parsed = LogicNode.CODEC.codec()
-                                                .parse(JsonOps.INSTANCE, bedrockObjectToJson(obj))
-                                                //? if <1.20.6 {
-                                                .getOrThrow(false, message -> {
-                                                    throw new IllegalArgumentException(message);
-                                                })
-                                                //?} else {
-                                                .getOrThrow(message -> {
-                                                    return new IllegalArgumentException(message);
-                                                })
-                                                //?}
-                                                ;
+                    var eventResult = LogicNode.CODEC.codec()
+                            .parse(JsonOps.INSTANCE, bedrockObjectToJson(obj));
+                    var parsed = eventResult.result().orElseThrow(() ->
+                            new IllegalArgumentException(eventResult.error().map(e -> e.message())
+                                    .orElse("Failed to parse behavior event")));
                     result.put(entry.getKey(), parsed);
                 } catch (RuntimeException exception) {
                     logger.warn("Failed to parse behavior event: {}", entry.getKey(), exception);

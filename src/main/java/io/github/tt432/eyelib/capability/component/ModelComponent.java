@@ -3,10 +3,8 @@ package io.github.tt432.eyelib.capability.component;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
-import io.github.tt432.eyelib.bridge.material.MaterialPort;
 import io.github.tt432.eyelib.bridge.material.RenderTypeResolver;
 import io.github.tt432.eyelib.material.render.RenderTypeResolver.EntityRenderTypeData;
-import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import io.github.tt432.eyelib.material.material.BrMaterialResolver;
 import io.github.tt432.eyelib.material.material.ResolvedBrMaterial;
@@ -15,16 +13,6 @@ import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.model.Model;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.Getter;
-//? if <26.1 {
-import net.minecraft.client.renderer.RenderType;
-//?} else {
-import net.minecraft.client.renderer.rendertype.RenderType;
-//?}
-//? if <26.1 {
-import net.minecraft.resources.ResourceLocation;
-//?} else {
-import net.minecraft.resources.Identifier;
-//?}
 import org.jspecify.annotations.Nullable;
 
 import java.util.Map;
@@ -90,26 +78,18 @@ public class ModelComponent {
     }
 
     @Nullable
-    //? if <26.1 {
-    public RenderType getRenderType(ResourceLocation texture) {
-    //?} else {
-    public RenderType getRenderType(Identifier texture) {
-    //?}
+    public PortRenderPass getRenderType(PortResourceLocation texture) {
         ModelComponentInfo info = serializableInfo;
         if (info == null) return null;
         Map<String, BrMaterialEntry> matMap = currentMaterialMap();
         BrMaterialEntry entry = resolveEntry(matMap, info.renderType().path());
         if (entry != null) {
-            PortResourceLocation portTex = ResourceLocationBridge.fromMc(texture);
             ResolvedBrMaterial material = resolveCachedMaterial(entry, matMap);
-            PortRenderPass pass = material != null
-                    ? RenderTypeResolver.resolve(portTex, material)
-                    : RenderTypeResolver.resolve(portTex, entry, matMap);
-            return MaterialPort.toRenderType(pass, portTex);
+            return material != null
+                    ? RenderTypeResolver.resolve(texture, material)
+                    : RenderTypeResolver.resolve(texture, entry, matMap);
         }
-        EntityRenderTypeData fallback = resolveFallback(info.renderType());
-        PortResourceLocation portTex = ResourceLocationBridge.fromMc(texture);
-        return MaterialPort.toRenderType(fallback.factory().apply(portTex), portTex);
+        return resolveFallback(info.renderType()).factory().apply(texture);
     }
 
     public boolean isSolid() {

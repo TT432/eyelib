@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.importer.addon;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.util.codec.CodecOps;
 import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashMap;
@@ -33,18 +34,9 @@ public record BedrockPackManifest(
 
     public static BedrockPackManifest parse(com.google.gson.JsonObject root) {
         int formatVersion = root.has("format_version") ? root.get("format_version").getAsInt() : 2;
-        Header header = Header.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, root.getAsJsonObject("header"))
-                //? if <1.20.6 {
-                .getOrThrow(false, IllegalArgumentException::new);
-                //?} else {
-                .getOrThrow(IllegalArgumentException::new);
-                //?}
+        Header header = CodecOps.getOrThrow(Header.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, root.getAsJsonObject("header")));
         List<Module> modules = root.has("modules")
-                //? if <1.20.6 {
-                ? Module.CODEC.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, root.get("modules")).getOrThrow(false, IllegalArgumentException::new)
-                //?} else {
-                ? Module.CODEC.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, root.get("modules")).getOrThrow(IllegalArgumentException::new)
-                //?}
+                ? CodecOps.getOrThrow(Module.CODEC.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, root.get("modules")))
                 : List.of();
         List<Dependency> dependencies = new java.util.ArrayList<>();
         if (root.has("dependencies")) {
@@ -54,11 +46,7 @@ public record BedrockPackManifest(
         }
         Metadata metadata = root.has("metadata") ? Metadata.parse(root.getAsJsonObject("metadata")) : Metadata.empty();
         List<String> capabilities = root.has("capabilities")
-                //? if <1.20.6 {
-                ? Codec.STRING.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, root.get("capabilities")).getOrThrow(false, IllegalArgumentException::new)
-                //?} else {
-                ? Codec.STRING.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, root.get("capabilities")).getOrThrow(IllegalArgumentException::new)
-                //?}
+                ? CodecOps.getOrThrow(Codec.STRING.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, root.get("capabilities")))
                 : List.of();
         List<Subpack> subpacks = new java.util.ArrayList<>();
         if (root.has("subpacks")) {
@@ -96,22 +84,13 @@ public record BedrockPackManifest(
 
         public static Metadata parse(com.google.gson.JsonObject root) {
             List<String> authors = root.has("authors")
-                    //? if <1.20.6 {
-                    ? Codec.STRING.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, root.get("authors")).getOrThrow(false, IllegalArgumentException::new)
-                    //?} else {
-                    ? Codec.STRING.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, root.get("authors")).getOrThrow(IllegalArgumentException::new)
-                    //?}
+                    ? CodecOps.getOrThrow(Codec.STRING.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, root.get("authors")))
                     : List.of();
             LinkedHashMap<String, List<String>> generatedWith = new LinkedHashMap<>();
             if (root.has("generated_with")) {
                 com.google.gson.JsonObject generatedWithRoot = root.getAsJsonObject("generated_with");
                 for (Map.Entry<String, com.google.gson.JsonElement> entry : generatedWithRoot.entrySet()) {
-                    generatedWith.put(entry.getKey(), Codec.STRING.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, entry.getValue())
-                            //? if <1.20.6 {
-                            .getOrThrow(false, IllegalArgumentException::new));
-                            //?} else {
-                            .getOrThrow(IllegalArgumentException::new));
-                            //?}
+                generatedWith.put(entry.getKey(), CodecOps.getOrThrow(Codec.STRING.listOf().parse(com.mojang.serialization.JsonOps.INSTANCE, entry.getValue())));
                 }
             }
             LinkedHashMap<String, BedrockResourceValue> extraFields = new LinkedHashMap<>();
@@ -180,11 +159,7 @@ public record BedrockPackManifest(
                     root.has("uuid") ? root.get("uuid").getAsString() : null,
                     root.has("module_name") ? root.get("module_name").getAsString() : null,
                     root.has("version")
-                            //? if <1.20.6 {
-                            ? BedrockVersionValue.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, root.get("version")).getOrThrow(false, IllegalArgumentException::new)
-                            //?} else {
-                            ? BedrockVersionValue.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, root.get("version")).getOrThrow(IllegalArgumentException::new)
-                            //?}
+                            ? CodecOps.getOrThrow(BedrockVersionValue.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, root.get("version")))
                             : BedrockVersionValue.numeric(List.of())
             );
         }

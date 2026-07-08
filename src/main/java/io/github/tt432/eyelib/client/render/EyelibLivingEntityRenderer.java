@@ -18,7 +18,8 @@ import net.minecraft.world.entity.LivingEntity;
 import static io.github.tt432.eyelib.client.render.EntityRenderOrchestrator.renderItemInHand;
 //? if >=26.1 {
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
-import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
+import io.github.tt432.eyelib.bridge.material.MaterialPort;
+import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.util.PortResourceLocation;
@@ -157,14 +158,14 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
 
             var portTexture = mc.getTexture();
             if (portTexture == null) continue;
-            Identifier texture = ResourceLocationBridge.toMc(portTexture);
-            RenderType renderType = mc.getRenderType(texture);
-            if (renderType == null) continue;
+            PortRenderPass renderPass = mc.getRenderType(portTexture);
+            if (renderPass == null) continue;
+            RenderType renderType = MaterialPort.toRenderType(renderPass, portTexture);
 
             final var m = model;
             final var ti = tickedInfos;
             final var rt = renderType;
-            final var tex = texture;
+            final var tex = portTexture;
             final var isSolid = mc.isSolid();
             final var light = mc.isIgnoreLighting() ? 0xF000F0 : state.lightCoords;
             final var pv = mc.getPartVisibility();

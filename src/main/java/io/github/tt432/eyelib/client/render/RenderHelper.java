@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.bridge.event.ManagerEntryChangedEventPublisher;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelib.bridge.client.render.bake.ModelBakePort;
+import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import io.github.tt432.eyelib.client.render.visitor.ActiveModelRenderVisitors;
 import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors;
 import io.github.tt432.eyelib.model.ModelVisitContext;
@@ -64,7 +65,7 @@ public class RenderHelper {
     public RenderHelper render(RenderParams params, Model model, ModelRuntimeData infos) {
         this.params = params;
         if (params.texture() != null) {
-            context.put("BackedModel", ModelBakePort.twoSideGetBakedModel(model, params.isSolid(), params.texture()));
+            context.put("BackedModel", ModelBakePort.twoSideGetBakedModel(model, params.isSolid(), ResourceLocationBridge.toMc(params.texture())));
         }
 
         dfsModel(model).visit(params, context, ActiveModelRenderVisitors.RENDER_VISITOR, infos, new DFSModel.StateMachine());
