@@ -17,8 +17,7 @@ class BrParticleLoaderPublicationTest {
         ));
 
         assertTrue(source.contains("super(\"particles\", \"json\")"));
-        assertTrue(source.contains("Map<ResourceLocation, JsonElement>"));
-        assertTrue(source.contains("entry.getKey().toString()"));
+        assertTrue(source.contains("applyJson(Map<String, JsonElement>"));
     }
 
     @Test
