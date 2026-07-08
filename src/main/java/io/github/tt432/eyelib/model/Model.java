@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.model;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import io.github.tt432.eyelib.bridge.util.CodecOps;
 import io.github.tt432.eyelib.model.locator.GroupLocator;
 import io.github.tt432.eyelib.model.locator.ModelLocator;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -84,8 +85,7 @@ public interface Model {
 
         List<TextureMesh> textureMeshes();
 
-        //? if <1.20.6 {
-        Codec<Bone> CODEC = net.minecraft.util.ExtraCodecs.lazyInitializedCodec(() -> RecordCodecBuilder.create(ins -> ins.group(
+        Codec<Bone> CODEC = CodecOps.lazyCodec(() -> RecordCodecBuilder.create(ins -> ins.group(
                 Codec.INT.fieldOf("id").forGetter(Bone::id),
                 Codec.INT.fieldOf("parent").forGetter(Bone::parent),
                 ImporterCodecs.VECTOR3FC.fieldOf("pivot").forGetter(Bone::pivot),
@@ -100,23 +100,6 @@ public interface Model {
                 Codec.STRING.optionalFieldOf("material", null).forGetter(Bone::material),
                 TextureMesh.CODEC.listOf().optionalFieldOf("texture_meshes", List.of()).forGetter(Bone::textureMeshes)
         ).apply(ins, SimpleBone::new)));
-        //?} else {
-        Codec<Bone> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-                Codec.INT.fieldOf("id").forGetter(Bone::id),
-                Codec.INT.fieldOf("parent").forGetter(Bone::parent),
-                ImporterCodecs.VECTOR3FC.fieldOf("pivot").forGetter(Bone::pivot),
-                ImporterCodecs.VECTOR3FC.fieldOf("rotation").forGetter(Bone::rotation),
-                ImporterCodecs.VECTOR3FC.fieldOf("position").forGetter(Bone::position),
-                ImporterCodecs.VECTOR3FC.fieldOf("scale").forGetter(Bone::scale),
-                Codec.STRING.optionalFieldOf("binding", null).forGetter(Bone::binding),
-                GlobalBoneIdHandler.map(Bone.CODEC).fieldOf("children").forGetter(Bone::children),
-                Cube.CODEC.listOf().fieldOf("cubes").forGetter(Bone::cubes),
-                GroupLocator.CODEC.fieldOf("locator").forGetter(Bone::locator),
-                Codec.BOOL.optionalFieldOf("reset", false).forGetter(Bone::reset),
-                Codec.STRING.optionalFieldOf("material", null).forGetter(Bone::material),
-                TextureMesh.CODEC.listOf().optionalFieldOf("texture_meshes", List.of()).forGetter(Bone::textureMeshes)
-        ).apply(ins, SimpleBone::new));
-        //?}
 
         static Bone of(
                 int id,

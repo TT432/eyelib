@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.bridge.util.CodecOps;
 import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
 import io.github.tt432.eyelib.particle.runtime.ParticleDefinition;
 import io.github.tt432.eyelib.particle.runtime.bedrock.component.emitter.EmitterInitialization;
@@ -108,12 +109,7 @@ public final class ParticleComponentManager {
         if (info == null) {
             return Optional.empty();
         }
-        return Optional.of(info.codec().parse(JsonOps.INSTANCE, toJson(value))
-                //? if <1.20.6 {
-                .getOrThrow(false, IllegalArgumentException::new));
-                //?} else {
-                .getOrThrow(IllegalArgumentException::new));
-                //?}
+        return Optional.of(CodecOps.getOrThrow(info.codec().parse(JsonOps.INSTANCE, toJson(value))));
     }
 
     public static boolean classSourceMentionsRawComponents() {

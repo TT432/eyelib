@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.importer.model.bbmodel;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.bridge.util.CodecOps;
 import lombok.extern.slf4j.Slf4j;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -33,12 +34,7 @@ public class BBModelLoader {
              InputStreamReader isr = new InputStreamReader(fis, StandardCharsets.UTF_8);
              BufferedReader reader = new BufferedReader(isr)) {
 
-            BBModel model = BBModel.CODEC.parse(JsonOps.INSTANCE, GSON.fromJson(reader, JsonElement.class))
-                    //? if <1.20.6 {
-                    .getOrThrow(false, IllegalArgumentException::new);
-                    //?} else {
-                    .getOrThrow(IllegalArgumentException::new);
-                    //?}
+            BBModel model = CodecOps.getOrThrow(BBModel.CODEC.parse(JsonOps.INSTANCE, GSON.fromJson(reader, JsonElement.class)));
 
             if (model == null) {
                 log.error("Failed to parse JSON from file: {}", file.getAbsolutePath());

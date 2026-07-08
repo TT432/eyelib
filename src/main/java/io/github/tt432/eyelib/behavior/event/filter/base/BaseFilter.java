@@ -1,6 +1,8 @@
 package io.github.tt432.eyelib.behavior.event.filter.base;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import io.github.tt432.eyelib.bridge.util.CodecOps;
 import io.github.tt432.eyelib.behavior.EntityBehaviorData;
 import io.github.tt432.eyelib.behavior.event.filter.Filter;
 import io.github.tt432.eyelib.behavior.event.filter.Operator;
@@ -19,7 +21,7 @@ public abstract sealed class BaseFilter<T> implements Filter permits ActorHealth
     protected final Operator operator;
     protected final String domain;
 
-    public static final Codec<BaseFilter<?>> CODEC = Codec.STRING.dispatch("test",
+    public static final Codec<BaseFilter<?>> CODEC = CodecOps.dispatch("test",
             v -> {
                 if (v instanceof ActorHealth) {
                     return "actor_health";
@@ -29,11 +31,7 @@ public abstract sealed class BaseFilter<T> implements Filter permits ActorHealth
             },
             s -> {
                 if (s.equals("actor_health")) {
-                    //? if <1.20.6 {
-                    return ActorHealth.CODEC.codec();
-                    //?} else {
-                    return ActorHealth.CODEC.fieldOf("value");
-                    //?}
+                    return ActorHealth.CODEC;
                 } else {
                     throw new IllegalStateException("Unexpected value: " + s);
                 }

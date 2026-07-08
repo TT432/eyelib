@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.bridge.util.CodecOps;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationEntrySchema;
 import io.github.tt432.eyelib.importer.animation.bedrock.BrAnimationSet;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSchema;
@@ -197,13 +198,8 @@ public final class BedrockAddonLoader {
             case ATTACHABLE ->              acc.parseAndStore(entry, BrClientEntity.ATTACHABLE_CODEC, acc.attachables);
             case PARTICLE ->                acc.parseAndStore(entry, BrParticle.CODEC, acc.particleFiles);
             case RENDER_CONTROLLER -> {
-                BrRenderControllers controllers = BrRenderControllers.CODEC.parse(JsonOps.INSTANCE,
-                        readJsonElement(entry))
-                        //? if <1.20.6 {
-                        .getOrThrow(false, IllegalArgumentException::new);
-                        //?} else {
-                        .getOrThrow(IllegalArgumentException::new);
-                        //?}
+                        BrRenderControllers controllers = CodecOps.getOrThrow(BrRenderControllers.CODEC.parse(JsonOps.INSTANCE,
+                                readJsonElement(entry)));
                 mergeRenderControllers(acc.renderControllerFiles, entry.effectivePath(), controllers.renderControllers());
             }
             case MODEL -> {

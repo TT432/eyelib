@@ -5,6 +5,7 @@ import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcStateDef
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSchema;
 
 import com.mojang.serialization.Codec;
+import io.github.tt432.eyelib.bridge.util.CodecOps;
 import io.github.tt432.eyelib.animation.Animation;
 import io.github.tt432.eyelib.animation.AnimationLookup;
 import io.github.tt432.eyelib.animation.AnimationEffects;
@@ -34,23 +35,13 @@ public record BrAnimationController(
         ));
     }
 
-    //? if <1.20.6 {
-    public static final Codec<BrAnimationController> CODEC = Codec.STRING.dispatchStable(
+    public static final Codec<BrAnimationController> CODEC = CodecOps.dispatchStable(
             BrAnimationController::name,
             name -> BrAnimationControllerSchema.CODEC.xmap(
                     schema -> fromSchema(name, schema),
                     BrAnimationController::toSchema
             )
     );
-    //?} else {
-    public static final Codec<BrAnimationController> CODEC = Codec.STRING.dispatchStable(
-            BrAnimationController::name,
-            name -> BrAnimationControllerSchema.CODEC.xmap(
-                    schema -> fromSchema(name, schema),
-                    BrAnimationController::toSchema
-            ).fieldOf("value")
-    );
-    //?}
 
     public static BrAnimationController fromSchema(String name, BrAnimationControllerSchema schema) {
         return new BrAnimationController(io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerDefinition.fromSchema(name, schema));

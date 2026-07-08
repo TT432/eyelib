@@ -4,6 +4,7 @@ import com.google.common.base.Suppliers;
 import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.*;
+import io.github.tt432.eyelib.bridge.util.CodecOps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.AccessLevel;
@@ -27,28 +28,8 @@ import java.util.stream.Stream;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EyelibCodec {
-    /**
-     * DFU 9 移除了 {@link Codec#unit(Object)}，用 Encoder.empty() + Decoder.unit() 重建。
-     */
     public static <T> Codec<T> unit(T instance) {
-        //? if <26.1 {
-        return Codec.unit(instance);
-        //?} else {
-        return Codec.of(
-                new Encoder<>() {
-                    @Override
-                    public <D> DataResult<D> encode(T input, DynamicOps<D> ops, D prefix) {
-                        return DataResult.success(prefix);
-                    }
-                },
-                new Decoder<>() {
-                    @Override
-                    public <D> DataResult<Pair<T, D>> decode(DynamicOps<D> ops, D input) {
-                        return DataResult.success(Pair.of(instance, input));
-                    }
-                }
-        );
-        //?}
+        return CodecOps.unit(instance);
     }
 
     public static final Codec<Vector2f> VEC2F = io.github.tt432.eyelib.util.codec.ChinExtraCodecs.tuple(Codec.FLOAT, Codec.FLOAT)
@@ -116,12 +97,7 @@ public class EyelibCodec {
             @Override
             public <T> DataResult<S> decode(DynamicOps<T> ops, MapLike<T> input) {
                 var result = input.entries()
-                        .map(p -> p.mapFirst(k -> ops.getStringValue(k)
-                                //? if <1.20.6 {
-                                .getOrThrow(false, IllegalArgumentException::new)))
-                                //?} else {
-                                .getOrThrow(IllegalArgumentException::new)))
-                                //?}
+                .map(p -> p.mapFirst(k -> CodecOps.getOrThrow(ops.getStringValue(k))))
                         .filter(p -> get().containsKey(p.getFirst()))
                         .findFirst()
                         .map(p -> {

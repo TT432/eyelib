@@ -5,6 +5,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.bridge.util.CodecOps;
 import io.github.tt432.eyelib.importer.addon.BedrockResourceValue;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -47,17 +48,11 @@ public final class ImporterCodecUtil {
                     LinkedHashMap<String, T> parsed = new LinkedHashMap<>();
                     for (Map.Entry<String, JsonElement> entry : values.entrySet()) {
                         try {
-                            T value = codecFactory.apply(entry.getKey())
-                                    .parse(JsonOps.INSTANCE, entry.getValue())
-                                    //? if <1.20.6 {
-                                    .getOrThrow(false, message -> {
-                                        throw new IllegalArgumentException(message);
-                                    })
-                                    //?} else {
-                                    .getOrThrow(message -> {
-                                        return new IllegalArgumentException(message);
-                                    })
-                                    //?}
+                            T value = CodecOps.getOrThrow(
+                                    codecFactory.apply(entry.getKey())
+                                            .parse(JsonOps.INSTANCE, entry.getValue()),
+                                    IllegalArgumentException::new
+                            );
                                     ;
                             parsed.put(entry.getKey(), value);
                         } catch (RuntimeException exception) {
@@ -70,17 +65,11 @@ public final class ImporterCodecUtil {
                     LinkedHashMap<String, JsonElement> encoded = new LinkedHashMap<>();
                     for (Map.Entry<String, T> entry : values.entrySet()) {
                         try {
-                            JsonElement jsonElement = codecFactory.apply(entry.getKey())
-                                    .encodeStart(JsonOps.INSTANCE, entry.getValue())
-                                    //? if <1.20.6 {
-                                    .getOrThrow(false, message -> {
-                                        throw new IllegalArgumentException(message);
-                                    })
-                                    //?} else {
-                                    .getOrThrow(message -> {
-                                        return new IllegalArgumentException(message);
-                                    })
-                                    //?}
+                            JsonElement jsonElement = CodecOps.getOrThrow(
+                                    codecFactory.apply(entry.getKey())
+                                            .encodeStart(JsonOps.INSTANCE, entry.getValue()),
+                                    IllegalArgumentException::new
+                            );
                                     ;
                             encoded.put(entry.getKey(), jsonElement);
                         } catch (RuntimeException exception) {
