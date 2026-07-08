@@ -1,5 +1,4 @@
 package io.github.tt432.eyelib.ui;
-import io.github.tt432.eyelib.bridge.ui.adapter.MCGraphics;
 
 import io.github.tt432.eyelib.util.PortResourceLocation;
 
