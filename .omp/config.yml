@@ -1,0 +1,8 @@
+# 项目级 omp 配置：将 .opencode/skills 纳入 skill 发现（自动演化范围）
+#
+# 背景：opencode discovery provider 只发现 user 级 ~/.config/opencode/AGENTS.md，
+# 不扫描项目 .opencode/skills。故用 skills.customDirectories 显式纳入。
+# 扫描为非递归布局：.opencode/skills/<name>/SKILL.md（每个 SKILL.md 需含 description）。
+skills:
+  customDirectories:
+    - .opencode/skills
