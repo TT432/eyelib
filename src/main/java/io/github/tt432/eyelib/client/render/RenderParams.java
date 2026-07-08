@@ -9,15 +9,9 @@ import io.github.tt432.eyelib.bridge.material.MaterialPort;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
-import io.github.tt432.eyelib.util.texture.TexturePaths;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import lombok.With;
 import net.minecraft.client.renderer.MultiBufferSource;
-//? if <26.1 {
-import net.minecraft.client.renderer.RenderType;
-//?} else {
-import net.minecraft.client.renderer.rendertype.RenderType;
-//?}
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 import org.jspecify.annotations.Nullable;
@@ -30,7 +24,7 @@ public record RenderParams(
         @Nullable Entity renderTarget,
         PoseStack.Pose pose0,
         PoseStack poseStack,
-        @Nullable RenderType renderType,
+        @Nullable PortRenderPass renderPass,
         @Nullable PortResourceLocation texture,
         boolean isSolid,
         @Nullable VertexConsumer consumer,
@@ -54,8 +48,8 @@ public record RenderParams(
         );
     }
 
-    public static Builder builder(PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable PortResourceLocation texture, @Nullable VertexConsumer consumer) {
-        return new Builder(PoseCopies.copy(poseStack.last()), poseStack, renderType, isSolid, texture, consumer);
+    public static Builder builder(PoseStack poseStack, @Nullable PortRenderPass renderPass, boolean isSolid, @Nullable PortResourceLocation texture, @Nullable VertexConsumer consumer) {
+        return new Builder(PoseCopies.copy(poseStack.last()), poseStack, renderPass, isSolid, texture, consumer);
     }
 
     public static Builder builder(PoseStack poseStack, MultiBufferSource multiBufferSource, ModelComponent modelComponent) {
@@ -65,42 +59,17 @@ public record RenderParams(
                     .partVisibility(modelComponent.getPartVisibility());
         }
         PortRenderPass renderPass = modelComponent.getRenderType(portTexture);
-        RenderType renderType = renderPass != null ? MaterialPort.toRenderType(renderPass, portTexture) : null;
+        var renderType = renderPass != null ? MaterialPort.toRenderType(renderPass, portTexture) : null;
         if (renderType == null) {
             return builder(poseStack, null, modelComponent.isSolid(), portTexture, null)
                     .partVisibility(modelComponent.getPartVisibility());
         }
         VertexConsumer buffer = multiBufferSource.getBuffer(renderType);
 
-        return builder(poseStack, renderType, modelComponent.isSolid(), portTexture, buffer)
+        return builder(poseStack, renderPass, modelComponent.isSolid(), portTexture, buffer)
                 .partVisibility(modelComponent.getPartVisibility());
     }
 
-    public RenderParams asEmissive(MultiBufferSource multiBufferSource, ModelComponent modelComponent) {
-        // 26.1 尚未迁移 emissive 重渲染（TextureManager / render-state API 差异），保留原 no-op。
-        //? if <26.1 {
-        if (texture == null) {
-            return withTexture(TexturePresencePort.missingLocation());
-        }
-        PortResourceLocation emissivePortTexture = PortResourceLocation.of(
-                texture.namespace(), TexturePaths.emissivePath(texture.path()));
-        if (!TexturePresencePort.isLoaded(emissivePortTexture)) {
-            return withTexture(TexturePresencePort.missingLocation());
-        }
-        PortRenderPass emissiveRenderPass = modelComponent.getRenderType(emissivePortTexture);
-        if (emissiveRenderPass == null) {
-            return withTexture(TexturePresencePort.missingLocation());
-        }
-        RenderType emissiveRenderType = MaterialPort.toRenderType(emissiveRenderPass, emissivePortTexture);
-        VertexConsumer emissiveBuffer = multiBufferSource.getBuffer(emissiveRenderType);
-        return withRenderType(emissiveRenderType)
-                .withConsumer(emissiveBuffer)
-                .withTexture(emissivePortTexture)
-                .withLight(EntityRenderPorts.RenderSystemPort.FULL_BRIGHT);
-        //?} else {
-        return this;
-        //?}
-    }
 
     public boolean textureMissing() {
         return texture == null || texture.equals(TexturePresencePort.missingLocation());
@@ -111,7 +80,7 @@ public record RenderParams(
         private final PoseStack.Pose pose0;
         private final PoseStack poseStack;
         @Nullable
-        private RenderType renderType;
+        private PortRenderPass renderPass;
         @Nullable
         private PortResourceLocation texture;
         private boolean isSolid;
@@ -126,13 +95,13 @@ public record RenderParams(
         private Int2BooleanOpenHashMap partVisibility = new Int2BooleanOpenHashMap();
         private float @Nullable [] tintColor = null;
 
-        public Builder(PoseStack.Pose pose0, PoseStack poseStack, @Nullable RenderType renderType, boolean isSolid, @Nullable PortResourceLocation texture, @Nullable VertexConsumer consumer) {
+        public Builder(PoseStack.Pose pose0, PoseStack poseStack, @Nullable PortRenderPass renderPass, boolean isSolid, @Nullable PortResourceLocation texture, @Nullable VertexConsumer consumer) {
             this.pose0 = pose0;
             this.poseStack = poseStack;
             this.texture = texture;
             this.isSolid = isSolid;
             this.consumer = consumer;
-            this.renderType = renderType;
+            this.renderPass = renderPass;
         }
 
         public Builder entity(@Nullable Entity entity) {
@@ -172,16 +141,16 @@ public record RenderParams(
             if (colorMaskPass == null) {
                 return this;
             }
-            RenderType colorMaskRenderType = MaterialPort.toRenderType(colorMaskPass, colorMaskTexture);
+            var colorMaskRenderType = MaterialPort.toRenderType(colorMaskPass, colorMaskTexture);
             texture = colorMaskTexture;
-            renderType = colorMaskRenderType;
+            renderPass = colorMaskPass;
             consumer = multiBufferSource.getBuffer(colorMaskRenderType);
             isSolid = modelComponent.isSolid();
             return this;
         }
 
         public RenderParams build() {
-            return new RenderParams(renderTarget, pose0, poseStack, renderType, texture, isSolid, consumer, light, overlay, partVisibility, tintColor);
+            return new RenderParams(renderTarget, pose0, poseStack, renderPass, texture, isSolid, consumer, light, overlay, partVisibility, tintColor);
         }
     }
 }

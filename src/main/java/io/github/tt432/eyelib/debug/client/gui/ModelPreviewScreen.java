@@ -198,7 +198,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             //?}
             VertexConsumer buffer = bufferSource.getBuffer(renderType);
 
-            RenderParams params = RenderParams.builder(poseStack, renderType, true, ResourceLocationBridge.fromMc(texture), buffer)
+            RenderParams params = RenderParams.builder(poseStack, null, true, ResourceLocationBridge.fromMc(texture), buffer)
                                               .light(EntityRenderPorts.RenderSystemPort.FULL_BRIGHT) // Full bright for preview
                                               .overlay(OverlayTexture.NO_OVERLAY)
                                               .build();

@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.bridge.client.render.bake;
 
-import io.github.tt432.eyelib.bridge.client.render.bake.adapter.EmissiveModelBakeInfo;
 import io.github.tt432.eyelib.bridge.client.render.bake.adapter.TwoSideModelBakeInfo;
 import io.github.tt432.eyelib.model.Model;
 //? if <26.1 {
@@ -13,9 +12,6 @@ import net.minecraft.resources.Identifier;
  * 模型烘焙信息端口，为 application 层提供跨版本烘焙操作访问。
  */
 public interface ModelBakePort {
-    static void emissiveInvalidateModel(String entryName) {
-        EmissiveModelBakeInfo.INSTANCE.invalidateModel(entryName);
-    }
 
     static void twoSideInvalidateModel(String entryName) {
         TwoSideModelBakeInfo.INSTANCE.invalidateModel(entryName);

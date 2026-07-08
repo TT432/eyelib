@@ -21,7 +21,6 @@ import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
 import io.github.tt432.eyelib.molang.type.*;
 import io.github.tt432.eyelib.util.PortResourceLocation;
-import io.github.tt432.eyelib.util.texture.TexturePaths;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import java.util.*;
 
@@ -115,10 +114,7 @@ public record RenderControllerEntry(
         return composeTextureLocation(resolveTextureLayerPaths(scope, entity), "");
     }
 
-    public PortResourceLocation getEmissiveTexture(MolangScope scope, BrClientEntity entity) {
-        List<String> layerPaths = resolveTextureLayerPaths(scope, entity);
-        return composeTextureLocation(toEmissiveTextureLayerPaths(layerPaths), "");
-    }
+
 
     public List<ModelComponent> setupModel(MolangScope scope, BrClientEntity entity,
                                            Collection<Model> models,
@@ -268,12 +264,6 @@ public record RenderControllerEntry(
                 PortResourceLocation uploadTexture = texture;
                 if (textureLayers.size() > 1) {
                     syncedActions.add(() -> NativeImagePort.upload(uploadTexture, TextureMergePort.merge(textureLayers)));
-                }
-
-                PortResourceLocation emissiveTexture = getEmissiveTexture(scope, entity);
-                List<PortResourceLocation> emissiveTextureLayers = toPortLocations(toEmissiveTextureLayerPaths(textureLayerPaths));
-                if (emissiveTextureLayers.size() > 1) {
-                    syncedActions.add(() -> NativeImagePort.upload(emissiveTexture, TextureMergePort.merge(emissiveTextureLayers)));
                 }
             }
 
@@ -441,13 +431,6 @@ public record RenderControllerEntry(
         return layerPaths;
     }
 
-    private List<String> toEmissiveTextureLayerPaths(List<String> layerPaths) {
-        List<String> emissiveLayerPaths = new ArrayList<>(layerPaths.size());
-        for (String layerPath : layerPaths) {
-            emissiveLayerPaths.add(TexturePaths.emissivePath(layerPath));
-        }
-        return emissiveLayerPaths;
-    }
 
     private List<PortResourceLocation> toPortLocations(List<String> layerPaths) {
         List<PortResourceLocation> resourceLocations = new ArrayList<>(layerPaths.size());

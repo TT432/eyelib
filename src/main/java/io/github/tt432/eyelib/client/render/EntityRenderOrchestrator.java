@@ -346,8 +346,6 @@ public final class EntityRenderOrchestrator {
 
                                                                            RenderPorts.get().renderSystemPort().flushBuffer(multiBufferSource);
 
-                                                                           RenderParams emissiveRenderParams = renderParams.asEmissive(multiBufferSource, modelComponent);
-
                                                                            poseStack.popPose();
 
                                                                            return 1;

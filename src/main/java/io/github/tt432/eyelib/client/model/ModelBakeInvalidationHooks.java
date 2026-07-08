@@ -26,7 +26,6 @@ public final class ModelBakeInvalidationHooks {
                 return;
             }
 
-            ModelBakePort.emissiveInvalidateModel(event.getEntryName());
             ModelBakePort.twoSideInvalidateModel(event.getEntryName());
         });
     }

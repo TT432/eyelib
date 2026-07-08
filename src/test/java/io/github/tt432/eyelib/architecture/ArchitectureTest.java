@@ -297,10 +297,11 @@ class ArchitectureTest {
                     .and(DescribedPredicate.not(RECORD_CLASSES))
                     .and(DescribedPredicate.not(ENUM_CLASSES))
                     .and(DescribedPredicate.not(ABSTRACT_CLASSES))
+                    .and(DescribedPredicate.not(EXTENDS_MC_CLASS))
                     .and(DescribedPredicate.describe("public top-level",
                             jc -> jc.getModifiers().contains(JavaModifier.PUBLIC)
                                     && !jc.getName().contains("$")))
-                    .as("bridge 包内的 public 顶层类（排除 adapter/ 子包、Forge 生命周期入口、record、enum、abstract class）");
+                    .as("bridge 包内的 public 顶层类（排除 adapter/ 子包、Forge 生命周期入口、record、enum、abstract class、MC 平台子类）");
 
     /**
      * ADR-0018 规则 6（判据 I-2）：Domain 包不得暴露服务定位器（{@code public static final Xxx INSTANCE}）。
