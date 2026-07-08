@@ -11,9 +11,7 @@ import net.minecraft.resources.Identifier;
  *
  * @author TT432
  */
-public final class ResourceLocationBridge {
-
-    private ResourceLocationBridge() {}
+public interface ResourceLocationBridge {
 
     //? if <26.1 {
     public static ResourceLocation toMc(PortResourceLocation port) {

@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.bridge.client.render.bake;
 
-import io.github.tt432.eyelib.client.render.bake.BakedModel;
 import com.mojang.blaze3d.platform.NativeImage;
 import io.github.tt432.eyelib.model.Model;
 import it.unimi.dsi.fastutil.ints.Int2BooleanFunction;
@@ -19,17 +18,17 @@ import static org.lwjgl.opengl.GL11.*;
 /**
  * @author TT432
  */
-public abstract class ModelBakeInfo<Info> {
+public abstract class ModelBakeInfo<Info, BM> {
     //? if <26.1 {
-    private final Map<String, HashMap<ResourceLocation, BakedModel>> modelCache = new HashMap<>();
+    private final Map<String, HashMap<ResourceLocation, BM>> modelCache = new HashMap<>();
     //?} else {
-    private final Map<String, HashMap<Identifier, BakedModel>> modelCache = new HashMap<>();
+    private final Map<String, HashMap<Identifier, BM>> modelCache = new HashMap<>();
     //?}
 
     //? if <26.1 {
-    public BakedModel getBakedModel(Model model, boolean isSolid, ResourceLocation texture) {
+    public BM getBakedModel(Model model, boolean isSolid, ResourceLocation texture) {
     //?} else {
-    public BakedModel getBakedModel(Model model, boolean isSolid, Identifier texture) {
+    public BM getBakedModel(Model model, boolean isSolid, Identifier texture) {
     //?}
         return modelCache.computeIfAbsent(model.name(), s -> new HashMap<>())
                          .computeIfAbsent(texture, i -> {
@@ -48,7 +47,7 @@ public abstract class ModelBakeInfo<Info> {
     protected abstract Info getBakeInfo(Model model, boolean isSolid, Identifier texture);
     //?}
 
-    protected abstract BakedModel bake(Model model, Info info);
+    protected abstract BM bake(Model model, Info info);
 
     @FunctionalInterface
     public interface BoneDataConsumer {

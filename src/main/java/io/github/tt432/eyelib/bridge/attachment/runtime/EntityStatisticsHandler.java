@@ -3,8 +3,8 @@ package io.github.tt432.eyelib.bridge.attachment.runtime;
 import io.github.tt432.eyelib.util.entitydata.EntityStatisticsUpdater;
 import io.github.tt432.eyelib.util.entitydata.EntityStatistics;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentTypeRegistry;
-import io.github.tt432.eyelib.bridge.attachment.network.DataAttachmentSyncRuntime;
+import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.bridge.attachment.network.adapter.DataAttachmentSyncRuntime;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 //? if <1.20.6 {
@@ -46,3 +46,5 @@ public class EntityStatisticsHandler {
         }
     }
 }
+
+

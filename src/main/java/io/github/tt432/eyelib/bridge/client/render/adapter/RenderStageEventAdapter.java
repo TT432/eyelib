@@ -56,7 +56,7 @@ public final class RenderStageEventAdapter {
 
         var sharedBuffer = new com.mojang.blaze3d.vertex.ByteBufferBuilder(786432);
         MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(sharedBuffer);
-        RenderPorts.get().renderBufferPort.renderEntities(
+        RenderPorts.get().renderBufferPort().renderEntities(
                 partialTick, position.x, position.y, position.z, event.getPoseStack(), bufferSource);
         try { bufferSource.endBatch(); } catch (Throwable ignored) {}
         sharedBuffer.close();

@@ -3,7 +3,7 @@ package io.github.tt432.eyelib.bridge.capability;
 import com.mojang.serialization.Codec;
 import io.github.tt432.eyelib.bridge.Eyelib;
 import io.github.tt432.eyelib.util.dataattach.DataAttachmentType;
-import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.DataAttachmentTypeRegistry;
 import io.github.tt432.eyelib.behavior.EntityBehaviorData;
 import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
 import lombok.AccessLevel;
@@ -92,3 +92,4 @@ public class EyelibAttachableData {
                 () -> new DataAttachmentType<>("eyelib:" + name, factory, codecSupplier.get(), null));
     }
 }
+

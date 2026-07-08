@@ -30,6 +30,6 @@ public final class EntityJoinLevelEventAdapter {
     @SubscribeEvent
     public static void onEvent(EntityJoinLevelEvent event) {
         Entity entity = event.getEntity();
-        RenderPorts.get().setupClientEntityPort.setup(entity);
+        RenderPorts.get().setupClientEntityPort().setup(entity);
     }
 }

@@ -51,7 +51,7 @@ public final class RenderLivingEventAdapter {
 
         var params = new RenderEntityParams(entity, event.getMultiBufferSource(), event.getPoseStack(),
                                             event.getPackedLight(), event.getPartialTick(), overlay);
-        if (RenderPorts.get().renderEntityPort.render(params)) {
+        if (RenderPorts.get().renderEntityPort().render(params)) {
             event.setCanceled(true);
         }
     }
@@ -68,7 +68,7 @@ public final class RenderLivingEventAdapter {
 
         var params = new RenderEntityParams(entity, bufferSource, event.getPoseStack(),
                                             state.lightCoords, event.getPartialTick(), OverlayTexture.NO_OVERLAY);
-        boolean rendered = RenderPorts.get().renderEntityPort.render(params);
+        boolean rendered = RenderPorts.get().renderEntityPort().render(params);
 
         bufferSource.endBatch();
         byteBufferBuilder.close();

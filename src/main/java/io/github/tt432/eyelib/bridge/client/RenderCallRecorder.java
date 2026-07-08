@@ -5,10 +5,7 @@ package io.github.tt432.eyelib.bridge.client;
  *
  * @author TT432
  */
-public final class RenderCallRecorder {
-    private RenderCallRecorder() {
-    }
-
+public interface RenderCallRecorder {
     public static void record(Runnable runnable) {
         //? if <26.1 {
         com.mojang.blaze3d.systems.RenderSystem.recordRenderCall(runnable::run);

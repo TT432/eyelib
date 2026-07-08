@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.bridge.client.render.adapter;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.tt432.eyelib.bridge.client.EntityRenderPorts;
+import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -9,6 +9,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 //?}
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 //? if <26.1 {
 import net.minecraft.world.entity.animal.Sheep;
@@ -64,6 +65,13 @@ public final class EntityRenderSystem implements EntityRenderPorts.RenderSystemP
     }
 
     @Override
+    public void setupLlamaDecor(Entity entity, io.github.tt432.eyelib.molang.MolangScope scope) {
+        if (entity instanceof Llama llama) {
+            scope.set("variable.decortextureindex", getLlamaDecorColorIndex(llama));
+        }
+    }
+
+    @Override
     public void pushPoseRaw(PoseStack poseStack, PoseStack.Pose pose) {
         //? if <1.20.6 {
         poseStack.poseStack.addLast(pose);
@@ -87,6 +95,41 @@ public final class EntityRenderSystem implements EntityRenderPorts.RenderSystemP
         if (source instanceof MultiBufferSource.BufferSource bs) {
             bs.endBatch();
         }
+        //?}
+    }
+
+    @Override
+    public String slotName(EquipmentSlot slot) {
+        //? if <1.20.6 {
+        return switch (slot) {
+            case MAINHAND -> "main_hand";
+            case OFFHAND -> "off_hand";
+            case HEAD -> "slot.armor.head";
+            case CHEST -> "slot.armor.chest";
+            case LEGS -> "slot.armor.legs";
+            case FEET -> "slot.armor.feet";
+        };
+        //?} elif <26.1 {
+        return switch (slot) {
+            case MAINHAND -> "main_hand";
+            case OFFHAND -> "off_hand";
+            case HEAD -> "slot.armor.head";
+            case CHEST -> "slot.armor.chest";
+            case LEGS -> "slot.armor.legs";
+            case FEET -> "slot.armor.feet";
+            case BODY -> "slot.armor.body";
+        };
+        //?} else {
+        return switch (slot) {
+            case MAINHAND -> "main_hand";
+            case OFFHAND -> "off_hand";
+            case HEAD -> "slot.armor.head";
+            case CHEST -> "slot.armor.chest";
+            case LEGS -> "slot.armor.legs";
+            case FEET -> "slot.armor.feet";
+            case BODY -> "slot.armor.body";
+            case SADDLE -> "slot.saddle";
+        };
         //?}
     }
 
@@ -136,3 +179,4 @@ public final class EntityRenderSystem implements EntityRenderPorts.RenderSystemP
         return poseStack;
     }
 }
+

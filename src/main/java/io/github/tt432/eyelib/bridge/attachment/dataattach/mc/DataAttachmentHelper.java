@@ -1,4 +1,7 @@
 package io.github.tt432.eyelib.bridge.attachment.dataattach.mc;
+import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.McDataAttachmentContainer;
+
+import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.DataAttachmentContainerCapability;
 
 import io.github.tt432.eyelib.util.dataattach.DataAttachmentType;
 import io.github.tt432.eyelib.util.dataattach.IDataAttachmentContainer;
@@ -10,7 +13,7 @@ import org.jspecify.annotations.Nullable;
  *
  * @author TT432
  */
-public class DataAttachmentHelper {
+public interface DataAttachmentHelper {
     private static IDataAttachmentContainer get(Entity entity) {
         //? if <1.20.6 {
         return entity.getCapability(DataAttachmentContainerCapability.INSTANCE).orElseGet(McDataAttachmentContainer::new);

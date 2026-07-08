@@ -17,9 +17,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
  *
  * @author TT432
  */
-public final class ItemKeyResolver {
-    private ItemKeyResolver() {}
-
+public interface ItemKeyResolver {
     /**
      * @return 给定物品栈在所属注册表中的 key，不存在时为 null
      */

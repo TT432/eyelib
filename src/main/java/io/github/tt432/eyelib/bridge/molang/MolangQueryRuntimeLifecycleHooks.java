@@ -1,5 +1,7 @@
 package io.github.tt432.eyelib.bridge.molang;
 
+import io.github.tt432.eyelib.bridge.molang.adapter.MinecraftMolangQueryRuntime;
+
 import io.github.tt432.eyelib.molang.mapping.api.MolangQueryRuntimeBridge;
 //? if <1.20.6 {
 import net.minecraftforge.api.distmarker.Dist;
@@ -33,3 +35,4 @@ public final class MolangQueryRuntimeLifecycleHooks {
         MolangQueryRuntimeBridge.install(new MinecraftMolangQueryRuntime());
     }
 }
+

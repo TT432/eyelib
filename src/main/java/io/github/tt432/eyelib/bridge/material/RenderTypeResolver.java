@@ -1,5 +1,7 @@
 package io.github.tt432.eyelib.bridge.material;
 
+import io.github.tt432.eyelib.bridge.material.adapter.BrRenderTypeFactory;
+
 import io.github.tt432.eyelib.material.gl.GLStates;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import io.github.tt432.eyelib.material.material.BrMaterialResolver;
@@ -18,11 +20,9 @@ import java.util.Optional;
  *
  * @author TT432
  */
-public final class RenderTypeResolver {
-    private RenderTypeResolver() {
-    }
+public interface RenderTypeResolver {
 
-    public static EntityRenderTypeData resolve(PortResourceLocation id) {
+    static EntityRenderTypeData resolve(PortResourceLocation id) {
         return switch (id.toString()) {
             case "minecraft:cutout" -> new EntityRenderTypeData(id, false,
                     tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, false));
@@ -115,3 +115,4 @@ public final class RenderTypeResolver {
         );
     }
 }
+

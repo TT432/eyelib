@@ -1,6 +1,5 @@
 package io.github.tt432.eyelib.bridge.client.loader;
 
-import io.github.tt432.eyelib.client.loader.ResourceLoader;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 //? if <1.20.6 {
 import net.minecraftforge.api.distmarker.Dist;

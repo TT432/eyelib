@@ -11,7 +11,7 @@ import net.minecraft.client.renderer.rendertype.RenderType;
  *
  * @author TT432
  */
-record BridgeRenderPass(
+public record BridgeRenderPass(
         PortRenderPass.Transparency transparency,
         boolean disableCulling,
         RenderType renderType

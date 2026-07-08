@@ -2,9 +2,8 @@ package io.github.tt432.eyelib.bridge;
 
 import io.github.tt432.eyelib.bridge.capability.EyelibAttachableData;
 import io.github.tt432.eyelib.behavior.BehaviorEntityRegistry;
-import io.github.tt432.eyelib.common.behavior.BehaviorPackAutoLoader;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelib.bridge.attachment.network.DataAttachmentSyncRuntime;
+import io.github.tt432.eyelib.bridge.attachment.network.adapter.DataAttachmentSyncRuntime;
 import io.github.tt432.eyelib.behavior.BehaviorEntity;
 import io.github.tt432.eyelib.behavior.EntityBehaviorData;
 import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
@@ -44,7 +43,8 @@ public final class CommonEntityEventHandler {
 
     @SubscribeEvent
     public static void onServerAboutToStart(ServerAboutToStartEvent event) {
-        BehaviorPackAutoLoader.load(event.getServer());
+        ApplicationLifecyclePort port = ApplicationLifecyclePort.get();
+        if (port != null) port.loadBehaviorPacks(event.getServer());
     }
 
     @SubscribeEvent
@@ -92,3 +92,4 @@ public final class CommonEntityEventHandler {
         DataAttachmentSyncRuntime.syncTrackedAndSelf(EyelibAttachableData.SYNCED_BEHAVIOR_STATE.get(), living, state);
     }
 }
+

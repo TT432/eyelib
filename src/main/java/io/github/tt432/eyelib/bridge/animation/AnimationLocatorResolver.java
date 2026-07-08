@@ -15,11 +15,7 @@ import java.util.Map;
  *
  * @author TT432
  */
-public final class AnimationLocatorResolver {
-
-    private AnimationLocatorResolver() {
-    }
-
+public interface AnimationLocatorResolver {
     public static void install() {
         BrAnimationEntryDefinition.installLocatorProvider(AnimationLocatorResolver::resolve);
     }

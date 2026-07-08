@@ -7,10 +7,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
  *
  * @author TT432
  */
-public final class GuiRenderBridge {
-
-    private GuiRenderBridge() {}
-
+public interface GuiRenderBridge {
     public static void enableBlend() {
         //? if <26.1 {
         RenderSystem.enableBlend();

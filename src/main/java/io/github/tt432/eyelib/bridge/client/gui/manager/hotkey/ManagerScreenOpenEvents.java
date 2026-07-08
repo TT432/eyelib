@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.bridge.client.gui.manager.hotkey;
 
-import io.github.tt432.eyelib.bridge.ui.ScreenPort;
+import io.github.tt432.eyelib.bridge.ui.adapter.ScreenPort;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
@@ -36,3 +36,4 @@ public final class ManagerScreenOpenEvents {
         }
     }
 }
+

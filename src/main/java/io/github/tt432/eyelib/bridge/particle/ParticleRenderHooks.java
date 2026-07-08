@@ -1,4 +1,7 @@
 package io.github.tt432.eyelib.bridge.particle;
+import io.github.tt432.eyelib.bridge.particle.adapter.BedrockParticleRenderer;
+
+import io.github.tt432.eyelib.bridge.particle.adapter.ParticleRuntimeBridge;
 
 //? if <1.20.6 {
 import net.minecraftforge.api.distmarker.Dist;
@@ -69,3 +72,4 @@ public final class ParticleRenderHooks {
         ParticleRuntimeBridge.RENDER_MANAGER.clear();
     }
 }
+

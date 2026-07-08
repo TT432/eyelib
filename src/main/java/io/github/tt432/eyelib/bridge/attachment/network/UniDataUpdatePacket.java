@@ -1,7 +1,7 @@
 package io.github.tt432.eyelib.bridge.attachment.network;
 
 import io.github.tt432.eyelib.util.dataattach.DataAttachmentType;
-import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.DataAttachmentTypeRegistry;
 import io.github.tt432.eyelib.util.streamcodec.EyelibStreamCodecs;
 import io.github.tt432.eyelib.util.streamcodec.StreamCodec;
 import net.minecraft.network.FriendlyByteBuf;
@@ -54,3 +54,4 @@ public record UniDataUpdatePacket<T>(int entityId, DataAttachmentType<T> attachm
     }
     //?}
 }
+

@@ -6,8 +6,7 @@ import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import io.github.tt432.eyelib.molang.mapping.api.MolangQueryRuntimeBridge;
 import io.github.tt432.eyelib.molang.port.PortEntity;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -64,8 +63,8 @@ import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 
-import io.github.tt432.eyelib.bridge.molang.ComponentStore;
-import io.github.tt432.eyelib.bridge.molang.MolangEntityContext;
+import io.github.tt432.eyelib.bridge.molang.adapter.ComponentStore;
+import io.github.tt432.eyelib.bridge.molang.adapter.MolangEntityContext;
 
 import static io.github.tt432.eyelib.molang.MolangValue.FALSE;
 import static io.github.tt432.eyelib.molang.MolangValue.TRUE;
@@ -76,9 +75,8 @@ import static io.github.tt432.eyelib.molang.MolangValue.TRUE;
  * @author TT432
  */
 @MolangMapping(value = "query", pureFunction = false)
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 @SuppressWarnings("unused")
-public final class MolangBuiltInQuery {
+public interface MolangBuiltInQuery {
     @MolangFunction(value = "has_main_hand", description = "主手有物品")
     public static float hasMainHand(MolangScope scope) {
         return livingBool(scope, e -> !e.getMainHandItem().isEmpty());
@@ -271,9 +269,8 @@ public final class MolangBuiltInQuery {
     @MolangFunction(value = "is_name_any", description = "判断实体的名称是否匹配给定字符串中的任意一个（不区分大小写子串匹配）")
     public static float isNameAny(MolangScope scope, String... names) {
         return scope.getHostContext().get(Entity.class).map(entity -> {
-            String entityName = entity.hasCustomName()
-                    ? entity.getCustomName().getString()
-                    : entity.getName().getString();
+            Component customName = entity.getCustomName();
+            String entityName = (customName != null ? customName : entity.getName()).getString();
             String lowerName = entityName.toLowerCase(java.util.Locale.ROOT);
             for (String name : names) {
                 if (lowerName.contains(name.toLowerCase(java.util.Locale.ROOT))) {
@@ -658,14 +655,15 @@ public final class MolangBuiltInQuery {
     @MolangFunction(value = "is_damage_by", description = "判断生物是否被指定的伤害类型所伤害")
     public static float isDamageBy(MolangScope scope, String... damageTypes) {
         return livingBool(scope, e -> {
-            if (e.getLastDamageSource() != null) {
+            net.minecraft.world.damagesource.DamageSource lastDamage = e.getLastDamageSource();
+            if (lastDamage != null) {
                 return e.level().registryAccess()
                         //? if <26.1 {
                         .registry(Registries.DAMAGE_TYPE)
                         //?} else {
                         .lookup(Registries.DAMAGE_TYPE)
                         //?}
-                        .map(r -> r.getKey(e.getLastDamageSource().type()))
+                        .map(r -> r.getKey(lastDamage.type()))
                         .map(rl -> Arrays.stream(damageTypes).anyMatch(t -> rl.toString().equals(t.toString())))
                         .orElse(false);
             }
@@ -1126,3 +1124,5 @@ public final class MolangBuiltInQuery {
                     .map(val -> ((Number) val).floatValue());
     }
 }
+
+

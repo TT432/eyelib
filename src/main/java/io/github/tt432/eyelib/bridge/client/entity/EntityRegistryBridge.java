@@ -15,9 +15,7 @@ import java.util.List;
  *
  * @author TT432
  */
-public final class EntityRegistryBridge {
-    private EntityRegistryBridge() {}
-
+public interface EntityRegistryBridge {
     public record EntityTypeEntry(String id, String description) {}
 
     public static List<EntityTypeEntry> getEntries() {

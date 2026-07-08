@@ -1,40 +1,34 @@
 package io.github.tt432.eyelib.bridge.client.render.adapter;
 
-import io.github.tt432.eyelib.bridge.client.EntityRenderPorts;
+import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * 渲染 Port 实例容器，由 wiring 阶段 {@link #install()} 一次后运行时只读。
- * adapter 子包内的实现类，被 ArchUnit 规则 8 排除。
- *
- * @author TT432
- */
-public final class RenderPorts {
-    @Nullable
-    private static volatile RenderPorts instance;
+public interface RenderPorts {
+    AtomicReference<@Nullable RenderPorts> HOLDER = new AtomicReference<>();
 
-    public EntityRenderPorts.RenderBufferPort renderBufferPort =
-            (p, x, y, z, ps, bs) -> {};
-    public EntityRenderPorts.RenderEntityPort renderEntityPort = params -> false;
-    public EntityRenderPorts.SetupClientEntityPort setupClientEntityPort = e -> List.of();
-    public EntityRenderPorts.RenderSystemPort renderSystemPort = new EntityRenderSystem();
+    EntityRenderPorts.RenderBufferPort renderBufferPort();
+    EntityRenderPorts.RenderEntityPort renderEntityPort();
+    EntityRenderPorts.SetupClientEntityPort setupClientEntityPort();
+    EntityRenderPorts.RenderSystemPort renderSystemPort();
 
-    private RenderPorts() {
-    }
-
-    public static RenderPorts install() {
-        RenderPorts ports = new RenderPorts();
-        instance = ports;
+    static RenderPorts install(
+            EntityRenderPorts.RenderBufferPort renderBufferPort,
+            EntityRenderPorts.RenderEntityPort renderEntityPort,
+            EntityRenderPorts.SetupClientEntityPort setupClientEntityPort
+    ) {
+        RenderPortsImpl ports = new RenderPortsImpl(renderBufferPort, renderEntityPort, setupClientEntityPort);
+        HOLDER.set(ports);
         return ports;
     }
 
-    public static RenderPorts get() {
-        RenderPorts ports = instance;
+    static RenderPorts get() {
+        RenderPorts ports = HOLDER.get();
         if (ports == null) {
             throw new IllegalStateException("RenderPorts not installed");
         }
         return ports;
     }
 }
+

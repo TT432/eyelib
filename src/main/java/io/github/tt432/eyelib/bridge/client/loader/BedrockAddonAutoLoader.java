@@ -1,8 +1,8 @@
 package io.github.tt432.eyelib.bridge.client.loader;
 
-import io.github.tt432.eyelib.client.loader.BedrockAddonRuntimeBridge;
-import io.github.tt432.eyelib.bridge.client.render.texture.NativeImageIO;
-import io.github.tt432.eyelib.bridge.event.TextureChangedEvent;
+import io.github.tt432.eyelib.bridge.ApplicationLifecyclePort;
+import io.github.tt432.eyelib.bridge.client.render.texture.adapter.NativeImageIO;
+import io.github.tt432.eyelib.bridge.event.adapter.TextureChangedEvent;
 import io.github.tt432.eyelib.importer.addon.BedrockAddon;
 import io.github.tt432.eyelib.importer.addon.BedrockAddonLoader;
 import io.github.tt432.eyelib.importer.addon.BedrockAddonWarning;
@@ -111,7 +111,8 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
     }
 
     private void bridgeAndPublish(BedrockAddon addon) {
-        BedrockAddonRuntimeBridge.replaceFromAddon(addon);
+        ApplicationLifecyclePort port = ApplicationLifecyclePort.get();
+        if (port != null) port.onAddonParsed(addon);
         ParticleResourcePublication.replaceFromSchemas(
                 addon.aggregate().resourcePack().particleFiles(), LOGGER);
         uploadAddonTextures(addon.aggregate().textures());
@@ -142,3 +143,5 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
         }
     }
 }
+
+

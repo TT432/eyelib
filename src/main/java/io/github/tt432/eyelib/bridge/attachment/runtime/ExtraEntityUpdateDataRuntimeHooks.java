@@ -2,9 +2,9 @@ package io.github.tt432.eyelib.bridge.attachment.runtime;
 
 import io.github.tt432.eyelib.util.entitydata.ExtraEntityUpdateData;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.DataAttachmentTypeRegistry;
 import io.github.tt432.eyelib.bridge.attachment.network.ExtraEntityUpdateDataPacket;
-import io.github.tt432.eyelib.bridge.network.EyelibNetworkTransport;
+import io.github.tt432.eyelib.bridge.network.adapter.EyelibNetworkTransport;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.world.entity.Entity;
@@ -120,3 +120,5 @@ public final class ExtraEntityUpdateDataRuntimeHooks {
         return updated;
     }
 }
+
+

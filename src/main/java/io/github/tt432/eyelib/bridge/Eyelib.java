@@ -1,9 +1,10 @@
 package io.github.tt432.eyelib.bridge;
 
-import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentContainerCapability;
-import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.bridge.network.adapter.EyelibNetworkTransport;
+
+import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.DataAttachmentContainerCapability;
+import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.DataAttachmentTypeRegistry;
 import io.github.tt432.eyelib.bridge.animation.AnimationLocatorResolver;
-import io.github.tt432.eyelib.network.EyelibNetworkManager;
 //? if <1.20.6 {
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -30,10 +31,12 @@ public class Eyelib {
 
         try {
             Class.forName("io.github.tt432.eyelib.capability.AttachableDataTypes");
+            Class<?> implClass = Class.forName("io.github.tt432.eyelib.client.lifecycle.ApplicationLifecyclePortImpl");
+            ApplicationLifecyclePort.install((ApplicationLifecyclePort) implClass.getDeclaredConstructor().newInstance());
             //? if >=1.20.6 {
             Class.forName("io.github.tt432.eyelib.bridge.capability.EyelibAttachableData");
             //?}
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
@@ -42,9 +45,10 @@ public class Eyelib {
         //? if >=1.20.6
         DataAttachmentContainerCapability.register(bus);
         //? if <1.20.6 {
-        EyelibNetworkManager.register();
+        ApplicationLifecyclePort port = ApplicationLifecyclePort.get();
+        if (port != null) port.registerNetworkHandlers();
         //?} else {
-        bus.addListener(io.github.tt432.eyelib.bridge.network.EyelibNetworkTransport::onRegisterPayloads);
+        bus.addListener(io.github.tt432.eyelib.bridge.network.adapter.EyelibNetworkTransport::onRegisterPayloads);
         //?}
 
         if (!(//? if <26.1 {
@@ -62,3 +66,6 @@ public class Eyelib {
         }
     }
 }
+
+
+

@@ -3,17 +3,13 @@ package io.github.tt432.eyelib.bridge.attachment.network;
 import io.github.tt432.eyelib.util.entitydata.ExtraEntityData;
 import io.github.tt432.eyelib.util.entitydata.ExtraEntityUpdateData;
 import io.github.tt432.eyelib.util.dataattach.DataAttachmentType;
-import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentTypeRegistry;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-
+import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.DataAttachmentTypeRegistry;
 /**
  * 数据附属同步载荷的转换工具。
  *
  * @author TT432
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class DataAttachmentSyncPayloadOps {
+public interface DataAttachmentSyncPayloadOps {
     public record AttachmentUpdate<T>(int entityId, DataAttachmentType<T> attachment, T value) {
     }
 

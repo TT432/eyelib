@@ -1,6 +1,9 @@
 package io.github.tt432.eyelib.bridge.attachment.dataattach.mc;
+import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.McDataAttachmentContainer;
 
-import io.github.tt432.eyelib.bridge.attachment.network.DataAttachmentSyncRuntime;
+import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.DataAttachmentContainerCapability;
+
+import io.github.tt432.eyelib.bridge.attachment.network.adapter.DataAttachmentSyncRuntime;
 //? if <1.20.6 {
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -46,3 +49,5 @@ public class DataAttachmentEventHandlers {
         });
     }
 }
+
+

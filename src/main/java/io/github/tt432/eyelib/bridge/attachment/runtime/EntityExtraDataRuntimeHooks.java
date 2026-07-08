@@ -3,8 +3,8 @@ package io.github.tt432.eyelib.bridge.attachment.runtime;
 import io.github.tt432.eyelib.util.entitydata.ExtraEntityDataUpdater;
 import io.github.tt432.eyelib.util.entitydata.ExtraEntityData;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentTypeRegistry;
-import io.github.tt432.eyelib.bridge.attachment.network.DataAttachmentSyncRuntime;
+import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.DataAttachmentTypeRegistry;
+import io.github.tt432.eyelib.bridge.attachment.network.adapter.DataAttachmentSyncRuntime;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
@@ -124,3 +124,5 @@ public final class EntityExtraDataRuntimeHooks {
         );
     }
 }
+
+

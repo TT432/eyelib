@@ -1,5 +1,7 @@
 package io.github.tt432.eyelib.bridge.client.manager;
 
+import io.github.tt432.eyelib.bridge.client.manager.adapter.ForgeManagerEventPublisher;
+
 import io.github.tt432.eyelib.util.manager.ManagerEventPublishBridge;
 //? if <1.20.6 {
 import net.minecraftforge.api.distmarker.Dist;
@@ -30,3 +32,4 @@ public final class ManagerEventLifecycleHooks {
         ManagerEventPublishBridge.install(new ForgeManagerEventPublisher());
     }
 }
+
