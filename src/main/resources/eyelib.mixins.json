@@ -33,6 +33,7 @@
     "client.ItemInHandRendererMixin",
     "client.HumanoidArmorLayerMixin",
     "attachment.MultiPlayerGameModeMixin",
+    "client.TextureManagerMixin",
     //?}
   ],
   "injectors": {

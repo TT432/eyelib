@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.bridge.client.loader;
 
 import io.github.tt432.eyelib.bridge.ApplicationLifecyclePort;
 import io.github.tt432.eyelib.bridge.client.render.texture.adapter.NativeImageIO;
+import io.github.tt432.eyelib.importer.model.importer.AddonTextureRegistry;
 import io.github.tt432.eyelib.bridge.event.adapter.TextureChangedEvent;
 import io.github.tt432.eyelib.importer.addon.BedrockAddon;
 import io.github.tt432.eyelib.importer.addon.BedrockAddonLoader;
@@ -122,13 +123,10 @@ final class BedrockAddonAutoLoader implements PreparableReloadListener {
         if (textures.isEmpty()) {
             return;
         }
+        // 注册到 AddonTextureRegistry，由 TextureManagerMixin 在 getTexture() 中按需创建 DynamicTexture。
+        // .tga 路径自动归一化为 .png，使 MC 原版纹理加载机制能透明加载 .tga。
         textures.forEach((relativePath, imageData) -> {
-            try {
-                NativeImageIO.upload(relativePath.toLowerCase(Locale.ROOT),
-                                     NativeImageIO.fromImportedImageData(imageData));
-            } catch (RuntimeException e) {
-                LOGGER.error("Failed to upload addon texture: {}", relativePath, e);
-            }
+            AddonTextureRegistry.put(relativePath.toLowerCase(Locale.ROOT), imageData);
         });
         //? if <1.20.6 {
         MinecraftForge.EVENT_BUS.post(new TextureChangedEvent());
