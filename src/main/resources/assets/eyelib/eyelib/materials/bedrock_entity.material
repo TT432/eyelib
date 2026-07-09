@@ -1,0 +1,150 @@
+{
+  "materials": {
+    "entity_emissive:entity": {
+      "+defines": ["USE_EMISSIVE"]
+    },
+    "entity_emissive_alpha:entity_emissive": {
+      "+defines": ["ALPHA_TEST"]
+    },
+    "entity_emissive_alpha_one_sided:entity_emissive_alpha": {
+    },
+    "entity_alphatest_one_sided:entity_alphatest": {
+    },
+    "entity_custom:entity_alphatest": {
+    },
+    "entity_beam:entity": {
+    },
+    "entity_beam_additive:entity_beam": {
+      "+states": ["Blending"],
+      "blendSrc": "One",
+      "blendDst": "One"
+    },
+    "entity_dissolve_layer0.skinning:entity_alphatest": {
+    },
+    "entity_dissolve_layer1.skinning:entity_alphatest": {
+    },
+    "player_animated:entity": {
+    },
+    "player_spectator:entity": {
+    },
+    "villager_v2_masked:entity_alphatest": {
+    },
+    "horse_leather_armor:entity_alphatest": {
+    },
+    "nautilus:entity_alphatest": {
+    },
+    "fang:entity_alphatest": {
+    },
+    "minecart:entity_alphatest": {
+    },
+    "armadillo:entity_alphatest": {
+    },
+    "armor_stand:entity_alphatest": {
+    },
+    "axolotl:entity_alphatest": {
+    },
+    "axolotl_limbs:entity_alphatest": {
+    },
+    "bat_v2:entity_alphatest": {
+    },
+    "bee:entity_alphatest": {
+    },
+    "bogged:entity_alphatest": {
+    },
+    "bogged_clothes:entity_alphatest": {
+    },
+    "breeze:entity_alphatest": {
+    },
+    "breeze_wind:entity_alphatest": {
+    },
+    "camel:entity_alphatest": {
+    },
+    "cat:entity_alphatest": {
+    },
+    "cod:entity_alphatest": {
+    },
+    "dolphin:entity_alphatest": {
+    },
+    "drowned:entity_alphatest": {
+    },
+    "ender_dragon:entity_alphatest": {
+    },
+    "evoker:entity_alphatest": {
+    },
+    "frog:entity_alphatest": {
+    },
+    "ghast:entity_alphatest": {
+    },
+    "goat:entity_alphatest": {
+    },
+    "guardian:entity_alphatest": {
+    },
+    "guardian_ghost:entity_alphatest": {
+      "+defines": ["USE_ONLY_EMISSIVE"]
+    },
+    "hoglin:entity_alphatest": {
+    },
+    "horse:entity_alphatest": {
+    },
+    "husk:entity_alphatest": {
+    },
+    "iron_golem:entity_alphatest": {
+    },
+    "llama:entity_alphatest": {
+    },
+    "magma_cube:entity_alphatest": {
+    },
+    "ocelot:entity_alphatest": {
+    },
+    "parrot:entity_alphatest": {
+    },
+    "phantom:entity_alphatest": {
+    },
+    "piglin:entity_alphatest": {
+    },
+    "piglin_brute:entity_alphatest": {
+    },
+    "pillager:entity_alphatest": {
+    },
+    "polar_bear:entity_alphatest": {
+    },
+    "pufferfish:entity_alphatest": {
+    },
+    "ravager:entity_alphatest": {
+    },
+    "salmon:entity_alphatest": {
+    },
+    "shulker:entity_alphatest": {
+    },
+    "silverfish:entity_alphatest": {
+    },
+    "silverfish_layers:entity_alphatest": {
+    },
+    "skeleton:entity_alphatest": {
+    },
+    "sniffer:entity_alphatest": {
+    },
+    "spider:entity_alphatest": {
+    },
+    "spider_invisible:entity_alphatest": {
+    },
+    "stray:entity_alphatest": {
+    },
+    "stray_clothes:entity_alphatest": {
+    },
+    "strider:entity_alphatest": {
+    },
+    "vindicator:entity_alphatest": {
+    },
+    "wandering_trader:entity_alphatest": {
+    },
+    "witch:entity_alphatest": {
+    },
+    "wither_boss_armor:entity_alphatest": {
+    },
+    "zoglin:entity_alphatest": {
+    },
+    "zombie:entity_alphatest": {
+    }
+  }
+}

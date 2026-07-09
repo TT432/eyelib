@@ -1,5 +1,4 @@
 package io.github.tt432.eyelib.bridge.material;
-
 import io.github.tt432.eyelib.bridge.material.adapter.BrRenderTypeFactory;
 
 import io.github.tt432.eyelib.material.gl.GLStates;
@@ -13,7 +12,11 @@ import io.github.tt432.eyelib.material.render.BrRenderStateFactory;
 import io.github.tt432.eyelib.material.render.RenderTypeResolver.EntityRenderTypeData;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * 根据资源路径将材质名称解析为对应的 PortRenderPass 工厂。
  * 此桥接版本使用纯数据 Port 类型，不直接依赖 MC RenderType。
@@ -21,6 +24,9 @@ import java.util.Optional;
  * @author TT432
  */
 public interface RenderTypeResolver {
+
+    Logger LOGGER = LoggerFactory.getLogger("Eyelib/RenderType");
+    Set<String> WARNED_UNKNOWN_RENDER_TYPES = ConcurrentHashMap.newKeySet();
 
     static EntityRenderTypeData resolve(PortResourceLocation id) {
         return switch (id.toString()) {
@@ -34,8 +40,14 @@ public interface RenderTypeResolver {
                     tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, true));
             case "minecraft:particles_add" -> new EntityRenderTypeData(id, false,
                     texture -> BrRenderTypeFactory.create(texture, BrRenderStateFactory.from(particleAdd())));
-            default -> new EntityRenderTypeData(id, true,
-                    tex -> PortRenderPass.of(PortRenderPass.Transparency.SOLID, false));
+            default -> {
+                if (WARNED_UNKNOWN_RENDER_TYPES.add(id.toString())) {
+                    LOGGER.warn("Unknown material '{}' — no matching material definition or render type found. " +
+                            "Falling back to SOLID; add the material to eyelib/materials/ for correct rendering.", id);
+                }
+                yield new EntityRenderTypeData(id, true,
+                        tex -> PortRenderPass.of(PortRenderPass.Transparency.SOLID, false));
+            }
         };
     }
 
