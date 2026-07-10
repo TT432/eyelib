@@ -286,12 +286,8 @@ dependencies {
         compileOnly("maven.modrinth:acceleratedrendering:1.0.5-1.20.1-alpha")
     }
 
-    compileOnly 'io.github.tt432:clientsmokeannotation:1.0.0'
-    if (isLegacyForge) {
-        localRuntime "io.github.tt432:clientsmoke:${version}"
-    } else if (isModern) {
-        localRuntime "io.github.tt432:clientsmoke-neoforge:${version}"
-    }
+    compileOnly "io.github.tt432:clientsmoke:${version}"
+    localRuntime "io.github.tt432:clientsmoke:${version}"
 
     // spark 性能剖析工具（dev-only，localRuntime 不进发布 jar）。
     // 必须用 modLocalRuntime（由 obfuscation.createRemappingConfiguration 创建），

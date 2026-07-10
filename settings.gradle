@@ -24,6 +24,6 @@ stonecutter {
 
 rootProject.name = "eyelib"
 
-includeBuild("clientsmoke")
-includeBuild("clientsmokeannotation")
-includeBuild("clientsmoke-neoforge")
+// clientsmoke 是独立 stonecutter submodule，通过 maven local 提供 artifacts。
+// 不使用 includeBuild——stonecutter 多节点产生相同 group:name 导致 composite build 歧义。
+// 构建流程：先 gradlew -p clientsmoke :<version>:publishToMavenLocal，再构建主项目。
