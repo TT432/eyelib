@@ -45,6 +45,9 @@ public final class RenderLivingEventAdapter {
     //? if <26.1 {
     @SubscribeEvent
     public static <E extends LivingEntity, M extends EntityModel<E>> void onEvent(RenderLivingEvent.Pre<E, M> event) {
+        if (io.github.tt432.clientsmoke.runtime.ClientSmokeVisualHooks.isSuppressRenderEvents()) {
+            return;
+        }
         LivingEntity entity = event.getEntity();
         int overlay = LivingEntityRenderer.getOverlayCoords(entity,
                 ((LivingEntityRendererAccessor) event.getRenderer()).callGetWhiteOverlayProgress(entity, event.getPartialTick()));
