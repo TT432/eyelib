@@ -7,13 +7,12 @@ plugins {
     id 'signing'
 }
 
-// Stonecutter centralScript: 此脚本对每个 version node (:1.20.1, :1.21.1) 各跑一次。
-// 0.7.x 无 sc 别名与 parsed，用 stonecutter.current.version + stonecutter.eval 比较。
-def mcVersion = stonecutter.current.version
-def isLegacyForge = stonecutter.eval(mcVersion, '<1.20.6')
-def isModern = stonecutter.eval(mcVersion, '>=26.1')
+// Stonecutter 0.9 centralScript: 此脚本对每个 version node (:1.20.1, :1.21.1, :26.1.2) 各跑一次。
+// 版本比较用 sc.current.parsed.matches（0.8+ API，替代旧 stonecutter.eval）。
+def isLegacyForge = sc.current.parsed.matches '<1.20.6'
+def isModern = sc.current.parsed.matches '>=26.1'
 // 26.1+ 移除了 additionalRuntimeClasspath 配置（模块层系统变更）
-def hasAdditionalRuntimeClasspath = stonecutter.eval(mcVersion, '<26.1')
+def hasAdditionalRuntimeClasspath = sc.current.parsed.matches '<26.1'
 
 // Stonecutter 常量：源码中用 //? if legacy / //? if modern 做三路分支
 stonecutter {
@@ -21,7 +20,7 @@ stonecutter {
     constants['modern'] = isModern
 }
 
-// Stonecutter 0.7.x centralScript 不自动替换 sourceSet：compileJava 默认编译 src/main/java，
+// Stonecutter centralScript 不自动替换 sourceSet（0.7-0.9 均如此）：compileJava 默认编译 src/main/java，
 // 但加了 //? 注释后原始源码有裸露的 else 分支导致语法错误。
 // 必须让 sourceSet 指向 stonecutterGenerate 的生成目录。
 def stonecutterMainBase = layout.buildDirectory.dir('generated/stonecutter/main')
@@ -191,7 +190,7 @@ if (isLegacyForge) {
         accessTransformers.from rootProject.file('src/main/resources/META-INF/accesstransformer.cfg')
 
         // 26.1+ 去混淆，无需 parchment
-        if (stonecutter.eval(mcVersion, '<26.1')) {
+        if (!isModern) {
             parchment {
                 mappingsVersion = project.parchment_mappings_version
                 minecraftVersion = project.parchment_minecraft_version
