@@ -52,10 +52,14 @@ public abstract class TextureManagerMixin {
 
         ImportedImageData addonData = AddonTextureRegistry.get(path.getPath());
         if (addonData != null) {
-            NativeImage image = NativeImageIO.fromImportedImageData(addonData);
-            DynamicTexture texture = new DynamicTexture(image);
-            this.register(path, texture);
-            cir.setReturnValue(texture);
+        NativeImage image = NativeImageIO.fromImportedImageData(addonData);
+        if (image == null || (image.getWidth() <= 1 && image.getHeight() <= 1)) {
+            if (image != null) image.close();
+            return;
+        }
+        DynamicTexture texture = new DynamicTexture(image);
+        this.register(path, texture);
+        cir.setReturnValue(texture);
         }
     }
     //?} else {
@@ -77,10 +81,14 @@ public abstract class TextureManagerMixin {
 
         ImportedImageData addonData = AddonTextureRegistry.get(path.getPath());
         if (addonData != null) {
-            NativeImage image = NativeImageIO.fromImportedImageData(addonData);
-            DynamicTexture texture = new DynamicTexture(() -> "eyelib addon texture", image);
-            this.register(path, texture);
-            cir.setReturnValue(texture);
+        NativeImage image = NativeImageIO.fromImportedImageData(addonData);
+        if (image == null || (image.getWidth() <= 1 && image.getHeight() <= 1)) {
+            if (image != null) image.close();
+            return;
+        }
+        DynamicTexture texture = new DynamicTexture(() -> "eyelib addon texture", image);
+        this.register(path, texture);
+        cir.setReturnValue(texture);
         }
     }
     //?}
