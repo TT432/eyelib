@@ -1,6 +1,11 @@
 ﻿---
 name: progressive-exploration
 description: Interactive runtime state exploration via the AI debug HTTP server in a running Minecraft client. Use to probe screens, inspect game state, navigate UI, or test hypotheses before writing code.
+license: MIT
+compatibility: opencode
+metadata:
+  author: https://github.com/TT432
+  version: "1.0.0"
 ---
 
 ## When to use
@@ -149,13 +154,13 @@ minecraft.stop();
 
 Never skip runtime verification in favor of "guess → change code → rebuild → restart". An `/eval` probe proves the code path is reached and shows real data.
 
-### Janino class name gotcha
+### Class name resolution
 
-The Janino compiler auto-imports only `Minecraft`, `LocalPlayer`, `ClientLevel`. All other classes need fully qualified names. **Before writing an eval, verify the class path** — don't guess package names. Use `glob`/`grep` 查找类路径。
+The `/eval` template auto-injects `Minecraft`, `LocalPlayer`, `ClientLevel` via the JDK's built-in compiler (not Janino). All other classes need fully qualified names. **Before writing an eval, verify the class path** — don't guess package names. Use `glob`/`grep` 查找类路径。
 
 ## Limitations
 
-- **Janino Java dialect**: the embedded compiler does not support `var`, pattern-matching `instanceof`, switch expressions, or records. Use explicit types and traditional syntax.
+- **Compiler**: AIDebugServer uses the JDK's built-in compiler (not Janino). Full Java syntax is supported: `var`, lambda, `Map.of()`, records, switch expressions, multi-line `if/return` blocks.
 - **Auto-imports**: only `Minecraft`, `LocalPlayer`, `ClientLevel` are imported. Other classes need fully qualified names.
 - **Timeout**: code runs on the MC render thread with a 10-second timeout. World generation and heavy operations will time out the HTTP response but may still complete asynchronously.
 - **Thread safety**: all MC API calls execute on the render thread via `Minecraft.tell()`. Long-running code blocks the render loop.

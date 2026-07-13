@@ -1,6 +1,11 @@
 ---
 name: molang-refactor-supervisor
 description: Coordinate eyelib `molang` package refactor slices through subagent design, implementation, review, roadmap alignment, and Gradle verification without directly editing business logic.
+license: MIT
+compatibility: opencode
+metadata:
+  author: https://github.com/TT432
+  version: "1.0.0"
 ---
 
 ## When to use

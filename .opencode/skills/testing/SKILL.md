@@ -1,6 +1,11 @@
 ---
 name: testing
 description: Decision framework for choosing between progressive exploration, unit tests, and smoke tests. Does NOT describe how to write them — see progressive-exploration, unit-test, smoke-test skills for that.
+license: MIT
+compatibility: opencode
+metadata:
+  author: https://github.com/TT432
+  version: "1.0.0"
 ---
 
 ## The Three Verification Layers

@@ -1,6 +1,11 @@
 ---
 name: smoke-test
 description: Write and run ClientSmoke tests that verify visual behavior in a real Minecraft client. Use for render output, GL state, texture correctness, and full-lifecycle integration checks.
+license: MIT
+compatibility: opencode
+metadata:
+  author: https://github.com/TT432
+  version: "1.0.0"
 ---
 
 ## What ClientSmoke Is

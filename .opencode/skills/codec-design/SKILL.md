@@ -1,6 +1,11 @@
 ﻿---
 name: codec-design
 description: Design and implement Codec-based data transformations. Use when creating/refactoring Codecs for serialization, making loader/schema code Codec-driven, or separating I/O from data parsing. Reference NeoForge Codec docs at https://docs.neoforged.net/docs/datastorage/codecs
+license: MIT
+compatibility: opencode
+metadata:
+  author: https://github.com/TT432
+  version: "1.0.0"
 ---
 
 ## 核心理念

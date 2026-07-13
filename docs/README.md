@@ -73,7 +73,8 @@
 
 1. 新增或删除模块 → 更新对应 `package-info.java`，跑 `:1.20.1:generateModulesMd` 重新生成 `MODULES.md`。
 2. 新增架构决策 → 在 `decisions/` 中创建新 ADR，更新本文件 ADR 索引；若修订旧 ADR，在旧 ADR 头部加 `amended/superseded by` 标注。
-3. 发现新陷阱 → 判断属于哪个 Skill 域，添加到对应 Skill 的 Common Pitfalls 节。
+3. 发现新陷阱 → 操作类陷阱（执行某流程时易犯）添加到对应 Skill 的 Common Pitfalls 节；架构/领域类陷阱添加到 `decisions/0007-known-pitfalls.md` 或对应 ADR。
 4. 新增操作流程 → 创建或更新对应 Skill，更新本文件 Skill 索引。
 5. 改 `build.gradle` / `settings.gradle` / Stonecutter node → 同步 AGENTS.md Tooling Restrictions 与本文件导航表（若结构变）。
 6. 文档自引用必须验证路径有效性——提交前 grep 全仓库验证无旧路径残留。
+7. Skill 的 `references/` 只放支撑该 skill 操作流程的结构化参考（命令清单/模板/API）；架构概念、陷阱根因、实现决策、历史记录归 `docs/`（ADR-0011）。

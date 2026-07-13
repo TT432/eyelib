@@ -117,19 +117,6 @@ List comps = (List) cap.getClass().getMethod("getModelComponents").invoke(cap);
 // 验证 comps.size()、RenderType 等
 ```
 
-## 闸门通过表（2026-06 历史快照）
-
-> ArchUnit 规则已由 ADR-0014 删除。下表记录六边形重构期间的验收结果，G2/G3 列仍可参考。
-
-| 批次 | 模块 | G1 隔离 | G2 spec-test | G3 集成 |
-|------|------|---------|-------------|---------|
-| 1 | material | ✅ ArchUnit（3 排除） | ✅ 28 tests | ✅ |
-| 1 | molang | ✅ ArchUnit（4 排除） | ✅ 21 tests | — |
-| 2 | model | ✅ ArchUnit（2 排除） | — | — |
-| 3 | animation | ✅ ArchUnit（4 排除） | ✅ 7 tests | — |
-| 3 | behavior | ✅ ArchUnit（1 排除） | ✅ 9 tests | — |
-| 4 | particle | ✅ ArchUnit（8 排除） | ✅ 6 tests | — |
-
 ## Common Pitfalls
 
 1. **ArchUnit 规则未在 build.gradle 加依赖** — 先确认 `testImplementation 'com.tngtech.archunit:archunit-junit5'`

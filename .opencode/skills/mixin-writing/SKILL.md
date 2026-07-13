@@ -1,6 +1,11 @@
 ---
 name: mixin-writing
 description: Write Mixin accessors and injectors for eyelib. Use when replacing reflection with @Accessor/@Invoker, injecting into vanilla methods, or debugging Mixin AP compilation errors. Covers Forge 1.20.1 (Mixin AP active) and NeoForge 1.21.1 (no Mixin AP) dual-version patterns.
+license: MIT
+compatibility: opencode
+metadata:
+  author: https://github.com/TT432
+  version: "1.0.0"
 ---
 
 ## 核心理念
