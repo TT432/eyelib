@@ -25,7 +25,11 @@ final class EntityCaptureBase {
             throw new RuntimeException("Level not available");
         }
 
+        //? if <26.1 {
         Entity entity = factory.create(mc.level);
+        //?} else {
+        Entity entity = factory.create(mc.level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+        //?}
         if (entity == null) {
             throw new RuntimeException("Failed to create entity: " + factory);
         }
@@ -51,7 +55,11 @@ final class EntityCaptureBase {
         int minR = 255, maxR = 0, minG = 255, maxG = 0, minB = 255, maxB = 0;
         for (int y = 0; y < FBO_SIZE; y += 2) {
             for (int x = 0; x < FBO_SIZE; x += 2) {
+                //? if <26.1 {
                 int pixel = image.getPixelRGBA(x, y);
+                //?} else {
+                int pixel = image.getPixel(x, y);
+                //?}
                 int r = pixel & 0xFF;
                 int g = (pixel >> 8) & 0xFF;
                 int b = (pixel >> 16) & 0xFF;
