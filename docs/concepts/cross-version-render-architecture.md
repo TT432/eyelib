@@ -292,8 +292,8 @@ static void vertex(VertexConsumer, x,y,z, r,g,b,a, u,v, overlay, light, nx,ny,nz
 - **前置**：`RenderPorts.get()` HOLDER 已 install
 - **关键方法**：
   - `pushPoseRaw(poseStack, pose)` — 直接向 PoseStack 栈压入预构造的 `Pose`（用于 locator bone 复用），屏蔽 `<1.20.6` 字段直访 / `<26.1` mixin accessor（`>=26.1` 该方法体为空，因 API 已支持）
-  - `renderItemDirect(...)` — 仅 `<26.1` 实现（`>=26.1` 物品渲染路径待补，见 §7.3）
-  - `flushBuffer(source)` — 仅 `<26.1` 实现
+  - `renderItemDirect(sink, ...)` — 三版本实现（接收 `RenderSink`，`//?` 切分方法体：`<26.1` 从 sink 取 `MultiBufferSource` + `boolean left`，`>=26.1` 从 sink 取 `SubmitNodeCollector`，见 §7.3）
+  - ~~`flushBuffer(source)`~~ — 已删除（死代码，flush 语义移入 `ImmediateRenderSink.flush()`）
   - `slotName(slot)` — EquipmentSlot→Bedrock slot 字符串，三版本 switch
   - `FULL_BRIGHT` — 常量 `//?`（`LightTexture.FULL_BRIGHT` vs `0xF000F0`）
 - **不变量**：对同一 `EquipmentSlot`，`slotName` 返回值在语义上版本一致（仅随新 slot 枚举值扩展）
