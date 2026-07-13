@@ -209,6 +209,17 @@ org.apache.logging.log4j.core.config.Configurator.setLevel(
 
 让子代理自己发现这些。你只提供原材料和目标。
 
+### 1.20.1 截图在虚拟显示器上捕获全暗
+
+`ScreenshotRecorder.grab` / `Screenshot.grab` 在 **OrayIddDriver 虚拟显示器**上，1.20.1 捕获的 PNG 整体偏暗（白天天空 avg≈47，应为亮蓝 ~150），无法用于视觉验证渲染。26.1.2 同 API 捕获正常（avg≈144）。
+
+**原因**：1.20.1 与 26.1.2 的截图 GPU 回读管线不同，OrayIddDriver 对 1.20.1 路径回读异常。
+
+**规避**：
+- 验证 1.20.1 渲染正确性用 **clientsmoke `EntitySceneRenderer` 的 FBO 回读路径**（实体渲染到独立 RenderTarget，不经主显示器），或换非虚拟显示器。
+- 26.1.2 截图正常，可作跨版本对照基准。
+- `grab` 后客户端可能因 GPU 回读崩溃（OrayIddDriver），但 PNG 会先保存，可用 python(PIL) 分析磁盘文件。
+
 ### Attachable 渲染注入点错误
 
 Bedrock attachable 只在物品装备（手持/穿戴）时激活，不覆盖掉落物或 GUI。MC Java 中不同路径走不同类：

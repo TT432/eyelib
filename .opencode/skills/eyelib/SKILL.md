@@ -12,7 +12,7 @@ metadata:
 
 # Eyelib 开发
 
-项目根 `E:\_ideaProjects\qylEyelib`。MC 1.20.1 / Forge 47.1.3 / Java 17，Stonecutter active = `1.20.1` + node `1.21.1`（详见 `eyelib-build` SKILL）。
+项目根 `E:\_ideaProjects\qylEyelib`。MC 1.20.1 / Forge 47.1.3 / Java 17，Stonecutter active = `1.20.1`(legacyforge) + node `1.21.1`/`26.1.2`(neoforge)。26.1.2 渲染架构重写（声明式 PSO + submit 延迟提交），经 RenderSink 兼容层与 1.20.1 行为对齐（详见 `docs/concepts/cross-version-render-architecture.md`）。
 
 ## Skill 导航
 

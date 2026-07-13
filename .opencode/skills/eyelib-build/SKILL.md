@@ -12,14 +12,14 @@ metadata:
 
 # Eyelib 构建与测试
 
-项目根 `E:\_ideaProjects\qylEyelib`。单 Gradle project(ADR-0014 flat-merge),Stonecutter 0.7.11 多版本,active = `1.20.1`(legacyforge) + node `1.21.1`(neoforge)。Java 17,Forge 47.1.3。
+项目根 `E:\_ideaProjects\qylEyelib`。单 Gradle project(ADR-0014 flat-merge),Stonecutter 0.9.6 多版本(节点 `1.20.1`/`1.21.1`/`26.1.2`),active = `1.20.1`(legacyforge,Java 17)。node `1.21.1`/`26.1.2` 用 NeoForge 21.1.x / 26.1.2.x。
 
 ## 工具链与硬约束
 
 - **Gradle 调用方式**: 编译/测试/NullAway/clientsmoke/启停客户端统一走 `eyelib-debug` MCP(`eyelib_debug_build`、`eyelib_debug_test`、`eyelib_debug_nullaway`、`eyelib_debug_clientsmoke`、`eyelib_debug_launch`、`eyelib_debug_close`)；任意其它 Gradle task(generateModulesMd、compileJava、各 node test、Gradle sync)通过 bash 跑 `gradlew`。
 - **唯一允许的 IDE**: IntelliJ IDEA。JDTLS / VS Code / Eclipse 全部禁用。
 - **Stonecutter 多版本**:
-  - `build.gradle` 是 `centralScript`,每个 version node(`:1.20.1`、`:1.21.1`)都跑一次。版本特定代码用 `//?` 注释切分,放在 `versions/<mc-version>/` 下。
+  - `build.gradle` 是 `centralScript`,每个 version node(`:1.20.1`、`:1.21.1`、`:26.1.2`)都跑一次。版本特定代码用 `//?` 注释切分,放在 `versions/<mc-version>/` 下。
   - active version 在 `stonecutter.gradle` 里(`stonecutter.active '1.20.1'`)。跑 task 用 node 前缀:`:1.20.1:test`、`:1.20.1:generateModulesMd` 等。
   - **切 active version 后必须在 IDEA 里 Gradle sync(reimport)**,否则 source set 显示错位。
 
