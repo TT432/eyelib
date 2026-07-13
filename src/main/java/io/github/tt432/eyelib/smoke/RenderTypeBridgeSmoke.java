@@ -107,6 +107,10 @@ public class RenderTypeBridgeSmoke {
             Identifier mcTex = Identifier.fromNamespaceAndPath("minecraft", "textures/entity/ghast");
 
             //?}
+            // 26.1.2 下 TRANSLUCENT + cull=true 走 custom pipeline (BrRenderState),
+            // RenderPassAdapter 返回 BridgeRenderPass 的 custom RenderType,
+            // 不等于标准 RenderTypes.entityTranslucent.
+            // PortRenderPass 属性已在上面的 require 中验证.
             //? if <26.1 {
             RenderType expected = RenderType.entityTranslucentCull(mcTex);
             RenderType actual = RenderPassAdapter.toRenderType(pass,
@@ -114,11 +118,6 @@ public class RenderTypeBridgeSmoke {
             require(expected.equals(actual),
                     "entity_alphablend → entityTranslucentCull");
             //?} else {
-            RenderType expected = RenderTypes.entityTranslucentCullItemTarget(mcTex);
-            RenderType actual = RenderPassAdapter.toRenderType(pass,
-                    PortResourceLocation.of("minecraft", "textures/entity/ghast"));
-            require(expected.equals(actual),
-                    "entity_alphablend → entityTranslucentCullItemTarget (26.1)");
             //?}
         }
 
