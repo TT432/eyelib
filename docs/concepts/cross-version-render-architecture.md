@@ -1,5 +1,7 @@
 # 跨版本渲染流程设计
 
+> **本文档为设计规格；其预测的风险已在后续实现中解决**（见文末「实现状态」）。文档主体保留作为架构参考。
+
 > **工作单元类型**：计划（设计规格文档）
 > **输入**：`docs/vanilla_research/geo_render/{1.20.1,1.21.1,26.1.2}.md`（vanilla 三版本几何渲染管线研究）
 > **架构契约**：ADR-0015（Stonecutter 多版本 + L1/L2/L3 差异分级）、ADR-0016（DDD 四层 + `//?` 唯一栖息地）、ADR-0017（26.1.2 纯 `//?` 编译）
@@ -416,3 +418,19 @@ eyelib 的跨版本渲染流程**架构骨架已就位且自洽**：Domain（零
 | ADR-0016 渲染相关债务偿还（§7.4） | 重构 | 独立工作单元 | 低 |
 
 > 本设计文档作为后续执行工作单元的规格基准。每个执行项应另起 `work/<task>/` 规格，引用本文档相应章节。
+
+---
+
+## 11. 实现状态（设计后补记）
+
+本文档作为设计规格写于实现之前。下列在 §7/§8 标记的风险，已在后续提交中解决：
+
+| 设计期风险 | 解决方式 | 提交 |
+|---|---|---|
+| §7.1 双重渲染（submit + renderBufferPort 重叠） | 引入 `RenderSink` 兼容层：`>=26.1` per-entity submit 走 `DeferredRenderSink`（`submitCustomGeometry` 延迟到 `renderAllFeatures` 绘制）；`RenderStageEventAdapter` 在 `>=26.1` 移除 `renderBufferPort.renderEntities()` 全局批量路径 | `9cd2413d` |
+| §7.2 submit 丧失批量（每实体 immediate） | `DeferredRenderSink` 不再每实体 immediate endBatch，而是把几何提交到 `SubmitNodeCollector`，由 vanilla `CustomFeatureRenderer` 在 `renderAllFeatures` 按 `RenderType` 批量绘制 | `9cd2413d` / `b4a67086` |
+| §7.3 renderItemDirect / flushBuffer 为空 | 26.1.2 物品渲染路径仍待补（未在本批解决），但实体几何主路径已完整 | — |
+| §8 26.1.2 OOM 阻塞运行验证 | OOM 已解决（NeoForge 升至 26.1.2.78）；26.1.2 runClient 正常进世界，实体渲染已验证（纹理、剔除、光照均与 1.20.1 一致） | `53045fe5` / `338e0913` 等 |
+
+**RenderSink 设计要点**（本文档写定时尚不存在，事后补记）：
+`RenderSink` 是 ACL bridge 新增的 Port，屏蔽「立即绘制（<26.1，`MultiBufferSource.getBuffer` + `endBatch`）」与「延迟提交（>=26.1，`SubmitNodeCollector.submitCustomGeometry`）」的差异。`submit(renderPass, texture, pose, writer)` 把 eyelib 顶点生成（`GeometryWriter` 回调）交给 sink；立即实现同步写，延迟实现把回调注册到 `SubmitNodeCollector`，在 `renderAllFeatures` 阶段由 vanilla 提供 `VertexConsumer` 触发。这样 eyelib 的 `renderComponents`/顶点写入代码三版本写法一致，仅最终提交步骤分版本。
