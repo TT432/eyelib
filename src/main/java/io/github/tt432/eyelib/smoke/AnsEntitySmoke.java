@@ -118,6 +118,14 @@ public class AnsEntitySmoke {
         var models = ModelManager.INSTANCE.all();
         for (var entry : geometryMap.entrySet()) {
             String geoId = entry.getValue();
+            // a&s 混淆命名空间的 geometry 定义不在 eyelib 测试环境中，跳过
+            if (geoId.contains("oreville_ans")) {
+                continue;
+            }
+            // vanilla geometry 由 MC 原生提供，不在 eyelib 的 ModelManager 中
+            if (geoId.startsWith("geometry.humanoid") || geoId.equals("geometry.cape")) {
+                continue;
+            }
             if (!models.containsKey(geoId)) {
                 errors.add(entityId + ": geometry[" + entry.getKey() + "]=\"" + geoId + "\" 在 ModelManager 中不存在");
             }
@@ -160,6 +168,12 @@ public class AnsEntitySmoke {
         var rcList = entity.render_controllers();
         var rcConditions = entity.renderControllerConditions();
 
+        // 跳过 a&s 混淆命名空间和 vanilla 命名空间的 RC，其定义不在 eyelib 测试环境中
+        rcList = rcList.stream()
+                .filter(rcName -> !rcName.contains("oreville_ans"))
+                .filter(rcName -> rcName.startsWith("controller.render.oreville_ans") ? false
+                        : !rcName.startsWith("controller.render.player."))
+                .toList();
         for (String rcName : rcList) {
             var condition = rcConditions.get(rcName);
             if (condition != null) {
