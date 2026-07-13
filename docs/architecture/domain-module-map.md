@@ -27,7 +27,7 @@
 
 ## 提取状态
 
-> ArchUnit 隔离：ADR-0014 因收益不抵成本删除，ADR-0015 计划以 freeze 模式恢复（Phase 2+ pending）。当前状态为**文档约定 + PR review 把关**。
+> ArchUnit 隔离：ADR-0014 删除后由 ADR-0015 以 freeze 模式恢复。`ArchitectureTest.java`（ADR-0016 四层模型）已落地运行，baseline 存于 `build/archunit_store/`。新违规直接 fail，老违规按 Phase 3 逐步还债。
 
 > 以下 MC 文件数与 Spec 测试数为 2026-06-08 快照，仅供横向对比参考。
 
