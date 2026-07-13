@@ -35,6 +35,8 @@ import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.util.PortResourceLocation;
+import io.github.tt432.eyelib.material.port.PortRenderPass;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
 import io.github.tt432.eyelib.util.event.api.OnRenderStage;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -173,6 +175,7 @@ public final class EntityRenderOrchestrator {
 
     static void renderEntities(float partialTick, double camX, double camY, double camZ,
                                PoseStack rootPoseStack, MultiBufferSource.BufferSource bufferSource) {
+        //? if <26.1 {
         entities().forEach(e -> {
             if (!(e instanceof LivingEntity entity)) return;
 
@@ -185,7 +188,7 @@ public final class EntityRenderOrchestrator {
                         Mth.lerp(partialTick, entity.xOld, entity.getX()) - camX,
                         Mth.lerp(partialTick, entity.yOld, entity.getY()) - camY,
                         Mth.lerp(partialTick, entity.zOld, entity.getZ()) - camZ);
-                SimpleRenderAction.builder(bufferSource, rootPoseStack, cap, partialTick)
+                SimpleRenderAction.builder(bufferSource, io.github.tt432.eyelib.bridge.client.render.RenderSink.of(bufferSource), rootPoseStack, cap, partialTick)
                                   .entity(entity)
                                   .animation(cap.getAnimationComponent())
                                   .build()
@@ -203,6 +206,7 @@ public final class EntityRenderOrchestrator {
                 try { bufferSource.endBatch(); } catch (Throwable ignored3) {}
             }
         });
+        //?}
     }
 
     static boolean renderEntityFromParams(RenderEntityParams params) {
@@ -210,7 +214,7 @@ public final class EntityRenderOrchestrator {
         var cap = RenderData.getComponent(entity);
         if (!cap.isUseBuiltInRenderSystem()) return false;
 
-        return SimpleRenderAction.builder(params.multiBufferSource(), params.poseStack(), cap, params.partialTick())
+        return SimpleRenderAction.builder(params.multiBufferSource(), params.sink(), params.poseStack(), cap, params.partialTick())
                 .entity(entity)
                 .animation(cap.getAnimationComponent())
                 .overlay(params.overlay())
@@ -319,8 +323,6 @@ public final class EntityRenderOrchestrator {
                                                                            var poseStack = data.poseStack();
                                                                            poseStack.pushPose();
 
-                                                                            RenderParams renderParams = buildRenderParams(data, modelComponent);
-
                                                                            var tickedInfos = data.tickedInfos();
                                                                            if (tickedInfos == null) {
                                                                                tickedInfos = ModelRuntimeData.EMPTY;
@@ -334,17 +336,33 @@ public final class EntityRenderOrchestrator {
                                                                                poseStack.popPose();
                                                                                return 0;
                                                                            }
-                                                                           MultiBufferSource multiBufferSource = data.multiBufferSource();
 
                                                                            setupEntityClientEntityData(data);
 
-                                                                           RenderHelper renderHelper = RenderHelper.start()
-                                                                                                                   .render(renderParams, model, cast(tickedInfos))
-                                                                                                                   .collectLocators(model, tickedInfos);
-
-                                                                            data.extraRender().render(renderHelper.getContext(), data);
-
-                                                                           RenderPorts.get().renderSystemPort().flushBuffer(multiBufferSource);
+                                                                           // 解析最终 renderPass+texture（含 colorMask 替换），不含 consumer；
+                                                                           // consumer 由 RenderSink 在回调中提供（立即: bufferSource.getBuffer; 延迟: submitCustomGeometry 回调）。
+                                                                           RenderOutput output = resolveOutput(data, modelComponent);
+                                                                           ModelRuntimeData finalTickedInfos = tickedInfos;
+                                                                           if (output != null) {
+                                                                               data.sink().submit(output.renderPass(), output.texture(), poseStack, (pose, consumer) -> {
+                                                                                   // 用 sink 捕获的 pose 快照重建 PoseStack：延迟实现(>=26.1)的回调在 renderAllFeatures
+                                                                                   // 阶段执行，此时原 poseStack 已被 popPose，必须用快照而非 data.poseStack()。
+                                                                                   PoseStack capturedPose = RenderPorts.get().renderSystemPort().createPoseStackFromMatrix(pose.pose());
+                                                                                   RenderParams renderParams = buildRenderParams(capturedPose, data, modelComponent, output, consumer);
+                                                                                   RenderHelper renderHelper = RenderHelper.start()
+                                                                                           .render(renderParams, model, cast(finalTickedInfos))
+                                                                                           .collectLocators(model, finalTickedInfos);
+                                                                                   data.extraRender().render(renderHelper.getContext(), data);
+                                                                               });
+                                                                               data.sink().flush();
+                                                                           } else {
+                                                                               // 无有效 renderPass：仍收集 locator（consumer=null 时 visitor 跳过顶点写入）
+                                                                                RenderParams renderParams = buildRenderParams(data.poseStack(), data, modelComponent, null, null);
+                                                                               RenderHelper renderHelper = RenderHelper.start()
+                                                                                       .render(renderParams, model, cast(finalTickedInfos))
+                                                                                       .collectLocators(model, finalTickedInfos);
+                                                                               data.extraRender().render(renderHelper.getContext(), data);
+                                                                           }
 
                                                                            poseStack.popPose();
 
@@ -498,21 +516,61 @@ public final class EntityRenderOrchestrator {
         return syncedActions;
     }
 
-    private static RenderParams buildRenderParams(SimpleRenderAction<?> data, ModelComponent modelComponent) {
-        RenderParams.Builder builder = RenderParams.builder(data.poseStack(), data.multiBufferSource(), modelComponent);
-        float[] colorMask = modelComponent.usesColorMask() ? RenderPorts.get().renderSystemPort().getEntityTintColor(data.entity()) : null;
-        if (colorMask != null) {
-            builder = builder.colorMaskTexture(data.multiBufferSource(), modelComponent, colorMask);
+    /**
+     * 解析 ModelComponent 最终的 (renderPass, texture, isSolid)，含 colorMask 替换。
+     * 不涉及 VertexConsumer——consumer 由 RenderSink 回调提供。
+     * 返回 null 表示无有效渲染 pass。
+     */
+    private static @Nullable RenderOutput resolveOutput(SimpleRenderAction<?> data, ModelComponent modelComponent) {
+        io.github.tt432.eyelib.util.PortResourceLocation texture = modelComponent.getTexture();
+        if (texture == null) {
+            return null;
         }
-        float[] rcColor = modelComponent.getRcColor();
-        if (rcColor != null) {
-            builder = builder.tintColor(rcColor);
+        PortRenderPass renderPass = modelComponent.getRenderType(texture);
+        boolean isSolid = modelComponent.isSolid();
+
+        if (modelComponent.usesColorMask()) {
+            float[] color = RenderPorts.get().renderSystemPort().getEntityTintColor(data.entity());
+            if (color != null) {
+                io.github.tt432.eyelib.util.PortResourceLocation colorMaskTexture =
+                        io.github.tt432.eyelib.bridge.client.render.texture.NativeImagePort.colorMaskTexture(texture, color);
+                if (colorMaskTexture != null) {
+                    PortRenderPass colorMaskPass = modelComponent.getRenderType(colorMaskTexture);
+                    if (colorMaskPass != null) {
+                        texture = colorMaskTexture;
+                        renderPass = colorMaskPass;
+                    }
+                }
+            }
         }
+
+        if (renderPass == null) {
+            return null;
+        }
+        return new RenderOutput(renderPass, texture, isSolid);
+    }
+
+    /**
+     * 用 sink 回调提供的 consumer 构造 RenderParams。output 为 null 时构造无渲染（consumer=null）的 params。
+     */
+    private static RenderParams buildRenderParams(PoseStack poseStack, SimpleRenderAction<?> data, ModelComponent modelComponent,
+                                                  @Nullable RenderOutput output, @Nullable VertexConsumer consumer) {
+        RenderParams.Builder builder = output != null
+                ? RenderParams.builder(poseStack, output.renderPass(), output.isSolid(), output.texture(), consumer)
+                : RenderParams.builder(poseStack, null, modelComponent.isSolid(), null, null);
         return builder
                 .entity(data.entity())
                 .overlay(data.overlay())
                 .light(modelComponent.isIgnoreLighting() ? EntityRenderPorts.RenderSystemPort.FULL_BRIGHT : data.packedLight())
                 .partVisibility(modelComponent.getPartVisibility())
+                .tintColor(modelComponent.getRcColor())
                 .build();
+    }
+
+    private record RenderOutput(
+            PortRenderPass renderPass,
+            io.github.tt432.eyelib.util.PortResourceLocation texture,
+            boolean isSolid
+    ) {
     }
 }

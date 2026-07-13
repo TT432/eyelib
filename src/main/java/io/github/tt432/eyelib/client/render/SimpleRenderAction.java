@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
+import io.github.tt432.eyelib.bridge.client.render.RenderSink;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.animation.AnimationComponent;
 import io.github.tt432.eyelib.animation.AnimationEffects;
@@ -19,6 +20,7 @@ import org.jspecify.annotations.Nullable;
 @With
 public record SimpleRenderAction<T>(
         MultiBufferSource multiBufferSource,
+        RenderSink sink,
         PoseStack poseStack,
         RenderData<T> renderData,
         float partialTick,
@@ -29,8 +31,8 @@ public record SimpleRenderAction<T>(
         @Nullable AnimationEffects effects,
         Builder.ExtraRender<T> extraRender
 ) {
-    public static <T> Builder<T> builder(MultiBufferSource multiBufferSource, PoseStack poseStack, RenderData<T> renderData, float partialTick) {
-        return new Builder<>(multiBufferSource, poseStack, renderData, partialTick);
+    public static <T> Builder<T> builder(MultiBufferSource multiBufferSource, RenderSink sink, PoseStack poseStack, RenderData<T> renderData, float partialTick) {
+        return new Builder<>(multiBufferSource, sink, poseStack, renderData, partialTick);
     }
 
     public boolean render() {
@@ -43,6 +45,7 @@ public record SimpleRenderAction<T>(
 
     public static class Builder<T> {
         MultiBufferSource multiBufferSource;
+        RenderSink sink;
         PoseStack poseStack;
         RenderData<T> renderData;
         float partialTick;
@@ -55,8 +58,9 @@ public record SimpleRenderAction<T>(
         ExtraRender<T> extraRender = (context, action) -> {
         };
 
-        public Builder(MultiBufferSource multiBufferSource, PoseStack poseStack, RenderData<T> renderData, float partialTick) {
+        public Builder(MultiBufferSource multiBufferSource, RenderSink sink, PoseStack poseStack, RenderData<T> renderData, float partialTick) {
             this.multiBufferSource = multiBufferSource;
+            this.sink = sink;
             this.poseStack = poseStack;
             this.partialTick = partialTick;
             this.renderData = renderData;
@@ -97,8 +101,7 @@ public record SimpleRenderAction<T>(
         }
 
         public SimpleRenderAction<T> build() {
-            return new SimpleRenderAction<>(multiBufferSource, poseStack, renderData, partialTick, light, overlay, entity, tickedInfos, effects, extraRender);
+            return new SimpleRenderAction<>(multiBufferSource, sink, poseStack, renderData, partialTick, light, overlay, entity, tickedInfos, effects, extraRender);
         }
     }
 }
-

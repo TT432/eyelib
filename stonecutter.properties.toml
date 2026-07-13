@@ -19,7 +19,7 @@ parchment_mappings_version = "2024.11.17"
 
 ["26.1.2"]
 minecraft_version = "26.1.2"
-neoforge_version = "26.1.2.76"
+neoforge_version = "26.1.2.78"
 minecraft_version_range = "[26.1.2, 26.2)"
 loader_version_range = "[4,)"
 java_version = "25"

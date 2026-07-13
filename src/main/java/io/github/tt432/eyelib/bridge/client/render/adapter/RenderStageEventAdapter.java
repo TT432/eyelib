@@ -54,12 +54,8 @@ public final class RenderStageEventAdapter {
 
         RenderStageRegistries.renderStage().dispatch(partialTick, position.x, position.y, position.z);
 
-        var sharedBuffer = new com.mojang.blaze3d.vertex.ByteBufferBuilder(786432);
-        MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(sharedBuffer);
-        RenderPorts.get().renderBufferPort().renderEntities(
-                partialTick, position.x, position.y, position.z, event.getPoseStack(), bufferSource);
-        try { bufferSource.endBatch(); } catch (Throwable ignored) {}
-        sharedBuffer.close();
+        // >=26.1 实体渲染由 RenderLivingEventAdapter 经 RenderSink(submitCustomGeometry) 延迟提交，
+        // 此处不再做全局批量绘制（否则与 per-entity 路径双重渲染）。仅保留 FramePipeline dispatch。
     }
     //?}
 }

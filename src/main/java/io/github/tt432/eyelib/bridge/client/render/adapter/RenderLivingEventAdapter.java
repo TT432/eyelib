@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.bridge.client.render.adapter;
 
 import io.github.tt432.eyelib.bridge.client.RenderEntityParams;
+import io.github.tt432.eyelib.bridge.client.render.RenderSink;
 //? if <26.1 {
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.EntityModel;
@@ -51,8 +52,7 @@ public final class RenderLivingEventAdapter {
         LivingEntity entity = event.getEntity();
         int overlay = LivingEntityRenderer.getOverlayCoords(entity,
                 ((LivingEntityRendererAccessor) event.getRenderer()).callGetWhiteOverlayProgress(entity, event.getPartialTick()));
-
-        var params = new RenderEntityParams(entity, event.getMultiBufferSource(), event.getPoseStack(),
+        var params = new RenderEntityParams(entity, event.getMultiBufferSource(), RenderSink.of(event.getMultiBufferSource()), event.getPoseStack(),
                                             event.getPackedLight(), event.getPartialTick(), overlay);
         if (RenderPorts.get().renderEntityPort().render(params)) {
             event.setCanceled(true);
@@ -66,15 +66,14 @@ public final class RenderLivingEventAdapter {
         LivingEntity entity = findEntityByRenderState(state.entityType, state.x, state.y, state.z, event.getPartialTick());
         if (entity == null) return;
 
-        com.mojang.blaze3d.vertex.ByteBufferBuilder byteBufferBuilder = new com.mojang.blaze3d.vertex.ByteBufferBuilder(786432);
-        MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(byteBufferBuilder);
+        // 几何走 RenderSink 延迟提交（submitCustomGeometry，renderAllFeatures 阶段绘制）；
+        // multiBufferSource 仅用于手持物等附属渲染（>=26.1 renderItemDirect 为空实现）。
+        MultiBufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
 
-        var params = new RenderEntityParams(entity, bufferSource, event.getPoseStack(),
+        var params = new RenderEntityParams(entity, bufferSource, RenderSink.of(event.getSubmitNodeCollector()), event.getPoseStack(),
                                             state.lightCoords, event.getPartialTick(), OverlayTexture.NO_OVERLAY);
         boolean rendered = RenderPorts.get().renderEntityPort().render(params);
 
-        bufferSource.endBatch();
-        byteBufferBuilder.close();
         if (rendered) event.setCanceled(true);
     }
 

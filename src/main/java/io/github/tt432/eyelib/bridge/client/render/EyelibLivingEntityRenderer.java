@@ -60,7 +60,7 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
     public void render(T entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         int overlay = LivingEntityRenderer.getOverlayCoords(entity, getWhiteOverlayProgress(entity, partialTicks));
         RenderPorts.get().renderEntityPort().render(
-                new RenderEntityParams(entity, buffer, poseStack, packedLight, partialTicks, overlay));
+                new RenderEntityParams(entity, buffer, RenderSink.of(buffer), poseStack, packedLight, partialTicks, overlay));
     }
 
     public static class EmptyEntityModel<T extends Entity> extends EntityModel<T> {
@@ -116,7 +116,7 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
         ByteBufferBuilder byteBufferBuilder = new ByteBufferBuilder(786432);
         MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(byteBufferBuilder);
         RenderPorts.get().renderEntityPort().render(
-                new RenderEntityParams(entity, bufferSource, poseStack, state.lightCoords, state.partialTick, overlay));
+                new RenderEntityParams(entity, bufferSource, RenderSink.of(submitNodeCollector), poseStack, state.lightCoords, state.partialTick, overlay));
         bufferSource.endBatch();
         byteBufferBuilder.close();
     }

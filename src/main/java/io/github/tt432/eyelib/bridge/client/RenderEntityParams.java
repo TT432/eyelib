@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.bridge.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.tt432.eyelib.bridge.client.render.RenderSink;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.Entity;
 
@@ -13,6 +14,7 @@ import net.minecraft.world.entity.Entity;
 public record RenderEntityParams(
         Entity entity,
         MultiBufferSource multiBufferSource,
+        RenderSink sink,
         PoseStack poseStack,
         int packedLight,
         float partialTick,
