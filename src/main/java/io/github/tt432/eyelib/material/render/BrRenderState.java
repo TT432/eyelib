@@ -32,9 +32,17 @@ public record BrRenderState(
         return blend.filter(value -> !value.isDefaultTranslucent()).isPresent()
                 || depth.func().filter(func -> func != DepthFunc.LessEqual).isPresent()
                 || !depth.test()
-                || !writeMask.writeColor()
-                || !writeMask.writeDepth()
-                || stencil.isPresent();
+                || !writeMask().writeColor()
+                || !writeMask().writeDepth()
+                || stencil.isPresent()
+                //? if >=26.1 {
+                // 26.1.2 vanilla RenderTypes 缺 entityTranslucentCull(plain)/无剔除 entitySolid，
+                // 这些 cull 组合 vanilla 路径无法表达，须走 custom buildPipeline（.withCull 正确处理）。
+                // ALPHA_TEST 的 entityCutout/entityCutoutCull 两值 vanilla 都有，无需走 custom。
+                || (transparency == Transparency.BLEND && cull)
+                || (transparency == Transparency.NONE && !cull)
+                //?}
+                ;
     }
 
     public enum SurfaceClass {
