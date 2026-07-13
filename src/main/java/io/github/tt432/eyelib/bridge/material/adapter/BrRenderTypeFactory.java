@@ -206,6 +206,9 @@ public final class BrRenderTypeFactory {
         RenderPipeline.Builder builder = RenderPipeline.builder(baseSnippet)
                 .withLocation(Identifier.parse("eyelib:material_" + Integer.toHexString(state.hashCode())))
                 .withCull(state.cull())
+                // entity shader 在 !NO_OVERLAY 时声明 Sampler1(overlay 纹理)；BrRenderStateFactory 强制 overlay=true，
+                // 故 pipeline 必须声明 Sampler1，否则 shader 读未绑定 sampler → 全黑。vanilla 所有实体 pipeline 均如此。
+                .withSampler("Sampler1")
                 .withColorTargetState(buildColorTargetState(state))
                 .withDepthStencilState(Optional.of(buildDepthStencilState(state)));
         if (isCutout(state.surfaceClass())) {
