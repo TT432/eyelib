@@ -58,5 +58,30 @@ public abstract class TextureManagerMixin {
             cir.setReturnValue(texture);
         }
     }
+    //?} else {
+    @Shadow
+    private Map<Identifier, AbstractTexture> byPath;
+
+    @Shadow
+    public abstract void register(Identifier path, AbstractTexture texture);
+
+    @Inject(
+            method = "getTexture(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/renderer/texture/AbstractTexture;",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private void eyelib$addonTexture(Identifier path, CallbackInfoReturnable<AbstractTexture> cir) {
+        if (this.byPath.get(path) != null) {
+            return;
+        }
+
+        ImportedImageData addonData = AddonTextureRegistry.get(path.getPath());
+        if (addonData != null) {
+            NativeImage image = NativeImageIO.fromImportedImageData(addonData);
+            DynamicTexture texture = new DynamicTexture(() -> "eyelib addon texture", image);
+            this.register(path, texture);
+            cir.setReturnValue(texture);
+        }
+    }
     //?}
 }

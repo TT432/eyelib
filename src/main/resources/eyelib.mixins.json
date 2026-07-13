@@ -26,6 +26,7 @@
     //?}
   ],
   "client": [
+    "client.TextureManagerMixin",
     //? if !modern {
     "LivingEntityRendererAccessor",
     "HumanoidModelMixin",
@@ -33,7 +34,6 @@
     "client.ItemInHandRendererMixin",
     "client.HumanoidArmorLayerMixin",
     "attachment.MultiPlayerGameModeMixin",
-    "client.TextureManagerMixin",
     //?}
   ],
   "injectors": {
