@@ -10,6 +10,8 @@ import io.github.tt432.eyelib.animation.BrAnimator;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.molang.MolangScope;
+//? if >=26.1
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.InteractionHand;
@@ -24,15 +26,41 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * 注入 ItemInHandRenderer，为手持 attachable 物品提供通用渲染（覆盖所有 LivingEntity）。
  *
+ * <p>跨版本签名差异（ADR-0016 //? 切分）：
+ * <ul>
+ *   <li>&lt;26.1：{@code renderItem(LivingEntity, ItemStack, ItemDisplayContext, boolean left, PoseStack, MultiBufferSource, int)}</li>
+ *   <li>&gt;=26.1：{@code renderItem(LivingEntity, ItemStack, ItemDisplayContext, PoseStack, SubmitNodeCollector, int)}，
+ *       移除 {@code boolean left}（左右手从 {@link ItemDisplayContext} 推断），{@code MultiBufferSource}→{@code SubmitNodeCollector}</li>
+ * </ul>
+ * &gt;=26.1 下 attachable 模型渲染使用全局 bufferSource（与 RenderLivingEventAdapter 一致）。
+ *
  * @author TT432
  */
 @Mixin(ItemInHandRenderer.class)
 public class ItemInHandRendererMixin {
 
+    //? if <26.1 {
     @Inject(method = "renderItem", at = @At("HEAD"), cancellable = true)
     private void onRenderItem(LivingEntity entity, ItemStack stack, ItemDisplayContext context,
                               boolean left, PoseStack poseStack, MultiBufferSource buffer,
                               int light, CallbackInfo ci) {
+        tryRenderAttachable(entity, stack, left, poseStack, buffer, light, ci);
+    }
+    //?} else {
+    @Inject(method = "renderItem", at = @At("HEAD"), cancellable = true)
+    private void onRenderItem(LivingEntity entity, ItemStack stack, ItemDisplayContext context,
+                              PoseStack poseStack, SubmitNodeCollector submitNodeCollector,
+                              int light, CallbackInfo ci) {
+        boolean left = context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND
+                    || context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
+        MultiBufferSource buffer = net.minecraft.client.Minecraft.getInstance().renderBuffers().bufferSource();
+        tryRenderAttachable(entity, stack, left, poseStack, buffer, light, ci);
+    }
+    //?}
+
+    private void tryRenderAttachable(LivingEntity entity, ItemStack stack, boolean left,
+                                     PoseStack poseStack, MultiBufferSource buffer,
+                                     int light, CallbackInfo ci) {
         BrClientEntity attachable = AttachableResolver.resolve(entity, stack);
         if (attachable == null) {
             return;
