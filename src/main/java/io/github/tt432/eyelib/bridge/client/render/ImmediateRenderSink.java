@@ -14,7 +14,7 @@ import net.minecraft.client.renderer.RenderType;
  *
  * <p>{@code submit} 同步从 {@link MultiBufferSource} 取 VertexConsumer 并执行 writer；
  * {@code flush} 在底层是 {@link MultiBufferSource.BufferSource} 时执行 {@code endBatch()} 触发立即绘制。
- * 行为与改造前的 getBuffer + 写 + flushBuffer 一致。
+ * 行为与改造前的 getBuffer + 写 + endBatch 一致。
  *
  * @author TT432
  */
@@ -38,6 +38,11 @@ final class ImmediateRenderSink implements RenderSink {
         if (bufferSource instanceof MultiBufferSource.BufferSource bs) {
             bs.endBatch();
         }
+    }
+
+    @Override
+    public MultiBufferSource multiBufferSource() {
+        return bufferSource;
     }
 }
 //?}

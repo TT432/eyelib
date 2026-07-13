@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.bridge.client.adapter;
 
 import io.github.tt432.eyelib.bridge.client.RenderEntityParams;
+import io.github.tt432.eyelib.bridge.client.render.RenderSink;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -60,9 +61,7 @@ public final class EntityRenderPorts {
         void pushPoseRaw(PoseStack poseStack, PoseStack.Pose pose);
 
         void renderItemDirect(LivingEntity le, ItemStack item, ItemDisplayContext context,
-                              boolean left, PoseStack poseStack, MultiBufferSource bufferSource, int light);
-
-        void flushBuffer(MultiBufferSource source);
+                              boolean left, PoseStack poseStack, RenderSink sink, int light);
 
         /**
          * 将 MC {@link EquipmentSlot} 翻译为 Bedrock {@code context.item_slot} 字符串。

@@ -67,7 +67,7 @@ public final class RenderLivingEventAdapter {
         if (entity == null) return;
 
         // 几何走 RenderSink 延迟提交（submitCustomGeometry，renderAllFeatures 阶段绘制）；
-        // multiBufferSource 仅用于手持物等附属渲染（>=26.1 renderItemDirect 为空实现）。
+        // multiBufferSource 仅用于手持物等附属渲染。
         MultiBufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
 
         var params = new RenderEntityParams(entity, bufferSource, RenderSink.of(event.getSubmitNodeCollector()), event.getPoseStack(),

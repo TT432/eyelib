@@ -50,5 +50,10 @@ final class DeferredRenderSink implements RenderSink {
     public void flush() {
         // 无操作：每个 submit 回调内已立即绘制。
     }
+
+    @Override
+    public SubmitNodeCollector submitNodeCollector() {
+        return collector;
+    }
 }
 //?}

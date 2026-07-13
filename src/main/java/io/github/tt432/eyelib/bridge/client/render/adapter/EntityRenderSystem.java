@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.bridge.client.render.adapter;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
+import io.github.tt432.eyelib.bridge.client.render.RenderSink;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -82,19 +83,13 @@ public final class EntityRenderSystem implements EntityRenderPorts.RenderSystemP
 
     @Override
     public void renderItemDirect(LivingEntity le, ItemStack item, ItemDisplayContext context,
-                                 boolean left, PoseStack poseStack, MultiBufferSource bufferSource, int light) {
+                                 boolean left, PoseStack poseStack, RenderSink sink, int light) {
         //? if <26.1 {
         Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer()
-                  .renderItem(le, item, context, left, poseStack, bufferSource, light);
-        //?}
-    }
-
-    @Override
-    public void flushBuffer(MultiBufferSource source) {
-        //? if <26.1 {
-        if (source instanceof MultiBufferSource.BufferSource bs) {
-            bs.endBatch();
-        }
+                  .renderItem(le, item, context, left, poseStack, sink.multiBufferSource(), light);
+        //?} else {
+        Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer()
+                  .renderItem(le, item, context, poseStack, sink.submitNodeCollector(), light);
         //?}
     }
 

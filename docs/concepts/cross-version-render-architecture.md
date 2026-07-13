@@ -346,13 +346,11 @@ static void vertex(VertexConsumer, x,y,z, r,g,b,a, u,v, overlay, light, nx,ny,nz
 
 若采纳 §7.1 方案 2（纯 submit），需重构 submit 为收集 `SubmitNode` + 共享 buffer，而非 immediate。若采纳方案 1/3，则 submit 可保持 thin。
 
-### 7.3【中风险】26.1.2 renderItemDirect / flushBuffer 为空
+### 7.3【已解决】26.1.2 renderItemDirect / flushBuffer
 
-`EntityRenderSystem.renderItemDirect`（行 86-89）与 `flushBuffer`（行 93-99）的 `>=26.1` 分支**方法体为空**。意味着 26.1.2 下：
-- 手持物渲染（`renderItemInHand`→`renderHandItem`→`renderItemDirect`）不会执行
-- buffer flush 不执行
-
-这是 26.1.2 未完成的子路径，待执行工作单元补全（26.1.2 物品渲染需走新的 `ItemRenderer` / SubmitNode 路径）。
+**已解决**（见 §11 实现状态）：
+- `renderItemDirect` 26.1.2 分支补全：vanilla `ItemInHandRenderer.renderItem` 签名在 26.1.2 变更为 `(LivingEntity, ItemStack, ItemDisplayContext, PoseStack, SubmitNodeCollector, int)`——移除 `boolean left`、`MultiBufferSource`→`SubmitNodeCollector`。`renderItemDirect` 接口改为接收 `RenderSink`（eyelib 抽象），bridge 实现按版本从 sink 取底层 vanilla 渲染目标（`<26.1 sink.multiBufferSource()` / `>=26.1 sink.submitNodeCollector()`）。application 层零 `//?`。
+- `flushBuffer`：确认为死代码（RenderSink 改造后 flush 逻辑移入 `ImmediateRenderSink.flush()`，零调用者），接口方法与实现已删除。
 
 ### 7.4【低风险/债务】ADR-0016 过渡期债务
 
@@ -414,7 +412,7 @@ eyelib 的跨版本渲染流程**架构骨架已就位且自洽**：Domain（零
 | 执行项 | 性质 | 前置 | 风险 |
 |--------|------|------|------|
 | 26.1.2 双重渲染决策（§7.1 方案 1/2/3） | 设计决策 | runClient（OOM 解决后） | 高 |
-| 26.1.2 renderItemDirect/flushBuffer 补全（§7.3） | 实现补全 | runClient | 中 |
+| ~~26.1.2 renderItemDirect/flushBuffer 补全（§7.3）~~ | ~~实现补全~~ | ✅ 已解决 | — |
 | ADR-0016 渲染相关债务偿还（§7.4） | 重构 | 独立工作单元 | 低 |
 
 > 本设计文档作为后续执行工作单元的规格基准。每个执行项应另起 `work/<task>/` 规格，引用本文档相应章节。
@@ -429,7 +427,7 @@ eyelib 的跨版本渲染流程**架构骨架已就位且自洽**：Domain（零
 |---|---|---|
 | §7.1 双重渲染（submit + renderBufferPort 重叠） | 引入 `RenderSink` 兼容层：`>=26.1` per-entity submit 走 `DeferredRenderSink`（`submitCustomGeometry` 延迟到 `renderAllFeatures` 绘制）；`RenderStageEventAdapter` 在 `>=26.1` 移除 `renderBufferPort.renderEntities()` 全局批量路径 | `9cd2413d` |
 | §7.2 submit 丧失批量（每实体 immediate） | `DeferredRenderSink` 不再每实体 immediate endBatch，而是把几何提交到 `SubmitNodeCollector`，由 vanilla `CustomFeatureRenderer` 在 `renderAllFeatures` 按 `RenderType` 批量绘制 | `9cd2413d` / `b4a67086` |
-| §7.3 renderItemDirect / flushBuffer 为空 | 26.1.2 物品渲染路径仍待补（未在本批解决），但实体几何主路径已完整 | — |
+| §7.3 renderItemDirect / flushBuffer 为空 | renderItemDirect 改为接收 `RenderSink`，26.1.2 经 `sink.submitNodeCollector()` 传递 vanilla `SubmitNodeCollector`（renderItem 签名变更：移除 left、MultiBufferSource→SubmitNodeCollector）；flushBuffer 确认为死代码已删除 | 本次提交 |
 | §8 26.1.2 OOM 阻塞运行验证 | OOM 已解决（NeoForge 升至 26.1.2.78）；26.1.2 runClient 正常进世界，实体渲染已验证（纹理、剔除、光照均与 1.20.1 一致） | `53045fe5` / `338e0913` 等 |
 
 **RenderSink 设计要点**（本文档写定时尚不存在，事后补记）：

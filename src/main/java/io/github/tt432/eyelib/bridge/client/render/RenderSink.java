@@ -44,6 +44,16 @@ public interface RenderSink {
     void flush();
 
     /**
+     * 返回底层 vanilla 渲染目标，供附属渲染（如手持物品）直接调用 vanilla API。
+     * <p>&lt;26.1 返回 {@link MultiBufferSource}，&gt;=26.1 返回 {@link SubmitNodeCollector}。
+     */
+    //? if <26.1 {
+    MultiBufferSource multiBufferSource();
+    //?} else {
+    SubmitNodeCollector submitNodeCollector();
+    //?}
+
+    /**
      * 顶点生成回调：把几何写入给定 VertexConsumer。
      */
     @FunctionalInterface

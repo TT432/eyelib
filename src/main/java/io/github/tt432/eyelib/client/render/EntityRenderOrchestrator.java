@@ -14,6 +14,7 @@ import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
 import io.github.tt432.eyelib.bridge.client.ClientTickPort;
 import io.github.tt432.eyelib.bridge.client.RenderEntityParams;
 import io.github.tt432.eyelib.bridge.client.render.adapter.RenderPorts;
+import io.github.tt432.eyelib.bridge.client.render.RenderSink;
 import io.github.tt432.eyelib.model.ModelVisitContext;
 import io.github.tt432.eyelib.bridge.molang.ComponentStoreView;
 import io.github.tt432.eyelib.bridge.molang.MolangContextPort;
@@ -259,7 +260,7 @@ public final class EntityRenderOrchestrator {
         if (offHandPose != null) {
             RenderPorts.get().renderSystemPort().pushPoseRaw(poseStack, offHandPose);
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.OFF_HAND);
-            renderHandItemOrAttachable(action.multiBufferSource(), renderTarget, itemInHand,
+            renderHandItemOrAttachable(action.multiBufferSource(), action.sink(), renderTarget, itemInHand,
                     ItemDisplayContext.THIRD_PERSON_LEFT_HAND, light, poseStack, true, InteractionHand.OFF_HAND);
         }
 
@@ -267,14 +268,14 @@ public final class EntityRenderOrchestrator {
         if (mainHandPose != null) {
             RenderPorts.get().renderSystemPort().pushPoseRaw(poseStack, mainHandPose);
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.MAIN_HAND);
-            renderHandItemOrAttachable(action.multiBufferSource(), renderTarget, itemInHand,
+            renderHandItemOrAttachable(action.multiBufferSource(), action.sink(), renderTarget, itemInHand,
                     ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, poseStack, false, InteractionHand.MAIN_HAND);
         }
 
         return true;
     }
 
-    private static void renderHandItemOrAttachable(MultiBufferSource bufferSource, LivingEntity le, ItemStack item,
+    private static void renderHandItemOrAttachable(MultiBufferSource bufferSource, RenderSink sink, LivingEntity le, ItemStack item,
                                                    ItemDisplayContext context, int light, PoseStack poseStack,
                                                    boolean left, InteractionHand hand) {
         if (item.isEmpty()) {
@@ -289,10 +290,10 @@ public final class EntityRenderOrchestrator {
             return;
         }
 
-        renderHandItem(bufferSource, le, item, context, light, poseStack, left);
+        renderHandItem(sink, le, item, context, light, poseStack, left);
     }
 
-    private static void renderHandItem(MultiBufferSource bufferSource, LivingEntity le, ItemStack item,
+    private static void renderHandItem(RenderSink sink, LivingEntity le, ItemStack item,
                                        ItemDisplayContext context, int light, PoseStack poseStack, boolean left) {
         if (!item.isEmpty()) {
             poseStack.pushPose();
@@ -300,7 +301,7 @@ public final class EntityRenderOrchestrator {
             poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
             poseStack.translate(-0.25, 0.1, -1.15);
-            RenderPorts.get().renderSystemPort().renderItemDirect(le, item, context, left, poseStack, bufferSource, light);
+            RenderPorts.get().renderSystemPort().renderItemDirect(le, item, context, left, poseStack, sink, light);
             poseStack.popPose();
         }
     }
