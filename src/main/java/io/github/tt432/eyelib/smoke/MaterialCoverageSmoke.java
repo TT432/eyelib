@@ -67,8 +67,8 @@ public class MaterialCoverageSmoke {
 
         // === M3: 验证材质继承链解析正确（spider → entity_alphatest → ALPHA_TEST）===
         {
-            BrMaterialEntry spider = BrMaterialResolver.find(materials, "spider").orElse(null);
-            require(spider != null, "spider material must exist");
+            BrMaterialEntry spider = BrMaterialResolver.find(materials, "spider")
+                    .orElseThrow(() -> new AssertionError("spider material must exist"));
             ResolvedBrMaterial resolved = BrMaterialResolver.resolve(spider, materials);
             require(resolved.hasDefine("ALPHA_TEST"),
                     "spider must resolve ALPHA_TEST via entity_alphatest inheritance; got defines=" + resolved.defines());
@@ -76,8 +76,8 @@ public class MaterialCoverageSmoke {
 
         // === M4: 验证 emissive 材质继承链（entity_emissive → USE_EMISSIVE）===
         {
-            BrMaterialEntry emissive = BrMaterialResolver.find(materials, "entity_emissive").orElse(null);
-            require(emissive != null, "entity_emissive material must exist");
+            BrMaterialEntry emissive = BrMaterialResolver.find(materials, "entity_emissive")
+                    .orElseThrow(() -> new AssertionError("entity_emissive material must exist"));
             ResolvedBrMaterial resolved = BrMaterialResolver.resolve(emissive, materials);
             require(resolved.hasDefine("USE_EMISSIVE"),
                     "entity_emissive must resolve USE_EMISSIVE; got defines=" + resolved.defines());

@@ -34,6 +34,7 @@ public abstract class TextureManagerMixin {
 
     //? if <26.1 {
     @Shadow
+    @SuppressWarnings("NullAway")
     private Map<ResourceLocation, AbstractTexture> byPath;
 
     @Shadow

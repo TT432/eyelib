@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.importer.model.importer;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 全局纹理注册表：存储由 BedrockAddonLoader 解码的纹理数据（ImportedImageData）。
@@ -36,7 +37,7 @@ public final class AddonTextureRegistry {
      *
      * @return 解码数据，或 null
      */
-    public static ImportedImageData get(String path) {
+    public static @Nullable ImportedImageData get(String path) {
         return TEXTURES.get(path.toLowerCase(Locale.ROOT));
     }
 

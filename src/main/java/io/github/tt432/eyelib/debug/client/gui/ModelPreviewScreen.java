@@ -65,6 +65,7 @@ import java.util.Map;
  *
  * @author TT432
  */
+@org.jspecify.annotations.NullUnmarked
 public class ModelPreviewScreen extends ModalWorksurfaceScreen {
     @Nullable
     private EditBox searchBox;
