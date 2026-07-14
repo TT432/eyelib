@@ -65,6 +65,7 @@ public abstract class TextureManagerMixin {
     }
     //?} else {
     @Shadow
+    @SuppressWarnings("NullAway")
     private Map<Identifier, AbstractTexture> byPath;
 
     @Shadow

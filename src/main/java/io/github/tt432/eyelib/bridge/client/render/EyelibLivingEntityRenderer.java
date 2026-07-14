@@ -122,6 +122,7 @@ public class EyelibLivingEntityRenderer<T extends LivingEntity>
     }
 
     public static class EyelibEntityRenderState extends LivingEntityRenderState {
+        @SuppressWarnings("NullAway")
         public LivingEntity entity;
     }
 
