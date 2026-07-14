@@ -1,6 +1,6 @@
 plugins {
     id 'dev.kikugie.stonecutter'
-    id 'net.neoforged.moddev.legacyforge' version '2.0.91' apply false
+    id 'net.neoforged.moddev.legacyforge' version '2.0.102' apply false
     id 'net.neoforged.moddev' version '2.0.141' apply false
     id 'io.freefair.lombok' version '8.6' apply false
     id 'net.ltgt.errorprone' version '4.4.0' apply false
