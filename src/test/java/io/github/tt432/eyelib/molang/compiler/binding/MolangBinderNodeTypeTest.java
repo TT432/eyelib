@@ -191,6 +191,29 @@ class MolangBinderNodeTypeTest {
                     .anyMatch(d -> d.severity() == BindDiagnostic.Severity.ERROR),
                     "Writing to context should be ERROR severity");
         }
+
+        @Test void queryWriteProducesError() {
+            var r = bind("q.foo = 1");
+            assertFalse(r.diagnostics().isEmpty(),
+                    "Writing to query should produce diagnostic");
+            assertTrue(r.diagnostics().stream()
+                    .anyMatch(d -> d.severity() == BindDiagnostic.Severity.ERROR),
+                    "Writing to query should be ERROR severity");
+        }
+
+        @Test void tempWriteIsAllowed() {
+            var r = bind("t.foo = 1");
+            assertTrue(r.diagnostics().stream()
+                    .noneMatch(d -> d.severity() == BindDiagnostic.Severity.ERROR),
+                    "Writing to temp should not produce ERROR");
+        }
+
+        @Test void variableWriteIsAllowed() {
+            var r = bind("v.foo = 1");
+            assertTrue(r.diagnostics().stream()
+                    .noneMatch(d -> d.severity() == BindDiagnostic.Severity.ERROR),
+                    "Writing to variable should not produce ERROR");
+        }
     }
 
     @Nested
