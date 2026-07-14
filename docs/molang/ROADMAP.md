@@ -109,7 +109,7 @@ Before host/query bridge implementation starts, keep this roadmap and `refactor-
 
 ## Blocked / Deferred Decisions
 
-- Phase 4 MolangOwnerSet has been removed. HostContext exists in `mapping/api/HostContext.java` and now supports canonical `HostRole<T>` lookup alongside deprecated raw `Class<?>` lookup for transitional callers. Migration status: file deleted, semantic model partially migrated (type-safe HostRole<T> operational, downstream Class<?> callers still pending migration).
+- Phase 4 MolangOwnerSet has been removed. HostContext exists in `mapping/api/HostContext.java` and supports canonical `HostRole<T>` lookup. **Migration completed** (commit `98ed1de9`): all static `Class<?>` callers migrated to `HostRole<T>` across 14 files. Remaining `Class<?>` API is intentionally retained for two dynamic-resolution paths: `MolangRuntimeSupport.get(role.parameterType())` (callable parameter resolution) and `RenderData.put((Class<T>) owner.getClass(), owner)` (runtime owner type). `MolangScope.HostContext` bridges `get(Class<?>)` to also search `hostRoleStore`, ensuring interop.
 - All Phase 5/6 items resolved by the unified compile-then-execute refactor — see Phase 7 status above.
 
 ## Phase 4 Recorded Decisions And Required Test Surfaces
@@ -177,7 +177,7 @@ Target thresholds establish what "done" means before phase promotion.
 | Callable discovery roles | Bounded inference + loud ambiguity (tested) | 🔶 |
 | Query variant selection matrix | Explicit default-variant + equal-tie failure (tested) | 🔶 |
 | Bind-link contract | Stable candidateSetRef + registryVersionRef (tested) | 🔶 |
-| MolangOwnerSet→HostContext migration | migration plan documented (not yet performed) | ⬜ |
+| MolangOwnerSet→HostContext migration | All static Class<?> callers migrated to HostRole<T> (dynamic resolution paths intentionally retained) | ✅ |
 
 ### Phase 5 — Execution and Runtime Semantics (Superseded)
 
