@@ -121,7 +121,7 @@ Before host/query bridge implementation starts, keep this roadmap and `refactor-
 - Completed contract evidence: `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangHostPublicationDeterminismConflictTest.java` verifies deterministic publication order for the same mapping set and loud failure for unresolved equal-tie callable conflicts.
 - Completed contract evidence: `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangCallableDiscoveryRoleContractTest.java` verifies explicit special-role metadata publication, bounded first non-special receiver inference, and loud deterministic failure for ambiguous receiver inference.
 - Completed contract evidence: `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangQueryVariantSelectionMatrixContractTest.java` verifies query selection ordering (name, visible arity, visible compatibility, required host roles, specificity, priority), explicit lowest-specificity default-variant behavior, and loud failure for equal-specificity/equal-priority ambiguity.
-- Completed contract evidence: `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangCallableVariantSelectionAmbiguityContractTest.java` verifies variant-selection ambiguity handling, and `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangCallablePublicationSignatureRoleTest.java` verifies callable publication signature role stability. Bind-link contract tests (`MolangQueryBindLinkContractTest`, `MolangCallableBindLinkContractTest`) and animation-clock transitional parity test (`MolangAnimationClockTransitionalParityContractTest`) are NOT YET IMPLEMENTED (⬜).
+- Completed contract evidence: `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangCallableVariantSelectionAmbiguityContractTest.java` verifies variant-selection ambiguity handling, and `src/test/java/io/github/tt432/eyelib/molang/mapping/MolangCallablePublicationSignatureRoleTest.java` verifies callable publication signature role stability. Animation-clock transitional parity test (`MolangAnimationClockTransitionalParityContractTest`) is COMPLETED (✅), verifying HostRole put ↔ Class<?> get bridge interop. Bind-link contract tests (`MolangQueryBindLinkContractTest`, `MolangCallableBindLinkContractTest`) are NOT YET IMPLEMENTED (⬜).
 
 ## Refactor Plan Execution Record (2026-05-03)
 
@@ -172,7 +172,7 @@ Target thresholds establish what "done" means before phase promotion.
 
 | KR | Threshold | Status |
 |---|---|---|
-| Contract test count | ≥5 contract test classes green | 🔶 |
+| Contract test count | ≥5 contract test classes green | ✅ (6 green) |
 | Host publication determinism | Equal-tie conflict fails loudly (tested) | 🔶 |
 | Callable discovery roles | Bounded inference + loud ambiguity (tested) | 🔶 |
 | Query variant selection matrix | Explicit default-variant + equal-tie failure (tested) | 🔶 |
