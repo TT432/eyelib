@@ -173,9 +173,9 @@ Target thresholds establish what "done" means before phase promotion.
 | KR | Threshold | Status |
 |---|---|---|
 | Contract test count | ≥5 contract test classes green | ✅ (6 green) |
-| Host publication determinism | Equal-tie conflict fails loudly (tested) | 🔶 |
-| Callable discovery roles | Bounded inference + loud ambiguity (tested) | 🔶 |
-| Query variant selection matrix | Explicit default-variant + equal-tie failure (tested) | 🔶 |
+| Host publication determinism | Equal-tie conflict fails loudly (tested) | ✅ |
+| Callable discovery roles | Bounded inference + loud ambiguity (tested) | ✅ |
+| Query variant selection matrix | Explicit default-variant + equal-tie failure (tested) | ✅ |
 | Bind-link contract | Stable candidateSetRef + registryVersionRef (tested) | 🔶 |
 | MolangOwnerSet→HostContext migration | All static Class<?> callers migrated to HostRole<T> (dynamic resolution paths intentionally retained) | ✅ |
 
