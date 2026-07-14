@@ -164,7 +164,7 @@ Target thresholds establish what "done" means before phase promotion.
 |---|---|---|
 | Alias canonicalization coverage | All 4 alias roots (q/t/v/c) → canonical tested | ✅ |
 | Deferred reason granularity | ≥3 distinct reason types beyond UNSUPPORTED_IN_THIS_SLICE | ✅ |
-| Invalid-write diagnostics | All write-target errors tested (query/context/unknown) | 🔶 |
+| Invalid-write diagnostics | All write-target errors tested (query/context/temp/variable) | ✅ |
 | Strict/debug mode coverage | ≥5 distinct binder families tested per mode | ✅ |
 | Alias logic deduplication | ≤1 implementation location (shared module) | ✅ |
 
