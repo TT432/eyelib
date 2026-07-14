@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.smoke;
 import com.mojang.blaze3d.platform.NativeImage;
 import io.github.tt432.clientsmoke.runtime.ClientSmokeVisualHooks;
 import io.github.tt432.clientsmoke.runtime.EntitySceneRenderer;
+import io.github.tt432.eyelib.bridge.client.render.adapter.RenderLivingEventAdapter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -38,8 +39,12 @@ final class EntityCaptureBase {
 
         ClientSmokeVisualHooks.setScene(FBO_SIZE, FBO_SIZE, (m, rt) -> {
             EntitySceneRenderer.beginScene(m, rt, BG_ARGB);
-            EntitySceneRenderer.renderEntityAt(m, entity, ORIGIN_X, ORIGIN_Y, scale, yaw);
-            EntitySceneRenderer.endScene(m);
+            RenderLivingEventAdapter.suppressRenderEvents = true;
+            try {
+                EntitySceneRenderer.renderEntityAt(m, entity, ORIGIN_X, ORIGIN_Y, scale, yaw);
+            } finally {
+                RenderLivingEventAdapter.suppressRenderEvents = false;
+            }
         }, image -> {
             verifyNonEmpty(image, name);
         });

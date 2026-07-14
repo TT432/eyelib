@@ -43,10 +43,17 @@ public final class RenderLivingEventAdapter {
     private RenderLivingEventAdapter() {
     }
 
+    /**
+     * When true, skip entity render event processing to avoid interfering
+     * with SceneRenderer (clientsmoke FBO) entity rendering.
+     * Set by eyelib smoke tests around {@code EntitySceneRenderer.renderEntityAt}.
+     */
+    public static boolean suppressRenderEvents = false;
+
     //? if <26.1 {
     @SubscribeEvent
     public static <E extends LivingEntity, M extends EntityModel<E>> void onEvent(RenderLivingEvent.Pre<E, M> event) {
-        if (io.github.tt432.clientsmoke.runtime.ClientSmokeVisualHooks.isSuppressRenderEvents()) {
+        if (suppressRenderEvents) {
             return;
         }
         LivingEntity entity = event.getEntity();
