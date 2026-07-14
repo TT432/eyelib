@@ -146,7 +146,7 @@ Target thresholds establish what "done" means before phase promotion.
 |---|---|---|
 | Stable corpus case IDs | 100% phase1 cases have fixed IDs | ✅ |
 | Corpus linter zero errors | 0 lint errors on phase1 resources (valid corpus only; invalid*/ intentional test fixtures excluded) | ✅ |
-| Corpus parse runner | 100% phase1 cases pass parse | ⬜ |
+| Corpus parse runner | 100% phase1 cases pass parse (MolangCorpusHarnessTest green) | ✅ |
 | Phase1 corpus rows | ≥30 expression rows covering syntax baseline | ✅ |
 
 ### Phase 2 — Parser and AST
