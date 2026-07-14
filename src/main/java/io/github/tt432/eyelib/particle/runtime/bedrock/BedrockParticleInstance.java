@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.particle.runtime.bedrock;
 
 import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
 import io.github.tt432.eyelib.particle.runtime.bedrock.component.ParticleComponentManager;
 import io.github.tt432.eyelib.particle.runtime.bedrock.component.particle.ParticleParticleComponent;
 import io.github.tt432.eyelib.particle.runtime.support.ParticleBlackboard;
@@ -51,7 +52,7 @@ public final class BedrockParticleInstance implements ParticleParticleComponent.
         random3 = emitter.random().nextFloat();
         random4 = emitter.random().nextFloat();
         molangScope.setParent(emitter.molangScope());
-        molangScope.getHostContext().put(BedrockParticleInstance.class, this);
+        molangScope.getHostContext().put(HostRoles.PARTICLE_INSTANCE, this);
         emitter.definition().curves().forEach((key, curve) -> molangScope.set(key, () -> BedrockParticleEmitter.calculateCurve(curve, molangScope)));
         molangScope.set("variable.particle_age", this::age);
         molangScope.set("variable.particle_lifetime", this::lifetime);

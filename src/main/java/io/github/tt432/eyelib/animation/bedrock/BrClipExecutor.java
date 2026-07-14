@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.util.math.EyeMath;
 import io.github.tt432.eyelib.util.math.MathHelper;
 import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
 import org.joml.Vector3f;
 import java.util.Map;
 
@@ -25,7 +26,7 @@ final class BrClipExecutor {
             animationStartFeedback.run();
         }
 
-        scope.getHostContext().put(BrAnimationEntry.Data.class, data);
+        scope.getHostContext().put(HostRoles.ANIMATION_DATA, data);
         var animTimeUpdate = entry.anim_time_update().eval(scope);
         BrAnimationPlaybackState.TickResult tickResult = data.owner().playbackState().tick(entry.loop(), entry.animationLength(), ticks, animTimeUpdate);
         data.owner().syncStateFields();

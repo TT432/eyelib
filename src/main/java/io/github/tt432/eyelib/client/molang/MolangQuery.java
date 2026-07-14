@@ -11,6 +11,8 @@ import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
 import io.github.tt432.eyelib.behavior.component.MarkVariant;
 import io.github.tt432.eyelib.behavior.component.Variant;
 import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.mapping.api.HostRole;
+import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMapping;
 import lombok.AccessLevel;
@@ -31,30 +33,35 @@ import static io.github.tt432.eyelib.molang.MolangValue.TRUE;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @SuppressWarnings("unused")
 public final class MolangQuery {
+
+    private static final HostRole<Creeper> CREEPER = HostRole.of("Creeper", Creeper.class);
+    private static final HostRole<WitherBoss> WITHER_BOSS = HostRole.of("WitherBoss", WitherBoss.class);
+    private static final HostRole<Entity> ENTITY = HostRole.of("Entity", Entity.class);
+    private static final HostRole<LivingEntity> LIVING_ENTITY = HostRole.of("LivingEntity", LivingEntity.class);
     @MolangFunction(value = "anim_time", alias = "life_time", description = "动画播放秒数")
     public static float animTime(MolangScope scope) {
-        return scope.getHostContext().get(BrAnimationEntry.Data.class).map(BrAnimationEntry.Data::animTime)
-                    .orElseGet(() -> scope.getHostContext().get(BrAnimationController.Data.class)
+        return scope.getHostContext().get(HostRoles.ANIMATION_DATA).map(BrAnimationEntry.Data::animTime)
+                    .orElseGet(() -> scope.getHostContext().get(HostRoles.CONTROLLER_DATA)
                                           .map(BrAnimationController.Data::animTime).orElse(0F));
     }
 
     @MolangFunction(value = "delta_time", description = "距离上一帧的秒数")
     public static float deltaTime(MolangScope scope) {
-        return scope.getHostContext().get(BrAnimationEntry.Data.class).map(BrAnimationEntry.Data::deltaTime).orElse(0F);
+        return scope.getHostContext().get(HostRoles.ANIMATION_DATA).map(BrAnimationEntry.Data::deltaTime).orElse(0F);
     }
 
     @MolangFunction(value = "any_animation_finished", description = "任意动画播放完毕（动画控制器）")
     public static float anyAnimationFinished(MolangScope scope) {
-        return scope.getHostContext().get(BrAnimationController.class)
-                    .flatMap(c -> scope.getHostContext().get(BrAnimationController.Data.class)
+        return scope.getHostContext().get(HostRoles.ANIMATION_CONTROLLER)
+                    .flatMap(c -> scope.getHostContext().get(HostRoles.CONTROLLER_DATA)
                                        .map(c::anyAnimationFinished)
                     ).orElse(false) ? TRUE : FALSE;
     }
 
     @MolangFunction(value = "all_animations_finished", description = "所有动画播放完毕（动画控制器）")
     public static float allAnimationsFinished(MolangScope scope) {
-        return scope.getHostContext().get(BrAnimationController.class)
-                    .flatMap(c -> scope.getHostContext().get(BrAnimationController.Data.class)
+        return scope.getHostContext().get(HostRoles.ANIMATION_CONTROLLER)
+                    .flatMap(c -> scope.getHostContext().get(HostRoles.CONTROLLER_DATA)
                                        .map(c::allAnimationFinished)
                     ).orElse(false) ? TRUE : FALSE;
     }
@@ -128,8 +135,7 @@ public final class MolangQuery {
 
     @MolangFunction(value = "modified_distance_moved", description = "移动过的距离")
     public static float modifiedDistanceMoved(MolangScope scope) {
-        return scope.getHostContext()
-                    .get(Entity.class)
+        return scope.getHostContext().get(ENTITY)
                     .map(e -> DataAttachmentHelper.getOrCreate(DataAttachmentTypeRegistry.ENTITY_STATISTICS.get(), e)
                                                   .distanceWalked())
                     .orElse(0F);
@@ -156,34 +162,33 @@ public final class MolangQuery {
 
     @MolangFunction(value = "creeper_swell", alias = "swell_amount", description = "苦力怕爆炸计时")
     public static float creeperSwell(MolangScope scope) {
-        return scope.getHostContext().get(Creeper.class).map(creeper -> {
+        return scope.getHostContext().get(CREEPER).map(creeper -> {
                     return EntityStatePort.creeperSwell(creeper);
                 })
-                    .orElse(Float.valueOf(scope.getHostContext()
-                                                .get(WitherBoss.class)
+                    .orElse(Float.valueOf(scope.getHostContext().get(WITHER_BOSS)
                                                 .map(WitherBoss::getInvulnerableTicks)
                                                .orElse(0)));
     }
 
     private static float livingBool(MolangScope scope, ToBooleanFunction<LivingEntity> function) {
-        return scope.getHostContext().get(LivingEntity.class)
+        return scope.getHostContext().get(LIVING_ENTITY)
                     .map(l -> function.apply(l) ? TRUE : FALSE)
                     .orElse(0F);
     }
 
     private static float entityBool(MolangScope scope, ToBooleanFunction<Entity> function) {
-        return scope.getHostContext().get(Entity.class).map(l -> function.apply(l) ? TRUE : FALSE).orElse(0F);
+        return scope.getHostContext().get(ENTITY).map(l -> function.apply(l) ? TRUE : FALSE).orElse(0F);
     }
 
     private static float livingFloat(MolangScope scope, Function<LivingEntity, Float> function) {
-        return scope.getHostContext().get(LivingEntity.class)
+        return scope.getHostContext().get(LIVING_ENTITY)
                     .map(function)
                     .orElse(0F);
     }
 
     @MolangFunction(value = "equipped_item_is_attachable", description = "手持物品为 attachable")
     public static float equippedItemIsAttachable(MolangScope scope) {
-        return scope.getHostContext().get(LivingEntity.class)
+        return scope.getHostContext().get(LIVING_ENTITY)
                     .map(entity -> {
                         if (AttachableResolver.resolve(entity, entity.getMainHandItem()) != null
                                 || AttachableResolver.resolve(entity, entity.getOffhandItem()) != null) {

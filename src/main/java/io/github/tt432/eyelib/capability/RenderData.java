@@ -11,6 +11,7 @@ import io.github.tt432.eyelib.animation.AnimationComponentInfo;
 import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.mapping.api.HostRole;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.world.entity.Entity;
@@ -25,6 +26,9 @@ import java.util.Optional;
  */
 @Getter
 public class RenderData<T> {
+    @SuppressWarnings("unchecked")
+    private static final HostRole<RenderData<?>> RENDER_DATA =
+            HostRole.of("render_data", (Class<RenderData<?>>) (Class<?>) RenderData.class);
     public static <T> Codec<RenderData<T>> codec() {
         return RecordCodecBuilder.create(ins -> ins.group(
                 ModelComponentInfo.CODEC.listOf()
@@ -97,7 +101,7 @@ public class RenderData<T> {
     public void init(T owner) {
         this.owner = owner;
         scope = new MolangScope();
-        scope.getHostContext().put(RenderData.class, this);
+        scope.getHostContext().put(RENDER_DATA, this);
         if (owner != null) {
             scope.getHostContext().put((Class<T>) owner.getClass(), owner);
         }

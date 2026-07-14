@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.particle.runtime.bedrock;
 
 import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
 import io.github.tt432.eyelib.importer.particle.BrParticle;
 import io.github.tt432.eyelib.particle.runtime.ParticleDefinition;
 import io.github.tt432.eyelib.particle.runtime.bedrock.component.ParticleComponentManager;
@@ -74,7 +75,7 @@ public final class BedrockParticleEmitter implements EmitterParticleComponent.Em
         timer.start();
 
         parentScope.ifPresent(molangScope::setParent);
-        molangScope.getHostContext().put(BedrockParticleEmitter.class, this);
+        molangScope.getHostContext().put(HostRoles.PARTICLE_EMITTER, this);
         definition.curves().forEach((key, curve) -> molangScope.set(key, () -> calculateCurve(curve, molangScope)));
         molangScope.set("variable.emitter_age", this::age);
         molangScope.set("variable.emitter_lifetime", this::lifetimeSeconds);

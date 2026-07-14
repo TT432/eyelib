@@ -53,13 +53,19 @@ public final class MolangScope {
         @Override
         @SuppressWarnings("unchecked")
         public <T> Optional<T> get(Class<T> clazz) {
-            // 1. 先尝试精确匹配
+            // 1. 先尝试精确匹配 hostContextStore
             Object exact = hostContextStore.get(clazz);
             if (exact != null) {
                 return Optional.of((T) exact);
             }
-            // 2. 回退到超类/接口匹配（isInstance）
+            // 2. 回退到超类/接口匹配（isInstance）hostContextStore
             for (var entry : hostContextStore.entrySet()) {
+                if (clazz.isInstance(entry.getValue())) {
+                    return Optional.of((T) entry.getValue());
+                }
+            }
+            // 3. 回退到 hostRoleStore（兼容 HostRole put 的数据，确保 callable 参数解析正确）
+            for (var entry : hostRoleStore.entrySet()) {
                 if (clazz.isInstance(entry.getValue())) {
                     return Optional.of((T) entry.getValue());
                 }

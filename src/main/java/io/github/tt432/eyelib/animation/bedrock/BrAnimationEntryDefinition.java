@@ -10,6 +10,7 @@ import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.MolangValue;
+import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
 
 import io.github.tt432.eyelib.animation.SoundPlayer;
 import io.github.tt432.eyelib.molang.port.PortEntity;
@@ -41,7 +42,7 @@ public record BrAnimationEntryDefinition(
     private static SoundPlayer soundPlayer = (id, x, y, z, v, p) -> {};
 
     private static LocatorPositionProvider locatorProvider = (scope, locatorName) ->
-            scope.getHostContext().get(PortEntity.class)
+            scope.getHostContext().get(HostRoles.PORT_ENTITY)
                     .map(e -> new Vector3f(e.getX(), e.getY(), e.getZ()))
                     .orElse(new Vector3f());
 
@@ -91,8 +92,8 @@ public record BrAnimationEntryDefinition(
 
     public static AnimationEffect<BrEffectsKeyFrameDefinition> soundEffect(TreeMap<Float, List<BrEffectsKeyFrameDefinition>> data) {
         return new AnimationEffect<>(data, (scope, ticks, frame) -> {
-            scope.getHostContext().get(PortEntity.class).ifPresent(e ->
-                scope.getHostContext().get(BrClientEntity.class).ifPresent(clientEntity -> {
+            scope.getHostContext().get(HostRoles.PORT_ENTITY).ifPresent(e ->
+                scope.getHostContext().get(HostRoles.CLIENT_ENTITY).ifPresent(clientEntity -> {
                     String s = clientEntity.sound_effects().get(frame.effect());
 
                     if (s != null) {
@@ -105,13 +106,13 @@ public record BrAnimationEntryDefinition(
 
     public static AnimationEffect<BrEffectsKeyFrameDefinition> particleEffect(TreeMap<Float, List<BrEffectsKeyFrameDefinition>> data) {
         return new AnimationEffect<>(data, (scope, ticks, frame) -> {
-            scope.getHostContext().get(PortEntity.class).ifPresent(entity ->
-                scope.getHostContext().get(BrAnimationEntry.Data.class).ifPresent(animationData ->
-                    scope.getHostContext().get(BrClientEntity.class).ifPresent(clientEntity -> {
+            scope.getHostContext().get(HostRoles.PORT_ENTITY).ifPresent(entity ->
+                    scope.getHostContext().get(HostRoles.ANIMATION_DATA).ifPresent(animationData ->
+                    scope.getHostContext().get(HostRoles.CLIENT_ENTITY).ifPresent(clientEntity -> {
                         String s = clientEntity.particle_effects().get(frame.effect());
 
                         if (s != null) {
-                                AnimationParticleSpawner spawner = scope.getHostContext().get(AnimationParticleSpawner.class).orElse(null);
+                                AnimationParticleSpawner spawner = scope.getHostContext().get(HostRoles.ANIMATION_PARTICLE_SPAWNER).orElse(null);
                                 if (spawner != null) {
                                     String uuid = UUID.randomUUID().toString();
                                     Vector3f position = locatorProvider.resolve(scope, frame.locator().orElse(null));

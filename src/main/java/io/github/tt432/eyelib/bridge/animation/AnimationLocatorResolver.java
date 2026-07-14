@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.bridge.animation;
 
 import io.github.tt432.eyelib.animation.bedrock.BrAnimationEntryDefinition;
 import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.mapping.api.HostRole;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -16,13 +17,15 @@ import java.util.Map;
  * @author TT432
  */
 public interface AnimationLocatorResolver {
+    HostRole<Entity> ENTITY = HostRole.of("entity", Entity.class);
+
     public static void install() {
         BrAnimationEntryDefinition.installLocatorProvider(AnimationLocatorResolver::resolve);
     }
 
     @SuppressWarnings("unchecked")
     private static Vector3f resolve(MolangScope scope, @Nullable String locatorName) {
-        Entity entity = scope.getHostContext().get(Entity.class).orElse(null);
+        Entity entity = scope.getHostContext().get(ENTITY).orElse(null);
         if (entity == null) return new Vector3f();
 
         Vector3f fallback = entity.position().toVector3f();

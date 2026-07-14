@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.molang.compiler;
 
 import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
 import io.github.tt432.eyelib.molang.mapping.api.MolangFunction;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
@@ -143,7 +144,7 @@ public final class MolangRuntimeSupport {
     }
 
     private static Set<MolangFunction.ParameterRole> computeAvailableHostRoles(MolangScope scope) {
-        return scope.getHostContext().get(Object.class).isPresent()
+        return scope.getHostContext().get(HostRoles.HOST_PRESENCE_MARKER).isPresent()
                 ? HOST_ROLES_FULL
                 : HOST_ROLES_MINIMAL;
     }

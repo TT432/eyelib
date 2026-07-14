@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.client.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import io.github.tt432.eyelib.animation.AnimationEffects;
-import io.github.tt432.eyelib.animation.AnimationParticleSpawner;
 import io.github.tt432.eyelib.animation.BrAnimator;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
@@ -19,6 +18,8 @@ import io.github.tt432.eyelib.model.ModelVisitContext;
 import io.github.tt432.eyelib.bridge.molang.ComponentStoreView;
 import io.github.tt432.eyelib.bridge.molang.MolangContextPort;
 import io.github.tt432.eyelib.bridge.molang.MolangEntityContextView;
+import io.github.tt432.eyelib.molang.mapping.api.HostRole;
+import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
 import io.github.tt432.eyelib.bridge.particle.ParticlePort;
 import io.github.tt432.eyelib.capability.component.ClientEntityComponent;
 import io.github.tt432.eyelib.capability.component.ModelComponent;
@@ -72,6 +73,8 @@ import static net.minecraft.client.Minecraft.getInstance;
 public final class EntityRenderOrchestrator {
     private static final int leftitem = GlobalBoneIdHandler.get("leftitem");
     private static final int rightitem = GlobalBoneIdHandler.get("rightitem");
+    private static final HostRole<MolangEntityContextView> MOLANG_ENTITY_CONTEXT =
+            HostRole.of("molang_entity_context", MolangEntityContextView.class);
 
     private static volatile int renderCount = 0;
     private static volatile int errorCount = 0;
@@ -147,7 +150,7 @@ public final class EntityRenderOrchestrator {
                     scope.set("variable.attack_time", ((float) entity.swingTime) / entity.getCurrentSwingDuration());
 
                     scope.getHostContext()
-                         .put(AnimationParticleSpawner.class,
+                         .put(HostRoles.ANIMATION_PARTICLE_SPAWNER,
                                  new RootAnimationParticleSpawner(ParticlePort.getSpawnAdapter()));
 
                     ModelRuntimeData tickedInfos;
@@ -409,7 +412,7 @@ public final class EntityRenderOrchestrator {
         SyncedBehaviorState synced = DataAttachmentHelper.getOrNull(
                 DataAttachmentPort.syncedBehaviorState(), entity);
         if (synced == null) {
-            scope.getHostContext().remove(MolangEntityContextView.class);
+            scope.getHostContext().remove(MOLANG_ENTITY_CONTEXT);
             return;
         }
 
@@ -417,7 +420,7 @@ public final class EntityRenderOrchestrator {
         store.put("minecraft:variant", synced.variant());
         store.put("minecraft:mark_variant", synced.markVariant());
         store.put("minecraft:scale", synced.scale());
-        scope.getHostContext().put(MolangEntityContextView.class, MolangContextPort.newMolangEntityContext(store));
+        scope.getHostContext().put(MOLANG_ENTITY_CONTEXT, MolangContextPort.newMolangEntityContext(store));
     }
 
     static List<Runnable> setupClientEntity(Entity entity, RenderData<?> cap) {
@@ -504,13 +507,13 @@ public final class EntityRenderOrchestrator {
             ce.scripts().ifPresent(s -> cap.getAnimationComponent().setup(ce.animations(), s.animate()));
 
             if (cap.getScope() != null) {
-                cap.getScope().getHostContext().put(BrClientEntity.class, ce);
+                cap.getScope().getHostContext().put(HostRoles.CLIENT_ENTITY, ce);
             }
         } else {
             components.clear();
             renderControllerComponent.clear();
             if (cap.getScope() != null) {
-                cap.getScope().getHostContext().remove(BrClientEntity.class);
+                cap.getScope().getHostContext().remove(HostRoles.CLIENT_ENTITY);
             }
         }
 

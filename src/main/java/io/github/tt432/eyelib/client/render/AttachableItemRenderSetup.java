@@ -12,12 +12,13 @@ import io.github.tt432.eyelib.bridge.particle.ParticlePort;
 import io.github.tt432.eyelib.client.entity.AttachableResolver;
 import io.github.tt432.eyelib.animation.AnimationComponent;
 import io.github.tt432.eyelib.animation.AnimationEffects;
-import io.github.tt432.eyelib.animation.AnimationParticleSpawner;
 import io.github.tt432.eyelib.animation.BrAnimator;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.molang.type.MolangString;
+import io.github.tt432.eyelib.molang.mapping.api.HostRole;
+import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.Minecraft;
@@ -40,6 +41,8 @@ import java.util.Map;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class AttachableItemRenderSetup {
+    private static final HostRole<LivingEntity> LIVING_ENTITY = HostRole.of("LivingEntity", LivingEntity.class);
+    private static final HostRole<Entity> ENTITY = HostRole.of("Entity", Entity.class);
     private static final Map<LivingEntity, EnumMap<EquipmentSlot, RenderData<ItemStack>>> CACHE = new HashMap<>();
 
     @Nullable
@@ -69,9 +72,9 @@ public final class AttachableItemRenderSetup {
 
         var scope = rd.getScope();
         if (scope != null) {
-            scope.getHostContext().put(LivingEntity.class, entity);
-            scope.getHostContext().put(Entity.class, entity);
-            scope.getHostContext().put(io.github.tt432.eyelib.molang.port.PortEntity.class,
+            scope.getHostContext().put(LIVING_ENTITY, entity);
+            scope.getHostContext().put(ENTITY, entity);
+            scope.getHostContext().put(HostRoles.PORT_ENTITY,
                     EntityPort.from(entity));
             scope.set("context.item_slot", new MolangString(slotName(slot)));
             scope.set("context.is_first_person", isFirstPerson ? 1F : 0F);
@@ -137,7 +140,7 @@ public final class AttachableItemRenderSetup {
             scope.set("variable.partial_tick", partialTick);
 
             AnimationEffects effects = new AnimationEffects();
-            scope.getHostContext().put(AnimationParticleSpawner.class, new RootAnimationParticleSpawner(ParticlePort.getSpawnAdapter()));
+            scope.getHostContext().put(HostRoles.ANIMATION_PARTICLE_SPAWNER, new RootAnimationParticleSpawner(ParticlePort.getSpawnAdapter()));
             ac.tickedInfos = BrAnimator.tickAnimation(ac, scope, effects,
                                                       (ClientTickPort.getTick() + partialTick) / 20, () -> {
                         var ce = rd.getClientEntityComponent().getClientEntity();
