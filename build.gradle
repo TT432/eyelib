@@ -275,6 +275,14 @@ if (isLegacyForge) {
 // (mcp_config zip, forge artifacts) which break composite build consumers with variant
 // attribute conflicts (minecraft_mappings.v2 = 'srg').
 
+// 独立 configuration 用于解析 clientsmoke jar（不继承到 runtimeClasspath，避免 classpath 冲突）
+configurations {
+    clientsmokeJar {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+}
 dependencies {
     // 显式添加 Lombok：neoForge plugin 的 ModDevGradle 可能重配置 annotationProcessorPath，
     // 覆盖 freefair lombok 插件自动添加的处理器。显式声明确保 Lombok 在所有 node 生效。
@@ -287,7 +295,16 @@ dependencies {
     }
 
     compileOnly "io.github.tt432:clientsmoke:${version}"
-    localRuntime "io.github.tt432:clientsmoke:${version}"
+    // NeoForge <26.1（ModDevGradle 1.x）的 localRuntime 不将外部 mod jar 注册到 mod discovery。
+    // >=26.1（ModDevGradle 2.x）和 Forge 自动注册。
+    // 1.21.1 需要 copyClientsmokeToMods 任务（见文件底部）将 jar 复制到 mods/ 目录。
+    // 注意：1.21.1 不能用 localRuntime（jar 会在 classpath + mods/ 双份导致类加载冲突）。
+    if (!isLegacyForge && !isModern) {
+        // 独立 configuration，不继承到 runtimeClasspath
+        clientsmokeJar "io.github.tt432:clientsmoke:${version}"
+    } else {
+        localRuntime "io.github.tt432:clientsmoke:${version}"
+    }
 
     // spark 性能剖析工具（dev-only，localRuntime 不进发布 jar）。
     // 必须用 modLocalRuntime（由 obfuscation.createRemappingConfiguration 创建），
@@ -623,5 +640,19 @@ tasks.register('generateModulesMd') {
 
         outputFile.text = md.toString()
         println "Generated MODULES.md with ${modules.size()} modules"
+    }
+}
+
+// NeoForge <26.1（ModDevGradle 1.x）不将 localRuntime 中的外部 mod jar 注册到 mod discovery。
+// 通过将 clientsmoke jar 复制到 run/clientsmoke/mods/ 目录，让 NeoForge mod discovery 扫描到它。
+if (!isLegacyForge && hasAdditionalRuntimeClasspath) {
+    tasks.register('copyClientsmokeToMods', Copy) {
+        from(configurations.clientsmokeJar)
+        into project.file('run/clientsmoke/mods')
+        rename { 'clientsmoke.jar' }
+    }
+    // 在构建产物生成后复制（createMinecraftArtifacts 是 ModDevGradle 的产物任务）
+    tasks.named('createMinecraftArtifacts') {
+        finalizedBy 'copyClientsmokeToMods'
     }
 }
