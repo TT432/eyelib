@@ -47,7 +47,7 @@ final class BrClipExecutor {
         entry.bones().int2ObjectEntrySet().forEach((boneEntry) -> {
             var boneName = boneEntry.getIntKey();
             var boneAnim = boneEntry.getValue();
-            var renderInfoEntry = infos.getData(boneName);
+            var renderInfoEntry = infos.getDataForAnimation(boneName);
             if (renderInfoEntry == null) return;
 
             Vector3f pos = boneAnim.lerpPosition(scope, animTick);

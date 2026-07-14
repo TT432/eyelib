@@ -52,6 +52,16 @@ public final class EntityRenderSystem implements EntityRenderPorts.RenderSystemP
     }
 
     @Override
+    public double fieldOfViewDegrees() {
+        return Minecraft.getInstance().options.fov().get();
+    }
+
+    @Override
+    public int viewportHeight() {
+        return Minecraft.getInstance().getWindow().getHeight();
+    }
+
+    @Override
     public int getLlamaDecorColorIndex(Llama llama) {
         //? if <1.20.6 {
         if (llama.inventory.getItem(AbstractHorse.INV_SLOT_ARMOR)

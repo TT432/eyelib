@@ -23,6 +23,7 @@ public record BakedModel(
 ) {
     public record BakedBone(
             int vertexSize,
+            float detailSize,
 
             float[] position,
             float[] normal,
@@ -46,12 +47,27 @@ public record BakedModel(
             return result;
         }
 
+        private static float detailSize(float[] x, float[] y, float[] z) {
+            if (x.length == 0) return 0F;
+            float minX = x[0], minY = y[0], minZ = z[0];
+            float maxX = x[0], maxY = y[0], maxZ = z[0];
+            for (int i = 1; i < x.length; i++) {
+                minX = Math.min(minX, x[i]);
+                minY = Math.min(minY, y[i]);
+                minZ = Math.min(minZ, z[i]);
+                maxX = Math.max(maxX, x[i]);
+                maxY = Math.max(maxY, y[i]);
+                maxZ = Math.max(maxZ, z[i]);
+            }
+            return Math.max(maxX - minX, Math.max(maxY - minY, maxZ - minZ));
+        }
+
         public BakedBone(float[] xList, float[] yList, float[] zList,
                          float[] nxList, float[] nyList, float[] nzList,
                          float[] xListResult, float[] yListResult, float[] zListResult,
                          float[] nxListResult, float[] nyListResult, float[] nzListResult,
                          float[] u, float[] v) {
-            this(xList.length, merge(xList, yList, zList), merge(nxList, nyList, nzList),
+            this(xList.length, detailSize(xList, yList, zList), merge(xList, yList, zList), merge(nxList, nyList, nzList),
                  merge(xListResult, yListResult, zListResult), merge(nxListResult, nyListResult, nzListResult),
                  u, v, createVertices(xList.length));
             //? if <1.20.6 {

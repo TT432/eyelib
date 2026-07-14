@@ -44,6 +44,7 @@ public class AnimationComponent {
     AnimationComponentInfo serializableInfo;
     private final Map<Animation, MolangValue> animate = new HashMap<>();
     private final Map<String, Object> animationData = new HashMap<>();
+    private final AnimationLodState lodState = new AnimationLodState();
 
     @Nullable
     public ModelRuntimeData tickedInfos;
@@ -89,6 +90,7 @@ public class AnimationComponent {
 
         this.animate.clear();
         animationData.clear();
+        lodState.reset();
 
         animate.forEach((name, value) -> {
             String animationName = animations.get(name);
