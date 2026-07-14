@@ -7,7 +7,7 @@
   "minVersion": "0.8",
   "package": "io.github.tt432.eyelib.mixin",
   "compatibilityLevel": "JAVA_17",
-  //? if !modern {
+  //? if legacy {
   "refmap": "eyelib.refmap.json",
   //?}
   "mixins": [
@@ -37,6 +37,10 @@
     //?}
   ],
   "injectors": {
+    //? if legacy {
     "defaultRequire": 1
+    //?} else {
+    "defaultRequire": 0
+    //?}
   }
 }
