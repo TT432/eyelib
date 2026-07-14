@@ -153,7 +153,7 @@ Target thresholds establish what "done" means before phase promotion.
 
 | KR | Threshold | Status |
 |---|---|---|
-| AST node coverage | All syntax-baseline checklist nodes have explicit AST types | 🔶 |
+| AST node coverage | All syntax-baseline checklist nodes have explicit AST types (26 types in MolangAst.java) | ✅ |
 | ForEachExpr binder branch | Explicit handler in MolangBinder (not generic else) | ✅ |
 | Handwritten frontend coverage | ≥20 acceptance/rejection tests | ✅ |
 | ANTLR-generated parser removed | All ANTLR artifacts deleted; handwritten parser is sole frontend | ✅ |
