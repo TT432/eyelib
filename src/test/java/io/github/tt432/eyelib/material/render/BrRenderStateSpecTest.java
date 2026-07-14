@@ -268,11 +268,11 @@ class BrRenderStateSpecTest {
     // === S9: needsCustomRenderType 检测 ===
 
     @Test
-    @DisplayName("Render §entity_nocull (real): 仅 DisableCulling → needsCustomRenderType=true（因 cull 改变即触发）")
+    @DisplayName("Render §entity_nocull (real): 仅 DisableCulling → needsCustomRenderType 版本依赖")
     void entityNocullNeedsCustomRenderType() {
         // 真实 entity_nocull：无 ALPHA_TEST，仅 DisableCulling
-        // BrRenderState.needsCustomRenderType() 在 cull 改变时不触发 custom
-        // 但 writeMask/stencil/blend 等无变化 → 预期 false
+        // <26.1: cull 改变不触发 custom RT（vanilla 有 entityCutoutCull 两值覆盖）
+        // >=26.1: cull 改变触发 custom RT（vanilla 缺 nocull Solid RenderType）
         BrRenderState state = resolve(
                 Map.of(
                         "entity", entry("entity", defines(), states()),
@@ -282,9 +282,14 @@ class BrRenderStateSpecTest {
                 ),
                 "entity_nocull:entity");
 
-        // DisableCulling 只改变 cull → needsCustomRenderType=false
-        assertFalse(state.needsCustomRenderType(),
-                    "entity_nocull 仅改 cull → needsCustomRenderType=false（cull 改变不触发 custom RT）");
+        boolean isModern = Boolean.parseBoolean(System.getProperty("eyelib.isModern", "false"));
+        if (isModern) {
+            assertTrue(state.needsCustomRenderType(),
+                       "26.1+ entity_nocull 仅改 cull → needsCustomRenderType=true（vanilla 缺 nocull Solid RenderType）");
+        } else {
+            assertFalse(state.needsCustomRenderType(),
+                        "entity_nocull 仅改 cull → needsCustomRenderType=false（cull 改变不触发 custom RT）");
+        }
     }
 
     @Test

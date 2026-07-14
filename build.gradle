@@ -524,6 +524,8 @@ tasks.named('test').configure {
     // 自定义 freeze 匹配器：忽略违规描述中的行号，避免源码编辑导致 baseline 失效。
     // 见 IgnoreLineNumberViolationMatcher。
     systemProperty 'archunit.freeze.lineMatcher', 'io.github.tt432.eyelib.architecture.IgnoreLineNumberViolationMatcher'
+    // 版本标记：26.1+ BrRenderState cull 变体需要 custom pipeline（vanilla 缺 nocull Solid RenderType）
+    systemProperty 'eyelib.isModern', isModern
 }
 
 // 测试源码不使用任何 annotation processor（无 Lombok/Mixin AP/NullAway）。
