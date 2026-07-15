@@ -390,7 +390,7 @@ public final class EntityRenderOrchestrator {
             poseStack.scale(s.getScaleX(scope), s.getScaleY(scope), s.getScaleZ(scope));
         });
 
-        if (data.entity() instanceof LivingEntity livingEntity) {
+        if (data.applyEntityPose() && data.entity() instanceof LivingEntity livingEntity) {
             if (livingEntity.isBaby()) {
                 poseStack.scale(0.5F, 0.5F, 0.5F);
             }

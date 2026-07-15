@@ -27,6 +27,7 @@ public record SimpleRenderAction<T>(
         int packedLight,
         int overlay,
         @Nullable Entity entity,
+        boolean applyEntityPose,
         @Nullable ModelRuntimeData tickedInfos,
         @Nullable AnimationEffects effects,
         Builder.ExtraRender<T> extraRender
@@ -53,6 +54,7 @@ public record SimpleRenderAction<T>(
         int light = EntityRenderPorts.RenderSystemPort.FULL_BRIGHT;
         private int overlay = OverlayTexture.NO_OVERLAY;
         @Nullable Entity entity;
+        boolean applyEntityPose = true;
         @Nullable ModelRuntimeData tickedInfos = ModelRuntimeData.EMPTY;
         @Nullable AnimationEffects effects = new AnimationEffects();
         ExtraRender<T> extraRender = (context, action) -> {
@@ -68,6 +70,12 @@ public record SimpleRenderAction<T>(
 
         public Builder<T> entity(@Nullable Entity entity) {
             this.entity = entity;
+            return this;
+        }
+
+        /** 控制是否追加宿主幼体缩放与身体旋转；客户端实体脚本缩放始终保留。 */
+        public Builder<T> applyEntityPose(boolean applyEntityPose) {
+            this.applyEntityPose = applyEntityPose;
             return this;
         }
 
@@ -101,7 +109,7 @@ public record SimpleRenderAction<T>(
         }
 
         public SimpleRenderAction<T> build() {
-            return new SimpleRenderAction<>(multiBufferSource, sink, poseStack, renderData, partialTick, light, overlay, entity, tickedInfos, effects, extraRender);
+            return new SimpleRenderAction<>(multiBufferSource, sink, poseStack, renderData, partialTick, light, overlay, entity, applyEntityPose, tickedInfos, effects, extraRender);
         }
     }
 }
