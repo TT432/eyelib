@@ -6,12 +6,10 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
 import io.github.tt432.eyelib.bridge.client.gui.adapter.ModalWorksurfaceScreen;
-import io.github.tt432.eyelib.bridge.client.render.texture.TexturePresencePort;
 import io.github.tt432.eyelib.client.model.ModelBakeInvalidationHooks;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import io.github.tt432.eyelib.client.model.DFSModel;
 import io.github.tt432.eyelib.client.manager.ModelManager;
-import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.bridge.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.bridge.client.render.bake.ModelBakePort;
@@ -36,7 +34,6 @@ import net.minecraft.client.gui.GuiGraphics;
 //?} else {
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 //?}
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
@@ -59,7 +56,6 @@ import org.lwjgl.glfw.GLFW;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.LinkedHashMap;
 import java.util.Comparator;
 import java.util.Locale;
 import java.util.Map;
@@ -85,11 +81,6 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
     private String statusMessage = "";
     private final LodRuntimeState previewLodState = new LodRuntimeState();
     private List<String> modelIds = List.of();
-    private Map<String, PortResourceLocation> modelTextures = Map.of();
-    private int fullVertexCount;
-    private int lodVertexCount;
-    private float previewPixelsPerUnit;
-    private boolean updatingSearchBox;
     private int selectedModelIndex = -1;
 
     // Viewport configuration
@@ -115,13 +106,10 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         int searchBoxWidth = (int) (this.width * SEARCH_BOX_WIDTH_PERCENT);
         int searchBoxX = (this.width - searchBoxWidth) / 2;
 
-        this.searchBox = new EditBox(this.font, searchBoxX, 20, searchBoxWidth - 76, 20, Component.literal("Search Model"));
+        this.searchBox = new EditBox(this.font, searchBoxX, 20, searchBoxWidth, 20, Component.literal("Search Model"));
         this.searchBox.setMaxLength(256);
         this.searchBox.setHint(Component.literal("Enter model name or ID..."));
-        this.searchBox.setResponder(this::updateSearchStatus);
         this.addWidget(this.searchBox);
-        this.addRenderableWidget(Button.builder(Component.literal("Select"), button -> searchCurrentQuery())
-                .pos(searchBoxX + searchBoxWidth - 72, 20).size(72, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("<"), button -> cycleModel(-1))
                 .pos(searchBoxX, 44).size(36, 20).build());
@@ -131,14 +119,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
 
         refreshModelIds();
         if (currentModel == null && !modelIds.isEmpty()) {
-            int initialIndex = 0;
-            for (int i = 0; i < modelIds.size(); i++) {
-                if (modelTextures.containsKey(modelIds.get(i))) {
-                    initialIndex = i;
-                    break;
-                }
-            }
-            selectManagerModel(initialIndex);
+            selectManagerModel(0);
         }
         this.setInitialFocus(this.searchBox);
     }
@@ -161,10 +142,6 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
 //        guiGraphics.fill(viewportX - 1, viewportY - 1, viewportX + viewportWidth + 1, viewportY + viewportHeight + 1, 0xFFFFFFFF);
 //        guiGraphics.fill(viewportX, viewportY, viewportX + viewportWidth, viewportY + viewportHeight, 0xFF000000);
 
-        if (!statusMessage.isEmpty()) {
-            guiGraphics.drawCenteredString(this.font, statusMessage, this.width / 2, 70, 0xFFFFFF55);
-        }
-
         if (currentModel != null) {
             // Render the model within the viewport
             renderModelInViewport(guiGraphics, viewportX, viewportY, viewportWidth, viewportHeight, partialTick);
@@ -173,20 +150,17 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             guiGraphics.drawCenteredString(this.font, "Model: " + currentModel.name(), this.width / 2,
                     viewportY + viewportHeight + 10, 0xFFFFFFFF);
             guiGraphics.drawCenteredString(this.font,
-                    String.format(Locale.ROOT, "LOD: %s | Strength: %.0f%% | Simulated: %.1f px/unit | Rotation: %.1f, %.1f | Scale: %.2fx | Pan: %.1f, %.1f",
-                            previewLodState.level(), LodController.intensity() * 100F, previewPixelsPerUnit,
+                    String.format(Locale.ROOT, "LOD: %s | Strength: %.0f%% | Rotation: %.1f, %.1f | Scale: %.2fx | Pan: %.1f, %.1f",
+                            previewLodState.level(), LodController.intensity() * 100F,
                             rotateX, rotateY, scale, translateX, translateY),
                     this.width / 2, viewportY + viewportHeight + 25, 0xFFAAAAAA);
-            int reductionPercent = fullVertexCount == 0 ? 0
-                    : Math.round((fullVertexCount - lodVertexCount) * 100F / fullVertexCount);
-            guiGraphics.drawCenteredString(this.font,
-                    String.format(Locale.ROOT, "Vertices: FULL %,d -> LOD %,d (-%d%%)",
-                            fullVertexCount, lodVertexCount, reductionPercent),
-                    this.width / 2, viewportY + viewportHeight + 40, 0xFF55FF55);
-        } else if (!statusMessage.isEmpty()) {
-            guiGraphics.drawCenteredString(this.font, statusMessage, this.width / 2, this.height / 2, 0xFFFF5555);
-
+        } else {
+            // Render status message (e.g., "Model not found")
+            if (!statusMessage.isEmpty()) {
+                guiGraphics.drawCenteredString(this.font, statusMessage, this.width / 2, this.height / 2, 0xFFFF5555);
+            }
         }
+
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
     //?} else {
@@ -239,10 +213,8 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             RenderType renderType = RenderTypes.entitySolid(texture);
             //?}
             VertexConsumer buffer = bufferSource.getBuffer(renderType);
-            previewPixelsPerUnit = Math.max(10F,
-                    Math.abs(baseScale * scale) * (1F - 0.8F * LodController.intensity()));
-            previewLodState.setPreview(LodController.intensity(), previewPixelsPerUnit);
-            updateVertexCounts();
+
+            previewLodState.setPreview(LodController.intensity(), Math.abs(baseScale * scale));
 
             RenderParams params = RenderParams.builder(poseStack, null, true, ResourceLocationBridge.fromMc(texture), buffer)
                                               .light(EntityRenderPorts.RenderSystemPort.FULL_BRIGHT) // Full bright for preview
@@ -298,29 +270,6 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
     }
     //?}
 
-    private void searchCurrentQuery() {
-        if (searchBox != null) {
-            performSearch(searchBox.getValue());
-        }
-    }
-
-    private void updateSearchStatus(String query) {
-        if (updatingSearchBox) return;
-        if (query == null || query.isBlank()) {
-            statusMessage = "Type a model name or ID, then press Enter or Select";
-            return;
-        }
-        String lowerQuery = query.toLowerCase(Locale.ROOT);
-        long matches = modelIds.stream()
-                .filter(id -> {
-                    Model model = ModelManager.INSTANCE.get(id);
-                    return id.toLowerCase(Locale.ROOT).contains(lowerQuery)
-                            || model != null && model.name().toLowerCase(Locale.ROOT).contains(lowerQuery);
-                })
-                .count();
-        statusMessage = matches == 0 ? "No matching models" : matches + " matching model(s); press Enter or Select";
-    }
-
     private void performSearch(String query) {
         if (query == null || query.isBlank()) {
             return;
@@ -341,46 +290,13 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         statusMessage = "Model not found: " + query;
     }
 
-    private void updateVertexCounts() {
-        fullVertexCount = 0;
-        lodVertexCount = 0;
-        if (bakedModel == null) return;
-        for (BakedModel.BakedBone bone : bakedModel.bones().values()) {
-            fullVertexCount += bone.vertexSize();
-            if (previewLodState.shouldRenderBone(bone.detailSize())) {
-                lodVertexCount += bone.vertexSize();
-            }
-        }
-    }
-
     private void refreshModelIds() {
         modelIds = ModelManager.INSTANCE.all().keySet().stream()
                 .sorted(Comparator.naturalOrder())
                 .toList();
-        modelTextures = buildModelTextureIndex();
         if (selectedModelIndex >= modelIds.size()) {
             selectedModelIndex = -1;
         }
-    }
-
-    private Map<String, PortResourceLocation> buildModelTextureIndex() {
-        Map<String, PortResourceLocation> result = new LinkedHashMap<>();
-        ClientEntityManager.INSTANCE.all().entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .forEach(clientEntityEntry -> {
-                    var clientEntity = clientEntityEntry.getValue();
-                    clientEntity.geometry().forEach((shortName, modelId) -> {
-                        String texture = clientEntity.textures().get(shortName);
-                        if (texture == null) texture = clientEntity.textures().get("default");
-                        if (texture == null && !clientEntity.textures().isEmpty()) {
-                            texture = clientEntity.textures().values().iterator().next();
-                        }
-                        if (texture != null) {
-                            result.putIfAbsent(modelId, PortResourceLocation.parse(texture));
-                        }
-                    });
-                });
-        return Map.copyOf(result);
     }
 
     private void cycleModel(int direction) {
@@ -405,33 +321,10 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             return;
         }
         selectedModelIndex = index;
-        updatingSearchBox = true;
         if (searchBox != null) {
             searchBox.setValue(id);
         }
-        updatingSearchBox = false;
-        selectModel(model, resolvePreviewTexture(id));
-    }
-
-    private PortResourceLocation resolvePreviewTexture(String modelId) {
-        PortResourceLocation mapped = modelTextures.get(modelId);
-        if (mapped != null) return mapped;
-
-        String path = modelId.contains(":") ? modelId.substring(modelId.indexOf(':') + 1) : modelId;
-        String simpleName = path.startsWith("geometry.") ? path.substring("geometry.".length()) : path;
-        int lastDot = simpleName.lastIndexOf('.');
-        if (lastDot >= 0) simpleName = simpleName.substring(lastDot + 1);
-        String[] candidates = {
-                "minecraft:textures/entity/" + simpleName + "/" + simpleName + ".png",
-                "minecraft:textures/entity/" + simpleName + ".png"
-        };
-        for (String candidate : candidates) {
-            PortResourceLocation location = PortResourceLocation.parse(candidate);
-            if (Minecraft.getInstance().getResourceManager().getResource(ResourceLocationBridge.toMc(location)).isPresent()) {
-                return location;
-            }
-        }
-        return TexturePresencePort.missingLocation();
+        selectModel(model, PortResourceLocation.parse("minecraft:textures/block/white_wool.png"));
     }
 
     private void selectModel(Model model, PortResourceLocation texture) {
@@ -443,13 +336,12 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             currentTexture = texture;
             bakedModel = nextBakedModel;
             dfsModel = nextDfsModel;
-            statusMessage = "Selected " + model.name() + " | Texture: " + texture;
+            statusMessage = "";
             rotateX = 0F;
             rotateY = 0F;
             scale = 1F;
             translateX = 0F;
             translateY = 0F;
-            updateVertexCounts();
         } catch (RuntimeException exception) {
             currentModel = null;
             bakedModel = null;
