@@ -314,7 +314,7 @@ public final class EntityRenderOrchestrator {
         return (T) obj;
     }
 
-    static <T> boolean renderComponents(SimpleRenderAction<T> data) {
+    public static <T> boolean renderComponents(SimpleRenderAction<T> data) {
         return new ArrayList<>(data.renderData().getModelComponents()).stream()
                                                                        .filter(mc -> mc.readyForRendering() || (mc.getSerializableInfo() != null && mc.getSerializableInfo()
                                                                                                                                                       .texture() != null))
@@ -423,14 +423,14 @@ public final class EntityRenderOrchestrator {
         scope.getHostContext().put(MOLANG_ENTITY_CONTEXT, MolangContextPort.newMolangEntityContext(store));
     }
 
-    static List<Runnable> setupClientEntity(Entity entity, RenderData<?> cap) {
+    public static List<Runnable> setupClientEntity(Entity entity, RenderData<?> cap) {
         cap.ensureOwner(entity);
 
         String entityId = RenderPorts.get().renderSystemPort().getEntityTypeId(entity);
         return setupClientEntity(entityId, cap);
     }
 
-    static List<Runnable> setupClientEntity(String entityId, RenderData<?> cap) {
+    public static List<Runnable> setupClientEntity(String entityId, RenderData<?> cap) {
         ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
         BrClientEntity clientEntity = clientEntityComponent.getClientEntity();
 
@@ -444,7 +444,7 @@ public final class EntityRenderOrchestrator {
         return setupClientEntity(clientEntity, cap);
     }
 
-    static List<Runnable> setupClientEntity(@Nullable BrClientEntity clientEntity, RenderData<?> cap) {
+    public static List<Runnable> setupClientEntity(@Nullable BrClientEntity clientEntity, RenderData<?> cap) {
         ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
         RenderControllerComponent renderControllerComponent = cap.getRenderControllerComponent();
         List<Runnable> syncedActions = new ArrayList<>();
