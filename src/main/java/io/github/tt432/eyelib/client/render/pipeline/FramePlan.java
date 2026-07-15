@@ -15,18 +15,16 @@ public final class FramePlan {
     private final double camX;
     private final double camY;
     private final double camZ;
-    private final long frameIndex;
 
     private final List<EntitySetupResult> setupResults = new ArrayList<>();
     private final List<Runnable> deferredEffects = new ArrayList<>();
     private final List<EntityTickResult> tickResults = new ArrayList<>();
 
-    public FramePlan(float partialTick, double camX, double camY, double camZ, long frameIndex) {
+    public FramePlan(float partialTick, double camX, double camY, double camZ) {
         this.partialTick = partialTick;
         this.camX = camX;
         this.camY = camY;
         this.camZ = camZ;
-        this.frameIndex = frameIndex;
     }
 
     public float partialTick() {
@@ -43,10 +41,6 @@ public final class FramePlan {
 
     public double camZ() {
         return camZ;
-    }
-
-    public long frameIndex() {
-        return frameIndex;
     }
 
     public List<EntitySetupResult> setupResults() {

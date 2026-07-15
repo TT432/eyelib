@@ -56,10 +56,6 @@ public final class EntityRenderPorts {
     public interface RenderSystemPort {
         String getEntityTypeId(Entity entity);
 
-        double fieldOfViewDegrees();
-
-        int viewportHeight();
-
         int getLlamaDecorColorIndex(Llama llama);
 
         void pushPoseRaw(PoseStack poseStack, PoseStack.Pose pose);

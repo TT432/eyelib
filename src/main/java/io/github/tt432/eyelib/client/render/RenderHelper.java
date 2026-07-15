@@ -14,7 +14,6 @@ import io.github.tt432.eyelib.client.render.visitor.BuiltInBrModelRenderVisitors
 import io.github.tt432.eyelib.model.ModelVisitContext;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;
-import io.github.tt432.eyelib.model.lod.LodRuntimeState;
 import lombok.Getter;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
@@ -65,9 +64,6 @@ public class RenderHelper {
 
     public RenderHelper render(RenderParams params, Model model, ModelRuntimeData infos) {
         this.params = params;
-        if (params.lodState() != null) {
-            context.put(LodRuntimeState.MODEL_VISIT_CONTEXT_KEY, params.lodState());
-        }
         if (params.texture() != null) {
             context.put("BackedModel", ModelBakePort.twoSideGetBakedModel(model, params.isSolid(), ResourceLocationBridge.toMc(params.texture())));
         }

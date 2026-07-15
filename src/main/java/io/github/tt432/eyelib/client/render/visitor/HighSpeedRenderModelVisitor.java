@@ -8,7 +8,6 @@ import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.bridge.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;
-import io.github.tt432.eyelib.model.lod.LodRuntimeState;
 import lombok.Setter;
 import org.jspecify.annotations.Nullable;
 
@@ -42,9 +41,7 @@ public class HighSpeedRenderModelVisitor extends ModelVisitor {
             return;
         }
 
-        LodRuntimeState lodState = context.get(LodRuntimeState.MODEL_VISIT_CONTEXT_KEY);
-        if (renderParams.partVisibility().getOrDefault(bone.id(), true)
-                && (lodState == null || lodState.shouldRenderBone(bakedBone.detailSize()))) {
+        if (renderParams.partVisibility().getOrDefault(bone.id(), true)) {
             renderBakedBone(renderParams, bakedBone);
         }
     }

@@ -17,12 +17,7 @@ import java.util.Map;
 public final class BrAnimator {
     public static ModelRuntimeData tickAnimation(AnimationComponent component, MolangScope scope, AnimationEffects effects,
                                                  float ticks, Runnable animationStartFeedback) {
-        return tickAnimation(component, scope, effects, ticks, animationStartFeedback, true);
-    }
-
-    public static ModelRuntimeData tickAnimation(AnimationComponent component, MolangScope scope, AnimationEffects effects,
-                                                 float ticks, Runnable animationStartFeedback, boolean samplePose) {
-        ModelRuntimeData infos = samplePose ? new ModelRuntimeData() : ModelRuntimeData.effectsOnly();
+        ModelRuntimeData infos = new ModelRuntimeData();
         var serializableInfo = component.getSerializableInfo();
         if (serializableInfo == null) {
             return infos;

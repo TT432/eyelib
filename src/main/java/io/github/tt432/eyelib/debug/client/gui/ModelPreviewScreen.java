@@ -15,7 +15,6 @@ import io.github.tt432.eyelib.bridge.client.render.bake.BakedModel;
 import io.github.tt432.eyelib.bridge.client.render.bake.ModelBakePort;
 import io.github.tt432.eyelib.client.render.visitor.ActiveModelRenderVisitors;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
-import io.github.tt432.eyelib.client.render.lod.LodController;
 import io.github.tt432.eyelib.importer.model.bbmodel.BBModel;
 import io.github.tt432.eyelib.importer.model.bbmodel.BBModelLoader;
 import io.github.tt432.eyelib.importer.model.bbmodel.Texture;
@@ -23,8 +22,10 @@ import io.github.tt432.eyelib.importer.model.importer.ModelImporter;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.model.ModelPreviewAsset;
 import io.github.tt432.eyelib.model.ModelVisitContext;
-import io.github.tt432.eyelib.model.lod.LodRuntimeState;
-import io.github.tt432.eyelib.util.PortResourceLocation;
+//? if >=26.1 {
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+//?}
 //? if >=26.1 {
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -35,8 +36,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 //?}
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.AbstractSliderButton;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.MultiBufferSource;
 //? if <26.1 {
 import net.minecraft.client.renderer.RenderType;
@@ -56,8 +55,6 @@ import org.lwjgl.glfw.GLFW;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Comparator;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -72,16 +69,13 @@ import java.util.Map;
 public class ModelPreviewScreen extends ModalWorksurfaceScreen {
     @Nullable
     private EditBox searchBox;
-    private Model currentModel;
-    private PortResourceLocation currentTexture = PortResourceLocation.parse("minecraft:textures/block/white_wool.png");
+    @Nullable
+    private ModelPreviewAsset currentModel;
     @Nullable
     private DFSModel dfsModel;
     @Nullable
     private BakedModel bakedModel;
     private String statusMessage = "";
-    private final LodRuntimeState previewLodState = new LodRuntimeState();
-    private List<String> modelIds = List.of();
-    private int selectedModelIndex = -1;
 
     // Viewport configuration
     private static final float VIEWPORT_SIZE_PERCENT = 0.6f;
@@ -93,6 +87,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
     private float scale = 1.0f;
     private float translateX = 0;
     private float translateY = 0;
+    private final boolean isDragging = false;
 
     public ModelPreviewScreen() {
         super(Component.literal("Model Preview"));
@@ -106,22 +101,16 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         int searchBoxWidth = (int) (this.width * SEARCH_BOX_WIDTH_PERCENT);
         int searchBoxX = (this.width - searchBoxWidth) / 2;
 
+        // Initialize search box at the top
         this.searchBox = new EditBox(this.font, searchBoxX, 20, searchBoxWidth, 20, Component.literal("Search Model"));
         this.searchBox.setMaxLength(256);
         this.searchBox.setHint(Component.literal("Enter model name or ID..."));
+        this.searchBox.setResponder(this::performSearch);
         this.addWidget(this.searchBox);
 
-        this.addRenderableWidget(Button.builder(Component.literal("<"), button -> cycleModel(-1))
-                .pos(searchBoxX, 44).size(36, 20).build());
-        this.addRenderableWidget(Button.builder(Component.literal(">"), button -> cycleModel(1))
-                .pos(searchBoxX + searchBoxWidth - 36, 44).size(36, 20).build());
-        this.addRenderableWidget(new LodStrengthSlider(searchBoxX + 42, 44, searchBoxWidth - 84, 20));
-
-        refreshModelIds();
-        if (currentModel == null && !modelIds.isEmpty()) {
-            selectManagerModel(0);
-        }
+        // Set initial focus to search box
         this.setInitialFocus(this.searchBox);
+
     }
 
     //? if <26.1 {
@@ -147,13 +136,9 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             renderModelInViewport(guiGraphics, viewportX, viewportY, viewportWidth, viewportHeight, partialTick);
 
             // Render model info
-            guiGraphics.drawCenteredString(this.font, "Model: " + currentModel.name(), this.width / 2,
-                    viewportY + viewportHeight + 10, 0xFFFFFFFF);
-            guiGraphics.drawCenteredString(this.font,
-                    String.format(Locale.ROOT, "LOD: %s | Strength: %.0f%% | Rotation: %.1f, %.1f | Scale: %.2fx | Pan: %.1f, %.1f",
-                            previewLodState.level(), LodController.intensity() * 100F,
-                            rotateX, rotateY, scale, translateX, translateY),
-                    this.width / 2, viewportY + viewportHeight + 25, 0xFFAAAAAA);
+            guiGraphics.drawCenteredString(this.font, "Model: " + currentModel.model()
+                                                                              .name(), this.width / 2, viewportY + viewportHeight + 10, 0xFFFFFFFF);
+            guiGraphics.drawCenteredString(this.font, String.format("Rotation: %.1f, %.1f | Scale: %.2fx | Pan: %.1f, %.1f", rotateX, rotateY, scale, translateX, translateY), this.width / 2, viewportY + viewportHeight + 25, 0xFFAAAAAA);
         } else {
             // Render status message (e.g., "Model not found")
             if (!statusMessage.isEmpty()) {
@@ -205,7 +190,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         if (currentModel != null) {
             // Setup RenderParams
             MultiBufferSource.BufferSource bufferSource = guiGraphics.bufferSource();
-            ResourceLocation texture = ResourceLocationBridge.toMc(currentTexture);
+            ResourceLocation texture = ResourceLocationBridge.parseMc(currentModel.atlasTexture().id());
 
             //? if <26.1 {
             RenderType renderType = RenderType.entitySolid(texture);
@@ -214,12 +199,9 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             //?}
             VertexConsumer buffer = bufferSource.getBuffer(renderType);
 
-            previewLodState.setPreview(LodController.intensity(), Math.abs(baseScale * scale));
-
             RenderParams params = RenderParams.builder(poseStack, null, true, ResourceLocationBridge.fromMc(texture), buffer)
                                               .light(EntityRenderPorts.RenderSystemPort.FULL_BRIGHT) // Full bright for preview
                                               .overlay(OverlayTexture.NO_OVERLAY)
-                                              .lodState(previewLodState)
                                               .build();
 
             // Render
@@ -229,7 +211,6 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
                     if (bakedModel != null) {
                         context.put("BackedModel", bakedModel);
                     }
-                    context.put(LodRuntimeState.MODEL_VISIT_CONTEXT_KEY, previewLodState);
                     if (this.dfsModel != null) {
                         this.dfsModel.visit(params, context, ActiveModelRenderVisitors.RENDER_VISITOR, new ModelRuntimeData(), new DFSModel.StateMachine());
                     }
@@ -271,109 +252,50 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
     //?}
 
     private void performSearch(String query) {
-        if (query == null || query.isBlank()) {
+        if (query == null || query.trim().isEmpty()) {
             return;
         }
 
-        String lowerQuery = query.toLowerCase(Locale.ROOT);
+        String lowerQuery = query.toLowerCase();
         Map<String, Model> allModels = ModelManager.INSTANCE.all();
-        for (int i = 0; i < modelIds.size(); i++) {
-            String id = modelIds.get(i);
-            Model model = allModels.get(id);
-            if (model != null && (id.toLowerCase(Locale.ROOT).contains(lowerQuery)
-                    || model.name().toLowerCase(Locale.ROOT).contains(lowerQuery))) {
-                selectManagerModel(i);
-                return;
+
+        Model found = null;
+
+        // Fuzzy match: check ID (key) and Name
+        for (Map.Entry<String, Model> entry : allModels.entrySet()) {
+            String id = entry.getKey();
+            Model model = entry.getValue();
+
+            if (id.toLowerCase().contains(lowerQuery) || model.name().toLowerCase().contains(lowerQuery)) {
+                found = model;
+                break; // Stop at first match
             }
         }
 
-        statusMessage = "Model not found: " + query;
-    }
-
-    private void refreshModelIds() {
-        modelIds = ModelManager.INSTANCE.all().keySet().stream()
-                .sorted(Comparator.naturalOrder())
-                .toList();
-        if (selectedModelIndex >= modelIds.size()) {
-            selectedModelIndex = -1;
-        }
-    }
-
-    private void cycleModel(int direction) {
-        refreshModelIds();
-        if (modelIds.isEmpty()) {
-            statusMessage = "No models are loaded";
-            return;
-        }
-        int next = selectedModelIndex < 0 ? 0 : Math.floorMod(selectedModelIndex + direction, modelIds.size());
-        selectManagerModel(next);
-    }
-
-    private void selectManagerModel(int index) {
-        if (index < 0 || index >= modelIds.size()) {
-            return;
-        }
-        String id = modelIds.get(index);
-        Model model = ModelManager.INSTANCE.get(id);
-        if (model == null) {
-            refreshModelIds();
-            statusMessage = "Model was reloaded: " + id;
-            return;
-        }
-        selectedModelIndex = index;
-        if (searchBox != null) {
-            searchBox.setValue(id);
-        }
-        selectModel(model, PortResourceLocation.parse("minecraft:textures/block/white_wool.png"));
-    }
-
-    private void selectModel(Model model, PortResourceLocation texture) {
-        try {
-            var info = ModelBakePort.twoSideGetBakeInfo(model, true, ResourceLocationBridge.toMc(texture));
-            BakedModel nextBakedModel = ModelBakePort.twoSideBake(model, info);
-            DFSModel nextDfsModel = DFSModel.create(model);
-            currentModel = model;
-            currentTexture = texture;
-            bakedModel = nextBakedModel;
-            dfsModel = nextDfsModel;
-            statusMessage = "";
-            rotateX = 0F;
-            rotateY = 0F;
-            scale = 1F;
-            translateX = 0F;
-            translateY = 0F;
-        } catch (RuntimeException exception) {
-            currentModel = null;
-            bakedModel = null;
-            dfsModel = null;
-            statusMessage = "Failed to prepare model: " + exception.getMessage();
-        }
-    }
-
-    private final class LodStrengthSlider extends AbstractSliderButton {
-        private LodStrengthSlider(int x, int y, int width, int height) {
-            super(x, y, width, height, Component.empty(), LodController.intensity());
-            updateMessage();
-        }
-
-        @Override
-        protected void updateMessage() {
-            setMessage(Component.literal(String.format(Locale.ROOT, "LOD Strength: %.0f%%", value * 100D)));
-        }
-
-        @Override
-        protected void applyValue() {
-            LodController.setIntensity((float) value);
-            previewLodState.setPreview(LodController.intensity(), 1F);
-        }
+//        if (found instanceof BBModel bbModel) {
+//            this.currentModel = bbModel;
+//            this.renderModels = bbModel.splitByTexture();
+//            this.statusMessage = "";
+//            // Reset view on new model
+//            this.rotateX = 0;
+//            this.rotateY = 0;
+//            this.scale = 1.0f;
+//            this.translateX = 0;
+//            this.translateY = 0;
+//        } else if (found != null) {
+//            this.currentModel = null;
+//            this.renderModels = null;
+//            this.statusMessage = "Found model is not a BBModel: " + found.name();
+//        } else {
+//            this.currentModel = null;
+//            this.renderModels = null;
+//            this.statusMessage = "Model not found: " + query;
+//        }
     }
 
     //? if <26.1 {
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
-        if (mouseY < 70) {
-            return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
-        }
         if (button == 0) { // Left click drag
             // Adjust rotation sensitivity
             this.rotateY += (float) dragX;
@@ -419,7 +341,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         //?}
 
         // Clamp scale
-        this.scale = Math.max(0.1f, Math.min(2.0f, this.scale));
+        this.scale = Math.min(2.0f, this.scale);
 
         return true;
     }
@@ -431,9 +353,20 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         if (path.toString().endsWith(".bbmodel")) {
             try {
                 BBModel model = new BBModelLoader().load(path);
-                ModelPreviewAsset preview = previewModel(model, ModelImporter.importBlockbench(model));
-                selectedModelIndex = -1;
-                selectModel(preview.model(), PortResourceLocation.parse(preview.atlasTexture().id()));
+                this.currentModel = previewModel(model, ModelImporter.importBlockbench(model));
+                var model1 = currentModel.model();
+                var info = ModelBakePort.twoSideGetBakeInfo(model1, true, ResourceLocationBridge.parseMc(currentModel.atlasTexture()
+                                                                                                                      .id()));
+                bakedModel = ModelBakePort.twoSideBake(model1, info);
+                dfsModel = DFSModel.create(model1);
+                this.statusMessage = "";
+
+                // Reset view
+                this.rotateX = 0;
+                this.rotateY = 0;
+                this.scale = 1.0f;
+                this.translateX = 0;
+                this.translateY = 0;
             } catch (Exception e) {
                 e.printStackTrace();
                 this.statusMessage = "Failed to load .bbmodel: " + e.getMessage();

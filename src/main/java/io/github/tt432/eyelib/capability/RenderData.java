@@ -12,7 +12,6 @@ import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.mapping.api.HostRole;
-import io.github.tt432.eyelib.model.lod.LodRuntimeState;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.world.entity.Entity;
@@ -68,7 +67,6 @@ public class RenderData<T> {
     private final List<ModelComponent> modelComponents = new ArrayList<>();
 
     private final AnimationComponent animationComponent = new AnimationComponent();
-    private final LodRuntimeState lodState = new LodRuntimeState();
 
     private final ClientEntityComponent clientEntityComponent = new ClientEntityComponent();
 

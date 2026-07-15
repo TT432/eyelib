@@ -49,10 +49,6 @@ GET /loaded → {"loaded": false} → 仍在加载资源，继续等待
 while /loaded == false → sleep 3s → retry
 ```
 
-### MCP `/eval` 的世界前置条件
-
-`eyelib_debug_execute` 当前要求客户端已经进入世界。即使 `/loaded` 在标题画面返回 `true`，该 MCP 调用仍会返回 `Game must be in a world`。使用 MCP 调试时必须先调用 `eyelib_debug_enter_world`；标题画面的 screen 状态只能用 `eyelib_debug_status` 检查。直接调用底层 HTTP `/eval` 不受此 MCP 包装限制。
-
 ### Session verification
 
 After game startup, confirm the debug server belongs to the current launch by checking the in-game log timestamp matches the process start time. If `/eval` gives unexpected results (wrong world, wrong screen, different position), suspect a stale session.
@@ -61,7 +57,7 @@ After game startup, confirm the debug server belongs to the current launch by ch
 
 ### 1. Probe current state
 
-Start broad, narrow down based on the response. The code runs inside a template that auto-injects `minecraft`, `player`, `level`. With the MCP wrapper, enter a world first, so `player` and `level` are available.
+Start broad, narrow down based on the response. The code runs inside a template that auto-injects `minecraft`, `player`, `level`. They may be null if not in a world.
 
 ```java
 // Where are we?

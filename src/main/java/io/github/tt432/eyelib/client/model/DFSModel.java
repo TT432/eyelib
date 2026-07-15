@@ -72,7 +72,7 @@ public record DFSModel(
                 PoseStackPort.identity(),
                 new PoseStack(),
                 null, null, false, null, 0,
-                OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap(), null, null
+                OverlayTexture.NO_OVERLAY, new Int2BooleanOpenHashMap(), null
         ), new ModelVisitContext(), new ModelRuntimeData(), model);
 
         return new DFSModel(frames);

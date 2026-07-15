@@ -33,7 +33,6 @@ import io.github.tt432.eyelib.client.render.pipeline.EntityTickResult;
 import io.github.tt432.eyelib.client.render.pipeline.FramePlan;
 import io.github.tt432.eyelib.client.render.pipeline.FramePipeline;
 import io.github.tt432.eyelib.client.render.pipeline.FrameStage;
-import io.github.tt432.eyelib.client.render.lod.LodController;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.model.GlobalBoneIdHandler;
@@ -80,7 +79,6 @@ public final class EntityRenderOrchestrator {
     private static volatile int renderCount = 0;
     private static volatile int errorCount = 0;
     private static volatile @Nullable String lastError = null;
-    private static long frameIndex;
 
     private EntityRenderOrchestrator() {
     }
@@ -106,7 +104,7 @@ public final class EntityRenderOrchestrator {
 
     @OnRenderStage
     public static void onRenderStage(float partialTick, double camX, double camY, double camZ) {
-        PIPELINE.run(new FramePlan(partialTick, camX, camY, camZ, frameIndex++));
+        PIPELINE.run(new FramePlan(partialTick, camX, camY, camZ));
     }
 
     static final class SetupStage implements FrameStage {
@@ -155,25 +153,17 @@ public final class EntityRenderOrchestrator {
                          .put(HostRoles.ANIMATION_PARTICLE_SPAWNER,
                                  new RootAnimationParticleSpawner(ParticlePort.getSpawnAdapter()));
 
-                    LodController.update(cap.getLodState(), entity, plan);
                     ModelRuntimeData tickedInfos;
                     if (cap.getAnimationComponent().getSerializableInfo() != null) {
-                        int sampleInterval = cap.getLodState().level().animationSampleInterval();
-                        boolean samplePose = cap.getAnimationComponent().getLodState()
-                                .shouldSample(plan.frameIndex(), sampleInterval);
-                        ModelRuntimeData evaluatedInfos = BrAnimator.tickAnimation(
-                                cap.getAnimationComponent(), scope, effects,
+                        tickedInfos = BrAnimator.tickAnimation(cap.getAnimationComponent(), scope, effects,
                                 (ClientTickPort.getTick() + plan.partialTick()) / 20, () -> {
                                     if (clientEntityComponent.getClientEntity() != null) {
                                         clientEntityComponent.getClientEntity().scripts().ifPresent(scripts -> {
                                             scripts.pre_animation().eval(scope);
                                         });
                                     }
-                                }, samplePose);
-                        tickedInfos = cap.getAnimationComponent().getLodState().resolve(
-                                plan.frameIndex(), sampleInterval, samplePose ? evaluatedInfos : null);
+                                });
                     } else {
-                        cap.getAnimationComponent().getLodState().reset();
                         tickedInfos = ModelRuntimeData.EMPTY;
                     }
                     cap.getAnimationComponent().tickedInfos = tickedInfos;
@@ -574,7 +564,6 @@ public final class EntityRenderOrchestrator {
                 : RenderParams.builder(poseStack, null, modelComponent.isSolid(), null, null);
         return builder
                 .entity(data.entity())
-                .lodState(data.renderData().getLodState())
                 .overlay(data.overlay())
                 .light(modelComponent.isIgnoreLighting() ? EntityRenderPorts.RenderSystemPort.FULL_BRIGHT : data.packedLight())
                 .partVisibility(modelComponent.getPartVisibility())
