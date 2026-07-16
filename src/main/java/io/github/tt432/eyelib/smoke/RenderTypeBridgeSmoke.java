@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.bridge.material.RenderTypeResolver;
 import io.github.tt432.eyelib.material.material.BrMaterialEntry;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.material.port.PortRenderPass.Transparency;
+import io.github.tt432.eyelib.material.render.RenderTypeResolver.EntityRenderTypeData;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 //? if <26.1 {
 import net.minecraft.client.renderer.RenderType;
@@ -136,7 +137,64 @@ public class RenderTypeBridgeSmoke {
                     "entity_alphatest no DisableCulling → disableCulling=false");
         }
 
-        LOGGER.info("[RenderTypeBridgeSmoke] All 4 bridge adapter paths passed");
+        // === S5: 原版 (MC JE) RenderType 名称回退（材质系统未命中时按名称匹配原版语义）===
+        {
+            PortResourceLocation tex = PortResourceLocation.of("minecraft", "textures/entity/vanilla");
+
+            // entity_solid -> SOLID + cull, isSolid=true
+            EntityRenderTypeData d = RenderTypeResolver.resolve(PortResourceLocation.parse("entity_solid"));
+            PortRenderPass p = d.factory().apply(tex);
+            require(p.transparency() == Transparency.SOLID, "entity_solid -> SOLID: got " + p.transparency());
+            require(!p.disableCulling(), "entity_solid cull -> disableCulling=false");
+            require(d.isSolid(), "entity_solid isSolid=true");
+            require(!RenderTypeResolver.WARNED_UNKNOWN_RENDER_TYPES.contains("minecraft:entity_solid"),
+                    "entity_solid is a known vanilla type, must not warn");
+
+            // entity_cutout -> ALPHA_TEST；cull 因版本对齐原版（<26.1 剔除 / >=26.1 不剔除）
+            d = RenderTypeResolver.resolve(PortResourceLocation.parse("entity_cutout"));
+            p = d.factory().apply(tex);
+            require(p.transparency() == Transparency.ALPHA_TEST, "entity_cutout -> ALPHA_TEST: got " + p.transparency());
+            //? if <26.1 {
+            require(!p.disableCulling(), "entity_cutout <26.1 -> cull (disableCulling=false)");
+            //?} else {
+            require(p.disableCulling(), "entity_cutout >=26.1 -> no cull (disableCulling=true)");
+            //?}
+
+            // entity_cutout_no_cull -> ALPHA_TEST + no cull
+            d = RenderTypeResolver.resolve(PortResourceLocation.parse("entity_cutout_no_cull"));
+            p = d.factory().apply(tex);
+            require(p.transparency() == Transparency.ALPHA_TEST, "entity_cutout_no_cull -> ALPHA_TEST");
+            require(p.disableCulling(), "entity_cutout_no_cull -> no cull");
+
+            // entity_translucent -> TRANSLUCENT + no cull
+            d = RenderTypeResolver.resolve(PortResourceLocation.parse("entity_translucent"));
+            p = d.factory().apply(tex);
+            require(p.transparency() == Transparency.TRANSLUCENT, "entity_translucent -> TRANSLUCENT");
+            require(p.disableCulling(), "entity_translucent -> no cull");
+
+            // entity_translucent_cull -> TRANSLUCENT + cull
+            d = RenderTypeResolver.resolve(PortResourceLocation.parse("entity_translucent_cull"));
+            p = d.factory().apply(tex);
+            require(p.transparency() == Transparency.TRANSLUCENT, "entity_translucent_cull -> TRANSLUCENT");
+            require(!p.disableCulling(), "entity_translucent_cull -> cull");
+
+            // entity_translucent_emissive -> TRANSLUCENT_EMISSIVE
+            d = RenderTypeResolver.resolve(PortResourceLocation.parse("entity_translucent_emissive"));
+            p = d.factory().apply(tex);
+            require(p.transparency() == Transparency.TRANSLUCENT_EMISSIVE,
+                    "entity_translucent_emissive -> EMISSIVE: got " + p.transparency());
+
+            // 非原版名仍走 SOLID 回退 + 警告，清理以免污染其它 smoke 的 WARNED 断言
+            d = RenderTypeResolver.resolve(PortResourceLocation.parse("eyelib:not_a_vanilla_type"));
+            p = d.factory().apply(tex);
+            require(p.transparency() == Transparency.SOLID, "unknown -> SOLID fallback: got " + p.transparency());
+            require(d.isSolid(), "unknown -> isSolid=true");
+            require(RenderTypeResolver.WARNED_UNKNOWN_RENDER_TYPES.contains("eyelib:not_a_vanilla_type"),
+                    "unknown type should be warned");
+            RenderTypeResolver.WARNED_UNKNOWN_RENDER_TYPES.remove("eyelib:not_a_vanilla_type");
+        }
+
+        LOGGER.info("[RenderTypeBridgeSmoke] All bridge adapter + vanilla fallback paths passed");
     }
 }
 

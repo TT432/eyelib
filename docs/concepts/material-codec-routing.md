@@ -46,14 +46,18 @@ entity JSON: materials: {default: "entity_alphatest"}
           ├─ 命中 → entry.hasBlending(matMap)  → entityTranslucent
           │       → entry.isAlphatest(matMap)  → entityCutoutNoCull
           │       → else                       → entitySolid
-          └─ 未命中 → RenderTypeResolver.resolve(renderType)
+          └─ 未命中 -> RenderTypeResolver.resolve(renderType)
+                       ├─ 命中原版 (MC JE) RenderType 名 -> resolveVanilla() 返回等价 PortRenderPass
+                       │   （entity_solid/cutout/cutout_no_cull/translucent/translucent_cull/emissive/eyes
+                       │    + 方块层 solid/cutout/cutout_mipped/translucent；cull 按版本对齐原版）
+                       └─ 未知名 -> SOLID + 警告（WARNED_UNKNOWN_RENDER_TYPES）
 ```
 
 **注意**：`isAlphatest()` 使用 `defines.toList()` 遍历 define 继承链检测 `ALPHA_TEST` 字符串，而非按材质名匹配。这比废弃的 `isBaseType(entry, "entity_alphatest")` 名字匹配更健壮——对非标准命名的 alphatest 材质（如 `entity_alphatest_one_sided`）也有效。
 
 **第二路由**：`BrMaterialEntry.getRenderType(texture, materials)`（material 模块内，用于自定义着色器/bgfx 路径）也应包含同样的 alphatest 检查，否则非 blending 材质会错误地 fall 到 `entitySolid`。两条路径必须一致。
 
-**关键关注点**：未命中时 `RenderTypeResolver` 的默认返回是 `entitySolid`，如果 Bedrock material 名不在 MaterialManager 中且不被 `RenderTypeResolver` 认识，alpha test 会被丢失。
+**关键关注点**：未命中时 `RenderTypeResolver.resolve` 先尝试 `resolveVanilla` 按名称匹配原版 (MC JE) RenderType 语义（`entity_cutout` 等返回等价 PortRenderPass，不再丢 alpha test）。仅当名称既不在材质系统也不属于原版 RenderType 名时，才回退到 SOLID + 警告。原版 `entity_cutout` 的 cull 跨版本翻转：1.20.1/1.21.1 剔除，26.1.2 渲染重写后不剔除，`resolveVanilla` 用 `//?` 对齐。
 
 ## ⚠️ ModifyAble.add()/sub() 的 `this` 陷阱
 

@@ -41,13 +41,58 @@ public interface RenderTypeResolver {
             case "minecraft:particles_add" -> new EntityRenderTypeData(id, false,
                     texture -> BrRenderTypeFactory.create(texture, BrRenderStateFactory.from(particleAdd())));
             default -> {
+                EntityRenderTypeData vanilla = resolveVanilla(id);
+                if (vanilla != null) {
+                    yield vanilla;
+                }
                 if (WARNED_UNKNOWN_RENDER_TYPES.add(id.toString())) {
-                    LOGGER.warn("Unknown material '{}' — no matching material definition or render type found. " +
+                    LOGGER.warn("Unknown material '{}' - no matching material definition or render type found. " +
                             "Falling back to SOLID; add the material to eyelib/materials/ for correct rendering.", id);
                 }
                 yield new EntityRenderTypeData(id, true,
                         tex -> PortRenderPass.of(PortRenderPass.Transparency.SOLID, false));
             }
+        };
+    }
+
+    /**
+     * 当材质名未在 eyelib 材质系统中命中时，按名称匹配原版 (MC JE) RenderType 语义。
+     * <p>
+     * 命中原版实体/方块层 RenderType 名称时返回等价 {@link PortRenderPass}（透明度 + cull），
+     * 由 {@link io.github.tt432.eyelib.bridge.material.adapter.RenderPassAdapter} 物化为对应版本的 MC RenderType。
+     * <p>
+     * cull 按版本对齐原版：原版 {@code entityCutout} 在 1.20.1/1.21.1 为剔除，
+     * 在 26.1.2 渲染重写后翻转为不剔除（名称 {@code entity_cutout} 不再剔除）。
+     * 未命中返回 {@code null}，调用方回退到 SOLID + 警告。
+     */
+    private static EntityRenderTypeData resolveVanilla(PortResourceLocation id) {
+        return switch (id.path()) {
+            // --- 不透明 ---
+            case "entity_solid", "solid" -> new EntityRenderTypeData(id, true,
+                    tex -> PortRenderPass.of(PortRenderPass.Transparency.SOLID, false));
+            // --- alpha test ---
+            case "entity_cutout" -> {
+                //? if <26.1 {
+                yield new EntityRenderTypeData(id, false,
+                        tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, false));
+                //?} else {
+                yield new EntityRenderTypeData(id, false,
+                        tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, true));
+                //?}
+            }
+            case "entity_cutout_no_cull", "entity_cutout_no_cull_z_offset" -> new EntityRenderTypeData(id, false,
+                    tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, true));
+            case "cutout", "cutout_mipped" -> new EntityRenderTypeData(id, false,
+                    tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, false));
+            // --- 半透明 ---
+            case "entity_translucent" -> new EntityRenderTypeData(id, false,
+                    tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, true));
+            case "entity_translucent_cull", "translucent" -> new EntityRenderTypeData(id, false,
+                    tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, false));
+            // --- 自发光（eyes 近似为 emissive，优于 SOLID 回退）---
+            case "entity_translucent_emissive", "eyes" -> new EntityRenderTypeData(id, false,
+                    tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT_EMISSIVE, false));
+            default -> null;
         };
     }
 
