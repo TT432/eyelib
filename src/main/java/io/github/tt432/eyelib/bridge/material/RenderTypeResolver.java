@@ -10,6 +10,7 @@ import io.github.tt432.eyelib.util.PortResourceLocation;
 import io.github.tt432.eyelib.material.render.BrRenderState;
 import io.github.tt432.eyelib.material.render.BrRenderStateFactory;
 import io.github.tt432.eyelib.material.render.RenderTypeResolver.EntityRenderTypeData;
+import org.jspecify.annotations.Nullable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -65,7 +66,7 @@ public interface RenderTypeResolver {
      * 在 26.1.2 渲染重写后翻转为不剔除（名称 {@code entity_cutout} 不再剔除）。
      * 未命中返回 {@code null}，调用方回退到 SOLID + 警告。
      */
-    private static EntityRenderTypeData resolveVanilla(PortResourceLocation id) {
+    private static @Nullable EntityRenderTypeData resolveVanilla(PortResourceLocation id) {
         return switch (id.path()) {
             // --- 不透明 ---
             case "entity_solid", "solid" -> new EntityRenderTypeData(id, true,
