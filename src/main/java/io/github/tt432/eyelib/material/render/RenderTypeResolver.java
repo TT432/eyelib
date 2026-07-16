@@ -35,7 +35,7 @@ public final class RenderTypeResolver {
             case "cutout_no_cull" -> new EntityRenderTypeData(id, false,
                     tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, true));
             case "translucent" -> new EntityRenderTypeData(id, false,
-                    tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, false));
+                    tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, true));
             default -> throw new IllegalArgumentException("未知 RenderType: " + id);
         };
     }
@@ -65,7 +65,7 @@ public final class RenderTypeResolver {
             case "particles_alpha" -> new EntityRenderTypeData(id, false,
                     tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, true));
             case "particles_blend" -> new EntityRenderTypeData(id, false,
-                    tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, false));
+                    tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, true));
             case "particles_add" -> new EntityRenderTypeData(id, false,
                     tex -> PortRenderPass.of(PortRenderPass.Transparency.ADDITIVE, true));
             default -> resolve(id);

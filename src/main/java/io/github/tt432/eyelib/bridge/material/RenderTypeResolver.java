@@ -35,7 +35,7 @@ public interface RenderTypeResolver {
             case "minecraft:cutout_no_cull" -> new EntityRenderTypeData(id, false,
                     tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, true));
             case "minecraft:translucent", "minecraft:particles_blend" -> new EntityRenderTypeData(id, false,
-                    tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, false));
+                    tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, true));
             case "minecraft:particles_alpha" -> new EntityRenderTypeData(id, false,
                     tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, true));
             case "minecraft:particles_add" -> new EntityRenderTypeData(id, false,
@@ -87,8 +87,10 @@ public interface RenderTypeResolver {
             // --- 半透明 ---
             case "entity_translucent" -> new EntityRenderTypeData(id, false,
                     tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, true));
-            case "entity_translucent_cull", "translucent" -> new EntityRenderTypeData(id, false,
+            case "entity_translucent_cull" -> new EntityRenderTypeData(id, false,
                     tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, false));
+            case "translucent" -> new EntityRenderTypeData(id, false,
+                    tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, true));
             // --- 自发光（eyes 近似为 emissive，优于 SOLID 回退）---
             case "entity_translucent_emissive", "eyes" -> new EntityRenderTypeData(id, false,
                     tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT_EMISSIVE, false));
@@ -144,7 +146,7 @@ public interface RenderTypeResolver {
             case "particles_alpha" -> new EntityRenderTypeData(id, false,
                     tex -> PortRenderPass.of(PortRenderPass.Transparency.ALPHA_TEST, true));
             case "particles_blend" -> new EntityRenderTypeData(id, false,
-                    tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, false));
+                    tex -> PortRenderPass.of(PortRenderPass.Transparency.TRANSLUCENT, true));
             case "particles_add" -> new EntityRenderTypeData(id, false,
                     texture -> BrRenderTypeFactory.create(texture, BrRenderStateFactory.from(particleAdd())));
             default -> resolve(id);

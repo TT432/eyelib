@@ -185,6 +185,7 @@ class MaterialEndToEndTest {
         var resolved = io.github.tt432.eyelib.material.material.BrMaterialResolver.resolve(
                 translucent, material.materials());
         assertTrue(resolved.hasState(io.github.tt432.eyelib.material.gl.GLStates.Blending));
+        assertTrue(resolved.hasState(io.github.tt432.eyelib.material.gl.GLStates.DisableCulling));
         assertEquals(io.github.tt432.eyelib.material.gl.BlendFactor.SourceAlpha,
                 resolved.blend().blendSrc());
         assertEquals(io.github.tt432.eyelib.material.gl.BlendFactor.OneMinusSrcAlpha,
@@ -199,7 +200,7 @@ class MaterialEndToEndTest {
                 material.materials());
         assertEquals(io.github.tt432.eyelib.material.port.PortRenderPass.Transparency.TRANSLUCENT,
                 pass.transparency());
-        assertFalse(pass.disableCulling());
+        assertTrue(pass.disableCulling());
     }
 
     @Test
