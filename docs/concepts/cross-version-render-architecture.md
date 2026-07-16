@@ -334,11 +334,13 @@ static void vertex(VertexConsumer, x,y,z, r,g,b,a, u,v, overlay, light, nx,ny,nz
 
 > 残留债务：`renderBufferPort` 接口 + 空实现可考虑后续清理。`submit` fallback 仍每实体新建 `ByteBufferBuilder(786432)` + immediate `BufferSource`（见 §7.2），但仅在 fallback 路径触发，非热路径。
 
-### 7.2【中风险】26.1.2 submit 丧失批量优势
+### 7.2【已解决】26.1.2 submit 丧失批量优势
 
-`submit()`（行 116-121）每实体新建 `ByteBufferBuilder(786432)` + immediate `BufferSource`，立即 `endBatch` + `close`。这违背 26.1.2 `SubmitNode` 延迟提交 + `FeatureRenderDispatcher` 按 `RenderType` 批量绘制的设计意图，导致每实体一次 draw call。
-
-若采纳 §7.1 方案 2（纯 submit），需重构 submit 为收集 `SubmitNode` + 共享 buffer，而非 immediate。若采纳方案 1/3，则 submit 可保持 thin。
+**已解决**（2026-07-17）：`DeferredRenderSink` 恢复为直接写 CustomFeatureRenderer 按 RenderType 分组共享的
+BufferBuilder（`submitCustomGeometry(pose, renderType, writer::write)`），同 RenderType 的多实体几何
+合并为一次 draw call。早前写共享 buffer 的崩溃（b4a67086 归因为 stale builder）真实根因是
+`EntityCaptureBase` 场景 lambda 缺 `endScene` 导致的 `outputColorTextureOverride` 残留（见 fa45df00）；
+根因修复后共享 buffer 路径连续 smoke 全绿。每回调自建 `ByteBufferBuilder(768KB)` 的临时方案已移除。
 
 ### 7.3【已解决】26.1.2 renderItemDirect / flushBuffer
 
@@ -420,7 +422,7 @@ eyelib 的跨版本渲染流程**架构骨架已就位且自洽**：Domain（零
 | 设计期风险 | 解决方式 | 提交 |
 |---|---|---|
 | §7.1 双重渲染（submit + renderBufferPort 重叠） | 引入 `RenderSink` 兼容层：`>=26.1` per-entity submit 走 `DeferredRenderSink`（`submitCustomGeometry` 延迟到 `renderAllFeatures` 绘制）；`RenderStageEventAdapter` 在 `>=26.1` 移除 `renderBufferPort.renderEntities()` 全局批量路径 | `9cd2413d` |
-| §7.2 submit 丧失批量（每实体 immediate） | `DeferredRenderSink` 不再每实体 immediate endBatch，而是把几何提交到 `SubmitNodeCollector`，由 vanilla `CustomFeatureRenderer` 在 `renderAllFeatures` 按 `RenderType` 批量绘制 | `9cd2413d` / `b4a67086` |
+| §7.2 submit 丧失批量（每实体 immediate） | `DeferredRenderSink` 直接写 CustomFeatureRenderer 共享 BufferBuilder，vanilla 在 `renderAllFeatures` 按 RenderType 批量绘制；b4a67086 的独立 immediate 临时方案在根因（fa45df00）修复后移除 | `9cd2413d` / 本次提交 |
 | §7.3 renderItemDirect / flushBuffer 为空 | renderItemDirect 改为接收 `RenderSink`，26.1.2 经 `sink.submitNodeCollector()` 传递 vanilla `SubmitNodeCollector`（renderItem 签名变更：移除 left、MultiBufferSource→SubmitNodeCollector）；flushBuffer 确认为死代码已删除 | 本次提交 |
 | §8 26.1.2 OOM 阻塞运行验证 | OOM 已解决（NeoForge 升至 26.1.2.78）；26.1.2 runClient 正常进世界，实体渲染已验证（纹理、剔除、光照均与 1.20.1 一致） | `53045fe5` / `338e0913` 等 |
 
