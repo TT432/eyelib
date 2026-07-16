@@ -132,6 +132,19 @@ class MaterialEndToEndTest {
                 .parse(JsonOps.INSTANCE, json), RuntimeException::new);
     }
 
+    private static BrMaterial parsePackagedVanillaMaterial() {
+        try (var reader = new java.io.InputStreamReader(
+                java.util.Objects.requireNonNull(MaterialEndToEndTest.class.getResourceAsStream(
+                        "/assets/eyelib/eyelib/materials/vanilla.material")),
+                java.nio.charset.StandardCharsets.UTF_8)) {
+            JsonElement json = JsonParser.parseReader(reader);
+            return TestCodecUtil.unwrap(BrMaterial.CODEC
+                    .parse(JsonOps.INSTANCE, json), RuntimeException::new);
+        } catch (java.io.IOException e) {
+            throw new java.io.UncheckedIOException(e);
+        }
+    }
+
     @Test
     void testCODECParsing_all11Entries() {
         BrMaterial material = parseVanillaMaterial();
@@ -161,6 +174,32 @@ class MaterialEndToEndTest {
         BrMaterialEntry alphatest = material.materials().get("entity_alphatest:entity");
         assertEquals("entity", alphatest.base());
         assertEquals("entity_alphatest", alphatest.name());
+    }
+
+    @Test
+    void packagedTranslucentMaterialUsesStandardAlphaBlend() {
+        BrMaterial material = parsePackagedVanillaMaterial();
+        BrMaterialEntry translucent = material.materials().get("translucent");
+
+        assertNotNull(translucent);
+        var resolved = io.github.tt432.eyelib.material.material.BrMaterialResolver.resolve(
+                translucent, material.materials());
+        assertTrue(resolved.hasState(io.github.tt432.eyelib.material.gl.GLStates.Blending));
+        assertEquals(io.github.tt432.eyelib.material.gl.BlendFactor.SourceAlpha,
+                resolved.blend().blendSrc());
+        assertEquals(io.github.tt432.eyelib.material.gl.BlendFactor.OneMinusSrcAlpha,
+                resolved.blend().blendDst());
+        assertEquals(io.github.tt432.eyelib.material.gl.BlendFactor.One,
+                resolved.blend().alphaSrc());
+        assertEquals(io.github.tt432.eyelib.material.gl.BlendFactor.OneMinusSrcAlpha,
+                resolved.blend().alphaDst());
+
+        var pass = translucent.getRenderType(
+                io.github.tt432.eyelib.util.PortResourceLocation.of("minecraft", "test"),
+                material.materials());
+        assertEquals(io.github.tt432.eyelib.material.port.PortRenderPass.Transparency.TRANSLUCENT,
+                pass.transparency());
+        assertFalse(pass.disableCulling());
     }
 
     @Test

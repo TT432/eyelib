@@ -13,7 +13,11 @@
       "fragmentShader": "b",
       "defines": [],
       "samplerStates": [],
-      "states": [],
+      "states": ["Blending"],
+      "blendSrc": "SourceAlpha",
+      "blendDst": "OneMinusSrcAlpha",
+      "alphaSrc": "One",
+      "alphaDst": "OneMinusSrcAlpha",
       "variants": []
     },
     "solid": {
