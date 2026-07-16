@@ -44,6 +44,9 @@ final class EntityCaptureBase {
                 EntitySceneRenderer.renderEntityAt(m, entity, ORIGIN_X, ORIGIN_Y, scale, yaw);
             } finally {
                 RenderLivingEventAdapter.suppressRenderEvents = false;
+                // begin/end 必须配对：26.1.2 的 endScene 复位 outputColorTextureOverride，
+                // 否则 clear() 销毁 FBO 后下一帧 RenderType.draw 用到已关闭的纹理（"Color texture is closed"）
+                EntitySceneRenderer.endScene(m);
             }
         }, image -> {
             verifyNonEmpty(image, name);
