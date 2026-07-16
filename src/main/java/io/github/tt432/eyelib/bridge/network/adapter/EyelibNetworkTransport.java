@@ -57,7 +57,7 @@ public interface EyelibNetworkTransport {
 
     //? if >=1.20.6 {
     public static void onRegisterPayloads(RegisterPayloadHandlersEvent event) {
-        REGISTRAR.set(event.registrar("1"));
+        REGISTRAR.set(event.registrar("1").optional());
         ApplicationLifecyclePort port = ApplicationLifecyclePort.get();
         if (port != null) port.registerNetworkHandlers();
     }
