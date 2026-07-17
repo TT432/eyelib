@@ -43,9 +43,7 @@ public record BrClientEntity(
                         ? DataResult.success(objectValue)
                         : DataResult.error(() -> "Expected object value");
             },
-            value -> {
-                throw new UnsupportedOperationException("Client entity object encoding is not supported");
-            }
+            BedrockResourceValue.ObjectValue::toJsonElement
     );
 
     private static final Codec<String> RENDER_CONTROLLER_CODEC = ImporterCodecUtil.JSON_ELEMENT_CODEC.comapFlatMap(
@@ -61,7 +59,8 @@ public record BrClientEntity(
                 }
                 return DataResult.error(() -> "Expected string or object for render_controller");
             },
-            name -> { throw new UnsupportedOperationException(); }
+            // 编码为字符串形式（条件形式在解码时已丢弃条件，无法逆向）
+            com.google.gson.JsonPrimitive::new
     );
 
     private static final Codec<Map<String, String>> ITEM_FIELD_CODEC = Codec.either(

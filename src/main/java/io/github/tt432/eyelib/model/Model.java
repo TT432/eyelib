@@ -85,21 +85,33 @@ public interface Model {
 
         List<TextureMesh> textureMeshes();
 
+        /**
+         * id/parent 以骨骼名序列化（经 {@link GlobalBoneIdHandler#STRING_ID_CODEC} 双向映射），
+         * 而非裸 int——裸 int 依赖会话级的全局 id 分配顺序，跨会话往返（如 cospack 导出/再加载）会错位。
+         * parent 为 -1（根骨骼）时序列化为空串（{@code get("") == -1}）。
+         */
+        Codec<Integer> PARENT_ID_CODEC = Codec.STRING.xmap(GlobalBoneIdHandler::get,
+                id -> id == -1 ? "" : GlobalBoneIdHandler.get(id));
+
+        // optionalFieldOf(name, null) / xmap(orElse(null)) 在字段缺失时都会产生 DataResult Success(null)，
+        // 组合阶段 Optional.of(null) NPE。正确做法：group 组件保持 Optional<String>，在 apply 里解包。
         Codec<Bone> CODEC = CodecOps.lazyCodec(() -> RecordCodecBuilder.create(ins -> ins.group(
-                Codec.INT.fieldOf("id").forGetter(Bone::id),
-                Codec.INT.fieldOf("parent").forGetter(Bone::parent),
+                GlobalBoneIdHandler.STRING_ID_CODEC.fieldOf("id").forGetter(Bone::id),
+                PARENT_ID_CODEC.fieldOf("parent").forGetter(Bone::parent),
                 ImporterCodecs.VECTOR3FC.fieldOf("pivot").forGetter(Bone::pivot),
                 ImporterCodecs.VECTOR3FC.fieldOf("rotation").forGetter(Bone::rotation),
                 ImporterCodecs.VECTOR3FC.fieldOf("position").forGetter(Bone::position),
                 ImporterCodecs.VECTOR3FC.fieldOf("scale").forGetter(Bone::scale),
-                Codec.STRING.optionalFieldOf("binding", null).forGetter(Bone::binding),
+                Codec.STRING.optionalFieldOf("binding").forGetter(b -> java.util.Optional.ofNullable(b.binding())),
                 GlobalBoneIdHandler.map(Bone.CODEC).fieldOf("children").forGetter(Bone::children),
                 Cube.CODEC.listOf().fieldOf("cubes").forGetter(Bone::cubes),
                 GroupLocator.CODEC.fieldOf("locator").forGetter(Bone::locator),
                 Codec.BOOL.optionalFieldOf("reset", false).forGetter(Bone::reset),
-                Codec.STRING.optionalFieldOf("material", null).forGetter(Bone::material),
+                Codec.STRING.optionalFieldOf("material").forGetter(b -> java.util.Optional.ofNullable(b.material())),
                 TextureMesh.CODEC.listOf().optionalFieldOf("texture_meshes", List.of()).forGetter(Bone::textureMeshes)
-        ).apply(ins, SimpleBone::new)));
+        ).apply(ins, (id, parent, pivot, rotation, position, scale, binding, children, cubes, locator, reset, material, textureMeshes) ->
+                new SimpleBone(id, parent, pivot, rotation, position, scale, binding.orElse(null),
+                        children, cubes, locator, reset, material.orElse(null), textureMeshes))));
 
         static Bone of(
                 int id,
@@ -181,8 +193,8 @@ public interface Model {
         public static final Codec<Face> CODEC = RecordCodecBuilder.create(ins -> ins.group(
                 Vertex.CODEC.listOf().fieldOf("vertexes").forGetter(Face::vertexes),
                 ImporterCodecs.VECTOR3FC.fieldOf("normal").forGetter(Face::normal),
-                Codec.STRING.optionalFieldOf("material_instance", null).forGetter(Face::materialInstance)
-        ).apply(ins, Face::new));
+                Codec.STRING.optionalFieldOf("material_instance").forGetter(f -> java.util.Optional.ofNullable(f.materialInstance()))
+        ).apply(ins, (vertexes, normal, materialInstance) -> new Face(vertexes, normal, materialInstance.orElse(null))));
 
         public Face(List<Vertex> vertexes, Vector3fc normal) {
             this(vertexes, normal, null);

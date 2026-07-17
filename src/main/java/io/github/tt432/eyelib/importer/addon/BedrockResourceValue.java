@@ -48,6 +48,36 @@ public sealed interface BedrockResourceValue permits BedrockResourceValue.NullVa
         return new ObjectValue(values);
     }
 
+    /**
+     * {@link #fromJsonElement} 的逆变换：序列化回 JsonElement（cospack 导出等场景需要）。
+     */
+    default JsonElement toJsonElement() {
+        if (this instanceof NullValue) {
+            return JsonNull.INSTANCE;
+        }
+        if (this instanceof BooleanValue b) {
+            return new JsonPrimitive(b.value());
+        }
+        if (this instanceof NumberValue n) {
+            return new JsonPrimitive(n.value());
+        }
+        if (this instanceof StringValue s) {
+            return new JsonPrimitive(s.value());
+        }
+        if (this instanceof ArrayValue a) {
+            JsonArray array = new JsonArray();
+            for (BedrockResourceValue value : a.values()) {
+                array.add(value.toJsonElement());
+            }
+            return array;
+        }
+        JsonObject object = new JsonObject();
+        for (Map.Entry<String, BedrockResourceValue> entry : ((ObjectValue) this).values().entrySet()) {
+            object.add(entry.getKey(), entry.getValue().toJsonElement());
+        }
+        return object;
+    }
+
     record NullValue() implements BedrockResourceValue {
     }
 
