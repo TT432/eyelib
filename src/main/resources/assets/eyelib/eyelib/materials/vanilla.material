@@ -3,7 +3,7 @@
     "cutout": {
       "vertexShader": "a",
       "fragmentShader": "b",
-      "defines": [],
+      "defines": ["ALPHA_TEST"],
       "samplerStates": [],
       "states": [],
       "variants": []
