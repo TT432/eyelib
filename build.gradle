@@ -432,6 +432,9 @@ publishing {
     publications {
         // Publication 1: Forge mod distribution — jarJar + reobfuscation, POM carries mod deps
         mavenJava(MavenPublication) {
+            // stonecutter node 的 project.name 是版本号（1.20.1/...），artifactId 必须显式固定为 mod_id，
+            // 否则 mavenLocal 发布坐标变成 io.github.tt432:<版本号>:...，消费方无法按 eyelib 名称解析。
+            artifactId = mod_id
             from components.java
             suppressPomMetadataWarningsFor('reobfApiElements')
             suppressPomMetadataWarningsFor('reobfRuntimeElements')
