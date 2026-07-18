@@ -512,7 +512,7 @@ public interface MolangBuiltInQuery {
 
     @MolangFunction(value = "is_on_ground", description = "正处于地面上")
     public static float isOnGround(MolangScope scope) {
-        return entityBool(scope, Entity::onGround);
+        return entityBool(scope, io.github.tt432.eyelib.bridge.molang.adapter.EntityPortAdapter::isOnGround);
     }
 
     @MolangFunction(value = "fall_distance", description = "摔落的距离")

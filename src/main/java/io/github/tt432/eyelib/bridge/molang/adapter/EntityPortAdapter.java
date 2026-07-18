@@ -29,6 +29,15 @@ public final class EntityPortAdapter {
         return new PortEntityImpl(entity);
     }
 
+    /**
+     * Bedrock q.is_on_ground 语义。JE 客户端实体的 onGround 仅随移动包同步，
+     * 静止实体（如 NoAI）永远为 false；用 1mm 下移碰撞检测兜底。
+     */
+    public static boolean isOnGround(Entity entity) {
+        return entity.onGround()
+                || !entity.level().noCollision(entity, entity.getBoundingBox().move(0.0, -1.0E-3, 0.0));
+    }
+
     private record PortEntityImpl(Entity entity) implements PortEntity {
         @Override
         public Map<String, Object> getQueryProperties() {
@@ -51,7 +60,7 @@ public final class EntityPortAdapter {
             props.put("is_sprinting", living && ((net.minecraft.world.entity.LivingEntity) entity).isSprinting());
             // 通用实体属性
             props.put("on_fire", entity.isOnFire());
-            props.put("is_on_ground", entity.onGround());
+            props.put("is_on_ground", isOnGround(entity));
             props.put("is_in_water", entity.isInWater());
             props.put("is_riding", entity.isPassenger());
             // 实体特定行为属性
