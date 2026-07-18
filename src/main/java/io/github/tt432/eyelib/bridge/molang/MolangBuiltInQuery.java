@@ -288,14 +288,13 @@ public interface MolangBuiltInQuery {
         return scope.getHostContext().get(ENTITY).map(Entity::getName).orElse(Component.empty()).getString();
     }
 
-    @MolangFunction(value = "is_name_any", description = "判断实体的名称是否匹配给定字符串中的任意一个（不区分大小写子串匹配）")
+    @MolangFunction(value = "is_name_any", description = "实体名称是否与给定名称之一精确相等（区分大小写）")
     public static float isNameAny(MolangScope scope, String... names) {
         return scope.getHostContext().get(ENTITY).map(entity -> {
             Component customName = entity.getCustomName();
             String entityName = (customName != null ? customName : entity.getName()).getString();
-            String lowerName = entityName.toLowerCase(java.util.Locale.ROOT);
             for (String name : names) {
-                if (lowerName.contains(name.toLowerCase(java.util.Locale.ROOT))) {
+                if (entityName.equals(name)) {
                     return TRUE;
                 }
             }
@@ -513,6 +512,11 @@ public interface MolangBuiltInQuery {
     @MolangFunction(value = "is_on_ground", description = "正处于地面上")
     public static float isOnGround(MolangScope scope) {
         return entityBool(scope, io.github.tt432.eyelib.bridge.molang.adapter.EntityPortAdapter::isOnGround);
+    }
+
+    @MolangFunction(value = "is_in_ui", description = "是否在 UI 中渲染（eyelib 目前只有世界内渲染路径，恒为 0）")
+    public static float isInUi(MolangScope scope) {
+        return FALSE;
     }
 
     @MolangFunction(value = "fall_distance", description = "摔落的距离")
