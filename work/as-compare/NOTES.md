@@ -42,17 +42,19 @@
 | ad99accb | NaN 语义：比较运算含 NaN 除 != 外恒 false（fcmpl/fcmpg 分工，同 javac）；`main_hand_item_use_duration` 零除 NaN 返回 0 | MolangSpecTest NaN 用例 ✓ |
 | d6fbe0a7 | render_controller 内联条件下沉 BrClientEntity codec（attachables brarchive 分支漏 normalize 致 5 RC 无条件全渲染）；删 normalizeRenderControllers | 弓组件 5→1(主RC) ✓ |
 | 8407d893 | RC textures 数组改多 pass 分层（官方/wiki：图层顺序渲染，删 TextureLayerMerger 合并）；texture_mesh 体素化贴图按实体纹理表短名解析（dhw 而非图层贴图）；手持附着补骨骼 pivot 平移（收集姿态不含 pivot，曾致弓沉到实体原点）；texture_mesh 转换对齐 Blockbench 实测 | 弓挂手侧、形状/姿态正确 ✓；clientsmoke 9/9 ✓ |
+| 1c45073d | RC 条件逐 tick 动态重估（BE 逐帧语义），实体+attachable 两侧 | 骷髅拉弓箭层 2→3、射击后回落 ✓ |
+| 11288a7d | 单采样材质多图层 RC 只渲染第 0 层（BE 语义：分层需 multitexture/masked 多采样材质） | 弓由全绿→棕色，与 BE 截图一致 ✓ |
 
 ## 四、待办问题（按优先级）
 
-1. **弓颜色待 BE 对照**：姿态/形状已 parity（Blockbench 参照确认）；当前为调色板层（dpw 绿金渐变）覆盖的深绿色，BE 实际色调需 BE 截图确认。A&S 武器色 = 包设置 iocufj 调色板系统（9 条 128×1 渐变，默认 dpw）
+1. **附魔弓发光层未验证**：zxhwjj/aegbne（v.is_enchanted）的调色板发光层用单采样加法混合材质（dgvqwe One/One），现按单采样规则只渲染第 0 层；BE 附魔弓实际表现需附魔场景对照（优先级低）
 2. **内存泄漏**（feedback fb_mrqjf0zjwp2l）：JE 帧数随时间下降，已实证 OutOfMemoryError 崩溃（crash-2026-07-19_06.36.50-client.txt）。线索：AttachableItemRenderSetup.CACHE 在客户端 ItemStack 实例更换时重复建 rd（观测到 5→10 组件重复）；collectBindBones 每帧每实体分配新 map
-3. **RC 条件一次性求值**：条件仅在 setupClientEntity 时评估一次，动态条件（如 `q.main_hand_item_use_duration>0` 拉弓显示箭）不会切换。需每 tick 评估+变更重建组件（BE 语义）
-4. **未实现 query/功能**（A&S 用到）：`rotation_to_camera`、`math.ease_in_out_back`、`query.any`、`entity_biome_has_any_identifier`、`q.is_pack_setting_selected/enabled`（现为恒 false 桩，A&S 包设置全部走默认分支——注意与 BE 非默认设置用户产生差异）、`relative_to`（骨骼动画相对实体）、`c.owning_entity->`、`q.main_hand_item_use_duration`
-5. **服务端行为侧** query 注册表与渲染侧分离，服务端缺 is_item_name_any 等（日志有 MolangRuntimeSupport 告警）；VanillaBehaviorEntityLoader 部分事件解析失败（has_component/has_biome_tag）
-6. **JE 蜘蛛消失过一次**（未复现）
-7. **子包 key 错位**（docs/gap-analysis/brarchive-subpack-key-mismatch.md）：遇症状再处理
-8. **色调差**：JE 画面整体比 BE 亮（引擎级，暂不归档为 bug）
+3. **未实现 query/功能**（A&S 用到）：`rotation_to_camera`、`math.ease_in_out_back`、`query.any`、`entity_biome_has_any_identifier`、`q.is_pack_setting_selected/enabled`（现为恒 false 桩，A&S 包设置全部走默认分支——注意与 BE 非默认设置用户产生差异）、`relative_to`（骨骼动画相对实体）、`c.owning_entity->`、`q.main_hand_item_use_duration`
+4. **服务端行为侧** query 注册表与渲染侧分离，服务端缺 is_item_name_any 等（日志有 MolangRuntimeSupport 告警）；VanillaBehaviorEntityLoader 部分事件解析失败（has_component/has_biome_tag）
+5. **JE 蜘蛛消失过一次**（未复现）
+6. **子包 key 错位**（docs/gap-analysis/brarchive-subpack-key-mismatch.md）：遇症状再处理
+7. **色调差**：JE 画面整体比 BE 亮（引擎级，暂不归档为 bug）
+8. **BE 并排对照**（需用户 `/wsserver localhost:19199` 重连）：AFK 遮罩下的 BE 截图已证实弓=棕色，但精细节拍/持弓倾斜角的并排对比仍需活连接
 
 ## 五、实体进度
 
@@ -62,7 +64,7 @@
 | chicken | ✅ 修复后 parity | is_name_any 修复 |
 | pig/cow/creeper | ✅ 外观 parity | |
 | sheep | ≈ | 白/米黄=引擎色调差 |
-| skeleton | ≈ 待 BE 定色调 | 弓挂手侧、形状/姿态 parity；颜色=调色板深绿待 BE 对照 |
+| skeleton | ✅ parity | 弓=棕色（BE 截图实证）、挂手侧垂下、拉弓出箭、射击回落 |
 | spider | ❓ | 消失过一次未复现 |
 | 其余 ~105 种 | 未对比 | |
 
@@ -76,3 +78,5 @@
 6. **收集的骨骼姿态不含 pivot 平移**：applyBoneTranslate 是 T(pos)×T(pivot)×R×S×T(-pivot)，做附着点（attachable/locator）必须自行补 T(pivot)，否则附着物沉到实体原点
 7. **JE 传送必须用服务端命令**：客户端 `player.teleportTo` 会被服务端橡皮筋回弹（getOrPrepare 探针看到的位置是旧的）
 8. **brarchive 解码**：8B magic(0x267052A0B125277D) + 4B count + 4B version + count×256B 记录（名+0xFC 处长度）+ 串接 JSON；`__brarchive/models/entity.brarchive`=几何，`materials.brarchive` 无 payload（.material 是普通 zip 条目）
+9. **BE 分层语义定案**：RC textures 数组=多图层绑定采样器，材质决定是否合成——multitexture/masked 族（entity_multitexture_*、villager_v2_masked、MASKED_MULTITEXTURE define）才分层；单采样材质只渲染第 0 层（wiki 分层教程+A&S 弓实证：调色板层不生效、弓=棕色）
+10. **无头截 BE 窗口**：`capture_bedrock.py`（WGC）不依赖 WS 连接，AFK 遮罩下也能拿到实体外观证据——WS 断了先截图再谈
