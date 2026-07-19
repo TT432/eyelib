@@ -38,28 +38,21 @@
 |---|---|---|
 | 4b3f9786 | `q.is_on_ground` 静止实体恒 false → EntityPortAdapter.isOnGround 加包围盒下移 1mm 碰撞兜底 | 僵尸 q.is_on_ground=1.0 ✓ |
 | da9f49b1 | `is_name_any` 子串匹配→区分大小写精确匹配（'Chicken' 误中 'chick' 致成年鸡变雏鸡）；补 `q.is_in_ui` 恒 0 | 成年鸡=白色母鸡 ✓ |
-| 待提交 | 见下"未提交工作" | |
-
-## 三、未提交工作（14 文件，已构建验证，待 smoke 后提交）
-
-1. **molang `this` 实现**（ModelRuntimeData/BrAnimator/BrClipExecutor/BrBoneKeyFrame/BrBoneAnimation/BrBoneAnimationSampler/MolangValue3/EntityRenderOrchestrator/AttachableItemRenderSetup/ItemInHandRendererMixin/ItemRendererMixin）
-   - 官方 syntax-guide：`this` = 表达式最终写入目标的当前值（bind + 已累积动画，逐轴）
-   - ModelRuntimeData 挂 bindBones 表；BrClipExecutor 按通道换算 this 值；全部 lerp/catmullrom 线程化逐轴 scope.set("this")
-   - 验证：`-this(=5)=-5.0` ✓
-2. **`q.modified_move_speed` 零除 NaN 修复**（MolangBuiltInQuery）：基础移速属性=0 时 0/0=NaN 沿动画链扩散致上半身消失；speed<=1e-6 返回 0。验证：瞄准骷髅骨骼数值恢复 ✓
-3. **texture_meshes 体素化**（TwoSideModelBakeInfo）：官方文档 texture_mesh=贴图像素转体素（texel→1px 深 voxel）。getBakeInfo 缓存 TexImage 像素副本，bake 时逐不透明 texel 生 1×1×1 六面体素。弓从"完全不渲染"→"形状渲染出来" ✓（颜色/姿态仍待校准）
-4. **`q.is_attached` 实现**（MolangBuiltInQuery.ATTACHED HostRole + AttachableItemRenderSetup.getOrPrepare markAttached）：修复 A&S 弓第二层误选不透明黑 1×1（cdx）被 merge 成全黑
-5. **1×1 纹理放行条件**（TextureManagerMixin）：vanilla 能解析才放行（保留 c535b789 史莱姆修复），否则注册 1×1 DynamicTexture——修复 bge.png 透明占位图触发 FileNotFoundException 中断整个 attachable 渲染
+| 42f07bd5 | molang `this` 实现（官方 syntax-guide：bind+已累积动画逐轴）；`q.modified_move_speed` 零除 NaN 修复；texture_meshes 体素化初版；`q.is_attached`；1×1 纹理放行 | 瞄准骷髅骨骼数值恢复 ✓；弓形状出现 ✓ |
+| ad99accb | NaN 语义：比较运算含 NaN 除 != 外恒 false（fcmpl/fcmpg 分工，同 javac）；`main_hand_item_use_duration` 零除 NaN 返回 0 | MolangSpecTest NaN 用例 ✓ |
+| d6fbe0a7 | render_controller 内联条件下沉 BrClientEntity codec（attachables brarchive 分支漏 normalize 致 5 RC 无条件全渲染）；删 normalizeRenderControllers | 弓组件 5→1(主RC) ✓ |
+| 8407d893 | RC textures 数组改多 pass 分层（官方/wiki：图层顺序渲染，删 TextureLayerMerger 合并）；texture_mesh 体素化贴图按实体纹理表短名解析（dhw 而非图层贴图）；手持附着补骨骼 pivot 平移（收集姿态不含 pivot，曾致弓沉到实体原点）；texture_mesh 转换对齐 Blockbench 实测 | 弓挂手侧、形状/姿态正确 ✓；clientsmoke 9/9 ✓ |
 
 ## 四、待办问题（按优先级）
 
-1. **弓姿态/颜色未校准**：体素化后形状出现但角度/颜色不对（当前呈大绿色面片，疑似 outline/overlay 组件渲染错位）；merge（complex:）与多 pass 语义需按 Mojang 文档定夺（RC `textures` 数组=多图层，文档原话 "what textures to use on and in which layer"）
+1. **弓颜色待 BE 对照**：姿态/形状已 parity（Blockbench 参照确认）；当前为调色板层（dpw 绿金渐变）覆盖的深绿色，BE 实际色调需 BE 截图确认。A&S 武器色 = 包设置 iocufj 调色板系统（9 条 128×1 渐变，默认 dpw）
 2. **内存泄漏**（feedback fb_mrqjf0zjwp2l）：JE 帧数随时间下降，已实证 OutOfMemoryError 崩溃（crash-2026-07-19_06.36.50-client.txt）。线索：AttachableItemRenderSetup.CACHE 在客户端 ItemStack 实例更换时重复建 rd（观测到 5→10 组件重复）；collectBindBones 每帧每实体分配新 map
-3. **未实现 query/功能**（A&S 用到）：`rotation_to_camera`、`math.ease_in_out_back`、`query.any`、`entity_biome_has_any_identifier`、`q.is_pack_setting_selected/enabled`（现为恒 false 桩，A&S 包设置全部走默认分支——注意与 BE 非默认设置用户产生差异）、`relative_to`（骨骼动画相对实体）、`c.owning_entity->`、`q.main_hand_item_use_duration`
-4. **服务端行为侧** query 注册表与渲染侧分离，服务端缺 is_item_name_any 等（日志有 MolangRuntimeSupport 告警）；VanillaBehaviorEntityLoader 部分事件解析失败（has_component/has_biome_tag）
-5. **JE 蜘蛛消失过一次**（未复现）
-6. **子包 key 错位**（docs/gap-analysis/brarchive-subpack-key-mismatch.md）：遇症状再处理
-7. **色调差**：JE 画面整体比 BE 亮（引擎级，暂不归档为 bug）
+3. **RC 条件一次性求值**：条件仅在 setupClientEntity 时评估一次，动态条件（如 `q.main_hand_item_use_duration>0` 拉弓显示箭）不会切换。需每 tick 评估+变更重建组件（BE 语义）
+4. **未实现 query/功能**（A&S 用到）：`rotation_to_camera`、`math.ease_in_out_back`、`query.any`、`entity_biome_has_any_identifier`、`q.is_pack_setting_selected/enabled`（现为恒 false 桩，A&S 包设置全部走默认分支——注意与 BE 非默认设置用户产生差异）、`relative_to`（骨骼动画相对实体）、`c.owning_entity->`、`q.main_hand_item_use_duration`
+5. **服务端行为侧** query 注册表与渲染侧分离，服务端缺 is_item_name_any 等（日志有 MolangRuntimeSupport 告警）；VanillaBehaviorEntityLoader 部分事件解析失败（has_component/has_biome_tag）
+6. **JE 蜘蛛消失过一次**（未复现）
+7. **子包 key 错位**（docs/gap-analysis/brarchive-subpack-key-mismatch.md）：遇症状再处理
+8. **色调差**：JE 画面整体比 BE 亮（引擎级，暂不归档为 bug）
 
 ## 五、实体进度
 
@@ -69,7 +62,7 @@
 | chicken | ✅ 修复后 parity | is_name_any 修复 |
 | pig/cow/creeper | ✅ 外观 parity | |
 | sheep | ≈ | 白/米黄=引擎色调差 |
-| skeleton | ⚠️ 部分 | 弓可渲染但姿态/颜色未校准（见待办 1） |
+| skeleton | ≈ 待 BE 定色调 | 弓挂手侧、形状/姿态 parity；颜色=调色板深绿待 BE 对照 |
 | spider | ❓ | 消失过一次未复现 |
 | 其余 ~105 种 | 未对比 | |
 
@@ -79,3 +72,7 @@
 2. **分层看门狗定位 NaN/错误生产者**：BrAnimator 顶层 + BrControllerExecutor blend 层各插桩一层，比猜快
 3. **归因套路**：运行时 animate 表逐条清零 → 二分定位 → 回查 brarchive 数据 → 对照 Mojang 文档（oracle 优先级：creator 文档 > mcpack 数据 > bedrock-wiki > 内部 ADR）
 4. **BE 侧对照技巧**：变异体用"一排 N 只看分布"；状态依赖（瞄准）用生存+抗性5+单只（防互射/被秒）
+5. **Blockbench 活 codec 作权威 oracle**（texture_mesh 转换定案）：web.blockbench.net 控制台直接 `newProject(Formats.bedrock); Codecs.bedrock.load(json, file)`，读内部字段 = BE JSON→内部空间映射真值。实测映射：position=(-x,-y,z)、rotation=(-rx,-ry,rz)、local_pivot=(x,y,-z)、scale 不变；网格片元布局：图右→-x、图下→+z、厚度-y；Blockbench 内部空间 == eyelib JE 几何空间（骨 pivot.x 取反同约定）
+6. **收集的骨骼姿态不含 pivot 平移**：applyBoneTranslate 是 T(pos)×T(pivot)×R×S×T(-pivot)，做附着点（attachable/locator）必须自行补 T(pivot)，否则附着物沉到实体原点
+7. **JE 传送必须用服务端命令**：客户端 `player.teleportTo` 会被服务端橡皮筋回弹（getOrPrepare 探针看到的位置是旧的）
+8. **brarchive 解码**：8B magic(0x267052A0B125277D) + 4B count + 4B version + count×256B 记录（名+0xFC 处长度）+ 串接 JSON；`__brarchive/models/entity.brarchive`=几何，`materials.brarchive` 无 payload（.material 是普通 zip 条目）
