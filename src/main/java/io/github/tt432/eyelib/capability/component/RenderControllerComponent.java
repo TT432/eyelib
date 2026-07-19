@@ -19,6 +19,16 @@ public class RenderControllerComponent {
     }
 
     private final List<Slot> slots = new ArrayList<>();
+    /** 最近一次 setup 时各 RC 条件的启用位掩码（bit i = render_controllers[i] 启用）。 */
+    private int conditionMask = -1;
+
+    public int conditionMask() {
+        return conditionMask;
+    }
+
+    public void setConditionMask(int conditionMask) {
+        this.conditionMask = conditionMask;
+    }
 
     public Slot syncSlot(int index, @Nullable RenderControllerEntry renderController) {
         while (slots.size() <= index) {

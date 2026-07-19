@@ -169,6 +169,14 @@ public final class EntityRenderOrchestrator {
                     cap.getAnimationComponent().tickedInfos = tickedInfos;
                     cap.getAnimationComponent().effects = effects;
 
+                    // RC 条件动态重估：条件翻转时重建组件（BE 语义为逐帧评估）
+                    var ce = clientEntityComponent.getClientEntity();
+                    if (ce != null && !ce.renderControllerConditions().isEmpty()
+                            && evalConditionMask(ce, scope)
+                               != cap.getRenderControllerComponent().conditionMask()) {
+                        setupClientEntity(ce, cap).forEach(Runnable::run);
+                    }
+
                     AttachableItemRenderSetup.tickForEntity(entity, plan.partialTick());
 
                     plan.tickResults().add(new EntityTickResult(entity, tickedInfos, effects));
@@ -497,6 +505,7 @@ public final class EntityRenderOrchestrator {
             components.clear();
             BrClientEntity ce = appliedClientEntity;
 
+            int conditionMask = 0;
             for (int i = 0; i < ce.render_controllers().size(); i++) {
                 String renderController = ce.render_controllers().get(i);
                 io.github.tt432.eyelib.molang.MolangValue condition = ce.renderControllerConditions()
@@ -504,11 +513,13 @@ public final class EntityRenderOrchestrator {
                 if (condition != null && cap.getScope() != null && !condition.evalAsBool(cap.getScope())) {
                     continue;
                 }
+                conditionMask |= 1 << i;
                 RenderControllerEntry renderControllerEntry = RenderControllerManager.INSTANCE.get(renderController);
                 RenderControllerComponent.Slot renderControllerSlot = renderControllerComponent.syncSlot(i, renderControllerEntry);
                 if (renderControllerEntry != null && cap.getScope() != null)
                     components.addAll(renderControllerEntry.setupModel(cap.getScope(), appliedClientEntity, clientEntityComponent.getModels(), renderControllerSlot, syncedActions));
             }
+            renderControllerComponent.setConditionMask(conditionMask);
             renderControllerComponent.trim(ce.render_controllers().size());
 
             if (components.isEmpty() && !ce.geometry().isEmpty()) {
@@ -536,12 +547,28 @@ public final class EntityRenderOrchestrator {
         } else {
             components.clear();
             renderControllerComponent.clear();
+            renderControllerComponent.setConditionMask(0);
             if (cap.getScope() != null) {
                 cap.getScope().getHostContext().remove(HostRoles.CLIENT_ENTITY);
             }
         }
 
         return syncedActions;
+    }
+
+    /**
+     * 求值实体全部 render_controller 条件的启用位掩码（bit i = render_controllers[i] 启用）。
+     * 与 setupClientEntity 的跳过逻辑一致：无条件恒启用，scope 缺失时启用。
+     */
+    public static int evalConditionMask(BrClientEntity ce, @Nullable MolangScope scope) {
+        int mask = 0;
+        for (int i = 0; i < ce.render_controllers().size(); i++) {
+            var condition = ce.renderControllerConditions().get(ce.render_controllers().get(i));
+            if (condition == null || scope == null || condition.evalAsBool(scope)) {
+                mask |= 1 << i;
+            }
+        }
+        return mask;
     }
 
     /**

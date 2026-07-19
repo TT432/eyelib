@@ -150,6 +150,15 @@ public final class AttachableItemRenderSetup {
                         }
                     }, EntityRenderOrchestrator.collectBindBones(rd));
             ac.effects = effects;
+
+            // RC 条件动态重估：条件翻转时重建组件（BE 语义为逐帧评估；
+            // 如拉弓 q.main_hand_item_use_duration>0 时显示箭层）
+            var ce = rd.getClientEntityComponent().getClientEntity();
+            if (ce != null && !ce.renderControllerConditions().isEmpty()
+                    && EntityRenderOrchestrator.evalConditionMask(ce, scope)
+                       != rd.getRenderControllerComponent().conditionMask()) {
+                EntityRenderOrchestrator.setupClientEntity(ce, rd).forEach(Runnable::run);
+            }
         }
     }
 
