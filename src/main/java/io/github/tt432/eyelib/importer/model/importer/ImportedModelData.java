@@ -135,7 +135,7 @@ public record ImportedModelData(
                     bone.reset(),
                     boneMirror,
                     bone.binding(),
-                    bone.textureMeshes().stream().map(tm -> importedTextureMesh(tm, bone.pivot())).toList()
+                    bone.textureMeshes().stream().map(tm -> importedTextureMesh(tm)).toList()
             ));
         }
 
@@ -527,23 +527,12 @@ public record ImportedModelData(
         return list;
     }
 
-    private static ImportedTextureMeshData importedTextureMesh(BedrockGeometryModel.TextureMeshDef tm, Vector3f bonePivotPixels) {
-        Vector3f localPivot = new Vector3f(tm.localPivot());
-        localPivot.z *= -1;
-
-        Vector3f position = new Vector3f(tm.position());
-        position.y *= -1;
-        position.y += bonePivotPixels.y;
-        position.x *= -1;
-
-        Vector3f rotationDeg = new Vector3f(tm.rotation());
-        rotationDeg.x *= -1;
-        rotationDeg.y *= -1;
-
-        Vector3f posBlock = new Vector3f(-position.x / 16f, position.y / 16f, position.z / 16f);
-        Vector3f lpBlock = new Vector3f(-localPivot.x / 16f, localPivot.y / 16f, localPivot.z / 16f);
-
-        Vector3f rotRad = new Vector3f(rotationDeg).mul(DEGREES_TO_RADIANS);
+    private static ImportedTextureMeshData importedTextureMesh(BedrockGeometryModel.TextureMeshDef tm) {
+        // 转换约定经 Blockbench 5.x bedrock codec 实测（Blockbench 内部空间 == eyelib 几何空间）：
+        // position=(-x,-y,z)、rotation=(-rx,-ry,rz)、local_pivot=(x,y,-z)、scale 不变
+        Vector3f posBlock = new Vector3f(-tm.position().x / 16f, -tm.position().y / 16f, tm.position().z / 16f);
+        Vector3f lpBlock = new Vector3f(tm.localPivot().x / 16f, tm.localPivot().y / 16f, -tm.localPivot().z / 16f);
+        Vector3f rotRad = new Vector3f(tm.rotation()).mul(DEGREES_TO_RADIANS);
         rotRad.x *= -1;
         rotRad.y *= -1;
 

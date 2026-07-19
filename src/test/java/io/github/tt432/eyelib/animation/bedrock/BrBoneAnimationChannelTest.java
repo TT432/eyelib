@@ -43,7 +43,7 @@ class BrBoneAnimationChannelTest {
                 new TreeMap<>(Float::compare)
         ));
 
-        Vector3f sampled = animation.sample(BrBoneAnimation.ROTATION, new MolangScope(), 5F);
+        Vector3f sampled = animation.sample(BrBoneAnimation.ROTATION, new MolangScope(), 5F, 0F, 0F, 0F);
 
         assertNotNull(sampled);
         assertEquals(5F, sampled.x, 0.0001F);
@@ -62,7 +62,7 @@ class BrBoneAnimationChannelTest {
         AnimationDefinition<BrBoneKeyFrameDefinition, BrAnimationChannel<BrBoneKeyFrameDefinition>> definition = animation.definition();
 
         assertTrue(definition.channel("missing").keyFrames().getData().isEmpty());
-        assertNull(animation.sample("missing", new MolangScope(), 1F));
+        assertNull(animation.sample("missing", new MolangScope(), 1F, 0F, 0F, 0F));
     }
 
     @Test
@@ -73,8 +73,8 @@ class BrBoneAnimationChannelTest {
                 new TreeMap<>(Float::compare)
         ));
 
-        Vector3f atTick = BrBoneAnimationSampler.sample(animation.definition(), BrBoneAnimation.ROTATION, new MolangScope(), 2F);
-        Vector3f afterTick = BrBoneAnimationSampler.sample(animation.definition(), BrBoneAnimation.ROTATION, new MolangScope(), 5F);
+        Vector3f atTick = BrBoneAnimationSampler.sample(animation.definition(), BrBoneAnimation.ROTATION, new MolangScope(), 2F, 0F, 0F, 0F);
+        Vector3f afterTick = BrBoneAnimationSampler.sample(animation.definition(), BrBoneAnimation.ROTATION, new MolangScope(), 5F, 0F, 0F, 0F);
 
         assertNotNull(atTick);
         assertNotNull(afterTick);
@@ -93,7 +93,7 @@ class BrBoneAnimationChannelTest {
                 new TreeMap<>(Float::compare)
         ));
 
-        Vector3f sampled = BrBoneAnimationSampler.sample(animation.definition(), BrBoneAnimation.ROTATION, new MolangScope(), 5F);
+        Vector3f sampled = BrBoneAnimationSampler.sample(animation.definition(), BrBoneAnimation.ROTATION, new MolangScope(), 5F, 0F, 0F, 0F);
 
         assertNotNull(sampled);
         assertEquals(5F, sampled.x, 0.0001F);

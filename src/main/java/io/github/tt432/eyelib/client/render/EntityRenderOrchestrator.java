@@ -274,17 +274,26 @@ public final class EntityRenderOrchestrator {
         PoseStack poseStack = new PoseStack();
         var locators = context
                               .<Int2ObjectMap<PoseStack.Pose>>orCreate("bones", new Int2ObjectOpenHashMap<>());
+        // 收集的骨骼姿态为「绕 pivot 的动画变换」，不包含 pivot 平移（applyBoneTranslate 中 +pivot/-pivot 抵消）。
+        // attachable 需要附着到骨骼原点，必须补回骨骼 pivot 平移。
+        var bindBones = collectBindBones(action.renderData());
+        var offHandBone = bindBones.get(leftitem);
+        var mainHandBone = bindBones.get(rightitem);
         var offHandPose = locators.get(leftitem);
-        if (offHandPose != null) {
+        if (offHandPose != null && offHandBone != null) {
             RenderPorts.get().renderSystemPort().pushPoseRaw(poseStack, offHandPose);
+            var pivot = offHandBone.pivot();
+            poseStack.translate(pivot.x(), pivot.y(), pivot.z());
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.OFF_HAND);
             renderHandItemOrAttachable(action.multiBufferSource(), action.sink(), renderTarget, itemInHand,
                     ItemDisplayContext.THIRD_PERSON_LEFT_HAND, light, poseStack, true, InteractionHand.OFF_HAND);
         }
 
         var mainHandPose = locators.get(rightitem);
-        if (mainHandPose != null) {
+        if (mainHandPose != null && mainHandBone != null) {
             RenderPorts.get().renderSystemPort().pushPoseRaw(poseStack, mainHandPose);
+            var pivot = mainHandBone.pivot();
+            poseStack.translate(pivot.x(), pivot.y(), pivot.z());
             ItemStack itemInHand = renderTarget.getItemInHand(InteractionHand.MAIN_HAND);
             renderHandItemOrAttachable(action.multiBufferSource(), action.sink(), renderTarget, itemInHand,
                     ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, poseStack, false, InteractionHand.MAIN_HAND);
@@ -583,6 +592,7 @@ public final class EntityRenderOrchestrator {
                 .light(modelComponent.isIgnoreLighting() ? EntityRenderPorts.RenderSystemPort.FULL_BRIGHT : data.packedLight())
                 .partVisibility(modelComponent.getPartVisibility())
                 .tintColor(modelComponent.getRcColor())
+                .meshTexture(modelComponent.getMeshTexture())
                 .build();
     }
 

@@ -65,7 +65,9 @@ public class RenderHelper {
     public RenderHelper render(RenderParams params, Model model, ModelRuntimeData infos) {
         this.params = params;
         if (params.texture() != null) {
-            context.put("BackedModel", ModelBakePort.twoSideGetBakedModel(model, params.isSolid(), ResourceLocationBridge.toMc(params.texture())));
+            var meshTexture = params.meshTexture() != null ? params.meshTexture() : params.texture();
+            context.put("BackedModel", ModelBakePort.twoSideGetBakedModel(model, params.isSolid(),
+                    ResourceLocationBridge.toMc(params.texture()), ResourceLocationBridge.toMc(meshTexture)));
         }
 
         dfsModel(model).visit(params, context, ActiveModelRenderVisitors.RENDER_VISITOR, infos, new DFSModel.StateMachine());

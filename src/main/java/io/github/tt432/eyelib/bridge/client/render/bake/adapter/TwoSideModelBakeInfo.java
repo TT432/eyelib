@@ -28,10 +28,19 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     public static final TwoSideModelBakeInfo INSTANCE = new TwoSideModelBakeInfo();
 
     //? if <26.1 {
-    private final Map<String, Map<ResourceLocation, TwoSideInfoMap>> cache = new HashMap<>();
+    private final Map<String, Map<String, TwoSideInfoMap>> cache = new HashMap<>();
+    private final Map<String, Map<String, BakedModel>> bakedCache = new HashMap<>();
     //?} else {
-    private final Map<String, Map<Identifier, TwoSideInfoMap>> cache = new HashMap<>();
+    private final Map<String, Map<String, TwoSideInfoMap>> cache = new HashMap<>();
+    private final Map<String, Map<String, BakedModel>> bakedCache = new HashMap<>();
     //?}
+
+    @Override
+    public void invalidateModel(String modelName) {
+        super.invalidateModel(modelName);
+        cache.remove(modelName);
+        bakedCache.remove(modelName);
+    }
 
     @Override
     //? if <26.1 {
@@ -39,13 +48,27 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     //?} else {
     public TwoSideInfoMap getBakeInfo(Model model, boolean isSolid, Identifier texture) {
     //?}
+        return getBakeInfo(model, isSolid, texture, texture);
+    }
+
+    /**
+     * 获取烘焙信息。cube 双面判定来自渲染图层贴图；
+     * texture_meshes 体素化的像素形状来自 meshTexture（BE 语义：由 texture_mesh 短名指定的贴图决定）。
+     */
+    //? if <26.1 {
+    public TwoSideInfoMap getBakeInfo(Model model, boolean isSolid, ResourceLocation texture, ResourceLocation meshTexture) {
+    //?} else {
+    public TwoSideInfoMap getBakeInfo(Model model, boolean isSolid, Identifier texture, Identifier meshTexture) {
+    //?}
         return cache.computeIfAbsent(model.name(), ___ -> new HashMap<>())
-                    .computeIfAbsent(texture, __ -> {
+                    .computeIfAbsent(texture + "|" + meshTexture, __ -> {
                         Int2ObjectMap<TwoSideInfo> builder = new Int2ObjectOpenHashMap<>();
                         var imageRef = new java.util.concurrent.atomic.AtomicReference<TexImage>();
 
                         downloadTexture(texture, nativeimage -> {
-                            imageRef.set(TexImage.copy(nativeimage));
+                            if (meshTexture.equals(texture)) {
+                                imageRef.set(TexImage.copy(nativeimage));
+                            }
                             model.toplevelBones().forEach((boneName, bone) ->
                                                                        processBone(bone, nativeimage,
                                                                                    //? if <26.1 {
@@ -56,8 +79,22 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
                                                                                    (n, d) -> builder.put(n, new TwoSideInfo(n, d))));
                         });
 
+                        if (!meshTexture.equals(texture)) {
+                            downloadTexture(meshTexture, nativeimage -> imageRef.set(TexImage.copy(nativeimage)));
+                        }
+
                         return new TwoSideInfoMap(builder, imageRef.get());
                     });
+    }
+
+    //? if <26.1 {
+    public BakedModel getBakedModel(Model model, boolean isSolid, ResourceLocation texture, ResourceLocation meshTexture) {
+    //?} else {
+    public BakedModel getBakedModel(Model model, boolean isSolid, Identifier texture, Identifier meshTexture) {
+    //?}
+        return bakedCache.computeIfAbsent(model.name(), ___ -> new HashMap<>())
+                         .computeIfAbsent(texture + "|" + meshTexture,
+                                          __ -> bake(model, getBakeInfo(model, isSolid, texture, meshTexture)));
     }
 
     @Override
@@ -181,8 +218,10 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
     }
 
     /**
-     * 将单个 texture_mesh 体素化：不透明 texel → 1x1x1（单位：1/16 块）立方体，
-     * 施加 local_pivot 缩放/旋转与 position 平移（几何空间单位=像素，与 cube 相同的 x 翻转约定）。
+     * 将单个 texture_mesh 体素化：不透明 texel → 1x1x1（单位：1/16 块）立方体。
+     * 布局对齐 Blockbench 预览/BE 运行时的 XZ 片元约定：
+     * 图像右 → -x，图像下 → +z，厚度沿 -y（1 像素深）；
+     * 变换序为 translate(position) × rotate × translate(local_pivot) × scale（Blockbench 同款）。
      */
     private static void bakeTextureMesh(Model.TextureMesh tm, TexImage img,
                                         List<Vector3fc> vertexes, List<Vector3fc> normals, List<Vector2fc> uvs) {
@@ -197,20 +236,20 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
                 .translate(pos.x(), pos.y(), pos.z())
                 .rotateZYX(rot.z(), rot.y(), rot.x())
                 .translate(lp.x(), lp.y(), lp.z())
-                .scale(scale.x(), scale.y(), scale.z())
-                .translate(-lp.x(), -lp.y(), -lp.z());
+                .scale(scale.x(), scale.y(), scale.z());
 
         int w = img.width();
         int h = img.height();
         for (int ty = 0; ty < h; ty++) {
             for (int tx = 0; tx < w; tx++) {
                 if (!img.opaque(tx, ty)) continue;
-                // texel 中心（几何像素坐标：x 右、y 下）→ 与 cubes 一致的 x 翻转 / y 向上
+                // texel 中心（XZ 片元：x 右翻、z 向下、y 为厚度轴）→ 与 cubes 一致的 x 翻转约定
                 float cx = -(tx + 0.5f) * px;
-                float cy = -(ty + 0.5f) * px;
+                float cy = -0.5f * px;
+                float cz = (ty + 0.5f) * px;
                 float u = (tx + 0.5f) / w;
                 float v = (ty + 0.5f) / h;
-                emitVoxel(transform, cx, cy, 0, px, u, v, vertexes, normals, uvs);
+                emitVoxel(transform, cx, cy, cz, px, u, v, vertexes, normals, uvs);
             }
         }
     }

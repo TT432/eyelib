@@ -27,6 +27,16 @@ public class ModelComponent {
     ModelComponentInfo serializableInfo;
     private boolean ignoreLighting;
     private float @Nullable [] rcColor;
+    /**
+     * texture_meshes 体素化所用的贴图（BE 语义：texture_mesh 的像素形状由其实体纹理表短名指定的贴图决定，
+     * 与渲染 pass 绑定的图层贴图无关）。null 时回退为组件渲染贴图。
+     */
+    @Nullable
+    private PortResourceLocation meshTexture;
+
+    public void setMeshTexture(@Nullable PortResourceLocation meshTexture) {
+        this.meshTexture = meshTexture;
+    }
 
     @Nullable
     private Map<String, BrMaterialEntry> matMapRef;

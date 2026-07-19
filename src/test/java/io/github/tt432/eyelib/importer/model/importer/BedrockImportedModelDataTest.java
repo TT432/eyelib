@@ -80,9 +80,9 @@ class BedrockImportedModelDataTest {
         assertEquals(1, root.textureMeshes().size());
         ImportedTextureMeshData textureMesh = root.textureMeshes().get(0);
         assertEquals("tex_mesh", textureMesh.texture());
-        assertVector(textureMesh.position(), 0.125F, -1F, 0.25F);
-        assertVector(textureMesh.rotation(), radians(5), radians(6), radians(7));
-        assertVector(textureMesh.localPivot(), -0.0625F, 0.125F, -0.1875F);
+        assertVector(textureMesh.position(), -0.125F, -1.125F, 0.25F);
+        assertVector(textureMesh.rotation(), radians(-5), radians(-6), radians(7));
+        assertVector(textureMesh.localPivot(), 0.0625F, 0.125F, -0.1875F);
         assertVector(textureMesh.scale(), 1, 1, 1);
     }
 
@@ -454,20 +454,20 @@ class BedrockImportedModelDataTest {
         assertVector(rootDefault.scale(), 1F, 1F, 1F);
 
         assertEquals("mesh_rot_scale", rootCustom.texture());
-        assertVector(rootCustom.position(), 0.125F, -1.125F, 0.25F);
-        assertVector(rootCustom.rotation(), radians(10), radians(20), radians(30));
-        assertVector(rootCustom.localPivot(), -0.0625F, 0.125F, -0.1875F);
+        assertVector(rootCustom.position(), -0.125F, -1.125F, 0.25F);
+        assertVector(rootCustom.rotation(), radians(-10), radians(-20), radians(30));
+        assertVector(rootCustom.localPivot(), 0.0625F, 0.125F, -0.1875F);
         assertVector(rootCustom.scale(), 2F, 1F, 0.5F);
 
         assertEquals("mesh_zero", rootZeroScale.texture());
-        assertVector(rootZeroScale.position(), -0.125F, -1F, 0F);
+        assertVector(rootZeroScale.position(), 0.125F, -1F, 0F);
         assertVector(rootZeroScale.scale(), 1F, 1F, 1F);
 
         assertEquals(1, childA.textureMeshes().size());
         ImportedTextureMeshData childMesh = childA.textureMeshes().get(0);
         assertEquals("mesh_child_a", childMesh.texture());
-        assertVector(childMesh.position(), 0.0625F, -0.625F, -0.125F);
-        assertVector(childMesh.rotation(), 0F, radians(45), 0F);
+        assertVector(childMesh.position(), -0.0625F, -0.875F, -0.125F);
+        assertVector(childMesh.rotation(), 0F, radians(-45), 0F);
         assertVector(childMesh.localPivot(), 0F, 0F, 0F);
         assertVector(childMesh.scale(), 1F, 1F, 1F);
     }

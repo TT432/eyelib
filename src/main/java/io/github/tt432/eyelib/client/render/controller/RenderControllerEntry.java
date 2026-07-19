@@ -7,7 +7,6 @@ import io.github.tt432.eyelib.capability.component.ModelComponent;
 import io.github.tt432.eyelib.capability.component.RenderControllerComponent;
 import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.bridge.client.render.texture.NativeImagePort;
-import io.github.tt432.eyelib.bridge.client.render.texture.TextureMergePort;
 import io.github.tt432.eyelib.bridge.client.render.texture.TexturePresencePort;
 import io.github.tt432.eyelib.util.entitydata.ModelComponentInfo;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
@@ -110,12 +109,6 @@ public record RenderControllerEntry(
         });
     }
 
-    public PortResourceLocation getTexture(MolangScope scope, BrClientEntity entity) {
-        return composeTextureLocation(resolveTextureLayerPaths(scope, entity), "");
-    }
-
-
-
     public List<ModelComponent> setupModel(MolangScope scope, BrClientEntity entity,
                                            Collection<Model> models,
                                            RenderControllerComponent.Slot renderControllerSlot,
@@ -172,26 +165,43 @@ public record RenderControllerEntry(
 
         float[] rcColor = evalRcColor(scope);
 
-        // 每个唯一材质创建一个 ModelComponent
+        // texture_meshes 体素化贴图（BE 语义：形状由 mesh 短名指定的贴图决定，与图层无关）
+        PortResourceLocation meshTexture = resolveMeshTexture(models, entity, geometryResult);
+
+        // 每组骨骼先解析各自的图层纹理列表（texture.material 注入依赖组材质）
+        // BE 语义：textures 数组 = 多图层，按数组顺序逐层渲染同一几何（先底层后顶层），不做贴图合并
+        Map<String, List<PortResourceLocation>> texturesByGroup = new LinkedHashMap<>();
+        int maxLayers = 1;
         for (var groupEntry : materialBoneGroups.entrySet()) {
-            String materialName = groupEntry.getKey();
-            Set<Integer> visibleBones = groupEntry.getValue();
+            List<PortResourceLocation> layers = resolveSlotTextures(scope, entity, groupEntry.getKey(),
+                                                                    needReloadTexture, syncedActions);
+            texturesByGroup.put(groupEntry.getKey(), layers);
+            maxLayers = Math.max(maxLayers, layers.size());
+        }
 
-            PortResourceLocation matTexture = resolveSlotTexture(scope, entity, materialName,
-                                                              needReloadTexture, syncedActions);
+        // 层在外、组在内：第 i 层渲染全模型的所有材质组，再渲染第 i+1 层
+        for (int layer = 0; layer < maxLayers; layer++) {
+            for (var groupEntry : materialBoneGroups.entrySet()) {
+                String materialName = groupEntry.getKey();
+                Set<Integer> visibleBones = groupEntry.getValue();
 
-            ModelComponent comp = new ModelComponent();
-            comp.setInfo(new ModelComponentInfo(geometryResult, matTexture,
-                    PortResourceLocation.parse(materialName)
-            ));
-            comp.setIgnoreLighting(ignoreLighting);
-            comp.setRcColor(rcColor);
+                List<PortResourceLocation> layers = texturesByGroup.get(materialName);
+                PortResourceLocation matTexture = layers.get(Math.min(layer, layers.size() - 1));
 
-            Int2BooleanOpenHashMap vis = buildVisibility(allBoneIds, visibleBones);
-            renderControllerSlot.runtime().evalPartVisibility(vis, scope);
-            comp.getPartVisibility().putAll(vis);
+                ModelComponent comp = new ModelComponent();
+                comp.setInfo(new ModelComponentInfo(geometryResult, matTexture,
+                        PortResourceLocation.parse(materialName)
+                ));
+                comp.setIgnoreLighting(ignoreLighting);
+                comp.setRcColor(rcColor);
+                comp.setMeshTexture(meshTexture);
 
-            components.add(comp);
+                Int2BooleanOpenHashMap vis = buildVisibility(allBoneIds, visibleBones);
+                renderControllerSlot.runtime().evalPartVisibility(vis, scope);
+                comp.getPartVisibility().putAll(vis);
+
+                components.add(comp);
+            }
         }
 
         if (needReloadTexture) {
@@ -199,6 +209,32 @@ public record RenderControllerEntry(
         }
 
         return components;
+    }
+
+    /**
+     * 解析 texture_meshes 的体素化贴图：仅在当前 RC 选中的几何上收集 texture_mesh 短名，经实体纹理表解析。
+     * 仅当所有 mesh 解析到同一路径时返回该路径；无 mesh 或多路径时返回 null（回退组件图层贴图）。
+     */
+    private static @org.jspecify.annotations.Nullable PortResourceLocation resolveMeshTexture(Collection<Model> models, BrClientEntity entity, String geometryName) {
+        String resolved = null;
+        for (Model model : models) {
+            if (model == null || !model.name().equals(geometryName)) continue;
+            for (var boneEntry : model.allBones().int2ObjectEntrySet()) {
+                for (Model.TextureMesh tm : boneEntry.getValue().textureMeshes()) {
+                    String path = entity.textures().get(tm.texture());
+                    if (path == null) {
+                        path = entity.textures().get("default");
+                    }
+                    if (path == null) continue;
+                    if (resolved == null) {
+                        resolved = path;
+                    } else if (!resolved.equals(path)) {
+                        return null;
+                    }
+                }
+            }
+        }
+        return resolved == null ? null : PortResourceLocation.parse(resolved);
     }
 
     /**
@@ -229,14 +265,15 @@ public record RenderControllerEntry(
     }
 
     /**
-     * 按当前材质名解析纹理。注入 {@code texture.material} 到 scope 中，
+     * 按当前材质名解析全部图层纹理。注入 {@code texture.material} 到 scope 中，
      * 使得 Bedrock 的 {@code "textures": ["texture.material"]} 表达式能按材质槽动态求值。
+     * 返回顺序与 RC 的 textures 数组一致（先底层后顶层）。
      */
-    private PortResourceLocation resolveSlotTexture(MolangScope scope, BrClientEntity entity,
-                                                String materialName, boolean needReload,
-                                                List<Runnable> syncedActions) {
+    private List<PortResourceLocation> resolveSlotTextures(MolangScope scope, BrClientEntity entity,
+                                                           String materialName, boolean needReload,
+                                                           List<Runnable> syncedActions) {
         if (textures.isEmpty()) {
-            return TexturePresencePort.missingLocation();
+            return List.of(TexturePresencePort.missingLocation());
         }
 
         // 按材质名查找实体纹理表，作为 texture.material 的动态值
@@ -253,25 +290,17 @@ public record RenderControllerEntry(
         }
 
         try {
-            List<String> textureLayerPaths = resolveTextureLayerPaths(scope, entity);
-            PortResourceLocation texture = getTexture(scope, entity);
-            List<PortResourceLocation> textureLayers = toPortLocations(textureLayerPaths);
-            if (textureLayers.size() == 1) {
-                texture = textureLayers.get(0);
-            }
+            List<PortResourceLocation> textureLayers = toPortLocations(resolveTextureLayerPaths(scope, entity));
 
-            if (needReload) {
-                PortResourceLocation uploadTexture = texture;
-                if (textureLayers.size() > 1) {
-                    syncedActions.add(() -> NativeImagePort.upload(uploadTexture, TextureMergePort.merge(textureLayers)));
-                }
-            }
-
-            // alphatest 材质走 clamped 纹理，避免 MC cutout threshold 0.5 丢弃低 alpha 像素
+            // alphatest 材质逐层走 clamped 纹理，避免 MC cutout threshold 0.5 丢弃低 alpha 像素
             if (!usesColorMask(materialName) && isAlphatestMaterial(materialName)) {
-                return clampedTexture(texture, textureLayers, syncedActions, needReload);
+                List<PortResourceLocation> clamped = new ArrayList<>(textureLayers.size());
+                for (PortResourceLocation layer : textureLayers) {
+                    clamped.add(clampedTexture(layer, syncedActions, needReload));
+                }
+                return clamped;
             }
-            return texture;
+            return textureLayers;
         } finally {
             if (texPath != null) {
                 if (hadOldValue) {
@@ -284,27 +313,19 @@ public record RenderControllerEntry(
     }
 
     /**
-     * 创建 clamped 纹理副本：download 每个原始纹理层，clamp alpha，再 merge。
-     * 避免 regular merge 的 premultiplied alpha 把低 alpha 颜色乘成黑色。
+     * 创建单层 clamped 纹理副本：download 原纹理，clamp alpha，再上传。
+     * 避免 premultiplied alpha 把低 alpha 颜色乘成黑色。
      * alphatest 材质使用此副本以避免低 alpha 像素被 MC cutout shader 丢弃。
      */
-    private static PortResourceLocation clampedTexture(PortResourceLocation original, List<PortResourceLocation> layers,
-                                                    List<Runnable> syncedActions, boolean needReload) {
+    private static PortResourceLocation clampedTexture(PortResourceLocation original,
+                                                       List<Runnable> syncedActions, boolean needReload) {
         PortResourceLocation clamped = PortResourceLocation.of(original.namespace(), "clamped/" + original.path());
         if (needReload) {
             syncedActions.add(() -> {
-                List<PortResourceLocation> clampedLayers = new java.util.ArrayList<>();
-                for (PortResourceLocation layer : layers) {
-                    PortResourceLocation clampedLayer = PortResourceLocation.of(layer.namespace(), "_tmp_clamped/" + layer.path());
-                    NativeImage img = NativeImagePort.download(layer, NativeImagePort::copyImage);
-                    if (img != null) {
-                        NativeImagePort.clampAlphaToBinary(img);
-                        NativeImagePort.upload(clampedLayer, img);
-                        clampedLayers.add(clampedLayer);
-                    }
-                }
-                if (!clampedLayers.isEmpty()) {
-                    NativeImagePort.upload(clamped, TextureMergePort.merge(clampedLayers));
+                NativeImage img = NativeImagePort.download(original, NativeImagePort::copyImage);
+                if (img != null) {
+                    NativeImagePort.clampAlphaToBinary(img);
+                    NativeImagePort.upload(clamped, img);
                 }
             });
         }
@@ -413,14 +434,6 @@ public record RenderControllerEntry(
             var r = map.get(object.asString().toLowerCase(Locale.ROOT).replace(type + ".", ""));
             return Objects.requireNonNullElse(r, "minecraft:null");
         }
-    }
-
-    private PortResourceLocation composeTextureLocation(List<String> layerPaths, String suffix) {
-        StringBuilder pathBuilder = new StringBuilder();
-        for (String layerPath : layerPaths) {
-            pathBuilder.append(layerPath);
-        }
-        return PortResourceLocation.of("complex", pathBuilder.toString().replace(":", "_") + suffix);
     }
 
     private List<String> resolveTextureLayerPaths(MolangScope scope, BrClientEntity entity) {

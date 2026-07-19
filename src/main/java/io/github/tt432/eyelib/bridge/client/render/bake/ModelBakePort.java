@@ -35,9 +35,17 @@ public interface ModelBakePort {
     static BakedModel twoSideGetBakedModel(Model model, boolean isSolid, ResourceLocation texture) {
         return TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, isSolid, texture);
     }
+
+    static BakedModel twoSideGetBakedModel(Model model, boolean isSolid, ResourceLocation texture, ResourceLocation meshTexture) {
+        return TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, isSolid, texture, meshTexture);
+    }
     //?} else {
     static BakedModel twoSideGetBakedModel(Model model, boolean isSolid, Identifier texture) {
         return TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, isSolid, texture);
+    }
+
+    static BakedModel twoSideGetBakedModel(Model model, boolean isSolid, Identifier texture, Identifier meshTexture) {
+        return TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, isSolid, texture, meshTexture);
     }
     //?}
 }

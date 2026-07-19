@@ -298,9 +298,9 @@ class BedrockGeometryImporterTest {
         assertVector(root.textureMeshes().get(0).scale(), 1F, 1F, 1F);
 
         assertEquals("mesh_rot_scale", root.textureMeshes().get(1).texture());
-        assertVector(root.textureMeshes().get(1).position(), 0.125F, -1.125F, 0.25F);
-        assertVector(root.textureMeshes().get(1).rotation(), radians(10), radians(20), radians(30));
-        assertVector(root.textureMeshes().get(1).localPivot(), -0.0625F, 0.125F, -0.1875F);
+        assertVector(root.textureMeshes().get(1).position(), -0.125F, -1.125F, 0.25F);
+        assertVector(root.textureMeshes().get(1).rotation(), radians(-10), radians(-20), radians(30));
+        assertVector(root.textureMeshes().get(1).localPivot(), 0.0625F, 0.125F, -0.1875F);
         assertVector(root.textureMeshes().get(1).scale(), 2F, 1F, 0.5F);
 
         assertEquals("mesh_zero", root.textureMeshes().get(2).texture());
@@ -308,8 +308,8 @@ class BedrockGeometryImporterTest {
 
         assertEquals(1, childA.textureMeshes().size());
         assertEquals("mesh_child_a", childA.textureMeshes().get(0).texture());
-        assertVector(childA.textureMeshes().get(0).position(), 0.0625F, -0.625F, -0.125F);
-        assertVector(childA.textureMeshes().get(0).rotation(), 0F, radians(45), 0F);
+        assertVector(childA.textureMeshes().get(0).position(), -0.0625F, -0.875F, -0.125F);
+        assertVector(childA.textureMeshes().get(0).rotation(), 0F, radians(-45), 0F);
     }
 
     @Test
