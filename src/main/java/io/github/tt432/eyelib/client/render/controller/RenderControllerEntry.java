@@ -175,6 +175,11 @@ public record RenderControllerEntry(
         for (var groupEntry : materialBoneGroups.entrySet()) {
             List<PortResourceLocation> layers = resolveSlotTextures(scope, entity, groupEntry.getKey(),
                                                                     needReloadTexture, syncedActions);
+            // BE 语义：多图层纹理需要 multitexture/masked 材质（多采样器）；
+            // 单采样材质只渲染第 0 层（bedrock-wiki 分层教程：需 villager_v2_masked 类材质）
+            if (!isMultitextureMaterial(groupEntry.getKey()) && layers.size() > 1) {
+                layers = layers.subList(0, 1);
+            }
             texturesByGroup.put(groupEntry.getKey(), layers);
             maxLayers = Math.max(maxLayers, layers.size());
         }
@@ -235,6 +240,30 @@ public record RenderControllerEntry(
             }
         }
         return resolved == null ? null : PortResourceLocation.parse(resolved);
+    }
+
+    /**
+     * 判断材质是否支持多图层纹理（BE multitexture/masked 材质族，多采样器）。
+     * 命中途径：USE_COLOR_MASK / MASKED_MULTITEXTURE define，或名称含 multitexture/masked。
+     */
+    private static boolean isMultitextureMaterial(String materialName) {
+        if (usesColorMask(materialName)) {
+            return true;
+        }
+        String name = materialName.toLowerCase(Locale.ROOT);
+        if (name.contains("multitexture") || name.contains("masked")) {
+            return true;
+        }
+        var matMap = MaterialManager.INSTANCE.all();
+        var entry = BrMaterialResolver.find(matMap, materialName).orElse(null);
+        if (entry == null) {
+            return false;
+        }
+        try {
+            return BrMaterialResolver.resolve(entry, matMap).hasDefine("MASKED_MULTITEXTURE");
+        } catch (IllegalStateException exception) {
+            return entry.defines().add().stream().flatMap(Collection::stream).anyMatch("MASKED_MULTITEXTURE"::equals);
+        }
     }
 
     /**
