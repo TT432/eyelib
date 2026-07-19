@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 模型运行时变换数据，按骨骼 ID 存储位置/旋转/缩放偏移。
@@ -30,6 +31,20 @@ public final class ModelRuntimeData {
 
     private final Int2ObjectMap<Entry> entries = new Int2ObjectOpenHashMap<>();
 
+    /**
+     * 骨骼名 id -> 模型 bind 骨骼。为 molang `this` 提供“表达式写入目标的当前值”
+     * （bind + 已累积动画，见 Mojang molang syntax-guide）。
+     */
+    private @Nullable Int2ObjectMap<Model.Bone> bindBones;
+
+    public void bindBones(@Nullable Int2ObjectMap<Model.Bone> bindBones) {
+        this.bindBones = bindBones;
+    }
+
+    public Model.@Nullable Bone bindBone(int boneId) {
+        return bindBones == null ? null : bindBones.get(boneId);
+    }
+
     public void reset() {
         entries.values().forEach(Entry::resetRenderInfo);
     }
@@ -41,6 +56,10 @@ public final class ModelRuntimeData {
 
     public Entry getData(int id) {
         return entries.computeIfAbsent(id, s -> new Entry());
+    }
+
+    public Int2ObjectMap<Entry> entries() {
+        return entries;
     }
 
     public Entry getOrDefault(int id) {

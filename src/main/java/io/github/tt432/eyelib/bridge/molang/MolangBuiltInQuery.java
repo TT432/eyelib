@@ -519,6 +519,19 @@ public interface MolangBuiltInQuery {
         return FALSE;
     }
 
+    io.github.tt432.eyelib.molang.mapping.api.HostRole<Boolean> ATTACHED =
+            io.github.tt432.eyelib.molang.mapping.api.HostRole.of("is_attached", Boolean.class);
+
+    @MolangFunction(value = "is_attached", description = "attachable 是否附着于实体渲染（由 AttachableItemRenderSetup 置位）")
+    public static float isAttached(MolangScope scope) {
+        return scope.getHostContext().get(ATTACHED).map(b -> b ? TRUE : FALSE).orElse(FALSE);
+    }
+
+    /** 供 AttachableItemRenderSetup 将 scope 标记为“附着渲染”。 */
+    public static void markAttached(MolangScope scope) {
+        scope.getHostContext().put(ATTACHED, Boolean.TRUE);
+    }
+
     @MolangFunction(value = "fall_distance", description = "摔落的距离")
     public static float fallDistance(MolangScope scope) {
         //? if <26.1 {
@@ -781,9 +794,12 @@ public interface MolangBuiltInQuery {
             var x = e.getX();
             var z = e.getZ();
 
-            return ((float) Math.sqrt((x - xo) * (x - xo) + (z - zo) * (z - zo)))
-                    / ((float) e.getAttributeBaseValue(Attributes.MOVEMENT_SPEED) *
-                    1.3F);
+            float speed = (float) e.getAttributeBaseValue(Attributes.MOVEMENT_SPEED) * 1.3F;
+            // 属性移速为 0 时避免 0/0=NaN（NaN 会沿动画链扩散致整模型消失）
+            if (speed <= 1.0E-6F) {
+                return 0F;
+            }
+            return ((float) Math.sqrt((x - xo) * (x - xo) + (z - zo) * (z - zo))) / speed;
         });
     }
 

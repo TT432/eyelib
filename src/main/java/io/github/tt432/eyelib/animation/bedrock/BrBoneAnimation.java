@@ -131,23 +131,24 @@ public record BrBoneAnimation(
     }
 
     @Nullable
-    public Vector3f lerpRotation(MolangScope scope, float currentTick) {
-        return sample(ROTATION, scope, currentTick);
+    public Vector3f lerpRotation(MolangScope scope, float currentTick, float thisX, float thisY, float thisZ) {
+        return sample(ROTATION, scope, currentTick, thisX, thisY, thisZ);
     }
 
     @Nullable
-    public Vector3f lerpPosition(MolangScope scope, float currentTick) {
-        return sample(POSITION, scope, currentTick);
+    public Vector3f lerpPosition(MolangScope scope, float currentTick, float thisX, float thisY, float thisZ) {
+        return sample(POSITION, scope, currentTick, thisX, thisY, thisZ);
     }
 
     @Nullable
-    public Vector3f lerpScale(MolangScope scope, float currentTick) {
-        return sample(SCALE, scope, currentTick);
+    public Vector3f lerpScale(MolangScope scope, float currentTick, float thisX, float thisY, float thisZ) {
+        return sample(SCALE, scope, currentTick, thisX, thisY, thisZ);
     }
 
     @Nullable
-    public Vector3f sample(String channelName, MolangScope scope, float currentTick) {
-        return BrBoneAnimationSampler.sample(compiledDefinition, channelName, scope, currentTick);
+    public Vector3f sample(String channelName, MolangScope scope, float currentTick,
+                           float thisX, float thisY, float thisZ) {
+        return BrBoneAnimationSampler.sample(compiledDefinition, channelName, scope, currentTick, thisX, thisY, thisZ);
     }
 
     /**
@@ -160,7 +161,8 @@ public record BrBoneAnimation(
     @Nullable
     public static Vector3f lerp(MolangScope scope,
                                 ImmutableFloatTreeMap<BrBoneKeyFrame> frames,
-                                float currentTick) {
+                                float currentTick,
+                                float thisX, float thisY, float thisZ) {
         BrBoneKeyFrame before = frames.floorEntry(currentTick);
         BrBoneKeyFrame after = frames.higherEntry(currentTick);
 
@@ -168,20 +170,20 @@ public record BrBoneAnimation(
             var weight = EyeMath.getWeight(before.timestamp(), after.timestamp(), currentTick);
 
             if (before.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR && after.lerpMode() == BrBoneKeyFrame.LerpMode.LINEAR) {
-                return before.linearLerp(scope, after, weight);
+                return before.linearLerp(scope, after, weight, thisX, thisY, thisZ);
             } else if (before.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM || after.lerpMode() == BrBoneKeyFrame.LerpMode.CATMULLROM) {
                 var beforePlus = frames.lowerEntry(before.timestamp());
                 var afterPlus = frames.higherEntry(after.timestamp());
 
                 if (beforePlus == null || afterPlus == null) {
-                    return before.linearLerp(scope, after, weight);
+                    return before.linearLerp(scope, after, weight, thisX, thisY, thisZ);
                 }
-                return BrBoneKeyFrame.catmullromLerp(scope, beforePlus, before, after, afterPlus, weight);
+                return BrBoneKeyFrame.catmullromLerp(scope, beforePlus, before, after, afterPlus, weight, thisX, thisY, thisZ);
             }
         } else if (before != null) {
-            return before.get(before.timestamp() >= currentTick).eval(scope);
+            return before.get(before.timestamp() >= currentTick).evalWithThis(scope, thisX, thisY, thisZ);
         } else if (after != null) {
-            return after.get(after.timestamp() >= currentTick).eval(scope);
+            return after.get(after.timestamp() >= currentTick).evalWithThis(scope, thisX, thisY, thisZ);
         }
 
         return null;

@@ -70,4 +70,18 @@ public record MolangValue3(
     public Vector3f eval(MolangScope scope) {
         return new Vector3f(getX(scope), getY(scope), getZ(scope));
     }
+
+    /**
+     * 逐轴绑定 molang `this` 后求值。`this` = 表达式最终写入目标的当前值
+     * （Mojang molang syntax-guide），在关键帧语境下为该骨骼该通道的当前值。
+     */
+    public Vector3f evalWithThis(MolangScope scope, float thisX, float thisY, float thisZ) {
+        scope.set("this", thisX);
+        float x = getX(scope);
+        scope.set("this", thisY);
+        float y = getY(scope);
+        scope.set("this", thisZ);
+        float z = getZ(scope);
+        return new Vector3f(x, y, z);
+    }
 }

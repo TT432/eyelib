@@ -91,7 +91,7 @@ public class ItemInHandRendererMixin {
                         if (ce != null) {
                             ce.scripts().ifPresent(s -> s.pre_animation().eval(scope));
                         }
-                    });
+                    }, io.github.tt432.eyelib.client.render.EntityRenderOrchestrator.collectBindBones(rd));
             ac.tickedInfos = tickedInfos;
             ac.effects = effects;
         }

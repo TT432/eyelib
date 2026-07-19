@@ -162,7 +162,7 @@ public final class EntityRenderOrchestrator {
                                             scripts.pre_animation().eval(scope);
                                         });
                                     }
-                                });
+                                }, collectBindBones(cap));
                     } else {
                         tickedInfos = ModelRuntimeData.EMPTY;
                     }
@@ -232,6 +232,21 @@ public final class EntityRenderOrchestrator {
         var cap = RenderData.getComponent(entity);
         cap.ensureOwner(entity);
         return setupClientEntity(entity, cap);
+    }
+
+    /**
+     * 收集实体全部模型组件的骨骼（bind 姿势），供 molang `this` 求值。
+     */
+    public static it.unimi.dsi.fastutil.ints.Int2ObjectMap<io.github.tt432.eyelib.model.Model.Bone> collectBindBones(RenderData<?> cap) {
+        var map = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<io.github.tt432.eyelib.model.Model.Bone>();
+        for (ModelComponent mc : cap.getModelComponents()) {
+            var model = mc.getModel();
+            if (model == null) continue;
+            for (var entry : model.allBones().int2ObjectEntrySet()) {
+                map.putIfAbsent(entry.getIntKey(), entry.getValue());
+            }
+        }
+        return map;
     }
 
     static <T> boolean renderEntity(SimpleRenderAction<T> data) {

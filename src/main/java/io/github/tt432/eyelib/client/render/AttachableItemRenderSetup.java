@@ -78,6 +78,7 @@ public final class AttachableItemRenderSetup {
                     EntityPort.from(entity));
             scope.set("context.item_slot", new MolangString(slotName(slot)));
             scope.set("context.is_first_person", isFirstPerson ? 1F : 0F);
+            io.github.tt432.eyelib.bridge.molang.MolangBuiltInQuery.markAttached(scope);
         }
 
         rd.getClientEntityComponent().setClientEntity(attachable);
@@ -147,7 +148,7 @@ public final class AttachableItemRenderSetup {
                         if (ce != null) {
                             ce.scripts().ifPresent(s -> s.pre_animation().eval(scope));
                         }
-                    });
+                    }, EntityRenderOrchestrator.collectBindBones(rd));
             ac.effects = effects;
         }
     }

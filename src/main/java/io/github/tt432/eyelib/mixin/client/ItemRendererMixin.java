@@ -50,7 +50,7 @@ public class ItemRendererMixin {
 
         ModelRuntimeData tickedInfos = BrAnimator.tickAnimation(ac, scope, effects,
                                                                 (ClientTickHandler.getTick() + partialTick) / 20, () -> {
-                });
+                }, io.github.tt432.eyelib.client.render.EntityRenderOrchestrator.collectBindBones(rd));
         ac.tickedInfos = tickedInfos;
         ac.effects = effects;
     }

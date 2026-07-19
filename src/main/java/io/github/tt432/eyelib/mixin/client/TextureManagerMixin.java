@@ -54,9 +54,20 @@ public abstract class TextureManagerMixin {
         ImportedImageData addonData = AddonTextureRegistry.get(path.getPath());
         if (addonData != null) {
         NativeImage image = NativeImageIO.fromImportedImageData(addonData);
-        if (image == null || (image.getWidth() <= 1 && image.getHeight() <= 1)) {
-            if (image != null) image.close();
+        if (image == null) {
             return;
+        }
+        if (image.getWidth() <= 1 && image.getHeight() <= 1) {
+            // 1x1 有两种来源：(a) addon 对 vanilla 路径的占位遮蔽（应让 vanilla SimpleTexture 正常加载，
+            // 见 c535b789）；(b) addon 自带的合法 1x1 透明贴图（如 A&S Texture.transparent=bge.png，
+            // vanilla 无此资源，放行会得到 FileNotFoundException 并中断整个 attachable 渲染）。
+            // 仅当 vanilla 资源管理器确实能解析该路径时才放行。
+            boolean vanillaHas = net.minecraft.client.Minecraft.getInstance().getResourceManager()
+                    .getResource(path).isPresent();
+            if (vanillaHas) {
+                image.close();
+                return;
+            }
         }
         DynamicTexture texture = new DynamicTexture(image);
         this.register(path, texture);
@@ -84,9 +95,17 @@ public abstract class TextureManagerMixin {
         ImportedImageData addonData = AddonTextureRegistry.get(path.getPath());
         if (addonData != null) {
         NativeImage image = NativeImageIO.fromImportedImageData(addonData);
-        if (image == null || (image.getWidth() <= 1 && image.getHeight() <= 1)) {
-            if (image != null) image.close();
+        if (image == null) {
             return;
+        }
+        if (image.getWidth() <= 1 && image.getHeight() <= 1) {
+            // 同 <26.1 分支：仅当 vanilla 能解析该路径时才放行 1x1 占位遮蔽。
+            boolean vanillaHas = net.minecraft.client.Minecraft.getInstance().getResourceManager()
+                    .getResource(path).isPresent();
+            if (vanillaHas) {
+                image.close();
+                return;
+            }
         }
         DynamicTexture texture = new DynamicTexture(() -> "eyelib addon texture", image);
         this.register(path, texture);
