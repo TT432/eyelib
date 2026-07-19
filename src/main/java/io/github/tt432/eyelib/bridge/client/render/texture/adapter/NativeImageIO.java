@@ -281,9 +281,11 @@ public class NativeImageIO {
     }
 
     /**
-     * 将 alpha 值二值化：有颜色内容的像素 → alpha 255，纯透明 → alpha 0。
+     * 将 alpha 值二值化：alpha>0 → 255，alpha=0 → 保持 0。
      * 解决 Bedrock addon 纹理使用低 alpha（如 alpha=3）做边缘抗锯齿，
-     * 以及部分像素（如眼睛）被错误保存为 alpha=0 但颜色非空的问题。
+     * 被 MC cutout threshold 0.5 误丢弃的问题。
+     * alpha=0 必须保持透明：BE 语义即不可见，且包会故意用透明占位图
+     * （如 A&S 无业村民职业层 = 1×1 透明 tga）实现不可见 pass。
      */
     public void clampAlphaToBinary(NativeImage image) {
         for (int y = 0; y < image.getHeight(); y++) {
@@ -294,16 +296,12 @@ public class NativeImageIO {
                 int rgba = image.getPixel(x, y);
                 //?}
                 int alpha = (rgba >> 24) & 0xFF;
-                if (alpha < 255) {
-                    // 有颜色内容（任何 RGB 通道非零）→ 设为完全不透明
-                    int rgb = rgba & 0x00FFFFFF;
-                    if (rgb != 0 || alpha > 0) {
-                        //? if <26.1 {
-                        image.setPixelRGBA(x, y, rgba | 0xFF000000);
-                        //?} else {
-                        image.setPixel(x, y, rgba | 0xFF000000);
-                        //?}
-                    }
+                if (alpha > 0 && alpha < 255) {
+                    //? if <26.1 {
+                    image.setPixelRGBA(x, y, rgba | 0xFF000000);
+                    //?} else {
+                    image.setPixel(x, y, rgba | 0xFF000000);
+                    //?}
                 }
             }
         }

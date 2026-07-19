@@ -59,6 +59,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -462,12 +463,27 @@ public final class EntityRenderOrchestrator {
         return setupClientEntity(entityId, cap);
     }
 
+    /**
+     * BE 重命名实体的 JE 类型别名：BE 村与掠夺更新把 villager/zombie_villager 重命名为 *_v2，
+     * 资源包（如 A&S）只注册新名；JE 1.20.1 实体类型仍是旧名，查表时回退别名。
+     */
+    private static final Map<String, String> JE_TO_BE_ENTITY_ALIAS = Map.of(
+            "minecraft:villager", "minecraft:villager_v2",
+            "minecraft:zombie_villager", "minecraft:zombie_villager_v2"
+    );
+
     public static List<Runnable> setupClientEntity(String entityId, RenderData<?> cap) {
         ClientEntityComponent clientEntityComponent = cap.getClientEntityComponent();
         BrClientEntity clientEntity = clientEntityComponent.getClientEntity();
 
         if (clientEntity == null) {
             clientEntity = ClientEntityManager.INSTANCE.get(entityId.toString());
+            if (clientEntity == null) {
+                String alias = JE_TO_BE_ENTITY_ALIAS.get(entityId.toString());
+                if (alias != null) {
+                    clientEntity = ClientEntityManager.INSTANCE.get(alias);
+                }
+            }
             if (clientEntity != null) {
                 clientEntityComponent.setClientEntity(clientEntity);
             }
