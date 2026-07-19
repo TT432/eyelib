@@ -155,7 +155,20 @@ public final class MolangRuntimeSupport {
         Object[] args = new Object[method.getParameterCount()];
         int visibleIdx = 0;
 
+        // varargs 数组槽位不在主循环消耗可见参数——全部由下方打包块填充
+        int varArgSlot = -1;
+        if (method.isVarArgs() && !paramRoles.isEmpty()) {
+            FunctionParameterRole lastRole = paramRoles.get(paramRoles.size() - 1);
+            if (lastRole.role() == MolangFunction.ParameterRole.VISIBLE_ARG
+                    && method.getParameterTypes()[lastRole.index()].isArray()) {
+                varArgSlot = lastRole.index();
+            }
+        }
+
         for (FunctionParameterRole role : paramRoles) {
+            if (role.index() == varArgSlot) {
+                continue;
+            }
             Object argValue = switch (role.role()) {
                 case VISIBLE_ARG -> {
                     if (visibleIdx >= visibleArgValues.size()) {
@@ -174,24 +187,20 @@ public final class MolangRuntimeSupport {
             args[role.index()] = argValue;
         }
 
-        if (method.isVarArgs() && !paramRoles.isEmpty()) {
-            FunctionParameterRole lastRole = paramRoles.get(paramRoles.size() - 1);
-            if (lastRole.role() == MolangFunction.ParameterRole.VISIBLE_ARG) {
-                int lastIdx = lastRole.index();
-                Class<?> varArgArrayType = method.getParameterTypes()[lastIdx];
-                Class<?> varArgComponent = varArgArrayType.getComponentType();
-                if (varArgComponent != null) {
-                    int varArgCount = Math.max(0, visibleArgValues.size() - visibleIdx);
-                    Object packed = Array.newInstance(varArgComponent, varArgCount);
-                    for (int i = 0; i < varArgCount; i++) {
-                        Object converted = convertMolangValue(visibleArgValues.get(visibleIdx + i), varArgComponent);
-                        if (converted == null && varArgComponent.isPrimitive()) {
-                            converted = defaultPrimitive(varArgComponent);
-                        }
-                        Array.set(packed, i, converted);
+        if (varArgSlot >= 0) {
+            Class<?> varArgArrayType = method.getParameterTypes()[varArgSlot];
+            Class<?> varArgComponent = varArgArrayType.getComponentType();
+            if (varArgComponent != null) {
+                int varArgCount = Math.max(0, visibleArgValues.size() - visibleIdx);
+                Object packed = Array.newInstance(varArgComponent, varArgCount);
+                for (int i = 0; i < varArgCount; i++) {
+                    Object converted = convertMolangValue(visibleArgValues.get(visibleIdx + i), varArgComponent);
+                    if (converted == null && varArgComponent.isPrimitive()) {
+                        converted = defaultPrimitive(varArgComponent);
                     }
-                    args[lastIdx] = packed;
+                    Array.set(packed, i, converted);
                 }
+                args[varArgSlot] = packed;
             }
         }
 

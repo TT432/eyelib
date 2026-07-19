@@ -10,6 +10,7 @@ import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.DataAttach
 import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
 import io.github.tt432.eyelib.behavior.component.MarkVariant;
 import io.github.tt432.eyelib.behavior.component.Variant;
+import io.github.tt432.eyelib.behavior.component.property.SkinId;
 import io.github.tt432.eyelib.molang.MolangScope;
 import io.github.tt432.eyelib.molang.mapping.api.HostRole;
 import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
@@ -196,6 +197,25 @@ public final class MolangQuery {
                         }
                         return FALSE;
                     }).orElse(FALSE);
+    }
+
+    @MolangFunction(value = "any", description = "第一个参数与后续任一参数相等则返回 1")
+    public static float any(MolangScope scope, float first, float... others) {
+        for (float other : others) {
+            if (first == other) {
+                return TRUE;
+            }
+        }
+        return FALSE;
+    }
+
+    @MolangFunction(value = "skin_id", description = "皮肤 id（无组件时回退 0，保证变体公式可算）")
+    public static float skinId(MolangScope scope) {
+        return livingFloat(scope, l -> {
+            SkinId component = DataAttachmentHelper.getOrCreate(DataAttachmentPort.entityBehaviorData(), l)
+                                                   .component(SkinId.class);
+            return component != null ? (float) component.value() : 0;
+        });
     }
 
     @FunctionalInterface

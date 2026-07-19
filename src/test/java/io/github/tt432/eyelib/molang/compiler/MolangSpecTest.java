@@ -29,6 +29,9 @@ class MolangSpecTest {
         if (MolangMappingRegistries.mappingTree().findClasses("math").isEmpty()) {
             MolangMappingRegistries.mappingTree().addNode("math", new MolangClass(MolangMath.class, true));
         }
+        if (MolangMappingRegistries.mappingTree().findClasses("query").isEmpty()) {
+            MolangMappingRegistries.mappingTree().addNode("query", new MolangClass(io.github.tt432.eyelib.client.molang.MolangQuery.class, false));
+        }
     }
 
     // === Core arithmetic ===
@@ -95,6 +98,15 @@ class MolangSpecTest {
     void ternaryConditional() {
         assertEvaluatesTo("1>0?10:20", 10.0f);
         assertEvaluatesTo("0>1?10:20", 20.0f);
+    }
+
+    @Test
+    @DisplayName("回归：varargs 函数收到全部参数（变参首元素不丢失）")
+    void varargsFunctionReceivesAllArguments() {
+        assertEvaluatesTo("q.any(0,0,2,5)", 1F);
+        assertEvaluatesTo("q.any(0,1,2)", 0F);
+        assertEvaluatesTo("q.any(3,3)", 1F);
+        assertEvaluatesTo("q.any(3)", 0F);
     }
 
     // === Variables ===
