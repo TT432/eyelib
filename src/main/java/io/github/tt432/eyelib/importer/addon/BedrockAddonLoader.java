@@ -456,9 +456,7 @@ public final class BedrockAddonLoader {
         } else if (name.startsWith("entity.") || name.startsWith("entities.")) {
             for (String chunk : splitConcatenatedJson(fullJson)) {
                 try {
-                    var element = parseJsonLenient(chunk);
-                    normalizeRenderControllers(element);
-                    DataResult<BrClientEntity> result = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, element);
+                    DataResult<BrClientEntity> result = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, parseJsonLenient(chunk));
                     result.error().ifPresent(err -> acc.warnings.add(
                             warn(BedrockAddonWarningCode.SCHEMA_PARSE_FAILED, entry.effectivePath(),
                                     "entity: " + err.message())));
@@ -778,39 +776,6 @@ public final class BedrockAddonLoader {
     }
 
     // BrArchive 辅助函数
-
-    private static void normalizeRenderControllers(JsonElement root) {
-        if (!root.isJsonObject()) return;
-        var obj = root.getAsJsonObject();
-        for (String key : obj.keySet()) {
-            var val = obj.get(key);
-            if (!val.isJsonObject()) continue;
-            var desc = val.getAsJsonObject().get("description");
-            if (desc == null || !desc.isJsonObject()) continue;
-            var rc = desc.getAsJsonObject().get("render_controllers");
-            if (rc == null || !rc.isJsonArray()) continue;
-            var arr = rc.getAsJsonArray();
-            var normalized = new com.google.gson.JsonArray();
-            var conditions = new com.google.gson.JsonObject();
-            for (JsonElement el : arr) {
-                if (el.isJsonPrimitive()) {
-                    normalized.add(el);
-                } else if (el.isJsonObject()) {
-                    var o = el.getAsJsonObject();
-                    if (!o.keySet().isEmpty()) {
-                        String ctrlName = o.keySet().iterator().next();
-                        normalized.add(new com.google.gson.JsonPrimitive(ctrlName));
-                        JsonElement condVal = o.get(ctrlName);
-                        if (condVal != null && condVal.isJsonPrimitive()) {
-                            conditions.addProperty(ctrlName, condVal.getAsString());
-                        }
-                    }
-                }
-            }
-            desc.getAsJsonObject().add("render_controllers", normalized);
-            desc.getAsJsonObject().add("render_controller_conditions", conditions);
-        }
-    }
 
     // JSON 分片 / 低级工具
 

@@ -180,4 +180,54 @@ class BrClientEntityCodecTest {
         assertEquals("#ffffff", ((io.github.tt432.eyelib.importer.addon.BedrockResourceValue.StringValue) entity.spawn_egg().orElseThrow().values().get("base_color")).value());
         assertEquals("#000000", ((io.github.tt432.eyelib.importer.addon.BedrockResourceValue.StringValue) entity.spawn_egg().orElseThrow().values().get("overlay_color")).value());
     }
+
+    @Test
+    void inlineRenderControllerConditionsAreCaptured() {
+        String json = """
+                {
+                  "minecraft:attachable": {
+                    "description": {
+                      "identifier": "eyelib:test_attachable",
+                      "render_controllers": [
+                        { "controller.render.conditional": "query.is_enchanted" },
+                        "controller.render.always"
+                      ]
+                    }
+                  }
+                }
+                """;
+
+        BrClientEntity entity = TestCodecUtil.unwrap(BrClientEntity.ATTACHABLE_CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
+
+        assertEquals(java.util.List.of("controller.render.conditional", "controller.render.always"),
+                entity.render_controllers());
+        assertEquals(1, entity.renderControllerConditions().size());
+        assertTrue(entity.renderControllerConditions().containsKey("controller.render.conditional"));
+    }
+
+    @Test
+    void explicitRenderControllerConditionsWinOverInline() {
+        String json = """
+                {
+                  "minecraft:client_entity": {
+                    "description": {
+                      "identifier": "eyelib:test_entity",
+                      "render_controllers": [
+                        { "controller.render.a": "1.0" }
+                      ],
+                      "render_controller_conditions": {
+                        "controller.render.a": "0.0"
+                      }
+                    }
+                  }
+                }
+                """;
+
+        BrClientEntity entity = TestCodecUtil.unwrap(BrClientEntity.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(json)));
+
+        assertEquals(java.util.List.of("controller.render.a"), entity.render_controllers());
+        assertEquals(1, entity.renderControllerConditions().size());
+        assertFalse(entity.renderControllerConditions().get("controller.render.a")
+                .evalAsBool(new io.github.tt432.eyelib.molang.MolangScope()));
+    }
 }
