@@ -64,8 +64,9 @@
 | chicken | ✅ 修复后 parity | is_name_any 修复 |
 | pig/cow/creeper | ✅ 外观 parity | |
 | sheep | ≈ | 白/米黄=引擎色调差 |
-| skeleton | ✅ parity | 弓=棕色（BE 截图实证）、挂手侧垂下、拉弓出箭、射击回落 |
-| spider | ❓ | 消失过一次未复现 |
+| skeleton | ✅ parity | 弓=棕色（BE 截图实证）、挂手侧垂下、拉弓出箭、射击回落、持弓臂姿（varargs 修复后） |
+| spider | ✅ 非 bug | "消失"两起均破案：JE=summon 整数坐标吸附方块中心致 1.4 宽蜘蛛卡墙窒息（LivingDeathEvent src=inWall 实证）；BE=狼咬死（隔离实验实证） |
+| villager | ✅ 修复后 parity | 修复链：villager_v2 别名、clamp 保留全透明、q.any/q.skin_id、varargs off-by-one；平原型=bsc 黄脸绿眼棕袍 ✓ |
 | 其余 ~105 种 | 未对比 | |
 
 ## 六、方法论沉淀（重要）
@@ -80,3 +81,7 @@
 8. **brarchive 解码**：8B magic(0x267052A0B125277D) + 4B count + 4B version + count×256B 记录（名+0xFC 处长度）+ 串接 JSON；`__brarchive/models/entity.brarchive`=几何，`materials.brarchive` 无 payload（.material 是普通 zip 条目）
 9. **BE 分层语义定案**：RC textures 数组=多图层绑定采样器，材质决定是否合成——multitexture/masked 族（entity_multitexture_*、villager_v2_masked、MASKED_MULTITEXTURE define）才分层；单采样材质只渲染第 0 层（wiki 分层教程+A&S 弓实证：调色板层不生效、弓=棕色）
 10. **无头截 BE 窗口**：`capture_bedrock.py`（WGC）不依赖 WS 连接，AFK 遮罩下也能拿到实体外观证据——WS 断了先截图再谈
+11. **宽体实体召唤要留墙距**：/summon 整数坐标吸附方块中心，蜘蛛(1.4宽)在 8×8 棚里贴墙放会卡墙窒息（约 1s 死亡，LivingDeathEvent 可查 src=inWall）
+12. **实体离奇死亡三板斧**：LivingDeathEvent（src）→ 服务端 getSingleplayerServer 查存活 → 隔离实验（逐个排除杀手）；BE 侧 querytarget 追踪位置漂移
+13. **molang 未实现 query 返回 MolangNull 而非 0**：`null+number=null` → 三元/公式静默产 null → 数组索引回退 0，变体选错但不报错；排查变体问题先查链上每个 query 是否为 null
+14. **BE 群系决定实体变体**：村民脸=群系变体纹理（taiga=绿眼 bsh）；双侧对比前必须对齐群系/实体类型，否则把变体差异误判为渲染 bug
