@@ -65,6 +65,24 @@ class MolangSpecTest {
     }
 
     @Test
+    @DisplayName("NaN 参与比较: 除 != 外恒为 false（对齐 Java/BE 语义）")
+    void nanComparisonsAreFalseExceptNotEqual() {
+        // molang 除零安全返回 0，NaN 只能来自宿主 query/变量注入
+        assertNanEvaluatesTo("v.nan > 0", 0.0f);
+        assertNanEvaluatesTo("v.nan >= 0", 0.0f);
+        assertNanEvaluatesTo("v.nan < 0", 0.0f);
+        assertNanEvaluatesTo("v.nan <= 0", 0.0f);
+        assertNanEvaluatesTo("v.nan == 0", 0.0f);
+        assertNanEvaluatesTo("v.nan != 0", 1.0f);
+        assertNanEvaluatesTo("0 > v.nan", 0.0f);
+        assertNanEvaluatesTo("0 >= v.nan", 0.0f);
+        assertNanEvaluatesTo("0 < v.nan", 0.0f);
+        assertNanEvaluatesTo("0 <= v.nan", 0.0f);
+        assertNanEvaluatesTo("0 == v.nan", 0.0f);
+        assertNanEvaluatesTo("0 != v.nan", 1.0f);
+    }
+
+    @Test
     @DisplayName("Bedrock §空值合并: ?? 操作符")
     void nullCoalesce() {
         assertEvaluatesTo("1??2", 1.0f);
@@ -211,6 +229,15 @@ class MolangSpecTest {
 
     private void assertEvaluatesTo(String expression, float expected) {
         assertEvaluatesTo(expression, expected, null);
+    }
+
+    private void assertNanEvaluatesTo(String expression, float expected) {
+        CompiledMolangExpression compiled = compiler.compile(expression, CompileContext.defaults());
+        assertNotNull(compiled, "编译不应返回 null: " + expression);
+        MolangScope scope = new MolangScope();
+        scope.set("variable.nan", Float.NaN);
+        MolangObject value = compiled.evaluate(scope);
+        assertEquals(expected, value.asFloat(), 0.0001f, expression);
     }
 
     private void assertEvaluatesTo(String expression, float expected, String message) {

@@ -349,10 +349,18 @@ public final class MolangBytecodeEmitter {
         code.labelBinding(end);
     }
 
+    /**
+     * 发出浮点比较字节码，结果为 MolangFloat ZERO/ONE。
+     * NaN 语义对齐 Java/BE：含 NaN 的比较除 != 外恒为 false。
+     * 技巧与 javac 一致：>/>= 用 fcmpl（NaN → -1），</<=/==/!= 用 fcmpg（NaN → +1）。
+     */
     private static void emitComparison(CodeBuilder code, String operator) {
         Label trueLabel = code.newLabel();
         Label endLabel = code.newLabel();
-        code.fcmpg();
+        switch (operator) {
+            case ">", ">=" -> code.fcmpl();
+            default -> code.fcmpg();
+        }
         switch (operator) {
             case "==" -> code.ifeq(trueLabel);
             case "!=" -> code.ifne(trueLabel);

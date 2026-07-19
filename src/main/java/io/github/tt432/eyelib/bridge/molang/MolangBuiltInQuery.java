@@ -272,6 +272,10 @@ public interface MolangBuiltInQuery {
             //?} else {
             int useDuration = 1;
             //?}
+            // 未在使用物品时 useDuration=0，0/0 会产生 NaN；BE 语义下未使用即返回 0
+            if (useDuration <= 0) {
+                return 0F;
+            }
             return (float) living.getTicksUsingItem() / useDuration;
         });
     }
