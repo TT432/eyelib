@@ -169,7 +169,9 @@ public final class AttachableItemRenderSetup {
             tickedInfos = ModelRuntimeData.EMPTY;
         }
 
-        for (ModelComponent mc : rd.getModelComponents()) {
+        var sorted = new java.util.ArrayList<>(rd.getModelComponents());
+        sorted.sort(java.util.Comparator.comparingInt(EntityRenderOrchestrator::passOrder));
+        for (ModelComponent mc : sorted) {
             if (!mc.readyForRendering()) continue;
 
             Model model = mc.getModel();

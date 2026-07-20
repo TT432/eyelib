@@ -289,7 +289,8 @@ public record RenderControllerEntry(
 
         if (isHurt && isHurtColor.isPresent()) return isHurtColor.get().eval(scope);
         if (isOnFire && onFireColor.isPresent()) return onFireColor.get().eval(scope);
-        if (overlayColor.isPresent()) return overlayColor.get().eval(scope);
+        // overlay_color 是受伤/特殊状态覆盖层的颜色（官方文档：配合 query.overlay_alpha 的 overlay 效果），
+        // 不得作为常驻顶点染色——否则 A&S 发光层（overlay rgb=0）会被永久乘黑。
         if (color.isPresent()) return color.get().eval(scope);
         return null;
     }
@@ -322,8 +323,10 @@ public record RenderControllerEntry(
         try {
             List<PortResourceLocation> textureLayers = toPortLocations(resolveTextureLayerPaths(scope, entity));
 
-            // alphatest 材质逐层走 clamped 纹理，避免 MC cutout threshold 0.5 丢弃低 alpha 像素
-            if (!usesColorMask(materialName) && isAlphatestMaterial(materialName)) {
+            // alphatest 材质逐层走 clamped 纹理，避免 MC cutout threshold 0.1/0.5 丢弃低 alpha 像素；
+            // emissive 材质同理：BE 发光着色器不丢弃低 alpha（alpha 是发光掩码），
+            // 而 MC entityTranslucent 着色器在 alpha<0.1 时 discard（A&S 蜘蛛红眼 alpha 仅 1-10 会整体消失）
+            if (!usesColorMask(materialName) && (isAlphatestMaterial(materialName) || isEmissiveMaterial(materialName))) {
                 List<PortResourceLocation> clamped = new ArrayList<>(textureLayers.size());
                 for (PortResourceLocation layer : textureLayers) {
                     clamped.add(clampedTexture(layer, syncedActions, needReload));
@@ -367,6 +370,25 @@ public record RenderControllerEntry(
      * alphatest 材质需要 clamp alpha 以解决 MC cutout shader threshold 0.5
      * 丢弃 Bedrock 低 alpha 像素的问题。
      */
+    /**
+     * 判断材质是否为发光材质（解析链上含 USE_EMISSIVE / USE_ONLY_EMISSIVE define）。
+     * 发光材质的纹理 alpha 是掩码而非半透明，需二值化以防 MC 着色器按阈值丢弃。
+     */
+    private static boolean isEmissiveMaterial(String materialName) {
+        var matMap = MaterialManager.INSTANCE.all();
+        var entry = BrMaterialResolver.find(matMap, materialName).orElse(null);
+        if (entry == null) {
+            return false;
+        }
+        try {
+            var resolved = BrMaterialResolver.resolve(entry, matMap);
+            return resolved.hasDefine("USE_EMISSIVE") || resolved.hasDefine("USE_ONLY_EMISSIVE");
+        } catch (IllegalStateException exception) {
+            return entry.defines().add().stream().flatMap(Collection::stream)
+                        .anyMatch(d -> "USE_EMISSIVE".equals(d) || "USE_ONLY_EMISSIVE".equals(d));
+        }
+    }
+
     private static boolean isAlphatestMaterial(String materialName) {
         var matMap = MaterialManager.INSTANCE.all();
         var entry = matMap.get(materialName);

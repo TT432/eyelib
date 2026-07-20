@@ -347,8 +347,25 @@ public final class EntityRenderOrchestrator {
         return (T) obj;
     }
 
+    /**
+     * 渲染顺序分档：BE 的材质系统按材质类型排序（不透明/cutout 先画，半透明/加法/发光后画），
+     * 否则后画的不透明 pass 会以深度覆盖先画的发光/加法 pass（如 A&S 蜘蛛眼睛被身体盖住）。
+     */
+    static int passOrder(ModelComponent mc) {
+        var pass = mc.getRenderType(mc.getTexture());
+        if (pass == null) {
+            return 0;
+        }
+        return switch (pass.transparency()) {
+            case SOLID, ALPHA_TEST -> 0;
+            case TRANSLUCENT, TRANSLUCENT_EMISSIVE, ADDITIVE -> 1;
+        };
+    }
+
     public static <T> boolean renderComponents(SimpleRenderAction<T> data) {
-        return new ArrayList<>(data.renderData().getModelComponents()).stream()
+        var components = new ArrayList<>(data.renderData().getModelComponents());
+        components.sort(java.util.Comparator.comparingInt(EntityRenderOrchestrator::passOrder));
+        return components.stream()
                                                                        .filter(mc -> mc.readyForRendering() || (mc.getSerializableInfo() != null && mc.getSerializableInfo()
                                                                                                                                                       .texture() != null))
                                                                        .mapToLong(modelComponent -> {
