@@ -96,7 +96,7 @@ import org.jspecify.annotations.NullMarked;
   Bedrock 文档、Mojang Creator 文档）。
 - **关于依赖的说法必须与 `build.gradle` 一致。** Gradle 依赖图是唯一的真相来源。
 - **纯文档变更：** 提交前验证每个引用的文件路径都能解析。
-- **结构/代码变更：** 通过 `eyelib_debug_build` 构建，要求退出码 :0: 才能声称完成。
+- **结构/代码变更：** 通过 `mcmcp_build` 构建，要求退出码 :0: 才能声称完成。
 - **运行时敏感变更：** 先编译，然后用现有的开发客户端流程进行冒烟检查。
 
 ## 文档同步规则
@@ -123,10 +123,10 @@ import org.jspecify.annotations.NullMarked;
 
 - IntelliJ IDEA 是唯一的 IDE。严禁提交 VS Code 和 Eclipse 产物。
 - **JDTLS 被明确禁止。**
-- **JetBrains MCP / ide-index MCP 已废弃。** 构建、测试、调试、客户端启停统一通过 `eyelib-debug` MCP
-  （`eyelib_debug_build` / `eyelib_debug_test` / `eyelib_debug_nullaway` / `eyelib_debug_clientsmoke` /
-  `eyelib_debug_launch` / `eyelib_debug_close` / `eyelib_debug_execute` / `eyelib_debug_send_command`）。
-- **Gradle 执行**: `eyelib-debug` MCP 覆盖编译/测试/clientsmoke；任意其它 Gradle task（如 `:1.20.1:generateModulesMd`、
+- **JetBrains MCP / ide-index MCP 已废弃。** 构建、测试、调试、客户端启停统一通过 `mcmcp` omp 拓展
+  （`mcmcp_build` / `mcmcp_test` / `mcmcp_nullaway` / `mcmcp_clientsmoke` /
+  `mcmcp_launch` / `mcmcp_close` / `mcmcp_execute` / `mcmcp_send_command`）。
+- **Gradle 执行**: `mcmcp` 拓展覆盖编译/测试/clientsmoke；任意其它 Gradle task（如 `:1.20.1:generateModulesMd`、
   `compileJava`、各 node test）及 Gradle sync 通过 bash 跑 `gradlew`。
 - **Stonecutter 多版本**:
     - `build.gradle` 是 `centralScript`,每个 version node(`:1.20.1`、`:1.21.1`、`:26.1.2`)都跑一次。版本特定代码用 `//?`
@@ -135,7 +135,7 @@ import org.jspecify.annotations.NullMarked;
       `:1.20.1:generateModulesMd` 等。
     - 切 active version 后必须在 IDEA 里 Gradle sync(reimport),否则 source set 显示错位。
 - **游戏重启**: 通过 debug HTTP `/eval` → `minecraft.stop()` 关闭运行中的客户端,切勿从 shell `kill` java 进程。
-- **游戏启动**: `eyelib_debug_launch`。启动前检查端口 25999 是否空闲；若被占用，先 `eyelib_debug_close` 关闭旧实例。
+- **游戏启动**: `mcmcp_launch`（读取项目根 `.mcmcp`，经 `AI_DEBUG_PORT` 环境变量向客户端传调试端口，默认 25999）。启动前检查该端口是否空闲；若被占用，先 `mcmcp_close` 关闭旧实例。调试 HTTP 服务器由 clientsmoke mod 内的 AIDebugServer 提供，仅在配置 `ai_debug_port` 时开启。
 
 ## 构建与测试验证
 
@@ -143,7 +143,7 @@ import org.jspecify.annotations.NullMarked;
   ，表示测试已在相同源码上运行过——构建系统正确地跟踪了输入变更。仅在你故意更改了测试源码而 Gradle 忽略此变更时，才清理受影响模块的
   `build/` 目录。
 - **切勿向 Gradle 传递 `--no-build-cache`。** 它会强制完全重建 MC Forge 产物。应使用有针对性的缓存清理。
-- `eyelib_debug_build` 编译源码。对于依赖重混淆 JAR 的运行时验证，使用 `eyelib_debug_launch` 启动客户端。
+- `mcmcp_build` 编译源码。对于依赖重混淆 JAR 的运行时验证，使用 `mcmcp_launch` 启动客户端。
 
 ## 完整验证流程
 
@@ -160,26 +160,26 @@ import org.jspecify.annotations.NullMarked;
 
 ### 各闸门执行方式
 
-1. **编译**: `eyelib_debug_build`。构建失败时直接读 `build/_mcp_gradle_out.txt` / `build/_mcp_gradle_err.txt`
+1. **编译**: `mcmcp_build`。构建失败时直接读 `build/_mcp_gradle_out.txt` / `build/_mcp_gradle_err.txt`
    拿完整错误(见 `eyelib-build` SKILL 的"报错被截断"陷阱)。
-2. **NullAway / Error Prone**: `eyelib_debug_nullaway`。强制 `@NullMarked` 约定(只在 `package-info.java` 加)与
+2. **NullAway / Error Prone**: `mcmcp_nullaway`。强制 `@NullMarked` 约定(只在 `package-info.java` 加)与
    null safety，不通过说明包边界/可空性出了问题，**禁止用加注解的方式静默消除报错**，先查根因。
-3. **单元测试**: `eyelib_debug_test`(等同 `:1.20.1:test`)。跨版本改动时按各 node 分别跑(`:1.20.1:test`、
+3. **单元测试**: `mcmcp_test`(等同 `:1.20.1:test`)。跨版本改动时按各 node 分别跑(`:1.20.1:test`、
    `:1.21.1:test`)。测试失败先 `git stash` 复现，排除预存失败(见 `eyelib` SKILL 跨域约束)。
 4. **MODULES.md**: 仅在包/模块结构变更时执行 `:1.20.1:generateModulesMd`(bash `gradlew :1.20.1:generateModulesMd`)
    重生成，**禁止手编**，产物需随改动一起提交。
 5. **文档同步**: 见上文"文档同步规则"，grep 全仓库验证无旧路径残留、所有引用路径可解析。
-6. **clientsmoke**: `eyelib_debug_clientsmoke`。验证 MC 客户端加载后的接线行为(Bridge/接线层)，报告输出到
+6. **clientsmoke**: `mcmcp_clientsmoke`。验证 MC 客户端加载后的接线行为(Bridge/接线层)，报告输出到
    `versions/<version>/run/clientsmoke/clientsmoke-reports/`（gameDirectory 由 build.gradle clientSmoke run config 决定）。写法见 `eyelib-clientsmoke` SKILL。
 
 ### 提交前 Checklist（代码/结构/运行时变更）
 
-- [ ] `eyelib_debug_build` 退出码 0
-- [ ] `eyelib_debug_nullaway` 无报错
-- [ ] `eyelib_debug_test` 全绿(跨版本改动则各 node 分别全绿)
+- [ ] `mcmcp_build` 退出码 0
+- [ ] `mcmcp_nullaway` 无报错
+- [ ] `mcmcp_test` 全绿(跨版本改动则各 node 分别全绿)
 - [ ] 包/模块结构变更 → `:1.20.1:generateModulesMd` 已重生成且随改动提交
 - [ ] 触发"文档同步规则"任一行 → grep 验证无旧路径残留
-- [ ] 运行时敏感 → `eyelib_debug_clientsmoke` 全绿
+- [ ] 运行时敏感 → `mcmcp_clientsmoke` 全绿
 
 ## Skill 使用
 

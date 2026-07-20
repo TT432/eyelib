@@ -55,8 +55,8 @@ eyelib-material 的 smoke test（MaterialPipelineSmoke）和 particle 的 Bedroc
 
 教训：复杂任务中，关键约束（domain 不能依赖 bridge）需要在 task 描述中明确重复。
 
-### 5. 编译命令：通过 eyelib-debug MCP 或 bash 跑 Gradle
+### 5. 编译命令：通过 mcmcp 拓展 或 bash 跑 Gradle
 
 历史教训: WSL 下的 `./gradlew` 和 `java -cp ... GradleWrapperMain` 对 `/mnt/e/` 路径超时/挂死; Windows 侧 `cmd.exe /c "... && gradlew.bat ..."` 快且合法。
 
-编译: `eyelib_debug_build`(通过 eyelib-debug MCP),或 bash `gradlew compileJava`。测试: `eyelib_debug_test`,或其他 Gradle task 通过 bash `gradlew <task>`。
+编译: `mcmcp_build`(通过 mcmcp 拓展),或 bash `gradlew compileJava`。测试: `mcmcp_test`,或其他 Gradle task 通过 bash `gradlew <task>`。

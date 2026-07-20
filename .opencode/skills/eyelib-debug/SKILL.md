@@ -1,47 +1,49 @@
 ---
 name: eyelib-debug
-description: Eyelib MCP 调试——启动客户端、/eval 执行代码、渲染诊断 Phase、实体操作。Use when debugging rendering, executing /eval code, or diagnosing entity issues.
+description: Eyelib 客户端调试——mcmcp 拓展启动客户端、/eval 执行代码、渲染诊断 Phase、实体操作。Use when debugging rendering, executing /eval code, or diagnosing entity issues.
 license: MIT
 compatibility: opencode
 metadata:
   author: https://github.com/TT432
   version: "1.0.0"
   tags: eyelib, debug, mcp, eval, rendering
-  related-skills: eyelib, eyelib-build, eyelib-renderdoc, eyelib-clientsmoke
+  related-skills: eyelib, eyelib-build, eyelib-renderdoc, eyelib-clientsmoke, mcmcp
 ---
 
 # Eyelib 调试与渲染诊断
 
-## MCP 工具
+## mcmcp 拓展工具
 
-eyelib-debug MCP server 封装了整个调试流程。工具以 `eyelib_debug_*` 前缀注册。
+调试流程由 `mcmcp` omp 拓展（`.omp/extensions/mcmcp/`，见 mcmcp SKILL）封装。调试 HTTP 服务器是
+clientsmoke mod 内的 `io.github.tt432.clientsmoke.debug.AIDebugServer`，仅在配置
+`ai_debug_port`（JVM 系统属性，fallback 环境变量 `AI_DEBUG_PORT`）时开启；`mcmcp_launch`
+会自动经环境变量传入端口（默认 25999）。
 
 | 工具 | 用途 |
 |---|---|
-| `eyelib_debug_launch(timeout=120)` | RenderDoc capture 模式启动客户端。内部：重建 → 杀僵尸 → renderdoccmd capture → 轮询就绪 |
-| `eyelib_debug_enter_world(world_name="Debug World", timeout=60)` | 进入单人世界 |
-| `eyelib_debug_execute(code)` | 在 JVM 内执行 Java 方法体（同 /eval） |
-| `eyelib_debug_send_command(side, command_text)` | 发送 slash 命令；side="client" 走玩家网络包，side="server" 在 integrated server 直接执行（仅单人） |
-| `eyelib_debug_capture_frame()` | 程序化截帧 |
-| `eyelib_debug_status(info="summary")` | 查询会话状态 |
-| `eyelib_debug_close()` | 关闭客户端 |
-| `eyelib_debug_build(module="")` | 构建单个或全部模块（:module:jar + createLaunchScripts）。不传 module 则构建全部 |
-| `eyelib_debug_nullaway(module="")` | NullAway/Error Prone nullness 检查 |
-| `eyelib_debug_clientsmoke(timeout=120)` | 运行 clientsmoke 测试 |
+| `mcmcp_launch(version, timeout=120, port=25999)` | 按 `.mcmcp` 中该版本的 launch_cmd 启动客户端 → 轮询 /ping /loaded 就绪 |
+| `mcmcp_enter_world(world_name="Debug World", timeout=60)` | 进入单人世界 |
+| `mcmcp_execute(code)` | 在 JVM 内执行 Java 方法体（同 /eval） |
+| `mcmcp_send_command(side, command_text)` | 发送 slash 命令；side="client" 走玩家网络包，side="server" 在 integrated server 直接执行（仅单人） |
+| `mcmcp_status(info="summary")` | 查询会话状态 |
+| `mcmcp_close()` | 关闭客户端 |
+| `mcmcp_build(version)` | 编译 + 刷新 ModDevGradle 启动产物 |
+| `mcmcp_test(version, test_filter="")` | 跑 `:{version}:test` |
+| `mcmcp_nullaway(module="", version)` | NullAway/Error Prone nullness 检查 |
+| `mcmcp_clientsmoke(timeout=120, version)` | 运行 clientsmoke 测试 |
 
 ### 设计原则
 - **无状态**：所有状态从 AIDebugServer 端点实时查询
-- **launch 自动重建**：内部跑 `:compileJava` + `createLaunchScripts` 后再启动
+- **launch 不自动重建**：启动前要求 run 产物已生成，缺产物时报错并提示先跑 `mcmcp_build`
 
 ### 典型流程
 
 ```
-eyelib_debug_status(info="all")
-eyelib_debug_launch(timeout=120)
-eyelib_debug_enter_world(world_name="Debug World")
-eyelib_debug_execute(code='return "hello world";')
-eyelib_debug_capture_frame()
-eyelib_debug_close()
+mcmcp_status(info="all")
+mcmcp_launch(timeout=120)
+mcmcp_enter_world(world_name="Debug World")
+mcmcp_execute(code='return "hello world";')
+mcmcp_close()
 ```
 
 ## /eval 语法
@@ -50,17 +52,21 @@ eyelib_debug_close()
 - AIDebugServer 使用 **JDK 自带编译器**（非 Janino），支持完整 Java 语法：`var`、lambda、`Map.of()`、`while`、多行 `if return` 均可
 - 代码在游戏工作目录（`versions/<node>/run/`）执行，访问项目文件用绝对路径
 
-### fallback shell（MCP 不可用时）
+### fallback shell（mcmcp 拓展不可用时）
+
+默认调试端口 25999；手动启动客户端时必须显式传 `-Dai_debug_port=<port>`（或设环境变量 `AI_DEBUG_PORT`），否则 AIDebugServer 不开启。
 
 ```powershell
 # 查端口占用
 netstat -ano | findstr 25999
 
-# 手动启动 RenderDoc capture (PowerShell, 不走 WSL)
+# 手动启动 RenderDoc capture (PowerShell, 不走 WSL)。
+# 先向 VM 参数文件追加调试端口（runClient.cmd 经 @clientRunVmArgs.txt 读 JVM 参数）：
+Add-Content versions\1.20.1\build\moddev\clientRunVmArgs.txt "`n-Dai_debug_port=25999"
 Set-Location E:\_ideaProjects\qylEyelib
 & "E:\RenderDoc\renderdoccmd.exe" capture `
     -c eyelib_capture --opt-hook-children `
-    "E:\_ideaProjects\qylEyelib\build\moddev\runClient.cmd"
+    "E:\_ideaProjects\qylEyelib\versions\1.20.1\build\moddev\runClient.cmd"
 
 # curl 交互 (Windows 自带 curl.exe; PowerShell 别名需显式调用)
 'return "hello";' | curl.exe -s --proxy http://127.0.0.1:10808 `
@@ -108,34 +114,34 @@ Set-Location E:\_ideaProjects\qylEyelib
 
 **Phase 0: 空间位置（最重要）**
 ```
-eyelib_debug_execute(code='net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance(); net.minecraft.world.entity.Entity target = mc.level.getEntity(250); double distSq = mc.player.distanceToSqr(target); return "distSq=" + distSq + " shouldRender=" + target.shouldRender(mc.player.getX(), mc.player.getY(), mc.player.getZ());')
+mcmcp_execute(code='net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance(); net.minecraft.world.entity.Entity target = mc.level.getEntity(250); double distSq = mc.player.distanceToSqr(target); return "distSq=" + distSq + " shouldRender=" + target.shouldRender(mc.player.getX(), mc.player.getY(), mc.player.getZ());')
 ```
 距离阈值 = `boundingBox.getSize() × 64 × viewScale`
 
 **Phase 2: BrClientEntity 注册**
 ```
-eyelib_debug_execute(code='return io.github.tt432.eyelib.client.manager.ClientEntityManager.INSTANCE.get("minecraft:slime") == null ? "BR_NULL" : "BR_OK";')
+mcmcp_execute(code='return io.github.tt432.eyelib.client.manager.ClientEntityManager.INSTANCE.get("minecraft:slime") == null ? "BR_NULL" : "BR_OK";')
 ```
 
 **Phase 4: ModelComponent 完整性**
 ```
-eyelib_debug_execute(code='Object cap = io.github.tt432.eyelib.capability.RenderData.getComponent(target); java.util.List comps = (java.util.List) cap.getClass().getMethod("getModelComponents").invoke(cap); return "comps=" + comps.size();')
+mcmcp_execute(code='Object cap = io.github.tt432.eyelib.capability.RenderData.getComponent(target); java.util.List comps = (java.util.List) cap.getClass().getMethod("getModelComponents").invoke(cap); return "comps=" + comps.size();')
 ```
 
 **Phase 5: Eyelib 接管状态**
 ```
-eyelib_debug_execute(code='Object cap = io.github.tt432.eyelib.capability.RenderData.getComponent(target); java.lang.reflect.Field f = cap.getClass().getDeclaredField("useBuiltInRenderSystem"); f.setAccessible(true); boolean ub = f.getBoolean(cap); return "useBuiltIn=" + ub + " renderer=" + minecraft.getEntityRenderDispatcher().getRenderer(target).getClass().getSimpleName();')
+mcmcp_execute(code='Object cap = io.github.tt432.eyelib.capability.RenderData.getComponent(target); java.lang.reflect.Field f = cap.getClass().getDeclaredField("useBuiltInRenderSystem"); f.setAccessible(true); boolean ub = f.getBoolean(cap); return "useBuiltIn=" + ub + " renderer=" + minecraft.getEntityRenderDispatcher().getRenderer(target).getClass().getSimpleName();')
 ```
 `useBuiltIn=true` → eyelib 接管渲染。`false` → fallback 到 vanilla。
 
 **Phase 11: GL 状态查询**
 ```
-eyelib_debug_execute(code='return "GL_PROGRAM=" + org.lwjgl.opengl.GL20.glGetInteger(org.lwjgl.opengl.GL20.GL_CURRENT_PROGRAM);')
+mcmcp_execute(code='return "GL_PROGRAM=" + org.lwjgl.opengl.GL20.glGetInteger(org.lwjgl.opengl.GL20.GL_CURRENT_PROGRAM);')
 ```
 
 **Phase G: 多组件渲染顺序/深度排查**
 ```
-eyelib_debug_execute(code='Object cap = io.github.tt432.eyelib.capability.RenderData.getComponent(target); java.util.List comps = (java.util.List) cap.getClass().getMethod("getModelComponents").invoke(cap); for (int i=0; i<comps.size(); i++) { Object comp = comps.get(i); Object info = comp.getClass().getMethod("getSerializableInfo").invoke(comp); String model = (String) info.getClass().getMethod("model").invoke(info); ... }')
+mcmcp_execute(code='Object cap = io.github.tt432.eyelib.capability.RenderData.getComponent(target); java.util.List comps = (java.util.List) cap.getClass().getMethod("getModelComponents").invoke(cap); for (int i=0; i<comps.size(); i++) { Object comp = comps.get(i); Object info = comp.getClass().getMethod("getSerializableInfo").invoke(comp); String model = (String) info.getClass().getMethod("model").invoke(info); ... }')
 ```
 若所有组件的 visCount == totalCount 但视觉上有"部位缺失"→ 深度互斥。
 
@@ -143,18 +149,18 @@ eyelib_debug_execute(code='Object cap = io.github.tt432.eyelib.capability.Render
 
 召唤实体：
 ```
-eyelib_debug_execute(code='net.minecraft.world.entity.Mob slime = (net.minecraft.world.entity.Mob) net.minecraft.world.entity.EntityType.SLIME.create(minecraft.getSingleplayerServer().overworld()); slime.setPos(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ() + 3); minecraft.getSingleplayerServer().overworld().addFreshEntity(slime); return "ok";')
+mcmcp_execute(code='net.minecraft.world.entity.Mob slime = (net.minecraft.world.entity.Mob) net.minecraft.world.entity.EntityType.SLIME.create(minecraft.getSingleplayerServer().overworld()); slime.setPos(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ() + 3); minecraft.getSingleplayerServer().overworld().addFreshEntity(slime); return "ok";')
 ```
 
 拉近（用 `setPos` 不用 `teleportTo`——后者只在 ServerLevel 生效）：
 ```
-eyelib_debug_execute(code='target.setPos(minecraft.player.getX() + 3, minecraft.player.getY(), minecraft.player.getZ() + 3); return "ok";')
+mcmcp_execute(code='target.setPos(minecraft.player.getX() + 3, minecraft.player.getY(), minecraft.player.getZ() + 3); return "ok";')
 ```
 
 ### GUI 导航
 
 ```
-eyelib_debug_execute(code='net.minecraft.client.gui.screens.TitleScreen ts = (net.minecraft.client.gui.screens.TitleScreen) mc.screen; ((net.minecraft.client.gui.components.Button) ts.children().get(0)).onPress(); return "ok";')
+mcmcp_execute(code='net.minecraft.client.gui.screens.TitleScreen ts = (net.minecraft.client.gui.screens.TitleScreen) mc.screen; ((net.minecraft.client.gui.components.Button) ts.children().get(0)).onPress(); return "ok";')
 ```
 
 ### 特征矩阵
@@ -192,11 +198,11 @@ org.apache.logging.log4j.core.config.Configurator.setLevel(
 
 ### launch 超时：僵尸进程占用端口
 
-`eyelib_debug_launch` 超时最常见原因是上一次未正常关闭的客户端仍占领 25999。MCP 超时后子进程可能残留。
+`mcmcp_launch` 超时最常见原因是上一次未正常关闭的客户端仍占用调试端口（默认 25999）。超时后子进程可能残留。
 
-**修复**：launch 前先 `eyelib_debug_close`。close 会等待端口释放并 force kill。
+**修复**：launch 前先 `mcmcp_close`。close 会等待端口释放并 force kill。
 
-**launch + rebuild 超时**：`eyelib_debug_launch` 内部会 rebuild。如果编译量大有超时风险，先 `eyelib_debug_build(module='all')` 再 launch。
+**编译量大有超时风险时**：先 `mcmcp_build` 再 launch（launch 本身不跑构建）。
 
 ### 子代理委派：不预设结论
 

@@ -1,4 +1,4 @@
-﻿---
+---
 name: progressive-exploration
 description: Interactive runtime state exploration via the AI debug HTTP server in a running Minecraft client. Use to probe screens, inspect game state, navigate UI, or test hypotheses before writing code.
 license: MIT
@@ -18,11 +18,11 @@ metadata:
 
 ## Prerequisites
 
-The debug HTTP server starts automatically in development environment (gated by Forge's `FMLLoader.isProduction()` check). It listens on port `25999`.
+调试 HTTP 服务器是 clientsmoke mod 内的 AIDebugServer（`io.github.tt432.clientsmoke.debug`），仅在配置 `ai_debug_port`（JVM 系统属性，fallback 环境变量 `AI_DEBUG_PORT`）时开启。默认端口 `25999`（`mcmcp_launch` 会自动注入）。
 
 ### Startup guard
 
-Before starting the client, always check port 25999:
+Before starting the client, always check the debug port (default 25999):
 
 ```
 GET /ping → {"status": "ok"}  → old instance still running → minecraft.stop() first
@@ -148,7 +148,7 @@ minecraft.stop();
 
 ## Debugger Workflow
 
-> **`jetbrain_xdebug_*` MCP 工具已废弃**，当前 session 无断点调试 MCP 能力。断点调试只能在 IDEA 中手动操作（agent 无法直接设断点）。需要运行时数据时，用 progressive exploration 的 `/eval`（`eyelib_debug_execute`）作为替代。
+> **`jetbrain_xdebug_*` MCP 工具已废弃**，当前 session 无断点调试 MCP 能力。断点调试只能在 IDEA 中手动操作（agent 无法直接设断点）。需要运行时数据时，用 progressive exploration 的 `/eval`（`mcmcp_execute`）作为替代。
 
 `/eval` 一次就能拿到真实的运行时数据：在可疑代码路径上调用方法、读字段、打印状态，验证假设后再改代码。不要退回"猜 → 改代码 → 重建 → 重启"的循环——`/eval` 等价于一次可编程的断点检视。
 

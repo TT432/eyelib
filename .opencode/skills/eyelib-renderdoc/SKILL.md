@@ -27,14 +27,16 @@ RenderDoc v1.44，路径 `E:\RenderDoc\renderdoccmd.exe`。
 
 ```powershell
 Set-Location E:\_ideaProjects\qylEyelib
+# AIDebugServer 默认不开启：capture 前向 VM 参数文件追加调试端口
+Add-Content versions\1.20.1\build\moddev\clientRunVmArgs.txt "`n-Dai_debug_port=25999"
 & "E:\RenderDoc\renderdoccmd.exe" capture `
     -c eyelib_capture --opt-hook-children `
-    "E:\_ideaProjects\qylEyelib\build\moddev\runClient.cmd"
+    "E:\_ideaProjects\qylEyelib\versions\1.20.1\build\moddev\runClient.cmd"
 ```
 
-**前置**: `build/moddev/runClient.cmd` 需先由 `createLaunchScripts` 生成(经 `eyelib_debug_build`)。
+**前置**: `versions/<node>/build/moddev/runClient.cmd` 需先由 `createClientLaunchScript` 生成(经 `mcmcp_build`)。
 
-推荐用 `eyelib_debug_launch()`（MCP 工具），自动完成上述步骤。
+普通调试启动用 `mcmcp_launch()`（omp 拓展工具），自动经环境变量注入调试端口。
 
 ## renderdoccmd CLI 限制
 
@@ -76,6 +78,8 @@ import renderdoc as rd
 ⚠️ **WSL 下 GLES 3.x 抓帧无法回放**。唯一可行路径：Windows 侧 Python replay。
 
 ## RenderDocCapturer API
+
+`io.github.tt432.clientsmoke.debug.RenderDocCapturer`（clientsmoke mod 内，经 /eval 调用）：
 
 ```java
 RenderDocCapturer.isAvailable()          // boolean

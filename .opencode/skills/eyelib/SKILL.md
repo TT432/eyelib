@@ -20,6 +20,7 @@ metadata:
 |---|---|
 | 编译、测试、Gradle 约束 | `eyelib-build` |
 | 启动调试、/eval、渲染诊断 | `eyelib-debug` |
+| mcmcp 拓展、.mcmcp 格式、端口机制 | `mcmcp` |
 | GPU 截帧、RenderDoc 回放 | `eyelib-renderdoc` |
 | Clientsmoke 烟雾测试 | `eyelib-clientsmoke` |
 | 六边形架构验收 G1→G2→G3 | `eyelib-hexagonal-gates` |

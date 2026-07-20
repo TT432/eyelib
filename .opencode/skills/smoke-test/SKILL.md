@@ -96,7 +96,7 @@ There is a dedicated `clientSmoke` Gradle run configuration. To execute:
 
 1. Sync the Gradle project if dependencies changed
 2. Build the project
-3. Run via `eyelib_debug_clientsmoke`
+3. Run via `mcmcp_clientsmoke`
 4. Check `run/clientsmoke/clientsmoke-reports/` for results
 
 The smoke client uses a separate game directory (`run/clientsmoke/`) and auto-exits, so it doesn't block.

@@ -8,11 +8,9 @@ import io.github.tt432.eyelib.bridge.animation.AnimationLocatorResolver;
 //? if <1.20.6 {
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLLoader;
 //?} else {
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.loading.FMLLoader;
 //?}
 
 /**
@@ -52,20 +50,6 @@ public class Eyelib {
         //?} else {
         bus.addListener(io.github.tt432.eyelib.bridge.network.adapter.EyelibNetworkTransport::onRegisterPayloads);
         //?}
-
-        if (!(//? if <26.1 {
-            FMLLoader.isProduction()
-            //?} else {
-            false
-            //?}
-        )) {
-            try {
-                Class<?> serverClass = Class.forName("io.github.tt432.eyelib.common.debug.AIDebugServer");
-                Object server = serverClass.getDeclaredConstructor().newInstance();
-                serverClass.getMethod("start").invoke(server);
-            } catch (Exception ignored) {
-            }
-        }
     }
 }
 

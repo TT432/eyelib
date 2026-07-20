@@ -206,8 +206,8 @@ if (isLegacyForge) {
 ```
 
 ```bash
-# 通过 eyelib-debug MCP 或 bash gradlew 编译
-eyelib_debug_build version="1.20.1"
+# 通过 mcmcp 拓展 或 bash gradlew 编译
+mcmcp_build version="1.20.1"
 # 或 bash: gradlew :1.20.1:compileJava :1.21.1:compileJava
 ```
 

@@ -77,10 +77,10 @@ public class RenderPassAdapterSmoke {
 | `EntityRenderSystem.setupClientEntity()` | clientsmoke + Fake | 需 Entity + 所有 Manager |
 | 渲染输出 (GPU) | RenderDoc | 需 GL 状态 |
 
-## 一键运行：eyelib_debug_clientsmoke MCP 工具
+## 一键运行：mcmcp_clientsmoke 工具
 
 ```python
-eyelib_debug_clientsmoke(timeout=180)
+mcmcp_clientsmoke(timeout=180)
 ```
 
 封装完整流程：
@@ -101,7 +101,7 @@ eyelib_debug_clientsmoke(timeout=180)
       ↳ java.lang.AssertionError: Attachable not auto-loaded for minecraft:stick
 ```
 
-实现位于 `scripts/eyelib_debug_mcp.py`。客户端 `runClient` 的 build.gradle 配置中**不应**永久加 `clientsmoke.enabled`（会干扰普通调试启动），由 MCP 工具在启动前注入。
+实现位于 `.omp/extensions/mcmcp/index.ts`（`mcmcp_clientsmoke`）。客户端 `runClient` 的 build.gradle 配置中**不应**永久加 `clientsmoke.enabled`（会干扰普通调试启动），由该工具在启动前注入。
 
 ## 已验证的陷阱
 
@@ -122,7 +122,7 @@ Bedrock `.mcpack` 中 `entity_nocull:entity` **只有** `+states[DisableCulling]
 
 ### launch 后不要 enter_world
 
-clientsmoke 状态机在 `WORLD_CREATE` 阶段自己创建 `ClientSmokeTest` 世界。`eyelib_debug_enter_world` 会创建另一个世界导致冲突。
+clientsmoke 状态机在 `WORLD_CREATE` 阶段自己创建 `ClientSmokeTest` 世界。`mcmcp_enter_world` 会创建另一个世界导致冲突。
 
 ### MC 1.20.1 ResourceLocation
 

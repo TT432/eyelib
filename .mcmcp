@@ -1,0 +1,5 @@
+{
+  "1.20.1": ["cmd.exe", "/c", "versions\\1.20.1\\build\\moddev\\runClient.cmd"],
+  "1.21.1": ["cmd.exe", "/c", "versions\\1.21.1\\build\\moddev\\runClient.cmd"],
+  "26.1.2": ["cmd.exe", "/c", "versions\\26.1.2\\build\\moddev\\runClient.cmd"]
+}

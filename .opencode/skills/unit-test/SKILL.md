@@ -12,10 +12,10 @@ metadata:
 
 JUnit Jupiter 5.10.2. No custom runners, no Mockito, no base classes.
 
-Tests are run via Gradle `test` tasks using `eyelib_debug_test`:
+Tests are run via Gradle `test` tasks using `mcmcp_test`:
 ```
-eyelib_debug_test              # 全 project
-eyelib_debug_test version="1.20.1"  # Stonecutter active node
+mcmcp_test              # 全 project
+mcmcp_test version="1.20.1"  # Stonecutter active node
 ```
 
 ## Test File Conventions
@@ -116,5 +116,5 @@ void loadsAddonFixture() throws Exception {
 All modules run JUnit via the standard Gradle `test` task. To verify changes:
 
 1. 在 IDEA 里手动 Gradle sync(reimport)（如果修改了 `build.gradle`）
-2. Build the project via `eyelib_debug_build`
-3. Run the relevant test via `eyelib_debug_test`
+2. Build the project via `mcmcp_build`
+3. Run the relevant test via `mcmcp_test`

@@ -4,8 +4,9 @@
 
 ## 前置条件
 
-- `build/moddev/runClient.cmd` 已通过 `createLaunchScripts` 生成(经 `eyelib_debug_build`)
-- 无僵尸进程占用 port 25999
+- `versions/<node>/build/moddev/runClient.cmd` 已通过 `createClientLaunchScript` 生成(经 `mcmcp_build`)
+- 无僵尸进程占用调试端口（默认 25999）
+- AIDebugServer 默认不开启：必须向 VM 参数文件追加 `-Dai_debug_port=25999`（或设环境变量 `AI_DEBUG_PORT`）
 
 ```powershell
 netstat -ano | findstr 25999  # 查僵尸
@@ -13,15 +14,16 @@ netstat -ano | findstr 25999  # 查僵尸
 
 ## 完整命令序列
 
-> 以下 curl 步骤既可在 PowerShell(`curl.exe ...`) 也可在 WSL bash(`curl ...`)执行。MCP 工具(`eyelib_debug_*`) 是首选,本文是 fallback。
+> 以下 curl 步骤既可在 PowerShell(`curl.exe ...`) 也可在 WSL bash(`curl ...`)执行。mcmcp 拓展工具(`mcmcp_*`) 是首选,本文是 fallback。
 
 ### 1. 启动 RenderDoc capture 模式
 
 ```powershell
 Set-Location E:\_ideaProjects\qylEyelib
+Add-Content versions\1.20.1\build\moddev\clientRunVmArgs.txt "`n-Dai_debug_port=25999"
 & "E:\RenderDoc\renderdoccmd.exe" capture `
     -c eyelib_capture --opt-hook-children `
-    "E:\_ideaProjects\qylEyelib\build\moddev\runClient.cmd"
+    "E:\_ideaProjects\qylEyelib\versions\1.20.1\build\moddev\runClient.cmd"
 ```
 
 使用 `background=true, notify_on_complete=false`（永不退出的长进程，静默运行正确）。
@@ -99,16 +101,16 @@ return "distSq=" + distSq + " shouldRender=" + shouldRender + " pos=" + target.g
 
 ```bash
 # start
-echo 'io.github.tt432.eyelib.common.debug.RenderDocCapturer
+echo 'io.github.tt432.clientsmoke.debug.RenderDocCapturer
   .setCaptureFilePathTemplate("E:\\\\_ideaProjects\\\\qylEyelib\\\\eyelib_bgfx_v4");
-io.github.tt432.eyelib.common.debug.RenderDocCapturer.startCapture();
+io.github.tt432.clientsmoke.debug.RenderDocCapturer.startCapture();
 return "started";' | curl ...
 
 # 等至少 3 秒让场景渲染
 sleep 3
 
 # end
-echo 'io.github.tt432.eyelib.common.debug.RenderDocCapturer.endCapture();
+echo 'io.github.tt432.clientsmoke.debug.RenderDocCapturer.endCapture();
 return "done";' | curl ...
 ```
 

@@ -17,8 +17,8 @@
 3. ~~`mods.toml`：必须有 `[[mods]]` 节~~ — 现共享 root mod 声明
 4. ~~**必须有 `@Mod` 注解类**(如 `EyelibBridge.java`)~~ — 不需要
 5. ~~Root `build.gradle`：加 `api` + `modImplementation` + `jarJar` 三条依赖~~ — 不需要
-6. 编译：`eyelib_debug_build`(通过 eyelib-debug MCP),或 bash `gradlew compileJava`(单 project)
-7. 启动游戏验证：`eyelib_debug_launch` → `eyelib_debug_enter_world`
+6. 编译：`mcmcp_build`(通过 mcmcp 拓展),或 bash `gradlew compileJava`(单 project)
+7. 启动游戏验证：`mcmcp_launch` → `mcmcp_enter_world`
 
 ## 两种 Port 模式
 

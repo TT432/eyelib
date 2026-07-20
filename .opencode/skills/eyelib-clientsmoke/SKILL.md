@@ -58,8 +58,8 @@ public class MySmoke {
 ## 运行
 
 ```python
-eyelib_debug_launch(timeout=180)     # 启动 + 自动编译
-# ⚠️ 不要调用 eyelib_debug_enter_world！clientsmoke 自己创建 ClientSmokeTest 世界
+mcmcp_launch(timeout=180)     # 启动 + 自动编译
+# ⚠️ 不要调用 mcmcp_enter_world！clientsmoke 自己创建 ClientSmokeTest 世界
 # 等待 ~30s → 状态机 INIT → CONFIG_LOAD → SCAN → WORLD_CREATE → STABILIZE → TEST_EXEC → REPORT
 ```
 
@@ -71,5 +71,5 @@ eyelib_debug_launch(timeout=180)     # 启动 + 自动编译
 ## 常见陷阱
 
 - **MaterialManager key 用 `name:base` 格式**：`.mcpack` 中的 key 是 `entity_nocull:entity` 不是 `entity_nocull`
-- **不能和 `eyelib_debug_enter_world` 同时使用**：clientsmoke 自己创建世界，手动 enter_world 会冲突
+- **不能和 `mcmcp_enter_world` 同时使用**：clientsmoke 自己创建世界，手动 enter_world 会冲突
 - **`ResourceLocation` 用 `new ResourceLocation(ns, path)`**：MC 1.20.1 没有 `fromNamespaceAndPath`

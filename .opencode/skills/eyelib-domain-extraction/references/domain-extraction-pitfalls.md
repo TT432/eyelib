@@ -44,11 +44,11 @@
 
 ## 编译
 
-### 通过 eyelib-debug MCP 或 bash 跑 Gradle
+### 通过 mcmcp 拓展 或 bash 跑 Gradle
 
 历史教训: WSL 下 `./gradlew` / `java -cp ... GradleWrapperMain` 经常超时(>120s); Windows 侧 `cmd.exe /c gradlew.bat` 快(5-20s)。
 
-编译: `eyelib_debug_build`(通过 eyelib-debug MCP),或 bash `gradlew compileJava`。
+编译: `mcmcp_build`(通过 mcmcp 拓展),或 bash `gradlew compileJava`。
 
 (ADR-0014 后是单 Gradle project,不再有 `:eyelib-material:compileJava` 这种子项目 task 路径。)
 

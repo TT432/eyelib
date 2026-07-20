@@ -190,7 +190,8 @@ public record RenderControllerEntry(
                 String materialName = groupEntry.getKey();
                 Set<Integer> visibleBones = groupEntry.getValue();
 
-                List<PortResourceLocation> layers = texturesByGroup.get(materialName);
+                // 不变量：texturesByGroup 与 materialBoneGroups 同键（上方同一循环构建）
+                List<PortResourceLocation> layers = java.util.Objects.requireNonNull(texturesByGroup.get(materialName));
                 PortResourceLocation matTexture = layers.get(Math.min(layer, layers.size() - 1));
 
                 ModelComponent comp = new ModelComponent();
