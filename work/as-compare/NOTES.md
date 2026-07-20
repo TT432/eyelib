@@ -12,7 +12,7 @@
 - 规则：双侧 doMobSpawning=false、doDaylightCycle=false、time set 6000、weather clear
 - JE /summon 不给默认装备（BE 会给，如骷髅弓）→ 对比前需手动配装
 
-### JE 侧（eyelib-debug MCP，端口 25999）
+### JE 侧（mcmcp 拓展，调试端口默认 25999，由 ai_debug_port 指定）
 - 客户端工作目录 = `versions/1.20.1/run/`（不是根 run/！）
 - 截图：`Screenshot.grab(new File("E:/_ideaProjects/qylEyelib/work/as-compare/shots"), "name.png", minecraft.getMainRenderTarget(), c->{})` → 输出在 `<dir>/screenshots/name.png`，抓的是上一帧，改状态后需等 1 帧
 - /eval 每次重启后需重设：`fov 60`、`pauseOnLostFocus=false`（否则失焦自动暂停出菜单）、`hideGui=true`
@@ -65,9 +65,17 @@
 | pig/cow/creeper | ✅ 外观 parity | |
 | sheep | ≈ | 白/米黄=引擎色调差 |
 | skeleton | ✅ parity | 弓=棕色（BE 截图实证）、挂手侧垂下、拉弓出箭、射击回落、持弓臂姿（varargs 修复后） |
-| spider | ✅ 非 bug | "消失"两起均破案：JE=summon 整数坐标吸附方块中心致 1.4 宽蜘蛛卡墙窒息（LivingDeathEvent src=inWall 实证）；BE=狼咬死（隔离实验实证） |
+| spider | ✅ 修复后 parity | 红眼泛光 ✓（abb4652c：overlay_color 去常驻染色 + 透明度分档排序 + emissive clamp）；"消失"两起均破案：JE=卡墙窒息、BE=狼咬 |
 | villager | ✅ 修复后 parity | 修复链：villager_v2 别名、clamp 保留全透明、q.any/q.skin_id、varargs off-by-one；平原型=bsc 黄脸绿眼棕袍 ✓ |
 | 其余 ~105 种 | 未对比 | |
+
+## 发光/分层渲染机制总结（2026-07-20 破案，勿再踩）
+
+- **A&S 发光眼睛 = 三层复合**：身体纹理内嵌低 alpha 眼 texel（255,1,1,α1-10，clamp 后不透明按房间光照渲染）+ 独立发光面片 pass（1×1 纹理空间贴全图，emissive+additive，ignore_lighting）+ overlay_color 夜间渐变。之前看到的“暗红眼”只是第一层，发光 pass 从未出片。
+- **overlay_color 语义**（官方 wither_boss 示例证）：受伤/特殊状态覆盖层颜色（配合 query.overlay_alpha），不是常驻顶点染色。A&S 眼睛 RC 的 overlay_color={0,0,0,夜间渐变}——常驻应用会把 pass 乘黑。
+- **渲染顺序**：BE 材质系统按类型排序（cutout 先、半透明/加法/发光后）；按 RC 列表顺序渲染会让后画的身体 pass 以深度盖住先画的发光 pass。
+- **emissive 纹理必须 clamp**：MC entityTranslucent 着色器 alpha<0.1 discard；BE 发光着色器不丢（alpha=发光掩码）。A&S 眼 texel alpha 1-10 → 不 clamp 整体消失。
+- **additive 混合别动 blend 因子**：曾把 emissive+additive 强制 One/One——结果 PNG 透明区白底 rgb 被全加 → 白板。声明的 (SourceAlpha, One) 配合 clamp 才是正解（alpha 闸门 + 全红）。
 
 ## 六、方法论沉淀（重要）
 
@@ -85,3 +93,5 @@
 12. **实体离奇死亡三板斧**：LivingDeathEvent（src）→ 服务端 getSingleplayerServer 查存活 → 隔离实验（逐个排除杀手）；BE 侧 querytarget 追踪位置漂移
 13. **molang 未实现 query 返回 MolangNull 而非 0**：`null+number=null` → 三元/公式静默产 null → 数组索引回退 0，变体选错但不报错；排查变体问题先查链上每个 query 是否为 null
 14. **BE 群系决定实体变体**：村民脸=群系变体纹理（taiga=绿眼 bsh）；双侧对比前必须对齐群系/实体类型，否则把变体差异误判为渲染 bug
+15. **双客户端陷阱**：多个 MC 客户端并存时 25999 调试端口可能被陈旧进程占用——探针读到旧代码会制造“修复无效”假象；排期前先 `jps -l` 确认只有一个 MC 进程
+16. **渲染不出片的排查顺序**（本次泛光全程实证）：先证顶点入 buffer（visitVertex 插桩/RenderDoc 顶点扫）→ 再证片元产出（像素历史）→ 再查着色器阈值（alpha discard）→ 再查混合与染色。不要先猜 blend/light
