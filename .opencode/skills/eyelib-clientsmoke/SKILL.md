@@ -58,7 +58,7 @@ public class MySmoke {
 ## 运行
 
 ```python
-mcmcp_launch(timeout=180)     # 启动 + 自动编译
+mcmcp_clientsmoke(timeout=180)  # 重建 + 注入 JVM 参数 + 启动 + 解析报告（一键）
 # ⚠️ 不要调用 mcmcp_enter_world！clientsmoke 自己创建 ClientSmokeTest 世界
 # 等待 ~30s → 状态机 INIT → CONFIG_LOAD → SCAN → WORLD_CREATE → STABILIZE → TEST_EXEC → REPORT
 ```
