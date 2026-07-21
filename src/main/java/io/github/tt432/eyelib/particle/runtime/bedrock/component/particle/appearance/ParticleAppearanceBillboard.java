@@ -14,7 +14,10 @@ import org.joml.Quaternionf;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Locale;
 import java.util.Objects;
 
 /** @author TT432 */
@@ -24,6 +27,8 @@ public record ParticleAppearanceBillboard(
         Direction direction,
         UV uv
 ) implements ParticleParticleComponent {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParticleAppearanceBillboard.class);
+
     public static final Codec<ParticleAppearanceBillboard> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             MolangValue2.CODEC.fieldOf("size").forGetter(ParticleAppearanceBillboard::size),
             FaceCameraMode.CODEC.optionalFieldOf("facing_camera_mode", FaceCameraMode.ROTATE_XYZ).forGetter(ParticleAppearanceBillboard::facingCameraMode),
@@ -222,9 +227,18 @@ public record ParticleAppearanceBillboard(
         };
 
         public static final Codec<FaceCameraMode> CODEC = Codec.STRING.xmap(
-                name -> FaceCameraMode.valueOf(name.toUpperCase()),
+                FaceCameraMode::byName,
                 mode -> mode.name().toLowerCase()
         );
+
+        private static FaceCameraMode byName(String name) {
+            try {
+                return FaceCameraMode.valueOf(name.toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException e) {
+                LOGGER.warn("Unknown particle facing_camera_mode '{}', falling back to rotate_xyz", name);
+                return ROTATE_XYZ;
+            }
+        }
     }
 
     public record Direction(
@@ -244,9 +258,21 @@ public record ParticleAppearanceBillboard(
             CUSTOM_DIRECTION;
 
             public static final Codec<Mode> CODEC = Codec.STRING.xmap(
-                    name -> Mode.valueOf(name.toUpperCase()),
+                    Mode::byName,
                     mode -> mode.name().toLowerCase()
             );
+
+            private static Mode byName(String name) {
+                return switch (name.toLowerCase(Locale.ROOT)) {
+                    // Bedrock 官方值为 custom_direction；部分资源包写作 custom，按同一语义兼容
+                    case "custom_direction", "custom" -> CUSTOM_DIRECTION;
+                    case "derive_from_velocity" -> DERIVE_FROM_VELOCITY;
+                    default -> {
+                        LOGGER.warn("Unknown particle direction mode '{}', falling back to derive_from_velocity", name);
+                        yield DERIVE_FROM_VELOCITY;
+                    }
+                };
+            }
         }
     }
 }
