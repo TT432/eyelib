@@ -14,7 +14,7 @@ metadata:
 
 ## mcmcp 拓展工具
 
-调试流程由 `mcmcp` omp 拓展（`.omp/extensions/mcmcp/`，见 mcmcp SKILL）封装。调试 HTTP 服务器是
+调试流程由 `mcmcp` omp 拓展（`~/.omp/agent/extensions/mcmcp/`，见 mcmcp SKILL）封装。调试 HTTP 服务器是
 clientsmoke mod 内的 `io.github.tt432.clientsmoke.debug.AIDebugServer`，仅在配置
 `ai_debug_port`（JVM 系统属性，fallback 环境变量 `AI_DEBUG_PORT`）时开启；`mcmcp_launch`
 会自动经环境变量传入端口（默认 25999）。

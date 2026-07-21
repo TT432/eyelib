@@ -80,7 +80,7 @@ additionalRuntimeClasspath(implementation('group:artifact:version'))
 - `build/_mcp_gradle_err.txt` — Gradle stderr(JVM warning + 编译错误回显)
 - `build/_mcp_gradle.log` — mcmcp 拓展的运行日志(每次调用的 task 列表 + 耗时)
 
-`build` 失败时直接 `read` 这两个文件即可拿到完整错误。这是 mcmcp 拓展(`.omp/extensions/mcmcp/index.ts` `runGradle`)写盘的实现细节。
+`build` 失败时直接 `read` 这两个文件即可拿到完整错误。这是 mcmcp 拓展(`~/.omp/agent/extensions/mcmcp/index.ts` `runGradle`)写盘的实现细节。
 
 > 若用 bash 跑 `gradlew`,输出直接在终端,不会落盘到上述文件——两者执行链路不同。
 

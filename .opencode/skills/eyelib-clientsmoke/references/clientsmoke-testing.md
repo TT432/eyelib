@@ -101,7 +101,7 @@ mcmcp_clientsmoke(timeout=180)
       ↳ java.lang.AssertionError: Attachable not auto-loaded for minecraft:stick
 ```
 
-实现位于 `.omp/extensions/mcmcp/index.ts`（`mcmcp_clientsmoke`）。客户端 `runClient` 的 build.gradle 配置中**不应**永久加 `clientsmoke.enabled`（会干扰普通调试启动），由该工具在启动前注入。
+实现位于 `~/.omp/agent/extensions/mcmcp/index.ts`（`mcmcp_clientsmoke`）。客户端 `runClient` 的 build.gradle 配置中**不应**永久加 `clientsmoke.enabled`（会干扰普通调试启动），由该工具在启动前注入。
 
 ## 已验证的陷阱
 

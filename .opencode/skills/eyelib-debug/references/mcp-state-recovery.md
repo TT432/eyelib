@@ -1,6 +1,6 @@
 # 会话状态恢复
 
-mcmcp 拓展（`.omp/extensions/mcmcp/index.ts`）**无状态机**：所有状态都从 AIDebugServer
+mcmcp 拓展（`~/.omp/agent/extensions/mcmcp/index.ts`）**无状态机**：所有状态都从 AIDebugServer
 端点实时查询（`readGameState`），不存在旧 Python MCP「状态只降级不恢复」的问题。
 
 ## 历史
