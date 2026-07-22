@@ -9,7 +9,6 @@ import com.github.argon4w.acceleratedrendering.core.meshes.collectors.CulledMesh
 import com.github.argon4w.acceleratedrendering.features.entities.AcceleratedEntityRenderingFeature;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import lombok.experimental.ExtensionMethod;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -25,7 +24,7 @@ import java.util.Map;
 public class AcceleratedBakedBoneRenderer implements IAcceleratedRenderer<ARBoneData> {
     public static final AcceleratedBakedBoneRenderer INSTANCE = new AcceleratedBakedBoneRenderer();
 
-    private final Map<ARBoneData, Map<IBufferGraph, IMesh>> boneMeshes = new Reference2ObjectOpenHashMap<>();
+    private final Map<ARBoneData, Map<IBufferGraph, IMesh>> boneMeshes = new Object2ObjectOpenHashMap<>();
 
     @Override
     public void render(VertexConsumer vertexConsumer, ARBoneData data, Matrix4f transform, Matrix3f normal, int light, int overlay, int color) {
