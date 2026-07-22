@@ -1,0 +1,43 @@
+---
+name: bedrock-parity
+description: 用真实 Bedrock addon 对照验证 eyelib 实体、Molang 与材质渲染行为。Use when comparing JE and BE output, collecting runtime evidence, or diagnosing parity differences.
+license: MIT
+compatibility: opencode
+metadata:
+  author: https://github.com/TT432/eyelib
+  version: "1.0.0"
+  tags: eyelib, bedrock, parity, rendering, molang
+  related-skills: eyelib, eyelib-debug, eyelib-renderdoc, progressive-exploration, mcmcp
+---
+
+# Bedrock 复刻对比
+
+## 适用范围
+
+需要以真实 Bedrock addon（优先 `.mcpack` 数据）校对 eyelib 的实体外观、动画、Molang、材质或 attachable 行为时使用。不要把某次对比的截图或提交历史当作规范。
+
+## 固定流程
+
+1. **建立 oracle**：先查 Mojang Creator 文档，再查实际 `.mcpack`/`.brarchive`，最后查 Bedrock Wiki；项目文档只作二次解释。
+2. **对齐场景**：JE/BE 使用同坐标、朝向、光照、时间、FOV=60；对齐群系、装备和实体类型。
+3. **排除随机性**：变体用一排实体看分布；状态动画用单个受控实体，避免把随机相位当 bug。
+4. **收集证据**：用 `mcmcp_execute` 查询 `RenderData`、scope、model components 和动画状态；用 RenderDoc 确认顶点、像素历史和深度遮挡。
+5. **按层归因**：模型加载 → 部件可见 → 顶点提交 → 几何/UV/颜色 → 片元 → alpha discard → 混合/光照/overlay。
+6. **修复后复测**：先定向单测或运行时 probe，再做跨版本构建；渲染接线或材质变化必须补 clientsmoke/RenderDoc 证据。
+
+## 高风险陷阱
+
+- 旧客户端占用调试端口时，探针可能读到旧代码。
+- `player.teleportTo` 可能被服务端回弹；需要服务端命令传送。
+- 宽体实体贴墙会 suffocation，先查死亡来源再判断“消失”。
+- 未实现 Molang query 返回 `MolangNull`，不是 `0`；沿表达式检查 null 传播。
+- `texture_mesh` 坐标和 UV 不要凭 JE 直觉猜；用 Blockbench Bedrock codec 读取内部坐标。
+
+## 关键语义速查
+
+- RC 的纹理数组只有在多采样/掩码材质中才会合成多层；单采样材质只取第 0 层。
+- `overlay_color` 是状态覆盖色，不是常驻 tint。
+- emissive 低 alpha 需要独立 clamp 路径；additive 保留 `(SourceAlpha, One)`。
+- 收集的骨骼姿态不含 pivot 平移；attachable/locator 必须自行补 pivot。
+
+完整判定规则见 `docs/concepts/bedrock-parity-investigation.md`。

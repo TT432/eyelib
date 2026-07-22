@@ -15,6 +15,7 @@
 | Bedrock 差距分析 | [gap-analysis/](gap-analysis/) |
 | 六边形架构 Port 清单与提取进度 | [architecture/domain-module-map.md](architecture/domain-module-map.md) |
 | Molang 重构路线图 | [molang/ROADMAP.md](molang/ROADMAP.md) |
+| Bedrock JE/BE 复刻对比方法 | [concepts/bedrock-parity-investigation.md](concepts/bedrock-parity-investigation.md) |
 | Spark 性能基线与优化 | [perf/spark-baseline-and-optimizations.md](perf/spark-baseline-and-optimizations.md) |
 
 ## Skill 索引
@@ -27,6 +28,7 @@
 | `eyelib-build` | 构建、测试、环境——Gradle(Stonecutter 多版本) + eyelib-debug MCP 全流程 |
 | `eyelib-debug` | MCP 调试——启动客户端、/eval 执行代码、渲染诊断 Phase |
 | `eyelib-clientsmoke` | Clientsmoke 客户端烟雾测试 |
+| `bedrock-parity` | 真实 Bedrock addon 对照验证实体、Molang 与材质渲染 |
 | `eyelib-renderdoc` | GPU 调试——RenderDoc 截帧、headless 回放 |
 | `eyelib-hexagonal-gates` | 六边形架构验收闸门——G1(ArchUnit)→G2(spec-test)→G3(RenderDoc) |
 | `eyelib-domain-extraction` | Domain Port 提取操作手册——定位 MC 接触点、创建 Port、迁移 bridge |
@@ -60,6 +62,8 @@
 | 0016 | 库隔离标准 — DDD 分层与 ACL 职责边界 | Accepted (2026-06-25) |
 | 0017 | 移除 migrate26Renames 文本替换，统一用 `//?` 条件注释 | Accepted (2026-06-28) |
 | 0018 | 孤立静止片段架构（IQF）—— 片段形状判据 + ACL 开放契约（反射调度） | Accepted (2026-06-28) |
+| 0019 | Attachable 派生渲染缓存生命周期 | Accepted (2026-07-22) |
+| 0020 | 调试服务器归属与 mcmcp 拓展 | Accepted (2026-07-22) |
 
 ## 核心原则
 
