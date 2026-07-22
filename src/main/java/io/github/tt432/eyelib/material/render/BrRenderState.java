@@ -22,7 +22,8 @@ public record BrRenderState(
         boolean lightmap,
         boolean overlay,
         Set<String> shaderFeatures,
-        boolean customShader
+        boolean customShader,
+        boolean emissive
 ) {
     public boolean isSolid() {
         return transparency == Transparency.NONE && writeMask.writeDepth();

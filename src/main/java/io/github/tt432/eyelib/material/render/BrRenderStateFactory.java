@@ -51,7 +51,8 @@ public final class BrRenderStateFactory {
                 true,
                 true,
                 Set.copyOf(material.defines()),
-                material.hasShaders()
+                material.hasShaders(),
+                emissive
         );
     }
 

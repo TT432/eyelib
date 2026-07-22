@@ -136,7 +136,11 @@ public final class BrRenderTypeFactory {
         return new RenderStateShard.ShaderStateShard(() -> switch (state.surfaceClass()) {
             case CUTOUT -> GameRenderer.getRendertypeEntityCutoutShader();
             case EMISSIVE_CUTOUT, TRANSLUCENT_EMISSIVE -> GameRenderer.getRendertypeEntityTranslucentEmissiveShader();
-            case TRANSLUCENT, ADDITIVE -> GameRenderer.getRendertypeEntityTranslucentShader();
+            // emissive 材质必须走无光照贴图的发光着色器（BE 发光=不受场景光照）；
+            // entityTranslucent 会乘光照贴图，黑屋里发光层直接变暗（A&S 蜘蛛红眼教训）
+            case TRANSLUCENT, ADDITIVE -> state.emissive()
+                    ? GameRenderer.getRendertypeEntityTranslucentEmissiveShader()
+                    : GameRenderer.getRendertypeEntityTranslucentShader();
             case GLINT -> GameRenderer.getRendertypeEntityGlintShader();
             default -> GameRenderer.getRendertypeEntitySolidShader();
         });
