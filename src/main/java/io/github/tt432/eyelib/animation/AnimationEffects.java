@@ -10,4 +10,18 @@ import java.util.List;
  */
 public class AnimationEffects {
     public final List<List<RuntimeParticlePlayData>> particles = new ArrayList<>();
+    private final List<Runnable> deferredEffects = new ArrayList<>();
+
+    public void defer(Runnable effect) {
+        deferredEffects.add(effect);
+    }
+
+    public void commitDeferred() {
+        if (deferredEffects.isEmpty()) {
+            return;
+        }
+        List<Runnable> pending = List.copyOf(deferredEffects);
+        deferredEffects.clear();
+        pending.forEach(Runnable::run);
+    }
 }

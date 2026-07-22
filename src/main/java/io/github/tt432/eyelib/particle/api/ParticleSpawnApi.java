@@ -1,5 +1,7 @@
 package io.github.tt432.eyelib.particle.api;
 
+import org.joml.Matrix4fc;
+
 /**
  * 粒子运行时适配器的字符串键控生成/移除请求端口。
  *
@@ -12,6 +14,11 @@ public interface ParticleSpawnApi {
      * @param request 字符串键控的粒子生成请求
      */
     void spawn(ParticleSpawnRequest request);
+
+    /**
+     * 更新已生成发射器的世界锚点位姿。
+     */
+    void updatePose(String spawnId, Matrix4fc pose);
 
     /**
      * 通过字符串生成标识符移除一个已生成的粒子发射器。

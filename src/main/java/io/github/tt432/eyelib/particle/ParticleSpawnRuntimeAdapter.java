@@ -11,6 +11,7 @@ import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleEmitter;
 import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleRuntime;
 import io.github.tt432.eyelib.particle.runtime.bedrock.ParticleRuntimeEnvironment;
 import org.joml.Vector3f;
+import org.joml.Matrix4fc;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -100,6 +101,11 @@ public final class ParticleSpawnRuntimeAdapter implements ParticleSpawnApi {
                 runtimeEnvironment.get(),
                 request.position()
         );
+    }
+
+    @Override
+    public void updatePose(String spawnId, Matrix4fc pose) {
+        renderManager.updateEmitterPose(spawnId, pose);
     }
 
     @Override

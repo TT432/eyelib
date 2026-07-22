@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.animation;
 
 import org.joml.Vector3f;
+import org.joml.Matrix4fc;
 /**
  * 粒子生成接口，作为 animation 模块与 particle 模块的边界。
  * animation 侧通过此接口发射粒子，不接触 particle 内部类型。
@@ -17,6 +18,9 @@ public interface AnimationParticleSpawner {
      * @return true 表示请求已发送给 particle runtime（不一定代表成功 spawn）
      */
     boolean spawn(String spawnId, String effectId, Vector3f position);
+
+    /** 更新已生成发射器的世界锚点位姿。 */
+    void updatePose(String spawnId, Matrix4fc pose);
 
     void remove(String spawnId);
 }

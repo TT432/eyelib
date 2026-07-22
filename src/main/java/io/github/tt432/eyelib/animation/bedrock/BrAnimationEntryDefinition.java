@@ -17,10 +17,14 @@ import io.github.tt432.eyelib.molang.port.PortEntity;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.joml.Vector3f;
+import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.TreeMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Consumer;
 import java.util.UUID;
 
 /**
@@ -41,21 +45,25 @@ public record BrAnimationEntryDefinition(
 ) implements AnimationClipDefinition<Integer, BrBoneAnimation, BrLoopType, MolangValue> {
     private static SoundPlayer soundPlayer = (id, x, y, z, v, p) -> {};
 
-    private static LocatorPositionProvider locatorProvider = (scope, locatorName) ->
+    private static LocatorPoseProvider locatorProvider = (scope, locatorName) ->
             scope.getHostContext().get(HostRoles.PORT_ENTITY)
-                    .map(e -> new Vector3f(e.getX(), e.getY(), e.getZ()))
-                    .orElse(new Vector3f());
+                    .map(e -> new Matrix4f().translation(e.getX(), e.getY(), e.getZ()))
+                    .orElseGet(Matrix4f::new);
 
     public static void installSoundPlayer(SoundPlayer sp) {
         soundPlayer = sp;
     }
 
-    public static void installLocatorProvider(LocatorPositionProvider provider) {
+    public static void installLocatorProvider(LocatorPoseProvider provider) {
         locatorProvider = provider;
     }
 
-    public static Vector3f resolveLocator(MolangScope scope, @Nullable String locatorName) {
+    public static Matrix4f resolveLocatorPose(MolangScope scope, @Nullable String locatorName) {
         return locatorProvider.resolve(scope, locatorName);
+    }
+
+    public static Vector3f resolveLocator(MolangScope scope, @Nullable String locatorName) {
+        return resolveLocatorPose(scope, locatorName).getTranslation(new Vector3f());
     }
 
     public static BrAnimationEntryDefinition fromSchema(String name, BrAnimationEntrySchema schema) {
@@ -105,25 +113,60 @@ public record BrAnimationEntryDefinition(
     }
 
     public static AnimationEffect<BrEffectsKeyFrameDefinition> particleEffect(TreeMap<Float, List<BrEffectsKeyFrameDefinition>> data) {
-        return new AnimationEffect<>(data, (scope, ticks, frame) -> {
-            scope.getHostContext().get(HostRoles.PORT_ENTITY).ifPresent(entity ->
+        return new AnimationEffect<>(data, (scope, ticks, frame) ->
+                scope.getHostContext().get(HostRoles.CLIENT_ENTITY).ifPresent(clientEntity -> {
+                    String effect = clientEntity.particle_effects().get(frame.effect());
+                    if (effect == null) {
+                        return;
+                    }
                     scope.getHostContext().get(HostRoles.ANIMATION_DATA).ifPresent(animationData ->
-                    scope.getHostContext().get(HostRoles.CLIENT_ENTITY).ifPresent(clientEntity -> {
-                        String s = clientEntity.particle_effects().get(frame.effect());
+                            requestParticleSpawn(scope, effect, frame.locator().orElse(null), true, ticks,
+                                    animationData.owner().particles()::add));
+                }));
+    }
 
-                        if (s != null) {
-                                AnimationParticleSpawner spawner = scope.getHostContext().get(HostRoles.ANIMATION_PARTICLE_SPAWNER).orElse(null);
-                                if (spawner != null) {
-                                    String uuid = UUID.randomUUID().toString();
-                                    Vector3f position = locatorProvider.resolve(scope, frame.locator().orElse(null));
-                                    spawner.spawn(uuid, s, position);
-                                    animationData.owner().particles().add(new RuntimeParticlePlayData(uuid, frame.locator().orElse(null), ticks));
-                                }
-                            }
-                    })
-                )
-            );
-        });
+    public static void requestParticleSpawn(
+            MolangScope scope,
+            String effect,
+            @Nullable String locator,
+            boolean bindToActor,
+            float ticks,
+            Consumer<RuntimeParticlePlayData> registry
+    ) {
+        AnimationParticleSpawner spawner = scope.getHostContext()
+                .get(HostRoles.ANIMATION_PARTICLE_SPAWNER).orElse(null);
+        if (spawner == null) {
+            return;
+        }
+
+        String uuid = UUID.randomUUID().toString();
+        Runnable spawn = () -> {
+            Matrix4f pose = resolveLocatorPose(scope, locator);
+            Vector3f position = pose.getTranslation(new Vector3f());
+            if (spawner.spawn(uuid, effect, position)) {
+                spawner.updatePose(uuid, pose);
+                registry.accept(new RuntimeParticlePlayData(uuid, locator, bindToActor, ticks));
+            }
+        };
+        scope.getHostContext().get(HostRoles.ANIMATION_EFFECTS)
+                .ifPresentOrElse(animationEffects -> animationEffects.defer(spawn), spawn);
+    }
+
+    public static void updateParticleAnchors(MolangScope scope, io.github.tt432.eyelib.animation.AnimationEffects effects) {
+        AnimationParticleSpawner spawner = scope.getHostContext()
+                .get(HostRoles.ANIMATION_PARTICLE_SPAWNER).orElse(null);
+        if (spawner == null) {
+            return;
+        }
+
+        Set<String> updated = new HashSet<>();
+        for (List<RuntimeParticlePlayData> particles : effects.particles) {
+            for (RuntimeParticlePlayData particle : particles) {
+                if (particle.bindToActor() && updated.add(particle.particleUUID())) {
+                    spawner.updatePose(particle.particleUUID(), resolveLocatorPose(scope, particle.locator()));
+                }
+            }
+        }
     }
 
     public static AnimationEffect<MolangValue> timelineEffect(TreeMap<Float, List<MolangValue>> data) {

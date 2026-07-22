@@ -1,5 +1,8 @@
 package io.github.tt432.eyelib.animation.bedrock.controller;
 
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
+import io.github.tt432.eyelib.TestCodecUtil;
 import io.github.tt432.eyelib.animation.AnimationRegistries;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcParticleEffect;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcState;
@@ -101,6 +104,18 @@ class BrAnimationControllerSpecTest {
         assertEquals(1, state.particleEffects().size());
         assertTrue(state.particleEffects().get(0).effect().isPresent());
         assertEquals("minecraft:flame", state.particleEffects().get(0).effect().get());
+    }
+
+    @Test
+    @DisplayName("Mojang §RC particle_effects: bind_to_actor 默认为 true")
+    void particleEffectBindingDefaultsToActorUnlessExplicitlyDisabled() {
+        BrAcParticleEffect defaultBound = TestCodecUtil.unwrap(BrAcParticleEffect.CODEC.parse(
+                JsonOps.INSTANCE, JsonParser.parseString("{\"effect\":\"smoke\"}")));
+        BrAcParticleEffect explicitlyUnbound = TestCodecUtil.unwrap(BrAcParticleEffect.CODEC.parse(
+                JsonOps.INSTANCE, JsonParser.parseString("{\"effect\":\"smoke\",\"bind_to_actor\":false}")));
+
+        assertTrue(defaultBound.bindToActor());
+        assertFalse(explicitlyUnbound.bindToActor());
     }
 
     // === helpers ===

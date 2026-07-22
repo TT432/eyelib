@@ -13,6 +13,7 @@ import io.github.tt432.eyelib.particle.runtime.support.ParticleMath;
 import io.github.tt432.eyelib.particle.runtime.support.ParticleTimer;
 import org.jspecify.annotations.Nullable;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 
 import java.util.List;
@@ -61,6 +62,7 @@ public final class BedrockParticleEmitter implements EmitterParticleComponent.Em
         this.environment = Objects.requireNonNull(environment, "environment");
         this.spawner = Objects.requireNonNull(spawner, "spawner");
         this.position = new Vector3f(Objects.requireNonNull(position, "position"));
+        baseRotation.translation(this.position);
         timer = new ParticleTimer(new io.github.tt432.eyelib.particle.runtime.ParticleRuntimeServices.TimeSource() {
             @Override
             public int ticks() {
@@ -108,6 +110,11 @@ public final class BedrockParticleEmitter implements EmitterParticleComponent.Em
 
     public Matrix4f baseRotation() {
         return baseRotation;
+    }
+
+    public void setPose(Matrix4fc pose) {
+        Objects.requireNonNull(pose, "pose").getTranslation(position);
+        baseRotation.set(pose);
     }
 
     public Vector3f position() {

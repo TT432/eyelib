@@ -16,7 +16,7 @@ public record BrAcParticleEffect(
     public static final Codec<BrAcParticleEffect> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.STRING.optionalFieldOf("effect").forGetter(o -> o.effect),
             Codec.STRING.optionalFieldOf("locator").forGetter(o -> o.locator),
-            Codec.BOOL.optionalFieldOf("bind_to_actor", false).forGetter(o -> o.bindToActor),
+            Codec.BOOL.optionalFieldOf("bind_to_actor", true).forGetter(o -> o.bindToActor),
             MolangValue.CODEC.optionalFieldOf("pre_effect_script", MolangValue.ZERO).forGetter(o -> o.preEffectScript)
     ).apply(ins, BrAcParticleEffect::new));
 }

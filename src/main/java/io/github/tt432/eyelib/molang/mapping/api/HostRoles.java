@@ -1,6 +1,8 @@
 package io.github.tt432.eyelib.molang.mapping.api;
 
 import io.github.tt432.eyelib.animation.AnimationParticleSpawner;
+import io.github.tt432.eyelib.animation.AnimationEffects;
+import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.animation.bedrock.BrAnimationEntry;
 import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationController;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAcStateDefinition;
@@ -32,6 +34,11 @@ public final class HostRoles {
 
 
     // === 动画 ===
+
+    public static final HostRole<ModelRuntimeData> MODEL_RUNTIME_DATA =
+            HostRole.of("model_runtime_data", ModelRuntimeData.class);
+    public static final HostRole<AnimationEffects> ANIMATION_EFFECTS =
+            HostRole.of("animation_effects", AnimationEffects.class);
 
     public static final HostRole<BrAnimationEntry.Data> ANIMATION_DATA =
             HostRole.of("animation_data", BrAnimationEntry.Data.class);

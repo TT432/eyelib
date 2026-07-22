@@ -7,6 +7,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 
 import java.util.Map;
 import java.util.Objects;
@@ -48,6 +50,17 @@ public final class ParticleRenderManager {
                 return;
             }
             emitters.put(id, emitter);
+        });
+    }
+
+    public void updateEmitterPose(String id, Matrix4fc pose) {
+        Objects.requireNonNull(id, "id");
+        Matrix4f poseCopy = new Matrix4f(Objects.requireNonNull(pose, "pose"));
+        runtimeServices.submit(() -> {
+            BedrockParticleEmitter emitter = emitters.get(id);
+            if (emitter != null) {
+                emitter.setPose(poseCopy);
+            }
         });
     }
 

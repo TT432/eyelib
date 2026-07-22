@@ -1,6 +1,8 @@
 package io.github.tt432.eyelib.animation;
 
 import io.github.tt432.eyelib.animation.AnimationComponent;
+import io.github.tt432.eyelib.animation.bedrock.BrAnimationEntryDefinition;
+import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.molang.MolangScope;
@@ -28,21 +30,30 @@ public final class BrAnimator {
                                                  @Nullable Int2ObjectMap<Model.Bone> bindBones) {
         ModelRuntimeData infos = new ModelRuntimeData();
         infos.bindBones(bindBones);
-        var serializableInfo = component.getSerializableInfo();
-        if (serializableInfo == null) {
+        scope.getHostContext().put(HostRoles.MODEL_RUNTIME_DATA, infos);
+        scope.getHostContext().put(HostRoles.ANIMATION_EFFECTS, effects);
+        try {
+            var serializableInfo = component.getSerializableInfo();
+            if (serializableInfo == null) {
+                return infos;
+            }
+
+            for (Map.Entry<Animation, MolangValue> entry : component.getAnimate().entrySet()) {
+                Animation animation = entry.getKey();
+                MolangValue multiplier = entry.getValue();
+                if (animation == null) continue;
+
+                animation.tickAnimation(component.getAnimationData(animation.name()),
+                        serializableInfo.animations(), scope, ticks, multiplier.eval(scope),
+                        infos, effects, animationStartFeedback);
+            }
+
+            BrAnimationEntryDefinition.updateParticleAnchors(scope, effects);
+            effects.commitDeferred();
             return infos;
+        } finally {
+            scope.getHostContext().remove(HostRoles.ANIMATION_EFFECTS);
+            scope.getHostContext().remove(HostRoles.MODEL_RUNTIME_DATA);
         }
-
-        for (Map.Entry<Animation, MolangValue> entry : component.getAnimate().entrySet()) {
-            Animation animation = entry.getKey();
-            MolangValue multiplier = entry.getValue();
-            if (animation == null) continue;
-
-            animation.tickAnimation(component.getAnimationData(animation.name()),
-                    serializableInfo.animations(), scope, ticks, multiplier.eval(scope),
-                    infos, effects, animationStartFeedback);
-        }
-
-        return infos;
     }
 }

@@ -8,6 +8,7 @@ import org.jspecify.annotations.Nullable;
 public record RuntimeParticlePlayData(
         String particleUUID,
         @Nullable String locator,
+        boolean bindToActor,
         float startTicks
 ) {
 }

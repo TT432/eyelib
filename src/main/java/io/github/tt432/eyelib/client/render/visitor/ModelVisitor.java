@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.client.render.PoseCopies;
 import io.github.tt432.eyelib.bridge.client.render.PoseStackPort;
 import io.github.tt432.eyelib.client.render.RenderParams;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
+import io.github.tt432.eyelib.animation.ModelPoseTransforms;
 import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.model.locator.LocatorEntry;
 import io.github.tt432.eyelib.util.math.EyeMath;
@@ -138,20 +139,10 @@ public class ModelVisitor {
                        PoseStack.Pose last = poseStack.last();
                        Matrix4f m4 = last.pose();
 
-                       m4.translate(data.position(bone));
-
-                       var renderPivot = bone.pivot();
-                       m4.translate(renderPivot);
-
-                       var rotation = data.rotation(bone);
-
-                       last.normal().rotateZYX(rotation.z(), rotation.y(), rotation.x());
-                       m4.rotateZYX(rotation.z(), rotation.y(), rotation.x());
-
-                       var scale = data.scale(bone);
-                       poseStack.scale(scale.x(), scale.y(), scale.z());
-
-                        m4.translate(-renderPivot.x(), -renderPivot.y(), -renderPivot.z());
+                       ModelPoseTransforms.applyBone(m4, bone, data, (rotation, scale) -> {
+                           last.normal().rotateZYX(rotation.z(), rotation.y(), rotation.x());
+                           poseStack.scale(scale.x(), scale.y(), scale.z());
+                       });
                         return PoseCopies.copy(last);
                     } else {
                         PoseStackPort.replaceLast(poseStack, pose);

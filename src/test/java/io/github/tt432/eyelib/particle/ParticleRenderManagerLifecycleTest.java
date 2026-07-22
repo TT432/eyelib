@@ -11,6 +11,7 @@ import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleInstance;
 import io.github.tt432.eyelib.particle.runtime.bedrock.BedrockParticleRuntime;
 import io.github.tt432.eyelib.particle.runtime.bedrock.ParticleRuntimeEnvironment;
 import org.joml.Vector3f;
+import org.joml.Matrix4f;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -37,6 +38,21 @@ class ParticleRenderManagerLifecycleTest {
 
         manager.removeEmitter("test");
         assertEquals(0, manager.getEmitterCount());
+    }
+
+    @Test
+    void updateEmitterPoseCopiesTheWorldAnchorTransform() {
+        ParticleRenderManager manager = new ParticleRenderManager(ParticleClientRuntimeServices.immediate());
+        BedrockParticleEmitter emitter = emitter(new FakeEnvironment(), manager);
+        manager.spawnEmitter("anchor", emitter);
+        Matrix4f pose = new Matrix4f().translation(4, 5, 6).rotateY((float) (Math.PI / 2));
+
+        manager.updateEmitterPose("anchor", pose);
+        pose.identity();
+
+        assertEquals(new Vector3f(4, 5, 6), emitter.position());
+        assertTrue(emitter.baseRotation().equals(
+                new Matrix4f().translation(4, 5, 6).rotateY((float) (Math.PI / 2)), 0.0001F));
     }
 
     @Test
