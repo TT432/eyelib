@@ -445,7 +445,8 @@ public final class HandwrittenMolangAstParserFrontend implements MolangParserFro
                     tokens.add(readIdentifier(tokenStartIndex, tokenStartLine, tokenStartColumn));
                     continue;
                 }
-                if (isDigit(current)) {
+                if (isDigit(current)
+                        || (current == '.' && index + 1 < length && isDigit(source.charAt(index + 1)))) {
                     tokens.add(readNumber(tokenStartIndex, tokenStartLine, tokenStartColumn));
                     continue;
                 }

@@ -35,9 +35,9 @@ class MolangSpecDrivenTest {
         @ParameterizedTest
         @ValueSource(strings = {
                 "0", "1", "42", "007",
-                "0.0", "1.5", "3.14159",
-                "1e5", "1.5e-4", "2E+10", "0.5E0",
-                "1.0f", "42.0f",
+                "0.0", "1.5", "3.14159", ".0", ".5",
+                "1e5", "1.5e-4", "2E+10", "0.5E0", ".5e-2",
+                "1.0f", "42.0f", ".5f",
         })
         void parsesValidNumbers(String expr) {
             assertParses(expr);

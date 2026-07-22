@@ -27,6 +27,17 @@ class MolangCompilerImplHandsOnQaTest {
     }
 
     @Test
+    void compilesLeadingDecimalParticleExpressionFromCrashReport() {
+        MolangCompilerImpl compiler = new MolangCompilerImpl();
+
+        CompiledMolangExpression compiled = compiler.compile(
+                ".0 + math.cos(variable.particle_random_2 * 360) * 0.3",
+                CompileContext.defaults());
+
+        assertNotNull(compiled);
+    }
+
+    @Test
     void compileUnknownFunctionCompilesSuccessfully() {
         // 完整的字节码发射器覆盖后，所有表达式都能成功编译。
         // 未知函数在运行时通过 MolangRuntimeSupport 解析为 MolangNull。
