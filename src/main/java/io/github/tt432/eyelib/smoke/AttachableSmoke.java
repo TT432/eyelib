@@ -7,8 +7,16 @@ import io.github.tt432.eyelib.client.manager.AttachableManager;
 import io.github.tt432.eyelib.client.render.AttachableItemRenderSetup;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import net.minecraft.client.Minecraft;
+//? if <1.20.6 {
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
+//?} else {
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+//?}
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -50,6 +58,7 @@ public class AttachableSmoke {
 
         verifyHandAttachable(player);
         verifyArmorAttachable(player);
+        verifyLeaveEventClearsAttachableCache(player);
     }
 
     private static void verifyHandAttachable(Player player) {
@@ -66,6 +75,13 @@ public class AttachableSmoke {
             throw new AssertionError("RenderData not created for MAIN_HAND");
         }
         LOGGER.info("[AttachableSmoke] hand ModelComponents: {}", rd.getModelComponents().size());
+
+        AttachableItemRenderSetup.clearEntity(player);
+        RenderData<ItemStack> rebuilt = AttachableItemRenderSetup.getOrPrepare(
+                player, InteractionHand.MAIN_HAND, true);
+        if (rebuilt == null || rebuilt == rd) {
+            throw new AssertionError("clearEntity did not release cached MAIN_HAND RenderData");
+        }
     }
 
     private static void verifyArmorAttachable(Player player) {
@@ -82,5 +98,29 @@ public class AttachableSmoke {
             throw new AssertionError("RenderData not created for HEAD slot");
         }
         LOGGER.info("[AttachableSmoke] helmet ModelComponents: {}", rd.getModelComponents().size());
+    }
+
+    private static void verifyLeaveEventClearsAttachableCache(Player player) {
+        ArmorStand probe = new ArmorStand(player.level(), player.getX(), player.getY(), player.getZ());
+        probe.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.STICK));
+
+        RenderData<ItemStack> beforeLeave = AttachableItemRenderSetup.getOrPrepare(
+                probe, EquipmentSlot.MAINHAND, false);
+        if (beforeLeave == null) {
+            throw new AssertionError("RenderData not created for entity-leave probe");
+        }
+
+        //? if <1.20.6 {
+        MinecraftForge.EVENT_BUS.post(new EntityLeaveLevelEvent(probe, player.level()));
+        //?} else {
+        NeoForge.EVENT_BUS.post(new EntityLeaveLevelEvent(probe, player.level()));
+        //?}
+
+        RenderData<ItemStack> afterLeave = AttachableItemRenderSetup.getOrPrepare(
+                probe, EquipmentSlot.MAINHAND, false);
+        if (afterLeave == null || afterLeave == beforeLeave) {
+            throw new AssertionError("EntityLeaveLevelEvent did not release attachable RenderData");
+        }
+        AttachableItemRenderSetup.clearEntity(probe);
     }
 }

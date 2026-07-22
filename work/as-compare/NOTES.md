@@ -48,7 +48,7 @@
 ## 四、待办问题（按优先级）
 
 1. **附魔弓发光层未验证**：zxhwjj/aegbne（v.is_enchanted）的调色板发光层用单采样加法混合材质（dgvqwe One/One），现按单采样规则只渲染第 0 层；BE 附魔弓实际表现需附魔场景对照（优先级低）
-2. **内存泄漏**（feedback fb_mrqjf0zjwp2l）：JE 帧数随时间下降，已实证 OutOfMemoryError 崩溃（crash-2026-07-19_06.36.50-client.txt）。线索：AttachableItemRenderSetup.CACHE 在客户端 ItemStack 实例更换时重复建 rd（观测到 5→10 组件重复）；collectBindBones 每帧每实体分配新 map
+2. **Attachable 实体缓存泄漏已修复（2026-07-22）**：`AttachableItemRenderSetup.CACHE` 原为强键 `HashMap`，且 `clearEntity` 无卸载事件调用方，导致离开世界的实体连同 RenderData/模型/Molang scope 被静态缓存永久保留。现改为弱键并由客户端 `EntityLeaveLevelEvent` 立即清理；1.20.1 AttachableSmoke 实测事件后重建 RenderData，9/9 通过。历史 16 GiB OOM 的其他大对象（byte[]/ZipFS）未取得引用链，不能归因于本项。
 3. **未实现 query/功能**（A&S 用到）：`rotation_to_camera`、`math.ease_in_out_back`、`query.any`、`entity_biome_has_any_identifier`、`q.is_pack_setting_selected/enabled`（现为恒 false 桩，A&S 包设置全部走默认分支——注意与 BE 非默认设置用户产生差异）、`relative_to`（骨骼动画相对实体）、`c.owning_entity->`、`q.main_hand_item_use_duration`
 4. **服务端行为侧** query 注册表与渲染侧分离，服务端缺 is_item_name_any 等（日志有 MolangRuntimeSupport 告警）；VanillaBehaviorEntityLoader 部分事件解析失败（has_component/has_biome_tag）
 5. **JE 蜘蛛消失过一次**（未复现）

@@ -31,7 +31,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
 import java.util.EnumMap;
-import java.util.HashMap;
+import java.util.WeakHashMap;
 import java.util.Map;
 
 /**
@@ -43,7 +43,7 @@ import java.util.Map;
 public final class AttachableItemRenderSetup {
     private static final HostRole<LivingEntity> LIVING_ENTITY = HostRole.of("LivingEntity", LivingEntity.class);
     private static final HostRole<Entity> ENTITY = HostRole.of("Entity", Entity.class);
-    private static final Map<LivingEntity, EnumMap<EquipmentSlot, RenderData<ItemStack>>> CACHE = new HashMap<>();
+    private static final Map<LivingEntity, EnumMap<EquipmentSlot, RenderData<ItemStack>>> CACHE = new WeakHashMap<>();
 
     @Nullable
     public static RenderData<ItemStack> getOrPrepare(LivingEntity entity, InteractionHand hand, boolean isFirstPerson) {
