@@ -1,6 +1,6 @@
 package io.github.tt432.eyelib.bridge.client.render.adapter;
 
-import io.github.tt432.eyelib.client.render.AttachableItemRenderSetup;
+import io.github.tt432.eyelib.bridge.ApplicationLifecyclePort;
 import net.minecraft.world.entity.LivingEntity;
 //? if <1.20.6 {
 import net.minecraftforge.api.distmarker.Dist;
@@ -27,7 +27,8 @@ public final class EntityLeaveLevelEventAdapter {
     @SubscribeEvent
     public static void onEvent(EntityLeaveLevelEvent event) {
         if (event.getLevel().isClientSide() && event.getEntity() instanceof LivingEntity livingEntity) {
-            AttachableItemRenderSetup.clearEntity(livingEntity);
+            ApplicationLifecyclePort port = ApplicationLifecyclePort.get();
+            if (port != null) port.onLivingEntityLeaveLevel(livingEntity);
         }
     }
 }

@@ -25,5 +25,7 @@ public interface ApplicationLifecyclePort {
 
     void onTextureChanged();
 
+    void onLivingEntityLeaveLevel(net.minecraft.world.entity.LivingEntity entity);
+
     void onAddonParsed(io.github.tt432.eyelib.importer.addon.BedrockAddon addon);
 }
