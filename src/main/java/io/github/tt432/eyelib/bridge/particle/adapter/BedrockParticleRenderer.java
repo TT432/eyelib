@@ -159,20 +159,20 @@ public final class BedrockParticleRenderer implements ParticleRenderManager.Part
     private static void vertex(VertexConsumer vertexConsumer, Vector3f position, int color, float u, float v, int light, Vector3f normal) {
         //? if <1.20.6 {
         vertexConsumer.vertex(position.x, position.y, position.z,
-                FastColor.ABGR32.red(color),
-                FastColor.ABGR32.green(color),
-                FastColor.ABGR32.blue(color),
-                FastColor.ABGR32.alpha(color),
+                FastColor.ARGB32.red(color),
+                FastColor.ARGB32.green(color),
+                FastColor.ARGB32.blue(color),
+                FastColor.ARGB32.alpha(color),
                 u, v,
                 OverlayTexture.NO_OVERLAY, light, normal.x, normal.y, normal.z);
         //?} else {
         vertexConsumer.addVertex(position.x, position.y, position.z)
                 .setColor(
                         //? if <26.1 {
-                        FastColor.ABGR32.red(color),
-                        FastColor.ABGR32.green(color),
-                        FastColor.ABGR32.blue(color),
-                        FastColor.ABGR32.alpha(color)
+                        FastColor.ARGB32.red(color),
+                        FastColor.ARGB32.green(color),
+                        FastColor.ARGB32.blue(color),
+                        FastColor.ARGB32.alpha(color)
                         //?} else {
                         ARGB.red(color),
                         ARGB.green(color),
