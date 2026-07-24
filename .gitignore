@@ -60,6 +60,7 @@ clientsmoke-reports/
 
 # temporary planning artifacts
 .planning/tmp-*
+work/feedback.json
 
 # local reference / intermediate research results
 .local_ref/
