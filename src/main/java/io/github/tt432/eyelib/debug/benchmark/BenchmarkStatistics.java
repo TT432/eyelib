@@ -3,6 +3,7 @@ package io.github.tt432.eyelib.debug.benchmark;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.ToDoubleFunction;
 
 /** Report-stage statistics for frame samples. */
 public final class BenchmarkStatistics {
@@ -48,7 +49,7 @@ public final class BenchmarkStatistics {
             return new Summary(0, 0, 0, 0, 0,
                     Percentiles.ZERO, Percentiles.ZERO, 0,
                     BudgetStatistics.empty(30), BudgetStatistics.empty(60), BudgetStatistics.empty(120),
-                    List.of(), 0, STABILITY_INSUFFICIENT_DATA);
+                    List.of(), 0, STABILITY_INSUFFICIENT_DATA, 0, STABILITY_INSUFFICIENT_DATA);
         }
 
         long[] timestampsNs = new long[frameCount];
@@ -78,8 +79,10 @@ public final class BenchmarkStatistics {
                 : 0;
 
         List<WindowStatistics> windows = windows(timestampsNs, frameIntervalsNs);
-        double slopeMsPerMinute = theilSenSlopeMsPerMinute(windows);
-        String stability = classifyStability(windows, slopeMsPerMinute);
+        double slopeMsPerMinute = theilSenSlopeMsPerMinute(windows, WindowStatistics::frameIntervalP50Ms);
+        String stability = classifyStability(windows, slopeMsPerMinute, WindowStatistics::frameIntervalP50Ms);
+        double tailSlopeMsPerMinute = theilSenSlopeMsPerMinute(windows, WindowStatistics::frameIntervalP99Ms);
+        String tailStability = classifyStability(windows, tailSlopeMsPerMinute, WindowStatistics::frameIntervalP99Ms);
 
         return new Summary(frameCount, firstTimestampNs, lastTimestampNs,
                 finiteOrZero(durationSeconds), finiteOrZero(throughputFps),
@@ -87,7 +90,8 @@ public final class BenchmarkStatistics {
                 budgetStatistics(frameIntervalsNs, 30),
                 budgetStatistics(frameIntervalsNs, 60),
                 budgetStatistics(frameIntervalsNs, 120),
-                windows, finiteOrZero(slopeMsPerMinute), stability);
+                windows, finiteOrZero(slopeMsPerMinute), stability,
+                finiteOrZero(tailSlopeMsPerMinute), tailStability);
     }
 
     private static Percentiles percentilesMs(long[] valuesNs) {
@@ -186,7 +190,8 @@ public final class BenchmarkStatistics {
         return (timestampNs - epochNs) / WINDOW_NS;
     }
 
-    private static double theilSenSlopeMsPerMinute(List<WindowStatistics> windows) {
+    private static double theilSenSlopeMsPerMinute(List<WindowStatistics> windows,
+                                                   ToDoubleFunction<WindowStatistics> windowValue) {
         int pairCount = windows.size() * (windows.size() - 1) / 2;
         if (pairCount == 0) {
             return 0;
@@ -199,8 +204,8 @@ public final class BenchmarkStatistics {
                 double elapsedMinutes = (windows.get(j).midpointTimestampNs() - firstTimeNs)
                         / (60.0 * NS_PER_SECOND);
                 if (elapsedMinutes > 0) {
-                    slopes[index++] = (windows.get(j).frameIntervalP50Ms()
-                            - windows.get(i).frameIntervalP50Ms()) / elapsedMinutes;
+                    slopes[index++] = (windowValue.applyAsDouble(windows.get(j))
+                            - windowValue.applyAsDouble(windows.get(i))) / elapsedMinutes;
                 }
             }
         }
@@ -211,7 +216,8 @@ public final class BenchmarkStatistics {
         return medianSorted(slopes, index);
     }
 
-    private static String classifyStability(List<WindowStatistics> windows, double slopeMsPerMinute) {
+    private static String classifyStability(List<WindowStatistics> windows, double slopeMsPerMinute,
+                                            ToDoubleFunction<WindowStatistics> windowValue) {
         if (windows.size() < 4) {
             return STABILITY_INSUFFICIENT_DATA;
         }
@@ -227,7 +233,7 @@ public final class BenchmarkStatistics {
         for (int i = 0; i < windows.size(); i++) {
             double elapsedMinutes = (windows.get(i).midpointTimestampNs() - firstTimeNs)
                     / (60.0 * NS_PER_SECOND);
-            intercepts[i] = windows.get(i).frameIntervalP50Ms() - slopeMsPerMinute * elapsedMinutes;
+            intercepts[i] = windowValue.applyAsDouble(windows.get(i)) - slopeMsPerMinute * elapsedMinutes;
         }
         Arrays.sort(intercepts);
         double intercept = medianSorted(intercepts, intercepts.length);
@@ -237,15 +243,15 @@ public final class BenchmarkStatistics {
             double elapsedMinutes = (windows.get(i).midpointTimestampNs() - firstTimeNs)
                     / (60.0 * NS_PER_SECOND);
             double expected = intercept + slopeMsPerMinute * elapsedMinutes;
-            absoluteResiduals[i] = Math.abs(windows.get(i).frameIntervalP50Ms() - expected);
+            absoluteResiduals[i] = Math.abs(windowValue.applyAsDouble(windows.get(i)) - expected);
         }
         Arrays.sort(absoluteResiduals);
         double noiseMadMs = medianSorted(absoluteResiduals, absoluteResiduals.length);
         double requiredChangeMs = Math.max(MIN_MEANINGFUL_CHANGE_MS, 3 * MAD_SCALE * noiseMadMs);
 
         int edgeCount = Math.max(2, windows.size() / 3);
-        double earlyMedianMs = edgeMedian(windows, 0, edgeCount);
-        double lateMedianMs = edgeMedian(windows, windows.size() - edgeCount, windows.size());
+        double earlyMedianMs = edgeMedian(windows, 0, edgeCount, windowValue);
+        double lateMedianMs = edgeMedian(windows, windows.size() - edgeCount, windows.size(), windowValue);
         double robustOverallChangeMs = lateMedianMs - earlyMedianMs;
         double fittedOverallChangeMs = slopeMsPerMinute * durationMinutes;
 
@@ -258,10 +264,11 @@ public final class BenchmarkStatistics {
         return STABILITY_FLAT;
     }
 
-    private static double edgeMedian(List<WindowStatistics> windows, int fromIndex, int toIndex) {
+    private static double edgeMedian(List<WindowStatistics> windows, int fromIndex, int toIndex,
+                                     ToDoubleFunction<WindowStatistics> windowValue) {
         double[] values = new double[toIndex - fromIndex];
         for (int i = fromIndex; i < toIndex; i++) {
-            values[i - fromIndex] = windows.get(i).frameIntervalP50Ms();
+            values[i - fromIndex] = windowValue.applyAsDouble(windows.get(i));
         }
         Arrays.sort(values);
         return medianSorted(values, values.length);
@@ -301,7 +308,13 @@ public final class BenchmarkStatistics {
         }
     }
 
-    /** Immutable summary whose units are encoded in each time-related accessor name. */
+    /**
+     * Immutable summary whose units are encoded in each time-related accessor name.
+     *
+     * <p>{@code stabilityClassification} tracks the windowed-P50 trend while
+     * {@code tailStabilityClassification} independently tracks the windowed-P99 trend,
+     * so a flat median can never mask a deteriorating tail.</p>
+     */
     public record Summary(int frameCount, long firstTimestampNs, long lastTimestampNs,
                           double measurementDurationSeconds, double throughputFps,
                           Percentiles frameIntervalPercentilesMs,
@@ -309,7 +322,9 @@ public final class BenchmarkStatistics {
                           BudgetStatistics fps30Budget, BudgetStatistics fps60Budget,
                           BudgetStatistics fps120Budget, List<WindowStatistics> fiveSecondWindows,
                           double windowP50TheilSenSlopeMsPerMinute,
-                          String stabilityClassification) {
+                          String stabilityClassification,
+                          double windowP99TheilSenSlopeMsPerMinute,
+                          String tailStabilityClassification) {
         public Summary {
             fiveSecondWindows = List.copyOf(fiveSecondWindows);
         }

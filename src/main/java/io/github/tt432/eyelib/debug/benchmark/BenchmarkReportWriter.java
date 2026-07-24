@@ -120,6 +120,9 @@ final class BenchmarkReportWriter {
         json.append(numberField("window_p50_theil_sen_slope_ms_per_minute",
                         summary.windowP50TheilSenSlopeMsPerMinute(), true))
                 .append(field("stability_classification", summary.stabilityClassification(), true))
+                .append(numberField("window_p99_theil_sen_slope_ms_per_minute",
+                        summary.windowP99TheilSenSlopeMsPerMinute(), true))
+                .append(field("tail_stability_classification", summary.tailStabilityClassification(), true))
                 .append("  \"five_second_windows\": [\n");
         for (int i = 0; i < summary.fiveSecondWindows().size(); i++) {
             BenchmarkStatistics.WindowStatistics window = summary.fiveSecondWindows().get(i);

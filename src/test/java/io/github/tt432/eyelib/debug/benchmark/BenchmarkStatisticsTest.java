@@ -98,6 +98,36 @@ class BenchmarkStatisticsTest {
     }
 
     @Test
+    void flatWindowMedianWithRisingWindowTailIsClassifiedAsTailSlowdown() {
+        BenchmarkStatistics.Summary summary = summarizeWindowTailValues(20, 40, 60, 80, 100, 120, 140, 160);
+
+        assertEquals(8, summary.fiveSecondWindows().size());
+        assertEquals(10.0, summary.fiveSecondWindows().get(0).frameIntervalP50Ms(), 0.000001);
+        assertEquals(160.0, summary.fiveSecondWindows().get(7).frameIntervalP99Ms(), 0.000001);
+        assertEquals(BenchmarkStatistics.STABILITY_FLAT, summary.stabilityClassification(),
+                "window P50 stays constant, so the median classification stays flat");
+        assertEquals(BenchmarkStatistics.STABILITY_SLOWDOWN, summary.tailStabilityClassification(),
+                "rising window P99 must surface as a tail slowdown, not be masked by the flat median");
+    }
+
+    @Test
+    void flatWindowMedianAndFlatWindowTailAreBothClassifiedAsFlat() {
+        BenchmarkStatistics.Summary summary = summarizeWindowTailValues(30, 30, 30, 30, 30, 30, 30, 30);
+
+        assertEquals(BenchmarkStatistics.STABILITY_FLAT, summary.stabilityClassification());
+        assertEquals(BenchmarkStatistics.STABILITY_FLAT, summary.tailStabilityClassification());
+    }
+
+    @Test
+    void tooFewWindowsYieldInsufficientDataForBothClassifications() {
+        BenchmarkStatistics.Summary summary = summarizeWindowTailValues(20, 60);
+
+        assertEquals(2, summary.fiveSecondWindows().size());
+        assertEquals(BenchmarkStatistics.STABILITY_INSUFFICIENT_DATA, summary.stabilityClassification());
+        assertEquals(BenchmarkStatistics.STABILITY_INSUFFICIENT_DATA, summary.tailStabilityClassification());
+    }
+
+    @Test
     void emptyAndSingletonSummariesNeverExposeNonFiniteNumbers() {
         BenchmarkStatistics.Summary empty = BenchmarkStatistics.summarize(new FrameSampleBuffer(0));
         assertEquals(0, empty.frameCount());
@@ -130,6 +160,22 @@ class BenchmarkStatisticsTest {
         return BenchmarkStatistics.summarize(buffer);
     }
 
+    private static BenchmarkStatistics.Summary summarizeWindowTailValues(long... tailValuesMs) {
+        int framesPerWindow = 100;
+        int tailFramesPerWindow = 10;
+        FrameSampleBuffer buffer = new FrameSampleBuffer(tailValuesMs.length * framesPerWindow);
+        for (int w = 0; w < tailValuesMs.length; w++) {
+            for (int f = 0; f < framesPerWindow; f++) {
+                long intervalNs = f < framesPerWindow - tailFramesPerWindow
+                        ? 10 * MS_NS
+                        : tailValuesMs[w] * MS_NS;
+                buffer.record(w * 5L * SECOND_NS + f * (SECOND_NS / 20), intervalNs, intervalNs,
+                        1, BenchmarkPhase.MEASURE);
+            }
+        }
+        return BenchmarkStatistics.summarize(buffer);
+    }
+
     private static void assertFiniteSummaryValues(BenchmarkStatistics.Summary summary) {
         assertFalse(Double.isNaN(summary.measurementDurationSeconds()));
         assertFalse(Double.isInfinite(summary.measurementDurationSeconds()));
@@ -139,5 +185,7 @@ class BenchmarkStatisticsTest {
         assertFalse(Double.isInfinite(summary.p99DerivedFps()));
         assertFalse(Double.isNaN(summary.windowP50TheilSenSlopeMsPerMinute()));
         assertFalse(Double.isInfinite(summary.windowP50TheilSenSlopeMsPerMinute()));
+        assertFalse(Double.isNaN(summary.windowP99TheilSenSlopeMsPerMinute()));
+        assertFalse(Double.isInfinite(summary.windowP99TheilSenSlopeMsPerMinute()));
     }
 }
