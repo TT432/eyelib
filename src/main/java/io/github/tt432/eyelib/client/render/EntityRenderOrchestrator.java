@@ -382,7 +382,12 @@ public final class EntityRenderOrchestrator {
      * 否则后画的不透明 pass 会以深度覆盖先画的发光/加法 pass（如 A&S 蜘蛛眼睛被身体盖住）。
      */
     static int passOrder(ModelComponent mc) {
-        var pass = mc.getRenderType(mc.getTexture());
+        var texture = mc.getTexture();
+        if (texture == null) {
+            // 无纹理组件没有材质 pass 可查，与不透明同档（原行为：getRenderType 返回 null → 0）
+            return 0;
+        }
+        var pass = mc.getRenderType(texture);
         if (pass == null) {
             return 0;
         }
