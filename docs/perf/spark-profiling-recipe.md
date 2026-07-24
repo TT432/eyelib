@@ -52,6 +52,7 @@ Boolean r = (Boolean) runCmd.invoke(null, "sparkc profiler start --timeout 60");
 读 `versions/<mc-version>/run/config/spark/activity.json`(spark 自动写入的 JSON 存档,含所有活动的 URL)。不依赖 chat appender(日志在暂停后可能停止刷新)。
 
 ### 关键踩坑
+- **spark 总量不可跨 run 比较**：60s 窗口 self-time ∝ 帧数 × 每帧成本，且受热状态/远控 IDD GPU 状态影响（2026-07-25 实测同代码两 run eyelib self 差 30%+）。spark 只做方法级归因；幅度结论用 clientBenchmark A-B-A 交错。详见 docs/perf/spark-baseline-and-optimizations.md 方法论局限 4。
 - **不要加 `--thread "Render thread"`**:引号在 `ClientCommandHandler.runCommand` 里被 brigadier 吞掉,导致 `threadDumper.ids=[]`,采样完全为空(protobuf 仅 ~6KB,threads 字段不存在)。
 - **client-side `/sparkc heapsummary` 无 chat 输出**:改用 server-side `mc.getSingleplayerServer().getCommands().performPrefixedCommand(src.withPermission(4), "spark heapsummary")`。
 - **单机世界失焦暂停**:`pauseOnLostFocus=true` 会让 Render thread 冻结,采不到数据。执行前先 `mc.options.pauseOnLostFocus = false` + `mc.setScreen(null)`。
