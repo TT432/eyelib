@@ -28,7 +28,7 @@ public record Shooter(
             Codec.INT.optionalFieldOf("aux_val", 0).forGetter(Shooter::aux_val),
             Codec.BOOL.optionalFieldOf("magic", false).forGetter(Shooter::magic),
             Codec.FLOAT.optionalFieldOf("power", 0.0f).forGetter(Shooter::power),
-            ShooterPotion.CODEC.listOf().fieldOf("pots").forGetter(Shooter::pots)
+            ShooterPotion.CODEC.listOf().optionalFieldOf("pots", List.of()).forGetter(Shooter::pots)
     ).apply(inst, Shooter::new));
 
     @Override

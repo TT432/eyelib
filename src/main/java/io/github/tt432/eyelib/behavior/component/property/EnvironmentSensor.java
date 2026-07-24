@@ -1,10 +1,14 @@
 package io.github.tt432.eyelib.behavior.component.property;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
+import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
 import java.util.List;
 
 /**
@@ -15,9 +19,14 @@ import java.util.List;
 public record EnvironmentSensor(
         List<EnvironmentTrigger> triggers
 ) implements Component {
-    private static final Codec<JsonObject> JSON_OBJECT_CODEC = Codec.STRING.xmap(
-            s -> JsonParser.parseString(s).getAsJsonObject(),
-            Object::toString
+    private static final Codec<JsonObject> JSON_OBJECT_CODEC = Codec.PASSTHROUGH.comapFlatMap(
+            dynamic -> {
+                JsonElement element = dynamic.convert(JsonOps.INSTANCE).getValue();
+                return element.isJsonObject()
+                        ? DataResult.success(element.getAsJsonObject())
+                        : DataResult.error(() -> "Expected JSON object, got: " + element);
+            },
+            jsonObject -> new Dynamic<>(JsonOps.INSTANCE, jsonObject)
     );
 
     /**
@@ -36,7 +45,7 @@ public record EnvironmentSensor(
     }
 
     public static final Codec<EnvironmentSensor> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            EnvironmentTrigger.CODEC.listOf().fieldOf("triggers").forGetter(EnvironmentSensor::triggers)
+            ChinExtraCodecs.singleOrList(EnvironmentTrigger.CODEC).fieldOf("triggers").forGetter(EnvironmentSensor::triggers)
     ).apply(ins, EnvironmentSensor::new));
 
     @Override

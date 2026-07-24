@@ -1,10 +1,14 @@
 package io.github.tt432.eyelib.behavior.component.property;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.behavior.component.Component;
+import io.github.tt432.eyelib.util.codec.ChinExtraCodecs;
 import java.util.List;
 
 /**
@@ -15,9 +19,14 @@ import java.util.List;
 public record SpawnEntity(
         List<SpawnEntry> entities
 ) implements Component {
-    private static final Codec<JsonObject> JSON_OBJECT_CODEC = Codec.STRING.xmap(
-            s -> JsonParser.parseString(s).getAsJsonObject(),
-            Object::toString
+    private static final Codec<JsonObject> JSON_OBJECT_CODEC = Codec.PASSTHROUGH.comapFlatMap(
+            dynamic -> {
+                JsonElement element = dynamic.convert(JsonOps.INSTANCE).getValue();
+                return element.isJsonObject()
+                        ? DataResult.success(element.getAsJsonObject())
+                        : DataResult.error(() -> "Expected JSON object, got: " + element);
+            },
+            jsonObject -> new Dynamic<>(JsonOps.INSTANCE, jsonObject)
     );
 
     /**
@@ -43,7 +52,7 @@ public record SpawnEntity(
                 Codec.INT.optionalFieldOf("num_to_spawn", 1).forGetter(SpawnEntry::num_to_spawn),
                 Codec.BOOL.optionalFieldOf("should_leash", false).forGetter(SpawnEntry::should_leash),
                 Codec.BOOL.optionalFieldOf("single_use", false).forGetter(SpawnEntry::single_use),
-                Codec.STRING.fieldOf("spawn_entity").forGetter(SpawnEntry::spawn_entity),
+                Codec.STRING.optionalFieldOf("spawn_entity", "").forGetter(SpawnEntry::spawn_entity),
                 Codec.STRING.optionalFieldOf("spawn_event", "minecraft:entity_born").forGetter(SpawnEntry::spawn_event),
                 Codec.STRING.optionalFieldOf("spawn_item", "egg").forGetter(SpawnEntry::spawn_item),
                 Codec.STRING.optionalFieldOf("spawn_method", "born").forGetter(SpawnEntry::spawn_method),
@@ -52,7 +61,7 @@ public record SpawnEntity(
     }
 
     public static final Codec<SpawnEntity> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-            SpawnEntry.CODEC.listOf().fieldOf("entities").forGetter(SpawnEntity::entities)
+            ChinExtraCodecs.singleOrList(SpawnEntry.CODEC).fieldOf("entities").forGetter(SpawnEntity::entities)
     ).apply(ins, SpawnEntity::new));
 
     @Override

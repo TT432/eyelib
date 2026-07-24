@@ -32,7 +32,7 @@ public record Equippable(List<EquipSlot> slots) implements io.github.tt432.eyeli
         static final Codec<EquipSlot> CODEC = RecordCodecBuilder.create(inst -> inst.group(
                 Codec.INT.fieldOf("slot").forGetter(EquipSlot::slot),
                 Codec.STRING.listOf().fieldOf("accepted_items").forGetter(EquipSlot::accepted_items),
-                Codec.STRING.fieldOf("interact_text").forGetter(EquipSlot::interact_text),
+                Codec.STRING.optionalFieldOf("interact_text", "").forGetter(EquipSlot::interact_text),
                 EventRef.CODEC.optionalFieldOf("on_equip", EventRef.NONE).forGetter(EquipSlot::on_equip),
                 EventRef.CODEC.optionalFieldOf("on_unequip", EventRef.NONE).forGetter(EquipSlot::on_unequip)
         ).apply(inst, EquipSlot::new));

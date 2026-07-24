@@ -16,7 +16,7 @@ import java.util.List;
 public record Equipment(String table, List<SlotDrop> slot_drop_chance) implements io.github.tt432.eyelib.behavior.component.Component {
     public static final Codec<Equipment> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             Codec.STRING.fieldOf("table").forGetter(Equipment::table),
-            SlotDrop.CODEC.listOf().fieldOf("slot_drop_chance").forGetter(Equipment::slot_drop_chance)
+            SlotDrop.CODEC.listOf().optionalFieldOf("slot_drop_chance", List.of()).forGetter(Equipment::slot_drop_chance)
     ).apply(inst, Equipment::new));
 
     @Override
