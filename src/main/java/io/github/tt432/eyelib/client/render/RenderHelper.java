@@ -20,6 +20,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author TT432
@@ -32,6 +33,7 @@ public class RenderHelper {
 
     public static RenderHelper start() {
         ModelBakeInvalidationHooks.install();
+        installInvalidationListener();
         return new RenderHelper();
     }
 
@@ -46,6 +48,23 @@ public class RenderHelper {
         return dfsModels.size();
     }
 
+    private static final AtomicBoolean INVALIDATION_INSTALLED = new AtomicBoolean(false);
+
+    /**
+     * 幂等安装 dfsModels 缓存失效监听（与 {@link ModelBakeInvalidationHooks#install()} 同模式）。
+     * 不允许用 static initializer 做业务 wiring（ADR-0018 Q-2）；
+     * 在 {@link #start()} 中调用，保证首次使用 dfsModels 前监听已就位。
+     */
+    private static void installInvalidationListener() {
+        if (!INVALIDATION_INSTALLED.compareAndSet(false, true)) {
+            return;
+        }
+        ManagerEntryChangedEventPublisher.<ManagerEventPort>addListener(e -> {
+            if (e.getManagerName().equals(ModelManager.class.getSimpleName()))
+                dfsModels.remove(e.getEntryName());
+        });
+    }
+
     public DFSModel dfsModel(Model model) {
         return dfsModels.computeIfAbsent(model.name(), m -> DFSModel.create(model));
     }
@@ -53,13 +72,6 @@ public class RenderHelper {
     public RenderHelper params(RenderParams params) {
         this.params = params;
         return this;
-    }
-
-    static {
-        ManagerEntryChangedEventPublisher.<ManagerEventPort>addListener(e -> {
-            if (e.getManagerName().equals(ModelManager.class.getSimpleName()))
-                dfsModels.remove(e.getEntryName());
-        });
     }
 
     public RenderHelper render(RenderParams params, Model model, ModelRuntimeData infos) {
