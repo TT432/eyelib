@@ -22,6 +22,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
 import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.Slime;
 import java.util.function.Function;
 
 import static io.github.tt432.eyelib.molang.MolangValue.FALSE;
@@ -77,7 +78,17 @@ public final class MolangQuery {
             }
             Variant component = DataAttachmentHelper.getOrCreate(DataAttachmentPort.entityBehaviorData(), l)
                                                     .component(Variant.class);
-            return component != null ? (float) component.value() : 0;
+            if (component != null) {
+                return (float) component.value();
+            }
+            // JE 原生实体 variant 语义对齐 BE：史莱姆 variant == 尺寸层级（JE/BE 均为 1/2/4；
+            // bedrock-wiki runtime-identifier：variant 1-5 对应默认史莱姆层级）。
+            // A&S 等无行为包资源包依赖该内置语义（scale = q.variant），
+            // 缺失时史莱姆渲染缩放为 0 完全不可见。
+            if (l instanceof Slime slime) {
+                return (float) Math.max(1, slime.getSize());
+            }
+            return 0F;
         });
     }
 

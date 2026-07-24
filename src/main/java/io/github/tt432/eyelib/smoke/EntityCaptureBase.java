@@ -4,9 +4,11 @@ import com.mojang.blaze3d.platform.NativeImage;
 import io.github.tt432.clientsmoke.runtime.ClientSmokeVisualHooks;
 import io.github.tt432.clientsmoke.runtime.EntitySceneRenderer;
 import io.github.tt432.eyelib.bridge.client.render.adapter.RenderLivingEventAdapter;
+import io.github.tt432.eyelib.client.render.EntityRenderOrchestrator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,17 +38,32 @@ final class EntityCaptureBase {
         }
         entity.setPos(0, 0, 0);
         entity.tickCount = 10;
+        EntityRenderOrchestrator.prepareDetachedEntity(entity);
 
         ClientSmokeVisualHooks.setScene(FBO_SIZE, FBO_SIZE, (m, rt) -> {
             EntitySceneRenderer.beginScene(m, rt, BG_ARGB);
-            RenderLivingEventAdapter.suppressRenderEvents = true;
+            // 不抑制 RenderLivingEvent：必须让 Eyelib 渲染管线真实接管，
+            // 并用 renderCount/errorCount 断言证明像素来自 Eyelib 而非 vanilla 回退
+            // （与 debug/benchmark/FboBenchmarkWorkload 同一范式）。
+            RenderLivingEventAdapter.sceneEntityOverride =
+                    entity instanceof LivingEntity living ? living : null;
+            int renderCountBefore = EntityRenderOrchestrator.getRenderCount();
+            int errorCountBefore = EntityRenderOrchestrator.getErrorCount();
             try {
                 EntitySceneRenderer.renderEntityAt(m, entity, ORIGIN_X, ORIGIN_Y, scale, yaw);
             } finally {
-                RenderLivingEventAdapter.suppressRenderEvents = false;
+                RenderLivingEventAdapter.sceneEntityOverride = null;
                 // begin/end 必须配对：26.1.2 的 endScene 复位 outputColorTextureOverride，
                 // 否则 clear() 销毁 FBO 后下一帧 RenderType.draw 用到已关闭的纹理（"Color texture is closed"）
                 EntitySceneRenderer.endScene(m);
+            }
+            if (EntityRenderOrchestrator.getRenderCount() <= renderCountBefore) {
+                throw new RuntimeException(name
+                        + " was not rendered by the Eyelib pipeline (renderCount did not increase)");
+            }
+            if (EntityRenderOrchestrator.getErrorCount() != errorCountBefore) {
+                throw new RuntimeException(name + " Eyelib render errored: "
+                        + EntityRenderOrchestrator.getLastError());
             }
         }, image -> {
             verifyNonEmpty(image, name);

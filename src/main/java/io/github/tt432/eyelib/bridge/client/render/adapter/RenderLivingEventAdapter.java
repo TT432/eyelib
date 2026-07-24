@@ -44,21 +44,14 @@ public final class RenderLivingEventAdapter {
     }
 
     /**
-     * When true, skip entity render event processing to avoid interfering
-     * with SceneRenderer (clientsmoke FBO) entity rendering.
-     * Set by eyelib smoke tests around {@code EntitySceneRenderer.renderEntityAt}.
+     * Detached entity currently rendered into a dev/smoke FBO scene
+     * (26.1+ render-state 路径需要它定位实体；1.20.1 由事件直接携带实体，不使用本字段）。
      */
-    public static boolean suppressRenderEvents = false;
-
-    /** Detached entity currently rendered by the dev FBO benchmark. */
     public static @org.jspecify.annotations.Nullable LivingEntity sceneEntityOverride;
 
     //? if <26.1 {
     @SubscribeEvent
     public static <E extends LivingEntity, M extends EntityModel<E>> void onEvent(RenderLivingEvent.Pre<E, M> event) {
-        if (suppressRenderEvents) {
-            return;
-        }
         LivingEntity entity = event.getEntity();
         int overlay = LivingEntityRenderer.getOverlayCoords(entity,
                 ((LivingEntityRendererAccessor) event.getRenderer()).callGetWhiteOverlayProgress(entity, event.getPartialTick()));
