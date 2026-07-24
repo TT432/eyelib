@@ -46,6 +46,6 @@ public final class ItemTrackRenderer {
      * 获取渲染用的 partialTick。
      */
     public static float getPartialTick() {
-        return ClientFrameTimePort.getFrameTime();
+        return ClientFrameTimePort.getRealtimeDeltaTicks();
     }
 }
