@@ -130,6 +130,24 @@ public record BrBoneAnimation(
         return channel != null ? channel : new BrAnimationChannel<>(name, ImmutableFloatTreeMap.empty());
     }
 
+    /** 通道是否含关键帧；空通道可在采样前整体短路。 */
+    public boolean hasRotation() {
+        return hasChannel(ROTATION);
+    }
+
+    public boolean hasPosition() {
+        return hasChannel(POSITION);
+    }
+
+    public boolean hasScale() {
+        return hasChannel(SCALE);
+    }
+
+    private boolean hasChannel(String name) {
+        BrAnimationChannel<BrBoneKeyFrame> channel = channels.get(name);
+        return channel != null && !channel.keyFrames().isEmpty();
+    }
+
     @Nullable
     public Vector3f lerpRotation(MolangScope scope, float currentTick, float thisX, float thisY, float thisZ) {
         return sample(ROTATION, scope, currentTick, thisX, thisY, thisZ);

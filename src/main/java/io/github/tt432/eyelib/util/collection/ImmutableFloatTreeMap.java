@@ -102,6 +102,10 @@ public sealed class ImmutableFloatTreeMap<V> {
         return new ImmutableFloatTreeMap<>(new float[]{0}, new Float2ObjectOpenHashMap<>(Map.of(0F, value)));
     }
 
+    public boolean isEmpty() {
+        return sortedKeys.length == 0;
+    }
+
     @Nullable
     public V floorEntry(float currentTick) {
         int index = Arrays.binarySearch(sortedKeys, currentTick);

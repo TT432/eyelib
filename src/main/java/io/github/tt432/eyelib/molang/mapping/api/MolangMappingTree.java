@@ -69,6 +69,23 @@ public class MolangMappingTree {
     public final Node toplevelNode = new Node();
     private RegistryVersionRef registryVersionRef = new RegistryVersionRef("0");
 
+    // 名称解析缓存：findField/findMethod/selectQueryVariant 的结果只取决于注册表内容，
+    // 注册表变更（addNode/clear）时整体失效。Optional.empty 表示「已解析为 null」。
+    private final Map<String, Optional<FieldData>> fieldResolutionCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<String, Optional<MethodData>> methodResolutionCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<QueryVariantKey, Optional<FunctionInfo>> queryVariantCache = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private record QueryVariantKey(String name,
+                                   List<VisibleArgumentKind> visibleArgumentCallShape,
+                                   Set<MolangFunction.ParameterRole> availableHostRoles) {
+    }
+
+    private void invalidateResolutionCaches() {
+        fieldResolutionCache.clear();
+        methodResolutionCache.clear();
+        queryVariantCache.clear();
+    }
+
     MolangMappingTree() {
     }
 
@@ -77,6 +94,7 @@ public class MolangMappingTree {
         toplevelNode.actualClasses.clear();
         toplevelNode.actualFunctions.clear();
         toplevelNode.cachedFields.clear();
+        invalidateResolutionCaches();
         registryVersionRef = FingerprintCalculator.buildRegistryVersionRef(toplevelNode);
     }
 
@@ -92,7 +110,8 @@ public class MolangMappingTree {
     }
 
     public void addNode(String name, MolangClass actualClass) {
-        String[] split = name.split("\\.");
+        invalidateResolutionCaches();
+        String[] split = name.split("\\\\.");
 
         Node last = toplevelNode;
 
@@ -140,6 +159,7 @@ public class MolangMappingTree {
     }
 
     void normalizeAndValidatePublicationOrder() {
+        invalidateResolutionCaches();
         FingerprintCalculator.normalizeAndValidateNode(toplevelNode, "", CLASS_PUBLICATION_ORDER, FUNCTION_PUBLICATION_ORDER);
         registryVersionRef = FingerprintCalculator.buildRegistryVersionRef(toplevelNode);
     }
@@ -152,6 +172,14 @@ public class MolangMappingTree {
 
     @Nullable
     public FieldData findField(String name) {
+        Optional<FieldData> cached = fieldResolutionCache.get(name);
+        if (cached != null) return cached.orElse(null);
+        FieldData resolved = findFieldUncached(name);
+        fieldResolutionCache.put(name, Optional.ofNullable(resolved));
+        return resolved;
+    }
+
+    private @Nullable FieldData findFieldUncached(String name) {
         int i = name.indexOf(".");
         String fieldName;
         String scopeName;
@@ -178,11 +206,25 @@ public class MolangMappingTree {
             List<VisibleArgumentKind> visibleArgumentCallShape,
             Set<MolangFunction.ParameterRole> availableHostRoles
     ) {
-        return VariantSelector.selectQueryVariant(this, name, visibleArgumentCallShape, availableHostRoles);
+        // 键直接复用调用方集合：callShape/hostRoles 均为调用方新造或共享不可变常量，无突变风险。
+        var key = new QueryVariantKey(name, visibleArgumentCallShape, availableHostRoles);
+        Optional<FunctionInfo> cached = queryVariantCache.get(key);
+        if (cached != null) return cached.orElse(null);
+        FunctionInfo resolved = VariantSelector.selectQueryVariant(this, name, visibleArgumentCallShape, availableHostRoles);
+        queryVariantCache.put(key, Optional.ofNullable(resolved));
+        return resolved;
     }
 
     @Nullable
     public MethodData findMethod(String name) {
+        Optional<MethodData> cached = methodResolutionCache.get(name);
+        if (cached != null) return cached.orElse(null);
+        MethodData resolved = findMethodUncached(name);
+        methodResolutionCache.put(name, Optional.ofNullable(resolved));
+        return resolved;
+    }
+
+    private @Nullable MethodData findMethodUncached(String name) {
         int i = name.indexOf(".");
 
         String methodName;

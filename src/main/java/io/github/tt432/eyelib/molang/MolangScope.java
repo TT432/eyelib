@@ -102,6 +102,29 @@ public final class MolangScope {
 
     private final Map<String, MolangObject> cache = new ConcurrentHashMap<>();
 
+    // molang `this` 绑定：关键帧语境下恒为标量 float，走专用字段避免每轴 Map 写入与装箱。
+    // 语义与 cache 路径一致：沿 parent 链取最近的绑定。
+    private float thisValue;
+    private boolean thisSet;
+
+    public void setThis(float value) {
+        thisValue = value;
+        thisSet = true;
+    }
+
+    /**
+     * 读取 molang `this` 绑定（逐轴写入目标当前值）。沿 parent 链查找；
+     * 未绑定时回退通用 Map 路径（兜底，正常已无此写入点）。
+     */
+    public MolangObject getThis() {
+        MolangScope scope = this;
+        while (scope != null) {
+            if (scope.thisSet) return MolangFloat.valueOf(scope.thisValue);
+            scope = scope.parent;
+        }
+        return get("this");
+    }
+
     public boolean contains(String name) {
         return cache.containsKey(name) || (parent != null && parent.contains(name));
     }

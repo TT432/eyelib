@@ -60,7 +60,41 @@
 - **语义保持**:selectQueryVariant 等价语义(最高 specificity 中最高 priority 的最后一个候选);hostRoles 只读 contains,不可变 Set 安全。
 - **验证**:MolangRuntimeSupport self 1844→556ms(-70%),VariantSelector self 1648→172ms(-90%),selectQueryVariant 几乎归零。
 
-## 验证证据(优化前 → 优化后)
+### Opt7 · molang `this` 绑定字段化
+
+- **文件**:`molang/MolangScope.java`、`molang/MolangValue3.java`、`animation/bedrock/BrBoneKeyFrame.java`、`molang/compiler/MolangBytecodeEmitter.java`
+- **根因**:关键帧逐轴求值前 `scope.set("this", v)` 走 `MolangFloat.valueOf`(非 0/1 即 new)+ `ConcurrentHashMap.put`,96 实体约 21,600 次 put + 装箱/帧。
+- **方案**:MolangScope 增加 `float thisValue` + `thisSet` 专用字段,`setThis(float)` 写入;`getThis()` 沿 parent 链读取(语义与原 cache 路径一致),未绑定时回退 `get("this")` 兑底。字节码发射器 `BoundThisExpr` 改发 `getThis()` 调用。
+- **语义保持**:全部 `this` 写入点均为标量 float(grep 验证);单测 `this`=0(无动画上下文)行为不变。
+
+### Opt8 · 动画空通道短路
+
+- **文件**:`animation/bedrock/BrClipExecutor.java`、`animation/bedrock/BrBoneAnimation.java`、`util/collection/ImmutableFloatTreeMap.java`
+- **根因**:无关键帧的通道(position/scale 常为空)仍执行 12 行 `this*` 计算(含 bind 读取)+ 2 次 TreeMap 查找后返回 null。
+- **方案**:BrBoneAnimation 增加 `hasRotation/hasPosition/hasScale`(构造后资源不可变),BrClipExecutor 按通道守卫,全空骨骼连同 bind 查询一起跳过。
+
+### Opt9 · MolangMappingTree 名称解析缓存
+
+- **文件**:`molang/mapping/api/MolangMappingTree.java`
+- **根因**:`findField`/`findMethod`/`selectQueryVariant` 每次调用做 `toLowerCase` + findNode 遍历 + 变体选择,结果只取决于注册表内容。spark 显示 `StringLatin1.toLowerCase` self 4708ms/60s。
+- **方案**:三级 CHM 缓存(值为 `Optional`,`empty`=已解析为 null),`addNode`/`clear`/`normalizeAndValidatePublicationOrder` 时整体失效。selectQueryVariant 键直接复用调用方集合(callShape 为调用方新造、hostRoles 为共享不可变常量)。
+- **验证**:`StringLatin1.toLowerCase` self 4708→28ms(-99%),`VariantSelector.selectQueryVariant` self 180→0ms。
+- **教训**:首版缓存键用 `List.copyOf`/`Set.copyOf` 防御性拷贝,每次 resolveCall 多 3 次分配,fbo render_work P50 反而 +1.8ms;去掉拷贝后恢复。缓存键设计不得引入超过被缓存计算的成本。
+
+## 验证证据(Opt7-9,2026-07-25)
+
+**clientBenchmark A-B-A 交错(同环境,mixed n96,render_work)**:交错是必需的——同日两次 baseline 差异达 20%(远控 IDD GPU 状态漂移),跨 run 直接对比会得出完全相反的结论。
+
+| 轮次 | fbo P50 | world P50 | fbo P99 | world P99 |
+|---|---:|---:|---:|---:|
+| 优化后 run1 | 8.43 | 47.57 | 15.42 | 76.42 |
+| baseline(同环境) | 10.71 | 59.80 | 15.32 | 91.66 |
+| 优化后 run2 | 8.18 | 48.71 | 11.52 | 71.93 |
+
+- **fbo render_work P50: 10.71 → 8.31 ms(均值) = -22.4%**
+- **world render_work P50: 59.80 → 48.14 ms(均值) = -19.5%**
+- spark 前后链接:before https://spark.lucko.me/SyEtXi9c7c after https://spark.lucko.me/PP3G4voelR(仅作方法级归因,总量不可跨 run 比——60s 窗口 self-time 受帧率与环境影响,见 方法论局限 4)
+
 
 ### T2 · 稳态渲染(60s)
 
@@ -139,3 +173,4 @@
 1. **Java sampler safepoint bias**:对 fillInStackTrace / Pattern.compile 这类热点检测可靠,但绝对值是相对排名(self-time 总和可能 > 100%,因 DAG 压缩)。
 2. **RenderDoc 影响**:dev 客户端若以 RenderDoc capture 模式启动,CPU/堆有轻微 hook 开销,应在非 RenderDoc 环境复测确认。
 3. **单次采样**:每类只做一次 profile,目标是识别瓶颈(非精确基准)。
+4. **spark 总量不可跨 run 比较(2026-07-25 实证)**:60s 窗口的 self-time 正比于窗口内帧数 × 每帧成本,且受机器状态(热状态、远控 IDD GPU 驱动状态)影响。两次同代码 run 的 eyelib self 可差 30%+,环境差异足以掩盖 ±20% 的真实优化。spark 用于方法级归因(哪个方法热),**幅度结论必须用 clientBenchmark A-B-A 交错**(baseline/候选在同会话交替跑)。

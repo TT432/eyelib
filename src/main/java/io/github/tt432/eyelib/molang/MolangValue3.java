@@ -76,11 +76,11 @@ public record MolangValue3(
      * （Mojang molang syntax-guide），在关键帧语境下为该骨骼该通道的当前值。
      */
     public Vector3f evalWithThis(MolangScope scope, float thisX, float thisY, float thisZ) {
-        scope.set("this", thisX);
+        scope.setThis(thisX);
         float x = getX(scope);
-        scope.set("this", thisY);
+        scope.setThis(thisY);
         float y = getY(scope);
-        scope.set("this", thisZ);
+        scope.setThis(thisZ);
         float z = getZ(scope);
         return new Vector3f(x, y, z);
     }

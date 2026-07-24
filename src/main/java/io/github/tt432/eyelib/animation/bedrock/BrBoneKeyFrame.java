@@ -124,18 +124,18 @@ public record BrBoneKeyFrame(
         ArrayList<Vector2f> points = new ArrayList<>();
 
         if (firstPointPredicate) {
-            scope.set("this", thisValue);
+            scope.setThis(thisValue);
             points.add(new Vector2f(beforePlus.timestamp(), function.apply(beforePlus.getPost(), scope)));
         }
 
-        scope.set("this", thisValue);
+        scope.setThis(thisValue);
         points.add(new Vector2f(before.timestamp(), function.apply(before.getPost(), scope)));
 
-        scope.set("this", thisValue);
+        scope.setThis(thisValue);
         points.add(new Vector2f(after.timestamp(), function.apply(after.getPre(), scope)));
 
         if (lastPointPredicate) {
-            scope.set("this", thisValue);
+            scope.setThis(thisValue);
             points.add(new Vector2f(afterPlus.timestamp(), function.apply(afterPlus.getPre(), scope)));
         }
 
@@ -150,18 +150,18 @@ public record BrBoneKeyFrame(
         ArrayList<Vector2f> points = new ArrayList<>();
 
         if (firstPointPredicate) {
-            scope.set("this", thisValue);
+            scope.setThis(thisValue);
             points.add(new Vector2f(beforePlus.timestamp(), function.apply(getValue(beforePlus, false), scope)));
         }
 
-        scope.set("this", thisValue);
+        scope.setThis(thisValue);
         points.add(new Vector2f(before.timestamp(), function.apply(getValue(before, false), scope)));
 
-        scope.set("this", thisValue);
+        scope.setThis(thisValue);
         points.add(new Vector2f(after.timestamp(), function.apply(getValue(after, true), scope)));
 
         if (lastPointPredicate) {
-            scope.set("this", thisValue);
+            scope.setThis(thisValue);
             points.add(new Vector2f(afterPlus.timestamp(), function.apply(getValue(afterPlus, true), scope)));
         }
 
@@ -186,15 +186,15 @@ public record BrBoneKeyFrame(
         var am3 = current.dataPoints().size() > 1 && current.timestamp() < other.timestamp() ? getValue(current, false) : getValue(current, true);
         var bm3 = other.dataPoints().size() > 1 && current.timestamp() > other.timestamp() ? getValue(other, false) : getValue(other, true);
 
-        scope.set("this", thisX);
+        scope.setThis(thisX);
         float ax = am3.getX(scope);
         float bx = bm3.getX(scope);
 
-        scope.set("this", thisY);
+        scope.setThis(thisY);
         float ay = am3.getY(scope);
         float by = bm3.getY(scope);
 
-        scope.set("this", thisZ);
+        scope.setThis(thisZ);
         float az = am3.getZ(scope);
         float bz = bm3.getZ(scope);
 

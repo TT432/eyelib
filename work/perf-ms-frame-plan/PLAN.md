@@ -51,7 +51,9 @@ E=实体，A=活跃动画，B=骨骼，V=顶点/骨骼。96 实体规模下分�
 
 ## 3. 动画执行子任务
 
-### A1 · `this` 绑定字段化（P0，预期收益最高）
+> 实施状态（2026-07-25）：A1、A2、A7（新增，见下）已合入。同环境 A-B-A benchmark：fbo render_work P50 -22.4%，world P50 -19.5%。详见 docs/perf/spark-baseline-and-optimizations.md Opt7/8/9。
+
+### A1 · `this` 绑定字段化（P0，预期收益最高）【已合入 Opt7】
 
 - **位置**：`MolangScope.java`（set/get "this"）、`MolangValue3.java:76-86`（evalWithThis）、`MolangBytecodeEmitter`（this 读取指令）。
 - **现状**：每轴求值前 `scope.set("this", v)` → `MolangFloat.valueOf`（非 0/1 即 new）→ `ConcurrentHashMap.put`；求值时 `cache.get("this")` + parent 链检查。96 实体 ≈ 21,600 次 put + 21,600 次 get/帧。
@@ -62,7 +64,7 @@ E=实体，A=活跃动画，B=骨骼，V=顶点/骨骼。96 实体规模下分�
 - **副作用/风险**：若有脚本/实体语境把 `this` 绑为实体对象（Bedrock `q.this`？），字段化会丢语义——抽验时未发现此类用法，实施前必须 grep 验证。
 - **验证**：spark 60s 对比（MolangFloat 分配、Expr.evaluate self）；mixed n96 benchmark。
 
-### A2 · 空通道短路（P0，风险最低）
+### A2 · 空通道短路（P0，风险最低）【已合入 Opt8】
 
 - **位置**：`BrClipExecutor.java:54-93`、`BrBoneAnimation.java`（sample/lerp*）。
 - **现状**：无关键帧的通道（position/scale 常为空）仍执行：12 行 `this*` 计算（含 bind 读取、乘法）+ `BrBoneAnimationSampler.sample` → 2 次 `ImmutableFloatTreeMap` 查找 → 返回 null。空通道在白名单骨骼上占比通常 ≥50%。
@@ -93,6 +95,11 @@ E=实体，A=活跃动画，B=骨骼，V=顶点/骨骼。96 实体规模下分�
 ### A6 · transition 求值短路（P3，暂缓）
 
 - 依赖编译期"tick-independent"标记，语义失效风险大于收益。列入但不排期。
+
+### A7 · MolangMappingTree 名称解析缓存（P0，计划中新增，已合入 Opt9）
+
+- spark 基线实測发现：`resolveMemberAccess`/`selectQueryVariant` 路径的 `findField`/`findMethod` 每次调用做 `toLowerCase` + findNode 遍历，`StringLatin1.toLowerCase` self 4708ms/60s，超过 A1/A2 的预期收益。
+- 方案与验证见 docs/perf/spark-baseline-and-optimizations.md Opt9（含缓存键防御性拷贝反而引入回归的教训）。
 
 ## 4. 渲染子任务
 

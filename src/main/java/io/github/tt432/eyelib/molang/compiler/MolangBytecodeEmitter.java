@@ -158,8 +158,7 @@ public final class MolangBytecodeEmitter {
             emitExpr(code, grouping.expression(), state);
         } else if (expr instanceof BoundMolang.BoundThisExpr) {
             code.aload(1);
-            code.ldc("this");
-            code.invokevirtual(CD_MOLANG_SCOPE, "get", MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_STRING));
+            code.invokevirtual(CD_MOLANG_SCOPE, "getThis", MethodTypeDesc.of(CD_MOLANG_OBJECT));
         } else if (expr instanceof BoundMolang.BoundBreakExpr) {
             code.goto_(currentLoopContext(state).breakLabel());
             code.aconst_null();
