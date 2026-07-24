@@ -13,6 +13,7 @@ def isLegacyForge = sc.current.parsed.matches '<1.20.6'
 def isModern = sc.current.parsed.matches '>=26.1'
 // 26.1+ 移除了 additionalRuntimeClasspath 配置（模块层系统变更）
 def hasAdditionalRuntimeClasspath = sc.current.parsed.matches '<26.1'
+def benchmarkProperty = { String name, String defaultValue -> System.getProperty(name, defaultValue) }
 
 // Stonecutter 常量：源码中用 //? if legacy / //? if modern 做三路分支
 stonecutter {
@@ -136,6 +137,28 @@ if (isLegacyForge) {
                 systemProperty 'clientsmoke.autoExit', 'true'
             }
 
+            clientBenchmark {
+                client()
+                gameDirectory = project.file('run/benchmark')
+                systemProperty 'forge.enabledGameTestNamespaces', project.mod_id
+                systemProperty 'eyelib.benchmark.enabled', 'true'
+                systemProperty 'eyelib.benchmark.autoExit', benchmarkProperty('eyelib.benchmark.autoExit', 'true')
+                systemProperty 'eyelib.benchmark.modes', benchmarkProperty('eyelib.benchmark.modes', 'fbo,world,pacing,stability')
+                systemProperty 'eyelib.benchmark.entity', benchmarkProperty('eyelib.benchmark.entity', 'minecraft:slime')
+                systemProperty 'eyelib.benchmark.counts', benchmarkProperty('eyelib.benchmark.counts', '1,16,64')
+                systemProperty 'eyelib.benchmark.warmupSeconds', benchmarkProperty('eyelib.benchmark.warmupSeconds', '15')
+                systemProperty 'eyelib.benchmark.measureSeconds', benchmarkProperty('eyelib.benchmark.measureSeconds', '30')
+                systemProperty 'eyelib.benchmark.stabilityWarmupSeconds', benchmarkProperty('eyelib.benchmark.stabilityWarmupSeconds', '30')
+                systemProperty 'eyelib.benchmark.stabilitySeconds', benchmarkProperty('eyelib.benchmark.stabilitySeconds', '600')
+                systemProperty 'eyelib.benchmark.pacingCount', benchmarkProperty('eyelib.benchmark.pacingCount', '16')
+                systemProperty 'eyelib.benchmark.stabilityCount', benchmarkProperty('eyelib.benchmark.stabilityCount', '64')
+                systemProperty 'eyelib.benchmark.fboSize', benchmarkProperty('eyelib.benchmark.fboSize', '512')
+                systemProperty 'eyelib.benchmark.stabilizeTicks', benchmarkProperty('eyelib.benchmark.stabilizeTicks', '100')
+                systemProperty 'eyelib.benchmark.maxSamples', benchmarkProperty('eyelib.benchmark.maxSamples', '2000000')
+                systemProperty 'eyelib.preventMouseGrab', 'true'
+                programArguments.addAll '--width', '1280', '--height', '720'
+            }
+
             server {
                 server()
                 programArgument '--nogui'
@@ -211,6 +234,28 @@ if (isLegacyForge) {
                 systemProperty 'neoforge.enabledGameTestNamespaces', 'clientsmoke'
                 systemProperty 'clientsmoke.enabled', 'true'
                 systemProperty 'clientsmoke.autoExit', 'true'
+            }
+
+            clientBenchmark {
+                client()
+                gameDirectory = project.file('run/benchmark')
+                systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+                systemProperty 'eyelib.benchmark.enabled', 'true'
+                systemProperty 'eyelib.benchmark.autoExit', benchmarkProperty('eyelib.benchmark.autoExit', 'true')
+                systemProperty 'eyelib.benchmark.modes', benchmarkProperty('eyelib.benchmark.modes', 'fbo,world,pacing,stability')
+                systemProperty 'eyelib.benchmark.entity', benchmarkProperty('eyelib.benchmark.entity', 'minecraft:slime')
+                systemProperty 'eyelib.benchmark.counts', benchmarkProperty('eyelib.benchmark.counts', '1,16,64')
+                systemProperty 'eyelib.benchmark.warmupSeconds', benchmarkProperty('eyelib.benchmark.warmupSeconds', '15')
+                systemProperty 'eyelib.benchmark.measureSeconds', benchmarkProperty('eyelib.benchmark.measureSeconds', '30')
+                systemProperty 'eyelib.benchmark.stabilityWarmupSeconds', benchmarkProperty('eyelib.benchmark.stabilityWarmupSeconds', '30')
+                systemProperty 'eyelib.benchmark.stabilitySeconds', benchmarkProperty('eyelib.benchmark.stabilitySeconds', '600')
+                systemProperty 'eyelib.benchmark.pacingCount', benchmarkProperty('eyelib.benchmark.pacingCount', '16')
+                systemProperty 'eyelib.benchmark.stabilityCount', benchmarkProperty('eyelib.benchmark.stabilityCount', '64')
+                systemProperty 'eyelib.benchmark.fboSize', benchmarkProperty('eyelib.benchmark.fboSize', '512')
+                systemProperty 'eyelib.benchmark.stabilizeTicks', benchmarkProperty('eyelib.benchmark.stabilizeTicks', '100')
+                systemProperty 'eyelib.benchmark.maxSamples', benchmarkProperty('eyelib.benchmark.maxSamples', '2000000')
+                systemProperty 'eyelib.preventMouseGrab', 'true'
+                programArguments.addAll '--width', '1280', '--height', '720'
             }
 
             server {
@@ -604,6 +649,7 @@ tasks.register('generateModulesMd') {
             return result.join(' ') ?: null
         }
 
+
         File[] subdirs = modulesDir.listFiles({ File f -> f.isDirectory() } as FileFilter)
         if (subdirs == null) {
             throw new GradleException("Cannot read modules dir: ${modulesDir}")
@@ -648,6 +694,39 @@ tasks.register('generateModulesMd') {
     }
 }
 
+def copyBenchmarkResourcepacks = tasks.register('copyBenchmarkResourcepacks', Copy) {
+    from project.file('run/resourcepacks')
+    into project.file('run/benchmark/resourcepacks')
+}
+
+def copyBenchmarkOptions = tasks.register('copyBenchmarkOptions', Copy) {
+    from project.file('run/options.txt')
+    into project.file('run/benchmark')
+}
+
+def prepareBenchmarkGameDirectory = tasks.register('prepareBenchmarkGameDirectory') {
+    dependsOn copyBenchmarkResourcepacks, copyBenchmarkOptions
+    def optionsFile = project.file('run/options.txt')
+    def resourcepackDir = project.file('run/resourcepacks')
+    doLast {
+        if (!optionsFile.isFile()) {
+            throw new GradleException("Benchmark requires ${optionsFile}")
+        }
+        def packs = resourcepackDir.listFiles({ File file -> file.isFile() } as FileFilter)
+        if (packs == null || packs.length == 0) {
+            throw new GradleException("Benchmark requires at least one resource pack in ${resourcepackDir}")
+        }
+    }
+}
+
+tasks.matching { it.name == 'runClientBenchmark' }.configureEach {
+    dependsOn prepareBenchmarkGameDirectory
+}
+
+tasks.matching { it.name == 'prepareClientBenchmarkRun' }.configureEach {
+    dependsOn prepareBenchmarkGameDirectory
+}
+
 // NeoForge <26.1（ModDevGradle 1.x）不将 localRuntime 中的外部 mod jar 注册到 mod discovery。
 // 通过将 clientsmoke jar 复制到 run/clientsmoke/mods/ 目录，让 NeoForge mod discovery 扫描到它。
 if (!isLegacyForge && hasAdditionalRuntimeClasspath) {
@@ -655,6 +734,17 @@ if (!isLegacyForge && hasAdditionalRuntimeClasspath) {
         from(configurations.clientsmokeJar)
         into project.file('run/clientsmoke/mods')
         rename { 'clientsmoke.jar' }
+    }
+    tasks.register('copyClientsmokeToBenchmarkMods', Copy) {
+        from(configurations.clientsmokeJar)
+        into project.file('run/benchmark/mods')
+        rename { 'clientsmoke.jar' }
+    }
+    tasks.matching { it.name == 'runClientBenchmark' }.configureEach {
+        dependsOn 'copyClientsmokeToBenchmarkMods'
+    }
+    tasks.matching { it.name == 'prepareClientBenchmarkRun' }.configureEach {
+        dependsOn 'copyClientsmokeToBenchmarkMods'
     }
     // 在构建产物生成后复制（createMinecraftArtifacts 是 ModDevGradle 的产物任务）
     tasks.named('createMinecraftArtifacts') {

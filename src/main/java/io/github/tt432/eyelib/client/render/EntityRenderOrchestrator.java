@@ -92,6 +92,33 @@ public final class EntityRenderOrchestrator {
         );
     }
 
+    /** Cumulative successful Eyelib entity renders, exposed for dev diagnostics. */
+    public static int getRenderCount() {
+        return renderCount;
+    }
+
+    /** Cumulative render failures, exposed for dev diagnostics. */
+    public static int getErrorCount() {
+        return errorCount;
+    }
+
+    /** First recorded render failure, or {@code null} when no failure occurred. */
+    public static @Nullable String getLastError() {
+        return lastError;
+    }
+
+    /** Resets dev-only render diagnostics before an isolated measurement. */
+    public static void resetDiagnostics() {
+        renderCount = 0;
+        errorCount = 0;
+        lastError = null;
+    }
+
+    /** Initializes a detached dev-scene entity before it enters the render-only benchmark loop. */
+    public static void prepareDetachedEntity(Entity entity) {
+        setup(entity).forEach(Runnable::run);
+    }
+
     private static Stream<Entity> entities() {
         net.minecraft.client.multiplayer.ClientLevel level = getInstance().level;
         return level != null ? StreamSupport.stream(level.entitiesForRendering().spliterator(), false) : Stream.empty();
@@ -206,7 +233,6 @@ public final class EntityRenderOrchestrator {
                                   .animation(cap.getAnimationComponent())
                                   .build()
                                   .render();
-                renderCount++;
                 rootPoseStack.popPose();
             } catch (Throwable t) {
                 errorCount++;
@@ -275,7 +301,11 @@ public final class EntityRenderOrchestrator {
             setupSyncedBehaviorContext(livingEntity, cap.getScope());
         }
 
-        return data.animationNotNull() && renderComponents(data);
+        boolean rendered = data.animationNotNull() && renderComponents(data);
+        if (rendered) {
+            renderCount++;
+        }
+        return rendered;
     }
 
     static boolean renderItemInHand(ModelVisitContext context, SimpleRenderAction<?> action,

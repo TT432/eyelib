@@ -50,6 +50,9 @@ public final class RenderLivingEventAdapter {
      */
     public static boolean suppressRenderEvents = false;
 
+    /** Detached entity currently rendered by the dev FBO benchmark. */
+    public static @org.jspecify.annotations.Nullable LivingEntity sceneEntityOverride;
+
     //? if <26.1 {
     @SubscribeEvent
     public static <E extends LivingEntity, M extends EntityModel<E>> void onEvent(RenderLivingEvent.Pre<E, M> event) {
@@ -70,7 +73,10 @@ public final class RenderLivingEventAdapter {
     public static <T extends LivingEntity, S extends net.minecraft.client.renderer.entity.state.LivingEntityRenderState, M extends EntityModel<? super S>> void onEvent(
             RenderLivingEvent.Pre<T, S, M> event) {
         var state = event.getRenderState();
-        LivingEntity entity = findEntityByRenderState(state.entityType, state.x, state.y, state.z, event.getPartialTick());
+        LivingEntity entity = sceneEntityOverride;
+        if (entity == null) {
+            entity = findEntityByRenderState(state.entityType, state.x, state.y, state.z, event.getPartialTick());
+        }
         if (entity == null) return;
 
         // 几何走 RenderSink 延迟提交（submitCustomGeometry，renderAllFeatures 阶段绘制）；

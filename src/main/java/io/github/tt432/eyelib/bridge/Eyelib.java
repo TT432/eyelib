@@ -50,6 +50,23 @@ public class Eyelib {
         //?} else {
         bus.addListener(io.github.tt432.eyelib.bridge.network.adapter.EyelibNetworkTransport::onRegisterPayloads);
         //?}
+
+        if (Boolean.getBoolean("eyelib.benchmark.enabled")) {
+            try {
+                Class.forName("io.github.tt432.eyelib.debug.benchmark.ClientBenchmarkRunner")
+                        .getMethod("install")
+                        .invoke(null);
+            } catch (java.lang.reflect.InvocationTargetException e) {
+                Throwable cause = e.getCause();
+                Throwable root = cause == null ? e : cause;
+                while (root.getCause() != null && root.getCause() != root) {
+                    root = root.getCause();
+                }
+                throw new IllegalStateException("Failed to install Eyelib benchmark runner: " + root, root);
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException("Failed to install Eyelib benchmark runner", e);
+            }
+        }
     }
 }
 

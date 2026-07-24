@@ -17,6 +17,7 @@
 | Molang 重构路线图 | [molang/ROADMAP.md](molang/ROADMAP.md) |
 | Bedrock JE/BE 复刻对比方法 | [concepts/bedrock-parity-investigation.md](concepts/bedrock-parity-investigation.md) |
 | Spark 性能基线与优化 | [perf/spark-baseline-and-optimizations.md](perf/spark-baseline-and-optimizations.md) |
+| 渲染 FPS / 稳定性 Benchmark | [perf/render-fps-benchmark.md](perf/render-fps-benchmark.md) |
 
 ## Skill 索引
 
