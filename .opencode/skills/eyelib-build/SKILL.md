@@ -37,7 +37,7 @@ metadata:
 
 ## 关键约束
 
-- **`FROM-CACHE` / `UP-TO-DATE` 是可接受的**: Gradle 输入跟踪可靠。仅当你改了测试源但 Gradle 报 UP-TO-DATE 时,清掉对应模块的 `build/` 目录再跑。
+- **`FROM-CACHE` / `UP-TO-DATE` 是否可接受取决于验证目标**: 回归门禁（“当前输入下测试通过”）可接受——Gradle 输入跟踪可靠，缓存命中意味着相同输入此前已成功。行为证据（新测试首次验证、性能测量、运行时诊断）不可接受——test 任务 `FROM-CACHE`/`UP-TO-DATE` 表示本次没有执行任何测试，清掉对应模块的 `build/` 目录再跑，并引用真实执行输出。
 - **禁止 `--no-build-cache`**: 会强制 MC Forge artifacts 全量重建。需要清缓存时只清相关模块的 `build/`。
 - **结构/代码改动**: 完成后必须 `mcmcp_build`,exit code = 0 才算完成。
 - **runtime-sensitive 改动**: 先编译,再用 dev client(eyelib-debug)做 smoke check。

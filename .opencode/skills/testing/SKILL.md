@@ -61,5 +61,5 @@ A single bug typically requires all three: explore to find the problem → unit 
 - Writing a smoke test for something a unit test can catch
 - Guessing runtime state instead of probing it with the debug endpoint
 - Leaving a runtime discovery undocumented (no follow-up unit test)
-- **Trusting Gradle `FROM-CACHE` or `UP-TO-DATE`** — if a test task shows no tests executed (0 tests, 0 failed, 0 skipped) or all tasks are `FROM-CACHE`, the tests did NOT run. Clear the project build directory and re-run.
+- **不区分验证目标地对待 Gradle `FROM-CACHE` / `UP-TO-DATE`** — 是否可接受取决于验证目标：回归门禁（“当前输入下测试通过”）可接受，Gradle 输入跟踪可靠，缓存命中意味着相同输入此前已成功；行为证据（“本次改动被执行/测量过”，如新测试首次验证、性能测量、运行时诊断）不可接受——test 任务 `FROM-CACHE`/`UP-TO-DATE` 或报告显示 0 tests 表示本次没有执行任何测试，清掉对应模块的 `build/` 目录和配置缓存（`.gradle/configuration-cache`）后重跑，并引用真实执行输出。
 - **Using `--no-build-cache`** — never pass this to Gradle. It forces a full rebuild of MC Forge artifacts taking 30+ minutes. Clear only the affected module's `build/` directory and the configuration cache (`.gradle/configuration-cache`).
