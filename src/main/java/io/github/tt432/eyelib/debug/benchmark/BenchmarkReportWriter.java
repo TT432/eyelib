@@ -74,6 +74,7 @@ final class BenchmarkReportWriter {
                 + field("kind", scenario.kind().name(), true)
                 + field("purpose", scenario.purpose().name(), true)
                 + field("entity_id", scenario.entityId(), true)
+                + field("entity_mix", scenario.entityComposition(), true)
                 + numberField("configured_entity_count", result.configuredEntityCount(), true)
                 + numberField("actual_entity_count", result.actualEntityCount(), true)
                 + numberField("target_fps", scenario.targetFps(), true)

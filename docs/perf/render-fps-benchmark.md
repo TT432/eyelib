@@ -53,9 +53,10 @@ cmd /c gradlew.bat ^
 
 | 属性 | 默认值 | 语义 |
 |---|---:|---|
-| `eyelib.benchmark.modes` | `fbo,world,pacing,stability` | 逗号分隔场景类型 |
-| `eyelib.benchmark.entity` | `minecraft:slime` | MC 实体注册表 ID |
-| `eyelib.benchmark.counts` | `1,16,64` | FBO/WORLD uncapped 数量阶梯 |
+| `eyelib.benchmark.modes` | `fbo,world,pacing,stability` | 逗号分隔场景类型；增加 `mixed` 运行混合实体 FBO/WORLD throughput 场景 |
+| `eyelib.benchmark.entity` | `minecraft:slime` | 单实体场景使用的 MC 实体注册表 ID |
+| `eyelib.benchmark.entityMix` | `minecraft:slime=24,minecraft:zombie=24,minecraft:skeleton=24,minecraft:cow=24` | `entity_id=count` 逗号分隔；仅由 `mixed` 场景使用，最多 16 种、总数最多 4096 |
+| `eyelib.benchmark.counts` | `1,16,64` | FBO/WORLD 单实体 uncapped 数量阶梯 |
 | `eyelib.benchmark.warmupSeconds` | `15` | 普通/pacing warmup |
 | `eyelib.benchmark.measureSeconds` | `30` | 普通/pacing measure |
 | `eyelib.benchmark.pacingCount` | `16` | pacing 场景实体数 |
@@ -66,6 +67,21 @@ cmd /c gradlew.bat ^
 | `eyelib.benchmark.fboSize` | `512` | FBO 边长 |
 | `eyelib.benchmark.maxSamples` | `2000000` | 每场景帧缓冲容量，满则失败 |
 | `eyelib.benchmark.autoExit` | `true` | 完成后关闭客户端 |
+
+混合场景示例（默认 4 种实体、总数 96，比当前单实体最大阶梯 64 高 50%）：
+
+```bat
+cmd /c gradlew.bat ^
+  -Deyelib.benchmark.modes=mixed ^
+  -Deyelib.benchmark.entityMix=minecraft:slime=24,minecraft:zombie=24,minecraft:skeleton=24,minecraft:cow=24 ^
+  -Deyelib.benchmark.warmupSeconds=5 ^
+  -Deyelib.benchmark.measureSeconds=30 ^
+  :1.20.1:runClientBenchmark
+```
+
+混合场景默认不加入既有矩阵，避免破坏历史 baseline；显式加入 `mixed` 后会额外运行一个 FBO 和一个 WORLD 场景。FBO 中的实体必须是 `LivingEntity`。报告 metadata 的 `entity_mix` 固化顺序和数量。
+
+压力建议：先用总数 96（约为当前最大 64 的 1.5 倍）验证，再按 128、192 阶梯增加。更高数量确实更容易暴露容量、批处理和 GC 问题，但实体种类多样性本身更容易暴露共享模型姿态、材质/动画状态泄漏；每次只改变总数或组成之一，并与同版本 baseline 对比。
 
 短功能验证示例：
 

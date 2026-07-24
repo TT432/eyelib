@@ -45,7 +45,6 @@ final class WorldBenchmarkWorkload implements BenchmarkWorkload {
         }
         this.server = integratedServer;
         this.scenario = scenario;
-        EntityType<?> entityType = BenchmarkEntityTypes.resolve(scenario.entityId());
         var dimension = minecraft.level.dimension();
         UUID playerId = minecraft.player.getUUID();
 
@@ -82,32 +81,38 @@ final class WorldBenchmarkWorkload implements BenchmarkWorkload {
                 int columns = Math.max(1, (int) Math.ceil(Math.sqrt(scenario.entityCount())));
                 double spacing = 2.25;
                 Set<UUID> entityIds = new HashSet<>();
-                for (int i = 0; i < scenario.entityCount(); i++) {
-                    //? if <26.1 {
-                    Entity entity = entityType.create(level);
-                    //?} else {
-                    Entity entity = entityType.create(level, EntitySpawnReason.COMMAND);
-                    //?}
-                    if (entity == null) {
-                        throw new IllegalStateException("Failed to create server entity " + scenario.entityId() + " at index " + i);
+                int entityIndex = 0;
+                for (BenchmarkScenario.EntitySpec spec : scenario.entitySpecs()) {
+                    EntityType<?> entityType = BenchmarkEntityTypes.resolve(spec.id());
+                    for (int i = 0; i < spec.count(); i++) {
+                        //? if <26.1 {
+                        Entity entity = entityType.create(level);
+                        //?} else {
+                        Entity entity = entityType.create(level, EntitySpawnReason.COMMAND);
+                        //?}
+                        if (entity == null) {
+                            throw new IllegalStateException("Failed to create server entity " + spec.id()
+                                    + " at index " + entityIndex);
+                        }
+                        int column = entityIndex % columns;
+                        int row = entityIndex / columns;
+                        double x = (column - (columns - 1) / 2.0) * spacing;
+                        double z = -row * spacing;
+                        entity.setPos(x, 1.0, z);
+                        entity.setNoGravity(true);
+                        entity.setInvulnerable(true);
+                        entity.setSilent(true);
+                        entity.addTag(BENCHMARK_TAG);
+                        if (entity instanceof Mob mob) {
+                            mob.setNoAi(true);
+                        }
+                        if (!level.addFreshEntity(entity)) {
+                            throw new IllegalStateException("Server rejected benchmark entity " + entityIndex);
+                        }
+                        serverEntities.add(entity);
+                        entityIds.add(entity.getUUID());
+                        entityIndex++;
                     }
-                    int column = i % columns;
-                    int row = i / columns;
-                    double x = (column - (columns - 1) / 2.0) * spacing;
-                    double z = -row * spacing;
-                    entity.setPos(x, 1.0, z);
-                    entity.setNoGravity(true);
-                    entity.setInvulnerable(true);
-                    entity.setSilent(true);
-                    entity.addTag(BENCHMARK_TAG);
-                    if (entity instanceof Mob mob) {
-                        mob.setNoAi(true);
-                    }
-                    if (!level.addFreshEntity(entity)) {
-                        throw new IllegalStateException("Server rejected benchmark entity " + i);
-                    }
-                    serverEntities.add(entity);
-                    entityIds.add(entity.getUUID());
                 }
                 spawnedEntityIds = Set.copyOf(entityIds);
                 serverPrepared = true;

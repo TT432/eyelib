@@ -36,23 +36,27 @@ final class FboBenchmarkWorkload implements BenchmarkWorkload {
         target = new TextureTarget(scenario.fboSize(), scenario.fboSize(), true, Minecraft.ON_OSX);
         //?}
 
-        EntityType<?> entityType = BenchmarkEntityTypes.resolve(scenario.entityId());
-        for (int i = 0; i < scenario.entityCount(); i++) {
-            //? if <26.1 {
-            Entity entity = entityType.create(minecraft.level);
-            //?} else {
-            Entity entity = entityType.create(minecraft.level, EntitySpawnReason.COMMAND);
-            //?}
-            if (entity == null) {
-                throw new IllegalStateException("Failed to create client entity " + scenario.entityId() + " at index " + i);
+        int entityIndex = 0;
+        for (BenchmarkScenario.EntitySpec spec : scenario.entitySpecs()) {
+            EntityType<?> entityType = BenchmarkEntityTypes.resolve(spec.id());
+            for (int i = 0; i < spec.count(); i++) {
+                //? if <26.1 {
+                Entity entity = entityType.create(minecraft.level);
+                //?} else {
+                Entity entity = entityType.create(minecraft.level, EntitySpawnReason.COMMAND);
+                //?}
+                if (entity == null) {
+                    throw new IllegalStateException("Failed to create client entity " + spec.id() + " at index " + entityIndex);
+                }
+                if (!(entity instanceof LivingEntity)) {
+                    throw new IllegalArgumentException("FBO benchmark requires living entities: " + spec.id());
+                }
+                entity.setPos(0.0, 0.0, 0.0);
+                entity.tickCount = 20 + entityIndex;
+                EntityRenderOrchestrator.prepareDetachedEntity(entity);
+                entities.add(entity);
+                entityIndex++;
             }
-            if (!(entity instanceof LivingEntity)) {
-                throw new IllegalArgumentException("FBO benchmark requires a living entity: " + scenario.entityId());
-            }
-            entity.setPos(0.0, 0.0, 0.0);
-            entity.tickCount = 20 + i;
-            EntityRenderOrchestrator.prepareDetachedEntity(entity);
-            entities.add(entity);
         }
     }
 
