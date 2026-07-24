@@ -21,11 +21,7 @@ import net.neoforged.neoforge.common.NeoForge;
 //?}
 
 import org.jspecify.annotations.Nullable;
-import com.sun.management.OperatingSystemMXBean;
 import java.io.IOException;
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryUsage;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -38,7 +34,7 @@ public final class ClientBenchmarkRunner {
 
     private final List<BenchmarkScenario> scenarios;
     private final BenchmarkReportWriter reportWriter;
-    private final @Nullable OperatingSystemMXBean operatingSystemBean;
+    private final AsyncResourceSampler resourceSampler;
 
     private State state = State.INIT;
     private int scenarioIndex;
@@ -50,7 +46,7 @@ public final class ClientBenchmarkRunner {
     private long prepareStartTick = -1L;
     private long phaseStartNs;
     private long lastFrameStartNs;
-    private long lastResourceSampleNs;
+    private long lastResourceSequence;
     private int lastRenderCount;
     private boolean scenarioReported;
     private boolean terminalHandled;
@@ -60,8 +56,7 @@ public final class ClientBenchmarkRunner {
     private ClientBenchmarkRunner() throws IOException {
         scenarios = ClientBenchmarkConfig.scenarios();
         reportWriter = new BenchmarkReportWriter();
-        java.lang.management.OperatingSystemMXBean bean = ManagementFactory.getOperatingSystemMXBean();
-        operatingSystemBean = bean instanceof OperatingSystemMXBean osBean ? osBean : null;
+        resourceSampler = new AsyncResourceSampler();
     }
 
     /** Installs the runner only when explicitly enabled by the dedicated run configuration. */
@@ -155,6 +150,7 @@ public final class ClientBenchmarkRunner {
     }
 
     private void handleInit(Minecraft minecraft) throws Exception {
+        resourceSampler.start();
         Options options = minecraft.options;
         originalOptions = new OptionSnapshot(
                 options.enableVsync().get(),
@@ -225,7 +221,7 @@ public final class ClientBenchmarkRunner {
             }
             phaseStartNs = System.nanoTime();
             lastFrameStartNs = 0L;
-            lastResourceSampleNs = 0L;
+            lastResourceSequence = resourceSampler.latest().sequence();
             state = State.WARMUP;
             LOGGER.info("[Benchmark] Warmup started: {} ({}s)", scenario.id(), scenario.warmupSeconds());
             return;
@@ -260,10 +256,7 @@ public final class ClientBenchmarkRunner {
         }
         lastFrameStartNs = nowNs;
 
-        if (lastResourceSampleNs == 0L || nowNs - lastResourceSampleNs >= SECOND_NS) {
-            sampleResources(nowNs);
-            lastResourceSampleNs = nowNs;
-        }
+        captureResourceSample();
 
         long elapsedNs = nowNs - phaseStartNs;
         if (state == State.WARMUP && elapsedNs >= scenario.warmupSeconds() * SECOND_NS) {
@@ -275,27 +268,29 @@ public final class ClientBenchmarkRunner {
         }
     }
 
-    private void sampleResources(long nowNs) {
+    private void captureResourceSample() {
         if (resources == null) {
             return;
         }
-        MemoryUsage heap = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
-        long gcCount = 0L;
-        long gcPauseMs = 0L;
-        for (GarbageCollectorMXBean gc : ManagementFactory.getGarbageCollectorMXBeans()) {
-            long count = gc.getCollectionCount();
-            long time = gc.getCollectionTime();
-            if (count > 0L) {
-                gcCount += count;
-            }
-            if (time > 0L) {
-                gcPauseMs += time;
-            }
+        Throwable samplingFailure = resourceSampler.failure();
+        if (samplingFailure != null) {
+            throw new IllegalStateException("Asynchronous resource sampling failed", samplingFailure);
         }
-        double processCpuLoad = operatingSystemBean == null ? -1.0 : operatingSystemBean.getProcessCpuLoad();
-        if (!resources.record(nowNs, heap.getUsed(), heap.getCommitted(), gcCount, gcPauseMs, processCpuLoad)) {
+        AsyncResourceSampler.Snapshot snapshot = resourceSampler.latest();
+        if (snapshot.sequence() <= lastResourceSequence) {
+            return;
+        }
+        if (!resources.record(
+                snapshot.timestampNs(),
+                snapshot.heapUsedBytes(),
+                snapshot.heapCommittedBytes(),
+                snapshot.gcCount(),
+                snapshot.gcPauseMs(),
+                snapshot.processCpuLoad()
+        )) {
             throw new IllegalStateException("Resource sample buffer overflow at capacity " + resources.capacity());
         }
+        lastResourceSequence = snapshot.sequence();
     }
 
     private void handleCooldown(Minecraft minecraft) throws Exception {
@@ -354,6 +349,7 @@ public final class ClientBenchmarkRunner {
         }
         terminalHandled = true;
         restoreOptions(minecraft);
+        resourceSampler.close();
         unregister();
         if (ClientBenchmarkConfig.shouldAutoExit()) {
             minecraft.stop();
@@ -393,6 +389,7 @@ public final class ClientBenchmarkRunner {
             LOGGER.error("[Benchmark] Failed to close workload after error", closeFailure);
         }
         restoreOptions(minecraft);
+        resourceSampler.close();
         unregister();
         if (ClientBenchmarkConfig.shouldAutoExit()) {
             minecraft.stop();
@@ -427,7 +424,7 @@ public final class ClientBenchmarkRunner {
         frames = null;
         resources = null;
         lastFrameStartNs = 0L;
-        lastResourceSampleNs = 0L;
+        lastResourceSequence = 0L;
     }
 
     private void fail(Throwable throwable) {

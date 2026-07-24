@@ -115,7 +115,7 @@ versions/<version>/run/benchmark/benchmark-reports/
 - 窗口 P50 Theil–Sen slope (`ms/min`)
 - `flat / slowdown / warmup / insufficient-data`
 
-`resources.csv` 每秒记录 heap used/committed、累计 GC count/pause 和 process CPU load。
+`resources.csv` 每秒记录 heap used/committed、累计 GC count/pause 和 process CPU load；JVM/OS 管理接口在独立 daemon 线程采样，渲染线程只复制已发布的 primitive snapshot。
 
 ## 结果有效性
 
