@@ -55,7 +55,7 @@ public class RenderHelper {
         return this;
     }
 
-    {
+    static {
         ManagerEntryChangedEventPublisher.<ManagerEventPort>addListener(e -> {
             if (e.getManagerName().equals(ModelManager.class.getSimpleName()))
                 dfsModels.remove(e.getEntryName());
