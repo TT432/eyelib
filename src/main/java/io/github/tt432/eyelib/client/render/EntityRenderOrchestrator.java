@@ -6,6 +6,8 @@ import io.github.tt432.eyelib.animation.AnimationEffects;
 import io.github.tt432.eyelib.animation.BrAnimator;
 import io.github.tt432.eyelib.animation.ModelRuntimeData;
 import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
+import io.github.tt432.eyelib.bridge.behavior.BehaviorSpawnPort;
+import io.github.tt432.eyelib.common.behavior.VanillaBehaviorEntityLoader;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelib.bridge.capability.DataAttachmentPort;
 import io.github.tt432.eyelib.capability.RenderData;
@@ -116,6 +118,12 @@ public final class EntityRenderOrchestrator {
 
     /** Initializes a detached dev-scene entity before it enters the render-only benchmark loop. */
     public static void prepareDetachedEntity(Entity entity) {
+        if (entity instanceof LivingEntity living) {
+            // detached/dev 场景无服务端 EntityJoinLevelEvent：走同一套行为包 spawn 逻辑，
+            // 保证 variant 语义与实机一致（variant 为真源，JE 实体状态跟随 variant）。
+            VanillaBehaviorEntityLoader.ensureVanillaLoaded(getInstance().gameDirectory.toPath());
+            BehaviorSpawnPort.applyFreshSpawn(living, false);
+        }
         setup(entity).forEach(Runnable::run);
     }
 

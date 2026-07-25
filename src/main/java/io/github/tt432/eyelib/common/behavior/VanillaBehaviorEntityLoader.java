@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.common.behavior;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.github.tt432.eyelib.behavior.BehaviorEntityRegistry;
 import io.github.tt432.eyelib.importer.addon.BrBehaviorEntityFile;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -35,6 +36,20 @@ public final class VanillaBehaviorEntityLoader {
             LOGGER.info("Loaded {} vanilla behavior entities", entities.size());
         }
         return entities.size();
+    }
+
+    /**
+     * 确保 vanilla 行为实体已合入注册表——供无服务端加载链的场景兜底（如客户端 detached/dev 渲染）。
+     * <p>
+     * 注册表非空说明服务端加载链（{@link BehaviorPackAutoLoader}）已发布 vanilla + 附加包，
+     * 直接跳过以免重新合入 vanilla 覆盖附加包对同一实体的覆写。
+     */
+    public static void ensureVanillaLoaded(Path gameDirectory) {
+        if (!BehaviorEntityRegistry.all().isEmpty()) return;
+        synchronized (VanillaBehaviorEntityLoader.class) {
+            if (!BehaviorEntityRegistry.all().isEmpty()) return;
+            mergeIntoRegistry(gameDirectory);
+        }
     }
 
     public static LinkedHashMap<String, BrBehaviorEntityFile> load(Path gameDirectory) {

@@ -1,17 +1,6 @@
 package io.github.tt432.eyelib.bridge;
 
-import io.github.tt432.eyelib.bridge.capability.EyelibAttachableData;
-import io.github.tt432.eyelib.behavior.BehaviorEntityRegistry;
-import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
-import io.github.tt432.eyelib.bridge.attachment.network.adapter.DataAttachmentSyncRuntime;
-import io.github.tt432.eyelib.behavior.BehaviorEntity;
-import io.github.tt432.eyelib.behavior.EntityBehaviorData;
-import io.github.tt432.eyelib.behavior.SyncedBehaviorState;
-import io.github.tt432.eyelib.behavior.component.MarkVariant;
-import io.github.tt432.eyelib.behavior.component.Variant;
-import io.github.tt432.eyelib.behavior.component.group.ComponentGroup;
-import io.github.tt432.eyelib.behavior.component.property.Scale;
-import io.github.tt432.eyelib.behavior.event.logic.LogicNode;
+import io.github.tt432.eyelib.bridge.behavior.adapter.BehaviorSpawnApplicator;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 //? if <1.20.6 {
@@ -25,9 +14,6 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 //?}
-import net.minecraft.core.registries.BuiltInRegistries;
-import java.util.ArrayList;
-import java.util.Optional;
 
 /**
  * @author TT432
@@ -53,43 +39,15 @@ public final class CommonEntityEventHandler {
         if (entity.level().isClientSide()) return;
         if (!(entity instanceof LivingEntity living)) return;
 
-        var key = BuiltInRegistries.ENTITY_TYPE.getKey(living.getType());
-        if (key == null) return;
-
-        BehaviorEntity be = BehaviorEntityRegistry.get(key.toString());
-        if (be == null) return;
-
-        LogicNode spawnEvent = be.events().get("minecraft:entity_spawned");
-        ArrayList<ComponentGroup> groups = spawnEvent == null
-                ? new ArrayList<>(be.component_groups().values())
-                : new ArrayList<>();
-        EntityBehaviorData data = new EntityBehaviorData(Optional.of(be), groups);
-        if (spawnEvent != null) {
-            spawnEvent.eval(data);
-            data.setup();
+        // BE 语义：entity_spawned 仅在生成时触发一次；已持有持久化 SyncedBehaviorState 的
+        // 实体（区块重载、世界重进）不得重新随机化 variant，但仍需用持久化 variant 重新对齐
+        // JE 实体状态（史莱姆尺寸）——variant 为真源，旧版本写下的不一致状态随之收敛。
+        if (BehaviorSpawnApplicator.hasSyncedState(living)) {
+            BehaviorSpawnApplicator.reapplyVariantToEntity(living);
+            return;
         }
 
-        Variant variant = data.component(Variant.class);
-        Scale scale = data.component(Scale.class);
-        MarkVariant markVariant = data.component(MarkVariant.class);
-
-        SyncedBehaviorState state = new SyncedBehaviorState(
-                variant != null ? variant.value() : 0,
-                scale != null ? scale.value() : 1.0f,
-                markVariant != null ? markVariant.value() : 0
-        );
-
-        DataAttachmentHelper.setLocal(
-                EyelibAttachableData.ENTITY_BEHAVIOR_DATA.get(),
-                living,
-                data
-        );
-        DataAttachmentHelper.setLocal(
-                EyelibAttachableData.SYNCED_BEHAVIOR_STATE.get(),
-                living,
-                state
-        );
-        DataAttachmentSyncRuntime.syncTrackedAndSelf(EyelibAttachableData.SYNCED_BEHAVIOR_STATE.get(), living, state);
+        BehaviorSpawnApplicator.applyFreshSpawn(living, true);
     }
 }
 
