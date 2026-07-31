@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 
 /** @author TT432 */
 public record ParticleAppearanceBillboard(
@@ -81,7 +82,8 @@ public record ParticleAppearanceBillboard(
                 return new Vector4f(base.x, base.y, size.x, size.y)
                         .div(textureWidth, textureHeight, textureWidth, textureHeight);
             }
-            return flipbook.get(scope, lifetime, time).div(textureWidth, textureHeight, textureWidth, textureHeight);
+            return flipbook.get(scope, lifetime, time, textureWidth, textureHeight)
+                    .div(textureWidth, textureHeight, textureWidth, textureHeight);
         }
 
         public record Flipbook(
@@ -95,22 +97,36 @@ public record ParticleAppearanceBillboard(
         ) {
             public static final Flipbook EMPTY = new Flipbook(null, null, null, null, null, false, false);
 
-            public static final Codec<Flipbook> CODEC = RecordCodecBuilder.create(ins -> ins.group(
-                    MolangValue2.CODEC.fieldOf("base_UV").forGetter(Flipbook::baseUV),
-                    MolangValue2.CODEC.fieldOf("size_UV").forGetter(Flipbook::sizeUV),
-                    MolangValue2.CODEC.fieldOf("step_UV").forGetter(Flipbook::stepUV),
-                    MolangValue.CODEC.optionalFieldOf("frames_per_second", MolangValue.ZERO).forGetter(Flipbook::framesPerSecond),
-                    MolangValue.CODEC.fieldOf("max_frame").forGetter(Flipbook::maxFrame),
-                    Codec.BOOL.optionalFieldOf("stretch_to_lifetime", false).forGetter(Flipbook::stretchToLifetime),
-                    Codec.BOOL.optionalFieldOf("loop", false).forGetter(Flipbook::loop)
-            ).apply(ins, Flipbook::new));
+            public static final Codec<Flipbook> CODEC = RecordCodecBuilder.create(ins -> {
+                var baseUv = MolangValue2.CODEC.fieldOf("base_UV").forGetter(Flipbook::baseUV);
+                var sizeUv = MolangValue2.CODEC.fieldOf("size_UV").forGetter(Flipbook::sizeUV);
+                var stepUv = MolangValue2.CODEC.fieldOf("step_UV").forGetter(Flipbook::stepUV);
+                var framesPerSecond = MolangValue.CODEC.optionalFieldOf("frames_per_second", MolangValue.ZERO).forGetter(Flipbook::framesPerSecond);
+                // max_frame 官方为可选字段（缺省时按纹理网格推导帧数），见
+                // particle_appearance_billboard_flipbook_data：Default Value 为 not set
+                var maxFrame = MolangValue.CODEC.optionalFieldOf("max_frame").forGetter((Flipbook f) -> Optional.ofNullable(f.maxFrame));
+                var stretchToLifetime = Codec.BOOL.optionalFieldOf("stretch_to_lifetime", false).forGetter(Flipbook::stretchToLifetime);
+                var loop = Codec.BOOL.optionalFieldOf("loop", false).forGetter(Flipbook::loop);
+                return ins.group(baseUv, sizeUv, stepUv, framesPerSecond, maxFrame, stretchToLifetime, loop)
+                        .apply(ins, (b, s, st, fps, mf, stl, lp) -> new Flipbook(b, s, st, fps, mf.orElse(null), stl, lp));
+            });
 
-            public Vector4f get(MolangScope scope, float lifetime, float time) {
-                // 调用方契约：仅在非 EMPTY 实例上调用（getUV line 77 已用 isEmpty 守卫）
+            public Vector4f get(MolangScope scope, float lifetime, float time, float textureWidth, float textureHeight) {
+                // 调用方契约：仅在非 EMPTY 实例上调用（getUV 已用 isEmpty 守卫）
                 MolangValue2 buv = Objects.requireNonNull(baseUV);
                 MolangValue2 suv = Objects.requireNonNull(stepUV);
                 MolangValue2 szuv = Objects.requireNonNull(sizeUV);
-                int max = (int) Math.floor(Objects.requireNonNull(maxFrame).eval(scope)) - 1;
+                float sizeX = szuv.getX(scope);
+                float sizeY = szuv.getY(scope);
+                int max;
+                if (maxFrame != null) {
+                    max = (int) Math.floor(maxFrame.eval(scope)) - 1;
+                } else {
+                    // max_frame 缺省：按纹理网格列数×行数推导最后一帧索引
+                    int columns = sizeX > 0 ? (int) Math.floor(textureWidth / sizeX) : 1;
+                    int rows = sizeY > 0 ? (int) Math.floor(textureHeight / sizeY) : 1;
+                    max = Math.max(columns, 1) * Math.max(rows, 1) - 1;
+                }
                 int frame = stretchToLifetime
                         ? (int) Math.floor((time / lifetime) * max)
                         : (int) Math.floor(Objects.requireNonNull(framesPerSecond).eval(scope) * time);
@@ -118,7 +134,7 @@ public record ParticleAppearanceBillboard(
                     frame = loop ? frame % (max + 1) : max;
                 }
                 Vector2f base = buv.eval(scope).add(suv.eval(scope).mul(frame));
-                return new Vector4f(base.x, base.y, szuv.getX(scope), szuv.getY(scope));
+                return new Vector4f(base.x, base.y, sizeX, sizeY);
             }
 
             public boolean isEmpty() {
