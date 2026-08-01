@@ -251,3 +251,13 @@ LDLib 1.20.1 为 SRG 名（Forge 1.20.1 reobf 生态），ModDevGradle legacyfor
 | 模型预览离屏渲染在 GUI 缩放下的正确性 | 中 | 复用 ModelPreviewScreen 既有路径 |
 | LDLib 1.20.1 SRG remap 在 ModDevGradle legacyforge 下的可行性 | 中 | spark 已有同路径先例（build.gradle 注释） |
 | Molang 表达式全括号化导致超长字符串 | 低 | 最小括号化 pass 后置优化（非 v1） |
+
+## 7. 实施记录（2026-08-02）
+
+已实现并验证（证据：domain 单测 71 个、三节点编译、1.20.1/1.21.1 客户端冒烟截图）：
+
+- T1–T10 全部落地；验证器 19 项检查、代码生成（含 temp 提取与子图内联）、三汇编器、两版编辑器适配、纹理/模型预览基础设施、运行时构建管线与实体渲染闭环。
+- 已知降级（均非本特性缺陷，见 work/feedback.json）：
+  1. **模型预览在 1.20.1/1.21.1 暂不出图**：`RenderType.entitySolid` 经 GuiGraphics bufferSource 在 Screen 渲染阶段无像素产出——预存平台级渲染 bug（`ModelPreviewScreen` 同样不出图），纹理预览正常，模型解析/纹理借用/占位逻辑已就绪，平台 bug 修复后自动恢复。26.1.2 按 §3.3 既定降级为纹理预览 + 文本。
+  2. **26.1.2 世界内冒烟被预存渲染崩溃阻塞**（`Not building!`，无 ldlib2 亦复现）；编辑器代码与 1.21.1 全共享，编译与翻译单测覆盖。
+  3. 1.20.1 画布分组按 D6 降级为仅文档持久化；1.21.1 dev runtime 需 neoforge ≥ 21.1.216（已升 21.1.248）。

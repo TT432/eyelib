@@ -4,6 +4,7 @@ import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.INodeOption;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.Node;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.port.IPort;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.port.PortCapacity;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.node.NodePreviewContext;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.graph.CustomGraphModelImpl;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.PortModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.definition.IOptionDefinitionContext;
@@ -48,6 +49,21 @@ public abstract class EvmNodeBase extends Node {
     @Override
     public Component getDisplayName() {
         return Component.literal(EvmNodes.displayName(type().id()));
+    }
+
+    /**
+     * ref.geometry / ref.texture 节点启用 LDLib2 内建节点预览面板（{@code NodePreviewModel}，
+     * {@code NodeElement.buildPreviewPart} 装配）；内容由 {@link EvmRefPreviewElement} 绘制。
+     */
+    @Override
+    public boolean hasNodePreview() {
+        return type().kind() == NodeType.Kind.REF_GEOMETRY || type().kind() == NodeType.Kind.REF_TEXTURE;
+    }
+
+    @Override
+    public void onBuildNodePreview(NodePreviewContext context) {
+        if (!hasNodePreview()) return;
+        context.container().addChild(new EvmRefPreviewElement(this));
     }
 
     @Override

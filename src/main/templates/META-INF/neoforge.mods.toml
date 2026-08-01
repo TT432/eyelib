@@ -29,7 +29,7 @@ side="BOTH"
 # LDLib2 可选前置：节点图编辑器（docs/specs/nodegraph-visual-molang.md D7）。未安装时编辑器入口关闭，其余功能不受影响。
 [[dependencies.${mod_id}]]
 modId="ldlib2"
-mandatory=false
+type="optional"
 versionRange="[2.2.32,)"
 ordering="AFTER"
 side="CLIENT"

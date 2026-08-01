@@ -12,7 +12,14 @@ import com.lowdragmc.lowdraglib.gui.editor.configurator.ConfiguratorGroup;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.NumberConfigurator;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.SelectorConfigurator;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.StringConfigurator;
+import com.lowdragmc.lowdraglib.gui.editor.configurator.WrapperConfigurator;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.annotation.CustomPortBehavior;
+import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
+import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
+import io.github.tt432.eyelib.client.nodegraph.preview.NodeAssetPreview;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.annotation.InputPort;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.annotation.OutputPort;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.data.BaseNode;
@@ -155,6 +162,56 @@ public class EvmNode extends BaseNode {
         for (PortDef input : type.inputsOf(selfInstance(), resolver)) {
             input.defaultValue().ifPresent(def -> buildConstantConfigurator(father, input, def));
         }
+        if (type == NodeTypes.REF_GEOMETRY || type == NodeTypes.REF_TEXTURE) {
+            father.addConfigurators(new WrapperConfigurator("preview", new ImageWidget(0, 0, PREVIEW_SIZE, PREVIEW_SIZE,
+                    (IGuiTexture) (graphics, mouseX, mouseY, x, y, w, h) -> drawRefPreview(graphics, x, y, w, h))));
+        }
+    }
+
+    // ---------- 资源引用预览（规格 §3.3） ----------
+
+    private static final int PREVIEW_SIZE = 64;
+    private static final ResourceLocation CHECKERBOARD =
+            new ResourceLocation("eyelib", "textures/gui/nodegraph/checkerboard.png");
+
+    /** 每帧重读选项值绘制预览（选项编辑后自动同步；引用缺失画「未找到」占位）。 */
+    private void drawRefPreview(GuiGraphics graphics, float fx, float fy, float fw, float fh) {
+        int x = (int) fx, y = (int) fy, w = (int) fw, h = (int) fh;
+        // 棋盘格底衬透明
+        graphics.blit(CHECKERBOARD, x, y, 0, 0, w, h, w, h);
+        NodeType type = nodeType();
+        if (type == NodeTypes.REF_TEXTURE) {
+            ResourceLocation texture = NodeAssetPreview.resolveTexture(optionWithDefault("path"));
+            if (texture == null) {
+                drawNotFound(graphics, x, y, w, h);
+            } else {
+                graphics.blit(texture, x, y, 0, 0, w, h, w, h);
+            }
+        } else if (type == NodeTypes.REF_GEOMETRY) {
+            NodeAssetPreview.ModelHandle handle = NodeAssetPreview.resolveModel(optionWithDefault("identifier"));
+            if (handle == null) {
+                drawNotFound(graphics, x, y, w, h);
+            } else {
+                NodeAssetPreview.renderModel(handle, graphics, x, y, w, h, 0f);
+            }
+        }
+    }
+
+    private static void drawNotFound(GuiGraphics graphics, int x, int y, int w, int h) {
+        graphics.drawCenteredString(Minecraft.getInstance().font, "未找到", x + w / 2, y + h / 2 - 4, 0xFFFF5555);
+    }
+
+    /** 读字符串选项；节点未显式设置时回退到 {@link NodeOptionDef} 默认值。 */
+    private String optionWithDefault(String id) {
+        NodeType type = nodeType();
+        if (type != null) {
+            for (NodeOptionDef def : type.options()) {
+                if (def.id().equals(id)) {
+                    return optionString(id, def.defaultValue().getAsString());
+                }
+            }
+        }
+        return optionString(id, "");
     }
 
     private void buildOptionConfigurator(ConfiguratorGroup father, NodeOptionDef option) {
