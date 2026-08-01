@@ -64,6 +64,10 @@ work/screenshots/
 work/perf-ms-frame-plan/spark/
 work/*.png
 
+# leak-investigation dump data (archived docs stay tracked)
+work/render-benchmark-leak-investigation/*.txt
+work/render-benchmark-leak-investigation/*.json
+
 # smoke test artifacts (generated at runtime, not source)
 run/clientsmoke/
 clientsmoke-reports/
