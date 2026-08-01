@@ -123,18 +123,27 @@ public record BrClientEntity(
 
     public BrClientEntity {
         min_engine_version = min_engine_version == null ? Optional.empty() : min_engine_version;
-        materials = Map.copyOf(materials);
-        textures = Map.copyOf(textures);
-        geometry = Map.copyOf(geometry);
-        animations = Map.copyOf(animations);
-        animation_controllers = animation_controllers.stream().map(Map::copyOf).toList();
-        particle_effects = Map.copyOf(particle_effects);
-        sound_effects = Map.copyOf(sound_effects);
+        // 保序不可变拷贝：Map.copyOf 的产物迭代序取决于输入迭代序（哈希展开），
+        // CODEC decode（HashMap 序）与 draft（LinkedHashMap 序）两条来源会产生不同迭代序，
+        // 破坏「encode(decode(x)) 与 draft 往返逐字节一致」（spec §8.9）。
+        materials = orderedCopy(materials);
+        textures = orderedCopy(textures);
+        geometry = orderedCopy(geometry);
+        animations = orderedCopy(animations);
+        animation_controllers = animation_controllers.stream()
+                .map(entry -> java.util.Collections.<String, String>unmodifiableMap(new java.util.LinkedHashMap<>(entry)))
+                .toList();
+        particle_effects = orderedCopy(particle_effects);
+        sound_effects = orderedCopy(sound_effects);
         render_controllers = List.copyOf(render_controllers);
-        renderControllerConditions = renderControllerConditions == null ? Map.of() : Map.copyOf(renderControllerConditions);
+        renderControllerConditions = renderControllerConditions == null ? Map.of() : orderedCopy(renderControllerConditions);
         scripts = scripts == null ? Optional.empty() : scripts;
         spawn_egg = spawn_egg == null ? Optional.empty() : spawn_egg;
-        item = item == null ? Map.of() : Map.copyOf(item);
+        item = item == null ? Map.of() : orderedCopy(item);
+    }
+
+    private static <K, V> Map<K, V> orderedCopy(Map<K, V> source) {
+        return java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(source));
     }
 
     public BrClientEntity(

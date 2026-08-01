@@ -5,6 +5,11 @@ import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.TestCodecUtil;
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -229,5 +234,43 @@ class BrClientEntityCodecTest {
         assertEquals(1, entity.renderControllerConditions().size());
         assertFalse(entity.renderControllerConditions().get("controller.render.a")
                 .evalAsBool(new io.github.tt432.eyelib.molang.MolangScope()));
+    }
+
+    @Test
+    void recordConstructorPreservesMapIterationOrder() {
+        // spec §8.9「零编辑往返逐字节一致」：Map.copyOf 的迭代序是输入 map 的哈希展开序，
+        // CODEC-decode（HashMap 序）与 draft（LinkedHashMap 序）两条来源会分歧。
+        // record 构造的防御性拷贝必须保序，否则 encode(draft) 与 encode(原实体) 文本不一致。
+        LinkedHashMap<String, String> particleEffects = new LinkedHashMap<>();
+        LinkedHashMap<String, String> soundEffects = new LinkedHashMap<>();
+        for (int i = 0; i < 6; i++) {
+            particleEffects.put("eff" + (char) ('a' + i) + i, "ns:particle." + i);
+            soundEffects.put("snd" + (char) ('a' + i) + i, "sound." + i);
+        }
+
+        BrClientEntity entity = new BrClientEntity(
+                "eyelib:order",
+                Optional.empty(),
+                Map.of(), Map.of(), Map.of(), Map.of(),
+                List.of(),
+                particleEffects,
+                soundEffects,
+                List.of(),
+                Map.of(),
+                Optional.empty(),
+                Optional.empty(),
+                Map.of(),
+                false);
+
+        assertEquals(particleEffects.keySet().stream().toList(),
+                entity.particle_effects().keySet().stream().toList());
+        assertEquals(soundEffects.keySet().stream().toList(),
+                entity.sound_effects().keySet().stream().toList());
+
+        // 文本级往返：encode(decode(x)) 与 encode(原实体) 逐字节一致
+        BrClientEntity decoded = TestCodecUtil.unwrap(
+                BrClientEntity.CODEC.parse(JsonOps.INSTANCE,
+                        TestCodecUtil.unwrap(BrClientEntity.CODEC.encodeStart(JsonOps.INSTANCE, entity))));
+        assertEquals(entity, decoded);
     }
 }
