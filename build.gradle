@@ -322,7 +322,11 @@ configurations {
     nullawayProcessor
     // 1.21.1 专用：LDLib2 jar 独立 configuration（不继承 runtimeClasspath，避免 classpath+mods 双份加载），
     // 由 copyLdlib2ToMods 复制进 run/mods 供 mod discovery（同 clientsmokeJar 模式）。
-    ldlib2Jar
+    // transitive=false：ldlib2 pom 声明的 fastutil/kotlin-stdlib/taffy/yoga 不是合法 mod 文件，
+    // 被 copy 进 run/mods 会触发 LoadingErrorScreen；:all fat jar 已内嵌这些依赖。
+    ldlib2Jar {
+        transitive = false
+    }
     // 1.20.1 专用：LDLib（SRG）编译路径，由 obfuscation.createRemappingConfiguration 生成 modLdlibCompile 做 SRG→Mojmap remap。
     ldlibCompile
 }
@@ -801,7 +805,16 @@ if (!isLegacyForge && hasAdditionalRuntimeClasspath) {
         from(configurations.ldlib2Jar)
         into project.file('run/mods')
     }
+    // 标准 client run 也需 clientsmoke（mcmcp AIDebugServer 宿主）：
+    // 既有 copyClientsmokeToMods 只覆盖 run/clientsmoke（clientSmoke 专用 run），
+    // 导致 1.21.1 标准 client 无调试端口，与 1.20.1/26.1.2（localRuntime 自动注册）不一致。
+    tasks.register('copyClientsmokeToRunMods', Copy) {
+        from(configurations.clientsmokeJar)
+        into project.file('run/mods')
+        rename { 'clientsmoke.jar' }
+    }
     tasks.matching { it.name in ['runClient', 'prepareClientRun'] }.configureEach {
         dependsOn 'copyLdlib2ToMods'
+        dependsOn 'copyClientsmokeToRunMods'
     }
 }

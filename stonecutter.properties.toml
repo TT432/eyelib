@@ -10,7 +10,8 @@ parchment_mappings_version = "2023.09.03"
 
 ["1.21.1"]
 minecraft_version = "1.21.1"
-neoforge_version = "21.1.115"
+# LDLib2（可选前置）要求 neoforge >= 21.1.216
+neoforge_version = "21.1.248"
 minecraft_version_range = "[1.21.1, 1.22)"
 loader_version_range = "[4,)"
 java_version = "21"
