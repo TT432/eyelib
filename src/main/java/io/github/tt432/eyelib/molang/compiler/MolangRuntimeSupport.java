@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.FunctionInfo;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.FunctionParameterRole;
 import io.github.tt432.eyelib.molang.mapping.api.MolangMappingTree.VisibleArgumentKind;
+import io.github.tt432.eyelib.molang.port.ArrowHostInstaller;
 import io.github.tt432.eyelib.molang.type.MolangArray;
 import io.github.tt432.eyelib.molang.type.MolangFloat;
 import io.github.tt432.eyelib.molang.type.MolangNull;
@@ -44,6 +45,35 @@ public final class MolangRuntimeSupport {
             ));
     private static final Set<MolangFunction.ParameterRole> HOST_ROLES_MINIMAL =
             Collections.unmodifiableSet(EnumSet.of(MolangFunction.ParameterRole.SPECIAL_ENGINE_ARG));
+
+    private static volatile @Nullable ArrowHostInstaller arrowHostInstaller;
+
+    /**
+     * 注册箭头访问（{@code ->}）宿主安装器（bridge 初始化时调用）。
+     * 未注册时箭头访问退化为仅求值右式。
+     */
+    public static void setArrowHostInstaller(@Nullable ArrowHostInstaller installer) {
+        arrowHostInstaller = installer;
+    }
+
+    /**
+     * 安装箭头宿主：把左侧求值结果翻译为宿主上下文中的实体，返回恢复 token。
+     * 未注册安装器或宿主不可翻译时返回 {@code null}（不切换）。
+     */
+    public static @Nullable Object pushArrowHost(MolangScope scope, MolangObject host) {
+        ArrowHostInstaller installer = arrowHostInstaller;
+        return installer == null ? null : installer.install(scope, host);
+    }
+
+    /**
+     * 恢复箭头切换前的宿主上下文。
+     */
+    public static void popArrowHost(MolangScope scope, @Nullable Object previous) {
+        ArrowHostInstaller installer = arrowHostInstaller;
+        if (installer != null) {
+            installer.restore(scope, previous);
+        }
+    }
 
     private MolangRuntimeSupport() {
     }

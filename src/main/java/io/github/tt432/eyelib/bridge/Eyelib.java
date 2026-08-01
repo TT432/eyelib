@@ -5,6 +5,7 @@ import io.github.tt432.eyelib.bridge.network.adapter.EyelibNetworkTransport;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.DataAttachmentContainerCapability;
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.adapter.DataAttachmentTypeRegistry;
 import io.github.tt432.eyelib.bridge.animation.AnimationLocatorResolver;
+import io.github.tt432.eyelib.bridge.molang.adapter.EntityPortAdapter;
 //? if <1.20.6 {
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -42,6 +43,7 @@ public class Eyelib {
 
         DataAttachmentTypeRegistry.DATA_ATTACHMENTS.register(bus);
         AnimationLocatorResolver.install();
+        EntityPortAdapter.installArrowHostBridge();
         //? if >=1.20.6
         DataAttachmentContainerCapability.register(bus);
         //? if <1.20.6 {

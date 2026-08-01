@@ -36,6 +36,7 @@ public final class MolangBytecodeEmitter {
             ClassDesc.of("io.github.tt432.eyelib.molang.type.MolangArray");
     private static final ClassDesc CD_MOLANG_SCOPE =
             ClassDesc.of("io.github.tt432.eyelib.molang.MolangScope");
+    private static final ClassDesc CD_OBJECT = ClassDesc.of("java.lang.Object");
     private static final ClassDesc CD_RUNTIME_SUPPORT =
             ClassDesc.of("io.github.tt432.eyelib.molang.compiler.MolangRuntimeSupport");
     private static final ClassDesc CD_STRING = ClassDesc.of("java.lang.String");
@@ -183,13 +184,22 @@ public final class MolangBytecodeEmitter {
             code.invokestatic(CD_RUNTIME_SUPPORT, "resolveCall",
                               MethodTypeDesc.of(CD_MOLANG_OBJECT, CD_MOLANG_SCOPE, CD_STRING, CD_MOLANG_OBJECT_ARRAY));
         } else if (expr instanceof BoundMolang.BoundArrowAccessExpr arrowAccessExpr) {
-            // 箭头访问（->）是文档化的 Molang 跨实体访问构造。
-            // 设计意图：左侧求值为宿主实体引用，右侧在该宿主上下文中求值。
-            // 当前实现：左侧求值后丢弃，仅返回右侧值。
-            // TODO: 实现箭头访问语义的 HostContext 切换。
+            // 箭头访问（->）是文档化的 Molang 跨实体访问构造：左侧求值为宿主实体引用，
+            // 右侧在该宿主的上下文中求值。pushArrowHost 安装宿主并返回恢复 token，
+            // 右式求值完成后 popArrowHost 恢复原上下文；未注册安装器时不切换（等价于
+            // 仅求值右式）。宿主切换对 scope 变量与右式的数值结果无影响。
+            // pushArrowHost(MolangScope, MolangObject)：参数按顺序压栈，先 scope 后 host
+            code.aload(1);
             emitExpr(code, arrowAccessExpr.left(), state);
-            code.pop();
+            code.invokestatic(CD_RUNTIME_SUPPORT, "pushArrowHost",
+                              MethodTypeDesc.of(CD_OBJECT, CD_MOLANG_SCOPE, CD_MOLANG_OBJECT));
+            int arrowHostLocal = state.allocateLocal();
+            code.astore(arrowHostLocal);
             emitExpr(code, arrowAccessExpr.right(), state);
+            code.aload(1);
+            code.aload(arrowHostLocal);
+            code.invokestatic(CD_RUNTIME_SUPPORT, "popArrowHost",
+                              MethodTypeDesc.of(CD_VOID, CD_MOLANG_SCOPE, CD_OBJECT));
         } else if (expr instanceof BoundMolang.BoundQueryAccessExpr queryAccessExpr) {
             emitExpr(code, queryAccessExpr.access(), state);
         } else if (expr instanceof BoundMolang.BoundIndexExpr indexExpr) {

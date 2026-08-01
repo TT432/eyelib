@@ -31,6 +31,31 @@ public class EntityBehaviorData {
     private List<ComponentGroup> componentGroups;
     private final Map<Class<? extends Component>, Component> components = new HashMap<>();
 
+    /**
+     * 待执行命令队列（queue_command 事件节点写入，由 bridge 侧每 tick 排空执行）。
+     * 运行时状态，不参与 CODEC/STREAM_CODEC 序列化。
+     */
+    private final List<String> pendingCommands = new ArrayList<>();
+
+    /**
+     * 追加一条待执行命令（Bedrock {@code queue_command} 语义：命令作用于调用实体自身）。
+     */
+    public void queueCommand(String command) {
+        pendingCommands.add(command);
+    }
+
+    /**
+     * 排空并返回全部待执行命令；调用后队列清空。
+     */
+    public List<String> drainCommands() {
+        if (pendingCommands.isEmpty()) {
+            return List.of();
+        }
+        List<String> drained = new ArrayList<>(pendingCommands);
+        pendingCommands.clear();
+        return drained;
+    }
+
     public EntityBehaviorData(Optional<BehaviorEntity> behavior, List<ComponentGroup> componentGroups) {
         this.behavior = behavior;
         this.componentGroups = componentGroups;

@@ -4,6 +4,9 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.tt432.eyelib.util.PortStringRepresentable;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL14.GL_COMPARE_R_TO_TEXTURE;
+import static org.lwjgl.opengl.GL14.GL_TEXTURE_COMPARE_FUNC;
+import static org.lwjgl.opengl.GL14.GL_TEXTURE_COMPARE_MODE;
 import static org.lwjgl.opengl.GL46.GL_MAX_TEXTURE_MAX_ANISOTROPY;
 import static org.lwjgl.opengl.GL46.GL_TEXTURE_MAX_ANISOTROPY;
 
@@ -45,7 +48,10 @@ public record BrSamplerState(
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, maxAnisotropy[0]);
         }),
         PCF(() -> {
-            // TODO: PCF 未实现
+            // 阴影贴图百分比渐进过滤：启用深度比较采样，由硬件完成 PCF 过滤。
+            // 该状态仅对深度纹理（阴影图）生效，非深度纹理按 GL 规范忽略。
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
         });
 
         public final Runnable onUse;

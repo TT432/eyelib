@@ -56,7 +56,17 @@ public record BrAnimationController(
 
     @Override
     public void onFinish(Object data) {
-        // TODO: 实现动画完成时的回调逻辑。
+        // 控制器整体结束：结束当前状态正在播放的所有子动画（触发各自的
+        // sound/particle/timeline 收尾事件），与状态切换时结束旧状态动画的语义一致。
+        if (data instanceof Data d && d.getCurrState() != null) {
+            d.getCurrState().animations().keySet().forEach(animationName -> {
+                String animName = d.owner().currentAnimations().get(animationName);
+                if (animName == null) return;
+                Animation animation = AnimationLookup.get(animName);
+                if (animation == null) return;
+                animation.onFinish(d.getData(animation));
+            });
+        }
     }
 
     @Override

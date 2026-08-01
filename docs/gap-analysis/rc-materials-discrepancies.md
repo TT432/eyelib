@@ -41,3 +41,11 @@ Mojang 文档确认 `materials` 是分区/覆盖语义（后面覆盖前面）�
 | `.../RenderControllerEntry.java` | 同上 + `setupModel()` 重写 |
 | `src/main/java/io/github/tt432/eyelib/material/.../BrMaterialEntry.java` | +1行 alphatest 检查 |
 | `src/main/java/io/github/tt432/eyelib/material/.../RenderTypeResolver.java` | +1 case 分支 |
+
+## G1（待实现）：运行时变体选择仅按名称匹配，非 Molang 驱动
+
+**Bedrock 语义**：材质变体（`variants`）在运行时由 Molang 查询（如 `query.has_variant`）驱动选择——同一材质在不同变体下解析为不同条目。
+
+**eyelib 现状**：`BrMaterialEntry.getVariant(variantName)` 仅按名称匹配（`BrMaterialResolver` 收集变体到 `ResolvedBrMaterial.variants`），尚无 Molang 驱动的运行时选择逻辑，也无渲染管线消费方。
+
+**方向**：以 Molang 查询结果作为变体键，接入材质解析链路；待渲染管线接入 `ResolvedBrMaterial` 后实施。

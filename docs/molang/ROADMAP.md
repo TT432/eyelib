@@ -1,4 +1,4 @@
-﻿# Eyelib Molang Roadmap
+# Eyelib Molang Roadmap
 
 ## Purpose
 
@@ -128,7 +128,8 @@ Before host/query bridge implementation starts, keep this roadmap and `refactor-
 Evidence from refactor-plan execution:
 
 - **P1 — Operator completeness** (✅): `<`, `<=`, `>=` operators added to handwritten tokenizer (`TokenKind.LESS`, `LESS_EQUAL`, `GREATER_EQUAL`) and parser (`parseComparison()` now matches all 6 comparison operators). Six `@ParameterizedTest`/`@CsvSource` cases in `HandwrittenMolangAstParserFrontendTest.parsesAllSixComparisonOperatorsIntoBinaryExpr()`.
-- **P2 — Frontend consolidation** (✅): `MolangCompilerImpl.java` line 26 now uses `MolangParserFrontends.active()` unified entry point instead of direct `HandwrittenMolangAstParserFrontend.INSTANCE`. Arrow access bytecode stub annotated with `TODO(Phase 4)`.
+- **P2 — Frontend consolidation** (✅): `MolangCompilerImpl.java` line 26 now uses `MolangParserFrontends.active()` unified entry point instead of direct `HandwrittenMolangAstParserFrontend.INSTANCE`. Arrow access bytecode was a stub annotated `TODO(Phase 4)`; **P7 已实现宿主切换语义**（见下）。
+- **P7 — Arrow access host-context switching** (✅): `MolangBytecodeEmitter` 对 `BoundArrowAccessExpr` 发射 pushArrowHost → 右式求值 → popArrowHost（恢复 token 存局部变量）；`MolangRuntimeSupport` 提供 push/pop 与安装器注册表；`molang/port/ArrowHostInstaller` 定义安装器 Port，`bridge/molang/adapter/EntityPortAdapter.installArrowHostBridge()` 在 mod 初始化时注册（把 `MolangEntityRef` 包装的 PortEntity 翻译为 MC Entity 注入宿主上下文）。契约测试：`src/test/java/io/github/tt432/eyelib/molang/compiler/MolangArrowAccessTest.java`（安装器委托、同作用域求值、无安装器降级、嵌套箭头 LIFO 恢复）。
 - **P3 — Test expansion** (✅): New `src/test/java/io/github/tt432/eyelib/molang/compiler/MolangFullPipelineTest.java` (7 families: binary arithmetic, comparison, logical, null coalesce, strings, this, return-in-block). New `src/test/java/io/github/tt432/eyelib/molang/compiler/frontend/MolangParserFrontendDivergenceTest.java` (20+ parameterized divergence cases). Total: ~40 new test cases.
 - **P4 — Documentation fix** (✅): ROADMAP file paths corrected (3 compiler files now at `compiler/` subpackage). Three missing contract test references replaced with actual file names. `compiler/diagnostic/` dead reference removed from `docs/index/molang.md` and `README.md`. MolangOwnerSet migration status accurately documented.
 - **P5 — Deferred semantics diagnostics** (✅): `MolangBinder.addDeferredNote()` now emits `BIND_DEFERRED_UNSUPPORTED` WARNING in ALL modes (NORMAL/STRICT/DEBUG). Previously only STRICT mode warned. Corresponding `MolangBinderTest` assertions updated.

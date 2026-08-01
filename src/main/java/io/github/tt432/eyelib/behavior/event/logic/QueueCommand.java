@@ -38,10 +38,9 @@ public record QueueCommand(
 
     @Override
     public void eval(EntityBehaviorData data) {
-        // Phase 1 实现: 命令执行器接口占位
-        // TODO: 对接实际命令执行系统
-        // for (String cmd : command) {
-        //     CommandQueue.enqueue(target, cmd);
-        // }
+        // queue_command 的命令作用于调用实体自身（Bedrock 语义）；
+        // 其余 target 暂不支持，与 Trigger 的 self-only 实现保持一致。
+        if (target != Subject.self) return;
+        command.forEach(data::queueCommand);
     }
 }

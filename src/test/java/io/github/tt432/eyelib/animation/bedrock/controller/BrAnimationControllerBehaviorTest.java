@@ -72,12 +72,64 @@ class BrAnimationControllerBehaviorTest {
         assertEquals(1, child.allFinishedChecks);
     }
 
+    @Test
+    void onFinishEndsAllChildAnimationsOfCurrentState() {
+        TestAnimation child = new TestAnimation("animation.test.idle", true, false);
+        AnimationRegistries.animation().put(child.name(), child);
+
+        BrAcState state = new BrAcState(
+                Map.of("slot.main", MolangValue.ONE),
+                MolangValue.ZERO,
+                MolangValue.ZERO,
+                List.of(),
+                List.of(),
+                Map.of(),
+                0F,
+                false
+        );
+        BrAnimationController controller = new BrAnimationController("controller.animation.test", state, Map.of("default", state));
+        BrAnimationController.Data data = controller.createData();
+        controller.tickAnimation(data, Map.of("slot.main", child.name()), new MolangScope(),
+                2F, 1F, new ModelRuntimeData(), new AnimationEffects(), () -> {
+                });
+        // 进入状态时 switchState 会重置子动画（调用一次 onFinish）
+        int afterTick = child.finishCalls;
+
+        controller.onFinish(data);
+
+        assertEquals(afterTick + 1, child.finishCalls);
+    }
+
+    @Test
+    void onFinishWithoutTickIsNoOp() {
+        TestAnimation child = new TestAnimation("animation.test.idle", true, false);
+        AnimationRegistries.animation().put(child.name(), child);
+
+        BrAcState state = new BrAcState(
+                Map.of("slot.main", MolangValue.ONE),
+                MolangValue.ZERO,
+                MolangValue.ZERO,
+                List.of(),
+                List.of(),
+                Map.of(),
+                0F,
+                false
+        );
+        BrAnimationController controller = new BrAnimationController("controller.animation.test", state, Map.of("default", state));
+
+        // 尚未 tick（无当前状态）：onFinish 不触碰任何子动画
+        controller.onFinish(controller.createData());
+
+        assertEquals(0, child.finishCalls);
+    }
+
     private static final class TestAnimation implements Animation {
         private final String name;
         private final boolean anyFinished;
         private final boolean allFinished;
         private int anyFinishedChecks;
         private int allFinishedChecks;
+        private int finishCalls;
 
         private TestAnimation(String name, boolean anyFinished, boolean allFinished) {
             this.name = name;
@@ -92,6 +144,7 @@ class BrAnimationControllerBehaviorTest {
 
         @Override
         public void onFinish(Object data) {
+            finishCalls++;
         }
 
         @Override

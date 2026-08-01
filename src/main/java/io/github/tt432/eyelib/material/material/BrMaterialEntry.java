@@ -597,7 +597,9 @@ public record BrMaterialEntry(
         );
     }
 
-    // TODO: 未来运行时变体选择应由Molang查询驱动（如query.has_variant），当前仅按名称匹配
+    // 设计注记：运行时变体选择当前仅按名称匹配（getVariant）。
+    // Bedrock 材质变体由 Molang 查询（如 query.has_variant）驱动，
+    // 属未来方向，见 docs/gap-analysis/rc-materials-discrepancies.md。
 
     /**
      * 按名称查找变体材质条目。

@@ -1,7 +1,16 @@
 package io.github.tt432.eyelib.bridge.molang.adapter;
 
 import io.github.tt432.eyelib.molang.port.PortEntity;
+import io.github.tt432.eyelib.molang.MolangScope;
+import io.github.tt432.eyelib.molang.compiler.MolangRuntimeSupport;
+import io.github.tt432.eyelib.molang.mapping.api.HostContext;
+import io.github.tt432.eyelib.molang.mapping.api.HostRole;
+import io.github.tt432.eyelib.molang.mapping.api.HostRoles;
+import io.github.tt432.eyelib.molang.port.ArrowHostInstaller;
+import io.github.tt432.eyelib.molang.type.MolangEntityRef;
+import io.github.tt432.eyelib.molang.type.MolangObject;
 import net.minecraft.world.entity.Entity;
+import org.jspecify.annotations.Nullable;
 //? if <26.1 {
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.animal.Wolf;
@@ -27,6 +36,60 @@ public final class EntityPortAdapter {
     private EntityPortAdapter() {}
     public static PortEntity from(Entity entity) {
         return new PortEntityImpl(entity);
+    }
+
+    /**
+     * 将 {@link PortEntity} 还原为 MC Entity；非本适配器包装的 PortEntity 返回 {@code null}。
+     */
+    public static @Nullable Entity toEntity(PortEntity portEntity) {
+        return portEntity instanceof PortEntityImpl impl ? impl.entity() : null;
+    }
+
+    /**
+     * 注册箭头访问（{@code ->}）宿主安装器：把箭头左侧的实体引用
+     * （{@link MolangEntityRef} 包装的 PortEntity）翻译为 MC Entity 并注入宿主上下文，
+     * 右式的 {@code query.*} 查询即可在目标实体上求值；求值结束后恢复原宿主。
+     * <p>
+     * 非实体引用（数字/字符串）不触发切换，箭头退化为仅求值右式。
+     */
+    public static void installArrowHostBridge() {
+        HostRole<Entity> entityRole = HostRole.of("arrow_entity", Entity.class);
+        MolangRuntimeSupport.setArrowHostInstaller(new ArrowHostInstaller() {
+            @Override
+            public @Nullable Object install(MolangScope scope, MolangObject host) {
+                PortEntity portEntity = host instanceof MolangEntityRef ref && ref.entity() instanceof PortEntity pe
+                        ? pe : null;
+                if (portEntity == null) return null;
+                Entity entity = toEntity(portEntity);
+                if (entity == null) return null;
+                Object previousEntity = scope.getHostContext().get(entityRole).orElse(null);
+                Object previousPortEntity = scope.getHostContext().get(HostRoles.PORT_ENTITY).orElse(null);
+                scope.getHostContext().put(entityRole, entity);
+                scope.getHostContext().put(HostRoles.PORT_ENTITY, portEntity);
+                return new ArrowHostToken(entityRole, previousEntity, previousPortEntity);
+            }
+
+            @Override
+            public void restore(MolangScope scope, @Nullable Object previous) {
+                if (!(previous instanceof ArrowHostToken token)) return;
+                putHost(scope.getHostContext(), token.entityRole(), token.previousEntity());
+                putHost(scope.getHostContext(), HostRoles.PORT_ENTITY, token.previousPortEntity());
+            }
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> void putHost(HostContext context, HostRole<T> role, @Nullable Object value) {
+        if (value == null) {
+            context.remove(role);
+        } else {
+            context.put(role, (T) value);
+        }
+    }
+
+    private record ArrowHostToken(HostRole<Entity> entityRole,
+                                  @Nullable Object previousEntity,
+                                  @Nullable Object previousPortEntity) {
     }
 
     /**
