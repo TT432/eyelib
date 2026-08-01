@@ -1,0 +1,460 @@
+package io.github.tt432.eyelib.nodegraph;
+
+import com.google.gson.JsonPrimitive;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * 节点目录：全部节点类型的注册表（规格 §2.2）。
+ *
+ * <p>端口/选项/种类在这里定义，验证器与代码生成器以 {@link NodeType.Kind} 分派。
+ * query/math 的函数目录不在此处——编辑器运行时从 MolangMappingTree 枚举（规格 D4），
+ * 图文档只存函数字符串。
+ */
+public final class NodeTypes {
+    private NodeTypes() {
+    }
+
+    private static final Map<String, NodeType> REGISTRY = new LinkedHashMap<>();
+
+    public static final String CAT_CONSTANT = "constant";
+    public static final String CAT_VARIABLE = "variable";
+    public static final String CAT_QUERY = "query";
+    public static final String CAT_OPERATOR = "operator";
+    public static final String CAT_EXEC = "exec";
+    public static final String CAT_REF = "reference";
+    public static final String CAT_ENTITY = "entity";
+    public static final String CAT_RC = "render_controller";
+    public static final String CAT_AC = "animation_controller";
+    public static final String CAT_SUBGRAPH = "subgraph";
+
+    // ---------- 二元/一元运算符（molang 无 % 运算符） ----------
+
+    /** 算术二元运算符（输出 FLOAT）。 */
+    public static final List<String> ARITHMETIC_OPS = List.of("+", "-", "*", "/");
+    /** 比较/逻辑二元运算符（输出 BOOL）。 */
+    public static final List<String> LOGICAL_OPS = List.of("==", "!=", "<", "<=", ">", ">=", "&&", "||");
+    public static final List<String> BINARY_OPS;
+
+    static {
+        List<String> ops = new ArrayList<>(ARITHMETIC_OPS);
+        ops.addAll(LOGICAL_OPS);
+        BINARY_OPS = List.copyOf(ops);
+    }
+
+    public static final List<String> UNARY_OPS = List.of("-", "!");
+
+    // ---------- 执行流端口 ----------
+
+    private static PortDef execIn() {
+        return new PortDef("exec_in", PortDirection.IN, PortType.EXEC, Optional.empty(), false);
+    }
+
+    private static PortDef execOut() {
+        return new PortDef("exec_out", PortDirection.OUT, PortType.EXEC, Optional.empty(), false);
+    }
+
+    private static PortDef slotOut(String id) {
+        return PortDef.outSingle(id, PortType.SLOT);
+    }
+
+    private static PortDef slotIn(String id) {
+        return PortDef.inMulti(id, PortType.SLOT);
+    }
+
+    // ---------- 注册 ----------
+
+    private static NodeType register(NodeType type) {
+        REGISTRY.put(type.id(), type);
+        return type;
+    }
+
+    public static Optional<NodeType> get(String id) {
+        return Optional.ofNullable(REGISTRY.get(id));
+    }
+
+    public static NodeType require(String id) {
+        NodeType type = REGISTRY.get(id);
+        if (type == null) {
+            throw new IllegalArgumentException("unknown node type: " + id);
+        }
+        return type;
+    }
+
+    public static List<NodeType> all() {
+        return List.copyOf(REGISTRY.values());
+    }
+
+    // ---------- 常量 ----------
+
+    public static final NodeType CONST_NUMBER = register(NodeType.of(
+            "const.number", NodeType.Kind.CONST_NUMBER, CAT_CONSTANT,
+            List.of(NodeOptionDef.number("value", 0)),
+            List.of(),
+            List.of(PortDef.out("out", PortType.FLOAT))));
+
+    public static final NodeType CONST_BOOL = register(NodeType.of(
+            "const.bool", NodeType.Kind.CONST_BOOL, CAT_CONSTANT,
+            List.of(NodeOptionDef.bool("value", false)),
+            List.of(),
+            List.of(PortDef.out("out", PortType.BOOL))));
+
+    public static final NodeType CONST_STRING = register(NodeType.of(
+            "const.string", NodeType.Kind.CONST_STRING, CAT_CONSTANT,
+            List.of(NodeOptionDef.string("value", "")),
+            List.of(),
+            List.of(PortDef.out("out", PortType.STRING))));
+
+    // ---------- 变量 ----------
+
+    public static final NodeType VAR_GET = register(NodeType.of(
+            "var.get", NodeType.Kind.VAR_GET, CAT_VARIABLE,
+            List.of(NodeOptionDef.string("name", "variable.foo")),
+            List.of(),
+            List.of(PortDef.out("out", PortType.ANY))));
+
+    public static final NodeType TEMP_GET = register(NodeType.of(
+            "temp.get", NodeType.Kind.TEMP_GET, CAT_VARIABLE,
+            List.of(NodeOptionDef.string("name", "temp.t")),
+            List.of(),
+            List.of(PortDef.out("out", PortType.ANY))));
+
+    /** exec.set_var：root 选项决定 variable./temp. 根。 */
+    public static final NodeType EXEC_SET_VAR = register(NodeType.of(
+            "exec.set_var", NodeType.Kind.EXEC_SET_VAR, CAT_EXEC,
+            List.of(
+                    NodeOptionDef.enumeration("root", "variable", List.of("variable", "temp")),
+                    NodeOptionDef.string("name", "variable.foo")),
+            List.of(execIn(), PortDef.in("value", PortType.ANY, new JsonPrimitive(0))),
+            List.of(execOut())));
+
+    // ---------- 查询与数学 ----------
+
+    private static List<PortDef> callArgPorts(NodeInstance instance) {
+        int argCount = Math.max(0, Math.min(instance.optionInt("arg_count", 0), 16));
+        List<PortDef> ports = new ArrayList<>();
+        for (int i = 1; i <= argCount; i++) {
+            ports.add(PortDef.in("arg" + i, PortType.ANY));
+        }
+        return ports;
+    }
+
+    public static final NodeType QUERY_CALL = register(NodeType.dynamic(
+            "query.call", NodeType.Kind.QUERY_CALL, CAT_QUERY,
+            List.of(
+                    NodeOptionDef.string("function", "query.anim_time"),
+                    NodeOptionDef.integer("arg_count", 0)),
+            (instance, resolver) -> callArgPorts(instance),
+            NodeType.PortProvider.fixed(List.of(PortDef.out("out", PortType.ANY)))));
+
+    public static final NodeType MATH_CALL = register(NodeType.dynamic(
+            "math.call", NodeType.Kind.MATH_CALL, CAT_QUERY,
+            List.of(
+                    NodeOptionDef.string("function", "math.sin"),
+                    NodeOptionDef.integer("arg_count", 1)),
+            (instance, resolver) -> callArgPorts(instance),
+            NodeType.PortProvider.fixed(List.of(PortDef.out("out", PortType.FLOAT)))));
+
+    public static final NodeType EXEC_CALL = register(NodeType.dynamic(
+            "exec.call", NodeType.Kind.EXEC_CALL, CAT_EXEC,
+            List.of(
+                    NodeOptionDef.string("function", "query.foo"),
+                    NodeOptionDef.integer("arg_count", 0)),
+            (instance, resolver) -> {
+                List<PortDef> ports = new ArrayList<>();
+                ports.add(execIn());
+                ports.addAll(callArgPorts(instance));
+                return ports;
+            },
+            NodeType.PortProvider.fixed(List.of(execOut()))));
+
+    // ---------- 运算 ----------
+
+    public static final NodeType OP_BINARY = register(NodeType.dynamic(
+            "op.binary", NodeType.Kind.OP_BINARY, CAT_OPERATOR,
+            List.of(NodeOptionDef.enumeration("op", "+", BINARY_OPS)),
+            NodeType.PortProvider.fixed(List.of(
+                    PortDef.in("a", PortType.ANY, new JsonPrimitive(0)),
+                    PortDef.in("b", PortType.ANY, new JsonPrimitive(0)))),
+            (instance, resolver) -> {
+                String op = instance.optionString("op", "+");
+                PortType out = LOGICAL_OPS.contains(op) ? PortType.BOOL : PortType.FLOAT;
+                return List.of(PortDef.out("out", out));
+            }));
+
+    public static final NodeType OP_UNARY = register(NodeType.dynamic(
+            "op.unary", NodeType.Kind.OP_UNARY, CAT_OPERATOR,
+            List.of(NodeOptionDef.enumeration("op", "-", UNARY_OPS)),
+            NodeType.PortProvider.fixed(List.of(
+                    PortDef.in("a", PortType.ANY, new JsonPrimitive(0)))),
+            (instance, resolver) -> {
+                String op = instance.optionString("op", "-");
+                PortType out = "!".equals(op) ? PortType.BOOL : PortType.FLOAT;
+                return List.of(PortDef.out("out", out));
+            }));
+
+    public static final NodeType OP_TERNARY = register(NodeType.of(
+            "op.ternary", NodeType.Kind.OP_TERNARY, CAT_OPERATOR,
+            List.of(),
+            List.of(
+                    PortDef.in("cond", PortType.BOOL, new JsonPrimitive(1)),
+                    PortDef.in("a", PortType.ANY, new JsonPrimitive(0)),
+                    PortDef.in("b", PortType.ANY, new JsonPrimitive(0))),
+            List.of(PortDef.out("out", PortType.ANY))));
+
+    public static final NodeType OP_NULLCOALESCE = register(NodeType.of(
+            "op.null_coalesce", NodeType.Kind.OP_NULLCOALESCE, CAT_OPERATOR,
+            List.of(),
+            List.of(
+                    PortDef.in("a", PortType.ANY, new JsonPrimitive(0)),
+                    PortDef.in("b", PortType.ANY, new JsonPrimitive(0))),
+            List.of(PortDef.out("out", PortType.ANY))));
+
+    // ---------- 执行流 ----------
+
+    public static final NodeType EXEC_LOOP = register(NodeType.of(
+            "exec.loop", NodeType.Kind.EXEC_LOOP, CAT_EXEC,
+            List.of(),
+            List.of(
+                    execIn(),
+                    PortDef.in("count", PortType.FLOAT, new JsonPrimitive(10)),
+                    new PortDef("body", PortDirection.IN, PortType.EXEC, Optional.empty(), false)),
+            List.of(execOut())));
+
+    public static final NodeType EXEC_FOREACH = register(NodeType.of(
+            "exec.for_each", NodeType.Kind.EXEC_FOREACH, CAT_EXEC,
+            List.of(NodeOptionDef.string("var_name", "temp.item")),
+            List.of(
+                    execIn(),
+                    PortDef.in("array", PortType.ARRAY),
+                    new PortDef("body", PortDirection.IN, PortType.EXEC, Optional.empty(), false)),
+            List.of(execOut())));
+
+    public static final NodeType EXEC_BREAK = register(NodeType.of(
+            "exec.break", NodeType.Kind.EXEC_BREAK, CAT_EXEC,
+            List.of(),
+            List.of(execIn()),
+            List.of()));
+
+    public static final NodeType EXEC_CONTINUE = register(NodeType.of(
+            "exec.continue", NodeType.Kind.EXEC_CONTINUE, CAT_EXEC,
+            List.of(),
+            List.of(execIn()),
+            List.of()));
+
+    public static final NodeType EXEC_RETURN = register(NodeType.of(
+            "exec.return", NodeType.Kind.EXEC_RETURN, CAT_EXEC,
+            List.of(),
+            List.of(
+                    execIn(),
+                    PortDef.in("value", PortType.ANY, new JsonPrimitive(0))),
+            List.of()));
+
+    // ---------- 资源引用 ----------
+
+    public static final NodeType REF_GEOMETRY = register(NodeType.of(
+            "ref.geometry", NodeType.Kind.REF_GEOMETRY, CAT_REF,
+            List.of(
+                    NodeOptionDef.string("short_name", "default"),
+                    NodeOptionDef.string("identifier", "geometry.example.model")),
+            List.of(),
+            List.of(PortDef.out("ref", PortType.GEOMETRY_REF))));
+
+    public static final NodeType REF_TEXTURE = register(NodeType.of(
+            "ref.texture", NodeType.Kind.REF_TEXTURE, CAT_REF,
+            List.of(
+                    NodeOptionDef.string("short_name", "default"),
+                    NodeOptionDef.string("path", "textures/entity/example")),
+            List.of(),
+            List.of(PortDef.out("ref", PortType.TEXTURE_REF))));
+
+    public static final NodeType REF_MATERIAL = register(NodeType.of(
+            "ref.material", NodeType.Kind.REF_MATERIAL, CAT_REF,
+            List.of(
+                    NodeOptionDef.string("short_name", "default"),
+                    NodeOptionDef.string("material", "entity_alphatest")),
+            List.of(),
+            List.of(PortDef.out("ref", PortType.MATERIAL_REF))));
+
+    public static final NodeType REF_ANIMATION = register(NodeType.of(
+            "ref.animation", NodeType.Kind.REF_ANIMATION, CAT_REF,
+            List.of(
+                    NodeOptionDef.string("short_name", "walk"),
+                    NodeOptionDef.string("identifier", "animation.example.walk")),
+            List.of(),
+            List.of(PortDef.out("ref", PortType.ANIMATION_REF))));
+
+    public static final NodeType REF_AC = register(NodeType.of(
+            "ref.ac", NodeType.Kind.REF_AC, CAT_REF,
+            List.of(
+                    NodeOptionDef.string("short_name", "main"),
+                    NodeOptionDef.string("identifier", "controller.animation.example.main")),
+            List.of(),
+            List.of(PortDef.out("ref", PortType.AC_REF))));
+
+    public static final NodeType REF_RC = register(NodeType.of(
+            "ref.rc", NodeType.Kind.REF_RC, CAT_REF,
+            List.of(NodeOptionDef.string("identifier", "controller.render.example")),
+            List.of(),
+            List.of(PortDef.out("ref", PortType.RC_REF))));
+
+    // ---------- 实体装配 ----------
+
+    public static final NodeType ENTITY_ROOT = register(NodeType.of(
+            "entity.root", NodeType.Kind.ENTITY_ROOT, CAT_ENTITY,
+            List.of(NodeOptionDef.string("identifier", "example:my_entity")),
+            List.of(
+                    new PortDef("initialize", PortDirection.IN, PortType.EXEC, Optional.empty(), false),
+                    new PortDef("pre_animation", PortDirection.IN, PortType.EXEC, Optional.empty(), false),
+                    new PortDef("parent_setup", PortDirection.IN, PortType.EXEC, Optional.empty(), false),
+                    PortDef.in("scale", PortType.FLOAT, new JsonPrimitive(1)),
+                    PortDef.in("scale_x", PortType.FLOAT),
+                    PortDef.in("scale_y", PortType.FLOAT),
+                    PortDef.in("scale_z", PortType.FLOAT),
+                    slotIn("animate"),
+                    slotIn("render_controllers")),
+            List.of()));
+
+    public static final NodeType ANIMATE_ENTRY = register(NodeType.of(
+            "animate.entry", NodeType.Kind.ANIMATE_ENTRY, CAT_ENTITY,
+            List.of(),
+            List.of(
+                    PortDef.in("ref", PortType.ANY),
+                    PortDef.in("weight", PortType.FLOAT, new JsonPrimitive(1))),
+            List.of(slotOut("entry"))));
+
+    public static final NodeType RC_CONDITION_ENTRY = register(NodeType.of(
+            "rc.condition_entry", NodeType.Kind.RC_CONDITION_ENTRY, CAT_ENTITY,
+            List.of(),
+            List.of(
+                    PortDef.in("rc", PortType.RC_REF),
+                    PortDef.in("condition", PortType.FLOAT, new JsonPrimitive(1))),
+            List.of(slotOut("entry"))));
+
+    // ---------- RenderController ----------
+
+    public static final NodeType RC_ROOT = register(NodeType.of(
+            "rc.root", NodeType.Kind.RC_ROOT, CAT_RC,
+            List.of(
+                    NodeOptionDef.bool("ignore_lighting", false),
+                    NodeOptionDef.of("arrays", NodeOptionDef.OptionType.TEXT, new JsonPrimitive(""))),
+            List.of(
+                    PortDef.in("geometry", PortType.STRING, new JsonPrimitive("geometry.default")),
+                    slotIn("textures"),
+                    slotIn("materials"),
+                    slotIn("part_visibility"),
+                    PortDef.in("color_r", PortType.FLOAT, new JsonPrimitive(1)),
+                    PortDef.in("color_g", PortType.FLOAT, new JsonPrimitive(1)),
+                    PortDef.in("color_b", PortType.FLOAT, new JsonPrimitive(1)),
+                    PortDef.in("color_a", PortType.FLOAT, new JsonPrimitive(1)),
+                    PortDef.in("is_hurt_r", PortType.FLOAT),
+                    PortDef.in("is_hurt_g", PortType.FLOAT),
+                    PortDef.in("is_hurt_b", PortType.FLOAT),
+                    PortDef.in("is_hurt_a", PortType.FLOAT),
+                    PortDef.in("on_fire_r", PortType.FLOAT),
+                    PortDef.in("on_fire_g", PortType.FLOAT),
+                    PortDef.in("on_fire_b", PortType.FLOAT),
+                    PortDef.in("on_fire_a", PortType.FLOAT),
+                    PortDef.in("overlay_r", PortType.FLOAT),
+                    PortDef.in("overlay_g", PortType.FLOAT),
+                    PortDef.in("overlay_b", PortType.FLOAT),
+                    PortDef.in("overlay_a", PortType.FLOAT)),
+            List.of()));
+
+    public static final NodeType LIST_ENTRY = register(NodeType.of(
+            "list.entry", NodeType.Kind.LIST_ENTRY, CAT_RC,
+            List.of(),
+            List.of(PortDef.in("value", PortType.ANY)),
+            List.of(slotOut("entry"))));
+
+    public static final NodeType MATERIAL_ENTRY = register(NodeType.of(
+            "material.entry", NodeType.Kind.MATERIAL_ENTRY, CAT_RC,
+            List.of(NodeOptionDef.string("pattern", "*")),
+            List.of(PortDef.in("value", PortType.ANY)),
+            List.of(slotOut("entry"))));
+
+    public static final NodeType PART_VISIBILITY_ENTRY = register(NodeType.of(
+            "part_visibility.entry", NodeType.Kind.PART_VISIBILITY_ENTRY, CAT_RC,
+            List.of(NodeOptionDef.string("bone_pattern", "*")),
+            List.of(PortDef.in("condition", PortType.BOOL, new JsonPrimitive(1))),
+            List.of(slotOut("entry"))));
+
+    // ---------- AnimationController ----------
+
+    public static final NodeType AC_ROOT = register(NodeType.of(
+            "ac.root", NodeType.Kind.AC_ROOT, CAT_AC,
+            List.of(
+                    NodeOptionDef.string("identifier", "controller.animation.example.main"),
+                    NodeOptionDef.string("initial_state", "default")),
+            List.of(slotIn("states")),
+            List.of()));
+
+    public static final NodeType AC_STATE = register(NodeType.of(
+            "ac.state", NodeType.Kind.AC_STATE, CAT_AC,
+            List.of(
+                    NodeOptionDef.string("name", "default"),
+                    NodeOptionDef.number("blend_transition", 0.2),
+                    NodeOptionDef.bool("blend_via_shortest_path", false)),
+            List.of(
+                    new PortDef("on_entry", PortDirection.IN, PortType.EXEC, Optional.empty(), false),
+                    new PortDef("on_exit", PortDirection.IN, PortType.EXEC, Optional.empty(), false),
+                    slotIn("animations"),
+                    slotIn("transitions")),
+            List.of(slotOut("state"))));
+
+    public static final NodeType AC_TRANSITION = register(NodeType.of(
+            "ac.transition", NodeType.Kind.AC_TRANSITION, CAT_AC,
+            List.of(NodeOptionDef.string("target", "default")),
+            List.of(PortDef.in("condition", PortType.FLOAT, new JsonPrimitive(1))),
+            List.of(slotOut("transition"))));
+
+    // ---------- 子图 ----------
+
+    public static final NodeType SUBGRAPH_CALL = register(NodeType.dynamic(
+            "subgraph.call", NodeType.Kind.SUBGRAPH_CALL, CAT_SUBGRAPH,
+            List.of(NodeOptionDef.string("subgraph", "")),
+            (instance, resolver) -> {
+                String name = instance.optionString("subgraph", "");
+                return resolver.resolve(name)
+                        .map(iface -> iface.inputs().stream()
+                                .<PortDef>map(p -> p.defaultValue()
+                                        .map(d -> new PortDef(p.name(), PortDirection.IN, p.type(), Optional.of(d), false))
+                                        .orElse(PortDef.in(p.name(), p.type())))
+                                .toList())
+                        .orElse(List.of());
+            },
+            (instance, resolver) -> {
+                String name = instance.optionString("subgraph", "");
+                return resolver.resolve(name)
+                        .map(iface -> List.of(PortDef.out("result", iface.output().type())))
+                        .orElse(List.of(PortDef.out("result", PortType.ANY)));
+            }));
+
+    /** 子图输入锚点：动态输出 = 所在图接口的输入参数。 */
+    public static final NodeType SUBGRAPH_INPUT = register(NodeType.dynamic(
+            "subgraph.input", NodeType.Kind.SUBGRAPH_INPUT, CAT_SUBGRAPH,
+            List.of(),
+            NodeType.PortProvider.fixed(List.of()),
+            (instance, resolver) -> resolver.self()
+                    .map(iface -> iface.inputs().stream()
+                            .<PortDef>map(p -> PortDef.out(p.name(), p.type()))
+                            .toList())
+                    .orElse(List.of())));
+
+    /** 子图输出锚点：exec_in（可空）+ result 输入（类型随所在图接口输出）。 */
+    public static final NodeType SUBGRAPH_OUTPUT = register(NodeType.dynamic(
+            "subgraph.output", NodeType.Kind.SUBGRAPH_OUTPUT, CAT_SUBGRAPH,
+            List.of(),
+            (instance, resolver) -> {
+                PortType resultType = resolver.self()
+                        .map(iface -> iface.output().type())
+                        .orElse(PortType.ANY);
+                return List.of(
+                        new PortDef("exec_in", PortDirection.IN, PortType.EXEC, Optional.empty(), false),
+                        PortDef.in("result", resultType));
+            },
+            NodeType.PortProvider.fixed(List.of())));
+}
