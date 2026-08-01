@@ -53,6 +53,16 @@ test.geo.json
 *.mv.db.trace.*
 NUL
 test_resources/
+*.jfr
+
+# local research / debugging artifacts (tracked work docs unaffected)
+work/ans-pack/
+work/be-sysid/
+work/player-anim/
+work/player-wiring/
+work/screenshots/
+work/perf-ms-frame-plan/spark/
+work/*.png
 
 # smoke test artifacts (generated at runtime, not source)
 run/clientsmoke/
