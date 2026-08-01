@@ -95,6 +95,18 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+    // firstdark snapshots：LDLib2（节点图编辑器可选前置，见 docs/specs/nodegraph-visual-molang.md §4）。
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "FirstdarkSnapshots"
+                url = "https://maven.firstdark.dev/snapshots"
+            }
+        }
+        filter {
+            includeGroup "com.lowdragmc.ldlib2"
+        }
+    }
 }
 
 base {
@@ -308,11 +320,19 @@ sourceSets {
 configurations {
     runtimeClasspath.extendsFrom localRuntime
     nullawayProcessor
+    // 1.21.1 专用：LDLib2 jar 独立 configuration（不继承 runtimeClasspath，避免 classpath+mods 双份加载），
+    // 由 copyLdlib2ToMods 复制进 run/mods 供 mod discovery（同 clientsmokeJar 模式）。
+    ldlib2Jar
+    // 1.20.1 专用：LDLib（SRG）编译路径，由 obfuscation.createRemappingConfiguration 生成 modLdlibCompile 做 SRG→Mojmap remap。
+    ldlibCompile
 }
 if (isLegacyForge) {
     obfuscation {
         createRemappingConfiguration(configurations.localRuntime)
+        createRemappingConfiguration(configurations.ldlibCompile)
     }
+    // LDLib 编译产物进 compileOnly（remap 后），源码侧 import com.lowdragmc.* 才可用 mojmap 名编译。
+    configurations.compileOnly.extendsFrom configurations.ldlibCompile
 }
 
 // ModDevGradle ObfuscationExtension.reobfuscate() replaces apiElements/runtimeElements with
@@ -359,6 +379,24 @@ dependencies {
     // CurseForge file 4738952 = spark-1.10.53-forge.jar，1.20.1 forge 唯一兼容版本。
     if (isLegacyForge) {
         modLocalRuntime "curse.maven:spark-361579:4738952"
+    }
+
+    // LDLib / LDLib2：节点图编辑器可选前置（docs/specs/nodegraph-visual-molang.md D7）。
+    // compileOnly + dev runtime，不 jarJar 嵌入产物；运行时缺失时编辑器入口关闭。
+    if (isLegacyForge) {
+        // LDLib 1.0.49-forge（SRG 名，modId=ldlib）：编译与运行均走 remap 配置（同 spark）。
+        // CurseForge project 626676 / file 7652228。
+        modLdlibCompile "curse.maven:ldlib-626676:7652228"
+        modLocalRuntime "curse.maven:ldlib-626676:7652228"
+    } else if (isModern) {
+        // LDLib2 26.1.x（mojmap，modId=ldlib2）；MDG 2.x localRuntime 自动注册 mod discovery。
+        compileOnly "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:26.1.2.27.a"
+        localRuntime "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:26.1.2.27.a"
+    } else {
+        // LDLib2 1.21.1（mojmap，modId=ldlib2，:all 含全部资源）；
+        // MDG 1.x localRuntime 不注册 mod discovery 且会双份加载 → 独立 configuration + copy 到 run/mods。
+        compileOnly "com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1:2.2.32:all"
+        ldlib2Jar "com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1:2.2.32:all"
     }
 
     if (hasAdditionalRuntimeClasspath) {
@@ -751,5 +789,16 @@ if (!isLegacyForge && hasAdditionalRuntimeClasspath) {
     // 在构建产物生成后复制（createMinecraftArtifacts 是 ModDevGradle 的产物任务）
     tasks.named('createMinecraftArtifacts') {
         finalizedBy 'copyClientsmokeToMods'
+    }
+}
+
+// 1.21.1：将 LDLib2 jar 复制到 run/mods，让 NeoForge mod discovery 加载它（同 clientsmoke 模式）。
+if (!isLegacyForge && hasAdditionalRuntimeClasspath) {
+    tasks.register('copyLdlib2ToMods', Copy) {
+        from(configurations.ldlib2Jar)
+        into project.file('run/mods')
+    }
+    tasks.matching { it.name in ['runClient', 'prepareClientRun'] }.configureEach {
+        dependsOn 'copyLdlib2ToMods'
     }
 }

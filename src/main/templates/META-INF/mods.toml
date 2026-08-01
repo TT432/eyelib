@@ -81,6 +81,14 @@ mandatory=true
 ordering="NONE"
 side="BOTH"
 
+# LDLib 可选前置：节点图编辑器（docs/specs/nodegraph-visual-molang.md D7）。未安装时编辑器入口关闭，其余功能不受影响。
+[[dependencies.${mod_id}]]
+modId="ldlib"
+mandatory=false
+versionRange="[1.0.49,)"
+ordering="AFTER"
+side="CLIENT"
+
 
 # Features are specific properties of the game environment, that you may want to declare you require. This example declares
 # that your mod requires GL version 3.2 or higher. Other features will be added. They are side aware so declaring this won't
