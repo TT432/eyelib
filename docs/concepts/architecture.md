@@ -121,5 +121,6 @@ Domain 模块的 Port 接口清单、MC import 渗透情况和剩余工作记录
 | [0016](../decisions/0016-bridge-extraction-standard.md) | 库隔离标准 — DDD 分层与 ACL 职责边界 |
 | [0017](../decisions/0017-remove-migrate26renames.md) | 移除 migrate26Renames 文本替换，统一用 `//?` 条件注释 |
 | [0018](../decisions/0018-isolated-quiescent-fragments.md) | 孤立静止片段架构（IQF）—— Application 层形状判据 + ArchUnit 扩展 |
+| [0021](../decisions/0021-nodegraph-visual-molang-ldlib.md) | 节点图可视化 Molang 语言与 LDLib 可选前置 |
 
 > 注:0013 主文档与 [0013a 附录 A](../decisions/0013a-bedrock-animation-query-functions.md)(基岩版 query.* 函数清单)共享同一 ADR 编号,0013a 是 0013 的附录而非独立 ADR。

@@ -21,10 +21,11 @@
 | `eyelib.model` | 模型定义模块。 |
 | `eyelib.molang` | Molang 引擎：Molang 值/运行时封装、作用域、编译器、代码缓存、映射 API 及类型系统。 |
 | `eyelib.network` | 网络包在客户端的接收/分发处理（不持版本特定 MC API；版本差异的通道注册由 bridge/network 负责）。 |
+| `eyelib.nodegraph` | 节点图模块：可视化 Molang 语言（EVM）的权威图文档模型、节点类型系统、验证、 图 → Molang 代码生成、图 → ClientEntity/RC/AC 组装。 |
 | `eyelib.particle` | 粒子模块：粒子定义、运行时、组件系统、加载管线与客户端渲染的整合入口。 |
 | `eyelib.smoke` | Clientsmoke 入口类集合，承担 mcpack 数据的运行时完整性验证。 |
 | `eyelib.track` | 追踪模块：为 ItemStack 提供单调递增 ID 分配、NBT 持久化及基于 ID 的通用缓存容器基础设施。 |
 | `eyelib.ui` | MC 无关的 GUI 抽象接口，由 bridge/ui/ 提供 MC 适配实现。 |
 | `eyelib.util` | 共享工具模块，提供 Eyelib 的基础工具类集合。 |
 
-(18 modules)
+(19 modules)
