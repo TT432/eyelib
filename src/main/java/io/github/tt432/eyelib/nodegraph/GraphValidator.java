@@ -1,0 +1,617 @@
+package io.github.tt432.eyelib.nodegraph;
+
+import com.google.gson.JsonElement;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+/**
+ * 图验证器（规格 §2/T3）：对 {@link GraphLibrary} / {@link GraphData} 做纯函数式检查，
+ * 产出结构化 {@link Diagnostic} 列表。
+ *
+ * <p>检查项：未知节点类型、uid 重复、wire 端点/方向/类型、多连接与 exec fan-out、
+ * 环检测、SLOT 装配白名单、资源引用误用与冲突、根节点计数、子图目标/递归/锚点、
+ * 未连接输入、孤儿 exec 链、未声明变量引用。
+ *
+ * <p>验证是纯函数：同输入同输出，不依赖 MC/LDLib；未知类型/端口只产生诊断，不抛异常。
+ */
+public final class GraphValidator {
+    private GraphValidator() {
+    }
+
+    /** 子图展开深度上限（规格 §2.4-9）。 */
+    public static final int MAX_SUBGRAPH_DEPTH = 32;
+
+    // ---------- 诊断码 ----------
+    public static final String UNKNOWN_NODE_TYPE = "UNKNOWN_NODE_TYPE";
+    public static final String DUPLICATE_UID = "DUPLICATE_UID";
+    public static final String UNKNOWN_WIRE_ENDPOINT = "UNKNOWN_WIRE_ENDPOINT";
+    public static final String WIRE_DIRECTION = "WIRE_DIRECTION";
+    public static final String TYPE_MISMATCH = "TYPE_MISMATCH";
+    public static final String LOOSE_TYPE = "LOOSE_TYPE";
+    public static final String DUPLICATE_INPUT = "DUPLICATE_INPUT";
+    public static final String EXEC_FANOUT = "EXEC_FANOUT";
+    public static final String CYCLE = "CYCLE";
+    public static final String SLOT_KIND = "SLOT_KIND";
+    public static final String REF_MISUSE = "REF_MISUSE";
+    public static final String ROOT_COUNT = "ROOT_COUNT";
+    public static final String SUBGRAPH_TARGET = "SUBGRAPH_TARGET";
+    public static final String SUBGRAPH_RECURSION = "SUBGRAPH_RECURSION";
+    public static final String SUBGRAPH_ANCHOR = "SUBGRAPH_ANCHOR";
+    public static final String REF_CONFLICT = "REF_CONFLICT";
+    public static final String UNCONNECTED_INPUT = "UNCONNECTED_INPUT";
+    public static final String ORPHAN_CHAIN = "ORPHAN_CHAIN";
+    public static final String UNDECLARED_VARIABLE = "UNDECLARED_VARIABLE";
+
+    /** SLOT 装配白名单：目标(节点类型.端口) → 允许的源节点类型。 */
+    private static final Map<String, String> SLOT_WHITELIST = Map.of(
+            "entity.root.animate", "animate.entry",
+            "entity.root.render_controllers", "rc.condition_entry",
+            "rc.root.textures", "list.entry",
+            "rc.root.materials", "material.entry",
+            "rc.root.part_visibility", "part_visibility.entry",
+            "ac.root.states", "ac.state",
+            "ac.state.animations", "animate.entry",
+            "ac.state.transitions", "ac.transition");
+
+    /** 只能接入装配槽（animate.entry.ref / rc.condition_entry.rc）的引用节点。 */
+    private static final Set<String> ASSEMBLY_ONLY_REFS = Set.of("ref.animation", "ref.ac", "ref.rc");
+    /** 可接表达式槽或 list/material 条目 value 的引用节点。 */
+    private static final Set<String> VALUE_REFS = Set.of("ref.geometry", "ref.texture", "ref.material");
+
+    /** 根锚点节点类型 id（可达性分析起点）。 */
+    private static final Set<String> ROOT_ANCHORS = Set.of("entity.root", "rc.root", "ac.root", "subgraph.output");
+
+    /** 诊断列表是否含 ERROR。 */
+    public static boolean hasErrors(List<Diagnostic> diagnostics) {
+        return diagnostics.stream().anyMatch(d -> d.severity() == Diagnostic.Severity.ERROR);
+    }
+
+    // ====================================================================
+    // 库级验证
+    // ====================================================================
+
+    /**
+     * 验证整个库：逐图检查 + 根节点计数 + 子图目标/递归/锚点 + 跨图资源引用冲突。
+     */
+    public static List<Diagnostic> validate(GraphLibrary library) {
+        List<Diagnostic> out = new ArrayList<>();
+        for (Map.Entry<String, GraphData> e : library.graphs().entrySet()) {
+            out.addAll(validateGraph(library, e.getKey(), e.getValue()));
+        }
+        GraphData main = library.graphs().get(library.main());
+        if (main != null) {
+            checkRootCount(library, main, out);
+        } else {
+            out.add(Diagnostic.error(ROOT_COUNT, "主图 '" + library.main() + "' 不存在"));
+        }
+        checkSubgraphAnchors(library, out);
+        Map<String, List<CallEdge>> callGraph = checkSubgraphTargets(library, out);
+        checkSubgraphRecursion(library, callGraph, out);
+        if (main != null) {
+            checkRefConflicts(library, callGraph, out);
+        }
+        return out;
+    }
+
+    /** 检查 12：主图根节点恰好 1 个（按库种类）。 */
+    private static void checkRootCount(GraphLibrary library, GraphData main, List<Diagnostic> out) {
+        String rootType = switch (library.kind()) {
+            case CLIENT_ENTITY -> "entity.root";
+            case RENDER_CONTROLLER -> "rc.root";
+            case ANIMATION_CONTROLLER -> "ac.root";
+            case EXPRESSION_LIB -> null;
+        };
+        if (rootType == null) {
+            return;
+        }
+        long count = main.nodes().stream().filter(n -> n.type().equals(rootType)).count();
+        if (count != 1) {
+            out.add(Diagnostic.error(ROOT_COUNT,
+                    "库种类 " + library.kind().getSerializedName() + " 的主图必须恰好 1 个 " + rootType + "，实际 " + count));
+        }
+    }
+
+    /** 检查 15：子图锚点数量；主图不得有锚点。 */
+    private static void checkSubgraphAnchors(GraphLibrary library, List<Diagnostic> out) {
+        for (Map.Entry<String, GraphData> e : library.graphs().entrySet()) {
+            String name = e.getKey();
+            GraphData graph = e.getValue();
+            long inputs = graph.nodes().stream().filter(n -> n.type().equals("subgraph.input")).count();
+            long outputs = graph.nodes().stream().filter(n -> n.type().equals("subgraph.output")).count();
+            boolean isMain = name.equals(library.main());
+            if (isMain) {
+                if (inputs > 0 || outputs > 0) {
+                    out.add(Diagnostic.error(SUBGRAPH_ANCHOR,
+                            "主图不得包含 subgraph.input/subgraph.output 锚点（input=" + inputs + ", output=" + outputs + "）"));
+                }
+            } else if (graph.isSubgraph()) {
+                if (outputs != 1) {
+                    out.add(Diagnostic.error(SUBGRAPH_ANCHOR,
+                            "子图 '" + name + "' 必须恰好 1 个 subgraph.output，实际 " + outputs));
+                }
+                if (inputs > 1) {
+                    out.add(Diagnostic.error(SUBGRAPH_ANCHOR,
+                            "子图 '" + name + "' 至多 1 个 subgraph.input，实际 " + inputs));
+                }
+            }
+        }
+    }
+
+    /** 子图调用边（目标图名 + 调用节点 uid）。 */
+    private record CallEdge(String target, String nodeUid) {
+    }
+
+    /** 检查 13：subgraph.call 指向存在且有接口的子图；同时返回调用图（供递归/引用冲突检查）。 */
+    private static Map<String, List<CallEdge>> checkSubgraphTargets(GraphLibrary library, List<Diagnostic> out) {
+        Map<String, List<CallEdge>> callGraph = new HashMap<>();
+        for (Map.Entry<String, GraphData> e : library.graphs().entrySet()) {
+            List<CallEdge> edges = new ArrayList<>();
+            for (NodeInstance node : e.getValue().nodes()) {
+                if (!node.type().equals("subgraph.call")) {
+                    continue;
+                }
+                String target = node.option("subgraph", NodeTypes.SUBGRAPH_CALL)
+                        .map(JsonElement::getAsString).orElse("");
+                Optional<GraphData> targetGraph = library.graph(target);
+                if (targetGraph.isEmpty() || targetGraph.get().graphInterface().isEmpty()) {
+                    out.add(Diagnostic.error(SUBGRAPH_TARGET,
+                            "subgraph.call 指向的子图 '" + target + "' 不存在或不是子图（无 interface）", node.uid()));
+                } else {
+                    edges.add(new CallEdge(target, node.uid()));
+                }
+            }
+            callGraph.put(e.getKey(), edges);
+        }
+        return callGraph;
+    }
+
+    /** 检查 14：子图调用链无环且展开深度 ≤ {@link #MAX_SUBGRAPH_DEPTH}。 */
+    private static void checkSubgraphRecursion(GraphLibrary library, Map<String, List<CallEdge>> callGraph,
+                                               List<Diagnostic> out) {
+        // 环检测（DFS 三色）
+        Map<String, Integer> color = new HashMap<>();
+        Deque<String> stack = new ArrayDeque<>();
+        for (String name : callGraph.keySet()) {
+            if (color.getOrDefault(name, 0) == 0) {
+                detectCallCycle(name, callGraph, color, stack, out);
+            }
+        }
+        // 深度（memoized 最长链；有环时跳过，环已报错）
+        Map<String, Integer> memo = new HashMap<>();
+        int depth = callDepth(library.main(), callGraph, memo, new HashSet<>());
+        if (depth > MAX_SUBGRAPH_DEPTH) {
+            out.add(Diagnostic.error(SUBGRAPH_RECURSION,
+                    "子图展开深度 " + depth + " 超过上限 " + MAX_SUBGRAPH_DEPTH));
+        }
+    }
+
+    private static void detectCallCycle(String start, Map<String, List<CallEdge>> callGraph,
+                                        Map<String, Integer> color, Deque<String> stack, List<Diagnostic> out) {
+        // 迭代 DFS，避免深链栈溢出
+        record Frame(String name, int nextEdge) {
+        }
+        Deque<Frame> frames = new ArrayDeque<>();
+        color.put(start, 1);
+        stack.push(start);
+        frames.push(new Frame(start, 0));
+        while (!frames.isEmpty()) {
+            Frame top = frames.peek();
+            List<CallEdge> edges = callGraph.getOrDefault(top.name(), List.of());
+            if (top.nextEdge() < edges.size()) {
+                frames.pop();
+                frames.push(new Frame(top.name(), top.nextEdge() + 1));
+                CallEdge edge = edges.get(top.nextEdge());
+                int c = color.getOrDefault(edge.target(), 0);
+                if (c == 1) {
+                    out.add(Diagnostic.error(SUBGRAPH_RECURSION,
+                            "子图调用链存在环（" + String.join(" → ", stack) + " → " + edge.target() + "）",
+                            edge.nodeUid()));
+                } else if (c == 0) {
+                    color.put(edge.target(), 1);
+                    stack.push(edge.target());
+                    frames.push(new Frame(edge.target(), 0));
+                }
+            } else {
+                frames.pop();
+                color.put(top.name(), 2);
+                stack.pop();
+            }
+        }
+    }
+
+    private static int callDepth(String name, Map<String, List<CallEdge>> callGraph,
+                                 Map<String, Integer> memo, Set<String> visiting) {
+        Integer cached = memo.get(name);
+        if (cached != null) {
+            return cached;
+        }
+        if (!visiting.add(name)) {
+            return 0; // 环：已另行报错
+        }
+        int depth = 1;
+        for (CallEdge edge : callGraph.getOrDefault(name, List.of())) {
+            depth = Math.max(depth, 1 + callDepth(edge.target(), callGraph, memo, visiting));
+        }
+        visiting.remove(name);
+        memo.put(name, depth);
+        return depth;
+    }
+
+    /** 检查 16：主图可达的全部图内，同类资源引用同 short_name 不同标识 = 冲突。 */
+    private static void checkRefConflicts(GraphLibrary library, Map<String, List<CallEdge>> callGraph,
+                                          List<Diagnostic> out) {
+        // BFS 收集可达图
+        Set<String> reachable = new LinkedHashSet<>();
+        Deque<String> queue = new ArrayDeque<>();
+        reachable.add(library.main());
+        queue.add(library.main());
+        while (!queue.isEmpty()) {
+            String name = queue.poll();
+            for (CallEdge edge : callGraph.getOrDefault(name, List.of())) {
+                if (reachable.add(edge.target())) {
+                    queue.add(edge.target());
+                }
+            }
+        }
+        // short_name → 标识值，按类别各自一张表
+        Map<String, Map<String, String>> seen = new HashMap<>();
+        for (String graphName : reachable) {
+            GraphData graph = library.graphs().get(graphName);
+            if (graph == null) {
+                continue;
+            }
+            for (NodeInstance node : graph.nodes()) {
+                String valueOption = switch (node.type()) {
+                    case "ref.geometry", "ref.animation", "ref.ac" -> "identifier";
+                    case "ref.texture" -> "path";
+                    case "ref.material" -> "material";
+                    default -> null;
+                };
+                if (valueOption == null) {
+                    continue;
+                }
+                NodeType type = NodeTypes.require(node.type());
+                String shortName = node.option("short_name", type).map(JsonElement::getAsString).orElse("");
+                String value = node.option(valueOption, type).map(JsonElement::getAsString).orElse("");
+                Map<String, String> table = seen.computeIfAbsent(node.type(), k -> new HashMap<>());
+                String prev = table.putIfAbsent(shortName, value);
+                if (prev != null && !prev.equals(value)) {
+                    out.add(Diagnostic.error(REF_CONFLICT,
+                            "资源引用冲突：" + node.type() + " 短名 '" + shortName + "' 同时指向 '"
+                                    + prev + "' 与 '" + value + "'", node.uid()));
+                }
+            }
+        }
+    }
+
+    // ====================================================================
+    // 单图验证
+    // ====================================================================
+
+    /**
+     * 验证单张图（库级检查除外）。{@code graphName} 仅用于诊断消息。
+     */
+    public static List<Diagnostic> validateGraph(GraphLibrary library, String graphName, GraphData graph) {
+        List<Diagnostic> out = new ArrayList<>();
+        NodeType.SubgraphResolver resolver = NodeType.SubgraphResolver.of(library, graph.graphInterface());
+
+        // 检查 2：uid 重复；建立 uid → 节点索引（保留首次出现）
+        Map<String, NodeInstance> byUid = new LinkedHashMap<>();
+        for (NodeInstance node : graph.nodes()) {
+            if (byUid.putIfAbsent(node.uid(), node) != null) {
+                out.add(Diagnostic.error(DUPLICATE_UID, "节点 uid 重复: " + node.uid(), node.uid()));
+            }
+        }
+
+        // 检查 1：未知节点类型；推导每实例端口集
+        Map<String, NodeType> types = new HashMap<>();
+        Map<String, List<PortDef>> inputs = new HashMap<>();
+        Map<String, List<PortDef>> outputs = new HashMap<>();
+        for (NodeInstance node : byUid.values()) {
+            Optional<NodeType> type = NodeTypes.get(node.type());
+            if (type.isEmpty()) {
+                out.add(Diagnostic.error(UNKNOWN_NODE_TYPE, "未知节点类型: " + node.type(), node.uid()));
+                continue;
+            }
+            types.put(node.uid(), type.get());
+            inputs.put(node.uid(), type.get().inputsOf(node, resolver));
+            outputs.put(node.uid(), type.get().outputsOf(node, resolver));
+        }
+
+        // wire 检查（3/4/5/6/10/11）+ 度数统计 + 有效边收集
+        Map<PortRef, PortDef> inPorts = new HashMap<>();   // 合法 to 端点 → 端口定义
+        Map<PortRef, PortDef> outPorts = new HashMap<>();  // 合法 from 端点 → 端口定义
+        Map<PortRef, Integer> inDegree = new HashMap<>();
+        Map<PortRef, Integer> outDegree = new HashMap<>();
+        List<Wire> valueExecEdges = new ArrayList<>();     // 非 SLOT 边（环检测）
+        List<Wire> execEdges = new ArrayList<>();          // EXEC 边（孤儿链）
+        List<Wire> allEdges = new ArrayList<>();           // 全部合法边（可达性）
+
+        for (Wire wire : graph.wires()) {
+            Endpoint from = resolveEndpoint(wire.from(), byUid, types, inputs, outputs, out);
+            Endpoint to = resolveEndpoint(wire.to(), byUid, types, inputs, outputs, out);
+            if (from == null || to == null) {
+                continue;
+            }
+            // 检查 4：方向
+            if (!from.output() || to.output()) {
+                out.add(Diagnostic.error(WIRE_DIRECTION,
+                        "连线方向错误：" + wire.from() + "（应为 OUT）→ " + wire.to() + "（应为 IN）",
+                        from.output() ? wire.to().node() : wire.from().node()));
+                continue;
+            }
+            PortType fromType = from.port().type();
+            PortType toType = to.port().type();
+            // 检查 5：类型兼容（ANY 参与时 isAssignableTo 恒 true，自然豁免）
+            if (!fromType.isAssignableTo(toType)) {
+                out.add(Diagnostic.error(TYPE_MISMATCH,
+                        "类型不兼容：" + wire.from() + "（" + fromType + "）→ " + wire.to() + "（" + toType + "）",
+                        wire.to().node()));
+            }
+            // 检查 6：弱类型（ANY 参与，EXEC/SLOT 除外）
+            if ((fromType == PortType.ANY || toType == PortType.ANY)
+                    && fromType != PortType.EXEC && toType != PortType.EXEC
+                    && fromType != PortType.SLOT && toType != PortType.SLOT) {
+                out.add(Diagnostic.warning(LOOSE_TYPE,
+                        "弱类型连接（ANY 参与）：" + wire.from() + "（" + fromType + "）→ " + wire.to() + "（" + toType + "）",
+                        wire.to().node()));
+            }
+            // 检查 10：SLOT 装配白名单
+            if (toType == PortType.SLOT) {
+                String expected = SLOT_WHITELIST.get(to.node().type() + "." + to.port().id());
+                if (expected == null || !expected.equals(from.node().type())) {
+                    out.add(Diagnostic.error(SLOT_KIND,
+                            "SLOT 连线种类非法：" + from.node().type() + " → " + to.node().type() + "." + to.port().id()
+                                    + (expected != null ? "（应为 " + expected + "）" : "（该端口不接受 SLOT 连线）"),
+                            to.node().uid()));
+                }
+            }
+            // 检查 11：资源引用误用
+            checkRefMisuse(wire, from, to, out);
+
+            inPorts.put(wire.to(), to.port());
+            outPorts.put(wire.from(), from.port());
+            inDegree.merge(wire.to(), 1, Integer::sum);
+            outDegree.merge(wire.from(), 1, Integer::sum);
+            allEdges.add(wire);
+            if (fromType != PortType.SLOT && toType != PortType.SLOT) {
+                valueExecEdges.add(wire);
+            }
+            if (fromType == PortType.EXEC) {
+                execEdges.add(wire);
+            }
+        }
+
+        // 检查 7：非 multi 输入被连多条
+        for (Map.Entry<PortRef, Integer> e : inDegree.entrySet()) {
+            PortDef port = inPorts.get(e.getKey());
+            if (e.getValue() > 1 && port != null && !port.multi()) {
+                out.add(Diagnostic.error(DUPLICATE_INPUT,
+                        "非 multi 输入端口被连接 " + e.getValue() + " 条：" + e.getKey(), e.getKey().node()));
+            }
+        }
+        // 检查 8：exec 输出 fan-out
+        for (Map.Entry<PortRef, Integer> e : outDegree.entrySet()) {
+            PortDef port = outPorts.get(e.getKey());
+            if (e.getValue() > 1 && port != null && port.type() == PortType.EXEC) {
+                out.add(Diagnostic.error(EXEC_FANOUT,
+                        "exec 输出端口出度 " + e.getValue() + " > 1：" + e.getKey(), e.getKey().node()));
+            }
+        }
+
+        // 检查 9：环检测（值边 + exec 边，SLOT 边不参与）
+        detectValueCycle(byUid, valueExecEdges, out);
+
+        // 可达性（根锚点出发，沿全部合法边反向遍历）
+        Set<String> roots = new LinkedHashSet<>();
+        for (NodeInstance node : byUid.values()) {
+            if (ROOT_ANCHORS.contains(node.type())) {
+                roots.add(node.uid());
+            }
+        }
+        Set<String> reachable = reverseReachable(roots, allEdges);
+        Set<String> execReachable = reverseReachable(roots, execEdges);
+
+        // 检查 17：可达节点的未连接输入
+        for (String uid : reachable) {
+            NodeInstance node = byUid.get(uid);
+            List<PortDef> ports = inputs.get(uid);
+            if (node == null || ports == null) {
+                continue;
+            }
+            for (PortDef port : ports) {
+                if (port.type() == PortType.EXEC || port.type() == PortType.SLOT) {
+                    continue;
+                }
+                if (inDegree.containsKey(new PortRef(uid, port.id()))) {
+                    continue;
+                }
+                if (node.constants().containsKey(port.id()) || port.defaultValue().isPresent()) {
+                    continue;
+                }
+                out.add(Diagnostic.error(UNCONNECTED_INPUT,
+                        "输入端口未连接且无内联值/默认值：" + uid + "." + port.id(), uid));
+            }
+        }
+
+        // 检查 18：孤儿 exec 链（存在根锚点才检查，避免无主图时报全图）
+        if (!roots.isEmpty()) {
+            for (Map.Entry<String, NodeInstance> e : byUid.entrySet()) {
+                if (execReachable.contains(e.getKey())) {
+                    continue;
+                }
+                boolean hasExec = inputs.getOrDefault(e.getKey(), List.of()).stream()
+                        .anyMatch(p -> p.type() == PortType.EXEC)
+                        || outputs.getOrDefault(e.getKey(), List.of()).stream()
+                        .anyMatch(p -> p.type() == PortType.EXEC);
+                if (hasExec) {
+                    out.add(Diagnostic.warning(ORPHAN_CHAIN,
+                            "exec 链节点未连入任何槽：" + e.getKey() + "（" + e.getValue().type() + "）", e.getKey()));
+                }
+            }
+        }
+
+        // 检查 19：未声明的黑板变量引用
+        checkVariableRefs(graph, byUid, types, out);
+
+        return out;
+    }
+
+    /** wire 端点解析结果。 */
+    private record Endpoint(NodeInstance node, PortDef port, boolean output) {
+    }
+
+    /**
+     * 解析 wire 端点：节点必须存在、端口 id 必须在该实例端口集内（动态端口经 resolver 推导）。
+     * 失败时产生 {@link #UNKNOWN_WIRE_ENDPOINT} 诊断并返回 null。
+     */
+    private static Endpoint resolveEndpoint(PortRef ref, Map<String, NodeInstance> byUid,
+                                            Map<String, NodeType> types,
+                                            Map<String, List<PortDef>> inputs,
+                                            Map<String, List<PortDef>> outputs,
+                                            List<Diagnostic> out) {
+        NodeInstance node = byUid.get(ref.node());
+        if (node == null) {
+            out.add(Diagnostic.error(UNKNOWN_WIRE_ENDPOINT, "连线端点节点不存在：" + ref.node(), ref.node()));
+            return null;
+        }
+        if (!types.containsKey(ref.node())) {
+            return null; // 未知类型已报 UNKNOWN_NODE_TYPE
+        }
+        Optional<PortDef> asOut = findPort(outputs.get(ref.node()), ref.port());
+        if (asOut.isPresent()) {
+            return new Endpoint(node, asOut.get(), true);
+        }
+        Optional<PortDef> asIn = findPort(inputs.get(ref.node()), ref.port());
+        if (asIn.isPresent()) {
+            return new Endpoint(node, asIn.get(), false);
+        }
+        out.add(Diagnostic.error(UNKNOWN_WIRE_ENDPOINT,
+                "连线端点端口不存在：" + ref + "（节点类型 " + node.type() + "）", ref.node()));
+        return null;
+    }
+
+    private static Optional<PortDef> findPort(List<PortDef> ports, String id) {
+        return ports.stream().filter(p -> p.id().equals(id)).findFirst();
+    }
+
+    /** 检查 11：资源引用节点的输出只能接规定目标。 */
+    private static void checkRefMisuse(Wire wire, Endpoint from, Endpoint to, List<Diagnostic> out) {
+        String fromType = from.node().type();
+        if (ASSEMBLY_ONLY_REFS.contains(fromType)) {
+            boolean ok = (to.node().type().equals("animate.entry") && to.port().id().equals("ref"))
+                    || (to.node().type().equals("rc.condition_entry") && to.port().id().equals("rc"));
+            if (!ok) {
+                out.add(Diagnostic.error(REF_MISUSE,
+                        fromType + " 的输出只能连接 animate.entry.ref / rc.condition_entry.rc，实际连接 "
+                                + wire.to(), from.node().uid()));
+            }
+        } else if (VALUE_REFS.contains(fromType)) {
+            if (!to.port().type().isValue()) {
+                out.add(Diagnostic.error(REF_MISUSE,
+                        fromType + " 的输出只能连接表达式槽或 material.entry.value / list.entry.value，实际连接 "
+                                + wire.to(), from.node().uid()));
+            }
+        }
+    }
+
+    /** 检查 9：值边 + exec 边上的环（SLOT 边不参与）。 */
+    private static void detectValueCycle(Map<String, NodeInstance> byUid, List<Wire> edges, List<Diagnostic> out) {
+        Map<String, List<String>> adj = new HashMap<>();
+        for (Wire wire : edges) {
+            adj.computeIfAbsent(wire.from().node(), k -> new ArrayList<>()).add(wire.to().node());
+        }
+        Map<String, Integer> color = new HashMap<>();
+        for (String uid : byUid.keySet()) {
+            if (color.getOrDefault(uid, 0) == 0) {
+                detectValueCycleDfs(uid, adj, color, out);
+            }
+        }
+    }
+
+    private static void detectValueCycleDfs(String start, Map<String, List<String>> adj,
+                                            Map<String, Integer> color, List<Diagnostic> out) {
+        record Frame(String uid, int next) {
+        }
+        Deque<Frame> frames = new ArrayDeque<>();
+        color.put(start, 1);
+        frames.push(new Frame(start, 0));
+        while (!frames.isEmpty()) {
+            Frame top = frames.peek();
+            List<String> neighbors = adj.getOrDefault(top.uid(), List.of());
+            if (top.next() < neighbors.size()) {
+                frames.pop();
+                frames.push(new Frame(top.uid(), top.next() + 1));
+                String v = neighbors.get(top.next());
+                int c = color.getOrDefault(v, 0);
+                if (c == 1) {
+                    out.add(Diagnostic.error(CYCLE, "数据流/执行流存在环，途经节点：" + v, v));
+                } else if (c == 0) {
+                    color.put(v, 1);
+                    frames.push(new Frame(v, 0));
+                }
+            } else {
+                frames.pop();
+                color.put(top.uid(), 2);
+            }
+        }
+    }
+
+    /** 从根锚点沿边反向（to → from）可达的节点集合。 */
+    private static Set<String> reverseReachable(Set<String> roots, List<Wire> edges) {
+        Map<String, List<String>> reverse = new HashMap<>();
+        for (Wire wire : edges) {
+            reverse.computeIfAbsent(wire.to().node(), k -> new ArrayList<>()).add(wire.from().node());
+        }
+        Set<String> visited = new LinkedHashSet<>(roots);
+        Deque<String> queue = new ArrayDeque<>(roots);
+        while (!queue.isEmpty()) {
+            String uid = queue.poll();
+            for (String prev : reverse.getOrDefault(uid, List.of())) {
+                if (visited.add(prev)) {
+                    queue.add(prev);
+                }
+            }
+        }
+        return visited;
+    }
+
+    /** 检查 19：var.get / exec.set_var（variable 根）引用未声明的黑板变量。 */
+    private static void checkVariableRefs(GraphData graph, Map<String, NodeInstance> byUid,
+                                          Map<String, NodeType> types, List<Diagnostic> out) {
+        Set<String> declared = new HashSet<>();
+        for (VariableDecl var : graph.variables()) {
+            declared.add(var.name());
+        }
+        for (NodeInstance node : byUid.values()) {
+            NodeType type = types.get(node.uid());
+            if (type == null) {
+                continue;
+            }
+            boolean check = switch (node.type()) {
+                case "var.get" -> true;
+                case "exec.set_var" -> node.option("root", type)
+                        .map(JsonElement::getAsString).orElse("variable").equals("variable");
+                default -> false;
+            };
+            if (!check) {
+                continue;
+            }
+            String name = node.option("name", type).map(JsonElement::getAsString).orElse("");
+            String stripped = name.startsWith("variable.") ? name.substring("variable.".length()) : name;
+            if (!declared.contains(stripped)) {
+                out.add(Diagnostic.warning(UNDECLARED_VARIABLE,
+                        "引用了黑板未声明的变量：" + name, node.uid()));
+            }
+        }
+    }
+}

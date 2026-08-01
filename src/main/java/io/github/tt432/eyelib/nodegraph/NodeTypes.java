@@ -233,17 +233,19 @@ public final class NodeTypes {
                     new PortDef("body", PortDirection.IN, PortType.EXEC, Optional.empty(), false)),
             List.of(execOut())));
 
+    // 终端节点（break/continue/return）也带 exec_out：我们的链是「反向汇入槽」模型，
+    // 没有 exec_out 的节点无法接入 loop.body 等 EXEC 槽；其后的语句为死代码（语义上正确）。
     public static final NodeType EXEC_BREAK = register(NodeType.of(
             "exec.break", NodeType.Kind.EXEC_BREAK, CAT_EXEC,
             List.of(),
             List.of(execIn()),
-            List.of()));
+            List.of(execOut())));
 
     public static final NodeType EXEC_CONTINUE = register(NodeType.of(
             "exec.continue", NodeType.Kind.EXEC_CONTINUE, CAT_EXEC,
             List.of(),
             List.of(execIn()),
-            List.of()));
+            List.of(execOut())));
 
     public static final NodeType EXEC_RETURN = register(NodeType.of(
             "exec.return", NodeType.Kind.EXEC_RETURN, CAT_EXEC,
@@ -251,7 +253,7 @@ public final class NodeTypes {
             List.of(
                     execIn(),
                     PortDef.in("value", PortType.ANY, new JsonPrimitive(0))),
-            List.of()));
+            List.of(execOut())));
 
     // ---------- 资源引用 ----------
 
@@ -339,6 +341,7 @@ public final class NodeTypes {
     public static final NodeType RC_ROOT = register(NodeType.of(
             "rc.root", NodeType.Kind.RC_ROOT, CAT_RC,
             List.of(
+                    NodeOptionDef.string("identifier", "controller.render.example"),
                     NodeOptionDef.bool("ignore_lighting", false),
                     NodeOptionDef.of("arrays", NodeOptionDef.OptionType.TEXT, new JsonPrimitive(""))),
             List.of(
