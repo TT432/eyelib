@@ -133,8 +133,8 @@ public final class NodeTypes {
 
     // ---------- 查询与数学 ----------
 
-    private static List<PortDef> callArgPorts(NodeInstance instance) {
-        int argCount = Math.max(0, Math.min(instance.optionInt("arg_count", 0), 16));
+    private static List<PortDef> callArgPorts(NodeInstance instance, int defaultArgCount) {
+        int argCount = Math.max(0, Math.min(instance.optionInt("arg_count", defaultArgCount), 16));
         List<PortDef> ports = new ArrayList<>();
         for (int i = 1; i <= argCount; i++) {
             ports.add(PortDef.in("arg" + i, PortType.ANY));
@@ -147,7 +147,7 @@ public final class NodeTypes {
             List.of(
                     NodeOptionDef.string("function", "query.anim_time"),
                     NodeOptionDef.integer("arg_count", 0)),
-            (instance, resolver) -> callArgPorts(instance),
+            (instance, resolver) -> callArgPorts(instance, 0),
             NodeType.PortProvider.fixed(List.of(PortDef.out("out", PortType.ANY)))));
 
     public static final NodeType MATH_CALL = register(NodeType.dynamic(
@@ -155,7 +155,7 @@ public final class NodeTypes {
             List.of(
                     NodeOptionDef.string("function", "math.sin"),
                     NodeOptionDef.integer("arg_count", 1)),
-            (instance, resolver) -> callArgPorts(instance),
+            (instance, resolver) -> callArgPorts(instance, 1),
             NodeType.PortProvider.fixed(List.of(PortDef.out("out", PortType.FLOAT)))));
 
     public static final NodeType EXEC_CALL = register(NodeType.dynamic(
@@ -166,7 +166,7 @@ public final class NodeTypes {
             (instance, resolver) -> {
                 List<PortDef> ports = new ArrayList<>();
                 ports.add(execIn());
-                ports.addAll(callArgPorts(instance));
+                ports.addAll(callArgPorts(instance, 0));
                 return ports;
             },
             NodeType.PortProvider.fixed(List.of(execOut()))));

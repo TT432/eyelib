@@ -392,11 +392,14 @@ dependencies {
         // LDLib2 26.1.x（mojmap，modId=ldlib2）；MDG 2.x localRuntime 自动注册 mod discovery。
         compileOnly "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:26.1.2.27.a"
         localRuntime "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:26.1.2.27.a"
+        // 编辑器适配层单测（EvmGraphTranslatorTest）需要 LDLib2 在 test 运行时 classpath。
+        testRuntimeOnly "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:26.1.2.27.a"
     } else {
         // LDLib2 1.21.1（mojmap，modId=ldlib2，:all 含全部资源）；
         // MDG 1.x localRuntime 不注册 mod discovery 且会双份加载 → 独立 configuration + copy 到 run/mods。
         compileOnly "com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1:2.2.32:all"
         ldlib2Jar "com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1:2.2.32:all"
+        testRuntimeOnly "com.lowdragmc.ldlib2:ldlib2-neoforge-1.21.1:2.2.32:all"
     }
 
     if (hasAdditionalRuntimeClasspath) {

@@ -70,6 +70,9 @@ public final class GraphValidator {
     /** 根锚点节点类型 id（可达性分析起点）。 */
     private static final Set<String> ROOT_ANCHORS = Set.of("entity.root", "rc.root", "ac.root", "subgraph.output");
 
+    /** 装配根节点：其输入是「槽」——未连线 = 字段缺省，不报 UNCONNECTED_INPUT。 */
+    private static final Set<String> ASSEMBLY_ROOTS = Set.of("entity.root", "rc.root", "ac.root");
+
     /** 诊断列表是否含 ERROR。 */
     public static boolean hasErrors(List<Diagnostic> diagnostics) {
         return diagnostics.stream().anyMatch(d -> d.severity() == Diagnostic.Severity.ERROR);
@@ -426,6 +429,10 @@ public final class GraphValidator {
             NodeInstance node = byUid.get(uid);
             List<PortDef> ports = inputs.get(uid);
             if (node == null || ports == null) {
+                continue;
+            }
+            // 根锚点节点的输入是「装配槽」：未连线 = 字段缺省（assembler 决定输出与否），不是错误。
+            if (ASSEMBLY_ROOTS.contains(node.type())) {
                 continue;
             }
             for (PortDef port : ports) {

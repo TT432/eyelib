@@ -489,7 +489,7 @@ public final class EvmGraphTranslator {
         Map<String, JsonElement> options = new LinkedHashMap<>();
         for (NodeOptionDef def : type.options()) {
             Constant c = model.getInputConstantsById().get(NodeOption.PORT_ID_PREFIX + def.id());
-            if (c == null || java.util.Objects.equals(c.getValue(), c.getDefaultValue())) continue;
+            if (c == null) continue;
             JsonElement j = EvmValues.javaToJson(c.getValue());
             if (j != null) {
                 options.put(def.id(), j);
