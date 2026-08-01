@@ -78,7 +78,9 @@ public final class EyelibManagerScreen implements UIScreen {
                         (mx, my, b) -> {
                             ManagerScreenLauncher.openEntitiesScreen();
                             return true;
-                        })
+                        }),
+                action(x1, y3, w, h, "节点图", "eyelib:icons/nodegraph",
+                        () -> io.github.tt432.eyelib.client.nodegraph.NodegraphGate.openEditor(null))
         );
         for (UIWidget widget : widgets) {
             ctx.addWidget(widget);
