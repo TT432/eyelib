@@ -1,10 +1,6 @@
 package io.github.tt432.eyelib.client.nodegraph;
 
-//? if <1.20.6 {
-import net.minecraftforge.fml.ModList;
-//?} else {
-import net.neoforged.fml.ModList;
-//?}
+import io.github.tt432.eyelib.bridge.client.compat.ldlib.LdlibCompat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,11 +16,9 @@ public final class NodegraphGate {
     private static final Logger LOGGER = LoggerFactory.getLogger(NodegraphGate.class);
 
     //? if <1.20.6 {
-    private static final String LDLIB_MOD_ID = "ldlib";
     private static final String EDITOR_IMPL_CLASS =
             "io.github.tt432.eyelib.client.nodegraph.editor.ldlib1.Ldlib1NodegraphEditor";
     //?} else {
-    private static final String LDLIB_MOD_ID = "ldlib2";
     private static final String EDITOR_IMPL_CLASS =
             "io.github.tt432.eyelib.client.nodegraph.editor.ldlib2.Ldlib2NodegraphEditor";
     //?}
@@ -34,7 +28,7 @@ public final class NodegraphGate {
 
     /** 节点图编辑器是否可用（LDLib 已安装）。 */
     public static boolean isEditorAvailable() {
-        return ModList.get().isLoaded(LDLIB_MOD_ID);
+        return LdlibCompat.isLdlibLoaded();
     }
 
     /**
@@ -44,7 +38,7 @@ public final class NodegraphGate {
      */
     public static void openEditor(@org.jspecify.annotations.Nullable String libraryName) {
         if (!isEditorAvailable()) {
-            LOGGER.warn("[nodegraph] editor unavailable: optional dependency '{}' is not installed", LDLIB_MOD_ID);
+            LOGGER.warn("[nodegraph] editor unavailable: optional LDLib dependency is not installed");
             return;
         }
         try {

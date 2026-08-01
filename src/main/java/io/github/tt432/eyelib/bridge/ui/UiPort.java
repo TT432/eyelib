@@ -17,4 +17,14 @@ public interface UiPort {
     static Screen wrap(UIScreen screen) {
         return ScreenPort.wrap(screen);
     }
+
+    /** GUI 缩放后的屏幕宽度（blaze3d Window 访问集中在 bridge）。 */
+    static int guiScaledWidth() {
+        return net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledWidth();
+    }
+
+    /** GUI 缩放后的屏幕高度。 */
+    static int guiScaledHeight() {
+        return net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledHeight();
+    }
 }

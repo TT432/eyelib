@@ -35,7 +35,11 @@ class StonecutterCommentPlacementTest {
             "io/github/tt432/eyelib/bridge/",
             "io/github/tt432/eyelib/mixin/",
             "io/github/tt432/eyelib/smoke/",
-            "io/github/tt432/eyelib/debug/"
+            "io/github/tt432/eyelib/debug/",
+            // client/nodegraph 编辑器适配层（LDLib 1.x/LDLib2 第三方库 ACL）：
+            // 整文件 //? 包裹是单版本编译隔离的手段（1.20.1 无 LDLib2、1.21.1+ 无 LDLib 1.x），
+            // 与 debug/smoke 的 client tooling 同性质的基础设施。
+            "io/github/tt432/eyelib/client/nodegraph/"
     );
 
     private static final String STONECUTTER_MARKER = "//?";
