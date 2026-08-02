@@ -39,6 +39,11 @@ public interface ModelBakePort {
     static BakedModel twoSideGetBakedModel(Model model, boolean isSolid, ResourceLocation texture, ResourceLocation meshTexture) {
         return TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, isSolid, texture, meshTexture);
     }
+
+    /** GUI 预览绘制（blaze3d 访问集中在 bridge；Tesselator + position_tex 即时绘制）。 */
+    static void twoSideDrawGuiPreview(BakedModel baked, org.joml.Matrix4f pose, ResourceLocation texture) {
+        TwoSideModelBakeInfo.INSTANCE.drawGuiPreview(baked, pose, texture);
+    }
     //?} else {
     static BakedModel twoSideGetBakedModel(Model model, boolean isSolid, Identifier texture) {
         return TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, isSolid, texture);

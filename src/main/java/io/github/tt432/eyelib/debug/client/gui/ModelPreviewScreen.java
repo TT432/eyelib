@@ -198,43 +198,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
                             : io.github.tt432.eyelib.client.nodegraph.preview.NodeAssetPreview
                                     .resolveAtlasTexture(currentModel.model().name()));
             try {
-                com.mojang.blaze3d.systems.RenderSystem.setShaderTexture(0, texture);
-                com.mojang.blaze3d.systems.RenderSystem.setShader(
-                        net.minecraft.client.renderer.GameRenderer::getPositionTexShader);
-                var pose = poseStack.last().pose();
-                //? if <1.20.6 {
-                Tesselator tesselator = Tesselator.getInstance();
-                BufferBuilder builder = tesselator.getBuilder();
-                builder.begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
-                        com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_TEX);
-                for (io.github.tt432.eyelib.bridge.client.render.bake.BakedModel.BakedBone bone : bakedModel.bones().values()) {
-                    bone.transformPos(pose);
-                    float[] pos = bone.positionResult();
-                    float[] u = bone.u();
-                    float[] v = bone.v();
-                    for (int i = 0; i < bone.vertexSize(); i++) {
-                        builder.vertex(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])
-                                .uv(u[i], v[i])
-                                .endVertex();
-                    }
-                }
-                tesselator.end();
-                //?} else {
-                BufferBuilder builder = Tesselator.getInstance().begin(
-                        com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
-                        com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_TEX);
-                for (io.github.tt432.eyelib.bridge.client.render.bake.BakedModel.BakedBone bone : bakedModel.bones().values()) {
-                    bone.transformPos(pose);
-                    float[] pos = bone.positionResult();
-                    float[] u = bone.u();
-                    float[] v = bone.v();
-                    for (int i = 0; i < bone.vertexSize(); i++) {
-                        builder.addVertex(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])
-                                .setUv(u[i], v[i]);
-                    }
-                }
-                com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(builder.buildOrThrow());
-                //?}
+                ModelBakePort.twoSideDrawGuiPreview(bakedModel, poseStack.last().pose(), texture);
             } catch (Exception e) {
                 e.printStackTrace(); // Log rendering errors but don't crash screen
             }

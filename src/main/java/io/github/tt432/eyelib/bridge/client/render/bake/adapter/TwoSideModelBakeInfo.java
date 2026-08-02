@@ -292,4 +292,53 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
                     || map.get(boneId).cubeNeedTwoSide[idx];
         }
     }
+
+    //? if <26.1 {
+    /**
+     * GUI 预览绘制（blaze3d 访问集中在 bridge）：Tesselator + position_tex 直接 drawWithShader，
+     * 与 {@code GuiGraphics.innerBlit} 同款即时机制。pose 已含全部 GUI 变换（CPU 侧烘进顶点）。
+     *
+     * <p>为何不走 guiGraphics.bufferSource 批渲染：LDLib 画布等上下文中批次零像素
+     * （画布 zoom/pan 只作用于 pose，不作用于批次状态/剪刀）。
+     */
+    public void drawGuiPreview(BakedModel baked, org.joml.Matrix4f pose, ResourceLocation texture) {
+        com.mojang.blaze3d.systems.RenderSystem.setShaderTexture(0, texture);
+        com.mojang.blaze3d.systems.RenderSystem.setShader(
+                net.minecraft.client.renderer.GameRenderer::getPositionTexShader);
+        //? if <1.20.6 {
+        com.mojang.blaze3d.vertex.Tesselator tesselator = com.mojang.blaze3d.vertex.Tesselator.getInstance();
+        com.mojang.blaze3d.vertex.BufferBuilder builder = tesselator.getBuilder();
+        builder.begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
+                com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_TEX);
+        emitGuiPreviewQuads(baked, pose, builder);
+        tesselator.end();
+        //?} else {
+        com.mojang.blaze3d.vertex.BufferBuilder builder = com.mojang.blaze3d.vertex.Tesselator.getInstance()
+                .begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
+                        com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_TEX);
+        emitGuiPreviewQuads(baked, pose, builder);
+        com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(builder.buildOrThrow());
+        //?}
+    }
+
+    private static void emitGuiPreviewQuads(BakedModel baked, org.joml.Matrix4f pose,
+                                            com.mojang.blaze3d.vertex.VertexConsumer buffer) {
+        for (BakedModel.BakedBone bone : baked.bones().values()) {
+            bone.transformPos(pose);
+            float[] pos = bone.positionResult();
+            float[] u = bone.u();
+            float[] v = bone.v();
+            for (int i = 0; i < bone.vertexSize(); i++) {
+                //? if <1.20.6 {
+                buffer.vertex(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])
+                        .uv(u[i], v[i])
+                        .endVertex();
+                //?} else {
+                buffer.addVertex(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])
+                        .setUv(u[i], v[i]);
+                //?}
+            }
+        }
+    }
+    //?}
 }

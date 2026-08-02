@@ -9,12 +9,8 @@ import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.client.Minecraft;
 //? if <26.1 {
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -168,43 +164,10 @@ public final class NodeAssetPreview {
         poseStack.mulPose(Axis.XP.rotationDegrees(30));
         poseStack.translate(-cx, -cy, -cz);
 
-        // 与 GuiGraphics.innerBlit 同款机制：Tesselator + position_tex 直接 drawWithShader。
+        // 与 GuiGraphics.innerBlit 同款机制：Tesselator + position_tex 直接 drawWithShader（bridge 实现）。
         // 这是该 GUI 上下文实证可用的唯一路径（blit 也走它）；bufferSource 批次在此上下文零像素。
         try {
-            com.mojang.blaze3d.systems.RenderSystem.setShaderTexture(0, texture);
-            com.mojang.blaze3d.systems.RenderSystem.setShader(
-                    net.minecraft.client.renderer.GameRenderer::getPositionTexShader);
-            var pose = poseStack.last().pose();
-            //? if <1.20.6 {
-            Tesselator tesselator = Tesselator.getInstance();
-            BufferBuilder builder = tesselator.getBuilder();
-            builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-            for (BakedModel.BakedBone bone : baked.bones().values()) {
-                bone.transformPos(pose);
-                float[] pos = bone.positionResult();
-                float[] u = bone.u();
-                float[] v = bone.v();
-                for (int i = 0; i < bone.vertexSize(); i++) {
-                    builder.vertex(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])
-                            .uv(u[i], v[i])
-                            .endVertex();
-                }
-            }
-            tesselator.end();
-            //?} else {
-            BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-            for (BakedModel.BakedBone bone : baked.bones().values()) {
-                bone.transformPos(pose);
-                float[] pos = bone.positionResult();
-                float[] u = bone.u();
-                float[] v = bone.v();
-                for (int i = 0; i < bone.vertexSize(); i++) {
-                    builder.addVertex(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])
-                            .setUv(u[i], v[i]);
-                }
-            }
-            com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(builder.buildOrThrow());
-            //?}
+            ModelBakePort.twoSideDrawGuiPreview(baked, poseStack.last().pose(), texture);
         } catch (Exception e) {
             // 预览渲染失败不崩编辑器，但要能看见原因（调试后改为 debug 级）
             org.slf4j.LoggerFactory.getLogger(NodeAssetPreview.class).warn("[nodegraph] model preview render failed", e);
