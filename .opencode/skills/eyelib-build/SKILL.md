@@ -92,3 +92,7 @@ centralScript 模式下 `//?` 版本条件注释的实战限制(官方语法文�
 - **行条件不支持 else**:`//? if <1.20.6\n<代码>\n//?} else` 是错误语法,需要 else 时必须用块条件。
 - **`//?` 块内禁放纯注释**:Stonecutter 在 else 分支激活时会剥离注释包裹,纯注释变成裸文本导致编译错误。块内需要占位时用 `throw new UnsupportedOperationException("...")`。
 - **sourceSet 需手动替换**:Stonecutter 0.7.x centralScript 不自动替换 sourceSet,需在 `build.gradle` 手动 `sourceSets.main.java.srcDirs = [stonecutterGenerated]`。
+
+### 直跑 gradlew --tests 带引号 pattern 报 No tests found
+
+在 git-bash 里 `cmd /c 'gradlew.bat :26.1.2:test --tests "*Foo*"'`,cmd 不剥离双引号,Gradle 收到带字面引号的 pattern → `No tests found for given includes: ["*Foo*"]`,极易误判为测试发现机制损坏。规避:用 `mcmcp_test`(内部传不带引号的 pattern),或直跑时写 `--tests *Foo*` 不带引号。

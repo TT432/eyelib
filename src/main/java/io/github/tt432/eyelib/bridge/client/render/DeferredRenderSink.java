@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.bridge.client.render;
 //? if >=26.1 {
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.tt432.eyelib.bridge.material.MaterialPort;
 import io.github.tt432.eyelib.material.port.PortRenderPass;
 import io.github.tt432.eyelib.util.PortResourceLocation;
@@ -32,7 +33,48 @@ final class DeferredRenderSink implements RenderSink {
         RenderType renderType = MaterialPort.toRenderType(renderPass, texture);
         // 直接写 CustomFeatureRenderer 提供的共享 buffer：vanilla 按 RenderType 分组、
         // 每组共享一个 BufferBuilder，phase 末由 LevelRenderer endBatch 统一绘制——真正的批量路径。
-        collector.submitCustomGeometry(pose, renderType, writer::write);
+        collector.submitCustomGeometry(pose, renderType, (submitPose, consumer) -> {
+            if (Boolean.getBoolean("eyelib.ngRenderProbe")) {
+                probeConsumerSwap(renderType, consumer);
+            }
+            try {
+                writer.write(submitPose, consumer);
+            } catch (IllegalStateException e) {
+                // 26.1 已知问题（见 work/feedback.json「Not building!」条目）：
+                // 极小概率下 vanilla 共享 BufferBuilder 在写入中途被外部 endBatch，
+                // 直接抛出会崩掉整个客户端。此处降级为丢弃本段几何并大声记录
+                // （renderType + consumer 身份 + 完整栈），保住其余渲染流程。
+                logWriterFailure(renderType, consumer, e);
+            }
+        });
+    }
+
+    private static final org.slf4j.Logger PROBE_LOG = org.slf4j.LoggerFactory.getLogger(DeferredRenderSink.class);
+    private static final java.util.Map<String, Integer> PROBE_SEEN = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.concurrent.atomic.AtomicBoolean WRITER_FAILURE_LOGGED =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    private static void logWriterFailure(RenderType renderType, VertexConsumer consumer, IllegalStateException e) {
+        if (WRITER_FAILURE_LOGGED.compareAndSet(false, true)) {
+            PROBE_LOG.error("[nodegraph/RenderSink] geometry write dropped: buffer ended mid-write. " +
+                            "renderType={} consumer={}@{} — 完整栈见异常（后续同类事件静默跳过）",
+                    renderType, consumer.getClass().getSimpleName(),
+                    Integer.toHexString(System.identityHashCode(consumer)), e);
+        }
+    }
+
+    /** 同一 renderType 文本的 consumer 实例变更时打一条（限频，避免高频 StackWalk）。 */
+    private static void probeConsumerSwap(RenderType renderType, VertexConsumer consumer) {
+        String key = renderType.toString();
+        int hash = System.identityHashCode(consumer);
+        Integer prev = PROBE_SEEN.put(key, hash);
+        if (prev == null) {
+            PROBE_LOG.warn("[renderProbe] first rt={} consumer={}@{}", key, consumer.getClass().getSimpleName(), Integer.toHexString(hash));
+        } else if (prev != hash) {
+            PROBE_LOG.warn("[renderProbe] SWAP rt={} consumer {}@{} -> {}@{}", key,
+                    consumer.getClass().getSimpleName(), Integer.toHexString(prev),
+                    consumer.getClass().getSimpleName(), Integer.toHexString(hash));
+        }
     }
 
     @Override
