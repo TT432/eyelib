@@ -9,6 +9,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.editor.GraphEditorView;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.nodegraph.GraphLibraryManager;
+import io.github.tt432.eyelib.client.nodegraph.workbench.ldlib2.Ldlib2Workbench;
 import io.github.tt432.eyelib.nodegraph.Diagnostic;
 import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphKind;
@@ -34,9 +35,10 @@ import java.util.Optional;
  * （{@code NodegraphGate} 反射调用点，签名不得偏离）。
  *
  * <p>宿主：{@link GraphEditorView}（含保存/脏标记/面包屑/黑板/检查器/小地图）
- * 经 ModularUI → ModularUIScreen → setScreen 打开。保存回调把 GraphModel 翻译回
+ * 经工作台容器（工具条 + 资产/调试侧栏 + 画布徽标，规格 nodegraph-workbench §W1/W3）→
+ * ModularUI → ModularUIScreen → setScreen 打开。保存回调把 GraphModel 翻译回
  * {@link GraphLibrary}，写入 {@link GraphLibraryManager} 并落盘
- * {@code config/eyelib/nodegraph/<name>.json}（规格 §3.2、D2）。
+ * {@code config/eyelib/nodegraph/<name>.json}（规格 §3.2、D2），同时灌入画布徽标模型。
  */
 public final class Ldlib2NodegraphEditor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Ldlib2NodegraphEditor.class);
@@ -71,26 +73,24 @@ public final class Ldlib2NodegraphEditor {
         EvmDiagnostics.report(openDiags);
 
         GraphEditorView editorView = new GraphEditorView();
-        editorView.layout(layout -> {
-            layout.widthPercent(100);
-            layout.heightPercent(100);
-        });
-        editorView.loadGraph(graph, savedTag -> persist(name, graph));
+        Ldlib2Workbench workbench = Ldlib2Workbench.create(library, editorView);
+        editorView.loadGraph(graph, savedTag -> workbench.onPersisted(persist(name, graph)));
 
         Minecraft mc = Minecraft.getInstance();
         mc.setScreen(new ModularUIScreen(
-                new ModularUI(UI.of(editorView), mc.player),
+                new ModularUI(UI.of(workbench.root()), mc.player),
                 Component.literal("Nodegraph: " + name)));
     }
 
-    /** 保存：GraphModel → GraphLibrary → 验证诊断 → 注册表 + 落盘。 */
-    private static void persist(String name, EvmGraph graph) {
+    /** 保存：GraphModel → GraphLibrary → 验证诊断 → 注册表 + 落盘；返回入库的库（供徽标模型重发射）。 */
+    private static GraphLibrary persist(String name, EvmGraph graph) {
         List<Diagnostic> diags = new ArrayList<>();
         GraphLibrary library = EvmGraphTranslator.toLibrary(graph, diags);
         diags.addAll(GraphValidator.validate(library));
         EvmDiagnostics.report(diags);
         GraphLibraryManager.INSTANCE.put(name, library);
         writeToDisk(name, library);
+        return library;
     }
 
     /** 落盘：config/eyelib/nodegraph/&lt;name&gt;.json（Gson pretty print，规格 §3.2）。 */

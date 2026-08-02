@@ -9,6 +9,8 @@ import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.behavior.BehaviorEntity;
 import io.github.tt432.eyelib.behavior.BehaviorEntityRegistry;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
+import io.github.tt432.eyelib.client.manager.RenderControllerManager;
+import io.github.tt432.eyelib.client.render.controller.RenderControllers;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,6 +65,22 @@ public final class EntityJsonService {
     public Optional<String> behaviorEntityJson(String id) {
         return Optional.ofNullable(BehaviorEntityRegistry.get(id))
                 .flatMap(entity -> encodeToPrettyJson(BehaviorEntity.CODEC, entity, id));
+    }
+
+    /**
+     * 已注册的渲染控制器名，字母序。
+     */
+    public List<String> renderControllerIds() {
+        return sortedIds(RenderControllerManager.INSTANCE.all());
+    }
+
+    /**
+     * 将指定渲染控制器编码为 render_controllers 文件形态的格式化 JSON，供查看与图导入。
+     */
+    public Optional<String> renderControllerJson(String name) {
+        return Optional.ofNullable(RenderControllerManager.INSTANCE.get(name))
+                .map(entry -> new RenderControllers(java.util.Map.of(name, entry)))
+                .flatMap(wrapper -> encodeToPrettyJson(RenderControllers.CODEC, wrapper, name));
     }
 
     private static List<String> sortedIds(Map<String, ?> entries) {

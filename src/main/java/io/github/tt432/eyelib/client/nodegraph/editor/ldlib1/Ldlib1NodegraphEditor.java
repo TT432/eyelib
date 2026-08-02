@@ -15,6 +15,11 @@ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.client.nodegraph.GraphLibraryManager;
 import io.github.tt432.eyelib.client.nodegraph.NodegraphBuildService;
+import io.github.tt432.eyelib.client.nodegraph.workbench.NodeDebugOverlayModel;
+import io.github.tt432.eyelib.client.nodegraph.workbench.ldlib1.AssetInspectorPanel;
+import io.github.tt432.eyelib.client.nodegraph.workbench.ldlib1.DebugSidebarPanel;
+import io.github.tt432.eyelib.client.nodegraph.workbench.ldlib1.ImportDialog;
+import io.github.tt432.eyelib.client.nodegraph.workbench.ldlib1.WorkbenchGraphViewWidget;
 import io.github.tt432.eyelib.nodegraph.Diagnostic;
 import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphKind;
@@ -97,14 +102,16 @@ public final class Ldlib1NodegraphEditor {
                 "root", Map.of("root", main));
     }
 
-    static void chat(String message) {
+    /** 聊天栏反馈（工作台面板共用）。 */
+    public static void chat(String message) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.gui != null) {
             minecraft.gui.getChat().addMessage(Component.literal(message));
         }
     }
 
-    private static void reportDiagnostics(String action, List<Diagnostic> diagnostics) {
+    /** 诊断双通道反馈：聊天栏摘要 + 日志（工作台面板共用）。 */
+    public static void reportDiagnostics(String action, List<Diagnostic> diagnostics) {
         long errors = diagnostics.stream().filter(d -> d.severity() == Diagnostic.Severity.ERROR).count();
         long warnings = diagnostics.size() - errors;
         chat("[nodegraph] " + action + ": " + errors + " error(s), " + warnings + " warning(s)");
@@ -151,6 +158,8 @@ public final class Ldlib1NodegraphEditor {
      */
     static final class EditorRoot extends WidgetGroup {
         private static final int BAR_HEIGHT = 18;
+        /** 右侧侧栏（资产检查器/调试）宽度。 */
+        private static final int SIDE_WIDTH = 210;
 
         private final String libraryName;
         private GraphLibrary library;
@@ -158,6 +167,10 @@ public final class Ldlib1NodegraphEditor {
         private final int panelHeight;
         /** 面包屑栈：底 = 主图名，顶 = 当前图名。 */
         private final Deque<String> breadcrumbs = new ArrayDeque<>();
+        /** 画布节点值徽标模型（规格 §W3；编辑器只负责绘制）。 */
+        private final NodeDebugOverlayModel overlay = new NodeDebugOverlayModel();
+        private final AssetInspectorPanel assetPanel;
+        private final DebugSidebarPanel debugPanel;
         private @Nullable EvmGraphViewWidget view;
 
         EditorRoot(String libraryName, GraphLibrary library, int width, int height) {
@@ -168,13 +181,37 @@ public final class Ldlib1NodegraphEditor {
             this.panelHeight = height - BAR_HEIGHT;
             breadcrumbs.addLast(library.main());
 
+            // 侧栏先建后挂：默认收起，不遮挡画布；两栏互斥（同位置叠放）。
+            // 必须先于按钮创建——按钮 lambda 捕获这两个 final 字段（definite assignment）。
+            assetPanel = new AssetInspectorPanel(width - SIDE_WIDTH, BAR_HEIGHT, SIDE_WIDTH, panelHeight);
+            debugPanel = new DebugSidebarPanel(width - SIDE_WIDTH, BAR_HEIGHT, SIDE_WIDTH, panelHeight, overlay);
+            assetPanel.setVisible(false);
+            assetPanel.setActive(false);
+            debugPanel.setVisible(false);
+            debugPanel.setActive(false);
+
             addWidget(new ButtonWidget(4, 3, 40, 12, new TextTexture("保存"), cd -> save()));
             addWidget(new ButtonWidget(48, 3, 40, 12, new TextTexture("构建"), cd -> build()));
             addWidget(new ButtonWidget(92, 3, 40, 12, new TextTexture("潜入"), cd -> dive()));
             addWidget(new ButtonWidget(136, 3, 40, 12, new TextTexture("返回"), cd -> surface()));
-            addWidget(new LabelWidget(182, 5, () -> String.join(" / ", breadcrumbs)));
+            addWidget(new ButtonWidget(180, 3, 40, 12, new TextTexture("导入"), cd -> new ImportDialog(this)));
+            addWidget(new ButtonWidget(224, 3, 40, 12, new TextTexture("资产"), cd -> togglePanel(assetPanel, debugPanel)));
+            addWidget(new ButtonWidget(268, 3, 40, 12, new TextTexture("调试"), cd -> togglePanel(debugPanel, assetPanel)));
+            addWidget(new LabelWidget(314, 5, () -> String.join(" / ", breadcrumbs)));
 
+            // rebuildView 会把侧栏抬到画布之上（侧栏先建，重建时保持顶层）
             rebuildView();
+        }
+
+        /** 侧栏开关：展开当前栏并收起另一栏（两栏同位置互斥）。 */
+        private void togglePanel(WidgetGroup panel, WidgetGroup other) {
+            boolean show = !panel.isVisible();
+            panel.setVisible(show);
+            panel.setActive(show);
+            if (show) {
+                other.setVisible(false);
+                other.setActive(false);
+            }
         }
 
         private String currentGraphName() {
@@ -186,8 +223,15 @@ public final class Ldlib1NodegraphEditor {
                 removeWidget(view);
             }
             EvmBaseGraph graph = Ldlib1GraphTranslator.toGraph(libraryName, currentGraphName(), library);
-            view = new EvmGraphViewWidget(graph, 0, BAR_HEIGHT, panelWidth, panelHeight);
+            view = new WorkbenchGraphViewWidget(overlay, graph, 0, BAR_HEIGHT, panelWidth, panelHeight);
             addWidget(view);
+            // 重建后画布是最后挂载的子节点，把侧栏重新抬到顶层
+            removeWidget(assetPanel);
+            removeWidget(debugPanel);
+            addWidget(assetPanel);
+            addWidget(debugPanel);
+            // 打开/潜入/返回：同步徽标发射目标图
+            overlay.updateGraph(library, currentGraphName());
         }
 
         /** 画布 → 文档：回译当前图并替换库内对应图（就地更新管理器与会话）。 */
@@ -202,6 +246,8 @@ public final class Ldlib1NodegraphEditor {
                     Map.copyOf(graphs));
             GraphLibraryManager.INSTANCE.put(libraryName, library);
             Ldlib1EditorSession.enter(library, data.graphInterface());
+            // 画布变更落库：重发射节点值徽标（规格 §W3 缓存：引用变化才重发射）
+            overlay.updateGraph(library, currentGraphName());
         }
 
         private void save() {
