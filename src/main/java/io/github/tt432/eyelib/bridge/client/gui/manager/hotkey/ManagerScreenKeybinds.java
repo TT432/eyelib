@@ -30,12 +30,15 @@ import org.lwjgl.glfw.GLFW;
 public final class ManagerScreenKeybinds {
     //? if <26.1 {
     public static final KeyMapping OPEN_SCREEN = new KeyMapping("Open Eyelib Manager Screen", GLFW.GLFW_KEY_I, "Eyelib");
+    public static final KeyMapping OPEN_NODEGRAPH_EDITOR = new KeyMapping("Open Eyelib NodeGraph Editor", GLFW.GLFW_KEY_C, "Eyelib");
     //?} else {
     public static final KeyMapping OPEN_SCREEN = new KeyMapping("Open Eyelib Manager Screen", GLFW.GLFW_KEY_I, KeyMapping.Category.MISC);
+    public static final KeyMapping OPEN_NODEGRAPH_EDITOR = new KeyMapping("Open Eyelib NodeGraph Editor", GLFW.GLFW_KEY_C, KeyMapping.Category.MISC);
     //?}
 
     @SubscribeEvent
     public static void onEvent(RegisterKeyMappingsEvent event) {
         event.register(OPEN_SCREEN);
+        event.register(OPEN_NODEGRAPH_EDITOR);
     }
 }

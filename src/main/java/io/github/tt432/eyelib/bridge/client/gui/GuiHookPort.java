@@ -18,4 +18,21 @@ public interface GuiHookPort {
     static void setAnimationViewHook(Supplier<UIScreen> supplier) {
         AnimationViewHook.openScreenSupplier = supplier;
     }
+
+    static void setNodegraphEditorHook(Runnable opener) {
+        NodegraphEditorHook.opener = opener;
+    }
+
+    /** 打开节点图编辑器（application 经 hook 注入实现；未注入或前置缺失时为空操作）。 */
+    static void openNodegraphEditor() {
+        NodegraphEditorHook.opener.run();
+    }
+
+    /** Nodegraph 编辑器开启 hook（与 ModelPreviewScreenHook 同模式）。 */
+    final class NodegraphEditorHook {
+        private static Runnable opener = () -> { };
+
+        private NodegraphEditorHook() {
+        }
+    }
 }

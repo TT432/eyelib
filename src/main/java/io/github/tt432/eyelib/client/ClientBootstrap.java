@@ -28,6 +28,7 @@ public final class ClientBootstrap {
         EntityRenderOrchestrator.wirePorts();
         GuiHookPort.setModelPreviewScreenHook(ModelPreviewScreen::new);
         GuiHookPort.setAnimationViewHook(AnimationView::new);
+        GuiHookPort.setNodegraphEditorHook(() -> io.github.tt432.eyelib.client.nodegraph.NodegraphGate.openEditor(null));
         UiPort.register(EyelibManagerScreen::create);
 
         ParticleSpawnRuntimeAdapter.configure(
