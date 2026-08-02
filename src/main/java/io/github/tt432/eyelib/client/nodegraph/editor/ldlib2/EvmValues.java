@@ -51,6 +51,7 @@ final class EvmValues {
         JsonPrimitive p = json.getAsJsonPrimitive();
         return switch (type) {
             case FLOAT -> p.isNumber() ? p.getAsFloat() : null;
+            case INT -> p.isNumber() ? p.getAsInt() : null;
             case BOOL -> p.isBoolean() ? p.getAsBoolean() : (p.isNumber() ? p.getAsFloat() != 0 : null);
             case STRING -> p.isString() ? p.getAsString() : null;
             default -> p.isNumber() ? p.getAsFloat() : p.isBoolean() ? p.getAsBoolean() : p.getAsString();

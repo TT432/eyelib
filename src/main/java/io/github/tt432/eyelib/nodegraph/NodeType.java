@@ -110,7 +110,7 @@ public final class NodeType {
      */
     public enum Kind {
         // 常量
-        CONST_NUMBER, CONST_BOOL, CONST_STRING,
+        CONST_NUMBER, CONST_INT, CONST_BOOL, CONST_STRING,
         // 变量
         VAR_GET, VAR_SET, TEMP_GET, TEMP_SET,
         // 查询与数学

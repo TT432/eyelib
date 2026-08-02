@@ -112,6 +112,14 @@ class MolangGeneratorTest {
     }
 
     @Test
+    void constIntEmitsIntegerLiteral() {
+        GraphData main = graph(
+                List.of(root(), node("i", "const.int", opts("value", 42))),
+                List.of(wire("i", "out", "root", "scale")));
+        assertEquals("42", expr(library(main), "scale"));
+    }
+
+    @Test
     void constBoolEmitsOneAndZero() {
         GraphData main = graph(
                 List.of(root(),

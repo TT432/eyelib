@@ -270,7 +270,7 @@ final class EmitSession {
         }
         NodeType type = typeOpt.get();
         return switch (type.kind()) {
-            case CONST_NUMBER -> Out.of(number(node, type, "value"));
+            case CONST_NUMBER, CONST_INT -> Out.of(number(node, type, "value"));
             case CONST_BOOL -> Out.of(bool(node, type, "value") ? "1" : "0");
             case CONST_STRING -> Out.of(quote(string(node, type, "value")));
             case VAR_GET -> Out.of(withRoot("variable", string(node, type, "name")));
@@ -464,7 +464,7 @@ final class EmitSession {
     /** 永不提取的平凡节点：常量、单变量/属性引用（§2.4-3）。 */
     private static boolean isTrivial(NodeType type, NodeInstance node) {
         return switch (type.kind()) {
-            case CONST_NUMBER, CONST_BOOL, CONST_STRING, VAR_GET, TEMP_GET,
+            case CONST_NUMBER, CONST_INT, CONST_BOOL, CONST_STRING, VAR_GET, TEMP_GET,
                  REF_GEOMETRY, REF_TEXTURE, REF_MATERIAL -> true;
             case QUERY_CALL, MATH_CALL -> node.optionInt("arg_count", 0) <= 0;
             default -> false;

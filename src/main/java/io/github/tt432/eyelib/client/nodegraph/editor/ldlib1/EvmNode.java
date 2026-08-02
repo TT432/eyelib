@@ -247,6 +247,24 @@ public class EvmNode extends BaseNode {
 
     private void buildConstantConfigurator(ConfiguratorGroup father, PortDef port, JsonElement def) {
         String id = port.id();
+        // 按声明端口类型分派（用户面向类型优先于 JSON 字面量种类——BOOL 端口默认值是数字 1，
+        // INT 端口默认值是浮点字面量；ANY/其余回退到字面量种类）。
+        switch (port.type()) {
+            case INT -> {
+                father.addConfigurators(new NumberConfigurator(
+                        id, () -> constants.getOrDefault(id, def).getAsInt(),
+                        v -> constants.put(id, new JsonPrimitive(v.intValue())), def.getAsInt(), true));
+                return;
+            }
+            case BOOL -> {
+                father.addConfigurators(new BooleanConfigurator(
+                        id, () -> boolConstant(constants.getOrDefault(id, def)),
+                        v -> constants.put(id, new JsonPrimitive(v)), boolConstant(def), true));
+                return;
+            }
+            default -> {
+            }
+        }
         if (def instanceof JsonPrimitive primitive && primitive.isBoolean()) {
             father.addConfigurators(new BooleanConfigurator(
                     id, () -> constants.getOrDefault(id, def).getAsBoolean(),
@@ -260,6 +278,12 @@ public class EvmNode extends BaseNode {
                     id, () -> constants.getOrDefault(id, def).getAsString(),
                     v -> constants.put(id, new JsonPrimitive(v)), def.getAsString(), true));
         }
+    }
+
+    /** BOOL 常量读取：兼容数字（0/1）与布尔字面量两种存储形态。 */
+    private static boolean boolConstant(JsonElement e) {
+        JsonPrimitive p = e.getAsJsonPrimitive();
+        return p.isBoolean() ? p.getAsBoolean() : p.getAsFloat() != 0;
     }
 
     // ---------- NBT（仅服务画布内复制/粘贴；权威格式是本域 JSON） ----------

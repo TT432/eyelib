@@ -12,9 +12,11 @@ import java.util.Locale;
 public enum PortType implements PortStringRepresentable {
     /** 执行流（仅语句上下文）。 */
     EXEC,
-    /** 数值（Molang 主类型）。 */
+    /** 数值·浮点（Molang 主类型）。 */
     FLOAT,
-    /** 布尔（语义标注，物理即 float 0/1）。 */
+    /** 数值·整数（语义标注，物理即 float；molang 无整数字面量）。 */
+    INT,
+    /** 数值·布尔（语义标注，物理即 float 0/1）。 */
     BOOL,
     /** 字符串。 */
     STRING,
@@ -46,7 +48,7 @@ public enum PortType implements PortStringRepresentable {
      * <ul>
      *   <li>EXEC 仅接 EXEC；</li>
      *   <li>ANY 与任何类型兼容（诊断降级为 warning，由验证器处理）；</li>
-     *   <li>BOOL ↔ FLOAT 双向隐式（非 0 即真）；</li>
+     *   <li>number 子类型（FLOAT/INT/BOOL）双向隐式互通（molang 运行时同值域，非 0 即真）；</li>
      *   <li>资源引用类型产出端可接 STRING；资源引用输入端口只接受同类型或 ANY；</li>
      *   <li>ARRAY 仅接 ARRAY/ANY。</li>
      * </ul>
@@ -56,9 +58,14 @@ public enum PortType implements PortStringRepresentable {
         if (this == ANY || target == ANY) return true;
         if (this == EXEC || target == EXEC) return false;
         if (this == SLOT || target == SLOT) return false;
-        if ((this == BOOL && target == FLOAT) || (this == FLOAT && target == BOOL)) return true;
+        if (isNumber() && target.isNumber()) return true;
         if (isRef() && target == STRING) return true;
         return false;
+    }
+
+    /** 是否为 number 子类型（float/int/bool——用户面向分类，molang 运行时同为 float 值域）。 */
+    public boolean isNumber() {
+        return this == FLOAT || this == INT || this == BOOL;
     }
 
     /** 是否为资源引用语义子类型。 */

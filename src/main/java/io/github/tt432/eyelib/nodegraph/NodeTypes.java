@@ -96,6 +96,12 @@ public final class NodeTypes {
             List.of(),
             List.of(PortDef.out("out", PortType.FLOAT))));
 
+    public static final NodeType CONST_INT = register(NodeType.of(
+            "const.int", NodeType.Kind.CONST_INT, CAT_CONSTANT,
+            List.of(NodeOptionDef.integer("value", 0)),
+            List.of(),
+            List.of(PortDef.out("out", PortType.INT))));
+
     public static final NodeType CONST_BOOL = register(NodeType.of(
             "const.bool", NodeType.Kind.CONST_BOOL, CAT_CONSTANT,
             List.of(NodeOptionDef.bool("value", false)),
@@ -220,7 +226,7 @@ public final class NodeTypes {
             List.of(),
             List.of(
                     execIn(),
-                    PortDef.in("count", PortType.FLOAT, new JsonPrimitive(10)),
+                    PortDef.in("count", PortType.INT, new JsonPrimitive(10)),
                     new PortDef("body", PortDirection.IN, PortType.EXEC, Optional.empty(), false)),
             List.of(execOut())));
 

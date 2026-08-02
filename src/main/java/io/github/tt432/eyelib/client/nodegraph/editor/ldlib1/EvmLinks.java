@@ -14,8 +14,8 @@ import io.github.tt432.eyelib.nodegraph.PortType;
  * {@code to.isAssignableFrom(from)} + {@code to == Object} + {@code from == Object}
  * + {@link TypeAdapter} 注册转换器），因此：
  * <ul>
- *   <li>FLOAT/BOOL → {@link Float}/{@link Boolean}，并注册双向转换器
- *       （域规则 bool↔float 隐式，规格 §2.1）；</li>
+ *   <li>FLOAT/INT/BOOL → {@link Float}/{@link Integer}/{@link Boolean}，并注册三向互通转换器
+ *       （域规则 number 子类型隐式互通，规格 §2.1）；</li>
  *   <li>STRING → {@link String}；ANY → {@link Object}（与任何类型互连，与域规则一致）；</li>
  *   <li>EXEC → {@link TriggerLink}：graphprocessor 内建特判「TriggerLink 仅连 TriggerLink」，
  *       恰好等于 exec↔exec；TriggerLink 本身是无语义空标记类（执行语义在
@@ -84,6 +84,7 @@ public final class EvmLinks {
         return switch (type) {
             case EXEC -> TriggerLink.class;
             case FLOAT -> Float.class;
+            case INT -> Integer.class;
             case BOOL -> Boolean.class;
             case STRING -> String.class;
             case ANY -> Object.class;
@@ -102,6 +103,7 @@ public final class EvmLinks {
     public static PortType toPortType(Class<?> clazz) {
         if (clazz == TriggerLink.class) return PortType.EXEC;
         if (clazz == Float.class || clazz == float.class) return PortType.FLOAT;
+        if (clazz == Integer.class || clazz == int.class) return PortType.INT;
         if (clazz == Boolean.class || clazz == boolean.class) return PortType.BOOL;
         if (clazz == String.class) return PortType.STRING;
         if (clazz == ArrayLink.class) return PortType.ARRAY;
@@ -122,9 +124,19 @@ public final class EvmLinks {
         if (adaptersRegistered) return;
         adaptersRegistered = true;
 
-        // bool ↔ float 隐式（规格 §2.1；函数永不执行，仅供 areTypesConnectable 判型）
+        // number 三子类型互通（规格 §2.1；函数永不执行，仅供 areTypesConnectable 判型）
         TypeAdapter.registerAdapter(Boolean.class, Float.class, b -> b ? 1f : 0f);
         TypeAdapter.registerAdapter(Float.class, Boolean.class, f -> f != 0f);
+        TypeAdapter.registerAdapter(Integer.class, Float.class, Integer::floatValue);
+        TypeAdapter.registerAdapter(Float.class, Integer.class, Float::intValue);
+        TypeAdapter.registerAdapter(Integer.class, Boolean.class, i -> i != 0);
+        TypeAdapter.registerAdapter(Boolean.class, Integer.class, b -> b ? 1 : 0);
+
+        // 用户面向类型名：number:{float/int/bool}/string（覆盖 graphprocessor 内建名）
+        TypeAdapter.registerTypeDisplayName(Float.class, "number<float>");
+        TypeAdapter.registerTypeDisplayName(Integer.class, "number<int>");
+        TypeAdapter.registerTypeDisplayName(Boolean.class, "number<bool>");
+        TypeAdapter.registerTypeDisplayName(String.class, "string");
 
         // 资源引用产出 → STRING 输入（单向；string → ref 不注册，与域规则一致）
         TypeAdapter.registerAdapter(GeometryRefLink.class, String.class, Object::toString);

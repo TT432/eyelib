@@ -51,6 +51,7 @@ public final class EvmTypeHandles {
         return List.of(
                 TypeHandles.EXECUTION_FLOW,
                 TypeHandles.FLOAT,
+                TypeHandles.INT,
                 TypeHandles.BOOL,
                 TypeHandles.STRING,
                 TypeHandles.OBJECT,
@@ -68,6 +69,7 @@ public final class EvmTypeHandles {
         return switch (type) {
             case EXEC -> TypeHandles.EXECUTION_FLOW;
             case FLOAT -> TypeHandles.FLOAT;
+            case INT -> TypeHandles.INT;
             case BOOL -> TypeHandles.BOOL;
             case STRING -> TypeHandles.STRING;
             case ARRAY, ANY -> TypeHandles.OBJECT;
@@ -86,6 +88,7 @@ public final class EvmTypeHandles {
         if (handle == null) return null;
         if (handle.equals(TypeHandles.EXECUTION_FLOW)) return PortType.EXEC;
         if (handle.equals(TypeHandles.FLOAT)) return PortType.FLOAT;
+        if (handle.equals(TypeHandles.INT)) return PortType.INT;
         if (handle.equals(TypeHandles.BOOL)) return PortType.BOOL;
         if (handle.equals(TypeHandles.STRING)) return PortType.STRING;
         if (handle.equals(TypeHandles.OBJECT)) return PortType.ANY;
