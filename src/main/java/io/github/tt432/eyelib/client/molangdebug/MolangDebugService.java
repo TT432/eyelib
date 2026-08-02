@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.client.molangdebug;
 
 import io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper;
 import io.github.tt432.eyelib.bridge.client.render.adapter.RenderPorts;
-import io.github.tt432.eyelib.bridge.ui.UiPort;
 import io.github.tt432.eyelib.capability.AttachableDataTypes;
 import io.github.tt432.eyelib.capability.RenderData;
 import io.github.tt432.eyelib.molang.MolangScope;
@@ -25,7 +24,7 @@ import java.util.Optional;
 
 /**
  * Molang 运行时调试服务：聚合调试器对 MC 世界与 molang 运行时的全部访问，
- * 使 {@link MolangDebugScreen} 保持 MC 无关。
+ * 供节点图工作台的调试面板/画布徽标使用（2026-08-03 独立屏幕已删除，收编进工作台）。
  *
  * <p>scope 获取链路（与渲染链 {@code EntityRenderOrchestrator} 一致但全程只读）：
  * 实体 → {@link DataAttachmentHelper#getOrNull}（不创建附件）→ {@link RenderData}
@@ -69,11 +68,6 @@ public final class MolangDebugService {
      */
     private static final MolangCompileCache COMPILE_CACHE =
             new MolangCompileCache(MolangMappingRegistries.mappingTree(), null);
-
-    /** 打开 molang 调试屏幕。 */
-    public static void openDebugScreen() {
-        Minecraft.getInstance().setScreen(UiPort.wrap(new MolangDebugScreen()));
-    }
 
     /**
      * 列出当前 client level 中可被调试的实体目标；不在世界中时返回空表。

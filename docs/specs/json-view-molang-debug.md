@@ -1,6 +1,8 @@
 # 规格：实体 JSON 查看器与 Molang 调试器
 
-状态：已实现（2026-08-02）。关联：ADR-0021（节点图）、nodegraph-visual-molang.md（节点图规格）。
+状态：**已被 nodegraph-workbench 取代**（2026-08-03 用户决策）。独立屏幕已删除；
+service 层（client.jsonview.EntityJsonService、client.molangdebug.MolangDebugService）
+保留并被节点图工作台共享。本文档保留作为 service 层行为规格。
 
 ## 1. 目标
 
@@ -66,8 +68,9 @@
 
 ## 5. 入口
 
-管理器屏幕（EyelibManagerScreen）新增入口按钮。两屏幕均基于 eyelib 自有
-UIScreen 框架（不依赖 LDLib），三个版本（1.20.1/1.21.1/26.1.2）可用。
+~~管理器屏幕（EyelibManagerScreen）新增入口按钮。~~（2026-08-03：独立屏幕已删除，
+能力收编为节点图工作台内嵌面板，见 nodegraph-workbench.md §W1/W3。）
+service 层的线程与只读约束不变：全部求值发生在渲染线程，JSON 编码只读无副作用。
 
 ## 6. 非目标
 

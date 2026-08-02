@@ -51,14 +51,13 @@ public final class EyelibManagerScreen implements UIScreen {
         var board = ctx.height() * 0.1F;
         var padding = ctx.height() * 0.05F;
         int x1 = Math.round(board);
-        int h = Math.round((ctx.height() - (board * 2 + padding * 3)) / 4);
+        int h = Math.round((ctx.height() - (board * 2 + padding * 2)) / 3);
         int w = Math.round(h / 0.618F);
         int x2 = Math.round(x1 + board + w + padding);
 
         int y1 = Math.round(board);
         int y2 = Math.round(board + padding + h);
         int y3 = Math.round(board + padding * 2 + h * 2);
-        int y4 = Math.round(board + padding * 3 + h * 3);
 
         widgets = List.of(
                 action(x1, y1, w, h, "动画", "eyelib:icons/animation",
@@ -81,11 +80,7 @@ public final class EyelibManagerScreen implements UIScreen {
                             return true;
                         }),
                 action(x1, y3, w, h, "节点图", "eyelib:icons/nodegraph",
-                        () -> io.github.tt432.eyelib.client.nodegraph.NodegraphGate.openEditor(null)),
-                action(x2, y4, w, h, "JSON 查看", "eyelib:icons/model",
-                        () -> io.github.tt432.eyelib.client.jsonview.JsonViewScreen.open()),
-                action(x1, y4, w, h, "Molang 调试", "eyelib:icons/texture",
-                        () -> io.github.tt432.eyelib.client.molangdebug.MolangDebugScreen.open())
+                        () -> io.github.tt432.eyelib.client.nodegraph.NodegraphGate.openEditor(null))
         );
         for (UIWidget widget : widgets) {
             ctx.addWidget(widget);
