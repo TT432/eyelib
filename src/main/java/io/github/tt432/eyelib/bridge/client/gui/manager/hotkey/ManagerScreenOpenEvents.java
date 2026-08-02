@@ -34,7 +34,9 @@ public final class ManagerScreenOpenEvents {
         if (ManagerScreenKeybinds.OPEN_SCREEN.isDown() && Minecraft.getInstance().screen == null) {
             ScreenPort.openManagerScreen();
         }
-        // Alt+C：节点图编辑器（Alt 手动判定，三版本免 KeyModifier 差异）
+        // Alt+C：节点图编辑器（Alt 手动判定，三版本免 KeyModifier 差异；
+        // 26.1 Window.getWindow() 已移除，与同包 V/G 键位一致在该版本禁用）
+        //? if <26.1 {
         if (ManagerScreenKeybinds.OPEN_NODEGRAPH_EDITOR.isDown() && Minecraft.getInstance().screen == null) {
             long window = Minecraft.getInstance().getWindow().getWindow();
             boolean altDown = org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_ALT) == org.lwjgl.glfw.GLFW.GLFW_PRESS
@@ -43,6 +45,7 @@ public final class ManagerScreenOpenEvents {
                 io.github.tt432.eyelib.bridge.client.gui.GuiHookPort.openNodegraphEditor();
             }
         }
+        //?}
     }
 }
 
