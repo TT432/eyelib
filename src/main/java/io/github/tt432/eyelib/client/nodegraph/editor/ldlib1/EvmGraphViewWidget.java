@@ -3,6 +3,7 @@
 package io.github.tt432.eyelib.client.nodegraph.editor.ldlib1;
 
 import com.lowdragmc.lowdraglib.gui.graphprocessor.data.BaseNode;
+import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.DebugPanelWidget;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.GraphViewWidget;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.NodeWidget;
 
@@ -11,7 +12,8 @@ import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.NodeWidget;
  * <ul>
  *   <li>放行 EVM 节点分组前缀（{@link EvmNodeRegistration#GROUP_PREFIX}）；</li>
  *   <li>禁用每 tick 的图执行（{@code setProcessor(null)}——编辑器只编辑不运行，
- *       避免 TriggerProcessor 空转）；</li>
+ *       避免 TriggerProcessor 空转），并移除假定 processor 非空的 DebugPanelWidget
+ *       （其 step 按钮在 processor 为 null 时触发 LDLib 内部 NPE 崩客户端）；</li>
  *   <li>给 {@link EvmNode} 装配 {@code uiRefresh} 钩子（选项变更 → 动态端口重算后
  *       重排节点 widget；graphprocessor 的 onPortsUpdated 在 UI 层无监听者，须手动刷新）。</li>
  * </ul>
@@ -20,6 +22,10 @@ public class EvmGraphViewWidget extends GraphViewWidget {
     public EvmGraphViewWidget(EvmBaseGraph graph, int x, int y, int width, int height) {
         super(graph, x, y, width, height, groups -> groups.add(EvmNodeRegistration.GROUP_PREFIX));
         setProcessor(null);
+        // DebugPanelWidget 的 run/step 按钮直调 GraphViewWidget.runStep/runAll；
+        // runStep 在 processor == null 时 NPE（stepIterator 未初始化即 hasNext，LDLib 自身缺陷）。
+        // EVM 编辑器只编辑不运行（processor 恒为 null），必须整体移除调试面板，否则点 step 即崩客户端。
+        widgets.stream().filter(DebugPanelWidget.class::isInstance).findFirst().ifPresent(this::removeWidget);
     }
 
     @Override
