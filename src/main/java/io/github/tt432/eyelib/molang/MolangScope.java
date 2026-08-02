@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.molang.type.MolangNull;
 import io.github.tt432.eyelib.molang.type.MolangObject;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -168,6 +169,23 @@ public final class MolangScope {
      */
     public int getCacheSize() {
         return cache.size();
+    }
+
+    /**
+     * 只读枚举<b>本层</b>（不含 parent 链）的变量缓存条目，供调试/诊断工具做快照展示。
+     * 返回内部缓存的只读视图，随后续 {@link #set}/{@link #remove} 实时变化；
+     * 调用方如需跨帧持有应自行拷贝。
+     */
+    public Map<String, MolangObject> localEntries() {
+        return Collections.unmodifiableMap(cache);
+    }
+
+    /**
+     * 只读访问 parent 作用域；未设置时返回 {@code null}。
+     * 供调试工具沿 scope 链标注变量的来源层。
+     */
+    public @Nullable MolangScope getParent() {
+        return parent;
     }
 
 }

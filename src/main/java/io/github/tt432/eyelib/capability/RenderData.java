@@ -86,6 +86,16 @@ public class RenderData<T> {
     }
 
     /**
+     * 只读获取 scope：仅当 owner 匹配且 scope 已初始化时返回，否则 empty。
+     * 供调试器等只读消费端使用——owner 守卫收敛在本类（IQF Q-4），调用方不得再自行
+     * 比较 {@code getOwner()}；本方法不触发 lazy-init。
+     */
+    public Optional<MolangScope> scopeIfOwnedBy(Object expectedOwner) {
+        MolangScope s = scope;
+        return s != null && owner == expectedOwner ? Optional.of(s) : Optional.empty();
+    }
+
+    /**
      * 确保 owner 已绑定到当前对象；未绑定或绑定了别的对象时重新初始化。
      * 这是 lazy-init 守卫的唯一合法位置（IQF 判据 Q-4），调用方不应再自行做 getOwner 比较。
      */
