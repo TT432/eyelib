@@ -179,6 +179,9 @@ public class EvmNode extends BaseNode {
         int x = (int) fx, y = (int) fy, w = (int) fw, h = (int) fh;
         // 棋盘格底衬透明
         graphics.blit(CHECKERBOARD, x, y, 0, 0, w, h, w, h);
+        // guiTextured 无深度测试，画家算法后画者覆盖——必须把棋盘格先 flush 落盘，
+        // 否则模型顶点（entitySolid 批次）虽先发射，却在屏幕末 flush 时被棋盘格覆盖。
+        graphics.flush();
         NodeType type = nodeType();
         if (type == NodeTypes.REF_TEXTURE) {
             ResourceLocation texture = NodeAssetPreview.resolveTexture(optionWithDefault("path"));

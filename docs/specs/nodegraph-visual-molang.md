@@ -258,6 +258,15 @@ LDLib 1.20.1 为 SRG 名（Forge 1.20.1 reobf 生态），ModDevGradle legacyfor
 
 - T1–T10 全部落地；验证器 19 项检查、代码生成（含 temp 提取与子图内联）、三汇编器、两版编辑器适配、纹理/模型预览基础设施、运行时构建管线与实体渲染闭环。
 - 已知降级（均非本特性缺陷，见 work/feedback.json）：
-  1. **模型预览在 1.20.1/1.21.1 暂不出图**：`RenderType.entitySolid` 经 GuiGraphics bufferSource 在 Screen 渲染阶段无像素产出——预存平台级渲染 bug（`ModelPreviewScreen` 同样不出图），纹理预览正常，模型解析/纹理借用/占位逻辑已就绪，平台 bug 修复后自动恢复。26.1.2 按 §3.3 既定降级为纹理预览 + 文本。
-  2. **26.1.2 世界内冒烟被预存渲染崩溃阻塞**（`Not building!`，无 ldlib2 亦复现）；编辑器代码与 1.21.1 全共享，编译与翻译单测覆盖。
-  3. 1.20.1 画布分组按 D6 降级为仅文档持久化；1.21.1 dev runtime 需 neoforge ≥ 21.1.216（已升 21.1.248）。
+  1. **26.1.2 世界内冒烟被预存渲染崩溃阻塞**（`Not building!`，无 ldlib2 亦复现）；编辑器代码与 1.21.1 全共享，编译与翻译单测覆盖。
+  2. 1.20.1 画布分组按 D6 降级为仅文档持久化；1.21.1 dev runtime 需 neoforge ≥ 21.1.216（已升 21.1.248）。
+  3. 26.1.2 模型预览按 §3.3 既定降级为纹理预览 + 文本（26.1 GUI 渲染路径未迁移）。
+
+### 6.1 模型预览根因记录（fb_msaxt2mctep9，已修复）
+
+调试初期模型预览在 1.20.1/1.21.1 不出图，一度误判为 entitySolid 着色器与 GUI 上下文不兼容。
+实测（探针四边形 + 矩阵 dump + RenderDoc 截帧）证明顶点与矩阵均正确但零像素，
+**根因是 `GuiGraphics.enableScissor` 被传入 LDLib 画布坐标**：画布 zoom/pan 只作用于 pose，
+不作用于剪刀矩形（它把入参当屏幕坐标），导致整个绘制被剪空。修复：预览不做 scissor，
+渲染改用与 `GuiGraphics.innerBlit` 同款的 Tesselator + position_tex 直接 drawWithShader 路径，
+并加包围盒自动取景。ModelPreviewScreen 同病同药（其搜索赋值块被注释的预存 bug 一并修复）。

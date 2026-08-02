@@ -1,5 +1,7 @@
 package io.github.tt432.eyelib.client.nodegraph.preview;
 
+import io.github.tt432.eyelib.bridge.client.render.bake.BakedModel;
+import io.github.tt432.eyelib.bridge.client.render.bake.ModelBakePort;
 import io.github.tt432.eyelib.bridge.material.ResourceLocationBridge;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.importer.model.importer.AddonTextureRegistry;
@@ -7,17 +9,16 @@ import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.util.PortResourceLocation;
 import net.minecraft.client.Minecraft;
 //? if <26.1 {
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
-import io.github.tt432.eyelib.animation.ModelRuntimeData;
-import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
-import io.github.tt432.eyelib.client.render.RenderHelper;
-import io.github.tt432.eyelib.client.render.RenderParams;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 //?} else {
 import net.minecraft.resources.Identifier;
@@ -85,7 +86,8 @@ public final class NodeAssetPreview {
         return new ModelHandle(model, resolveAtlasTexture(geometryIdentifier.strip()));
     }
 
-    private static String resolveAtlasTexture(String geometryIdentifier) {
+    /** 几何 → 预览纹理解析（借声明该 geometry 的 ClientEntity 纹理；无则 missing）。 */
+    public static String resolveAtlasTexture(String geometryIdentifier) {
         String best = null;
         for (var entry : io.github.tt432.eyelib.client.manager.ClientEntityManager.INSTANCE.all().entrySet()) {
             if (!entry.getValue().geometry().containsValue(geometryIdentifier)) {
@@ -114,37 +116,100 @@ public final class NodeAssetPreview {
 
     //? if <26.1 {
     /**
-     * 模型预览渲染（仅 &lt;26.1）：把模型以全亮渲染进当前 {@link GuiGraphics} pose，
-     * 正面 30° 倾斜、自动适配缩放（{@code Math.min(w, h) / 3} 基准，同
-     * {@code ModelPreviewScreen.renderModelInViewport}）。scissor 由本方法内部处理。
-     * 渲染异常被吞掉（预览失败不崩编辑器）。
+     * 模型预览渲染（仅 <26.1）：包围盒自动取景、正面 30° 倾斜、全图适配缩放。
+     *
+     * <p>实现要点（1.20.1 GUI 上下文实证）：
+     * <<<
+     * 顶点机制与 {@code GuiGraphics.innerBlit} 同款（Tesselator + position_tex 直接
+     * drawWithShader）——guiGraphics.bufferSource 的批渲染（含 entitySolid）在 LDLib
+     * 画布上下文零像素（根因：画布 zoom/pan 只作用于 pose，不作用于批次的剪刀/状态，
+     * 任何 enableScissor 在画布坐标系下都会剪出错误区域，见下）。
+     * <<<
+     * 不做 enableScissor：LDLib 画布坐标经 pose 变换才落屏，GuiGraphics.enableScissor
+     * 直接把入参当屏幕坐标，在画布内必然剪错；预览区固定、溢出容忍。
      */
     public static void renderModel(ModelHandle handle, GuiGraphics gfx, int x, int y, int w, int h, float partialTick) {
-        gfx.enableScissor(x, y, x + w, y + h);
+        // 不用 enableScissor：LDLib 画布坐标经 pose 的 zoom/pan 变换才落到屏幕坐标，
+        // 而 GuiGraphics.enableScissor 直接把入参当屏幕坐标缩放——在画布内会剪出错误区域
+        // （顶点经 pose 正确落屏，却被错误剪刀矩形整批裁掉——这正是预览零像素的根因）。
+        // 预览区固定 64px，模型居中适配缩放，溢出容忍。
         PoseStack poseStack = gfx.pose();
         poseStack.pushPose();
-        poseStack.translate(x + w / 2.0f, y + h / 2.0f, 100.0f);
-        float baseScale = Math.min(w, h) / 3.0f;
-        poseStack.scale(baseScale, -baseScale, baseScale);
-        poseStack.mulPose(Axis.XP.rotationDegrees(30));
 
-        MultiBufferSource.BufferSource bufferSource = gfx.bufferSource();
+        // 自动取景：先由烘焙顶点包围盒计算缩放与居中（超大模型不再只露一角）。
         ResourceLocation texture = ResourceLocationBridge.parseMc(handle.atlasTextureId());
-        RenderType renderType = RenderType.entitySolid(texture);
-        VertexConsumer buffer = bufferSource.getBuffer(renderType);
-        RenderParams params = RenderParams.builder(poseStack, null, true, ResourceLocationBridge.fromMc(texture), buffer)
-                .light(EntityRenderPorts.RenderSystemPort.FULL_BRIGHT)
-                .overlay(OverlayTexture.NO_OVERLAY)
-                .build();
+        BakedModel baked;
         try {
-            RenderHelper.start().render(params, handle.model(), new ModelRuntimeData());
+            baked = ModelBakePort.twoSideGetBakedModel(handle.model(), true, texture, texture);
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(NodeAssetPreview.class).warn("[nodegraph] model preview bake failed", e);
+            poseStack.popPose();
+            return;
+        }
+        float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE, minZ = Float.MAX_VALUE;
+        float maxX = -Float.MAX_VALUE, maxY = -Float.MAX_VALUE, maxZ = -Float.MAX_VALUE;
+        for (BakedModel.BakedBone bone : baked.bones().values()) {
+            float[] p = bone.position();
+            for (int i = 0; i < bone.vertexSize(); i++) {
+                minX = Math.min(minX, p[i * 3]);
+                maxX = Math.max(maxX, p[i * 3]);
+                minY = Math.min(minY, p[i * 3 + 1]);
+                maxY = Math.max(maxY, p[i * 3 + 1]);
+                minZ = Math.min(minZ, p[i * 3 + 2]);
+                maxZ = Math.max(maxZ, p[i * 3 + 2]);
+            }
+        }
+        float sizeX = Math.max(maxX - minX, 0.01f), sizeY = Math.max(maxY - minY, 0.01f);
+        float scale = 0.8f * Math.min(w / sizeX, h / sizeY);
+        float cx = (minX + maxX) / 2f, cy = (minY + maxY) / 2f, cz = (minZ + maxZ) / 2f;
+
+        poseStack.translate(x + w / 2.0f, y + h / 2.0f, 100.0f);
+        poseStack.scale(scale, -scale, scale);
+        poseStack.mulPose(Axis.XP.rotationDegrees(30));
+        poseStack.translate(-cx, -cy, -cz);
+
+        // 与 GuiGraphics.innerBlit 同款机制：Tesselator + position_tex 直接 drawWithShader。
+        // 这是该 GUI 上下文实证可用的唯一路径（blit 也走它）；bufferSource 批次在此上下文零像素。
+        try {
+            com.mojang.blaze3d.systems.RenderSystem.setShaderTexture(0, texture);
+            com.mojang.blaze3d.systems.RenderSystem.setShader(
+                    net.minecraft.client.renderer.GameRenderer::getPositionTexShader);
+            var pose = poseStack.last().pose();
+            //? if <1.20.6 {
+            Tesselator tesselator = Tesselator.getInstance();
+            BufferBuilder builder = tesselator.getBuilder();
+            builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+            for (BakedModel.BakedBone bone : baked.bones().values()) {
+                bone.transformPos(pose);
+                float[] pos = bone.positionResult();
+                float[] u = bone.u();
+                float[] v = bone.v();
+                for (int i = 0; i < bone.vertexSize(); i++) {
+                    builder.vertex(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])
+                            .uv(u[i], v[i])
+                            .endVertex();
+                }
+            }
+            tesselator.end();
+            //?} else {
+            BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+            for (BakedModel.BakedBone bone : baked.bones().values()) {
+                bone.transformPos(pose);
+                float[] pos = bone.positionResult();
+                float[] u = bone.u();
+                float[] v = bone.v();
+                for (int i = 0; i < bone.vertexSize(); i++) {
+                    builder.addVertex(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])
+                            .setUv(u[i], v[i]);
+                }
+            }
+            com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(builder.buildOrThrow());
+            //?}
         } catch (Exception e) {
             // 预览渲染失败不崩编辑器，但要能看见原因（调试后改为 debug 级）
             org.slf4j.LoggerFactory.getLogger(NodeAssetPreview.class).warn("[nodegraph] model preview render failed", e);
         }
-        bufferSource.endBatch(renderType);
         poseStack.popPose();
-        gfx.disableScissor();
     }
     //?}
 

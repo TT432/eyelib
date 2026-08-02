@@ -63,6 +63,9 @@ public final class EvmRefPreviewElement extends UIElement {
             if (handle == null) {
                 guiContext.drawTexture(NOT_FOUND, x, y, w, h);
             } else {
+                // guiTextured 无深度测试，画家算法后画者覆盖——先把棋盘格 flush 落盘，
+                // 否则模型顶点在屏幕末 flush 时被棋盘格覆盖（同 ldlib1 EvmNode 处理）。
+                guiContext.graphics.flush();
                 NodeAssetPreview.renderModel(handle, guiContext.graphics,
                         (int) x, (int) y, (int) w, (int) h, guiContext.partialTick);
             }

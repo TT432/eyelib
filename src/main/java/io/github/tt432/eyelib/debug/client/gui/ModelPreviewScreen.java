@@ -2,6 +2,8 @@ package io.github.tt432.eyelib.debug.client.gui;
 
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import io.github.tt432.eyelib.bridge.client.adapter.EntityRenderPorts;
@@ -167,7 +169,7 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
      */
     //? if <26.1 {
     private void renderModelInViewport(GuiGraphics guiGraphics, int x, int y, int w, int h, float partialTick) {
-        // Enable scissor to clip rendering to viewport
+        // Enable scissor to clip rendering to viewport（屏幕坐标系，画布变换不涉及，安全）
         guiGraphics.enableScissor(x, y, x + w, y + h);
 
         PoseStack poseStack = guiGraphics.pose();
@@ -186,40 +188,56 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
         poseStack.mulPose(Axis.XP.rotationDegrees(rotateX));
         poseStack.mulPose(Axis.YP.rotationDegrees(rotateY));
 
-
-        if (currentModel != null) {
-            // Setup RenderParams
-            MultiBufferSource.BufferSource bufferSource = guiGraphics.bufferSource();
-            ResourceLocation texture = ResourceLocationBridge.parseMc(currentModel.atlasTexture().id());
-
-            //? if <26.1 {
-            RenderType renderType = RenderType.entitySolid(texture);
-            //?} else {
-            RenderType renderType = RenderTypes.entitySolid(texture);
-            //?}
-            VertexConsumer buffer = bufferSource.getBuffer(renderType);
-
-            RenderParams params = RenderParams.builder(poseStack, null, true, ResourceLocationBridge.fromMc(texture), buffer)
-                                              .light(EntityRenderPorts.RenderSystemPort.FULL_BRIGHT) // Full bright for preview
-                                              .overlay(OverlayTexture.NO_OVERLAY)
-                                              .build();
-
-            // Render
+        if (currentModel != null && bakedModel != null) {
+            // 与 NodeAssetPreview.renderModel 同款：Tesselator + position_tex 直接 drawWithShader。
+            // 旧路径（bufferSource 批渲染 entitySolid + DFSModel.visit）在本上下文零像素——
+            // 顶点经 pose 正确落屏但被批次状态/剪刀问题整批裁掉（见 ADR-0021 相关排查记录）。
+            ResourceLocation texture = ResourceLocationBridge.parseMc(
+                    currentModel.atlasTexture() != null
+                            ? currentModel.atlasTexture().id()
+                            : io.github.tt432.eyelib.client.nodegraph.preview.NodeAssetPreview
+                                    .resolveAtlasTexture(currentModel.model().name()));
             try {
-                if (currentModel != null) {
-                    ModelVisitContext context = new ModelVisitContext();
-                    if (bakedModel != null) {
-                        context.put("BackedModel", bakedModel);
-                    }
-                    if (this.dfsModel != null) {
-                        this.dfsModel.visit(params, context, ActiveModelRenderVisitors.RENDER_VISITOR, new ModelRuntimeData(), new DFSModel.StateMachine());
+                com.mojang.blaze3d.systems.RenderSystem.setShaderTexture(0, texture);
+                com.mojang.blaze3d.systems.RenderSystem.setShader(
+                        net.minecraft.client.renderer.GameRenderer::getPositionTexShader);
+                var pose = poseStack.last().pose();
+                //? if <1.20.6 {
+                Tesselator tesselator = Tesselator.getInstance();
+                BufferBuilder builder = tesselator.getBuilder();
+                builder.begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
+                        com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_TEX);
+                for (io.github.tt432.eyelib.bridge.client.render.bake.BakedModel.BakedBone bone : bakedModel.bones().values()) {
+                    bone.transformPos(pose);
+                    float[] pos = bone.positionResult();
+                    float[] u = bone.u();
+                    float[] v = bone.v();
+                    for (int i = 0; i < bone.vertexSize(); i++) {
+                        builder.vertex(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])
+                                .uv(u[i], v[i])
+                                .endVertex();
                     }
                 }
+                tesselator.end();
+                //?} else {
+                BufferBuilder builder = Tesselator.getInstance().begin(
+                        com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
+                        com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_TEX);
+                for (io.github.tt432.eyelib.bridge.client.render.bake.BakedModel.BakedBone bone : bakedModel.bones().values()) {
+                    bone.transformPos(pose);
+                    float[] pos = bone.positionResult();
+                    float[] u = bone.u();
+                    float[] v = bone.v();
+                    for (int i = 0; i < bone.vertexSize(); i++) {
+                        builder.addVertex(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])
+                                .setUv(u[i], v[i]);
+                    }
+                }
+                com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(builder.buildOrThrow());
+                //?}
             } catch (Exception e) {
                 e.printStackTrace(); // Log rendering errors but don't crash screen
             }
-
-            bufferSource.endBatch(renderType);
         }
 
         poseStack.popPose();
@@ -272,6 +290,27 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             }
         }
 
+        if (found != null) {
+            // 搜索路径同样装载（此前整个赋值块被注释，搜索永远空结果——预存 bug）
+            String atlasId = io.github.tt432.eyelib.client.nodegraph.preview.NodeAssetPreview
+                    .resolveAtlasTexture(found.name());
+            this.currentModel = new ModelPreviewAsset(found, null);
+            var info = ModelBakePort.twoSideGetBakeInfo(found, true, ResourceLocationBridge.parseMc(atlasId));
+            bakedModel = ModelBakePort.twoSideBake(found, info);
+            dfsModel = DFSModel.create(found);
+            this.statusMessage = "";
+            this.rotateX = 0;
+            this.rotateY = 0;
+            this.scale = 1.0f;
+            this.translateX = 0;
+            this.translateY = 0;
+        } else {
+            this.currentModel = null;
+            this.bakedModel = null;
+            this.dfsModel = null;
+            this.statusMessage = "Model not found: " + query;
+        }
+    }
 //        if (found instanceof BBModel bbModel) {
 //            this.currentModel = bbModel;
 //            this.renderModels = bbModel.splitByTexture();
@@ -291,7 +330,6 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
 //            this.renderModels = null;
 //            this.statusMessage = "Model not found: " + query;
 //        }
-    }
 
     //? if <26.1 {
     @Override
