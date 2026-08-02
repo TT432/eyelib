@@ -140,6 +140,46 @@ class MolangGeneratorTest {
         assertEquals("'it\\'s a \\\\ test'", expr(library(main), "scale"));
     }
 
+    @Test
+    void contextGetPrefixesName() {
+        GraphData main = graph(
+                List.of(root(),
+                        node("c", "context.get", opts("name", "item_slot")),
+                        node("d", "context.get", opts("name", "context.other"))),
+                List.of(wire("c", "out", "root", "scale"),
+                        wire("d", "out", "root", "scale_x")));
+        GraphLibrary lib = library(main);
+        assertEquals("context.item_slot", expr(lib, "scale"));
+        assertEquals("context.other", expr(lib, "scale_x"));
+    }
+
+    @Test
+    void nodeOutputEmissionForBadge() {
+        // 画布徽标路径：直接发射生产者输出（无需下游输入槽）。
+        GraphData main = graph(
+                List.of(root(),
+                        node("i", "const.number", opts("value", 1.0)),
+                        node("add", "op.binary", opts("op", "+")),
+                        node("j", "const.number", opts("value", 2))),
+                List.of(wire("i", "out", "add", "a"),
+                        wire("j", "out", "add", "b"),
+                        wire("add", "out", "root", "scale")));
+        GraphLibrary lib = library(main);
+        CodegenResult leaf = new MolangGenerator(lib).emitNodeOutput("root", "i", "out");
+        assertFalse(leaf.hasErrors(), () -> "unexpected errors: " + leaf.diagnostics());
+        assertEquals("1", leaf.code());
+        CodegenResult sum = new MolangGenerator(lib).emitNodeOutput("root", "add", "out");
+        assertFalse(sum.hasErrors(), () -> "unexpected errors: " + sum.diagnostics());
+        assertEquals("(1 + 2)", sum.code());
+    }
+
+    @Test
+    void nodeOutputEmissionRejectsValueInput() {
+        GraphData main = graph(List.of(root()), List.of());
+        CodegenResult r = new MolangGenerator(library(main)).emitNodeOutput("root", "root", "scale");
+        assertTrue(r.hasErrors());
+    }
+
     // ---------- 变量 / 查询 / 数学 ----------
 
     @Test

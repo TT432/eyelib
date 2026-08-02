@@ -122,6 +122,12 @@ public final class NodeTypes {
             List.of(),
             List.of(PortDef.out("out", PortType.ANY))));
 
+    public static final NodeType CONTEXT_GET = register(NodeType.of(
+            "context.get", NodeType.Kind.CONTEXT_GET, CAT_VARIABLE,
+            List.of(NodeOptionDef.string("name", "context.other")),
+            List.of(),
+            List.of(PortDef.out("out", PortType.ANY))));
+
     public static final NodeType TEMP_GET = register(NodeType.of(
             "temp.get", NodeType.Kind.TEMP_GET, CAT_VARIABLE,
             List.of(NodeOptionDef.string("name", "temp.t")),

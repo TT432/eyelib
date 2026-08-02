@@ -1,0 +1,192 @@
+package io.github.tt432.eyelib.nodegraph.decompile;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import io.github.tt432.eyelib.nodegraph.Diagnostic;
+import io.github.tt432.eyelib.nodegraph.GraphData;
+import io.github.tt432.eyelib.nodegraph.GraphKind;
+import io.github.tt432.eyelib.nodegraph.GraphLibrary;
+import io.github.tt432.eyelib.nodegraph.NodeInstance;
+import io.github.tt432.eyelib.nodegraph.PortRef;
+import io.github.tt432.eyelib.nodegraph.PortType;
+import io.github.tt432.eyelib.nodegraph.StickyNote;
+import io.github.tt432.eyelib.nodegraph.VariableDecl;
+import io.github.tt432.eyelib.nodegraph.Wire;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+
+/**
+ * 导入图构建器（包内共享）：节点/连线/便签/诊断累积、反编译片段合并（uid 加唯一前缀防冲突）、
+ * 值槽/EXEC 槽接线、黑板变量收集，最终经 {@link GraphLayout} 布局产出 {@link ImportResult}。
+ */
+final class ImportGraphBuilder {
+    private final Map<String, NodeInstance> nodes = new LinkedHashMap<>();
+    private final List<Wire> wires = new ArrayList<>();
+    private final List<StickyNote> stickies = new ArrayList<>();
+    private final List<Diagnostic> diagnostics = new ArrayList<>();
+    private int uidSeq;
+    private int fragmentSeq;
+    private int stickySeq;
+
+    // ---------- 选项/节点构造 ----------
+
+    /** 选项表构造（String/Number/Boolean/JsonElement → JsonPrimitive/原样），同 AssemblyTestSupport 风格。 */
+    static Map<String, JsonElement> opts(Object... kv) {
+        Map<String, JsonElement> map = new LinkedHashMap<>();
+        for (int i = 0; i < kv.length; i += 2) {
+            Object v = kv[i + 1];
+            JsonElement e = v instanceof String s ? new JsonPrimitive(s)
+                    : v instanceof Number n ? new JsonPrimitive(n)
+                    : v instanceof Boolean bl ? new JsonPrimitive(bl)
+                    : (JsonElement) v;
+            map.put((String) kv[i], e);
+        }
+        return map;
+    }
+
+    /** 根锚点节点：uid 固定 "root"（与 ng_smoke.json 约定一致）。 */
+    void addRoot(String type, Map<String, JsonElement> options) {
+        nodes.put("root", new NodeInstance("root", type, 0, 0, options, Map.of()));
+    }
+
+    /** 普通节点：uid = 语义前缀 + 递增序号（确定性）。 */
+    String addNode(String prefix, String type, Map<String, JsonElement> options) {
+        String uid = prefix + (uidSeq++);
+        nodes.put(uid, new NodeInstance(uid, type, 0, 0, options, Map.of()));
+        return uid;
+    }
+
+    /** 未连线输入端口的内联值（constants；优先级高于端口默认，codegen 经 literal 发射）。 */
+    void putConstant(String nodeUid, String portId, JsonElement value) {
+        NodeInstance n = nodes.get(nodeUid);
+        if (n == null) {
+            throw new IllegalStateException("node '" + nodeUid + "' not found");
+        }
+        Map<String, JsonElement> constants = new LinkedHashMap<>(n.constants());
+        constants.put(portId, value);
+        nodes.put(nodeUid, new NodeInstance(n.uid(), n.type(), n.x(), n.y(), n.options(), constants));
+    }
+
+    void wire(String fromNode, String fromPort, String toNode, String toPort) {
+        wires.add(new Wire(new PortRef(fromNode, fromPort), new PortRef(toNode, toPort)));
+    }
+
+    void sticky(String text) {
+        stickies.add(new StickyNote("note" + (stickySeq++), text, 0, 0, 200, 100, "#FFFF88"));
+    }
+
+    void warn(String code, String message) {
+        diagnostics.add(Diagnostic.warning(code, message));
+    }
+
+    void error(String code, String message) {
+        diagnostics.add(Diagnostic.error(code, message));
+    }
+
+    // ---------- 片段合并与槽接线 ----------
+
+    /** 合并反编译片段：全部 uid（节点/连线端点/便签/诊断关联节点）加唯一前缀，返回前缀。 */
+    private String mergeFragment(List<NodeInstance> fNodes, List<Wire> fWires,
+                                 List<StickyNote> fStickies, List<Diagnostic> fDiagnostics) {
+        String prefix = "f" + (fragmentSeq++) + "_";
+        for (NodeInstance n : fNodes) {
+            nodes.put(prefix + n.uid(),
+                    new NodeInstance(prefix + n.uid(), n.type(), 0, 0, n.options(), n.constants()));
+        }
+        for (Wire w : fWires) {
+            wires.add(new Wire(
+                    new PortRef(prefix + w.from().node(), w.from().port()),
+                    new PortRef(prefix + w.to().node(), w.to().port())));
+        }
+        for (StickyNote s : fStickies) {
+            stickies.add(new StickyNote(prefix + s.uid(), s.text(), 0, 0,
+                    s.width(), s.height(), s.color()));
+        }
+        for (Diagnostic d : fDiagnostics) {
+            diagnostics.add(new Diagnostic(d.severity(), d.code(), d.message(),
+                    d.nodeUid().map(u -> prefix + u)));
+        }
+        return prefix;
+    }
+
+    /** molang 表达式 → 连线到消费值槽。空白源 = 无内容，跳过。 */
+    void wireExpression(String source, String consumerUid, String consumerPort) {
+        if (source.isBlank()) {
+            return;
+        }
+        MolangDecompiler.ExprFragment frag = MolangDecompiler.decompileExpression(source);
+        String prefix = mergeFragment(frag.nodes(), frag.wires(), frag.stickyNotes(), frag.diagnostics());
+        frag.output().ifPresent(out -> wire(prefix + out.node(), out.port(), consumerUid, consumerPort));
+    }
+
+    /**
+     * molang 语句序列列表（Bedrock 允许 string 或 string[]，调用方拆好）→ exec 链接入消费 EXEC 槽。
+     * 多段顺序拼接：前段链尾 exec_out → 后段链首 exec_in；最终链尾 → 消费槽（反向汇入槽模型）。
+     */
+    void wireStatements(List<String> sources, String consumerUid, String consumerPort) {
+        PortRef prevTail = null;
+        for (String source : sources) {
+            if (source.isBlank()) {
+                continue;
+            }
+            MolangDecompiler.ExecFragment frag = MolangDecompiler.decompileStatements(source);
+            String prefix = mergeFragment(frag.nodes(), frag.wires(), frag.stickyNotes(), frag.diagnostics());
+            if (frag.chain().isEmpty()) {
+                continue;
+            }
+            if (prevTail != null) {
+                wire(prevTail.node(), prevTail.port(), prefix + frag.chain().get(0), "exec_in");
+            }
+            List<String> chain = frag.chain();
+            prevTail = new PortRef(prefix + chain.get(chain.size() - 1), "exec_out");
+        }
+        if (prevTail != null) {
+            wire(prevTail.node(), prevTail.port(), consumerUid, consumerPort);
+        }
+    }
+
+    // ---------- 产出 ----------
+
+    ImportResult build(GraphKind kind) {
+        List<NodeInstance> laidOut = GraphLayout.layout(List.copyOf(nodes.values()), wires);
+        List<StickyNote> placed = GraphLayout.placeStickyNotes(stickies, laidOut);
+        GraphData data = new GraphData(laidOut, List.copyOf(wires), collectVariables(laidOut),
+                List.of(), placed, Optional.empty());
+        return new ImportResult(
+                new GraphLibrary(GraphLibrary.CURRENT_FORMAT_VERSION, kind, "root", Map.of("root", data)),
+                diagnostics);
+    }
+
+    /** 黑板变量声明：收集 var.get / exec.set_var(root=variable) 引用的 variable.* 名（去重排序）。 */
+    private static List<VariableDecl> collectVariables(List<NodeInstance> nodes) {
+        Set<String> names = new TreeSet<>();
+        for (NodeInstance n : nodes) {
+            switch (n.type()) {
+                case "var.get" -> addVarName(names, n.options().get("name"));
+                case "exec.set_var" -> {
+                    JsonElement root = n.options().get("root");
+                    if (root instanceof JsonPrimitive p && "variable".equals(p.getAsString())) {
+                        addVarName(names, n.options().get("name"));
+                    }
+                }
+                default -> {
+                }
+            }
+        }
+        return names.stream().map(name -> VariableDecl.of(name, PortType.ANY)).toList();
+    }
+
+    private static void addVarName(Set<String> out, JsonElement name) {
+        if (name instanceof JsonPrimitive p && p.isString()) {
+            String s = p.getAsString();
+            if (s.startsWith("variable.")) {
+                out.add(s.substring("variable.".length()));
+            }
+        }
+    }
+}

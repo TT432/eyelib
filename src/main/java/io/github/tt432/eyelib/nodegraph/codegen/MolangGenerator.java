@@ -49,4 +49,15 @@ public final class MolangGenerator {
     public CodegenResult emitStatementListFor(String graphName, String nodeUid, String portId) {
         return emitStatementList(graphName, new PortRef(nodeUid, portId));
     }
+
+    /**
+     * 生成某节点值输出端口的产出表达式（画布调试徽标用，规格 nodegraph-workbench §W3）。
+     *
+     * @param graphName 图名（库内键）
+     * @param nodeUid   生产者节点 uid
+     * @param portId    值输出端口 id
+     */
+    public CodegenResult emitNodeOutput(String graphName, String nodeUid, String portId) {
+        return new EmitSession(library).emitNodeOutput(graphName, nodeUid, portId);
+    }
 }

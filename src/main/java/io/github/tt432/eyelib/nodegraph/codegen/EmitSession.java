@@ -236,6 +236,40 @@ final class EmitSession {
         return Out.of("0");
     }
 
+    /**
+     * 发射某节点<b>值输出端口</b>的产出表达式（画布调试徽标用；规格 nodegraph-workbench §W3）。
+     * 与 {@link #emitExpression} 同会话语义（temp.gN 提取/子图内联），仅入口从输入槽换成生产者输出。
+     */
+    CodegenResult emitNodeOutput(String graphName, String nodeUid, String portId) {
+        Optional<GraphData> graph = library.graph(graphName);
+        if (graph.isEmpty()) {
+            error("UNKNOWN_GRAPH", "graph '" + graphName + "' not found in library");
+            return new CodegenResult("0", diagnostics);
+        }
+        Optional<NodeInstance> node = graph.get().findNode(nodeUid);
+        if (node.isEmpty()) {
+            error("UNKNOWN_NODE", "node '" + nodeUid + "' not found in graph '" + graphName + "'", nodeUid);
+            return new CodegenResult("0", diagnostics);
+        }
+        Optional<NodeType> type = NodeTypes.get(node.get().type());
+        if (type.isEmpty()) {
+            error("UNKNOWN_NODE_TYPE", "unknown node type '" + node.get().type() + "'", nodeUid);
+            return new CodegenResult("0", diagnostics);
+        }
+        Frame f = new Frame(graph.get(), "");
+        boolean valid = type.get().outputsOf(node.get(), f.resolver).stream()
+                .anyMatch(p -> p.id().equals(portId) && p.type().isValue());
+        if (!valid) {
+            error("INVALID_SLOT", "port '" + portId + "' of node '" + nodeUid + "' is not a value output port", nodeUid);
+            return new CodegenResult("0", diagnostics);
+        }
+        countNode(f, node.get(), type.get());
+        Out out = emitValueProducer(f, node.get(), portId);
+        List<String> parts = new ArrayList<>(out.preludes());
+        parts.add(out.expr());
+        return new CodegenResult(String.join("; ", parts), diagnostics);
+    }
+
     /** 发射生产者节点的输出；出度 ≥ 2 的非平凡节点提取 temp.gN（§2.4-3）。 */
     private Out emitValueProducer(Frame f, NodeInstance node, String portId) {
         Optional<NodeType> type = NodeTypes.get(node.type());
@@ -275,6 +309,7 @@ final class EmitSession {
             case CONST_STRING -> Out.of(quote(string(node, type, "value")));
             case VAR_GET -> Out.of(withRoot("variable", string(node, type, "name")));
             case TEMP_GET -> Out.of(withRoot("temp", string(node, type, "name")));
+            case CONTEXT_GET -> Out.of(withRoot("context", string(node, type, "name")));
             case QUERY_CALL, MATH_CALL -> emitCallLike(f, node, type);
             case OP_BINARY -> {
                 Out a = emitValueInput(f, node.uid(), "a");
@@ -464,7 +499,7 @@ final class EmitSession {
     /** 永不提取的平凡节点：常量、单变量/属性引用（§2.4-3）。 */
     private static boolean isTrivial(NodeType type, NodeInstance node) {
         return switch (type.kind()) {
-            case CONST_NUMBER, CONST_INT, CONST_BOOL, CONST_STRING, VAR_GET, TEMP_GET,
+            case CONST_NUMBER, CONST_INT, CONST_BOOL, CONST_STRING, VAR_GET, TEMP_GET, CONTEXT_GET,
                  REF_GEOMETRY, REF_TEXTURE, REF_MATERIAL -> true;
             case QUERY_CALL, MATH_CALL -> node.optionInt("arg_count", 0) <= 0;
             default -> false;
