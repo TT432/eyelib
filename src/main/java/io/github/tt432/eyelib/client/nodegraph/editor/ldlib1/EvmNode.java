@@ -14,6 +14,7 @@ import com.lowdragmc.lowdraglib.gui.editor.configurator.SelectorConfigurator;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.StringConfigurator;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.WrapperConfigurator;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.annotation.CustomPortBehavior;
+import com.lowdragmc.lowdraglib.gui.graphprocessor.data.NodePort;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import io.github.tt432.eyelib.client.nodegraph.preview.NodeAssetPreview;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
 /**
@@ -247,37 +249,45 @@ public class EvmNode extends BaseNode {
 
     private void buildConstantConfigurator(ConfiguratorGroup father, PortDef port, JsonElement def) {
         String id = port.id();
+        // 连线 → 内联常量禁用+变灰（codegen 取值顺序 连线 > 内联 > 默认；WiredConstantConfigurators）
+        BooleanSupplier wired = () -> isPortWired(id);
         // 按声明端口类型分派（用户面向类型优先于 JSON 字面量种类——BOOL 端口默认值是数字 1，
         // INT 端口默认值是浮点字面量；ANY/其余回退到字面量种类）。
         switch (port.type()) {
             case INT -> {
-                father.addConfigurators(new NumberConfigurator(
+                father.addConfigurators(new WiredConstantConfigurators.WiredNumber(
                         id, () -> constants.getOrDefault(id, def).getAsInt(),
-                        v -> constants.put(id, new JsonPrimitive(v.intValue())), def.getAsInt(), true));
+                        v -> constants.put(id, new JsonPrimitive(v.intValue())), def.getAsInt(), true, wired));
                 return;
             }
             case BOOL -> {
-                father.addConfigurators(new BooleanConfigurator(
+                father.addConfigurators(new WiredConstantConfigurators.WiredBoolean(
                         id, () -> boolConstant(constants.getOrDefault(id, def)),
-                        v -> constants.put(id, new JsonPrimitive(v)), boolConstant(def), true));
+                        v -> constants.put(id, new JsonPrimitive(v)), boolConstant(def), true, wired));
                 return;
             }
             default -> {
             }
         }
         if (def instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            father.addConfigurators(new BooleanConfigurator(
+            father.addConfigurators(new WiredConstantConfigurators.WiredBoolean(
                     id, () -> constants.getOrDefault(id, def).getAsBoolean(),
-                    v -> constants.put(id, new JsonPrimitive(v)), def.getAsBoolean(), true));
+                    v -> constants.put(id, new JsonPrimitive(v)), def.getAsBoolean(), true, wired));
         } else if (def instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            father.addConfigurators(new NumberConfigurator(
+            father.addConfigurators(new WiredConstantConfigurators.WiredNumber(
                     id, () -> constants.getOrDefault(id, def).getAsFloat(),
-                    v -> constants.put(id, new JsonPrimitive(v.floatValue())), def.getAsFloat(), true));
+                    v -> constants.put(id, new JsonPrimitive(v.floatValue())), def.getAsFloat(), true, wired));
         } else if (def instanceof JsonPrimitive primitive && primitive.isString()) {
-            father.addConfigurators(new StringConfigurator(
+            father.addConfigurators(new WiredConstantConfigurators.WiredString(
                     id, () -> constants.getOrDefault(id, def).getAsString(),
-                    v -> constants.put(id, new JsonPrimitive(v)), def.getAsString(), true));
+                    v -> constants.put(id, new JsonPrimitive(v)), def.getAsString(), true, wired));
         }
+    }
+
+    /** 端口连线状态（内联常量禁用判定）；动态端口重算间隙查不到端口时按未连线。 */
+    private boolean isPortWired(String portId) {
+        NodePort port = getPort("in", portId);
+        return port != null && !port.getEdges().isEmpty();
     }
 
     /** BOOL 常量读取：兼容数字（0/1）与布尔字面量两种存储形态。 */
