@@ -143,6 +143,16 @@ public class EvmNode extends BaseNode {
         return new NodeInstance(evmUid, nodeTypeId, 0, 0, options, constants);
     }
 
+    /**
+     * 节点最小宽度。LDLib 默认 50 会把内联编辑器（value/name/op 行）挤成几像素宽的
+     * 黑点（文字溢出不可读）；110 保证「标签 + 可用输入框」一行放得下（用户布局要求：
+     * op 选择器与内联值框通栏宽）。
+     */
+    @Override
+    public int getMinWidth() {
+        return 110;
+    }
+
     /** 选项变更后：重算动态端口（含跨节点传播）+ 刷新节点 widget。 */
     public void refreshDynamicPorts() {
         updatePortsForField("in");
