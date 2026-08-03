@@ -95,7 +95,7 @@ LDLib2 有 SubgraphNodeModel，LDLib 1.x graphprocessor 没有子图。为保证
 **查询**：QueryCall（函数名 + 动态实参端口；成员访问形 `query.foo` 与调用形 `query.foo(a,b)` 统一）、MathCall（math.* 同构）。
 **运算**：BinaryOp(+ - * / % == != < <= > >= && ||)、UnaryOp(- !)、Ternary(cond ? a : b)、NullCoalesce(a ?? b)。
 **执行流**（exec pins）：Sequence（顺序执行 n 路）、SetVar（exec 版赋值）、Loop(count, body exec, break/continue 口)、ForEach(array, 迭代变量, body)、Break / Continue、Return(value)（表达式上下文的显式返回，可省——隐式以最后语句为返回值）。
-**资源引用**：GeometryRef / TextureRef / MaterialRef / AnimationRef / AnimationControllerRef / RenderControllerRef（产出对应 ref 类型 + 短名；节点体含预览与「短名/标识符」字段）。
+**资源引用**：GeometryRef / TextureRef / MaterialRef / AnimationRef / AnimationControllerRef / RenderControllerRef（产出对应 ref 类型；节点体含预览与标识符字段；短名默认由标识符派生、不显式管理——见 nodegraph-shortname-elimination.md / ADR-0023）。
 **实体装配**（ClientEntity 文档专用）：EntityRoot（文档根，见 §2.5）、RenderControllerSlot、AnimationControllerSlot、AnimateEntry。
 **子图**：SubgraphCall（引用库内子图）、SubgraphInput / SubgraphOutput（子图定义侧端口锚点）。
 **注释**：StickyNote（便签，纯文档）。
@@ -115,7 +115,7 @@ LDLib2 有 SubgraphNodeModel，LDLib 1.x graphprocessor 没有子图。为保证
 5. **别名规范形**：输出只用 `query./variable./temp./context./math.` 全名。
 6. **exec fan-out 禁止**：exec 输出端口最多 1 条出边（UE 蓝图 Sequence 节点解决分叉），违反 = 错误。
 7. **未连接输入**：有默认值的用默认值；无默认值 = 编译错误（除非 any 类型槽且槽位允许缺省）。
-8. **资源引用完备性**：EntityRoot 装配时，所有 ref 节点的短名/标识符对必须两两不冲突（同短名不同标识符 = 错误）。
+8. **资源引用完备性**：EntityRoot 装配时，所有 ref 节点的有效短名/标识符对必须两两不冲突（同有效短名不同标识符 = 错误；有效短名 = 显式覆盖 ?: 标识符派生，ADR-0023）。
 9. **子图展开深度**：子图引用链必须无环（递归子图 = 错误）；展开深度上限 32（防御性）。
 
 ### 2.5 ClientEntity 文档与 EntityRoot
@@ -131,9 +131,10 @@ ClientEntity 文档 = 一个主图，含唯一 EntityRoot 节点。EntityRoot �
 | scale / scaleX / scaleY / scaleZ | scripts.scale* | 表达式 | |
 | animate[] | scripts.animate | 表达式(blend weight) + AnimationRef/ACRef | 动态条目 |
 | render_controllers[] | render_controllers + renderControllerConditions | RCRef + 条件表达式 | |
-| geometry[] | geometry 声明表 | GeometryRef | 短名→标识符 |
-| textures[] | textures 声明表 | TextureRef | 短名→路径 |
-| materials[] | materials 声明表 | MaterialRef | 短名→材质名 |
+| geometry[] | geometry 声明表 | GeometryRef | 有效短名→标识符（短名派生/default 别名见 ADR-0023） |
+| textures[] | textures 声明表 | TextureRef | 有效短名→路径 |
+| materials[] | materials 声明表 | MaterialRef | 有效短名→材质名 |
+| animations[] | animations 声明表 | AnimationRef/ACRef | 有效短名→标识符（ref.ac 同发本表，ADR-0023 D5） |
 
 **RC/AC 文档**（独立图文档类型，同样可制作）：
 - RC 文档：geometry(表达式)、textures[](表达式)、materials[](pattern+表达式)、part_visibility[](骨骼 pattern+条件表达式)、color/is_hurt/on_fire/overlay(表达式组)、ignoreLighting、arrays。
