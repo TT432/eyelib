@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.nodegraph.editor.ldlib2;
 //? if !legacy {
+import com.lowdragmc.lowdraglib2.gui.ui.data.Tooltips;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.INodeOption;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.Node;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.port.IPort;
@@ -13,6 +14,7 @@ import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeOptionDef;
 import io.github.tt432.eyelib.nodegraph.NodeType;
 import io.github.tt432.eyelib.nodegraph.PortDef;
+import io.github.tt432.eyelib.nodegraph.ShortNames;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,10 +71,19 @@ public abstract class EvmNodeBase extends Node {
     @Override
     public void onDefineOptions(IOptionDefinitionContext context) {
         super.onDefineOptions(context);
+        boolean isRef = ShortNames.valueOptionOf(type().id()) != null;
         for (NodeOptionDef def : type().options()) {
-            context.addOption(def.id(), EvmValues.optionJavaType(def.type()))
-                    .withDefaultValue(EvmValues.optionDefault(def))
-                    .withDisplayName(Component.literal(def.id()));
+            var builder = context.addOption(def.id(), EvmValues.optionJavaType(def.type()))
+                    .withDefaultValue(EvmValues.optionDefault(def));
+            if (isRef && ShortNames.SHORT_NAME_OPTION.equals(def.id())) {
+                // 规格 D8：短名是高级逃生舱，默认派生；tooltip 实时显示当前有效短名
+                String effective = ShortNames.effective(currentInstanceView(), type());
+                builder.withDisplayName(Component.literal("short_name（高级·留空=派生）"))
+                        .withTooltips(Tooltips.of("外部契约短名覆盖；当前有效短名: "
+                                + (effective.isEmpty() ? "(空——构建将报错)" : effective)));
+            } else {
+                builder.withDisplayName(Component.literal(def.id()));
+            }
         }
     }
 

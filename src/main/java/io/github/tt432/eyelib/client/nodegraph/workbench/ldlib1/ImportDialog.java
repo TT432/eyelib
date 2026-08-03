@@ -14,6 +14,7 @@ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import io.github.tt432.eyelib.client.gui.manager.io.FileDialogService;
 import io.github.tt432.eyelib.client.jsonview.EntityJsonService;
 import io.github.tt432.eyelib.client.nodegraph.GraphLibraryManager;
+import io.github.tt432.eyelib.client.nodegraph.KnownRefTables;
 import io.github.tt432.eyelib.client.nodegraph.editor.ldlib1.Ldlib1NodegraphEditor;
 import io.github.tt432.eyelib.nodegraph.decompile.ImportResult;
 import io.github.tt432.eyelib.nodegraph.decompile.JsonGraphImporters;
@@ -123,7 +124,9 @@ public final class ImportDialog extends DialogWidget {
         JsonObject root = JsonParser.parseString(json.get()).getAsJsonObject();
         ImportResult result = switch (kind) {
             case CLIENT_ENTITY -> JsonGraphImporters.importClientEntity(root);
-            case RENDER_CONTROLLER -> JsonGraphImporters.importRenderController(root, id);
+            // D4 跨文档关联：携已知短名表回填裸短名 ref 的标识符
+            case RENDER_CONTROLLER -> JsonGraphImporters.importRenderController(
+                    root, id, KnownRefTables.collectForRc(id));
         };
         finish(result, id);
     }
@@ -164,14 +167,14 @@ public final class ImportDialog extends DialogWidget {
             if (name == null) {
                 Ldlib1NodegraphEditor.chat("[nodegraph] render_controllers 为空，无法导入");
             } else {
-                finish(JsonGraphImporters.importRenderController(root, name), name);
+                finish(JsonGraphImporters.importRenderController(root, name, KnownRefTables.collectForRc(name)), name);
             }
         } else if (root.get("animation_controllers") instanceof JsonObject animationControllers) {
             String name = firstKey(animationControllers);
             if (name == null) {
                 Ldlib1NodegraphEditor.chat("[nodegraph] animation_controllers 为空，无法导入");
             } else {
-                finish(JsonGraphImporters.importAnimationControllers(root, name), name);
+                finish(JsonGraphImporters.importAnimationControllers(root, name, KnownRefTables.collect()), name);
             }
         } else {
             Ldlib1NodegraphEditor.chat("[nodegraph] 无法识别的 JSON 形态"

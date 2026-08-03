@@ -27,6 +27,7 @@ import io.github.tt432.eyelib.nodegraph.GraphLibrary;
 import io.github.tt432.eyelib.nodegraph.GraphValidator;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
+import io.github.tt432.eyelib.nodegraph.ShortNameOps;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -197,7 +198,8 @@ public final class Ldlib1NodegraphEditor {
             addWidget(new ButtonWidget(180, 3, 40, 12, new TextTexture("导入"), cd -> new ImportDialog(this)));
             addWidget(new ButtonWidget(224, 3, 40, 12, new TextTexture("资产"), cd -> togglePanel(assetPanel, debugPanel)));
             addWidget(new ButtonWidget(268, 3, 40, 12, new TextTexture("调试"), cd -> togglePanel(debugPanel, assetPanel)));
-            addWidget(new LabelWidget(314, 5, () -> String.join(" / ", breadcrumbs)));
+            addWidget(new ButtonWidget(312, 3, 48, 12, new TextTexture("规范化"), cd -> normalizeShortNames()));
+            addWidget(new LabelWidget(366, 5, () -> String.join(" / ", breadcrumbs)));
 
             // rebuildView 会把侧栏抬到画布之上（侧栏先建，重建时保持顶层）
             rebuildView();
@@ -266,6 +268,24 @@ public final class Ldlib1NodegraphEditor {
             if (result.injectedId() != null) {
                 chat("[nodegraph] injected: " + result.injectedId());
             }
+        }
+
+        /**
+         * 规范化短名（规格 D4）：同步画布 → 剥全部显式 short_name（派生接管）→ 重建画布。
+         * 适用全闭包已入图；同 pack 未导入文档引用旧短名将断（按钮即明示动作）。
+         */
+        private void normalizeShortNames() {
+            syncCanvasToLibrary();
+            ShortNameOps.RewriteResult r = ShortNameOps.normalize(library);
+            if (r.changed() == 0) {
+                chat("[nodegraph] 无显式短名可清除（已是派生状态）");
+                return;
+            }
+            library = r.library();
+            GraphLibraryManager.INSTANCE.put(libraryName, library);
+            rebuildView();
+            chat("[nodegraph] 规范化：已清除 " + r.changed() + " 个显式短名（派生接管）；"
+                    + "注意：未导入的同包文档若引用旧短名将失效");
         }
 
         /** 潜入选中的 subgraph.call 节点（无子图概念的原生画布 → 重建 widget）。 */

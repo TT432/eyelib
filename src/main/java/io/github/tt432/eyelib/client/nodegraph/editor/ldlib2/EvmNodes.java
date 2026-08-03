@@ -32,6 +32,14 @@ public final class EvmNodes {
         }
     }
 
+    @NodeAttribute(name = "const.int", group = NodeTypes.CAT_CONSTANT, graphTypes = {EvmGraph.class})
+    public static final class ConstInt extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.CONST_INT;
+        }
+    }
+
     @NodeAttribute(name = "const.bool", group = NodeTypes.CAT_CONSTANT, graphTypes = {EvmGraph.class})
     public static final class ConstBool extends EvmNodeBase {
         @Override
@@ -53,6 +61,14 @@ public final class EvmNodes {
         @Override
         public NodeType type() {
             return NodeTypes.VAR_GET;
+        }
+    }
+
+    @NodeAttribute(name = "context.get", group = NodeTypes.CAT_VARIABLE, graphTypes = {EvmGraph.class})
+    public static final class ContextGet extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.CONTEXT_GET;
         }
     }
 
@@ -322,8 +338,8 @@ public final class EvmNodes {
 
     /** getSupportNodes 清单（创建顺序 = 目录顺序）。 */
     public static final List<Class<? extends Node>> ALL = List.of(
-            ConstNumber.class, ConstBool.class, ConstString.class,
-            VarGet.class, TempGet.class, ExecSetVar.class,
+            ConstNumber.class, ConstInt.class, ConstBool.class, ConstString.class,
+            VarGet.class, ContextGet.class, TempGet.class, ExecSetVar.class,
             QueryCall.class, MathCall.class, ExecCall.class,
             OpBinary.class, OpUnary.class, OpTernary.class, OpNullCoalesce.class,
             ExecLoop.class, ExecForEach.class, ExecBreak.class, ExecContinue.class, ExecReturn.class,

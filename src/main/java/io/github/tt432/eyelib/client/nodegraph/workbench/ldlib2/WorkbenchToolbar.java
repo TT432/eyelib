@@ -10,7 +10,8 @@ import net.minecraft.network.chat.Component;
  * 「资产」「调试」同时是左右侧栏的折叠开关，按当前可见性显示按下态。
  */
 final class WorkbenchToolbar extends UIElement {
-    WorkbenchToolbar(Runnable onImport, Runnable onToggleAssets, Runnable onToggleDebug) {
+    WorkbenchToolbar(Runnable onImport, Runnable onToggleAssets, Runnable onToggleDebug,
+                     Runnable onNormalize) {
         layout(layout -> layout
                 .widthPercent(100)
                 .height(22)
@@ -23,7 +24,8 @@ final class WorkbenchToolbar extends UIElement {
         addChildren(
                 toolButton("导入", onImport),
                 toolButton("资产", onToggleAssets),
-                toolButton("调试", onToggleDebug));
+                toolButton("调试", onToggleDebug),
+                toolButton("规范化", onNormalize));
     }
 
     private static Button toolButton(String text, Runnable onClick) {

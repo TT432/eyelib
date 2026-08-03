@@ -11,6 +11,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.TextArea;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import io.github.tt432.eyelib.client.jsonview.EntityJsonService;
 import io.github.tt432.eyelib.client.nodegraph.GraphLibraryManager;
+import io.github.tt432.eyelib.client.nodegraph.KnownRefTables;
 import io.github.tt432.eyelib.client.nodegraph.editor.ldlib2.EvmDiagnostics;
 import io.github.tt432.eyelib.client.nodegraph.editor.ldlib2.Ldlib2NodegraphEditor;
 import io.github.tt432.eyelib.nodegraph.GraphKind;
@@ -171,7 +172,9 @@ final class ImportDialogs {
             JsonObject fileJson = JsonParser.parseString(json.get()).getAsJsonObject();
             ImportResult result = switch (entry.kind()) {
                 case CLIENT_ENTITY -> JsonGraphImporters.importClientEntity(fileJson);
-                case RENDER_CONTROLLER -> JsonGraphImporters.importRenderController(fileJson, entry.id());
+                // D4 跨文档关联：携已知短名表回填裸短名 ref 的标识符
+                case RENDER_CONTROLLER -> JsonGraphImporters.importRenderController(
+                        fileJson, entry.id(), KnownRefTables.collectForRc(entry.id()));
             };
             finish(result, entry.id());
         } catch (RuntimeException e) {
@@ -237,12 +240,12 @@ final class ImportDialogs {
             }
             String rcName = firstKey(root, "render_controllers");
             if (rcName != null) {
-                finish(JsonGraphImporters.importRenderController(root, rcName), rcName);
+                finish(JsonGraphImporters.importRenderController(root, rcName, KnownRefTables.collectForRc(rcName)), rcName);
                 return;
             }
             String acName = firstKey(root, "animation_controllers");
             if (acName != null) {
-                finish(JsonGraphImporters.importAnimationControllers(root, acName), acName);
+                finish(JsonGraphImporters.importAnimationControllers(root, acName, KnownRefTables.collect()), acName);
                 return;
             }
             notify(mui, "导入失败", "无法判别 JSON 形态：根键需为 minecraft:client_entity / render_controllers / animation_controllers 之一");

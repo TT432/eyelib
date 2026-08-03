@@ -22,7 +22,8 @@ public final class Ldlib2Workbench {
     private final AssetInspectorPanel assetPanel;
     private final DebugPanel debugPanel;
 
-    private Ldlib2Workbench(GraphLibrary initialLibrary, GraphEditorView editorView) {
+    private Ldlib2Workbench(GraphLibrary initialLibrary, GraphEditorView editorView,
+                            Runnable onNormalize) {
         assetPanel = new AssetInspectorPanel();
         debugPanel = new DebugPanel(overlayModel::setTarget);
         // root 先建：工具条 lambda 捕获 final 字段 root（definite assignment）
@@ -31,7 +32,8 @@ public final class Ldlib2Workbench {
         WorkbenchToolbar toolbar = new WorkbenchToolbar(
                 () -> ImportDialogs.openImportMenu(root),
                 () -> assetPanel.setDisplay(!assetPanel.isDisplayed()),
-                () -> debugPanel.setDisplay(!debugPanel.isDisplayed()));
+                () -> debugPanel.setDisplay(!debugPanel.isDisplayed()),
+                onNormalize);
 
         // 行内剩余空间全给编辑器：grow=1 + basis=0（widthPercent(100) 会把固定宽侧栏挤出版面）
         editorView.layout(layout -> layout.flex(1).flexBasisPercent(0).minWidth(0).heightPercent(100));
@@ -48,9 +50,14 @@ public final class Ldlib2Workbench {
         overlayModel.updateGraph(initialLibrary, initialLibrary.main());
     }
 
-    /** 组装工作台；{@code editorView} 的 loadGraph 由调用方随后完成。 */
-    public static Ldlib2Workbench create(GraphLibrary initialLibrary, GraphEditorView editorView) {
-        return new Ldlib2Workbench(initialLibrary, editorView);
+    /**
+     * 组装工作台；{@code editorView} 的 loadGraph 由调用方随后完成。
+     *
+     * @param onNormalize 「规范化」按钮动作（规格 D4；由编辑器侧提供——持久化当前画布后改写重开）
+     */
+    public static Ldlib2Workbench create(GraphLibrary initialLibrary, GraphEditorView editorView,
+                                         Runnable onNormalize) {
+        return new Ldlib2Workbench(initialLibrary, editorView, onNormalize);
     }
 
     /** 根元素（交给 {@code UI.of(...)}）。 */

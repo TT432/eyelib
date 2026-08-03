@@ -16,6 +16,7 @@ import io.github.tt432.eyelib.nodegraph.GraphKind;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
 import io.github.tt432.eyelib.nodegraph.GraphValidator;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
+import io.github.tt432.eyelib.nodegraph.ShortNameOps;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
@@ -73,7 +74,8 @@ public final class Ldlib2NodegraphEditor {
         EvmDiagnostics.report(openDiags);
 
         GraphEditorView editorView = new GraphEditorView();
-        Ldlib2Workbench workbench = Ldlib2Workbench.create(library, editorView);
+        Ldlib2Workbench workbench = Ldlib2Workbench.create(library, editorView,
+                () -> normalizeAndReopen(name, graph));
         editorView.loadGraph(graph, savedTag -> workbench.onPersisted(persist(name, graph)));
         // 视口适配内容：导入/打开后用户必须立刻看到节点（导入布局可能离原点很远）
         editorView.graphView.fitGraphChildren(15f);
@@ -82,6 +84,24 @@ public final class Ldlib2NodegraphEditor {
         mc.setScreen(new ModularUIScreen(
                 new ModularUI(UI.of(workbench.root()), mc.player),
                 Component.literal("Nodegraph: " + name)));
+    }
+
+    /**
+     * 规范化短名（规格 D4）：持久化当前画布 → 剥全部显式 short_name（派生接管）→ 落盘重开。
+     * 适用全闭包已入图；同 pack 未导入文档引用旧短名将断（按钮即明示动作）。
+     */
+    private static void normalizeAndReopen(String name, EvmGraph graph) {
+        GraphLibrary persisted = persist(name, graph);
+        ShortNameOps.RewriteResult r = ShortNameOps.normalize(persisted);
+        if (r.changed() == 0) {
+            EvmDiagnostics.info("无显式短名可清除（已是派生状态）");
+            return;
+        }
+        GraphLibraryManager.INSTANCE.put(name, r.library());
+        writeToDisk(name, r.library());
+        EvmDiagnostics.info("规范化：已清除 " + r.changed() + " 个显式短名（派生接管）；"
+                + "注意：未导入的同包文档若引用旧短名将失效");
+        open(name);
     }
 
     /** 保存：GraphModel → GraphLibrary → 验证诊断 → 注册表 + 落盘；返回入库的库（供徽标模型重发射）。 */

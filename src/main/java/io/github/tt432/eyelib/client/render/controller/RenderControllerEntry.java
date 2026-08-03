@@ -476,16 +476,24 @@ public record RenderControllerEntry(
         MolangObject object = value.getObject(scope);
 
         if (object instanceof MolangNull) {
-            var r = map.get(value.context().toLowerCase(Locale.ROOT).replace(type + ".", ""));
+            // 只剥首个类别前缀（多点短名可能含同类片段，全量 replace 会误剥——规格 D7）
+            var r = map.get(stripTypePrefix(value.context(), type));
             return Objects.requireNonNullElse(r, "minecraft:null");
         } else if (object instanceof MolangString || object instanceof MolangDynamicObject) {
             return Objects.requireNonNullElse(object.asString(), "minecraft:null");
         } else if (object instanceof MolangArray) {
             return "minecraft:null";
         } else {
-            var r = map.get(object.asString().toLowerCase(Locale.ROOT).replace(type + ".", ""));
+            var r = map.get(stripTypePrefix(object.asString(), type));
             return Objects.requireNonNullElse(r, "minecraft:null");
         }
+    }
+
+    /** 剥首个 "<type>." 前缀并 lowercase（原 replace 全量替换对多点短名有误剥风险）。 */
+    private static String stripTypePrefix(String raw, String type) {
+        String s = raw.toLowerCase(Locale.ROOT);
+        String prefix = type + ".";
+        return s.startsWith(prefix) ? s.substring(prefix.length()) : s;
     }
 
     private List<String> resolveTextureLayerPaths(MolangScope scope, BrClientEntity entity) {

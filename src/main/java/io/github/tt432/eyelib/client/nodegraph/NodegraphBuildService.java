@@ -4,11 +4,13 @@ import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.animation.bedrock.controller.BrAnimationControllers;
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
+import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
 import io.github.tt432.eyelib.importer.animation.bedrock.controller.BrAnimationControllerSet;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.model.Model;
 import io.github.tt432.eyelib.nodegraph.Diagnostic;
 import io.github.tt432.eyelib.nodegraph.GraphKind;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
@@ -22,8 +24,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * 图文档库 → 运行时资源构建管线（规格 §2.6）。
@@ -97,7 +102,39 @@ public final class NodegraphBuildService {
         BrClientEntity entity = parsed.result().orElseThrow();
         ClientEntityManager.INSTANCE.put(entity.identifier(), entity);
         LOGGER.info("[nodegraph] injected client entity {}", entity.identifier());
+        warnModelTextureMeshCoverage(diagnostics, entity);
         return new BuildResult(diagnostics, entity.identifier());
+    }
+
+    /**
+     * D9 模型短名覆盖度检查：图内引用几何的 texture_meshes 短名须能经实体纹理表解析，
+     * 否则运行时静默跳过该 mesh（RenderControllerEntry:230）。缺 "default" 键时才报
+     * （有 default 时运行时有回退）。per-bone material 运行时暂无消费端，不检查。
+     */
+    private static void warnModelTextureMeshCoverage(List<Diagnostic> diagnostics, BrClientEntity entity) {
+        Set<String> textureKeys = entity.textures().keySet();
+        if (textureKeys.contains("default")) {
+            return;
+        }
+        Set<String> missing = new TreeSet<>();
+        for (String geometryId : new LinkedHashSet<>(entity.geometry().values())) {
+            Model model = ModelManager.INSTANCE.get(geometryId);
+            if (model == null) {
+                continue;
+            }
+            for (var boneEntry : model.allBones().int2ObjectEntrySet()) {
+                for (Model.TextureMesh tm : boneEntry.getValue().textureMeshes()) {
+                    if (!textureKeys.contains(tm.texture())) {
+                        missing.add(tm.texture() + "（几何 " + geometryId + "）");
+                    }
+                }
+            }
+        }
+        for (String name : missing) {
+            diagnostics.add(Diagnostic.warning("UNCOVERED_TEXTURE_MESH",
+                    "模型 texture_mesh 短名 '" + name + "' 未被实体纹理表覆盖（运行时将跳过该体素化 mesh）；"
+                            + "请为对应 ref.texture 设置显式 short_name 覆盖"));
+        }
     }
 
     private static BuildResult injectRenderController(List<Diagnostic> diagnostics, GraphLibrary library, JsonObject json) {

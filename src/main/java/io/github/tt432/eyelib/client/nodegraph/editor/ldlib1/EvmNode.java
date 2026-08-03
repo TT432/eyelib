@@ -16,6 +16,7 @@ import com.lowdragmc.lowdraglib.gui.editor.configurator.WrapperConfigurator;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.annotation.CustomPortBehavior;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
+import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import io.github.tt432.eyelib.client.nodegraph.preview.NodeAssetPreview;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -31,6 +32,7 @@ import io.github.tt432.eyelib.nodegraph.NodeType;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.PortDef;
 import io.github.tt432.eyelib.nodegraph.PortType;
+import io.github.tt432.eyelib.nodegraph.ShortNames;
 import net.minecraft.nbt.CompoundTag;
 import org.jspecify.annotations.Nullable;
 
@@ -202,12 +204,28 @@ public class EvmNode extends BaseNode {
     public void buildConfigurator(ConfiguratorGroup father) {
         NodeType type = nodeType();
         if (type == null) return;
+        boolean isRef = ShortNames.valueOptionOf(nodeTypeId) != null;
         for (NodeOptionDef option : type.options()) {
+            // ref 节点的 short_name 收进「高级」区（规格 D8：默认派生，覆盖是逃生舱）
+            if (isRef && ShortNames.SHORT_NAME_OPTION.equals(option.id())) continue;
             buildOptionConfigurator(father, option);
         }
         if (type == NodeTypes.REF_GEOMETRY || type == NodeTypes.REF_TEXTURE) {
             father.addConfigurators(new WrapperConfigurator("preview", new ImageWidget(0, 0, PREVIEW_SIZE, PREVIEW_SIZE,
                     (IGuiTexture) (graphics, mouseX, mouseY, x, y, w, h) -> drawRefPreview(graphics, x, y, w, h))));
+        }
+        if (isRef) {
+            // 有效短名只读展示（选项变更 → reloadWidget → 此处重建刷新）
+            String effective = ShortNames.effective(selfInstance(), type);
+            ConfiguratorGroup advanced = new ConfiguratorGroup("高级", true);
+            advanced.addConfigurators(new WrapperConfigurator("有效短名",
+                    new LabelWidget(0, 3, effective.isEmpty() ? "(空——构建将报错)" : effective)));
+            for (NodeOptionDef option : type.options()) {
+                if (ShortNames.SHORT_NAME_OPTION.equals(option.id())) {
+                    buildOptionConfigurator(advanced, option);
+                }
+            }
+            father.addConfigurators(advanced);
         }
     }
 
