@@ -121,10 +121,10 @@ class ClientEntityAssemblerTest {
                 desc.getAsJsonObject("materials").get("default").getAsString());
         assertEquals("animation.test.walk",
                 desc.getAsJsonObject("animations").get("walk").getAsString());
-        JsonArray controllers = desc.getAsJsonArray("animation_controllers");
-        assertEquals(1, controllers.size());
+        // D6：ref.ac 与 ref.animation 同发进 animations 表；animation_controllers 不再发射
         assertEquals("controller.animation.test.main",
-                controllers.get(0).getAsJsonObject().get("main").getAsString());
+                desc.getAsJsonObject("animations").get("main").getAsString());
+        assertFalse(desc.has("animation_controllers"));
 
         // render_controllers：condition 恒 "1" → 纯字符串；否则 {identifier: condition}
         JsonArray rcs = desc.getAsJsonArray("render_controllers");
@@ -183,5 +183,83 @@ class ClientEntityAssemblerTest {
         assertEquals("geometry.test.model", geometry.get("default").getAsString());
         assertEquals("geometry.test.sub", geometry.get("sub_geo").getAsString());
         assertFalse(hasCode(r, AssemblySupport.INVALID_ENTRY_REF));
+    }
+
+    // ---------- 短名派生与 default 别名（规格 D1/D2/D6） ----------
+
+    @Test
+    void derivedShortNamesAndDefaultAlias() {
+        // 无显式 short_name → 表键为派生名；单资产表自动补 default 别名
+        GraphLibrary lib = lib(GraphKind.CLIENT_ENTITY, graph(
+                List.of(
+                        node("root", "entity.root", opts("identifier", "test:derived")),
+                        node("rg1", "ref.geometry", opts("identifier", "geometry.test.model")),
+                        node("rt1", "ref.texture", opts("path", "textures/entity/test")),
+                        node("rm1", "ref.material", opts("material", "entity_alphatest")),
+                        node("ra1", "ref.animation", opts("identifier", "animation.test.walk")),
+                        node("rac1", "ref.ac", opts("identifier", "controller.animation.test.main"))),
+                List.of()));
+
+        AssemblyResult r = ClientEntityAssembler.assemble(lib);
+
+        assertFalse(r.hasErrors(), () -> r.diagnostics().toString());
+        JsonObject desc = r.json().getAsJsonObject("minecraft:client_entity").getAsJsonObject("description");
+        JsonObject geometry = desc.getAsJsonObject("geometry");
+        assertEquals("geometry.test.model", geometry.get("geometry.test.model").getAsString());
+        // D2：单资产 → default 别名
+        assertEquals("geometry.test.model", geometry.get("default").getAsString());
+        assertEquals(2, geometry.entrySet().size());
+        JsonObject textures = desc.getAsJsonObject("textures");
+        assertEquals("textures/entity/test", textures.get("textures.entity.test").getAsString());
+        assertEquals("textures/entity/test", textures.get("default").getAsString());
+        JsonObject materials = desc.getAsJsonObject("materials");
+        assertEquals("entity_alphatest", materials.get("entity_alphatest").getAsString());
+        assertEquals("entity_alphatest", materials.get("default").getAsString());
+        // D6：ref.ac 进 animations 表；动画表不发 default 别名
+        JsonObject animations = desc.getAsJsonObject("animations");
+        assertEquals("animation.test.walk", animations.get("animation.test.walk").getAsString());
+        assertEquals("controller.animation.test.main", animations.get("controller.animation.test.main").getAsString());
+        assertFalse(animations.has("default"));
+        assertFalse(desc.has("animation_controllers"));
+    }
+
+    @Test
+    void noDefaultAliasForMultiAssetTable() {
+        // 多资产表不发 default 别名（歧义）
+        GraphLibrary lib = lib(GraphKind.CLIENT_ENTITY, graph(
+                List.of(
+                        node("root", "entity.root", opts("identifier", "test:multi")),
+                        node("rg1", "ref.geometry", opts("identifier", "geometry.test.a")),
+                        node("rg2", "ref.geometry", opts("identifier", "geometry.test.b"))),
+                List.of()));
+
+        AssemblyResult r = ClientEntityAssembler.assemble(lib);
+
+        assertFalse(r.hasErrors(), () -> r.diagnostics().toString());
+        JsonObject desc = r.json().getAsJsonObject("minecraft:client_entity").getAsJsonObject("description");
+        JsonObject geometry = desc.getAsJsonObject("geometry");
+        assertEquals(2, geometry.entrySet().size());
+        assertFalse(geometry.has("default"));
+    }
+
+    @Test
+    void explicitDefaultSuppressesAlias() {
+        // 显式 default 存在时不再补别名；另一资产照常派生
+        GraphLibrary lib = lib(GraphKind.CLIENT_ENTITY, graph(
+                List.of(
+                        node("root", "entity.root", opts("identifier", "test:explicit")),
+                        node("rg1", "ref.geometry",
+                                opts("short_name", "default", "identifier", "geometry.test.main")),
+                        node("rg2", "ref.geometry", opts("identifier", "geometry.test.alt"))),
+                List.of()));
+
+        AssemblyResult r = ClientEntityAssembler.assemble(lib);
+
+        assertFalse(r.hasErrors(), () -> r.diagnostics().toString());
+        JsonObject geometry = r.json().getAsJsonObject("minecraft:client_entity")
+                .getAsJsonObject("description").getAsJsonObject("geometry");
+        assertEquals(2, geometry.entrySet().size());
+        assertEquals("geometry.test.main", geometry.get("default").getAsString());
+        assertEquals("geometry.test.alt", geometry.get("geometry.test.alt").getAsString());
     }
 }

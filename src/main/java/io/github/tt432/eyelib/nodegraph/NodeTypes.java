@@ -272,7 +272,8 @@ public final class NodeTypes {
     public static final NodeType REF_GEOMETRY = register(NodeType.of(
             "ref.geometry", NodeType.Kind.REF_GEOMETRY, CAT_REF,
             List.of(
-                    NodeOptionDef.string("short_name", "default"),
+                    // short_name 空 = 派生（ShortNames.effective）；非空 = 显式覆盖（外部契约逃生舱）
+                    NodeOptionDef.string("short_name", ""),
                     NodeOptionDef.string("identifier", "geometry.example.model")),
             List.of(),
             List.of(PortDef.out("ref", PortType.GEOMETRY_REF))));
@@ -280,7 +281,7 @@ public final class NodeTypes {
     public static final NodeType REF_TEXTURE = register(NodeType.of(
             "ref.texture", NodeType.Kind.REF_TEXTURE, CAT_REF,
             List.of(
-                    NodeOptionDef.string("short_name", "default"),
+                    NodeOptionDef.string("short_name", ""),
                     NodeOptionDef.string("path", "textures/entity/example")),
             List.of(),
             List.of(PortDef.out("ref", PortType.TEXTURE_REF))));
@@ -288,7 +289,7 @@ public final class NodeTypes {
     public static final NodeType REF_MATERIAL = register(NodeType.of(
             "ref.material", NodeType.Kind.REF_MATERIAL, CAT_REF,
             List.of(
-                    NodeOptionDef.string("short_name", "default"),
+                    NodeOptionDef.string("short_name", ""),
                     NodeOptionDef.string("material", "entity_alphatest")),
             List.of(),
             List.of(PortDef.out("ref", PortType.MATERIAL_REF))));
@@ -296,7 +297,7 @@ public final class NodeTypes {
     public static final NodeType REF_ANIMATION = register(NodeType.of(
             "ref.animation", NodeType.Kind.REF_ANIMATION, CAT_REF,
             List.of(
-                    NodeOptionDef.string("short_name", "walk"),
+                    NodeOptionDef.string("short_name", ""),
                     NodeOptionDef.string("identifier", "animation.example.walk")),
             List.of(),
             List.of(PortDef.out("ref", PortType.ANIMATION_REF))));
@@ -304,7 +305,7 @@ public final class NodeTypes {
     public static final NodeType REF_AC = register(NodeType.of(
             "ref.ac", NodeType.Kind.REF_AC, CAT_REF,
             List.of(
-                    NodeOptionDef.string("short_name", "main"),
+                    NodeOptionDef.string("short_name", ""),
                     NodeOptionDef.string("identifier", "controller.animation.example.main")),
             List.of(),
             List.of(PortDef.out("ref", PortType.AC_REF))));

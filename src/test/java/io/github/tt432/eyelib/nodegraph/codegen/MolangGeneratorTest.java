@@ -321,6 +321,23 @@ class MolangGeneratorTest {
         assertEquals("material.mat", expr(lib, "scale_y"));
     }
 
+    @Test
+    void referenceNodesDeriveShortNamesWhenUnset() {
+        // short_name 空 = 派生（D1）：identity+sanitize
+        GraphData main = graph(
+                List.of(root(),
+                        node("g", "ref.geometry", opts("identifier", "geometry.x.y")),
+                        node("t", "ref.texture", opts("path", "textures/entity/x")),
+                        node("m", "ref.material", opts("material", "Entity_Alphatest"))),
+                List.of(wire("g", "ref", "root", "scale"),
+                        wire("t", "ref", "root", "scale_x"),
+                        wire("m", "ref", "root", "scale_y")));
+        GraphLibrary lib = library(main);
+        assertEquals("geometry.geometry.x.y", expr(lib, "scale"));
+        assertEquals("texture.textures.entity.x", expr(lib, "scale_x"));
+        assertEquals("material.entity_alphatest", expr(lib, "scale_y"));
+    }
+
     // ---------- 未连接输入 ----------
 
     @Test

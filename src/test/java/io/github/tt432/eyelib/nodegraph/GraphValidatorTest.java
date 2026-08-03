@@ -384,6 +384,64 @@ class GraphValidatorTest {
                 GraphValidator.REF_CONFLICT));
     }
 
+    @Test
+    void refConflictDerivedSanitizeCollision() {
+        // "textures/a/b" 与 "textures.a.b" 派生同名 → 冲突（D5）
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("t1", "ref.texture", opts("path", "textures/a/b")),
+                        node("t2", "ref.texture", opts("path", "textures.a.b"))),
+                List.of());
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        assertTrue(hasCode(diags, GraphValidator.REF_CONFLICT));
+    }
+
+    @Test
+    void refConflictAnimationAcShareNamespace() {
+        // ref.animation 与 ref.ac 同发 animations 表（D6），同短名不同标识 → 冲突
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("a1", "ref.animation", opts("short_name", "x", "identifier", "animation.a")),
+                        node("a2", "ref.ac", opts("short_name", "x", "identifier", "controller.animation.b"))),
+                List.of());
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        assertTrue(hasCode(diags, GraphValidator.REF_CONFLICT));
+    }
+
+    @Test
+    void invalidExplicitShortName() {
+        // 显式短名含非法字符（会发射为 molang 成员访问的类别）→ INVALID_SHORT_NAME
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("t1", "ref.texture", opts("short_name", "My-Skin", "path", "textures/a"))),
+                List.of());
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        assertTrue(hasCode(diags, GraphValidator.INVALID_SHORT_NAME));
+    }
+
+    @Test
+    void emptyEffectiveShortName() {
+        // short_name 与标识符均空 → 有效短名空 → INVALID_SHORT_NAME
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("g1", "ref.geometry", opts("short_name", "", "identifier", ""))),
+                List.of());
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        assertTrue(hasCode(diags, GraphValidator.INVALID_SHORT_NAME));
+        assertFalse(hasCode(diags, GraphValidator.REF_CONFLICT));
+    }
+
+    @Test
+    void explicitShortNameOnAnimationSkipsMolangCheck() {
+        // animation/ac 短名不进 molang（JSON 键），显式值含大写不查 INVALID_SHORT_NAME
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("a1", "ref.animation", opts("short_name", "Walk", "identifier", "animation.a"))),
+                List.of());
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        assertFalse(hasCode(diags, GraphValidator.INVALID_SHORT_NAME));
+    }
+
     // ---------- 17 UNCONNECTED_INPUT ----------
 
     @Test

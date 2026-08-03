@@ -47,6 +47,8 @@ public final class GraphValidator {
     public static final String SUBGRAPH_RECURSION = "SUBGRAPH_RECURSION";
     public static final String SUBGRAPH_ANCHOR = "SUBGRAPH_ANCHOR";
     public static final String REF_CONFLICT = "REF_CONFLICT";
+    /** 显式短名非法（非 molang 成员路径）或有效短名为空。 */
+    public static final String INVALID_SHORT_NAME = "INVALID_SHORT_NAME";
     public static final String UNCONNECTED_INPUT = "UNCONNECTED_INPUT";
     public static final String ORPHAN_CHAIN = "ORPHAN_CHAIN";
     public static final String UNDECLARED_VARIABLE = "UNDECLARED_VARIABLE";
@@ -249,7 +251,7 @@ public final class GraphValidator {
         return depth;
     }
 
-    /** 检查 16：主图可达的全部图内，同类资源引用同 short_name 不同标识 = 冲突。 */
+    /** 检查 16：主图可达的全部图内，同类资源引用同有效短名不同标识 = 冲突；有效短名空/显式短名非法 = 错误。 */
     private static void checkRefConflicts(GraphLibrary library, Map<String, List<CallEdge>> callGraph,
                                           List<Diagnostic> out) {
         // BFS 收集可达图
@@ -265,7 +267,7 @@ public final class GraphValidator {
                 }
             }
         }
-        // short_name → 标识值，按类别各自一张表
+        // 有效短名 → 标识值，按类别各自一张表
         Map<String, Map<String, String>> seen = new HashMap<>();
         for (String graphName : reachable) {
             GraphData graph = library.graphs().get(graphName);
@@ -273,19 +275,29 @@ public final class GraphValidator {
                 continue;
             }
             for (NodeInstance node : graph.nodes()) {
-                String valueOption = switch (node.type()) {
-                    case "ref.geometry", "ref.animation", "ref.ac" -> "identifier";
-                    case "ref.texture" -> "path";
-                    case "ref.material" -> "material";
-                    default -> null;
-                };
+                String valueOption = ShortNames.valueOptionOf(node.type());
                 if (valueOption == null) {
                     continue;
                 }
                 NodeType type = NodeTypes.require(node.type());
-                String shortName = node.option("short_name", type).map(JsonElement::getAsString).orElse("");
+                String explicit = node.option("short_name", type).map(JsonElement::getAsString).orElse("");
+                if (!explicit.isEmpty() && ShortNames.isMolangEmitted(node.type())
+                        && !ShortNames.isSanitized(explicit)) {
+                    out.add(Diagnostic.error(INVALID_SHORT_NAME,
+                            "显式短名 '" + explicit + "' 不是合法 molang 成员路径（会发射为 "
+                                    + node.type().substring(4) + ".<短名> 表达式）", node.uid()));
+                }
+                String shortName = ShortNames.effective(node, type);
+                if (shortName.isEmpty()) {
+                    out.add(Diagnostic.error(INVALID_SHORT_NAME,
+                            node.type() + " 有效短名为空（short_name 与标识符至少填一个）", node.uid()));
+                    continue;
+                }
                 String value = node.option(valueOption, type).map(JsonElement::getAsString).orElse("");
-                Map<String, String> table = seen.computeIfAbsent(node.type(), k -> new HashMap<>());
+                // ref.animation 与 ref.ac 同发进 animations 表（D6），冲突检测须同命名空间
+                String tableName = node.type().equals("ref.animation") || node.type().equals("ref.ac")
+                        ? "animations" : node.type();
+                Map<String, String> table = seen.computeIfAbsent(tableName, k -> new HashMap<>());
                 String prev = table.putIfAbsent(shortName, value);
                 if (prev != null && !prev.equals(value)) {
                     out.add(Diagnostic.error(REF_CONFLICT,

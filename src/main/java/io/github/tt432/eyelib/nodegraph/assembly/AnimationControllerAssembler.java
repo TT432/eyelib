@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
+import io.github.tt432.eyelib.nodegraph.ShortNames;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -101,8 +102,8 @@ public final class AnimationControllerAssembler {
                 continue;
             }
             String shortName = switch (refNode.type()) {
-                case "ref.animation" -> AssemblySupport.optionString(refNode, NodeTypes.REF_ANIMATION, "short_name");
-                case "ref.ac" -> AssemblySupport.optionString(refNode, NodeTypes.REF_AC, "short_name");
+                case "ref.animation" -> ShortNames.effective(refNode, NodeTypes.REF_ANIMATION);
+                case "ref.ac" -> ShortNames.effective(refNode, NodeTypes.REF_AC);
                 default -> null;
             };
             if (shortName == null) {

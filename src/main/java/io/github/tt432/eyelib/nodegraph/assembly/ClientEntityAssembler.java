@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
+import io.github.tt432.eyelib.nodegraph.ShortNames;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -98,8 +99,8 @@ public final class ClientEntityAssembler {
                 continue;
             }
             String shortName = switch (refNode.type()) {
-                case "ref.animation" -> AssemblySupport.optionString(refNode, NodeTypes.REF_ANIMATION, "short_name");
-                case "ref.ac" -> AssemblySupport.optionString(refNode, NodeTypes.REF_AC, "short_name");
+                case "ref.animation" -> ShortNames.effective(refNode, NodeTypes.REF_ANIMATION);
+                case "ref.ac" -> ShortNames.effective(refNode, NodeTypes.REF_AC);
                 default -> null;
             };
             if (shortName == null) {
@@ -119,7 +120,10 @@ public final class ClientEntityAssembler {
 
     /**
      * 声明表：从主图可达全部图（含子图，与 GraphValidator REF_CONFLICT 同范围）收集 REF_* 节点，
-     * 按 uid 字典序、同 short_name 去重（保留先者；同短名不同标识符的冲突由验证器 REF_CONFLICT 报告）。
+     * 按 uid 字典序、同有效短名去重（保留先者；同短名不同标识符的冲突由验证器 REF_CONFLICT 报告）。
+     * 有效短名 = 显式 short_name 非空 ? 显式 : 派生（ShortNames.effective，规格 D1/D3）。
+     * ref.ac 与 ref.animation 同发进 animations 表（规格 D6：Bedrock animate 命名空间两表合并，
+     * eyelib 运行时只读 animations 表）。geometry/textures/materials 三表按 D2 发 default 别名。
      */
     private static void addDeclarationTables(AssemblySupport.Ctx ctx, JsonObject description) {
         List<NodeInstance> nodes = new ArrayList<>();
@@ -131,29 +135,33 @@ public final class ClientEntityAssembler {
         Map<String, String> textures = new LinkedHashMap<>();
         Map<String, String> materials = new LinkedHashMap<>();
         Map<String, String> animations = new LinkedHashMap<>();
-        Map<String, String> controllers = new LinkedHashMap<>();
         for (NodeInstance node : nodes) {
             switch (node.type()) {
                 case "ref.geometry" -> geometry.putIfAbsent(
-                        AssemblySupport.optionString(node, NodeTypes.REF_GEOMETRY, "short_name"),
+                        ShortNames.effective(node, NodeTypes.REF_GEOMETRY),
                         AssemblySupport.optionString(node, NodeTypes.REF_GEOMETRY, "identifier"));
                 case "ref.texture" -> textures.putIfAbsent(
-                        AssemblySupport.optionString(node, NodeTypes.REF_TEXTURE, "short_name"),
+                        ShortNames.effective(node, NodeTypes.REF_TEXTURE),
                         // 不带 .png，CODEC 层会补
                         AssemblySupport.optionString(node, NodeTypes.REF_TEXTURE, "path"));
                 case "ref.material" -> materials.putIfAbsent(
-                        AssemblySupport.optionString(node, NodeTypes.REF_MATERIAL, "short_name"),
+                        ShortNames.effective(node, NodeTypes.REF_MATERIAL),
                         AssemblySupport.optionString(node, NodeTypes.REF_MATERIAL, "material"));
                 case "ref.animation" -> animations.putIfAbsent(
-                        AssemblySupport.optionString(node, NodeTypes.REF_ANIMATION, "short_name"),
+                        ShortNames.effective(node, NodeTypes.REF_ANIMATION),
                         AssemblySupport.optionString(node, NodeTypes.REF_ANIMATION, "identifier"));
-                case "ref.ac" -> controllers.putIfAbsent(
-                        AssemblySupport.optionString(node, NodeTypes.REF_AC, "short_name"),
+                case "ref.ac" -> animations.putIfAbsent(
+                        ShortNames.effective(node, NodeTypes.REF_AC),
                         AssemblySupport.optionString(node, NodeTypes.REF_AC, "identifier"));
                 default -> {
                 }
             }
         }
+        // D2：单资产表自动补 default 别名（保运行时回退与外部 RC 的 geometry.default 惯例）；
+        // 多资产表不发（歧义，需要 default 的场景走显式覆盖）
+        addDefaultAlias(geometry);
+        addDefaultAlias(textures);
+        addDefaultAlias(materials);
         if (!geometry.isEmpty()) {
             description.add("geometry", toObject(geometry));
         }
@@ -166,15 +174,16 @@ public final class ClientEntityAssembler {
         if (!animations.isEmpty()) {
             description.add("animations", toObject(animations));
         }
-        if (!controllers.isEmpty()) {
-            // Bedrock 惯例：单元素 map 的 list
-            JsonArray list = new JsonArray();
-            controllers.forEach((shortName, identifier) -> {
-                JsonObject entry = new JsonObject();
-                entry.addProperty(shortName, identifier);
-                list.add(entry);
-            });
-            description.add("animation_controllers", list);
+    }
+
+    /** 不同资产恰 1 个且无 default 键时，补 "default" 别名指向该资产。 */
+    private static void addDefaultAlias(Map<String, String> table) {
+        if (table.isEmpty() || table.containsKey("default")) {
+            return;
+        }
+        java.util.Set<String> distinct = new java.util.HashSet<>(table.values());
+        if (distinct.size() == 1) {
+            table.put("default", distinct.iterator().next());
         }
     }
 

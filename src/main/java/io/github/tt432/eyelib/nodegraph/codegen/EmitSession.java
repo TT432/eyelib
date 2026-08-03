@@ -13,6 +13,7 @@ import io.github.tt432.eyelib.nodegraph.PortDef;
 import io.github.tt432.eyelib.nodegraph.PortDirection;
 import io.github.tt432.eyelib.nodegraph.PortRef;
 import io.github.tt432.eyelib.nodegraph.PortType;
+import io.github.tt432.eyelib.nodegraph.ShortNames;
 import io.github.tt432.eyelib.nodegraph.Wire;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -333,9 +334,9 @@ final class EmitSession {
                 Out b = emitValueInput(f, node.uid(), "b");
                 yield combine(List.of(a, b), "(" + a.expr() + " ?? " + b.expr() + ")");
             }
-            case REF_GEOMETRY -> Out.of("geometry." + string(node, type, "short_name"));
-            case REF_TEXTURE -> Out.of("texture." + string(node, type, "short_name"));
-            case REF_MATERIAL -> Out.of("material." + string(node, type, "short_name"));
+            case REF_GEOMETRY -> Out.of("geometry." + ShortNames.effective(node, type));
+            case REF_TEXTURE -> Out.of("texture." + ShortNames.effective(node, type));
+            case REF_MATERIAL -> Out.of("material." + ShortNames.effective(node, type));
             case SUBGRAPH_CALL -> emitSubgraphCall(f, node, type);
             default -> {
                 error("UNSUPPORTED_NODE",
