@@ -172,6 +172,93 @@ class MolangDecompilerTest {
                 .nodes(), "ref.material").options().get("short_name").getAsString());
     }
 
+    // ---------- 语句：条件赋值脱糖 ----------
+
+    @Test
+    void conditionalAssignmentNoElse() {
+        MolangDecompiler.ExecFragment f = MolangDecompiler.decompileStatements("v.a?{v.x=1;v.y=2;}");
+        assertFalse(hasCode(f.diagnostics(), DecompileDiagnostics.UNSUPPORTED_IMPORT));
+        var setVars = allByType(f.nodes(), "exec.set_var");
+        assertEquals(2, setVars.size());
+        assertEquals(2, f.chain().size());
+        var ternaries = allByType(f.nodes(), "op.ternary");
+        assertEquals(2, ternaries.size());
+        // 第一变量 v.x：a=const.int 1，b=var.get 自引用，cond=var.get v.a
+        NodeInstance ternary = ternaries.get(0);
+        NodeInstance condNode = nodeByUid(f, wireSource(f.wires(), ternary.uid(), "cond"));
+        assertEquals("var.get", condNode.type());
+        assertEquals("variable.a", condNode.options().get("name").getAsString());
+        NodeInstance aNode = nodeByUid(f, wireSource(f.wires(), ternary.uid(), "a"));
+        assertEquals("const.int", aNode.type());
+        NodeInstance bNode = nodeByUid(f, wireSource(f.wires(), ternary.uid(), "b"));
+        assertEquals("var.get", bNode.type());
+        assertEquals("variable.x", bNode.options().get("name").getAsString());
+        // set_var：ternary.out → value，name 带根全名
+        NodeInstance setX = setVars.get(0);
+        assertEquals("variable.x", setX.options().get("name").getAsString());
+        assertEquals(ternary.uid(), wireSource(f.wires(), setX.uid(), "value"));
+    }
+
+    @Test
+    void conditionalAssignmentWithElse() {
+        MolangDecompiler.ExecFragment f = MolangDecompiler.decompileStatements("v.a?{v.x=1;}:{v.x=2;}");
+        assertFalse(hasCode(f.diagnostics(), DecompileDiagnostics.UNSUPPORTED_IMPORT));
+        NodeInstance ternary = firstByType(f.nodes(), "op.ternary");
+        assertEquals("const.int", nodeByUid(f, wireSource(f.wires(), ternary.uid(), "a")).type());
+        NodeInstance bNode = nodeByUid(f, wireSource(f.wires(), ternary.uid(), "b"));
+        assertEquals("const.int", bNode.type());
+        assertEquals(2, bNode.options().get("value").getAsInt());
+    }
+
+    @Test
+    void conditionalAssignmentTempSelfRef() {
+        MolangDecompiler.ExecFragment f = MolangDecompiler.decompileStatements("v.a?{temp.t=1;}");
+        NodeInstance ternary = firstByType(f.nodes(), "op.ternary");
+        NodeInstance bNode = nodeByUid(f, wireSource(f.wires(), ternary.uid(), "b"));
+        assertEquals("temp.get", bNode.type());
+        assertEquals("temp.t", bNode.options().get("name").getAsString());
+    }
+
+    @Test
+    void conditionalAssignmentNested() {
+        // v.x = v.a ? (v.b ? 2 : 1) : v.x（顺序语义：先 v=1，再 v.b 条件覆盖）
+        MolangDecompiler.ExecFragment f = MolangDecompiler.decompileStatements("v.a?{v.x=1; v.b?{v.x=2;}}");
+        assertFalse(hasCode(f.diagnostics(), DecompileDiagnostics.UNSUPPORTED_IMPORT));
+        var ternaries = allByType(f.nodes(), "op.ternary");
+        assertEquals(2, ternaries.size());
+        // 外层 cond = var.get v.a
+        NodeInstance outer = ternaries.stream()
+                .filter(t -> {
+                    String condUid = wireSource(f.wires(), t.uid(), "cond");
+                    NodeInstance condNode = nodeByUid(f, condUid);
+                    return "var.get".equals(condNode.type())
+                            && "variable.a".equals(condNode.options().get("name").getAsString());
+                }).findFirst().orElseThrow();
+        // 外层 a = 内层三元（cond = var.get v.b）
+        NodeInstance inner = nodeByUid(f, wireSource(f.wires(), outer.uid(), "a"));
+        assertEquals("op.ternary", inner.type());
+        NodeInstance innerCond = nodeByUid(f, wireSource(f.wires(), inner.uid(), "cond"));
+        assertEquals("variable.b", innerCond.options().get("name").getAsString());
+        // 内层 a=2，b=1（顺序覆盖）；外层 b = var.get 自引用
+        assertEquals(2, nodeByUid(f, wireSource(f.wires(), inner.uid(), "a")).options().get("value").getAsInt());
+        assertEquals(1, nodeByUid(f, wireSource(f.wires(), inner.uid(), "b")).options().get("value").getAsInt());
+        NodeInstance outerB = nodeByUid(f, wireSource(f.wires(), outer.uid(), "b"));
+        assertEquals("var.get", outerB.type());
+        assertEquals("variable.x", outerB.options().get("name").getAsString());
+    }
+
+    @Test
+    void conditionalNonAssignmentStillUnsupported() {
+        MolangDecompiler.ExecFragment f = MolangDecompiler.decompileStatements("v.a?{query.foo();}");
+        assertTrue(hasCode(f.diagnostics(), DecompileDiagnostics.UNSUPPORTED_IMPORT));
+        // 不产生条件赋值节点
+        assertTrue(allByType(f.nodes(), "op.ternary").isEmpty());
+    }
+
+    private static NodeInstance nodeByUid(MolangDecompiler.ExecFragment f, String uid) {
+        return f.nodes().stream().filter(n -> n.uid().equals(uid)).findFirst().orElseThrow();
+    }
+
     // ---------- 语句：赋值 / loop / for_each / 控制流 ----------
 
     @Test

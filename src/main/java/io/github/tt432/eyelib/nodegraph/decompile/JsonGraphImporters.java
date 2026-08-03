@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.nodegraph.decompile;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.nodegraph.GraphKind;
@@ -45,7 +46,7 @@ public final class JsonGraphImporters {
     private static final Set<String> ENTITY_TOP_KEYS = Set.of("format_version", "minecraft:client_entity");
     private static final Set<String> ENTITY_DESC_KEYS = Set.of(
             "identifier", "scripts", "geometry", "textures", "materials",
-            "animations", "animation_controllers", "render_controllers");
+            "animations", "animation_controllers", "render_controllers", "render_controller_conditions");
     private static final Set<String> ENTITY_SCRIPT_KEYS = Set.of(
             "initialize", "pre_animation", "parent_setup", "animate",
             "scale", "scaleX", "scaleY", "scaleZ");
@@ -102,6 +103,25 @@ public final class JsonGraphImporters {
                 }
             } else {
                 invalidField(b, "description.render_controllers", rcs);
+            }
+        }
+
+        // render_controller_conditions：map 形态（运行时与内联条件合并、显式优先）；
+        // 与内联 {id: condition} 同构——导入为同一批 rc.condition_entry 节点，
+        // 再 build 时以数组内联形态回出（语义等价，见 ADR-0022 D2 往返承诺）
+        JsonElement rcc = desc.get("render_controller_conditions");
+        if (rcc != null) {
+            if (rcc.isJsonObject()) {
+                for (Map.Entry<String, JsonElement> e : rcc.getAsJsonObject().entrySet()) {
+                    String refUid = b.addNode("rc", NodeTypes.REF_RC.id(),
+                            ImportGraphBuilder.opts("identifier", e.getKey()));
+                    String entryUid = b.addNode("rce", NodeTypes.RC_CONDITION_ENTRY.id(), Map.of());
+                    b.wire(refUid, "ref", entryUid, "rc");
+                    valueSlot(b, entryUid, "condition", "render_controller_conditions." + e.getKey(), e.getValue());
+                    b.wire(entryUid, "entry", "root", "render_controllers");
+                }
+            } else {
+                invalidField(b, "description.render_controller_conditions", rcc);
             }
         }
 
@@ -445,7 +465,8 @@ public final class JsonGraphImporters {
 
     // ---------- 共享工具 ----------
 
-    /** 值槽接线：字符串 → molang 反编译连线；数值/布尔 → 内联常量；其余 → INVALID_FIELD + 便签。 */
+    /** 值槽接线：字符串 → molang 反编译连线；字符串数组 → "; " 拼接后连线（ExprSet）；
+     * 数值/布尔 → 内联常量；其余 → INVALID_FIELD + 便签。 */
     private static void valueSlot(ImportGraphBuilder b, String nodeUid, String portId,
                                   String label, @Nullable JsonElement value) {
         if (value == null) {
@@ -458,9 +479,26 @@ public final class JsonGraphImporters {
             } else {
                 b.putConstant(nodeUid, portId, p);
             }
+        } else if (value.isJsonArray() && allStrings(value.getAsJsonArray())) {
+            // Bedrock 允许 weight/条件等值为 molang 字符串数组（ExprSet 语义）；
+            // 拼接后由反编译器统一处理（单元素等价字符串直译）
+            List<String> parts = new ArrayList<>();
+            for (JsonElement el : value.getAsJsonArray()) {
+                parts.add(el.getAsString());
+            }
+            b.wireExpression(String.join("; ", parts), nodeUid, portId);
         } else {
             invalidField(b, label, value);
         }
+    }
+
+    private static boolean allStrings(JsonArray array) {
+        for (JsonElement el : array) {
+            if (!(el.isJsonPrimitive() && el.getAsJsonPrimitive().isString())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** 语句源：string → 单段；string[] → 多段（顺序拼接）；其余 → INVALID_FIELD + 便签。 */

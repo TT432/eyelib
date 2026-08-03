@@ -12,9 +12,12 @@ import io.github.tt432.eyelib.nodegraph.PortRef;
 import io.github.tt432.eyelib.nodegraph.StickyNote;
 import io.github.tt432.eyelib.nodegraph.Wire;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
@@ -167,9 +170,130 @@ public final class MolangDecompiler {
             }
         } else if (expr instanceof MolangAst.CallExpr call && callRoot(call) != null) {
             chain.add(callNode(b, "exec.call", callRoot(call), call.arguments()));
+        } else if (expr instanceof MolangAst.TernaryConditionalExpr ternary
+                && conditionalAssignments(b, ternary.condition(), ternary.whenTrue(), ternary.whenFalse(), chain)) {
+            // c ? {赋值块} : {赋值块} → 条件赋值脱糖（见 conditionalAssignments）
+        } else if (expr instanceof MolangAst.BinaryConditionalExpr binary
+                && conditionalAssignments(b, binary.condition(), binary.whenFalse(), null, chain)) {
+            // c ? {赋值块}（record 字段名 whenFalse 实为 then 分支）→ 同上，else 侧缺省
         } else {
             b.unsupportedNote(expr, "无法作为语句导入的表达式");
         }
+    }
+
+    /**
+     * 条件赋值脱糖（molang 无 if 语句，`c?{...}` 是惯用法）：语句序列符号执行——
+     * 顺序赋值直接覆盖，条件分支按变量折叠为嵌套三元（缺省侧取自引用，`v=v` 为无操作）。
+     * 例：`c1?{v=1; c2?{v=2;}}` → `v = c1 ? (c2 ? 2 : 1) : v`。
+     * 仅当全部语句都是 variable./temp. 赋值或（嵌套的）条件赋值块时适用；否则返回 false 走 UNSUPPORTED。
+     */
+    private static boolean conditionalAssignments(Builder b, MolangAst.Expr condition,
+                                                  MolangAst.@Nullable Expr whenTrue,
+                                                  MolangAst.@Nullable Expr whenFalse,
+                                                  List<String> chain) {
+        Map<String, MolangAst.Expr> thenValues = execAssigns(statementsOf(whenTrue));
+        Map<String, MolangAst.Expr> elseValues = execAssigns(statementsOf(whenFalse));
+        if (thenValues == null || elseValues == null
+                || (thenValues.isEmpty() && elseValues.isEmpty())) {
+            return false;
+        }
+        Set<String> vars = new LinkedHashSet<>(thenValues.keySet());
+        vars.addAll(elseValues.keySet());
+        for (String varKey : vars) {
+            MolangAst.Expr thenValue = thenValues.getOrDefault(varKey, selfRefAst(varKey));
+            MolangAst.Expr elseValue = elseValues.getOrDefault(varKey, selfRefAst(varKey));
+            String ternary = b.addNode("op.ternary", Map.of());
+            b.wireFrom(expr(b, condition), ternary, "cond");
+            b.wireFrom(expr(b, thenValue), ternary, "a");
+            b.wireFrom(expr(b, elseValue), ternary, "b");
+            String root = varKey.substring(0, varKey.indexOf('.'));
+            // name 与 assignment() 一致存带根全名（variable.x / temp.x）
+            String setVar = b.addNode("exec.set_var", ImportGraphBuilder.opts("root", root, "name", varKey));
+            b.wire(ternary, "out", setVar, "value");
+            chain.add(setVar);
+        }
+        return true;
+    }
+
+    /** 分支 → 语句列表（null=空；BlockExpr=其语句；单赋值=单语句）。 */
+    private static List<MolangAst.Stmt> statementsOf(MolangAst.@Nullable Expr branch) {
+        if (branch == null) {
+            return List.of();
+        }
+        if (branch instanceof MolangAst.BlockExpr block) {
+            return block.statements();
+        }
+        if (branch instanceof MolangAst.AssignmentExpr) {
+            return List.of(new MolangAst.ExprStmt(branch.span(), branch));
+        }
+        return List.of(new MolangAst.ExprStmt(SourceSpan.unknown(), branch));
+    }
+
+    /**
+     * 语句序列符号执行：赋值覆盖；`c?{T}`/`c?{T}:{F}` 分支递归后对每个变量折叠
+     * `v = c ? 分支T值 : 分支F值`（未触及侧回落执行前状态）；任何其它语句 → null。
+     */
+    private static @Nullable Map<String, MolangAst.Expr> execAssigns(List<MolangAst.Stmt> statements) {
+        Map<String, MolangAst.Expr> values = new LinkedHashMap<>();
+        for (MolangAst.Stmt stmt : statements) {
+            if (!(stmt instanceof MolangAst.ExprStmt exprStmt)) {
+                return null;
+            }
+            MolangAst.Expr e = exprStmt.expression();
+            if (e instanceof MolangAst.AssignmentExpr assignment) {
+                String key = assignmentKey(assignment);
+                if (key == null) {
+                    return null;
+                }
+                values.put(key, assignment.value());
+            } else if (e instanceof MolangAst.TernaryConditionalExpr ternary) {
+                Map<String, MolangAst.Expr> thenV = execAssigns(statementsOf(ternary.whenTrue()));
+                Map<String, MolangAst.Expr> elseV = execAssigns(statementsOf(ternary.whenFalse()));
+                if (thenV == null || elseV == null) {
+                    return null;
+                }
+                Set<String> branchVars = new LinkedHashSet<>(thenV.keySet());
+                branchVars.addAll(elseV.keySet());
+                for (String v : branchVars) {
+                    MolangAst.Expr a = thenV.getOrDefault(v, values.getOrDefault(v, selfRefAst(v)));
+                    MolangAst.Expr bv = elseV.getOrDefault(v, values.getOrDefault(v, selfRefAst(v)));
+                    values.put(v, new MolangAst.TernaryConditionalExpr(ternary.span(), ternary.condition(), a, bv));
+                }
+            } else if (e instanceof MolangAst.BinaryConditionalExpr binary) {
+                // record 字段名 whenFalse 实为 then 分支（parser 简写 c?{...} 无 else）
+                Map<String, MolangAst.Expr> thenV = execAssigns(statementsOf(binary.whenFalse()));
+                if (thenV == null) {
+                    return null;
+                }
+                for (var entry : thenV.entrySet()) {
+                    String v = entry.getKey();
+                    MolangAst.Expr base = values.getOrDefault(v, selfRefAst(v));
+                    values.put(v, new MolangAst.TernaryConditionalExpr(binary.span(), binary.condition(), entry.getValue(), base));
+                }
+            } else {
+                return null;
+            }
+        }
+        return values;
+    }
+
+    /** 赋值目标 key（root.path）；非 variable./temp. 或不可解析 → null。 */
+    private static @Nullable String assignmentKey(MolangAst.AssignmentExpr assignment) {
+        QualifiedName target = resolve(assignment.target());
+        if (target == null || !(target.root().equals("variable") || target.root().equals("temp"))) {
+            return null;
+        }
+        return target.root() + "." + target.path();
+    }
+
+    /** 自引用 AST（variable.x → member access 链；供三元缺省侧与表达式内嵌）。 */
+    private static MolangAst.Expr selfRefAst(String varKey) {
+        int dot = varKey.indexOf('.');
+        MolangAst.Expr current = new MolangAst.IdentifierExpr(SourceSpan.unknown(), varKey.substring(0, dot));
+        for (String segment : varKey.substring(dot + 1).split("\\.")) {
+            current = new MolangAst.MemberAccessExpr(SourceSpan.unknown(), current, segment);
+        }
+        return current;
     }
 
     private static void assignment(Builder b, MolangAst.AssignmentExpr assignment, List<String> chain) {

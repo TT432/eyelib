@@ -36,6 +36,82 @@ import org.junit.jupiter.api.Test;
  */
 class JsonGraphImportersTest {
 
+    // ---------- ClientEntity 新增形态覆盖 ----------
+
+    @Test
+    void animateArrayWeightValuesImport() {
+        // allay 实测形态：weight 为字符串数组（ExprSet），单元素等价字符串直译
+        JsonObject json = parse("""
+                {
+                  "minecraft:client_entity": {
+                    "description": {
+                      "identifier": "test:arrayweight",
+                      "animations": {"walk": "animation.test.walk"},
+                      "scripts": {"animate": [{"walk": ["q.is_alive"]}]}
+                    }
+                  }
+                }
+                """);
+        ImportResult imported = JsonGraphImporters.importClientEntity(json);
+        assertFalse(hasCode(imported.diagnostics(), DecompileDiagnostics.INVALID_FIELD));
+        // weight 经反编译连线（query 别名归一）
+        NodeInstance entry = firstByType(imported.library().mainGraph().nodes(), "animate.entry");
+        NodeInstance queryCall = firstByType(imported.library().mainGraph().nodes(), "query.call");
+        assertEquals(queryCall.uid(), wireSource(imported.library().mainGraph().wires(), entry.uid(), "weight"));
+        // 往返：组装回出 weight 表达式（单字符串，语义等价）
+        AssemblyResult assembled = ClientEntityAssembler.assemble(imported.library());
+        JsonArray animate = assembled.json().getAsJsonObject("minecraft:client_entity")
+                .getAsJsonObject("description").getAsJsonObject("scripts").getAsJsonArray("animate");
+        assertEquals("query.is_alive",
+                norm(animate.get(0).getAsJsonObject().get("walk").getAsString()));
+    }
+
+    @Test
+    void renderControllerConditionsMapImport() {
+        // map 形态条件表 → rc.condition_entry（与内联同构，往返以数组内联回出，语义等价）
+        JsonObject json = parse("""
+                {
+                  "minecraft:client_entity": {
+                    "description": {
+                      "identifier": "test:rcc",
+                      "render_controller_conditions": {"controller.render.test.a": "query.is_baby"}
+                    }
+                  }
+                }
+                """);
+        ImportResult imported = JsonGraphImporters.importClientEntity(json);
+        assertFalse(hasCode(imported.diagnostics(), DecompileDiagnostics.UNKNOWN_FIELD));
+        NodeInstance entry = firstByType(imported.library().mainGraph().nodes(), "rc.condition_entry");
+        NodeInstance queryCall = firstByType(imported.library().mainGraph().nodes(), "query.call");
+        assertEquals(queryCall.uid(), wireSource(imported.library().mainGraph().wires(), entry.uid(), "condition"));
+        AssemblyResult assembled = ClientEntityAssembler.assemble(imported.library());
+        JsonArray rcs = assembled.json().getAsJsonObject("minecraft:client_entity")
+                .getAsJsonObject("description").getAsJsonArray("render_controllers");
+        assertEquals("query.is_baby",
+                norm(rcs.get(0).getAsJsonObject().get("controller.render.test.a").getAsString()));
+    }
+
+    @Test
+    void conditionalAssignmentInInitialize() {
+        // 条件赋值脱糖：v.a?{v.x=1;} → initialize 往返语义 = variable.x = variable.a ? 1 : variable.x
+        JsonObject json = parse("""
+                {
+                  "minecraft:client_entity": {
+                    "description": {
+                      "identifier": "test:condassign",
+                      "scripts": {"initialize": "v.a?{v.x=1;}"}
+                    }
+                  }
+                }
+                """);
+        ImportResult imported = JsonGraphImporters.importClientEntity(json);
+        assertFalse(hasCode(imported.diagnostics(), DecompileDiagnostics.UNSUPPORTED_IMPORT));
+        AssemblyResult assembled = ClientEntityAssembler.assemble(imported.library());
+        String initialize = assembled.json().getAsJsonObject("minecraft:client_entity")
+                .getAsJsonObject("description").getAsJsonObject("scripts").get("initialize").getAsString();
+        assertEquals(norm("variable.x = variable.a ? 1 : variable.x"), norm(initialize));
+    }
+
     // ---------- ClientEntity 往返 ----------
 
     private static final String ENTITY_JSON = """

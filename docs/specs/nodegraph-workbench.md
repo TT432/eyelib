@@ -48,7 +48,14 @@ molang 字符串 → MolangAst（现有手写解析器）→ 图 IR：
 | `variable.x = e;` | exec.set_var |
 | `loop(n, {...})` / `for_each(v, arr, {...})` | exec.loop / exec.for_each |
 | `break/continue/return` | exec.break / exec.continue / exec.return |
+| 条件赋值块 `c?{v=1;}` / `c?{v=1;}:{v=2;}`（含嵌套） | **条件赋值脱糖**：符号执行为 `v = c ? a : v`（exec.set_var + op.ternary；非赋值语句则落入下行） |
 | arrow `a->b`、下标 `a[i]`、member access | **不支持** → UNSUPPORTED_IMPORT 诊断 + sticky note 原文 + 占位 const |
+
+- 值槽（weight/condition 等）接受 Bedrock 的**字符串数组**形态（ExprSet，"; " 拼接后统一反编译）。
+- `render_controller_conditions`（map 形态）与内联 `{id: condition}` 同构——导入为同一批
+  rc.condition_entry，再 build 以数组内联回出（运行时两者合并，语义等价）。
+- 图语言无表达的字段（spawn_egg / enable_attachables / particle_effects / sound_effects）
+  → UNKNOWN_FIELD + 便签保留原文（设计内行为，非缺陷）。
 
 - **context.get 新增节点**：补齐图语言表达力（现状 var.get 经 withRoot 会把
   `context.x` 错拼成 `variable.context.x`）。
