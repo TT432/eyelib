@@ -98,6 +98,14 @@ molang 字符串 → MolangAst（现有手写解析器）→ 图 IR：
 
 ## 5. 验收
 
+画布 UX 约束（2026-08-03 自查修订，ldlib1）：
+- 节点面板只列 EVM 组（LDLib 内建节点无法回译域模型，是用户陷阱）；组前缀取短名
+  `evm`（长前缀截断后全部不可读）。
+- 关闭 dev 默认的节点调试信息（红色 compute order）。
+- 未选调试目标时不画徽标与截断提示（「—」×64 是噪声）；目标无 scope 才显示「—」。
+- 输入端口被连线时内联常量禁用+变灰（codegen 顺序 连线 > 内联 > 默认，UE 同款）；
+  ldlib2 由 PortConstantEditorElement 内建实现同语义。
+
 1. ~~导入 vanilla `minecraft:zombie`（ClientEntity）→ 图结构完整（root+refs+scripts），~~
    ~~未修改直接 build → 注入后实体渲染与原版一致（语义等价）。~~
    **已验证（2026-08-03，1.20.1 冒烟）**：导入 zombie→952 节点/862 连线/153 变量/24 便签，

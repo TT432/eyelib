@@ -25,8 +25,10 @@ import java.lang.annotation.Annotation;
  * 画布经 {@code GraphViewWidget} 第 5 参 additionalGroups 放行该前缀。
  */
 public final class EvmNodeRegistration {
-    /** 节点面板分组前缀（与 GraphViewWidget additionalGroups 一致）。 */
-    public static final String GROUP_PREFIX = "graph_processor.node.evm";
+    /** 节点面板分组前缀（与 GraphViewWidget additionalGroups 一致）。
+     * 取短名 "evm"：NodeGroupWidget 按钮按宽度截断组名，长前缀会截得只剩不可读的
+     * "graph_processor.no..."（实测 21 组不可区分）；短前缀下类别名基本完整可读。 */
+    public static final String GROUP_PREFIX = "evm";
 
     private static boolean registered = false;
 

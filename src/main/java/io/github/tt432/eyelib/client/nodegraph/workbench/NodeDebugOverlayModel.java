@@ -97,7 +97,12 @@ public final class NodeDebugOverlayModel {
             return;
         }
         Entity t = target;
-        MolangScope scope = t != null ? MolangDebugService.resolveScope(t) : null;
+        if (t == null) {
+            // 未选目标时不画徽标（64 个「—」是纯噪声；选定目标但无 scope 才显示「—」）
+            badges = Map.of();
+            return;
+        }
+        MolangScope scope = MolangDebugService.resolveScope(t);
         Map<String, Badge> next = new LinkedHashMap<>();
         for (var e : entries.entrySet()) {
             Entry entry = e.getValue();

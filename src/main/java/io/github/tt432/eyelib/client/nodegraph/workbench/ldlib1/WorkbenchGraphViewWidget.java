@@ -140,7 +140,7 @@ public final class WorkbenchGraphViewWidget extends EvmGraphViewWidget {
                         position.y + entry.getValue().getSizeHeight() + 2, scale, badge);
             }
 
-            if (overlayModel.truncated()) {
+            if (overlayModel.target() != null && overlayModel.truncated()) {
                 // 视口左上角（视图坐标 = offset + 屏幕边距/scale）
                 drawBadgeText(graphics, font,
                         freeGraphView.getXOffset() + 4 / scale, freeGraphView.getYOffset() + 4 / scale,
