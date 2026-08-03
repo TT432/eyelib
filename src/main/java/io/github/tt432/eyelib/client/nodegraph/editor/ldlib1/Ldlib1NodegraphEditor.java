@@ -224,6 +224,9 @@ public final class Ldlib1NodegraphEditor {
             }
             EvmBaseGraph graph = Ldlib1GraphTranslator.toGraph(libraryName, currentGraphName(), library);
             view = new WorkbenchGraphViewWidget(overlay, graph, 0, BAR_HEIGHT, panelWidth, panelHeight);
+            // LDLib 构造函数末尾会用内建 fit（缩放下限 0.5，大图≈无效）覆盖 loadGraph 里的适配，
+            // 必须在构造完成后再调一次我们的 fitToContent（用户报告「导入后没有节点」的根因）
+            ((WorkbenchGraphViewWidget) view).fitToContent();
             addWidget(view);
             // 重建后画布是最后挂载的子节点，把侧栏重新抬到顶层
             removeWidget(assetPanel);

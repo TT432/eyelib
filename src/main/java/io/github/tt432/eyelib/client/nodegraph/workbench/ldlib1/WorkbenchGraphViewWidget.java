@@ -52,6 +52,64 @@ public final class WorkbenchGraphViewWidget extends EvmGraphViewWidget {
         if (badgeLayer != null) {
             getFreeGraphView().addWidget(badgeLayer);
         }
+        fitToContent();
+    }
+
+    /**
+     * 视口适配内容：全部节点包围盒居中，缩放收敛 [0.15, 1]。
+     * 不用 LDLib 内建 fit（缩放下限 0.5，对导入的大图≈无效）——用户报告
+     * 「导入后没有节点」的根因就是视口停在原点而图布局在远处（规格 §W2 布局）。
+     */
+    public void fitToContent() {
+        var nodes = getNodeMap();
+        if (nodes.isEmpty()) {
+            return;
+        }
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE;
+        int anchorX = 0, anchorY = 0;
+        for (var entry : nodes.entrySet()) {
+            Position pos = entry.getKey().position;
+            if (pos == null) {
+                continue;
+            }
+            minX = Math.min(minX, pos.x);
+            minY = Math.min(minY, pos.y);
+            if (pos.x + entry.getValue().getSizeWidth() > maxX) {
+                anchorX = pos.x + entry.getValue().getSizeWidth() / 2;
+                anchorY = pos.y + entry.getValue().getSizeHeight() / 2;
+            }
+            maxX = Math.max(maxX, pos.x + entry.getValue().getSizeWidth());
+            maxY = Math.max(maxY, pos.y + entry.getValue().getSizeHeight());
+        }
+        if (minX > maxX) {
+            return;
+        }
+        float pad = 60;
+        float w = maxX - minX + pad * 2;
+        float h = maxY - minY + pad * 2;
+        FreeGraphView fgv = getFreeGraphView();
+        float scale = Math.min(1f, Math.min(getSizeWidth() / w, getSizeHeight() / h));
+        if (scale >= 0.15f) {
+            fgv.setScale(scale);
+            fgv.setXOffset(minX - pad + (w - getSizeWidth() / scale) / 2);
+            fgv.setYOffset(minY - pad + (h - getSizeHeight() / scale) / 2);
+            return;
+        }
+        // 图过大（如导入的实体图）：全图缩到可读缩放无意义——适配装配根邻域
+        // （布局不变式：装配根在最右列 = max-x 节点），用户从汇开始向外导航。
+        fitToRegion(anchorX, anchorY);
+    }
+
+    /** 以 (anchorX, anchorY) 为中心的邻域适配（约 1200×800 视图单位，缩放收敛 [0.15, 1]）。 */
+    private void fitToRegion(int anchorX, int anchorY) {
+        float w = 1200, h = 800;
+        float scale = Math.min(1f, Math.min(getSizeWidth() / w, getSizeHeight() / h));
+        scale = Math.max(0.15f, scale);
+        FreeGraphView fgv = getFreeGraphView();
+        fgv.setScale(scale);
+        fgv.setXOffset(anchorX - getSizeWidth() / scale / 2);
+        fgv.setYOffset(anchorY - getSizeHeight() / scale / 2);
     }
 
     /** 徽标绘制层：零尺寸（不参与命中），在 FreeGraphView 视图坐标系内绘制。 */

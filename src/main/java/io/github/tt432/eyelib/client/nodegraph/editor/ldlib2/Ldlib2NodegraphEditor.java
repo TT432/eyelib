@@ -75,6 +75,8 @@ public final class Ldlib2NodegraphEditor {
         GraphEditorView editorView = new GraphEditorView();
         Ldlib2Workbench workbench = Ldlib2Workbench.create(library, editorView);
         editorView.loadGraph(graph, savedTag -> workbench.onPersisted(persist(name, graph)));
+        // 视口适配内容：导入/打开后用户必须立刻看到节点（导入布局可能离原点很远）
+        editorView.graphView.fitGraphChildren(15f);
 
         Minecraft mc = Minecraft.getInstance();
         mc.setScreen(new ModularUIScreen(
