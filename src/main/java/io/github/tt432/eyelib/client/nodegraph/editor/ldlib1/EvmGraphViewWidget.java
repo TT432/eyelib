@@ -6,6 +6,7 @@ import com.lowdragmc.lowdraglib.gui.graphprocessor.data.BaseNode;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.DebugPanelWidget;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.GraphViewWidget;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.NodeWidget;
+import java.util.ArrayList;
 
 /**
  * EVM 画布：在 GraphViewWidget 之上做四件事——
@@ -46,19 +47,38 @@ public class EvmGraphViewWidget extends GraphViewWidget {
     @Override
     public void loadGraph() {
         super.loadGraph();
+        replaceWithEvmNodeWidgets();
         wireRefreshHooks();
     }
 
     @Override
     public void addNode(BaseNode node) {
         super.addNode(node);
+        replaceWithEvmNodeWidgets();
         wireRefreshHook(node);
     }
 
     @Override
     public void pasteTo(double mouseX, double mouseY) {
         super.pasteTo(mouseX, mouseY);
+        replaceWithEvmNodeWidgets();
         wireRefreshHooks();
+    }
+
+    /**
+     * LDLib 的 loadGraph/addNode/pasteTo 硬编码 {@code new NodeWidget}——把 EVM 节点的
+     * 裸 NodeWidget 原位换成 {@link EvmNodeWidget}（端口行内编辑器依赖其 reloadWidget 钩子）。
+     */
+    private void replaceWithEvmNodeWidgets() {
+        for (var entry : new ArrayList<>(getNodeMap().entrySet())) {
+            if (entry.getKey() instanceof EvmNode && !(entry.getValue() instanceof EvmNodeWidget)) {
+                NodeWidget old = entry.getValue();
+                getFreeGraphView().removeWidget(old);
+                EvmNodeWidget widget = new EvmNodeWidget(this, entry.getKey());
+                getFreeGraphView().addWidget(widget);
+                getNodeMap().put(entry.getKey(), widget);
+            }
+        }
     }
 
     private void wireRefreshHooks() {

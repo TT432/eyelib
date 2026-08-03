@@ -14,7 +14,6 @@ import com.lowdragmc.lowdraglib.gui.editor.configurator.SelectorConfigurator;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.StringConfigurator;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.WrapperConfigurator;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.annotation.CustomPortBehavior;
-import com.lowdragmc.lowdraglib.gui.graphprocessor.data.NodePort;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import io.github.tt432.eyelib.client.nodegraph.preview.NodeAssetPreview;
@@ -31,6 +30,7 @@ import io.github.tt432.eyelib.nodegraph.NodeOptionDef;
 import io.github.tt432.eyelib.nodegraph.NodeType;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.PortDef;
+import io.github.tt432.eyelib.nodegraph.PortType;
 import net.minecraft.nbt.CompoundTag;
 import org.jspecify.annotations.Nullable;
 
@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
 /**
@@ -144,13 +143,25 @@ public class EvmNode extends BaseNode {
     }
 
     /**
-     * 节点最小宽度。LDLib 默认 50 会把内联编辑器（value/name/op 行）挤成几像素宽的
-     * 黑点（文字溢出不可读）；110 保证「标签 + 可用输入框」一行放得下（用户布局要求：
-     * op 选择器与内联值框通栏宽）。
+     * 节点最小宽度：保证「圆点 + 标签 + 行内编辑器」一行放得下（UE 引脚行内编辑器，
+     * 见 EvmInlinePortFields）；无行内编辑器端口时 80（LDLib 默认 50 会把内容挤成黑点）。
      */
     @Override
     public int getMinWidth() {
-        return 110;
+        NodeType type = nodeType();
+        int need = 80;
+        if (type != null) {
+            var font = net.minecraft.client.Minecraft.getInstance().font;
+            for (PortDef def : type.inputsOf(selfInstance(), resolver)) {
+                if (def.type() == PortType.EXEC || def.type() == PortType.SLOT
+                        || def.defaultValue().isEmpty()) {
+                    continue;
+                }
+                // 圆点(18) + 标签 + 编辑器(64) + 输出侧预留(28)
+                need = Math.max(need, 18 + font.width(def.id()) + 64 + 28);
+            }
+        }
+        return need;
     }
 
     /** 选项变更后：重算动态端口（含跨节点传播）+ 刷新节点 widget。 */
@@ -162,7 +173,7 @@ public class EvmNode extends BaseNode {
         }
     }
 
-    // ---------- 节点内容区（选项 + 内联常量） ----------
+    // ---------- 节点内容区（选项；内联常量已移入端口行，见 EvmInlinePortFields） ----------
 
     @Override
     public void buildConfigurator(ConfiguratorGroup father) {
@@ -170,9 +181,6 @@ public class EvmNode extends BaseNode {
         if (type == null) return;
         for (NodeOptionDef option : type.options()) {
             buildOptionConfigurator(father, option);
-        }
-        for (PortDef input : type.inputsOf(selfInstance(), resolver)) {
-            input.defaultValue().ifPresent(def -> buildConstantConfigurator(father, input, def));
         }
         if (type == NodeTypes.REF_GEOMETRY || type == NodeTypes.REF_TEXTURE) {
             father.addConfigurators(new WrapperConfigurator("preview", new ImageWidget(0, 0, PREVIEW_SIZE, PREVIEW_SIZE,
@@ -255,55 +263,6 @@ public class EvmNode extends BaseNode {
     private void setOption(String id, JsonElement value) {
         options.put(id, value);
         refreshDynamicPorts();
-    }
-
-    private void buildConstantConfigurator(ConfiguratorGroup father, PortDef port, JsonElement def) {
-        String id = port.id();
-        // 连线 → 内联常量禁用+变灰（codegen 取值顺序 连线 > 内联 > 默认；WiredConstantConfigurators）
-        BooleanSupplier wired = () -> isPortWired(id);
-        // 按声明端口类型分派（用户面向类型优先于 JSON 字面量种类——BOOL 端口默认值是数字 1，
-        // INT 端口默认值是浮点字面量；ANY/其余回退到字面量种类）。
-        switch (port.type()) {
-            case INT -> {
-                father.addConfigurators(new WiredConstantConfigurators.WiredNumber(
-                        id, () -> constants.getOrDefault(id, def).getAsInt(),
-                        v -> constants.put(id, new JsonPrimitive(v.intValue())), def.getAsInt(), true, wired));
-                return;
-            }
-            case BOOL -> {
-                father.addConfigurators(new WiredConstantConfigurators.WiredBoolean(
-                        id, () -> boolConstant(constants.getOrDefault(id, def)),
-                        v -> constants.put(id, new JsonPrimitive(v)), boolConstant(def), true, wired));
-                return;
-            }
-            default -> {
-            }
-        }
-        if (def instanceof JsonPrimitive primitive && primitive.isBoolean()) {
-            father.addConfigurators(new WiredConstantConfigurators.WiredBoolean(
-                    id, () -> constants.getOrDefault(id, def).getAsBoolean(),
-                    v -> constants.put(id, new JsonPrimitive(v)), def.getAsBoolean(), true, wired));
-        } else if (def instanceof JsonPrimitive primitive && primitive.isNumber()) {
-            father.addConfigurators(new WiredConstantConfigurators.WiredNumber(
-                    id, () -> constants.getOrDefault(id, def).getAsFloat(),
-                    v -> constants.put(id, new JsonPrimitive(v.floatValue())), def.getAsFloat(), true, wired));
-        } else if (def instanceof JsonPrimitive primitive && primitive.isString()) {
-            father.addConfigurators(new WiredConstantConfigurators.WiredString(
-                    id, () -> constants.getOrDefault(id, def).getAsString(),
-                    v -> constants.put(id, new JsonPrimitive(v)), def.getAsString(), true, wired));
-        }
-    }
-
-    /** 端口连线状态（内联常量禁用判定）；动态端口重算间隙查不到端口时按未连线。 */
-    private boolean isPortWired(String portId) {
-        NodePort port = getPort("in", portId);
-        return port != null && !port.getEdges().isEmpty();
-    }
-
-    /** BOOL 常量读取：兼容数字（0/1）与布尔字面量两种存储形态。 */
-    private static boolean boolConstant(JsonElement e) {
-        JsonPrimitive p = e.getAsJsonPrimitive();
-        return p.isBoolean() ? p.getAsBoolean() : p.getAsFloat() != 0;
     }
 
     // ---------- NBT（仅服务画布内复制/粘贴；权威格式是本域 JSON） ----------

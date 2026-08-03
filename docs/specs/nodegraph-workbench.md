@@ -105,6 +105,10 @@ molang 字符串 → MolangAst（现有手写解析器）→ 图 IR：
 - 未选调试目标时不画徽标与截断提示（「—」×64 是噪声）；目标无 scope 才显示「—」。
 - 输入端口被连线时内联常量禁用+变灰（codegen 顺序 连线 > 内联 > 默认，UE 同款）；
   ldlib2 由 PortConstantEditorElement 内建实现同语义。
+- 内联常量编辑器嵌在端口行内（UE 引脚行内编辑器，用户决策 2026-08-03）：
+  不再产生节点内容区的独立常量行；ldlib1 由 EvmNodeWidget.reloadWidget 后
+  EvmInlinePortFields 嵌入（NodeWidget 无布局管理处，ports 组的 HORIZONTAL 布局会
+  把直挂子件重排出节点外——挂载点必须避开布局管理组）。
 
 1. ~~导入 vanilla `minecraft:zombie`（ClientEntity）→ 图结构完整（root+refs+scripts），~~
    ~~未修改直接 build → 注入后实体渲染与原版一致（语义等价）。~~
