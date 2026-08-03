@@ -19,6 +19,7 @@ import io.github.tt432.eyelib.nodegraph.GraphKind;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.PortRef;
+import io.github.tt432.eyelib.nodegraph.ShortNameOps;
 import io.github.tt432.eyelib.nodegraph.Wire;
 import io.github.tt432.eyelib.nodegraph.assembly.AnimationControllerAssembler;
 import io.github.tt432.eyelib.nodegraph.assembly.AssemblyResult;
@@ -92,6 +93,45 @@ class JsonGraphImportersTest {
     }
 
     @Test
+    void renderControllerArrayAndConditionsMapMergeById() {
+        // 数组与 map 含同一 id：导入必须合并为单个 rc.condition_entry（否则组装回出重复条目、
+        // 运行时同 RC 渲染两遍——悦灵实机暴露的保真缺陷）
+        JsonObject json = parse("""
+                {
+                  "minecraft:client_entity": {
+                    "description": {
+                      "identifier": "test:rcmerge",
+                      "render_controllers": ["controller.render.test.a", "controller.render.test.b"],
+                      "render_controller_conditions": {"controller.render.test.b": "query.is_baby"}
+                    }
+                  }
+                }
+                """);
+        ImportResult imported = JsonGraphImporters.importClientEntity(json);
+        assertFalse(imported.hasErrors(), () -> imported.diagnostics().toString());
+        // 恰 2 个条目；b 的条件来自 map
+        assertEquals(2, allByType(imported.library().mainGraph().nodes(), "rc.condition_entry").size());
+        assertEquals(2, allByType(imported.library().mainGraph().nodes(), "ref.rc").size());
+
+        AssemblyResult assembled = ClientEntityAssembler.assemble(imported.library());
+        JsonArray rcs = assembled.json().getAsJsonObject("minecraft:client_entity")
+                .getAsJsonObject("description").getAsJsonArray("render_controllers");
+        assertEquals(2, rcs.size());
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (JsonElement el : rcs) {
+            if (el.isJsonPrimitive()) {
+                seen.add(el.getAsString());
+            } else {
+                var obj = el.getAsJsonObject();
+                String id = obj.keySet().iterator().next();
+                seen.add(id);
+                assertEquals("query.is_baby", norm(obj.get(id).getAsString()));
+            }
+        }
+        assertEquals(java.util.Set.of("controller.render.test.a", "controller.render.test.b"), seen);
+    }
+
+    @Test
     void conditionalAssignmentInInitialize() {
         // 条件赋值脱糖：v.a?{v.x=1;} → initialize 往返语义 = variable.x = variable.a ? 1 : variable.x
         JsonObject json = parse("""
@@ -160,9 +200,13 @@ class JsonGraphImportersTest {
         assertEquals(stringMap(originalDesc.getAsJsonObject("geometry")), stringMap(desc.getAsJsonObject("geometry")));
         assertEquals(stringMap(originalDesc.getAsJsonObject("textures")), stringMap(desc.getAsJsonObject("textures")));
         assertEquals(stringMap(originalDesc.getAsJsonObject("materials")), stringMap(desc.getAsJsonObject("materials")));
-        assertEquals(stringMap(originalDesc.getAsJsonObject("animations")), stringMap(desc.getAsJsonObject("animations")));
-        assertEquals(singleKeyArrayToMap(originalDesc.getAsJsonArray("animation_controllers")),
-                singleKeyArrayToMap(desc.getAsJsonArray("animation_controllers")));
+        // D6：animations 与 animation_controllers 是同一命名空间（Bedrock animate 解析两表合并）；
+        // 重组装统一发进 animations 表，不再发 animation_controllers
+        Map<String, String> originalAnimations = new java.util.LinkedHashMap<>(
+                stringMap(originalDesc.getAsJsonObject("animations")));
+        originalAnimations.putAll(singleKeyArrayToMap(originalDesc.getAsJsonArray("animation_controllers")));
+        assertEquals(originalAnimations, stringMap(desc.getAsJsonObject("animations")));
+        assertFalse(desc.has("animation_controllers"));
 
         JsonObject originalScripts = originalDesc.getAsJsonObject("scripts");
         JsonObject scripts = desc.getAsJsonObject("scripts");
@@ -372,6 +416,44 @@ class JsonGraphImportersTest {
         assertTrue(entry.get("ignore_lighting").getAsBoolean());
         assertColorEquals(originalEntry.getAsJsonObject("color"), entry.getAsJsonObject("color"));
         assertColorEquals(originalEntry.getAsJsonObject("overlay_color"), entry.getAsJsonObject("overlay_color"));
+    }
+
+    /** D4：RC 导入携已知短名表 → 裸短名 ref 回填标识符（显式短名保留）。 */
+    @Test
+    void rcImportBackfillsIdentifiersFromKnownTables() {
+        JsonObject original = parse(RC_JSON);
+        ShortNameOps.KnownTables known = new ShortNameOps.KnownTables.Builder()
+                .put("ref.geometry", "default", "geometry.test.model")
+                .put("ref.texture", "default", "textures/entity/test")
+                .put("ref.material", "default", "entity_alphatest")
+                .build();
+
+        ImportResult imported = JsonGraphImporters.importRenderController(
+                original, "controller.render.test", known);
+        assertFalse(imported.hasErrors(), () -> imported.diagnostics().toString());
+        GraphData graph = imported.library().mainGraph();
+
+        NodeInstance geo = firstByType(graph.nodes(), "ref.geometry");
+        assertEquals("geometry.test.model", geo.options().get("identifier").getAsString());
+        assertEquals("default", geo.options().get("short_name").getAsString());
+
+        List<NodeInstance> texRefs = allByType(graph.nodes(), "ref.texture");
+        assertEquals(2, texRefs.size());
+        NodeInstance texDefault = texRefs.stream()
+                .filter(n -> n.options().get("short_name").getAsString().equals("default"))
+                .findFirst().orElseThrow();
+        assertEquals("textures/entity/test", texDefault.options().get("path").getAsString());
+        NodeInstance texVariant = texRefs.stream()
+                .filter(n -> n.options().get("short_name").getAsString().equals("variant"))
+                .findFirst().orElseThrow();
+        assertFalse(texVariant.options().containsKey("path"));
+
+        // 重组装仍按显式短名回出（保留策略）
+        AssemblyResult assembled = RenderControllerAssembler.assemble(imported.library());
+        assertFalse(assembled.hasErrors(), () -> assembled.diagnostics().toString());
+        JsonObject entry = assembled.json().getAsJsonObject("render_controllers")
+                .getAsJsonObject("controller.render.test");
+        assertEquals("geometry.default", entry.get("geometry").getAsString());
     }
 
     /** (c) RC：import(build(graph)) 结构断言 + 再 build JSON 相等。 */

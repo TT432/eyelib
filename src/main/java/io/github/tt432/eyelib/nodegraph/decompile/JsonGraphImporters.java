@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.nodegraph.GraphKind;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
+import io.github.tt432.eyelib.nodegraph.ShortNameOps;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -94,35 +95,38 @@ public final class JsonGraphImporters {
             }
         }
 
-        // render_controllers
+        // render_controllers 与 render_controller_conditions 按 RC id 合并导入（每个 id 恰一个
+        // rc.condition_entry）：运行时语义即「两者合并、map 条目优先」（BrClientEntity 构造器注释）。
+        // 不合并会导致同 id 在数组中出现两次 → 组装回出重复条目 → 运行时同一 RC 渲染两遍。
+        Map<String, JsonElement> conditionMap = new LinkedHashMap<>();
+        JsonElement rcc = desc.get("render_controller_conditions");
+        if (rcc != null) {
+            if (rcc.isJsonObject()) {
+                for (Map.Entry<String, JsonElement> e : rcc.getAsJsonObject().entrySet()) {
+                    conditionMap.put(e.getKey(), e.getValue());
+                }
+            } else {
+                invalidField(b, "description.render_controller_conditions", rcc);
+            }
+        }
         JsonElement rcs = desc.get("render_controllers");
         if (rcs != null) {
             if (rcs.isJsonArray()) {
                 for (JsonElement entry : rcs.getAsJsonArray()) {
-                    importRcConditionEntry(b, entry);
+                    importRcConditionEntry(b, entry, conditionMap);
                 }
             } else {
                 invalidField(b, "description.render_controllers", rcs);
             }
         }
-
-        // render_controller_conditions：map 形态（运行时与内联条件合并、显式优先）；
-        // 与内联 {id: condition} 同构——导入为同一批 rc.condition_entry 节点，
-        // 再 build 时以数组内联形态回出（语义等价，见 ADR-0022 D2 往返承诺）
-        JsonElement rcc = desc.get("render_controller_conditions");
-        if (rcc != null) {
-            if (rcc.isJsonObject()) {
-                for (Map.Entry<String, JsonElement> e : rcc.getAsJsonObject().entrySet()) {
-                    String refUid = b.addNode("rc", NodeTypes.REF_RC.id(),
-                            ImportGraphBuilder.opts("identifier", e.getKey()));
-                    String entryUid = b.addNode("rce", NodeTypes.RC_CONDITION_ENTRY.id(), Map.of());
-                    b.wire(refUid, "ref", entryUid, "rc");
-                    valueSlot(b, entryUid, "condition", "render_controller_conditions." + e.getKey(), e.getValue());
-                    b.wire(entryUid, "entry", "root", "render_controllers");
-                }
-            } else {
-                invalidField(b, "description.render_controller_conditions", rcc);
-            }
+        // 只在 map 中出现的 id（数组未列出）：按 map 条件补条目
+        for (Map.Entry<String, JsonElement> e : conditionMap.entrySet()) {
+            String refUid = b.addNode("rc", NodeTypes.REF_RC.id(),
+                    ImportGraphBuilder.opts("identifier", e.getKey()));
+            String entryUid = b.addNode("rce", NodeTypes.RC_CONDITION_ENTRY.id(), Map.of());
+            b.wire(refUid, "ref", entryUid, "rc");
+            valueSlot(b, entryUid, "condition", "render_controller_conditions." + e.getKey(), e.getValue());
+            b.wire(entryUid, "entry", "root", "render_controllers");
         }
 
         unknownFields(b, "description", desc, ENTITY_DESC_KEYS);
@@ -191,13 +195,23 @@ public final class JsonGraphImporters {
         unknownFields(b, "scripts", scripts, ENTITY_SCRIPT_KEYS);
     }
 
-    /** render_controllers 条目：纯字符串（condition 恒 1）或 {identifier: condition}。 */
-    private static void importRcConditionEntry(ImportGraphBuilder b, JsonElement entry) {
+    /**
+     * render_controllers 条目：纯字符串（condition 恒 1）或 {identifier: condition}。
+     * {@code conditionOverrides}（render_controller_conditions map）按 id 优先覆盖内联条件；
+     * 命中即 remove（调用方据剩余键补「只在 map 出现」的条目）。
+     */
+    private static void importRcConditionEntry(ImportGraphBuilder b, JsonElement entry,
+                                               Map<String, JsonElement> conditionOverrides) {
         if (entry.isJsonPrimitive() && entry.getAsJsonPrimitive().isString()) {
+            String id = entry.getAsString();
             String refUid = b.addNode("rc", NodeTypes.REF_RC.id(),
-                    ImportGraphBuilder.opts("identifier", entry.getAsString()));
+                    ImportGraphBuilder.opts("identifier", id));
             String entryUid = b.addNode("rce", NodeTypes.RC_CONDITION_ENTRY.id(), Map.of());
             b.wire(refUid, "ref", entryUid, "rc");
+            JsonElement override = conditionOverrides.remove(id);
+            if (override != null) {
+                valueSlot(b, entryUid, "condition", "render_controller_conditions." + id, override);
+            }
             b.wire(entryUid, "entry", "root", "render_controllers");
         } else if (entry.isJsonObject()) {
             for (Map.Entry<String, JsonElement> e : entry.getAsJsonObject().entrySet()) {
@@ -205,7 +219,11 @@ public final class JsonGraphImporters {
                         ImportGraphBuilder.opts("identifier", e.getKey()));
                 String entryUid = b.addNode("rce", NodeTypes.RC_CONDITION_ENTRY.id(), Map.of());
                 b.wire(refUid, "ref", entryUid, "rc");
-                valueSlot(b, entryUid, "condition", "render_controllers." + e.getKey(), e.getValue());
+                // map 优先于内联（与运行时合并语义一致）
+                JsonElement effective = conditionOverrides.remove(e.getKey());
+                valueSlot(b, entryUid, "condition",
+                        (effective != null ? "render_controller_conditions." : "render_controllers.") + e.getKey(),
+                        effective != null ? effective : e.getValue());
                 b.wire(entryUid, "entry", "root", "render_controllers");
             }
         } else {
@@ -264,6 +282,15 @@ public final class JsonGraphImporters {
 
     /** render_controllers 文件 JSON + 目标 RC 名 → RENDER_CONTROLLER 库。 */
     public static ImportResult importRenderController(JsonObject fileJson, String rcName) {
+        return importRenderController(fileJson, rcName, ShortNameOps.KnownTables.EMPTY);
+    }
+
+    /**
+     * 同上传入已知短名表（规格 D4 跨文档关联）：{@code geometry.x} 等裸短名 ref
+     * 命中表项时回填标识符（显式短名保留）。
+     */
+    public static ImportResult importRenderController(JsonObject fileJson, String rcName,
+                                                      ShortNameOps.KnownTables known) {
         ImportGraphBuilder b = new ImportGraphBuilder();
         JsonObject controllers = objOrNull(fileJson, "render_controllers");
         JsonObject entry = controllers == null ? null : objOrNull(controllers, rcName);
@@ -318,7 +345,7 @@ public final class JsonGraphImporters {
 
         unknownFields(b, rcName, entry, RC_ENTRY_KEYS);
         unknownFields(b, "<file>", fileJson, RC_TOP_KEYS);
-        return b.build(GraphKind.RENDER_CONTROLLER);
+        return backfilled(b.build(GraphKind.RENDER_CONTROLLER), known);
     }
 
     /** materials / part_visibility：object 或 single-key object 数组 → 条目节点接入 SLOT。 */
@@ -364,6 +391,12 @@ public final class JsonGraphImporters {
 
     /** animation controllers 文件 JSON + 目标 AC 名 → ANIMATION_CONTROLLER 库。 */
     public static ImportResult importAnimationControllers(JsonObject fileJson, String acName) {
+        return importAnimationControllers(fileJson, acName, ShortNameOps.KnownTables.EMPTY);
+    }
+
+    /** 同上传入已知短名表（规格 D4）：state animations 裸短名 ref 命中表项时回填标识符。 */
+    public static ImportResult importAnimationControllers(JsonObject fileJson, String acName,
+                                                          ShortNameOps.KnownTables known) {
         ImportGraphBuilder b = new ImportGraphBuilder();
         JsonObject controllers = objOrNull(fileJson, "animation_controllers");
         JsonObject schema = controllers == null ? null : objOrNull(controllers, acName);
@@ -400,7 +433,13 @@ public final class JsonGraphImporters {
 
         unknownFields(b, acName, schema, AC_SCHEMA_KEYS);
         unknownFields(b, "<file>", fileJson, AC_TOP_KEYS);
-        return b.build(GraphKind.ANIMATION_CONTROLLER);
+        return backfilled(b.build(GraphKind.ANIMATION_CONTROLLER), known);
+    }
+
+    /** 应用标识符补全并重组 ImportResult（表空时原样返回）。 */
+    private static ImportResult backfilled(ImportResult result, ShortNameOps.KnownTables known) {
+        var rewrite = ShortNameOps.backfillIdentifiers(result.library(), known);
+        return rewrite.changed() == 0 ? result : new ImportResult(rewrite.library(), result.diagnostics());
     }
 
     private static void importAcState(ImportGraphBuilder b, String acName, String stateName,
