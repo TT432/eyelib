@@ -143,25 +143,48 @@ public class EvmNode extends BaseNode {
     }
 
     /**
-     * 节点最小宽度：保证「圆点 + 标签 + 行内编辑器」一行放得下（UE 引脚行内编辑器，
-     * 见 EvmInlinePortFields）；无行内编辑器端口时 80（LDLib 默认 50 会把内容挤成黑点）。
+     * 节点最小宽度：按内容自适应——行内编辑器行（圆点+标签+当前值全显）与选项行
+     * （label+当前值全显）逐行取最大，用户不希望滚动截断信息（如 variable.cdrzno 的前缀）。
+     * 无行内编辑器/选项时 80；总宽封顶 {@value #MAX_CONTENT_WIDTH} 防失控（超出仍滚动）。
      */
+    private static final int MAX_CONTENT_WIDTH = 260;
+
     @Override
     public int getMinWidth() {
         NodeType type = nodeType();
         int need = 80;
         if (type != null) {
             var font = net.minecraft.client.Minecraft.getInstance().font;
-            for (PortDef def : type.inputsOf(selfInstance(), resolver)) {
+            NodeInstance instance = selfInstance();
+            // 行内编辑器行：圆点(18) + 端口标签 + 值全显 + 输出侧预留(28)
+            for (PortDef def : type.inputsOf(instance, resolver)) {
                 if (def.type() == PortType.EXEC || def.type() == PortType.SLOT
                         || def.defaultValue().isEmpty()) {
                     continue;
                 }
-                // 圆点(18) + 标签 + 编辑器(64) + 输出侧预留(28)
-                need = Math.max(need, 18 + font.width(def.id()) + 64 + 28);
+                int valueW = Math.max(48, Math.min(
+                        font.width(textOf(constants.getOrDefault(def.id(), def.defaultValue().get()))) + 12, 140));
+                need = Math.max(need, 18 + font.width(def.id()) + 4 + valueW + 28);
+            }
+            // 选项行：label + 当前值全显（不滚动）
+            for (NodeOptionDef option : type.options()) {
+                JsonElement value = options.getOrDefault(option.id(), option.defaultValue());
+                int valueW = Math.max(40, Math.min(font.width(textOf(value)) + 12, 160));
+                need = Math.max(need, font.width(option.id()) + 8 + valueW + 12);
             }
         }
-        return need;
+        return Math.min(need, MAX_CONTENT_WIDTH);
+    }
+
+    /** JsonElement → 显示文本（字符串去引号，数字/bool 直排），供宽度测量。 */
+    private static String textOf(JsonElement e) {
+        if (e instanceof JsonPrimitive p) {
+            if (p.isString()) {
+                return p.getAsString();
+            }
+            return p.toString();
+        }
+        return e.toString();
     }
 
     /** 选项变更后：重算动态端口（含跨节点传播）+ 刷新节点 widget。 */
