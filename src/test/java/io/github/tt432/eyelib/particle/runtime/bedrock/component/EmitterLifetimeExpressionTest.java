@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.particle.runtime.support.ParticleBlackboard;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** @author TT432 */
@@ -21,6 +22,29 @@ class EmitterLifetimeExpressionTest {
 
         assertTrue(emitter.enabled);
         assertEquals(1, emitter.loopStarts);
+    }
+
+    @Test
+    void onTickRemovesEmitterWhenExpirationExpressionTrueWhileInactive() {
+        FakeEmitter emitter = new FakeEmitter();
+
+        EmitterLifetimeExpression expression = new EmitterLifetimeExpression(MolangValue.FALSE_VALUE, MolangValue.TRUE_VALUE);
+        expression.onTick(emitter);
+
+        assertFalse(emitter.enabled);
+        assertTrue(emitter.removed);
+    }
+
+    @Test
+    void onTickDisablesWithoutRemovalWhenBothExpressionsFalse() {
+        FakeEmitter emitter = new FakeEmitter();
+        emitter.enabled = true;
+
+        EmitterLifetimeExpression expression = new EmitterLifetimeExpression(MolangValue.FALSE_VALUE, MolangValue.FALSE_VALUE);
+        expression.onTick(emitter);
+
+        assertFalse(emitter.enabled);
+        assertFalse(emitter.removed);
     }
 
     private static final class FakeEmitter implements EmitterParticleComponent.EmitterAccess {

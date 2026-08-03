@@ -28,9 +28,13 @@ public record EmitterLifetimeExpression(
                 emitter.blackboard().put(LIFETIME_EXPRESSION_KEY, true);
                 emitter.onLoopStart();
             }
-        } else if (expirationExpression.evalAsBool(emitter.molangScope())) {
+        } else {
             emitter.setEnabled(false);
             emitter.blackboard().put(LIFETIME_EXPRESSION_KEY, false);
+
+            if (expirationExpression.evalAsBool(emitter.molangScope())) {
+                emitter.remove();
+            }
         }
     }
 }
