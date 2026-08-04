@@ -10,10 +10,13 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextArea;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import io.github.tt432.eyelib.client.jsonview.EntityJsonService;
+import io.github.tt432.eyelib.client.nodegraph.DiagnosticsCenter;
 import io.github.tt432.eyelib.client.nodegraph.GraphLibraryManager;
+import io.github.tt432.eyelib.client.nodegraph.ImportClosure;
 import io.github.tt432.eyelib.client.nodegraph.KnownRefTables;
 import io.github.tt432.eyelib.client.nodegraph.editor.ldlib2.EvmDiagnostics;
 import io.github.tt432.eyelib.client.nodegraph.editor.ldlib2.Ldlib2NodegraphEditor;
+import io.github.tt432.eyelib.nodegraph.Diagnostic;
 import io.github.tt432.eyelib.nodegraph.GraphKind;
 import io.github.tt432.eyelib.nodegraph.decompile.ImportResult;
 import io.github.tt432.eyelib.nodegraph.decompile.JsonGraphImporters;
@@ -45,8 +48,14 @@ import java.util.function.Consumer;
  *   <li>从文件导入：LDLib2 自带 {@link Dialog#showFileDialog}（.json 过滤）。</li>
  * </ul>
  *
+ * ClientEntity 走闭包导入（规格 nodegraph-declaration-wiring §3 D2，
+ * {@link ImportClosure#importWithClosure}）：实体库先注册，主图 ref.rc / ref.ac
+ * 引用的 RC/AC 文档跟随导入为独立库。直接导入 RC/AC 文件的路径不变。
+ *
  * 成功后（诊断含 error 也照常）：新名注册 {@link GraphLibraryManager} →
- * {@link EvmDiagnostics#report} → {@link Ldlib2NodegraphEditor#open} 重开编辑器到新库。
+ * 诊断上报 {@link DiagnosticsCenter}（分节：实体节=实体标识符，RC 节 "rc:<id>"，
+ * AC 节 "ac:<id>"）→ {@link EvmDiagnostics#info} 成功提示 →
+ * {@link Ldlib2NodegraphEditor#open} 重开编辑器到新库。
  */
 final class ImportDialogs {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportDialogs.class);
@@ -143,7 +152,7 @@ final class ImportDialogs {
                         "[" + entry.kind().label + "] " + entry.id(),
                         WorkbenchColors.TEXT, false, () -> {
                             dialog.close();
-                            importFromRegistry(service, entry, mui);
+                            importFromRegistry(service, entry);
                         }));
             }
         };
@@ -159,27 +168,27 @@ final class ImportDialogs {
         dialog.show(mui);
     }
 
-    private static void importFromRegistry(EntityJsonService service, Entry entry, ModularUI mui) {
+    private static void importFromRegistry(EntityJsonService service, Entry entry) {
         Optional<String> json = switch (entry.kind()) {
             case CLIENT_ENTITY -> service.clientEntityJson(entry.id());
             case RENDER_CONTROLLER -> service.renderControllerJson(entry.id());
         };
         if (json.isEmpty()) {
-            notify(mui, "导入失败", "JSON 编码失败: " + entry.id() + "（详见日志）");
+            reportError("注册表导入", "JSON 编码失败: " + entry.id() + "（详见日志）");
             return;
         }
         try {
             JsonObject fileJson = JsonParser.parseString(json.get()).getAsJsonObject();
-            ImportResult result = switch (entry.kind()) {
-                case CLIENT_ENTITY -> JsonGraphImporters.importClientEntity(fileJson);
+            if (entry.kind() == SourceKind.CLIENT_ENTITY) {
+                importEntityWithClosure(fileJson, entry.id());
+            } else {
                 // D4 跨文档关联：携已知短名表回填裸短名 ref 的标识符
-                case RENDER_CONTROLLER -> JsonGraphImporters.importRenderController(
-                        fileJson, entry.id(), KnownRefTables.collectForRc(entry.id()));
-            };
-            finish(result, entry.id());
+                finish(JsonGraphImporters.importRenderController(
+                        fileJson, entry.id(), KnownRefTables.collectForRc(entry.id())), entry.id());
+            }
         } catch (RuntimeException e) {
             LOGGER.warn("[nodegraph] registry import failed for '{}'", entry.id(), e);
-            notify(mui, "导入失败", String.valueOf(e.getMessage()));
+            reportError("注册表导入", String.valueOf(e.getMessage()));
         }
     }
 
@@ -200,7 +209,7 @@ final class ImportDialogs {
                 .setOnClick(event -> {
                     String text = String.join("\n", textArea.getValue());
                     dialog.close();
-                    importFromText(text, mui);
+                    importFromText(text);
                 })
                 .setText("ldlib.gui.tips.confirm")
                 .addClass("__confirm-button__"));
@@ -216,26 +225,26 @@ final class ImportDialogs {
         Dialog.showFileDialog("导入 JSON 文件", dir, true, Dialog.suffixFilter("json"),
                 file -> {
                     try {
-                        importFromText(Files.readString(file.toPath()), mui);
+                        importFromText(Files.readString(file.toPath()));
                     } catch (IOException e) {
                         LOGGER.warn("[nodegraph] failed to read import file '{}'", file, e);
-                        notify(mui, "导入失败", "无法读取文件: " + e.getMessage());
+                        reportError("文件导入", "无法读取文件: " + e.getMessage());
                     }
                 }).show(mui);
     }
 
     /** 按根键自动判别三种文件形态（RC/AC 名取根对象第一个键）。 */
-    private static void importFromText(String text, ModularUI mui) {
+    private static void importFromText(String text) {
         JsonObject root;
         try {
             root = JsonParser.parseString(text).getAsJsonObject();
         } catch (RuntimeException e) {
-            notify(mui, "导入失败", "JSON 解析失败: " + e.getMessage());
+            reportError("文本导入", "JSON 解析失败: " + e.getMessage());
             return;
         }
         try {
             if (root.has("minecraft:client_entity")) {
-                finish(JsonGraphImporters.importClientEntity(root), clientEntityBaseName(root));
+                importEntityWithClosure(root, clientEntityBaseName(root));
                 return;
             }
             String rcName = firstKey(root, "render_controllers");
@@ -248,10 +257,10 @@ final class ImportDialogs {
                 finish(JsonGraphImporters.importAnimationControllers(root, acName, KnownRefTables.collect()), acName);
                 return;
             }
-            notify(mui, "导入失败", "无法判别 JSON 形态：根键需为 minecraft:client_entity / render_controllers / animation_controllers 之一");
+            reportError("文本导入", "无法判别 JSON 形态：根键需为 minecraft:client_entity / render_controllers / animation_controllers 之一");
         } catch (RuntimeException e) {
             LOGGER.warn("[nodegraph] text import failed", e);
-            notify(mui, "导入失败", String.valueOf(e.getMessage()));
+            reportError("文本导入", String.valueOf(e.getMessage()));
         }
     }
 
@@ -279,11 +288,49 @@ final class ImportDialogs {
 
     // ==================== 收尾 ====================
 
+    /**
+     * ClientEntity 闭包导入（规格 §3 D2）：实体库先注册（RC 短名回填依赖图库，
+     * 由 {@link ImportClosure#importWithClosure} 保证），再依次注册 RC 库、AC 库；
+     * 诊断按文档分节上报，成功提示保留，最后打开实体库。
+     */
+    private static void importEntityWithClosure(JsonObject root, String baseName) {
+        String entityName = freshLibraryName(baseName);
+        ImportClosure.Result closure = ImportClosure.importWithClosure(root, entityName);
+        String entityId = closure.entityId() != null ? closure.entityId() : entityName;
+        List<DiagnosticsCenter.Section> sections = new ArrayList<>();
+        sections.add(new DiagnosticsCenter.Section(entityId, closure.entity().diagnostics()));
+        int libraries = 1;
+        for (ImportClosure.NamedImport rc : closure.rcs()) {
+            if (rc.result() != null) {
+                GraphLibraryManager.INSTANCE.put(freshLibraryName(rc.id()), rc.result().library());
+                libraries++;
+            }
+            sections.add(new DiagnosticsCenter.Section("rc:" + rc.id(), rc.diagnostics()));
+        }
+        for (ImportClosure.NamedImport ac : closure.acs()) {
+            if (ac.result() != null) {
+                GraphLibraryManager.INSTANCE.put(freshLibraryName(ac.id()), ac.result().library());
+                libraries++;
+            }
+            sections.add(new DiagnosticsCenter.Section("ac:" + ac.id(), ac.diagnostics()));
+        }
+        DiagnosticsCenter.report("导入 " + entityId, sections);
+        EvmDiagnostics.info("imported as nodegraph library '" + entityName + "' (client_entity, "
+                + libraries + " libraries with closure)");
+        Ldlib2NodegraphEditor.open(entityName);
+    }
+
+    /** 导入入口级错误上报（规格 §4：走 DiagnosticsCenter + 浮动面板，不再弹通知）。 */
+    private static void reportError(String label, String message) {
+        DiagnosticsCenter.report("导入", label,
+                List.of(Diagnostic.error(ImportClosure.IMPORT_FAILURE, message)));
+    }
+
     /** 注册新库并重开编辑器（诊断含 error 也照常导入，同 ldlib1）。 */
     private static void finish(ImportResult result, String baseName) {
         String name = freshLibraryName(baseName);
         GraphLibraryManager.INSTANCE.put(name, result.library());
-        EvmDiagnostics.report(result.diagnostics());
+        DiagnosticsCenter.report("导入 " + baseName, name, result.diagnostics());
         EvmDiagnostics.info("imported as nodegraph library '" + name + "' ("
                 + kindName(result.library().kind()) + ")");
         Ldlib2NodegraphEditor.open(name);
@@ -310,10 +357,6 @@ final class ImportDialogs {
             name = base + "_" + suffix++;
         }
         return name;
-    }
-
-    private static void notify(ModularUI mui, String title, String info) {
-        Dialog.showNotification(title, info, null).show(mui);
     }
 }
 //?}

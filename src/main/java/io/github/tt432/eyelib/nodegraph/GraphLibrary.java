@@ -8,7 +8,7 @@ import java.util.Optional;
 /**
  * 图文档库：一个 JSON 文件 = 1 主图 + N 命名子图（规格 D5）。
  *
- * @param formatVersion schema 版本（当前 1）
+ * @param formatVersion schema 版本（当前 3）
  * @param kind          库种类
  * @param main          主图名（graphs 中的键）
  * @param graphs        全部图（主图 + 子图）
@@ -19,7 +19,7 @@ public record GraphLibrary(
         String main,
         Map<String, GraphData> graphs
 ) {
-    public static final int CURRENT_FORMAT_VERSION = 2;
+    public static final int CURRENT_FORMAT_VERSION = 3;
 
     public static final Codec<GraphLibrary> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.INT.optionalFieldOf("format_version", CURRENT_FORMAT_VERSION).forGetter(GraphLibrary::formatVersion),

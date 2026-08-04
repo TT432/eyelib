@@ -346,30 +346,35 @@ class GraphValidatorTest {
 
     @Test
     void refConflictSameShortNameDifferentIdentifier() {
+        // D1：REF_CONFLICT 范围 = 连到声明端口的 ref
         GraphData main = graph(
                 List.of(node("r", "entity.root"),
                         node("g1", "ref.geometry", opts("short_name", "default", "identifier", "geometry.a")),
                         node("g2", "ref.geometry", opts("short_name", "default", "identifier", "geometry.b"))),
-                List.of());
+                List.of(wire("g1", "ref", "r", "geometries"),
+                        wire("g2", "ref", "r", "geometries")));
         List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
         assertTrue(hasCode(diags, GraphValidator.REF_CONFLICT));
     }
 
     @Test
-    void refConflictAcrossSubgraph() {
+    void refConflictSkipsUnwiredAndSubgraphRefs() {
+        // 未连声明端口的主图 ref / 子图 ref 不进声明表（D1），不参与 REF_CONFLICT
         GraphInterface iface = new GraphInterface(List.of(), GraphInterface.Param.of("result", PortType.FLOAT));
         GraphData sg = subgraph(
                 List.of(node("out", "subgraph.output"), node("c", "const.number"),
-                        node("g2", "ref.texture", opts("short_name", "default", "path", "textures/b"))),
+                        node("g3", "ref.geometry", opts("short_name", "default", "identifier", "geometry.c"))),
                 List.of(wire("c", "out", "out", "result")), iface);
         GraphData main = graph(
                 List.of(node("r", "entity.root"),
                         node("call", "subgraph.call", opts("subgraph", "sg")),
-                        node("g1", "ref.texture", opts("short_name", "default", "path", "textures/a"))),
-                List.of(wire("call", "result", "r", "scale")));
+                        node("g1", "ref.geometry", opts("short_name", "default", "identifier", "geometry.a")),
+                        node("g2", "ref.geometry", opts("short_name", "default", "identifier", "geometry.b"))),
+                List.of(wire("call", "result", "r", "scale"),
+                        wire("g1", "ref", "r", "geometries")));
         Map<String, GraphData> graphs = Map.of("root", main, "sg", sg);
-        assertTrue(hasCode(GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, graphs)),
-                GraphValidator.REF_CONFLICT));
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, graphs));
+        assertFalse(hasCode(diags, GraphValidator.REF_CONFLICT));
     }
 
     @Test
@@ -379,7 +384,8 @@ class GraphValidatorTest {
                 List.of(node("r", "entity.root"),
                         node("t1", "ref.texture", opts("path", "textures/a/b")),
                         node("t2", "ref.texture", opts("path", "textures.a.b"))),
-                List.of());
+                List.of(wire("t1", "ref", "r", "textures"),
+                        wire("t2", "ref", "r", "textures")));
         List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
         assertTrue(hasCode(diags, GraphValidator.REF_CONFLICT));
     }
@@ -391,7 +397,8 @@ class GraphValidatorTest {
                 List.of(node("r", "entity.root"),
                         node("a1", "ref.animation", opts("short_name", "x", "identifier", "animation.a")),
                         node("a2", "ref.ac", opts("short_name", "x", "identifier", "controller.animation.b"))),
-                List.of());
+                List.of(wire("a1", "ref", "r", "animations"),
+                        wire("a2", "ref", "r", "animation_controllers")));
         List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
         assertTrue(hasCode(diags, GraphValidator.REF_CONFLICT));
     }
@@ -534,6 +541,99 @@ class GraphValidatorTest {
         assertFalse(hasCode(validateGraph(main), GraphValidator.SET_TARGET_NOT_VARIABLE));
     }
 
+    // ---------- 21 REF_NOT_CONNECTED (WARNING，仅 CLIENT_ENTITY) ----------
+
+    @Test
+    void declarationRefNotConnected() {
+        // 主图 ref.geometry 带标识符但未连声明端口 → WARNING
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("g1", "ref.geometry", opts("identifier", "geometry.a"))),
+                List.of());
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        List<Diagnostic> warns = byCode(diags, GraphValidator.REF_NOT_CONNECTED);
+        assertEquals(1, warns.size());
+        assertEquals(Diagnostic.Severity.WARNING, warns.get(0).severity());
+        assertEquals("g1", warns.get(0).nodeUid().orElseThrow());
+    }
+
+    @Test
+    void animateEntryOnlyRefStillNotDeclared() {
+        // 仅接 animate.entry 不进声明表：消息需点明该情形
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("e", "animate.entry"),
+                        node("a1", "ref.animation", opts("identifier", "animation.a"))),
+                List.of(wire("a1", "ref", "e", "ref"), wire("e", "entry", "r", "animate")));
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        List<Diagnostic> warns = byCode(diags, GraphValidator.REF_NOT_CONNECTED);
+        assertEquals(1, warns.size());
+        assertTrue(warns.get(0).message().contains("animate.entry"));
+    }
+
+    @Test
+    void placeholderRefNotReported() {
+        // 标识符选项无实例值的占位 ref 不报（UNKNOWN_REFERENCE 已覆盖）；连线的 ref 也不报
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("g1", "ref.geometry", opts("short_name", "walk")),
+                        node("g2", "ref.geometry", opts("identifier", "geometry.a"))),
+                List.of(wire("g2", "ref", "r", "geometries")));
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        assertFalse(hasCode(diags, GraphValidator.REF_NOT_CONNECTED));
+    }
+
+    @Test
+    void refRcNotConnectedToConditionEntry() {
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.a"))),
+                List.of());
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        assertTrue(hasCode(diags, GraphValidator.REF_NOT_CONNECTED));
+    }
+
+    @Test
+    void refRcWiredToConditionEntryIsFine() {
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("e", "rc.condition_entry"),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.a"))),
+                List.of(wire("rc1", "ref", "e", "rc"), wire("e", "entry", "r", "render_controllers")));
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        assertFalse(hasCode(diags, GraphValidator.REF_NOT_CONNECTED));
+    }
+
+    @Test
+    void subgraphDeclarationRefHintsMoveToMain() {
+        GraphInterface iface = new GraphInterface(List.of(), GraphInterface.Param.of("result", PortType.FLOAT));
+        GraphData sg = subgraph(
+                List.of(node("out", "subgraph.output"), node("c", "const.number"),
+                        node("t1", "ref.texture", opts("path", "textures/a"))),
+                List.of(wire("c", "out", "out", "result")), iface);
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("call", "subgraph.call", opts("subgraph", "sg"))),
+                List.of(wire("call", "result", "r", "scale")));
+        Map<String, GraphData> graphs = Map.of("root", main, "sg", sg);
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, graphs));
+        List<Diagnostic> warns = byCode(diags, GraphValidator.REF_NOT_CONNECTED);
+        assertEquals(1, warns.size());
+        assertTrue(warns.get(0).message().contains("移至主图"));
+        assertEquals("t1", warns.get(0).nodeUid().orElseThrow());
+    }
+
+    @Test
+    void rcLibraryRefsNotReportedNotConnected() {
+        // RC/AC 库中的 ref.*（接表达式槽的 VALUE_REFS 用法）不受影响
+        GraphData main = graph(
+                List.of(node("r", "rc.root"),
+                        node("m1", "ref.material", opts("short_name", "default"))),
+                List.of());
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.RENDER_CONTROLLER, main));
+        assertFalse(hasCode(diags, GraphValidator.REF_NOT_CONNECTED));
+    }
+
     // ---------- 完整合法图：零 ERROR ----------
 
     @Test
@@ -565,6 +665,7 @@ class GraphValidatorTest {
                         wire("sv", "exec_out", "r", "initialize"),
                         wire("svt", "out", "sv", "target"),
                         wire("ra", "ref", "ae", "ref"),
+                        wire("ra", "ref", "r", "animations"),
                         wire("ae", "entry", "r", "animate")),
                 List.of(VariableDecl.of("foo", PortType.FLOAT)));
 

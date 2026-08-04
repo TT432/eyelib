@@ -19,7 +19,7 @@ import java.util.Set;
  *
  * <p>检查项：未知节点类型、uid 重复、wire 端点/方向/类型、多连接与 exec fan-out、
  * 环检测、SLOT 装配白名单、资源引用误用与冲突、根节点计数、子图目标/递归/锚点、
- * 未连接输入、孤儿 exec 链、未声明变量引用。
+ * 未连接输入、孤儿 exec 链、未声明变量引用、声明类 ref 未接线。
  *
  * <p>验证是纯函数：同输入同输出，不依赖 MC/LDLib；未知类型/端口只产生诊断，不抛异常。
  */
@@ -53,6 +53,8 @@ public final class GraphValidator {
     public static final String UNDECLARED_VARIABLE = "UNDECLARED_VARIABLE";
     /** exec.set_var 的 target 未连线到 variable 节点。 */
     public static final String SET_TARGET_NOT_VARIABLE = "SET_TARGET_NOT_VARIABLE";
+    /** 声明类 ref 未接线（WARNING，仅 CLIENT_ENTITY 库；规格 D1 §2.3）。 */
+    public static final String REF_NOT_CONNECTED = "REF_NOT_CONNECTED";
 
     /** SLOT 装配白名单：目标(节点类型.端口) → 允许的源节点类型。 */
     private static final Map<String, String> SLOT_WHITELIST = Map.of(
@@ -65,9 +67,9 @@ public final class GraphValidator {
             "ac.state.animations", "animate.entry",
             "ac.state.transitions", "ac.transition");
 
-    /** 只能接入装配槽（animate.entry.ref / rc.condition_entry.rc）的引用节点。 */
+    /** 只能接入装配槽（animate.entry.ref / rc.condition_entry.rc）或 entity.root 声明端口的引用节点。 */
     private static final Set<String> ASSEMBLY_ONLY_REFS = Set.of("ref.animation", "ref.ac", "ref.rc");
-    /** 可接表达式槽或 list/material 条目 value 的引用节点。 */
+    /** 可接表达式槽、list/material 条目 value 或 entity.root 声明端口的引用节点。 */
     private static final Set<String> VALUE_REFS = Set.of("ref.geometry", "ref.texture", "ref.material");
 
     /** 根锚点节点类型 id（可达性分析起点）。 */
@@ -104,6 +106,7 @@ public final class GraphValidator {
         checkSubgraphRecursion(library, callGraph, out);
         if (main != null) {
             checkRefConflicts(library, callGraph, out);
+            checkRefNotConnected(library, out);
         }
         return out;
     }
@@ -252,7 +255,11 @@ public final class GraphValidator {
         return depth;
     }
 
-    /** 检查 16：主图可达的全部图内，同类资源引用同有效短名不同标识 = 冲突；有效短名空/显式短名非法 = 错误。 */
+    /**
+     * 检查 16：主图可达全部图内 ref 的有效短名合法性（INVALID_SHORT_NAME）；
+     * REF_CONFLICT 范围 = 主图连到 entity.root 声明端口的 ref（规格 D1：声明 = 连线），
+     * 同有效短名不同标识 = 冲突。
+     */
     private static void checkRefConflicts(GraphLibrary library, Map<String, List<CallEdge>> callGraph,
                                           List<Diagnostic> out) {
         // BFS 收集可达图
@@ -268,16 +275,14 @@ public final class GraphValidator {
                 }
             }
         }
-        // 有效短名 → 标识值，按类别各自一张表
-        Map<String, Map<String, String>> seen = new HashMap<>();
+        // 有效短名合法性（全部可达 ref，与是否连线无关）
         for (String graphName : reachable) {
             GraphData graph = library.graphs().get(graphName);
             if (graph == null) {
                 continue;
             }
             for (NodeInstance node : graph.nodes()) {
-                String valueOption = ShortNames.valueOptionOf(node.type());
-                if (valueOption == null) {
+                if (ShortNames.valueOptionOf(node.type()) == null) {
                     continue;
                 }
                 NodeType type = NodeTypes.require(node.type());
@@ -288,25 +293,134 @@ public final class GraphValidator {
                             "显式短名 '" + explicit + "' 不是合法 molang 成员路径（会发射为 "
                                     + node.type().substring(4) + ".<短名> 表达式）", node.uid()));
                 }
-                String shortName = ShortNames.effective(node, type);
-                if (shortName.isEmpty()) {
+                if (ShortNames.effective(node, type).isEmpty()) {
                     out.add(Diagnostic.error(INVALID_SHORT_NAME,
                             node.type() + " 有效短名为空（short_name 与标识符至少填一个）", node.uid()));
-                    continue;
-                }
-                String value = node.option(valueOption, type).map(JsonElement::getAsString).orElse("");
-                // ref.animation 与 ref.ac 同发进 animations 表（D6），冲突检测须同命名空间
-                String tableName = node.type().equals("ref.animation") || node.type().equals("ref.ac")
-                        ? "animations" : node.type();
-                Map<String, String> table = seen.computeIfAbsent(tableName, k -> new HashMap<>());
-                String prev = table.putIfAbsent(shortName, value);
-                if (prev != null && !prev.equals(value)) {
-                    out.add(Diagnostic.error(REF_CONFLICT,
-                            "资源引用冲突：" + node.type() + " 短名 '" + shortName + "' 同时指向 '"
-                                    + prev + "' 与 '" + value + "'", node.uid()));
                 }
             }
         }
+        // REF_CONFLICT：仅 CLIENT_ENTITY 主图连到声明端口的 ref（声明表集合，与组装器同范围）
+        if (library.kind() != GraphKind.CLIENT_ENTITY) {
+            return;
+        }
+        GraphData main = library.graphs().get(library.main());
+        Optional<NodeInstance> root = main == null ? Optional.empty()
+                : main.nodes().stream().filter(n -> n.type().equals("entity.root")).findFirst();
+        if (root.isEmpty()) {
+            return;
+        }
+        Set<String> declared = new HashSet<>();
+        for (Wire wire : main.wires()) {
+            if (wire.to().node().equals(root.get().uid())
+                    && NodeTypes.DECLARATION_PORTS.containsValue(wire.to().port())) {
+                declared.add(wire.from().node());
+            }
+        }
+        // 有效短名 → 标识值，按类别各自一张表
+        Map<String, Map<String, String>> seen = new HashMap<>();
+        for (NodeInstance node : main.nodes()) {
+            if (!declared.contains(node.uid())) {
+                continue;
+            }
+            String valueOption = ShortNames.valueOptionOf(node.type());
+            if (valueOption == null) {
+                continue;
+            }
+            NodeType type = NodeTypes.require(node.type());
+            String shortName = ShortNames.effective(node, type);
+            if (shortName.isEmpty()) {
+                continue; // 已报 INVALID_SHORT_NAME
+            }
+            String value = node.option(valueOption, type).map(JsonElement::getAsString).orElse("");
+            // ref.animation 与 ref.ac 同发进 animations 表（D6），冲突检测须同命名空间
+            String tableName = node.type().equals("ref.animation") || node.type().equals("ref.ac")
+                    ? "animations" : node.type();
+            Map<String, String> table = seen.computeIfAbsent(tableName, k -> new HashMap<>());
+            String prev = table.putIfAbsent(shortName, value);
+            if (prev != null && !prev.equals(value)) {
+                out.add(Diagnostic.error(REF_CONFLICT,
+                        "资源引用冲突：" + node.type() + " 短名 '" + shortName + "' 同时指向 '"
+                                + prev + "' 与 '" + value + "'", node.uid()));
+            }
+        }
+    }
+
+    /**
+     * 检查 21（WARNING，仅 CLIENT_ENTITY 库；规格 D1 §2.3）：声明类 ref 未接线。
+     * 主图 ref.{geometry,texture,material,animation,ac} 未连对应声明端口（仅接 animate.entry 的情形
+     * 消息单独点明）、主图 ref.rc 未连任何 rc.condition_entry、子图中的声明类 ref 提示移至主图。
+     * 标识符选项无实例值的占位 ref 不报（UNKNOWN_REFERENCE 已覆盖）。
+     */
+    private static void checkRefNotConnected(GraphLibrary library, List<Diagnostic> out) {
+        if (library.kind() != GraphKind.CLIENT_ENTITY) {
+            return;
+        }
+        GraphData main = library.graphs().get(library.main());
+        Optional<NodeInstance> root = main == null ? Optional.empty()
+                : main.nodes().stream().filter(n -> n.type().equals("entity.root")).findFirst();
+        if (main == null || root.isEmpty()) {
+            return;
+        }
+        String rootUid = root.get().uid();
+        for (NodeInstance node : main.nodes()) {
+            String port = NodeTypes.DECLARATION_PORTS.get(node.type());
+            if (port != null) {
+                if (rawIdentifier(node).isEmpty()) {
+                    continue;
+                }
+                boolean wired = main.wires().stream().anyMatch(w ->
+                        w.from().node().equals(node.uid()) && w.to().node().equals(rootUid)
+                                && w.to().port().equals(port));
+                if (wired) {
+                    continue;
+                }
+                boolean animateOnly = main.wires().stream().anyMatch(w ->
+                        w.from().node().equals(node.uid()) && w.to().port().equals("ref")
+                                && main.findNode(w.to().node())
+                                .map(n -> n.type().equals("animate.entry")).orElse(false));
+                out.add(Diagnostic.warning(REF_NOT_CONNECTED, animateOnly
+                        ? node.type() + " 仅连接 animate.entry，不会进入声明表；请同时连线 entity.root 的 "
+                                + port + " 端口"
+                        : node.type() + " 未连线 entity.root 的 " + port + " 声明端口，不会进入声明表",
+                        node.uid()));
+            } else if (node.type().equals("ref.rc")) {
+                if (rawIdentifier(node).isEmpty()) {
+                    continue;
+                }
+                boolean connected = main.wires().stream().anyMatch(w ->
+                        w.from().node().equals(node.uid()) && w.to().port().equals("rc")
+                                && main.findNode(w.to().node())
+                                .map(n -> n.type().equals("rc.condition_entry")).orElse(false));
+                if (!connected) {
+                    out.add(Diagnostic.warning(REF_NOT_CONNECTED,
+                            "ref.rc 未连接任何 rc.condition_entry，不会出现在 render_controllers", node.uid()));
+                }
+            }
+        }
+        // 子图中的声明类 ref（无法声明）→ 提示移至主图接线
+        for (Map.Entry<String, GraphData> e : library.graphs().entrySet()) {
+            if (e.getKey().equals(library.main())) {
+                continue;
+            }
+            for (NodeInstance node : e.getValue().nodes()) {
+                String port = NodeTypes.DECLARATION_PORTS.get(node.type());
+                if (port == null || rawIdentifier(node).isEmpty()) {
+                    continue;
+                }
+                out.add(Diagnostic.warning(REF_NOT_CONNECTED,
+                        node.type() + " 位于子图 '" + e.getKey() + "'，无法进入声明表；"
+                                + "请移至主图并连线 entity.root 的 " + port + " 端口", node.uid()));
+            }
+        }
+    }
+
+    /** ref 节点的实例级标识符选项原文（无实例值 = 空，不落类型默认；占位 ref 判定用）。 */
+    private static String rawIdentifier(NodeInstance node) {
+        String optionId = node.type().equals("ref.rc") ? "identifier" : ShortNames.valueOptionOf(node.type());
+        if (optionId == null) {
+            return "";
+        }
+        return node.optionRaw(optionId).map(JsonElement::getAsString).orElse("");
     }
 
     // ====================================================================
@@ -523,18 +637,25 @@ public final class GraphValidator {
     private static void checkRefMisuse(Wire wire, Endpoint from, Endpoint to, List<Diagnostic> out) {
         String fromType = from.node().type();
         if (ASSEMBLY_ONLY_REFS.contains(fromType)) {
+            // ref.animation/ref.ac 另可接 entity.root 对应声明端口（D1）；ref.rc 无声明端口
+            String declarationPort = NodeTypes.DECLARATION_PORTS.get(fromType);
             boolean ok = (to.node().type().equals("animate.entry") && to.port().id().equals("ref"))
-                    || (to.node().type().equals("rc.condition_entry") && to.port().id().equals("rc"));
+                    || (to.node().type().equals("rc.condition_entry") && to.port().id().equals("rc"))
+                    || (declarationPort != null && to.node().type().equals("entity.root")
+                            && to.port().id().equals(declarationPort));
             if (!ok) {
                 out.add(Diagnostic.error(REF_MISUSE,
-                        fromType + " 的输出只能连接 animate.entry.ref / rc.condition_entry.rc，实际连接 "
-                                + wire.to(), from.node().uid()));
+                        fromType + " 的输出只能连接 animate.entry.ref / rc.condition_entry.rc"
+                                + (declarationPort != null ? " / entity.root." + declarationPort : "")
+                                + "，实际连接 " + wire.to(), from.node().uid()));
             }
         } else if (VALUE_REFS.contains(fromType)) {
+            // 声明端口类型（GEOMETRY_REF 等）本身是值类型，isValue 天然放行；接错类别由类型检查报
             if (!to.port().type().isValue()) {
                 out.add(Diagnostic.error(REF_MISUSE,
-                        fromType + " 的输出只能连接表达式槽或 material.entry.value / list.entry.value，实际连接 "
-                                + wire.to(), from.node().uid()));
+                        fromType + " 的输出只能连接表达式槽、material.entry.value / list.entry.value 或 "
+                                + "entity.root." + NodeTypes.DECLARATION_PORTS.get(fromType)
+                                + " 声明端口，实际连接 " + wire.to(), from.node().uid()));
             }
         }
     }

@@ -32,6 +32,7 @@ final class WorkbenchColors {
     static final int TEXT = 0xFFFFFFFF;
     static final int DIM = 0xFFAAAAAA;
     static final int ERROR = 0xFFFF5555;
+    static final int WARNING = 0xFFFFAA00;
 
     /** 徽标颜色：error 优先，其余按 MolangType（number 三子类型同色）。 */
     static int badgeColor(boolean error, MolangType type) {

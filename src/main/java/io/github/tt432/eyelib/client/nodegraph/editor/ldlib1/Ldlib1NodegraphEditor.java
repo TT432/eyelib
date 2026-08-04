@@ -9,12 +9,14 @@ import com.lowdragmc.lowdraglib.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ButtonWidget;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import io.github.tt432.eyelib.client.nodegraph.DiagnosticsCenter;
 import io.github.tt432.eyelib.client.nodegraph.EprojectService;
 import io.github.tt432.eyelib.client.nodegraph.GraphLibraryManager;
 import io.github.tt432.eyelib.client.nodegraph.NodegraphBuildService;
 import io.github.tt432.eyelib.client.nodegraph.workbench.NodeDebugOverlayModel;
 import io.github.tt432.eyelib.client.nodegraph.workbench.ldlib1.AssetInspectorPanel;
 import io.github.tt432.eyelib.client.nodegraph.workbench.ldlib1.DebugSidebarPanel;
+import io.github.tt432.eyelib.client.nodegraph.workbench.ldlib1.DiagnosticsPanel;
 import io.github.tt432.eyelib.client.nodegraph.workbench.ldlib1.ImportDialog;
 import io.github.tt432.eyelib.client.nodegraph.workbench.ldlib1.VariablesPanel;
 import io.github.tt432.eyelib.client.nodegraph.workbench.ldlib1.WorkbenchGraphViewWidget;
@@ -109,16 +111,9 @@ public final class Ldlib1NodegraphEditor {
         }
     }
 
-    /** 诊断双通道反馈：聊天栏摘要 + 日志（工作台面板共用）。 */
+    /** 诊断批量上报：改道 {@link DiagnosticsCenter}（规格 §4.2），聊天栏不再出现诊断。 */
     public static void reportDiagnostics(String action, List<Diagnostic> diagnostics) {
-        long errors = diagnostics.stream().filter(d -> d.severity() == Diagnostic.Severity.ERROR).count();
-        long warnings = diagnostics.size() - errors;
-        chat("[nodegraph] " + action + ": " + errors + " error(s), " + warnings + " warning(s)");
-        diagnostics.stream().limit(10).forEach(d -> chat("  " + d));
-        if (diagnostics.size() > 10) {
-            chat("  ... and " + (diagnostics.size() - 10) + " more (see log)");
-        }
-        diagnostics.forEach(d -> LOGGER.info("[nodegraph] {} {}", action, d));
+        DiagnosticsCenter.report(action, action, diagnostics);
     }
 
     /** 库键末段（新建项目名：规格 §2.3，键形如 {project}/{libId} 或 eyelib:nodegraph/x）。 */
@@ -153,6 +148,7 @@ public final class Ldlib1NodegraphEditor {
         private final AssetInspectorPanel assetPanel;
         private final DebugSidebarPanel debugPanel;
         private final VariablesPanel variablesPanel;
+        private final DiagnosticsPanel diagnosticsPanel;
         private final LabelWidget toastLabel;
         private @Nullable EvmGraphViewWidget view;
         /** toast 文本与过期 tick（编辑器内轻量提示；空串 = 不显示）。 */
@@ -178,8 +174,15 @@ public final class Ldlib1NodegraphEditor {
             debugPanel.setActive(false);
             variablesPanel.setVisible(false);
             variablesPanel.setActive(false);
-            // toast 底部提示（在 rebuildView 里随侧栏一起抬到画布之上）
-            toastLabel = new LabelWidget(8, height - 16, () -> toastText);
+            // 诊断浮动面板（规格 §4.3）：左下角「问题」按钮 + 弹层；定位回调路由到当前画布
+            diagnosticsPanel = new DiagnosticsPanel(0, BAR_HEIGHT, panelWidth, panelHeight,
+                    uid -> {
+                        if (view instanceof WorkbenchGraphViewWidget workbench) {
+                            workbench.focusNode(uid);
+                        }
+                    });
+            // toast 底部提示（抬到底部「问题」按钮之上；在 rebuildView 里随侧栏一起抬到画布之上）
+            toastLabel = new LabelWidget(8, height - 30, () -> toastText);
 
             addWidget(new ButtonWidget(4, 3, 40, 12, new TextTexture("保存"), cd -> save()));
             addWidget(new ButtonWidget(48, 3, 40, 12, new TextTexture("构建"), cd -> build()));
@@ -195,6 +198,7 @@ public final class Ldlib1NodegraphEditor {
             addWidget(new ButtonWidget(356, 3, 48, 12, new TextTexture("规范化"), cd -> normalizeShortNames()));
             addWidget(new LabelWidget(410, 5, () -> String.join(" / ", breadcrumbs)));
 
+            addWidget(diagnosticsPanel);
             // rebuildView 会把侧栏抬到画布之上（侧栏先建，重建时保持顶层）
             rebuildView();
         }
@@ -254,10 +258,12 @@ public final class Ldlib1NodegraphEditor {
             removeWidget(assetPanel);
             removeWidget(debugPanel);
             removeWidget(variablesPanel);
+            removeWidget(diagnosticsPanel);
             removeWidget(toastLabel);
             addWidget(assetPanel);
             addWidget(debugPanel);
             addWidget(variablesPanel);
+            addWidget(diagnosticsPanel);
             addWidget(toastLabel);
             // 打开/潜入/返回：同步徽标发射目标图
             overlay.updateGraph(library, currentGraphName());
@@ -298,7 +304,7 @@ public final class Ldlib1NodegraphEditor {
                 libraryName = project.libraryKeys().get(0);
                 toast("已新建项目「" + project.name() + "」并保存");
             }
-            reportDiagnostics("validate", GraphValidator.validate(library));
+            DiagnosticsCenter.report("保存 " + libraryName, libraryName, GraphValidator.validate(library));
         }
 
         /** Ctrl+S 保存（Screen.isSave 是 1.20.2+ API，1.20.1 手写等价判断；先例 GraphViewWidget Ctrl+C）。 */
@@ -367,7 +373,7 @@ public final class Ldlib1NodegraphEditor {
         private void build() {
             syncCanvasToLibrary();
             NodegraphBuildService.BuildResult result = NodegraphBuildService.build(libraryName, library);
-            reportDiagnostics("build", result.diagnostics());
+            DiagnosticsCenter.report("构建 " + libraryName, libraryName, result.diagnostics());
             if (result.injectedId() != null) {
                 chat("[nodegraph] injected: " + result.injectedId());
             }
@@ -402,13 +408,13 @@ public final class Ldlib1NodegraphEditor {
                 }
             }
             if (call == null) {
-                chat("[nodegraph] select a subgraph.call node first");
+                toast("请先选中一个 subgraph.call 节点");
                 return;
             }
             String target = call.optionString("subgraph", "");
             Optional<GraphData> graph = library.graph(target);
             if (target.isEmpty() || graph.isEmpty() || graph.get().graphInterface().isEmpty()) {
-                chat("[nodegraph] cannot dive: subgraph '" + target + "' not found in library");
+                toast("无法潜入：库中不存在子图「" + target + "」");
                 return;
             }
             syncCanvasToLibrary();
@@ -419,7 +425,7 @@ public final class Ldlib1NodegraphEditor {
 
         private void surface() {
             if (breadcrumbs.size() <= 1) {
-                chat("[nodegraph] already at main graph");
+                toast("已在主图");
                 return;
             }
             syncCanvasToLibrary();

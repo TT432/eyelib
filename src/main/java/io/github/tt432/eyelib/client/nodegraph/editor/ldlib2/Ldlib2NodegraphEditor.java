@@ -4,6 +4,7 @@ import com.lowdragmc.lowdraglib2.gui.holder.ModularUIScreen;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.editor.GraphEditorView;
+import io.github.tt432.eyelib.client.nodegraph.DiagnosticsCenter;
 import io.github.tt432.eyelib.client.nodegraph.EprojectService;
 import io.github.tt432.eyelib.client.nodegraph.GraphLibraryManager;
 import io.github.tt432.eyelib.client.nodegraph.workbench.ldlib2.Ldlib2Workbench;
@@ -66,7 +67,7 @@ public final class Ldlib2NodegraphEditor {
 
         List<Diagnostic> openDiags = new ArrayList<>(GraphValidator.validate(library));
         EvmGraph graph = EvmGraphTranslator.toGraph(library, openDiags);
-        EvmDiagnostics.report(openDiags);
+        DiagnosticsCenter.report("打开 " + name[0], name[0], openDiags);
 
         GraphEditorView editorView = new GraphEditorView();
         //? if <26.1 {
@@ -117,7 +118,7 @@ public final class Ldlib2NodegraphEditor {
         List<Diagnostic> diags = new ArrayList<>();
         GraphLibrary library = EvmGraphTranslator.toLibrary(graph, diags);
         diags.addAll(GraphValidator.validate(library));
-        EvmDiagnostics.report(diags);
+        DiagnosticsCenter.report("构建 " + name, name, diags);
         GraphLibraryManager.INSTANCE.put(name, library);
         return library;
     }

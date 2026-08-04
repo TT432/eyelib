@@ -329,6 +329,14 @@ public final class NodeTypes {
 
     // ---------- 实体装配 ----------
 
+    /** entity.root 的声明端口（D1）：ref 类型 → 端口 id。 */
+    public static final Map<String, String> DECLARATION_PORTS = Map.of(
+            "ref.geometry", "geometries",
+            "ref.texture", "textures",
+            "ref.material", "materials",
+            "ref.animation", "animations",
+            "ref.ac", "animation_controllers");
+
     public static final NodeType ENTITY_ROOT = register(NodeType.of(
             "entity.root", NodeType.Kind.ENTITY_ROOT, CAT_ENTITY,
             List.of(NodeOptionDef.string("identifier", "example:my_entity")),
@@ -340,6 +348,12 @@ public final class NodeTypes {
                     PortDef.in("scale_x", PortType.FLOAT),
                     PortDef.in("scale_y", PortType.FLOAT),
                     PortDef.in("scale_z", PortType.FLOAT),
+                    // 声明端口（规格 D1：声明 = 连线；ref.* 只有接到这里才进声明表）
+                    PortDef.inMulti("geometries", PortType.GEOMETRY_REF),
+                    PortDef.inMulti("textures", PortType.TEXTURE_REF),
+                    PortDef.inMulti("materials", PortType.MATERIAL_REF),
+                    PortDef.inMulti("animations", PortType.ANIMATION_REF),
+                    PortDef.inMulti("animation_controllers", PortType.AC_REF),
                     slotIn("animate"),
                     slotIn("render_controllers")),
             List.of()));

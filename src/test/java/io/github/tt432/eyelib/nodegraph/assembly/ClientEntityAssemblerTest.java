@@ -2,7 +2,6 @@ package io.github.tt432.eyelib.nodegraph.assembly;
 
 import static io.github.tt432.eyelib.nodegraph.assembly.AssemblyTestSupport.countCode;
 import static io.github.tt432.eyelib.nodegraph.assembly.AssemblyTestSupport.graph;
-import static io.github.tt432.eyelib.nodegraph.assembly.AssemblyTestSupport.hasCode;
 import static io.github.tt432.eyelib.nodegraph.assembly.AssemblyTestSupport.lib;
 import static io.github.tt432.eyelib.nodegraph.assembly.AssemblyTestSupport.node;
 import static io.github.tt432.eyelib.nodegraph.assembly.AssemblyTestSupport.opts;
@@ -25,7 +24,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * {@link ClientEntityAssembler} 单测：最小空图、全字段图（JSON 结构断言）、
- * MISSING_ENTRY_REF 错误、声明表去重与子图可达收集。
+ * MISSING_ENTRY_REF 错误、声明表连线收集与去重、声明端口类型不匹配。
  */
 class ClientEntityAssemblerTest {
 
@@ -86,6 +85,12 @@ class ClientEntityAssemblerTest {
                         wire("ra1", "ref", "ae1", "ref"),
                         wire("ae2", "entry", "root", "animate"),
                         wire("rac1", "ref", "ae2", "ref"),
+                        // 声明连线（D1：声明 = 连线）
+                        wire("rg1", "ref", "root", "geometries"),
+                        wire("rt1", "ref", "root", "textures"),
+                        wire("rm1", "ref", "root", "materials"),
+                        wire("ra1", "ref", "root", "animations"),
+                        wire("rac1", "ref", "root", "animation_controllers"),
                         wire("rce1", "entry", "root", "render_controllers"),
                         wire("rrc1", "ref", "rce1", "rc"),
                         wire("rce2", "entry", "root", "render_controllers"),
@@ -155,23 +160,29 @@ class ClientEntityAssemblerTest {
     }
 
     @Test
-    void declarationTablesDedupAndSubgraphReachable() {
+    void declarationTablesWiredOnlyAndDedup() {
+        // D1：声明 = 连线——只有连到 entity.root 声明端口的 ref 进声明表；
+        // 未连线的主图 ref 与子图 ref（即使子图可达）均不收集
         GraphInterface iface = new GraphInterface(List.of(),
                 new GraphInterface.Param("result", PortType.FLOAT, Optional.empty()));
         GraphData main = graph(
                 List.of(
-                        node("root", "entity.root", opts("identifier", "test:sub")),
+                        node("root", "entity.root", opts("identifier", "test:wired")),
                         node("sc1", "subgraph.call", opts("subgraph", "sub")),
                         node("rg1", "ref.geometry",
-                                opts("short_name", "default", "identifier", "geometry.test.model"))),
-                List.of());
+                                opts("short_name", "default", "identifier", "geometry.test.model")),
+                        // 与 rg1 同 short_name + 同 identifier → 去重
+                        node("rg3", "ref.geometry",
+                                opts("short_name", "default", "identifier", "geometry.test.model")),
+                        node("rg9", "ref.geometry",
+                                opts("short_name", "stray", "identifier", "geometry.test.stray"))),
+                List.of(
+                        wire("rg1", "ref", "root", "geometries"),
+                        wire("rg3", "ref", "root", "geometries")));
         GraphData sub = new GraphData(
                 List.of(
                         node("rg2", "ref.geometry",
-                                opts("short_name", "sub_geo", "identifier", "geometry.test.sub")),
-                        // 与 rg1 同 short_name + 同 identifier → 去重
-                        node("rg3", "ref.geometry",
-                                opts("short_name", "default", "identifier", "geometry.test.model"))),
+                                opts("short_name", "sub_geo", "identifier", "geometry.test.sub"))),
                 List.of(), List.of(), List.of(), List.of(), Optional.of(iface));
         GraphLibrary lib = new GraphLibrary(1, GraphKind.CLIENT_ENTITY, "root",
                 Map.of("root", main, "sub", sub));
@@ -181,10 +192,36 @@ class ClientEntityAssemblerTest {
         assertFalse(r.hasErrors(), () -> r.diagnostics().toString());
         JsonObject desc = r.json().getAsJsonObject("minecraft:client_entity").getAsJsonObject("description");
         JsonObject geometry = desc.getAsJsonObject("geometry");
-        assertEquals(2, geometry.entrySet().size());
+        assertEquals(1, geometry.entrySet().size());
         assertEquals("geometry.test.model", geometry.get("default").getAsString());
-        assertEquals("geometry.test.sub", geometry.get("sub_geo").getAsString());
-        assertFalse(hasCode(r, AssemblySupport.INVALID_ENTRY_REF));
+    }
+
+    @Test
+    void invalidDeclarationRefType() {
+        // 声明端口源节点类型不匹配 → INVALID_DECLARATION_REF（带 nodeUid），该节点不进表
+        GraphLibrary lib = lib(GraphKind.CLIENT_ENTITY, graph(
+                List.of(
+                        node("root", "entity.root", opts("identifier", "test:badref")),
+                        node("rt1", "ref.texture",
+                                opts("short_name", "default", "path", "textures/entity/test")),
+                        node("rg1", "ref.geometry",
+                                opts("short_name", "default", "identifier", "geometry.test.model"))),
+                List.of(
+                        wire("rt1", "ref", "root", "geometries"),
+                        wire("rg1", "ref", "root", "geometries"))));
+
+        AssemblyResult r = ClientEntityAssembler.assemble(lib);
+
+        assertTrue(r.hasErrors());
+        assertEquals(1, countCode(r, AssemblySupport.INVALID_DECLARATION_REF));
+        assertEquals("rt1", r.diagnostics().stream()
+                .filter(d -> d.code().equals(AssemblySupport.INVALID_DECLARATION_REF))
+                .findFirst().orElseThrow().nodeUid().orElseThrow());
+        // 不匹配的跳过；匹配的 rg1 照常入表
+        JsonObject geometry = r.json().getAsJsonObject("minecraft:client_entity")
+                .getAsJsonObject("description").getAsJsonObject("geometry");
+        assertEquals(1, geometry.entrySet().size());
+        assertEquals("geometry.test.model", geometry.get("default").getAsString());
     }
 
     // ---------- 短名派生与 default 别名（规格 D1/D2/D6） ----------
@@ -200,7 +237,12 @@ class ClientEntityAssemblerTest {
                         node("rm1", "ref.material", opts("material", "entity_alphatest")),
                         node("ra1", "ref.animation", opts("identifier", "animation.test.walk")),
                         node("rac1", "ref.ac", opts("identifier", "controller.animation.test.main"))),
-                List.of()));
+                List.of(
+                        wire("rg1", "ref", "root", "geometries"),
+                        wire("rt1", "ref", "root", "textures"),
+                        wire("rm1", "ref", "root", "materials"),
+                        wire("ra1", "ref", "root", "animations"),
+                        wire("rac1", "ref", "root", "animation_controllers"))));
 
         AssemblyResult r = ClientEntityAssembler.assemble(lib);
 
@@ -233,7 +275,9 @@ class ClientEntityAssemblerTest {
                         node("root", "entity.root", opts("identifier", "test:multi")),
                         node("rg1", "ref.geometry", opts("identifier", "geometry.test.a")),
                         node("rg2", "ref.geometry", opts("identifier", "geometry.test.b"))),
-                List.of()));
+                List.of(
+                        wire("rg1", "ref", "root", "geometries"),
+                        wire("rg2", "ref", "root", "geometries"))));
 
         AssemblyResult r = ClientEntityAssembler.assemble(lib);
 
@@ -253,7 +297,9 @@ class ClientEntityAssemblerTest {
                         node("rg1", "ref.geometry",
                                 opts("short_name", "default", "identifier", "geometry.test.main")),
                         node("rg2", "ref.geometry", opts("identifier", "geometry.test.alt"))),
-                List.of()));
+                List.of(
+                        wire("rg1", "ref", "root", "geometries"),
+                        wire("rg2", "ref", "root", "geometries"))));
 
         AssemblyResult r = ClientEntityAssembler.assemble(lib);
 

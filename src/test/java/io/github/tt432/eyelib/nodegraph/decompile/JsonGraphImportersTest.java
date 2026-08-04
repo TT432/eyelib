@@ -252,6 +252,36 @@ class JsonGraphImportersTest {
                 norm(initialize));
     }
 
+    /** D1：导入的声明表 ref 节点建后立即接线到 entity.root 对应声明端口。 */
+    @Test
+    void importedDeclarationRefsAreWired() {
+        ImportResult imported = JsonGraphImporters.importClientEntity(parse(ENTITY_JSON));
+        assertFalse(imported.hasErrors(), () -> imported.diagnostics().toString());
+        GraphData graph = imported.library().mainGraph();
+        Map<String, String> expectedPorts = Map.of(
+                "ref.geometry", "geometries",
+                "ref.texture", "textures",
+                "ref.material", "materials",
+                "ref.animation", "animations",
+                "ref.ac", "animation_controllers");
+        for (NodeInstance node : graph.nodes()) {
+            String port = expectedPorts.get(node.type());
+            if (port == null) {
+                continue;
+            }
+            // resolveAnimationRef 的未声明兜底 ref（无标识符选项）保持不连线（§2.5）
+            if (!node.options().containsKey("identifier") && !node.options().containsKey("path")
+                    && !node.options().containsKey("material")) {
+                continue;
+            }
+            String uid = node.uid();
+            assertTrue(graph.wires().stream().anyMatch(w ->
+                            w.from().node().equals(uid) && w.from().port().equals("ref")
+                                    && w.to().node().equals("root") && w.to().port().equals(port)),
+                    () -> node.type() + " " + uid + " 未连线到 root." + port);
+        }
+    }
+
     /** (c) import(build(graph)) 结构断言 + 再 build JSON 相等。 */
     @Test
     void buildThenImportStructure() {
@@ -286,7 +316,8 @@ class JsonGraphImportersTest {
                                 wire("rce1", "entry", "root", "render_controllers"),
                                 wire("rrc2", "ref", "rce2", "rc"),
                                 wire("q1", "out", "rce2", "condition"),
-                                wire("rce2", "entry", "root", "render_controllers")),
+                                wire("rce2", "entry", "root", "render_controllers"),
+                                wire("rg1", "ref", "root", "geometries")),
                         List.of(), List.of(), List.of(), Optional.empty())));
 
         AssemblyResult built = ClientEntityAssembler.assemble(lib);

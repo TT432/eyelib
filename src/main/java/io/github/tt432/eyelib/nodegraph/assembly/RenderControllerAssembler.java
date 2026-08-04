@@ -62,7 +62,7 @@ public final class RenderControllerAssembler {
         entry.addProperty("geometry", ctx.emitExpression(root.uid(), "geometry"));
 
         JsonArray textures = new JsonArray();
-        for (NodeInstance e : AssemblySupport.slotEntries(main, root.uid(), "textures")) {
+        for (NodeInstance e : AssemblySupport.wiredSources(main, root.uid(), "textures")) {
             textures.add(ctx.emitExpression(e.uid(), "value"));
         }
         if (textures.size() > 0) {
@@ -70,7 +70,7 @@ public final class RenderControllerAssembler {
         }
 
         JsonArray materials = new JsonArray();
-        for (NodeInstance e : AssemblySupport.slotEntries(main, root.uid(), "materials")) {
+        for (NodeInstance e : AssemblySupport.wiredSources(main, root.uid(), "materials")) {
             JsonObject obj = new JsonObject();
             obj.addProperty(AssemblySupport.optionString(e, NodeTypes.MATERIAL_ENTRY, "pattern"),
                     ctx.emitExpression(e.uid(), "value"));
@@ -82,7 +82,7 @@ public final class RenderControllerAssembler {
 
         // 同 pattern 后来者覆盖；LinkedHashMap 保持首现位置（去重保序），先按 pattern 归并再发射
         Map<String, NodeInstance> visibility = new LinkedHashMap<>();
-        for (NodeInstance e : AssemblySupport.slotEntries(main, root.uid(), "part_visibility")) {
+        for (NodeInstance e : AssemblySupport.wiredSources(main, root.uid(), "part_visibility")) {
             visibility.put(AssemblySupport.optionString(e, NodeTypes.PART_VISIBILITY_ENTRY, "bone_pattern"), e);
         }
         if (!visibility.isEmpty()) {

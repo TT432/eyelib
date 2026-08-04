@@ -8,6 +8,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
+import io.github.tt432.eyelib.nodegraph.GraphMigrations;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -173,7 +174,7 @@ public final class EprojectIo {
         return new Eproject(name, version, libraries);
     }
 
-    /** 库 JSON → GraphLibrary（CODEC + JsonOps）。 */
+    /** 库 JSON → GraphLibrary（CODEC + JsonOps + GraphMigrations 链式迁移）。 */
     private static GraphLibrary decodeLibrary(Path source, String entry, byte[] body) {
         JsonElement json;
         try {
@@ -181,11 +182,12 @@ public final class EprojectIo {
         } catch (JsonParseException e) {
             throw new EprojectException(source, "库条目 " + entry + " 不是合法 JSON: " + e.getMessage(), e);
         }
-        return GraphLibrary.CODEC.parse(JsonOps.INSTANCE, json)
+        GraphLibrary parsed = GraphLibrary.CODEC.parse(JsonOps.INSTANCE, json)
                 .resultOrPartial(err -> {
                     throw new EprojectException(source, "库条目 " + entry + " CODEC 解析失败: " + err);
                 })
                 .orElseThrow(() -> new EprojectException(source, "库条目 " + entry + " CODEC 解析失败"));
+        return GraphMigrations.migrate(parsed);
     }
 
     // ---------- 写入 ----------

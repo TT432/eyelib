@@ -10,6 +10,7 @@ import io.github.tt432.eyelib.nodegraph.GraphLibrary;
  * LDLib2 节点图工作台编排器（规格 §3 版本策略的 ldlib2 薄壳）：
  * 把 {@link GraphEditorView} 包进 顶部工具条 + 左资产侧栏 + 右调试侧栏 的容器，
  * 并持有本编辑器会话唯一的 {@link NodeDebugOverlayModel}（画布徽标模型）。
+ * 左下角另挂诊断浮动面板（{@link DiagnosticsPanel}，规格 nodegraph-declaration-wiring §4.3）。
  *
  * <p>接线约定（{@code Ldlib2NodegraphEditor.open}）：
  * 构造 {@link #create}（附加徽标 overlay 到 root 图视图、初始 {@code updateGraph}）→
@@ -48,6 +49,9 @@ public final class Ldlib2Workbench {
 
         BadgeOverlay.attach(editorView.graphView, overlayModel);
         overlayModel.updateGraph(initialLibrary, initialLibrary.main());
+
+        // 诊断浮动面板（规格 D3）：绝对定位左下角，挂在 root 上不被侧栏折叠影响
+        root.addChild(new DiagnosticsPanel(editorView));
     }
 
     /**

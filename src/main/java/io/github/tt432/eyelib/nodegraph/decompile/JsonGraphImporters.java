@@ -22,7 +22,8 @@ import org.jspecify.annotations.Nullable;
  * <p>字段映射：
  * <ul>
  *   <li>ClientEntity：description.identifier → entity.root 选项；geometry/textures/materials/
- *       animations/animation_controllers 声明表 → ref.* 节点（无需连线，assembler 全局收集）；
+ *       animations/animation_controllers 声明表 → ref.* 节点，建节点即接线到 entity.root
+ *       对应声明端口（规格 D1：声明 = 连线）；
  *       scripts.initialize/pre_animation/parent_setup（string 或 string[]）→ exec 链；
  *       scale/scaleX/scaleY/scaleZ → 表达式槽（数值/布尔 → 内联常量，字符串 → molang 反编译连线）；
  *       animate → animate.entry（短名解析到声明表 ref.animation/ref.ac，未声明 → 补独立
@@ -76,7 +77,7 @@ public final class JsonGraphImporters {
 
         b.addRoot(NodeTypes.ENTITY_ROOT.id(), stringOption(desc, "identifier", b, "description"));
 
-        // 声明表（ref.* 节点无需连线，assembler 从可达图全局收集）
+        // 声明表（ref.* 节点建后立即接线到 entity.root 对应声明端口，规格 D1）
         Map<String, String> animationRefs = new LinkedHashMap<>();
         Map<String, String> acRefs = new LinkedHashMap<>();
         importRefTable(b, desc, "geometry", NodeTypes.REF_GEOMETRY.id(), "identifier", null);
@@ -134,7 +135,8 @@ public final class JsonGraphImporters {
         return b.build(GraphKind.CLIENT_ENTITY);
     }
 
-    /** 声明表：object 或 single-key object 数组（animation_controllers 的 Bedrock 惯例）。 */
+    /** 声明表：object 或 single-key object 数组（animation_controllers 的 Bedrock 惯例）。
+     * 每个 ref 节点建后立即接线到 entity.root 对应声明端口（规格 D1 §2.5）。 */
     private static void importRefTable(ImportGraphBuilder b, JsonObject desc, String field,
                                        String refType, String valueOption,
                                        @Nullable Map<String, String> refsOut) {
@@ -153,6 +155,13 @@ public final class JsonGraphImporters {
             case "animations" -> "anim";
             default -> "acref";
         };
+        String declarationPort = switch (field) {
+            case "geometry" -> "geometries";
+            case "textures" -> "textures";
+            case "materials" -> "materials";
+            case "animations" -> "animations";
+            default -> "animation_controllers";
+        };
         for (JsonObject obj : objects) {
             for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
                 if (!e.getValue().isJsonPrimitive() || !e.getValue().getAsJsonPrimitive().isString()) {
@@ -162,6 +171,7 @@ public final class JsonGraphImporters {
                 String uid = b.addNode(prefix, refType, ImportGraphBuilder.opts(
                         "short_name", e.getKey(),
                         valueOption, e.getValue().getAsString()));
+                b.wire(uid, "ref", "root", declarationPort);
                 if (refsOut != null) {
                     refsOut.putIfAbsent(e.getKey(), uid);
                 }
@@ -234,7 +244,8 @@ public final class JsonGraphImporters {
     /**
      * animate / ac.state animations 条目：纯字符串（weight 缺省 1）或 {short_name: weight}。
      * 短名解析：animations 声明表 → ref.animation；animation_controllers 声明表 → ref.ac；
-     * 未声明 → 补仅 short_name 的 ref.animation（warnIfUnresolved 时 + UNKNOWN_REFERENCE）。
+     * 未声明 → 补仅 short_name 的 ref.animation（warnIfUnresolved 时 + UNKNOWN_REFERENCE；
+     * 不连线声明端口，规格 §2.5）。
      */
     private static void importAnimateEntry(ImportGraphBuilder b, String ownerUid, String slotPort,
                                            JsonElement entry, Map<String, String> animationRefs,

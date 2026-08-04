@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.nodegraph.Diagnostic;
 import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
+import io.github.tt432.eyelib.nodegraph.NodeType;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.ShortNames;
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ import java.util.Optional;
  * identifier；scripts（initialize/pre_animation/parent_setup EXEC 槽未连线则跳过，
  * scale/scaleX/scaleY/scaleZ 有连线或内联值才输出，animate 恒输出 weight 表达式）；
  * 声明表（geometry/textures/materials/animations/animation_controllers，
- * 从主图可达全部图收集 REF_* 节点，同 short_name 去重，非空才输出）；
+ * = entity.root 五个声明端口的连线源节点，同 short_name 去重，非空才输出）；
  * render_controllers（condition 恒 "1" → 纯字符串，否则 {identifier: condition}）。
  */
 public final class ClientEntityAssembler {
@@ -48,7 +49,7 @@ public final class ClientEntityAssembler {
                 if (!scripts.entrySet().isEmpty()) {
                     description.add("scripts", scripts);
                 }
-                addDeclarationTables(ctx, description);
+                addDeclarationTables(ctx, rootNode, description);
                 JsonArray renderControllers = assembleRenderControllers(ctx, rootNode);
                 if (renderControllers.size() > 0) {
                     description.add("render_controllers", renderControllers);
@@ -93,7 +94,7 @@ public final class ClientEntityAssembler {
     /** scripts.animate：animate.entry（uid 字典序）→ [{short_name: weight 表达式}]。 */
     private static JsonArray assembleAnimate(AssemblySupport.Ctx ctx, NodeInstance root) {
         JsonArray animate = new JsonArray();
-        for (NodeInstance entry : AssemblySupport.slotEntries(ctx.main, root.uid(), "animate")) {
+        for (NodeInstance entry : AssemblySupport.wiredSources(ctx.main, root.uid(), "animate")) {
             NodeInstance refNode = AssemblySupport.resolveEntryRef(ctx, entry, "ref");
             if (refNode == null) {
                 continue;
@@ -119,43 +120,30 @@ public final class ClientEntityAssembler {
     // ---------- 声明表 ----------
 
     /**
-     * 声明表：从主图可达全部图（含子图，与 GraphValidator REF_CONFLICT 同范围）收集 REF_* 节点，
-     * 按 uid 字典序、同有效短名去重（保留先者；同短名不同标识符的冲突由验证器 REF_CONFLICT 报告）。
+     * 声明表 = entity.root 五个声明端口（geometries/textures/materials/animations/
+     * animation_controllers）的连线源节点（规格 D1：声明 = 连线，全局扫描语义废止）。
+     * 按 uid 字典序、同有效短名去重（putIfAbsent 保留先者；同短名不同标识符的冲突由验证器
+     * REF_CONFLICT 报告）。端口源节点类型与该端口声明类别不匹配 → INVALID_DECLARATION_REF 并跳过。
      * 有效短名 = 显式 short_name 非空 ? 显式 : 派生（ShortNames.effective，规格 D1/D3）。
      * ref.ac 与 ref.animation 同发进 animations 表（规格 D6：Bedrock animate 命名空间两表合并，
      * eyelib 运行时只读 animations 表）。geometry/textures/materials 三表按 D2 发 default 别名。
      */
-    private static void addDeclarationTables(AssemblySupport.Ctx ctx, JsonObject description) {
-        List<NodeInstance> nodes = new ArrayList<>();
-        for (GraphData graph : AssemblySupport.reachableGraphs(ctx.library)) {
-            nodes.addAll(graph.nodes());
-        }
-        nodes.sort(Comparator.comparing(NodeInstance::uid));
+    private static void addDeclarationTables(AssemblySupport.Ctx ctx, NodeInstance root,
+                                             JsonObject description) {
         Map<String, String> geometry = new LinkedHashMap<>();
         Map<String, String> textures = new LinkedHashMap<>();
         Map<String, String> materials = new LinkedHashMap<>();
         Map<String, String> animations = new LinkedHashMap<>();
-        for (NodeInstance node : nodes) {
-            switch (node.type()) {
-                case "ref.geometry" -> geometry.putIfAbsent(
-                        ShortNames.effective(node, NodeTypes.REF_GEOMETRY),
-                        AssemblySupport.optionString(node, NodeTypes.REF_GEOMETRY, "identifier"));
-                case "ref.texture" -> textures.putIfAbsent(
-                        ShortNames.effective(node, NodeTypes.REF_TEXTURE),
-                        // 不带 .png，CODEC 层会补
-                        AssemblySupport.optionString(node, NodeTypes.REF_TEXTURE, "path"));
-                case "ref.material" -> materials.putIfAbsent(
-                        ShortNames.effective(node, NodeTypes.REF_MATERIAL),
-                        AssemblySupport.optionString(node, NodeTypes.REF_MATERIAL, "material"));
-                case "ref.animation" -> animations.putIfAbsent(
-                        ShortNames.effective(node, NodeTypes.REF_ANIMATION),
-                        AssemblySupport.optionString(node, NodeTypes.REF_ANIMATION, "identifier"));
-                case "ref.ac" -> animations.putIfAbsent(
-                        ShortNames.effective(node, NodeTypes.REF_AC),
-                        AssemblySupport.optionString(node, NodeTypes.REF_AC, "identifier"));
-                default -> {
-                }
-            }
+        collectDeclaration(ctx, root, "geometries", "ref.geometry", geometry);
+        collectDeclaration(ctx, root, "textures", "ref.texture", textures);
+        collectDeclaration(ctx, root, "materials", "ref.material", materials);
+        // D6：animations 与 animation_controllers 两端口汇入同一 animations 表；合并后重排 uid 字典序
+        List<NodeInstance> animSources = new ArrayList<>();
+        animSources.addAll(declarationSources(ctx, root, "animations", "ref.animation"));
+        animSources.addAll(declarationSources(ctx, root, "animation_controllers", "ref.ac"));
+        animSources.sort(Comparator.comparing(NodeInstance::uid));
+        for (NodeInstance source : animSources) {
+            putDeclaration(source, animations);
         }
         // D2：单资产表自动补 default 别名（保运行时回退与外部 RC 的 geometry.default 惯例）；
         // 多资产表不发（歧义，需要 default 的场景走显式覆盖）
@@ -174,6 +162,36 @@ public final class ClientEntityAssembler {
         if (!animations.isEmpty()) {
             description.add("animations", toObject(animations));
         }
+    }
+
+    /** 单个声明端口：类型校验后按有效短名去重入表。 */
+    private static void collectDeclaration(AssemblySupport.Ctx ctx, NodeInstance root, String port,
+                                           String refType, Map<String, String> table) {
+        for (NodeInstance source : declarationSources(ctx, root, port, refType)) {
+            putDeclaration(source, table);
+        }
+    }
+
+    /** 声明端口的连线源节点（uid 字典序）；类型不匹配 → INVALID_DECLARATION_REF 并剔除。 */
+    private static List<NodeInstance> declarationSources(AssemblySupport.Ctx ctx, NodeInstance root,
+                                                         String port, String refType) {
+        List<NodeInstance> sources = AssemblySupport.wiredSources(ctx.main, root.uid(), port);
+        List<NodeInstance> out = new ArrayList<>();
+        for (NodeInstance source : sources) {
+            if (!source.type().equals(refType)) {
+                ctx.error(AssemblySupport.INVALID_DECLARATION_REF,
+                        "声明端口 " + port + " 只接受 " + refType + "，实际连接 " + source.type(), source.uid());
+                continue;
+            }
+            out.add(source);
+        }
+        return out;
+    }
+
+    private static void putDeclaration(NodeInstance source, Map<String, String> table) {
+        NodeType type = NodeTypes.require(source.type());
+        table.putIfAbsent(ShortNames.effective(source, type),
+                AssemblySupport.optionString(source, type, ShortNames.valueOptionOf(source.type())));
     }
 
     /** 不同资产恰 1 个且无 default 键时，补 "default" 别名指向该资产。 */
@@ -198,7 +216,7 @@ public final class ClientEntityAssembler {
     /** rc.condition_entry（uid 字典序）：condition 恒 "1" → 纯字符串；否则 {identifier: condition}。 */
     private static JsonArray assembleRenderControllers(AssemblySupport.Ctx ctx, NodeInstance root) {
         JsonArray out = new JsonArray();
-        for (NodeInstance entry : AssemblySupport.slotEntries(ctx.main, root.uid(), "render_controllers")) {
+        for (NodeInstance entry : AssemblySupport.wiredSources(ctx.main, root.uid(), "render_controllers")) {
             NodeInstance refNode = AssemblySupport.resolveEntryRef(ctx, entry, "rc");
             if (refNode == null) {
                 continue;

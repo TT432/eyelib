@@ -101,6 +101,32 @@ public final class WorkbenchGraphViewWidget extends EvmGraphViewWidget {
         fitToRegion(anchorX, anchorY);
     }
 
+    /**
+     * 诊断定位（规格 §4.3）：选中指定 uid 的节点并把画布视口居中到它
+     * （沿用 {@link #fitToRegion} 的偏移公式，保持当前缩放）。
+     * best effort——节点不在当前画布（如在别的图）时静默不动作。
+     */
+    public void focusNode(String uid) {
+        for (var entry : getNodeMap().entrySet()) {
+            if (!uidOf(entry.getKey()).equals(uid)) {
+                continue;
+            }
+            Position pos = entry.getKey().position;
+            if (pos == null) {
+                return;
+            }
+            // NodeWidget 每帧读 getSelectedNodes() 画选中高亮，直接改这个活集合即生效
+            getSelectedNodes().clear();
+            getSelectedNodes().add(entry.getKey());
+            float centerX = pos.x + entry.getValue().getSizeWidth() / 2f;
+            float centerY = pos.y + entry.getValue().getSizeHeight() / 2f;
+            FreeGraphView fgv = getFreeGraphView();
+            fgv.setXOffset(centerX - getSizeWidth() / fgv.getScale() / 2);
+            fgv.setYOffset(centerY - getSizeHeight() / fgv.getScale() / 2);
+            return;
+        }
+    }
+
     /** 以 (anchorX, anchorY) 为中心的邻域适配（约 1200×800 视图单位，缩放收敛 [0.15, 1]）。 */
     private void fitToRegion(int anchorX, int anchorY) {
         float w = 1200, h = 800;

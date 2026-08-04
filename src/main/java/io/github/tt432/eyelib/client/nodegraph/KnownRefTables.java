@@ -19,8 +19,8 @@ import java.util.Map;
  * <ol>
  *   <li>{@link ClientEntityManager} 全部已注册 ClientEntity 的声明表
  *       （geometry/textures/materials/animations/animation_controllers——Bedrock 原始键）；</li>
- *   <li>{@link GraphLibraryManager} 已导入实体图库中 ref 节点的有效短名
- *       （显式或派生）→ 标识符。</li>
+ *   <li>{@link GraphLibraryManager} 已导入实体图库中，主图连到 entity.root 声明端口的 ref 节点的
+ *       有效短名（显式或派生）→ 标识符（规格 D1：声明 = 连线，与组装器同范围）。</li>
  * </ol>
  */
 public final class KnownRefTables {
@@ -66,21 +66,39 @@ public final class KnownRefTables {
             if (library.kind() != GraphKind.CLIENT_ENTITY) {
                 continue;
             }
-            for (GraphData graph : library.graphs().values()) {
-                for (NodeInstance node : graph.nodes()) {
-                    String valueOption = ShortNames.valueOptionOf(node.type());
-                    if (valueOption == null) {
-                        continue;
-                    }
-                    String identifier = node.option(valueOption, NodeTypes.require(node.type()))
-                            .map(com.google.gson.JsonElement::getAsString).orElse("");
-                    if (identifier.isEmpty()) {
-                        continue;
-                    }
-                    String shortName = ShortNames.effective(node, NodeTypes.require(node.type()));
-                    if (!shortName.isEmpty()) {
-                        b.put(node.type(), shortName, identifier);
-                    }
+            GraphData main = library.graphs().get(library.main());
+            if (main == null) {
+                continue;
+            }
+            // 只收主图连到 entity.root 声明端口的 ref（规格 D1：声明 = 连线）
+            java.util.Optional<NodeInstance> root = main.nodes().stream()
+                    .filter(n -> n.type().equals("entity.root")).findFirst();
+            if (root.isEmpty()) {
+                continue;
+            }
+            java.util.Set<String> declared = new java.util.HashSet<>();
+            for (io.github.tt432.eyelib.nodegraph.Wire wire : main.wires()) {
+                if (wire.to().node().equals(root.get().uid())
+                        && NodeTypes.DECLARATION_PORTS.containsValue(wire.to().port())) {
+                    declared.add(wire.from().node());
+                }
+            }
+            for (NodeInstance node : main.nodes()) {
+                if (!declared.contains(node.uid())) {
+                    continue;
+                }
+                String valueOption = ShortNames.valueOptionOf(node.type());
+                if (valueOption == null) {
+                    continue;
+                }
+                String identifier = node.option(valueOption, NodeTypes.require(node.type()))
+                        .map(com.google.gson.JsonElement::getAsString).orElse("");
+                if (identifier.isEmpty()) {
+                    continue;
+                }
+                String shortName = ShortNames.effective(node, NodeTypes.require(node.type()));
+                if (!shortName.isEmpty()) {
+                    b.put(node.type(), shortName, identifier);
                 }
             }
         }

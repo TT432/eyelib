@@ -62,7 +62,7 @@ public final class AnimationControllerAssembler {
         JsonObject states = new JsonObject();
         Set<String> stateNames = new LinkedHashSet<>();
         List<NodeInstance> transitions = new ArrayList<>();
-        for (NodeInstance state : AssemblySupport.slotEntries(ctx.main, root.uid(), "states")) {
+        for (NodeInstance state : AssemblySupport.wiredSources(ctx.main, root.uid(), "states")) {
             String name = AssemblySupport.optionString(state, NodeTypes.AC_STATE, "name");
             if (!stateNames.add(name)) {
                 ctx.error(AssemblySupport.DUPLICATE_STATE, "状态重名：'" + name + "'（保留先者）", state.uid());
@@ -96,7 +96,7 @@ public final class AnimationControllerAssembler {
 
         // 同 short_name 后来者覆盖；先归并再发射
         Map<String, NodeInstance> animations = new LinkedHashMap<>();
-        for (NodeInstance entry : AssemblySupport.slotEntries(ctx.main, state.uid(), "animations")) {
+        for (NodeInstance entry : AssemblySupport.wiredSources(ctx.main, state.uid(), "animations")) {
             NodeInstance refNode = AssemblySupport.resolveEntryRef(ctx, entry, "ref");
             if (refNode == null) {
                 continue;
@@ -122,7 +122,7 @@ public final class AnimationControllerAssembler {
         }
 
         Map<String, NodeInstance> transitions = new LinkedHashMap<>();
-        for (NodeInstance t : AssemblySupport.slotEntries(ctx.main, state.uid(), "transitions")) {
+        for (NodeInstance t : AssemblySupport.wiredSources(ctx.main, state.uid(), "transitions")) {
             transitionsOut.add(t);
             transitions.put(AssemblySupport.optionString(t, NodeTypes.AC_TRANSITION, "target"), t);
         }

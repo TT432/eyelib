@@ -7,15 +7,12 @@ import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeType;
-import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.PortDef;
 import io.github.tt432.eyelib.nodegraph.Wire;
 import io.github.tt432.eyelib.nodegraph.codegen.CodegenResult;
 import io.github.tt432.eyelib.nodegraph.codegen.MolangGenerator;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +21,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * 组装器共享工具：组装上下文（codegen 入口 + 诊断汇总）、SLOT 条目收集、
- * 连线/内容判定、选项读取、主图可达图遍历（与 GraphValidator 的 REF_CONFLICT 收集范围一致）。
+ * 连线/内容判定、选项读取。
  */
 final class AssemblySupport {
     private AssemblySupport() {
@@ -38,6 +35,8 @@ final class AssemblySupport {
     static final String MISSING_ENTRY_REF = "MISSING_ENTRY_REF";
     /** 装配条目的引用槽连到了种类非法的节点。 */
     static final String INVALID_ENTRY_REF = "INVALID_ENTRY_REF";
+    /** entity.root 声明端口的连线源节点类型与该端口声明类别不匹配。 */
+    static final String INVALID_DECLARATION_REF = "INVALID_DECLARATION_REF";
     /** rc.root 的 arrays 选项不是合法 JSON 对象。 */
     static final String INVALID_ARRAYS = "INVALID_ARRAYS";
     /** ac.state 重名。 */
@@ -88,11 +87,11 @@ final class AssemblySupport {
         return Optional.of(roots.get(0));
     }
 
-    /** 收集连入某 SLOT 端口的条目节点（按 uid 去重，uid 字典序稳定排序）。 */
-    static List<NodeInstance> slotEntries(GraphData graph, String slotNodeUid, String slotPortId) {
+    /** 收集连入某输入端口的源节点（按 uid 去重，uid 字典序稳定排序）。 */
+    static List<NodeInstance> wiredSources(GraphData graph, String nodeUid, String portId) {
         Set<String> uids = new LinkedHashSet<>();
         for (Wire wire : graph.wires()) {
-            if (wire.to().node().equals(slotNodeUid) && wire.to().port().equals(slotPortId)) {
+            if (wire.to().node().equals(nodeUid) && wire.to().port().equals(portId)) {
                 uids.add(wire.from().node());
             }
         }
@@ -146,38 +145,6 @@ final class AssemblySupport {
     /** 取原始 JSON 选项（数值/布尔选项直接写 JSON 原始类型，不走 molang）。 */
     static JsonElement optionValue(NodeInstance node, NodeType type, String id) {
         return node.option(id, type).orElse(new JsonPrimitive(false));
-    }
-
-    /**
-     * 主图可达的全部图（含主图自身）：BFS 沿 subgraph.call 边（目标须存在且有接口），
-     * 与 {@code GraphValidator} 的 REF_CONFLICT 收集范围一致。
-     */
-    static List<GraphData> reachableGraphs(GraphLibrary library) {
-        List<GraphData> out = new ArrayList<>();
-        Set<String> visited = new LinkedHashSet<>();
-        Deque<String> queue = new ArrayDeque<>();
-        visited.add(library.main());
-        queue.add(library.main());
-        while (!queue.isEmpty()) {
-            String name = queue.poll();
-            GraphData graph = library.graphs().get(name);
-            if (graph == null) {
-                continue;
-            }
-            out.add(graph);
-            for (NodeInstance node : graph.nodes()) {
-                if (!node.type().equals("subgraph.call")) {
-                    continue;
-                }
-                String target = optionString(node, NodeTypes.SUBGRAPH_CALL, "subgraph");
-                Optional<GraphData> targetGraph = library.graph(target);
-                if (targetGraph.isPresent() && targetGraph.get().graphInterface().isPresent()
-                        && visited.add(target)) {
-                    queue.add(target);
-                }
-            }
-        }
-        return out;
     }
 
     /** 端口默认值 → molang 字面量文本（无默认时给 fallback）。 */
