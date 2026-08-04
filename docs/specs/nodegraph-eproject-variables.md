@@ -159,3 +159,21 @@ project.json：
 - 不做项目间库依赖/引用（项目内库自闭包，跨项目契约仍走有效短名派生）。
 - 不做 temp/context 变量的面板化。
 - 不做 texture 的文件夹浏览对话框（候选列表 + 自由输入足够）。
+
+## 7. 验证结果（2026-08-05）
+
+- 单测：1.20.1 / 1.21.1 全量绿（含架构门禁；新增 GraphMigrationsTest 5 项、
+  GraphVariableOpsTest 5 项、PortType VARIABLE 矩阵 2 项、EprojectIoTest 9 项、
+  验证器 SET_TARGET_NOT_VARIABLE 3 项）；26.1.2 编译绿。
+- 实机（1.20.1，EprojectSmoke2 世界）：
+  - 变量面板：新增 speed:FLOAT 经 Host 路径落库，面板行渲染（改名/类型/删按钮在位）；
+  - 保存按钮：未绑定库 → 新建文件夹项目 config/eyelib/main/（OPC 四件齐全），
+    变量与新节点形态（variable/exec.set_var）落盘；二次保存写回原项目不分叉；
+  - loadAll 回读：main/main 加载，variables 与 format_version=2 一致；
+  - 构建 + 挂载渲染：eyelib:ng_smoke_test 注入并接管猪渲染（vanilla 模型消失）；
+  - 资产下拉：SuggestionConfigurator 挂在 ref 节点选项上，候选层渲染（geometry=2969 /
+    animation=2560 / texture=10222 / material=202 / rc=972 运行时枚举）。
+- 实机（1.21.1，EpSmoke21 世界）：
+  - LDLib2 SAVE 链（notifySaved）落盘文件夹项目，二次保存无分叉；
+  - Blackboard 在位（内建变量面板），4 个资产 Selector 挂在 ref 节点；
+  - zip 形态 mainzip.eproject 加载成功（directoryForm=false，库内容完整）。
