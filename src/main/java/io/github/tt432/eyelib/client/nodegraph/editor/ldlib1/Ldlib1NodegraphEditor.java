@@ -141,7 +141,8 @@ public final class Ldlib1NodegraphEditor {
         /** 右侧侧栏（资产检查器/调试/变量）宽度。 */
         private static final int SIDE_WIDTH = 210;
 
-        private final String libraryName;
+        /** 当前库键（另存为项目后切换为新键，见 {@link #save()}）。 */
+        private String libraryName;
         private GraphLibrary library;
         private final int panelWidth;
         private final int panelHeight;
@@ -293,6 +294,8 @@ public final class Ldlib1NodegraphEditor {
             } else {
                 EprojectService.ProjectRef project =
                         EprojectService.saveAsProject(libraryName, lastKeySegment(libraryName));
+                // 另存后切换到新库键——否则二次保存会又叉出一个新项目
+                libraryName = project.libraryKeys().get(0);
                 toast("已新建项目「" + project.name() + "」并保存");
             }
             reportDiagnostics("validate", GraphValidator.validate(library));

@@ -48,10 +48,11 @@ public final class Ldlib2NodegraphEditor {
      * @param libraryName 图文档库名（{@link GraphLibraryManager} 的键）；null/空 = 新建 client_entity 库
      */
     public static void open(@Nullable String libraryName) {
-        String name;
+        // 另存为项目后库键切换（saveViaEproject 返回新键），后续保存须用新键——用单元素数组持有
+        String[] name = new String[1];
         GraphLibrary library;
         if (libraryName == null || libraryName.isEmpty()) {
-            name = freshLibraryName();
+            name[0] = freshLibraryName();
             library = newClientEntityLibrary();
         } else {
             GraphLibrary existing = GraphLibraryManager.INSTANCE.get(libraryName);
@@ -59,7 +60,7 @@ public final class Ldlib2NodegraphEditor {
                 LOGGER.warn("[nodegraph] library '{}' not found in GraphLibraryManager", libraryName);
                 return;
             }
-            name = libraryName;
+            name[0] = libraryName;
             library = existing;
         }
 
@@ -69,7 +70,7 @@ public final class Ldlib2NodegraphEditor {
 
         GraphEditorView editorView = new GraphEditorView();
         Ldlib2Workbench workbench = Ldlib2Workbench.create(library, editorView,
-                () -> normalizeAndReopen(name, graph));
+                () -> normalizeAndReopen(name[0], graph));
         editorView.loadGraph(graph, savedTag -> workbench.onPersisted(save(name, graph)));
         // 视口适配内容：导入/打开后用户必须立刻看到节点（导入布局可能离原点很远）
         editorView.graphView.fitGraphChildren(15f);
@@ -77,7 +78,7 @@ public final class Ldlib2NodegraphEditor {
         Minecraft mc = Minecraft.getInstance();
         mc.setScreen(new ModularUIScreen(
                 new ModularUI(UI.of(workbench.root()), mc.player),
-                Component.literal("Nodegraph: " + name)));
+                Component.literal("Nodegraph: " + name[0])));
     }
 
     /**
@@ -92,16 +93,16 @@ public final class Ldlib2NodegraphEditor {
             return;
         }
         GraphLibraryManager.INSTANCE.put(name, r.library());
-        saveViaEproject(name);
+        String key = saveViaEproject(name);
         EvmDiagnostics.info("规范化：已清除 " + r.changed() + " 个显式短名（派生接管）；"
                 + "注意：未导入的同包文档若引用旧短名将失效");
-        open(name);
+        open(key);
     }
 
     /** 保存：翻译入库（见下）+ eproject 写回；返回入库的库（供徽标模型重发射）。 */
-    private static GraphLibrary save(String name, EvmGraph graph) {
-        GraphLibrary library = persistToManager(name, graph);
-        saveViaEproject(name);
+    private static GraphLibrary save(String[] name, EvmGraph graph) {
+        GraphLibrary library = persistToManager(name[0], graph);
+        name[0] = saveViaEproject(name[0]);
         return library;
     }
 
@@ -118,19 +119,22 @@ public final class Ldlib2NodegraphEditor {
     /**
      * eproject 写回（规格 §2.3/§5）：库键已绑定项目 → 项目内全部库按来源形态写回；
      * 未绑定（资源包/内存导入/新建库）→ 以库键末段为名就地新建文件夹形态项目。
+     *
+     * @return 生效库键（另存后为新键，调用方须切换后续操作用键）
      */
-    private static void saveViaEproject(String libraryKey) {
+    private static String saveViaEproject(String libraryKey) {
         Optional<EprojectService.ProjectRef> bound = EprojectService.projectOf(libraryKey);
         if (bound.isPresent()) {
             boolean ok = EprojectService.saveProjectOf(libraryKey);
             EvmDiagnostics.info(ok
                     ? "已保存项目 " + bound.get().name()
                     : "项目保存失败（详见日志）");
-            return;
+            return libraryKey;
         }
         String projectName = libraryKey.substring(libraryKey.lastIndexOf('/') + 1);
         EprojectService.ProjectRef created = EprojectService.saveAsProject(libraryKey, projectName);
         EvmDiagnostics.info("已新建项目 " + created.name() + " 并保存（" + created.path() + "）");
+        return created.libraryKeys().get(0);
     }
 
     /** 新建库的占位名：untitled / untitled_2 / …（取注册表中未占用的第一个）。 */
