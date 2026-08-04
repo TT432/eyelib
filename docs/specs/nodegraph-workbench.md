@@ -110,6 +110,23 @@ molang 字符串 → MolangAst（现有手写解析器）→ 图 IR：
   EvmInlinePortFields 嵌入（NodeWidget 无布局管理处，ports 组的 HORIZONTAL 布局会
   把直挂子件重排出节点外——挂载点必须避开布局管理组）。
 
+2026-08-04 修复批次（用户实测报告）：
+- 验证器删除 LOOSE_TYPE 检查：molang 是动态类型语言，ANY 是温度/compare/ref 等端口的
+  常态，「ANY 参与即警告」在导入时产生数百条警告刷屏（聊天栏+日志），用户视同导入损坏。
+  真类型不兼容仍由 TYPE_MISMATCH（ERROR）覆盖。诊断聊天栏输出封顶：汇总行 + 前 10 条
+  + 余量提示（日志始终全量，两版编辑器同）。
+- 画布网格改程序化 LOD（GridLodRenderer）：LDLib1 固定 50 单位线（缩时糊成灰霉）、
+  LDLib2 固定 grid_bg 平铺纹理（缩时摩尔纹/竖条纹、放大时圆点糊成方块）。新实现世界
+  锚定间距按 2 幂升档（屏幕间距恒 ≥14px）、线宽恒 1px、每 8 格一条主线。ldlib1 挂在
+  FreeGraphView 子层（setDrawGrid(false) 替代）；ldlib2 替换 GraphViewStyle.gridTexture
+  （非 SpriteTexture 时 textureScale=1，draw 得纯世界坐标）。26.1 纹理走渲染器注册表，
+  暂不接线（保留默认网格）。
+- 模型预览（ref.geometry）：无纹理时纯色块+逐面漫反射明暗（ POSITION_COLOR + 顶点色烘焙，
+  取代紫黑 missing texture）；交互=左拖轨道球旋转/右拖平移/滚轮缩放/双击重置
+  （PreviewViewState per 节点持有，widget 重建不丢）。有纹理路径零变化。
+- short_name 字段：普通字段始终显示有效短名（底层空=自动派生随 identifier 刷新），
+  去除「高级·留空=派生」 jargon 与折叠组。
+
 1. ~~导入 vanilla `minecraft:zombie`（ClientEntity）→ 图结构完整（root+refs+scripts），~~
    ~~未修改直接 build → 注入后实体渲染与原版一致（语义等价）。~~
    **已验证（2026-08-03，1.20.1 冒烟）**：导入 zombie→952 节点/862 连线/153 变量/24 便签，

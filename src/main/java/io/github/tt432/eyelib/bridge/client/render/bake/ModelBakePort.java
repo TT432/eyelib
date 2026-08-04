@@ -44,6 +44,11 @@ public interface ModelBakePort {
     static void twoSideDrawGuiPreview(BakedModel baked, org.joml.Matrix4f pose, ResourceLocation texture) {
         TwoSideModelBakeInfo.INSTANCE.drawGuiPreview(baked, pose, texture);
     }
+
+    /** GUI 预览纯色绘制（无纹理路径：position_color + 逐面漫反射明暗烘顶点色）。 */
+    static void twoSideDrawGuiPreviewFlat(BakedModel baked, org.joml.Matrix4f pose) {
+        TwoSideModelBakeInfo.INSTANCE.drawGuiPreviewFlat(baked, pose);
+    }
     //?} else {
     static BakedModel twoSideGetBakedModel(Model model, boolean isSolid, Identifier texture) {
         return TwoSideModelBakeInfo.INSTANCE.getBakedModel(model, isSolid, texture);

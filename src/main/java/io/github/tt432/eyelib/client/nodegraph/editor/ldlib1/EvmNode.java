@@ -15,10 +15,9 @@ import com.lowdragmc.lowdraglib.gui.editor.configurator.StringConfigurator;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.WrapperConfigurator;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.annotation.CustomPortBehavior;
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
-import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
-import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import io.github.tt432.eyelib.client.nodegraph.AssetSuggestions;
 import io.github.tt432.eyelib.client.nodegraph.preview.NodeAssetPreview;
+import io.github.tt432.eyelib.client.nodegraph.preview.PreviewViewState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -79,6 +78,8 @@ public class EvmNode extends BaseNode {
     public final transient NodeType.SubgraphResolver resolver;
     /** 选项变更后的 widget 刷新钩子（由 EvmGraphViewWidget 装配；不序列化）。 */
     public transient @Nullable Runnable uiRefresh;
+    /** ref 预览的交互视角（节点级持有，预览 widget 随选项变更重建时不丢；不序列化）。 */
+    public final transient PreviewViewState previewViewState = new PreviewViewState();
 
     public EvmNode(String nodeTypeId, NodeType.SubgraphResolver resolver) {
         this.nodeTypeId = nodeTypeId;
@@ -169,10 +170,13 @@ public class EvmNode extends BaseNode {
                         font.width(textOf(constants.getOrDefault(def.id(), def.defaultValue().get()))) + 12, 140));
                 need = Math.max(need, 18 + font.width(def.id()) + 4 + valueW + 28);
             }
-            // 选项行：label + 当前值全显（不滚动）
+            // 选项行：label + 当前值全显（不滚动）；short_name 按有效短名量宽（自动生成值也占宽）
             for (NodeOptionDef option : type.options()) {
-                JsonElement value = options.getOrDefault(option.id(), option.defaultValue());
-                int valueW = Math.max(40, Math.min(font.width(textOf(value)) + 12, 160));
+                String text = ShortNames.SHORT_NAME_OPTION.equals(option.id())
+                        && ShortNames.valueOptionOf(nodeTypeId) != null
+                        ? effectiveShortName()
+                        : textOf(options.getOrDefault(option.id(), option.defaultValue()));
+                int valueW = Math.max(40, Math.min(font.width(text) + 12, 160));
                 need = Math.max(need, font.width(option.id()) + 8 + valueW + 12);
             }
         }
@@ -205,28 +209,14 @@ public class EvmNode extends BaseNode {
     public void buildConfigurator(ConfiguratorGroup father) {
         NodeType type = nodeType();
         if (type == null) return;
-        boolean isRef = ShortNames.valueOptionOf(nodeTypeId) != null;
         for (NodeOptionDef option : type.options()) {
-            // ref 节点的 short_name 收进「高级」区（规格 D8：默认派生，覆盖是逃生舱）
-            if (isRef && ShortNames.SHORT_NAME_OPTION.equals(option.id())) continue;
             buildOptionConfigurator(father, option);
         }
         if (type == NodeTypes.REF_GEOMETRY || type == NodeTypes.REF_TEXTURE) {
-            father.addConfigurators(new WrapperConfigurator("preview", new ImageWidget(0, 0, PREVIEW_SIZE, PREVIEW_SIZE,
-                    (IGuiTexture) (graphics, mouseX, mouseY, x, y, w, h) -> drawRefPreview(graphics, x, y, w, h))));
-        }
-        if (isRef) {
-            // 有效短名只读展示（选项变更 → reloadWidget → 此处重建刷新）
-            String effective = ShortNames.effective(selfInstance(), type);
-            ConfiguratorGroup advanced = new ConfiguratorGroup("高级", true);
-            advanced.addConfigurators(new WrapperConfigurator("有效短名",
-                    new LabelWidget(0, 3, effective.isEmpty() ? "(空——构建将报错)" : effective)));
-            for (NodeOptionDef option : type.options()) {
-                if (ShortNames.SHORT_NAME_OPTION.equals(option.id())) {
-                    buildOptionConfigurator(advanced, option);
-                }
-            }
-            father.addConfigurators(advanced);
+            father.addConfigurators(new WrapperConfigurator("preview",
+                    new RefPreviewWidget(0, 0, PREVIEW_SIZE,
+                            (IGuiTexture) (graphics, mouseX, mouseY, x, y, w, h) -> drawRefPreview(graphics, x, y, w, h),
+                            previewViewState, type == NodeTypes.REF_GEOMETRY)));
         }
     }
 
@@ -257,7 +247,7 @@ public class EvmNode extends BaseNode {
             if (handle == null) {
                 drawNotFound(graphics, x, y, w, h);
             } else {
-                NodeAssetPreview.renderModel(handle, graphics, x, y, w, h, 0f);
+                NodeAssetPreview.renderModel(handle, graphics, x, y, w, h, 0f, previewViewState);
             }
         }
     }
@@ -281,6 +271,14 @@ public class EvmNode extends BaseNode {
 
     private void buildOptionConfigurator(ConfiguratorGroup father, NodeOptionDef option) {
         String id = option.id();
+        // ref 节点的 short_name：绑定有效短名而非底层选项——底层空时字段显示自动生成的
+        // 派生值（forceUpdate 每帧拉取，identifier 改动即时跟随，且不触发短名自身变更事件）；
+        // 用户清空即回自动模式（domain 语义不变：空 = 派生，见 ShortNames.effective）。
+        if (ShortNames.SHORT_NAME_OPTION.equals(id) && ShortNames.valueOptionOf(nodeTypeId) != null) {
+            father.addConfigurators(new StringConfigurator(
+                    id, this::effectiveShortName, this::writeShortName, "", true));
+            return;
+        }
         JsonElement current = options.getOrDefault(id, option.defaultValue());
         switch (option.type()) {
             case STRING, TEXT, IDENTIFIER -> {
@@ -316,6 +314,22 @@ public class EvmNode extends BaseNode {
 
     private void setOption(String id, JsonElement value) {
         options.put(id, value);
+        refreshDynamicPorts();
+    }
+
+    /** ref 节点的有效短名（domain {@link ShortNames#effective} 的画布投影；显式非空 ? 显式 : 派生）。 */
+    private String effectiveShortName() {
+        NodeType type = nodeType();
+        return type == null ? "" : ShortNames.effective(selfInstance(), type);
+    }
+
+    /** 写 short_name：空串 = 移除显式值（回自动生成），非空 = 显式覆盖。 */
+    private void writeShortName(String value) {
+        if (value.isEmpty()) {
+            options.remove(ShortNames.SHORT_NAME_OPTION);
+        } else {
+            options.put(ShortNames.SHORT_NAME_OPTION, new JsonPrimitive(value));
+        }
         refreshDynamicPorts();
     }
 

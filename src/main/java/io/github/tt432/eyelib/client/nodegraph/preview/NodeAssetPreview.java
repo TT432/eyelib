@@ -32,7 +32,8 @@ import org.jspecify.annotations.Nullable;
  * {@code TextureManagerMixin} 以此接入原版纹理加载），再查原版资源管理器。
  *
  * <p>模型解析：{@link ModelManager} 以 geometry identifier 为键。几何不绑定纹理，
- * 预览纹理固定用 MC missing texture（紫黑棋盘，明示「未绑定纹理」）。
+ * 预览纹理借用声明该 geometry 的 ClientEntity 纹理；借不到（或资源缺失）时走
+ * 纯色 + 逐面明暗路径（不再是紫黑 missing texture 块，见 {@link #hasUsableTexture}）。
  *
  * <p>{@link #renderModel} 仅 &lt;26.1 存在：26.1 的 GUI 渲染路径（GuiGraphics →
  * GuiGraphicsExtractor）未迁移（{@code ModelPreviewScreen.renderModelInViewport} 同为
@@ -82,7 +83,7 @@ public final class NodeAssetPreview {
         return new ModelHandle(model, resolveAtlasTexture(geometryIdentifier.strip()));
     }
 
-    /** 几何 → 预览纹理解析（借声明该 geometry 的 ClientEntity 纹理；无则 missing）。 */
+    /** 几何 → 预览纹理解析（借声明该 geometry 的 ClientEntity 纹理；无则 missing 标记）。 */
     public static String resolveAtlasTexture(String geometryIdentifier) {
         String best = null;
         for (var entry : io.github.tt432.eyelib.client.manager.ClientEntityManager.INSTANCE.all().entrySet()) {
@@ -110,9 +111,24 @@ public final class NodeAssetPreview {
         return port.namespace() + ":" + texturePath;
     }
 
+    /**
+     * 预览纹理是否真实可渲染：missing 标记 / 空白 / 资源不存在（addon 注册表与原版
+     * 资源管理器都查不到，即绑定会落 missingno 紫黑块）→ false，调用方改走纯色明暗路径。
+     * 判定复用现有纹理解析结果，不新增配置项。
+     */
+    public static boolean hasUsableTexture(String textureId) {
+        if (textureId.isBlank() || MISSING_TEXTURE_ID.equals(textureId.strip())) return false;
+        PortResourceLocation port = PortResourceLocation.parse(textureId.strip());
+        // addon 纹理以无命名空间相对路径为键（同 resolveTexture）
+        if (AddonTextureRegistry.get(port.path()) != null) return true;
+        return Minecraft.getInstance().getResourceManager().getResource(ResourceLocationBridge.toMc(port)).isPresent();
+    }
+
     //? if <26.1 {
     /**
-     * 模型预览渲染（仅 <26.1）：包围盒自动取景、正面 30° 倾斜、全图适配缩放。
+     * 模型预览渲染（仅 <26.1）：包围盒自动取景；未交互时正面 30° 倾斜、全图适配缩放，
+     * 用户交互后以 {@link PreviewViewState} 的视角为准（左拖旋转 / 右拖平移 / 滚轮缩放）。
+     * 无可用纹理时渲染为纯色 + 逐面明暗（bridge 的 position_color 路径）。
      *
      * <p>实现要点（1.20.1 GUI 上下文实证）：
      * <<<
@@ -124,7 +140,8 @@ public final class NodeAssetPreview {
      * 不做 enableScissor：LDLib 画布坐标经 pose 变换才落屏，GuiGraphics.enableScissor
      * 直接把入参当屏幕坐标，在画布内必然剪错；预览区固定、溢出容忍。
      */
-    public static void renderModel(ModelHandle handle, GuiGraphics gfx, int x, int y, int w, int h, float partialTick) {
+    public static void renderModel(ModelHandle handle, GuiGraphics gfx, int x, int y, int w, int h, float partialTick,
+                                   @Nullable PreviewViewState view) {
         // 不用 enableScissor：LDLib 画布坐标经 pose 的 zoom/pan 变换才落到屏幕坐标，
         // 而 GuiGraphics.enableScissor 直接把入参当屏幕坐标缩放——在画布内会剪出错误区域
         // （顶点经 pose 正确落屏，却被错误剪刀矩形整批裁掉——这正是预览零像素的根因）。
@@ -159,15 +176,29 @@ public final class NodeAssetPreview {
         float scale = 0.8f * Math.min(w / sizeX, h / sizeY);
         float cx = (minX + maxX) / 2f, cy = (minY + maxY) / 2f, cz = (minZ + maxZ) / 2f;
 
-        poseStack.translate(x + w / 2.0f, y + h / 2.0f, 100.0f);
-        poseStack.scale(scale, -scale, scale);
-        poseStack.mulPose(Axis.XP.rotationDegrees(30));
+        // 交互视角：pan 加在控件中心上（屏幕平面平移），zoom 乘在自动取景基准上（锚 = 中心 + pan）
+        float panX = view == null ? 0 : view.panX, panY = view == null ? 0 : view.panY;
+        float zoom = view == null ? 1f : view.zoom;
+        poseStack.translate(x + w / 2.0f + panX, y + h / 2.0f + panY, 100.0f);
+        poseStack.scale(scale * zoom, -scale * zoom, scale * zoom);
+        if (view != null && view.interacted) {
+            // 用户接管视角：轨道球（先 yaw 绕模型 Y，再 pitch 绕视图 X）
+            poseStack.mulPose(Axis.XP.rotationDegrees(view.pitch));
+            poseStack.mulPose(Axis.YP.rotationDegrees(view.yaw));
+        } else {
+            poseStack.mulPose(Axis.XP.rotationDegrees(30));
+        }
         poseStack.translate(-cx, -cy, -cz);
 
         // 与 GuiGraphics.innerBlit 同款机制：Tesselator + position_tex 直接 drawWithShader（bridge 实现）。
         // 这是该 GUI 上下文实证可用的唯一路径（blit 也走它）；bufferSource 批次在此上下文零像素。
         try {
-            ModelBakePort.twoSideDrawGuiPreview(baked, poseStack.last().pose(), texture);
+            if (hasUsableTexture(handle.atlasTextureId())) {
+                ModelBakePort.twoSideDrawGuiPreview(baked, poseStack.last().pose(), texture);
+            } else {
+                // 无纹理：纯色 + 逐面明暗（不再是紫黑 missing texture 块）
+                ModelBakePort.twoSideDrawGuiPreviewFlat(baked, poseStack.last().pose());
+            }
         } catch (Exception e) {
             // 预览渲染失败不崩编辑器，但要能看见原因（调试后改为 debug 级）
             org.slf4j.LoggerFactory.getLogger(NodeAssetPreview.class).warn("[nodegraph] model preview render failed", e);
@@ -180,7 +211,8 @@ public final class NodeAssetPreview {
      * 可预览模型句柄。
      *
      * @param model          解析到的模型
-     * @param atlasTextureId 预览纹理 id（几何不绑纹理，固定 missing texture）
+     * @param atlasTextureId 预览纹理 id（几何不绑纹理，借 ClientEntity 纹理；
+     *                       无借用对象时为 missing 标记，渲染走纯色明暗路径）
      */
     public record ModelHandle(Model model, String atlasTextureId) {
     }

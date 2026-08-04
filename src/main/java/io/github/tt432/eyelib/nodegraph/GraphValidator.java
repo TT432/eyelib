@@ -36,7 +36,6 @@ public final class GraphValidator {
     public static final String UNKNOWN_WIRE_ENDPOINT = "UNKNOWN_WIRE_ENDPOINT";
     public static final String WIRE_DIRECTION = "WIRE_DIRECTION";
     public static final String TYPE_MISMATCH = "TYPE_MISMATCH";
-    public static final String LOOSE_TYPE = "LOOSE_TYPE";
     public static final String DUPLICATE_INPUT = "DUPLICATE_INPUT";
     public static final String EXEC_FANOUT = "EXEC_FANOUT";
     public static final String CYCLE = "CYCLE";
@@ -372,14 +371,6 @@ public final class GraphValidator {
             if (!fromType.isAssignableTo(toType)) {
                 out.add(Diagnostic.error(TYPE_MISMATCH,
                         "类型不兼容：" + wire.from() + "（" + fromType + "）→ " + wire.to() + "（" + toType + "）",
-                        wire.to().node()));
-            }
-            // 检查 6：弱类型（ANY 参与，EXEC/SLOT 除外）
-            if ((fromType == PortType.ANY || toType == PortType.ANY)
-                    && fromType != PortType.EXEC && toType != PortType.EXEC
-                    && fromType != PortType.SLOT && toType != PortType.SLOT) {
-                out.add(Diagnostic.warning(LOOSE_TYPE,
-                        "弱类型连接（ANY 参与）：" + wire.from() + "（" + fromType + "）→ " + wire.to() + "（" + toType + "）",
                         wire.to().node()));
             }
             // 检查 10：SLOT 装配白名单

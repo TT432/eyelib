@@ -156,19 +156,6 @@ class GraphValidatorTest {
         assertTrue(hasCode(diags, GraphValidator.TYPE_MISMATCH));
     }
 
-    // ---------- 6 LOOSE_TYPE (WARNING) ----------
-
-    @Test
-    void looseTypeWarning() {
-        // ANY 产出（context.get）接 FLOAT 输入 → 宽松告警
-        List<Diagnostic> diags = validateGraph(graph(
-                List.of(node("v", "context.get"), node("r", "entity.root")),
-                List.of(wire("v", "out", "r", "scale"))));
-        List<Diagnostic> loose = byCode(diags, GraphValidator.LOOSE_TYPE);
-        assertEquals(1, loose.size());
-        assertEquals(Diagnostic.Severity.WARNING, loose.get(0).severity());
-    }
-
     // ---------- 7 DUPLICATE_INPUT ----------
 
     @Test

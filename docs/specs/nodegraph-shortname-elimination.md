@@ -80,7 +80,7 @@ sanitize(s):
 
 ### D3 显式覆盖（逃生舱）
 
-- ref 节点保留 `short_name` 选项，**默认空 = 派生**；非空 = 显式覆盖（高级区，编辑器默认折叠）。
+- ref 节点保留 `short_name` 选项，**默认空 = 派生**；非空 = 显式覆盖（编辑器字段始终显示有效短名）。
 - 覆盖场景：外部文档互操作（vanilla RC）、模型 texture_meshes/per-bone material 名（F8）、
   导入保留（D4）。
 - 覆盖值同样过 sanitize 校验（F9），非法 → 验证错误。
@@ -129,8 +129,8 @@ sanitize(s):
 
 ### D8 编辑器
 
-- ref 节点：标识符字段为主（现有预览不变）；`short_name` 收入**高级区默认折叠**，
-  空时 placeholder 实时显示派生值（`derive(...)` 预览）。两版编辑器同。
+- ref 节点：标识符字段为主（现有预览不变）；`short_name` 为普通字段，**始终显示有效短名**
+  （底层空 = 自动派生并随 identifier 即时刷新，用户可输入覆盖、清空恢复自动）。两版编辑器同。
 - 图库级「规范化短名」按钮（D4）：一键清显式覆盖。
 - 资产检查器（W1）对 ref 节点的「跳转资产定义」以标识符为准（现状已是）。
 
@@ -154,7 +154,7 @@ sanitize(s):
 |---|---|---|
 | P1 | domain：`ShortNames` 纯函数 + ref 节点选项语义变更（short_name 默认空）+ codegen EmitSession 有效短名 + 三个 assembler 有效短名/D2 别名/D6 表归属 + D5 验证器 | 单测：派生函数矩阵、碰撞检测、别名规则、ref.ac→animations、往返 |
 | P2 | decompiler：D4 保留/跨文档关联 + 规范化动作（domain 纯函数 `normalize(GraphLibrary)`） | 单测：悦灵全量导入→规范化→重组装，表键全派生化；RC+实体同批导入标识符补全 |
-| P3 | 编辑器两版：高级区折叠 + 派生 placeholder + 规范化按钮 | 客户端截图验证 |
+| P3 | 编辑器两版：short_name 有效值字段（自动生成+可覆盖）+ 规范化按钮 | 客户端截图验证 |
 | P4 | client：D7 运行时小修 + D9 构建警告 + NodegraphBuildService 诊断透传 | 悦灵规范化重建 → 渲染截图对比（应无变化） |
 | P5 | 文档：本规格状态→已批准、ADR-0023、nodegraph-visual-molang.md §2.5/2.6 修订 | — |
 

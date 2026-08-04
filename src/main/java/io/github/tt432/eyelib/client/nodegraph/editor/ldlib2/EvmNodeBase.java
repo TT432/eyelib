@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.client.nodegraph.editor.ldlib2;
 import com.lowdragmc.lowdraglib2.configurator.IConfigurable;
 import com.lowdragmc.lowdraglib2.configurator.ui.SelectorConfigurator;
 import com.lowdragmc.lowdraglib2.configurator.ui.StringConfigurator;
-import com.lowdragmc.lowdraglib2.gui.ui.data.Tooltips;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.INodeOption;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.Node;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.port.IPort;
@@ -15,6 +14,7 @@ import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.PortModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.definition.IOptionDefinitionContext;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.definition.IPortDefinitionContext;
 import io.github.tt432.eyelib.client.nodegraph.AssetSuggestions;
+import io.github.tt432.eyelib.client.nodegraph.preview.PreviewViewState;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeOptionDef;
 import io.github.tt432.eyelib.nodegraph.NodeType;
@@ -42,6 +42,14 @@ public abstract class EvmNodeBase extends Node {
 
     /** domain 节点类型（目录条目）。 */
     public abstract NodeType type();
+
+    /** ref 预览的交互视角（节点级持有，预览元素重建不丢；不序列化）。 */
+    private final PreviewViewState previewViewState = new PreviewViewState();
+
+    /** ref 预览的交互视角（{@link EvmRefPreviewElement} 使用）。 */
+    public PreviewViewState previewViewState() {
+        return previewViewState;
+    }
 
     /** 本节点所在的 EvmGraph（经 nodeModel → graphModel → graph 链）。 */
     protected @Nullable EvmGraph evmGraph() {
@@ -79,15 +87,11 @@ public abstract class EvmNodeBase extends Node {
         boolean isRef = ShortNames.valueOptionOf(type().id()) != null;
         for (NodeOptionDef def : type().options()) {
             var builder = context.addOption(def.id(), EvmValues.optionJavaType(def.type()))
-                    .withDefaultValue(EvmValues.optionDefault(def));
+                    .withDefaultValue(EvmValues.optionDefault(def))
+                    .withDisplayName(Component.literal(def.id()));
+            // ref 节点的 short_name：绑定有效短名而非底层选项（见 shortNameBinding）
             if (isRef && ShortNames.SHORT_NAME_OPTION.equals(def.id())) {
-                // 规格 D8：短名是高级逃生舱，默认派生；tooltip 实时显示当前有效短名
-                String effective = ShortNames.effective(currentInstanceView(), type());
-                builder.withDisplayName(Component.literal("short_name（高级·留空=派生）"))
-                        .withTooltips(Tooltips.of("外部契约短名覆盖；当前有效短名: "
-                                + (effective.isEmpty() ? "(空——构建将报错)" : effective)));
-            } else {
-                builder.withDisplayName(Component.literal(def.id()));
+                builder.withConfigurable(shortNameBinding());
             }
             // 规格 §4.2：带 suggestionKey 的字符串选项挂资产候选下拉
             if (def.suggestionKey().isPresent()
@@ -95,6 +99,37 @@ public abstract class EvmNodeBase extends Node {
                 builder.withConfigurable(assetSuggestions(def.suggestionKey().get()));
             }
         }
+    }
+
+    /**
+     * ref 节点 short_name 的自定义绑定：字段始终显示有效短名——底层空时显示自动生成的
+     * 派生值（forceUpdate 每帧拉取 → identifier 改动即时跟随，且不触发短名自身变更事件）；
+     * 用户编辑写显式值，清空（空串 = 底层默认）即回自动模式
+     * （domain 语义不变：空 = 派生，见 {@link ShortNames#effective}）。
+     */
+    private ITypeConfigurable shortNameBinding() {
+        return (valueConfigurable, typeHandle) -> IConfigurable.create(father ->
+                father.addConfigurator(new StringConfigurator("",
+                        this::effectiveShortName, valueConfigurable::setValue,
+                        "", valueConfigurable.forceUpdate())));
+    }
+
+    /** 当前有效短名：显式 short_name 非空 ? 显式值 : 对标识符选项派生（{@link ShortNames#derive}）。 */
+    private String effectiveShortName() {
+        String explicit = java.util.Objects.toString(readStringOption(ShortNames.SHORT_NAME_OPTION), "");
+        if (!explicit.isEmpty()) {
+            return explicit;
+        }
+        String valueOption = ShortNames.valueOptionOf(type().id());
+        return valueOption == null ? ""
+                : ShortNames.derive(java.util.Objects.toString(readStringOption(valueOption), ""));
+    }
+
+    /** 读字符串选项当前值（未设/缺失 → null）。 */
+    private @Nullable String readStringOption(String id) {
+        INodeOption option = getNodeOptionById(id);
+        if (option == null) return null;
+        return option.<String>tryGetValue(String.class).result().orElse(null);
     }
 
     /**

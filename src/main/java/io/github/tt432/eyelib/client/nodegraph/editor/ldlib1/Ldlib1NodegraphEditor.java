@@ -381,13 +381,13 @@ public final class Ldlib1NodegraphEditor {
             syncCanvasToLibrary();
             ShortNameOps.RewriteResult r = ShortNameOps.normalize(library);
             if (r.changed() == 0) {
-                chat("[nodegraph] 无显式短名可清除（已是派生状态）");
+                chat("[nodegraph] 没有自定义短名可清除（全部短名均为自动生成）");
                 return;
             }
             library = r.library();
             GraphLibraryManager.INSTANCE.put(libraryName, library);
             rebuildView();
-            chat("[nodegraph] 规范化：已清除 " + r.changed() + " 个显式短名（派生接管）；"
+            chat("[nodegraph] 规范化：已清除 " + r.changed() + " 个自定义短名（恢复自动生成）；"
                     + "注意：未导入的同包文档若引用旧短名将失效");
         }
 

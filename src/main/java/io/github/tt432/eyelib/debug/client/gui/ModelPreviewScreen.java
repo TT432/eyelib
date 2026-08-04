@@ -192,13 +192,18 @@ public class ModelPreviewScreen extends ModalWorksurfaceScreen {
             // 与 NodeAssetPreview.renderModel 同款：Tesselator + position_tex 直接 drawWithShader。
             // 旧路径（bufferSource 批渲染 entitySolid + DFSModel.visit）在本上下文零像素——
             // 顶点经 pose 正确落屏但被批次状态/剪刀问题整批裁掉（见 ADR-0021 相关排查记录）。
-            ResourceLocation texture = ResourceLocationBridge.parseMc(
-                    currentModel.atlasTexture() != null
-                            ? currentModel.atlasTexture().id()
-                            : io.github.tt432.eyelib.client.nodegraph.preview.NodeAssetPreview
-                                    .resolveAtlasTexture(currentModel.model().name()));
+            String atlasId = currentModel.atlasTexture() != null
+                    ? currentModel.atlasTexture().id()
+                    : io.github.tt432.eyelib.client.nodegraph.preview.NodeAssetPreview
+                            .resolveAtlasTexture(currentModel.model().name());
             try {
-                ModelBakePort.twoSideDrawGuiPreview(bakedModel, poseStack.last().pose(), texture);
+                if (io.github.tt432.eyelib.client.nodegraph.preview.NodeAssetPreview.hasUsableTexture(atlasId)) {
+                    ModelBakePort.twoSideDrawGuiPreview(bakedModel, poseStack.last().pose(),
+                            ResourceLocationBridge.parseMc(atlasId));
+                } else {
+                    // 无纹理：纯色 + 逐面明暗（不再是紫黑 missing texture 块）
+                    ModelBakePort.twoSideDrawGuiPreviewFlat(bakedModel, poseStack.last().pose());
+                }
             } catch (Exception e) {
                 e.printStackTrace(); // Log rendering errors but don't crash screen
             }

@@ -7,7 +7,12 @@ import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.DebugPanelWidget;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.GraphViewWidget;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.NodeWidget;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.ParameterPanelWidget;
+import com.lowdragmc.lowdraglib.gui.widget.FreeGraphView;
+import com.lowdragmc.lowdraglib.gui.widget.Widget;
+import io.github.tt432.eyelib.client.nodegraph.workbench.GridLodRenderer;
 import java.util.ArrayList;
+import net.minecraft.client.gui.GuiGraphics;
+import org.jspecify.annotations.Nullable;
 
 /**
  * EVM 画布：在 GraphViewWidget 之上做四件事——
@@ -41,6 +46,33 @@ public class EvmGraphViewWidget extends GraphViewWidget {
         // LDLib 参数面板（ParameterPanelWidget）只读且无增删，由工作台变量面板
         // （VariablesPanel，规格 §3.2）取代——整体移除，避免两套变量入口并存
         widgets.stream().filter(ParameterPanelWidget.class::isInstance).findFirst().ifPresent(this::removeWidget);
+        // LOD 网格：关闭 LDLib 固定 50 单位网格（缩小时线宽亚像素锯齿/糊成灰霾，
+        // 用户实测报告），改挂程序化 LOD 网格层（GridLodRenderer，间距按 2 幂升档、
+        // 线宽恒 1 物理 px），挂在所有节点之下（index 0）
+        getFreeGraphView().setDrawGrid(false);
+        gridLayer = new GridLayer();
+        getFreeGraphView().addWidget(0, gridLayer);
+    }
+
+    /** LOD 网格层（超类构造触发 loadGraph 时尚未创建，故可空并在 loadGraph 中判空）。 */
+    private @Nullable GridLayer gridLayer;
+
+    /** LOD 网格绘制层：零尺寸（不参与命中），在 FreeGraphView 视图坐标系内绘制，挂在节点之下。 */
+    private final class GridLayer extends Widget {
+        GridLayer() {
+            super(0, 0, 0, 0);
+        }
+
+        @Override
+        public void drawInBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+            FreeGraphView fgv = getFreeGraphView();
+            float scale = fgv.getScale();
+            if (scale <= 0) {
+                return;
+            }
+            GridLodRenderer.draw(graphics, fgv.getXOffset(), fgv.getYOffset(),
+                    fgv.getSizeWidth() / scale, fgv.getSizeHeight() / scale, 50f);
+        }
     }
 
     @Override
@@ -51,6 +83,10 @@ public class EvmGraphViewWidget extends GraphViewWidget {
     @Override
     public void loadGraph() {
         super.loadGraph();
+        // loadGraph 会 clearAllWidgets 后重挂节点，把网格层重新压回所有节点之下
+        if (gridLayer != null) {
+            getFreeGraphView().addWidget(0, gridLayer);
+        }
         replaceWithEvmNodeWidgets();
         wireRefreshHooks();
     }
@@ -100,6 +136,53 @@ public class EvmGraphViewWidget extends GraphViewWidget {
                 }
             };
         }
+    }
+
+    // ---------- ref 预览的右键平移委托 ----------
+    // GraphViewWidget.mouseClicked 在子控件之前拦截右键做框选，预览控件永远收不到右键；
+    // 这里在命中 ref 预览控件时优先把整段右键手势（按下/拖动/抬起）委托给它，
+    // 跳过画布框选（含 mouseDragged 里无条件置位的 isDraggingArea，否则拖出蓝色框选残影）。
+    // 命中检测用画布视图坐标（freeGraphView 的子控件都在视图坐标系）。
+
+    /** 正在平移视角的预览控件（一段右键手势期间非空）。 */
+    private @Nullable RefPreviewWidget panningPreview;
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 1 && isMouseOverElement(mouseX, mouseY)) {
+            var viewMouse = getFreeGraphView().getViewPosition((float) mouseX, (float) mouseY);
+            if (getFreeGraphView().getHoverElement(viewMouse.x, viewMouse.y) instanceof RefPreviewWidget preview
+                    && preview.isInteractive()) {
+                panningPreview = preview;
+                preview.beginPanFromGraph();
+                return true;
+            }
+        }
+        // 新手势开始：清掉可能残留的委托（如上次 mouseReleased 未到达）
+        panningPreview = null;
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (panningPreview != null && button == 1) {
+            // 换算成画布视图坐标增量（同 FreeGraphView.mouseDragged 对子控件的换算），平移与光标 1:1
+            float scale = getFreeGraphView().getScale();
+            panningPreview.panDragFromGraph(dragX / scale, dragY / scale);
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (panningPreview != null) {
+            RefPreviewWidget preview = panningPreview;
+            panningPreview = null;
+            preview.endPanFromGraph();
+            return true;
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
     }
 }
 //?}

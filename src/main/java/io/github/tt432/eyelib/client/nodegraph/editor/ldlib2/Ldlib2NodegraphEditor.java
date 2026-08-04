@@ -69,6 +69,12 @@ public final class Ldlib2NodegraphEditor {
         EvmDiagnostics.report(openDiags);
 
         GraphEditorView editorView = new GraphEditorView();
+        //? if <26.1 {
+        // LOD 网格：替换默认 grid_bg 平铺纹理（缩小时摩尔纹/竖条纹，放大时糊成方块）。
+        // 26.1 纹理渲染走 gui_texture_renderer 注册表，不接线（保留默认网格）。
+        editorView.graphView.graphView.graphViewStyle(style ->
+                style.gridTexture(new LodGridTexture(style.gridSize())));
+        //?}
         Ldlib2Workbench workbench = Ldlib2Workbench.create(library, editorView,
                 () -> normalizeAndReopen(name[0], graph));
         editorView.loadGraph(graph, savedTag -> workbench.onPersisted(save(name, graph)));
@@ -89,12 +95,12 @@ public final class Ldlib2NodegraphEditor {
         GraphLibrary persisted = persistToManager(name, graph);
         ShortNameOps.RewriteResult r = ShortNameOps.normalize(persisted);
         if (r.changed() == 0) {
-            EvmDiagnostics.info("无显式短名可清除（已是派生状态）");
+            EvmDiagnostics.info("没有自定义短名可清除（全部短名均为自动生成）");
             return;
         }
         GraphLibraryManager.INSTANCE.put(name, r.library());
         String key = saveViaEproject(name);
-        EvmDiagnostics.info("规范化：已清除 " + r.changed() + " 个显式短名（派生接管）；"
+        EvmDiagnostics.info("规范化：已清除 " + r.changed() + " 个自定义短名（恢复自动生成）；"
                 + "注意：未导入的同包文档若引用旧短名将失效");
         open(key);
     }

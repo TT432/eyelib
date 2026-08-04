@@ -215,6 +215,16 @@ org.apache.logging.log4j.core.config.Configurator.setLevel(
 
 让子代理自己发现这些。你只提供原材料和目标。
 
+### 驱动 LDLib2 UI 的鼠标事件必须先用 glfwSetCursorPos 喂悬停
+
+LDLib2 的悬停/命中（`ModularUIWidget.lastMouseX` → `getLastHoveredElement`）只在渲染时从**真实光标**位置更新——合成调用 `Screen.mouseMoved/mouseClicked(x,y)` 不会改变悬停目标，MOUSE_DOWN 会派给真实光标下的元素（通常不是目标）。`java.awt.Robot` 在客户端 JVM 不可用（headless）。
+
+可行路径（已验证 2026-08-04）：
+1. `GLFW.glfwSetCursorPos(minecraft.getWindow().getWindow(), lx*guiScale, ly*guiScale)` 把真实光标移到目标控件上（窗口内物理 px）；
+2. 让一帧渲染过去（分两次 mcmcp_execute，不要在同一 eval 里连着点）；
+3. 再合成 `screen.mouseClicked/mouseDragged/mouseReleased/mouseScrolled`（坐标用 logical px = physical/guiScale）；
+4. 验证悬停命中可用 `rootElement.hitTest(x, y)`（ModularUI.ui.rootElement，double 签名，返回 oshi Pair）。
+
 ### 1.20.1 截图在虚拟显示器上捕获全暗
 
 `ScreenshotRecorder.grab` / `Screenshot.grab` 在 **OrayIddDriver 虚拟显示器**上，1.20.1 捕获的 PNG 整体偏暗（白天天空 avg≈47，应为亮蓝 ~150），无法用于视觉验证渲染。26.1.2 同 API 捕获正常（avg≈144）。

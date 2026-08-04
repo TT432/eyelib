@@ -340,5 +340,69 @@ public class TwoSideModelBakeInfo extends ModelBakeInfo<TwoSideModelBakeInfo.Two
             }
         }
     }
+
+    // ---------- 无纹理预览：纯色 + 逐面漫反射明暗（不再是紫黑 missing texture 块） ----------
+
+    /** 环境光（背光面保底亮度）。 */
+    private static final float PREVIEW_AMBIENT = 0.45f;
+    /** 漫反射强度。 */
+    private static final float PREVIEW_DIFFUSE = 0.55f;
+    /** 基色浅灰（0xBFBFBF）。 */
+    private static final float PREVIEW_BASE_GRAY = 0xBF / 255f;
+    /** 光方向 = 屏幕左上前方。pose 输出空间 +y 指向屏幕下方，故「上」为 -y 分量。 */
+    private static final Vector3f PREVIEW_LIGHT_DIR = new Vector3f(-0.6f, -1.0f, 0.8f).normalize();
+
+    /**
+     * 无纹理 GUI 预览绘制：position_color 纯色 + 逐面漫反射明暗烘进顶点色
+     * （shade = ambient + diffuse·max(0, n·l)，面法线经 pose 变换到屏幕空间——
+     * 交互旋转时明暗随视角变化，形状可读）。
+     */
+    public void drawGuiPreviewFlat(BakedModel baked, org.joml.Matrix4f pose) {
+        com.mojang.blaze3d.systems.RenderSystem.setShader(
+                net.minecraft.client.renderer.GameRenderer::getPositionColorShader);
+        //? if <1.20.6 {
+        com.mojang.blaze3d.vertex.Tesselator tesselator = com.mojang.blaze3d.vertex.Tesselator.getInstance();
+        com.mojang.blaze3d.vertex.BufferBuilder builder = tesselator.getBuilder();
+        builder.begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
+                com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_COLOR);
+        emitGuiPreviewFlatQuads(baked, pose, builder);
+        tesselator.end();
+        //?} else {
+        com.mojang.blaze3d.vertex.BufferBuilder builder = com.mojang.blaze3d.vertex.Tesselator.getInstance()
+                .begin(com.mojang.blaze3d.vertex.VertexFormat.Mode.QUADS,
+                        com.mojang.blaze3d.vertex.DefaultVertexFormat.POSITION_COLOR);
+        emitGuiPreviewFlatQuads(baked, pose, builder);
+        com.mojang.blaze3d.vertex.BufferUploader.drawWithShader(builder.buildOrThrow());
+        //?}
+    }
+
+    private static void emitGuiPreviewFlatQuads(BakedModel baked, org.joml.Matrix4f pose,
+                                                com.mojang.blaze3d.vertex.VertexConsumer buffer) {
+        Vector3f faceNormal = new Vector3f();
+        for (BakedModel.BakedBone bone : baked.bones().values()) {
+            bone.transformPos(pose);
+            float[] pos = bone.positionResult();
+            float[] normals = bone.normal();
+            float shade = PREVIEW_AMBIENT;
+            for (int i = 0; i < bone.vertexSize(); i++) {
+                if ((i & 3) == 0) {
+                    // 逐面明暗：一个 quad 的 4 顶点共享面法线（cube 面轴对齐；
+                    // texture_mesh 体素同样按面发射），transformDirection 归一化
+                    faceNormal.set(normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]);
+                    pose.transformDirection(faceNormal);
+                    shade = PREVIEW_AMBIENT + PREVIEW_DIFFUSE * Math.max(0f, faceNormal.dot(PREVIEW_LIGHT_DIR));
+                }
+                float c = PREVIEW_BASE_GRAY * shade;
+                //? if <1.20.6 {
+                buffer.vertex(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])
+                        .color(c, c, c, 1f)
+                        .endVertex();
+                //?} else {
+                buffer.addVertex(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2])
+                        .setColor(c, c, c, 1f);
+                //?}
+            }
+        }
+    }
     //?}
 }
