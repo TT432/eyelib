@@ -611,6 +611,46 @@ class JsonGraphImportersTest {
         assertColorEquals(originalEntry.getAsJsonObject("overlay_color"), entry.getAsJsonObject("overlay_color"));
     }
 
+    /** 颜色全数值且 8bit 精确 → const.color 节点（取色器可编辑）接 COLOR 端口。 */
+    @Test
+    void byteExactColorImportsAsConstColorNode() {
+        JsonObject json = parse("""
+                {"format_version": "1.8.0", "render_controllers": {"controller.render.test": {
+                  "geometry": "geometry.default",
+                  "color": {"r": 1, "g": 0, "b": 0, "a": 1}
+                }}}""");
+        ImportResult imported = JsonGraphImporters.importRenderController(json, "controller.render.test");
+        assertFalse(imported.hasErrors(), () -> imported.diagnostics().toString());
+        GraphData main = imported.library().mainGraph();
+        Optional<NodeInstance> cc = main.nodes().stream()
+                .filter(n -> n.type().equals("const.color")).findFirst();
+        assertTrue(cc.isPresent(), () -> main.nodes().toString());
+        assertEquals("#FFFF0000", cc.get().options().get("value").getAsString());
+        assertTrue(main.wires().stream().anyMatch(w -> w.from().node().equals(cc.get().uid())
+                && w.from().port().equals("out") && w.to().port().equals("color")));
+        assertTrue(main.nodes().stream().noneMatch(n -> n.type().equals("color.compose")));
+    }
+
+    /** 颜色含表达式通道 → color.compose（表达式走 g 槽连线，数值通道变内联常量）。 */
+    @Test
+    void expressionColorImportsAsComposeNode() {
+        JsonObject original = parse(RC_JSON);
+        ImportResult imported = JsonGraphImporters.importRenderController(original, "controller.render.test");
+        assertFalse(imported.hasErrors(), () -> imported.diagnostics().toString());
+        GraphData main = imported.library().mainGraph();
+        Optional<NodeInstance> compose = main.nodes().stream()
+                .filter(n -> n.type().equals("color.compose")).findFirst();
+        assertTrue(compose.isPresent(), () -> main.nodes().toString());
+        // g = "query.is_baby" → 表达式反编译连线进 compose.g
+        assertTrue(main.wires().stream().anyMatch(w -> w.to().node().equals(compose.get().uid())
+                && w.to().port().equals("g")));
+        // r = 1.0 → 内联常量
+        assertEquals(1.0, compose.get().constants().get("r").getAsDouble(), 1e-9);
+        // compose.out → rc.root.color
+        assertTrue(main.wires().stream().anyMatch(w -> w.from().node().equals(compose.get().uid())
+                && w.from().port().equals("out") && w.to().port().equals("color")));
+    }
+
     /** D4：RC 导入携已知短名表 → 裸短名 ref 回填标识符（显式短名保留）。 */
     @Test
     void rcImportBackfillsIdentifiersFromKnownTables() {

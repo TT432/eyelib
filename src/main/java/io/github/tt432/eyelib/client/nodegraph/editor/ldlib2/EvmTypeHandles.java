@@ -40,6 +40,12 @@ public final class EvmTypeHandles {
         }
     }
 
+    /** COLOR 复合颜色端口的 marker 类型（仅占位；颜色不承载标量值，仅同 handle 可连）。 */
+    public static final class ColorValue {
+        private ColorValue() {
+        }
+    }
+
     /** 自定义 handle 注册（类加载恰好一次；颜色随字段初始化一并设置，不用 static 块）。 */
     private static final class Holder {
         static final TypeHandle SLOT = colored(SlotValue.class, "eyelib:slot", "Slot", 0xFF9C27B0);
@@ -50,6 +56,7 @@ public final class EvmTypeHandles {
         static final TypeHandle ANIMATION_REF = colored(String.class, "eyelib:animation_ref", "Animation Ref", 0xFFFF9800);
         static final TypeHandle AC_REF = colored(String.class, "eyelib:ac_ref", "AC Ref", 0xFFFF5722);
         static final TypeHandle RC_REF = colored(String.class, "eyelib:rc_ref", "RC Ref", 0xFF3F51B5);
+        static final TypeHandle COLOR = colored(ColorValue.class, "eyelib:color", "Color", 0xFFD81B60);
 
         static final List<TypeHandle> ALL = List.of(
                 TypeHandles.EXECUTION_FLOW,
@@ -65,7 +72,8 @@ public final class EvmTypeHandles {
                 MATERIAL_REF,
                 ANIMATION_REF,
                 AC_REF,
-                RC_REF);
+                RC_REF,
+                COLOR);
         /** 黑板变量声明可选类型：VARIABLE 是 variable 节点端口的身份标注，不是可声明的值类型。 */
         static final List<TypeHandle> VARIABLE_DECL_TYPES =
                 ALL.stream().filter(h -> !h.equals(VARIABLE)).toList();
@@ -104,6 +112,7 @@ public final class EvmTypeHandles {
             case ANIMATION_REF -> Holder.ANIMATION_REF;
             case AC_REF -> Holder.AC_REF;
             case RC_REF -> Holder.RC_REF;
+            case COLOR -> Holder.COLOR;
         };
     }
 
@@ -124,6 +133,7 @@ public final class EvmTypeHandles {
         if (handle.equals(Holder.ANIMATION_REF)) return PortType.ANIMATION_REF;
         if (handle.equals(Holder.AC_REF)) return PortType.AC_REF;
         if (handle.equals(Holder.RC_REF)) return PortType.RC_REF;
+        if (handle.equals(Holder.COLOR)) return PortType.COLOR;
         return null;
     }
 }

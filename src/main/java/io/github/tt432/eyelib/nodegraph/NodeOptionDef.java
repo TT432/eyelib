@@ -64,6 +64,11 @@ public record NodeOptionDef(
                 Optional.of(choices), Optional.empty());
     }
 
+    /** 颜色选项（#AARRGGBB 十六进制字符串；编辑器渲染为取色器）。 */
+    public static NodeOptionDef color(String id, String defaultValue) {
+        return of(id, OptionType.COLOR, new JsonPrimitive(defaultValue));
+    }
+
     /** 选项值类型。 */
     public enum OptionType implements PortStringRepresentable {
         STRING,
@@ -74,7 +79,9 @@ public record NodeOptionDef(
         BOOL,
         ENUM,
         /** 资源标识符（namespace:path 形态，仅语义标注）。 */
-        IDENTIFIER;
+        IDENTIFIER,
+        /** 颜色（#AARRGGBB 十六进制字符串）。 */
+        COLOR;
 
         public static final Codec<OptionType> CODEC = PortStringRepresentable.fromEnum(OptionType::values);
 

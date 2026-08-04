@@ -51,6 +51,22 @@ public final class MolangGenerator {
     }
 
     /**
+     * 生成颜色槽的四通道代码（规格 §2.4-11）。
+     *
+     * @param graphName 图名（库内键）
+     * @param slot      COLOR 类 IN 端口（如 rc.root 的 color）
+     * @return code=null 表示端口未连线（调用方省略该颜色字段）
+     */
+    public ColorCodegenResult emitColor(String graphName, PortRef slot) {
+        return new EmitSession(library).emitColor(graphName, slot);
+    }
+
+    /** {@link #emitColor(String, PortRef)} 的 (节点 uid, 端口 id) 便捷形。 */
+    public ColorCodegenResult emitColorFor(String graphName, String nodeUid, String portId) {
+        return emitColor(graphName, new PortRef(nodeUid, portId));
+    }
+
+    /**
      * 生成某节点值输出端口的产出表达式（画布调试徽标用，规格 nodegraph-workbench §W3）。
      *
      * @param graphName 图名（库内键）

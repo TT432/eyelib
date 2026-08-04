@@ -75,7 +75,10 @@ class RenderControllerAssemblerTest {
                         node("pv3", "part_visibility.entry", opts("bone_pattern", "head*")),
                         node("pn3", "const.number", opts("value", 0.5)),
                         node("cr", "const.number", opts("value", 0.25)),
-                        node("oa", "const.number", opts("value", 0.5))),
+                        node("cc", "color.compose"),
+                        node("oa", "const.number", opts("value", 0.5)),
+                        node("co", "color.compose"),
+                        node("ck", "const.color", opts("value", "#FF00FF00"))),
                 List.of(
                         wire("g1", "out", "root", "geometry"),
                         wire("t1", "entry", "root", "textures"),
@@ -89,8 +92,14 @@ class RenderControllerAssemblerTest {
                         wire("pv2", "entry", "root", "part_visibility"),
                         wire("pv3", "entry", "root", "part_visibility"),
                         wire("pn3", "out", "pv3", "condition"),
-                        wire("cr", "out", "root", "color_r"),
-                        wire("oa", "out", "root", "overlay_a"))));
+                        // color：compose r 接表达式，g/b/a 走端口默认 1
+                        wire("cr", "out", "cc", "r"),
+                        wire("cc", "out", "root", "color"),
+                        // overlay_color：compose a 接表达式
+                        wire("oa", "out", "co", "a"),
+                        wire("co", "out", "root", "overlay_color"),
+                        // is_hurt_color：const.color 纯色（#FF00FF00 = a1 r0 g1 b0）
+                        wire("ck", "out", "root", "is_hurt_color"))));
 
         AssemblyResult r = RenderControllerAssembler.assemble(lib);
 
@@ -120,15 +129,20 @@ class RenderControllerAssemblerTest {
 
         assertTrue(entry.get("ignore_lighting").getAsBoolean());
 
-        // color：仅 color_r 有内容 → 组输出，其余通道取端口默认 "1"
+        // color：compose 仅 r 有连线 → 组输出，其余通道取端口默认 "1"
         JsonObject color = entry.getAsJsonObject("color");
         assertEquals("0.25", color.get("r").getAsString());
         assertEquals("1", color.get("g").getAsString());
         assertEquals("1", color.get("b").getAsString());
         assertEquals("1", color.get("a").getAsString());
-        assertFalse(entry.has("is_hurt_color"));
+        // is_hurt_color：const.color → 四通道字面值
+        JsonObject hurt = entry.getAsJsonObject("is_hurt_color");
+        assertEquals("0", hurt.get("r").getAsString());
+        assertEquals("1", hurt.get("g").getAsString());
+        assertEquals("0", hurt.get("b").getAsString());
+        assertEquals("1", hurt.get("a").getAsString());
         assertFalse(entry.has("on_fire_color"));
-        // overlay_color：overlay_r/g/b 无端口默认 → 回落 "1"
+        // overlay_color：compose 仅 a 连线，其余回落 "1"
         JsonObject overlay = entry.getAsJsonObject("overlay_color");
         assertEquals("1", overlay.get("r").getAsString());
         assertEquals("1", overlay.get("g").getAsString());

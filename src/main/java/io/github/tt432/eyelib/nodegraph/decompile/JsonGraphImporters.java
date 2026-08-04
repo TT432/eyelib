@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import io.github.tt432.eyelib.nodegraph.ColorValues;
 import io.github.tt432.eyelib.nodegraph.GraphKind;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.ShortNameOps;
@@ -34,7 +35,7 @@ import org.jspecify.annotations.Nullable;
  *       textures → list.entry；materials/part_visibility（object 或 single-key object 数组）
  *       → material.entry / part_visibility.entry；arrays → rc.root TEXT 选项（原文）；
  *       ignore_lighting → 布尔选项；color/is_hurt_color/on_fire_color/overlay_color
- *       → 四通道表达式槽；</li>
+ *       → const.color（全数值且 8bit 精确）或 color.compose 接 COLOR 端口；</li>
  *   <li>AnimationController：initial_state → ac.root 选项；states → ac.state
  *       （on_entry/on_exit → exec 链；animations → animate.entry；transitions → ac.transition；
  *       blend_transition/blend_via_shortest_path → 数值/布尔选项）。</li>
@@ -433,10 +434,10 @@ public final class JsonGraphImporters {
         importPatternMap(b, rcUid, entry.get("part_visibility"), rcName + ".part_visibility",
                 NodeTypes.PART_VISIBILITY_ENTRY.id(), "bone_pattern", "condition", "pve", "part_visibility");
 
-        importColor(b, rcUid, entry, rcName, "color", "color");
-        importColor(b, rcUid, entry, rcName, "is_hurt_color", "is_hurt");
-        importColor(b, rcUid, entry, rcName, "on_fire_color", "on_fire");
-        importColor(b, rcUid, entry, rcName, "overlay_color", "overlay");
+        importColor(b, rcUid, entry, rcName, "color");
+        importColor(b, rcUid, entry, rcName, "is_hurt_color");
+        importColor(b, rcUid, entry, rcName, "on_fire_color");
+        importColor(b, rcUid, entry, rcName, "overlay_color");
 
         unknownFields(b, rcName, entry, RC_ENTRY_KEYS);
     }
@@ -462,9 +463,10 @@ public final class JsonGraphImporters {
         }
     }
 
-    /** 颜色组：{r,g,b,a} 四通道表达式槽（数字 → 内联常量；字符串 → molang 反编译连线）。 */
+    /** 颜色组：{r,g,b,a} 全数值且 8bit 精确 → const.color 接 COLOR 端口；
+     * 含表达式/非 8bit 精确数值 → color.compose（通道走表达式槽语义）接线。 */
     private static void importColor(ImportGraphBuilder b, String rcUid, JsonObject entry, String rcName,
-                                    String field, String portPrefix) {
+                                    String field) {
         JsonElement color = entry.get(field);
         if (color == null) {
             return;
@@ -474,10 +476,36 @@ public final class JsonGraphImporters {
             return;
         }
         JsonObject obj = color.getAsJsonObject();
-        valueSlot(b, rcUid, portPrefix + "_r", rcName + "." + field + ".r", obj.get("r"));
-        valueSlot(b, rcUid, portPrefix + "_g", rcName + "." + field + ".g", obj.get("g"));
-        valueSlot(b, rcUid, portPrefix + "_b", rcName + "." + field + ".b", obj.get("b"));
-        valueSlot(b, rcUid, portPrefix + "_a", rcName + "." + field + ".a", obj.get("a"));
+        JsonElement[] ch = {obj.get("r"), obj.get("g"), obj.get("b"), obj.get("a")};
+        boolean allByteExact = true;
+        for (JsonElement c : ch) {
+            if (c == null) {
+                continue; // 缺省通道 → compose 端口默认 1（8bit 精确）
+            }
+            if (!(c.isJsonPrimitive() && c.getAsJsonPrimitive().isNumber()
+                    && ColorValues.isByteExact(c.getAsDouble()))) {
+                allByteExact = false;
+                break;
+            }
+        }
+        if (allByteExact) {
+            float[] v = {1, 1, 1, 1};
+            for (int i = 0; i < 4; i++) {
+                if (ch[i] != null) {
+                    v[i] = (float) ch[i].getAsDouble();
+                }
+            }
+            String colorUid = b.addNode("color", NodeTypes.CONST_COLOR.id(),
+                    ImportGraphBuilder.opts("value", ColorValues.toHex(v[0], v[1], v[2], v[3])));
+            b.wire(colorUid, "out", rcUid, field);
+        } else {
+            String composeUid = b.addNode("color", NodeTypes.COLOR_COMPOSE.id(), Map.of());
+            String[] names = {"r", "g", "b", "a"};
+            for (int i = 0; i < 4; i++) {
+                valueSlot(b, composeUid, names[i], rcName + "." + field + "." + names[i], ch[i]);
+            }
+            b.wire(composeUid, "out", rcUid, field);
+        }
     }
 
     // ---------- AnimationController ----------

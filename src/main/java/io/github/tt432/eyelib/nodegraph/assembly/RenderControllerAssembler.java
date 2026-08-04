@@ -113,34 +113,23 @@ public final class RenderControllerAssembler {
 
         entry.add("ignore_lighting", AssemblySupport.optionValue(root, NodeTypes.RC_ROOT, "ignore_lighting"));
 
-        addColor(ctx, root, entry, "color", "color_r", "color_g", "color_b", "color_a");
-        addColor(ctx, root, entry, "is_hurt_color", "is_hurt_r", "is_hurt_g", "is_hurt_b", "is_hurt_a");
-        addColor(ctx, root, entry, "on_fire_color", "on_fire_r", "on_fire_g", "on_fire_b", "on_fire_a");
-        addColor(ctx, root, entry, "overlay_color", "overlay_r", "overlay_g", "overlay_b", "overlay_a");
+        addColor(ctx, root, entry, "color");
+        addColor(ctx, root, entry, "is_hurt_color");
+        addColor(ctx, root, entry, "on_fire_color");
+        addColor(ctx, root, entry, "overlay_color");
     }
 
-    /** 颜色组：四通道全未连线且无常数 → 不输出；否则 {r,g,b,a} 全输出（无内容通道取端口默认，无默认回落 "1"）。 */
-    private static void addColor(AssemblySupport.Ctx ctx, NodeInstance root, JsonObject entry,
-                                 String field, String r, String g, String b, String a) {
-        String[] channels = {r, g, b, a};
-        boolean any = false;
-        for (String channel : channels) {
-            if (AssemblySupport.hasContent(ctx.main, root, channel)) {
-                any = true;
-                break;
-            }
-        }
-        if (!any) {
+    /** 颜色组：COLOR 端口未连线 → 不输出；已连线 → {r,g,b,a} 四通道全输出（规格 §2.4-11）。 */
+    private static void addColor(AssemblySupport.Ctx ctx, NodeInstance root, JsonObject entry, String field) {
+        var code = ctx.emitColor(root.uid(), field);
+        if (code == null) {
             return;
         }
-        String[] keys = {"r", "g", "b", "a"};
         JsonObject color = new JsonObject();
-        for (int i = 0; i < channels.length; i++) {
-            String code = AssemblySupport.hasContent(ctx.main, root, channels[i])
-                    ? ctx.emitExpression(root.uid(), channels[i])
-                    : AssemblySupport.portDefaultLiteral(ctx, root, NodeTypes.RC_ROOT, channels[i], "1");
-            color.addProperty(keys[i], code);
-        }
+        color.addProperty("r", code.r());
+        color.addProperty("g", code.g());
+        color.addProperty("b", code.b());
+        color.addProperty("a", code.a());
         entry.add(field, color);
     }
 }

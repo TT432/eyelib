@@ -56,6 +56,22 @@ public final class EvmNodes {
         }
     }
 
+    @NodeAttribute(name = "const.color", group = NodeTypes.CAT_CONSTANT, graphTypes = {EvmGraph.class})
+    public static final class ConstColor extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.CONST_COLOR;
+        }
+    }
+
+    @NodeAttribute(name = "color.compose", group = NodeTypes.CAT_OPERATOR, graphTypes = {EvmGraph.class})
+    public static final class ColorCompose extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.COLOR_COMPOSE;
+        }
+    }
+
     @NodeAttribute(name = "variable", group = NodeTypes.CAT_VARIABLE, graphTypes = {EvmGraph.class})
     public static final class Variable extends EvmNodeBase {
         @Override
@@ -339,6 +355,7 @@ public final class EvmNodes {
     /** getSupportNodes 清单（创建顺序 = 目录顺序）。 */
     public static final List<Class<? extends Node>> ALL = List.of(
             ConstNumber.class, ConstInt.class, ConstBool.class, ConstString.class,
+            ConstColor.class, ColorCompose.class,
             Variable.class, ContextGet.class, TempGet.class, ExecSetVar.class, ExecSetTemp.class,
             QueryCall.class, MathCall.class, ExecCall.class,
             OpBinary.class, OpUnary.class, OpTernary.class, OpNullCoalesce.class,
@@ -371,6 +388,8 @@ public final class EvmNodes {
         names.put("const.number", "Number");
         names.put("const.bool", "Bool");
         names.put("const.string", "String");
+        names.put("const.color", "Color");
+        names.put("color.compose", "Color Compose");
         names.put("variable", "Variable");
         names.put("temp.get", "Get Temp");
         names.put("exec.set_var", "Set Variable");

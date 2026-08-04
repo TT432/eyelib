@@ -1,11 +1,12 @@
 package io.github.tt432.eyelib.nodegraph.codegen;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
+import io.github.tt432.eyelib.nodegraph.ColorValues;
 import io.github.tt432.eyelib.nodegraph.Diagnostic;
 import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphInterface;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
+import io.github.tt432.eyelib.nodegraph.MolangLiterals;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeType;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
@@ -271,6 +272,75 @@ final class EmitSession {
         return new CodegenResult(String.join("; ", parts), diagnostics);
     }
 
+    // ---------- 颜色发射 ----------
+
+    /**
+     * 发射颜色端口（COLOR 类型 IN 端口）：已连线 → 四通道 {@link ColorCode}；未连线 → code=null
+     * （调用方省略该颜色字段）。四通道各自独立会话（不共享 temp 提取——JSON 中四通道是四个
+     * 独立 ExprSet 字符串）。
+     */
+    ColorCodegenResult emitColor(String graphName, PortRef slot) {
+        Optional<GraphData> graph = library.graph(graphName);
+        if (graph.isEmpty()) {
+            error("UNKNOWN_GRAPH", "graph '" + graphName + "' not found in library");
+            return new ColorCodegenResult(null, diagnostics);
+        }
+        Optional<NodeInstance> node = graph.get().findNode(slot.node());
+        if (node.isEmpty()) {
+            error("UNKNOWN_NODE", "node '" + slot.node() + "' not found in graph '" + graphName + "'", slot.node());
+            return new ColorCodegenResult(null, diagnostics);
+        }
+        Optional<Wire> wire = wireInto(graph.get(), slot.node(), slot.port());
+        if (wire.isEmpty()) {
+            return new ColorCodegenResult(null, diagnostics);
+        }
+        Optional<NodeInstance> producer = graph.get().findNode(wire.get().from().node());
+        if (producer.isEmpty()) {
+            error("UNKNOWN_NODE", "wire source node '" + wire.get().from().node() + "' not found", slot.node());
+            return new ColorCodegenResult(null, diagnostics);
+        }
+        Optional<NodeType> type = NodeTypes.get(producer.get().type());
+        if (type.isEmpty()) {
+            error("UNKNOWN_NODE_TYPE", "unknown node type '" + producer.get().type() + "'", producer.get().uid());
+            return new ColorCodegenResult(null, diagnostics);
+        }
+        return switch (type.get().kind()) {
+            case CONST_COLOR -> {
+                float[] c = ColorValues.parse(string(producer.get(), type.get(), "value"));
+                if (c == null) {
+                    error("INVALID_COLOR_VALUE", "const.color 的 value 不是 #RRGGBB/#AARRGGBB，按白色处理",
+                            producer.get().uid());
+                    c = new float[]{1, 1, 1, 1};
+                }
+                yield new ColorCodegenResult(new ColorCode(
+                        formatNumber(c[0]), formatNumber(c[1]), formatNumber(c[2]), formatNumber(c[3])),
+                        diagnostics);
+            }
+            case COLOR_COMPOSE -> new ColorCodegenResult(new ColorCode(
+                    emitColorChannel(graph.get(), producer.get(), "r"),
+                    emitColorChannel(graph.get(), producer.get(), "g"),
+                    emitColorChannel(graph.get(), producer.get(), "b"),
+                    emitColorChannel(graph.get(), producer.get(), "a")),
+                    diagnostics);
+            default -> {
+                error("INVALID_COLOR_SOURCE",
+                        "颜色端口只能接 const.color / color.compose（实际 '" + producer.get().type() + "'）",
+                        producer.get().uid());
+                yield new ColorCodegenResult(null, diagnostics);
+            }
+        };
+    }
+
+    /** color.compose 单通道发射：独立帧（通道间不共享 temp 提取）。 */
+    private String emitColorChannel(GraphData graph, NodeInstance compose, String channel) {
+        Frame f = new Frame(graph, "");
+        countValueInput(f, compose.uid(), channel);
+        Out out = emitValueInput(f, compose.uid(), channel);
+        List<String> parts = new ArrayList<>(out.preludes());
+        parts.add(out.expr());
+        return String.join("; ", parts);
+    }
+
     /** 发射生产者节点的输出；出度 ≥ 2 的非平凡节点提取 temp.gN（§2.4-3）。 */
     private Out emitValueProducer(Frame f, NodeInstance node, String portId) {
         Optional<NodeType> type = NodeTypes.get(node.type());
@@ -308,6 +378,11 @@ final class EmitSession {
             case CONST_NUMBER, CONST_INT -> Out.of(number(node, type, "value"));
             case CONST_BOOL -> Out.of(bool(node, type, "value") ? "1" : "0");
             case CONST_STRING -> Out.of(quote(string(node, type, "value")));
+            case CONST_COLOR, COLOR_COMPOSE -> {
+                // 颜色是复合值，只能经 emitColor 进入颜色端口；流到标量上下文即图有误
+                error("COLOR_AS_SCALAR", "color value cannot be used as a scalar molang expression", node.uid());
+                yield Out.of("0");
+            }
             case VARIABLE -> Out.of(withRoot("variable", string(node, type, "name")));
             case TEMP_GET -> Out.of(withRoot("temp", string(node, type, "name")));
             case CONTEXT_GET -> Out.of(withRoot("context", string(node, type, "name")));
@@ -505,7 +580,8 @@ final class EmitSession {
     /** 永不提取的平凡节点：常量、单变量/属性引用（§2.4-3）。 */
     private static boolean isTrivial(NodeType type, NodeInstance node) {
         return switch (type.kind()) {
-            case CONST_NUMBER, CONST_INT, CONST_BOOL, CONST_STRING, VARIABLE, TEMP_GET, CONTEXT_GET,
+            case CONST_NUMBER, CONST_INT, CONST_BOOL, CONST_STRING, CONST_COLOR, COLOR_COMPOSE,
+                 VARIABLE, TEMP_GET, CONTEXT_GET,
                  REF_GEOMETRY, REF_TEXTURE, REF_MATERIAL -> true;
             case QUERY_CALL, MATH_CALL -> node.optionInt("arg_count", 0) <= 0;
             default -> false;
@@ -540,11 +616,8 @@ final class EmitSession {
 
     /** JsonElement → molang 字面量：数字去 .0；bool → 1/0；string → 单引号转义。 */
     private String literal(JsonElement e, String nodeUid) {
-        if (e instanceof JsonPrimitive p) {
-            if (p.isNumber()) return formatNumber(p.getAsDouble());
-            if (p.isBoolean()) return p.getAsBoolean() ? "1" : "0";
-            if (p.isString()) return quote(p.getAsString());
-        }
+        String s = MolangLiterals.literal(e);
+        if (s != null) return s;
         diagnostics.add(Diagnostic.warning("INVALID_CONSTANT",
                 "constant is not a primitive molang literal, using 0", nodeUid));
         return "0";
@@ -552,15 +625,12 @@ final class EmitSession {
 
     /** 数字格式化：整数去 .0（1.0 → "1"，1.5 → "1.5"）。 */
     static String formatNumber(double v) {
-        if (v == Math.rint(v) && Double.isFinite(v) && Math.abs(v) < 9.0e15) {
-            return Long.toString((long) v);
-        }
-        return Double.toString(v);
+        return MolangLiterals.formatNumber(v);
     }
 
     /** 字符串字面量：单引号包裹，转义 ' 与 \。 */
     static String quote(String s) {
-        return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'";
+        return MolangLiterals.quote(s);
     }
 
     /** 多条入线（非法单连接）时取 from (node, port) 字典序最小者，保证确定性。 */

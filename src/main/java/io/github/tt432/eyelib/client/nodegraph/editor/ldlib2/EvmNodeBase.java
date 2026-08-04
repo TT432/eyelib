@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.client.nodegraph.editor.ldlib2;
 //? if !legacy {
 import com.lowdragmc.lowdraglib2.configurator.IConfigurable;
+import com.lowdragmc.lowdraglib2.configurator.ui.ColorConfigurator;
 import com.lowdragmc.lowdraglib2.configurator.ui.SelectorConfigurator;
 import com.lowdragmc.lowdraglib2.configurator.ui.StringConfigurator;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.INodeOption;
@@ -15,10 +16,13 @@ import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.definition.IOptionDe
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.definition.IPortDefinitionContext;
 import io.github.tt432.eyelib.client.nodegraph.AssetSuggestions;
 import io.github.tt432.eyelib.client.nodegraph.preview.PreviewViewState;
+import io.github.tt432.eyelib.nodegraph.ColorValues;
+import io.github.tt432.eyelib.nodegraph.InlineLiteral;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeOptionDef;
 import io.github.tt432.eyelib.nodegraph.NodeType;
 import io.github.tt432.eyelib.nodegraph.PortDef;
+import io.github.tt432.eyelib.nodegraph.PortType;
 import io.github.tt432.eyelib.nodegraph.ShortNames;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -93,6 +97,10 @@ public abstract class EvmNodeBase extends Node {
             if (isRef && ShortNames.SHORT_NAME_OPTION.equals(def.id())) {
                 builder.withConfigurable(shortNameBinding());
             }
+            // COLOR 选项：取色器绑定（hex 字符串 ↔ ARGB int，见 colorBinding）
+            if (def.type() == NodeOptionDef.OptionType.COLOR) {
+                builder.withConfigurable(colorBinding());
+            }
             // 规格 §4.2：带 suggestionKey 的字符串选项挂资产候选下拉
             if (def.suggestionKey().isPresent()
                     && EvmValues.optionJavaType(def.type()) == String.class) {
@@ -148,6 +156,36 @@ public abstract class EvmNodeBase extends Node {
         });
     }
 
+    /**
+     * COLOR 选项的取色器绑定：底层值为 {@code #AARRGGBB} hex 字符串，取色器侧按 ARGB int
+     * 读写（{@link ColorValues#toArgbInt}/{@link ColorValues#fromArgbInt} 互转；非法 hex 显示不透明白）。
+     */
+    private static ITypeConfigurable colorBinding() {
+        return (valueConfigurable, typeHandle) -> IConfigurable.create(father ->
+                father.addConfigurator(new ColorConfigurator("",
+                        () -> ColorValues.toArgbInt(java.util.Objects.toString(
+                                valueConfigurable.getValue(), null)),
+                        argb -> valueConfigurable.setValue(ColorValues.fromArgbInt(argb)),
+                        ColorValues.toArgbInt(java.util.Objects.toString(
+                                valueConfigurable.getDefaultValue(), null)),
+                        valueConfigurable.forceUpdate())));
+    }
+
+    /**
+     * ANY 输入端口的行内文本绑定：文本 ↔ JSON 字面值（{@link InlineLiteral} 智能解析：
+     * 整数→int、小数→float、true/false→bool、其余→字符串）→ Java 值
+     * （{@link EvmValues#portJsonToJava}，Float/Boolean/String）。
+     */
+    private static ITypeConfigurable anyTextBinding() {
+        return (valueConfigurable, typeHandle) -> IConfigurable.create(father ->
+                father.addConfigurator(new StringConfigurator("",
+                        () -> InlineLiteral.toText(EvmValues.javaToJson(valueConfigurable.getValue())),
+                        text -> valueConfigurable.setValue(EvmValues.portJsonToJava(
+                                InlineLiteral.parse(text), PortType.ANY)),
+                        InlineLiteral.toText(EvmValues.javaToJson(valueConfigurable.getDefaultValue())),
+                        valueConfigurable.forceUpdate())));
+    }
+
     @Override
     public void onDefinePorts(IPortDefinitionContext context) {
         super.onDefinePorts(context);
@@ -159,6 +197,10 @@ public abstract class EvmNodeBase extends Node {
         for (PortDef port : type().inputsOf(view, resolver)) {
             var builder = context.addInputPort(port.id(), EvmTypeHandles.toHandle(port.type()))
                     .withDisplayName(Component.literal(port.id()));
+            // ANY 输入端口：挂行内字面值文本编辑器（见 anyTextBinding）
+            if (port.type() == PortType.ANY) {
+                builder.withConfigurable(anyTextBinding());
+            }
             port.defaultValue().ifPresent(dv -> {
                 Object value = EvmValues.portJsonToJava(dv, port.type());
                 if (value != null) builder.withDefaultValue(value);

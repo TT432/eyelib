@@ -33,6 +33,11 @@ import java.util.Set;
  *   <li>RENDER_CONTROLLER / ANIMATION_CONTROLLER 库不变。</li>
  * </ul>
  *
+ * <p>v3 → v4 RC 内联（CLIENT_ENTITY 库）：rc.condition_entry 拆解、声明线重定向 ref.rc。
+ *
+ * <p>v4 → v5 颜色端口化（所有库）：rc.root 16 个 float 通道端口 → 4 个 COLOR 端口
+ * （常量 → const.color，含表达式 → color.compose）。
+ *
  * <p>纯函数：输入输出均为不可变文档；加载路径（资源包 loader / EprojectIo）统一调用。
  * 已是新格式的文档原样返回。
  */
@@ -51,6 +56,9 @@ public final class GraphMigrations {
         }
         if (result.formatVersion() < 4) {
             result = migrateV3ToV4(result);
+        }
+        if (result.formatVersion() < 5) {
+            result = migrateV4ToV5(result);
         }
         return new GraphLibrary(GraphLibrary.CURRENT_FORMAT_VERSION, result.kind(), result.main(),
                 result.graphs());
@@ -314,6 +322,129 @@ public final class GraphMigrations {
         graphs.put(library.main(), new GraphData(List.copyOf(nodes), List.copyOf(wires),
                 main.variables(), main.placemats(), main.stickyNotes(), main.graphInterface()));
         return new GraphLibrary(4, library.kind(), library.main(), graphs);
+    }
+
+    /**
+     * v4 → v5（规格 §6.5）：rc.root 16 个 float 颜色通道端口 → 4 个 COLOR 端口。
+     *
+     * <ul>
+     *   <li>四通道均无无线无常数 → 不迁移该字段（新端口留空 = 字段不输出，同语义）；</li>
+     *   <li>四通道均无连线且常数（缺省 1）全部 8bit 精确 → const.color（取色器节点）接线；</li>
+     *   <li>否则 → color.compose：通道线/内联常数原样搬到 r/g/b/a，compose 输出接颜色端口；</li>
+     *   <li>所有库类型都迁移（rc.root 存在于 RENDER_CONTROLLER 与 CLIENT_ENTITY 库）。</li>
+     * </ul>
+     */
+    private static GraphLibrary migrateV4ToV5(GraphLibrary library) {
+        Map<String, GraphData> graphs = new LinkedHashMap<>();
+        for (Map.Entry<String, GraphData> entry : library.graphs().entrySet()) {
+            graphs.put(entry.getKey(), migrateColorsV5(entry.getValue()));
+        }
+        return new GraphLibrary(5, library.kind(), library.main(), graphs);
+    }
+
+    /** (字段端口, 通道前缀) 四组颜色。 */
+    private static final String[][] COLOR_FIELDS = {
+            {"color", "color"}, {"is_hurt_color", "is_hurt"},
+            {"on_fire_color", "on_fire"}, {"overlay_color", "overlay"}};
+    private static final String[] CHANNELS = {"r", "g", "b", "a"};
+
+    private static GraphData migrateColorsV5(GraphData graph) {
+        List<NodeInstance> nodes = new ArrayList<>(graph.nodes());
+        List<Wire> wires = new ArrayList<>(graph.wires());
+        Set<String> uidTaken = new HashSet<>();
+        for (NodeInstance n : nodes) {
+            uidTaken.add(n.uid());
+        }
+        int[] counter = {0};
+
+        for (int i = 0; i < nodes.size(); i++) {
+            NodeInstance rc = nodes.get(i);
+            if (!rc.type().equals("rc.root")) {
+                continue;
+            }
+            Map<String, JsonElement> rcConstants = new LinkedHashMap<>(rc.constants());
+            int created = 0;
+            for (String[] field : COLOR_FIELDS) {
+                String fieldPort = field[0];
+                String[] channelPorts = new String[4];
+                for (int c = 0; c < 4; c++) {
+                    channelPorts[c] = field[1] + "_" + CHANNELS[c];
+                }
+                // 收集每通道的线与内联常数
+                Wire[] channelWires = new Wire[4];
+                JsonElement[] channelConstants = new JsonElement[4];
+                boolean anyContent = false;
+                boolean anyWire = false;
+                boolean allByteExact = true;
+                for (int c = 0; c < 4; c++) {
+                    String cp = channelPorts[c];
+                    int idx = c;
+                    channelWires[c] = wires.stream()
+                            .filter(w -> w.to().node().equals(rc.uid()) && w.to().port().equals(cp))
+                            .findFirst().orElse(null);
+                    channelConstants[c] = rcConstants.get(cp);
+                    if (channelWires[idx] != null) {
+                        anyWire = true;
+                        anyContent = true;
+                    }
+                    if (channelConstants[idx] != null) {
+                        anyContent = true;
+                        JsonElement cc = channelConstants[idx];
+                        if (!(cc instanceof JsonPrimitive p) || !p.isNumber()
+                                || !ColorValues.isByteExact(p.getAsDouble())) {
+                            allByteExact = false;
+                        }
+                    }
+                }
+                if (!anyContent) {
+                    continue;
+                }
+                // 创建 const.color / color.compose
+                String newUid = freshUid(uidTaken, counter);
+                uidTaken.add(newUid);
+                NodeInstance created_;
+                if (!anyWire && allByteExact) {
+                    float[] values = new float[4];
+                    for (int c = 0; c < 4; c++) {
+                        values[c] = channelConstants[c] != null
+                                ? (float) channelConstants[c].getAsDouble() : 1f;
+                    }
+                    created_ = new NodeInstance(newUid, "const.color",
+                            rc.x() + 60, rc.y() + 40 * (created++),
+                            Map.of("value", new JsonPrimitive(
+                                    ColorValues.toHex(values[0], values[1], values[2], values[3]))),
+                            Map.of());
+                } else {
+                    Map<String, JsonElement> composeConstants = new LinkedHashMap<>();
+                    for (int c = 0; c < 4; c++) {
+                        if (channelConstants[c] != null) {
+                            composeConstants.put(CHANNELS[c], channelConstants[c]);
+                        }
+                    }
+                    created_ = new NodeInstance(newUid, "color.compose",
+                            rc.x() + 60, rc.y() + 40 * (created++),
+                            Map.of(), Map.copyOf(composeConstants));
+                    for (int c = 0; c < 4; c++) {
+                        if (channelWires[c] != null) {
+                            wires.add(new Wire(channelWires[c].from(), new PortRef(newUid, CHANNELS[c])));
+                        }
+                    }
+                }
+                nodes.add(created_);
+                wires.add(new Wire(new PortRef(newUid, "out"), new PortRef(rc.uid(), fieldPort)));
+                // 拆旧：通道线与通道常数
+                for (String cp : channelPorts) {
+                    wires.removeIf(w -> w.to().node().equals(rc.uid()) && w.to().port().equals(cp));
+                    rcConstants.remove(cp);
+                }
+            }
+            if (!rcConstants.equals(rc.constants())) {
+                nodes.set(i, new NodeInstance(rc.uid(), rc.type(), rc.x(), rc.y(),
+                        rc.options(), Map.copyOf(rcConstants)));
+            }
+        }
+        return new GraphData(List.copyOf(nodes), List.copyOf(wires),
+                graph.variables(), graph.placemats(), graph.stickyNotes(), graph.graphInterface());
     }
 
     private static String optionString(NodeInstance node, String id, String fallback) {

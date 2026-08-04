@@ -292,7 +292,7 @@ class GraphMigrationsTest {
                 List.of(wire("rc1", "ref", "e1", "rc"),
                         wire("e1", "entry", "root", "render_controllers")))));
 
-        assertEquals(4, migrated.formatVersion());
+        assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, migrated.formatVersion());
         GraphData main = migrated.mainGraph();
         assertTrue(main.findNode("e1").isEmpty());
         assertTrue(main.wires().stream()
@@ -373,12 +373,78 @@ class GraphMigrationsTest {
     }
 
     @Test
-    void v4LibraryPassesThrough() {
+    void v4LibraryOnlyBumpsVersion() {
+        // v4 图无颜色内容：v5 迁移无介入点，图内容原样，版本升到 CURRENT
         GraphData main = graph(
                 List.of(rootNode(),
                         node("rc1", "ref.rc", opts("identifier", "controller.render.a"))),
                 List.of(wire("rc1", "ref", "root", "render_controllers")));
         GraphLibrary v4 = new GraphLibrary(4, GraphKind.CLIENT_ENTITY, "root", Map.of("root", main));
-        assertEquals(v4, GraphMigrations.migrate(v4));
+        GraphLibrary migrated = GraphMigrations.migrate(v4);
+        assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, migrated.formatVersion());
+        assertEquals(main, migrated.mainGraph());
+    }
+
+    // ---------- v4 → v5：rc.root 颜色通道端口 → COLOR 端口 ----------
+
+    @Test
+    void byteExactChannelConstantsBecomeConstColor() {
+        // color_r=1, color_g=0, color_b=0（a 无 = 默认 1），全 8bit 精确 → const.color #FFFF0000
+        NodeInstance rc = new NodeInstance("root", "rc.root", 0, 0,
+                opts("identifier", "controller.render.a"),
+                Map.of("color_r", new JsonPrimitive(1),
+                        "color_g", new JsonPrimitive(0),
+                        "color_b", new JsonPrimitive(0)));
+        GraphLibrary old = new GraphLibrary(4, GraphKind.RENDER_CONTROLLER, "root",
+                Map.of("root", graph(List.of(rc), List.of())));
+
+        GraphData main = GraphMigrations.migrate(old).mainGraph();
+
+        NodeInstance migratedRc = main.findNode("root").orElseThrow();
+        assertTrue(migratedRc.constants().isEmpty());
+        Optional<NodeInstance> cc = main.nodes().stream()
+                .filter(n -> n.type().equals("const.color")).findFirst();
+        assertTrue(cc.isPresent(), () -> main.nodes().toString());
+        assertEquals("#FFFF0000", cc.get().options().get("value").getAsString());
+        assertTrue(main.wires().contains(wire(cc.get().uid(), "out", "root", "color")));
+    }
+
+    @Test
+    void wiredChannelBecomesCompose() {
+        // overlay_r 有表达式线、overlay_a=0.5 内联常数（非 8bit 精确）→ color.compose：
+        // 线移 compose.r、常数移 compose.a、out 接 root.overlay_color、rc 常数清除
+        NodeInstance rc = new NodeInstance("root", "rc.root", 0, 0,
+                opts("identifier", "controller.render.a"),
+                Map.of("overlay_a", new JsonPrimitive(0.5)));
+        GraphLibrary old = new GraphLibrary(4, GraphKind.RENDER_CONTROLLER, "root",
+                Map.of("root", graph(
+                        List.of(rc, node("e", "const.number", opts("value", 0.25))),
+                        List.of(wire("e", "out", "root", "overlay_r")))));
+
+        GraphData main = GraphMigrations.migrate(old).mainGraph();
+
+        NodeInstance migratedRc = main.findNode("root").orElseThrow();
+        assertTrue(migratedRc.constants().isEmpty());
+        Optional<NodeInstance> compose = main.nodes().stream()
+                .filter(n -> n.type().equals("color.compose")).findFirst();
+        assertTrue(compose.isPresent(), () -> main.nodes().toString());
+        assertEquals(0.5, compose.get().constants().get("a").getAsDouble(), 1e-9);
+        assertTrue(main.wires().contains(wire("e", "out", compose.get().uid(), "r")));
+        assertTrue(main.wires().contains(wire(compose.get().uid(), "out", "root", "overlay_color")));
+        assertTrue(main.wires().stream().noneMatch(w -> w.to().port().equals("overlay_r")));
+    }
+
+    @Test
+    void rcRootWithoutColorContentUntouched() {
+        GraphData main = graph(
+                List.of(node("root", "rc.root", opts("identifier", "controller.render.a")),
+                        node("m1", "ref.material", opts("short_name", "default"))),
+                List.of());
+        GraphLibrary old = new GraphLibrary(4, GraphKind.RENDER_CONTROLLER, "root", Map.of("root", main));
+
+        GraphLibrary migrated = GraphMigrations.migrate(old);
+
+        assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, migrated.formatVersion());
+        assertEquals(main, migrated.mainGraph());
     }
 }

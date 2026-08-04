@@ -16,6 +16,7 @@ import com.lowdragmc.lowdraglib.gui.widget.SwitchWidget;
 import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
+import io.github.tt432.eyelib.nodegraph.InlineLiteral;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeType;
 import io.github.tt432.eyelib.nodegraph.PortDef;
@@ -125,6 +126,15 @@ final class EvmInlinePortFields {
                     field.setClientSideWidget();
                     yield field;
                 }
+                case ANY -> {
+                    // ANY 端口行内字面值智能解析（规格 §2.8）："5"→int、"1.5"→float、
+                    // "true"→bool、其余→string；set_var.value 直接敲值即得数字而非字符串
+                    var field = new TextFieldWidget(2, 1, w - 4, h - 2,
+                            () -> InlineLiteral.toText(current(defValue)), this::writeAny);
+                    field.setBordered(false);
+                    field.setClientSideWidget();
+                    yield field;
+                }
                 default -> {
                     var field = new TextFieldWidget(2, 1, w - 4, h - 2,
                             () -> current(defValue).getAsString(), this::writeString);
@@ -156,6 +166,11 @@ final class EvmInlinePortFields {
             } catch (NumberFormatException ignored) {
                 // 同上
             }
+        }
+
+        /** ANY 写回：智能解析字面值（{@link InlineLiteral#parse} 不会抛）。 */
+        private void writeAny(String text) {
+            node.constants.put(def.id(), InlineLiteral.parse(text));
         }
 
         private void writeBool(boolean pressed) {

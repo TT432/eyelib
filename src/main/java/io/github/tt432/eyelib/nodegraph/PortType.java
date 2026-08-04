@@ -39,7 +39,9 @@ public enum PortType implements PortStringRepresentable {
     /** animation controller 引用（string 子类型）。 */
     AC_REF,
     /** render controller 引用（string 子类型）。 */
-    RC_REF;
+    RC_REF,
+    /** RGBA 四通道复合颜色（不承载标量 molang；仅 const.color/color.compose 产出、颜色端口消费）。 */
+    COLOR;
 
     public static final Codec<PortType> CODEC = PortStringRepresentable.fromEnum(PortType::values);
 
@@ -57,6 +59,8 @@ public enum PortType implements PortStringRepresentable {
      */
     public boolean isAssignableTo(PortType target) {
         if (this == target) return true;
+        // COLOR 是复合值（4 通道），不与任何标量/通配类型互通（含 ANY/VARIABLE 隐式读）
+        if (this == COLOR || target == COLOR) return false;
         if (this == ANY || target == ANY) return true;
         if (this == EXEC || target == EXEC) return false;
         if (this == SLOT || target == SLOT) return false;

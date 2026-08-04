@@ -110,13 +110,13 @@ public final class NodeType {
      */
     public enum Kind {
         // 常量
-        CONST_NUMBER, CONST_INT, CONST_BOOL, CONST_STRING,
+        CONST_NUMBER, CONST_INT, CONST_BOOL, CONST_STRING, CONST_COLOR,
         // 变量
         VARIABLE, TEMP_GET, CONTEXT_GET,
         // 查询与数学
         QUERY_CALL, MATH_CALL,
         // 运算
-        OP_BINARY, OP_UNARY, OP_TERNARY, OP_NULLCOALESCE,
+        OP_BINARY, OP_UNARY, OP_TERNARY, OP_NULLCOALESCE, COLOR_COMPOSE,
         // 执行流
         EXEC_SET_VAR, EXEC_SET_TEMP, EXEC_CALL, EXEC_LOOP, EXEC_FOREACH, EXEC_BREAK, EXEC_CONTINUE, EXEC_RETURN,
         // 资源引用

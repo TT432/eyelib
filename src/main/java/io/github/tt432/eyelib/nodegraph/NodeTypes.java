@@ -114,6 +114,23 @@ public final class NodeTypes {
             List.of(),
             List.of(PortDef.out("out", PortType.STRING))));
 
+    /** const.color：取色器选择的 RGBA 常量（选项 #AARRGGBB，8bit/通道）。 */
+    public static final NodeType CONST_COLOR = register(NodeType.of(
+            "const.color", NodeType.Kind.CONST_COLOR, CAT_CONSTANT,
+            List.of(NodeOptionDef.color("value", ColorValues.WHITE)),
+            List.of(),
+            List.of(PortDef.out("out", PortType.COLOR))));
+
+    /** color.compose：四通道（各默认 1）合成颜色；通道可接任意 float 表达式（动态颜色）。 */
+    public static final NodeType COLOR_COMPOSE = register(NodeType.of(
+            "color.compose", NodeType.Kind.COLOR_COMPOSE, CAT_OPERATOR,
+            List.of(),
+            List.of(PortDef.in("r", PortType.FLOAT, new JsonPrimitive(1)),
+                    PortDef.in("g", PortType.FLOAT, new JsonPrimitive(1)),
+                    PortDef.in("b", PortType.FLOAT, new JsonPrimitive(1)),
+                    PortDef.in("a", PortType.FLOAT, new JsonPrimitive(1))),
+            List.of(PortDef.out("out", PortType.COLOR))));
+
     // ---------- 变量 ----------
 
     /**
@@ -399,22 +416,10 @@ public final class NodeTypes {
                     slotIn("textures"),
                     slotIn("materials"),
                     slotIn("part_visibility"),
-                    PortDef.in("color_r", PortType.FLOAT, new JsonPrimitive(1)),
-                    PortDef.in("color_g", PortType.FLOAT, new JsonPrimitive(1)),
-                    PortDef.in("color_b", PortType.FLOAT, new JsonPrimitive(1)),
-                    PortDef.in("color_a", PortType.FLOAT, new JsonPrimitive(1)),
-                    PortDef.in("is_hurt_r", PortType.FLOAT),
-                    PortDef.in("is_hurt_g", PortType.FLOAT),
-                    PortDef.in("is_hurt_b", PortType.FLOAT),
-                    PortDef.in("is_hurt_a", PortType.FLOAT),
-                    PortDef.in("on_fire_r", PortType.FLOAT),
-                    PortDef.in("on_fire_g", PortType.FLOAT),
-                    PortDef.in("on_fire_b", PortType.FLOAT),
-                    PortDef.in("on_fire_a", PortType.FLOAT),
-                    PortDef.in("overlay_r", PortType.FLOAT),
-                    PortDef.in("overlay_g", PortType.FLOAT),
-                    PortDef.in("overlay_b", PortType.FLOAT),
-                    PortDef.in("overlay_a", PortType.FLOAT)),
+                    PortDef.in("color", PortType.COLOR),
+                    PortDef.in("is_hurt_color", PortType.COLOR),
+                    PortDef.in("on_fire_color", PortType.COLOR),
+                    PortDef.in("overlay_color", PortType.COLOR)),
             // v4：接 entity.root.render_controllers = 本实体定义并挂载该 RC
             List.of(PortDef.out("controller", PortType.RC_REF))));
 

@@ -20,7 +20,7 @@ import io.github.tt432.eyelib.nodegraph.PortType;
  *   <li>EXEC → {@link TriggerLink}：graphprocessor 内建特判「TriggerLink 仅连 TriggerLink」，
  *       恰好等于 exec↔exec；TriggerLink 本身是无语义空标记类（执行语义在
  *       TriggerProcessor/ITriggerableNode，本编辑器禁用 processor，不触及）；</li>
- *   <li>SLOT/ARRAY/各 *_REF → 专属空标记类：同类才连，与域规则一致；</li>
+ *   <li>SLOT/ARRAY/COLOR/各 *_REF → 专属空标记类：同类才连，与域规则一致；</li>
  *   <li>每个 *_REF 标记类注册到 String 的单向转换器（域规则：ref 产出可接 STRING 输入）。</li>
  * </ul>
  *
@@ -85,6 +85,12 @@ public final class EvmLinks {
         }
     }
 
+    /** COLOR 标记类（复合颜色值；同类才连，与域矩阵一致）。 */
+    public static final class ColorLink {
+        private ColorLink() {
+        }
+    }
+
     /** 域端口类型 → graphprocessor 判型用 Java 类型。 */
     public static Class<?> toClass(PortType type) {
         return switch (type) {
@@ -96,6 +102,7 @@ public final class EvmLinks {
             case ANY -> Object.class;
             case ARRAY -> ArrayLink.class;
             case SLOT -> SlotLink.class;
+            case COLOR -> ColorLink.class;
             case GEOMETRY_REF -> GeometryRefLink.class;
             case TEXTURE_REF -> TextureRefLink.class;
             case MATERIAL_REF -> MaterialRefLink.class;
@@ -115,6 +122,7 @@ public final class EvmLinks {
         if (clazz == String.class) return PortType.STRING;
         if (clazz == ArrayLink.class) return PortType.ARRAY;
         if (clazz == SlotLink.class) return PortType.SLOT;
+        if (clazz == ColorLink.class) return PortType.COLOR;
         if (clazz == GeometryRefLink.class) return PortType.GEOMETRY_REF;
         if (clazz == TextureRefLink.class) return PortType.TEXTURE_REF;
         if (clazz == MaterialRefLink.class) return PortType.MATERIAL_REF;

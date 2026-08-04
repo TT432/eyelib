@@ -8,6 +8,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.BooleanConfigurator;
+import com.lowdragmc.lowdraglib.gui.editor.configurator.ColorConfigurator;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.ConfiguratorGroup;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.NumberConfigurator;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.SelectorConfigurator;
@@ -18,6 +19,7 @@ import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import io.github.tt432.eyelib.client.nodegraph.AssetSuggestions;
 import io.github.tt432.eyelib.client.nodegraph.preview.NodeAssetPreview;
 import io.github.tt432.eyelib.client.nodegraph.preview.PreviewViewState;
+import io.github.tt432.eyelib.nodegraph.ColorValues;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -305,6 +307,10 @@ public class EvmNode extends BaseNode {
             case BOOL -> father.addConfigurators(new BooleanConfigurator(
                     id, () -> options.getOrDefault(id, option.defaultValue()).getAsBoolean(),
                     v -> setOption(id, new JsonPrimitive(v)), current.getAsBoolean(), true));
+            case COLOR -> father.addConfigurators(new ColorConfigurator(
+                    id, () -> ColorValues.toArgbInt(options.getOrDefault(id, option.defaultValue()).getAsString()),
+                    v -> setOption(id, new JsonPrimitive(ColorValues.fromArgbInt(v.intValue()))),
+                    ColorValues.toArgbInt(option.defaultValue().getAsString()), true));
             case ENUM -> father.addConfigurators(new SelectorConfigurator<>(
                     id, () -> options.getOrDefault(id, option.defaultValue()).getAsString(),
                     v -> setOption(id, new JsonPrimitive(v)), option.defaultValue().getAsString(), true,

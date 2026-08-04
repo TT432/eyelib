@@ -24,7 +24,7 @@ final class EvmValues {
             case INT -> Integer.class;
             case FLOAT -> Float.class;
             case BOOL -> Boolean.class;
-            case STRING, TEXT, ENUM, IDENTIFIER -> String.class;
+            case STRING, TEXT, ENUM, IDENTIFIER, COLOR -> String.class;
         };
     }
 
@@ -41,7 +41,7 @@ final class EvmValues {
             case INT -> p.isNumber() ? p.getAsInt() : null;
             case FLOAT -> p.isNumber() ? p.getAsFloat() : null;
             case BOOL -> p.isBoolean() ? p.getAsBoolean() : null;
-            case STRING, TEXT, ENUM, IDENTIFIER -> p.isString() ? p.getAsString() : null;
+            case STRING, TEXT, ENUM, IDENTIFIER, COLOR -> p.isString() ? p.getAsString() : null;
         };
     }
 

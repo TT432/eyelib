@@ -74,4 +74,20 @@ class PortTypeTest {
         assertFalse(PortType.EXEC.isAssignableTo(PortType.VARIABLE));
         assertTrue(PortType.VARIABLE.isValue());
     }
+
+    @Test
+    void colorIsStrictlyColorOnly() {
+        // COLOR 是复合值：仅自连；ANY 通配 / VARIABLE 隐式读 / number 互通全不适用
+        assertTrue(PortType.COLOR.isAssignableTo(PortType.COLOR));
+        assertFalse(PortType.COLOR.isAssignableTo(PortType.ANY));
+        assertFalse(PortType.ANY.isAssignableTo(PortType.COLOR));
+        assertFalse(PortType.FLOAT.isAssignableTo(PortType.COLOR));
+        assertFalse(PortType.COLOR.isAssignableTo(PortType.FLOAT));
+        assertFalse(PortType.VARIABLE.isAssignableTo(PortType.COLOR));
+        assertFalse(PortType.COLOR.isAssignableTo(PortType.STRING));
+        assertFalse(PortType.COLOR.isAssignableTo(PortType.EXEC));
+        assertFalse(PortType.COLOR.isAssignableTo(PortType.SLOT));
+        assertTrue(PortType.COLOR.isValue());
+        org.junit.jupiter.api.Assertions.assertEquals("color", PortType.COLOR.getSerializedName());
+    }
 }

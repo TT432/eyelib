@@ -156,7 +156,8 @@ public final class NodeDebugOverlayModel {
                 continue;
             }
             Optional<PortDef> out = type.get().outputsOf(node, lib.subgraphResolver()).stream()
-                    .filter(p -> p.type().isValue())
+                    // COLOR 输出是复合值（非标量 molang），发射即 COLOR_AS_SCALAR——不做徽标
+                    .filter(p -> p.type().isValue() && p.type() != io.github.tt432.eyelib.nodegraph.PortType.COLOR)
                     .findFirst();
             if (out.isEmpty()) {
                 continue;

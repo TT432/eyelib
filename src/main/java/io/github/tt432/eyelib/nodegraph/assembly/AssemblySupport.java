@@ -7,9 +7,10 @@ import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeType;
-import io.github.tt432.eyelib.nodegraph.PortDef;
 import io.github.tt432.eyelib.nodegraph.Wire;
 import io.github.tt432.eyelib.nodegraph.codegen.CodegenResult;
+import io.github.tt432.eyelib.nodegraph.codegen.ColorCode;
+import io.github.tt432.eyelib.nodegraph.codegen.ColorCodegenResult;
 import io.github.tt432.eyelib.nodegraph.codegen.MolangGenerator;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -67,6 +68,13 @@ final class AssemblySupport {
         /** 执行槽生成（EXEC 槽 → 语句序列）；诊断透传。 */
         String emitStatements(String nodeUid, String portId) {
             CodegenResult r = generator.emitStatementListFor(library.main(), nodeUid, portId);
+            diagnostics.addAll(r.diagnostics());
+            return r.code();
+        }
+
+        /** 颜色槽生成（COLOR 槽 → 四通道）；null = 未连线（调用方省略字段）。诊断透传。 */
+        @Nullable ColorCode emitColor(String nodeUid, String portId) {
+            ColorCodegenResult r = generator.emitColorFor(library.main(), nodeUid, portId);
             diagnostics.addAll(r.diagnostics());
             return r.code();
         }
@@ -145,32 +153,5 @@ final class AssemblySupport {
     /** 取原始 JSON 选项（数值/布尔选项直接写 JSON 原始类型，不走 molang）。 */
     static JsonElement optionValue(NodeInstance node, NodeType type, String id) {
         return node.option(id, type).orElse(new JsonPrimitive(false));
-    }
-
-    /** 端口默认值 → molang 字面量文本（无默认时给 fallback）。 */
-    static String portDefaultLiteral(Ctx ctx, NodeInstance node, NodeType type, String portId, String fallback) {
-        Optional<PortDef> port = type.inputsOf(node, ctx.library.subgraphResolver()).stream()
-                .filter(p -> p.id().equals(portId)).findFirst();
-        return port.flatMap(PortDef::defaultValue).map(AssemblySupport::literal).orElse(fallback);
-    }
-
-    /** JsonElement → molang 字面量：数字去 .0；bool → 1/0；string → 单引号转义。与 codegen 同规则。 */
-    private static String literal(JsonElement e) {
-        if (e instanceof JsonPrimitive p) {
-            if (p.isNumber()) {
-                double v = p.getAsDouble();
-                if (v == Math.rint(v) && Double.isFinite(v) && Math.abs(v) < 9.0e15) {
-                    return Long.toString((long) v);
-                }
-                return Double.toString(v);
-            }
-            if (p.isBoolean()) {
-                return p.getAsBoolean() ? "1" : "0";
-            }
-            if (p.isString()) {
-                return "'" + p.getAsString().replace("\\", "\\\\").replace("'", "\\'") + "'";
-            }
-        }
-        return "0";
     }
 }
