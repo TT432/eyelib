@@ -19,7 +19,7 @@ public record GraphLibrary(
         String main,
         Map<String, GraphData> graphs
 ) {
-    public static final int CURRENT_FORMAT_VERSION = 1;
+    public static final int CURRENT_FORMAT_VERSION = 2;
 
     public static final Codec<GraphLibrary> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.INT.optionalFieldOf("format_version", CURRENT_FORMAT_VERSION).forGetter(GraphLibrary::formatVersion),

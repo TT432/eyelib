@@ -116,11 +116,15 @@ public final class NodeTypes {
 
     // ---------- 变量 ----------
 
-    public static final NodeType VAR_GET = register(NodeType.of(
-            "var.get", NodeType.Kind.VAR_GET, CAT_VARIABLE,
-            List.of(NodeOptionDef.string("name", "variable.foo")),
+    /**
+     * variable：黑板变量本身（变量面板拖拽产物）。name 不带根（与 {@link VariableDecl#name()} 一致）。
+     * 输出 VARIABLE 类型：接任意值端口 = 隐式读；接 exec.set_var.target = 写身份（规格 §3.1）。
+     */
+    public static final NodeType VARIABLE = register(NodeType.of(
+            "variable", NodeType.Kind.VARIABLE, CAT_VARIABLE,
+            List.of(NodeOptionDef.string("name", "foo")),
             List.of(),
-            List.of(PortDef.out("out", PortType.ANY))));
+            List.of(PortDef.out("out", PortType.VARIABLE))));
 
     public static final NodeType CONTEXT_GET = register(NodeType.of(
             "context.get", NodeType.Kind.CONTEXT_GET, CAT_VARIABLE,
@@ -134,12 +138,19 @@ public final class NodeTypes {
             List.of(),
             List.of(PortDef.out("out", PortType.ANY))));
 
-    /** exec.set_var：root 选项决定 variable./temp. 根。 */
+    /** exec.set_var：黑板变量写入。target 引脚必须接 variable 节点（写身份）；value 为写入值。 */
     public static final NodeType EXEC_SET_VAR = register(NodeType.of(
             "exec.set_var", NodeType.Kind.EXEC_SET_VAR, CAT_EXEC,
-            List.of(
-                    NodeOptionDef.enumeration("root", "variable", List.of("variable", "temp")),
-                    NodeOptionDef.string("name", "variable.foo")),
+            List.of(),
+            List.of(execIn(),
+                    PortDef.in("target", PortType.VARIABLE),
+                    PortDef.in("value", PortType.ANY, new JsonPrimitive(0))),
+            List.of(execOut())));
+
+    /** exec.set_temp：瞬态 temp 赋值（不进变量面板；name 可带不带 temp. 前缀）。 */
+    public static final NodeType EXEC_SET_TEMP = register(NodeType.of(
+            "exec.set_temp", NodeType.Kind.EXEC_SET_TEMP, CAT_EXEC,
+            List.of(NodeOptionDef.string("name", "temp.t")),
             List.of(execIn(), PortDef.in("value", PortType.ANY, new JsonPrimitive(0))),
             List.of(execOut())));
 
@@ -274,7 +285,7 @@ public final class NodeTypes {
             List.of(
                     // short_name 空 = 派生（ShortNames.effective）；非空 = 显式覆盖（外部契约逃生舱）
                     NodeOptionDef.string("short_name", ""),
-                    NodeOptionDef.string("identifier", "geometry.example.model")),
+                    NodeOptionDef.asset("identifier", "geometry.example.model", "geometry")),
             List.of(),
             List.of(PortDef.out("ref", PortType.GEOMETRY_REF))));
 
@@ -282,7 +293,7 @@ public final class NodeTypes {
             "ref.texture", NodeType.Kind.REF_TEXTURE, CAT_REF,
             List.of(
                     NodeOptionDef.string("short_name", ""),
-                    NodeOptionDef.string("path", "textures/entity/example")),
+                    NodeOptionDef.asset("path", "textures/entity/example", "texture")),
             List.of(),
             List.of(PortDef.out("ref", PortType.TEXTURE_REF))));
 
@@ -290,7 +301,7 @@ public final class NodeTypes {
             "ref.material", NodeType.Kind.REF_MATERIAL, CAT_REF,
             List.of(
                     NodeOptionDef.string("short_name", ""),
-                    NodeOptionDef.string("material", "entity_alphatest")),
+                    NodeOptionDef.asset("material", "entity_alphatest", "material")),
             List.of(),
             List.of(PortDef.out("ref", PortType.MATERIAL_REF))));
 
@@ -298,7 +309,7 @@ public final class NodeTypes {
             "ref.animation", NodeType.Kind.REF_ANIMATION, CAT_REF,
             List.of(
                     NodeOptionDef.string("short_name", ""),
-                    NodeOptionDef.string("identifier", "animation.example.walk")),
+                    NodeOptionDef.asset("identifier", "animation.example.walk", "animation")),
             List.of(),
             List.of(PortDef.out("ref", PortType.ANIMATION_REF))));
 
@@ -306,13 +317,13 @@ public final class NodeTypes {
             "ref.ac", NodeType.Kind.REF_AC, CAT_REF,
             List.of(
                     NodeOptionDef.string("short_name", ""),
-                    NodeOptionDef.string("identifier", "controller.animation.example.main")),
+                    NodeOptionDef.asset("identifier", "controller.animation.example.main", "ac")),
             List.of(),
             List.of(PortDef.out("ref", PortType.AC_REF))));
 
     public static final NodeType REF_RC = register(NodeType.of(
             "ref.rc", NodeType.Kind.REF_RC, CAT_REF,
-            List.of(NodeOptionDef.string("identifier", "controller.render.example")),
+            List.of(NodeOptionDef.asset("identifier", "controller.render.example", "rc")),
             List.of(),
             List.of(PortDef.out("ref", PortType.RC_REF))));
 

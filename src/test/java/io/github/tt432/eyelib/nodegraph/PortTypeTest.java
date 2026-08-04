@@ -51,4 +51,27 @@ class PortTypeTest {
     void intSerializesLowercase() {
         org.junit.jupiter.api.Assertions.assertEquals("int", PortType.INT.getSerializedName());
     }
+
+    @Test
+    void variableReadsIntoAnyValuePort() {
+        // 隐式读：VARIABLE → 任意值端口（规格 §3.1）
+        assertTrue(PortType.VARIABLE.isAssignableTo(PortType.FLOAT));
+        assertTrue(PortType.VARIABLE.isAssignableTo(PortType.INT));
+        assertTrue(PortType.VARIABLE.isAssignableTo(PortType.BOOL));
+        assertTrue(PortType.VARIABLE.isAssignableTo(PortType.STRING));
+        assertTrue(PortType.VARIABLE.isAssignableTo(PortType.ARRAY));
+        assertTrue(PortType.VARIABLE.isAssignableTo(PortType.ANY));
+        assertTrue(PortType.VARIABLE.isAssignableTo(PortType.VARIABLE));
+    }
+
+    @Test
+    void variableTargetRejectsNonVariable() {
+        // 只有 VARIABLE 能提供写身份（ANY 通配除外，验证器严格化）；EXEC/SLOT 隔离
+        assertFalse(PortType.FLOAT.isAssignableTo(PortType.VARIABLE));
+        assertFalse(PortType.STRING.isAssignableTo(PortType.VARIABLE));
+        assertFalse(PortType.VARIABLE.isAssignableTo(PortType.EXEC));
+        assertFalse(PortType.VARIABLE.isAssignableTo(PortType.SLOT));
+        assertFalse(PortType.EXEC.isAssignableTo(PortType.VARIABLE));
+        assertTrue(PortType.VARIABLE.isValue());
+    }
 }

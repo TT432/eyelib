@@ -211,6 +211,9 @@ public final class EvmGraphTranslator {
             return null;
         }
         NodeType type = typeOpt.get();
+        if (type.kind() == NodeType.Kind.VARIABLE) {
+            return createVariableNode(model, n, uid, pos, diags);
+        }
         if (type.kind() == NodeType.Kind.SUBGRAPH_CALL) {
             String subName = n.optionString("subgraph", "");
             GraphModel sub = ctx.subgraphsByName.get(subName);
@@ -233,6 +236,22 @@ public final class EvmGraphTranslator {
             return node;
         }
         return createEvmNode(model, type, n, uid, pos, diags);
+    }
+
+    /**
+     * domain variable 节点 → LDLib2 {@link VariableNodeModel}：按 name（不带根，与
+     * {@link VariableDecl#name()} 一致）解析黑板声明并绑定——重命名/改型由声明引用自动同步。
+     * 黑板未声明时退回选项形态的 variable 节点保住画布内容（验证器报 UNDECLARED_VARIABLE）。
+     */
+    private static @Nullable AbstractNodeModel createVariableNode(GraphModel model, NodeInstance n,
+                                                                  UUID uid, Vector2f pos, List<Diagnostic> diags) {
+        String name = n.optionString("name", "");
+        for (VariableDeclarationModelBase var : model.getGraphVariableModels()) {
+            if (var != null && !var.isInputOrOutput() && var.getName().equals(name)) {
+                return model.createVariableNode(var, pos, uid, null);
+            }
+        }
+        return createEvmNode(model, NodeTypes.VARIABLE, n, uid, pos, diags);
     }
 
     private static @Nullable NodeModel createEvmNode(GraphModel model, NodeType type, NodeInstance n,
@@ -284,13 +303,17 @@ public final class EvmGraphTranslator {
         return type != null ? type : PortType.ANY;
     }
 
-    /** 连线端点解析：普通节点按端口 id；SubgraphNodeModel 按子图变量名/result → 变量 uid 端口。 */
+    /** 连线端点解析：普通节点按端口 id；SubgraphNodeModel 按子图变量名/result → 变量 uid 端口；
+     *  VariableNodeModel 只有唯一主口（读=出/写=入），不看请求的端口 id。 */
     private static @Nullable PortModel resolvePort(Map<String, AbstractNodeModel> nodesByUid, PortRef ref,
                                                    PortDirection direction, List<Diagnostic> diags) {
         AbstractNodeModel node = nodesByUid.get(ref.node());
         if (!(node instanceof NodeModel nm)) {
             diags.add(Diagnostic.warning("EDITOR_TRANSLATE", "wire endpoint node '" + ref.node() + "' missing"));
             return null;
+        }
+        if (node instanceof VariableNodeModel varNode) {
+            return direction == PortDirection.OUTPUT ? varNode.getOutputPort() : varNode.getInputPort();
         }
         if (node instanceof SubgraphNodeModel sub) {
             GraphModel target = sub.getSubgraphModel();
@@ -449,14 +472,10 @@ public final class EvmGraphTranslator {
                 diags.add(Diagnostic.warning("EDITOR_TRANSLATE", "variable node without declaration skipped"));
                 return null;
             }
-            PortModel input = varNode.getInputPort();
-            if (input != null && !input.getConnectedWires().isEmpty()) {
-                diags.add(Diagnostic.warning("EDITOR_TRANSLATE",
-                        "variable node '" + decl.getName() + "' has a wired input (set semantics); exported as var.get", uid));
-            }
+            // variable 节点即变量本身：导出 name（不带根）；写身份靠 exec.set_var.target 连线表达
             Map<String, JsonElement> options = new LinkedHashMap<>();
             options.put("name", new JsonPrimitive(decl.getName()));
-            return new NodeInstance(uid, "var.get", pos.x, pos.y, options, Map.of());
+            return new NodeInstance(uid, "variable", pos.x, pos.y, options, Map.of());
         }
         if (nm instanceof ConstantNodeModel constNode) {
             Object value = constNode.getConstant() != null ? constNode.getConstant().getValue() : null;
@@ -535,8 +554,9 @@ public final class EvmGraphTranslator {
             if (port.getDirection() == PortDirection.OUTPUT) {
                 return new PortRef(nodeUid, "out");
             }
+            // 写入口仅子图接口 OUTPUT 变量（WRITE 修饰）才有；domain 用 subgraph.output 锚点表达赋值
             diags.add(Diagnostic.warning("EDITOR_TRANSLATE",
-                    "wire into a variable node's input dropped (var.set is exec-only in EVM)", nodeUid));
+                    "wire into a variable node's input dropped (domain 无写入口形态，请用 subgraph.output 锚点)", nodeUid));
             return null;
         }
         if (owner instanceof ConstantNodeModel) {

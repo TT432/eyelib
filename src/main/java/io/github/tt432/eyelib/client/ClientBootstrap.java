@@ -29,6 +29,8 @@ public final class ClientBootstrap {
         GuiHookPort.setModelPreviewScreenHook(ModelPreviewScreen::new);
         GuiHookPort.setAnimationViewHook(AnimationView::new);
         GuiHookPort.setNodegraphEditorHook(() -> io.github.tt432.eyelib.client.nodegraph.NodegraphGate.openEditor(null));
+        // eproject 项目库启动加载（规格 nodegraph-eproject-variables §2.3）
+        io.github.tt432.eyelib.client.nodegraph.EprojectService.loadAll();
         UiPort.register(EyelibManagerScreen::create);
 
         ParticleSpawnRuntimeAdapter.configure(

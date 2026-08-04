@@ -17,6 +17,7 @@ import com.lowdragmc.lowdraglib.gui.graphprocessor.annotation.CustomPortBehavior
 import com.lowdragmc.lowdraglib.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib.gui.widget.ImageWidget;
 import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
+import io.github.tt432.eyelib.client.nodegraph.AssetSuggestions;
 import io.github.tt432.eyelib.client.nodegraph.preview.NodeAssetPreview;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -282,9 +283,21 @@ public class EvmNode extends BaseNode {
         String id = option.id();
         JsonElement current = options.getOrDefault(id, option.defaultValue());
         switch (option.type()) {
-            case STRING, TEXT, IDENTIFIER -> father.addConfigurators(new StringConfigurator(
-                    id, () -> options.getOrDefault(id, option.defaultValue()).getAsString(),
-                    v -> setOption(id, new JsonPrimitive(v)), option.defaultValue().getAsString(), true));
+            case STRING, TEXT, IDENTIFIER -> {
+                // 带 suggestionKey 的 STRING/IDENTIFIER 选项：可输入下拉（规格 §4.2，
+                // 候选运行时从注册表取，自由输入保留）
+                if (option.type() != NodeOptionDef.OptionType.TEXT && option.suggestionKey().isPresent()) {
+                    String suggestionKey = option.suggestionKey().get();
+                    father.addConfigurators(new SuggestionConfigurator(
+                            id, () -> options.getOrDefault(id, option.defaultValue()).getAsString(),
+                            v -> setOption(id, new JsonPrimitive(v)), option.defaultValue().getAsString(), true,
+                            () -> AssetSuggestions.suggest(suggestionKey)));
+                } else {
+                    father.addConfigurators(new StringConfigurator(
+                            id, () -> options.getOrDefault(id, option.defaultValue()).getAsString(),
+                            v -> setOption(id, new JsonPrimitive(v)), option.defaultValue().getAsString(), true));
+                }
+            }
             case FLOAT -> father.addConfigurators(new NumberConfigurator(
                     id, () -> options.getOrDefault(id, option.defaultValue()).getAsFloat(),
                     v -> setOption(id, new JsonPrimitive(v.floatValue())), current.getAsFloat(), true));

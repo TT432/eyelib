@@ -39,8 +39,8 @@ import java.util.UUID;
  *   <li>连线经 {@code graph.connect(inputPort, outputPort)}（参数序：输入在前），
  *       端口按（承载字段 "in"/"out"，identifier = 域端口 id）反查；</li>
  *   <li>黑板变量 → ExposedParameter（accessor=Get），显示名 = 分组全路径（D6 平铺）；</li>
- *   <li>ParameterNode（参数面板拖拽产物）回译为 var.get 域节点；accessor=Set 的参数节点
- *       本域无对应表达，跳过并告警。</li>
+ *   <li>ParameterNode（旧参数面板拖拽产物，仅兼容粘贴/旧画布）回译为 variable 域节点；
+ *       accessor=Set 的参数节点本域无对应表达，跳过并告警。</li>
  * </ul>
  */
 public final class Ldlib1GraphTranslator {

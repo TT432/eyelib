@@ -260,8 +260,9 @@ class JsonGraphImportersTest {
                         List.of(
                                 node("root", "entity.root", opts("identifier", "test:cycle"),
                                         opts("scale_x", 2)),
-                                node("s1", "exec.set_var", opts("name", "variable.foo", "root", "variable"),
+                                node("s1", "exec.set_var", Map.of(),
                                         opts("value", 1)),
+                                node("s1t", "variable", opts("name", "foo")),
                                 node("cscale", "const.number", opts("value", 1.5)),
                                 node("ae1", "animate.entry"),
                                 node("w1", "const.number", opts("value", 0.5)),
@@ -276,6 +277,7 @@ class JsonGraphImportersTest {
                                         opts("short_name", "default", "identifier", "geometry.test.model"))),
                         List.of(
                                 wire("s1", "exec_out", "root", "initialize"),
+                                wire("s1t", "out", "s1", "target"),
                                 wire("cscale", "out", "root", "scale"),
                                 wire("ra1", "ref", "ae1", "ref"),
                                 wire("w1", "out", "ae1", "weight"),
@@ -302,7 +304,9 @@ class JsonGraphImportersTest {
         assertEquals("default", geo.options().get("short_name").getAsString());
         assertEquals("geometry.test.model", geo.options().get("identifier").getAsString());
         NodeInstance setVar = firstByType(graph.nodes(), "exec.set_var");
-        assertEquals("variable.foo", setVar.options().get("name").getAsString());
+        NodeInstance setTarget = graph.findNode(wireSource(graph.wires(), setVar.uid(), "target")).orElseThrow();
+        assertEquals("variable", setTarget.type());
+        assertEquals("foo", setTarget.options().get("name").getAsString());
         assertEquals(setVar.uid(), wireSource(graph.wires(), "root", "initialize"));
         assertEquals(1, allByType(graph.nodes(), "animate.entry").size());
         assertEquals(2, allByType(graph.nodes(), "rc.condition_entry").size());

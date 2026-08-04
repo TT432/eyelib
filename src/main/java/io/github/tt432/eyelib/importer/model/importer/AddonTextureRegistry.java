@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.importer.model.importer;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.jspecify.annotations.Nullable;
 
@@ -39,6 +40,14 @@ public final class AddonTextureRegistry {
      */
     public static @Nullable ImportedImageData get(String path) {
         return TEXTURES.get(path.toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * 已注册纹理路径的只读快照（归一化形态：小写、.tga→.png，无命名空间）。
+     * 供节点图资产选择器（AssetSuggestions）枚举候选。
+     */
+    public static Set<String> keys() {
+        return Set.copyOf(TEXTURES.keySet());
     }
 
     /**

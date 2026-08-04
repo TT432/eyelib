@@ -308,7 +308,7 @@ final class EmitSession {
             case CONST_NUMBER, CONST_INT -> Out.of(number(node, type, "value"));
             case CONST_BOOL -> Out.of(bool(node, type, "value") ? "1" : "0");
             case CONST_STRING -> Out.of(quote(string(node, type, "value")));
-            case VAR_GET -> Out.of(withRoot("variable", string(node, type, "name")));
+            case VARIABLE -> Out.of(withRoot("variable", string(node, type, "name")));
             case TEMP_GET -> Out.of(withRoot("temp", string(node, type, "name")));
             case CONTEXT_GET -> Out.of(withRoot("context", string(node, type, "name")));
             case QUERY_CALL, MATH_CALL -> emitCallLike(f, node, type);
@@ -446,12 +446,17 @@ final class EmitSession {
         NodeType type = typeOpt.get();
         switch (type.kind()) {
             case EXEC_SET_VAR -> {
+                // target 引脚接 variable 节点；其隐式读发射即 variable.<name>，直接用作赋值左值
+                Out target = emitValueInput(f, node.uid(), "target");
                 Out value = emitValueInput(f, node.uid(), "value");
-                String name = string(node, type, "name");
-                String target = name.startsWith("variable.") || name.startsWith("temp.")
-                        ? name
-                        : string(node, type, "root") + "." + name;
-                return withPreludes(value, target + " = " + value.expr());
+                List<String> statements = new ArrayList<>(target.preludes());
+                statements.addAll(value.preludes());
+                statements.add(target.expr() + " = " + value.expr());
+                return statements;
+            }
+            case EXEC_SET_TEMP -> {
+                Out value = emitValueInput(f, node.uid(), "value");
+                return withPreludes(value, withRoot("temp", string(node, type, "name")) + " = " + value.expr());
             }
             case EXEC_CALL -> {
                 Out call = emitCallLike(f, node, type);
@@ -500,7 +505,7 @@ final class EmitSession {
     /** 永不提取的平凡节点：常量、单变量/属性引用（§2.4-3）。 */
     private static boolean isTrivial(NodeType type, NodeInstance node) {
         return switch (type.kind()) {
-            case CONST_NUMBER, CONST_INT, CONST_BOOL, CONST_STRING, VAR_GET, TEMP_GET, CONTEXT_GET,
+            case CONST_NUMBER, CONST_INT, CONST_BOOL, CONST_STRING, VARIABLE, TEMP_GET, CONTEXT_GET,
                  REF_GEOMETRY, REF_TEXTURE, REF_MATERIAL -> true;
             case QUERY_CALL, MATH_CALL -> node.optionInt("arg_count", 0) <= 0;
             default -> false;

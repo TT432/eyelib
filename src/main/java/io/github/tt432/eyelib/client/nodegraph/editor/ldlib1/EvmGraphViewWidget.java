@@ -6,6 +6,7 @@ import com.lowdragmc.lowdraglib.gui.graphprocessor.data.BaseNode;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.DebugPanelWidget;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.GraphViewWidget;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.NodeWidget;
+import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.ParameterPanelWidget;
 import java.util.ArrayList;
 
 /**
@@ -37,6 +38,9 @@ public class EvmGraphViewWidget extends GraphViewWidget {
         // runStep 在 processor == null 时 NPE（stepIterator 未初始化即 hasNext，LDLib 自身缺陷）。
         // EVM 编辑器只编辑不运行（processor 恒为 null），必须整体移除调试面板，否则点 step 即崩客户端。
         widgets.stream().filter(DebugPanelWidget.class::isInstance).findFirst().ifPresent(this::removeWidget);
+        // LDLib 参数面板（ParameterPanelWidget）只读且无增删，由工作台变量面板
+        // （VariablesPanel，规格 §3.2）取代——整体移除，避免两套变量入口并存
+        widgets.stream().filter(ParameterPanelWidget.class::isInstance).findFirst().ifPresent(this::removeWidget);
     }
 
     @Override

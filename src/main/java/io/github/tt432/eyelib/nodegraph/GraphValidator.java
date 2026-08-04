@@ -52,6 +52,8 @@ public final class GraphValidator {
     public static final String UNCONNECTED_INPUT = "UNCONNECTED_INPUT";
     public static final String ORPHAN_CHAIN = "ORPHAN_CHAIN";
     public static final String UNDECLARED_VARIABLE = "UNDECLARED_VARIABLE";
+    /** exec.set_var 的 target 未连线到 variable 节点。 */
+    public static final String SET_TARGET_NOT_VARIABLE = "SET_TARGET_NOT_VARIABLE";
 
     /** SLOT 装配白名单：目标(节点类型.端口) → 允许的源节点类型。 */
     private static final Map<String, String> SLOT_WHITELIST = Map.of(
@@ -482,6 +484,9 @@ public final class GraphValidator {
         // 检查 19：未声明的黑板变量引用
         checkVariableRefs(graph, byUid, types, out);
 
+        // 检查 20：exec.set_var target 必须是 variable 节点
+        checkSetVarTargets(graph, byUid, types, out);
+
         return out;
     }
 
@@ -604,7 +609,7 @@ public final class GraphValidator {
         return visited;
     }
 
-    /** 检查 19：var.get / exec.set_var（variable 根）引用未声明的黑板变量。 */
+    /** 检查 19：variable 节点引用未声明的黑板变量。 */
     private static void checkVariableRefs(GraphData graph, Map<String, NodeInstance> byUid,
                                           Map<String, NodeType> types, List<Diagnostic> out) {
         Set<String> declared = new HashSet<>();
@@ -613,16 +618,7 @@ public final class GraphValidator {
         }
         for (NodeInstance node : byUid.values()) {
             NodeType type = types.get(node.uid());
-            if (type == null) {
-                continue;
-            }
-            boolean check = switch (node.type()) {
-                case "var.get" -> true;
-                case "exec.set_var" -> node.option("root", type)
-                        .map(JsonElement::getAsString).orElse("variable").equals("variable");
-                default -> false;
-            };
-            if (!check) {
+            if (type == null || type.kind() != NodeType.Kind.VARIABLE) {
                 continue;
             }
             String name = node.option("name", type).map(JsonElement::getAsString).orElse("");
@@ -630,6 +626,30 @@ public final class GraphValidator {
             if (!declared.contains(stripped)) {
                 out.add(Diagnostic.warning(UNDECLARED_VARIABLE,
                         "引用了黑板未声明的变量：" + name, node.uid()));
+            }
+        }
+    }
+
+    /** 检查 20：exec.set_var 的 target 引脚必须连线到 variable 节点（写身份）。 */
+    private static void checkSetVarTargets(GraphData graph, Map<String, NodeInstance> byUid,
+                                           Map<String, NodeType> types, List<Diagnostic> out) {
+        for (NodeInstance node : byUid.values()) {
+            NodeType type = types.get(node.uid());
+            if (type == null || type.kind() != NodeType.Kind.EXEC_SET_VAR) {
+                continue;
+            }
+            boolean ok = false;
+            for (Wire wire : graph.wires()) {
+                if (wire.to().node().equals(node.uid()) && wire.to().port().equals("target")) {
+                    NodeInstance producer = byUid.get(wire.from().node());
+                    NodeType producerType = producer == null ? null : types.get(producer.uid());
+                    ok = producerType != null && producerType.kind() == NodeType.Kind.VARIABLE;
+                    break;
+                }
+            }
+            if (!ok) {
+                out.add(Diagnostic.error(SET_TARGET_NOT_VARIABLE,
+                        "exec.set_var 的 target 必须连线到 variable 节点", node.uid()));
             }
         }
     }

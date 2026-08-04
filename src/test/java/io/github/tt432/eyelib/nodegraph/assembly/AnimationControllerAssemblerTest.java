@@ -71,7 +71,8 @@ class AnimationControllerAssemblerTest {
                         node("q1", "query.call",
                                 opts("function", "query.modified_distance_moved", "arg_count", 0)),
                         node("s2", "ac.state", opts("name", "walk")),
-                        node("sv", "exec.set_var", opts("name", "variable.stopped")),
+                        node("sv", "exec.set_var"),
+                        node("svt", "variable", opts("name", "stopped")),
                         node("t2", "ac.transition", opts("target", "idle"))),
                 List.of(
                         wire("s1", "state", "root", "states"),
@@ -82,6 +83,7 @@ class AnimationControllerAssemblerTest {
                         wire("q1", "out", "t1", "condition"),
                         wire("s2", "state", "root", "states"),
                         wire("sv", "exec_out", "s2", "on_exit"),
+                        wire("svt", "out", "sv", "target"),
                         wire("t2", "transition", "s2", "transitions"))));
 
         AssemblyResult r = AnimationControllerAssembler.assemble(lib);

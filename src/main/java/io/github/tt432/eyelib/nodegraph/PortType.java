@@ -26,6 +26,8 @@ public enum PortType implements PortStringRepresentable {
     SLOT,
     /** 未推导/通配。 */
     ANY,
+    /** 黑板变量身份（variable 节点产出；接任意值端口 = 隐式读，接 exec.set_var.target = 写身份）。 */
+    VARIABLE,
     /** geometry 短名/标识符引用（string 子类型）。 */
     GEOMETRY_REF,
     /** texture 短名/路径引用（string 子类型）。 */
@@ -58,6 +60,9 @@ public enum PortType implements PortStringRepresentable {
         if (this == ANY || target == ANY) return true;
         if (this == EXEC || target == EXEC) return false;
         if (this == SLOT || target == SLOT) return false;
+        // 变量身份 → 任意值端口 = 隐式读；其它类型不能冒充变量身份（ANY 通配除外，验证器严格化）
+        if (target == VARIABLE) return false;
+        if (this == VARIABLE) return true;
         if (isNumber() && target.isNumber()) return true;
         if (isRef() && target == STRING) return true;
         return false;

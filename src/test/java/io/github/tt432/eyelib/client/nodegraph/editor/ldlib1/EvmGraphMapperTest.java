@@ -91,10 +91,10 @@ class EvmGraphMapperTest {
         assertEquals(Optional.of("a/b"), EvmGraphMapper.variableGroup("a/b/c"));
     }
 
-    // ---------- ParameterNode → var.get ----------
+    // ---------- ParameterNode → variable ----------
 
     @Test
-    void parameterNodeBecomesVarGet() {
+    void parameterNodeBecomesVariable() {
         EvmGraphModel model = new EvmGraphModel(
                 List.of(EvmGraphModel.EvmNodeModel.parameter("guid-1", "a/b/foo", 7, 8)),
                 List.of(new EvmGraphModel.EvmEdgeModel("guid-1", "out", "n1", "a")),
@@ -103,10 +103,10 @@ class EvmGraphMapperTest {
         GraphData data = EvmGraphMapper.toData(model, GraphData.empty());
 
         NodeInstance varGet = data.nodes().get(0);
-        assertEquals(NodeTypes.VAR_GET.id(), varGet.type());
+        assertEquals(NodeTypes.VARIABLE.id(), varGet.type());
         assertEquals("guid-1", varGet.uid());
         assertEquals(7, varGet.x());
-        assertEquals(new JsonPrimitive("variable.foo"), varGet.options().get("name"));
+        assertEquals(new JsonPrimitive("foo"), varGet.options().get("name"));
 
         // 黑板变量还原出分组
         assertEquals(List.of(new VariableDecl("foo", PortType.FLOAT, Optional.of("a/b"), Optional.empty())),
@@ -117,9 +117,9 @@ class EvmGraphMapperTest {
     }
 
     @Test
-    void varGetEvmNodeRoundTripsAsEvmNotParameter() {
+    void variableEvmNodeRoundTripsAsEvmNotParameter() {
         GraphData source = new GraphData(
-                List.of(node("v", "var.get", 1, 2, opts("name", "variable.foo"), Map.of())),
+                List.of(node("v", "variable", 1, 2, opts("name", "foo"), Map.of())),
                 List.of(), List.of(VariableDecl.of("foo", PortType.FLOAT)),
                 List.of(), List.of(), Optional.empty());
 

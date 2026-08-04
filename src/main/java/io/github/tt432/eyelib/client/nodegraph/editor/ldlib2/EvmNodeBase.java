@@ -1,15 +1,20 @@
 package io.github.tt432.eyelib.client.nodegraph.editor.ldlib2;
 //? if !legacy {
+import com.lowdragmc.lowdraglib2.configurator.IConfigurable;
+import com.lowdragmc.lowdraglib2.configurator.ui.SelectorConfigurator;
+import com.lowdragmc.lowdraglib2.configurator.ui.StringConfigurator;
 import com.lowdragmc.lowdraglib2.gui.ui.data.Tooltips;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.INodeOption;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.Node;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.port.IPort;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.port.PortCapacity;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.ITypeConfigurable;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.node.NodePreviewContext;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.graph.CustomGraphModelImpl;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.PortModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.definition.IOptionDefinitionContext;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.definition.IPortDefinitionContext;
+import io.github.tt432.eyelib.client.nodegraph.AssetSuggestions;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeOptionDef;
 import io.github.tt432.eyelib.nodegraph.NodeType;
@@ -84,7 +89,28 @@ public abstract class EvmNodeBase extends Node {
             } else {
                 builder.withDisplayName(Component.literal(def.id()));
             }
+            // 规格 §4.2：带 suggestionKey 的字符串选项挂资产候选下拉
+            if (def.suggestionKey().isPresent()
+                    && EvmValues.optionJavaType(def.type()) == String.class) {
+                builder.withConfigurable(assetSuggestions(def.suggestionKey().get()));
+            }
         }
+    }
+
+    /**
+     * 资产候选配置器（规格 §4.2）：StringConfigurator 保留自由输入（外部契约逃生舱），
+     * SelectorConfigurator 供给运行时注册表候选（检查器每次打开取 COW 快照）；两行绑同一选项值。
+     */
+    private static ITypeConfigurable assetSuggestions(String suggestionKey) {
+        return (valueConfigurable, typeHandle) -> IConfigurable.create(father -> {
+            java.util.function.Supplier<String> getter = valueConfigurable::getValue;
+            java.util.function.Consumer<String> setter = valueConfigurable::setValue;
+            String fallback = java.util.Objects.toString(valueConfigurable.getDefaultValue(), "");
+            boolean forceUpdate = valueConfigurable.forceUpdate();
+            father.addConfigurator(new StringConfigurator("", getter, setter, fallback, forceUpdate));
+            father.addConfigurator(new SelectorConfigurator<>("", getter, setter, fallback, forceUpdate,
+                    AssetSuggestions.suggest(suggestionKey), s -> s));
+        });
     }
 
     @Override

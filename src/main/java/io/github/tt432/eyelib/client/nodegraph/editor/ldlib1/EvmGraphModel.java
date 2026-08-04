@@ -16,7 +16,7 @@ import java.util.Optional;
  * <p>翻译分两段：{@code GraphData ↔ EvmGraphModel}（纯，{@link EvmGraphMapper}，可单测）与
  * {@code EvmGraphModel ↔ BaseGraph}（薄绑定，{@link Ldlib1GraphTranslator}）。
  * 画布上只有两类节点：EVM 节点（{@link EvmNode}，承载域节点类型）与
- * LDLib 参数节点（ParameterNode，黑板变量面板拖拽产物，回译为本域 var.get）。
+ * LDLib 参数节点（ParameterNode，旧参数面板拖拽产物，回译为本域 variable 节点）。
  *
  * @param nodes  画布节点
  * @param edges  连线（端口 id 均为域端口 id）

@@ -162,20 +162,12 @@ final class ImportGraphBuilder {
                 diagnostics);
     }
 
-    /** 黑板变量声明：收集 var.get / exec.set_var(root=variable) 引用的 variable.* 名（去重排序）。 */
+    /** 黑板变量声明：收集 variable 节点引用的变量名（不带根，去重排序）。 */
     private static List<VariableDecl> collectVariables(List<NodeInstance> nodes) {
         Set<String> names = new TreeSet<>();
         for (NodeInstance n : nodes) {
-            switch (n.type()) {
-                case "var.get" -> addVarName(names, n.options().get("name"));
-                case "exec.set_var" -> {
-                    JsonElement root = n.options().get("root");
-                    if (root instanceof JsonPrimitive p && "variable".equals(p.getAsString())) {
-                        addVarName(names, n.options().get("name"));
-                    }
-                }
-                default -> {
-                }
+            if ("variable".equals(n.type())) {
+                addVarName(names, n.options().get("name"));
             }
         }
         return names.stream().map(name -> VariableDecl.of(name, PortType.ANY)).toList();
@@ -184,9 +176,8 @@ final class ImportGraphBuilder {
     private static void addVarName(Set<String> out, JsonElement name) {
         if (name instanceof JsonPrimitive p && p.isString()) {
             String s = p.getAsString();
-            if (s.startsWith("variable.")) {
-                out.add(s.substring("variable.".length()));
-            }
+            // 兼容带根旧写法（variable.foo）；variable 节点 name 规范形态是不带根
+            out.add(s.startsWith("variable.") ? s.substring("variable.".length()) : s);
         }
     }
 }

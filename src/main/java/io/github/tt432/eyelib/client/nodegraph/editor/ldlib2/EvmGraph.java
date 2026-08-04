@@ -6,7 +6,11 @@ import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.Node;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.TypeHandle;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.graph.CustomGraphModelImpl;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.graph.GraphModel;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.AbstractNodeModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.PortModel;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.VariableNodeModel;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.VariableNodeModelImpl;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.model.variable.ModifierFlags;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.variable.VariableDeclarationModelBase;
 import io.github.tt432.eyelib.nodegraph.GraphInterface;
 import io.github.tt432.eyelib.nodegraph.GraphKind;
@@ -136,6 +140,34 @@ public class EvmGraph extends Graph {
         return EvmTypeHandles.allSupported();
     }
 
+    /** 黑板变量类型候选不含 VARIABLE 身份类型（它只是 variable 节点端口的身份标注）。 */
+    @Override
+    public List<TypeHandle> getVariableSupportTypes() {
+        return EvmTypeHandles.allVariableDeclTypes();
+    }
+
+    /**
+     * 黑板变量节点（拖拽/翻译/粘贴统一走本类，见 {@link EvmGraphModel#getVariableNodeType}
+     * 与 {@link EvmGraphModel#createNodeFromDiscriminator}）。
+     *
+     * <p>读出口类型固定为 {@link PortType#VARIABLE} 身份 handle（原样会取声明的具体类型）：
+     * 连线兼容由 {@link EvmGraphModel#canAssignTo} 走 domain 矩阵——VARIABLE 可接一切值端口
+     * （隐式读）且可接 exec.set_var.target（写身份）；若保留声明类型，FLOAT 变量将连不上
+     * STRING 输入与 VARIABLE 身份的 target。写入口（子图接口 OUTPUT 变量，WRITE 修饰）
+     * 保留声明的具体类型——喂入值仍按声明类型检查。
+     */
+    public static final class EvmVariableNodeModel extends VariableNodeModelImpl {
+        @Override
+        public TypeHandle getDataType() {
+            var decl = getVariableDeclarationModel();
+            if (decl == null) return super.getDataType();
+            if (decl.getModifiers() == ModifierFlags.WRITE) {
+                return decl.getDataTypeHandle();
+            }
+            return EvmTypeHandles.toHandle(PortType.VARIABLE);
+        }
+    }
+
     /**
      * 连线类型检查走 domain 兼容矩阵（规格 §2.1：bool↔float 隐式、ref→string 等），
      * 不认得的 handle 回落 LDLib2 默认 Java 类型检查。
@@ -143,6 +175,18 @@ public class EvmGraph extends Graph {
     public static final class EvmGraphModel extends CustomGraphModelImpl {
         public EvmGraphModel(Graph graph) {
             super(graph);
+        }
+
+        @Override
+        protected Class<? extends VariableNodeModel> getVariableNodeType() {
+            return EvmVariableNodeModel.class;
+        }
+
+        /** 粘贴/撤销经鉴别子重建变量节点，保持同一实现（端口身份类型规则一致）。 */
+        @Override
+        protected AbstractNodeModel createNodeFromDiscriminator(String type) {
+            if ("variable".equals(type)) return new EvmVariableNodeModel();
+            return super.createNodeFromDiscriminator(type);
         }
 
         @Override

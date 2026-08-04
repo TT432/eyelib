@@ -160,8 +160,9 @@ class GraphValidatorTest {
 
     @Test
     void looseTypeWarning() {
+        // ANY 产出（context.get）接 FLOAT 输入 → 宽松告警
         List<Diagnostic> diags = validateGraph(graph(
-                List.of(node("v", "var.get"), node("r", "entity.root")),
+                List.of(node("v", "context.get"), node("r", "entity.root")),
                 List.of(wire("v", "out", "r", "scale"))));
         List<Diagnostic> loose = byCode(diags, GraphValidator.LOOSE_TYPE);
         assertEquals(1, loose.size());
@@ -474,7 +475,7 @@ class GraphValidatorTest {
     void orphanChain() {
         GraphData main = graph(
                 List.of(node("r", "entity.root", Map.of(), opts("scale_x", 1, "scale_y", 1, "scale_z", 1)),
-                        node("s", "exec.set_var", opts("root", "temp", "name", "temp.t"))),
+                        node("s", "exec.set_temp", opts("name", "temp.t"))),
                 List.of());
         List<Diagnostic> diags = validateGraph(main);
         List<Diagnostic> orphans = byCode(diags, GraphValidator.ORPHAN_CHAIN);
@@ -487,7 +488,7 @@ class GraphValidatorTest {
     void connectedExecChainIsNotOrphan() {
         GraphData main = graph(
                 List.of(node("r", "entity.root", Map.of(), opts("scale_x", 1, "scale_y", 1, "scale_z", 1)),
-                        node("s", "exec.set_var", opts("root", "temp", "name", "temp.t"))),
+                        node("s", "exec.set_temp", opts("name", "temp.t"))),
                 List.of(wire("s", "exec_out", "r", "initialize")));
         assertFalse(hasCode(validateGraph(main), GraphValidator.ORPHAN_CHAIN));
     }
@@ -497,7 +498,7 @@ class GraphValidatorTest {
     @Test
     void undeclaredVariable() {
         GraphData main = graph(
-                List.of(node("v", "var.get", opts("name", "variable.missing"))), List.of());
+                List.of(node("v", "variable", opts("name", "missing"))), List.of());
         List<Diagnostic> diags = validateGraph(main);
         List<Diagnostic> undeclared = byCode(diags, GraphValidator.UNDECLARED_VARIABLE);
         assertEquals(1, undeclared.size());
@@ -507,9 +508,43 @@ class GraphValidatorTest {
     @Test
     void declaredVariableIsFine() {
         GraphData main = graph(
-                List.of(node("v", "var.get", opts("name", "variable.foo"))),
+                List.of(node("v", "variable", opts("name", "foo"))),
                 List.of(), List.of(VariableDecl.of("foo", PortType.FLOAT)));
         assertFalse(hasCode(validateGraph(main), GraphValidator.UNDECLARED_VARIABLE));
+    }
+
+    // ---------- 20 SET_TARGET_NOT_VARIABLE ----------
+
+    @Test
+    void setVarTargetUnconnectedIsError() {
+        GraphData main = graph(
+                List.of(node("r", "entity.root", Map.of(), opts("scale_x", 1, "scale_y", 1, "scale_z", 1)),
+                        node("s", "exec.set_var")),
+                List.of(wire("s", "exec_out", "r", "initialize")));
+        assertTrue(hasCode(validateGraph(main), GraphValidator.SET_TARGET_NOT_VARIABLE));
+    }
+
+    @Test
+    void setVarTargetFromConstantIsError() {
+        GraphData main = graph(
+                List.of(node("r", "entity.root", Map.of(), opts("scale_x", 1, "scale_y", 1, "scale_z", 1)),
+                        node("s", "exec.set_var"),
+                        node("c", "const.number")),
+                List.of(wire("s", "exec_out", "r", "initialize"),
+                        wire("c", "out", "s", "target")));
+        assertTrue(hasCode(validateGraph(main), GraphValidator.SET_TARGET_NOT_VARIABLE));
+    }
+
+    @Test
+    void setVarTargetFromVariableNodeIsFine() {
+        GraphData main = graph(
+                List.of(node("r", "entity.root", Map.of(), opts("scale_x", 1, "scale_y", 1, "scale_z", 1)),
+                        node("s", "exec.set_var"),
+                        node("v", "variable", opts("name", "foo"))),
+                List.of(wire("s", "exec_out", "r", "initialize"),
+                        wire("v", "out", "s", "target")),
+                List.of(VariableDecl.of("foo", PortType.FLOAT)));
+        assertFalse(hasCode(validateGraph(main), GraphValidator.SET_TARGET_NOT_VARIABLE));
     }
 
     // ---------- 完整合法图：零 ERROR ----------
@@ -529,17 +564,19 @@ class GraphValidatorTest {
                 opts("scale_x", 1, "scale_y", 1, "scale_z", 1));
         NodeInstance call = node("sc", "subgraph.call", opts("subgraph", "sg"));
         NodeInstance arg = node("c1", "const.number", opts("value", 2));
-        NodeInstance setVar = node("sv", "exec.set_var", opts("root", "variable", "name", "variable.foo"));
+        NodeInstance setVar = node("sv", "exec.set_var");
+        NodeInstance setTarget = node("svt", "variable", opts("name", "foo"));
         NodeInstance animRef = node("ra", "ref.animation",
                 opts("short_name", "walk", "identifier", "animation.example.walk"));
         NodeInstance entry = node("ae", "animate.entry");
 
         GraphData main = graph(
-                List.of(root, call, arg, setVar, animRef, entry),
+                List.of(root, call, arg, setVar, setTarget, animRef, entry),
                 List.of(
                         wire("sc", "result", "r", "scale"),
                         wire("c1", "out", "sc", "x"),
                         wire("sv", "exec_out", "r", "initialize"),
+                        wire("svt", "out", "sv", "target"),
                         wire("ra", "ref", "ae", "ref"),
                         wire("ae", "entry", "r", "animate")),
                 List.of(VariableDecl.of("foo", PortType.FLOAT)));

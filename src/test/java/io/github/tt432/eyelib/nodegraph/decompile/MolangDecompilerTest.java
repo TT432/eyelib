@@ -65,7 +65,7 @@ class MolangDecompilerTest {
         assertEquals(new PortRef(op.uid(), "out"), f.output().orElseThrow());
 
         NodeInstance a = firstByType(f.nodes(), "const.int");
-        NodeInstance b = firstByType(f.nodes(), "var.get");
+        NodeInstance b = firstByType(f.nodes(), "variable");
         assertEquals(a.uid(), wireSource(f.wires(), op.uid(), "a"));
         assertEquals(b.uid(), wireSource(f.wires(), op.uid(), "b"));
         assertFalse(f.diagnostics().stream().anyMatch(d -> true));
@@ -76,7 +76,7 @@ class MolangDecompilerTest {
         MolangDecompiler.ExprFragment neg = MolangDecompiler.decompileExpression("-variable.a");
         NodeInstance op = firstByType(neg.nodes(), "op.unary");
         assertEquals("-", op.options().get("op").getAsString());
-        assertEquals(firstByType(neg.nodes(), "var.get").uid(), wireSource(neg.wires(), op.uid(), "a"));
+        assertEquals(firstByType(neg.nodes(), "variable").uid(), wireSource(neg.wires(), op.uid(), "a"));
 
         MolangDecompiler.ExprFragment not = MolangDecompiler.decompileExpression("!query.is_baby");
         assertEquals("!", firstByType(not.nodes(), "op.unary").options().get("op").getAsString());
@@ -92,7 +92,7 @@ class MolangDecompilerTest {
 
         MolangDecompiler.ExprFragment nc = MolangDecompiler.decompileExpression("variable.a ?? 0");
         NodeInstance coalesce = firstByType(nc.nodes(), "op.null_coalesce");
-        assertEquals(firstByType(nc.nodes(), "var.get").uid(), wireSource(nc.wires(), coalesce.uid(), "a"));
+        assertEquals(firstByType(nc.nodes(), "variable").uid(), wireSource(nc.wires(), coalesce.uid(), "a"));
     }
 
     @Test
@@ -112,18 +112,19 @@ class MolangDecompilerTest {
 
     @Test
     void variableRootsAndAliases() {
-        assertEquals("variable.x", firstByType(MolangDecompiler.decompileExpression("variable.x")
-                .nodes(), "var.get").options().get("name").getAsString());
+        // variable 节点 name 不带根
+        assertEquals("x", firstByType(MolangDecompiler.decompileExpression("variable.x")
+                .nodes(), "variable").options().get("name").getAsString());
         // v. 别名归一为 variable.
-        assertEquals("variable.x", firstByType(MolangDecompiler.decompileExpression("v.x")
-                .nodes(), "var.get").options().get("name").getAsString());
+        assertEquals("x", firstByType(MolangDecompiler.decompileExpression("v.x")
+                .nodes(), "variable").options().get("name").getAsString());
         assertEquals("temp.t", firstByType(MolangDecompiler.decompileExpression("t.t")
                 .nodes(), "temp.get").options().get("name").getAsString());
         assertEquals("context.other", firstByType(MolangDecompiler.decompileExpression("c.other")
                 .nodes(), "context.get").options().get("name").getAsString());
         // 多级成员路径保留
-        assertEquals("variable.foo.bar", firstByType(MolangDecompiler.decompileExpression("variable.foo.bar")
-                .nodes(), "var.get").options().get("name").getAsString());
+        assertEquals("foo.bar", firstByType(MolangDecompiler.decompileExpression("variable.foo.bar")
+                .nodes(), "variable").options().get("name").getAsString());
     }
 
     // ---------- query/math 调用 ----------
@@ -183,19 +184,21 @@ class MolangDecompilerTest {
         assertEquals(2, f.chain().size());
         var ternaries = allByType(f.nodes(), "op.ternary");
         assertEquals(2, ternaries.size());
-        // 第一变量 v.x：a=const.int 1，b=var.get 自引用，cond=var.get v.a
+        // 第一变量 v.x：a=const.int 1，b=variable 自引用，cond=variable v.a
         NodeInstance ternary = ternaries.get(0);
         NodeInstance condNode = nodeByUid(f, wireSource(f.wires(), ternary.uid(), "cond"));
-        assertEquals("var.get", condNode.type());
-        assertEquals("variable.a", condNode.options().get("name").getAsString());
+        assertEquals("variable", condNode.type());
+        assertEquals("a", condNode.options().get("name").getAsString());
         NodeInstance aNode = nodeByUid(f, wireSource(f.wires(), ternary.uid(), "a"));
         assertEquals("const.int", aNode.type());
         NodeInstance bNode = nodeByUid(f, wireSource(f.wires(), ternary.uid(), "b"));
-        assertEquals("var.get", bNode.type());
-        assertEquals("variable.x", bNode.options().get("name").getAsString());
-        // set_var：ternary.out → value，name 带根全名
+        assertEquals("variable", bNode.type());
+        assertEquals("x", bNode.options().get("name").getAsString());
+        // set_var：ternary.out → value；target ← variable 节点（name 不带根）
         NodeInstance setX = setVars.get(0);
-        assertEquals("variable.x", setX.options().get("name").getAsString());
+        NodeInstance targetNode = nodeByUid(f, wireSource(f.wires(), setX.uid(), "target"));
+        assertEquals("variable", targetNode.type());
+        assertEquals("x", targetNode.options().get("name").getAsString());
         assertEquals(ternary.uid(), wireSource(f.wires(), setX.uid(), "value"));
     }
 
@@ -226,25 +229,25 @@ class MolangDecompilerTest {
         assertFalse(hasCode(f.diagnostics(), DecompileDiagnostics.UNSUPPORTED_IMPORT));
         var ternaries = allByType(f.nodes(), "op.ternary");
         assertEquals(2, ternaries.size());
-        // 外层 cond = var.get v.a
+        // 外层 cond = variable v.a
         NodeInstance outer = ternaries.stream()
                 .filter(t -> {
                     String condUid = wireSource(f.wires(), t.uid(), "cond");
                     NodeInstance condNode = nodeByUid(f, condUid);
-                    return "var.get".equals(condNode.type())
-                            && "variable.a".equals(condNode.options().get("name").getAsString());
+                    return "variable".equals(condNode.type())
+                            && "a".equals(condNode.options().get("name").getAsString());
                 }).findFirst().orElseThrow();
-        // 外层 a = 内层三元（cond = var.get v.b）
+        // 外层 a = 内层三元（cond = variable v.b）
         NodeInstance inner = nodeByUid(f, wireSource(f.wires(), outer.uid(), "a"));
         assertEquals("op.ternary", inner.type());
         NodeInstance innerCond = nodeByUid(f, wireSource(f.wires(), inner.uid(), "cond"));
-        assertEquals("variable.b", innerCond.options().get("name").getAsString());
-        // 内层 a=2，b=1（顺序覆盖）；外层 b = var.get 自引用
+        assertEquals("b", innerCond.options().get("name").getAsString());
+        // 内层 a=2，b=1（顺序覆盖）；外层 b = variable 自引用
         assertEquals(2, nodeByUid(f, wireSource(f.wires(), inner.uid(), "a")).options().get("value").getAsInt());
         assertEquals(1, nodeByUid(f, wireSource(f.wires(), inner.uid(), "b")).options().get("value").getAsInt());
         NodeInstance outerB = nodeByUid(f, wireSource(f.wires(), outer.uid(), "b"));
-        assertEquals("var.get", outerB.type());
-        assertEquals("variable.x", outerB.options().get("name").getAsString());
+        assertEquals("variable", outerB.type());
+        assertEquals("x", outerB.options().get("name").getAsString());
     }
 
     @Test
@@ -266,17 +269,17 @@ class MolangDecompilerTest {
         MolangDecompiler.ExecFragment f = MolangDecompiler.decompileStatements("variable.x = 1;");
         assertEquals(1, f.chain().size());
         NodeInstance setVar = firstByType(f.nodes(), "exec.set_var");
-        assertEquals("variable", setVar.options().get("root").getAsString());
-        assertEquals("variable.x", setVar.options().get("name").getAsString());
+        NodeInstance targetNode = nodeByUid(f, wireSource(f.wires(), setVar.uid(), "target"));
+        assertEquals("variable", targetNode.type());
+        assertEquals("x", targetNode.options().get("name").getAsString());
         assertEquals(firstByType(f.nodes(), "const.int").uid(), wireSource(f.wires(), setVar.uid(), "value"));
     }
 
     @Test
     void assignmentToTemp() {
         MolangDecompiler.ExecFragment f = MolangDecompiler.decompileStatements("t.x = 1;");
-        NodeInstance setVar = firstByType(f.nodes(), "exec.set_var");
-        assertEquals("temp", setVar.options().get("root").getAsString());
-        assertEquals("temp.x", setVar.options().get("name").getAsString());
+        NodeInstance setTemp = firstByType(f.nodes(), "exec.set_temp");
+        assertEquals("temp.x", setTemp.options().get("name").getAsString());
     }
 
     @Test
@@ -290,6 +293,7 @@ class MolangDecompilerTest {
         NodeInstance setVar = firstByType(f.nodes(), "exec.set_var");
         assertEquals(setVar.uid(), wireSource(f.wires(), loop.uid(), "body"));
         assertTrue(wireInto(f.wires(), setVar.uid(), "value").isPresent());
+        assertTrue(wireInto(f.wires(), setVar.uid(), "target").isPresent());
     }
 
     @Test
@@ -298,8 +302,8 @@ class MolangDecompilerTest {
                 MolangDecompiler.decompileStatements("for_each(t.item, variable.arr, { temp.y = 2; });");
         NodeInstance forEach = firstByType(f.nodes(), "exec.for_each");
         assertEquals("temp.item", forEach.options().get("var_name").getAsString());
-        assertEquals(firstByType(f.nodes(), "var.get").uid(), wireSource(f.wires(), forEach.uid(), "array"));
-        assertEquals(firstByType(f.nodes(), "exec.set_var").uid(), wireSource(f.wires(), forEach.uid(), "body"));
+        assertEquals(firstByType(f.nodes(), "variable").uid(), wireSource(f.wires(), forEach.uid(), "array"));
+        assertEquals(firstByType(f.nodes(), "exec.set_temp").uid(), wireSource(f.wires(), forEach.uid(), "body"));
     }
 
     @Test

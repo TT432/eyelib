@@ -56,11 +56,11 @@ public final class EvmNodes {
         }
     }
 
-    @NodeAttribute(name = "var.get", group = NodeTypes.CAT_VARIABLE, graphTypes = {EvmGraph.class})
-    public static final class VarGet extends EvmNodeBase {
+    @NodeAttribute(name = "variable", group = NodeTypes.CAT_VARIABLE, graphTypes = {EvmGraph.class})
+    public static final class Variable extends EvmNodeBase {
         @Override
         public NodeType type() {
-            return NodeTypes.VAR_GET;
+            return NodeTypes.VARIABLE;
         }
     }
 
@@ -85,6 +85,14 @@ public final class EvmNodes {
         @Override
         public NodeType type() {
             return NodeTypes.EXEC_SET_VAR;
+        }
+    }
+
+    @NodeAttribute(name = "exec.set_temp", group = NodeTypes.CAT_EXEC, graphTypes = {EvmGraph.class})
+    public static final class ExecSetTemp extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.EXEC_SET_TEMP;
         }
     }
 
@@ -339,7 +347,7 @@ public final class EvmNodes {
     /** getSupportNodes 清单（创建顺序 = 目录顺序）。 */
     public static final List<Class<? extends Node>> ALL = List.of(
             ConstNumber.class, ConstInt.class, ConstBool.class, ConstString.class,
-            VarGet.class, ContextGet.class, TempGet.class, ExecSetVar.class,
+            Variable.class, ContextGet.class, TempGet.class, ExecSetVar.class, ExecSetTemp.class,
             QueryCall.class, MathCall.class, ExecCall.class,
             OpBinary.class, OpUnary.class, OpTernary.class, OpNullCoalesce.class,
             ExecLoop.class, ExecForEach.class, ExecBreak.class, ExecContinue.class, ExecReturn.class,
@@ -371,9 +379,10 @@ public final class EvmNodes {
         names.put("const.number", "Number");
         names.put("const.bool", "Bool");
         names.put("const.string", "String");
-        names.put("var.get", "Get Variable");
+        names.put("variable", "Variable");
         names.put("temp.get", "Get Temp");
         names.put("exec.set_var", "Set Variable");
+        names.put("exec.set_temp", "Set Temp");
         names.put("query.call", "Query Call");
         names.put("math.call", "Math Call");
         names.put("exec.call", "Exec Call");

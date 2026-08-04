@@ -16,22 +16,31 @@ import java.util.Optional;
  * @param type         选项值类型
  * @param defaultValue 默认值
  * @param choices      ENUM 类型的可选值
+ * @param suggestionKey 资产候选键（纯元数据；client 运行时从注册表供给候选，见规格 §4.1）
  */
 public record NodeOptionDef(
         String id,
         OptionType type,
         JsonElement defaultValue,
-        Optional<List<String>> choices
+        Optional<List<String>> choices,
+        Optional<String> suggestionKey
 ) {
     public static final Codec<NodeOptionDef> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             Codec.STRING.fieldOf("id").forGetter(NodeOptionDef::id),
             OptionType.CODEC.fieldOf("type").forGetter(NodeOptionDef::type),
             GraphJson.ELEMENT_CODEC.fieldOf("default").forGetter(NodeOptionDef::defaultValue),
-            Codec.STRING.listOf().optionalFieldOf("choices").forGetter(NodeOptionDef::choices)
+            Codec.STRING.listOf().optionalFieldOf("choices").forGetter(NodeOptionDef::choices),
+            Codec.STRING.optionalFieldOf("suggestion").forGetter(NodeOptionDef::suggestionKey)
     ).apply(ins, NodeOptionDef::new));
 
     public static NodeOptionDef of(String id, OptionType type, JsonElement defaultValue) {
-        return new NodeOptionDef(id, type, defaultValue, Optional.empty());
+        return new NodeOptionDef(id, type, defaultValue, Optional.empty(), Optional.empty());
+    }
+
+    /** 带资产候选键的字符串选项（编辑器渲染为可输入下拉，不锁死自由输入）。 */
+    public static NodeOptionDef asset(String id, String defaultValue, String suggestionKey) {
+        return new NodeOptionDef(id, OptionType.STRING, new JsonPrimitive(defaultValue),
+                Optional.empty(), Optional.of(suggestionKey));
     }
 
     public static NodeOptionDef string(String id, String defaultValue) {
@@ -51,7 +60,8 @@ public record NodeOptionDef(
     }
 
     public static NodeOptionDef enumeration(String id, String defaultValue, List<String> choices) {
-        return new NodeOptionDef(id, OptionType.ENUM, new JsonPrimitive(defaultValue), Optional.of(choices));
+        return new NodeOptionDef(id, OptionType.ENUM, new JsonPrimitive(defaultValue),
+                Optional.of(choices), Optional.empty());
     }
 
     /** 选项值类型。 */

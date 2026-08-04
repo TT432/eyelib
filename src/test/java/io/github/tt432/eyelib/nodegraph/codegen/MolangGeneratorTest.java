@@ -186,8 +186,8 @@ class MolangGeneratorTest {
     void varAndTempGetPrefixNames() {
         GraphData main = graph(
                 List.of(root(),
-                        node("a", "var.get", opts("name", "foo")),
-                        node("b", "var.get", opts("name", "variable.bar")),
+                        node("a", "variable", opts("name", "foo")),
+                        node("b", "variable", opts("name", "bar")),
                         node("c", "temp.get", opts("name", "t1"))),
                 List.of(wire("a", "out", "root", "scale"),
                         wire("b", "out", "root", "scale_x"),
@@ -204,7 +204,7 @@ class MolangGeneratorTest {
                 List.of(root(),
                         node("q0", "query.call", opts("function", "query.anim_time", "arg_count", 0)),
                         node("q1", "query.call", opts("function", "query.foo", "arg_count", 2)),
-                        node("v", "var.get", opts("name", "x")),
+                        node("v", "variable", opts("name", "x")),
                         node("c", "const.number", opts("value", 1.5))),
                 List.of(wire("q0", "out", "root", "scale"),
                         wire("q1", "out", "root", "scale_x"),
@@ -251,11 +251,11 @@ class MolangGeneratorTest {
         GraphData main = graph(
                 List.of(root(),
                         node("neg", "op.unary", opts("op", "-")),
-                        node("v", "var.get", opts("name", "a")),
+                        node("v", "variable", opts("name", "a")),
                         node("ter", "op.ternary"),
                         node("cond", "query.call", opts("function", "query.c", "arg_count", 0)),
                         node("nc", "op.null_coalesce"),
-                        node("v2", "var.get", opts("name", "b"))),
+                        node("v2", "variable", opts("name", "b"))),
                 List.of(wire("neg", "out", "root", "scale"),
                         wire("v", "out", "neg", "a"),
                         wire("ter", "out", "root", "scale_x"),
@@ -292,10 +292,10 @@ class MolangGeneratorTest {
 
     @Test
     void trivialNodesAreNotExtractedEvenWhenShared() {
-        // var.get 出度 2 仍是平凡（单变量引用），文本内联
+        // variable 节点出度 2 仍是平凡（单变量引用），文本内联
         GraphData main = graph(
                 List.of(root(),
-                        node("v", "var.get", opts("name", "a")),
+                        node("v", "variable", opts("name", "a")),
                         node("add", "op.binary", opts("op", "+"))),
                 List.of(wire("add", "out", "root", "scale"),
                         wire("v", "out", "add", "a"),
@@ -367,17 +367,19 @@ class MolangGeneratorTest {
 
     @Test
     void initializeChainEmitsSetVarStatements() {
-        // set1: variable.a = 1 → set2: temp.t = (variable.a * 2)
+        // set1: variable.a = 1（variable 节点连线 target）→ set2: temp.t = (variable.a * 2)
         GraphData main = graph(
                 List.of(root(),
-                        node("set1", "exec.set_var", opts("root", "variable", "name", "a")),
+                        node("set1", "exec.set_var"),
+                        node("ta", "variable", opts("name", "a")),
                         node("c1", "const.number", opts("value", 1)),
-                        node("set2", "exec.set_var", opts("root", "temp", "name", "t")),
+                        node("set2", "exec.set_temp", opts("name", "t")),
                         node("mul", "op.binary", opts("op", "*")),
-                        node("va", "var.get", opts("name", "variable.a")),
+                        node("va", "variable", opts("name", "a")),
                         node("c2", "const.number", opts("value", 2))),
                 List.of(wire("set2", "exec_out", "root", "initialize"),
                         wire("set1", "exec_out", "set2", "exec_in"),
+                        wire("ta", "out", "set1", "target"),
                         wire("c1", "out", "set1", "value"),
                         wire("mul", "out", "set2", "value"),
                         wire("va", "out", "mul", "a"),
@@ -400,7 +402,7 @@ class MolangGeneratorTest {
                         node("c3", "const.number", opts("value", 3)),
                         node("fe", "exec.for_each", opts("var_name", "temp.item")),
                         node("arr", "query.call", opts("function", "query.my_array", "arg_count", 0)),
-                        node("set", "exec.set_var", opts("root", "temp", "name", "sum")),
+                        node("set", "exec.set_temp", opts("name", "sum")),
                         node("add", "op.binary", opts("op", "+")),
                         node("sum", "temp.get", opts("name", "temp.sum")),
                         node("item", "temp.get", opts("name", "temp.item"))),
@@ -424,7 +426,7 @@ class MolangGeneratorTest {
                 List.of(root(),
                         node("call", "exec.call", opts("function", "query.foo", "arg_count", 2)),
                         node("c1", "const.number", opts("value", 1)),
-                        node("v", "var.get", opts("name", "x")),
+                        node("v", "variable", opts("name", "x")),
                         node("loop", "exec.loop", Map.of(), opts("count", 10)),
                         node("br", "exec.break"),
                         node("cont", "exec.continue")),
@@ -446,7 +448,7 @@ class MolangGeneratorTest {
                 List.of(root(),
                         node("ret", "exec.return"),
                         node("add", "op.binary", opts("op", "+")),
-                        node("va", "var.get", opts("name", "variable.a")),
+                        node("va", "variable", opts("name", "a")),
                         node("c1", "const.number", opts("value", 1))),
                 List.of(wire("ret", "exec_out", "root", "initialize"),
                         wire("add", "out", "ret", "value"),
@@ -508,7 +510,7 @@ class MolangGeneratorTest {
         GraphData main = graph(
                 List.of(root(),
                         node("call", "subgraph.call", opts("subgraph", "sq")),
-                        node("w", "var.get", opts("name", "w"))),
+                        node("w", "variable", opts("name", "w"))),
                 List.of(wire("call", "result", "root", "scale"),
                         wire("w", "out", "call", "x")));
         assertEquals("temp.sg0_g0 = (variable.w + 1); (temp.sg0_g0 * temp.sg0_g0)",
@@ -523,12 +525,14 @@ class MolangGeneratorTest {
                 GraphInterface.Param.of("result", PortType.FLOAT));
         GraphData sub = subgraph(iface,
                 List.of(node("in", "subgraph.input"),
-                        node("set", "exec.set_var", opts("root", "variable", "name", "b")),
+                        node("set", "exec.set_var"),
+                        node("tb", "variable", opts("name", "b")),
                         node("c2", "const.number", opts("value", 2)),
                         node("add", "op.binary", opts("op", "+")),
                         node("c1", "const.number", opts("value", 1)),
                         node("out", "subgraph.output")),
                 List.of(wire("set", "exec_out", "out", "exec_in"),
+                        wire("tb", "out", "set", "target"),
                         wire("c2", "out", "set", "value"),
                         wire("in", "x", "add", "a"),
                         wire("c1", "out", "add", "b"),

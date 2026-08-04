@@ -79,6 +79,12 @@ public final class EvmLinks {
         }
     }
 
+    /** VARIABLE 标记类。 */
+    public static final class VariableLink {
+        private VariableLink() {
+        }
+    }
+
     /** 域端口类型 → graphprocessor 判型用 Java 类型。 */
     public static Class<?> toClass(PortType type) {
         return switch (type) {
@@ -96,6 +102,7 @@ public final class EvmLinks {
             case ANIMATION_REF -> AnimationRefLink.class;
             case AC_REF -> AcRefLink.class;
             case RC_REF -> RcRefLink.class;
+            case VARIABLE -> VariableLink.class;
         };
     }
 
@@ -114,6 +121,7 @@ public final class EvmLinks {
         if (clazz == AnimationRefLink.class) return PortType.ANIMATION_REF;
         if (clazz == AcRefLink.class) return PortType.AC_REF;
         if (clazz == RcRefLink.class) return PortType.RC_REF;
+        if (clazz == VariableLink.class) return PortType.VARIABLE;
         return PortType.ANY;
     }
 
@@ -163,6 +171,17 @@ public final class EvmLinks {
         TypeAdapter.registerTypeColor(AnimationRefLink.class, ColorPattern.LIGHT_BLUE.color);
         TypeAdapter.registerTypeColor(AcRefLink.class, ColorPattern.MAGENTA.color);
         TypeAdapter.registerTypeColor(RcRefLink.class, ColorPattern.BROWN.color);
+
+        // variable 身份 → 任意值端口 = 隐式读（单向；不注册反向，set_var.target 只接受
+        // variable 节点，拖错由验证器 SET_TARGET_NOT_VARIABLE 报错）
+        TypeAdapter.registerAdapter(VariableLink.class, Float.class, v -> 0f);
+        TypeAdapter.registerAdapter(VariableLink.class, Integer.class, v -> 0);
+        TypeAdapter.registerAdapter(VariableLink.class, Boolean.class, v -> false);
+        TypeAdapter.registerAdapter(VariableLink.class, String.class, Object::toString);
+        TypeAdapter.registerAdapter(VariableLink.class, ArrayLink.class, v -> null);
+        TypeAdapter.registerAdapter(VariableLink.class, Object.class, v -> v);
+        TypeAdapter.registerTypeDisplayName(VariableLink.class, "variable");
+        TypeAdapter.registerTypeColor(VariableLink.class, ColorPattern.YELLOW.color);
     }
 }
 //?}

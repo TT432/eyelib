@@ -26,8 +26,8 @@ import java.util.Optional;
  *   <li>黑板变量 ↔ ExposedParameter：标识符 = 分组全路径
  *       （{@code group + "/" + name}，无分组即 {@code name}；按最后一个 {@code "/"} 切分还原，
  *       即「黑板分组平铺全路径名」的 D6 降级，且保持双向无损）；</li>
- *   <li>PARAMETER 画布节点（LDLib 参数面板产物）→ var.get 域节点
- *       （name 选项 = {@code "variable." + 变量名}，变量名为标识符最后一段）；</li>
+ *   <li>PARAMETER 画布节点（LDLib 参数面板产物）→ variable 域节点
+ *       （name 选项 = 变量名，不带根，变量名为标识符最后一段）；</li>
  *   <li>placemats / stickyNotes / graphInterface 不在画布模型内——回写时从既有
  *       {@link GraphData} 原样保留（规格 D6：分组仅持久化在文档）。</li>
  * </ul>
@@ -69,8 +69,8 @@ public final class EvmGraphMapper {
             nodes.add(switch (node.kind()) {
                 case EVM -> new NodeInstance(node.uid(), node.typeId(), node.x(), node.y(),
                         node.options(), node.constants());
-                case PARAMETER -> new NodeInstance(node.uid(), NodeTypes.VAR_GET.id(), node.x(), node.y(),
-                        Map.of("name", new JsonPrimitive("variable." + variableName(node.parameterId()))),
+                case PARAMETER -> new NodeInstance(node.uid(), NodeTypes.VARIABLE.id(), node.x(), node.y(),
+                        Map.of("name", new JsonPrimitive(variableName(node.parameterId()))),
                         Map.of());
             });
         }

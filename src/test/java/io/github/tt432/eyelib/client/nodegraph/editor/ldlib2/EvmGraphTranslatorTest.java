@@ -8,6 +8,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.NodeModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.SubgraphNodeModel;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.VariableNodeModel;
 import io.github.tt432.eyelib.nodegraph.Diagnostic;
 import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphInterface;
@@ -62,7 +63,8 @@ class EvmGraphTranslatorTest {
                 new NodeInstance("n1", "const.number", 10, 20, opts("value", 3.5), Map.of()),
                 new NodeInstance("n2", "math.call", 200, 20,
                         opts("function", "math.sin", "arg_count", 1), Map.of()),
-                new NodeInstance("n3", "var.get", -500, 400, opts("name", "variable.foo"), Map.of()),
+                new NodeInstance("n3", "variable", -500, 400, opts("name", "foo"), Map.of()),
+                new NodeInstance("set1", "exec.set_var", -200, 600, Map.of(), Map.of()),
                 new NodeInstance("root_node", "entity.root", 1000, 500,
                         opts("identifier", "example:my_entity"), Map.of()),
                 new NodeInstance("call1", "subgraph.call", 500, 20, opts("subgraph", "double"), Map.of()));
@@ -70,11 +72,12 @@ class EvmGraphTranslatorTest {
                 new Wire(new PortRef("n1", "out"), new PortRef("n2", "arg1")),
                 new Wire(new PortRef("n2", "out"), new PortRef("root_node", "scale")),
                 new Wire(new PortRef("n1", "out"), new PortRef("call1", "x")),
-                new Wire(new PortRef("call1", "result"), new PortRef("root_node", "scale_y")));
+                new Wire(new PortRef("call1", "result"), new PortRef("root_node", "scale_y")),
+                new Wire(new PortRef("n3", "out"), new PortRef("set1", "target")));
         GraphData main = new GraphData(
                 mainNodes,
                 mainWires,
-                List.of(new VariableDecl("variable.foo", PortType.FLOAT,
+                List.of(new VariableDecl("foo", PortType.FLOAT,
                         Optional.of("a/b"), Optional.of(new JsonPrimitive(1.5)))),
                 List.of(new Placemat("p1", "Group A", "#FF00FF00", List.of("n1", "n2"))),
                 List.of(new StickyNote("s1", "hello", 0, 0, 200, 100, "#FFFFFF00")),
@@ -150,13 +153,17 @@ class EvmGraphTranslatorTest {
         assertNotNull(n2, "math.call node present");
         assertNotNull(n2.getInputsById().get("arg1"), "dynamic arg1 port from arg_count=1");
 
+        NodeModel n3 = nodesByUid.get(EvmGraphTranslator.uidOf("n3").toString());
+        assertNotNull(n3, "variable node present");
+        assertTrue(n3 instanceof VariableNodeModel, "variable node binds blackboard declaration");
+
         NodeModel call1 = nodesByUid.get(EvmGraphTranslator.uidOf("call1").toString());
         assertNotNull(call1, "subgraph.call node present");
         assertTrue(call1 instanceof SubgraphNodeModel, "subgraph.call maps to native SubgraphNodeModel");
         assertEquals(1, call1.getInputsById().size(), "one mirrored input (x)");
         assertEquals(1, call1.getOutputsById().size(), "one mirrored output (result)");
 
-        assertEquals(4, graph.graphModel.getWireModels().size(), "all main wires created");
+        assertEquals(5, graph.graphModel.getWireModels().size(), "all main wires created");
 
         var sub = graph.graphModel.getLocalSubGraphs().get(0);
         Map<String, NodeModel> subNodes = new HashMap<>();

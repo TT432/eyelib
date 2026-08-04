@@ -30,13 +30,14 @@ import org.jspecify.annotations.Nullable;
  *   <li>数字字面量 → const.number（整数值 → const.int）；字符串 → const.string；true/false → const.bool；</li>
  *   <li>{@code a op b} / {@code op a} / {@code c ? a : b} / {@code a ?? b}
  *       → op.binary / op.unary / op.ternary / op.null_coalesce；</li>
- *   <li>{@code variable.x} / {@code temp.x} / {@code context.x} → var.get / temp.get / context.get
- *       （q./v./t./c. 别名经 {@link MolangRootAliasCanonicalizer} 归一，name 存带根全名）；</li>
+ *   <li>{@code variable.x} → variable 节点（name 不带根）；{@code temp.x} / {@code context.x}
+ *       → temp.get / context.get
+ *       （q./v./t./c. 别名经 {@link MolangRootAliasCanonicalizer} 归一，temp/context 的 name 存带根全名）；</li>
  *   <li>{@code query.f(...)} / {@code math.f(...)} → query.call / math.call
  *       （function + arg_count + argN 连线；无参成员访问形 {@code query.f} 同样归为 arg_count=0 的调用）；</li>
  *   <li>{@code geometry.x} / {@code texture.x} / {@code material.x} → ref.geometry / ref.texture / ref.material
  *       （short_name；assembler 在表达式槽正是这样发射的，见 VALUE_REFS）；</li>
- *   <li>{@code variable.x = e;} → exec.set_var（root 选项 variable/temp）；
+ *   <li>{@code variable.x = e;} → exec.set_var + variable 节点连线 target；{@code temp.x = e;} → exec.set_temp；
  *       {@code loop(n, {…})} / {@code for_each(v, arr, {…})} → exec.loop / exec.for_each；
  *       break/continue/return → exec.break / exec.continue / exec.return；
  *       query/math 调用语句 → exec.call；裸语句块拍平进当前链；</li>
@@ -207,8 +208,8 @@ public final class MolangDecompiler {
             b.wireFrom(expr(b, thenValue), ternary, "a");
             b.wireFrom(expr(b, elseValue), ternary, "b");
             String root = varKey.substring(0, varKey.indexOf('.'));
-            // name 与 assignment() 一致存带根全名（variable.x / temp.x）
-            String setVar = b.addNode("exec.set_var", ImportGraphBuilder.opts("root", root, "name", varKey));
+            // name 与 assignment() 一致：variable 根存不带根名，temp 根存带根全名
+            String setVar = addSetNode(b, root, varKey);
             b.wire(ternary, "out", setVar, "value");
             chain.add(setVar);
         }
@@ -302,11 +303,24 @@ public final class MolangDecompiler {
             b.unsupportedNote(assignment, "赋值目标不是 variable./temp. 成员");
             return;
         }
-        String uid = b.addNode("exec.set_var", ImportGraphBuilder.opts(
-                "root", target.root(),
-                "name", target.qualified()));
+        String uid = addSetNode(b, target.root(), target.qualified());
         b.wireFrom(expr(b, assignment.value()), uid, "value");
         chain.add(uid);
+    }
+
+    /**
+     * 赋值节点发射：variable 根 → exec.set_var + variable 节点连线 target（写身份走引脚）；
+     * temp 根 → exec.set_temp（name 存带根全名）。返回 set 节点 uid。
+     */
+    private static String addSetNode(Builder b, String root, String qualified) {
+        if (root.equals("variable")) {
+            String name = qualified.substring("variable.".length());
+            String varNode = b.addNode("variable", ImportGraphBuilder.opts("name", name));
+            String set = b.addNode("exec.set_var", Map.of());
+            b.wire(varNode, "out", set, "target");
+            return set;
+        }
+        return b.addNode("exec.set_temp", ImportGraphBuilder.opts("name", qualified));
     }
 
     private static void forEach(Builder b, MolangAst.ForEachExpr forEach, List<String> chain) {
@@ -414,8 +428,8 @@ public final class MolangDecompiler {
             return b.unsupported(member, "member access 属主不是根标识符");
         }
         return switch (qn.root()) {
-            case "variable" -> b.valueNode("var.get",
-                    ImportGraphBuilder.opts("name", qn.qualified()), "out");
+            case "variable" -> b.valueNode("variable",
+                    ImportGraphBuilder.opts("name", qn.path()), "out");
             case "temp" -> b.valueNode("temp.get",
                     ImportGraphBuilder.opts("name", qn.qualified()), "out");
             case "context" -> b.valueNode("context.get",

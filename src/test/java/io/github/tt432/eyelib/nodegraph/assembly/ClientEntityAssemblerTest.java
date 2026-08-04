@@ -56,7 +56,8 @@ class ClientEntityAssemblerTest {
                 List.of(
                         node("root", "entity.root", opts("identifier", "test:full"),
                                 opts("scale_x", 2)),
-                        node("s1", "exec.set_var", opts("name", "variable.foo")),
+                        node("s1", "exec.set_var"),
+                        node("s1t", "variable", opts("name", "foo")),
                         node("cscale", "const.number", opts("value", 1.5)),
                         node("ae1", "animate.entry"),
                         node("w1", "const.number", opts("value", 0.5)),
@@ -78,6 +79,7 @@ class ClientEntityAssemblerTest {
                                 opts("short_name", "default", "material", "entity_alphatest"))),
                 List.of(
                         wire("s1", "exec_out", "root", "initialize"),
+                        wire("s1t", "out", "s1", "target"),
                         wire("cscale", "out", "root", "scale"),
                         wire("ae1", "entry", "root", "animate"),
                         wire("w1", "out", "ae1", "weight"),
