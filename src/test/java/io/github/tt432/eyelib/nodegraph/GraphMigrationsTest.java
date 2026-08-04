@@ -16,7 +16,9 @@ import org.junit.jupiter.api.Test;
 
 /**
  * {@link GraphMigrations}：format_version 1 → 2 变量节点化迁移契约（规格 §3.4）
- * + 2 → 3 声明连线化迁移契约（规格 nodegraph-declaration-wiring §2.4）。
+ * + 2 → 3 声明连线化迁移契约（规格 nodegraph-declaration-wiring §2.4）
+ * + 3 → 4 RenderController 内联迁移契约（规格 nodegraph-inline-render-controller §5）。
+ * v2 起点用例走完整迁移链，断言的是 v4 终态。
  */
 class GraphMigrationsTest {
 
@@ -135,33 +137,41 @@ class GraphMigrationsTest {
                 List.of(rootNode(),
                         node("g1", "ref.geometry", opts("identifier", "geometry.a")),
                         node("a1", "ref.animation", opts("short_name", "walk", "identifier", "animation.a")),
-                        node("e1", "animate.entry")),
+                        node("e1", "animate.entry"),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.a"))),
                 List.of(wire("a1", "ref", "e1", "ref"), wire("e1", "entry", "root", "animate")))));
 
         GraphLibrary migrated = GraphMigrations.migrate(old);
 
         assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, migrated.formatVersion());
         GraphData main = migrated.mainGraph();
-        // 无连线的 ref.geometry 补线；仅接 animate.entry 的 ref.animation 也补线（原连线保留）
-        assertTrue(main.wires().contains(wire("g1", "ref", "root", "geometries")));
+        // v2→v3 补线 + v3→v4 重定向：ref.geometry 最终接主图第一个 ref.rc（uid 序）的声明端口；
+        // ref.animation 保留实体级 animations 端口（原连线保留）；ref.rc 直连 render_controllers
+        assertTrue(main.wires().contains(wire("g1", "ref", "rc1", "decl_geometries")));
         assertTrue(main.wires().contains(wire("a1", "ref", "root", "animations")));
         assertTrue(main.wires().contains(wire("a1", "ref", "e1", "ref")));
+        assertTrue(main.wires().contains(wire("rc1", "ref", "root", "render_controllers")));
+        assertTrue(main.nodes().stream().noneMatch(n -> n.type().equals("rc.condition_entry")));
     }
 
     @Test
     void wiredDeclarationRefNotDoubleWired() {
         GraphLibrary old = library(2, Map.of("root", graph(
-                List.of(rootNode(), node("g1", "ref.geometry", opts("identifier", "geometry.a"))),
+                List.of(rootNode(), node("g1", "ref.geometry", opts("identifier", "geometry.a")),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.a"))),
                 List.of(wire("g1", "ref", "root", "geometries")))));
 
         GraphData main = GraphMigrations.migrate(old).mainGraph();
 
+        // v4：既有声明线重定向第一个 ref.rc，不重复补线
         assertEquals(1, main.wires().stream()
-                .filter(w -> w.from().node().equals("g1") && w.to().port().equals("geometries")).count());
+                .filter(w -> w.from().node().equals("g1") && w.to().port().equals("decl_geometries")).count());
+        assertTrue(main.wires().contains(wire("g1", "ref", "rc1", "decl_geometries")));
     }
 
     @Test
-    void bareRefRcGainsConditionEntry() {
+    void bareRefRcMountedDirectly() {
+        // v2 裸 ref.rc：v2→v3 生成 rc.condition_entry，v3→v4 随即拆解为直连
         GraphLibrary old = library(2, Map.of("root", graph(
                 List.of(rootNode(), node("rc1", "ref.rc", opts("identifier", "controller.render.a"))),
                 List.of())));
@@ -169,14 +179,9 @@ class GraphMigrationsTest {
         GraphLibrary migrated = GraphMigrations.migrate(old);
 
         GraphData main = migrated.mainGraph();
-        NodeInstance entry = main.nodes().stream()
-                .filter(n -> n.type().equals("rc.condition_entry")).findFirst().orElseThrow();
-        // 置于 ref 右侧；condition 不设内联值（端口默认 1）
-        assertEquals(240f, entry.x());
-        assertTrue(entry.constants().isEmpty());
-        assertTrue(main.wires().contains(wire("rc1", "ref", entry.uid(), "rc")));
-        assertTrue(main.wires().contains(wire(entry.uid(), "entry", "root", "render_controllers")));
-        // 组装产物：condition 恒 1 → 纯字符串
+        assertTrue(main.nodes().stream().noneMatch(n -> n.type().equals("rc.condition_entry")));
+        assertTrue(main.wires().contains(wire("rc1", "ref", "root", "render_controllers")));
+        // condition 未设置 → 端口默认 1 → 组装产物为纯字符串
         AssemblyResult assembled = ClientEntityAssembler.assemble(migrated);
         JsonArray rcs = assembled.json().getAsJsonObject("minecraft:client_entity")
                 .getAsJsonObject("description").getAsJsonArray("render_controllers");
@@ -193,16 +198,17 @@ class GraphMigrationsTest {
                 List.of(wire("c", "out", "out", "result"), wire("t8", "ref", "c", "a")),
                 List.of(), List.of(), List.of(), Optional.of(iface));
         GraphLibrary old = library(2, Map.of(
-                "root", graph(List.of(rootNode()), List.of()),
+                "root", graph(List.of(rootNode(),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.a"))), List.of()),
                 "sub", sub));
 
         GraphLibrary migrated = GraphMigrations.migrate(old);
 
         GraphData main = migrated.mainGraph();
-        // 完全无连线的 t9 移入主图（uid/选项保留）并补线
+        // 完全无连线的 t9 移入主图（uid/选项保留）并补线（v4：重定向第一个 ref.rc 的声明端口）
         NodeInstance moved = main.findNode("t9").orElseThrow();
         assertEquals("textures/a", moved.options().get("path").getAsString());
-        assertTrue(main.wires().contains(wire("t9", "ref", "root", "textures")));
+        assertTrue(main.wires().contains(wire("t9", "ref", "rc1", "decl_textures")));
         GraphData migratedSub = migrated.graphs().get("sub");
         assertTrue(migratedSub.findNode("t9").isEmpty());
         // 有连线的 t8 不动
@@ -226,14 +232,12 @@ class GraphMigrationsTest {
                         node("g1", "ref.geometry", opts("short_name", "default", "identifier", "geometry.a")),
                         node("a1", "ref.animation", opts("short_name", "walk", "identifier", "animation.a")),
                         node("e1", "animate.entry"),
-                        node("rc1", "ref.rc", opts("identifier", "controller.render.a")),
-                        // 迁移生成的 rc.condition_entry（uid 依 freshUid 序列）
-                        node("mig0", "rc.condition_entry", Map.of())),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.a"))),
+                // v4 手工终态：geo 声明线接第一个 ref.rc；ref.rc 直连 render_controllers
                 List.of(wire("a1", "ref", "e1", "ref"), wire("e1", "entry", "root", "animate"),
-                        wire("g1", "ref", "root", "geometries"),
+                        wire("g1", "ref", "rc1", "decl_geometries"),
                         wire("a1", "ref", "root", "animations"),
-                        wire("rc1", "ref", "mig0", "rc"),
-                        wire("mig0", "entry", "root", "render_controllers")))));
+                        wire("rc1", "ref", "root", "render_controllers")))));
 
         AssemblyResult fromMigrated = ClientEntityAssembler.assemble(GraphMigrations.migrate(old));
         AssemblyResult fromWired = ClientEntityAssembler.assemble(handWired);
@@ -265,5 +269,116 @@ class GraphMigrationsTest {
                 List.of())));
         GraphLibrary once = GraphMigrations.migrate(old);
         assertEquals(once, GraphMigrations.migrate(once));
+    }
+
+    // ---------- v3 → v4：RenderController 内联（规格 inline-render-controller §5） ----------
+
+    private static GraphLibrary v3Library(GraphData main) {
+        return new GraphLibrary(3, GraphKind.CLIENT_ENTITY, "root", Map.of("root", main));
+    }
+
+    private static NodeInstance conditionEntry(String uid, String inlineCondition) {
+        return new NodeInstance(uid, "rc.condition_entry", 0, 0, Map.of(),
+                opts("condition", inlineCondition));
+    }
+
+    @Test
+    void conditionEntryInlineConstantMovesToRefRc() {
+        // entry 的内联 condition 常量搬到 ref.rc.condition；entry 及其线删除；ref 直连 render_controllers
+        GraphLibrary migrated = GraphMigrations.migrate(v3Library(graph(
+                List.of(rootNode(),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.a")),
+                        conditionEntry("e1", "query.is_baby")),
+                List.of(wire("rc1", "ref", "e1", "rc"),
+                        wire("e1", "entry", "root", "render_controllers")))));
+
+        assertEquals(4, migrated.formatVersion());
+        GraphData main = migrated.mainGraph();
+        assertTrue(main.findNode("e1").isEmpty());
+        assertTrue(main.wires().stream()
+                .noneMatch(w -> w.from().node().equals("e1") || w.to().node().equals("e1")));
+        assertTrue(main.wires().contains(wire("rc1", "ref", "root", "render_controllers")));
+        assertEquals("query.is_baby",
+                main.findNode("rc1").orElseThrow().constants().get("condition").getAsString());
+    }
+
+    @Test
+    void conditionEntryConditionWireMovedToRefRc() {
+        // condition 连线（非内联）迁到 ref.rc.condition，线源保留
+        GraphLibrary migrated = GraphMigrations.migrate(v3Library(graph(
+                List.of(rootNode(),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.a")),
+                        node("e1", "rc.condition_entry"),
+                        node("q1", "query.call", opts("function", "query.is_baby"))),
+                List.of(wire("rc1", "ref", "e1", "rc"),
+                        wire("q1", "out", "e1", "condition"),
+                        wire("e1", "entry", "root", "render_controllers")))));
+
+        GraphData main = migrated.mainGraph();
+        assertTrue(main.findNode("e1").isEmpty());
+        assertTrue(main.wires().contains(wire("q1", "out", "rc1", "condition")));
+        assertTrue(main.wires().contains(wire("rc1", "ref", "root", "render_controllers")));
+    }
+
+    @Test
+    void doubleEntrySameRefFirstWins() {
+        // 同一 ref.rc 多条 entry：先者（节点序）的 condition 胜出；render_controllers 只挂一次；其余 entry 删除
+        GraphLibrary migrated = GraphMigrations.migrate(v3Library(graph(
+                List.of(rootNode(),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.a")),
+                        conditionEntry("e1", "query.a"),
+                        conditionEntry("e2", "query.b")),
+                List.of(wire("rc1", "ref", "e1", "rc"), wire("e1", "entry", "root", "render_controllers"),
+                        wire("rc1", "ref", "e2", "rc"), wire("e2", "entry", "root", "render_controllers")))));
+
+        GraphData main = migrated.mainGraph();
+        assertTrue(main.findNode("e1").isEmpty());
+        assertTrue(main.findNode("e2").isEmpty());
+        assertEquals("query.a",
+                main.findNode("rc1").orElseThrow().constants().get("condition").getAsString());
+        assertEquals(1, main.wires().stream().filter(w -> w.from().node().equals("rc1")
+                && w.to().node().equals("root") && w.to().port().equals("render_controllers")).count());
+    }
+
+    @Test
+    void declarationWiresRedirectedToFirstRefRc() {
+        // entity.root 三声明端口的线 → 重定向 uid 序最小的 ref.rc
+        GraphLibrary migrated = GraphMigrations.migrate(v3Library(graph(
+                List.of(rootNode(),
+                        node("g1", "ref.geometry", opts("identifier", "geometry.a")),
+                        node("t1", "ref.texture", opts("path", "textures/a")),
+                        node("rc2", "ref.rc", opts("identifier", "controller.render.b")),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.a"))),
+                List.of(wire("g1", "ref", "root", "geometries"),
+                        wire("t1", "ref", "root", "textures")))));
+
+        GraphData main = migrated.mainGraph();
+        assertTrue(main.wires().contains(wire("g1", "ref", "rc1", "decl_geometries")));
+        assertTrue(main.wires().contains(wire("t1", "ref", "rc1", "decl_textures")));
+        assertTrue(main.wires().stream().noneMatch(w -> w.to().node().equals("root")
+                && java.util.Set.of("geometries", "textures", "materials").contains(w.to().port())));
+    }
+
+    @Test
+    void declarationWiresDroppedWithoutRefRc() {
+        // 无 ref.rc → 声明线断线（节点保留，验证器 REF_NOT_CONNECTED 提示）
+        GraphLibrary migrated = GraphMigrations.migrate(v3Library(graph(
+                List.of(rootNode(),
+                        node("g1", "ref.geometry", opts("identifier", "geometry.a"))),
+                List.of(wire("g1", "ref", "root", "geometries")))));
+
+        GraphData main = migrated.mainGraph();
+        assertTrue(main.wires().isEmpty());
+        assertTrue(main.findNode("g1").isPresent());
+    }
+
+    @Test
+    void v4LibraryPassesThrough() {
+        GraphData main = graph(
+                List.of(rootNode(),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.a"))),
+                List.of(wire("rc1", "ref", "root", "render_controllers")));
+        GraphLibrary v4 = new GraphLibrary(4, GraphKind.CLIENT_ENTITY, "root", Map.of("root", main));
+        assertEquals(v4, GraphMigrations.migrate(v4));
     }
 }

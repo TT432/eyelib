@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.client.nodegraph;
 
 import io.github.tt432.eyelib.client.manager.ClientEntityManager;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
+import io.github.tt432.eyelib.nodegraph.DeclarationTables;
 import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphKind;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
@@ -70,17 +71,19 @@ public final class KnownRefTables {
             if (main == null) {
                 continue;
             }
-            // 只收主图连到 entity.root 声明端口的 ref（规格 D1：声明 = 连线）
+            // v4：geo/tex/mat = DeclarationTables 的 RC 锚点集合（与组装器同口径）；
+            // 动画/AC = 主图连到 entity.root 动画声明端口的 ref
+            java.util.Set<String> declared = new java.util.HashSet<>();
+            DeclarationTables.collectRefs(main).values()
+                    .forEach(list -> list.forEach(n -> declared.add(n.uid())));
             java.util.Optional<NodeInstance> root = main.nodes().stream()
                     .filter(n -> n.type().equals("entity.root")).findFirst();
-            if (root.isEmpty()) {
-                continue;
-            }
-            java.util.Set<String> declared = new java.util.HashSet<>();
-            for (io.github.tt432.eyelib.nodegraph.Wire wire : main.wires()) {
-                if (wire.to().node().equals(root.get().uid())
-                        && NodeTypes.DECLARATION_PORTS.containsValue(wire.to().port())) {
-                    declared.add(wire.from().node());
+            if (root.isPresent()) {
+                for (io.github.tt432.eyelib.nodegraph.Wire wire : main.wires()) {
+                    if (wire.to().node().equals(root.get().uid())
+                            && NodeTypes.ENTITY_DECLARATION_PORTS.containsValue(wire.to().port())) {
+                        declared.add(wire.from().node());
+                    }
                 }
             }
             for (NodeInstance node : main.nodes()) {

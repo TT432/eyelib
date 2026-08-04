@@ -324,12 +324,29 @@ public final class NodeTypes {
     public static final NodeType REF_RC = register(NodeType.of(
             "ref.rc", NodeType.Kind.REF_RC, CAT_REF,
             List.of(NodeOptionDef.asset("identifier", "controller.render.example", "rc")),
-            List.of(),
+            List.of(
+                    // v4：外部 RC 的挂载条件 + 为它准备的 geo/tex/mat 表行（规格 §2.2）
+                    PortDef.in("condition", PortType.FLOAT, new JsonPrimitive(1)),
+                    PortDef.inMulti("decl_geometries", PortType.GEOMETRY_REF),
+                    PortDef.inMulti("decl_textures", PortType.TEXTURE_REF),
+                    PortDef.inMulti("decl_materials", PortType.MATERIAL_REF)),
             List.of(PortDef.out("ref", PortType.RC_REF))));
 
     // ---------- 实体装配 ----------
 
-    /** entity.root 的声明端口（D1）：ref 类型 → 端口 id。 */
+    /** entity.root 的声明端口（v4）：动画/AC 声明在实体级（双消费端：animate 脚本 + AC 状态机）。 */
+    public static final Map<String, String> ENTITY_DECLARATION_PORTS = Map.of(
+            "ref.animation", "animations",
+            "ref.ac", "animation_controllers");
+
+    /** RC 锚点（rc.root / ref.rc）的声明端口（v4）：geo/tex/mat 的语义锚点是 RC（规格 §2）。
+     * decl_ 前缀避免与 rc.root 的 textures/materials SLOT 端口撞名。 */
+    public static final Map<String, String> RC_DECLARATION_PORTS = Map.of(
+            "ref.geometry", "decl_geometries",
+            "ref.texture", "decl_textures",
+            "ref.material", "decl_materials");
+
+    /** v3 历史映射（仅 GraphMigrations v2→v3 使用）：五类 ref → entity.root 声明端口。 */
     public static final Map<String, String> DECLARATION_PORTS = Map.of(
             "ref.geometry", "geometries",
             "ref.texture", "textures",
@@ -348,14 +365,12 @@ public final class NodeTypes {
                     PortDef.in("scale_x", PortType.FLOAT),
                     PortDef.in("scale_y", PortType.FLOAT),
                     PortDef.in("scale_z", PortType.FLOAT),
-                    // 声明端口（规格 D1：声明 = 连线；ref.* 只有接到这里才进声明表）
-                    PortDef.inMulti("geometries", PortType.GEOMETRY_REF),
-                    PortDef.inMulti("textures", PortType.TEXTURE_REF),
-                    PortDef.inMulti("materials", PortType.MATERIAL_REF),
+                    // 声明端口（v4：动画/AC 在实体级；geo/tex/mat 锚点在 RC，见 RC_DECLARATION_PORTS）
                     PortDef.inMulti("animations", PortType.ANIMATION_REF),
                     PortDef.inMulti("animation_controllers", PortType.AC_REF),
                     slotIn("animate"),
-                    slotIn("render_controllers")),
+                    // v4：直连 rc.root.controller / ref.rc.ref（条件在源节点的 condition 端口）
+                    PortDef.inMulti("render_controllers", PortType.RC_REF)),
             List.of()));
 
     public static final NodeType ANIMATE_ENTRY = register(NodeType.of(
@@ -364,14 +379,6 @@ public final class NodeTypes {
             List.of(
                     PortDef.in("ref", PortType.ANY),
                     PortDef.in("weight", PortType.FLOAT, new JsonPrimitive(1))),
-            List.of(slotOut("entry"))));
-
-    public static final NodeType RC_CONDITION_ENTRY = register(NodeType.of(
-            "rc.condition_entry", NodeType.Kind.RC_CONDITION_ENTRY, CAT_ENTITY,
-            List.of(),
-            List.of(
-                    PortDef.in("rc", PortType.RC_REF),
-                    PortDef.in("condition", PortType.FLOAT, new JsonPrimitive(1))),
             List.of(slotOut("entry"))));
 
     // ---------- RenderController ----------
@@ -383,6 +390,11 @@ public final class NodeTypes {
                     NodeOptionDef.bool("ignore_lighting", false),
                     NodeOptionDef.of("arrays", NodeOptionDef.OptionType.TEXT, new JsonPrimitive(""))),
             List.of(
+                    // v4：内联进实体画布时的挂载条件 + 仅声明端口（规格 §2.1）；独立 RC 库中闲置
+                    PortDef.in("condition", PortType.FLOAT, new JsonPrimitive(1)),
+                    PortDef.inMulti("decl_geometries", PortType.GEOMETRY_REF),
+                    PortDef.inMulti("decl_textures", PortType.TEXTURE_REF),
+                    PortDef.inMulti("decl_materials", PortType.MATERIAL_REF),
                     PortDef.in("geometry", PortType.STRING, new JsonPrimitive("geometry.default")),
                     slotIn("textures"),
                     slotIn("materials"),
@@ -403,7 +415,8 @@ public final class NodeTypes {
                     PortDef.in("overlay_g", PortType.FLOAT),
                     PortDef.in("overlay_b", PortType.FLOAT),
                     PortDef.in("overlay_a", PortType.FLOAT)),
-            List.of()));
+            // v4：接 entity.root.render_controllers = 本实体定义并挂载该 RC
+            List.of(PortDef.out("controller", PortType.RC_REF))));
 
     public static final NodeType LIST_ENTRY = register(NodeType.of(
             "list.entry", NodeType.Kind.LIST_ENTRY, CAT_RC,

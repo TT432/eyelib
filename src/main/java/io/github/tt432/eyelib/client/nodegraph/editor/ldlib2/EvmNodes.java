@@ -256,14 +256,6 @@ public final class EvmNodes {
         }
     }
 
-    @NodeAttribute(name = "rc.condition_entry", group = NodeTypes.CAT_ENTITY, graphTypes = {EvmGraph.class})
-    public static final class RcConditionEntry extends EvmNodeBase {
-        @Override
-        public NodeType type() {
-            return NodeTypes.RC_CONDITION_ENTRY;
-        }
-    }
-
     @NodeAttribute(name = "rc.root", group = NodeTypes.CAT_RC, graphTypes = {EvmGraph.class})
     public static final class RcRoot extends EvmNodeBase {
         @Override
@@ -352,7 +344,7 @@ public final class EvmNodes {
             OpBinary.class, OpUnary.class, OpTernary.class, OpNullCoalesce.class,
             ExecLoop.class, ExecForEach.class, ExecBreak.class, ExecContinue.class, ExecReturn.class,
             RefGeometry.class, RefTexture.class, RefMaterial.class, RefAnimation.class, RefAc.class, RefRc.class,
-            EntityRoot.class, AnimateEntry.class, RcConditionEntry.class,
+            EntityRoot.class, AnimateEntry.class,
             RcRoot.class, ListEntry.class, MaterialEntry.class, PartVisibilityEntry.class,
             AcRoot.class, AcState.class, AcTransition.class,
             SubgraphCall.class, SubgraphInput.class, SubgraphOutput.class);
@@ -403,7 +395,6 @@ public final class EvmNodes {
         names.put("ref.rc", "RC Ref");
         names.put("entity.root", "Entity Root");
         names.put("animate.entry", "Animate Entry");
-        names.put("rc.condition_entry", "RC Condition Entry");
         names.put("rc.root", "RC Root");
         names.put("list.entry", "List Entry");
         names.put("material.entry", "Material Entry");

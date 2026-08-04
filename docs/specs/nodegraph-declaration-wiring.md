@@ -1,6 +1,6 @@
 # 节点图：声明连线语义 + 闭包导入 + 诊断面板
 
-状态：已实施并验证（2026-08-04，ADR-0025）
+状态：已实施并验证（2026-08-04，ADR-0025）；**v3 语义已被 nodegraph-inline-render-controller.md（v4，ADR-0026）取代**——rc.condition_entry 删除、geo/tex/mat 声明锚点移至 RC、RC 闭包改内联。本文留作历史记录。
 前置：nodegraph-visual-molang.md、nodegraph-shortname-elimination.md、nodegraph-eproject-variables.md
 
 ## 1. 背景与问题

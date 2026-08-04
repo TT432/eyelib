@@ -289,9 +289,8 @@ final class ImportDialogs {
     // ==================== 收尾 ====================
 
     /**
-     * ClientEntity 闭包导入（规格 §3 D2）：实体库先注册（RC 短名回填依赖图库，
-     * 由 {@link ImportClosure#importWithClosure} 保证），再依次注册 RC 库、AC 库；
-     * 诊断按文档分节上报，成功提示保留，最后打开实体库。
+     * ClientEntity 闭包导入（规格 inline-render-controller §6）：RC 已内联进实体主图，
+     * 只需注册 AC 闭包库；诊断分节上报，成功提示保留，最后打开实体库。
      */
     private static void importEntityWithClosure(JsonObject root, String baseName) {
         String entityName = freshLibraryName(baseName);
@@ -300,13 +299,6 @@ final class ImportDialogs {
         List<DiagnosticsCenter.Section> sections = new ArrayList<>();
         sections.add(new DiagnosticsCenter.Section(entityId, closure.entity().diagnostics()));
         int libraries = 1;
-        for (ImportClosure.NamedImport rc : closure.rcs()) {
-            if (rc.result() != null) {
-                GraphLibraryManager.INSTANCE.put(freshLibraryName(rc.id()), rc.result().library());
-                libraries++;
-            }
-            sections.add(new DiagnosticsCenter.Section("rc:" + rc.id(), rc.diagnostics()));
-        }
         for (ImportClosure.NamedImport ac : closure.acs()) {
             if (ac.result() != null) {
                 GraphLibraryManager.INSTANCE.put(freshLibraryName(ac.id()), ac.result().library());

@@ -23,20 +23,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 闭包导入（规格 nodegraph-declaration-wiring §3 D2）：UI 导入 ClientEntity 时，
- * 主图 ref.rc / ref.ac 引用的 RenderController / AnimationController 文档跟随导入。
+ * 闭包导入（规格 nodegraph-inline-render-controller §6）：UI 导入 ClientEntity 时，
+ * 引用的 RenderController 文档经 resolver **内联反编译进实体主图**（单库产物）；
+ * AnimationController 保持独立库闭包（双消费端语义，不内联）。
  *
  * <p>流程（{@link #importWithClosure}）：
  * <ol>
- *   <li>{@link JsonGraphImporters#importClientEntity} 导入实体并立即注册进
- *       {@link GraphLibraryManager}（必须先于 RC/AC 导入——
- *       {@link KnownRefTables#collectForRc} 依赖图库收集短名表）；</li>
- *   <li>从产物库主图收集 ref.rc / ref.ac 的 identifier 选项（非空、去重、uid 序）；</li>
- *   <li>逐个解析引用文档：RC 先走注册表（{@link EntityJsonService#renderControllerJson}
- *       编码回 render_controllers 文件形态——与运行时实体所见一致，覆盖 vanilla/
- *       BedrockAddonLoader 来源），回落 {@code eyelib/render_controllers} 资源目录扫描；
- *       AC 注册表不留存，只能扫 {@code eyelib/animation_controllers} 资源目录。
- *       都找不到 → 该文档记 {@link #CLOSURE_MISS} warning，不阻断。</li>
+ *   <li>{@link JsonGraphImporters#importClientEntity} 以 RC resolver 导入实体并注册进
+ *       {@link GraphLibraryManager}：resolver 注册表优先（{@link EntityJsonService 编码路径}
+ *       ——vanilla/BedrockAddonLoader 来源的 RC 不在资源目录），回落
+ *       {@code eyelib/render_controllers} 资源目录扫描；未命中 → ref.rc 外部引用
+ *       （诊断 RC_INLINE_MISS 在实体节）；</li>
+ *   <li>主图 ref.ac 的 identifier 收集 → 逐个扫 {@code eyelib/animation_controllers}
+ *       导入为独立库；找不到 → 该文档记 {@link #CLOSURE_MISS} warning，不阻断。</li>
  * </ol>
  *
  * <p>资源扫描经 {@link FileToIdConverter}（SimpleJsonWithSuffixResourceReloadListener
@@ -47,7 +46,7 @@ public final class ImportClosure {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportClosure.class);
     private static final Gson GSON = new GsonBuilder().setLenient().create();
 
-    /** 闭包文档缺失：资源包中扫不到含目标 id 的 RC/AC 文件（warning，不阻断）。 */
+    /** 闭包文档缺失：资源包中扫不到含目标 id 的 AC 文件（warning，不阻断）。 */
     public static final String CLOSURE_MISS = "CLOSURE_MISS";
 
     /** 导入入口级错误（JSON 解析失败 / 形态不识别 / 读取失败等，两版 ImportDialog 共用）。 */
@@ -60,9 +59,9 @@ public final class ImportClosure {
     }
 
     /**
-     * 闭包中一个具名文档的导入产物。
+     * 闭包中一个具名 AC 文档的导入产物。
      *
-     * @param id          RC/AC 标识符
+     * @param id          AC 标识符
      * @param result      导入结果；文档未找到时为 null（不注册库）
      * @param diagnostics 该文档的诊断（找到 = 导入器诊断；未找到 = CLOSURE_MISS warning）
      */
@@ -84,15 +83,13 @@ public final class ImportClosure {
     /**
      * 闭包导入产物。
      *
-     * @param entity   实体导入结果（库已由 {@link #importWithClosure} 注册）
+     * @param entity   实体导入结果（库已由 {@link #importWithClosure} 注册；RC 已内联）
      * @param entityId 实体标识符（产物库 root 选项；取不到为 null）
-     * @param rcs      ref.rc 闭包（uid 序去重）
-     * @param acs      ref.ac 闭包（uid 序去重）
+     * @param acs      ref.ac 闭包（uid 序去重，独立库）
      */
     public record Result(ImportResult entity, @Nullable String entityId,
-                         List<NamedImport> rcs, List<NamedImport> acs) {
+                         List<NamedImport> acs) {
         public Result {
-            rcs = List.copyOf(rcs);
             acs = List.copyOf(acs);
         }
     }
@@ -108,11 +105,13 @@ public final class ImportClosure {
     }
 
     /**
-     * 实体 + 引用闭包导入。实体库先以 {@code entityLibraryName} 注册（调用方按自身
-     * freshLibraryName 风格命名），再导入 RC/AC 闭包；RC/AC 库的命名与注册由调用方负责。
+     * 实体 + AC 引用闭包导入（v4：RC 内联）。实体库以 {@code entityLibraryName} 注册；
+     * AC 库的命名与注册由调用方负责。
      */
     public static Result importWithClosure(JsonObject entityFileJson, String entityLibraryName) {
-        ImportResult entity = JsonGraphImporters.importClientEntity(entityFileJson);
+        LazyScan rcScan = new LazyScan(RC_DIR);
+        ImportResult entity = JsonGraphImporters.importClientEntity(entityFileJson,
+                rcId -> registryRenderController(rcId).or(() -> rcScan.find(rcId)));
         GraphLibraryManager.INSTANCE.put(entityLibraryName, entity.library());
 
         String identifier = entity.library().mainGraph().nodes().stream()
@@ -121,17 +120,6 @@ public final class ImportClosure {
                 .map(node -> node.optionString("identifier", ""))
                 .orElse("");
         String entityId = identifier.isEmpty() ? null : identifier;
-
-        List<NamedImport> rcs = new ArrayList<>();
-        LazyScan rcScan = new LazyScan(RC_DIR);
-        for (String rcId : collectRefIdentifiers(entity, NodeTypes.REF_RC.id())) {
-            Optional<JsonObject> doc = registryRenderController(rcId)
-                    .or(() -> rcScan.find(rcId));
-            rcs.add(doc.<NamedImport>map(json -> NamedImport.found(rcId,
-                            JsonGraphImporters.importRenderController(
-                                    json, rcId, KnownRefTables.collectForRc(rcId))))
-                    .orElseGet(() -> NamedImport.miss(rcId)));
-        }
 
         List<NamedImport> acs = new ArrayList<>();
         LazyScan acScan = new LazyScan(AC_DIR);
@@ -143,7 +131,7 @@ public final class ImportClosure {
                     .orElseGet(() -> NamedImport.miss(acId)));
         }
 
-        return new Result(entity, entityId, rcs, acs);
+        return new Result(entity, entityId, acs);
     }
 
     /** 产物库主图中指定 ref 类型的 identifier 选项（非空、去重；节点插入序即 uid 序）。 */

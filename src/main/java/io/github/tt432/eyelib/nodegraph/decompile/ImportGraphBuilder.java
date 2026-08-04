@@ -84,6 +84,57 @@ final class ImportGraphBuilder {
         diagnostics.add(Diagnostic.warning(code, message));
     }
 
+    /** 是否已存在指定类型、指定 short_name 选项值的 ref 节点（凾底接线判重用）。 */
+    boolean hasRefWithShortName(String refType, String shortName) {
+        return nodes.values().stream().anyMatch(n -> n.type().equals(refType)
+                && n.options().get("short_name") instanceof JsonPrimitive p
+                && p.isString() && p.getAsString().equals(shortName));
+    }
+
+    /** 是否存在指定类型与短名、且能沿连线到达任一 RC 锚点（rc.root / ref.rc）的 ref。 */
+    boolean refReachesAnchor(String refType, String shortName) {
+        Map<String, List<String>> forward = new LinkedHashMap<>();
+        for (Wire wire : wires) {
+            forward.computeIfAbsent(wire.from().node(), k -> new ArrayList<>()).add(wire.to().node());
+        }
+        for (NodeInstance n : nodes.values()) {
+            if (!n.type().equals(refType)
+                    || !(n.options().get("short_name") instanceof JsonPrimitive p)
+                    || !p.isString() || !p.getAsString().equals(shortName)) {
+                continue;
+            }
+            if (reachesAnchor(n.uid(), forward, new LinkedHashMap<>(), new java.util.HashSet<>())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean reachesAnchor(String uid, Map<String, List<String>> forward,
+                                  Map<String, Boolean> memo, java.util.Set<String> visiting) {
+        NodeInstance node = nodes.get(uid);
+        if (node != null && (node.type().equals("rc.root") || node.type().equals("ref.rc"))) {
+            return true;
+        }
+        Boolean cached = memo.get(uid);
+        if (cached != null) {
+            return cached;
+        }
+        if (!visiting.add(uid)) {
+            return false;
+        }
+        boolean hit = false;
+        for (String next : forward.getOrDefault(uid, List.of())) {
+            if (reachesAnchor(next, forward, memo, visiting)) {
+                hit = true;
+                break;
+            }
+        }
+        visiting.remove(uid);
+        memo.put(uid, hit);
+        return hit;
+    }
+
     void error(String code, String message) {
         diagnostics.add(Diagnostic.error(code, message));
     }

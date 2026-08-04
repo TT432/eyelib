@@ -57,7 +57,7 @@ public final class RenderControllerAssembler {
         return new AssemblyResult(doc, diagnostics);
     }
 
-    private static void assembleEntry(AssemblySupport.Ctx ctx, NodeInstance root, JsonObject entry) {
+    static void assembleEntry(AssemblySupport.Ctx ctx, NodeInstance root, JsonObject entry) {
         GraphData main = ctx.main;
         entry.addProperty("geometry", ctx.emitExpression(root.uid(), "geometry"));
 

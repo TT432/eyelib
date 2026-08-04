@@ -85,14 +85,16 @@ public final class NodegraphBuildService {
         }
 
         return switch (library.kind()) {
-            case CLIENT_ENTITY -> injectClientEntity(diagnostics, assembly.json());
+            case CLIENT_ENTITY -> injectClientEntity(diagnostics, library, assembly);
             case RENDER_CONTROLLER -> injectRenderController(diagnostics, library, assembly.json());
             case ANIMATION_CONTROLLER -> injectAnimationController(diagnostics, library, assembly.json());
             case EXPRESSION_LIB -> new BuildResult(diagnostics, null);
         };
     }
 
-    private static BuildResult injectClientEntity(List<Diagnostic> diagnostics, JsonObject json) {
+    private static BuildResult injectClientEntity(List<Diagnostic> diagnostics, GraphLibrary library,
+                                                  AssemblyResult assembly) {
+        JsonObject json = assembly.json();
         var parsed = BrClientEntity.CODEC.parse(JsonOps.INSTANCE, json);
         if (parsed.error().isPresent()) {
             diagnostics.add(Diagnostic.error("CODEC_ROUNDTRIP",
@@ -103,7 +105,46 @@ public final class NodegraphBuildService {
         ClientEntityManager.INSTANCE.put(entity.identifier(), entity);
         LOGGER.info("[nodegraph] injected client entity {}", entity.identifier());
         warnModelTextureMeshCoverage(diagnostics, entity);
+        // v4：内联 rc.root 的伴随 RC 文档注册（撞 id 警告——与其它图库的 rc.root 冲突时后注册胜出）
+        for (JsonObject extra : assembly.extraDocs()) {
+            injectInlineRenderControllers(diagnostics, library, extra);
+        }
         return new BuildResult(diagnostics, entity.identifier());
+    }
+
+    /** 内联 RC 伴随文档：CODEC 往返 + 注册；与其它图库的 rc.root 撞 id → INLINE_RC_CONFLICT 警告。 */
+    private static void injectInlineRenderControllers(List<Diagnostic> diagnostics, GraphLibrary library,
+                                                      JsonObject doc) {
+        var parsed = RenderControllers.CODEC.parse(JsonOps.INSTANCE, doc);
+        if (parsed.error().isPresent()) {
+            diagnostics.add(Diagnostic.error("CODEC_ROUNDTRIP",
+                    "inline render_controller CODEC 往返失败: " + parsed.error().get().message()));
+            return;
+        }
+        RenderControllers controllers = parsed.result().orElseThrow();
+        controllers.render_controllers().forEach((key, entry) -> {
+            warnInlineRcConflict(diagnostics, library, key);
+            RenderControllerManager.INSTANCE.put(key, entry);
+            LOGGER.info("[nodegraph] injected inline render controller {}", key);
+        });
+    }
+
+    /** 内联 RC id 与其它已加载图库的 rc.root 撞 id（同一实体库自身除外）。 */
+    private static void warnInlineRcConflict(List<Diagnostic> diagnostics, GraphLibrary self, String rcId) {
+        for (Map.Entry<String, GraphLibrary> e : GraphLibraryManager.INSTANCE.all().entrySet()) {
+            GraphLibrary other = e.getValue();
+            if (other == self) {
+                continue;
+            }
+            boolean clash = other.graphs().values().stream().flatMap(g -> g.nodes().stream())
+                    .anyMatch(n -> n.type().equals("rc.root")
+                            && rcId.equals(n.optionString("identifier", "")));
+            if (clash) {
+                diagnostics.add(Diagnostic.warning("INLINE_RC_CONFLICT",
+                        "内联 RenderController '" + rcId + "' 与图库 '" + e.getKey()
+                                + "' 的 rc.root 撞 id（后注册胜出）"));
+            }
+        }
     }
 
     /**

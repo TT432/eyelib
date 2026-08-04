@@ -65,9 +65,7 @@ class ClientEntityAssemblerTest {
                         node("ae2", "animate.entry"),
                         node("rac1", "ref.ac",
                                 opts("short_name", "main", "identifier", "controller.animation.test.main")),
-                        node("rce1", "rc.condition_entry"),
                         node("rrc1", "ref.rc", opts("identifier", "controller.render.test.a")),
-                        node("rce2", "rc.condition_entry"),
                         node("rrc2", "ref.rc", opts("identifier", "controller.render.test.b")),
                         node("q1", "query.call", opts("function", "query.is_baby", "arg_count", 0)),
                         node("rg1", "ref.geometry",
@@ -85,17 +83,16 @@ class ClientEntityAssemblerTest {
                         wire("ra1", "ref", "ae1", "ref"),
                         wire("ae2", "entry", "root", "animate"),
                         wire("rac1", "ref", "ae2", "ref"),
-                        // 声明连线（D1：声明 = 连线）
-                        wire("rg1", "ref", "root", "geometries"),
-                        wire("rt1", "ref", "root", "textures"),
-                        wire("rm1", "ref", "root", "materials"),
+                        // 声明连线（v4：geo/tex/mat 锚点在 RC，动画/AC 保留实体级）
+                        wire("rg1", "ref", "rrc1", "decl_geometries"),
+                        wire("rt1", "ref", "rrc1", "decl_textures"),
+                        wire("rm1", "ref", "rrc1", "decl_materials"),
                         wire("ra1", "ref", "root", "animations"),
                         wire("rac1", "ref", "root", "animation_controllers"),
-                        wire("rce1", "entry", "root", "render_controllers"),
-                        wire("rrc1", "ref", "rce1", "rc"),
-                        wire("rce2", "entry", "root", "render_controllers"),
-                        wire("rrc2", "ref", "rce2", "rc"),
-                        wire("q1", "out", "rce2", "condition"))));
+                        // v4：ref.rc 直连 render_controllers；条件在 ref.rc.condition 端口
+                        wire("rrc1", "ref", "root", "render_controllers"),
+                        wire("rrc2", "ref", "root", "render_controllers"),
+                        wire("q1", "out", "rrc2", "condition"))));
 
         AssemblyResult r = ClientEntityAssembler.assemble(lib);
 
@@ -139,6 +136,8 @@ class ClientEntityAssemblerTest {
         assertEquals("controller.render.test.a", rcs.get(0).getAsString());
         assertEquals("query.is_baby",
                 rcs.get(1).getAsJsonObject().get("controller.render.test.b").getAsString());
+        // 无内联 rc.root → extraDocs 为空
+        assertTrue(r.extraDocs().isEmpty());
     }
 
     @Test
@@ -161,7 +160,7 @@ class ClientEntityAssemblerTest {
 
     @Test
     void declarationTablesWiredOnlyAndDedup() {
-        // D1：声明 = 连线——只有连到 entity.root 声明端口的 ref 进声明表；
+        // v4：geo/tex/mat 声明表 = DeclarationTables 从 RC 锚点派生——只有接入锚点的 ref 进表；
         // 未连线的主图 ref 与子图 ref（即使子图可达）均不收集
         GraphInterface iface = new GraphInterface(List.of(),
                 new GraphInterface.Param("result", PortType.FLOAT, Optional.empty()));
@@ -169,6 +168,7 @@ class ClientEntityAssemblerTest {
                 List.of(
                         node("root", "entity.root", opts("identifier", "test:wired")),
                         node("sc1", "subgraph.call", opts("subgraph", "sub")),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.test.a")),
                         node("rg1", "ref.geometry",
                                 opts("short_name", "default", "identifier", "geometry.test.model")),
                         // 与 rg1 同 short_name + 同 identifier → 去重
@@ -177,8 +177,9 @@ class ClientEntityAssemblerTest {
                         node("rg9", "ref.geometry",
                                 opts("short_name", "stray", "identifier", "geometry.test.stray"))),
                 List.of(
-                        wire("rg1", "ref", "root", "geometries"),
-                        wire("rg3", "ref", "root", "geometries")));
+                        wire("rc1", "ref", "root", "render_controllers"),
+                        wire("rg1", "ref", "rc1", "decl_geometries"),
+                        wire("rg3", "ref", "rc1", "decl_geometries")));
         GraphData sub = new GraphData(
                 List.of(
                         node("rg2", "ref.geometry",
@@ -198,17 +199,19 @@ class ClientEntityAssemblerTest {
 
     @Test
     void invalidDeclarationRefType() {
-        // 声明端口源节点类型不匹配 → INVALID_DECLARATION_REF（带 nodeUid），该节点不进表
+        // 声明端口源节点类别不匹配 → INVALID_DECLARATION_REF（带 nodeUid），该节点不进表
         GraphLibrary lib = lib(GraphKind.CLIENT_ENTITY, graph(
                 List.of(
                         node("root", "entity.root", opts("identifier", "test:badref")),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.test.a")),
                         node("rt1", "ref.texture",
                                 opts("short_name", "default", "path", "textures/entity/test")),
                         node("rg1", "ref.geometry",
                                 opts("short_name", "default", "identifier", "geometry.test.model"))),
                 List.of(
-                        wire("rt1", "ref", "root", "geometries"),
-                        wire("rg1", "ref", "root", "geometries"))));
+                        wire("rc1", "ref", "root", "render_controllers"),
+                        wire("rt1", "ref", "rc1", "decl_geometries"),
+                        wire("rg1", "ref", "rc1", "decl_geometries"))));
 
         AssemblyResult r = ClientEntityAssembler.assemble(lib);
 
@@ -232,15 +235,17 @@ class ClientEntityAssemblerTest {
         GraphLibrary lib = lib(GraphKind.CLIENT_ENTITY, graph(
                 List.of(
                         node("root", "entity.root", opts("identifier", "test:derived")),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.test.a")),
                         node("rg1", "ref.geometry", opts("identifier", "geometry.test.model")),
                         node("rt1", "ref.texture", opts("path", "textures/entity/test")),
                         node("rm1", "ref.material", opts("material", "entity_alphatest")),
                         node("ra1", "ref.animation", opts("identifier", "animation.test.walk")),
                         node("rac1", "ref.ac", opts("identifier", "controller.animation.test.main"))),
                 List.of(
-                        wire("rg1", "ref", "root", "geometries"),
-                        wire("rt1", "ref", "root", "textures"),
-                        wire("rm1", "ref", "root", "materials"),
+                        wire("rc1", "ref", "root", "render_controllers"),
+                        wire("rg1", "ref", "rc1", "decl_geometries"),
+                        wire("rt1", "ref", "rc1", "decl_textures"),
+                        wire("rm1", "ref", "rc1", "decl_materials"),
                         wire("ra1", "ref", "root", "animations"),
                         wire("rac1", "ref", "root", "animation_controllers"))));
 
@@ -273,11 +278,13 @@ class ClientEntityAssemblerTest {
         GraphLibrary lib = lib(GraphKind.CLIENT_ENTITY, graph(
                 List.of(
                         node("root", "entity.root", opts("identifier", "test:multi")),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.test.a")),
                         node("rg1", "ref.geometry", opts("identifier", "geometry.test.a")),
                         node("rg2", "ref.geometry", opts("identifier", "geometry.test.b"))),
                 List.of(
-                        wire("rg1", "ref", "root", "geometries"),
-                        wire("rg2", "ref", "root", "geometries"))));
+                        wire("rc1", "ref", "root", "render_controllers"),
+                        wire("rg1", "ref", "rc1", "decl_geometries"),
+                        wire("rg2", "ref", "rc1", "decl_geometries"))));
 
         AssemblyResult r = ClientEntityAssembler.assemble(lib);
 
@@ -294,12 +301,14 @@ class ClientEntityAssemblerTest {
         GraphLibrary lib = lib(GraphKind.CLIENT_ENTITY, graph(
                 List.of(
                         node("root", "entity.root", opts("identifier", "test:explicit")),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.test.a")),
                         node("rg1", "ref.geometry",
                                 opts("short_name", "default", "identifier", "geometry.test.main")),
                         node("rg2", "ref.geometry", opts("identifier", "geometry.test.alt"))),
                 List.of(
-                        wire("rg1", "ref", "root", "geometries"),
-                        wire("rg2", "ref", "root", "geometries"))));
+                        wire("rc1", "ref", "root", "render_controllers"),
+                        wire("rg1", "ref", "rc1", "decl_geometries"),
+                        wire("rg2", "ref", "rc1", "decl_geometries"))));
 
         AssemblyResult r = ClientEntityAssembler.assemble(lib);
 
@@ -309,5 +318,92 @@ class ClientEntityAssemblerTest {
         assertEquals(2, geometry.entrySet().size());
         assertEquals("geometry.test.main", geometry.get("default").getAsString());
         assertEquals("geometry.test.alt", geometry.get("geometry.test.alt").getAsString());
+    }
+
+    // ---------- 内联 rc.root（v4 规格 §3.2/§3.3） ----------
+
+    @Test
+    void inlineRcRootProducesMergedExtraDoc() {
+        // rc.root.controller 接 render_controllers → 内联 RC：列表纯字符串 + extraDocs 合并 RC 文档；
+        // geometry 字段端口上游 ref 同时入声明表（声明+引用一体）
+        GraphLibrary lib = lib(GraphKind.CLIENT_ENTITY, graph(
+                List.of(
+                        node("root", "entity.root", opts("identifier", "test:inline")),
+                        node("rcr1", "rc.root", opts("identifier", "controller.render.test.a")),
+                        node("rg1", "ref.geometry",
+                                opts("short_name", "default", "identifier", "geometry.test.model"))),
+                List.of(
+                        wire("rcr1", "controller", "root", "render_controllers"),
+                        wire("rg1", "ref", "rcr1", "geometry"))));
+
+        AssemblyResult r = ClientEntityAssembler.assemble(lib);
+
+        assertFalse(r.hasErrors(), () -> r.diagnostics().toString());
+        JsonObject desc = r.json().getAsJsonObject("minecraft:client_entity").getAsJsonObject("description");
+        JsonArray rcs = desc.getAsJsonArray("render_controllers");
+        assertEquals(1, rcs.size());
+        assertEquals("controller.render.test.a", rcs.get(0).getAsString());
+        assertEquals("geometry.test.model",
+                desc.getAsJsonObject("geometry").get("default").getAsString());
+
+        assertEquals(1, r.extraDocs().size());
+        JsonObject doc = r.extraDocs().get(0);
+        assertEquals("1.8.0", doc.get("format_version").getAsString());
+        JsonObject entry = doc.getAsJsonObject("render_controllers")
+                .getAsJsonObject("controller.render.test.a");
+        assertEquals("geometry.default", entry.get("geometry").getAsString());
+    }
+
+    @Test
+    void inlineRcRootWithCondition() {
+        // condition 非恒 1 → {identifier: condition}；extraDocs 仍产 RC 文档
+        GraphLibrary lib = lib(GraphKind.CLIENT_ENTITY, graph(
+                List.of(
+                        node("root", "entity.root", opts("identifier", "test:inlinecond")),
+                        node("rcr1", "rc.root", opts("identifier", "controller.render.test.a")),
+                        node("q1", "query.call", opts("function", "query.is_baby", "arg_count", 0))),
+                List.of(
+                        wire("rcr1", "controller", "root", "render_controllers"),
+                        wire("q1", "out", "rcr1", "condition"))));
+
+        AssemblyResult r = ClientEntityAssembler.assemble(lib);
+
+        assertFalse(r.hasErrors(), () -> r.diagnostics().toString());
+        JsonObject desc = r.json().getAsJsonObject("minecraft:client_entity").getAsJsonObject("description");
+        JsonArray rcs = desc.getAsJsonArray("render_controllers");
+        assertEquals(1, rcs.size());
+        assertEquals("query.is_baby",
+                rcs.get(0).getAsJsonObject().get("controller.render.test.a").getAsString());
+        assertEquals(1, r.extraDocs().size());
+        assertTrue(r.extraDocs().get(0).getAsJsonObject("render_controllers")
+                .has("controller.render.test.a"));
+    }
+
+    @Test
+    void multipleInlineRcRootsMergeIntoSingleDoc() {
+        // 多个内联 rc.root → 单个合并 render_controllers 文档；列表条目按连线源 uid 字典序
+        GraphLibrary lib = lib(GraphKind.CLIENT_ENTITY, graph(
+                List.of(
+                        node("root", "entity.root", opts("identifier", "test:multiinline")),
+                        node("rcr2", "rc.root", opts("identifier", "controller.render.test.b")),
+                        node("rcr1", "rc.root", opts("identifier", "controller.render.test.a"))),
+                List.of(
+                        wire("rcr1", "controller", "root", "render_controllers"),
+                        wire("rcr2", "controller", "root", "render_controllers"))));
+
+        AssemblyResult r = ClientEntityAssembler.assemble(lib);
+
+        assertFalse(r.hasErrors(), () -> r.diagnostics().toString());
+        JsonObject desc = r.json().getAsJsonObject("minecraft:client_entity").getAsJsonObject("description");
+        JsonArray rcs = desc.getAsJsonArray("render_controllers");
+        assertEquals(2, rcs.size());
+        assertEquals("controller.render.test.a", rcs.get(0).getAsString());
+        assertEquals("controller.render.test.b", rcs.get(1).getAsString());
+
+        assertEquals(1, r.extraDocs().size());
+        JsonObject controllers = r.extraDocs().get(0).getAsJsonObject("render_controllers");
+        assertEquals(2, controllers.entrySet().size());
+        assertTrue(controllers.has("controller.render.test.a"));
+        assertTrue(controllers.has("controller.render.test.b"));
     }
 }

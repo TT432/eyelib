@@ -170,11 +170,13 @@ public final class NodeDebugOverlayModel {
         tick();
     }
 
-    /** 仅装配上下文引用（无 molang 表达式语义，codegen 对其报错）——不做徽标。 */
+    /** 仅装配上下文节点（无 molang 表达式语义，codegen 对其报错）——不做徽标。 */
     private static boolean isAssemblyOnlyRef(NodeType.Kind kind) {
         return kind == NodeType.Kind.REF_ANIMATION
                 || kind == NodeType.Kind.REF_AC
-                || kind == NodeType.Kind.REF_RC;
+                || kind == NodeType.Kind.REF_RC
+                // v4：rc.root 有 controller（RC_REF）输出，属装配语义
+                || kind == NodeType.Kind.RC_ROOT;
     }
 
     private static boolean isSubgraphKind(NodeType.Kind kind) {

@@ -202,21 +202,50 @@ class GraphValidatorTest {
 
     @Test
     void slotKindViolation() {
-        // animate.entry 只能接 entity.root.animate，接 render_controllers 非法
+        // animate.entry 只能接 entity.root.animate / ac.state.animations；接 rc.root.textures 非法（应为 list.entry）
+        List<Diagnostic> diags = validateGraph(graph(
+                List.of(node("r", "rc.root"), node("e", "animate.entry")),
+                List.of(wire("e", "entry", "r", "textures"))));
+        assertTrue(hasCode(diags, GraphValidator.SLOT_KIND));
+    }
+
+    @Test
+    void renderControllersIsNoLongerSlot() {
+        // v4：entity.root.render_controllers 是 RC_REF inMulti（SLOT_WHITELIST 无条目）；
+        // SLOT 条目接入 → 类型不兼容，不再是 SLOT_KIND
         List<Diagnostic> diags = validateGraph(graph(
                 List.of(node("r", "entity.root"), node("e", "animate.entry")),
                 List.of(wire("e", "entry", "r", "render_controllers"))));
-        assertTrue(hasCode(diags, GraphValidator.SLOT_KIND));
+        assertFalse(hasCode(diags, GraphValidator.SLOT_KIND));
+        assertTrue(hasCode(diags, GraphValidator.TYPE_MISMATCH));
     }
 
     // ---------- 11 REF_MISUSE ----------
 
     @Test
     void refMisuseAssemblyRefToExpressionSlot() {
-        // ref.animation 只能接 animate.entry.ref / rc.condition_entry.rc
+        // ref.animation 只能接 animate.entry.ref / entity.root 动画声明端口（v4）
         List<Diagnostic> diags = validateGraph(graph(
-                List.of(node("ra", "ref.animation"), node("c", "rc.condition_entry")),
-                List.of(wire("ra", "ref", "c", "condition"))));
+                List.of(node("ra", "ref.animation"), node("r", "entity.root")),
+                List.of(wire("ra", "ref", "r", "scale"))));
+        assertTrue(hasCode(diags, GraphValidator.REF_MISUSE));
+    }
+
+    @Test
+    void refMisuseRefRcToNonMountPort() {
+        // ref.rc 只能接 entity.root.render_controllers（v4）
+        List<Diagnostic> diags = validateGraph(graph(
+                List.of(node("rc", "ref.rc"), node("r", "entity.root")),
+                List.of(wire("rc", "ref", "r", "scale"))));
+        assertTrue(hasCode(diags, GraphValidator.REF_MISUSE));
+    }
+
+    @Test
+    void refMisuseRcRootControllerToNonMountPort() {
+        // rc.root.controller 只能接 entity.root.render_controllers（v4）
+        List<Diagnostic> diags = validateGraph(graph(
+                List.of(node("rcr", "rc.root"), node("r", "entity.root")),
+                List.of(wire("rcr", "controller", "r", "scale"))));
         assertTrue(hasCode(diags, GraphValidator.REF_MISUSE));
     }
 
@@ -346,20 +375,22 @@ class GraphValidatorTest {
 
     @Test
     void refConflictSameShortNameDifferentIdentifier() {
-        // D1：REF_CONFLICT 范围 = 连到声明端口的 ref
+        // v4：REF_CONFLICT 范围 = DeclarationTables 派生集合（RC 锚点）
         GraphData main = graph(
                 List.of(node("r", "entity.root"),
+                        node("rc", "ref.rc", opts("identifier", "controller.render.a")),
                         node("g1", "ref.geometry", opts("short_name", "default", "identifier", "geometry.a")),
                         node("g2", "ref.geometry", opts("short_name", "default", "identifier", "geometry.b"))),
-                List.of(wire("g1", "ref", "r", "geometries"),
-                        wire("g2", "ref", "r", "geometries")));
+                List.of(wire("rc", "ref", "r", "render_controllers"),
+                        wire("g1", "ref", "rc", "decl_geometries"),
+                        wire("g2", "ref", "rc", "decl_geometries")));
         List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
         assertTrue(hasCode(diags, GraphValidator.REF_CONFLICT));
     }
 
     @Test
     void refConflictSkipsUnwiredAndSubgraphRefs() {
-        // 未连声明端口的主图 ref / 子图 ref 不进声明表（D1），不参与 REF_CONFLICT
+        // 未接 RC 锚点的主图 ref / 子图 ref 不进声明表（v4），不参与 REF_CONFLICT
         GraphInterface iface = new GraphInterface(List.of(), GraphInterface.Param.of("result", PortType.FLOAT));
         GraphData sg = subgraph(
                 List.of(node("out", "subgraph.output"), node("c", "const.number"),
@@ -367,11 +398,13 @@ class GraphValidatorTest {
                 List.of(wire("c", "out", "out", "result")), iface);
         GraphData main = graph(
                 List.of(node("r", "entity.root"),
+                        node("rc", "ref.rc", opts("identifier", "controller.render.a")),
                         node("call", "subgraph.call", opts("subgraph", "sg")),
                         node("g1", "ref.geometry", opts("short_name", "default", "identifier", "geometry.a")),
                         node("g2", "ref.geometry", opts("short_name", "default", "identifier", "geometry.b"))),
                 List.of(wire("call", "result", "r", "scale"),
-                        wire("g1", "ref", "r", "geometries")));
+                        wire("rc", "ref", "r", "render_controllers"),
+                        wire("g1", "ref", "rc", "decl_geometries")));
         Map<String, GraphData> graphs = Map.of("root", main, "sg", sg);
         List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, graphs));
         assertFalse(hasCode(diags, GraphValidator.REF_CONFLICT));
@@ -382,10 +415,12 @@ class GraphValidatorTest {
         // "textures/a/b" 与 "textures.a.b" 派生同名 → 冲突（D5）
         GraphData main = graph(
                 List.of(node("r", "entity.root"),
+                        node("rc", "ref.rc", opts("identifier", "controller.render.a")),
                         node("t1", "ref.texture", opts("path", "textures/a/b")),
                         node("t2", "ref.texture", opts("path", "textures.a.b"))),
-                List.of(wire("t1", "ref", "r", "textures"),
-                        wire("t2", "ref", "r", "textures")));
+                List.of(wire("rc", "ref", "r", "render_controllers"),
+                        wire("t1", "ref", "rc", "decl_textures"),
+                        wire("t2", "ref", "rc", "decl_textures")));
         List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
         assertTrue(hasCode(diags, GraphValidator.REF_CONFLICT));
     }
@@ -545,7 +580,7 @@ class GraphValidatorTest {
 
     @Test
     void declarationRefNotConnected() {
-        // 主图 ref.geometry 带标识符但未连声明端口 → WARNING
+        // v4 口径一：主图 ref.geometry 带标识符但未接入任何 RC 锚点 → WARNING
         GraphData main = graph(
                 List.of(node("r", "entity.root"),
                         node("g1", "ref.geometry", opts("identifier", "geometry.a"))),
@@ -555,6 +590,19 @@ class GraphValidatorTest {
         assertEquals(1, warns.size());
         assertEquals(Diagnostic.Severity.WARNING, warns.get(0).severity());
         assertEquals("g1", warns.get(0).nodeUid().orElseThrow());
+    }
+
+    @Test
+    void declarationRefWiredToAnchorIsFine() {
+        // ref.geometry 接 rc.root 声明端口 → 入派生集合，不报
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("rcr", "rc.root", opts("identifier", "controller.render.a")),
+                        node("g1", "ref.geometry", opts("identifier", "geometry.a"))),
+                List.of(wire("g1", "ref", "rcr", "decl_geometries"),
+                        wire("rcr", "controller", "r", "render_controllers")));
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        assertFalse(hasCode(diags, GraphValidator.REF_NOT_CONNECTED));
     }
 
     @Test
@@ -573,35 +621,95 @@ class GraphValidatorTest {
 
     @Test
     void placeholderRefNotReported() {
-        // 标识符选项无实例值的占位 ref 不报（UNKNOWN_REFERENCE 已覆盖）；连线的 ref 也不报
+        // 标识符选项无实例值的占位 ref 不报（UNKNOWN_REFERENCE 已覆盖）；接入锚点的 ref 也不报
         GraphData main = graph(
                 List.of(node("r", "entity.root"),
+                        node("rc", "ref.rc", opts("identifier", "controller.render.a")),
                         node("g1", "ref.geometry", opts("short_name", "walk")),
                         node("g2", "ref.geometry", opts("identifier", "geometry.a"))),
-                List.of(wire("g2", "ref", "r", "geometries")));
+                List.of(wire("rc", "ref", "r", "render_controllers"),
+                        wire("g2", "ref", "rc", "decl_geometries")));
         List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
         assertFalse(hasCode(diags, GraphValidator.REF_NOT_CONNECTED));
     }
 
     @Test
-    void refRcNotConnectedToConditionEntry() {
+    void refRcNotMounted() {
+        // v4 口径三：ref.rc 的 ref 未接 entity.root.render_controllers → WARNING
         GraphData main = graph(
                 List.of(node("r", "entity.root"),
                         node("rc1", "ref.rc", opts("identifier", "controller.render.a"))),
                 List.of());
         List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
-        assertTrue(hasCode(diags, GraphValidator.REF_NOT_CONNECTED));
+        List<Diagnostic> warns = byCode(diags, GraphValidator.REF_NOT_CONNECTED);
+        assertEquals(1, warns.size());
+        assertEquals("rc1", warns.get(0).nodeUid().orElseThrow());
     }
 
     @Test
-    void refRcWiredToConditionEntryIsFine() {
+    void refRcMountedDirectlyIsFine() {
+        // v4：ref.rc 直连 entity.root.render_controllers（无 rc.condition_entry）
         GraphData main = graph(
                 List.of(node("r", "entity.root"),
-                        node("e", "rc.condition_entry"),
                         node("rc1", "ref.rc", opts("identifier", "controller.render.a"))),
-                List.of(wire("rc1", "ref", "e", "rc"), wire("e", "entry", "r", "render_controllers")));
+                List.of(wire("rc1", "ref", "r", "render_controllers")));
         List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
         assertFalse(hasCode(diags, GraphValidator.REF_NOT_CONNECTED));
+    }
+
+    @Test
+    void rcRootControllerNotConnected() {
+        // v4 口径二：内联 rc.root 的 controller 未接 entity.root.render_controllers → WARNING
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("rcr", "rc.root", opts("identifier", "controller.render.a"))),
+                List.of());
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        List<Diagnostic> warns = byCode(diags, GraphValidator.REF_NOT_CONNECTED);
+        assertEquals(1, warns.size());
+        assertEquals("rcr", warns.get(0).nodeUid().orElseThrow());
+    }
+
+    // ---------- 22 DUPLICATE_RC_ID (ERROR，仅 CLIENT_ENTITY) ----------
+
+    @Test
+    void duplicateRcId() {
+        // 主图两个内联 rc.root 同 identifier → ERROR
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("rcr1", "rc.root", opts("identifier", "controller.render.a")),
+                        node("rcr2", "rc.root", opts("identifier", "controller.render.a"))),
+                List.of(wire("rcr1", "controller", "r", "render_controllers"),
+                        wire("rcr2", "controller", "r", "render_controllers")));
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        List<Diagnostic> errors = byCode(diags, GraphValidator.DUPLICATE_RC_ID);
+        assertEquals(1, errors.size());
+        assertEquals(Diagnostic.Severity.ERROR, errors.get(0).severity());
+    }
+
+    @Test
+    void distinctRcIdsAreFine() {
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("rcr1", "rc.root", opts("identifier", "controller.render.a")),
+                        node("rcr2", "rc.root", opts("identifier", "controller.render.b"))),
+                List.of(wire("rcr1", "controller", "r", "render_controllers"),
+                        wire("rcr2", "controller", "r", "render_controllers")));
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        assertFalse(hasCode(diags, GraphValidator.DUPLICATE_RC_ID));
+    }
+
+    @Test
+    void sameIdRefRcIsNotDuplicate() {
+        // DUPLICATE_RC_ID 只查内联 rc.root；外部 ref.rc 同 id 不报
+        GraphData main = graph(
+                List.of(node("r", "entity.root"),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.a")),
+                        node("rc2", "ref.rc", opts("identifier", "controller.render.a"))),
+                List.of(wire("rc1", "ref", "r", "render_controllers"),
+                        wire("rc2", "ref", "r", "render_controllers")));
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        assertFalse(hasCode(diags, GraphValidator.DUPLICATE_RC_ID));
     }
 
     @Test

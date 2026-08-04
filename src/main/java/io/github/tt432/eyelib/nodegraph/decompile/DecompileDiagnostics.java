@@ -19,4 +19,6 @@ public final class DecompileDiagnostics {
     public static final String INVALID_FIELD = "INVALID_FIELD";
     /** animate 短名不在声明表（animations / animation_controllers）中：补仅 short_name 的 ref.animation。 */
     public static final String UNKNOWN_REFERENCE = "UNKNOWN_REFERENCE";
+    /** 实体引用的 RC 文档解析器未命中：以 ref.rc 外部引用导入（v4 内联导入）。 */
+    public static final String RC_INLINE_MISS = "RC_INLINE_MISS";
 }
