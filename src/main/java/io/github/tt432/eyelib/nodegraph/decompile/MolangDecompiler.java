@@ -27,7 +27,8 @@ import org.jspecify.annotations.Nullable;
  *
  * <p>映射表（规格 §W2）：
  * <ul>
- *   <li>数字字面量 → const.number（整数值 → const.int）；字符串 → const.string；true/false → const.bool；</li>
+ *   <li>数字字面量 → const.number（整数值 → const.int）；字符串 → const.string；true/false → const.bool；
+ *       例外：赋值语句的值是常量字面量时不建 const 节点，直接内联为 set 节点 value 端口的行内值；</li>
  *   <li>{@code a op b} / {@code op a} / {@code c ? a : b} / {@code a ?? b}
  *       → op.binary / op.unary / op.ternary / op.null_coalesce；</li>
  *   <li>{@code variable.x} → variable 节点（name 不带根）；{@code temp.x} / {@code context.x}
@@ -304,7 +305,13 @@ public final class MolangDecompiler {
             return;
         }
         String uid = addSetNode(b, target.root(), target.qualified());
-        b.wireFrom(expr(b, assignment.value()), uid, "value");
+        JsonElement inline = inlineConstant(assignment.value());
+        if (inline != null) {
+            // 常量赋值不建 const 节点：内联为 value 端口行内值（编辑器可直接改，codegen 经 literal 发射）
+            b.putConstant(uid, "value", inline);
+        } else {
+            b.wireFrom(expr(b, assignment.value()), uid, "value");
+        }
         chain.add(uid);
     }
 
@@ -321,6 +328,38 @@ public final class MolangDecompiler {
             return set;
         }
         return b.addNode("exec.set_temp", ImportGraphBuilder.opts("name", qualified));
+    }
+
+    /** 赋值值是常量字面量 → 行内 JSON（分组解包；单目 +/- 折叠进数字）；非常量 → null。 */
+    private static @Nullable JsonElement inlineConstant(MolangAst.Expr expr) {
+        if (expr instanceof MolangAst.GroupingExpr grouping) {
+            return inlineConstant(grouping.expression());
+        }
+        if (expr instanceof MolangAst.NumberLiteralExpr number) {
+            return numberJson(number.value(), number.rawText());
+        }
+        if (expr instanceof MolangAst.UnaryExpr unary
+                && (unary.operator().equals("-") || unary.operator().equals("+"))) {
+            MolangAst.Expr operand = unary.expression();
+            if (operand instanceof MolangAst.GroupingExpr grouping) {
+                operand = grouping.expression();
+            }
+            if (operand instanceof MolangAst.NumberLiteralExpr number) {
+                double signed = unary.operator().equals("-") ? -number.value() : number.value();
+                return numberJson(signed, number.rawText());
+            }
+            return null;
+        }
+        if (expr instanceof MolangAst.StringLiteralExpr string) {
+            return new JsonPrimitive(unquote(string.rawText()));
+        }
+        if (expr instanceof MolangAst.IdentifierExpr identifier) {
+            String name = identifier.name().toLowerCase(Locale.ROOT);
+            if (name.equals("true") || name.equals("false")) {
+                return new JsonPrimitive(name.equals("true"));
+            }
+        }
+        return null;
     }
 
     private static void forEach(Builder b, MolangAst.ForEachExpr forEach, List<String> chain) {
@@ -468,13 +507,22 @@ public final class MolangDecompiler {
     }
 
     private static PortRef numberLiteral(Builder b, MolangAst.NumberLiteralExpr number) {
-        String raw = number.rawText().toLowerCase(Locale.ROOT);
-        boolean integral = !raw.contains(".") && !raw.contains("e")
-                && number.value() == Math.rint(number.value())
-                && Math.abs(number.value()) < 9.0e15;
-        return integral
+        return isIntegral(number.value(), number.rawText())
                 ? b.valueNode("const.int", ImportGraphBuilder.opts("value", (long) number.value()), "out")
                 : b.valueNode("const.number", ImportGraphBuilder.opts("value", number.value()), "out");
+    }
+
+    /** 数字 → JSON 字面值：整数值保持 long（与 const.int 同口径），否则 double。 */
+    private static JsonElement numberJson(double value, String rawText) {
+        return new JsonPrimitive(isIntegral(value, rawText) ? (Number) (long) value : value);
+    }
+
+    /** 整数判据：raw 无小数点/指数记号且值可精确表示为 long。 */
+    private static boolean isIntegral(double value, String rawText) {
+        String raw = rawText.toLowerCase(Locale.ROOT);
+        return !raw.contains(".") && !raw.contains("e")
+                && value == Math.rint(value)
+                && Math.abs(value) < 9.0e15;
     }
 
     /** 字符串字面量：rawText 含单引号；反转义 \\ 与 \'（codegen quote 的逆）。 */
@@ -572,6 +620,19 @@ public final class MolangDecompiler {
 
         PortRef valueNode(String type, Map<String, JsonElement> options, String outPort) {
             return new PortRef(addNode(type, options), outPort);
+        }
+
+        /** 未连线端口行内值（codegen 经 literal 发射；与 ImportGraphBuilder.putConstant 同语义）。 */
+        void putConstant(String nodeUid, String portId, JsonElement value) {
+            for (int i = nodes.size() - 1; i >= 0; i--) {
+                NodeInstance n = nodes.get(i);
+                if (n.uid().equals(nodeUid)) {
+                    Map<String, JsonElement> constants = new LinkedHashMap<>(n.constants());
+                    constants.put(portId, value);
+                    nodes.set(i, new NodeInstance(n.uid(), n.type(), n.x(), n.y(), n.options(), constants));
+                    return;
+                }
+            }
         }
 
         void wire(String fromNode, String fromPort, String toNode, String toPort) {

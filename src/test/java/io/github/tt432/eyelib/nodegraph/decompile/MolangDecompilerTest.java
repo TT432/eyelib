@@ -12,7 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.PortRef;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -272,7 +274,43 @@ class MolangDecompilerTest {
         NodeInstance targetNode = nodeByUid(f, wireSource(f.wires(), setVar.uid(), "target"));
         assertEquals("variable", targetNode.type());
         assertEquals("x", targetNode.options().get("name").getAsString());
-        assertEquals(firstByType(f.nodes(), "const.int").uid(), wireSource(f.wires(), setVar.uid(), "value"));
+        // 常量值内联为 value 端口行内值：无 const 节点、无 value 连线
+        assertEquals(1L, setVar.constants().get("value").getAsLong());
+        assertTrue(wireInto(f.wires(), setVar.uid(), "value").isEmpty());
+        assertTrue(allByType(f.nodes(), "const.int").isEmpty());
+    }
+
+    @Test
+    void assignmentConstantKindsInlined() {
+        MolangDecompiler.ExecFragment f = MolangDecompiler.decompileStatements(
+                "variable.i = 5; variable.f = 0.5; variable.b = true; variable.s = 'hi'; variable.n = -3;");
+        var sets = allByType(f.nodes(), "exec.set_var");
+        assertEquals(5, sets.size());
+        // 全部内联：无任何 const 节点
+        assertTrue(allByType(f.nodes(), "const.int").isEmpty());
+        assertTrue(allByType(f.nodes(), "const.number").isEmpty());
+        assertTrue(allByType(f.nodes(), "const.bool").isEmpty());
+        assertTrue(allByType(f.nodes(), "const.string").isEmpty());
+        Map<String, NodeInstance> byVar = new HashMap<>();
+        for (NodeInstance set : sets) {
+            NodeInstance target = nodeByUid(f, wireSource(f.wires(), set.uid(), "target"));
+            byVar.put(target.options().get("name").getAsString(), set);
+            assertTrue(wireInto(f.wires(), set.uid(), "value").isEmpty());
+        }
+        assertEquals(5L, byVar.get("i").constants().get("value").getAsLong());
+        assertEquals(0.5, byVar.get("f").constants().get("value").getAsDouble());
+        assertTrue(byVar.get("b").constants().get("value").getAsBoolean());
+        assertEquals("hi", byVar.get("s").constants().get("value").getAsString());
+        assertEquals(-3L, byVar.get("n").constants().get("value").getAsLong());
+    }
+
+    @Test
+    void assignmentNonConstantStillWired() {
+        // 非常量值照常走 const/op 节点连线
+        MolangDecompiler.ExecFragment f = MolangDecompiler.decompileStatements("variable.x = query.health + 1;");
+        NodeInstance setVar = firstByType(f.nodes(), "exec.set_var");
+        assertTrue(setVar.constants().isEmpty());
+        assertEquals(firstByType(f.nodes(), "op.binary").uid(), wireSource(f.wires(), setVar.uid(), "value"));
     }
 
     @Test
