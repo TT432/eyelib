@@ -5,10 +5,12 @@ package io.github.tt432.eyelib.client.nodegraph.editor.ldlib1;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.data.BaseNode;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.DebugPanelWidget;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.GraphViewWidget;
+import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.NodePortWidget;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.NodeWidget;
 import com.lowdragmc.lowdraglib.gui.graphprocessor.widget.ParameterPanelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.FreeGraphView;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
+import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import io.github.tt432.eyelib.client.nodegraph.workbench.GridLodRenderer;
 import java.util.ArrayList;
 import net.minecraft.client.gui.GuiGraphics;
@@ -182,7 +184,37 @@ public class EvmGraphViewWidget extends GraphViewWidget {
             preview.endPanFromGraph();
             return true;
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        // 拖线落空检测：super.mouseReleased 会把 clickedPort 清空，先捕获；
+        // 落在其它端口上的成边由子控件（NodePortWidget.mouseReleased）先行处理，这里只拾取落空场景
+        NodePortWidget draggedPort = getClickedPort();
+        boolean handled = super.mouseReleased(mouseX, mouseY, button);
+        if (draggedPort != null && button == 0 && !isOverAnyPort(mouseX, mouseY)) {
+            EvmPortConnectMenu.open(this, draggedPort, mouseX, mouseY);
+        }
+        return handled;
+    }
+
+    /** 松手位置（GUI 坐标）是否落在任一节点端口上（端口在画布视图坐标系，需先换算）。 */
+    private boolean isOverAnyPort(double mouseX, double mouseY) {
+        var viewMouse = getFreeGraphView().getViewPosition((float) mouseX, (float) mouseY);
+        for (var nodeWidget : getNodeMap().values()) {
+            if (containsPortAt(nodeWidget, viewMouse.x, viewMouse.y)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean containsPortAt(WidgetGroup group, double viewX, double viewY) {
+        for (Widget child : group.widgets) {
+            if (child instanceof NodePortWidget port && port.isMouseOverElement(viewX, viewY)) {
+                return true;
+            }
+            if (child instanceof WidgetGroup sub && containsPortAt(sub, viewX, viewY)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 //?}
