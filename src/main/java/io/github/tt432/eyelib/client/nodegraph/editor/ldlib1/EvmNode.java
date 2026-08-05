@@ -8,7 +8,6 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.lowdragmc.lowdraglib.gui.editor.ColorPattern;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.BooleanConfigurator;
-import com.lowdragmc.lowdraglib.gui.editor.configurator.ColorConfigurator;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.ConfiguratorGroup;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.NumberConfigurator;
 import com.lowdragmc.lowdraglib.gui.editor.configurator.SelectorConfigurator;
@@ -307,7 +306,7 @@ public class EvmNode extends BaseNode {
             case BOOL -> father.addConfigurators(new BooleanConfigurator(
                     id, () -> options.getOrDefault(id, option.defaultValue()).getAsBoolean(),
                     v -> setOption(id, new JsonPrimitive(v)), current.getAsBoolean(), true));
-            case COLOR -> father.addConfigurators(new ColorConfigurator(
+            case COLOR -> father.addConfigurators(new EvmColorConfigurator(
                     id, () -> ColorValues.toArgbInt(options.getOrDefault(id, option.defaultValue()).getAsString()),
                     v -> setOption(id, new JsonPrimitive(ColorValues.fromArgbInt(v.intValue()))),
                     ColorValues.toArgbInt(option.defaultValue().getAsString()), true));
