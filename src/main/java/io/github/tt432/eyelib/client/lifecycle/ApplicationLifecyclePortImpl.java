@@ -35,6 +35,17 @@ public final class ApplicationLifecyclePortImpl implements ApplicationLifecycleP
     @Override
     public void onLivingEntityLeaveLevel(LivingEntity entity) {
         AttachableItemRenderSetup.clearEntity(entity);
+        // 粒子：实体离场时移除其动画登记的粒子发射器（looping 发射器不会自然过期）
+        io.github.tt432.eyelib.capability.RenderData<?> renderData =
+                io.github.tt432.eyelib.bridge.attachment.dataattach.mc.DataAttachmentHelper.getOrNull(
+                        io.github.tt432.eyelib.capability.AttachableDataTypes.RENDER_DATA.get(), entity);
+        if (renderData != null) {
+            var spawner = io.github.tt432.eyelib.bridge.particle.ParticlePort.getSpawnAdapter();
+            io.github.tt432.eyelib.client.particle.RootAnimationParticleSpawner.removeTracked(
+                    renderData.getAnimationComponent(), spawner);
+            io.github.tt432.eyelib.client.particle.RootAnimationParticleSpawner.flushOrphaned(
+                    renderData.getAnimationComponent(), spawner);
+        }
     }
 
     @Override

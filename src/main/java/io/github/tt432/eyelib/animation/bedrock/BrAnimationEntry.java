@@ -143,6 +143,11 @@ public final class BrAnimationEntry implements Animation {
             return owner;
         }
 
+        /** 本剪辑登记的粒子播放数据（实体离场/动画信息重建清理用）。 */
+        public java.util.List<io.github.tt432.eyelib.animation.RuntimeParticlePlayData> particles() {
+            return owner().particles();
+        }
+
         public int loopedTimes() {
             return owner.loopedTimes();
         }

@@ -204,6 +204,9 @@ public final class EntityRenderOrchestrator {
                     }
                     cap.getAnimationComponent().tickedInfos = tickedInfos;
                     cap.getAnimationComponent().effects = effects;
+                    // setup 重建遗弃粒子的兜底清理（见 AnimationComponent.pollOrphanedParticles）
+                    RootAnimationParticleSpawner.flushOrphaned(
+                            cap.getAnimationComponent(), ParticlePort.getSpawnAdapter());
 
                     // RC 条件动态重估：条件翻转时重建组件（BE 语义为逐帧评估）
                     var ce = clientEntityComponent.getClientEntity();

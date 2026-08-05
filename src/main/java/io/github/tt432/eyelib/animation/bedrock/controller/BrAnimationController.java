@@ -109,6 +109,11 @@ public record BrAnimationController(
             return owner;
         }
 
+        /** 当前状态登记的粒子播放数据（实体离场/动画信息重建清理用）。 */
+        public java.util.List<io.github.tt432.eyelib.animation.RuntimeParticlePlayData> particles() {
+            return owner().particles();
+        }
+
         public float getStartTick() {
             return owner.startTick();
         }

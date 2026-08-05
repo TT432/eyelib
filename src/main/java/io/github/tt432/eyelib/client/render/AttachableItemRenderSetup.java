@@ -150,6 +150,8 @@ public final class AttachableItemRenderSetup {
                         }
                     }, EntityRenderOrchestrator.collectBindBones(rd));
             ac.effects = effects;
+            // setup 重建遗弃粒子的兜底清理（见 AnimationComponent.pollOrphanedParticles）
+            RootAnimationParticleSpawner.flushOrphaned(ac, ParticlePort.getSpawnAdapter());
 
             // RC 条件动态重估：条件翻转时重建组件（BE 语义为逐帧评估；
             // 如拉弓 q.main_hand_item_use_duration>0 时显示箭层）
@@ -193,7 +195,15 @@ public final class AttachableItemRenderSetup {
     }
 
     public static void clearEntity(LivingEntity entity) {
-        CACHE.remove(entity);
+        // 粒子：attachable 动画登记的粒子发射器随实体离场一并移除（looping 发射器不会自然过期）
+        var slotMap = CACHE.remove(entity);
+        if (slotMap != null) {
+            var spawner = ParticlePort.getSpawnAdapter();
+            for (RenderData<ItemStack> rd : slotMap.values()) {
+                RootAnimationParticleSpawner.removeTracked(rd.getAnimationComponent(), spawner);
+                RootAnimationParticleSpawner.flushOrphaned(rd.getAnimationComponent(), spawner);
+            }
+        }
     }
 
     private static void invalidate(LivingEntity entity, EquipmentSlot slot) {
