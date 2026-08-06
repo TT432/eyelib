@@ -96,3 +96,12 @@ centralScript 模式下 `//?` 版本条件注释的实战限制(官方语法文�
 ### 直跑 gradlew --tests 带引号 pattern 报 No tests found
 
 在 git-bash 里 `cmd /c 'gradlew.bat :26.1.2:test --tests "*Foo*"'`,cmd 不剥离双引号,Gradle 收到带字面引号的 pattern → `No tests found for given includes: ["*Foo*"]`,极易误判为测试发现机制损坏。规避:用 `mcmcp_test`(内部传不带引号的 pattern),或直跑时写 `--tests *Foo*` 不带引号。
+
+### 本地 jar 依赖：MDG remap 配置不收 files()，mavenLocal 同名替换不生效
+
+给 `modLdlibCompile`/`modLocalRuntime` 这类 MDG `createRemappingConfiguration` 生成的配置加本地 jar 时：
+
+- `files(...)` 记法直接报「Cannot convert the provided notation ... DependencyConstraint」——该链只接受字符串/map 坐标。
+- 正确路径：把 jar 手动装进 `~/.m2/repository/<group>/<name>/<version>/`（jar + 最小 pom），用坐标引用（注意 exclusiveContent 组过滤，别用被占用的 group）。
+- **同名同版本替换 mavenLocal 里的 jar 内容不会生效**：Gradle transform 缓存（`caches/<ver>/transforms/<hash>/`）按输入哈希命中，`--refresh-dependencies` 也不重算（2026-08-06 实证，clientRunClasspath 仍指旧变换产物）。必须**换版本号**（如 `-patched1`）再改依赖坐标。
+- 改完坐标后 `:​<node>:createClientLaunchScript` 可能 UP-TO-DATE 不重生成，确认 `versions/<node>/build/moddev/clientRunClasspath.txt` 里的 jar 路径已更新，必要时 `--rerun-tasks`。
