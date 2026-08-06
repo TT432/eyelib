@@ -1,6 +1,7 @@
 # 规格：节点图工作台（Nodegraph Workbench）
 
 状态：已批准（2026-08-03 用户拍板）。关联：ADR-0021、nodegraph-visual-molang.md、json-view-molang-debug.md。
+⚠ ldlib1 已退役（2026-08-07，ADR-0028）：本文 ldlib1 接线描述为历史记录，当前全版本统一 LDLib2。
 
 **用户决策（2026-08-03）**：
 - 导入 = **反编译为可编辑图**（非仅查看）。

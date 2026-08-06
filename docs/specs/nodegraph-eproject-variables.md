@@ -1,6 +1,7 @@
 # eproject 项目容器 + 变量节点化 + 资产选择器
 
 > 状态：实施中
+> ⚠ ldlib1 已退役（2026-08-07，ADR-0028）：本文 ldlib1 接线描述为历史记录，当前全版本统一 LDLib2。
 > 前置：nodegraph-visual-molang.md、nodegraph-shortname-elimination.md、nodegraph-workbench.md
 > ADR：0024
 

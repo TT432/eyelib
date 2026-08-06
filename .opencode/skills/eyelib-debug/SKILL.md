@@ -227,16 +227,9 @@ LDLib2 的悬停/命中（`ModularUIWidget.lastMouseX` → `getLastHoveredElemen
 
 **环境前提（2026-08-06 实证）**：该路径依赖 glfwSetCursorPos 能生效。本工作站 OrayIddDriver 远程会话活跃时，远端的物理光标注入会持续覆写光标位置——set 后立即读回仍是远端坐标（如 33828,32987，虚拟桌面坐标系、远超窗口尺寸，且持续漂移），渲染线程上 set 同样无效。此与 MC/LDLib2 无关，纯环境问题。判定方法：`glfwSetCursorPos(w,100,100)` 后同 eval 立即 `glfwGetCursorPos` 读回，不等于 (100,100) 即不可用于该路径。此时悬停会卡在坐标映射的角落元素上（如 WorkbenchToolbar），应改用反射直驱（写 widget 的 lastMouseX/lastMouseY 字段或直接调 widget 的 mouseMoved/mouseClicked）。2026-08-04 验证有效是因为当时远程会话未注入光标。
 
-### 驱动 LDLib1 节点画布内控件：坐标需经 FreeGraphView 逆变换
+### 驱动 LDLib2 节点画布内控件
 
-合成点击 LDLib1 节点图编辑器画布内的控件（行内端口字段、节点配置器）时，`widget.getPosition()` 是**画布坐标**，不是屏幕坐标——画布（FreeGraphView）有 scale + xOffset/yOffset。由 `getViewPosition` 字节码得正变换 `view = (screen − gvPos)/scale + offset`，故点击坐标应为：
-
-```
-screenX = gv.getPosition().x + (canvasX − gv.getXOffset()) * gv.getScale()
-screenY = gv.getPosition().y + (canvasY − gv.getYOffset()) * gv.getScale()
-```
-
-直接用 `getPosition()` 当屏幕坐标点击会落空（mouseClicked 返回 false、未获焦点）。**焦点未获得时所有键盘事件静默无效**——2026-08-05 曾据此误诊「LDLib1 TextFieldWidget 退格/删除/方向键不转发」。实证（2026-08-06，1.20.1 实机 + 字节码）：`TextFieldWidget.keyPressed` 把 ESC 以外的键全部转发给内部 EditBox（ESC 返回 false 留给屏幕关闭），退格/删除/方向键在工具栏字段与画布内联字段的真实路由下均正常。另：`updateScreen` 从 supplier 刷新显示值以 `setClientSideWidget()` 为前提。
+LDLib2 nodegraphtookit 画布（GraphView）内控件坐标同样在缩放/平移变换下——合成点击前先把控件中心换算到屏幕坐标（参考 LDLib2 画布的 view transform），点击落空会使控件未获焦点、后续键盘事件静默无效（2026-08-05 曾据此在 LDLib1 侧误诊「退格键不转发」；LDLib1 编辑器已于 2026-08-07 退役）。
 
 ### 1.20.1 截图在虚拟显示器上捕获全暗
 

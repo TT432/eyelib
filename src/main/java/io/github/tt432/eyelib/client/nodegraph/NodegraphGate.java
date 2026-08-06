@@ -15,13 +15,9 @@ import org.slf4j.LoggerFactory;
 public final class NodegraphGate {
     private static final Logger LOGGER = LoggerFactory.getLogger(NodegraphGate.class);
 
-    //? if <1.20.6 {
-    private static final String EDITOR_IMPL_CLASS =
-            "io.github.tt432.eyelib.client.nodegraph.editor.ldlib1.Ldlib1NodegraphEditor";
-    //?} else {
+    // 全版本统一 LDLib2 编辑器（ldlib1 已于 2026-08-07 退役，见 docs/decisions/0028）
     private static final String EDITOR_IMPL_CLASS =
             "io.github.tt432.eyelib.client.nodegraph.editor.ldlib2.Ldlib2NodegraphEditor";
-    //?}
 
     private NodegraphGate() {
     }

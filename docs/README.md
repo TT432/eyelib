@@ -66,6 +66,13 @@
 | 0019 | Attachable 派生渲染缓存生命周期 | Accepted (2026-07-22) |
 | 0020 | 调试服务器归属与 mcmcp 拓展 | Accepted (2026-07-22) |
 | 0021 | 节点图可视化 Molang 语言与 LDLib 可选前置 | Accepted (2026-08-02) |
+| 0022 | 节点图工作台——JSON 反编译导入与图内 Molang 调试 | Accepted |
+| 0023 | 节点图短名称消除——派生短名与协议名保留 | Accepted |
+| 0024 | eproject 容器、变量节点化与资产选择器 | Accepted |
+| 0025 | 声明连线语义 + 闭包导入 + 诊断中心 | Accepted |
+| 0026 | RenderController 内联进实体画布 | Accepted |
+| 0027 | COLOR 复合端口类型与 ANY 内联字面值 | Accepted (2026-08-04) |
+| 0028 | ldlib1 退役，节点图编辑器全版本统一 LDLib2 | Accepted (2026-08-07) |
 
 ## 核心原则
 

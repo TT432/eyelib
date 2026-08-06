@@ -392,13 +392,9 @@ dependencies {
         modLocalRuntime "curse.maven:spark-361579:4738952"
     }
 
-    // LDLib / LDLib2：节点图编辑器可选前置（docs/specs/nodegraph-visual-molang.md D7）。
+    // LDLib2：节点图编辑器可选前置（docs/specs/nodegraph-visual-molang.md D7）。
     // compileOnly + dev runtime，不 jarJar 嵌入产物；运行时缺失时编辑器入口关闭。
     if (isLegacyForge) {
-        // LDLib 1.0.49-forge（SRG 名，modId=ldlib）：编译与运行均走 remap 配置（同 spark）。
-        // CurseForge project 626676 / file 7652228。
-        modLdlibCompile "curse.maven:ldlib-626676:7652228"
-        modLocalRuntime "curse.maven:ldlib-626676:7652228"
         // LDLib2 1.20.1 Forge fork（TT432/LDLib2-1.20.1-Forge）：SRG 名，modId=ldlib2，
         // -all.jar 内嵌 yoga/taffy，kotlin-stdlib 需显式补（fastutil 由 MC 提供）。
         // 基于 weiliangyan 移植版 v2.2.27-forge.1.20.1-r8，fork 提交 26b6500 修复了

@@ -1,6 +1,7 @@
 # 颜色节点与 ANY 内联字面值（format v5）
 
 > 状态：已实现并实机验证（2026-08-04）。决策见 ADR-0027。
+> ⚠ ldlib1 已退役（2026-08-07，ADR-0028）：本文 ldlib1 接线描述（§3.5）为历史记录，当前全版本统一 LDLib2。
 > 修订关系：取代 nodegraph-visual-molang / nodegraph-inline-render-controller 中
 > rc.root「16 个 float 颜色通道端口」与「ANY 端口行内文本原样存储」的描述。
 

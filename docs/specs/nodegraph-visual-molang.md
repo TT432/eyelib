@@ -1,6 +1,7 @@
 # 节点图可视化 Molang 语言与 ClientEntity 制作器 — 设计规格
 
 > 状态：Draft v1（2026-08-01）
+> ⚠ ldlib1 已退役（2026-08-07，ADR-0028）：本文 ldlib1 接线描述为历史记录，当前全版本统一 LDLib2。
 > 前置调研：LDLib 1.20.1 (graphprocessor) / LDLib2 (nodegraphtookit) API、eyelib 消费端（BrClientEntity/RC/AC/MolangValue）
 > 关联：ADR（待补）、`docs/concepts/architecture.md`、`docs/decisions/0002-module-boundaries.md`
 
