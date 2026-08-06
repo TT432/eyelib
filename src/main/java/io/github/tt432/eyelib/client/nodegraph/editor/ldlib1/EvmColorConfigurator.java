@@ -169,10 +169,14 @@ public final class EvmColorConfigurator extends ColorConfigurator {
     }
 
     /**
-     * 数字输入框：LDLib 1.0.49 的 {@link TextFieldWidget#keyPressed} 只把 ESC 递给内部
-     * EditBox（反编译实证），退格/删除键在整个 LDLib 编辑器环境下都失效。子类补齐：
+     * 数字输入框：计算器式输入（追加数字、退格截尾、删空回 0、光标位置不影响结果）。
      * 截尾后经 setCurrentString 更新并手动触发 responder 回写——不触发 responder 时
      * 下一帧 updateScreen 会从 supplier 把旧值刷回来。
+     *
+     * <p>注：LDLib 1.0.49 的 {@link TextFieldWidget#keyPressed} 其实会把 ESC 以外的键
+     * 全部转发给内部 EditBox（字节码 + 1.20.1 实机验证 2026-08-06，退格/方向键在真实
+     * 路由下均正常）；早期「只转发 ESC」的反编译结论有误。本子类保留手动处理是为了
+     * 计算器式语义，且不依赖内部 EditBox 的焦点同步。
      */
     private static final class NumberFieldWidget extends TextFieldWidget {
         private final Consumer<String> responder;

@@ -68,7 +68,10 @@
 ### 3.5 编辑器接线
 
 - ldlib1：`EvmInlinePortFields` 新增 `case ANY`（智能解析文本框）；
-  `EvmNode` 新增 `OptionType.COLOR` → LDLib1 `ColorConfigurator`（ARGB int ↔ hex）；
+  `EvmNode` 新增 `OptionType.COLOR` → `EvmColorConfigurator`（ARGB int ↔ hex）。
+  注：LDLib1 原生 `ColorConfigurator` 的取色弹窗在本编辑器宿主下不可用
+  （Editor.INSTANCE 为空时弹窗按父级相对坐标加 mainGroup 全部屏外、节点配置器
+  gui==null 直接 NPE、HsbColorWidget 未开 alpha），故以子类修补（提交 f07e4ee6）；
   `EvmLinks.ColorLink` 标记类（同类才连）。
 - ldlib2：`EvmNodeBase.onDefineOptions` 对 COLOR 选项挂 LDLib2 `ColorConfigurator`
   绑定；`onDefinePorts` 对 ANY 输入端口挂智能解析 `StringConfigurator`；

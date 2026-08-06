@@ -225,6 +225,19 @@ LDLib2 的悬停/命中（`ModularUIWidget.lastMouseX` → `getLastHoveredElemen
 3. 再合成 `screen.mouseClicked/mouseDragged/mouseReleased/mouseScrolled`（坐标用 logical px = physical/guiScale）；
 4. 验证悬停命中可用 `rootElement.hitTest(x, y)`（ModularUI.ui.rootElement，double 签名，返回 oshi Pair）。
 
+**环境前提（2026-08-06 实证）**：该路径依赖 glfwSetCursorPos 能生效。本工作站 OrayIddDriver 远程会话活跃时，远端的物理光标注入会持续覆写光标位置——set 后立即读回仍是远端坐标（如 33828,32987，虚拟桌面坐标系、远超窗口尺寸，且持续漂移），渲染线程上 set 同样无效。此与 MC/LDLib2 无关，纯环境问题。判定方法：`glfwSetCursorPos(w,100,100)` 后同 eval 立即 `glfwGetCursorPos` 读回，不等于 (100,100) 即不可用于该路径。此时悬停会卡在坐标映射的角落元素上（如 WorkbenchToolbar），应改用反射直驱（写 widget 的 lastMouseX/lastMouseY 字段或直接调 widget 的 mouseMoved/mouseClicked）。2026-08-04 验证有效是因为当时远程会话未注入光标。
+
+### 驱动 LDLib1 节点画布内控件：坐标需经 FreeGraphView 逆变换
+
+合成点击 LDLib1 节点图编辑器画布内的控件（行内端口字段、节点配置器）时，`widget.getPosition()` 是**画布坐标**，不是屏幕坐标——画布（FreeGraphView）有 scale + xOffset/yOffset。由 `getViewPosition` 字节码得正变换 `view = (screen − gvPos)/scale + offset`，故点击坐标应为：
+
+```
+screenX = gv.getPosition().x + (canvasX − gv.getXOffset()) * gv.getScale()
+screenY = gv.getPosition().y + (canvasY − gv.getYOffset()) * gv.getScale()
+```
+
+直接用 `getPosition()` 当屏幕坐标点击会落空（mouseClicked 返回 false、未获焦点）。**焦点未获得时所有键盘事件静默无效**——2026-08-05 曾据此误诊「LDLib1 TextFieldWidget 退格/删除/方向键不转发」。实证（2026-08-06，1.20.1 实机 + 字节码）：`TextFieldWidget.keyPressed` 把 ESC 以外的键全部转发给内部 EditBox（ESC 返回 false 留给屏幕关闭），退格/删除/方向键在工具栏字段与画布内联字段的真实路由下均正常。另：`updateScreen` 从 supplier 刷新显示值以 `setClientSideWidget()` 为前提。
+
 ### 1.20.1 截图在虚拟显示器上捕获全暗
 
 `ScreenshotRecorder.grab` / `Screenshot.grab` 在 **OrayIddDriver 虚拟显示器**上，1.20.1 捕获的 PNG 整体偏暗（白天天空 avg≈47，应为亮蓝 ~150），无法用于视觉验证渲染。26.1.2 同 API 捕获正常（avg≈144）。
@@ -235,6 +248,16 @@ LDLib2 的悬停/命中（`ModularUIWidget.lastMouseX` → `getLastHoveredElemen
 - 验证 1.20.1 渲染正确性用 **clientsmoke `EntitySceneRenderer` 的 FBO 回读路径**（实体渲染到独立 RenderTarget，不经主显示器），或换非虚拟显示器。
 - 26.1.2 截图正常，可作跨版本对照基准。
 - `grab` 后客户端可能因 GPU 回读崩溃（OrayIddDriver），但 PNG 会先保存，可用 python(PIL) 分析磁盘文件。
+
+### 26.1.2 渲染偶发 IllegalStateException: Not building!
+
+现象：26.1.2 进超平坦世界后实体渲染偶发 `IllegalStateException: Not building!`（栈：CustomFeatureRenderer.renderSolid → EntityRenderOrchestrator → RenderHelper → DFSModel → VertexConsumerPort.vertex）。已有护栏（DeferredRenderSink.submit，2026-08-02 提交 edc37263）：writer 回调抛 IllegalStateException 时丢弃该段几何 + ERROR 日志（renderType + consumer 身份 + 完整栈），不再崩客户端。
+
+**根因未定位。** 机制分析：26.1 的 BufferSource.getBuffer 对 canConsolidateConsecutiveGeometry=false 的类型在重复获取时 endBatch 旧 builder；崩溃 = writer 写入一个被 endBatch 的 builder。但 vanilla 流程与 eyelib 回调链都不在循环中调 getBuffer。下次复现时：1) 取护栏日志中的 consumer 身份；2) 在 BufferSource.endBatch 处下条件断点对照是谁结束的该 builder。
+
+**环境噪声**：26.1.2 客户端曾反复 JVM 级死亡（C2 symbol.cpp、0xC0000005 无 hs_err），疑与渲染路径原生不稳定同源（JDK 25 + OrayIddDriver）。
+
+**RenderType 驻留已实证（2026-08-06），早期「每 submit 新建实例」结论废弃**：自定义 `eyelib_material_*` 由 `BrRenderTypeFactory.CACHE`（Key=texture+state 记录结构相等）驻留；vanilla 路径 `RenderTypes.entitySolid` 等在 26.1.2 走 `Util.memoize`（javap 字节码实证）。两条路径都不存在批次合并收益丧失问题。
 
 ### Attachable 渲染注入点错误
 
