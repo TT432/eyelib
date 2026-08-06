@@ -1,5 +1,5 @@
 package io.github.tt432.eyelib.client.nodegraph.workbench.ldlib2;
-//? if !legacy {
+//? if >=1.20.1 {
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;

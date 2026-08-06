@@ -1,5 +1,5 @@
 package io.github.tt432.eyelib.client.nodegraph.editor.ldlib2;
-//? if !legacy {
+//? if >=1.20.1 {
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.Node;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.NodeAttribute;
 import io.github.tt432.eyelib.nodegraph.NodeType;

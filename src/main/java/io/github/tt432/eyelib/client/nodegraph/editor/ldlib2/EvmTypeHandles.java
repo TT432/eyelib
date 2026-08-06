@@ -1,5 +1,5 @@
 package io.github.tt432.eyelib.client.nodegraph.editor.ldlib2;
-//? if !legacy {
+//? if >=1.20.1 {
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.TypeHandle;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.TypeHandleHelpers;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.TypeHandles;

@@ -1,5 +1,5 @@
 package io.github.tt432.eyelib.client.nodegraph.workbench.ldlib2;
-//? if !legacy {
+//? if >=1.20.1 {
 import com.lowdragmc.lowdraglib2.gui.ColorPattern;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;

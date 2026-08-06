@@ -1,5 +1,5 @@
 package io.github.tt432.eyelib.client.nodegraph.editor.ldlib2;
-//? if !legacy {
+//? if >=1.20.1 {
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;

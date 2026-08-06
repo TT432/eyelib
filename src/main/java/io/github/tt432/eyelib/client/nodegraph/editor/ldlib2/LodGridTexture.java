@@ -1,5 +1,5 @@
 package io.github.tt432.eyelib.client.nodegraph.editor.ldlib2;
-//? if !legacy {
+//? if >=1.20.1 {
 //? if <26.1 {
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import io.github.tt432.eyelib.client.nodegraph.workbench.GridLodRenderer;

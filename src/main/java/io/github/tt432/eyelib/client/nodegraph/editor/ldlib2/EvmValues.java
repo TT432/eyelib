@@ -1,5 +1,5 @@
 package io.github.tt432.eyelib.client.nodegraph.editor.ldlib2;
-//? if !legacy {
+//? if >=1.20.1 {
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.nodegraph.NodeOptionDef;

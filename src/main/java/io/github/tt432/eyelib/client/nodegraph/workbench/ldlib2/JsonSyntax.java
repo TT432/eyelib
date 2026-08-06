@@ -1,5 +1,5 @@
 package io.github.tt432.eyelib.client.nodegraph.workbench.ldlib2;
-//? if !legacy {
+//? if >=1.20.1 {
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;

@@ -1,5 +1,5 @@
 package io.github.tt432.eyelib.client.nodegraph.workbench.ldlib2;
-//? if !legacy {
+//? if >=1.20.1 {
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.editor.GraphEditorView;
 import dev.vfyjxf.taffy.style.FlexDirection;
@@ -49,6 +49,18 @@ public final class Ldlib2Workbench {
 
         BadgeOverlay.attach(editorView.graphView, overlayModel);
         overlayModel.updateGraph(initialLibrary, initialLibrary.main());
+
+        //? if legacy {
+        // LDLib2 2.2.27（1.20.1 移植版）的 GraphView 未处理 EXECUTE_COMMAND(SAVE)
+        // （上游 2.2.28+ 才加，转发 editorView.notifySaved），在 1.20.1 上补齐 Ctrl+S。
+        // 注意不可下沉到其他版本：2.2.32 内建同义监听器，双挂会重复保存。
+        editorView.graphView.addEventListener(
+                com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.EXECUTE_COMMAND, event -> {
+                    if (com.lowdragmc.lowdraglib2.gui.ui.event.CommandEvents.SAVE.equals(event.command)) {
+                        editorView.notifySaved();
+                    }
+                });
+        //?}
 
         // 诊断浮动面板（规格 D3）：绝对定位左下角，挂在 root 上不被侧栏折叠影响
         root.addChild(new DiagnosticsPanel(editorView));

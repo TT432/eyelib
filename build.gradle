@@ -107,6 +107,13 @@ repositories {
             includeGroup "com.lowdragmc.ldlib2"
         }
     }
+    // 移植版 LDLib2 评估（spike）：mavenLocal 手动安装的 release jar。
+    exclusiveContent {
+        forRepository { mavenLocal() }
+        filter {
+            includeGroup "com.github.weiliangyan"
+        }
+    }
 }
 
 base {
@@ -392,6 +399,14 @@ dependencies {
         // CurseForge project 626676 / file 7652228。
         modLdlibCompile "curse.maven:ldlib-626676:7652228"
         modLocalRuntime "curse.maven:ldlib-626676:7652228"
+        // LDLib2 1.20.1 Forge 非官方移植版评估（spike）：SRG 名，modId=ldlib2，
+        // -all.jar 内嵌 yoga/taffy，kotlin-stdlib 需显式补（fastutil 由 MC 提供）。
+        // https://github.com/weiliangyan/LDLib2-1.20.1-Forge v2.2.27-forge.1.20.1-r8
+        modLdlibCompile "com.github.weiliangyan:ldlib2-forge-1.20.1:2.2.27+forge.1.20.1-patched2"
+        modLocalRuntime "com.github.weiliangyan:ldlib2-forge-1.20.1:2.2.27+forge.1.20.1-patched2"
+        compileOnly "org.jetbrains.kotlin:kotlin-stdlib:2.1.20"
+        // 移植版 mods.toml 强制前置 kotlinforforge [4.11.0,)。
+        modLocalRuntime "maven.modrinth:kotlin-for-forge:4.11.0"
     } else if (isModern) {
         // LDLib2 26.1.x（mojmap，modId=ldlib2）；MDG 2.x localRuntime 自动注册 mod discovery。
         compileOnly "com.lowdragmc.ldlib2:ldlib2-neoforge-26.1:26.1.2.27.a"
