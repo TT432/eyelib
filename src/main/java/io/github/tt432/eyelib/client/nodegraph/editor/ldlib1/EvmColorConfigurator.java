@@ -16,7 +16,7 @@ import com.lowdragmc.lowdraglib.gui.widget.LabelWidget;
 import com.lowdragmc.lowdraglib.gui.widget.TextFieldWidget;
 import com.lowdragmc.lowdraglib.gui.widget.Widget;
 import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
-import net.minecraft.client.Minecraft;
+import io.github.tt432.eyelib.bridge.ui.UiPort;
 
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
@@ -66,13 +66,10 @@ public final class EvmColorConfigurator extends ColorConfigurator {
         if (root == null) {
             return;
         }
-        var window = Minecraft.getInstance().getWindow();
-        int mouseX = (int) (Minecraft.getInstance().mouseHandler.xpos()
-                * window.getGuiScaledWidth() / window.getScreenWidth());
-        int mouseY = (int) (Minecraft.getInstance().mouseHandler.ypos()
-                * window.getGuiScaledHeight() / window.getScreenHeight());
-        int x = Math.max(0, Math.min(mouseX, window.getGuiScaledWidth() - DIALOG_WIDTH));
-        int y = Math.max(0, Math.min(mouseY, window.getGuiScaledHeight() - DIALOG_HEIGHT));
+        int mouseX = UiPort.guiMouseX();
+        int mouseY = UiPort.guiMouseY();
+        int x = Math.max(0, Math.min(mouseX, UiPort.guiScaledWidth() - DIALOG_WIDTH));
+        int y = Math.max(0, Math.min(mouseY, UiPort.guiScaledHeight() - DIALOG_HEIGHT));
         DialogWidget dialog = new DialogWidget(x, y, DIALOG_WIDTH, DIALOG_HEIGHT);
         dialog.setClickClose(true);
         dialog.setBackground(new GuiTextureGroup(

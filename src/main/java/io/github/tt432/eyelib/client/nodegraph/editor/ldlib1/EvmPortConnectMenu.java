@@ -17,8 +17,9 @@ import com.lowdragmc.lowdraglib.gui.widget.WidgetGroup;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeType;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
+import io.github.tt432.eyelib.bridge.ui.UiPort;
 import io.github.tt432.eyelib.nodegraph.PortDef;
-import net.minecraft.client.Minecraft;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,11 +89,10 @@ final class EvmPortConnectMenu {
         if (root == null) {
             return;
         }
-        var window = Minecraft.getInstance().getWindow();
         int rows = Math.min(candidates.size(), MAX_ROWS);
         int dialogHeight = rows * ROW_HEIGHT + 8;
-        int x = Math.max(0, Math.min((int) mouseX, window.getGuiScaledWidth() - DIALOG_WIDTH));
-        int y = Math.max(0, Math.min((int) mouseY, window.getGuiScaledHeight() - dialogHeight));
+        int x = Math.max(0, Math.min((int) mouseX, UiPort.guiScaledWidth() - DIALOG_WIDTH));
+        int y = Math.max(0, Math.min((int) mouseY, UiPort.guiScaledHeight() - dialogHeight));
         DialogWidget dialog = new DialogWidget(x, y, DIALOG_WIDTH, dialogHeight);
         dialog.setClickClose(true);
         dialog.setBackground(new GuiTextureGroup(
@@ -135,7 +135,7 @@ final class EvmPortConnectMenu {
     }
 
     /** 在新建节点上按域端口 id 找 graphprocessor 端口（PortData.identifier = PortDef.id）。 */
-    private static NodePort findPort(BaseNode node, String portId, boolean output) {
+    private static @Nullable NodePort findPort(BaseNode node, String portId, boolean output) {
         var container = output ? node.outputPorts : node.inputPorts;
         for (NodePort port : container) {
             if (portId.equals(port.portData.identifier)) {

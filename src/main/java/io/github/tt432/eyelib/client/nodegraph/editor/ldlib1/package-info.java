@@ -8,5 +8,8 @@
  * 权威图模型在本域 {@code io.github.tt432.eyelib.nodegraph}，本包只做
  * 「图文档 ↔ graphprocessor 画布」双向翻译与编辑器宿主，不做权威存储。
  */
+@NullMarked
 package io.github.tt432.eyelib.client.nodegraph.editor.ldlib1;
+
+import org.jspecify.annotations.NullMarked;
 //?}

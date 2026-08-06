@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.nodegraph.decompile;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import org.jspecify.annotations.Nullable;
 import io.github.tt432.eyelib.nodegraph.Diagnostic;
 import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphKind;
@@ -224,7 +225,7 @@ final class ImportGraphBuilder {
         return names.stream().map(name -> VariableDecl.of(name, PortType.ANY)).toList();
     }
 
-    private static void addVarName(Set<String> out, JsonElement name) {
+    private static void addVarName(Set<String> out, @Nullable JsonElement name) {
         if (name instanceof JsonPrimitive p && p.isString()) {
             String s = p.getAsString();
             // 兼容带根旧写法（variable.foo）；variable 节点 name 规范形态是不带根

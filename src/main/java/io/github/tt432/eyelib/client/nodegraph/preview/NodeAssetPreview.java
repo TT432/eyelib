@@ -97,7 +97,11 @@ public final class NodeAssetPreview {
         if (best == null) {
             return MISSING_TEXTURE_ID;
         }
-        var textures = io.github.tt432.eyelib.client.manager.ClientEntityManager.INSTANCE.get(best).textures();
+        var entity = io.github.tt432.eyelib.client.manager.ClientEntityManager.INSTANCE.get(best);
+        if (entity == null) {
+            return MISSING_TEXTURE_ID; // 防御：best 取自 all() 键集，正常不会空
+        }
+        var textures = entity.textures();
         String path = textures.get("default");
         if (path == null && !textures.isEmpty()) {
             path = textures.values().iterator().next();

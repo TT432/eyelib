@@ -186,8 +186,9 @@ public final class ClientEntityAssembler {
         var type = NodeTypes.require(source.type());
         // 无实例标识符（占位 ref）→ 空串入表：类型默认值是 example 占位，不应进入产物；
         // 与 DeclarationTables.putShortName 同口径，验证器 UNKNOWN_REFERENCE 先行提示
+        String valueOption = ShortNames.valueOptionOf(source.type());
         table.putIfAbsent(ShortNames.effective(source, type),
-                source.option(ShortNames.valueOptionOf(source.type()), type)
+                valueOption == null ? "" : source.option(valueOption, type)
                         .map(com.google.gson.JsonElement::getAsString).orElse(""));
     }
 

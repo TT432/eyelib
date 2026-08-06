@@ -2,6 +2,7 @@ package io.github.tt432.eyelib.nodegraph;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Molang 字面量文本工具（codegen / 组装器 / 编辑器内联值共用，单一口径）。
@@ -24,7 +25,7 @@ public final class MolangLiterals {
     }
 
     /** JSON 基元 → molang 字面量文本：数字去 .0；bool → 1/0；string → 单引号转义。非基元 → null。 */
-    public static String literal(JsonElement e) {
+    public static @Nullable String literal(JsonElement e) {
         if (e instanceof JsonPrimitive p) {
             if (p.isNumber()) {
                 return formatNumber(p.getAsDouble());

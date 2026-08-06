@@ -1,6 +1,8 @@
 package io.github.tt432.eyelib.nodegraph;
 
 import com.google.gson.JsonElement;
+import org.jspecify.annotations.Nullable;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -645,7 +647,7 @@ public final class GraphValidator {
      * 解析 wire 端点：节点必须存在、端口 id 必须在该实例端口集内（动态端口经 resolver 推导）。
      * 失败时产生 {@link #UNKNOWN_WIRE_ENDPOINT} 诊断并返回 null。
      */
-    private static Endpoint resolveEndpoint(PortRef ref, Map<String, NodeInstance> byUid,
+    private static @Nullable Endpoint resolveEndpoint(PortRef ref, Map<String, NodeInstance> byUid,
                                             Map<String, NodeType> types,
                                             Map<String, List<PortDef>> inputs,
                                             Map<String, List<PortDef>> outputs,
@@ -658,11 +660,11 @@ public final class GraphValidator {
         if (!types.containsKey(ref.node())) {
             return null; // 未知类型已报 UNKNOWN_NODE_TYPE
         }
-        Optional<PortDef> asOut = findPort(outputs.get(ref.node()), ref.port());
+        Optional<PortDef> asOut = findPort(outputs.getOrDefault(ref.node(), List.of()), ref.port());
         if (asOut.isPresent()) {
             return new Endpoint(node, asOut.get(), true);
         }
-        Optional<PortDef> asIn = findPort(inputs.get(ref.node()), ref.port());
+        Optional<PortDef> asIn = findPort(inputs.getOrDefault(ref.node(), List.of()), ref.port());
         if (asIn.isPresent()) {
             return new Endpoint(node, asIn.get(), false);
         }

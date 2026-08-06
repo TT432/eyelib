@@ -229,8 +229,8 @@ public final class EvmGraphTranslator {
                 JsonElement value = n.constants().get(var.getName());
                 if (value == null) continue;
                 Constant c = node.getInputConstantsById().get(var.getUid().toString());
-                Object java = EvmValues.portJsonToJava(value, EvmTypeHandles.toPortType(var.getDataTypeHandle()) != null
-                        ? EvmTypeHandles.toPortType(var.getDataTypeHandle()) : PortType.ANY);
+                PortType portType = EvmTypeHandles.toPortType(var.getDataTypeHandle());
+                Object java = EvmValues.portJsonToJava(value, portType != null ? portType : PortType.ANY);
                 if (c != null && java != null) c.setValue(java);
             }
             return node;

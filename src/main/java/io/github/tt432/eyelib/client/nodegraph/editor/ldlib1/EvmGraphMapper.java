@@ -13,6 +13,7 @@ import io.github.tt432.eyelib.nodegraph.Wire;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -67,10 +68,11 @@ public final class EvmGraphMapper {
         List<NodeInstance> nodes = new ArrayList<>(model.nodes().size());
         for (EvmGraphModel.EvmNodeModel node : model.nodes()) {
             nodes.add(switch (node.kind()) {
-                case EVM -> new NodeInstance(node.uid(), node.typeId(), node.x(), node.y(),
+                // 工厂方法保证 kind 与字段对应（evm→typeId、parameter→parameterId 非空）
+                case EVM -> new NodeInstance(node.uid(), Objects.requireNonNull(node.typeId()), node.x(), node.y(),
                         node.options(), node.constants());
                 case PARAMETER -> new NodeInstance(node.uid(), NodeTypes.VARIABLE.id(), node.x(), node.y(),
-                        Map.of("name", new JsonPrimitive(variableName(node.parameterId()))),
+                        Map.of("name", new JsonPrimitive(variableName(Objects.requireNonNull(node.parameterId())))),
                         Map.of());
             });
         }

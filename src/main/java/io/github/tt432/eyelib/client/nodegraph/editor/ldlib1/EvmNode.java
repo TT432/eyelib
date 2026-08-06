@@ -60,12 +60,12 @@ import java.util.function.Function;
  * 由 {@link EvmNodeRegistration} 按域节点类型逐个显式注册。
  */
 public class EvmNode extends BaseNode {
-    /** 全部输入端口的承载字段（端口 id 见 PortData.identifier）。 */
+    /** 全部输入端口的承载字段（端口 id 见 PortData.identifier；值由 graphprocessor 运行期写入）。 */
     @InputPort
-    public Object in;
-    /** 全部输出端口的承载字段（端口 id 见 PortData.identifier）。 */
+    public @Nullable Object in;
+    /** 全部输出端口的承载字段（端口 id 见 PortData.identifier；值由 graphprocessor 运行期写入）。 */
     @OutputPort
-    public Object out;
+    public @Nullable Object out;
 
     /** 域节点类型 id（{@link NodeTypes} 注册表键）。 */
     public final String nodeTypeId;

@@ -5,4 +5,7 @@
  * 图文档（domain 权威模型）↔ LDLib2 GraphModel 的双向翻译、节点/端口/类型适配、
  * GraphEditorView 宿主与保存回写。整包在 1.20.1 被 Stonecutter 剥除（ldlib1 包代之）。
  */
+@NullMarked
 package io.github.tt432.eyelib.client.nodegraph.editor.ldlib2;
+
+import org.jspecify.annotations.NullMarked;

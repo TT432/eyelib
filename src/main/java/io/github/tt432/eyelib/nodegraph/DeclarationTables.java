@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -51,9 +52,10 @@ public final class DeclarationTables {
         Map<String, String> geometry = new LinkedHashMap<>();
         Map<String, String> textures = new LinkedHashMap<>();
         Map<String, String> materials = new LinkedHashMap<>();
-        refs.get("geometry").forEach(n -> putShortName(n, geometry));
-        refs.get("textures").forEach(n -> putShortName(n, textures));
-        refs.get("materials").forEach(n -> putShortName(n, materials));
+        // collectRefs 固定初始化三类键（结构性不变量）
+        Objects.requireNonNull(refs.get("geometry")).forEach(n -> putShortName(n, geometry));
+        Objects.requireNonNull(refs.get("textures")).forEach(n -> putShortName(n, textures));
+        Objects.requireNonNull(refs.get("materials")).forEach(n -> putShortName(n, materials));
         return new Tables(geometry, textures, materials);
     }
 
@@ -84,7 +86,7 @@ public final class DeclarationTables {
                 default -> null;
             };
             if (category != null && reachesAnchor(node.uid(), anchors, forward, memo, new HashSet<>())) {
-                out.get(category).add(node);
+                Objects.requireNonNull(out.get(category)).add(node);
             }
         }
         return out;
@@ -142,8 +144,9 @@ public final class DeclarationTables {
 
     private static void putShortName(NodeInstance ref, Map<String, String> table) {
         NodeType type = NodeTypes.require(ref.type());
+        String valueOption = ShortNames.valueOptionOf(ref.type());
         table.putIfAbsent(ShortNames.effective(ref, type),
-                ref.option(ShortNames.valueOptionOf(ref.type()), type)
+                valueOption == null ? "" : ref.option(valueOption, type)
                         .map(e -> e.getAsString()).orElse(""));
     }
 }

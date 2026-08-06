@@ -76,12 +76,13 @@ public final class Ldlib1NodegraphEditor {
 
         String name = libraryName == null || libraryName.isEmpty() ? null : libraryName;
         GraphLibrary library = name == null ? null : GraphLibraryManager.INSTANCE.get(name);
-        if (library == null) {
-            name = name == null ? "untitled" : name;
-            library = newClientEntityLibrary();
-            if (libraryName != null && !libraryName.isEmpty()) {
+        if (name == null || library == null) {
+            // name 非空但库不存在 → 明示新建；open(null) 静默新建
+            if (name != null) {
                 chat("[nodegraph] library '" + name + "' not found, created a new client_entity library");
             }
+            name = name == null ? "untitled" : name;
+            library = newClientEntityLibrary();
         }
 
         Ldlib1EditorSession.enter(library, Optional.empty());

@@ -27,4 +27,18 @@ public interface UiPort {
     static int guiScaledHeight() {
         return net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScaledHeight();
     }
+
+    /** 鼠标光标的 GUI 缩放坐标 X（mouseHandler 物理坐标 × guiScaled/screen 换算集中在 bridge）。 */
+    static int guiMouseX() {
+        var window = net.minecraft.client.Minecraft.getInstance().getWindow();
+        return (int) (net.minecraft.client.Minecraft.getInstance().mouseHandler.xpos()
+                * window.getGuiScaledWidth() / window.getScreenWidth());
+    }
+
+    /** 鼠标光标的 GUI 缩放坐标 Y。 */
+    static int guiMouseY() {
+        var window = net.minecraft.client.Minecraft.getInstance().getWindow();
+        return (int) (net.minecraft.client.Minecraft.getInstance().mouseHandler.ypos()
+                * window.getGuiScaledHeight() / window.getScreenHeight());
+    }
 }

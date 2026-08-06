@@ -367,7 +367,8 @@ public final class EvmNodes {
             SubgraphCall.class, SubgraphInput.class, SubgraphOutput.class);
 
     private static final Map<String, Class<? extends EvmNodeBase>> BY_TYPE_ID = new LinkedHashMap<>();
-    private static volatile Map<String, String> displayNames;
+    /** 显示名缓存：双重检查锁懒初始化（buildDisplayNames 需读取全部节点类，启动期不付成本）。 */
+    private static volatile @Nullable Map<String, String> displayNames;
 
     private static Map<String, String> displayNames() {
         Map<String, String> map = displayNames;

@@ -58,8 +58,12 @@ final class BenchmarkWorldController {
                 //?} else {
                 BenchmarkWorldController::createFlatWorldDimensions
                 //?}
-                //? if !legacy
-                , null
+                //? if !legacy {
+                // 末参是创建失败时回退的 Screen（26.1 JSpecify @NonNull；本路径为超平坦非实验特性，不会走到）
+                , java.util.Objects.requireNonNullElseGet(minecraft.screen,
+                        () -> new net.minecraft.client.gui.screens.Screen(
+                                net.minecraft.network.chat.Component.literal("benchmark")) {})
+                //?}
         );
     }
 

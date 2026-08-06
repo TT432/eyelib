@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -214,7 +215,8 @@ public final class GraphMigrations {
                 mainNodes.add(new NodeInstance(uid, node.type(), minX, y,
                         node.options(), node.constants()));
                 mainWires.add(new Wire(new PortRef(uid, "ref"),
-                        new PortRef(rootUid, NodeTypes.DECLARATION_PORTS.get(node.type()))));
+                        // moved 由上方 DECLARATION_PORTS.containsKey 过滤，get 必中
+                        new PortRef(rootUid, Objects.requireNonNull(NodeTypes.DECLARATION_PORTS.get(node.type())))));
                 y += 140;
             }
         }

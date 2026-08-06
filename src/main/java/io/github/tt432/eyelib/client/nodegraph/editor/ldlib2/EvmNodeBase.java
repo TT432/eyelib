@@ -1,5 +1,6 @@
 package io.github.tt432.eyelib.client.nodegraph.editor.ldlib2;
 //? if !legacy {
+import com.google.gson.JsonElement;
 import com.lowdragmc.lowdraglib2.configurator.IConfigurable;
 import com.lowdragmc.lowdraglib2.configurator.ui.ColorConfigurator;
 import com.lowdragmc.lowdraglib2.configurator.ui.SelectorConfigurator;
@@ -164,10 +165,10 @@ public abstract class EvmNodeBase extends Node {
         return (valueConfigurable, typeHandle) -> IConfigurable.create(father ->
                 father.addConfigurator(new ColorConfigurator("",
                         () -> ColorValues.toArgbInt(java.util.Objects.toString(
-                                valueConfigurable.getValue(), null)),
+                                valueConfigurable.getValue(), "")),
                         argb -> valueConfigurable.setValue(ColorValues.fromArgbInt(argb)),
                         ColorValues.toArgbInt(java.util.Objects.toString(
-                                valueConfigurable.getDefaultValue(), null)),
+                                valueConfigurable.getDefaultValue(), "")),
                         valueConfigurable.forceUpdate())));
     }
 
@@ -179,11 +180,17 @@ public abstract class EvmNodeBase extends Node {
     private static ITypeConfigurable anyTextBinding() {
         return (valueConfigurable, typeHandle) -> IConfigurable.create(father ->
                 father.addConfigurator(new StringConfigurator("",
-                        () -> InlineLiteral.toText(EvmValues.javaToJson(valueConfigurable.getValue())),
+                        () -> inlineTextOf(valueConfigurable.getValue()),
                         text -> valueConfigurable.setValue(EvmValues.portJsonToJava(
                                 InlineLiteral.parse(text), PortType.ANY)),
-                        InlineLiteral.toText(EvmValues.javaToJson(valueConfigurable.getDefaultValue())),
+                        inlineTextOf(valueConfigurable.getDefaultValue()),
                         valueConfigurable.forceUpdate())));
+    }
+
+    /** Java 值 → 行内显示文本；javaToJson 不可映射（null）时显示空串。 */
+    private static String inlineTextOf(@Nullable Object value) {
+        JsonElement json = EvmValues.javaToJson(value);
+        return json == null ? "" : InlineLiteral.toText(json);
     }
 
     @Override
