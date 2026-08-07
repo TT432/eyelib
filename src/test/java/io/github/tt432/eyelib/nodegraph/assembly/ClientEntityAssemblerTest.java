@@ -406,4 +406,55 @@ class ClientEntityAssemblerTest {
         assertTrue(controllers.has("controller.render.test.a"));
         assertTrue(controllers.has("controller.render.test.b"));
     }
+
+    // ---------- 变量声明默认值 → initialize 初始化（规格 nodegraph-variable-table §2.3） ----------
+
+    private static GraphData graphWithVars(List<io.github.tt432.eyelib.nodegraph.NodeInstance> nodes,
+                                           List<io.github.tt432.eyelib.nodegraph.Wire> wires,
+                                           List<io.github.tt432.eyelib.nodegraph.VariableDecl> variables) {
+        return new GraphData(nodes, wires, variables, List.of(), List.of(), Optional.empty());
+    }
+
+    @Test
+    void variableDefaultsExportToInitialize() {
+        GraphData main = graphWithVars(
+                List.of(node("root", "entity.root", opts("identifier", "test:inits"))),
+                List.of(),
+                List.of(new io.github.tt432.eyelib.nodegraph.VariableDecl("hp", PortType.FLOAT,
+                                Optional.empty(), Optional.of(new com.google.gson.JsonPrimitive(3)),
+                                io.github.tt432.eyelib.nodegraph.VariableDecl.Scope.VARIABLE),
+                        // TEMP 作用域默认值不导出；无默认值不导出
+                        new io.github.tt432.eyelib.nodegraph.VariableDecl("scratch", PortType.FLOAT,
+                                Optional.empty(), Optional.of(new com.google.gson.JsonPrimitive(9)),
+                                io.github.tt432.eyelib.nodegraph.VariableDecl.Scope.TEMP),
+                        io.github.tt432.eyelib.nodegraph.VariableDecl.of("nodef", PortType.FLOAT)));
+
+        AssemblyResult r = ClientEntityAssembler.assemble(lib(GraphKind.CLIENT_ENTITY, main));
+
+        assertFalse(r.hasErrors(), () -> r.diagnostics().toString());
+        JsonObject scripts = r.json().getAsJsonObject("minecraft:client_entity")
+                .getAsJsonObject("description").getAsJsonObject("scripts");
+        assertEquals("variable.hp = 3", scripts.get("initialize").getAsString());
+    }
+
+    @Test
+    void variableDefaultsPrependUserInitialize() {
+        GraphData main = graphWithVars(
+                List.of(node("root", "entity.root", opts("identifier", "test:inits2")),
+                        node("s1", "exec.set_var"),
+                        node("s1t", "variable", opts("name", "foo"))),
+                List.of(wire("s1t", "out", "s1", "target"),
+                        wire("s1", "exec_out", "root", "initialize")),
+                List.of(new io.github.tt432.eyelib.nodegraph.VariableDecl("hp", PortType.FLOAT,
+                        Optional.empty(), Optional.of(new com.google.gson.JsonPrimitive(3)),
+                        io.github.tt432.eyelib.nodegraph.VariableDecl.Scope.VARIABLE)));
+
+        AssemblyResult r = ClientEntityAssembler.assemble(lib(GraphKind.CLIENT_ENTITY, main));
+
+        assertFalse(r.hasErrors(), () -> r.diagnostics().toString());
+        JsonObject scripts = r.json().getAsJsonObject("minecraft:client_entity")
+                .getAsJsonObject("description").getAsJsonObject("scripts");
+        // 初始化在前（用户语句可覆盖初始化值）
+        assertEquals("variable.hp = 3; variable.foo = 0", scripts.get("initialize").getAsString());
+    }
 }

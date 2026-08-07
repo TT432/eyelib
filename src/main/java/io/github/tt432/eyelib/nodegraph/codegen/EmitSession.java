@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.nodegraph.EmolangRegistry;
 import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphInterface;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
+import io.github.tt432.eyelib.nodegraph.GraphVariableOps;
 import io.github.tt432.eyelib.nodegraph.MolangLiterals;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeType;
@@ -17,6 +18,7 @@ import io.github.tt432.eyelib.nodegraph.PortDirection;
 import io.github.tt432.eyelib.nodegraph.PortRef;
 import io.github.tt432.eyelib.nodegraph.PortType;
 import io.github.tt432.eyelib.nodegraph.ShortNames;
+import io.github.tt432.eyelib.nodegraph.VariableDecl;
 import io.github.tt432.eyelib.nodegraph.Wire;
 import io.github.tt432.eyelib.molang.compiler.frontend.MolangToken;
 import io.github.tt432.eyelib.molang.compiler.frontend.MolangTokenKind;
@@ -394,7 +396,17 @@ final class EmitSession {
                 error("COLOR_AS_SCALAR", "color value cannot be used as a scalar molang expression", node.uid());
                 yield Out.of("0");
             }
-            case VARIABLE -> Out.of(withRoot("variable", string(node, type, "name")));
+            // 变量根按黑板声明的 molang 作用域选择（规格 nodegraph-variable-table §2.2）；
+            // 未声明回落 variable.*（验证器另有 UNDECLARED_VARIABLE 警告）
+            case VARIABLE -> {
+                String varName = string(node, type, "name");
+                String bare = varName.startsWith("variable.") || varName.startsWith("temp.")
+                        ? varName.substring(varName.indexOf('.') + 1) : varName;
+                boolean temp = GraphVariableOps.find(f.graph, bare)
+                        .map(d -> d.scope() == VariableDecl.Scope.TEMP)
+                        .orElse(false);
+                yield Out.of(withRoot(temp ? "temp" : "variable", varName));
+            }
             case TEMP_GET -> Out.of(withRoot("temp", string(node, type, "name")));
             case CONTEXT_GET -> Out.of(withRoot("context", string(node, type, "name")));
             case QUERY_CALL, MATH_CALL -> emitCallLike(f, node, type);

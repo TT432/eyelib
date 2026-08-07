@@ -14,7 +14,7 @@ import java.lang.reflect.Type;
  * <p>LDLib2 内置常量类型：FLOAT→{@link Float}、BOOL→{@link Boolean}、STRING→{@link String}、
  * INT（选项）→{@link Integer}。ANY 端口按 JSON 字面量推断。
  */
-final class EvmValues {
+public final class EvmValues {
     private EvmValues() {
     }
 
@@ -46,7 +46,7 @@ final class EvmValues {
     }
 
     /** 端口常量 JSON → Java 值（按端口类型；ANY/OBJECT 按字面量推断）。 */
-    static @Nullable Object portJsonToJava(@Nullable JsonElement json, PortType type) {
+    public static @Nullable Object portJsonToJava(@Nullable JsonElement json, PortType type) {
         if (json == null || !json.isJsonPrimitive()) return null;
         JsonPrimitive p = json.getAsJsonPrimitive();
         return switch (type) {
@@ -59,7 +59,7 @@ final class EvmValues {
     }
 
     /** Java 值 → JSON（选项/常量写回 domain 用）。null 安全。 */
-    static @Nullable JsonElement javaToJson(@Nullable Object value) {
+    public static @Nullable JsonElement javaToJson(@Nullable Object value) {
         if (value == null) return null;
         if (value instanceof Boolean b) return new JsonPrimitive(b);
         if (value instanceof Integer i) return new JsonPrimitive(i);

@@ -107,7 +107,7 @@ public final class EvmGraphTranslator {
         }
         for (Map.Entry<String, GraphModel> e : modelsByName.entrySet()) {
             GraphData data = library.graphs().get(e.getKey());
-            if (data != null) populateVariables(e.getValue(), e.getKey(), data, diags);
+            if (data != null) populateVariables(e.getValue(), e.getKey(), data, ctx, diags);
         }
         for (Map.Entry<String, GraphModel> e : modelsByName.entrySet()) {
             GraphData data = library.graphs().get(e.getKey());
@@ -116,10 +116,12 @@ public final class EvmGraphTranslator {
         return root;
     }
 
-    private static void populateVariables(GraphModel model, String graphName, GraphData data, List<Diagnostic> diags) {
+    private static void populateVariables(GraphModel model, String graphName, GraphData data,
+                                          EvmGraph.LibraryContext ctx, List<Diagnostic> diags) {
         for (VariableDecl v : data.variables()) {
             createVariable(model, graphName, v.name(), v.type(), v.group(), v.defaultValue(),
                     ModifierFlags.NONE, VariableScope.LOCAL, diags);
+            ctx.variableScopes.put(uidOf(graphName + "/var/" + v.name()), v.scope());
         }
         data.graphInterface().ifPresent(iface -> {
             for (GraphInterface.Param p : iface.inputs()) {
@@ -406,8 +408,11 @@ public final class EvmGraphTranslator {
             PortType type = EvmTypeHandles.toPortType(var.getDataTypeHandle());
             Optional<JsonElement> def = Optional.ofNullable(var.getInitializationModel())
                     .map(c -> EvmValues.javaToJson(c.getValue()));
+            VariableDecl.Scope varScope = ctx != null
+                    ? ctx.variableScopes.getOrDefault(var.getUid(), VariableDecl.Scope.VARIABLE)
+                    : VariableDecl.Scope.VARIABLE;
             variables.add(new VariableDecl(var.getName(), type != null ? type : PortType.ANY,
-                    groupPathOf(var), def));
+                    groupPathOf(var), def, varScope));
         }
         List<NodeInstance> nodes = new ArrayList<>();
         for (AbstractNodeModel nm : model.getNodeModels()) {

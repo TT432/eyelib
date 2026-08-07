@@ -46,7 +46,7 @@ public final class GraphVariableOps {
     public static GraphData rename(GraphData graph, String oldName, String newName) {
         List<VariableDecl> variables = graph.variables().stream()
                 .map(v -> v.name().equals(oldName)
-                        ? new VariableDecl(newName, v.type(), v.group(), v.defaultValue())
+                        ? new VariableDecl(newName, v.type(), v.group(), v.defaultValue(), v.scope())
                         : v)
                 .toList();
         List<NodeInstance> nodes = graph.nodes().stream()
@@ -63,7 +63,7 @@ public final class GraphVariableOps {
     public static GraphData retype(GraphData graph, String name, PortType type) {
         List<VariableDecl> variables = graph.variables().stream()
                 .map(v -> v.name().equals(name)
-                        ? new VariableDecl(v.name(), type, v.group(), v.defaultValue())
+                        ? new VariableDecl(v.name(), type, v.group(), v.defaultValue(), v.scope())
                         : v)
                 .toList();
         return withVariables(graph, variables);
@@ -72,6 +72,16 @@ public final class GraphVariableOps {
     /** 查找声明。 */
     public static Optional<VariableDecl> find(GraphData graph, String name) {
         return graph.variables().stream().filter(v -> v.name().equals(name)).findFirst();
+    }
+
+    /** 改 molang 作用域（保留类型/分组/默认值）。 */
+    public static GraphData setScope(GraphData graph, String name, VariableDecl.Scope scope) {
+        List<VariableDecl> variables = graph.variables().stream()
+                .map(v -> v.name().equals(name)
+                        ? new VariableDecl(v.name(), v.type(), v.group(), v.defaultValue(), scope)
+                        : v)
+                .toList();
+        return withVariables(graph, variables);
     }
 
     private static GraphData withVariables(GraphData graph, List<VariableDecl> variables) {

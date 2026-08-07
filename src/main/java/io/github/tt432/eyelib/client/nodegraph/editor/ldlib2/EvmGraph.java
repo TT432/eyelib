@@ -16,6 +16,7 @@ import io.github.tt432.eyelib.nodegraph.GraphInterface;
 import io.github.tt432.eyelib.nodegraph.GraphKind;
 import io.github.tt432.eyelib.nodegraph.NodeType;
 import io.github.tt432.eyelib.nodegraph.PortType;
+import io.github.tt432.eyelib.nodegraph.VariableDecl;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -45,6 +46,12 @@ public class EvmGraph extends Graph {
         public final Map<UUID, String> namesBySubgraphUid = new LinkedHashMap<>();
         /** 未命名（用户在编辑器里新建）的 local subgraph 的取名计数。 */
         public int unnamedSubgraphCounter;
+        /**
+         * 变量模型 uid → molang 作用域（规格 nodegraph-variable-table §2.4）：LDLib2 变量模型
+         * 无作用域字段，eyelib 侧在此持有。加载时由 translator 从 VariableDecl 登记；
+         * 会话内改名 uid 不变、作用域跟随；变量表面板新建/改作用域也写这里。
+         */
+        public final Map<UUID, VariableDecl.Scope> variableScopes = new LinkedHashMap<>();
     }
 
     /** 所属库种类（保存时回写 GraphLibrary.kind）。 */

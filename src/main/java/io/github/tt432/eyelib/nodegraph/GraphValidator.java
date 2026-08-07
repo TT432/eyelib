@@ -53,6 +53,8 @@ public final class GraphValidator {
     public static final String UNCONNECTED_INPUT = "UNCONNECTED_INPUT";
     public static final String ORPHAN_CHAIN = "ORPHAN_CHAIN";
     public static final String UNDECLARED_VARIABLE = "UNDECLARED_VARIABLE";
+    /** TEMP 作用域变量同图有读无写（temp 跨求值不存活）。 */
+    public static final String TEMP_NEVER_WRITTEN = "TEMP_NEVER_WRITTEN";
     /** exec.set_var 的 target 未连线到 variable 节点。 */
     public static final String SET_TARGET_NOT_VARIABLE = "SET_TARGET_NOT_VARIABLE";
     /** 声明类 ref 未接线（WARNING，仅 CLIENT_ENTITY 库；规格 inline-render-controller §4）。 */
@@ -910,6 +912,47 @@ public final class GraphValidator {
             if (!declared.contains(stripped)) {
                 out.add(Diagnostic.warning(UNDECLARED_VARIABLE,
                         "引用了黑板未声明的变量：" + name, node.uid()));
+            }
+        }
+
+        // 检查 19b（规格 nodegraph-variable-table §2.5）：TEMP 作用域变量同图有读无写——
+        // temp 仅在当次求值内存活，跨求值读恒为 0。
+        Set<String> tempDeclared = new HashSet<>();
+        for (VariableDecl var : graph.variables()) {
+            if (var.scope() == VariableDecl.Scope.TEMP) {
+                tempDeclared.add(var.name());
+            }
+        }
+        if (!tempDeclared.isEmpty()) {
+            Set<String> written = new HashSet<>();
+            Set<String> read = new HashSet<>();
+            Map<String, String> varNodeName = new HashMap<>();
+            for (NodeInstance node : byUid.values()) {
+                NodeType type = types.get(node.uid());
+                if (type != null && type.kind() == NodeType.Kind.VARIABLE) {
+                    String name = node.option("name", type).map(JsonElement::getAsString).orElse("");
+                    varNodeName.put(node.uid(), name.startsWith("variable.")
+                            ? name.substring("variable.".length()) : name);
+                }
+            }
+            for (Wire w : graph.wires()) {
+                String sourceName = varNodeName.get(w.from().node());
+                if (sourceName == null || !tempDeclared.contains(sourceName)) {
+                    continue;
+                }
+                NodeType consumerType = types.get(w.to().node());
+                if (consumerType != null && consumerType.kind() == NodeType.Kind.EXEC_SET_VAR
+                        && w.to().port().equals("target")) {
+                    written.add(sourceName);
+                } else {
+                    read.add(sourceName);
+                }
+            }
+            for (String name : read) {
+                if (!written.contains(name)) {
+                    out.add(Diagnostic.warning(TEMP_NEVER_WRITTEN,
+                            "temp 作用域变量被读但同图无写入（跨求值读恒为 0）：" + name));
+                }
             }
         }
     }

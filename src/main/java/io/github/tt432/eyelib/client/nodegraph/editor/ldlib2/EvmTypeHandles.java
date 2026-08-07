@@ -74,9 +74,17 @@ public final class EvmTypeHandles {
                 AC_REF,
                 RC_REF,
                 COLOR);
-        /** 黑板变量声明可选类型：VARIABLE 是 variable 节点端口的身份标注，不是可声明的值类型。 */
-        static final List<TypeHandle> VARIABLE_DECL_TYPES =
-                ALL.stream().filter(h -> !h.equals(VARIABLE)).toList();
+        /**
+         * 黑板变量声明可选类型：变量存的是 molang 值，只收值类型（FLOAT/INT/BOOL/STRING/
+         * OBJECT=ANY）。EXECUTION_FLOW/SLOT/VARIABLE 是结构/身份标注，*_REF 是引用语义
+         * 子类型，COLOR 是复合值（无 molang 标量），均不可声明。
+         */
+        static final List<TypeHandle> VARIABLE_DECL_TYPES = List.of(
+                TypeHandles.FLOAT,
+                TypeHandles.INT,
+                TypeHandles.BOOL,
+                TypeHandles.STRING,
+                TypeHandles.OBJECT);
 
         private static TypeHandle colored(Class<?> type, String id, String friendlyName, int color) {
             TypeHandle handle = TypeHandleHelpers.customType(type, id, friendlyName);
@@ -90,7 +98,7 @@ public final class EvmTypeHandles {
         return Holder.ALL;
     }
 
-    /** 黑板变量声明可选类型（= {@link #allSupported()} 去掉 VARIABLE 身份类型）。 */
+    /** 黑板变量声明可选类型（仅 molang 值类型：FLOAT/INT/BOOL/STRING/OBJECT=ANY）。 */
     public static List<TypeHandle> allVariableDeclTypes() {
         return Holder.VARIABLE_DECL_TYPES;
     }

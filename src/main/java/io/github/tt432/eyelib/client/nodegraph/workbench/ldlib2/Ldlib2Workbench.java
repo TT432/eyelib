@@ -22,17 +22,22 @@ public final class Ldlib2Workbench {
     private final NodeDebugOverlayModel overlayModel = new NodeDebugOverlayModel();
     private final AssetInspectorPanel assetPanel;
     private final DebugPanel debugPanel;
+    private final VariablesPanel variablesPanel;
 
     private Ldlib2Workbench(GraphLibrary initialLibrary, GraphEditorView editorView,
                             Runnable onNormalize) {
         assetPanel = new AssetInspectorPanel();
         debugPanel = new DebugPanel(overlayModel::setTarget);
+        variablesPanel = new VariablesPanel(editorView);
+        // 默认隐藏（管理工具，工具条「变量」按钮切换；三侧栏齐开窄窗口会溢出）
+        variablesPanel.setDisplay(false);
         // root 先建：工具条 lambda 捕获 final 字段 root（definite assignment）
         root = new UIElement()
                 .layout(layout -> layout.widthPercent(100).heightPercent(100));
         WorkbenchToolbar toolbar = new WorkbenchToolbar(
                 () -> ImportDialogs.openImportMenu(root),
                 () -> assetPanel.setDisplay(!assetPanel.isDisplayed()),
+                () -> variablesPanel.setDisplay(!variablesPanel.isDisplayed()),
                 () -> debugPanel.setDisplay(!debugPanel.isDisplayed()),
                 onNormalize);
 
@@ -44,7 +49,7 @@ public final class Ldlib2Workbench {
                         .widthPercent(100)
                         .flex(1)
                         .flexDirection(FlexDirection.ROW));
-        contentRow.addChildren(assetPanel, editorView, debugPanel);
+        contentRow.addChildren(assetPanel, editorView, variablesPanel, debugPanel);
         root.addChildren(toolbar, contentRow);
 
         BadgeOverlay.attach(editorView.graphView, overlayModel);

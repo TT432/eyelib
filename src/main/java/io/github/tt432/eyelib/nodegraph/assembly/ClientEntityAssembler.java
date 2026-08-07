@@ -6,9 +6,11 @@ import io.github.tt432.eyelib.nodegraph.DeclarationTables;
 import io.github.tt432.eyelib.nodegraph.Diagnostic;
 import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
+import io.github.tt432.eyelib.nodegraph.MolangLiterals;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.ShortNames;
+import io.github.tt432.eyelib.nodegraph.VariableDecl;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -74,10 +76,30 @@ public final class ClientEntityAssembler {
     private static JsonObject assembleScripts(AssemblySupport.Ctx ctx, NodeInstance root) {
         JsonObject scripts = new JsonObject();
         GraphData main = ctx.main;
+        // 变量声明默认值 → initialize 初始化语句（规格 nodegraph-variable-table §2.3）：
+        // 仅 VARIABLE 作用域（temp 当次求值即清，初始化无意义），前置在用户语句之前
+        // （用户 initialize 语句可覆盖初始化值）。
+        List<String> varInits = new ArrayList<>();
+        for (VariableDecl decl : main.variables()) {
+            if (decl.scope() != VariableDecl.Scope.VARIABLE || decl.defaultValue().isEmpty()) {
+                continue;
+            }
+            String literal = MolangLiterals.literal(decl.defaultValue().get());
+            if (literal != null) {
+                varInits.add("variable." + decl.name() + " = " + literal);
+            }
+        }
         for (String slot : List.of("initialize", "pre_animation", "parent_setup")) {
             if (AssemblySupport.hasWire(main, root.uid(), slot)) {
-                scripts.addProperty(slot, ctx.emitStatements(root.uid(), slot));
+                String statements = ctx.emitStatements(root.uid(), slot);
+                if (slot.equals("initialize") && !varInits.isEmpty()) {
+                    statements = String.join("; ", varInits) + "; " + statements;
+                }
+                scripts.addProperty(slot, statements);
             }
+        }
+        if (!varInits.isEmpty() && !scripts.has("initialize")) {
+            scripts.addProperty("initialize", String.join("; ", varInits));
         }
         JsonArray animate = assembleAnimate(ctx, root);
         if (animate.size() > 0) {
