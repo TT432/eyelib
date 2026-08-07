@@ -47,8 +47,32 @@ public final class AssetSuggestions {
             case "rc" -> sorted(RenderControllerManager.INSTANCE.names());
             case "material" -> materials();
             case "texture" -> textures();
+            case "molang.query" -> molangFunctions("query");
+            case "molang.math" -> molangFunctions("math");
+            case "molang.call" -> {
+                // exec.call 可用 query/math 两侧函数（语句位调用）
+                TreeSet<String> out = new TreeSet<>(molangFunctions("query"));
+                out.addAll(molangFunctions("math"));
+                yield List.copyOf(out);
+            }
             default -> List.of();
         };
+    }
+
+    /**
+     * molang 函数全名候选：编译器映射树该根下的全部函数 + 字段（零参 query 多为字段）
+     * + 已注册的自定义函数（.emolang）。
+     */
+    private static List<String> molangFunctions(String root) {
+        TreeSet<String> out = new TreeSet<>();
+        var node = io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries
+                .mappingTree().toplevelNode.children.get(root);
+        if (node != null) {
+            node.actualFunctions.keySet().forEach(name -> out.add(root + "." + name));
+            node.cachedFields.keySet().forEach(name -> out.add(root + "." + name));
+        }
+        out.addAll(io.github.tt432.eyelib.nodegraph.MolangFunctionSignatures.customNames(root));
+        return List.copyOf(out);
     }
 
     private static List<String> animationsByPrefix(String prefix) {

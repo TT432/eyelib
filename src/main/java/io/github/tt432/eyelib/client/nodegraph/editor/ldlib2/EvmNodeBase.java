@@ -91,6 +91,12 @@ public abstract class EvmNodeBase extends Node {
         super.onDefineOptions(context);
         boolean isRef = ShortNames.valueOptionOf(type().id()) != null;
         for (NodeOptionDef def : type().options()) {
+            // 定长签名函数的 arg_count 无意义（端口数由签名决定），隐藏减少干扰
+            if ("arg_count".equals(def.id())
+                    && io.github.tt432.eyelib.nodegraph.MolangFunctionSignatures
+                            .isFixedArity(java.util.Objects.toString(readStringOption("function"), ""))) {
+                continue;
+            }
             var builder = context.addOption(def.id(), EvmValues.optionJavaType(def.type()))
                     .withDefaultValue(EvmValues.optionDefault(def))
                     .withDisplayName(Component.literal(def.id()));
@@ -203,7 +209,7 @@ public abstract class EvmNodeBase extends Node {
         NodeInstance view = currentInstanceView();
         for (PortDef port : type().inputsOf(view, resolver)) {
             var builder = context.addInputPort(port.id(), EvmTypeHandles.toHandle(port.type()))
-                    .withDisplayName(Component.literal(port.id()));
+                    .withDisplayName(Component.literal(port.label().orElse(port.id())));
             // ANY 输入端口：挂行内字面值文本编辑器（见 anyTextBinding）
             if (port.type() == PortType.ANY) {
                 builder.withConfigurable(anyTextBinding());
