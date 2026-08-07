@@ -59,6 +59,12 @@ public final class GraphValidator {
     public static final String REF_NOT_CONNECTED = "REF_NOT_CONNECTED";
     /** 主图两个内联 rc.root 的 identifier 相同（ERROR，规格 inline-render-controller §4）。 */
     public static final String DUPLICATE_RC_ID = "DUPLICATE_RC_ID";
+    /** rc.root 列表端口直连多个条目（v6 链式：只能接链头）。 */
+    public static final String LIST_MULTI_HEAD = "LIST_MULTI_HEAD";
+    /** 条目 next 链成环。 */
+    public static final String LIST_CYCLE = "LIST_CYCLE";
+    /** 条目节点不在任何到达 rc.root 的链上（不会出现在输出）。 */
+    public static final String ENTRY_ORPHAN = "ENTRY_ORPHAN";
 
     /** SLOT 装配白名单：目标(节点类型.端口) → 允许的源节点类型。 */
     private static final Map<String, String> SLOT_WHITELIST = Map.of(
@@ -68,7 +74,11 @@ public final class GraphValidator {
             "rc.root.part_visibility", "part_visibility.entry",
             "ac.root.states", "ac.state",
             "ac.state.animations", "animate.entry",
-            "ac.state.transitions", "ac.transition");
+            "ac.state.transitions", "ac.transition",
+            // v6：条目链（规格 §2.1）——条目的 next 只接同类条目
+            "list.entry.next", "list.entry",
+            "material.entry.next", "material.entry",
+            "part_visibility.entry.next", "part_visibility.entry");
 
     /** 只能接入装配槽（animate.entry.ref）或 entity.root 动画声明端口的引用节点。 */
     private static final Set<String> ASSEMBLY_ONLY_REFS = Set.of("ref.animation", "ref.ac");
@@ -111,6 +121,7 @@ public final class GraphValidator {
             checkRefConflicts(library, callGraph, out);
             checkRefNotConnected(library, out);
             checkDuplicateRcIds(library, out);
+            checkEntryChains(library, out);
         }
         return out;
     }
@@ -137,6 +148,106 @@ public final class GraphValidator {
                 out.add(Diagnostic.error(DUPLICATE_RC_ID,
                         "主图存在多个 identifier 为 '" + id + "' 的 rc.root", node.uid()));
             }
+        }
+    }
+
+    /** v6 三类有序条目类型。 */
+    private static final Set<String> CHAIN_ENTRY_TYPES = Set.of(
+            "list.entry", "material.entry", "part_visibility.entry");
+    /** rc.root 列表端口 → 链头条目类型。 */
+    private static final Map<String, String> CHAIN_HEAD_OF_PORT = Map.of(
+            "textures", "list.entry",
+            "materials", "material.entry",
+            "part_visibility", "part_visibility.entry");
+
+    /**
+     * 检查 23（ERROR/WARNING，CLIENT_ENTITY 与 RENDER_CONTROLLER 库）：v6 条目链完整性——
+     * 列表端口多头（LIST_MULTI_HEAD）、next 链成环（LIST_CYCLE）、条目不在任何到达
+     * rc.root 的链上（ENTRY_ORPHAN，含子图条目）。
+     */
+    private static void checkEntryChains(GraphLibrary library, List<Diagnostic> out) {
+        if (library.kind() != GraphKind.CLIENT_ENTITY && library.kind() != GraphKind.RENDER_CONTROLLER) {
+            return;
+        }
+        GraphData main = library.graphs().get(library.main());
+        Set<String> claimed = new HashSet<>();
+        Set<String> cycleReported = new HashSet<>();
+        if (main != null) {
+            for (NodeInstance node : main.nodes()) {
+                if (!node.type().equals("rc.root")) {
+                    continue;
+                }
+                for (Map.Entry<String, String> port : CHAIN_HEAD_OF_PORT.entrySet()) {
+                    List<Wire> direct = main.wires().stream()
+                            .filter(w -> w.to().node().equals(node.uid())
+                                    && w.to().port().equals(port.getKey()))
+                            .toList();
+                    if (direct.size() > 1) {
+                        out.add(Diagnostic.error(LIST_MULTI_HEAD,
+                                "rc.root 的 " + port.getKey() + " 直连了 " + direct.size()
+                                        + " 个条目；v6 起列表是链式：只接链头，后续条目挂到前一条目的 next",
+                                node.uid()));
+                    }
+                    for (Wire headWire : direct) {
+                        walkEntryChain(main, headWire.from().node(), claimed, cycleReported, out, true);
+                    }
+                }
+            }
+        }
+        // 孤儿条目：主图未被链认领 + 子图全部条目（到不了 rc.root）
+        for (Map.Entry<String, GraphData> e : library.graphs().entrySet()) {
+            boolean isMain = e.getKey().equals(library.main());
+            for (NodeInstance node : e.getValue().nodes()) {
+                if (!CHAIN_ENTRY_TYPES.contains(node.type())) {
+                    continue;
+                }
+                // 脱链的环：从未被认领的条目起走访（只查环，不认领——不到 rc.root 的链无归属）
+                if (!claimed.contains(node.uid())) {
+                    walkEntryChain(e.getValue(), node.uid(), claimed, cycleReported, out, false);
+                }
+                if (!isMain || !claimed.contains(node.uid())) {
+                    out.add(Diagnostic.warning(ENTRY_ORPHAN,
+                            node.type() + " 不在任何到达 rc.root 的条目链上"
+                                    + (isMain ? "" : "（位于子图 '" + e.getKey() + "'）") + "，不会出现在输出",
+                            node.uid()));
+                }
+            }
+        }
+    }
+
+    /**
+     * 从条目 uid 沿 next 链走访（next 的连线源 = 后继）；环报 LIST_CYCLE。
+     * claim=true（rc.root 链头走访）时认领经过的节点；false 仅查环（脱链表走访不认领）。
+     */
+    private static void walkEntryChain(GraphData graph, String startUid, Set<String> claimed,
+                                       Set<String> cycleReported, List<Diagnostic> out, boolean claim) {
+        if (claimed.contains(startUid)) {
+            return;
+        }
+        Set<String> path = new LinkedHashSet<>();
+        String cur = startUid;
+        while (cur != null) {
+            if (!path.add(cur)) {
+                if (cycleReported.add(cur)) {
+                    out.add(Diagnostic.error(LIST_CYCLE,
+                            "条目 next 链成环（经过 " + cur + "）", cur));
+                }
+                return;
+            }
+            if (claimed.contains(cur)) {
+                break;
+            }
+            String next = null;
+            for (Wire w : graph.wires()) {
+                if (w.to().node().equals(cur) && w.to().port().equals("next")) {
+                    next = w.from().node();
+                    break;
+                }
+            }
+            cur = next;
+        }
+        if (claim) {
+            claimed.addAll(path);
         }
     }
 
@@ -403,7 +514,8 @@ public final class GraphValidator {
                     continue;
                 }
                 out.add(Diagnostic.warning(REF_NOT_CONNECTED,
-                        node.type() + " 未接入任何 RenderController（rc.root / ref.rc），不会进入声明表",
+                        node.type() + " 未接入 rc.root 的 geometry/textures/materials 端口"
+                                + "（或 ref.rc 的声明端口），不会进入声明表",
                         node.uid()));
             } else if (NodeTypes.ENTITY_DECLARATION_PORTS.containsKey(node.type())) {
                 String port = NodeTypes.ENTITY_DECLARATION_PORTS.get(node.type());

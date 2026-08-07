@@ -389,8 +389,10 @@ public final class NodeTypes {
             "ref.animation", "animations",
             "ref.ac", "animation_controllers");
 
-    /** RC 锚点（rc.root / ref.rc）的声明端口（v4）：geo/tex/mat 的语义锚点是 RC（规格 §2）。
-     * decl_ 前缀避免与 rc.root 的 textures/materials SLOT 端口撞名。 */
+    /** ref.rc 的声明端口（v6 起仅 ref.rc 持有）：外部 RC 没有值端口，
+     * decl_* 是它的表行唯一声明通道；rc.root 的引用集由三值端口决定（规格 §3.1）。
+     * decl_ 前缀避免与 rc.root 的 textures/materials SLOT 端口撞名。
+     * GraphMigrations v5→v6 与导入器剩余行处理也使用本表。 */
     public static final Map<String, String> RC_DECLARATION_PORTS = Map.of(
             "ref.geometry", "decl_geometries",
             "ref.texture", "decl_textures",
@@ -440,11 +442,10 @@ public final class NodeTypes {
                     NodeOptionDef.bool("ignore_lighting", false),
                     NodeOptionDef.of("arrays", NodeOptionDef.OptionType.TEXT, new JsonPrimitive(""))),
             List.of(
-                    // v4：内联进实体画布时的挂载条件 + 仅声明端口（规格 §2.1）；独立 RC 库中闲置
+                    // v4：内联进实体画布时的挂载条件（规格 §2.1）；独立 RC 库中闲置
+                    // v6：decl_* 已删——geo/tex/mat 引用集由下方 geometry/textures/materials
+                    // 三端口的连线决定（规格 nodegraph-ordered-entries-and-rc-reference-set §3.1）
                     PortDef.in("condition", PortType.FLOAT, new JsonPrimitive(1)),
-                    PortDef.inMulti("decl_geometries", PortType.GEOMETRY_REF),
-                    PortDef.inMulti("decl_textures", PortType.TEXTURE_REF),
-                    PortDef.inMulti("decl_materials", PortType.MATERIAL_REF),
                     PortDef.in("geometry", PortType.STRING, new JsonPrimitive("geometry.default")),
                     slotIn("textures"),
                     slotIn("materials"),
@@ -459,19 +460,23 @@ public final class NodeTypes {
     public static final NodeType LIST_ENTRY = register(NodeType.of(
             "list.entry", NodeType.Kind.LIST_ENTRY, CAT_RC,
             List.of(),
-            List.of(PortDef.in("value", PortType.ANY)),
+            // v6：next 链（单连接 SLOT）——数组顺序 = 链序（规格 §2.1）
+            List.of(PortDef.in("value", PortType.ANY),
+                    PortDef.in("next", PortType.SLOT)),
             List.of(slotOut("entry"))));
 
     public static final NodeType MATERIAL_ENTRY = register(NodeType.of(
             "material.entry", NodeType.Kind.MATERIAL_ENTRY, CAT_RC,
             List.of(NodeOptionDef.string("pattern", "*")),
-            List.of(PortDef.in("value", PortType.ANY)),
+            List.of(PortDef.in("value", PortType.ANY),
+                    PortDef.in("next", PortType.SLOT)),
             List.of(slotOut("entry"))));
 
     public static final NodeType PART_VISIBILITY_ENTRY = register(NodeType.of(
             "part_visibility.entry", NodeType.Kind.PART_VISIBILITY_ENTRY, CAT_RC,
             List.of(NodeOptionDef.string("bone_pattern", "*")),
-            List.of(PortDef.in("condition", PortType.BOOL, new JsonPrimitive(1))),
+            List.of(PortDef.in("condition", PortType.BOOL, new JsonPrimitive(1)),
+                    PortDef.in("next", PortType.SLOT)),
             List.of(slotOut("entry"))));
 
     // ---------- AnimationController ----------

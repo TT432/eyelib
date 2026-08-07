@@ -191,14 +191,33 @@ class DeclarationTablesTest {
     @Test
     void entityRootDeclarationWiresAreNotCollected() {
         // v4：entity.root 不再有 geo/tex/mat 声明端口；手工构造的 entity.root 连线不入派生集合
+        // （short_name 用非协议名——协议名 default/material 走 v6 carve-out 恒入表）
         GraphData main = graph(
                 List.of(node("r", "entity.root"),
-                        node("g1", "ref.geometry", opts("short_name", "default", "identifier", "geometry.a"))),
+                        node("g1", "ref.geometry", opts("short_name", "foo", "identifier", "geometry.a"))),
                 List.of(wire("g1", "ref", "r", "geometries")));
 
         DeclarationTables.Tables tables = DeclarationTables.collect(main);
 
         assertTrue(tables.geometry().isEmpty());
         assertTrue(DeclarationTables.rcAnchors(main).isEmpty());
+    }
+
+    @Test
+    void protocolShortNameRefsCollectedWithoutWires() {
+        // v6 carve-out（规格 §3.2）：协议短名 ref（default / texture.material）在图中出现即入表，
+        // 无需接线；非协议短名不接线则不入表
+        GraphData main = graph(
+                List.of(node("rcr", "rc.root", opts("identifier", "controller.render.a")),
+                        node("g1", "ref.geometry", opts("short_name", "default", "identifier", "geometry.a")),
+                        node("t1", "ref.texture", opts("short_name", "material", "path", "textures/mat")),
+                        node("m1", "ref.material", opts("short_name", "fancy", "material", "entity_alphatest"))),
+                List.of());
+
+        DeclarationTables.Tables tables = DeclarationTables.collect(main);
+
+        assertEquals(Map.of("default", "geometry.a"), tables.geometry());
+        assertEquals(Map.of("material", "textures/mat"), tables.textures());
+        assertTrue(tables.materials().isEmpty());
     }
 }

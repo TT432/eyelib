@@ -1,6 +1,8 @@
 # 内联 RenderController：实体画布内的 RC 编辑
 
 版本 v4（format_version=4）。前置：nodegraph-declaration-wiring（D1 声明=连线）。
+> 修订（v6，nodegraph-ordered-entries-and-rc-reference-set）：§2.1 rc.root 的 decl_* 端口已删
+> （ref.rc 保留）；§3 的「uid 字典序条目收集」被链序取代；可达性声明模型其余部分仍有效。
 
 ## 1. 关系模型（为什么 geo ref 直接接 ClientEntity 没有意义）
 

@@ -21,9 +21,9 @@ import java.util.Optional;
  * kind=render_controller 的图库 → Bedrock render_controller 文档 JSON。
  *
  * <p>产出 {@code {"format_version":"1.8.0","render_controllers":{"<identifier>":{...}}}}。
- * entry 字段：geometry（恒输出）；textures（list.entry 的 value 表达式列表，uid 字典序）；
- * materials（material.entry → [{pattern: value 表达式}]）；part_visibility
- * （part_visibility.entry → [{bone_pattern: condition}]，同 pattern 后来者覆盖、去重保序）；
+ * entry 字段：geometry（恒输出）；textures（list.entry 的 value 表达式列表，v6 链序）；
+ * materials（material.entry → [{pattern: value 表达式}]，链序 = 首匹配优先）；part_visibility
+ * （part_visibility.entry → [{bone_pattern: condition}]，链序；同 pattern 后来者覆盖、去重保序）；
  * arrays（选项 JSON 文本解析原样放入，解析失败 → INVALID_ARRAYS）；ignore_lighting（布尔选项）；
  * color/is_hurt_color/on_fire_color/overlay_color（四通道全未连线且无常数则不输出，
  * 否则 {r,g,b,a} 全输出，无内容通道取端口默认，无默认回落 "1"——与 BrRcColor 缺省 1 同语义）。
@@ -62,7 +62,7 @@ public final class RenderControllerAssembler {
         entry.addProperty("geometry", ctx.emitExpression(root.uid(), "geometry"));
 
         JsonArray textures = new JsonArray();
-        for (NodeInstance e : AssemblySupport.wiredSources(main, root.uid(), "textures")) {
+        for (NodeInstance e : AssemblySupport.chainSources(main, root.uid(), "textures")) {
             textures.add(ctx.emitExpression(e.uid(), "value"));
         }
         if (textures.size() > 0) {
@@ -70,7 +70,7 @@ public final class RenderControllerAssembler {
         }
 
         JsonArray materials = new JsonArray();
-        for (NodeInstance e : AssemblySupport.wiredSources(main, root.uid(), "materials")) {
+        for (NodeInstance e : AssemblySupport.chainSources(main, root.uid(), "materials")) {
             JsonObject obj = new JsonObject();
             obj.addProperty(AssemblySupport.optionString(e, NodeTypes.MATERIAL_ENTRY, "pattern"),
                     ctx.emitExpression(e.uid(), "value"));
@@ -82,7 +82,7 @@ public final class RenderControllerAssembler {
 
         // 同 pattern 后来者覆盖；LinkedHashMap 保持首现位置（去重保序），先按 pattern 归并再发射
         Map<String, NodeInstance> visibility = new LinkedHashMap<>();
-        for (NodeInstance e : AssemblySupport.wiredSources(main, root.uid(), "part_visibility")) {
+        for (NodeInstance e : AssemblySupport.chainSources(main, root.uid(), "part_visibility")) {
             visibility.put(AssemblySupport.optionString(e, NodeTypes.PART_VISIBILITY_ENTRY, "bone_pattern"), e);
         }
         if (!visibility.isEmpty()) {

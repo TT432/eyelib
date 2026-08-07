@@ -260,9 +260,14 @@ class JsonGraphImportersTest {
                 .getAsJsonObject("description");
 
         assertEquals(originalDesc.get("identifier").getAsString(), desc.get("identifier").getAsString());
-        // 声明表逐值相等（geo/tex/mat = RC 锚点派生；未被字段引用的 angry 凾底挂第一个锚点）
+        // 声明表逐值相等（geo/tex/mat = 三值端口可达派生）。v6：未被字段引用的非协议行
+        // （textures.angry）不进表——DECL_LEFTOVER_DROPPED 诊断 + ref 节点保留在画布
+        assertTrue(hasCode(imported.diagnostics(), DecompileDiagnostics.DECL_LEFTOVER_DROPPED));
+        Map<String, String> expectedTextures = new java.util.LinkedHashMap<>(
+                stringMap(originalDesc.getAsJsonObject("textures")));
+        expectedTextures.remove("angry");
         assertEquals(stringMap(originalDesc.getAsJsonObject("geometry")), stringMap(desc.getAsJsonObject("geometry")));
-        assertEquals(stringMap(originalDesc.getAsJsonObject("textures")), stringMap(desc.getAsJsonObject("textures")));
+        assertEquals(expectedTextures, stringMap(desc.getAsJsonObject("textures")));
         assertEquals(stringMap(originalDesc.getAsJsonObject("materials")), stringMap(desc.getAsJsonObject("materials")));
         // D6：animations 与 animation_controllers 是同一命名空间（Bedrock animate 解析两表合并）；
         // 重组装统一发进 animations 表，不再发 animation_controllers
@@ -609,6 +614,37 @@ class JsonGraphImportersTest {
         assertTrue(entry.get("ignore_lighting").getAsBoolean());
         assertColorEquals(originalEntry.getAsJsonObject("color"), entry.getAsJsonObject("color"));
         assertColorEquals(originalEntry.getAsJsonObject("overlay_color"), entry.getAsJsonObject("overlay_color"));
+    }
+
+    /** v6：导入条目为链式接线——链序 = 原 JSON 数组序。 */
+    @Test
+    void importedEntriesFormChainInJsonOrder() {
+        ImportResult imported = JsonGraphImporters.importRenderController(parse(RC_JSON),
+                "controller.render.test");
+        assertFalse(imported.hasErrors(), () -> imported.diagnostics().toString());
+        GraphData g = imported.library().mainGraph();
+
+        // 恰好 1 个头接 root.textures；1 条 next 链线挂在链头上
+        Wire headWire = g.wires().stream()
+                .filter(w -> w.to().node().equals("root") && w.to().port().equals("textures"))
+                .findFirst().orElseThrow();
+        Wire nextWire = g.wires().stream()
+                .filter(w -> w.to().port().equals("next"))
+                .findFirst().orElseThrow();
+        String headUid = headWire.from().node();
+        assertEquals(headUid, nextWire.to().node());
+
+        // 链头条目 value 的 ref 短名 = default（JSON 第一元素），链尾 = variant
+        assertEquals("default", entryValueShortName(g, headUid));
+        assertEquals("variant", entryValueShortName(g, nextWire.from().node()));
+    }
+
+    /** 条目 value 槽连线源 ref 节点的 short_name 选项。 */
+    private static String entryValueShortName(GraphData g, String entryUid) {
+        String refUid = g.wires().stream()
+                .filter(w -> w.to().node().equals(entryUid) && w.to().port().equals("value"))
+                .findFirst().orElseThrow().from().node();
+        return g.findNode(refUid).orElseThrow().options().get("short_name").getAsString();
     }
 
     /** 颜色全数值且 8bit 精确 → const.color 节点（取色器可编辑）接 COLOR 端口。 */

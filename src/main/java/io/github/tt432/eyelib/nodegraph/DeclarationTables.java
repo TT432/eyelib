@@ -15,10 +15,12 @@ import java.util.Set;
  * 组装器、验证器（REF_CONFLICT / REF_NOT_CONNECTED 范围）、client KnownRefTables 的单一口径。
  *
  * <p><b>可达性模型</b>：ref.{geometry,texture,material} 在主图中存在到任一
- * <b>RC 锚点</b>（rc.root / ref.rc）的连线路径 → 入声明表（「ref 接 RC = 声明+引用」，
- * 覆盖声明端口直连、geometry 字段端口直连、条目 value、以及嵌套在表达式树内部的情形——
- * 悦灵 RC 的 {@code query.x ? geometry.a : geometry.b} 变体选择即嵌套形态）。
- * 无路径 → 不声明（验证器 REF_NOT_CONNECTED）。
+ * <b>RC 锚点</b>（rc.root / ref.rc）的连线路径 → 入声明表（「ref 接 RC = 声明+引用」）。
+ * v6 起 rc.root 无 decl_* 端口——其引用集由 geometry/textures/materials 三值端口决定
+ * （规格 nodegraph-ordered-entries-and-rc-reference-set §3.1），覆盖字段端口直连、条目 value、
+ * 以及嵌套在表达式树内部的情形（悦灵 RC 的 {@code query.x ? geometry.a : geometry.b} 变体选择）；
+ * ref.rc 保留 decl_* 声明端口（外部 RC 无值端口）。协议短名 ref（default / texture.material）
+ * 在图中出现即入表（carve-out，规格 §3.2）。其余无路径 → 不声明（验证器 REF_NOT_CONNECTED）。
  *
  * <p>同有效短名 putIfAbsent 保留先者；同短名不同标识符的冲突由验证器 REF_CONFLICT 报告。
  * 声明端口（decl_geometries 等）的类别不匹配源由 {@link #invalidDeclarationSources}
@@ -59,7 +61,8 @@ public final class DeclarationTables {
         return new Tables(geometry, textures, materials);
     }
 
-    /** 声明集合的 per-ref 视图（类别 → ref 节点，uid 序）：验证器冲突检测用。 */
+    /** 声明集合的 per-ref 视图（类别 → ref 节点，uid 序）：验证器冲突检测用。
+     * v6：协议短名 ref（default / texture.material）在图中出现即入集，无需接线（规格 §3.2）。 */
     public static Map<String, List<NodeInstance>> collectRefs(GraphData main) {
         Map<String, List<NodeInstance>> out = new LinkedHashMap<>();
         out.put("geometry", new ArrayList<>());
@@ -68,9 +71,6 @@ public final class DeclarationTables {
         Set<String> anchors = new HashSet<>();
         for (NodeInstance anchor : rcAnchors(main)) {
             anchors.add(anchor.uid());
-        }
-        if (anchors.isEmpty()) {
-            return out;
         }
         // 前向邻接：生产者 → 消费者
         Map<String, List<String>> forward = new HashMap<>();
@@ -85,7 +85,16 @@ public final class DeclarationTables {
                 case "ref.material" -> "materials";
                 default -> null;
             };
-            if (category != null && reachesAnchor(node.uid(), anchors, forward, memo, new HashSet<>())) {
+            if (category == null) {
+                continue;
+            }
+            boolean declared = reachesAnchor(node.uid(), anchors, forward, memo, new HashSet<>());
+            if (!declared) {
+                // 协议短名 carve-out：运行时回退/模型契约常量，不挂字段表达式也必须入表
+                String shortName = ShortNames.effective(node, NodeTypes.require(node.type()));
+                declared = ShortNameOps.isProtocolShortName(node.type(), shortName);
+            }
+            if (declared) {
                 Objects.requireNonNull(out.get(category)).add(node);
             }
         }

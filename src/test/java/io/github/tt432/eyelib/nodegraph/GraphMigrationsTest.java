@@ -447,4 +447,48 @@ class GraphMigrationsTest {
         assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, migrated.formatVersion());
         assertEquals(main, migrated.mainGraph());
     }
+
+    // ---------- v5 → v6：条目链化 + rc.root decl_* 移除 ----------
+
+    @Test
+    void v6ChainsMultiEntriesAndDropsRcRootDeclWires() {
+        // v5 形态：两个条目直连 textures（发射序 = uid 序 le1 < le2）+ decl 声明线
+        GraphData main = graph(
+                List.of(node("root", "rc.root", opts("identifier", "controller.render.a")),
+                        node("le1", "list.entry"), node("le2", "list.entry"),
+                        node("me1", "material.entry"),
+                        node("g1", "ref.geometry", opts("short_name", "default", "identifier", "geometry.a"))),
+                List.of(wire("le1", "entry", "root", "textures"),
+                        wire("le2", "entry", "root", "textures"),
+                        wire("me1", "entry", "root", "materials"),
+                        wire("g1", "ref", "root", "decl_geometries")));
+        GraphLibrary old = new GraphLibrary(5, GraphKind.RENDER_CONTROLLER, "root", Map.of("root", main));
+
+        GraphData migrated = GraphMigrations.migrate(old).mainGraph();
+
+        // 链化：首条目保留直连，后续挂前一条目 next
+        assertTrue(migrated.wires().contains(wire("le1", "entry", "root", "textures")));
+        assertTrue(migrated.wires().contains(wire("le2", "entry", "le1", "next")));
+        assertFalse(migrated.wires().contains(wire("le2", "entry", "root", "textures")));
+        // 单条目端口不动
+        assertTrue(migrated.wires().contains(wire("me1", "entry", "root", "materials")));
+        // decl 线删除、ref 节点保留
+        assertFalse(migrated.wires().contains(wire("g1", "ref", "root", "decl_geometries")));
+        assertTrue(migrated.findNode("g1").isPresent());
+    }
+
+    @Test
+    void v6KeepsRefRcDeclWires() {
+        GraphData main = graph(
+                List.of(rootNode(),
+                        node("rc1", "ref.rc", opts("identifier", "controller.render.a")),
+                        node("g1", "ref.geometry", opts("short_name", "default", "identifier", "geometry.a"))),
+                List.of(wire("rc1", "ref", "root", "render_controllers"),
+                        wire("g1", "ref", "rc1", "decl_geometries")));
+        GraphLibrary old = new GraphLibrary(5, GraphKind.CLIENT_ENTITY, "root", Map.of("root", main));
+
+        GraphData migrated = GraphMigrations.migrate(old).mainGraph();
+
+        assertTrue(migrated.wires().contains(wire("g1", "ref", "rc1", "decl_geometries")));
+    }
 }

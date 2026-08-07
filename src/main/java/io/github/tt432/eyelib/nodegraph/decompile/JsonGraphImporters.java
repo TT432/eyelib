@@ -219,18 +219,30 @@ public final class JsonGraphImporters {
         return anchorUid;
     }
 
-    /** 表内未被 RC 字段实体化的条目（仅被 arrays 原文/裸字符串引用，或未被引用）→ 补 ref 挂声明端口。 */
+    /**
+     * 表内未被 RC 字段实体化的条目 → 补 ref 节点。
+     * v6：锚点 ref.rc → 接 decl_* 声明端口（不变）；锚点 rc.root → 不接线
+     * （协议短名由 DeclarationTables carve-out 覆盖；其余行不进表 + INFO 诊断）。
+     */
     private static void attachLeftoverEntries(ImportGraphBuilder b, Map<String, String> table,
                                               String refType, String valueOption, String uidPrefix,
                                               String declPort, @Nullable String firstAnchor) {
+        boolean anchorIsRefRc = firstAnchor != null && "ref.rc".equals(b.typeOf(firstAnchor));
         for (Map.Entry<String, String> e : table.entrySet()) {
             if (b.refReachesAnchor(refType, e.getKey())) {
                 continue;
             }
             String uid = b.addNode(uidPrefix, refType, ImportGraphBuilder.opts(
                     "short_name", e.getKey(), valueOption, e.getValue()));
-            if (firstAnchor != null) {
+            if (firstAnchor == null) {
+                continue;
+            }
+            if (anchorIsRefRc) {
                 b.wire(uid, "ref", firstAnchor, declPort);
+            } else if (!ShortNameOps.isProtocolShortName(refType, e.getKey())) {
+                b.info(DecompileDiagnostics.DECL_LEFTOVER_DROPPED,
+                        "声明表行 '" + e.getKey() + "' 未被任何 RC 字段引用且非协议短名，v6 起不进表"
+                                + "（ref 节点已保留在画布，需要请接入 rc.root 的值端口）");
             }
         }
     }
@@ -421,10 +433,17 @@ public final class JsonGraphImporters {
         if (textures != null) {
             List<JsonElement> items = arrayOrSingle(b, rcName + ".textures", textures, false);
             if (items != null) {
+                String prevUid = null;
                 for (JsonElement item : items) {
                     String entryUid = b.addNode("le", NodeTypes.LIST_ENTRY.id(), Map.of());
                     valueSlot(b, entryUid, "value", rcName + ".textures[]", item);
-                    b.wire(entryUid, "entry", rcUid, "textures");
+                    // v6 链式：首条目接 rc.root，后续接前一条目的 next（数组序 = 链序）
+                    if (prevUid == null) {
+                        b.wire(entryUid, "entry", rcUid, "textures");
+                    } else {
+                        b.wire(entryUid, "entry", prevUid, "next");
+                    }
+                    prevUid = entryUid;
                 }
             }
         }
@@ -442,7 +461,7 @@ public final class JsonGraphImporters {
         unknownFields(b, rcName, entry, RC_ENTRY_KEYS);
     }
 
-    /** materials / part_visibility：object 或 single-key object 数组 → 条目节点接入 SLOT。 */
+    /** materials / part_visibility：object 或 single-key object 数组 → 条目节点链（v6：数组序 = 链序）。 */
     private static void importPatternMap(ImportGraphBuilder b, String rcUid, @Nullable JsonElement value,
                                          String label, String entryType, String patternOption,
                                          String valuePort, String uidPrefix, String slotPort) {
@@ -453,12 +472,18 @@ public final class JsonGraphImporters {
         if (objects == null) {
             return;
         }
+        String prevUid = null;
         for (JsonObject obj : objects) {
             for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
                 String entryUid = b.addNode(uidPrefix, entryType,
                         ImportGraphBuilder.opts(patternOption, e.getKey()));
                 valueSlot(b, entryUid, valuePort, label + "." + e.getKey(), e.getValue());
-                b.wire(entryUid, "entry", rcUid, slotPort);
+                if (prevUid == null) {
+                    b.wire(entryUid, "entry", rcUid, slotPort);
+                } else {
+                    b.wire(entryUid, "entry", prevUid, "next");
+                }
+                prevUid = entryUid;
             }
         }
     }

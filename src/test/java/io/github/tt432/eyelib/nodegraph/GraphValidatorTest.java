@@ -401,7 +401,7 @@ class GraphValidatorTest {
                         node("rc", "ref.rc", opts("identifier", "controller.render.a")),
                         node("call", "subgraph.call", opts("subgraph", "sg")),
                         node("g1", "ref.geometry", opts("short_name", "default", "identifier", "geometry.a")),
-                        node("g2", "ref.geometry", opts("short_name", "default", "identifier", "geometry.b"))),
+                        node("g2", "ref.geometry", opts("short_name", "other", "identifier", "geometry.b"))),
                 List.of(wire("call", "result", "r", "scale"),
                         wire("rc", "ref", "r", "render_controllers"),
                         wire("g1", "ref", "rc", "decl_geometries")));
@@ -816,5 +816,57 @@ class GraphValidatorTest {
         List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.ANIMATION_CONTROLLER, main));
         assertFalse(hasCode(diags, GraphValidator.SLOT_KIND));
         assertFalse(hasCode(diags, GraphValidator.ROOT_COUNT));
+    }
+
+    // ---------- v6：条目链（规格 §2.3） ----------
+
+    @Test
+    void listMultiHeadReported() {
+        GraphData main = graph(
+                List.of(node("root", "rc.root", opts("identifier", "controller.render.a")),
+                        node("e1", "list.entry"), node("e2", "list.entry")),
+                List.of(wire("e1", "entry", "root", "textures"),
+                        wire("e2", "entry", "root", "textures")));
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.RENDER_CONTROLLER, main));
+        assertTrue(hasCode(diags, GraphValidator.LIST_MULTI_HEAD));
+    }
+
+    @Test
+    void listCycleReported() {
+        // 脱链环：e1.next←e2、e2.next←e1，无链头
+        GraphData main = graph(
+                List.of(node("root", "rc.root", opts("identifier", "controller.render.a")),
+                        node("e1", "list.entry"), node("e2", "list.entry")),
+                List.of(wire("e2", "entry", "e1", "next"),
+                        wire("e1", "entry", "e2", "next")));
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.RENDER_CONTROLLER, main));
+        assertTrue(hasCode(diags, GraphValidator.LIST_CYCLE));
+    }
+
+    @Test
+    void entryOrphanReportedOnlyForUnclaimed() {
+        GraphData main = graph(
+                List.of(node("root", "rc.root", opts("identifier", "controller.render.a")),
+                        node("e1", "list.entry"), node("e2", "list.entry"), node("e3", "list.entry")),
+                List.of(wire("e1", "entry", "root", "textures"),
+                        wire("e2", "entry", "e1", "next")));
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.RENDER_CONTROLLER, main));
+        // e3 孤儿（告警）；e1/e2 在链上 → 全图只此 1 条
+        assertEquals(1, diags.stream().filter(d -> d.code().equals(GraphValidator.ENTRY_ORPHAN)
+                && d.nodeUid().equals(java.util.Optional.of("e3"))).count());
+    }
+
+    @Test
+    void wellFormedChainPasses() {
+        GraphData main = graph(
+                List.of(node("root", "rc.root", opts("identifier", "controller.render.a")),
+                        node("e1", "list.entry"), node("e2", "list.entry")),
+                List.of(wire("e1", "entry", "root", "textures"),
+                        wire("e2", "entry", "e1", "next")));
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.RENDER_CONTROLLER, main));
+        assertFalse(hasCode(diags, GraphValidator.LIST_MULTI_HEAD));
+        assertFalse(hasCode(diags, GraphValidator.LIST_CYCLE));
+        assertFalse(hasCode(diags, GraphValidator.ENTRY_ORPHAN));
+        assertFalse(hasCode(diags, GraphValidator.SLOT_KIND));
     }
 }

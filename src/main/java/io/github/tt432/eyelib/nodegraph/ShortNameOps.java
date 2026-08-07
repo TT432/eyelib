@@ -31,7 +31,7 @@ public final class ShortNameOps {
      * {@code material}（仅 ref.texture）是 Bedrock {@code texture.material} 动态材质纹理协议字。
      * 这些不是可派生的资产引用，而是协议常量。
      */
-    static boolean isProtocolShortName(String nodeType, String shortName) {
+    public static boolean isProtocolShortName(String nodeType, String shortName) {
         return "default".equals(shortName)
                 || ("material".equals(shortName) && nodeType.equals("ref.texture"));
     }

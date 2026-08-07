@@ -14,6 +14,7 @@ import io.github.tt432.eyelib.nodegraph.codegen.ColorCodegenResult;
 import io.github.tt432.eyelib.nodegraph.codegen.MolangGenerator;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -116,6 +117,29 @@ final class AssemblySupport {
         return graph.wires().stream()
                 .filter(w -> w.to().node().equals(nodeUid) && w.to().port().equals(portId))
                 .min(Comparator.comparing((Wire w) -> w.from().node()).thenComparing(w -> w.from().port()));
+    }
+
+    /**
+     * 有序条目链收集（v6，规格 §2.2）：列表端口的直连源为链头（多头按 uid 序兜底），
+     * 沿 `next` 链走访产出有序条目；visited 集防环截断。
+     */
+    static List<NodeInstance> chainSources(GraphData graph, String nodeUid, String portId) {
+        List<NodeInstance> out = new ArrayList<>();
+        Set<String> visited = new HashSet<>();
+        for (NodeInstance head : wiredSources(graph, nodeUid, portId)) {
+            NodeInstance cur = head;
+            while (visited.add(cur.uid())) {
+                out.add(cur);
+                NodeInstance next = wireInto(graph, cur.uid(), "next")
+                        .flatMap(w -> graph.findNode(w.from().node()))
+                        .orElse(null);
+                if (next == null) {
+                    break;
+                }
+                cur = next;
+            }
+        }
+        return out;
     }
 
     static boolean hasWire(GraphData graph, String nodeUid, String portId) {

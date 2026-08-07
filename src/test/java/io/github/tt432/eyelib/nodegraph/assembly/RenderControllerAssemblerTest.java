@@ -81,16 +81,18 @@ class RenderControllerAssemblerTest {
                         node("ck", "const.color", opts("value", "#FF00FF00"))),
                 List.of(
                         wire("g1", "out", "root", "geometry"),
+                        // v6 链式：t1 是 textures 链头，t2 挂 t1.next
                         wire("t1", "entry", "root", "textures"),
                         wire("tc1", "out", "t1", "value"),
-                        wire("t2", "entry", "root", "textures"),
+                        wire("t2", "entry", "t1", "next"),
                         wire("tc2", "out", "t2", "value"),
                         wire("m1", "entry", "root", "materials"),
                         wire("rm1", "ref", "m1", "value"),
+                        // pv 链：pv1(头) → pv2 → pv3
                         wire("pv1", "entry", "root", "part_visibility"),
                         wire("pb1", "out", "pv1", "condition"),
-                        wire("pv2", "entry", "root", "part_visibility"),
-                        wire("pv3", "entry", "root", "part_visibility"),
+                        wire("pv2", "entry", "pv1", "next"),
+                        wire("pv3", "entry", "pv2", "next"),
                         wire("pn3", "out", "pv3", "condition"),
                         // color：compose r 接表达式，g/b/a 走端口默认 1
                         wire("cr", "out", "cc", "r"),
@@ -148,6 +150,32 @@ class RenderControllerAssemblerTest {
         assertEquals("1", overlay.get("g").getAsString());
         assertEquals("1", overlay.get("b").getAsString());
         assertEquals("0.5", overlay.get("a").getAsString());
+    }
+
+    /** v6：条目顺序 = 链序（不是 uid 字典序）。 */
+    @Test
+    void chainOrderFollowsLinksNotUid() {
+        GraphLibrary lib = lib(GraphKind.RENDER_CONTROLLER, graph(
+                List.of(
+                        node("root", "rc.root", opts("identifier", "controller.render.chain")),
+                        // uid 字典序 a1 < z1，但链序是 z1(头) → a1
+                        node("z1", "list.entry"),
+                        node("zc1", "const.string", opts("value", "texture.head")),
+                        node("a1", "list.entry"),
+                        node("ac1", "const.string", opts("value", "texture.tail"))),
+                List.of(
+                        wire("z1", "entry", "root", "textures"),
+                        wire("zc1", "out", "z1", "value"),
+                        wire("a1", "entry", "z1", "next"),
+                        wire("ac1", "out", "a1", "value"))));
+
+        AssemblyResult r = RenderControllerAssembler.assemble(lib);
+
+        assertFalse(r.hasErrors(), () -> r.diagnostics().toString());
+        JsonArray textures = entryOf(r, "controller.render.chain").getAsJsonArray("textures");
+        assertEquals(2, textures.size());
+        assertEquals("'texture.head'", textures.get(0).getAsString());
+        assertEquals("'texture.tail'", textures.get(1).getAsString());
     }
 
     @Test

@@ -43,6 +43,10 @@ public record Diagnostic(
         return new Diagnostic(Severity.WARNING, code, message, Optional.of(nodeUid));
     }
 
+    public static Diagnostic info(String code, String message) {
+        return new Diagnostic(Severity.INFO, code, message, Optional.empty());
+    }
+
     public enum Severity implements PortStringRepresentable {
         ERROR,
         WARNING,

@@ -85,6 +85,16 @@ final class ImportGraphBuilder {
         diagnostics.add(Diagnostic.warning(code, message));
     }
 
+    void info(String code, String message) {
+        diagnostics.add(Diagnostic.info(code, message));
+    }
+
+    /** 节点类型（无此节点 → null）。 */
+    @Nullable String typeOf(String uid) {
+        NodeInstance n = nodes.get(uid);
+        return n == null ? null : n.type();
+    }
+
     /** 是否已存在指定类型、指定 short_name 选项值的 ref 节点（凾底接线判重用）。 */
     boolean hasRefWithShortName(String refType, String shortName) {
         return nodes.values().stream().anyMatch(n -> n.type().equals(refType)
