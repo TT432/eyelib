@@ -194,4 +194,108 @@ class GraphLayoutTest {
                 () -> producer.uid() + " 与 " + consumer.uid() + " 垂直距离 "
                         + Math.abs(producer.y() - consumer.y()) + " 超过行距 " + GraphLayout.Y_SPACING);
     }
+
+    @Test
+    void giantFanSplitsIntoMultipleColumns() {
+        // 40 叶纯叶扇超过单列上限（16）：拆成多列后每个子扇以 hub 居中，
+        // 最大边距从 (40−1)/2×110 压到 (16−1)/2×110
+        List<NodeInstance> nodes = new java.util.ArrayList<>();
+        nodes.add(node("hub"));
+        List<Wire> wires = new java.util.ArrayList<>();
+        for (int i = 1; i <= 40; i++) {
+            nodes.add(node("leaf" + i));
+            wires.add(wire("leaf" + i, "hub"));
+        }
+        List<NodeInstance> laid = GraphLayout.layout(nodes, wires);
+
+        float hubY = find(laid, "hub").y();
+        java.util.Set<Float> leafColumns = new java.util.HashSet<>();
+        float maxDist = 0;
+        for (int i = 1; i <= 40; i++) {
+            NodeInstance leaf = find(laid, "leaf" + i);
+            maxDist = Math.max(maxDist, Math.abs(leaf.y() - hubY));
+            leafColumns.add(leaf.x());
+        }
+        assertEquals(3, leafColumns.size(), "40 叶应拆成 3 列（16+16+8），实际 " + leafColumns.size());
+        assertTrue(maxDist <= 15 / 2.0 * GraphLayout.Y_SPACING + 1f,
+                "分列后扇形边缘成员距 hub " + maxDist + " 超过上限 "
+                        + (15 / 2.0 * GraphLayout.Y_SPACING + 1f));
+
+        // 每列内部最小行距保持（不重叠）
+        for (float columnX : leafColumns) {
+            java.util.List<Float> columnYs = new java.util.ArrayList<>();
+            for (int i = 1; i <= 40; i++) {
+                NodeInstance leaf = find(laid, "leaf" + i);
+                if (leaf.x() == columnX) {
+                    columnYs.add(leaf.y());
+                }
+            }
+            columnYs.sort(Float::compare);
+            for (int i = 1; i < columnYs.size(); i++) {
+                assertTrue(columnYs.get(i) - columnYs.get(i - 1) >= GraphLayout.Y_SPACING - 0.01f,
+                        "同列相邻扇成员间距 " + (columnYs.get(i) - columnYs.get(i - 1)) + " 小于行距");
+            }
+        }
+    }
+
+    @Test
+    void chainFedGiantFanSplitsWithoutBreakingEdgeDirections() {
+        // 成员自带生产者的巨扇（度数>1，如带表达式链的 rc.root→entity.root）：
+        // 唯一消费者同为 hub 即满足分列条件；分列不强行移动成员（链锚定），
+        // 但必须保持边方向不倒退、列数正确
+        List<NodeInstance> nodes = new java.util.ArrayList<>();
+        nodes.add(node("hub"));
+        List<Wire> wires = new java.util.ArrayList<>();
+        for (int i = 1; i <= 30; i++) {
+            nodes.add(node("leaf" + i));
+            nodes.add(node("chain" + i));
+            wires.add(wire("leaf" + i, "hub"));
+            wires.add(wire("chain" + i, "leaf" + i)); // 每个叶带一个上游
+        }
+        List<NodeInstance> laid = GraphLayout.layout(nodes, wires);
+
+        java.util.Set<Float> leafColumns = new java.util.HashSet<>();
+        for (int i = 1; i <= 30; i++) {
+            NodeInstance leaf = find(laid, "leaf" + i);
+            leafColumns.add(leaf.x());
+            assertTrue(find(laid, "chain" + i).x() < leaf.x(), "chain" + i + " 应在 leaf" + i + " 左侧");
+            assertTrue(leaf.x() < find(laid, "hub").x(), "leaf" + i + " 应在 hub 左侧");
+        }
+        assertEquals(2, leafColumns.size(), "30 叶应拆成 2 列（16+14），实际 " + leafColumns.size());
+    }
+
+    @Test
+    void hubMovesToFanSpanCenterWhenClearlyBetter() {
+        // 20 个纯叶扇成员被链锚定在 y=0..2090（ hub 的 L1 最优点偏向密集侧）；
+        // hub 独占一列可自由移动。极小极大定位把 hub 移到扇跨中心，
+        // 扇最大边 = 跨度一半；实测判定保证只在明显改善时移动
+        List<NodeInstance> nodes = new java.util.ArrayList<>();
+        nodes.add(node("hub"));
+        List<Wire> wires = new java.util.ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            nodes.add(node("leaf" + i));
+            nodes.add(node("anchor" + i));
+            // anchor 全挂在远处的一个源上，把 leaf 链锚到远离 hub 的位置
+            wires.add(wire("leaf" + i, "hub"));
+            wires.add(wire("anchor" + i, "leaf" + i));
+        }
+        nodes.add(node("farSource"));
+        for (int i = 0; i < 20; i++) {
+            wires.add(wire("farSource", "anchor" + i));
+        }
+        List<NodeInstance> laid = GraphLayout.layout(nodes, wires);
+
+        float hubY = find(laid, "hub").y();
+        float maxFanEdge = 0;
+        float minY = Float.MAX_VALUE, maxY = Float.MIN_VALUE;
+        for (int i = 0; i < 20; i++) {
+            float y = find(laid, "leaf" + i).y();
+            maxFanEdge = Math.max(maxFanEdge, Math.abs(y - hubY));
+            minY = Math.min(minY, y);
+            maxY = Math.max(maxY, y);
+        }
+        float halfSpan = (maxY - minY) / 2;
+        assertTrue(maxFanEdge <= halfSpan + GraphLayout.Y_SPACING,
+                "hub 应在扇跨中心附近：maxFanEdge=" + maxFanEdge + " halfSpan=" + halfSpan);
+    }
 }
