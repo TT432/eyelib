@@ -1,6 +1,8 @@
 package io.github.tt432.eyelib.nodegraph.decompile;
 
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
+import io.github.tt432.eyelib.nodegraph.NodeType;
+import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.StickyNote;
 import io.github.tt432.eyelib.nodegraph.Wire;
 import java.util.ArrayList;
@@ -17,7 +19,8 @@ import java.util.TreeMap;
  * 距离松弛定 y</b>。
  *
  * <p>坐标遵循编辑器既有约定（versions/1.20.1/run/config/eyelib/nodegraph/ng_smoke.json）：
- * 数据流方向 x 左→右（生产者左、消费者右，汇——装配根——在最右列），列距 300、最小行距 110。
+ * 数据流方向 x 左→右（生产者左、消费者右，汇——装配根——在最右列），列距 300；
+ * 垂直间距按节点估计高度逐对计算（{@code 上节点高 + 边距}，默认行距 110 = 标准高 62 + 48）。
  * 无连线的孤立节点（如声明表 ref.*）放在汇左一列。
  *
  * <p>算法阶段（都是确定性纯函数）：
@@ -31,7 +34,7 @@ import java.util.TreeMap;
  *       分列只缩冠幅占用的列高、不强行移动成员——成员位置由链锚定，强挪会把长边挪进链里
  *       （实测 Σ +48%）。</li>
  *   <li><b>距离松弛</b>：高斯-塞德尔迭代，每轮先把每个节点向「全部邻居的中位数 y」拉拢
- *       （L1 目标的单点最优；clamp 保持层内顺序与最小行距），再做<b>纯叶扇居中</b>
+ *       （L1 目标的单点最优；clamp 保持层内顺序与节点高度间距），再做<b>纯叶扇居中</b>
  *       （度数为 1 且共享唯一 hub 的层内连续段作为刚性整体平移到 hub y——压紧段对逐节点
  *       趟无自由度，单向堆叠就靠这个拆开）。轮数按图规模给足并带早退。</li>
  *   <li><b>扇形居中重排</b>（{@link #improveLeafFans}，实测验收的局部搜索）：对明显偏离
@@ -57,8 +60,13 @@ public final class GraphLayout {
 
     /** 列距（同 ng_smoke.json 的 300）。 */
     public static final float X_SPACING = 300f;
-    /** 最小行距（节点不重叠的垂直间距下限）。 */
+    /** 默认行距：两个「标准高度」（62px，如 const.number）节点加上边距后的间距。
+     *  实际垂直间距按节点估计高度逐对计算（{@link #estimateHeight}），本常量只作
+     *  阈值/增益单位与未知类型节点的等效行距。 */
     public static final float Y_SPACING = 110f;
+    /** 节点间垂直边距：间距 = 上节点高 + MARGIN。62（标准高）+ 48 = 110 = 旧固定行距，
+     *  默认节点的视觉间距与旧版一致。 */
+    private static final float NODE_MARGIN = 48f;
 
     /** 松弛早退阈值：单轮最大位移低于此值即视为收敛。 */
     private static final double RELAX_EPSILON = 0.5;
@@ -159,17 +167,27 @@ public final class GraphLayout {
         // 巨扇分列（在赋 y 之前：子列独立从 0 起均布）
         splitGiantFans(byLayer, soleConsumer, soleProducer);
 
-        // 初始均布 y
+        // 节点估计高度（LDLib2 编辑器实测标定，见 {@link #estimateHeight}）：垂直间距按
+        // 「上节点高 + 边距」逐对计算——固定行距会让 16 个 arg 的 query.call（318px）
+        // 这类高节点与邻居重叠（用户实机截图实证 2026-08-07）
+        Map<String, Float> heights = new HashMap<>();
+        for (NodeInstance n : nodes) {
+            heights.put(n.uid(), estimateHeight(n));
+        }
+
+        // 初始均布 y（按累计高度）
         Map<String, Double> ys = new HashMap<>();
         byLayer.values().forEach(group -> {
-            for (int i = 0; i < group.size(); i++) {
-                ys.put(group.get(i).uid(), (double) (i * Y_SPACING));
+            double y = 0;
+            for (NodeInstance n : group) {
+                ys.put(n.uid(), y);
+                y += heightOf(heights, n.uid()) + NODE_MARGIN;
             }
         });
 
-        relaxDistances(byLayer, consumers, producers, ys, soleHub, nodes.size());
-        improveLeafFans(byLayer, soleHub, consumers, producers, wires, ys, nodes.size());
-        centerHubsOnFanSpan(byLayer, soleConsumer, soleProducer, ys, wires);
+        relaxDistances(byLayer, consumers, producers, ys, soleHub, heights, nodes.size());
+        improveLeafFans(byLayer, soleHub, consumers, producers, wires, ys, heights, nodes.size());
+        centerHubsOnFanSpan(byLayer, soleConsumer, soleProducer, ys, wires, heights);
         normalizeY(ys);
 
         // 列 x 槽位：从右向左按（层号升序、层内 sub 降序）逐个占槽。无分列时与
@@ -291,7 +309,8 @@ public final class GraphLayout {
     private static void centerHubsOnFanSpan(Map<ColumnKey, List<NodeInstance>> byLayer,
                                             Map<String, String> soleConsumer,
                                             Map<String, String> soleProducer,
-                                            Map<String, Double> ys, List<Wire> wires) {
+                                            Map<String, Double> ys, List<Wire> wires,
+                                            Map<String, Float> heights) {
         // hub → 扇成员
         Map<String, List<String>> fanOf = new HashMap<>();
         for (Map.Entry<String, String> e : soleConsumer.entrySet()) {
@@ -323,9 +342,11 @@ public final class GraphLayout {
                 }
                 double target = (lo + hi) / 2;
                 double loBound = i > 0
-                        ? yOf(ys, group.get(i - 1).uid()) + Y_SPACING : Double.NEGATIVE_INFINITY;
+                        ? yOf(ys, group.get(i - 1).uid()) + heightOf(heights, group.get(i - 1).uid()) + NODE_MARGIN
+                        : Double.NEGATIVE_INFINITY;
                 double hiBound = i + 1 < group.size()
-                        ? yOf(ys, group.get(i + 1).uid()) - Y_SPACING : Double.POSITIVE_INFINITY;
+                        ? yOf(ys, group.get(i + 1).uid()) - NODE_MARGIN - heightOf(heights, uid)
+                        : Double.POSITIVE_INFINITY;
                 double oldY = yOf(ys, uid);
                 double newY = Math.min(Math.max(target, loBound), hiBound);
                 if (newY == oldY) {
@@ -351,35 +372,37 @@ public final class GraphLayout {
         return max;
     }
 
-    /** 便签定位：图最右列右侧一列，自上而下堆叠（其余字段直通）。 */
+    /** 便签定位：图最右列右侧一列，自上而下堆叠（行距取默认行距与便签自身高度+边距的较大者）。 */
     public static List<StickyNote> placeStickyNotes(List<StickyNote> notes, List<NodeInstance> laidOutNodes) {
         float maxX = 0;
         for (NodeInstance n : laidOutNodes) {
             maxX = Math.max(maxX, n.x());
         }
         List<StickyNote> out = new ArrayList<>(notes.size());
-        for (int i = 0; i < notes.size(); i++) {
-            StickyNote n = notes.get(i);
-            out.add(new StickyNote(n.uid(), n.text(), maxX + X_SPACING, i * Y_SPACING,
+        float y = 0;
+        for (StickyNote n : notes) {
+            out.add(new StickyNote(n.uid(), n.text(), maxX + X_SPACING, y,
                     n.width(), n.height(), n.color()));
+            y += Math.max(Y_SPACING, n.height() + 10f);
         }
         return out;
     }
 
     /**
      * 距离松弛：高斯-塞德尔迭代。每轮两层动作：① 逐节点向「全部邻居（生产者+消费者）
-     * 的中位数 y」拉拢（L1 目标的单点最优；clamp 保持层内顺序与最小行距）；② 纯叶扇居中（{@link #centerLeafFans}）。
+     * 的中位数 y」拉拢（L1 目标的单点最优；clamp 保持层内顺序与节点高度间距）；② 纯叶扇居中（{@link #centerLeafFans}）。
      * 孤立节点无邻居不参与①（留在均布位）。
      */
     private static void relaxDistances(Map<ColumnKey, List<NodeInstance>> byLayer,
                                        Map<String, List<String>> consumers,
                                        Map<String, List<String>> producers,
-                                       Map<String, Double> ys, Map<String, String> soleHub, int nodeCount) {
+                                       Map<String, Double> ys, Map<String, String> soleHub,
+                                       Map<String, Float> heights, int nodeCount) {
         int maxIterations = 2 * nodeCount + 16;
         for (int iteration = 0; iteration < maxIterations; iteration++) {
             double maxDelta = 0;
             for (List<NodeInstance> group : byLayer.values()) {
-                double prevY = Double.NEGATIVE_INFINITY;
+                double prevBottom = Double.NEGATIVE_INFINITY;
                 for (int i = 0; i < group.size(); i++) {
                     NodeInstance n = group.get(i);
                     double current = yOf(ys, n.uid());
@@ -387,18 +410,20 @@ public final class GraphLayout {
                             ? yOf(ys, group.get(i + 1).uid()) : Double.POSITIVE_INFINITY;
                     double desired = medianAllNeighborsY(n.uid(), consumers, producers, ys);
                     if (Double.isNaN(desired)) {
-                        prevY = current; // 孤立节点：不动
+                        prevBottom = current + heightOf(heights, n.uid()); // 孤立节点：不动
                         continue;
                     }
-                    double clamped = Math.min(Math.max(desired, prevY + Y_SPACING), nextY - Y_SPACING);
+                    double clamped = Math.min(
+                            Math.max(desired, prevBottom + NODE_MARGIN),
+                            nextY - NODE_MARGIN - heightOf(heights, n.uid()));
                     if (clamped != current) {
                         ys.put(n.uid(), clamped);
                         maxDelta = Math.max(maxDelta, Math.abs(clamped - current));
                     }
-                    prevY = clamped;
+                    prevBottom = clamped + heightOf(heights, n.uid());
                 }
             }
-            maxDelta = Math.max(maxDelta, centerLeafFans(byLayer, soleHub, ys));
+            maxDelta = Math.max(maxDelta, centerLeafFans(byLayer, soleHub, ys, heights));
             if (maxDelta < RELAX_EPSILON) {
                 return;
             }
@@ -414,7 +439,8 @@ public final class GraphLayout {
      */
     private static double centerLeafFans(Map<ColumnKey, List<NodeInstance>> byLayer,
                                          Map<String, String> soleHub,
-                                         Map<String, Double> ys) {
+                                         Map<String, Double> ys,
+                                         Map<String, Float> heights) {
         double maxDelta = 0;
         for (List<NodeInstance> group : byLayer.values()) {
             int size = group.size();
@@ -435,10 +461,12 @@ public final class GraphLayout {
                     double lastY = yOf(ys, group.get(j).uid());
                     double t = hubY - (firstY + lastY) / 2;
                     double lo = i > 0
-                            ? yOf(ys, group.get(i - 1).uid()) + Y_SPACING - firstY
+                            ? yOf(ys, group.get(i - 1).uid()) + heightOf(heights, group.get(i - 1).uid())
+                                    + NODE_MARGIN - firstY
                             : Double.NEGATIVE_INFINITY;
                     double hi = j + 1 < size
-                            ? yOf(ys, group.get(j + 1).uid()) - Y_SPACING - lastY
+                            ? yOf(ys, group.get(j + 1).uid()) - NODE_MARGIN
+                                    - heightOf(heights, group.get(j).uid()) - lastY
                             : Double.POSITIVE_INFINITY;
                     t = Math.min(Math.max(t, lo), hi);
                     if (Math.abs(t) > 1e-6) {
@@ -475,9 +503,10 @@ public final class GraphLayout {
                                         Map<String, List<String>> consumers,
                                         Map<String, List<String>> producers,
                                         List<Wire> wires, Map<String, Double> ys,
+                                        Map<String, Float> heights,
                                         int nodeCount) {
         for (int round = 0; round < MAX_FAN_IMPROVE_ROUNDS; round++) {
-            if (!tryOneFanCentering(byLayer, soleHub, consumers, producers, wires, ys, nodeCount)) {
+            if (!tryOneFanCentering(byLayer, soleHub, consumers, producers, wires, ys, heights, nodeCount)) {
                 return;
             }
         }
@@ -491,7 +520,8 @@ public final class GraphLayout {
                                               Map<String, String> soleHub,
                                               Map<String, List<String>> consumers,
                                               Map<String, List<String>> producers,
-                                              List<Wire> wires, Map<String, Double> ys, int nodeCount) {
+                                              List<Wire> wires, Map<String, Double> ys,
+                                              Map<String, Float> heights, int nodeCount) {
         for (List<NodeInstance> group : byLayer.values()) {
             // hub → 该层内扇成员（LinkedHashMap 保证遍历确定）
             Map<String, List<NodeInstance>> fans = new LinkedHashMap<>();
@@ -509,10 +539,12 @@ public final class GraphLayout {
                 }
                 double hubY = yOf(ys, e.getKey());
                 double maxEdge = 0;
+                double window = -NODE_MARGIN; // 扇窗像素高 = Σ成员高 + 边距×(k−1)
                 for (NodeInstance n : e.getValue()) {
                     maxEdge = Math.max(maxEdge, Math.abs(yOf(ys, n.uid()) - hubY));
+                    window += heightOf(heights, n.uid()) + NODE_MARGIN;
                 }
-                double optimal = (k - 1) / 2.0 * Y_SPACING;
+                double optimal = window / 2;
                 if (maxEdge > optimal + Y_SPACING) {
                     candidates.add(e);
                 }
@@ -529,8 +561,8 @@ public final class GraphLayout {
                 double before = totalEdgeLength(wires, ys);
                 List<NodeInstance> savedOrder = new ArrayList<>(group);
                 Map<String, Double> savedYs = new HashMap<>(ys);
-                centerFanOnHub(group, hub, soleHub, ys);
-                relaxDistances(byLayer, consumers, producers, ys, soleHub, nodeCount);
+                centerFanOnHub(group, hub, soleHub, ys, heights);
+                relaxDistances(byLayer, consumers, producers, ys, soleHub, heights, nodeCount);
                 double after = totalEdgeLength(wires, ys);
                 if (LAYOUT_DEBUG) {
                     org.slf4j.LoggerFactory.getLogger(GraphLayout.class).info(
@@ -557,7 +589,8 @@ public final class GraphLayout {
      * 是否保留由全图边长和实测判定（见 {@link #tryOneFanCentering}）。
      */
     private static void centerFanOnHub(List<NodeInstance> group, String hub,
-                                       Map<String, String> soleHub, Map<String, Double> ys) {
+                                       Map<String, String> soleHub, Map<String, Double> ys,
+                                       Map<String, Float> heights) {
         double hubY = yOf(ys, hub);
         List<NodeInstance> fan = new ArrayList<>();
         List<NodeInstance> prefix = new ArrayList<>();
@@ -571,20 +604,26 @@ public final class GraphLayout {
                 suffix.add(n);
             }
         }
-        int k = fan.size();
-        double startY = hubY - (k - 1) / 2.0 * Y_SPACING;
-        double y = startY - Y_SPACING;
+        // 扇窗像素高 = Σ成员高 + 边距×(k−1)；以 hub 中心居中
+        double window = -NODE_MARGIN;
+        for (NodeInstance n : fan) {
+            window += heightOf(heights, n.uid()) + NODE_MARGIN;
+        }
+        double startY = hubY + heightOf(heights, hub) / 2 - window / 2;
+        double y = startY - NODE_MARGIN;
         for (int i = prefix.size() - 1; i >= 0; i--) {
+            y -= heightOf(heights, prefix.get(i).uid());
             ys.put(prefix.get(i).uid(), y);
-            y -= Y_SPACING;
+            y -= NODE_MARGIN;
         }
-        for (int i = 0; i < k; i++) {
-            ys.put(fan.get(i).uid(), startY + i * Y_SPACING);
+        y = startY;
+        for (NodeInstance n : fan) {
+            ys.put(n.uid(), y);
+            y += heightOf(heights, n.uid()) + NODE_MARGIN;
         }
-        y = startY + k * Y_SPACING;
         for (NodeInstance n : suffix) {
             ys.put(n.uid(), y);
-            y += Y_SPACING;
+            y += heightOf(heights, n.uid()) + NODE_MARGIN;
         }
         group.clear();
         group.addAll(prefix);
@@ -639,6 +678,60 @@ public final class GraphLayout {
 
     private static double yOf(Map<String, Double> ys, String uid) {
         return ys.getOrDefault(uid, 0.0);
+    }
+
+    /** 读取节点估计高度（缺省按标准高 62）。 */
+    private static float heightOf(Map<String, Float> heights, String uid) {
+        return heights.getOrDefault(uid, UNKNOWN_NODE_HEIGHT);
+    }
+
+    /** 未知类型节点的等效高度（= const.number 实测高 62，配合 {@link #NODE_MARGIN} 保持默认行距 110）。 */
+    private static final float UNKNOWN_NODE_HEIGHT = 62f;
+    /** variable 节点（变量芯片）实测高 18，估计取 20。 */
+    private static final float VARIABLE_NODE_HEIGHT = 20f;
+    /** 内嵌资产预览的 ref 节点（ref.texture/ref.geometry，64px 预览）实测高 172，估计取 174。 */
+    private static final float REF_PREVIEW_NODE_HEIGHT = 174f;
+    /** 无预览的 ref 节点实测高 94，估计取 96。 */
+    private static final float REF_NODE_HEIGHT = 96f;
+    /**
+     * 布局用空子图解析器：布局只需端口数量，子图调用节点的动态端口按静态端口计
+     * （低估只多留空白，不会重叠）。
+     */
+    private static final NodeType.SubgraphResolver NO_SUBGRAPH = subgraphName -> java.util.Optional.empty();
+
+    /**
+     * 节点渲染高度估计（图坐标单位）：{@code 28 + 16×max(入,出) + 18×选项行数}。
+     * 常数经 LDLib2 编辑器实测标定（2026-08-07，1.20.1 fork 2.2.27，812 节点全量采样，
+     * 最大误差 +2，宁高估不低估——高估只多留白，低估会重叠）：
+     * query.call(arg_count=16) 实测 318 = 28+16×16+18×2；entity.root(11 入 1 选项) 实测 222 精确命中。
+     * 选项文本不换行（单行省略），与高度无关——实测同类型 len=29 与 len=40 高度相同。
+     * 特例：ref.texture / ref.geometry 内嵌 64px 资产预览（实测 172）；
+     * 其余 ref.* 无预览但选项区较高（实测 94）。
+     */
+    private static float estimateHeight(NodeInstance n) {
+        switch (n.type()) {
+            case "variable":
+                return VARIABLE_NODE_HEIGHT;
+            case "ref.texture":
+            case "ref.geometry":
+                return REF_PREVIEW_NODE_HEIGHT;
+            case "ref.animation":
+            case "ref.material":
+            case "ref.ac":
+            case "ref.rc":
+                return REF_NODE_HEIGHT;
+            default:
+                break;
+        }
+        java.util.Optional<NodeType> typeOpt = NodeTypes.get(n.type());
+        if (typeOpt.isEmpty()) {
+            return UNKNOWN_NODE_HEIGHT;
+        }
+        NodeType type = typeOpt.get();
+        int rows = Math.max(
+                type.inputsOf(n, NO_SUBGRAPH).size(),
+                type.outputsOf(n, NO_SUBGRAPH).size());
+        return 28 + 16f * rows + 18f * type.options().size();
     }
 
     private static int layerOf(String uid, Map<String, List<String>> consumers,
