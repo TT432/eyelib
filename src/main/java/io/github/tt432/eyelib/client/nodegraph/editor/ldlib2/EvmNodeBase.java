@@ -3,7 +3,6 @@ package io.github.tt432.eyelib.client.nodegraph.editor.ldlib2;
 import com.google.gson.JsonElement;
 import com.lowdragmc.lowdraglib2.configurator.IConfigurable;
 import com.lowdragmc.lowdraglib2.configurator.ui.ColorConfigurator;
-import com.lowdragmc.lowdraglib2.configurator.ui.SelectorConfigurator;
 import com.lowdragmc.lowdraglib2.configurator.ui.StringConfigurator;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.INodeOption;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.node.Node;
@@ -149,7 +148,7 @@ public abstract class EvmNodeBase extends Node {
 
     /**
      * 资产候选配置器（规格 §4.2）：StringConfigurator 保留自由输入（外部契约逃生舱），
-     * SelectorConfigurator 供给运行时注册表候选（检查器每次打开取 COW 快照）；两行绑同一选项值。
+     * EvmSelectorConfigurator 供给运行时注册表候选（懒构建，见 LazySelector；检查器每次打开取 COW 快照）；两行绑同一选项值。
      */
     private static ITypeConfigurable assetSuggestions(String suggestionKey) {
         return (valueConfigurable, typeHandle) -> IConfigurable.create(father -> {
@@ -158,7 +157,7 @@ public abstract class EvmNodeBase extends Node {
             String fallback = java.util.Objects.toString(valueConfigurable.getDefaultValue(), "");
             boolean forceUpdate = valueConfigurable.forceUpdate();
             father.addConfigurator(new StringConfigurator("", getter, setter, fallback, forceUpdate));
-            father.addConfigurator(new SelectorConfigurator<>("", getter, setter, fallback, forceUpdate,
+            father.addConfigurator(new EvmSelectorConfigurator<>("", getter, setter, fallback, forceUpdate,
                     AssetSuggestions.suggest(suggestionKey), s -> s));
         });
     }
