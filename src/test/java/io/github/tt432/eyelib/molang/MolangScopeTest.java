@@ -82,6 +82,34 @@ class MolangScopeTest {
     }
 
     @Test
+    void clearTempVariables只清temp保留variable() {
+        MolangScope scope = new MolangScope();
+        scope.set("temp.a", 1.0f);
+        scope.set("variable.b", 2.0f);
+        scope.set("plain", 3.0f);
+
+        scope.clearTempVariables();
+
+        assertFalse(scope.contains("temp.a"));
+        assertEquals(2.0f, scope.get("variable.b").asFloat(), 0.0001f);
+        assertEquals(3.0f, scope.get("plain").asFloat(), 0.0001f);
+    }
+
+    @Test
+    void clearTempVariables不动parent链() {
+        MolangScope parent = new MolangScope();
+        parent.set("temp.p", 9.0f);
+        MolangScope child = new MolangScope();
+        child.setParent(parent);
+        child.set("temp.c", 1.0f);
+
+        child.clearTempVariables();
+
+        assertFalse(child.contains("temp.c"));
+        assertEquals(9.0f, child.get("temp.p").asFloat(), 0.0001f);
+    }
+
+    @Test
     void remove从缓存中移除变量() {
         MolangScope scope = new MolangScope();
         scope.set("key", 10.0f);

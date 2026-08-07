@@ -27,6 +27,22 @@ class MolangValueTest {
     }
 
     @Test
+    void temp变量跨求值清空variable保留() {
+        MolangScope scope = new MolangScope();
+        new MolangValue("t.x = 5; v.y = 7").eval(scope);
+
+        // BE 语义：temp.* 仅在单次表达式求值内有效，下一个表达式读到 0；variable.* 持久
+        assertEquals(0.0f, new MolangValue("t.x").eval(scope), 0.0001f);
+        assertEquals(7.0f, new MolangValue("v.y").eval(scope), 0.0001f);
+    }
+
+    @Test
+    void 单次求值内temp正常读写() {
+        MolangScope scope = new MolangScope();
+        assertEquals(7.0f, new MolangValue("t.x = 5; return t.x + 2").eval(scope), 0.0001f);
+    }
+
+    @Test
     void 空字符串求值得0() {
         MolangValue v = new MolangValue("");
         assertEquals(0.0f, v.eval(new MolangScope()), 0.0001f);

@@ -103,6 +103,24 @@ public final class MolangScope {
 
     private final Map<String, MolangObject> cache = new ConcurrentHashMap<>();
 
+    // temp.* 键登记（BE 语义：temp.* 仅在当前表达式求值内有效，见 clearTempVariables）。
+    // 与 cache 同源写入/移除，localEntries 视图天然包含 temp 条目。
+    private final java.util.Set<String> tempKeys = ConcurrentHashMap.newKeySet();
+
+    private static boolean isTempKey(String name) {
+        return name.startsWith("temp.");
+    }
+
+    /**
+     * 清空本层全部 {@code temp.*} 变量。Bedrock 语义：temp 是单次表达式求值的草稿区，
+     * 跨求值不保留。求值入口（{@code MolangValue#getObject}）每次调用前执行本方法；
+     * variable.* 与 host context 不受影响。仅清本层，不动 parent 链。
+     */
+    public void clearTempVariables() {
+        tempKeys.forEach(cache::remove);
+        tempKeys.clear();
+    }
+
     // molang `this` 绑定：关键帧语境下恒为标量 float，走专用字段避免每轴 Map 写入与装箱。
     // 语义与 cache 路径一致：沿 parent 链取最近的绑定。
     private float thisValue;
@@ -151,17 +169,27 @@ public final class MolangScope {
 
     public MolangObject set(String name, FloatSupplier value) {
         MolangFloatSupplierObject object = new MolangFloatSupplierObject(value);
-        cache.put(name, object);
+        putTracked(name, object);
         return object;
     }
 
     public MolangObject set(String name, MolangObject object) {
-        cache.put(name, object);
+        putTracked(name, object);
         return object;
+    }
+
+    private void putTracked(String name, MolangObject object) {
+        cache.put(name, object);
+        if (isTempKey(name)) {
+            tempKeys.add(name);
+        }
     }
 
     public void remove(String name) {
         cache.remove(name);
+        if (isTempKey(name)) {
+            tempKeys.remove(name);
+        }
     }
 
     /**

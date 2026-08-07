@@ -116,7 +116,12 @@ public record MolangValue(
     public static final Codec<MolangValue> CODEC = MolangCodecs.singleOrListStrings()
                                                                .xmap(parts -> new MolangValue(String.join("", parts)), value -> List.of(value.toString()));
 
+    /**
+     * 在当前 scope 上求值。Bedrock 语义：{@code temp.*} 仅在单次表达式求值内有效，
+     * 故每次求值前先清空 scope 本层的 temp 变量（variable.* 不动）。
+     */
     public MolangObject getObject(MolangScope scope) {
+        scope.clearTempVariables();
         try {
             return Objects.requireNonNullElse(method.apply(scope), MolangNull.INSTANCE);
         } catch (Throwable e) {
