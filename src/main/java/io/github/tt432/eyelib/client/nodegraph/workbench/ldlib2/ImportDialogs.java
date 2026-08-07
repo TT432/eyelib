@@ -6,9 +6,12 @@ import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Dialog;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Switch;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextArea;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
+import dev.vfyjxf.taffy.style.FlexDirection;
 import io.github.tt432.eyelib.client.jsonview.EntityJsonService;
 import io.github.tt432.eyelib.client.nodegraph.DiagnosticsCenter;
 import io.github.tt432.eyelib.client.nodegraph.GraphLibraryManager;
@@ -81,6 +84,9 @@ final class ImportDialogs {
 
     // ==================== 入口菜单 ====================
 
+    /** 「导入时内联变量」复选框状态（会话级；规格 nodegraph-import-inline-variables）。 */
+    private static boolean inlineVariables;
+
     /** 工具条「导入」按钮：三个来源的入口对话框。 */
     static void openImportMenu(UIElement host) {
         ModularUI mui = host.getModularUI();
@@ -102,11 +108,29 @@ final class ImportDialogs {
             dialog.close();
             openFileDialog(mui);
         }));
+        dialog.addContent(inlineVariablesRow());
         dialog.addButton(new Button()
                 .setOnClick(event -> dialog.close())
                 .setText("ldlib.gui.tips.cancel")
                 .addClass("__cancel-button__"));
         dialog.show(mui);
+    }
+
+    /** 「导入时内联变量」复选行：勾选后导入自动内联可内联的变量（单写单读，规格文档有完整条件）。 */
+    private static UIElement inlineVariablesRow() {
+        UIElement row = new UIElement()
+                .layout(layout -> layout.widthPercent(100).height(14)
+                        .flexDirection(FlexDirection.ROW).gapAll(4));
+        Label label = new Label();
+        label.setText(Component.literal("导入时内联可内联的变量"));
+        label.textStyle(style -> style.fontSize(9));
+        label.layout(layout -> layout.flex(1).heightPercent(100));
+        Switch toggle = new Switch();
+        toggle.setOn(inlineVariables, false);
+        toggle.setOnSwitchChanged(on -> inlineVariables = on);
+        row.addChild(label);
+        row.addChild(toggle);
+        return row;
     }
 
     private static Button menuButton(String text, Runnable onClick) {
@@ -184,7 +208,7 @@ final class ImportDialogs {
             } else {
                 // D4 跨文档关联：携已知短名表回填裸短名 ref 的标识符
                 finish(JsonGraphImporters.importRenderController(
-                        fileJson, entry.id(), KnownRefTables.collectForRc(entry.id())), entry.id());
+                        fileJson, entry.id(), KnownRefTables.collectForRc(entry.id()), inlineVariables), entry.id());
             }
         } catch (RuntimeException e) {
             LOGGER.warn("[nodegraph] registry import failed for '{}'", entry.id(), e);
@@ -249,12 +273,14 @@ final class ImportDialogs {
             }
             String rcName = firstKey(root, "render_controllers");
             if (rcName != null) {
-                finish(JsonGraphImporters.importRenderController(root, rcName, KnownRefTables.collectForRc(rcName)), rcName);
+                finish(JsonGraphImporters.importRenderController(root, rcName,
+                        KnownRefTables.collectForRc(rcName), inlineVariables), rcName);
                 return;
             }
             String acName = firstKey(root, "animation_controllers");
             if (acName != null) {
-                finish(JsonGraphImporters.importAnimationControllers(root, acName, KnownRefTables.collect()), acName);
+                finish(JsonGraphImporters.importAnimationControllers(root, acName,
+                        KnownRefTables.collect(), inlineVariables), acName);
                 return;
             }
             reportError("文本导入", "无法判别 JSON 形态：根键需为 minecraft:client_entity / render_controllers / animation_controllers 之一");
@@ -294,7 +320,7 @@ final class ImportDialogs {
      */
     private static void importEntityWithClosure(JsonObject root, String baseName) {
         String entityName = freshLibraryName(baseName);
-        ImportClosure.Result closure = ImportClosure.importWithClosure(root, entityName);
+        ImportClosure.Result closure = ImportClosure.importWithClosure(root, entityName, inlineVariables);
         String entityId = closure.entityId() != null ? closure.entityId() : entityName;
         List<DiagnosticsCenter.Section> sections = new ArrayList<>();
         sections.add(new DiagnosticsCenter.Section(entityId, closure.entity().diagnostics()));

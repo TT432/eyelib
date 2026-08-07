@@ -81,7 +81,15 @@ public final class JsonGraphImporters {
      */
     public static ImportResult importClientEntity(JsonObject fileJson,
                                                   Function<String, Optional<JsonObject>> rcResolver) {
+        return importClientEntity(fileJson, rcResolver, false);
+    }
+
+    /** 同上，{@code inlineVariables=true} 时启用导入期变量内联（规格 nodegraph-import-inline-variables）。 */
+    public static ImportResult importClientEntity(JsonObject fileJson,
+                                                  Function<String, Optional<JsonObject>> rcResolver,
+                                                  boolean inlineVariables) {
         ImportGraphBuilder b = new ImportGraphBuilder();
+        b.inlineVariables(inlineVariables);
         JsonObject wrapper = objOrNull(fileJson, "minecraft:client_entity");
         JsonObject desc = wrapper == null ? null : objOrNull(wrapper, "description");
         if (desc == null) {
@@ -388,7 +396,15 @@ public final class JsonGraphImporters {
      */
     public static ImportResult importRenderController(JsonObject fileJson, String rcName,
                                                       ShortNameOps.KnownTables known) {
+        return importRenderController(fileJson, rcName, known, false);
+    }
+
+    /** 同上，{@code inlineVariables=true} 时启用导入期变量内联。 */
+    public static ImportResult importRenderController(JsonObject fileJson, String rcName,
+                                                      ShortNameOps.KnownTables known,
+                                                      boolean inlineVariables) {
         ImportGraphBuilder b = new ImportGraphBuilder();
+        b.inlineVariables(inlineVariables);
         JsonObject controllers = objOrNull(fileJson, "render_controllers");
         JsonObject entry = controllers == null ? null : objOrNull(controllers, rcName);
         if (entry == null) {
@@ -543,7 +559,15 @@ public final class JsonGraphImporters {
     /** 同上传入已知短名表（规格 D4）：state animations 裸短名 ref 命中表项时回填标识符。 */
     public static ImportResult importAnimationControllers(JsonObject fileJson, String acName,
                                                           ShortNameOps.KnownTables known) {
+        return importAnimationControllers(fileJson, acName, known, false);
+    }
+
+    /** 同上，{@code inlineVariables=true} 时启用导入期变量内联。 */
+    public static ImportResult importAnimationControllers(JsonObject fileJson, String acName,
+                                                          ShortNameOps.KnownTables known,
+                                                          boolean inlineVariables) {
         ImportGraphBuilder b = new ImportGraphBuilder();
+        b.inlineVariables(inlineVariables);
         JsonObject controllers = objOrNull(fileJson, "animation_controllers");
         JsonObject schema = controllers == null ? null : objOrNull(controllers, acName);
         if (schema == null) {

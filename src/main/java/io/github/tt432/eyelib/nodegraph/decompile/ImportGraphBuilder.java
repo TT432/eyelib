@@ -15,6 +15,7 @@ import io.github.tt432.eyelib.nodegraph.VariableDecl;
 import io.github.tt432.eyelib.nodegraph.Wire;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,6 +34,12 @@ final class ImportGraphBuilder {
     private int uidSeq;
     private int fragmentSeq;
     private int stickySeq;
+    /** 导入期变量内联开关（规格 nodegraph-import-inline-variables；默认关，UI 复选框 opt-in）。 */
+    private boolean inlineVariables;
+
+    void inlineVariables(boolean inlineVariables) {
+        this.inlineVariables = inlineVariables;
+    }
 
     // ---------- 选项/节点构造 ----------
 
@@ -215,9 +222,18 @@ final class ImportGraphBuilder {
     // ---------- 产出 ----------
 
     ImportResult build(GraphKind kind) {
-        List<NodeInstance> laidOut = GraphLayout.layout(List.copyOf(nodes.values()), wires);
+        Collection<NodeInstance> buildNodes = nodes.values();
+        List<Wire> buildWires = wires;
+        if (inlineVariables) {
+            // 内联必须在布局前：删除的节点不占位，布局直接按内联后拓扑排布
+            VariableInliner.Result inlined = VariableInliner.inline(buildNodes, buildWires);
+            buildNodes = inlined.nodes();
+            buildWires = inlined.wires();
+            diagnostics.addAll(inlined.diagnostics());
+        }
+        List<NodeInstance> laidOut = GraphLayout.layout(List.copyOf(buildNodes), buildWires);
         List<StickyNote> placed = GraphLayout.placeStickyNotes(stickies, laidOut);
-        GraphData data = new GraphData(laidOut, List.copyOf(wires), collectVariables(laidOut),
+        GraphData data = new GraphData(laidOut, List.copyOf(buildWires), collectVariables(laidOut),
                 List.of(), placed, Optional.empty());
         return new ImportResult(
                 new GraphLibrary(GraphLibrary.CURRENT_FORMAT_VERSION, kind, "root", Map.of("root", data)),

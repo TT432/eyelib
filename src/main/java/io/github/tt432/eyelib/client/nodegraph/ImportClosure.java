@@ -109,9 +109,15 @@ public final class ImportClosure {
      * AC 库的命名与注册由调用方负责。
      */
     public static Result importWithClosure(JsonObject entityFileJson, String entityLibraryName) {
+        return importWithClosure(entityFileJson, entityLibraryName, false);
+    }
+
+    /** 同上，{@code inlineVariables=true} 时启用导入期变量内联（实体库与 AC 闭包库都应用）。 */
+    public static Result importWithClosure(JsonObject entityFileJson, String entityLibraryName,
+                                           boolean inlineVariables) {
         LazyScan rcScan = new LazyScan(RC_DIR);
         ImportResult entity = JsonGraphImporters.importClientEntity(entityFileJson,
-                rcId -> registryRenderController(rcId).or(() -> rcScan.find(rcId)));
+                rcId -> registryRenderController(rcId).or(() -> rcScan.find(rcId)), inlineVariables);
         GraphLibraryManager.INSTANCE.put(entityLibraryName, entity.library());
 
         String identifier = entity.library().mainGraph().nodes().stream()
@@ -127,7 +133,7 @@ public final class ImportClosure {
             Optional<JsonObject> doc = acScan.find(acId);
             acs.add(doc.<NamedImport>map(json -> NamedImport.found(acId,
                             JsonGraphImporters.importAnimationControllers(
-                                    json, acId, KnownRefTables.collect())))
+                                    json, acId, KnownRefTables.collect(), inlineVariables)))
                     .orElseGet(() -> NamedImport.miss(acId)));
         }
 
