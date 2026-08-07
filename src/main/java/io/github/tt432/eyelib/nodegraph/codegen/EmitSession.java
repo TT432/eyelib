@@ -3,6 +3,8 @@ package io.github.tt432.eyelib.nodegraph.codegen;
 import com.google.gson.JsonElement;
 import io.github.tt432.eyelib.nodegraph.ColorValues;
 import io.github.tt432.eyelib.nodegraph.Diagnostic;
+import io.github.tt432.eyelib.nodegraph.EmolangFunction;
+import io.github.tt432.eyelib.nodegraph.EmolangRegistry;
 import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphInterface;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
@@ -16,6 +18,9 @@ import io.github.tt432.eyelib.nodegraph.PortRef;
 import io.github.tt432.eyelib.nodegraph.PortType;
 import io.github.tt432.eyelib.nodegraph.ShortNames;
 import io.github.tt432.eyelib.nodegraph.Wire;
+import io.github.tt432.eyelib.molang.compiler.frontend.MolangToken;
+import io.github.tt432.eyelib.molang.compiler.frontend.MolangTokenKind;
+import io.github.tt432.eyelib.molang.compiler.frontend.MolangTokenizer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -46,6 +51,8 @@ import java.util.regex.Pattern;
 final class EmitSession {
     /** 子图展开深度上限（规格 §2.4-9 防御性限制）。 */
     private static final int MAX_SUBGRAPH_DEPTH = 32;
+    /** .emolang 自定义函数展开深度上限（规格 nodegraph-emolang-functions §4-5）。 */
+    private static final int MAX_EMOLANG_DEPTH = 32;
 
     /** 可直接文本复制的表达式：全名标识符 / 数字字面量 / 字符串字面量。 */
     private static final Pattern DUPLICATABLE = Pattern.compile(
@@ -59,6 +66,10 @@ final class EmitSession {
     private final Deque<String> subgraphStack = new ArrayDeque<>();
     /** 全局子图调用计数（名称隔离前缀 K 的来源）。 */
     private int subgraphCallCounter;
+    /** .emolang 展开的函数名栈（递归检测 + 深度限制）。 */
+    private final Deque<String> emolangStack = new ArrayDeque<>();
+    /** 全局 .emolang 展开计数（temp.em<K>_ 前缀来源）。 */
+    private int emolangCallCounter;
 
     EmitSession(GraphLibrary library) {
         this.library = library;
@@ -424,6 +435,20 @@ final class EmitSession {
     /** query.call / math.call / exec.call 的公共发射：0 参数 → 属性访问形，否则调用形。 */
     private Out emitCallLike(Frame f, NodeInstance node, NodeType type) {
         String function = string(node, type, "function");
+        // .emolang 自定义函数 → 内联展开（规格 nodegraph-emolang-functions §4）
+        EmolangFunction custom = EmolangRegistry.find(function);
+        if (custom != null) {
+            return emitEmolangCall(f, node, type, custom);
+        }
+        // 裸名且非顶层内建（loop/for_each 等）→ 直发会产生非法 molang，提前警告
+        if (!function.isBlank() && function.indexOf('.') < 0
+                && !io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries
+                        .mappingTree().toplevelNode.actualFunctions.containsKey(function)) {
+            diagnostics.add(Diagnostic.warning("UNKNOWN_FUNCTION",
+                    "unknown bare function '" + function
+                            + "' (not a rooted built-in, not a loaded .emolang); emitted as-is",
+                    node.uid()));
+        }
         List<String> preludes = new ArrayList<>();
         List<String> args = new ArrayList<>();
         for (PortDef in : type.inputsOf(node, f.resolver)) {
@@ -434,6 +459,244 @@ final class EmitSession {
         }
         String expr = args.isEmpty() ? function : function + "(" + String.join(", ", args) + ")";
         return new Out(preludes, expr);
+    }
+
+    // ---------- .emolang 展开（规格 nodegraph-emolang-functions §4） ----------
+
+    /** 自定义函数调用：实参在调用点帧先发射，再递归展开函数体。 */
+    private Out emitEmolangCall(Frame f, NodeInstance node, NodeType type, EmolangFunction fn) {
+        List<String> preludes = new ArrayList<>();
+        List<String> args = new ArrayList<>();
+        int missing = 0;
+        for (PortDef in : type.inputsOf(node, f.resolver)) {
+            if (in.direction() != PortDirection.IN || !in.type().isValue()) continue;
+            boolean wired = wireInto(f.graph, node.uid(), in.id()).isPresent();
+            boolean inlined = node.constants().containsKey(in.id());
+            if (!wired && !inlined) {
+                // 未连接的形参按 0 占位（warning 而非 UNCONNECTED_INPUT 硬错误）
+                missing++;
+                args.add("0");
+                continue;
+            }
+            Out arg = emitValueInput(f, node.uid(), in.id());
+            preludes.addAll(arg.preludes());
+            args.add(arg.expr());
+        }
+        List<EmolangFunction.Param> params = fn.params();
+        if (missing > 0 || args.size() != params.size()) {
+            diagnostics.add(Diagnostic.warning("EMOLANG_ARITY",
+                    "emolang '" + fn.name() + "' takes " + params.size() + " args, got "
+                            + (args.size() - missing) + " connected (missing padded with 0, extra dropped)",
+                    node.uid()));
+            while (args.size() < params.size()) {
+                args.add("0");
+            }
+            if (args.size() > params.size()) {
+                args = new ArrayList<>(args.subList(0, params.size()));
+            }
+        }
+        Out expanded = expandEmolang(fn, args, node.uid());
+        preludes.addAll(expanded.preludes());
+        return new Out(preludes, expanded.expr());
+    }
+
+    /**
+     * 递归展开函数体：token 级形参替换（引用 ≥2 且非平凡 → temp.em<K>_ 提取前置）、
+     * 体内 temp.* 一律卫生重命名为 temp.em<K>_<原名>、嵌套自定义调用同机制递归。
+     * 前置语句与体语句按语句边界交错落位（体前段语句的 variable 副作用对后段嵌套调用的
+     * 实参可见，顺序与手写 molang 一致）。
+     */
+    private Out expandEmolang(EmolangFunction fn, List<String> argExprs, String nodeUid) {
+        if (emolangStack.contains(fn.name()) || emolangStack.size() >= MAX_EMOLANG_DEPTH) {
+            error("EMOLANG_RECURSION",
+                    "emolang '" + fn.name() + "' expands recursively or exceeds max depth "
+                            + MAX_EMOLANG_DEPTH, nodeUid);
+            return Out.of("0");
+        }
+        emolangStack.push(fn.name());
+        try {
+            String prefix = "em" + (emolangCallCounter++) + "_";
+            List<EmolangFunction.Param> params = fn.params();
+            List<MolangToken> body = fn.body();
+
+            // 形参引用计数（token 级；成员访问段不算引用）
+            Map<String, Integer> refCounts = new HashMap<>();
+            for (int i = 0; i < body.size(); i++) {
+                MolangToken t = body.get(i);
+                if (t.kind() == MolangTokenKind.IDENTIFIER
+                        && (i == 0 || body.get(i - 1).kind() != MolangTokenKind.DOT)) {
+                    refCounts.merge(t.lexeme(), 1, Integer::sum);
+                }
+            }
+
+            // 形参绑定（与子图展开 D5 同规则）
+            Map<String, String> bindings = new HashMap<>();
+            List<String> preludes = new ArrayList<>();
+            for (int i = 0; i < params.size(); i++) {
+                EmolangFunction.Param param = params.get(i);
+                int refs = refCounts.getOrDefault(param.name(), 0);
+                if (refs == 0) {
+                    continue;
+                }
+                String expr = argExprs.get(i);
+                if (refs >= 2 && !isDuplicatable(expr)) {
+                    String bound = "temp." + prefix + param.name();
+                    preludes.add(bound + " = " + expr);
+                    bindings.put(param.name(), bound);
+                } else {
+                    bindings.put(param.name(), "(" + expr + ")");
+                }
+            }
+
+            // 体语句逐句替换、嵌套前置随句落位；return 段最后处理
+            for (List<MolangToken> stmt : splitStatements(body.subList(0, fn.returnIndex()))) {
+                List<MolangToken> substituted = substitute(stmt, bindings, prefix, nodeUid, preludes);
+                String text = joinTokens(substituted);
+                if (!text.isEmpty()) {
+                    preludes.add(text);
+                }
+            }
+            List<MolangToken> returnTokens = new ArrayList<>(body.subList(fn.returnIndex() + 1, body.size()));
+            if (!returnTokens.isEmpty()
+                    && returnTokens.get(returnTokens.size() - 1).kind() == MolangTokenKind.SEMICOLON) {
+                returnTokens.remove(returnTokens.size() - 1);
+            }
+            List<MolangToken> substitutedReturn = substitute(returnTokens, bindings, prefix, nodeUid, preludes);
+            return new Out(preludes, joinTokens(substitutedReturn));
+        } finally {
+            emolangStack.pop();
+        }
+    }
+
+    /**
+     * token 流替换：形参 → 绑定文本、temp/t 别名成员 → 卫生重命名、裸名自定义调用 →
+     * 递归展开（其实参段先经本替换——外层形参/局部变量在嵌套实参中保持可见）。
+     * 嵌套展开产生的前置语句汇入 {@code preludeSink}（调用方按语句边界落位）。
+     */
+    private List<MolangToken> substitute(List<MolangToken> tokens, Map<String, String> bindings,
+                                         String prefix, String nodeUid, List<String> preludeSink) {
+        List<MolangToken> out = new ArrayList<>(tokens.size());
+        for (int i = 0; i < tokens.size(); i++) {
+            MolangToken t = tokens.get(i);
+            if (t.kind() == MolangTokenKind.IDENTIFIER
+                    && (i == 0 || tokens.get(i - 1).kind() != MolangTokenKind.DOT)) {
+                String bound = bindings.get(t.lexeme());
+                if (bound != null) {
+                    out.addAll(MolangTokenizer.tokenize(bound));
+                    continue;
+                }
+                if (("temp".equals(t.lexeme()) || "t".equals(t.lexeme()))
+                        && i + 2 < tokens.size()
+                        && tokens.get(i + 1).kind() == MolangTokenKind.DOT
+                        && tokens.get(i + 2).kind() == MolangTokenKind.IDENTIFIER) {
+                    out.addAll(MolangTokenizer.tokenize("temp." + prefix + tokens.get(i + 2).lexeme()));
+                    i += 2;
+                    continue;
+                }
+                EmolangFunction nested = EmolangRegistry.find(t.lexeme());
+                if (nested != null && i + 1 < tokens.size()
+                        && tokens.get(i + 1).kind() == MolangTokenKind.LEFT_PAREN) {
+                    int close = matchingParen(tokens, i + 1);
+                    if (close < 0) {
+                        error("EMOLANG_SYNTAX", "unclosed call in emolang body", nodeUid);
+                        continue;
+                    }
+                    // 嵌套实参段先做外层替换（外层形参/局部变量可见），再切分展开
+                    List<MolangToken> nestedArgTokens = substitute(
+                            tokens.subList(i + 2, close), bindings, prefix, nodeUid, preludeSink);
+                    Out nestedOut = expandEmolang(nested, splitArgs(nestedArgTokens), nodeUid);
+                    preludeSink.addAll(nestedOut.preludes());
+                    out.addAll(MolangTokenizer.tokenize("(" + nestedOut.expr() + ")"));
+                    i = close;
+                    continue;
+                }
+            }
+            out.add(t);
+        }
+        // 复 tokenizer 会附 EOF，剥掉
+        out.removeIf(tok -> tok.kind() == MolangTokenKind.EOF);
+        return out;
+    }
+
+    /** 体语句切分：顶层分号 / 回到深度 0 的右大括号（loop/for_each 块）为语句尾。 */
+    private static List<List<MolangToken>> splitStatements(List<MolangToken> tokens) {
+        List<List<MolangToken>> statements = new ArrayList<>();
+        List<MolangToken> current = new ArrayList<>();
+        int depth = 0;
+        for (MolangToken t : tokens) {
+            current.add(t);
+            if (t.kind() == MolangTokenKind.LEFT_BRACE) depth++;
+            else if (t.kind() == MolangTokenKind.RIGHT_BRACE) depth--;
+            if (depth == 0 && (t.kind() == MolangTokenKind.SEMICOLON
+                    || t.kind() == MolangTokenKind.RIGHT_BRACE)) {
+                statements.add(current);
+                current = new ArrayList<>();
+            }
+        }
+        if (!current.isEmpty()) {
+            statements.add(current);
+        }
+        return statements;
+    }
+
+    /** token 流重建文本：分号/逗号/括号/点号贴合，其余空格分隔；尾部分号剥除。 */
+    private static String joinTokens(List<MolangToken> tokens) {
+        StringBuilder sb = new StringBuilder();
+        String prev = null;
+        for (MolangToken t : tokens) {
+            String lexeme = t.lexeme();
+            boolean tightBefore = "." .equals(lexeme) || ";".equals(lexeme) || ",".equals(lexeme)
+                    || ")".equals(lexeme) || "]".equals(lexeme);
+            boolean prevTightAfter = ".".equals(prev) || "(".equals(prev) || "[".equals(prev);
+            if (prev != null && !tightBefore && !prevTightAfter) {
+                sb.append(' ');
+            }
+            sb.append(lexeme);
+            prev = lexeme;
+        }
+        String s = sb.toString().strip();
+        while (s.endsWith(";")) {
+            s = s.substring(0, s.length() - 1).strip();
+        }
+        return s;
+    }
+
+    /** 配对的右括号下标（openIdx 处须为 LEFT_PAREN）；未闭合 → -1。 */
+    private static int matchingParen(List<MolangToken> tokens, int openIdx) {
+        int depth = 0;
+        for (int i = openIdx; i < tokens.size(); i++) {
+            MolangTokenKind k = tokens.get(i).kind();
+            if (k == MolangTokenKind.LEFT_PAREN) depth++;
+            else if (k == MolangTokenKind.RIGHT_PAREN) {
+                depth--;
+                if (depth == 0) return i;
+            }
+        }
+        return -1;
+    }
+
+    /** 实参 token 段按顶层逗号切分并各自重建文本（空段列表 → 空表）。 */
+    private static List<String> splitArgs(List<MolangToken> tokens) {
+        List<String> args = new ArrayList<>();
+        int depth = 0;
+        List<MolangToken> current = new ArrayList<>();
+        for (MolangToken t : tokens) {
+            MolangTokenKind k = t.kind();
+            if (k == MolangTokenKind.COMMA && depth == 0) {
+                args.add(joinTokens(current));
+                current = new ArrayList<>();
+                continue;
+            }
+            if (k == MolangTokenKind.LEFT_PAREN || k == MolangTokenKind.LEFT_BRACKET
+                    || k == MolangTokenKind.LEFT_BRACE) depth++;
+            if (k == MolangTokenKind.RIGHT_PAREN || k == MolangTokenKind.RIGHT_BRACKET
+                    || k == MolangTokenKind.RIGHT_BRACE) depth--;
+            current.add(t);
+        }
+        if (!current.isEmpty()) {
+            args.add(joinTokens(current));
+        }
+        return args;
     }
 
     /** 子图内联展开（D5/§2.4-9）：形参替换 + temp.sg<K>_ 名称隔离。 */

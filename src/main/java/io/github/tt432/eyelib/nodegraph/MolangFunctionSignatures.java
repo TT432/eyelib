@@ -66,12 +66,15 @@ public final class MolangFunctionSignatures {
         return sig != null && sig.varArg() == null;
     }
 
-    /** 自定义函数名（按根前缀过滤，如 {@code "query"}），供编辑器下拉候选并入映射树枚举。 */
+    /**
+     * 自定义函数名候选：根前缀匹配（如 {@code "query"} 匹配 {@code "query.xxx"}）；
+     * 无根裸名（.emolang 自定义函数）并入全部根的候选（值语境通用）。
+     */
     public static List<String> customNames(String root) {
         String prefix = root + ".";
         List<String> names = new ArrayList<>();
         for (String name : CUSTOMS.keySet()) {
-            if (name.startsWith(prefix)) {
+            if (name.startsWith(prefix) || name.indexOf('.') < 0) {
                 names.add(name);
             }
         }

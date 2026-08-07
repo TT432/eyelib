@@ -31,6 +31,8 @@ public final class ClientBootstrap {
         GuiHookPort.setNodegraphEditorHook(() -> io.github.tt432.eyelib.client.nodegraph.NodegraphGate.openEditor(null));
         // eproject 项目库启动加载（规格 nodegraph-eproject-variables §2.3）
         io.github.tt432.eyelib.client.nodegraph.EprojectService.loadAll();
+        // config/emolang 自定义函数启动加载（编辑器打开时还会重扫）
+        io.github.tt432.eyelib.client.nodegraph.EmolangLoader.reloadAll();
         UiPort.register(EyelibManagerScreen::create);
 
         ParticleSpawnRuntimeAdapter.configure(

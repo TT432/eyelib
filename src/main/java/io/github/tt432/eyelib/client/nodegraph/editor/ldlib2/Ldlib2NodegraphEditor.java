@@ -49,6 +49,8 @@ public final class Ldlib2NodegraphEditor {
      * @param libraryName 图文档库名（{@link GraphLibraryManager} 的键）；null/空 = 新建 client_entity 库
      */
     public static void open(@Nullable String libraryName) {
+        // 重扫 config/emolang：改文件后重开编辑器即生效（规格 nodegraph-emolang-functions §3）
+        io.github.tt432.eyelib.client.nodegraph.EmolangLoader.reloadAll();
         // 另存为项目后库键切换（saveViaEproject 返回新键），后续保存须用新键——用单元素数组持有
         String[] name = new String[1];
         GraphLibrary library;
