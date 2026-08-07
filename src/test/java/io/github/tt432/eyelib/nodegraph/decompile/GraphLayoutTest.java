@@ -159,6 +159,35 @@ class GraphLayoutTest {
         assertClose(find(laid, "c2"), find(laid, "s"));
     }
 
+    @Test
+    void fanInClusterCentersOnItsHub() {
+        // 7 个单连线生产者（同层）扇入同一 hub：逐节点贪心下扇形从 hub 单向堆叠
+        // （最远 6×110）；压紧段刚性平移后扇形以 hub 为中心（最远 ≤ 3×110+容差）。
+        List<NodeInstance> nodes = new java.util.ArrayList<>();
+        nodes.add(node("hub"));
+        List<Wire> wires = new java.util.ArrayList<>();
+        for (int i = 1; i <= 7; i++) {
+            nodes.add(node("leaf" + i));
+            wires.add(wire("leaf" + i, "hub"));
+        }
+        List<NodeInstance> laid = GraphLayout.layout(nodes, wires);
+
+        float hubY = find(laid, "hub").y();
+        java.util.List<Float> leafYs = new java.util.ArrayList<>();
+        for (int i = 1; i <= 7; i++) {
+            leafYs.add(find(laid, "leaf" + i).y());
+        }
+        float maxDist = leafYs.stream().map(y -> Math.abs(y - hubY)).max(Float::compare).orElseThrow();
+        assertTrue(maxDist <= 3 * GraphLayout.Y_SPACING + 1f,
+                "扇形边缘成员距 hub " + maxDist + " 超过居中上限 " + (3 * GraphLayout.Y_SPACING + 1f));
+        // 层内最小行距保持（不重叠）
+        leafYs.sort(Float::compare);
+        for (int i = 1; i < leafYs.size(); i++) {
+            assertTrue(leafYs.get(i) - leafYs.get(i - 1) >= GraphLayout.Y_SPACING - 0.01f,
+                    "相邻扇形成员间距 " + (leafYs.get(i) - leafYs.get(i - 1)) + " 小于行距");
+        }
+    }
+
     /** 相连节点垂直距离不超过一个行距。 */
     private static void assertClose(NodeInstance producer, NodeInstance consumer) {
         assertTrue(Math.abs(producer.y() - consumer.y()) <= GraphLayout.Y_SPACING,
