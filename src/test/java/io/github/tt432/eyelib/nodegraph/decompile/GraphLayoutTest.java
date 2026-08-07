@@ -1,6 +1,7 @@
 package io.github.tt432.eyelib.nodegraph.decompile;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.PortRef;
@@ -11,8 +12,8 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
- * {@link GraphLayout} 单测：到汇最长路径定 x 层（汇最右）、DFS 序定 y、
- * 孤立节点位置、便签定位、确定性。
+ * {@link GraphLayout} 单测：到汇最长路径定 x 层（汇最右）、重心排序 + 距离松弛定 y
+ * （相连节点贴近）、孤立节点位置、便签定位、确定性。
  */
 class GraphLayoutTest {
 
@@ -63,6 +64,8 @@ class GraphLayoutTest {
 
         assertEquals(GraphLayout.X_SPACING, find(laid, "c").x());
         assertEquals(0f, find(laid, "z").x());
+        // 孤立节点无邻居，不参与松弛：留在均布行
+        assertEquals(GraphLayout.Y_SPACING, find(laid, "z").y());
     }
 
     @Test
@@ -119,5 +122,47 @@ class GraphLayoutTest {
         List<NodeInstance> laid = GraphLayout.layout(List.of(original), List.of());
         assertEquals(original.type(), laid.get(0).type());
         assertEquals(original.options(), laid.get(0).options());
+    }
+
+    @Test
+    void independentChainsStayVerticallyAligned() {
+        // 两条互不相连的链：每条链的相邻节点垂直距离不超过一个行距（理想 = 0）
+        List<NodeInstance> laid = GraphLayout.layout(
+                List.of(node("x1"), node("m1"), node("s1"), node("x2"), node("m2"), node("s2")),
+                List.of(wire("x1", "m1"), wire("m1", "s1"), wire("x2", "m2"), wire("m2", "s2")));
+
+        assertClose(find(laid, "x1"), find(laid, "m1"));
+        assertClose(find(laid, "m1"), find(laid, "s1"));
+        assertClose(find(laid, "x2"), find(laid, "m2"));
+        assertClose(find(laid, "m2"), find(laid, "s2"));
+        // 两簇不交错：链 1 整体在上
+        assertTrue(find(laid, "m1").y() < find(laid, "m2").y());
+        assertTrue(find(laid, "x1").y() < find(laid, "x2").y());
+    }
+
+    @Test
+    void distantClusterMemberPulledNearItsConsumer() {
+        // c2 有 5 个生产者 b1..b5：旧「DFS 序 × 均布行」把 b5 放到 y=550，距其消费者
+        // c2（y=110）440px。重心排序 + 距离松弛后该距离必须严格小于旧值。
+        List<NodeInstance> laid = GraphLayout.layout(
+                List.of(node("s"), node("c1"), node("c2"), node("a"),
+                        node("b1"), node("b2"), node("b3"), node("b4"), node("b5")),
+                List.of(wire("c1", "s"), wire("c2", "s"), wire("a", "c1"),
+                        wire("b1", "c2"), wire("b2", "c2"), wire("b3", "c2"),
+                        wire("b4", "c2"), wire("b5", "c2")));
+
+        float oldUniformDfsDistance = 440f;
+        float dist = Math.abs(find(laid, "b5").y() - find(laid, "c2").y());
+        assertTrue(dist < oldUniformDfsDistance, "b5 与其消费者 c2 的距离 " + dist + " 应小于旧布局 440");
+        // 兄弟消费者都贴近汇
+        assertClose(find(laid, "c1"), find(laid, "s"));
+        assertClose(find(laid, "c2"), find(laid, "s"));
+    }
+
+    /** 相连节点垂直距离不超过一个行距。 */
+    private static void assertClose(NodeInstance producer, NodeInstance consumer) {
+        assertTrue(Math.abs(producer.y() - consumer.y()) <= GraphLayout.Y_SPACING,
+                () -> producer.uid() + " 与 " + consumer.uid() + " 垂直距离 "
+                        + Math.abs(producer.y() - consumer.y()) + " 超过行距 " + GraphLayout.Y_SPACING);
     }
 }
