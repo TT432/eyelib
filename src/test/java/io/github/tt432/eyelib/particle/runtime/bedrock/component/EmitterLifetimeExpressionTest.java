@@ -35,6 +35,18 @@ class EmitterLifetimeExpressionTest {
         assertTrue(emitter.removed);
     }
 
+    /** BE 语义：expiration 与 activation 独立评估——activation 恒真也必须能销毁（泄漏场景回归）。 */
+    @Test
+    void onTickRemovesEmitterWhenExpirationTrueEvenWhileActive() {
+        FakeEmitter emitter = new FakeEmitter();
+
+        EmitterLifetimeExpression expression = new EmitterLifetimeExpression(MolangValue.TRUE_VALUE, MolangValue.TRUE_VALUE);
+        expression.onTick(emitter);
+
+        assertTrue(emitter.removed);
+        assertEquals(0, emitter.loopStarts);
+    }
+
     @Test
     void onTickDisablesWithoutRemovalWhenBothExpressionsFalse() {
         FakeEmitter emitter = new FakeEmitter();
