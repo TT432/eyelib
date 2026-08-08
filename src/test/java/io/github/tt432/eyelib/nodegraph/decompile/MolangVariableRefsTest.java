@@ -44,4 +44,26 @@ class MolangVariableRefsTest {
     void noVariablesYieldsEmpty() {
         assertTrue(MolangVariableRefs.collect(JsonParser.parseString("{\"k\": 5}")).isEmpty());
     }
+
+    @Test
+    void assignmentLhsIsWriteOtherOccurrencesAreReads() {
+        var json = JsonParser.parseString("\"v.a=5; v.b=v.a*2; v.c=(v.a==5); variable.d=v.c\"");
+        MolangVariableRefs.Refs refs = MolangVariableRefs.collectWithAccess(json);
+        assertEquals(Set.of("a", "b", "c", "d"), refs.writes());
+        assertEquals(Set.of("a", "c"), refs.reads());
+    }
+
+    @Test
+    void equalityComparisonIsNotAWrite() {
+        var json = JsonParser.parseString("\"v.x==5 && v.y!=3\"");
+        MolangVariableRefs.Refs refs = MolangVariableRefs.collectWithAccess(json);
+        assertTrue(refs.writes().isEmpty());
+        assertEquals(Set.of("x", "y"), refs.reads());
+    }
+
+    @Test
+    void unionPreservesOccurrenceOrder() {
+        var json = JsonParser.parseString("[\"v.b=v.a\", \"v.c=v.b\"]");
+        assertEquals(Set.of("a", "b", "c"), MolangVariableRefs.collect(json));
+    }
 }

@@ -48,6 +48,9 @@ import java.util.Set;
  *   <li>ref.rc 的 decl_* 不变。</li>
  * </ul>
  *
+ * <p>v6 → v7 命名变量端口：剥除 decl_variables 桶接线与 declvar- 节点
+ * （规格 nodegraph-animation-variable-refs §2.1；新接线需被引内容重建，重新导入自动恢复）。
+ *
  * <p>纯函数：输入输出均为不可变文档；加载路径（资源包 loader / EprojectIo）统一调用。
  * 已是新格式的文档原样返回。
  */
@@ -73,8 +76,41 @@ public final class GraphMigrations {
         if (result.formatVersion() < 6) {
             result = migrateV5ToV6(result);
         }
+        if (result.formatVersion() < 7) {
+            result = migrateV6ToV7(result);
+        }
         return new GraphLibrary(GraphLibrary.CURRENT_FORMAT_VERSION, result.kind(), result.main(),
                 result.graphs());
+    }
+
+    // ---------- v6 → v7：decl_variables 桶 → 命名变量端口 ----------
+
+    /**
+     * v6 的 decl_variables 桶接线（declvar- 节点 + decl_variables 连线）被命名变量端口
+     * （read:/write: + var_refs 快照）取代（规格 nodegraph-animation-variable-refs §2.1，
+     * 用户决策 2026-08-08：桶无类型、指代不明）。迁移剥除旧节点与旧连线——新接线需
+     * 被引内容（动画/AC 原始文档）才能重建，迁移上下文没有，重新导入即可自动恢复。
+     */
+    private static GraphLibrary migrateV6ToV7(GraphLibrary library) {
+        Map<String, GraphData> graphs = new LinkedHashMap<>();
+        for (Map.Entry<String, GraphData> entry : library.graphs().entrySet()) {
+            GraphData g = entry.getValue();
+            List<NodeInstance> nodes = new ArrayList<>();
+            for (NodeInstance n : g.nodes()) {
+                if (!n.uid().startsWith("declvar-")) {
+                    nodes.add(n);
+                }
+            }
+            List<Wire> wires = new ArrayList<>();
+            for (Wire w : g.wires()) {
+                if (!"decl_variables".equals(w.to().port()) && !w.from().node().startsWith("declvar-")) {
+                    wires.add(w);
+                }
+            }
+            graphs.put(entry.getKey(), new GraphData(nodes, wires, g.variables(),
+                    g.placemats(), g.stickyNotes(), g.graphInterface()));
+        }
+        return new GraphLibrary(library.formatVersion(), library.kind(), library.main(), graphs);
     }
 
     // ---------- v1 → v2：变量节点化 ----------

@@ -159,8 +159,9 @@ final class EmitSession {
 
     private void countNode(Frame f, NodeInstance node, NodeType type) {
         for (PortDef in : type.inputsOf(node, f.resolver)) {
-            // multi 输入是声明通道（decl_*），不参与值发射计数
-            if (in.direction() == PortDirection.IN && in.type().isValue() && !in.multi()) {
+            // multi 输入是声明通道（decl_*），ref 的 read:/write: 是变量声明通道，均不参与值发射计数
+            if (in.direction() == PortDirection.IN && in.type().isValue() && !in.multi()
+                    && !io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(in.id())) {
                 countValueInput(f, node.uid(), in.id());
             }
         }
@@ -174,7 +175,8 @@ final class EmitSession {
             Optional<NodeType> type = NodeTypes.get(node.type());
             if (type.isEmpty()) continue;
             for (PortDef in : type.get().inputsOf(node, f.resolver)) {
-                if (in.direction() == PortDirection.IN && in.type().isValue() && !in.multi()) {
+                if (in.direction() == PortDirection.IN && in.type().isValue() && !in.multi()
+                        && !io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(in.id())) {
                     countValueInput(f, node.uid(), in.id());
                 }
             }

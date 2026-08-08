@@ -743,8 +743,19 @@ public final class GraphLayout {
             case "ref.geometry":
                 return REF_PREVIEW_NODE_HEIGHT;
             case "ref.animation":
+            case "ref.ac": {
+                // 命名变量端口（read:/write:）会显著加高节点——按动态端口数计算，94 兜底
+                java.util.Optional<NodeType> dynType = NodeTypes.get(n.type());
+                if (dynType.isPresent()) {
+                    NodeType t = dynType.get();
+                    int rows = Math.max(
+                            t.inputsOf(n, NO_SUBGRAPH).size(),
+                            t.outputsOf(n, NO_SUBGRAPH).size());
+                    return Math.max(REF_NODE_HEIGHT, 28 + 16f * rows + 18f * t.options().size());
+                }
+                return REF_NODE_HEIGHT;
+            }
             case "ref.material":
-            case "ref.ac":
             case "ref.rc":
                 return REF_NODE_HEIGHT;
             default:

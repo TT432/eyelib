@@ -23,7 +23,7 @@ public final class AnimationAssetRegistry {
     private static Map<?, BrAnimation> stagedAnimations = Map.of();
     private static Map<?, BrAnimationControllers> stagedControllers = Map.of();
     /** 原始 schema 暂存（BedrockAddonRuntimeBridge 随运行时暂存一并替换）：
-     * 供节点图导入的 decl_variables 变量提取重编码为 JSON 文档。 */
+     * 供节点图导入的变量引用提取（read:/write: 命名端口快照）重编码为 JSON 文档。 */
     private static Map<String, BrAnimationEntrySchema> stagedAnimationSchemas = Map.of();
     private static Map<String, BrAnimationControllerSchema> stagedControllerSchemas = Map.of();
 

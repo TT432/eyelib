@@ -355,27 +355,58 @@ public final class NodeTypes {
             List.of(),
             List.of(PortDef.out("ref", PortType.MATERIAL_REF))));
 
-    /** 动画/AC ref 节点的变量引用声明端口（规格 nodegraph-animation-variable-refs）：
-     * 声明该动画/AC 触及的全部实体级 molang 变量——纯元数据，不承载 molang 值。 */
-    public static final String DECL_VARIABLES = "decl_variables";
+    /**
+     * ref 节点的变量引用端口（规格 nodegraph-animation-variable-refs §2.1）：
+     * 每个被引用的实体级 molang 变量一个命名端口——`read:<name>`（该动画/AC 读取）
+     * / `write:<name>`（该动画/AC 写入），VARIABLE 类型单连接，label 标注 v.<name> 读/写。
+     * 端口集由节点选项快照 {@link #VAR_REFS_OPTION}（导入时按被引内容提取写入）驱动；
+     * 声明通道——不参与值发射计数与未连接检查。
+     */
+    public static final String VAR_REFS_OPTION = "var_refs";
+    public static final String VAR_READ_PREFIX = "read:";
+    public static final String VAR_WRITE_PREFIX = "write:";
 
-    private static final PortDef DECL_VARIABLES_PORT = PortDef.inMulti(DECL_VARIABLES, PortType.VARIABLE);
+    /** 变量引用声明端口判定（EmitSession/GraphValidator 的豁免口径）。 */
+    public static boolean isVarRefPort(String portId) {
+        return portId.startsWith(VAR_READ_PREFIX) || portId.startsWith(VAR_WRITE_PREFIX);
+    }
 
-    public static final NodeType REF_ANIMATION = register(NodeType.of(
+    /** 从选项快照派生命名变量端口（无快照 = 无端口）。 */
+    public static List<PortDef> varRefPorts(NodeInstance instance) {
+        com.google.gson.JsonElement raw = instance.options().get(VAR_REFS_OPTION);
+        if (raw == null || !raw.isJsonObject()) {
+            return List.of();
+        }
+        com.google.gson.JsonObject obj = raw.getAsJsonObject();
+        List<PortDef> ports = new ArrayList<>();
+        for (com.google.gson.JsonElement e : obj.getAsJsonArray("reads") == null
+                ? new com.google.gson.JsonArray() : obj.getAsJsonArray("reads")) {
+            String name = e.getAsString();
+            ports.add(PortDef.inLabeled(VAR_READ_PREFIX + name, PortType.VARIABLE, "v." + name + " 读"));
+        }
+        for (com.google.gson.JsonElement e : obj.getAsJsonArray("writes") == null
+                ? new com.google.gson.JsonArray() : obj.getAsJsonArray("writes")) {
+            String name = e.getAsString();
+            ports.add(PortDef.inLabeled(VAR_WRITE_PREFIX + name, PortType.VARIABLE, "v." + name + " 写"));
+        }
+        return ports;
+    }
+
+    public static final NodeType REF_ANIMATION = register(NodeType.dynamic(
             "ref.animation", NodeType.Kind.REF_ANIMATION, CAT_REF,
             List.of(
                     NodeOptionDef.string("short_name", ""),
                     NodeOptionDef.asset("identifier", "animation.example.walk", "animation")),
-            List.of(DECL_VARIABLES_PORT),
-            List.of(PortDef.out("ref", PortType.ANIMATION_REF))));
+            (instance, resolver) -> varRefPorts(instance),
+            NodeType.PortProvider.fixed(List.of(PortDef.out("ref", PortType.ANIMATION_REF)))));
 
-    public static final NodeType REF_AC = register(NodeType.of(
+    public static final NodeType REF_AC = register(NodeType.dynamic(
             "ref.ac", NodeType.Kind.REF_AC, CAT_REF,
             List.of(
                     NodeOptionDef.string("short_name", ""),
                     NodeOptionDef.asset("identifier", "controller.animation.example.main", "ac")),
-            List.of(DECL_VARIABLES_PORT),
-            List.of(PortDef.out("ref", PortType.AC_REF))));
+            (instance, resolver) -> varRefPorts(instance),
+            NodeType.PortProvider.fixed(List.of(PortDef.out("ref", PortType.AC_REF)))));
 
     public static final NodeType REF_RC = register(NodeType.of(
             "ref.rc", NodeType.Kind.REF_RC, CAT_REF,

@@ -491,4 +491,29 @@ class GraphMigrationsTest {
 
         assertTrue(migrated.wires().contains(wire("g1", "ref", "rc1", "decl_geometries")));
     }
+
+    // ---------- v6 → v7：decl_variables 桶 → 命名变量端口 ----------
+
+    @Test
+    void v7StripsDeclVariableBucketWiring() {
+        // v6 形态：declvar- 节点 + decl_variables 桶连线（其他连线保留）
+        GraphData main = graph(
+                List.of(rootNode(),
+                        node("ra", "ref.animation", opts("identifier", "animation.a")),
+                        node("declvar-ra-edfatt", "variable", opts("name", "edfatt")),
+                        node("v1", "variable", opts("name", "x"))),
+                List.of(wire("declvar-ra-edfatt", "out", "ra", "decl_variables"),
+                        wire("ra", "ref", "root", "animations")));
+        GraphLibrary old = new GraphLibrary(6, GraphKind.CLIENT_ENTITY, "root", Map.of("root", main));
+
+        GraphData migrated = GraphMigrations.migrate(old).mainGraph();
+
+        // 桶节点与桶连线剥除，正常连线与节点保留
+        assertTrue(migrated.findNode("declvar-ra-edfatt").isEmpty());
+        assertTrue(migrated.wires().stream()
+                .noneMatch(w -> w.to().port().equals("decl_variables")));
+        assertTrue(migrated.wires().contains(wire("ra", "ref", "root", "animations")));
+        assertTrue(migrated.findNode("ra").isPresent());
+        assertTrue(migrated.findNode("v1").isPresent());
+    }
 }

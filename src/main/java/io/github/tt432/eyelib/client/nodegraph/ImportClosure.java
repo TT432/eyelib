@@ -124,11 +124,12 @@ public final class ImportClosure {
         ImportResult entity = JsonGraphImporters.importClientEntity(entityFileJson,
                 rcId -> registryRenderController(rcId).or(() -> rcScan.find(rcId)), inlineVariables);
 
-        // decl_variables 接线（规格 nodegraph-animation-variable-refs）：
-        // 从动画/AC 原始文档提取变量引用，接入实体库 ref 节点（纯元数据，不改导出产物）
+        // 变量引用命名端口接线（规格 nodegraph-animation-variable-refs）：
+        // 从动画/AC 原始文档按读/写提取变量引用，写入 ref 节点 var_refs 快照并接线
+        // （纯元数据，不改导出产物）
         LazyScan animScan = new LazyScan(ANIM_DIR);
         LazyScan acScan = new LazyScan(AC_DIR);
-        Map<String, Set<String>> varsByRefUid = new LinkedHashMap<>();
+        Map<String, MolangVariableRefs.Refs> refsByRefUid = new LinkedHashMap<>();
         for (NodeInstance node : entity.library().mainGraph().nodes()) {
             boolean isAnim = NodeTypes.REF_ANIMATION.id().equals(node.type());
             boolean isAc = NodeTypes.REF_AC.id().equals(node.type());
@@ -146,10 +147,10 @@ public final class ImportClosure {
                     .or(() -> io.github.tt432.eyelib.client.registry.AnimationAssetRegistry
                             .controllerSchemaDocument(refId))
                     .or(() -> isAnim ? animScan.find(refId) : acScan.find(refId));
-            doc.ifPresent(json -> varsByRefUid.put(node.uid(), MolangVariableRefs.collect(json)));
+            doc.ifPresent(json -> refsByRefUid.put(node.uid(), MolangVariableRefs.collectWithAccess(json)));
         }
         ImportResult wired = new ImportResult(
-                AnimationVariableDecls.wire(entity.library(), varsByRefUid), entity.diagnostics());
+                AnimationVariableDecls.wire(entity.library(), refsByRefUid), entity.diagnostics());
         GraphLibraryManager.INSTANCE.put(entityLibraryName, wired.library());
 
         String identifier = wired.library().mainGraph().nodes().stream()

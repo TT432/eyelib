@@ -22,28 +22,51 @@ public final class MolangVariableRefs {
     private MolangVariableRefs() {
     }
 
-    /** 提取文档中引用的全部实体级变量名（不含 variable./v. 前缀），按出现序去重。 */
-    public static Set<String> collect(JsonElement json) {
-        Set<String> out = new LinkedHashSet<>();
-        walk(json, out);
-        return out;
+    /**
+     * 变量引用的读写分列：赋值左值（`v.x =` / `variable.x =`，后跟 EQUAL）= 写，
+     * 其余出现（含 `==` 比较、`??` 合并、实参/读取位）= 读。同一变量可同时在两个集。
+     */
+    public record Refs(java.util.Set<String> reads, java.util.Set<String> writes) {
+        /** 读 ∪ 写（出现序去重）。 */
+        public Set<String> union() {
+            Set<String> out = new LinkedHashSet<>(reads);
+            out.addAll(writes);
+            return out;
+        }
+
+        public boolean isEmpty() {
+            return reads.isEmpty() && writes.isEmpty();
+        }
     }
 
-    private static void walk(JsonElement json, Set<String> out) {
+    /** 提取文档中引用的全部实体级变量名（不含 variable./v. 前缀），按出现序去重。 */
+    public static Set<String> collect(JsonElement json) {
+        return collectWithAccess(json).union();
+    }
+
+    /** 提取并按读/写分列（规格 nodegraph-animation-variable-refs §2.2）。 */
+    public static Refs collectWithAccess(JsonElement json) {
+        Set<String> reads = new LinkedHashSet<>();
+        Set<String> writes = new LinkedHashSet<>();
+        walk(json, reads, writes);
+        return new Refs(reads, writes);
+    }
+
+    private static void walk(JsonElement json, Set<String> reads, Set<String> writes) {
         if (json.isJsonPrimitive() && json.getAsJsonPrimitive().isString()) {
-            collectFromString(json.getAsString(), out);
+            collectFromString(json.getAsString(), reads, writes);
         } else if (json.isJsonArray()) {
             for (JsonElement e : json.getAsJsonArray()) {
-                walk(e, out);
+                walk(e, reads, writes);
             }
         } else if (json.isJsonObject()) {
             for (Map.Entry<String, JsonElement> e : json.getAsJsonObject().entrySet()) {
-                walk(e.getValue(), out);
+                walk(e.getValue(), reads, writes);
             }
         }
     }
 
-    private static void collectFromString(String text, Set<String> out) {
+    private static void collectFromString(String text, Set<String> reads, Set<String> writes) {
         List<MolangToken> tokens;
         try {
             tokens = MolangTokenizer.tokenize(text);
@@ -60,9 +83,12 @@ public final class MolangVariableRefs {
                 continue;
             }
             MolangToken name = tokens.get(i + 2);
-            if (name.kind() == MolangTokenKind.IDENTIFIER) {
-                out.add(name.lexeme());
+            if (name.kind() != MolangTokenKind.IDENTIFIER) {
+                continue;
             }
+            // 赋值左值 = 写：三连后紧跟单等号（EQUAL；`==` 是 EQUAL_EQUAL 不算）
+            boolean isWrite = i + 3 < tokens.size() && tokens.get(i + 3).kind() == MolangTokenKind.EQUAL;
+            (isWrite ? writes : reads).add(name.lexeme());
         }
     }
 }

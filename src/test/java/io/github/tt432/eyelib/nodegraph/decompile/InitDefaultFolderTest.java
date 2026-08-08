@@ -88,7 +88,7 @@ class InitDefaultFolderTest {
                 node("s", "exec.set_var")));
         List<Wire> wires = new ArrayList<>(List.of(
                 wire("v", "out", "s", "target"),
-                wire("dv", "out", "ra", "decl_variables"),
+                wire("dv", "out", "ra", "read:y"),
                 wire("s", "exec_out", "root", "initialize")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
@@ -96,7 +96,7 @@ class InitDefaultFolderTest {
         assertFalse(hasNode(r, "v"));
         assertFalse(hasNode(r, "s"));
         assertTrue(hasNode(r, "dv")); // 声明节点不动
-        assertTrue(hasWire(r, "dv", "out", "ra", "decl_variables"));
+        assertTrue(hasWire(r, "dv", "out", "ra", "read:y"));
         assertTrue(decl(r, "x").isPresent());
     }
 
