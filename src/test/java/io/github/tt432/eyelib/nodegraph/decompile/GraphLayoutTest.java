@@ -196,6 +196,46 @@ class GraphLayoutTest {
     }
 
     @Test
+    void compressedStackDoesNotTrapInLocalEquilibrium() {
+        // 悦灵实证陷阱（2026-08-08）：20 个扇成员 m_i 扇入 hub H，每个成员带一个 feeder f_i，
+        // f_i 又共享远簇汇 S（S 带 12 节链）。均布播种下 m 列被压紧栈钉死在列顶
+        // （栈底被低欲望节点锚住，协同下沉需穿越高边损中间态），极端边达 6700；
+        // 邻居中位数播种把种子放进链所在盆域。契约：m_i 与其 feeder 的距离有界。
+        List<NodeInstance> nodes = new java.util.ArrayList<>();
+        List<Wire> wires = new java.util.ArrayList<>();
+        nodes.add(node("H"));
+        nodes.add(node("S"));
+        String prev = null;
+        for (int i = 1; i <= 12; i++) {
+            nodes.add(node("t" + i));
+            if (prev != null) {
+                wires.add(wire(prev, "t" + i));
+            }
+            prev = "t" + i;
+        }
+        wires.add(wire("t12", "S"));
+        for (int i = 1; i <= 20; i++) {
+            nodes.add(node("m" + i));
+            nodes.add(node("f" + i));
+            wires.add(wire("m" + i, "H"));
+            wires.add(wire("f" + i, "m" + i));
+            wires.add(wire("f" + i, "S"));
+        }
+        List<NodeInstance> laid = GraphLayout.layout(nodes, wires);
+
+        float maxDist = 0;
+        for (int i = 1; i <= 20; i++) {
+            float dist = Math.abs(find(laid, "f" + i).y() - find(laid, "m" + i).y());
+            maxDist = Math.max(maxDist, dist);
+        }
+        // 灾难级陷阱的金丝雀界限：悦灵实机陷阱时该类边达数千（60 行距量级）。
+        // 本合成图在均布/中位数播种下均衡都在 550-700，界限取 8 行距——防陷阱回归，
+        // 不作两种播种的判别（该合成图不复现悦灵陷阱，判别力在实机数据上）。
+        assertTrue(maxDist <= 8 * GraphLayout.Y_SPACING,
+                "成员与其 feeder 的最大距离 " + maxDist + " 超过 8 行距（压紧栈陷阱回归）");
+    }
+
+    @Test
     void tallNodeDoesNotOverlapNeighbors() {
         // 16 个 arg 的 query.call 估计高 320（实测 318）：固定 110 行距会让它与同列邻居
         // 重叠（用户实机截图实证 2026-08-07）。同列相邻间距必须 ≥ 上节点估计高 + 边距。

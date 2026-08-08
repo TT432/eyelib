@@ -33,6 +33,10 @@ import java.util.TreeMap;
  *       同为某 hub」的成员群超过单列上限时切成多列（不限度数，带表达式链的 rc.root 也算）。
  *       分列只缩冠幅占用的列高、不强行移动成员——成员位置由链锚定，强挪会把长边挪进链里
  *       （实测 Σ +48%）。</li>
+ *   <li><b>邻居中位数播种</b>：y 不由均布起步，而是从汇侧列向源侧列逐列取「已播种邻居
+ *       的中位数」播种（单趟）。均布起步会让压紧栈陷入局部均衡——栈底被低欲望节点钉住、
+ *       整栈无法协同下沉到链所在的盆域（悦灵 rc.root 栈实证：均布起步收敛后 max=6712，
+ *       播种后 Σ −31%、max=4093）。多趟播种反而让上游影响回流拖坏（Σ +4%）。</li>
  *   <li><b>距离松弛</b>：高斯-塞德尔迭代，每轮先把每个节点向「全部邻居的中位数 y」拉拢
  *       （L1 目标的单点最优；clamp 保持层内顺序与节点高度间距），再做<b>纯叶扇居中</b>
  *       （度数为 1 且共享唯一 hub 的层内连续段作为刚性整体平移到 hub y——压紧段对逐节点
@@ -49,10 +53,13 @@ import java.util.TreeMap;
  * 环只做防御（层按 0 计），环本身由 GraphValidator.CYCLE 报告。
  *
  * <p><b>已证伪的改进方向（悦灵实测，仿真与实机一致）</b>——勿重试：
- * ① 巨扇成员强制居中（整列居中/实测验收居中）：链跟不上，长边从扇边挪进链边（Σ +48%
- * 或 max +44%）；且整列居中与逐节点松弛恒幅振荡，不能进早退循环；
+ * ① 巨扇成员强制居中（整列居中/实测验收居中/分列后块级居中/一次性居中后再松弛）：
+ * 链跟不上，长边从扇边挪进链边（Σ +48%、+12%、+9% 不等）；且整列居中与逐节点松弛
+ * 恒幅振荡，不能进早退循环；
  * ② 远邻 blend（median 向 >2000 的邻居偏移）：Σ 与极端边数齐升；
- * ③ 松弛后再重心排序交替：收敛到同一盆域，无收益。
+ * ③ 松弛后再重心排序交替：收敛到同一盆域，无收益；
+ * ④ 分列前按类型聚类（无居中配合时）：Σ +2.4%，纯叶段仍被度数>1 成员打断；
+ * ⑤ 播种多趟迭代：上游影响回流，Σ +4%、max +24%。
  */
 public final class GraphLayout {
     private GraphLayout() {
@@ -175,7 +182,10 @@ public final class GraphLayout {
             heights.put(n.uid(), estimateHeight(n));
         }
 
-        // 初始均布 y（按累计高度）
+        // 初始 y：先按累计高度均布兜底，再从汇侧列向源侧列做一次邻居中位数播种
+        // （Sugiyama 式初始化）。均布从 0 起的播种会让压紧栈陷入局部均衡：栈底被
+        // 低欲望节点钉住，整栈无法协同下沉到链所在的全局盆域（悦灵 rc.root 栈实证，
+        // 松弛 24 轮收敛在 max=6712 的陷阱里）。
         Map<String, Double> ys = new HashMap<>();
         byLayer.values().forEach(group -> {
             double y = 0;
@@ -184,6 +194,23 @@ public final class GraphLayout {
                 y += heightOf(heights, n.uid()) + NODE_MARGIN;
             }
         });
+        {
+            // byLayer 是 TreeMap（层号升序 = 汇→源），层内保持 DFS 序播种；clamp 保持
+            // 层内顺序与最小间距。每个节点取「已播种邻居」的中位数，无则留均布位。
+            // 单趟足够：两趟会让上游影响回流把图向下游拖（实测 Σ +4%、max +24%）。
+            for (List<NodeInstance> group : byLayer.values()) {
+                double prevBottom = Double.NEGATIVE_INFINITY;
+                for (int i = 0; i < group.size(); i++) {
+                    NodeInstance n = group.get(i);
+                    double current = yOf(ys, n.uid());
+                    double desired = medianAllNeighborsY(n.uid(), consumers, producers, ys);
+                    double seeded = Double.isNaN(desired) ? current
+                            : Math.max(desired, prevBottom + NODE_MARGIN);
+                    ys.put(n.uid(), seeded);
+                    prevBottom = seeded + heightOf(heights, n.uid());
+                }
+            }
+        }
 
         relaxDistances(byLayer, consumers, producers, ys, soleHub, heights, nodes.size());
         improveLeafFans(byLayer, soleHub, consumers, producers, wires, ys, heights, nodes.size());
