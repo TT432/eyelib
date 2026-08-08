@@ -146,8 +146,19 @@ project.json：
 - client 侧 `AssetSuggestions`：suggestionKey → `Supplier<List<String>>`，运行时从注册表取（COW 快照）。
 - ldlib1：`EvmNode.buildOptionConfigurator` 分派点扩展——带 suggestionKey 的 STRING/IDENTIFIER
   选项渲染为可输入下拉（SelectorConfigurator 候选动态提供）。
-- ldlib2：`EvmNodeBase.onDefineOptions` 接线 `withConfigurable` 自定义 SelectorConfigurator。
-- 下拉只是候选供给，不锁死自由输入（外部契约逃生舱，与 short_name 覆盖同理）。
+- ldlib2：`EvmNodeBase.onDefineOptions` 接线 `withConfigurable` 自定义 SelectorConfigurator
+  （EvmSelectorConfigurator，懒候选）。
+- ~~下拉只是候选供给，不锁死自由输入（外部契约逃生舱，与 short_name 覆盖同理）。~~
+  **修订（2026-08-07 用户决策）**：不再保留自由输入行——标识符一律下拉选择；
+  选择器宽度随选中内容自适应（文本宽 + 图标/padding，夹取 [60, 320]）。
+
+### 4.3 ref 节点 short_name 行
+
+**2026-08-07 用户决策**：ref.* 节点的 short_name 选项行不再显示。默认派生
+（ShortNames.effective）、显式值保留在选项数据里照常导出；UI 只暴露 identifier
+下拉。保留数据的理由：短名是实体文件内 animations 表的引用键，导入保真与
+外部契约（模型 texture_meshes 等）需要显式值通道；规范化（D4）仍会剥除等于
+派生值的显式值。
 
 ## 5. Ctrl+S
 

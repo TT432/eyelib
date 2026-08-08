@@ -107,7 +107,7 @@ public final class JsonGraphImporters {
         // 动画/AC 声明表 → entity.root 端口（v4 保留实体级：双消费端）
         Map<String, String> animationRefs = new LinkedHashMap<>();
         Map<String, String> acRefs = new LinkedHashMap<>();
-        importRefTable(b, desc, "animations", NodeTypes.REF_ANIMATION.id(), "identifier", animationRefs);
+        importRefTable(b, desc, "animations", NodeTypes.REF_ANIMATION.id(), "identifier", animationRefs, acRefs);
         importRefTable(b, desc, "animation_controllers", NodeTypes.REF_AC.id(), "identifier", acRefs);
 
         // scripts
@@ -282,6 +282,18 @@ public final class JsonGraphImporters {
     private static void importRefTable(ImportGraphBuilder b, JsonObject desc, String field,
                                        String refType, String valueOption,
                                        @Nullable Map<String, String> refsOut) {
+        importRefTable(b, desc, field, refType, valueOption, refsOut, null);
+    }
+
+    /**
+     * @param acRefsOut 仅 animations 表：值为 {@code controller.animation.*} 的条目归位为
+     *                  ref.ac + animation_controllers 端口（Bedrock 实体常把 AC 混声明在
+     *                  animations 表；导出时两端口仍合写 animations 表，见 ClientEntityAssembler D6）
+     */
+    private static void importRefTable(ImportGraphBuilder b, JsonObject desc, String field,
+                                       String refType, String valueOption,
+                                       @Nullable Map<String, String> refsOut,
+                                       @Nullable Map<String, String> acRefsOut) {
         JsonElement table = desc.get(field);
         if (table == null) {
             return;
@@ -290,7 +302,6 @@ public final class JsonGraphImporters {
         if (objects == null) {
             return;
         }
-        String prefix = field.equals("animations") ? "anim" : "acref";
         String declarationPort = field.equals("animations") ? "animations" : "animation_controllers";
         for (JsonObject obj : objects) {
             for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
@@ -298,12 +309,16 @@ public final class JsonGraphImporters {
                     invalidField(b, "description." + field + "." + e.getKey(), e.getValue());
                     continue;
                 }
-                String uid = b.addNode(prefix, refType, ImportGraphBuilder.opts(
+                String value = e.getValue().getAsString();
+                boolean acEntry = field.equals("animations") && value.startsWith("controller.animation");
+                String uid = b.addNode(acEntry || !field.equals("animations") ? "acref" : "anim",
+                        acEntry ? NodeTypes.REF_AC.id() : refType, ImportGraphBuilder.opts(
                         "short_name", e.getKey(),
-                        valueOption, e.getValue().getAsString()));
-                b.wire(uid, "ref", "root", declarationPort);
-                if (refsOut != null) {
-                    refsOut.putIfAbsent(e.getKey(), uid);
+                        valueOption, value));
+                b.wire(uid, "ref", "root", acEntry ? "animation_controllers" : declarationPort);
+                Map<String, String> out = acEntry && acRefsOut != null ? acRefsOut : refsOut;
+                if (out != null) {
+                    out.putIfAbsent(e.getKey(), uid);
                 }
             }
         }

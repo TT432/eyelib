@@ -56,6 +56,19 @@
    新增 variable 节点 + read:/write: 连线 → 新变量名并入图声明（type UNKNOWN、
    scope VARIABLE、无默认值）→ 产出新 GraphLibrary 重新注册。
 
+### 2.3b AC 归位（2026-08-07 补充）
+
+Bedrock 实体常把 AC 混声明在 `animations` 表（值为 `controller.animation.*`）。
+导入起这类条目归位为 **ref.ac + entity.root.animation_controllers 端口**（此前一律
+ref.animation，导致 ref.ac 的变量引用处理与 AC 库闭包导入都不触发）。导出时两端口
+仍合写回 `animations` 表（ClientEntityAssembler D6），产物不变。animate 短名解析
+（resolveAnimationRef）跨两表命中同一节点，不受影响。
+
+AC 库闭包导入（ImportClosure）走**双通道**：注册表暂存的单条目控制器体（包成
+`{animation_controllers: {<id>: ...}}` 文件文档）→ LazyScan 回落——brarchive 编码包
+没有明文资源目录 JSON，纯扫描通道会全 miss（2026-08-08 实证修复；顺带修
+KnownRefTables.collect() 对 ImmutableCollections.contains(null) 的潜伏 NPE）。
+
 ### 2.4 与折叠/内联的关系（结构独立，无需代码豁免）
 
 命名端口接线在导入**后处理**（折叠/内联完成之后），且每个（名, ref）对使用

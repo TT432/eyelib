@@ -236,6 +236,11 @@ final class ImportGraphBuilder {
         buildNodes = folded.nodes();
         buildWires = folded.wires();
         diagnostics.addAll(folded.diagnostics());
+        // 单用 const 内联无条件启用（规格 nodegraph-import-const-inline）
+        ConstNodeInliner.Result constInlined = ConstNodeInliner.inline(buildNodes, buildWires);
+        buildNodes = constInlined.nodes();
+        buildWires = constInlined.wires();
+        diagnostics.addAll(constInlined.diagnostics());
         List<NodeInstance> laidOut = GraphLayout.layout(List.copyOf(buildNodes), buildWires);
         List<StickyNote> placed = GraphLayout.placeStickyNotes(stickies, laidOut);
         GraphData data = new GraphData(laidOut, List.copyOf(buildWires),

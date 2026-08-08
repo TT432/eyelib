@@ -309,6 +309,62 @@ class JsonGraphImportersTest {
         assertEquals(originalB.getAsJsonArray("materials"), entryB.getAsJsonArray("materials"));
     }
 
+    /** AC 混声明通道（2026-08-07）：animations 表中值为 controller.animation.* 的条目
+     * 归位为 ref.ac + animation_controllers 端口；animate 短名解析命中同一节点；
+     * 导出两端口合写回 animations 表（D6）。 */
+    @Test
+    void acValuedAnimationsEntryImportsAsRefAc() {
+        JsonObject entity = parse("""
+                {
+                  "minecraft:client_entity": {
+                    "description": {
+                      "identifier": "test:acchannel",
+                      "geometry": {"default": "geometry.test.model"},
+                      "materials": {"default": "entity_alphatest"},
+                      "animations": {"walk": "animation.test.walk", "ctrl": "controller.animation.test.main"},
+                      "scripts": {"animate": ["walk", "ctrl"]}
+                    }
+                  }
+                }
+                """);
+        ImportResult imported = JsonGraphImporters.importClientEntity(entity, name -> Optional.empty());
+        assertFalse(imported.hasErrors(), () -> imported.diagnostics().toString());
+        GraphData graph = imported.library().mainGraph();
+
+        List<NodeInstance> animRefs = allByType(graph.nodes(), "ref.animation");
+        List<NodeInstance> acRefs = allByType(graph.nodes(), "ref.ac");
+        assertEquals(1, animRefs.size());
+        assertEquals(1, acRefs.size());
+        assertEquals("animation.test.walk", animRefs.get(0).options().get("identifier").getAsString());
+        assertEquals("controller.animation.test.main", acRefs.get(0).options().get("identifier").getAsString());
+
+        // 声明端口：ref.animation → animations；ref.ac → animation_controllers
+        assertTrue(graph.wires().stream().anyMatch(w -> w.from().node().equals(animRefs.get(0).uid())
+                && w.to().node().equals("root") && w.to().port().equals("animations")));
+        assertTrue(graph.wires().stream().anyMatch(w -> w.from().node().equals(acRefs.get(0).uid())
+                && w.to().node().equals("root") && w.to().port().equals("animation_controllers")));
+
+        // animate 条目解析：ctrl 接到 ref.ac 节点
+        List<NodeInstance> entries = allByType(graph.nodes(), "animate.entry");
+        assertEquals(2, entries.size());
+        java.util.Set<String> refSources = new java.util.HashSet<>();
+        for (NodeInstance entry : entries) {
+            refSources.add(wireSource(graph.wires(), entry.uid(), "ref"));
+        }
+        assertTrue(refSources.contains(acRefs.get(0).uid()), "ctrl 应解析到 ref.ac");
+        assertTrue(refSources.contains(animRefs.get(0).uid()), "walk 应解析到 ref.animation");
+
+        // 导出：两端口合写 animations 表，无 animation_controllers 表
+        AssemblyResult assembled = ClientEntityAssembler.assemble(imported.library());
+        assertFalse(assembled.hasErrors(), () -> assembled.diagnostics().toString());
+        JsonObject desc = assembled.json().getAsJsonObject("minecraft:client_entity")
+                .getAsJsonObject("description");
+        Map<String, String> animations = stringMap(desc.getAsJsonObject("animations"));
+        assertEquals("animation.test.walk", animations.get("walk"));
+        assertEquals("controller.animation.test.main", animations.get("ctrl"));
+        assertFalse(desc.has("animation_controllers"));
+    }
+
     /** v4 内联导入：resolver 命中 → rc.root 内联反编译；未命中 → ref.rc + RC_INLINE_MISS。 */
     @Test
     void resolverHitInlinesAndMissFallsBackToRefRc() {
@@ -534,15 +590,12 @@ class JsonGraphImportersTest {
         GraphData graph = imported.library().mainGraph();
         assertTrue(graph.stickyNotes().stream().anyMatch(s -> s.text().contains("variable.a->query.b")));
 
-        // scale：op.binary 的 a 侧为 const 0 占位，b 侧 const.int 1 正常
+        // scale：op.binary 的 a 侧为 const 0 占位，b 侧 const.int 1 正常；
+        // 单用 const 已内联为端口行内常量（nodegraph-import-const-inline），不再产生 const 节点
         NodeInstance op = firstByType(graph.nodes(), "op.binary");
         assertEquals(op.uid(), wireSource(graph.wires(), "root", "scale"));
-        NodeInstance aSource = graph.findNode(wireSource(graph.wires(), op.uid(), "a")).orElseThrow();
-        assertEquals("const.number", aSource.type());
-        assertEquals(0.0, aSource.options().get("value").getAsDouble());
-        NodeInstance bSource = graph.findNode(wireSource(graph.wires(), op.uid(), "b")).orElseThrow();
-        assertEquals("const.int", bSource.type());
-        assertEquals(1, bSource.options().get("value").getAsInt());
+        assertEquals(0.0, op.constants().get("a").getAsDouble());
+        assertEquals(1, op.constants().get("b").getAsInt());
 
         // initialize 的常量初始化赋值折叠为声明默认值（nodegraph-init-default-fold）
         var aDecl = graph.variables().stream().filter(d -> d.name().equals("a"))

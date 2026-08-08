@@ -162,7 +162,19 @@ public final class ImportClosure {
 
         List<NamedImport> acs = new ArrayList<>();
         for (String acId : collectRefIdentifiers(wired, NodeTypes.REF_AC.id())) {
-            Optional<JsonObject> doc = acScan.find(acId);
+            // 双通道：注册表暂存 schema（brarchive 编码包经资源桥解码暂存，LazyScan
+            // 只认资源目录明文 JSON 会漏）→ 资源目录扫描回落。
+            // 注册表返回单条目控制器体，需包成 {animation_controllers: {<id>: ...}} 文件文档
+            Optional<JsonObject> doc = io.github.tt432.eyelib.client.registry.AnimationAssetRegistry
+                    .controllerSchemaDocument(acId)
+                    .map(body -> {
+                        JsonObject table = new JsonObject();
+                        table.add(acId, body);
+                        JsonObject file = new JsonObject();
+                        file.add("animation_controllers", table);
+                        return file;
+                    })
+                    .or(() -> acScan.find(acId));
             acs.add(doc.<NamedImport>map(json -> NamedImport.found(acId,
                             JsonGraphImporters.importAnimationControllers(
                                     json, acId, KnownRefTables.collect(), inlineVariables)))

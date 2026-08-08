@@ -90,6 +90,11 @@ public abstract class EvmNodeBase extends Node {
         super.onDefineOptions(context);
         boolean isRef = ShortNames.valueOptionOf(type().id()) != null;
         for (NodeOptionDef def : type().options()) {
+            // ref 节点的 short_name 行不显示（用户决策 2026-08-07）：默认派生、显式值保留在
+            // 选项数据里照常导出，UI 不再暴露（派生语义见 ShortNames.effective）
+            if (isRef && ShortNames.SHORT_NAME_OPTION.equals(def.id())) {
+                continue;
+            }
             // 定长签名函数的 arg_count 无意义（端口数由签名决定），隐藏减少干扰
             if ("arg_count".equals(def.id())
                     && io.github.tt432.eyelib.nodegraph.MolangFunctionSignatures
@@ -99,10 +104,6 @@ public abstract class EvmNodeBase extends Node {
             var builder = context.addOption(def.id(), EvmValues.optionJavaType(def.type()))
                     .withDefaultValue(EvmValues.optionDefault(def))
                     .withDisplayName(Component.literal(def.id()));
-            // ref 节点的 short_name：绑定有效短名而非底层选项（见 shortNameBinding）
-            if (isRef && ShortNames.SHORT_NAME_OPTION.equals(def.id())) {
-                builder.withConfigurable(shortNameBinding());
-            }
             // COLOR 选项：取色器绑定（hex 字符串 ↔ ARGB int，见 colorBinding）
             if (def.type() == NodeOptionDef.OptionType.COLOR) {
                 builder.withConfigurable(colorBinding());
@@ -115,30 +116,6 @@ public abstract class EvmNodeBase extends Node {
         }
     }
 
-    /**
-     * ref 节点 short_name 的自定义绑定：字段始终显示有效短名——底层空时显示自动生成的
-     * 派生值（forceUpdate 每帧拉取 → identifier 改动即时跟随，且不触发短名自身变更事件）；
-     * 用户编辑写显式值，清空（空串 = 底层默认）即回自动模式
-     * （domain 语义不变：空 = 派生，见 {@link ShortNames#effective}）。
-     */
-    private ITypeConfigurable shortNameBinding() {
-        return (valueConfigurable, typeHandle) -> IConfigurable.create(father ->
-                father.addConfigurator(new StringConfigurator("",
-                        this::effectiveShortName, valueConfigurable::setValue,
-                        "", valueConfigurable.forceUpdate())));
-    }
-
-    /** 当前有效短名：显式 short_name 非空 ? 显式值 : 对标识符选项派生（{@link ShortNames#derive}）。 */
-    private String effectiveShortName() {
-        String explicit = java.util.Objects.toString(readStringOption(ShortNames.SHORT_NAME_OPTION), "");
-        if (!explicit.isEmpty()) {
-            return explicit;
-        }
-        String valueOption = ShortNames.valueOptionOf(type().id());
-        return valueOption == null ? ""
-                : ShortNames.derive(java.util.Objects.toString(readStringOption(valueOption), ""));
-    }
-
     /** 读字符串选项当前值（未设/缺失 → null）。 */
     private @Nullable String readStringOption(String id) {
         INodeOption option = getNodeOptionById(id);
@@ -147,8 +124,8 @@ public abstract class EvmNodeBase extends Node {
     }
 
     /**
-     * 资产候选配置器（规格 §4.2）：StringConfigurator 保留自由输入（外部契约逃生舱），
-     * EvmSelectorConfigurator 供给运行时注册表候选（懒构建，见 LazySelector；检查器每次打开取 COW 快照）；两行绑同一选项值。
+     * 资产候选配置器（规格 §4.2）：仅 EvmSelectorConfigurator 下拉（懒构建，见 LazySelector），
+     * 宽度随选中内容自适应。不再保留自由输入行（用户决策 2026-08-07：标识符一律下拉选择）。
      */
     private static ITypeConfigurable assetSuggestions(String suggestionKey) {
         return (valueConfigurable, typeHandle) -> IConfigurable.create(father -> {
@@ -156,7 +133,6 @@ public abstract class EvmNodeBase extends Node {
             java.util.function.Consumer<String> setter = valueConfigurable::setValue;
             String fallback = java.util.Objects.toString(valueConfigurable.getDefaultValue(), "");
             boolean forceUpdate = valueConfigurable.forceUpdate();
-            father.addConfigurator(new StringConfigurator("", getter, setter, fallback, forceUpdate));
             father.addConfigurator(new EvmSelectorConfigurator<>("", getter, setter, fallback, forceUpdate,
                     AssetSuggestions.suggest(suggestionKey), s -> s));
         });

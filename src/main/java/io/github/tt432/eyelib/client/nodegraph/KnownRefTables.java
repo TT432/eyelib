@@ -42,9 +42,11 @@ public final class KnownRefTables {
         ShortNameOps.KnownTables.Builder b = new ShortNameOps.KnownTables.Builder();
         java.util.List<BrClientEntity> all = new java.util.ArrayList<>(
                 ClientEntityManager.INSTANCE.all().values());
-        // 关联实体优先
-        all.sort((a, c) -> Boolean.compare(!a.render_controllers().contains(rcId),
-                !c.render_controllers().contains(rcId)));
+        // 关联实体优先（rcId=null 时无关联可排，跳过——ImmutableCollections.contains(null) 会 NPE）
+        if (rcId != null) {
+            all.sort((a, c) -> Boolean.compare(!a.render_controllers().contains(rcId),
+                    !c.render_controllers().contains(rcId)));
+        }
         for (BrClientEntity entity : all) {
             putEntity(b, entity);
         }
