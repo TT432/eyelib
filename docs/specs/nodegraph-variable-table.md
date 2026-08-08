@@ -48,8 +48,7 @@
   `EvmGraph.LibraryContext` 持 `Map<UUID, VariableDecl.Scope>`（键 = 变量模型 uid）。
   加载时 `EvmGraphTranslator.populateVariables` 登记；保存翻译按 `var.getUid()`
   读回（缺失 = VARIABLE）。会话内改名 uid 不变，作用域跟随；保存重开后由域重建。
-- **变量表面板**（`VariablesPanel`，工作台右侧栏，默认展开；面板头「变量」按钮
-  折叠表体）：
+- **变量表面板**（`VariablesPanel`，工作台右侧标签页的「变量」页，默认活动页）:
   - 表头行：名字 | 类型 | 作用域 | 默认值 | 引用数；顶部「+ 新建」与筛选框。
   - 行内编辑：改名（`setName`，同内建检查器）、改型（直连
     `setDataTypeHandle`，同内建黑板属性面板语义）、改作用域（写侧表）、改默认值
@@ -85,9 +84,10 @@
   改名/改型/改作用域/改默认值/删除全部接线；连续编辑（逐键）靠 HistoryStack 的
   `source` 合并为单条历史。新建走内建 dispatchCommand（本身可 undo）。
   26.1 序列化 API 改版（ValueOutput/ValueInput），按版本门控。
-- blackboard 合并：LDLib2 内建黑板面板（GraphPanel）隐藏，变量 UI 统一为变量表；
-  变量表默认展开。「变量」「调试」开关从顶部工具条移入变量表面板头——「变量」
-  折叠表体（表头条常显，按钮永不随面板消失），「调试」切换调试侧栏。黑板能力
+- blackboard 合并：LDLib2 内建黑板面板（GraphPanel）隐藏，变量 UI 统一为变量表。
+  右侧为标签页结构（用户决策 2026-08-07）：标签条 [变量][调试] 常显于标签体之上
+  （不随页显隐消失），点击互斥切换变量表/调试侧栏，活动标签半透明白底高亮；
+  「+ 新建」/筛选属变量页，随页显隐。黑板能力
   无损失：创建/改名/删除/改型变量表全覆盖，分组是 LDLib2 会话态（域不往返）。
 
 ### 2.8 面板调宽与引用高亮

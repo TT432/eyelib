@@ -53,14 +53,13 @@ final class VariablesPanel extends UIElement {
     private final UIElement headerRow;
 
     private String filterText = "";
-    private boolean collapsed = false;
     private boolean resizing = false;
     private float resizeStartX;
     private int resizeStartWidth;
     private @Nullable GraphModel lastModel;
     private String lastDirtyKey = "";
 
-    VariablesPanel(GraphEditorView editorView, Runnable onToggleDebug) {
+    VariablesPanel(GraphEditorView editorView) {
         this.editorView = editorView;
         layout(layout -> layout
                 .width(panelWidth)
@@ -69,23 +68,13 @@ final class VariablesPanel extends UIElement {
                 .gapAll(2));
         WorkbenchWidgets.panelBackground(this);
 
-        // 顶部：变量（折叠表体）+ 调试（切换调试侧栏）+ 新建 + 筛选
+        // 顶部：新建 + 筛选（变量/调试切换是外层标签页职责，见 Ldlib2Workbench）
         UIElement bar = new UIElement()
                 .layout(layout -> layout
                         .widthPercent(100)
                         .height(14)
                         .flexDirection(FlexDirection.ROW)
                         .gapAll(2));
-        Button variablesToggle = new Button();
-        variablesToggle.setText(Component.literal("变量"));
-        variablesToggle.textStyle(style -> style.fontSize(9));
-        variablesToggle.setOnClick(event -> setCollapsed(!collapsed));
-        variablesToggle.layout(layout -> layout.width(28).heightPercent(100));
-        Button debugToggle = new Button();
-        debugToggle.setText(Component.literal("调试"));
-        debugToggle.textStyle(style -> style.fontSize(9));
-        debugToggle.setOnClick(event -> onToggleDebug.run());
-        debugToggle.layout(layout -> layout.width(28).heightPercent(100));
         Button addButton = new Button();
         addButton.setText(Component.literal("+ 新建"));
         addButton.textStyle(style -> style.fontSize(9));
@@ -98,7 +87,7 @@ final class VariablesPanel extends UIElement {
             rebuild();
         });
         filterField.layout(layout -> layout.flex(1).heightPercent(100));
-        bar.addChildren(variablesToggle, debugToggle, addButton, filterField);
+        bar.addChildren(addButton, filterField);
 
         // 表头
         headerRow = new UIElement()
@@ -118,7 +107,7 @@ final class VariablesPanel extends UIElement {
         table = new ScrollerView();
         table.layout(layout -> layout.widthPercent(100).flex(1));
 
-        addChildren(WorkbenchWidgets.sectionTitle("变量表"), bar, headerRow, table);
+        addChildren(bar, headerRow, table);
 
         // 左缘拖拽调宽（规格 §2.8）：4px 手柄，拖动向左增宽
         UIElement resizeHandle = new UIElement()
@@ -145,13 +134,6 @@ final class VariablesPanel extends UIElement {
             VariablesPanel.this.layout(layout -> layout.width(panelWidth));
         }, true);
         addChild(resizeHandle);
-    }
-
-    /** 折叠/展开表体（表头条常显，按钮永不随面板消失）。 */
-    private void setCollapsed(boolean collapsed) {
-        this.collapsed = collapsed;
-        headerRow.setDisplay(!collapsed);
-        table.setDisplay(!collapsed);
     }
 
     private static UIElement headerCell(String text, int width) {

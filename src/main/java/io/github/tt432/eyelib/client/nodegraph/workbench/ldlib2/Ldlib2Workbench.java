@@ -8,7 +8,7 @@ import io.github.tt432.eyelib.nodegraph.GraphLibrary;
 
 /**
  * LDLib2 节点图工作台编排器（规格 §3 版本策略的 ldlib2 薄壳）：
- * 把 {@link GraphEditorView} 包进 顶部工具条 + 左资产侧栏 + 右调试侧栏 的容器，
+ * 把 {@link GraphEditorView} 包进 顶部工具条 + 左资产侧栏 + 右侧标签页（变量表/调试互斥） 的容器，
  * 并持有本编辑器会话唯一的 {@link NodeDebugOverlayModel}（画布徽标模型）。
  * 左下角另挂诊断浮动面板（{@link DiagnosticsPanel}，规格 nodegraph-declaration-wiring §4.3）。
  *
@@ -23,18 +23,19 @@ public final class Ldlib2Workbench {
     private final AssetInspectorPanel assetPanel;
     private final DebugPanel debugPanel;
     private final VariablesPanel variablesPanel;
+    private final com.lowdragmc.lowdraglib2.gui.ui.elements.Button variablesTabButton;
+    private final com.lowdragmc.lowdraglib2.gui.ui.elements.Button debugTabButton;
 
     private Ldlib2Workbench(GraphLibrary initialLibrary, GraphEditorView editorView,
                             Runnable onNormalize) {
         assetPanel = new AssetInspectorPanel();
         debugPanel = new DebugPanel(overlayModel::setTarget);
-        variablesPanel = new VariablesPanel(editorView,
-                () -> debugPanel.setDisplay(!debugPanel.isDisplayed()));
-        // blackboard 已合并进来（默认展开）；「变量」按钮在面板头折叠表体
+        variablesPanel = new VariablesPanel(editorView);
+        // 右侧标签页：变量表（默认）/调试 互斥切换，标签条常显不受页显隐影响
+        debugPanel.setDisplay(false);
         // root 先建：工具条 lambda 捕获 final 字段 root（definite assignment）
         root = new UIElement()
                 .layout(layout -> layout.widthPercent(100).heightPercent(100));
-        // 变量/调试开关在变量表面板头（blackboard 已合并进变量表，工具条不再重复入口）
         WorkbenchToolbar toolbar = new WorkbenchToolbar(
                 () -> ImportDialogs.openImportMenu(root),
                 () -> assetPanel.setDisplay(!assetPanel.isDisplayed()),
@@ -46,12 +47,28 @@ public final class Ldlib2Workbench {
         // 行内剩余空间全给编辑器：grow=1 + basis=0（widthPercent(100) 会把固定宽侧栏挤出版面）
         editorView.layout(layout -> layout.flex(1).flexBasisPercent(0).minWidth(0).heightPercent(100));
 
+        UIElement tabBar = new UIElement()
+                .layout(layout -> layout
+                        .widthPercent(100)
+                        .height(14)
+                        .flexDirection(FlexDirection.ROW)
+                        .gapAll(2));
+        variablesTabButton = tabButton("变量", true, () -> selectTab(true));
+        debugTabButton = tabButton("调试", false, () -> selectTab(false));
+        tabBar.addChildren(variablesTabButton, debugTabButton);
+        UIElement tabBody = new UIElement()
+                .layout(layout -> layout.flex(1).flexDirection(FlexDirection.ROW));
+        tabBody.addChildren(variablesPanel, debugPanel);
+        UIElement rightTabs = new UIElement()
+                .layout(layout -> layout.heightPercent(100).flexDirection(FlexDirection.COLUMN));
+        rightTabs.addChildren(tabBar, tabBody);
+
         UIElement contentRow = new UIElement()
                 .layout(layout -> layout
                         .widthPercent(100)
                         .flex(1)
                         .flexDirection(FlexDirection.ROW));
-        contentRow.addChildren(assetPanel, editorView, variablesPanel, debugPanel);
+        contentRow.addChildren(assetPanel, editorView, rightTabs);
         root.addChildren(toolbar, contentRow);
 
         BadgeOverlay.attach(editorView.graphView, overlayModel);
@@ -86,6 +103,33 @@ public final class Ldlib2Workbench {
     /** 根元素（交给 {@code UI.of(...)}）。 */
     public UIElement root() {
         return root;
+    }
+
+    /** 标签页切换：变量表/调试互斥显示，活动标签高亮。 */
+    private void selectTab(boolean variables) {
+        variablesPanel.setDisplay(variables);
+        debugPanel.setDisplay(!variables);
+        variablesTabButton.buttonStyle(style -> style.baseTexture(
+                variables ? com.lowdragmc.lowdraglib2.gui.ColorPattern.T_WHITE.rectTexture()
+                        : com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture.EMPTY));
+        debugTabButton.buttonStyle(style -> style.baseTexture(
+                !variables ? com.lowdragmc.lowdraglib2.gui.ColorPattern.T_WHITE.rectTexture()
+                        : com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture.EMPTY));
+    }
+
+    /** 标签按钮：小字、活动态半透明白底。 */
+    private static com.lowdragmc.lowdraglib2.gui.ui.elements.Button tabButton(
+            String text, boolean active, Runnable onClick) {
+        com.lowdragmc.lowdraglib2.gui.ui.elements.Button button =
+                new com.lowdragmc.lowdraglib2.gui.ui.elements.Button();
+        button.buttonStyle(style -> style.baseTexture(active
+                        ? com.lowdragmc.lowdraglib2.gui.ColorPattern.T_WHITE.rectTexture()
+                        : com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture.EMPTY))
+                .setOnClick(event -> onClick.run())
+                .setText(net.minecraft.network.chat.Component.literal(text))
+                .textStyle(style -> style.fontSize(9))
+                .layout(layout -> layout.width(28).heightPercent(100));
+        return button;
     }
 
     /** 藏掉内建黑板：沿 blackboard 的父链找到承载它的 GraphPanel 整体隐藏。 */
