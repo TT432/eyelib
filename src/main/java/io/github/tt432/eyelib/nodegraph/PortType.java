@@ -41,7 +41,10 @@ public enum PortType implements PortStringRepresentable {
     /** render controller 引用（string 子类型）。 */
     RC_REF,
     /** RGBA 四通道复合颜色（不承载标量 molang；仅 const.color/color.compose 产出、颜色端口消费）。 */
-    COLOR;
+    COLOR,
+
+    /** 变量声明未选类型（占位过渡态；验证器产生 VARIABLE_TYPE_UNKNOWN 警告，连线行为按 ANY 放行）。 */
+    UNKNOWN;
 
     public static final Codec<PortType> CODEC = PortStringRepresentable.fromEnum(PortType::values);
 
@@ -62,6 +65,8 @@ public enum PortType implements PortStringRepresentable {
         // COLOR 是复合值（4 通道），不与任何标量/通配类型互通（含 ANY/VARIABLE 隐式读）
         if (this == COLOR || target == COLOR) return false;
         if (this == ANY || target == ANY) return true;
+        // UNKNOWN 是变量声明的占位过渡态（规格 nodegraph-variable-table §2.6）：连线按 ANY 放行
+        if (this == UNKNOWN || target == UNKNOWN) return true;
         if (this == EXEC || target == EXEC) return false;
         if (this == SLOT || target == SLOT) return false;
         // 变量身份 → 任意值端口 = 隐式读；其它类型不能冒充变量身份（ANY 通配除外，验证器严格化）

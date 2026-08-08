@@ -124,4 +124,46 @@ class VariableScopeTest {
                 List.of(VariableDecl.of("hp", PortType.FLOAT)));
         assertFalse(hasDiagnostic(lib(main), GraphValidator.TEMP_NEVER_WRITTEN));
     }
+
+    // ---------- 验证器 VARIABLE_TYPE_UNKNOWN（规格 §2.6） ----------
+
+    @Test
+    void unknownTypedDeclarationWarns() {
+        GraphData main = graph(
+                List.of(new NodeInstance("root", "entity.root", 0, 0, Map.of(), Map.of())),
+                List.of(),
+                List.of(VariableDecl.of("new_var", PortType.UNKNOWN)));
+        assertTrue(hasDiagnostic(lib(main), GraphValidator.VARIABLE_TYPE_UNKNOWN));
+    }
+
+    @Test
+    void typedDeclarationDoesNotWarnUnknown() {
+        GraphData main = graph(
+                List.of(new NodeInstance("root", "entity.root", 0, 0, Map.of(), Map.of())),
+                List.of(),
+                List.of(VariableDecl.of("hp", PortType.FLOAT)));
+        assertFalse(hasDiagnostic(lib(main), GraphValidator.VARIABLE_TYPE_UNKNOWN));
+    }
+
+    // ---------- UNKNOWN 兼容矩阵与 codec ----------
+
+    @Test
+    void unknownBehavesLikeAnyInAssignability() {
+        for (PortType target : PortType.values()) {
+            if (target == PortType.COLOR) {
+                continue; // COLOR 复合值恒不互通
+            }
+            assertTrue(PortType.UNKNOWN.isAssignableTo(target), "UNKNOWN → " + target);
+            assertTrue(target.isAssignableTo(PortType.UNKNOWN), target + " → UNKNOWN");
+        }
+    }
+
+    @Test
+    void unknownCodecRoundTrips() {
+        VariableDecl decl = VariableDecl.of("new_var", PortType.UNKNOWN);
+        JsonElement json = TestCodecUtil.unwrap(VariableDecl.CODEC.encodeStart(JsonOps.INSTANCE, decl));
+        assertEquals("unknown", json.getAsJsonObject().get("type").getAsString());
+        VariableDecl back = TestCodecUtil.unwrap(VariableDecl.CODEC.parse(JsonOps.INSTANCE, json));
+        assertEquals(PortType.UNKNOWN, back.type());
+    }
 }

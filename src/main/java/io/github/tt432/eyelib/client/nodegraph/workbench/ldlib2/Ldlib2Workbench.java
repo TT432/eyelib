@@ -28,18 +28,20 @@ public final class Ldlib2Workbench {
                             Runnable onNormalize) {
         assetPanel = new AssetInspectorPanel();
         debugPanel = new DebugPanel(overlayModel::setTarget);
-        variablesPanel = new VariablesPanel(editorView);
-        // 默认隐藏（管理工具，工具条「变量」按钮切换；三侧栏齐开窄窗口会溢出）
-        variablesPanel.setDisplay(false);
+        variablesPanel = new VariablesPanel(editorView,
+                () -> debugPanel.setDisplay(!debugPanel.isDisplayed()));
+        // blackboard 已合并进来（默认展开）；「变量」按钮在面板头折叠表体
         // root 先建：工具条 lambda 捕获 final 字段 root（definite assignment）
         root = new UIElement()
                 .layout(layout -> layout.widthPercent(100).heightPercent(100));
+        // 变量/调试开关在变量表面板头（blackboard 已合并进变量表，工具条不再重复入口）
         WorkbenchToolbar toolbar = new WorkbenchToolbar(
                 () -> ImportDialogs.openImportMenu(root),
                 () -> assetPanel.setDisplay(!assetPanel.isDisplayed()),
-                () -> variablesPanel.setDisplay(!variablesPanel.isDisplayed()),
-                () -> debugPanel.setDisplay(!debugPanel.isDisplayed()),
                 onNormalize);
+
+        // blackboard 与变量表合并：藏掉 LDLib2 内建黑板面板，变量 UI 统一走 VariablesPanel
+        hideBuiltinBlackboard(editorView);
 
         // 行内剩余空间全给编辑器：grow=1 + basis=0（widthPercent(100) 会把固定宽侧栏挤出版面）
         editorView.layout(layout -> layout.flex(1).flexBasisPercent(0).minWidth(0).heightPercent(100));
@@ -84,6 +86,17 @@ public final class Ldlib2Workbench {
     /** 根元素（交给 {@code UI.of(...)}）。 */
     public UIElement root() {
         return root;
+    }
+
+    /** 藏掉内建黑板：沿 blackboard 的父链找到承载它的 GraphPanel 整体隐藏。 */
+    private static void hideBuiltinBlackboard(GraphEditorView editorView) {
+        UIElement element = editorView.graphView.blackboard;
+        while (element != null && !(element instanceof com.lowdragmc.lowdraglib2.nodegraphtookit.gui.GraphPanel)) {
+            element = element.getParent();
+        }
+        if (element != null) {
+            element.setDisplay(false);
+        }
     }
 
     /** 保存回调点：翻译回的库灌入徽标模型（引用比较，COW 文档变了才重发射）。 */

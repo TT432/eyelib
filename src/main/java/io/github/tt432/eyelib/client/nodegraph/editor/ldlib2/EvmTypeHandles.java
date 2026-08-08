@@ -121,6 +121,7 @@ public final class EvmTypeHandles {
             case AC_REF -> Holder.AC_REF;
             case RC_REF -> Holder.RC_REF;
             case COLOR -> Holder.COLOR;
+            case UNKNOWN -> TypeHandles.UNKNOWN;
         };
     }
 
@@ -133,6 +134,7 @@ public final class EvmTypeHandles {
         if (handle.equals(TypeHandles.BOOL)) return PortType.BOOL;
         if (handle.equals(TypeHandles.STRING)) return PortType.STRING;
         if (handle.equals(TypeHandles.OBJECT)) return PortType.ANY;
+        if (handle.equals(TypeHandles.UNKNOWN)) return PortType.UNKNOWN;
         if (handle.equals(Holder.SLOT)) return PortType.SLOT;
         if (handle.equals(Holder.VARIABLE)) return PortType.VARIABLE;
         if (handle.equals(Holder.GEOMETRY_REF)) return PortType.GEOMETRY_REF;

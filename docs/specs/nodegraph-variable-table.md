@@ -48,7 +48,8 @@
   `EvmGraph.LibraryContext` 持 `Map<UUID, VariableDecl.Scope>`（键 = 变量模型 uid）。
   加载时 `EvmGraphTranslator.populateVariables` 登记；保存翻译按 `var.getUid()`
   读回（缺失 = VARIABLE）。会话内改名 uid 不变，作用域跟随；保存重开后由域重建。
-- **变量表面板**（`VariablesPanel`，工作台右侧栏，工具条切换显隐）：
+- **变量表面板**（`VariablesPanel`，工作台右侧栏，默认展开；面板头「变量」按钮
+  折叠表体）：
   - 表头行：名字 | 类型 | 作用域 | 默认值 | 引用数；顶部「+ 新建」与筛选框。
   - 行内编辑：改名（`setName`，同内建检查器）、改型（直连
     `setDataTypeHandle`，同内建黑板属性面板语义）、改作用域（写侧表）、改默认值
@@ -67,6 +68,33 @@
   接值端口）但无任何 `exec.set_var` 写入——temp 跨求值不存活，读到恒 0。
 - 写检测：`exec.set_var` 的 target 连线源为同名 variable 节点。死写（只写不读）
   不报警。
+
+### 2.6 未选类型 = unknown
+
+- `PortType.UNKNOWN`：变量声明的占位过渡态。codec 序列化 `"unknown"`；连线兼容
+  矩阵按 ANY 放行（仅 COLOR 恒不互通）；`EvmTypeHandles` 双向映射 LDLib2 内建
+  `TypeHandles.UNKNOWN`。
+- 新建变量默认 unknown（用户显式选型前不猜测语义）；类型列显示编辑器类型名
+  （float/int/bool/string/object/unknown），不显示 handle 原文。
+- 验证器新增 `VARIABLE_TYPE_UNKNOWN`（warning）：声明类型为 UNKNOWN 的变量。
+
+### 2.7 变量表操作 undo 与 blackboard 合并
+
+- `EvmUndo`：图模型 NBT 快照 + 作用域侧表快照双份留底，undo/redo 同时恢复
+  （LDLib2 内建 UndoableGraphCommand 只覆盖图 NBT，侧表是 eyelib 域概念）。
+  改名/改型/改作用域/改默认值/删除全部接线；连续编辑（逐键）靠 HistoryStack 的
+  `source` 合并为单条历史。新建走内建 dispatchCommand（本身可 undo）。
+  26.1 序列化 API 改版（ValueOutput/ValueInput），按版本门控。
+- blackboard 合并：LDLib2 内建黑板面板（GraphPanel）隐藏，变量 UI 统一为变量表；
+  变量表默认展开。「变量」「调试」开关从顶部工具条移入变量表面板头——「变量」
+  折叠表体（表头条常显，按钮永不随面板消失），「调试」切换调试侧栏。黑板能力
+  无损失：创建/改名/删除/改型变量表全覆盖，分组是 LDLib2 会话态（域不往返）。
+
+### 2.8 面板调宽与引用高亮
+
+- 左缘 4px 拖拽手柄调宽（180..640，会话内保持）。
+- 点击变量行 → 图上高亮该变量的全部引用节点（复用内建选择态：clearAllSelected
+  + addSelected 绑定该声明的 VariableNodeModel）。
 
 ## 3. 前置条件 / 后置条件 / 不变量 / 异常行为
 
@@ -88,6 +116,9 @@
 
 - 单测：codec scope 往返/缺省；codegen TEMP 根发射（读+写）；initialize 初始化
   合并（有/无用户 initialize 连线）；TEMP_NEVER_WRITTEN 触发与不触发；
-  rename/retype 保 scope。
+  rename/retype 保 scope；VARIABLE_TYPE_UNKNOWN 触发与不触发；UNKNOWN 兼容矩阵
+  与 codec 往返。
 - 实机：变量表新建 TEMP 变量 → 连线读写 → 保存重开 → 导出 JSON：
   temp 读写为 `temp.*` 根；VARIABLE 默认值出现在 initialize。
+  U2 批次实机：blackboard 隐藏 + 变量表默认展开；新建变量 unknown；删除后 undo
+  恢复；行点击选中引用节点（数与引用数一致）；拖拽调宽 300→400；折叠隔帧生效。

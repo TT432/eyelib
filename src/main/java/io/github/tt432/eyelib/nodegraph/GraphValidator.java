@@ -55,6 +55,8 @@ public final class GraphValidator {
     public static final String UNDECLARED_VARIABLE = "UNDECLARED_VARIABLE";
     /** TEMP 作用域变量同图有读无写（temp 跨求值不存活）。 */
     public static final String TEMP_NEVER_WRITTEN = "TEMP_NEVER_WRITTEN";
+    /** 变量声明未选类型（规格 nodegraph-variable-table §2.6）。 */
+    public static final String VARIABLE_TYPE_UNKNOWN = "VARIABLE_TYPE_UNKNOWN";
     /** exec.set_var 的 target 未连线到 variable 节点。 */
     public static final String SET_TARGET_NOT_VARIABLE = "SET_TARGET_NOT_VARIABLE";
     /** 声明类 ref 未接线（WARNING，仅 CLIENT_ENTITY 库；规格 inline-render-controller §4）。 */
@@ -901,6 +903,11 @@ public final class GraphValidator {
         Set<String> declared = new HashSet<>();
         for (VariableDecl var : graph.variables()) {
             declared.add(var.name());
+            // 检查 19c（规格 nodegraph-variable-table §2.6）：未选类型的声明（unknown 过渡态）
+            if (var.type() == PortType.UNKNOWN) {
+                out.add(Diagnostic.warning(VARIABLE_TYPE_UNKNOWN,
+                        "变量未选择类型（unknown）：" + var.name()));
+            }
         }
         for (NodeInstance node : byUid.values()) {
             NodeType type = types.get(node.uid());

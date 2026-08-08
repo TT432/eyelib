@@ -5,8 +5,11 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Selector;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
+import com.lowdragmc.lowdraglib2.gui.ui.utils.UIElementProvider;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.TypeHandle;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.TypeHandles;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.editor.GraphEditorView;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.GraphView;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.command.VariableDeclarationCommands;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.graph.GraphModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.VariableNodeModel;
@@ -39,33 +42,50 @@ import java.util.List;
  * 跟随潜入的子图（{@link GraphEditorView#getCurrentView()}）。
  */
 final class VariablesPanel extends UIElement {
-    /** 侧栏展开宽度。 */
-    static final int WIDTH = 300;
+    /** 侧栏展开宽度（会话内保持，拖左缘调整）。 */
+    private static int panelWidth = 300;
+    private static final int MIN_WIDTH = 180;
+    private static final int MAX_WIDTH = 640;
 
     private final GraphEditorView editorView;
     private final TextField filterField;
     private final ScrollerView table;
+    private final UIElement headerRow;
 
     private String filterText = "";
+    private boolean collapsed = false;
+    private boolean resizing = false;
+    private float resizeStartX;
+    private int resizeStartWidth;
     private @Nullable GraphModel lastModel;
     private String lastDirtyKey = "";
 
-    VariablesPanel(GraphEditorView editorView) {
+    VariablesPanel(GraphEditorView editorView, Runnable onToggleDebug) {
         this.editorView = editorView;
         layout(layout -> layout
-                .width(WIDTH)
+                .width(panelWidth)
                 .heightPercent(100)
                 .paddingAll(4)
                 .gapAll(2));
         WorkbenchWidgets.panelBackground(this);
 
-        // 顶部：新建 + 筛选
+        // 顶部：变量（折叠表体）+ 调试（切换调试侧栏）+ 新建 + 筛选
         UIElement bar = new UIElement()
                 .layout(layout -> layout
                         .widthPercent(100)
                         .height(14)
                         .flexDirection(FlexDirection.ROW)
                         .gapAll(2));
+        Button variablesToggle = new Button();
+        variablesToggle.setText(Component.literal("变量"));
+        variablesToggle.textStyle(style -> style.fontSize(9));
+        variablesToggle.setOnClick(event -> setCollapsed(!collapsed));
+        variablesToggle.layout(layout -> layout.width(28).heightPercent(100));
+        Button debugToggle = new Button();
+        debugToggle.setText(Component.literal("调试"));
+        debugToggle.textStyle(style -> style.fontSize(9));
+        debugToggle.setOnClick(event -> onToggleDebug.run());
+        debugToggle.layout(layout -> layout.width(28).heightPercent(100));
         Button addButton = new Button();
         addButton.setText(Component.literal("+ 新建"));
         addButton.textStyle(style -> style.fontSize(9));
@@ -78,16 +98,16 @@ final class VariablesPanel extends UIElement {
             rebuild();
         });
         filterField.layout(layout -> layout.flex(1).heightPercent(100));
-        bar.addChildren(addButton, filterField);
+        bar.addChildren(variablesToggle, debugToggle, addButton, filterField);
 
         // 表头
-        UIElement header = new UIElement()
+        headerRow = new UIElement()
                 .layout(layout -> layout
                         .widthPercent(100)
                         .height(12)
                         .flexDirection(FlexDirection.ROW)
                         .gapAll(2));
-        header.addChildren(
+        headerRow.addChildren(
                 headerCell("名字", 76),
                 headerCell("类型", 62),
                 headerCell("作用域", 44),
@@ -98,7 +118,40 @@ final class VariablesPanel extends UIElement {
         table = new ScrollerView();
         table.layout(layout -> layout.widthPercent(100).flex(1));
 
-        addChildren(WorkbenchWidgets.sectionTitle("变量表"), bar, header, table);
+        addChildren(WorkbenchWidgets.sectionTitle("变量表"), bar, headerRow, table);
+
+        // 左缘拖拽调宽（规格 §2.8）：4px 手柄，拖动向左增宽
+        UIElement resizeHandle = new UIElement()
+                .layout(layout -> layout
+                        .positionType(dev.vfyjxf.taffy.style.TaffyPosition.ABSOLUTE)
+                        .left(0).top(0).bottom(0).width(4));
+        resizeHandle.addEventListener(com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.MOUSE_DOWN, event -> {
+            if (event.button == 0) {
+                resizing = true;
+                resizeStartX = event.x;
+                resizeStartWidth = panelWidth;
+            }
+        }, true);
+        addEventListener(com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.MOUSE_MOVE, event -> {
+            if (!resizing) {
+                return;
+            }
+            if (!isMouseDown(0)) {
+                resizing = false;
+                return;
+            }
+            panelWidth = Math.max(MIN_WIDTH,
+                    Math.min(MAX_WIDTH, resizeStartWidth + (int) (resizeStartX - event.x)));
+            VariablesPanel.this.layout(layout -> layout.width(panelWidth));
+        }, true);
+        addChild(resizeHandle);
+    }
+
+    /** 折叠/展开表体（表头条常显，按钮永不随面板消失）。 */
+    private void setCollapsed(boolean collapsed) {
+        this.collapsed = collapsed;
+        headerRow.setDisplay(!collapsed);
+        table.setDisplay(!collapsed);
     }
 
     private static UIElement headerCell(String text, int width) {
@@ -138,6 +191,12 @@ final class VariablesPanel extends UIElement {
             return null;
         }
         return graph.graphModel;
+    }
+
+    /** 当前潜入位置的图视图（无编辑器/图时 null）。 */
+    private @Nullable GraphView currentView() {
+        var view = editorView.getCurrentView();
+        return view != null && view.getGraph() instanceof EvmGraph ? view : null;
     }
 
     private EvmGraph.@Nullable LibraryContext currentContext() {
@@ -188,23 +247,29 @@ final class VariablesPanel extends UIElement {
         name.setText(var.getName(), false);
         name.setTextResponder(text -> {
             String newName = text.trim();
-            if (!newName.isEmpty() && !newName.equals(var.getName())) {
-                var.setName(newName);
+            GraphView view = currentView();
+            if (view != null && !newName.isEmpty() && !newName.equals(var.getName())) {
+                EvmUndo.push(view, model, currentContext(), "重命名变量",
+                        "var:name:" + var.getUid(), () -> var.setName(newName));
             }
         });
         name.layout(layout -> layout.width(76).heightPercent(100));
 
-        // 类型（同内建黑板属性面板的直连语义）
+        // 类型（同内建黑板属性面板的直连语义）；候选显示用编辑器类型名而非 handle 原文
         Selector<TypeHandle> type = new Selector<>();
         List<TypeHandle> candidates = new ArrayList<>(model.getVariableSupportTypes());
         if (!candidates.contains(var.getDataTypeHandle())) {
             candidates.add(var.getDataTypeHandle());
         }
         type.setCandidates(candidates);
+        type.setCandidateUIProvider(UIElementProvider.text(
+                handle -> Component.literal(typeDisplayName(handle))));
         type.setSelected(var.getDataTypeHandle(), false);
         type.registerValueListener(handle -> {
-            if (handle != null && handle != var.getDataTypeHandle()) {
-                var.setDataTypeHandle(handle);
+            GraphView view = currentView();
+            if (view != null && handle != null && handle != var.getDataTypeHandle()) {
+                EvmUndo.push(view, model, currentContext(), "修改变量类型",
+                        "var:type:" + var.getUid(), () -> var.setDataTypeHandle(handle));
             }
         });
         type.layout(layout -> layout.width(62).heightPercent(100));
@@ -220,13 +285,16 @@ final class VariablesPanel extends UIElement {
             scopeButton.textStyle(style -> style.fontSize(9));
             scopeButton.setOnClick(event -> {
                 EvmGraph.LibraryContext ctx = currentContext();
-                if (ctx == null) {
+                GraphView view = currentView();
+                if (ctx == null || view == null) {
                     return;
                 }
                 VariableDecl.Scope next = scopeOf(var) == VariableDecl.Scope.TEMP
                         ? VariableDecl.Scope.VARIABLE : VariableDecl.Scope.TEMP;
-                ctx.variableScopes.put(var.getUid(), next);
-                scopeButton.setText(Component.literal(next == VariableDecl.Scope.TEMP ? "temp" : "variable"));
+                EvmUndo.push(view, model, ctx, "切换变量作用域", "var:scope:" + var.getUid(), () -> {
+                    ctx.variableScopes.put(var.getUid(), next);
+                    scopeButton.setText(Component.literal(next == VariableDecl.Scope.TEMP ? "temp" : "variable"));
+                });
             });
             scopeButton.layout(layout -> layout.width(44).heightPercent(100));
             scopeCell = scopeButton;
@@ -236,7 +304,13 @@ final class VariablesPanel extends UIElement {
         TextField defaultField = new TextField();
         defaultField.textFieldStyle(style -> style.fontSize(9));
         defaultField.setText(defaultText(var), false);
-        defaultField.setTextResponder(text -> applyDefault(model, var, text));
+        defaultField.setTextResponder(text -> {
+            GraphView view = currentView();
+            if (view != null) {
+                EvmUndo.push(view, model, currentContext(), "修改变量默认值",
+                        "var:default:" + var.getUid(), () -> applyDefault(model, var, text));
+            }
+        });
         defaultField.layout(layout -> layout.width(56).heightPercent(100));
 
         // 引用数（绑定该声明的变量节点）
@@ -250,6 +324,24 @@ final class VariablesPanel extends UIElement {
         UIElement refsLabel = WorkbenchWidgets.textLine(String.valueOf(refs), WorkbenchColors.DIM)
                 .layout(layout -> layout.width(22).heightPercent(100));
 
+        // 点击行 → 图上高亮该变量的全部引用节点（用内建选择态呈现）
+        row.addEventListener(com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.MOUSE_DOWN, event -> {
+            if (event.button != 0) {
+                return;
+            }
+            GraphView view = currentView();
+            if (view == null) {
+                return;
+            }
+            view.clearAllSelected();
+            for (var nodeModel : model.getNodeModels()) {
+                if (nodeModel instanceof VariableNodeModel variableNode
+                        && variableNode.getVariableDeclarationModel() == var) {
+                    view.addSelected(variableNode);
+                }
+            }
+        });
+
         row.addChildren(name, type, scopeCell, defaultField, refsLabel);
         if (!interfaceVar) {
             Button delete = new Button();
@@ -257,10 +349,16 @@ final class VariablesPanel extends UIElement {
             delete.textStyle(style -> style.fontSize(9));
             delete.setOnClick(event -> {
                 EvmGraph.LibraryContext ctx = currentContext();
-                if (ctx != null) {
-                    ctx.variableScopes.remove(var.getUid());
+                GraphView view = currentView();
+                if (view == null) {
+                    return;
                 }
-                model.deleteVariableDeclaration(var, true);
+                EvmUndo.push(view, model, ctx, "删除变量", null, () -> {
+                    if (ctx != null) {
+                        ctx.variableScopes.remove(var.getUid());
+                    }
+                    model.deleteVariableDeclaration(var, true);
+                });
                 rebuild();
             });
             delete.layout(layout -> layout.width(16).heightPercent(100));
@@ -314,7 +412,7 @@ final class VariablesPanel extends UIElement {
             name = baseName + "_" + (++serial);
         }
         view.dispatchCommand(new VariableDeclarationCommands.CreateGraphVariableDeclarationCommand(
-                name, VariableScope.LOCAL, model.getVariableDeclarationModelType(), types.get(0),
+                name, VariableScope.LOCAL, model.getVariableDeclarationModelType(), TypeHandles.UNKNOWN,
                 null, Integer.MAX_VALUE, ModifierFlags.NONE, null));
         VariableDeclarationModelBase created = findVariable(model, name);
         EvmGraph.LibraryContext ctx = currentContext();
@@ -331,6 +429,18 @@ final class VariablesPanel extends UIElement {
             }
         }
         return null;
+    }
+
+    /** 类型列显示名（编辑器口径）：内置 OBJECT → object、UNKNOWN → unknown，其余走 domain 名。 */
+    private static String typeDisplayName(@Nullable TypeHandle handle) {
+        if (handle == null) {
+            return "unknown";
+        }
+        if (handle.equals(com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.TypeHandles.OBJECT)) {
+            return "object";
+        }
+        PortType portType = EvmTypeHandles.toPortType(handle);
+        return portType != null ? portType.getSerializedName() : handle.toString();
     }
 }
 //?}
