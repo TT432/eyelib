@@ -231,13 +231,36 @@ final class ImportGraphBuilder {
             buildWires = inlined.wires();
             diagnostics.addAll(inlined.diagnostics());
         }
+        // 初始化折叠无条件启用（规格 nodegraph-init-default-fold）：判据严格到产物等价
+        InitDefaultFolder.Result folded = InitDefaultFolder.fold(buildNodes, buildWires, List.of());
+        buildNodes = folded.nodes();
+        buildWires = folded.wires();
+        diagnostics.addAll(folded.diagnostics());
         List<NodeInstance> laidOut = GraphLayout.layout(List.copyOf(buildNodes), buildWires);
         List<StickyNote> placed = GraphLayout.placeStickyNotes(stickies, laidOut);
-        GraphData data = new GraphData(laidOut, List.copyOf(buildWires), collectVariables(laidOut),
+        GraphData data = new GraphData(laidOut, List.copyOf(buildWires),
+                mergeDecls(collectVariables(laidOut), folded.foldedDecls()),
                 List.of(), placed, Optional.empty());
         return new ImportResult(
                 new GraphLibrary(GraphLibrary.CURRENT_FORMAT_VERSION, kind, "root", Map.of("root", data)),
                 diagnostics);
+    }
+
+    /** 折叠产出的声明与节点收集合并（折叠声明带默认值，优先保留）。 */
+    private static List<VariableDecl> mergeDecls(List<VariableDecl> collected,
+                                                 List<VariableDecl> foldedDecls) {
+        if (foldedDecls.isEmpty()) {
+            return collected;
+        }
+        Set<String> foldedNames = new TreeSet<>();
+        for (VariableDecl d : foldedDecls) {
+            foldedNames.add(d.name());
+        }
+        List<VariableDecl> out = new ArrayList<>(
+                collected.stream().filter(d -> !foldedNames.contains(d.name())).toList());
+        out.addAll(foldedDecls);
+        out.sort((a, b) -> a.name().compareTo(b.name()));
+        return List.copyOf(out);
     }
 
     /** 黑板变量声明：收集 variable 节点引用的变量名（不带根，去重排序）。 */

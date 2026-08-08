@@ -227,8 +227,12 @@ class VariableInlinerTest {
         List<NodeInstance> onNodes = on.library().mainGraph().nodes();
         assertFalse(onNodes.stream().anyMatch(n -> n.type().equals("exec.set_temp")));
         assertFalse(onNodes.stream().anyMatch(n -> n.type().equals("temp.get")));
-        // variable.hp 只写不读，不内联，保留
-        assertTrue(onNodes.stream().anyMatch(n -> n.type().equals("exec.set_var")));
+        // variable.hp 只写不读且内联后值为常量 5 → 初始化折叠为声明默认值（nodegraph-init-default-fold）
+        assertFalse(onNodes.stream().anyMatch(n -> n.type().equals("exec.set_var")));
+        var hpDecl = on.library().mainGraph().variables().stream()
+                .filter(d -> d.name().equals("hp")).findFirst().orElseThrow();
+        assertEquals(new JsonPrimitive(5), hpDecl.defaultValue().orElseThrow());
         assertTrue(DecompileTestSupport.hasCode(on.diagnostics(), VariableInliner.INLINED_VARIABLE));
+        assertTrue(DecompileTestSupport.hasCode(on.diagnostics(), InitDefaultFolder.INIT_DEFAULT_FOLD));
     }
 }

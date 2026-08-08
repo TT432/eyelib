@@ -183,7 +183,11 @@ final class VariableInliner {
         }
         Wire valueWire = idx.wireInto(setUid, "value");
         PortRef valueSource = valueWire != null ? valueWire.from() : null;
-        JsonElement valueDefault = valueDefaultOf(idx.byUid.get(setUid));
+        NodeInstance setNode = idx.byUid.get(setUid);
+        // 未连线值：行内常量（constants 覆盖）优先，缺省回落端口默认
+        JsonElement inlineConstant = setNode != null ? setNode.constants().get("value") : null;
+        JsonElement valueDefault = inlineConstant != null && inlineConstant.isJsonPrimitive()
+                ? inlineConstant : valueDefaultOf(setNode);
         return new Candidate(setUid, refUid, consumerUid, consumerPort,
                 valueSource, valueDefault, displayName);
     }

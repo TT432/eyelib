@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphKind;
 import io.github.tt432.eyelib.nodegraph.GraphLibrary;
@@ -496,11 +497,11 @@ class JsonGraphImportersTest {
         NodeInstance geo = firstByType(graph.nodes(), "ref.geometry");
         assertEquals("default", geo.options().get("short_name").getAsString());
         assertEquals("geometry.test.model", geo.options().get("identifier").getAsString());
-        NodeInstance setVar = firstByType(graph.nodes(), "exec.set_var");
-        NodeInstance setTarget = graph.findNode(wireSource(graph.wires(), setVar.uid(), "target")).orElseThrow();
-        assertEquals("variable", setTarget.type());
-        assertEquals("foo", setTarget.options().get("name").getAsString());
-        assertEquals(setVar.uid(), wireSource(graph.wires(), "root", "initialize"));
+        // 初始化常量赋值折叠为声明默认值：foo 默认 1，initialize 链不再占节点
+        var fooDecl = graph.variables().stream().filter(d -> d.name().equals("foo"))
+                .findFirst().orElseThrow();
+        assertEquals(new JsonPrimitive(1), fooDecl.defaultValue().orElseThrow());
+        assertTrue(allByType(graph.nodes(), "exec.set_var").isEmpty());
         assertEquals(1, allByType(graph.nodes(), "animate.entry").size());
         assertEquals(2, allByType(graph.nodes(), "ref.rc").size());
         assertTrue(allByType(graph.nodes(), "rc.condition_entry").isEmpty());
@@ -543,9 +544,11 @@ class JsonGraphImportersTest {
         assertEquals("const.int", bSource.type());
         assertEquals(1, bSource.options().get("value").getAsInt());
 
-        // initialize 照常导入
-        NodeInstance setVar = firstByType(graph.nodes(), "exec.set_var");
-        assertEquals(setVar.uid(), wireSource(graph.wires(), "root", "initialize"));
+        // initialize 的常量初始化赋值折叠为声明默认值（nodegraph-init-default-fold）
+        var aDecl = graph.variables().stream().filter(d -> d.name().equals("a"))
+                .findFirst().orElseThrow();
+        assertEquals(new JsonPrimitive(1), aDecl.defaultValue().orElseThrow());
+        assertTrue(allByType(graph.nodes(), "exec.set_var").isEmpty());
     }
 
     @Test
