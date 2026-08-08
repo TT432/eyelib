@@ -355,12 +355,18 @@ public final class NodeTypes {
             List.of(),
             List.of(PortDef.out("ref", PortType.MATERIAL_REF))));
 
+    /** 动画/AC ref 节点的变量引用声明端口（规格 nodegraph-animation-variable-refs）：
+     * 声明该动画/AC 触及的全部实体级 molang 变量——纯元数据，不承载 molang 值。 */
+    public static final String DECL_VARIABLES = "decl_variables";
+
+    private static final PortDef DECL_VARIABLES_PORT = PortDef.inMulti(DECL_VARIABLES, PortType.VARIABLE);
+
     public static final NodeType REF_ANIMATION = register(NodeType.of(
             "ref.animation", NodeType.Kind.REF_ANIMATION, CAT_REF,
             List.of(
                     NodeOptionDef.string("short_name", ""),
                     NodeOptionDef.asset("identifier", "animation.example.walk", "animation")),
-            List.of(),
+            List.of(DECL_VARIABLES_PORT),
             List.of(PortDef.out("ref", PortType.ANIMATION_REF))));
 
     public static final NodeType REF_AC = register(NodeType.of(
@@ -368,7 +374,7 @@ public final class NodeTypes {
             List.of(
                     NodeOptionDef.string("short_name", ""),
                     NodeOptionDef.asset("identifier", "controller.animation.example.main", "ac")),
-            List.of(),
+            List.of(DECL_VARIABLES_PORT),
             List.of(PortDef.out("ref", PortType.AC_REF))));
 
     public static final NodeType REF_RC = register(NodeType.of(

@@ -39,6 +39,7 @@ public final class BedrockAddonRuntimeBridge {
     }
 
     public static void replaceFromResourcePack(BedrockAddonSideAggregate resourcePack) {
+        AnimationAssetRegistry.stageSchemas(resourcePack.animations(), resourcePack.animationControllers());
         AnimationAssetRegistry.stageAnimations(toRuntimeAnimations(resourcePack.animations()));
         AnimationAssetRegistry.stageControllers(toRuntimeAnimationControllers(resourcePack.animationControllers()));
         // 替换客户端实体

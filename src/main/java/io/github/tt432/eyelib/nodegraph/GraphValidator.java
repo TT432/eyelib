@@ -718,6 +718,10 @@ public final class GraphValidator {
                 if (port.type() == PortType.EXEC || port.type() == PortType.SLOT) {
                     continue;
                 }
+                // multi 输入是声明通道（decl_*）：未连线 = 空声明，不是错误
+                if (port.multi()) {
+                    continue;
+                }
                 if (inDegree.containsKey(new PortRef(uid, port.id()))) {
                     continue;
                 }

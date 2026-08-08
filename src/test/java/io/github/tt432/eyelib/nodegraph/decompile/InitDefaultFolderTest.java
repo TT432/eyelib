@@ -76,6 +76,30 @@ class InitDefaultFolderTest {
         assertTrue(DecompileTestSupport.hasCode(r.diagnostics(), InitDefaultFolder.INIT_DEFAULT_FOLD));
     }
 
+    /** decl 声明节点与写入节点是独立实例、且接线在导入后处理（折叠/内联之后），
+     * 结构上不与折叠互斥：折叠只删写入节点，声明节点/连线原样保留。 */
+    @Test
+    void foldLeavesDeclNodesIntact() {
+        List<NodeInstance> nodes = new ArrayList<>(List.of(
+                node("root", "entity.root"),
+                node("v", "variable", opts("name", "x")),
+                node("dv", "variable", opts("name", "y")),
+                node("ra", "ref.animation"),
+                node("s", "exec.set_var")));
+        List<Wire> wires = new ArrayList<>(List.of(
+                wire("v", "out", "s", "target"),
+                wire("dv", "out", "ra", "decl_variables"),
+                wire("s", "exec_out", "root", "initialize")));
+
+        InitDefaultFolder.Result r = fold(nodes, wires);
+
+        assertFalse(hasNode(r, "v"));
+        assertFalse(hasNode(r, "s"));
+        assertTrue(hasNode(r, "dv")); // 声明节点不动
+        assertTrue(hasWire(r, "dv", "out", "ra", "decl_variables"));
+        assertTrue(decl(r, "x").isPresent());
+    }
+
     /** 正例：两个 set_var 串联（s1→s2→root），各自折叠且 exec 链逐步塌缩。 */
     @Test
     void foldsChainedInitStatements() {

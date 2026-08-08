@@ -7,12 +7,16 @@ import com.google.gson.JsonObject;
 import io.github.tt432.eyelib.nodegraph.Diagnostic;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
+import io.github.tt432.eyelib.nodegraph.decompile.AnimationVariableDecls;
 import io.github.tt432.eyelib.nodegraph.decompile.ImportResult;
 import io.github.tt432.eyelib.nodegraph.decompile.JsonGraphImporters;
+import io.github.tt432.eyelib.nodegraph.decompile.MolangVariableRefs;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
@@ -54,6 +58,7 @@ public final class ImportClosure {
 
     private static final String RC_DIR = "eyelib/render_controllers";
     private static final String AC_DIR = "eyelib/animation_controllers";
+    private static final String ANIM_DIR = "eyelib/animations";
 
     private ImportClosure() {
     }
@@ -118,9 +123,36 @@ public final class ImportClosure {
         LazyScan rcScan = new LazyScan(RC_DIR);
         ImportResult entity = JsonGraphImporters.importClientEntity(entityFileJson,
                 rcId -> registryRenderController(rcId).or(() -> rcScan.find(rcId)), inlineVariables);
-        GraphLibraryManager.INSTANCE.put(entityLibraryName, entity.library());
 
-        String identifier = entity.library().mainGraph().nodes().stream()
+        // decl_variables 接线（规格 nodegraph-animation-variable-refs）：
+        // 从动画/AC 原始文档提取变量引用，接入实体库 ref 节点（纯元数据，不改导出产物）
+        LazyScan animScan = new LazyScan(ANIM_DIR);
+        LazyScan acScan = new LazyScan(AC_DIR);
+        Map<String, Set<String>> varsByRefUid = new LinkedHashMap<>();
+        for (NodeInstance node : entity.library().mainGraph().nodes()) {
+            boolean isAnim = NodeTypes.REF_ANIMATION.id().equals(node.type());
+            boolean isAc = NodeTypes.REF_AC.id().equals(node.type());
+            if (!isAnim && !isAc) {
+                continue;
+            }
+            String refId = node.optionString("identifier", "");
+            if (refId.isEmpty()) {
+                continue;
+            }
+            // id 前缀与节点类型可能不一致（Bedrock 实体把 AC 也声明在 animations 表里，
+            // 导入按表归类型）——两个注册通道都试，再回落资源扫描
+            Optional<JsonObject> doc = io.github.tt432.eyelib.client.registry.AnimationAssetRegistry
+                    .animationSchemaDocument(refId)
+                    .or(() -> io.github.tt432.eyelib.client.registry.AnimationAssetRegistry
+                            .controllerSchemaDocument(refId))
+                    .or(() -> isAnim ? animScan.find(refId) : acScan.find(refId));
+            doc.ifPresent(json -> varsByRefUid.put(node.uid(), MolangVariableRefs.collect(json)));
+        }
+        ImportResult wired = new ImportResult(
+                AnimationVariableDecls.wire(entity.library(), varsByRefUid), entity.diagnostics());
+        GraphLibraryManager.INSTANCE.put(entityLibraryName, wired.library());
+
+        String identifier = wired.library().mainGraph().nodes().stream()
                 .filter(node -> "root".equals(node.uid()))
                 .findFirst()
                 .map(node -> node.optionString("identifier", ""))
@@ -128,8 +160,7 @@ public final class ImportClosure {
         String entityId = identifier.isEmpty() ? null : identifier;
 
         List<NamedImport> acs = new ArrayList<>();
-        LazyScan acScan = new LazyScan(AC_DIR);
-        for (String acId : collectRefIdentifiers(entity, NodeTypes.REF_AC.id())) {
+        for (String acId : collectRefIdentifiers(wired, NodeTypes.REF_AC.id())) {
             Optional<JsonObject> doc = acScan.find(acId);
             acs.add(doc.<NamedImport>map(json -> NamedImport.found(acId,
                             JsonGraphImporters.importAnimationControllers(
@@ -137,7 +168,7 @@ public final class ImportClosure {
                     .orElseGet(() -> NamedImport.miss(acId)));
         }
 
-        return new Result(entity, entityId, acs);
+        return new Result(wired, entityId, acs);
     }
 
     /** 产物库主图中指定 ref 类型的 identifier 选项（非空、去重；节点插入序即 uid 序）。 */
