@@ -54,6 +54,7 @@ public final class ManagerResourceImportPlanner {
         if (addon.isPresent()) {
             BedrockAddon addonValue = addon.get();
             BedrockAddonRuntimeBridge.replaceFromAddon(addonValue);
+            io.github.tt432.eyelib.bridge.client.sound.AddonSoundPort.triggerSoundReload();
             ParticleResourcePublication.replaceFromSchemas(addonValue.aggregate()
                                                                      .resourcePack()
                                                                      .particleFiles(), logger);

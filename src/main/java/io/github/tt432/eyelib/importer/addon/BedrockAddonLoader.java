@@ -453,6 +453,17 @@ public final class BedrockAddonLoader {
                 merged.putAll(parseAnimationControllerChunk(chunk, acc, entry));
             }
             mergeAnimationControllers(acc.animationControllerFiles, entry.effectivePath(), merged);
+        } else if (name.startsWith("sounds.")) {
+            // sounds.brarchive：内嵌 sound_definitions.json（串接 JSON 容错逐块解析）
+            for (String chunk : splitConcatenatedJson(fullJson)) {
+                try {
+                    acc.soundDefinitionFiles.put(entry.effectivePath(),
+                            BrSoundDefinitions.parse(parseJsonLenient(chunk).getAsJsonObject()));
+                } catch (RuntimeException e) {
+                    acc.warnings.add(warn(BedrockAddonWarningCode.SCHEMA_PARSE_FAILED,
+                            entry.effectivePath(), "sound_definitions chunk: " + e.getMessage()));
+                }
+            }
         } else if (name.startsWith("entity.") || name.startsWith("entities.")) {
             for (String chunk : splitConcatenatedJson(fullJson)) {
                 try {

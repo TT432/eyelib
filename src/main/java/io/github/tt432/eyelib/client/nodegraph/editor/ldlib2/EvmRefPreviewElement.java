@@ -36,6 +36,8 @@ public final class EvmRefPreviewElement extends UIElement {
     private static final SpriteTexture CHECKERBOARD =
             SpriteTexture.of("eyelib:textures/gui/nodegraph/checkerboard.png");
     private static final IGuiTexture NOT_FOUND = new TextTexture("未找到", 0xFFFF5555).setWidth(PREVIEW_SIZE);
+    private static final IGuiTexture PLAY_HINT = new TextTexture("播放", 0xFF55FF55).setWidth(PREVIEW_SIZE);
+    private static final IGuiTexture PLAY_UNSUPPORTED = new TextTexture("(26.1 不支持播放预览)", 0xFFAAAAAA).setWidth(PREVIEW_SIZE);
 
     private final EvmNodeBase node;
 
@@ -49,15 +51,45 @@ public final class EvmRefPreviewElement extends UIElement {
         this.node = node;
         Style.defaultPipeline(getLayout(), l -> l.width(PREVIEW_SIZE).height(PREVIEW_SIZE));
         //? if <26.1 {
-        if (!isTexture()) {
+        if (isModel()) {
             // 模型预览交互：左拖旋转 / 右拖平移 / 滚轮缩放 / 双击重置（Scene 同款事件体系）
             addEventListener(UIEvents.MOUSE_DOWN, this::onPreviewMouseDown);
             addEventListener(UIEvents.MOUSE_WHEEL, this::onPreviewMouseWheel);
             addEventListener(UIEvents.DRAG_SOURCE_UPDATE, this::onPreviewDragUpdate);
             addEventListener(UIEvents.DOUBLE_CLICK, this::onPreviewDoubleClick);
+        } else if (isParticle() || isSound()) {
+            // 粒子/音效预览：点击播放（同走事件终止，防画布拖手势顶掉）
+            addEventListener(UIEvents.MOUSE_DOWN, this::onPlayMouseDown);
         }
         //?}
     }
+
+    //? if <26.1 {
+    private void onPlayMouseDown(UIEvent event) {
+        if (!isHover() || event.button != 0) return;
+        String value = refValue();
+        if (value.isBlank() || io.github.tt432.eyelib.client.nodegraph.MissingRefCheck.INSTANCE
+                .exists(node.type().id(), value)) {
+            return; // 缺失引用不播（节点已红高亮）
+        }
+        if (isParticle()) {
+            playParticle(value);
+        } else {
+            io.github.tt432.eyelib.bridge.client.sound.AddonSoundPort.playPreview(value);
+        }
+        event.stopPropagation();
+    }
+
+    private void playParticle(String effectId) {
+        var minecraft = net.minecraft.client.Minecraft.getInstance();
+        if (minecraft.player == null) return;
+        var pos = minecraft.player.getEyePosition().add(minecraft.player.getLookAngle().scale(3));
+        io.github.tt432.eyelib.bridge.particle.ParticlePort.getSpawnAdapter().spawn(
+                new io.github.tt432.eyelib.particle.api.ParticleSpawnRequest(
+                        java.util.UUID.randomUUID().toString(), effectId,
+                        new org.joml.Vector3f((float) pos.x, (float) pos.y, (float) pos.z)));
+    }
+    //?}
 
     //? if <26.1 {
     private void onPreviewMouseDown(UIEvent event) {
@@ -98,6 +130,18 @@ public final class EvmRefPreviewElement extends UIElement {
         return node.type().kind() == NodeType.Kind.REF_TEXTURE;
     }
 
+    private boolean isModel() {
+        return node.type().kind() == NodeType.Kind.REF_GEOMETRY;
+    }
+
+    private boolean isParticle() {
+        return node.type().kind() == NodeType.Kind.REF_PARTICLE;
+    }
+
+    private boolean isSound() {
+        return node.type().kind() == NodeType.Kind.REF_SOUND;
+    }
+
     /** 当前引用值（path / identifier），含选项默认值；每帧调用，编辑后即时生效。 */
     private String refValue() {
         var option = node.getNodeOptionById(isTexture() ? "path" : "identifier");
@@ -114,6 +158,10 @@ public final class EvmRefPreviewElement extends UIElement {
         if (isTexture()) {
             var texture = NodeAssetPreview.resolveTexture(refValue());
             guiContext.drawTexture(texture == null ? NOT_FOUND : SpriteTexture.of(texture), x, y, w, h);
+        } else if (isParticle() || isSound()) {
+            boolean missing = !io.github.tt432.eyelib.client.nodegraph.MissingRefCheck.INSTANCE
+                    .exists(node.type().id(), refValue());
+            guiContext.drawTexture(missing ? NOT_FOUND : PLAY_HINT, x, y, w, h);
         } else {
             var handle = NodeAssetPreview.resolveModel(refValue());
             if (handle == null) {
@@ -138,6 +186,10 @@ public final class EvmRefPreviewElement extends UIElement {
         if (isTexture()) {
             var texture = NodeAssetPreview.resolveTexture(refValue());
             context.drawTexture(texture == null ? NOT_FOUND : SpriteTexture.of(texture), x, y, w, h);
+        } else if (isParticle() || isSound()) {
+            boolean missing = !io.github.tt432.eyelib.client.nodegraph.MissingRefCheck.INSTANCE
+                    .exists(node.type().id(), refValue());
+            context.drawTexture(missing ? NOT_FOUND : PLAY_UNSUPPORTED, x, y, w, h);
         } else {
             String value = refValue();
             if (NodeAssetPreview.resolveModel(value) == null) {

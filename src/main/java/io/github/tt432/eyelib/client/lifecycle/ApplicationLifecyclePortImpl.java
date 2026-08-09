@@ -51,5 +51,6 @@ public final class ApplicationLifecyclePortImpl implements ApplicationLifecycleP
     @Override
     public void onAddonParsed(BedrockAddon addon) {
         BedrockAddonRuntimeBridge.replaceFromAddon(addon);
+        io.github.tt432.eyelib.bridge.client.sound.AddonSoundPort.triggerSoundReload();
     }
 }

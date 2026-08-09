@@ -869,4 +869,46 @@ class GraphValidatorTest {
         assertFalse(hasCode(diags, GraphValidator.ENTRY_ORPHAN));
         assertFalse(hasCode(diags, GraphValidator.SLOT_KIND));
     }
+
+    // ---------- 检查 24：MISSING_REFERENCE（规格 nodegraph-missing-refs） ----------
+
+    @Test
+    void missingReferenceReportedPerRefNode() {
+        GraphData main = graph(
+                List.of(node("root", "entity.root"),
+                        node("g", "ref.geometry", opts("identifier", "geometry.missing")),
+                        node("s", "ref.sound", opts("identifier", "noreply:missing_sound"))),
+                List.of(wire("g", "ref", "root", "geometry")));
+        // 表驱动假实现：geometry.missing 不存在、音效不存在
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main),
+                (type, id) -> false);
+        assertEquals(2, diags.stream().filter(d -> d.code().equals(GraphValidator.MISSING_REFERENCE)).count());
+        assertTrue(diags.stream().anyMatch(d -> d.code().equals(GraphValidator.MISSING_REFERENCE)
+                && d.nodeUid().equals(Optional.of("g"))));
+    }
+
+    @Test
+    void missingReferenceSkipsPlaceholderAndExisting() {
+        GraphData main = graph(
+                List.of(node("root", "entity.root"),
+                        // 无实例 identifier 选项 = 占位 ref，不报
+                        node("placeholder", "ref.geometry"),
+                        node("ok", "ref.particle", opts("identifier", "oreville_ans:ok")),
+                        node("bad", "ref.particle", opts("identifier", "oreville_ans:bad"))),
+                List.of());
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main),
+                (type, id) -> id.equals("oreville_ans:ok"));
+        assertEquals(1, diags.stream().filter(d -> d.code().equals(GraphValidator.MISSING_REFERENCE)).count());
+    }
+
+    @Test
+    void missingReferenceDefaultValidateIsPermissive() {
+        // 域入口 validate(library) 不注入存在性 → 不报（域不依赖客户端注册表）
+        GraphData main = graph(
+                List.of(node("root", "entity.root"),
+                        node("g", "ref.geometry", opts("identifier", "geometry.missing"))),
+                List.of(wire("g", "ref", "root", "geometry")));
+        List<Diagnostic> diags = GraphValidator.validate(lib(GraphKind.CLIENT_ENTITY, main));
+        assertFalse(hasCode(diags, GraphValidator.MISSING_REFERENCE));
+    }
 }

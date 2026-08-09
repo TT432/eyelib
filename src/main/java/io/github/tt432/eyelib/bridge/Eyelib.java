@@ -46,6 +46,8 @@ public class Eyelib {
         EntityPortAdapter.installArrowHostBridge();
         //? if >=1.20.6
         DataAttachmentContainerCapability.register(bus);
+        //? if <26.1
+        bus.addListener(io.github.tt432.eyelib.bridge.client.sound.adapter.AddonSoundBridge::onAddPackFinders);
         //? if <1.20.6 {
         ApplicationLifecyclePort port = ApplicationLifecyclePort.get();
         if (port != null) port.registerNetworkHandlers();

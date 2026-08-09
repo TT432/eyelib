@@ -72,6 +72,7 @@ public final class Ldlib2Workbench {
         root.addChildren(toolbar, contentRow);
 
         BadgeOverlay.attach(editorView.graphView, overlayModel);
+        MissingRefOverlay.attach(editorView.graphView);
         overlayModel.updateGraph(initialLibrary, initialLibrary.main());
 
         //? if legacy {

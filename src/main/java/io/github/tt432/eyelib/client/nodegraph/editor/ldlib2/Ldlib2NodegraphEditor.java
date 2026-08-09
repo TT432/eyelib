@@ -67,7 +67,7 @@ public final class Ldlib2NodegraphEditor {
             library = existing;
         }
 
-        List<Diagnostic> openDiags = new ArrayList<>(GraphValidator.validate(library));
+        List<Diagnostic> openDiags = new ArrayList<>(GraphValidator.validate(library, io.github.tt432.eyelib.client.nodegraph.MissingRefCheck.INSTANCE));
         EvmGraph graph = EvmGraphTranslator.toGraph(library, openDiags);
         DiagnosticsCenter.report("打开 " + name[0], name[0], openDiags);
 
@@ -119,7 +119,7 @@ public final class Ldlib2NodegraphEditor {
     private static GraphLibrary persistToManager(String name, EvmGraph graph) {
         List<Diagnostic> diags = new ArrayList<>();
         GraphLibrary library = EvmGraphTranslator.toLibrary(graph, diags);
-        diags.addAll(GraphValidator.validate(library));
+        diags.addAll(GraphValidator.validate(library, io.github.tt432.eyelib.client.nodegraph.MissingRefCheck.INSTANCE));
         DiagnosticsCenter.report("构建 " + name, name, diags);
         GraphLibraryManager.INSTANCE.put(name, library);
         return library;

@@ -6,6 +6,7 @@ import io.github.tt432.eyelib.client.manager.MaterialManager;
 import io.github.tt432.eyelib.client.manager.ModelManager;
 import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelib.client.registry.AnimationAssetRegistry;
+import io.github.tt432.eyelib.importer.addon.SoundAssetRegistry;
 import io.github.tt432.eyelib.importer.entity.BrClientEntity;
 import io.github.tt432.eyelib.client.render.controller.RenderControllerEntry;
 import io.github.tt432.eyelib.client.render.controller.RenderControllers;
@@ -42,6 +43,7 @@ public final class BedrockAddonRuntimeBridge {
         AnimationAssetRegistry.stageSchemas(resourcePack.animations(), resourcePack.animationControllers());
         AnimationAssetRegistry.stageAnimations(toRuntimeAnimations(resourcePack.animations()));
         AnimationAssetRegistry.stageControllers(toRuntimeAnimationControllers(resourcePack.animationControllers()));
+        SoundAssetRegistry.stageSounds(resourcePack.soundDefinitionFiles(), resourcePack.soundFiles());
         // 替换客户端实体
         {
             java.util.LinkedHashMap<String, BrClientEntity> flattened = new java.util.LinkedHashMap<>();

@@ -67,7 +67,7 @@ public final class NodegraphBuildService {
 
     /** 构建并注入给定图文档库（不查 Manager，编辑器直接用内存态）。 */
     public static BuildResult build(String libraryName, GraphLibrary library) {
-        List<Diagnostic> diagnostics = new ArrayList<>(GraphValidator.validate(library));
+        List<Diagnostic> diagnostics = new ArrayList<>(GraphValidator.validate(library, io.github.tt432.eyelib.client.nodegraph.MissingRefCheck.INSTANCE));
         if (diagnostics.stream().anyMatch(d -> d.severity() == Diagnostic.Severity.ERROR)) {
             return new BuildResult(diagnostics, null);
         }

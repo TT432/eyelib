@@ -77,7 +77,8 @@ public abstract class EvmNodeBase extends Node {
      */
     @Override
     public boolean hasNodePreview() {
-        return type().kind() == NodeType.Kind.REF_GEOMETRY || type().kind() == NodeType.Kind.REF_TEXTURE;
+        return type().kind() == NodeType.Kind.REF_GEOMETRY || type().kind() == NodeType.Kind.REF_TEXTURE
+                || type().kind() == NodeType.Kind.REF_PARTICLE || type().kind() == NodeType.Kind.REF_SOUND;
     }
 
     @Override

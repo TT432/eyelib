@@ -113,6 +113,14 @@ public final class GraphValidator {
      * 验证整个库：逐图检查 + 根节点计数 + 子图目标/递归/锚点 + 跨图资源引用冲突。
      */
     public static List<Diagnostic> validate(GraphLibrary library) {
+        return validate(library, RefExistenceChecker.alwaysExists());
+    }
+
+    /**
+     * 验证整个库（带资产存在性）：ref 节点引用的资产不存在时报 MISSING_REFERENCE（ERROR）。
+     * 存在性由调用方注入（域不依赖客户端注册表）。
+     */
+    public static List<Diagnostic> validate(GraphLibrary library, RefExistenceChecker refExistence) {
         List<Diagnostic> out = new ArrayList<>();
         for (Map.Entry<String, GraphData> e : library.graphs().entrySet()) {
             out.addAll(validateGraph(library, e.getKey(), e.getValue()));
@@ -132,7 +140,44 @@ public final class GraphValidator {
             checkDuplicateRcIds(library, out);
             checkEntryChains(library, out);
         }
+        checkMissingReferences(library, refExistence, out);
         return out;
+    }
+
+    /** 检查 24（ERROR）：ref 节点引用的资产不存在（规格 nodegraph-missing-refs）。 */
+    public static final String MISSING_REFERENCE = "MISSING_REFERENCE";
+
+    /** ref 节点类型 id → 引用值选项名。 */
+    private static final Map<String, String> REF_VALUE_OPTIONS = Map.of(
+            "ref.geometry", "identifier",
+            "ref.texture", "path",
+            "ref.material", "material",
+            "ref.animation", "identifier",
+            "ref.ac", "identifier",
+            "ref.particle", "identifier",
+            "ref.sound", "identifier",
+            "ref.rc", "identifier");
+
+    private static void checkMissingReferences(GraphLibrary library, RefExistenceChecker checker,
+                                               List<Diagnostic> out) {
+        for (GraphData graph : library.graphs().values()) {
+            for (NodeInstance node : graph.nodes()) {
+                String optionName = REF_VALUE_OPTIONS.get(node.type());
+                if (optionName == null) {
+                    continue;
+                }
+                // 选项无实例值 = 占位 ref（example 默认值），跳过（与 UNKNOWN_REFERENCE 同口径）
+                String value = node.options().containsKey(optionName)
+                        ? node.options().get(optionName).getAsString() : "";
+                if (value.isBlank()) {
+                    continue;
+                }
+                if (!checker.exists(node.type(), value)) {
+                    out.add(Diagnostic.error(MISSING_REFERENCE,
+                            node.type() + " 引用的资产不存在: " + value, node.uid()));
+                }
+            }
+        }
     }
 
     /** 检查 22（ERROR，仅 CLIENT_ENTITY 库）：主图内联 rc.root 的 identifier 重复。 */
