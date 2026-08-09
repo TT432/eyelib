@@ -1,16 +1,21 @@
 package io.github.tt432.eyelib.client.nodegraph.workbench.ldlib2;
 //? if >=1.20.1 {
+import com.lowdragmc.lowdraglib2.gui.texture.TextTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
+import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ScrollerView;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Selector;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
+import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.utils.UIElementProvider;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.TypeHandle;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.TypeHandles;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.editor.GraphEditorView;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.GraphView;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.command.NodeCommands;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.command.VariableDeclarationCommands;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.node.PortElement;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.graph.GraphModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.VariableNodeModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.variable.ModifierFlags;
@@ -24,6 +29,7 @@ import io.github.tt432.eyelib.nodegraph.InlineLiteral;
 import io.github.tt432.eyelib.nodegraph.PortType;
 import io.github.tt432.eyelib.nodegraph.VariableDecl;
 import net.minecraft.network.chat.Component;
+import org.joml.Vector2f;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -42,6 +48,13 @@ import java.util.List;
  * 跟随潜入的子图（{@link GraphEditorView#getCurrentView()}）。
  */
 final class VariablesPanel extends UIElement {
+    /** 拖拽载体：把声明从变量表拖上画布（DRAG_END 时悬停画布则生成变量节点）。 */
+    private record VariableDrag(VariableDeclarationModelBase decl) {
+    }
+
+    /** 双击判定窗口（毫秒）。 */
+    private static final long DOUBLE_CLICK_MS = 350;
+
     /** 侧栏展开宽度（会话内保持，拖左缘调整）。 */
     private static int panelWidth = 300;
     private static final int MIN_WIDTH = 180;
@@ -150,20 +163,36 @@ final class VariablesPanel extends UIElement {
         if (model == null) {
             return;
         }
+        String dirtyKey = computeDirtyKey(model);
+        if (model != lastModel || !dirtyKey.equals(lastDirtyKey)) {
+            lastModel = model;
+            lastDirtyKey = dirtyKey;
+            rebuild();
+        }
+    }
+
+    /**
+     * 脏键：模型身份 + 全部声明的名字/类型/修饰/作用域/默认值摘要。
+     * 直调 {@link #rebuild()} 的入口（改名提交、删除）必须随后调 {@link #markRebuilt(GraphModel)}
+     * 同步本键——否则 tick 的脏检查会跳过（如「改名→undo」键值净零时表格停在旧名）。
+     */
+    private String computeDirtyKey(GraphModel model) {
         StringBuilder key = new StringBuilder();
         for (VariableDeclarationModelBase var : model.getGraphVariableModels()) {
             if (var == null) continue;
             key.append(var.getName()).append(' ')
                     .append(var.getDataTypeHandle()).append(' ')
                     .append(var.getModifiers()).append(' ')
-                    .append(scopeOf(var)).append(';');
+                    .append(scopeOf(var)).append(' ')
+                    .append(defaultText(var)).append(';');
         }
-        String dirtyKey = System.identityHashCode(model) + "|" + key;
-        if (model != lastModel || !dirtyKey.equals(lastDirtyKey)) {
-            lastModel = model;
-            lastDirtyKey = dirtyKey;
-            rebuild();
-        }
+        return System.identityHashCode(model) + "|" + key;
+    }
+
+    /** 直调 rebuild 后同步脏键（见 {@link #computeDirtyKey} 注释）。 */
+    private void markRebuilt(GraphModel model) {
+        lastModel = model;
+        lastDirtyKey = computeDirtyKey(model);
     }
 
     /** 当前潜入位置的图模型（无编辑器/图时 null）。 */
@@ -223,19 +252,8 @@ final class VariablesPanel extends UIElement {
                         .flexDirection(FlexDirection.ROW)
                         .gapAll(2));
 
-        // 名字（改名经声明引用自动同步图内变量节点）
-        TextField name = new TextField();
-        name.textFieldStyle(style -> style.fontSize(9));
-        name.setText(var.getName(), false);
-        name.setTextResponder(text -> {
-            String newName = text.trim();
-            GraphView view = currentView();
-            if (view != null && !newName.isEmpty() && !newName.equals(var.getName())) {
-                EvmUndo.push(view, model, currentContext(), "重命名变量",
-                        "var:name:" + var.getUid(), () -> var.setName(newName));
-            }
-        });
-        name.layout(layout -> layout.width(76).heightPercent(100));
+        // 名字：可拖动标签（拖上画布生成变量节点）+ 双击改名（接口变量只读）
+        UIElement nameCell = buildNameCell(model, var, interfaceVar);
 
         // 类型（同内建黑板属性面板的直连语义）；候选显示用编辑器类型名而非 handle 原文
         Selector<TypeHandle> type = new Selector<>();
@@ -324,7 +342,7 @@ final class VariablesPanel extends UIElement {
             }
         });
 
-        row.addChildren(name, type, scopeCell, defaultField, refsLabel);
+        row.addChildren(nameCell, type, scopeCell, defaultField, refsLabel);
         if (!interfaceVar) {
             Button delete = new Button();
             delete.setText(Component.literal("×"));
@@ -342,6 +360,7 @@ final class VariablesPanel extends UIElement {
                     model.deleteVariableDeclaration(var, true);
                 });
                 rebuild();
+                markRebuilt(model);
             });
             delete.layout(layout -> layout.width(16).heightPercent(100));
             row.addChild(delete);
@@ -402,6 +421,94 @@ final class VariablesPanel extends UIElement {
             ctx.variableScopes.put(created.getUid(), VariableDecl.Scope.VARIABLE);
         }
         rebuild();
+    }
+
+    // ==================== 名字单元格（拖拽 + 双击改名） ====================
+
+    /**
+     * 名字单元格：常态是可拖动标签（同 LDLib2 黑板行交互——按住移出即发起拖拽，
+     * 落在画布上生成绑定该声明的变量节点）；双击切换为输入框改名，Enter/失焦提交。
+     * 接口变量（in/out）不改名但可拖拽（绑定接口声明的变量节点合法）。
+     */
+    private UIElement buildNameCell(GraphModel model, VariableDeclarationModelBase var, boolean interfaceVar) {
+        UIElement cell = new UIElement()
+                .layout(layout -> layout.width(76).heightPercent(100));
+        Label label = new Label();
+        label.textStyle(style -> style.fontSize(9));
+        label.setText(var.getName());
+        label.layout(layout -> layout.widthPercent(100).heightPercent(100));
+        cell.addChild(label);
+
+        // 拖拽上画布（同黑板行：MOUSE_DOWN 武装、按住移出发起、DRAG_END 悬停画布落点生成）
+        final long[] downAt = {0};
+        final long[] lastClickAt = {0};
+        label.addEventListener(UIEvents.MOUSE_DOWN, event -> {
+            if (event.button != 0) {
+                return;
+            }
+            downAt[0] = System.currentTimeMillis();
+            if (!interfaceVar && downAt[0] - lastClickAt[0] < DOUBLE_CLICK_MS) {
+                enterRename(cell, model, var);
+            }
+            lastClickAt[0] = downAt[0];
+        });
+        label.addEventListener(UIEvents.MOUSE_LEAVE, event -> {
+            if (downAt[0] != 0 && label.isMouseDown(0)) {
+                label.startDrag(new VariableDrag(var), new TextTexture(var.getName()));
+            }
+            downAt[0] = 0;
+        }, true);
+        label.addEventListener(UIEvents.MOUSE_UP, event -> downAt[0] = 0);
+        label.addEventListener(UIEvents.DRAG_END, event -> {
+            if (!(event.dragHandler.getDraggingObject() instanceof VariableDrag dragged)) {
+                return;
+            }
+            GraphView view = currentView();
+            if (view == null || !editorView.graphView.isSelfOrChildHover()) {
+                return;
+            }
+            Vector2f position = editorView.graphView.getContentViewContainer()
+                    .worldToLocalLayoutOffset(new Vector2f(event.x, event.y));
+            var command = new NodeCommands.CreateNodeCommand();
+            var portTarget = event.target.getFirstAncestorOfType(PortElement.class);
+            if (portTarget != null && portTarget.canAcceptDrop(dragged.decl())) {
+                command.withNodeOnPort(dragged.decl(), portTarget.getModel(), position, null);
+            } else {
+                command.withNodeOnGraph(dragged.decl(), position, null);
+            }
+            // CreateNodeCommand 是 UndoableGraphCommand，经 historyStack 天然可撤销
+            view.dispatchCommand(command);
+        });
+        return cell;
+    }
+
+    /** 双击进入改名：换入输入框并聚焦；Enter/失焦提交（空串或 ESC 视为取消）。 */
+    private void enterRename(UIElement cell, GraphModel model, VariableDeclarationModelBase var) {
+        cell.clearAllChildren();
+        TextField edit = new TextField();
+        edit.textFieldStyle(style -> style.fontSize(9));
+        edit.setText(var.getName(), false);
+        edit.layout(layout -> layout.widthPercent(100).heightPercent(100));
+        cell.addChild(edit);
+        edit.focus();
+        edit.addEventListener(UIEvents.KEY_DOWN, event -> {
+            if (event.keyCode == 257 || event.keyCode == 335) { // ENTER / NUMPAD ENTER
+                commitRename(edit.getValue(), model, var);
+            }
+        });
+        edit.addEventListener(UIEvents.BLUR, event -> commitRename(edit.getValue(), model, var));
+    }
+
+    /** 改名提交：非空且变化才入 undo 栈；随后整表重建（名字/引用数随动）。 */
+    private void commitRename(String text, GraphModel model, VariableDeclarationModelBase var) {
+        String newName = text == null ? "" : text.trim();
+        GraphView view = currentView();
+        if (view != null && !newName.isEmpty() && !newName.equals(var.getName())) {
+            EvmUndo.push(view, model, currentContext(), "重命名变量",
+                    "var:name:" + var.getUid(), () -> var.setName(newName));
+        }
+        rebuild();
+        markRebuilt(model);
     }
 
     private static @Nullable VariableDeclarationModelBase findVariable(GraphModel model, String name) {
