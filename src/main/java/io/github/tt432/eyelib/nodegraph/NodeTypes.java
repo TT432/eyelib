@@ -378,20 +378,42 @@ public final class NodeTypes {
 
     /** 从选项快照派生命名变量端口（无快照 = 无端口）。 */
     public static List<PortDef> varRefPorts(NodeInstance instance) {
+        List<PortDef> ports = new ArrayList<>(varRefReadPorts(instance));
+        ports.addAll(varRefWritePorts(instance));
+        return ports;
+    }
+
+    /** 读端口（左侧输入）：快照 reads 集。 */
+    public static List<PortDef> varRefReadPorts(NodeInstance instance) {
         com.google.gson.JsonElement raw = instance.options().get(VAR_REFS_OPTION);
         if (raw == null || !raw.isJsonObject()) {
             return List.of();
         }
-        com.google.gson.JsonObject obj = raw.getAsJsonObject();
+        com.google.gson.JsonArray reads = raw.getAsJsonObject().getAsJsonArray("reads");
+        if (reads == null) {
+            return List.of();
+        }
         List<PortDef> ports = new ArrayList<>();
-        for (com.google.gson.JsonElement e : obj.getAsJsonArray("reads") == null
-                ? new com.google.gson.JsonArray() : obj.getAsJsonArray("reads")) {
+        for (com.google.gson.JsonElement e : reads) {
             String name = e.getAsString();
             // 左读右写（v9）：读 = 左侧输入，写 = 右侧输出；位置即语义，不加文字标记
             ports.add(PortDef.inLabeled(VAR_READ_PREFIX + name, PortType.VARIABLE, "v." + name));
         }
-        for (com.google.gson.JsonElement e : obj.getAsJsonArray("writes") == null
-                ? new com.google.gson.JsonArray() : obj.getAsJsonArray("writes")) {
+        return ports;
+    }
+
+    /** 写端口（右侧输出）：快照 writes 集。 */
+    public static List<PortDef> varRefWritePorts(NodeInstance instance) {
+        com.google.gson.JsonElement raw = instance.options().get(VAR_REFS_OPTION);
+        if (raw == null || !raw.isJsonObject()) {
+            return List.of();
+        }
+        com.google.gson.JsonArray writes = raw.getAsJsonObject().getAsJsonArray("writes");
+        if (writes == null) {
+            return List.of();
+        }
+        List<PortDef> ports = new ArrayList<>();
+        for (com.google.gson.JsonElement e : writes) {
             String name = e.getAsString();
             ports.add(PortDef.outLabeled(VAR_WRITE_PREFIX + name, PortType.VARIABLE, "v." + name));
         }
@@ -403,8 +425,13 @@ public final class NodeTypes {
             List.of(
                     NodeOptionDef.string("short_name", ""),
                     NodeOptionDef.asset("identifier", "animation.example.walk", "animation")),
-            (instance, resolver) -> varRefPorts(instance),
-            NodeType.PortProvider.fixed(List.of(PortDef.out("ref", PortType.ANIMATION_REF)))));
+            (instance, resolver) -> varRefReadPorts(instance),
+            (instance, resolver) -> {
+                List<PortDef> outs = new ArrayList<>();
+                outs.add(PortDef.out("ref", PortType.ANIMATION_REF));
+                outs.addAll(varRefWritePorts(instance));
+                return outs;
+            }));
 
     public static final NodeType REF_AC = register(NodeType.of(
             "ref.ac", NodeType.Kind.REF_AC, CAT_REF,

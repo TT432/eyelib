@@ -29,15 +29,22 @@
 - `ref.animation` 的输入端口集由节点选项快照 `var_refs`
   （`{"reads":[...],"writes":[...]}`，导入时写入）动态驱动（同 query.call 的
   签名驱动端口机制）：
-  - 每个读取变量一个 `read:<name>` 端口（label `v.<name> 读`）；
-  - 每个写入变量一个 `write:<name>` 端口（label `v.<name> 写`）；
-  - 同一变量既读又写 = 两个端口（如 edfatt 的节流器模式）。
+- 每个读取变量一个 `read:<name>` 端口（label `v.<name>`）；
+- 每个写入变量一个 `write:<name>` 端口（label `v.<name>`）——**v9 起为右侧输出**
+  （左读右写，位置即语义，label 不带「读/写」文字）；注意端口必须拆进输入/输出
+  两个 provider（曾把 write 混在输入 provider 里返回，端口全部渲架在左侧，2026-08-09 修复）；
+- 同一变量既读又写 = 两个端口（如 edfatt 的节流器模式）。
 - 端口 `PortType.VARIABLE` 单连接。`read:`/`write:` 前缀是声明通道标记
   （`NodeTypes.isVarRefPort`）：EmitSession 值发射计数与 GraphValidator
-  UNCONNECTED_INPUT 检查统一豁免——声明通道不产生输出、空连线不是错误。
-- 每个（变量名, ref 节点）对一个 `variable` 节点（uid `declvar-<refUid>-<name>`，
-  竖排于 ref 下方），其 `out` 按读/写接入对应命名端口——一个节点可同时喂
-  该变量的 read 与 write 两个端口。
+  UNCONNECTED_INPUT 检查统一豁免——声明通道不产生输出、空连线不是错误；
+  REF_MISUSE（检查11）同样豁免 write: 输出边（2026-08-09 修复）。
+- 每个（变量名, ref 节点）对一个 `variable` 节点（uid `declvar-<refUid>-<name>`），
+  其 `out` 接 read 端口、ref 的 write 输出接其 `in`——一个节点可同时喂
+  该变量的 read 与 write 两个端口。**不要按名全图共享**（2026-08-09 实证：
+  共享节点被分层钉在远处，边横跨全图）；也不要在 wire() 里自排坐标——
+  wire 在 ImportClosure 层运行（建库布局之后），位置由接线后的重布局按
+  「声明通道共位子列」决定（GraphLayout：var-ref/写入边不参与最长路径分层，
+  纯声明变量节点贴主 ref 左侧子列、纯写入变量节点贴写入方右侧子列）。
 - VARIABLE→VARIABLE 同型直连，兼容矩阵无需修改。
 - **编辑器往返**：快照无 NodeOptionDef（不进模型选项），LDLib2 模型往返会丢——
   `LibraryContext.varRefs` 侧表持有（同 variableScopes pattern）：加载登记、

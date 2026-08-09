@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.tt432.eyelib.nodegraph.Diagnostic;
+import io.github.tt432.eyelib.nodegraph.GraphLibrary;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.decompile.AnimationVariableDecls;
@@ -143,8 +144,22 @@ public final class ImportClosure {
                     .or(() -> animScan.find(refId));
             doc.ifPresent(json -> refsByRefUid.put(node.uid(), MolangVariableRefs.collectWithAccess(json)));
         }
-        ImportResult wired = new ImportResult(
-                AnimationVariableDecls.wire(entity.library(), refsByRefUid), entity.diagnostics());
+        GraphLibrary wiredLib = AnimationVariableDecls.wire(entity.library(), refsByRefUid);
+        // 重布局：wire 在建库布局之后执行（refs 数据只能在闭包层解析），declvar 节点/
+        // 变量引用边此时才出现——不重来它们会停在 ref 下方的种子的位置堆成巨列，
+        // 且布局的声明通道共位逻辑（GraphLayout）看不到这些边（用户实机截图实证）
+        if (wiredLib != entity.library()) {
+            io.github.tt432.eyelib.nodegraph.GraphData main = wiredLib.mainGraph();
+            java.util.List<NodeInstance> relaid = io.github.tt432.eyelib.nodegraph.decompile.GraphLayout
+                    .layout(main.nodes(), main.wires());
+            java.util.Map<String, io.github.tt432.eyelib.nodegraph.GraphData> graphs = new LinkedHashMap<>(wiredLib.graphs());
+            graphs.put(wiredLib.main(), new io.github.tt432.eyelib.nodegraph.GraphData(relaid,
+                    main.wires(), main.variables(), main.placemats(), main.stickyNotes(),
+                    main.graphInterface()));
+            wiredLib = new GraphLibrary(wiredLib.formatVersion(), wiredLib.kind(),
+                    wiredLib.main(), graphs);
+        }
+        ImportResult wired = new ImportResult(wiredLib, entity.diagnostics());
         GraphLibraryManager.INSTANCE.put(entityLibraryName, wired.library());
 
         String identifier = wired.library().mainGraph().nodes().stream()

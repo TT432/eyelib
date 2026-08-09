@@ -854,6 +854,10 @@ public final class GraphValidator {
     private static void checkRefMisuse(Wire wire, Endpoint from, Endpoint to, List<Diagnostic> out) {
         String fromType = from.node().type();
         if (ASSEMBLY_ONLY_REFS.contains(fromType)) {
+            // 变量引用声明通道（write:<名> 右侧输出）不参与装配用途判定
+            if (NodeTypes.isVarRefPort(from.port().id())) {
+                return;
+            }
             // ref.animation/ref.ac：animate.entry.ref 或 entity.root 动画声明端口（v4）
             String declarationPort = NodeTypes.ENTITY_DECLARATION_PORTS.get(fromType);
             boolean ok = (to.node().type().equals("animate.entry") && to.port().id().equals("ref"))

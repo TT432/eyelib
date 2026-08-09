@@ -63,16 +63,21 @@ class AnimationVariableDeclsTest {
         assertTrue(main.wires().stream().anyMatch(
                 w -> w.to().node().equals("ra") && w.to().port().equals("read:dxvpbr")));
 
-        // 快照驱动的命名端口定义：id/label/类型/方向（v9：read 输入、write 输出，
-        // 位置即语义，label 不带「读/写」文字标记）
-        List<PortDef> ports = NodeTypes.REF_ANIMATION.inputsOf(ref, null);
-        assertEquals(3, ports.size());
-        assertTrue(ports.stream().anyMatch(p -> p.id().equals("read:edfatt")
+        // 快照驱动的命名端口定义：read 在输入侧、write 在输出侧（v9 修正：write 曾错误地
+        // 随输入 provider 注册，导致端口渲染在左侧——位置即语义，label 不带「读/写」标记）
+        List<PortDef> ins = NodeTypes.REF_ANIMATION.inputsOf(ref, null);
+        assertEquals(2, ins.size());
+        assertTrue(ins.stream().anyMatch(p -> p.id().equals("read:edfatt")
                 && p.label().orElse("").equals("v.edfatt")
                 && p.direction() == PortDirection.IN));
-        assertTrue(ports.stream().anyMatch(p -> p.id().equals("write:edfatt")
+        List<PortDef> outs = NodeTypes.REF_ANIMATION.outputsOf(ref, null);
+        assertTrue(outs.stream().anyMatch(p -> p.id().equals("ref")));
+        assertTrue(outs.stream().anyMatch(p -> p.id().equals("write:edfatt")
+                && p.label().orElse("").equals("v.edfatt")
                 && p.direction() == PortDirection.OUT));
-        assertTrue(ports.stream().allMatch(p -> NodeTypes.isVarRefPort(p.id())));
+        assertTrue(ins.stream().allMatch(p -> NodeTypes.isVarRefPort(p.id())));
+        assertTrue(outs.stream().filter(p -> !p.id().equals("ref"))
+                .allMatch(p -> NodeTypes.isVarRefPort(p.id())));
         // 位置：ref 节点下方竖排
         for (NodeInstance n : main.nodes()) {
             if (n.uid().startsWith("declvar-")) {

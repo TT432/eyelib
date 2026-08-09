@@ -23,12 +23,13 @@ import java.util.Set;
 /**
  * 动画/AC 变量引用的命名端口接线（规格 nodegraph-animation-variable-refs §2.3）：
  * 按被引内容提取的读/写变量集，给 ref 节点写入 {@code var_refs} 选项快照
- * （驱动 {@link NodeTypes#varRefPorts} 的命名端口），并按（变量名, ref 节点）对
- * 新增 variable 节点接入对应 {@code read:<name>} / {@code write:<name>} 端口，
- * 新变量名并入图声明，产出新图库。
+ * （驱动 {@link NodeTypes#varRefReadPorts}/{@link NodeTypes#varRefWritePorts} 的
+ * 命名端口），并接入共享 variable 节点（按名唯一，见下）的对应
+ * {@code read:<name>} / {@code write:<name>} 端口，新变量名并入图声明，产出新图库。
  *
- * <p>纯元数据变换：不改变任何已有连线的语义，导出产物不变。节点竖排于 ref 节点
- * 下方（x 对齐，y 步进 40）；uid 形如 {@code declvar-<refUid>-<name>}（确定性）。
+ * <p>纯元数据变换：不改变任何已有连线的语义，导出产物不变。每个 (ref, 变量) 对
+ * 独立节点（uid 形如 {@code declvar-<refUid>-<name>}，确定性）；初始位置取 ref 下方
+ * 仅作种子——最终坐标由布局的声明通道共位子列重算（GraphLayout）。
  */
 public final class AnimationVariableDecls {
     private AnimationVariableDecls() {
@@ -70,6 +71,9 @@ public final class AnimationVariableDecls {
 
             int row = 0;
             for (String name : refs.union()) {
+                // 每个 (ref, 变量) 对独立节点（2026-08-09 定版）：按名共享会把边拉向
+                // 远处的同名节点；独立节点由布局的共位子列贴靠各自 ref（GraphLayout
+                // 声明通道处理）。位置仅作种子，最终坐标由布局重算
                 String uid = "declvar-" + node.uid() + "-" + name;
                 nodes.add(new NodeInstance(uid, NodeTypes.VARIABLE.id(),
                         node.x(), node.y() + 40 + row * 40,

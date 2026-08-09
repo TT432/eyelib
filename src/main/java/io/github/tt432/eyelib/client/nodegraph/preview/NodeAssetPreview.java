@@ -123,9 +123,12 @@ public final class NodeAssetPreview {
     public static boolean hasUsableTexture(String textureId) {
         if (textureId.isBlank() || MISSING_TEXTURE_ID.equals(textureId.strip())) return false;
         PortResourceLocation port = PortResourceLocation.parse(textureId.strip());
-        // addon 纹理以无命名空间相对路径为键（同 resolveTexture）
-        if (AddonTextureRegistry.get(port.path()) != null) return true;
-        return Minecraft.getInstance().getResourceManager().getResource(ResourceLocationBridge.toMc(port)).isPresent();
+        // addon 纹理键 = 无命名空间相对路径 + .png 后缀（同 resolveTexture 归一化；
+        // 漏加后缀会把 textures/oreville/ans/czi 这类合法引用误报 MISSING_REFERENCE）
+        String texturePath = port.path().endsWith(".png") ? port.path() : port.path() + ".png";
+        if (AddonTextureRegistry.get(texturePath) != null) return true;
+        return Minecraft.getInstance().getResourceManager().getResource(ResourceLocationBridge.toMc(
+                PortResourceLocation.of(port.namespace(), texturePath))).isPresent();
     }
 
     //? if <26.1 {

@@ -41,7 +41,7 @@ public final class AddonSoundPack implements PackResources {
     }
 
     @Override
-    public IoSupplier<InputStream> getResource(PackType type, ResourceLocation location) {
+    public @Nullable IoSupplier<InputStream> getResource(PackType type, ResourceLocation location) {
         if (type != PackType.CLIENT_RESOURCES) {
             return null;
         }

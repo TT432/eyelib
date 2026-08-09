@@ -74,8 +74,13 @@ public final class AddonSoundBridge {
      * 未定义/无 .ogg 的 id 在此已被 MISSING_REFERENCE 通道标红，这里静默忽略。
      */
     public static void playPreview(String soundId) {
+        //? if <1.20.6 {
         ResourceLocation location = new ResourceLocation(
                 AddonSoundPack.NAMESPACE, AddonSoundPack.toEventKey(soundId));
+        //?} else {
+        ResourceLocation location = ResourceLocation.fromNamespaceAndPath(
+                AddonSoundPack.NAMESPACE, AddonSoundPack.toEventKey(soundId));
+        //?}
         Minecraft.getInstance().getSoundManager().play(
                 SimpleSoundInstance.forUI(SoundEvent.createVariableRangeEvent(location), 1.0F));
     }

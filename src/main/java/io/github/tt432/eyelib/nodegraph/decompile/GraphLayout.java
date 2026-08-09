@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 /**
  * 分层自动布局（规格 nodegraph-workbench §W2）：<b>到汇最长路径定 x 层；层内以 DFS 先序定序、
  * 距离松弛定 y</b>。
@@ -100,15 +101,47 @@ public final class GraphLayout {
         // （v.x = v.x + 1 模式下写入边与读取边互成环，到汇最长路径必须走纯流图）
         Map<String, List<String>> flowConsumers = new HashMap<>();
         Set<String> flowWiredNodes = new HashSet<>();
+        // 声明通道边（var-ref read:/write: 或写入通道）：不参与分层——declvar 变量节点
+        // 由专门的共位子列贴靠其 ref（见下方 declvarByRefLayer），否则最长路径把它们
+        // 钉在「最左消费者的上游」，横跨数列拉出长扇（用户实机截图实证 2026-08-09）
+        Map<String, Set<String>> declvarRefs = new HashMap<>();
+        Map<String, Set<String>> writeVarWriters = new HashMap<>();
         for (Wire w : wires) {
             consumers.computeIfAbsent(w.from().node(), k -> new ArrayList<>()).add(w.to().node());
             producers.computeIfAbsent(w.to().node(), k -> new ArrayList<>()).add(w.from().node());
             producerWires.computeIfAbsent(w.to().node(), k -> new ArrayList<>()).add(w);
-            if (!io.github.tt432.eyelib.nodegraph.NodeTypes.isVariableWriteInput(
-                    typeOf.getOrDefault(w.to().node(), ""), w.to().port())) {
+            boolean writeInput = io.github.tt432.eyelib.nodegraph.NodeTypes.isVariableWriteInput(
+                    typeOf.getOrDefault(w.to().node(), ""), w.to().port());
+            boolean varRefEdge = io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(w.to().port())
+                    || io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(w.from().port());
+            if (varRefEdge) {
+                String varUid = "variable".equals(typeOf.getOrDefault(w.from().node(), ""))
+                        ? w.from().node() : w.to().node();
+                String refUid = varUid.equals(w.from().node()) ? w.to().node() : w.from().node();
+                declvarRefs.computeIfAbsent(varUid, k -> new TreeSet<>()).add(refUid);
+            } else if (writeInput) {
+                // set_var.target → variable.in（非 var-ref 的纯写入边）
+                writeVarWriters.computeIfAbsent(w.to().node(), k -> new TreeSet<>()).add(w.from().node());
+            }
+            if (!writeInput && !varRefEdge) {
                 flowConsumers.computeIfAbsent(w.from().node(), k -> new ArrayList<>()).add(w.to().node());
                 flowWiredNodes.add(w.from().node());
                 flowWiredNodes.add(w.to().node());
+            }
+        }
+        // 纯声明/写入变量节点（全部边都是非流通道）：不进流分层，稍后共位插入——
+        // declvarOf：带 var-ref 边 → 贴主 ref 左侧；writeOnlyOf：仅 set_var 写入边 →
+        // 贴写入方右侧（左读右写的空间表达）
+        Map<String, String> declvarOf = new HashMap<>(); // varUid -> 主 ref uid（字典序最小，确定性）
+        for (Map.Entry<String, Set<String>> e : declvarRefs.entrySet()) {
+            if (!flowWiredNodes.contains(e.getKey())) {
+                declvarOf.put(e.getKey(), e.getValue().iterator().next());
+            }
+        }
+        Map<String, String> writeOnlyOf = new HashMap<>(); // varUid -> 主写入方 uid
+        for (Map.Entry<String, Set<String>> e : writeVarWriters.entrySet()) {
+            if (!flowWiredNodes.contains(e.getKey()) && !declvarRefs.containsKey(e.getKey())) {
+                writeOnlyOf.put(e.getKey(), e.getValue().iterator().next());
             }
         }
         consumers.values().forEach(list -> list.sort(Comparator.naturalOrder()));
@@ -145,10 +178,16 @@ public final class GraphLayout {
             dfsOrder(sink, producerWires, visited, order, seq);
         }
 
-        // 同层分组（层号升序 = 汇→源，确定性遍历），按 DFS 先序排定层内顺序
+        // 同层分组（层号升序 = 汇→源，确定性遍历），按 DFS 先序排定层内顺序；
+        // 纯声明/写入变量节点不进普通列（稍候插入共位子列）
         Map<ColumnKey, List<NodeInstance>> byLayer = new TreeMap<>();
+        Map<String, Integer> layerOfUid = new HashMap<>();
         for (NodeInstance node : nodes) {
+            if (declvarOf.containsKey(node.uid()) || writeOnlyOf.containsKey(node.uid())) {
+                continue;
+            }
             int layer = flowWiredNodes.contains(node.uid()) ? layers.get(node.uid()) : isolatedLayer;
+            layerOfUid.put(node.uid(), layer);
             byLayer.computeIfAbsent(new ColumnKey(layer, 0), k -> new ArrayList<>()).add(node);
         }
         byLayer.values().forEach(group -> group.sort(Comparator
@@ -224,6 +263,21 @@ public final class GraphLayout {
             }
         }
 
+        // 共位子列（此时全部普通列已完成播种，锚点 y 可读）：
+        // - declvar（带 var-ref 边）→ 主 ref 所在列的左侧子列（sub = 该层最小 sub − 1）
+        // - 纯写入变量（仅 set_var.target 写入边）→ 主写入方所在列的右侧子列（最大 sub + 1）
+        // y = 其全部锚点的已播种 y 中位数；同子列内按锚点 y 排序后顺序 clamp 防重叠
+        if (!declvarOf.isEmpty() || !writeOnlyOf.isEmpty()) {
+            Map<String, NodeInstance> byUid = new HashMap<>();
+            for (NodeInstance n : nodes) {
+                byUid.put(n.uid(), n);
+            }
+            insertCoLocatedColumns(byLayer, ys, consumers, producers, heights,
+                declvarOf, layerOfUid, isolatedLayer, byUid, -1);
+            insertCoLocatedColumns(byLayer, ys, consumers, producers, heights,
+                writeOnlyOf, layerOfUid, isolatedLayer, byUid, 1);
+        }
+
         relaxDistances(byLayer, consumers, producers, ys, soleHub, heights, nodes.size());
         improveLeafFans(byLayer, soleHub, consumers, producers, wires, ys, heights, nodes.size());
         centerHubsOnFanSpan(byLayer, soleConsumer, soleProducer, ys, wires, heights);
@@ -263,6 +317,59 @@ public final class GraphLayout {
         public int compareTo(ColumnKey other) {
             int c = Integer.compare(layer, other.layer);
             return c != 0 ? c : Integer.compare(sub, other.sub);
+        }
+    }
+
+    /**
+     * 共位子列插入：把声明/写入变量节点按主锚点（ref 或 set_var）所在层分组成子列，
+     * 放在该层 direction<0（最左子列再左一格）/ direction>0（最右子列再右一格）侧；
+     * y 取全部锚点的已播种 y 中位数，同子列按锚点 y 排序后顺序 clamp 防重叠。
+     * 调用时机：普通列完成播种之后、松弛之前（锚点 y 已可读，松弛继续微调）。
+     */
+    private static void insertCoLocatedColumns(
+            Map<ColumnKey, List<NodeInstance>> byLayer,
+            Map<String, Double> ys,
+            Map<String, List<String>> consumers,
+            Map<String, List<String>> producers,
+            Map<String, Float> heights,
+            Map<String, String> anchorOf,
+            Map<String, Integer> layerOfUid, int isolatedLayer,
+            Map<String, NodeInstance> byUid, int direction) {
+        if (anchorOf.isEmpty()) {
+            return;
+        }
+        Map<Integer, List<String>> byAnchorLayer = new TreeMap<>();
+        for (Map.Entry<String, String> e : anchorOf.entrySet()) {
+            int layer = layerOfUid.getOrDefault(e.getValue(), isolatedLayer);
+            byAnchorLayer.computeIfAbsent(layer, k -> new ArrayList<>()).add(e.getKey());
+        }
+        for (Map.Entry<Integer, List<String>> e : byAnchorLayer.entrySet()) {
+            int edge = 0;
+            for (ColumnKey key : byLayer.keySet()) {
+                if (key.layer() == e.getKey()) {
+                    edge = direction < 0 ? Math.min(edge, key.sub()) : Math.max(edge, key.sub());
+                }
+            }
+            int sub = direction < 0 ? edge - 1 : edge + 1;
+            List<String> group = e.getValue();
+            group.sort(Comparator
+                    .comparingDouble((String uid) -> yOf(ys, java.util.Objects.requireNonNull(
+                            anchorOf.get(uid), "anchorOf 键集成员")))
+                    .thenComparing(uid -> uid));
+            List<NodeInstance> column = new ArrayList<>();
+            double prevBottom = Double.NEGATIVE_INFINITY;
+            for (String uid : group) {
+                double desired = medianAllNeighborsY(uid, consumers, producers, ys);
+                if (Double.isNaN(desired)) {
+                    desired = yOf(ys, java.util.Objects.requireNonNull(
+                            anchorOf.get(uid), "anchorOf 键集成员"));
+                }
+                double y = Math.max(desired, prevBottom + NODE_MARGIN);
+                ys.put(uid, y);
+                prevBottom = y + heightOf(heights, uid);
+                column.add(byUid.get(uid));
+            }
+            byLayer.put(new ColumnKey(e.getKey(), sub), column);
         }
     }
 
