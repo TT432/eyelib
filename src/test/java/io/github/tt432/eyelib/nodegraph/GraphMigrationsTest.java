@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.nodegraph.assembly.AssemblyResult;
 import io.github.tt432.eyelib.nodegraph.assembly.ClientEntityAssembler;
@@ -515,5 +516,46 @@ class GraphMigrationsTest {
         assertTrue(migrated.wires().contains(wire("ra", "ref", "root", "animations")));
         assertTrue(migrated.findNode("ra").isPresent());
         assertTrue(migrated.findNode("v1").isPresent());
+    }
+
+    /** v7 → v8：ref.ac 剥除 var_refs 快照/read:write: 连线/失连 declvar 节点；ref.animation 保留。 */
+    @Test
+    void v7ToV8StripsRefAcVarRefPortsKeepsRefAnimation() {
+        JsonObject acSnap = new JsonObject();
+        JsonArray acWrites = new JsonArray();
+        acWrites.add("x");
+        acSnap.add("reads", new JsonArray());
+        acSnap.add("writes", acWrites);
+        JsonObject animSnap = new JsonObject();
+        JsonArray animReads = new JsonArray();
+        animReads.add("y");
+        animSnap.add("reads", animReads);
+        animSnap.add("writes", new JsonArray());
+
+        GraphLibrary v7 = library(7, Map.of("root", graph(
+                List.of(
+                        node("ac1", "ref.ac", opts("identifier", "controller.animation.a", "var_refs", acSnap)),
+                        node("an1", "ref.animation", opts("identifier", "animation.a", "var_refs", animSnap)),
+                        node("declvar-ac1-x", "variable", opts("name", "x")),
+                        node("declvar-an1-y", "variable", opts("name", "y"))),
+                List.of(
+                        wire("declvar-ac1-x", "out", "ac1", "write:x"),
+                        wire("declvar-an1-y", "out", "an1", "read:y")))));
+
+        GraphLibrary migrated = GraphMigrations.migrate(v7);
+        GraphData g = migrated.mainGraph();
+
+        NodeInstance ac = g.findNode("ac1").orElseThrow();
+        assertFalse(ac.options().containsKey("var_refs"), "ref.ac 快照应剥除");
+        assertFalse(g.findNode("declvar-ac1-x").isPresent(), "失连 declvar 节点应删除");
+        assertFalse(g.wires().stream().anyMatch(w -> w.to().node().equals("ac1")),
+                "指向 ref.ac 变量端口的连线应删除");
+
+        NodeInstance an = g.findNode("an1").orElseThrow();
+        assertTrue(an.options().containsKey("var_refs"), "ref.animation 快照应保留");
+        assertTrue(g.findNode("declvar-an1-y").isPresent(), "ref.animation 的 declvar 节点应保留");
+        assertTrue(g.wires().contains(wire("declvar-an1-y", "out", "an1", "read:y")),
+                "ref.animation 的变量连线应保留");
+        assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, migrated.formatVersion());
     }
 }

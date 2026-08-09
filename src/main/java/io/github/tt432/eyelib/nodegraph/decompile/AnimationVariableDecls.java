@@ -50,6 +50,12 @@ public final class AnimationVariableDecls {
         boolean changed = false;
 
         for (NodeInstance node : main.nodes()) {
+            // v8：只接 ref.animation——AC 的变量引用由 AC 图自身承担（exec 链内 variable
+            // 节点），ref.ac 不建命名端口（规格 §2.1，用户决策 2026-08-08）
+            if (!NodeTypes.REF_ANIMATION.id().equals(node.type())) {
+                nodes.add(node);
+                continue;
+            }
             MolangVariableRefs.Refs refs = refsByRefUid.get(node.uid());
             if (refs == null || refs.isEmpty()) {
                 nodes.add(node);

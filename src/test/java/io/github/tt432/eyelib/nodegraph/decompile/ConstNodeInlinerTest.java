@@ -122,4 +122,23 @@ class ConstNodeInlinerTest {
         assertTrue(r.diagnostics().isEmpty());
         assertFalse(countCode(r.diagnostics(), ConstNodeInliner.CONST_INLINE) > 0);
     }
+
+    @Test
+    void constStringInlinesIntoAnyArgPortWithoutDefault() {
+        // const.string → query.call(is_name_any).arg1：ANY 端口无默认值，
+        // ldlib2 仍挂行内文本编辑器（v8 起可内联）
+        List<NodeInstance> nodes = new java.util.ArrayList<>(List.of(
+                node("c", "const.string", opts("value", new JsonPrimitive("baby"))),
+                node("q", "query.call", opts("function", new JsonPrimitive("query.is_name_any"),
+                        "arg_count", new JsonPrimitive(1)))));
+        List<Wire> wires = new java.util.ArrayList<>(List.of(wire("c", "out", "q", "arg1")));
+
+        ConstNodeInliner.Result r = ConstNodeInliner.inline(nodes, wires);
+
+        assertTrue(r.nodes().stream().noneMatch(n -> n.uid().equals("c")), "const 节点应删除");
+        assertTrue(r.wires().isEmpty(), "连线应删除");
+        NodeInstance q = r.nodes().stream().filter(n -> n.uid().equals("q")).findFirst().orElseThrow();
+        assertEquals("baby", q.constants().get("arg1").getAsString(), "字符串值应保持字符串形态");
+        assertEquals(1, countCode(r.diagnostics(), ConstNodeInliner.CONST_INLINE));
+    }
 }

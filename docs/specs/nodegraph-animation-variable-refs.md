@@ -1,26 +1,32 @@
-# 动画/AC 的 molang 变量引用命名端口（read:/write:）
+# 动画/AC 的 molang 变量引用（read:/write: 命名端口 + AC 图化）
 
 > 状态：已实现并实机验证（2026-08-08）。
 > 动机：nodegraph-init-default-fold §3「变量作用域注意」——variable.* 是实体级
 > 作用域，但引用点分散在动画与 AC 文件里，实体库图内不可见。本特性把这些
-> 跨文件引用显式建模进实体库图。
+> 跨文件引用显式建模。
 > 修订：取代 v6 的 `decl_variables` 桶端口（用户决策 2026-08-08：「一切节点都要有
-> 类型且指代明确」——桶端口无类型、一根线说不清意味着什么）。v6→v7 迁移剥除
-> 旧桶接线（declvar- 节点 + decl_variables 连线），重新导入自动重建为新形态。
+> 类型且指代明确」）。**v8 再修订（用户决策 2026-08-08：「AC 应当类似
+> RenderController 图化，而不是类似 Animation」）——ref.ac 撤除命名变量端口，
+> AC 的变量引用由 AC 图自身承担（ac.state 的 on_entry/on_exit exec 链内 variable
+> 节点即真实引用，AC 库本就是图）；动画无图形态，ref.animation 保留命名端口作为
+> 唯一通道。** v6→v7 迁移剥除旧桶接线；v7→v8 迁移剥除 ref.ac 的 var_refs 快照、
+> 指向其 read:/write: 端口的连线与失连 declvar- 节点，重新导入自动恢复为 v8 形态。
 
 ## 1. 需求
 
 1. `ref.animation` 节点对该动画引用的全部 molang 变量有明确的输入端口。
-2. `ref.ac` 做与 `ref.rc`（v6 decl_* 通道）类似的处理：同样获得变量引用端口。
-3. **每根连线的含义自明**：站在编辑器前能直接看出「这个动画/AC **读**还是**写**
+2. ~~`ref.ac` 做与 `ref.rc`（v6 decl_* 通道）类似的处理~~（v8 废止）→ **AC 图化**：
+   AC 的变量引用在 AC 图内以 variable 节点呈现（与 RC 的 rc.root 图同构），
+   ref.ac 保持纯引用节点。
+3. **每根连线的含义自明**：站在编辑器前能直接看出「这个动画 **读**还是**写**
    哪个变量」——端口按变量命名、按读/写分列。
-4. 导入时自动从动画/AC 文档提取并接线，使实体库图呈现闭包级变量引用面。
+4. 导入时自动从动画文档提取并接线，使实体库图呈现动画的变量引用面。
 
 ## 2. 设计
 
-### 2.1 命名端口
+### 2.1 命名端口（仅 ref.animation）
 
-- `ref.animation` / `ref.ac` 的输入端口集由节点选项快照 `var_refs`
+- `ref.animation` 的输入端口集由节点选项快照 `var_refs`
   （`{"reads":[...],"writes":[...]}`，导入时写入）动态驱动（同 query.call 的
   签名驱动端口机制）：
   - 每个读取变量一个 `read:<name>` 端口（label `v.<name> 读`）；
@@ -33,6 +39,12 @@
   竖排于 ref 下方），其 `out` 按读/写接入对应命名端口——一个节点可同时喂
   该变量的 read 与 write 两个端口。
 - VARIABLE→VARIABLE 同型直连，兼容矩阵无需修改。
+- **编辑器往返**：快照无 NodeOptionDef（不进模型选项），LDLib2 模型往返会丢——
+  `LibraryContext.varRefs` 侧表持有（同 variableScopes pattern）：加载登记、
+  onDefinePorts 合并进端口视图、保存回写。
+- **AC（图化）**：ref.ac 无变量端口。AC 库的 ac.state on_entry/on_exit exec 链里
+  的 variable 节点就是变量引用的图形态；AC 图的变量声明由导入通用收集
+  （collectVariables）自动补齐。
 
 ### 2.2 变量提取（MolangVariableRefs，decompile 包）
 
@@ -50,8 +62,8 @@
 
 `ImportClosure.importWithClosure` 后处理：
 
-1. 实体库主图中每个 `ref.animation` / `ref.ac`（identifier 非空）→ 注册表暂存的
-   原始 schema 文档（双通道，实体 animations 表可能指向 AC id）→ LazyScan 回落；
+1. 实体库主图中每个 `ref.animation`（identifier 非空）→ 注册表暂存的原始 schema
+   文档 → LazyScan 回落（v8 起不再处理 ref.ac——AC 变量引用走 AC 图）；
 2. `AnimationVariableDecls.wire`：ref 节点写 `var_refs` 快照 → 按（名, ref）对
    新增 variable 节点 + read:/write: 连线 → 新变量名并入图声明（type UNKNOWN、
    scope VARIABLE、无默认值）→ 产出新 GraphLibrary 重新注册。
@@ -97,6 +109,8 @@ read: 端口）。注意顺序依赖：若未来把接线移进导入流水线�
 
 - 单测：提取（v./variable. 别名、temp 排除、残缺跳过、嵌套递归、**读/写分列**、
   `==` 非写、出现序）；接线（快照落位、read:/write: 命名端口与 label、声明合并、
-  布局位置、空输入 no-op）；v6→v7 迁移剥除；折叠对声明连线的结构豁免。
-- 实机：悦灵闭包重导——edfatt 等变量按读/写接入引用它的 AC/动画 ref 命名端口、
-  INIT_DEFAULT_FOLD 折叠数不减少、构建产物不变、编辑器打开正常。
+  布局位置、空输入 no-op、ref.ac 跳过）；v6→v7 迁移剥除；v7→v8 迁移剥除 ref.ac；
+  折叠对声明连线的结构豁免。
+- 实机：悦灵闭包重导——edfatt 等变量按读/写接入引用它的动画 ref 命名端口
+  （渲染层实证端口可见）、INIT_DEFAULT_FOLD 折叠数不减少、构建产物不变、
+  编辑器打开正常、保存往返快照不丢。

@@ -52,6 +52,13 @@ public class EvmGraph extends Graph {
          * 会话内改名 uid 不变、作用域跟随；变量表面板新建/改作用域也写这里。
          */
         public final Map<UUID, VariableDecl.Scope> variableScopes = new LinkedHashMap<>();
+        /**
+         * 节点模型 uid → ref.animation 节点的 var_refs 快照（规格
+         * nodegraph-animation-variable-refs）：快照无 NodeOptionDef（不进模型选项），
+         * LDLib2 模型往返会丢——与 variableScopes 同 pattern 侧表持有：加载时 translator
+         * 登记，{@code EvmNodeBase#currentInstanceView} 合并进端口视图，保存时回写。
+         */
+        public final Map<UUID, com.google.gson.JsonElement> varRefs = new LinkedHashMap<>();
     }
 
     /** 所属库种类（保存时回写 GraphLibrary.kind）。 */

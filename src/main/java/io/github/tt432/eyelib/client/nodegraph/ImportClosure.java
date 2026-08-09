@@ -125,28 +125,22 @@ public final class ImportClosure {
                 rcId -> registryRenderController(rcId).or(() -> rcScan.find(rcId)), inlineVariables);
 
         // 变量引用命名端口接线（规格 nodegraph-animation-variable-refs）：
-        // 从动画/AC 原始文档按读/写提取变量引用，写入 ref 节点 var_refs 快照并接线
-        // （纯元数据，不改导出产物）
+        // 从动画原始文档按读/写提取变量引用，写入 ref.animation 节点 var_refs 快照并接线
+        // （纯元数据，不改导出产物）；AC 不接（v8：AC 变量引用由 AC 图自身承担）
         LazyScan animScan = new LazyScan(ANIM_DIR);
         LazyScan acScan = new LazyScan(AC_DIR);
         Map<String, MolangVariableRefs.Refs> refsByRefUid = new LinkedHashMap<>();
         for (NodeInstance node : entity.library().mainGraph().nodes()) {
-            boolean isAnim = NodeTypes.REF_ANIMATION.id().equals(node.type());
-            boolean isAc = NodeTypes.REF_AC.id().equals(node.type());
-            if (!isAnim && !isAc) {
+            if (!NodeTypes.REF_ANIMATION.id().equals(node.type())) {
                 continue;
             }
             String refId = node.optionString("identifier", "");
             if (refId.isEmpty()) {
                 continue;
             }
-            // id 前缀与节点类型可能不一致（Bedrock 实体把 AC 也声明在 animations 表里，
-            // 导入按表归类型）——两个注册通道都试，再回落资源扫描
             Optional<JsonObject> doc = io.github.tt432.eyelib.client.registry.AnimationAssetRegistry
                     .animationSchemaDocument(refId)
-                    .or(() -> io.github.tt432.eyelib.client.registry.AnimationAssetRegistry
-                            .controllerSchemaDocument(refId))
-                    .or(() -> isAnim ? animScan.find(refId) : acScan.find(refId));
+                    .or(() -> animScan.find(refId));
             doc.ifPresent(json -> refsByRefUid.put(node.uid(), MolangVariableRefs.collectWithAccess(json)));
         }
         ImportResult wired = new ImportResult(

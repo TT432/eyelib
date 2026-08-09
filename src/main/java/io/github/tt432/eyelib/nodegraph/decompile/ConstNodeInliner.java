@@ -27,9 +27,10 @@ import java.util.Set;
  * 导出产物不变。
  *
  * <p>判据严格：多条出边（共享常量，内联会复制值且失去单一改点）、const.color
- * （COLOR 端口无行内字面值编辑器）、无默认值端口（无行内编辑器，值会隐身）均不动。
- * 字符串值保持 JsonPrimitive 字符串形态——不经过 InlineLiteral.parse 的
- * 智能解析，const.string("5") 不会被退化成 int 5。
+ * （COLOR 端口无行内字面值编辑器）、无行内编辑器的端口（值会隐身）均不动——
+ * ANY 输入例外：ldlib2 对其无条件挂行内文本编辑器，无默认值也可内联（call 的
+ * argN 端口即此类）。字符串值保持 JsonPrimitive 字符串形态——不经过
+ * InlineLiteral.parse 的智能解析，const.string("5") 不会被退化成 int 5。
  */
 final class ConstNodeInliner {
     private ConstNodeInliner() {
@@ -103,7 +104,7 @@ final class ConstNodeInliner {
                         "已内联 " + removedConst.size() + " 个单用 const 常量节点到端口行内值")));
     }
 
-    /** 端口可内联：带默认值且类型有行内编辑器（同 EvmInlinePortFields 覆盖范围）。 */
+    /** 端口可内联：类型有行内编辑器，且（带默认值 或 ANY——ldlib2 的 ANY 输入无条件挂行内文本编辑器）。 */
     private static boolean inlineCapable(NodeInstance target, String portId) {
         Optional<NodeType> type = NodeTypes.get(target.type());
         if (type.isEmpty()) {
@@ -111,7 +112,8 @@ final class ConstNodeInliner {
         }
         for (PortDef def : type.get().inputsOf(target, name -> Optional.empty())) {
             if (def.id().equals(portId)) {
-                return def.defaultValue().isPresent() && INLINE_CAPABLE.contains(def.type());
+                return INLINE_CAPABLE.contains(def.type())
+                        && (def.defaultValue().isPresent() || def.type() == PortType.ANY);
             }
         }
         return false;

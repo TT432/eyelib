@@ -207,6 +207,12 @@ public final class EvmGraphTranslator {
                                                           EvmGraph.LibraryContext ctx, List<Diagnostic> diags) {
         Vector2f pos = new Vector2f(n.x(), n.y());
         UUID uid = uidOf(n.uid());
+        // var_refs 快照无 NodeOptionDef（不进模型选项）——登记侧表供端口视图/保存往返
+        // （规格 nodegraph-animation-variable-refs；ref.ac 自 v8 不再有快照）
+        JsonElement varRefs = n.options().get(NodeTypes.VAR_REFS_OPTION);
+        if (varRefs != null) {
+            ctx.varRefs.put(uid, varRefs);
+        }
         Optional<NodeType> typeOpt = NodeTypes.get(n.type());
         if (typeOpt.isEmpty()) {
             diags.add(Diagnostic.warning("EDITOR_TRANSLATE", "unknown node type '" + n.type() + "'", n.uid()));
@@ -500,7 +506,7 @@ public final class EvmGraphTranslator {
             return null;
         }
         if (nm instanceof ICustomNodeModel custom && custom.getNode() instanceof EvmNodeBase evm) {
-            return evmNodeInstanceOf(nm, evm.type(), uid, pos, diags);
+            return evmNodeInstanceOf(nm, evm.type(), uid, pos, ctx, diags);
         }
         diags.add(Diagnostic.warning("EDITOR_TRANSLATE",
                 "unsupported node model " + nm.getClass().getSimpleName() + " skipped", uid));
@@ -508,7 +514,8 @@ public final class EvmGraphTranslator {
     }
 
     private static NodeInstance evmNodeInstanceOf(AbstractNodeModel nm, NodeType type, String uid,
-                                                  Vector2f pos, List<Diagnostic> diags) {
+                                                  Vector2f pos, EvmGraph.@Nullable LibraryContext ctx,
+                                                  List<Diagnostic> diags) {
         NodeModel model = (NodeModel) nm;
         Map<String, JsonElement> options = new LinkedHashMap<>();
         for (NodeOptionDef def : type.options()) {
@@ -517,6 +524,13 @@ public final class EvmGraphTranslator {
             JsonElement j = EvmValues.javaToJson(c.getValue());
             if (j != null) {
                 options.put(def.id(), j);
+            }
+        }
+        // var_refs 快照无 NodeOptionDef——从侧表回写（加载时登记，见 createNode）
+        if (ctx != null) {
+            JsonElement varRefs = ctx.varRefs.get(nm.getUid());
+            if (varRefs != null) {
+                options.put(NodeTypes.VAR_REFS_OPTION, varRefs);
             }
         }
         Map<String, JsonElement> constants = new LinkedHashMap<>();

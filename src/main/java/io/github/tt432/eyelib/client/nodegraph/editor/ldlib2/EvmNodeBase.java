@@ -21,6 +21,7 @@ import io.github.tt432.eyelib.nodegraph.InlineLiteral;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeOptionDef;
 import io.github.tt432.eyelib.nodegraph.NodeType;
+import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.PortDef;
 import io.github.tt432.eyelib.nodegraph.PortType;
 import io.github.tt432.eyelib.nodegraph.ShortNames;
@@ -220,6 +221,16 @@ public abstract class EvmNodeBase extends Node {
             var json = EvmValues.javaToJson(value != null ? value : EvmValues.optionDefault(def));
             if (json != null) {
                 options.put(def.id(), json);
+            }
+        }
+        // var_refs 快照无 NodeOptionDef（不在上面循环）——从侧表合并（ref.animation 命名
+        // 变量端口的驱动源；不合并则端口在编辑器不渲染、保存时丢失，规格 §2.1）
+        var nodeModel = getNodeModel();
+        EvmGraph graph = evmGraph();
+        if (nodeModel != null && graph != null && graph.context() != null) {
+            com.google.gson.JsonElement varRefs = graph.context().varRefs.get(nodeModel.getUid());
+            if (varRefs != null) {
+                options.put(NodeTypes.VAR_REFS_OPTION, varRefs);
             }
         }
         return new NodeInstance("", type().id(), 0, 0, options, Map.of());

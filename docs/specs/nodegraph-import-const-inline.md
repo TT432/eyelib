@@ -14,8 +14,10 @@
 1. const 节点类型 ∈ {const.number, const.int, const.bool, const.string}
    （const.color 不动——COLOR 端口无行内字面值编辑器）；
 2. 出边**恰好 1 条**（共享常量内联会复制值且失去单一改点）；
-3. 目标端口是**带默认值**的 INT/FLOAT/BOOL/STRING/ANY 输入（行内编辑器覆盖范围，
-   同 EvmInlinePortFields；无默认值端口无行内编辑器，内联后值会隐身）。
+3. 目标端口类型有行内编辑器（INT/FLOAT/BOOL/STRING/ANY，同 EvmInlinePortFields
+   覆盖范围）且（带默认值 **或类型为 ANY**）——ldlib2 对 ANY 输入无条件挂行内
+   文本编辑器（v8 起放开，call 的 argN 即此类）；其余无默认值端口无行内编辑器，
+   内联后值会隐身，不动）。
 
 ## 3. 语义保持
 
@@ -30,12 +32,12 @@
 - 前置：折叠之后、布局之前（删除的节点不占位）。
 - 后置：const 节点与连线删除；目标节点 constants 增加端口值；产出一条
   `CONST_INLINE` info 汇总（数量）。
-- 不变量：导出产物不变；多用途/孤儿 const、无默认值端口目标不受影响。
+- 不变量：导出产物不变；多用途/孤儿 const、无行内编辑器端口目标不受影响。
 - 异常行为：条件不满足 = 原样保留（静默）。
 
 ## 5. 验证
 
 - 单测 ConstNodeInlinerTest 6 例：单用内联（常量落 constants + 节点线删除）、
-  共享保留、字符串型保持、无默认值端口不动、const.color 不动、孤儿不动；
+  共享保留、字符串型保持、无行内编辑器端口不动、const.color 不动、孤儿不动；
   三节点编译、1.20.1/1.21.1 test+nullaway 全绿。
 - 实机：悦灵重导后 animate.entry weight 等单用常量不再产生 const 节点。

@@ -400,13 +400,16 @@ public final class NodeTypes {
             (instance, resolver) -> varRefPorts(instance),
             NodeType.PortProvider.fixed(List.of(PortDef.out("ref", PortType.ANIMATION_REF)))));
 
-    public static final NodeType REF_AC = register(NodeType.dynamic(
+    public static final NodeType REF_AC = register(NodeType.of(
             "ref.ac", NodeType.Kind.REF_AC, CAT_REF,
             List.of(
                     NodeOptionDef.string("short_name", ""),
                     NodeOptionDef.asset("identifier", "controller.animation.example.main", "ac")),
-            (instance, resolver) -> varRefPorts(instance),
-            NodeType.PortProvider.fixed(List.of(PortDef.out("ref", PortType.AC_REF)))));
+            // v8：ref.ac 不建变量命名端口——AC 的变量引用由 AC 图自身承担（ac.state 的
+            // on_entry/on_exit exec 链内 variable 节点即真实引用）；动画无图形态，
+            // ref.animation 保留 read:/write: 命名端口（规格 §2.1，用户决策 2026-08-08）
+            List.of(),
+            List.of(PortDef.out("ref", PortType.AC_REF))));
 
     public static final NodeType REF_RC = register(NodeType.of(
             "ref.rc", NodeType.Kind.REF_RC, CAT_REF,
