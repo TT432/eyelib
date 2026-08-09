@@ -33,10 +33,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class EvmRefPreviewElement extends UIElement {
     private static final int PREVIEW_SIZE = 64;
+    /** 粒子/音效预览是播放键不是纹理区：紧凑行高（无图像内容，棋盘格属误用，用户实机截图指正）。 */
+    private static final int PLAY_HEIGHT = 22;
     private static final SpriteTexture CHECKERBOARD =
             SpriteTexture.of("eyelib:textures/gui/nodegraph/checkerboard.png");
     private static final IGuiTexture NOT_FOUND = new TextTexture("未找到", 0xFFFF5555).setWidth(PREVIEW_SIZE);
-    private static final IGuiTexture PLAY_HINT = new TextTexture("播放", 0xFF55FF55).setWidth(PREVIEW_SIZE);
+    private static final IGuiTexture PLAY_BG = new com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture(0xE01E1E1E);
+    private static final IGuiTexture PLAY_HINT = new TextTexture("▶ 播放", 0xFF55FF55).setWidth(PREVIEW_SIZE);
     private static final IGuiTexture PLAY_UNSUPPORTED = new TextTexture("(26.1 不支持播放预览)", 0xFFAAAAAA).setWidth(PREVIEW_SIZE);
 
     private final EvmNodeBase node;
@@ -49,7 +52,9 @@ public final class EvmRefPreviewElement extends UIElement {
 
     public EvmRefPreviewElement(EvmNodeBase node) {
         this.node = node;
-        Style.defaultPipeline(getLayout(), l -> l.width(PREVIEW_SIZE).height(PREVIEW_SIZE));
+        int height = node.type().kind() == NodeType.Kind.REF_PARTICLE
+                || node.type().kind() == NodeType.Kind.REF_SOUND ? PLAY_HEIGHT : PREVIEW_SIZE;
+        Style.defaultPipeline(getLayout(), l -> l.width(PREVIEW_SIZE).height(height));
         //? if <26.1 {
         if (isModel()) {
             // 模型预览交互：左拖旋转 / 右拖平移 / 滚轮缩放 / 双击重置（Scene 同款事件体系）
@@ -154,14 +159,18 @@ public final class EvmRefPreviewElement extends UIElement {
     @Override
     public void drawBackgroundAdditional(GUIContext guiContext) {
         float x = getPositionX(), y = getPositionY(), w = getSizeWidth(), h = getSizeHeight();
+        if (isParticle() || isSound()) {
+            // 播放键：深色底 + 居中文字，无图像内容不画棋盘格
+            boolean missing = !io.github.tt432.eyelib.client.nodegraph.MissingRefCheck.INSTANCE
+                    .exists(node.type().id(), refValue());
+            guiContext.drawTexture(PLAY_BG, x, y, w, h);
+            guiContext.drawTexture(missing ? NOT_FOUND : PLAY_HINT, x, y, w, h);
+            return;
+        }
         guiContext.drawTexture(CHECKERBOARD, x, y, w, h);
         if (isTexture()) {
             var texture = NodeAssetPreview.resolveTexture(refValue());
             guiContext.drawTexture(texture == null ? NOT_FOUND : SpriteTexture.of(texture), x, y, w, h);
-        } else if (isParticle() || isSound()) {
-            boolean missing = !io.github.tt432.eyelib.client.nodegraph.MissingRefCheck.INSTANCE
-                    .exists(node.type().id(), refValue());
-            guiContext.drawTexture(missing ? NOT_FOUND : PLAY_HINT, x, y, w, h);
         } else {
             var handle = NodeAssetPreview.resolveModel(refValue());
             if (handle == null) {
@@ -182,14 +191,17 @@ public final class EvmRefPreviewElement extends UIElement {
     @Override
     protected void drawBackgroundAdditional(IGUIContext context) {
         float x = getPositionX(), y = getPositionY(), w = getSizeWidth(), h = getSizeHeight();
+        if (isParticle() || isSound()) {
+            boolean missing = !io.github.tt432.eyelib.client.nodegraph.MissingRefCheck.INSTANCE
+                    .exists(node.type().id(), refValue());
+            context.drawTexture(PLAY_BG, x, y, w, h);
+            context.drawTexture(missing ? NOT_FOUND : PLAY_UNSUPPORTED, x, y, w, h);
+            return;
+        }
         context.drawTexture(CHECKERBOARD, x, y, w, h);
         if (isTexture()) {
             var texture = NodeAssetPreview.resolveTexture(refValue());
             context.drawTexture(texture == null ? NOT_FOUND : SpriteTexture.of(texture), x, y, w, h);
-        } else if (isParticle() || isSound()) {
-            boolean missing = !io.github.tt432.eyelib.client.nodegraph.MissingRefCheck.INSTANCE
-                    .exists(node.type().id(), refValue());
-            context.drawTexture(missing ? NOT_FOUND : PLAY_UNSUPPORTED, x, y, w, h);
         } else {
             String value = refValue();
             if (NodeAssetPreview.resolveModel(value) == null) {

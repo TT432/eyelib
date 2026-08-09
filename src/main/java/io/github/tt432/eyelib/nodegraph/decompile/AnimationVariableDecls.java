@@ -71,23 +71,28 @@ public final class AnimationVariableDecls {
 
             int row = 0;
             for (String name : refs.union()) {
-                // 每个 (ref, 变量) 对独立节点（2026-08-09 定版）：按名共享会把边拉向
-                // 远处的同名节点；独立节点由布局的共位子列贴靠各自 ref（GraphLayout
-                // 声明通道处理）。位置仅作种子，最终坐标由布局重算
-                String uid = "declvar-" + node.uid() + "-" + name;
-                nodes.add(new NodeInstance(uid, NodeTypes.VARIABLE.id(),
-                        node.x(), node.y() + 40 + row * 40,
-                        Map.of("name", new JsonPrimitive(name)), new LinkedHashMap<>()));
+                // 每个 (ref, 变量, 方向) 对独立节点（2026-08-09 定版）：读节点贴 ref 左侧、
+                // 写节点贴右侧（左读右写；读写同拆双节点，避免一侧边被迫反向）。
+                // 位置仅作种子，最终坐标由布局重算
                 if (refs.reads().contains(name)) {
+                    String uid = "declvar-r-" + node.uid() + "-" + name;
+                    nodes.add(new NodeInstance(uid, NodeTypes.VARIABLE.id(),
+                            node.x(), node.y() + 40 + row * 40,
+                            Map.of("name", new JsonPrimitive(name)), new LinkedHashMap<>()));
                     wires.add(new Wire(new PortRef(uid, "out"),
                             new PortRef(node.uid(), NodeTypes.VAR_READ_PREFIX + name)));
+                    row++;
                 }
                 if (refs.writes().contains(name)) {
+                    String uid = "declvar-w-" + node.uid() + "-" + name;
+                    nodes.add(new NodeInstance(uid, NodeTypes.VARIABLE.id(),
+                            node.x(), node.y() + 40 + row * 40,
+                            Map.of("name", new JsonPrimitive(name)), new LinkedHashMap<>()));
                     // v9 左读右写：write 是 ref 的右侧输出，接 declvar 节点的 in
                     wires.add(new Wire(new PortRef(node.uid(), NodeTypes.VAR_WRITE_PREFIX + name),
                             new PortRef(uid, "in")));
+                    row++;
                 }
-                row++;
                 if (declNames.add(name)) {
                     newDecls.add(new VariableDecl(name, PortType.UNKNOWN,
                             Optional.empty(), Optional.empty(), VariableDecl.Scope.VARIABLE));

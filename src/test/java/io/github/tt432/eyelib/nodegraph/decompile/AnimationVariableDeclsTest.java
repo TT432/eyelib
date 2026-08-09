@@ -50,18 +50,19 @@ class AnimationVariableDeclsTest {
         assertEquals(2, snapshot.getAsJsonArray("reads").size());
         assertEquals(1, snapshot.getAsJsonArray("writes").size());
 
-        // 节点 + 命名端口线：edfatt 读+写两条，dxvpbr 读一条
-        assertEquals(3, main.nodes().size());
+        // 节点 + 命名端口线：edfatt 读写拆双节点（左读右写不反向），dxvpbr 读一个
+        assertEquals(4, main.nodes().size());
         assertEquals(3, main.wires().size());
         assertTrue(main.wires().stream().anyMatch(
                 w -> w.to().node().equals("ra") && w.to().port().equals("read:edfatt")
-                        && w.from().node().equals("declvar-ra-edfatt")));
+                        && w.from().node().equals("declvar-r-ra-edfatt")));
         // v9 左读右写：write 是 ref 的右侧输出，接 declvar 节点的 in（写入通道）
         assertTrue(main.wires().stream().anyMatch(
                 w -> w.from().node().equals("ra") && w.from().port().equals("write:edfatt")
-                        && w.to().node().equals("declvar-ra-edfatt") && w.to().port().equals("in")));
+                        && w.to().node().equals("declvar-w-ra-edfatt") && w.to().port().equals("in")));
         assertTrue(main.wires().stream().anyMatch(
-                w -> w.to().node().equals("ra") && w.to().port().equals("read:dxvpbr")));
+                w -> w.to().node().equals("ra") && w.to().port().equals("read:dxvpbr")
+                        && w.from().node().equals("declvar-r-ra-dxvpbr")));
 
         // 快照驱动的命名端口定义：read 在输入侧、write 在输出侧（v9 修正：write 曾错误地
         // 随输入 provider 注册，导致端口渲染在左侧——位置即语义，label 不带「读/写」标记）

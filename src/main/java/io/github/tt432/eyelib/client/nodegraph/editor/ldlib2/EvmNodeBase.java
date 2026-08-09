@@ -204,7 +204,7 @@ public abstract class EvmNodeBase extends Node {
         }
         for (PortDef port : type().outputsOf(view, resolver)) {
             var builder = context.addOutputPort(port.id(), EvmTypeHandles.toHandle(port.type()))
-                    .withDisplayName(Component.literal(port.id()));
+                    .withDisplayName(Component.literal(port.label().orElse(port.id())));
             applyCapacity(builder.build(), port);
         }
     }

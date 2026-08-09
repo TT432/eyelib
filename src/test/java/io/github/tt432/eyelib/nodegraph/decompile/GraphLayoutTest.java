@@ -366,29 +366,35 @@ class GraphLayoutTest {
     @Test
     void declvarNodesColocateWithTheirRef() {
         // 声明通道（ref.animation 的 read:/write: 端口与 variable.in 写入边）不参与
-        // 最长路径分层：纯 declvar 变量节点进主 ref 左侧共位子列，而不是被钉在
-        // 「最左消费者的上游」横跨数列（用户实机截图实证 2026-08-09 的巨列问题）
+        // 最长路径分层：读 declvar 贴主 ref 左侧、写 declvar 贴右侧（左读右写），
+        // 而不是被钉在「最左消费者的上游」横跨数列（用户实机截图实证 2026-08-09 的巨列问题）
         NodeInstance producer = NodeInstance.of("producer", "const.number", 0, 0);
         NodeInstance ref = NodeInstance.of("ref", "ref.animation", 0, 0);
         NodeInstance sink = NodeInstance.of("sink", "const.number", 0, 0);
-        NodeInstance declvar = NodeInstance.of("declvar-x", "variable", 0, 0);
+        NodeInstance readVar = NodeInstance.of("declvar-r-x", "variable", 0, 0);
+        NodeInstance writeVar = NodeInstance.of("declvar-w-y", "variable", 0, 0);
         List<Wire> wires = List.of(
                 wire("producer", "ref"),
                 new Wire(new PortRef("ref", "ref"), new PortRef("sink", "in")),
-                new Wire(new PortRef("declvar-x", "out"), new PortRef("ref", "read:x")),
-                new Wire(new PortRef("ref", "write:y"), new PortRef("declvar-x", "in")));
+                new Wire(new PortRef("declvar-r-x", "out"), new PortRef("ref", "read:x")),
+                new Wire(new PortRef("ref", "write:y"), new PortRef("declvar-w-y", "in")));
         List<NodeInstance> laid = GraphLayout.layout(
-                List.of(producer, ref, sink, declvar), wires);
+                List.of(producer, ref, sink, readVar, writeVar), wires);
 
         float refX = find(laid, "ref").x();
         float refY = find(laid, "ref").y();
-        NodeInstance dv = find(laid, "declvar-x");
-        assertEquals(refX - GraphLayout.X_SPACING, dv.x(),
-                "declvar 应在 ref 左侧相邻列：refX=" + refX + " dvX=" + dv.x());
-        assertTrue(Math.abs(dv.y() - refY) <= 2 * GraphLayout.Y_SPACING,
-                "declvar 应与 ref 同高度附近：refY=" + refY + " dvY=" + dv.y());
-        // 流程节点分层不受声明通道影响
-        assertEquals(refX + GraphLayout.X_SPACING, find(laid, "sink").x());
-        assertEquals(refX - 2 * GraphLayout.X_SPACING, find(laid, "producer").x());
+        NodeInstance rv = find(laid, "declvar-r-x");
+        NodeInstance wv = find(laid, "declvar-w-y");
+        assertEquals(refX - GraphLayout.X_SPACING, rv.x(),
+                "读 declvar 应在 ref 左侧相邻列：refX=" + refX + " dvX=" + rv.x());
+        assertEquals(refX + GraphLayout.X_SPACING, wv.x(),
+                "写 declvar 应在 ref 右侧相邻列：refX=" + refX + " dvX=" + wv.x());
+        assertTrue(Math.abs(rv.y() - refY) <= 2 * GraphLayout.Y_SPACING,
+                "读 declvar 应与 ref 同高度附近：refY=" + refY + " dvY=" + rv.y());
+        assertTrue(Math.abs(wv.y() - refY) <= 2 * GraphLayout.Y_SPACING,
+                "写 declvar 应与 ref 同高度附近：refY=" + refY + " dvY=" + wv.y());
+        // 流程节点分层顺序不受声明通道影响（声明子列占槽，不断言绝对槽位）
+        assertTrue(find(laid, "sink").x() > wv.x(), "sink 应在写 declvar 右侧");
+        assertTrue(find(laid, "producer").x() < rv.x(), "producer 应在读 declvar 左侧");
     }
 }

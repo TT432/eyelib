@@ -80,6 +80,12 @@ public final class GraphLayout {
     private static final double RELAX_EPSILON = 0.5;
     /** 单列扇成员上限：超过则拆成并列子列（见 {@link #splitGiantFans}）。 */
     private static final int MAX_FAN_LEAVES_PER_COLUMN = 16;
+    /** 共位子列成员上限：超过则切成多个并列子列（每块以自身锚点中位数居中）。 */
+    private static final int MAX_COLOCATED_PER_COLUMN = 10;
+    /** 声明簇同列混排的列高上限：超过则切下一列（防巨栈尾端远离锚点）。 */
+    private static final float MAX_CLUSTER_COLUMN_HEIGHT = 2600f;
+    /** 声明簇列内间距：声明芯片（variable/ref 小节点）不需要 48px 呼吸区，紧排防纵漂。 */
+    private static final float CLUSTER_GAP = 10f;
     /** 极小极大定位的最小扇规模：小于此数的扇 hub 交给中位数投票即可。 */
     private static final int MIN_MINIMAX_FAN_SIZE = 4;
 
@@ -106,6 +112,9 @@ public final class GraphLayout {
         // 钉在「最左消费者的上游」，横跨数列拉出长扇（用户实机截图实证 2026-08-09）
         Map<String, Set<String>> declvarRefs = new HashMap<>();
         Map<String, Set<String>> writeVarWriters = new HashMap<>();
+        // declvar 的读/写方向（共位侧选择）：ref.write: 输出 → 变量节点在 ref 右侧；
+        // ref.read: 输入 → 左侧（左读右写的空间表达）
+        Set<String> declvarWriteVars = new HashSet<>();
         for (Wire w : wires) {
             consumers.computeIfAbsent(w.from().node(), k -> new ArrayList<>()).add(w.to().node());
             producers.computeIfAbsent(w.to().node(), k -> new ArrayList<>()).add(w.from().node());
@@ -119,6 +128,9 @@ public final class GraphLayout {
                         ? w.from().node() : w.to().node();
                 String refUid = varUid.equals(w.from().node()) ? w.to().node() : w.from().node();
                 declvarRefs.computeIfAbsent(varUid, k -> new TreeSet<>()).add(refUid);
+                if (w.from().port().startsWith("write:")) {
+                    declvarWriteVars.add(varUid);
+                }
             } else if (writeInput) {
                 // set_var.target → variable.in（非 var-ref 的纯写入边）
                 writeVarWriters.computeIfAbsent(w.to().node(), k -> new TreeSet<>()).add(w.from().node());
@@ -130,18 +142,70 @@ public final class GraphLayout {
             }
         }
         // 纯声明/写入变量节点（全部边都是非流通道）：不进流分层，稍后共位插入——
-        // declvarOf：带 var-ref 边 → 贴主 ref 左侧；writeOnlyOf：仅 set_var 写入边 →
-        // 贴写入方右侧（左读右写的空间表达）
-        Map<String, String> declvarOf = new HashMap<>(); // varUid -> 主 ref uid（字典序最小，确定性）
+        // declvarReadOf/declvarWriteOf：带 var-ref 边 → 读贴主 ref 左侧、写贴右侧；
+        // writeOnlyOf：仅 set_var 写入边 → 贴写入方右侧（左读右写的空间表达）
+        Map<String, String> declvarReadOf = new HashMap<>(); // varUid -> 主 ref uid（字典序最小，确定性）
+        Map<String, String> declvarWriteOf = new HashMap<>();
         for (Map.Entry<String, Set<String>> e : declvarRefs.entrySet()) {
             if (!flowWiredNodes.contains(e.getKey())) {
-                declvarOf.put(e.getKey(), e.getValue().iterator().next());
+                (declvarWriteVars.contains(e.getKey()) ? declvarWriteOf : declvarReadOf)
+                        .put(e.getKey(), e.getValue().iterator().next());
             }
         }
         Map<String, String> writeOnlyOf = new HashMap<>(); // varUid -> 主写入方 uid
         for (Map.Entry<String, Set<String>> e : writeVarWriters.entrySet()) {
             if (!flowWiredNodes.contains(e.getKey()) && !declvarRefs.containsKey(e.getKey())) {
                 writeOnlyOf.put(e.getKey(), e.getValue().iterator().next());
+            }
+        }
+        // root 声明簇共位：ref.* / animate.entry 与 root 之间是纯声明通道，最长路径把它们
+        // 留在源侧、向 root 拉出横跨全图的扇（悦灵 65 条 ref.sound + 11 条 ref.ac + 19 条
+        // ref.animation + 16 条 animate.entry 边实证）。整簇按视觉序
+        // [读 declvar][ref][写 declvar][entry][root] 贴到 root 左侧子列——entry 的
+        // condition 边会拉长，但用 16 条边换掉 100+ 条扇形边。
+        // ref 纯度：无非 var-ref 的上游（entry 消费者允许，entry 同簇跟随）。
+        Map<String, String> rootDeclOf = new HashMap<>(); // refUid -> root uid
+        Map<String, String> entryDeclOf = new HashMap<>(); // animate.entry uid -> root uid
+        {
+            Set<String> declRefTypes = Set.of("ref.sound", "ref.particle", "ref.ac", "ref.animation");
+            Set<String> declPorts = Set.of("animations", "animation_controllers", "particles", "sounds");
+            Set<String> rootTypes = Set.of("entity.root", "rc.root");
+            for (NodeInstance n : nodes) {
+                if (declRefTypes.contains(n.type())) {
+                    String anchor = null;
+                    boolean pure = true;
+                    for (Wire w : wires) {
+                            boolean out = w.from().node().equals(n.uid());
+                            boolean in = w.to().node().equals(n.uid());
+                            if (!out && !in) {
+                                continue;
+                            }
+                            if (io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(w.from().port())
+                                    || io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(w.to().port())) {
+                                continue;
+                            }
+                            if (in) {
+                                pure = false;
+                                break;
+                            }
+                            if (declPorts.contains(w.to().port())
+                                    && rootTypes.contains(typeOf.getOrDefault(w.to().node(), ""))) {
+                                anchor = w.to().node();
+                            }
+                            // 其余出边（如 →animate.entry:ref）允许：entry 同簇
+                        }
+                    if (pure && anchor != null) {
+                        rootDeclOf.put(n.uid(), anchor);
+                    }
+                } else if ("animate.entry".equals(n.type())) {
+                    for (Wire w : wires) {
+                        if (w.from().node().equals(n.uid()) && "animate".equals(w.to().port())
+                                && "entity.root".equals(typeOf.getOrDefault(w.to().node(), ""))) {
+                            entryDeclOf.put(n.uid(), w.to().node());
+                            break;
+                        }
+                    }
+                }
             }
         }
         consumers.values().forEach(list -> list.sort(Comparator.naturalOrder()));
@@ -183,7 +247,9 @@ public final class GraphLayout {
         Map<ColumnKey, List<NodeInstance>> byLayer = new TreeMap<>();
         Map<String, Integer> layerOfUid = new HashMap<>();
         for (NodeInstance node : nodes) {
-            if (declvarOf.containsKey(node.uid()) || writeOnlyOf.containsKey(node.uid())) {
+            if (declvarReadOf.containsKey(node.uid()) || declvarWriteOf.containsKey(node.uid())
+                    || writeOnlyOf.containsKey(node.uid()) || rootDeclOf.containsKey(node.uid())
+                    || entryDeclOf.containsKey(node.uid())) {
                 continue;
             }
             int layer = flowWiredNodes.contains(node.uid()) ? layers.get(node.uid()) : isolatedLayer;
@@ -264,16 +330,38 @@ public final class GraphLayout {
         }
 
         // 共位子列（此时全部普通列已完成播种，锚点 y 可读）：
-        // - declvar（带 var-ref 边）→ 主 ref 所在列的左侧子列（sub = 该层最小 sub − 1）
-        // - 纯写入变量（仅 set_var.target 写入边）→ 主写入方所在列的右侧子列（最大 sub + 1）
-        // y = 其全部锚点的已播种 y 中位数；同子列内按锚点 y 排序后顺序 clamp 防重叠
-        if (!declvarOf.isEmpty() || !writeOnlyOf.isEmpty()) {
-            Map<String, NodeInstance> byUid = new HashMap<>();
-            for (NodeInstance n : nodes) {
-                byUid.put(n.uid(), n);
-            }
+        // - root 声明簇（ref + entry + 其 declvar）→ 协调放置到 root 左侧连续子列
+        // - 其余 declvar 读边 → 主 ref 左侧；写边 / 纯写入变量 → 锚点右侧
+        Map<String, NodeInstance> byUid = new HashMap<>();
+        for (NodeInstance n : nodes) {
+            byUid.put(n.uid(), n);
+        }
+        Map<String, String> genericReadOf = new HashMap<>();
+        Map<String, String> genericWriteOf = new HashMap<>();
+        Map<String, String> clusterReadOf = new HashMap<>();
+        Map<String, String> clusterWriteOf = new HashMap<>();
+        for (Map.Entry<String, String> e : declvarReadOf.entrySet()) {
+            (rootDeclOf.containsKey(e.getValue()) ? clusterReadOf : genericReadOf)
+                    .put(e.getKey(), e.getValue());
+        }
+        for (Map.Entry<String, String> e : declvarWriteOf.entrySet()) {
+            (rootDeclOf.containsKey(e.getValue()) ? clusterWriteOf : genericWriteOf)
+                    .put(e.getKey(), e.getValue());
+        }
+        if (!rootDeclOf.isEmpty() || !entryDeclOf.isEmpty()) {
+            placeDeclCluster(byLayer, ys, consumers, producers, heights,
+                    layerOfUid, isolatedLayer, byUid, wires, typeOf,
+                    rootDeclOf, entryDeclOf, clusterReadOf, clusterWriteOf);
+        }
+        if (!genericReadOf.isEmpty()) {
             insertCoLocatedColumns(byLayer, ys, consumers, producers, heights,
-                declvarOf, layerOfUid, isolatedLayer, byUid, -1);
+                genericReadOf, layerOfUid, isolatedLayer, byUid, -1);
+        }
+        if (!genericWriteOf.isEmpty()) {
+            insertCoLocatedColumns(byLayer, ys, consumers, producers, heights,
+                genericWriteOf, layerOfUid, isolatedLayer, byUid, 1);
+        }
+        if (!writeOnlyOf.isEmpty()) {
             insertCoLocatedColumns(byLayer, ys, consumers, producers, heights,
                 writeOnlyOf, layerOfUid, isolatedLayer, byUid, 1);
         }
@@ -350,26 +438,192 @@ public final class GraphLayout {
                     edge = direction < 0 ? Math.min(edge, key.sub()) : Math.max(edge, key.sub());
                 }
             }
-            int sub = direction < 0 ? edge - 1 : edge + 1;
-            List<String> group = e.getValue();
-            group.sort(Comparator
-                    .comparingDouble((String uid) -> yOf(ys, java.util.Objects.requireNonNull(
-                            anchorOf.get(uid), "anchorOf 键集成员")))
-                    .thenComparing(uid -> uid));
-            List<NodeInstance> column = new ArrayList<>();
-            double prevBottom = Double.NEGATIVE_INFINITY;
-            for (String uid : group) {
-                double desired = medianAllNeighborsY(uid, consumers, producers, ys);
-                if (Double.isNaN(desired)) {
-                    desired = yOf(ys, java.util.Objects.requireNonNull(
+            List<List<NodeInstance>> columns = packColocatedChunks(e.getValue(), anchorOf,
+                    ys, consumers, producers, heights, byUid, false);
+            for (int i = 0; i < columns.size(); i++) {
+                int sub = direction < 0 ? edge - 1 - i : edge + 1 + i;
+                byLayer.put(new ColumnKey(e.getKey(), sub), columns.get(i));
+            }
+        }
+    }
+
+    /**
+     * 共位组分块打包：按锚点 y 排序（uid 兜底），切成 ≤{@link #MAX_COLOCATED_PER_COLUMN} 的块，
+     * 每块以成员欲望值中位数居中并写回 ys——单块巨栈的尾端会远离锚点拉出长斜边
+     * （悦灵 45 变量 ref 实证 dy±1700）。anchorOnly=true 时欲望值只取锚点 y
+     * （声明簇成员的其他邻居此时还未播种，中位数会被默认值污染）。
+     * 返回按锚点 y 升序的列列表（调用方决定子列槽位）。
+     */
+    private static List<List<NodeInstance>> packColocatedChunks(
+            List<String> group, Map<String, String> anchorOf,
+            Map<String, Double> ys,
+            Map<String, List<String>> consumers, Map<String, List<String>> producers,
+            Map<String, Float> heights, Map<String, NodeInstance> byUid, boolean anchorOnly) {
+        group.sort(Comparator
+                .comparingDouble((String uid) -> yOf(ys, java.util.Objects.requireNonNull(
+                        anchorOf.get(uid), "anchorOf 键集成员")))
+                .thenComparing(uid -> uid));
+        List<List<NodeInstance>> columns = new ArrayList<>();
+        for (int start = 0; start < group.size(); start += MAX_COLOCATED_PER_COLUMN) {
+            List<String> chunk = group.subList(start,
+                    Math.min(start + MAX_COLOCATED_PER_COLUMN, group.size()));
+            List<Double> desired = new ArrayList<>();
+            double chunkHeight = -NODE_MARGIN;
+            for (String uid : chunk) {
+                double d = anchorOnly ? Double.NaN : medianAllNeighborsY(uid, consumers, producers, ys);
+                if (Double.isNaN(d)) {
+                    d = yOf(ys, java.util.Objects.requireNonNull(
                             anchorOf.get(uid), "anchorOf 键集成员"));
                 }
-                double y = Math.max(desired, prevBottom + NODE_MARGIN);
-                ys.put(uid, y);
-                prevBottom = y + heightOf(heights, uid);
+                desired.add(d);
+                chunkHeight += heightOf(heights, uid) + NODE_MARGIN;
+            }
+            desired.sort(Comparator.naturalOrder());
+            double center = desired.get(desired.size() / 2);
+            double y = center - chunkHeight / 2;
+            List<NodeInstance> column = new ArrayList<>();
+            double prevBottom = Double.NEGATIVE_INFINITY;
+            for (String uid : chunk) {
+                double yy = Math.max(y, prevBottom + NODE_MARGIN);
+                ys.put(uid, yy);
+                prevBottom = yy + heightOf(heights, uid);
                 column.add(byUid.get(uid));
             }
-            byLayer.put(new ColumnKey(e.getKey(), sub), column);
+            columns.add(column);
+        }
+        return columns;
+    }
+
+    /**
+     * root 声明簇协调放置：把一个 root（entity.root/rc.root）的全部声明成员摆到其左侧
+     * 连续子列。ref 与其 declvar **同列混排**（读 declvar 在上、ref 居中、写 declvar 在下）
+     * ——同列 dx=0 且垂直相邻，边最短；每列按累计高度封顶
+     * （{@link #MAX_CLUSTER_COLUMN_HEIGHT}）防巨栈。ref 列内排序：无 entry 消费者的
+     * 纯声明 ref（sound/particle）居左，有 entry 消费者的居右贴近 entry 列。
+     */
+    private static void placeDeclCluster(
+            Map<ColumnKey, List<NodeInstance>> byLayer,
+            Map<String, Double> ys,
+            Map<String, List<String>> consumers, Map<String, List<String>> producers,
+            Map<String, Float> heights,
+            Map<String, Integer> layerOfUid, int isolatedLayer,
+            Map<String, NodeInstance> byUid,
+            List<Wire> wires, Map<String, String> typeOf,
+            Map<String, String> rootDeclOf, Map<String, String> entryDeclOf,
+            Map<String, String> clusterReadOf, Map<String, String> clusterWriteOf) {
+        // refUid -> 其 declvar（读/写各一表，按变量节点 uid 排序确定）
+        Map<String, List<String>> readsOfRef = new HashMap<>();
+        Map<String, List<String>> writesOfRef = new HashMap<>();
+        for (Map.Entry<String, String> e : clusterReadOf.entrySet()) {
+            readsOfRef.computeIfAbsent(e.getValue(), k -> new ArrayList<>()).add(e.getKey());
+        }
+        for (Map.Entry<String, String> e : clusterWriteOf.entrySet()) {
+            writesOfRef.computeIfAbsent(e.getValue(), k -> new ArrayList<>()).add(e.getKey());
+        }
+        readsOfRef.values().forEach(list -> list.sort(Comparator.naturalOrder()));
+        writesOfRef.values().forEach(list -> list.sort(Comparator.naturalOrder()));
+
+        Set<String> roots = new TreeSet<>();
+        roots.addAll(rootDeclOf.values());
+        roots.addAll(entryDeclOf.values());
+        for (String rootUid : roots) {
+            int layer = layerOfUid.getOrDefault(rootUid, isolatedLayer);
+            int minSub = 0;
+            for (ColumnKey key : byLayer.keySet()) {
+                if (key.layer() == layer) {
+                    minSub = Math.min(minSub, key.sub());
+                }
+            }
+            double rootY = yOf(ys, rootUid);
+            // ref 列：每个 ref 与其 declvar 同列（读上 / ref / 写下），累计高度封顶切列
+            List<String> refs = new ArrayList<>();
+            for (Map.Entry<String, String> e : rootDeclOf.entrySet()) {
+                if (e.getValue().equals(rootUid)) {
+                    refs.add(e.getKey());
+                }
+            }
+            // 有 entry 消费者的 ref 排在最右（贴近 entry 列），纯声明 ref（sound/particle）
+            // 居左——ref↔entry 边与 ref→root 边不可兼得，entry 边跨列会产生反向穿插更碍眼
+            Set<String> entryConnected = new HashSet<>();
+            for (Wire w : wires) {
+                if (rootDeclOf.containsKey(w.from().node())
+                        && "ref".equals(w.to().port())
+                        && "animate.entry".equals(typeOf.getOrDefault(w.to().node(), ""))) {
+                    entryConnected.add(w.from().node());
+                }
+            }
+            refs.sort(Comparator
+                    .comparing((String uid) -> entryConnected.contains(uid))
+                    .thenComparing(uid -> uid));
+            List<List<String>> refColumns = new ArrayList<>();
+            List<String> current = new ArrayList<>();
+            double currentHeight = -CLUSTER_GAP;
+            for (String refUid : refs) {
+                List<String> items = new ArrayList<>();
+                items.addAll(readsOfRef.getOrDefault(refUid, List.of()));
+                items.add(refUid);
+                items.addAll(writesOfRef.getOrDefault(refUid, List.of()));
+                double itemsHeight = -CLUSTER_GAP;
+                for (String uid : items) {
+                    itemsHeight += heightOf(heights, uid) + CLUSTER_GAP;
+                }
+                if (!current.isEmpty() && currentHeight + CLUSTER_GAP + itemsHeight
+                        > MAX_CLUSTER_COLUMN_HEIGHT) {
+                    refColumns.add(current);
+                    current = new ArrayList<>();
+                    currentHeight = -CLUSTER_GAP;
+                }
+                current.addAll(items);
+                currentHeight += CLUSTER_GAP + itemsHeight;
+            }
+            if (!current.isEmpty()) {
+                refColumns.add(current);
+            }
+            // entry 列：同高度上限
+            List<String> entries = new ArrayList<>();
+            for (Map.Entry<String, String> e : entryDeclOf.entrySet()) {
+                if (e.getValue().equals(rootUid)) {
+                    entries.add(e.getKey());
+                }
+            }
+            entries.sort(Comparator.naturalOrder());
+            List<List<String>> entryColumns = new ArrayList<>();
+            current = new ArrayList<>();
+            currentHeight = -CLUSTER_GAP;
+            for (String uid : entries) {
+                double h = heightOf(heights, uid);
+                if (!current.isEmpty() && currentHeight + CLUSTER_GAP + h > MAX_CLUSTER_COLUMN_HEIGHT) {
+                    entryColumns.add(current);
+                    current = new ArrayList<>();
+                    currentHeight = -CLUSTER_GAP;
+                }
+                current.add(uid);
+                currentHeight += CLUSTER_GAP + h;
+            }
+            if (!current.isEmpty()) {
+                entryColumns.add(current);
+            }
+            // 视觉序 [ref 列…][entry 列…][root]；每列以 root.y 居中顺序打包
+            List<List<String>> visual = new ArrayList<>();
+            visual.addAll(refColumns);
+            visual.addAll(entryColumns);
+            int sub = minSub - visual.size();
+            for (List<String> column : visual) {
+                double columnHeight = -CLUSTER_GAP;
+                for (String uid : column) {
+                    columnHeight += heightOf(heights, uid) + CLUSTER_GAP;
+                }
+                double y = rootY - columnHeight / 2;
+                List<NodeInstance> placed = new ArrayList<>();
+                double prevBottom = Double.NEGATIVE_INFINITY;
+                for (String uid : column) {
+                    double yy = Math.max(y, prevBottom + CLUSTER_GAP);
+                    ys.put(uid, yy);
+                    prevBottom = yy + heightOf(heights, uid);
+                    placed.add(byUid.get(uid));
+                }
+                byLayer.put(new ColumnKey(layer, sub++), placed);
+            }
         }
     }
 
@@ -839,6 +1093,8 @@ public final class GraphLayout {
     private static final float REF_PREVIEW_NODE_HEIGHT = 174f;
     /** 无预览的 ref 节点实测高 94，估计取 96。 */
     private static final float REF_NODE_HEIGHT = 96f;
+    /** 粒子/音效 ref 节点：预览是 22px 播放键行（非 64px 纹理区），估计取 110。 */
+    private static final float REF_PLAY_NODE_HEIGHT = 110f;
     /**
      * 布局用空子图解析器：布局只需端口数量，子图调用节点的动态端口按静态端口计
      * （低估只多留空白，不会重叠）。
@@ -877,6 +1133,9 @@ public final class GraphLayout {
             case "ref.material":
             case "ref.rc":
                 return REF_NODE_HEIGHT;
+            case "ref.sound":
+            case "ref.particle":
+                return REF_PLAY_NODE_HEIGHT;
             default:
                 break;
         }
