@@ -60,10 +60,26 @@ public final class MolangFunctionSignatures {
         return custom != null ? custom : BUILT_IN.get(functionName);
     }
 
-    /** 是否定长签名（定长函数的 arg_count 选项无意义，编辑器隐藏之）。 */
+    /** 是否定长签名（定长函数的 args 列表选项无意义，编辑器隐藏之）。 */
     public static boolean isFixedArity(String functionName) {
         Signature sig = find(functionName);
         return sig != null && sig.varArg() == null;
+    }
+
+    /**
+     * args 列表行的显示标签：变长函数 → {@code 名[...]}（string 元素带 {@code : str[]}）；
+     * 未知函数 → {@code "args[...]"}；定长函数 → null（不显示列表行）。
+     */
+    public static @Nullable String variadicListLabel(String functionName) {
+        Signature sig = find(functionName);
+        if (sig == null) {
+            return "args[...]";
+        }
+        Arg varArg = sig.varArg();
+        if (varArg == null) {
+            return null;
+        }
+        return varArg.name() + "[...]" + (varArg.kind() == ArgKind.STRING ? ": str[]" : "");
     }
 
     /**
@@ -175,6 +191,8 @@ public final class MolangFunctionSignatures {
         t.put("query.camera_distance_range_lerp", fixed(num("min"), num("max")));
         t.put("query.chestplate_is", varArgs(str("items")));
         t.put("query.equipped_item_any_tag", varArgs(str("slot"), str("tags")));
+        t.put("query.entity_biome_has_any_identifier", varArgs(str("identifiers")));
+        t.put("query.entity_biome_has_any_tag", varArgs(str("tags")));
         t.put("query.get_root_locator_offset", fixed(str("locator"), str("axis")));
         t.put("query.graphics_mode_is_any", varArgs(str("modes")));
         t.put("query.has_property", fixed(str("property")));

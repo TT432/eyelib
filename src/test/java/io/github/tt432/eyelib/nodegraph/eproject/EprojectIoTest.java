@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.GraphKind;
@@ -51,6 +54,52 @@ class EprojectIoTest {
         libraries.put("alpha", lib("root", "sub_a"));
         libraries.put("beta", lib("main", "sub_b", "sub_c"));
         return Eproject.of("示例项目", libraries);
+    }
+
+    @Test
+    void libraryJsonAlwaysCarriesFormatVersion() throws IOException {
+        // optionalFieldOf 在值等于默认值时不落盘——encodeLibrary 显式补写，文件必须自描述
+        Path dir = tempDir.resolve("proj");
+        Files.createDirectories(dir);
+        EprojectIo.write(dir, sampleProject());
+        String text = Files.readString(dir.resolve("libraries/alpha.json"), StandardCharsets.UTF_8);
+        JsonObject json = JsonParser.parseString(text).getAsJsonObject();
+        assertTrue(json.has("format_version"), "库 JSON 必须带 format_version");
+        assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, json.get("format_version").getAsInt());
+    }
+
+    @Test
+    void missingFormatVersionWithArgCountMigratesFromV10() throws IOException {
+        // 旧构建写出的文件缺 format_version（encode 省略默认值）——读取侧按 arg_count 内容
+        // 探针定代为 v10 并走迁移（否则被 CODEC 缺省值误当当前版本跳过迁移）
+        Path dir = tempDir.resolve("proj");
+        Files.createDirectories(dir);
+        EprojectIo.write(dir, sampleProject());
+
+        Map<String, JsonElement> options = new LinkedHashMap<>();
+        options.put("function", new JsonPrimitive("query.is_name_any"));
+        options.put("arg_count", new JsonPrimitive(2));
+        Map<String, JsonElement> constants = new LinkedHashMap<>();
+        constants.put("arg1", new JsonPrimitive("a"));
+        constants.put("arg2", new JsonPrimitive("b"));
+        GraphLibrary v10 = new GraphLibrary(10, GraphKind.CLIENT_ENTITY, "root",
+                Map.of("root", new GraphData(
+                        List.of(new NodeInstance("q", "query.call", 0, 0, options, constants)),
+                        List.of(), List.of(), List.of(), List.of(), Optional.empty())));
+        JsonObject legacyJson = GraphLibrary.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, v10)
+                .result().orElseThrow().getAsJsonObject();
+        legacyJson.remove("format_version"); // 模拟旧构建输出（默认值不落盘）
+        Files.writeString(dir.resolve("libraries/alpha.json"),
+                new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(legacyJson),
+                StandardCharsets.UTF_8);
+
+        Eproject readBack = EprojectIo.read(dir);
+        GraphLibrary migrated = readBack.libraries().get("alpha");
+        assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, migrated.formatVersion(), "应迁移到当前版本");
+        NodeInstance q = migrated.mainGraph().findNode("q").orElseThrow();
+        assertFalse(q.options().containsKey("arg_count"), "arg_count 已消除");
+        assertNotNull(q.options().get("args"), "变长参数收进 args 列表");
+        assertEquals(2, q.options().get("args").getAsJsonArray().size());
     }
 
     // ---------- round-trip ----------

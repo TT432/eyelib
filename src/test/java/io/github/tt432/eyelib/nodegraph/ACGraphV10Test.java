@@ -96,7 +96,8 @@ class ACGraphV10Test {
 
         GraphLibrary migrated = GraphMigrations.migrate(v9);
 
-        assertEquals(10, migrated.formatVersion());
+        // v9 库经 v10、v11 逐级迁移到当前格式版本
+        assertEquals(GraphLibrary.CURRENT_FORMAT_VERSION, migrated.formatVersion());
         GraphData g = migrated.mainGraph();
         assertTrue(hasWire(g, "s1", "state", "root", "initial"), "initial_state 应迁移为 initial 图边");
         assertTrue(hasWire(g, "t1", "target", "s2", "incoming"), "target 应迁移为 incoming 图边");

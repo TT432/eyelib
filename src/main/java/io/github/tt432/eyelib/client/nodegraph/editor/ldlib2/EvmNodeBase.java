@@ -102,10 +102,24 @@ public abstract class EvmNodeBase extends Node {
             if (type().kind() == NodeType.Kind.AC_STATE && "name".equals(def.id())) {
                 continue;
             }
-            // 定长签名函数的 arg_count 无意义（端口数由签名决定），隐藏减少干扰
-            if ("arg_count".equals(def.id())
-                    && io.github.tt432.eyelib.nodegraph.MolangFunctionSignatures
-                            .isFixedArity(java.util.Objects.toString(readStringOption("function"), ""))) {
+            // v11：args 字面值列表行——定长函数不显示；零参内建（映射树可见参数 0）也不显示；
+            // 变长与真正未知的函数显示（未知行兼作逃生舱，列表数据不丢）。注意 define 期
+            // 选项值未必可读（LDLib2 两阶段加载：define 后才回写保存值）——首选实时读，
+            // 读不到回退翻译期写入的 initialFunction（见 EvmGraphTranslator.createNode）
+            if (def.type() == NodeOptionDef.OptionType.LIST) {
+                String fn = readStringOption("function");
+                if (fn == null || fn.isEmpty()) {
+                    fn = initialFunction != null ? initialFunction : "";
+                }
+                String listLabel = io.github.tt432.eyelib.nodegraph.MolangFunctionSignatures
+                        .variadicListLabel(fn);
+                if (listLabel == null || ("args[...]".equals(listLabel) && isKnownZeroArgFunction(fn))) {
+                    continue;
+                }
+                var builder = context.addOption(def.id(), String.class)
+                        .withDefaultValue(def.defaultValue().toString())
+                        .withDisplayName(Component.literal(listLabel));
+                builder.withConfigurable(listBinding());
                 continue;
             }
             var builder = context.addOption(def.id(), EvmValues.optionJavaType(def.type()))
@@ -128,6 +142,44 @@ public abstract class EvmNodeBase extends Node {
         INodeOption option = getNodeOptionById(id);
         if (option == null) return null;
         return option.<String>tryGetValue(String.class).result().orElse(null);
+    }
+
+    /** 加载期 function 值兜底（翻译器在首个 defineNode 前写入；交互新建节点为 null）。 */
+    private @Nullable String initialFunction;
+
+    /** 翻译期注入域 function 值（define 期选项值不可读，见 onDefineOptions LIST 分支）。 */
+    public void withInitialFunction(@Nullable String function) {
+        this.initialFunction = function;
+    }
+
+    /** 零参内建函数（映射树可见参数 0）→ args 列表行不显示。 */
+    private static boolean isKnownZeroArgFunction(String fn) {
+        int dot = fn.indexOf('.');
+        if (dot < 0) {
+            return false;
+        }
+        var rootNode = io.github.tt432.eyelib.molang.mapping.api.MolangMappingRegistries
+                .mappingTree().toplevelNode.children.get(fn.substring(0, dot));
+        if (rootNode == null) {
+            return false;
+        }
+        var infos = rootNode.actualFunctions.get(fn.substring(dot + 1));
+        if (infos == null || infos.isEmpty()) {
+            return false;
+        }
+        return infos.get(0).parameterRoles().stream()
+                .noneMatch(role -> role.role()
+                        == io.github.tt432.eyelib.molang.mapping.api.MolangFunction.ParameterRole.VISIBLE_ARG);
+    }
+
+    /** args 列表选项的节点内列表编辑器绑定（底层值 = JSON 数组文本）。 */
+    private static com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.ITypeConfigurable listBinding() {
+        return (valueConfigurable, typeHandle) -> IConfigurable.create(father ->
+                        father.addConfigurator(new EvmListConfigurator(
+                                valueConfigurable::getValue,
+                                valueConfigurable::setValue,
+                                java.util.Objects.toString(valueConfigurable.getDefaultValue(), "[]"),
+                                valueConfigurable.forceUpdate())));
     }
 
     /**

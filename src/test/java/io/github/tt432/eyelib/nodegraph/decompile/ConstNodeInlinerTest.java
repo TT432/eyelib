@@ -125,20 +125,20 @@ class ConstNodeInlinerTest {
 
     @Test
     void constStringInlinesIntoAnyArgPortWithoutDefault() {
-        // const.string → query.call(is_name_any).arg1：ANY 端口无默认值，
-        // ldlib2 仍挂行内文本编辑器（v8 起可内联）
+        // v11：query.is_name_any 是纯变长函数（固定前缀为空）→ 无任何 arg 端口，
+        // const 无法内联进不存在的端口；改用定长函数 math.pow 的 arg2（同为无默认 ANY 端口）
+        // 保持原测试意图——const.string 内联为行内常量
         List<NodeInstance> nodes = new java.util.ArrayList<>(List.of(
                 node("c", "const.string", opts("value", new JsonPrimitive("baby"))),
-                node("q", "query.call", opts("function", new JsonPrimitive("query.is_name_any"),
-                        "arg_count", new JsonPrimitive(1)))));
-        List<Wire> wires = new java.util.ArrayList<>(List.of(wire("c", "out", "q", "arg1")));
+                node("q", "math.call", opts("function", new JsonPrimitive("math.pow")))));
+        List<Wire> wires = new java.util.ArrayList<>(List.of(wire("c", "out", "q", "arg2")));
 
         ConstNodeInliner.Result r = ConstNodeInliner.inline(nodes, wires);
 
         assertTrue(r.nodes().stream().noneMatch(n -> n.uid().equals("c")), "const 节点应删除");
         assertTrue(r.wires().isEmpty(), "连线应删除");
         NodeInstance q = r.nodes().stream().filter(n -> n.uid().equals("q")).findFirst().orElseThrow();
-        assertEquals("baby", q.constants().get("arg1").getAsString(), "字符串值应保持字符串形态");
+        assertEquals("baby", q.constants().get("arg2").getAsString(), "字符串值应保持字符串形态");
         assertEquals(1, countCode(r.diagnostics(), ConstNodeInliner.CONST_INLINE));
     }
 }

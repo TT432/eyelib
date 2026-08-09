@@ -62,7 +62,7 @@ class EvmGraphTranslatorTest {
         List<NodeInstance> mainNodes = List.of(
                 new NodeInstance("n1", "const.number", 10, 20, opts("value", 3.5), Map.of()),
                 new NodeInstance("n2", "math.call", 200, 20,
-                        opts("function", "math.sin", "arg_count", 1), Map.of()),
+                        opts("function", "math.sin"), Map.of()),
                 new NodeInstance("n3", "variable", -500, 400, opts("name", "foo"), Map.of()),
                 new NodeInstance("set1", "exec.set_var", -200, 600, Map.of(), Map.of()),
                 new NodeInstance("root_node", "entity.root", 1000, 500,
@@ -90,7 +90,7 @@ class EvmGraphTranslatorTest {
                 List.of(
                         NodeInstance.of("in_anchor", "subgraph.input", 0, 0),
                         new NodeInstance("mul", "math.call", 200, 0,
-                                opts("function", "math.pow", "arg_count", 2),
+                                opts("function", "math.pow"),
                                 Map.of("arg2", new JsonPrimitive(2))),
                         NodeInstance.of("out_anchor", "subgraph.output", 400, 0)),
                 List.of(
@@ -151,7 +151,7 @@ class EvmGraphTranslatorTest {
         }
         NodeModel n2 = nodesByUid.get(EvmGraphTranslator.uidOf("n2").toString());
         assertNotNull(n2, "math.call node present");
-        assertNotNull(n2.getInputsById().get("arg1"), "dynamic arg1 port from arg_count=1");
+        assertNotNull(n2.getInputsById().get("arg1"), "math.sin 定长签名生成 arg1 端口");
 
         NodeModel n3 = nodesByUid.get(EvmGraphTranslator.uidOf("n3").toString());
         assertNotNull(n3, "variable node present");
@@ -174,7 +174,7 @@ class EvmGraphTranslatorTest {
         }
         NodeModel mul = subNodes.get(EvmGraphTranslator.uidOf("mul").toString());
         assertNotNull(mul);
-        assertNotNull(mul.getInputsById().get("arg2"), "arg_count=2 gives arg2");
+        assertNotNull(mul.getInputsById().get("arg2"), "math.pow 定长签名生成 arg2 端口");
         NodeModel inAnchor = subNodes.get(EvmGraphTranslator.uidOf("in_anchor").toString());
         assertNotNull(inAnchor);
         assertNotNull(inAnchor.getOutputsById().get("x"), "subgraph.input mirrors interface input x");

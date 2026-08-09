@@ -1147,7 +1147,21 @@ public final class GraphLayout {
         int rows = Math.max(
                 type.inputsOf(n, NO_SUBGRAPH).size(),
                 type.outputsOf(n, NO_SUBGRAPH).size());
-        return 28 + 16f * rows + 18f * type.options().size();
+        // v11：call 节点的 args 列表按条目数加行（每行 ≈ 选项行高；列表行含 +-× 控件）
+        int optionRows = type.options().size();
+        if (isCallType(n.type())) {
+            com.google.gson.JsonElement args = n.options().get("args");
+            int entries = args != null && args.isJsonArray() ? args.getAsJsonArray().size() : 0;
+            optionRows = 1 + entries; // function 行 + 每条目一行（空列表 = 0 行，列表行隐藏）
+            if (entries == 0) {
+                optionRows = 1;
+            }
+        }
+        return 28 + 16f * rows + 18f * optionRows;
+    }
+
+    private static boolean isCallType(String type) {
+        return "query.call".equals(type) || "math.call".equals(type) || "exec.call".equals(type);
     }
 
     private static int layerOf(String uid, Map<String, List<String>> consumers,

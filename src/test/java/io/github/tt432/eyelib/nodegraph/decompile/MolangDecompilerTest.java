@@ -135,22 +135,30 @@ class MolangDecompilerTest {
 
     @Test
     void queryCallWithArgs() {
+        // v11：query.get_name 不在签名表（未知函数）→ 字面量实参收进 args 列表选项，
+        // 不产生 argN 连线与 const 节点（原 arg_count+argN 连线的意图在 v11 下不可表达）
         MolangDecompiler.ExprFragment f =
                 MolangDecompiler.decompileExpression("query.get_name(1, 'a')");
         NodeInstance call = firstByType(f.nodes(), "query.call");
         assertEquals("query.get_name", call.options().get("function").getAsString());
-        assertEquals(2, call.options().get("arg_count").getAsInt());
-        assertEquals(firstByType(f.nodes(), "const.int").uid(), wireSource(f.wires(), call.uid(), "arg1"));
-        assertEquals(firstByType(f.nodes(), "const.string").uid(), wireSource(f.wires(), call.uid(), "arg2"));
+        com.google.gson.JsonArray expected = new com.google.gson.JsonArray();
+        expected.add(1);
+        expected.add("a");
+        assertEquals(expected, call.options().get("args"));
+        assertFalse(call.options().containsKey("arg_count"), "arg_count 已消除");
+        assertTrue(f.wires().stream().noneMatch(w -> w.to().node().equals(call.uid())),
+                "未知函数实参不产生连线");
     }
 
     @Test
     void queryMemberWithoutCall() {
-        // 无参成员访问形 → arg_count=0 的 query.call；q. 别名归一
+        // 无参成员访问形 → 只有 function 选项（+ 空 args 列表）的 query.call；q. 别名归一
         MolangDecompiler.ExprFragment f = MolangDecompiler.decompileExpression("q.anim_time");
         NodeInstance call = firstByType(f.nodes(), "query.call");
         assertEquals("query.anim_time", call.options().get("function").getAsString());
-        assertEquals(0, call.options().get("arg_count").getAsInt());
+        assertFalse(call.options().containsKey("arg_count"), "arg_count 已消除");
+        com.google.gson.JsonElement args = call.options().get("args");
+        assertTrue(args == null || args.getAsJsonArray().isEmpty(), "无参调用 args 列表为空");
     }
 
     @Test
@@ -158,7 +166,8 @@ class MolangDecompilerTest {
         MolangDecompiler.ExprFragment f = MolangDecompiler.decompileExpression("math.sin(query.anim_time)");
         NodeInstance call = firstByType(f.nodes(), "math.call");
         assertEquals("math.sin", call.options().get("function").getAsString());
-        assertEquals(1, call.options().get("arg_count").getAsInt());
+        // v11：math.sin 是定长签名 → 实参仍走 argN 连线；arg_count 不再写入
+        assertFalse(call.options().containsKey("arg_count"), "arg_count 已消除");
         assertEquals(firstByType(f.nodes(), "query.call").uid(), wireSource(f.wires(), call.uid(), "arg1"));
     }
 

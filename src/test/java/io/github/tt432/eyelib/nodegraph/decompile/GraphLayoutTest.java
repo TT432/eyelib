@@ -237,11 +237,16 @@ class GraphLayoutTest {
 
     @Test
     void tallNodeDoesNotOverlapNeighbors() {
-        // 16 个 arg 的 query.call 估计高 320（实测 318）：固定 110 行距会让它与同列邻居
+        // v11：16 条 args 列表条目的 query.call（query.x 为未知函数 → 无 arg 端口）估计高
+        // = 28 + 16×max(入0,出1) + 18×(1+16) = 350：固定 110 行距会让它与同列邻居
         // 重叠（用户实机截图实证 2026-08-07）。同列相邻间距必须 ≥ 上节点估计高 + 边距。
+        com.google.gson.JsonArray argsList = new com.google.gson.JsonArray();
+        for (int i = 0; i < 16; i++) {
+            argsList.add("item" + i);
+        }
         NodeInstance call = new NodeInstance("call", "query.call", 0, 0,
                 Map.of("function", new com.google.gson.JsonPrimitive("query.x"),
-                        "arg_count", new com.google.gson.JsonPrimitive(16)),
+                        "args", argsList),
                 Map.of());
         List<NodeInstance> laid = GraphLayout.layout(
                 List.of(node("p1"), call, node("p2"), node("c")),
@@ -250,10 +255,10 @@ class GraphLayoutTest {
         float callY = find(laid, "call").y();
         float p1Y = find(laid, "p1").y();
         float p2Y = find(laid, "p2").y();
-        // call 在 DFS 序最前（列顶）：其正下方节点间距 ≥ 320 + 48
+        // call 在 DFS 序最前（列顶）：其正下方节点间距 ≥ 350 + 48
         float belowCall = Math.min(p1Y, p2Y);
-        assertTrue(belowCall - callY >= 368f - 0.01f,
-                "高节点 query.call 下方间距 " + (belowCall - callY) + " 小于 估计高320+边距48");
+        assertTrue(belowCall - callY >= 398f - 0.01f,
+                "高节点 query.call 下方间距 " + (belowCall - callY) + " 小于 估计高350+边距48");
         // 两个标准节点之间保持默认行距 110
         assertTrue(Math.abs(p2Y - p1Y) >= GraphLayout.Y_SPACING - 0.01f,
                 "标准节点间距 " + Math.abs(p2Y - p1Y) + " 小于默认行距");

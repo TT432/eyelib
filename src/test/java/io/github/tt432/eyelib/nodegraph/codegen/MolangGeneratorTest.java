@@ -200,10 +200,12 @@ class MolangGeneratorTest {
 
     @Test
     void queryCallPropertyAccessAndCallForm() {
+        // v11：query.anim_time 不在签名表（零参内建不入表）→ 无端口无列表条目 → 属性访问形；
+        // 连线进参数的场景改用定长签名函数（query.camera_distance_range_lerp 双参 → arg1/arg2 端口）
         GraphData main = graph(
                 List.of(root(),
-                        node("q0", "query.call", opts("function", "query.anim_time", "arg_count", 0)),
-                        node("q1", "query.call", opts("function", "query.foo", "arg_count", 2)),
+                        node("q0", "query.call", opts("function", "query.anim_time")),
+                        node("q1", "query.call", opts("function", "query.camera_distance_range_lerp")),
                         node("v", "variable", opts("name", "x")),
                         node("c", "const.number", opts("value", 1.5))),
                 List.of(wire("q0", "out", "root", "scale"),
@@ -212,7 +214,7 @@ class MolangGeneratorTest {
                         wire("c", "out", "q1", "arg2")));
         GraphLibrary lib = library(main);
         assertEquals("query.anim_time", expr(lib, "scale"));
-        assertEquals("query.foo(variable.x, 1.5)", expr(lib, "scale_x"));
+        assertEquals("query.camera_distance_range_lerp(variable.x, 1.5)", expr(lib, "scale_x"));
     }
 
     @Test
@@ -352,13 +354,14 @@ class MolangGeneratorTest {
 
     @Test
     void unconnectedInputWithoutDefaultIsError() {
-        // query.call 的 arg1 无默认值：UNCONNECTED_INPUT 错误 + 0 占位
+        // v11：未知函数已无端口可断连；改用定长签名函数验证真实行为——
+        // math.sin 的 arg1 端口（inLabeled，无默认值）未连线 → UNCONNECTED_INPUT 错误 + 0 占位
         GraphData main = graph(
                 List.of(root(),
-                        node("q", "query.call", opts("function", "query.foo", "arg_count", 1))),
+                        node("q", "math.call", opts("function", "math.sin"))),
                 List.of(wire("q", "out", "root", "scale")));
         CodegenResult r = new MolangGenerator(library(main)).emitExpressionFor("root", "root", "scale");
-        assertEquals("query.foo(0)", r.code());
+        assertEquals("math.sin(0)", r.code());
         assertTrue(r.hasErrors());
         assertTrue(r.diagnostics().stream().anyMatch(d -> d.code().equals("UNCONNECTED_INPUT")));
     }
@@ -424,7 +427,8 @@ class MolangGeneratorTest {
         // 本用例直接以 exec_out 名义连线到槽口，仅验证发射规则本身。
         GraphData main = graph(
                 List.of(root(),
-                        node("call", "exec.call", opts("function", "query.foo", "arg_count", 2)),
+                        // v11：连线进 call 参数需定长签名函数（math.pow 双参 → arg1/arg2 端口）
+                        node("call", "exec.call", opts("function", "math.pow")),
                         node("c1", "const.number", opts("value", 1)),
                         node("v", "variable", opts("name", "x")),
                         node("loop", "exec.loop", Map.of(), opts("count", 10)),
@@ -437,7 +441,7 @@ class MolangGeneratorTest {
                         wire("br", "exec_out", "loop", "body"),
                         wire("cont", "exec_out", "root", "parent_setup")));
         GraphLibrary lib = library(main);
-        assertEquals("query.foo(1, variable.x)", exec(lib, "initialize"));
+        assertEquals("math.pow(1, variable.x)", exec(lib, "initialize"));
         assertEquals("loop(10, { break })", exec(lib, "pre_animation"));
         assertEquals("continue", exec(lib, "parent_setup"));
     }

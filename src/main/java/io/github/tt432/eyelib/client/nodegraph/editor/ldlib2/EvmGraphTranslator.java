@@ -276,6 +276,9 @@ public final class EvmGraphTranslator {
             diags.add(Diagnostic.warning("EDITOR_TRANSLATE", "cannot instantiate node class " + cls.getName(), n.uid()));
             return null;
         }
+        // define 期选项值不可读（LDLib2 两阶段加载）——列表行显隐需要域 function 值兜底
+        node.withInitialFunction(n.options().containsKey("function")
+                ? n.options().get("function").getAsString() : null);
         NodeModel nm = model.createNodeWithType(CustomNodeModelImpl.class, "", pos, uid,
                 m -> m.initCustomNode(node), null);
         boolean redefine = false;
@@ -520,6 +523,19 @@ public final class EvmGraphTranslator {
         return null;
     }
 
+    /** LIST 选项写回：JSON 数组文本 → JsonElement；非法/非数组 → null（不写回）。 */
+    private static @Nullable JsonElement parseListOption(@Nullable Object value) {
+        if (!(value instanceof String s) || s.isBlank()) {
+            return null;
+        }
+        try {
+            JsonElement parsed = com.google.gson.JsonParser.parseString(s);
+            return parsed.isJsonArray() ? parsed : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private static NodeInstance evmNodeInstanceOf(AbstractNodeModel nm, NodeType type, String uid,
                                                   Vector2f pos, EvmGraph.@Nullable LibraryContext ctx,
                                                   List<Diagnostic> diags) {
@@ -528,6 +544,14 @@ public final class EvmGraphTranslator {
         for (NodeOptionDef def : type.options()) {
             Constant c = model.getInputConstantsById().get(NodeOption.PORT_ID_PREFIX + def.id());
             if (c == null) continue;
+            // LIST：编辑器侧是 JSON 数组文本，写回解析为 JsonArray（非法 → 空数组）
+            if (def.type() == NodeOptionDef.OptionType.LIST) {
+                JsonElement parsed = parseListOption(c.getValue());
+                if (parsed != null) {
+                    options.put(def.id(), parsed);
+                }
+                continue;
+            }
             JsonElement j = EvmValues.javaToJson(c.getValue());
             if (j != null) {
                 options.put(def.id(), j);

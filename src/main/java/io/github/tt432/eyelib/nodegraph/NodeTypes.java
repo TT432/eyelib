@@ -179,43 +179,24 @@ public final class NodeTypes {
     // ---------- 查询与数学 ----------
 
     /**
-     * call 类节点的 arg 端口：函数在 {@link MolangFunctionSignatures} 有签名时按签名生成
-     * （定长：端口数 = 参数数，arg_count 选项失效；变长：max(arg_count, 固定前缀 + 1)），
-     * 端口 id 恒为 argN（连线稳定），参数名/类型进显示 label；端口物理类型保持 ANY
-     * （ANY 输入才有行内字面值编辑器）。未知函数退回 arg_count × ANY 无标注。
+     * call 类节点的 arg 端口（v11）：函数在 {@link MolangFunctionSignatures} 有签名时按签名生成
+     * 固定前缀端口（端口 id 恒 argN、参数名/类型进显示 label、物理类型 ANY——ANY 输入才有
+     * 行内字面值编辑器）；变长尾参与未知函数的全部参数不产生端口，走 {@code args}
+     * 字面值列表选项在节点内编辑（规格 nodegraph-variadic-call-list）。
      */
-    private static List<PortDef> callArgPorts(NodeInstance instance, int defaultArgCount) {
+    private static List<PortDef> callArgPorts(NodeInstance instance) {
         MolangFunctionSignatures.Signature sig =
                 MolangFunctionSignatures.find(instance.optionString("function", ""));
-        if (sig != null) {
-            List<MolangFunctionSignatures.Arg> fixed = sig.fixed();
-            MolangFunctionSignatures.Arg varArg = sig.varArg();
-            int total = varArg == null
-                    ? fixed.size()
-                    : Math.max(instance.optionInt("arg_count", defaultArgCount), fixed.size() + 1);
-            List<PortDef> ports = new ArrayList<>(total);
-            for (int i = 0; i < total; i++) {
-                MolangFunctionSignatures.Arg arg;
-                if (i < fixed.size()) {
-                    arg = fixed.get(i);
-                } else if (varArg != null) {
-                    arg = new MolangFunctionSignatures.Arg(
-                            varArg.name() + "[" + (i - fixed.size()) + "]",
-                            varArg.kind());
-                } else {
-                    continue; // 定长签名不会走到（total == fixed.size()）
-                }
-                String label = arg.kind() == MolangFunctionSignatures.ArgKind.STRING
-                        ? arg.name() + ": str"
-                        : arg.name();
-                ports.add(PortDef.inLabeled("arg" + (i + 1), PortType.ANY, label));
-            }
-            return ports;
+        if (sig == null) {
+            return List.of();
         }
-        int argCount = Math.max(0, Math.min(instance.optionInt("arg_count", defaultArgCount), 16));
-        List<PortDef> ports = new ArrayList<>();
-        for (int i = 1; i <= argCount; i++) {
-            ports.add(PortDef.in("arg" + i, PortType.ANY));
+        List<PortDef> ports = new ArrayList<>(sig.fixed().size());
+        for (int i = 0; i < sig.fixed().size(); i++) {
+            MolangFunctionSignatures.Arg arg = sig.fixed().get(i);
+            String label = arg.kind() == MolangFunctionSignatures.ArgKind.STRING
+                    ? arg.name() + ": str"
+                    : arg.name();
+            ports.add(PortDef.inLabeled("arg" + (i + 1), PortType.ANY, label));
         }
         return ports;
     }
@@ -224,27 +205,27 @@ public final class NodeTypes {
             "query.call", NodeType.Kind.QUERY_CALL, CAT_QUERY,
             List.of(
                     NodeOptionDef.asset("function", "query.anim_time", "molang.query"),
-                    NodeOptionDef.integer("arg_count", 0)),
-            (instance, resolver) -> callArgPorts(instance, 0),
+                    NodeOptionDef.list("args")),
+            (instance, resolver) -> callArgPorts(instance),
             NodeType.PortProvider.fixed(List.of(PortDef.out("out", PortType.ANY)))));
 
     public static final NodeType MATH_CALL = register(NodeType.dynamic(
             "math.call", NodeType.Kind.MATH_CALL, CAT_QUERY,
             List.of(
                     NodeOptionDef.asset("function", "math.sin", "molang.math"),
-                    NodeOptionDef.integer("arg_count", 1)),
-            (instance, resolver) -> callArgPorts(instance, 1),
+                    NodeOptionDef.list("args")),
+            (instance, resolver) -> callArgPorts(instance),
             NodeType.PortProvider.fixed(List.of(PortDef.out("out", PortType.FLOAT)))));
 
     public static final NodeType EXEC_CALL = register(NodeType.dynamic(
             "exec.call", NodeType.Kind.EXEC_CALL, CAT_EXEC,
             List.of(
                     NodeOptionDef.asset("function", "query.foo", "molang.call"),
-                    NodeOptionDef.integer("arg_count", 0)),
+                    NodeOptionDef.list("args")),
             (instance, resolver) -> {
                 List<PortDef> ports = new ArrayList<>();
                 ports.add(execIn());
-                ports.addAll(callArgPorts(instance, 0));
+                ports.addAll(callArgPorts(instance));
                 return ports;
             },
             NodeType.PortProvider.fixed(List.of(execOut()))));

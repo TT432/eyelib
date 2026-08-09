@@ -182,12 +182,42 @@ public final class EprojectIo {
         } catch (JsonParseException e) {
             throw new EprojectException(source, "库条目 " + entry + " 不是合法 JSON: " + e.getMessage(), e);
         }
+        // CODEC 的 format_version 缺省值是「当前版本」，而 encode 侧 optionalFieldOf 在
+        // 值等于默认值时不落盘——旧构建写出的文件缺该字段会被误认为当前版本而跳过迁移。
+        // 缺字段时按内容探针定代：含 arg_count 选项 = 列表化前（v11 起已消除），按 v10 走迁移。
+        if (json.isJsonObject() && !json.getAsJsonObject().has("format_version")
+                && containsArgCount(json.getAsJsonObject())) {
+            json.getAsJsonObject().addProperty("format_version", 10);
+        }
         GraphLibrary parsed = GraphLibrary.CODEC.parse(JsonOps.INSTANCE, json)
                 .resultOrPartial(err -> {
                     throw new EprojectException(source, "库条目 " + entry + " CODEC 解析失败: " + err);
                 })
                 .orElseThrow(() -> new EprojectException(source, "库条目 " + entry + " CODEC 解析失败"));
         return GraphMigrations.migrate(parsed);
+    }
+
+    /** 内容探针：任一 call 节点带 arg_count 选项（v11 起该字段已消除）。 */
+    private static boolean containsArgCount(JsonObject libraryJson) {
+        JsonElement graphs = libraryJson.get("graphs");
+        if (graphs == null || !graphs.isJsonObject()) {
+            return false;
+        }
+        for (Map.Entry<String, JsonElement> graph : graphs.getAsJsonObject().entrySet()) {
+            JsonElement nodes = graph.getValue().getAsJsonObject().get("nodes");
+            if (nodes == null || !nodes.isJsonArray()) {
+                continue;
+            }
+            for (JsonElement node : nodes.getAsJsonArray()) {
+                JsonObject obj = node.getAsJsonObject();
+                JsonElement options = obj.get("options");
+                if (options != null && options.isJsonObject()
+                        && options.getAsJsonObject().has("arg_count")) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // ---------- 写入 ----------
@@ -237,6 +267,11 @@ public final class EprojectIo {
                     throw new EprojectException(target, "库 '" + libId + "' CODEC 编码失败: " + err);
                 })
                 .orElseThrow(() -> new EprojectException(target, "库 '" + libId + "' CODEC 编码失败"));
+        // optionalFieldOf 在值等于默认值（= 当前版本）时不落盘，恰好丢掉最需要迁移信息的场景
+        // ——显式补写 format_version，保证文件自描述
+        if (encoded.isJsonObject()) {
+            encoded.getAsJsonObject().addProperty("format_version", library.formatVersion());
+        }
         return GSON.toJson(encoded);
     }
 

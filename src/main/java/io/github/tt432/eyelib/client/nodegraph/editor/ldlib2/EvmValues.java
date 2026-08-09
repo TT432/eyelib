@@ -24,7 +24,8 @@ public final class EvmValues {
             case INT -> Integer.class;
             case FLOAT -> Float.class;
             case BOOL -> Boolean.class;
-            case STRING, TEXT, ENUM, IDENTIFIER, COLOR -> String.class;
+            // LIST：JSON 数组以文本形态过桥（LDLib2 选项系统只载原始类型）
+            case STRING, TEXT, ENUM, IDENTIFIER, COLOR, LIST -> String.class;
         };
     }
 
@@ -35,13 +36,19 @@ public final class EvmValues {
 
     /** 选项 JSON → Java 值（按选项类型）。 */
     static @Nullable Object jsonToJava(@Nullable JsonElement json, NodeOptionDef.OptionType type) {
-        if (json == null || !json.isJsonPrimitive()) return null;
+        if (json == null) return null;
+        // LIST：JsonArray → JSON 文本
+        if (type == NodeOptionDef.OptionType.LIST) {
+            return json.isJsonArray() ? json.toString() : null;
+        }
+        if (!json.isJsonPrimitive()) return null;
         JsonPrimitive p = json.getAsJsonPrimitive();
         return switch (type) {
             case INT -> p.isNumber() ? p.getAsInt() : null;
             case FLOAT -> p.isNumber() ? p.getAsFloat() : null;
             case BOOL -> p.isBoolean() ? p.getAsBoolean() : null;
             case STRING, TEXT, ENUM, IDENTIFIER, COLOR -> p.isString() ? p.getAsString() : null;
+            case LIST -> null; // 已在上面处理
         };
     }
 

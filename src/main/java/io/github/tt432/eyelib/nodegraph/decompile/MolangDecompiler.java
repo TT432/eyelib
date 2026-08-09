@@ -35,7 +35,7 @@ import org.jspecify.annotations.Nullable;
  *       → temp.get / context.get
  *       （q./v./t./c. 别名经 {@link MolangRootAliasCanonicalizer} 归一，temp/context 的 name 存带根全名）；</li>
  *   <li>{@code query.f(...)} / {@code math.f(...)} → query.call / math.call
- *       （function + arg_count + argN 连线；无参成员访问形 {@code query.f} 同样归为 arg_count=0 的调用）；</li>
+ *       （function 选项；定长签名 → argN 连线，变长/未知 → 字面量实参进 args 列表选项，v11）；</li>
  *   <li>{@code geometry.x} / {@code texture.x} / {@code material.x} → ref.geometry / ref.texture / ref.material
  *       （short_name；assembler 在表达式槽正是这样发射的，见 VALUE_REFS）；</li>
  *   <li>{@code variable.x = e;} → exec.set_var + variable 节点连线 target；{@code temp.x = e;} → exec.set_temp；
@@ -54,9 +54,6 @@ import org.jspecify.annotations.Nullable;
 public final class MolangDecompiler {
     private MolangDecompiler() {
     }
-
-    /** call 节点 arg_count 上限（与 {@code NodeTypes.callArgPorts} 的 16 一致）。 */
-    private static final int MAX_CALL_ARGS = 16;
 
     /**
      * 表达式反编译产物。
@@ -451,10 +448,8 @@ public final class MolangDecompiler {
         }
         if (expr instanceof MolangAst.CallExpr call) {
             QualifiedName qn = callRoot(call);
-            if (qn == null || call.arguments().size() > MAX_CALL_ARGS) {
-                return b.unsupported(call, qn == null
-                        ? "调用目标不是 query./math. 成员"
-                        : "调用参数超过 " + MAX_CALL_ARGS + " 个");
+            if (qn == null) {
+                return b.unsupported(call, "调用目标不是 query./math. 成员");
             }
             String type = qn.root().equals("math") ? "math.call" : "query.call";
             return new PortRef(callNode(b, type, qn, call.arguments()), "out");
@@ -475,9 +470,9 @@ public final class MolangDecompiler {
             case "context" -> b.valueNode("context.get",
                     ImportGraphBuilder.opts("name", qn.qualified()), "out");
             case "query" -> b.valueNode("query.call", ImportGraphBuilder.opts(
-                    "function", qn.qualified(), "arg_count", 0), "out");
+                    "function", qn.qualified()), "out");
             case "math" -> b.valueNode("math.call", ImportGraphBuilder.opts(
-                    "function", qn.qualified(), "arg_count", 0), "out");
+                    "function", qn.qualified()), "out");
             // RC 表达式槽的资源引用（assembler VALUE_REFS 的逆）：仅有 short_name 信息
             case "geometry" -> b.valueNode("ref.geometry",
                     ImportGraphBuilder.opts("short_name", qn.path()), "ref");
@@ -489,16 +484,32 @@ public final class MolangDecompiler {
         };
     }
 
-    /** query.call / math.call / exec.call 公共构造：function + arg_count + argN 连线。 */
+    /**
+     * query.call / math.call / exec.call 公共构造（v11）：定长签名 → argN 连线；
+     * 变长/未知函数 → 字面量实参进 args 列表选项（非字面量实参无法列表化，诊断后跳过——
+     * 内建变长函数实参语义上都是字符串/数字字面量，实证零出现）。
+     */
     private static String callNode(Builder b, String type, @Nullable QualifiedName qn,
                                    List<MolangAst.Expr> args) {
-        String uid = b.addNode(type, ImportGraphBuilder.opts(
-                "function", qn == null ? "" : qn.qualified(),
-                "arg_count", args.size()));
-        for (int i = 0; i < args.size(); i++) {
-            b.wireFrom(expr(b, args.get(i)), uid, "arg" + (i + 1));
+        String function = qn == null ? "" : qn.qualified();
+        var sig = io.github.tt432.eyelib.nodegraph.MolangFunctionSignatures.find(function);
+        if (sig != null && sig.varArg() == null) {
+            String uid = b.addNode(type, ImportGraphBuilder.opts("function", function));
+            for (int i = 0; i < args.size(); i++) {
+                b.wireFrom(expr(b, args.get(i)), uid, "arg" + (i + 1));
+            }
+            return uid;
         }
-        return uid;
+        com.google.gson.JsonArray list = new com.google.gson.JsonArray();
+        for (MolangAst.Expr arg : args) {
+            JsonElement literal = inlineConstant(arg);
+            if (literal != null) {
+                list.add(literal);
+            } else {
+                b.unsupportedNote(arg, "变长实参不是字面量（列表选项只承载字面量），已跳过");
+            }
+        }
+        return b.addNode(type, ImportGraphBuilder.opts("function", function, "args", list));
     }
 
     /** 调用形（callee 为 query/math 根成员）→ 归一限定名；否则 null。 */

@@ -69,6 +69,11 @@ public record NodeOptionDef(
         return of(id, OptionType.COLOR, new JsonPrimitive(defaultValue));
     }
 
+    /** 字面值列表选项（JSON 数组；编辑器渲染为节点内列表编辑器——变长 call 参数用）。 */
+    public static NodeOptionDef list(String id) {
+        return of(id, OptionType.LIST, new com.google.gson.JsonArray());
+    }
+
     /** 选项值类型。 */
     public enum OptionType implements PortStringRepresentable {
         STRING,
@@ -81,7 +86,9 @@ public record NodeOptionDef(
         /** 资源标识符（namespace:path 形态，仅语义标注）。 */
         IDENTIFIER,
         /** 颜色（#AARRGGBB 十六进制字符串）。 */
-        COLOR;
+        COLOR,
+        /** 字面值列表（JSON 数组；变长参数等节点内列表编辑）。 */
+        LIST;
 
         public static final Codec<OptionType> CODEC = PortStringRepresentable.fromEnum(OptionType::values);
 

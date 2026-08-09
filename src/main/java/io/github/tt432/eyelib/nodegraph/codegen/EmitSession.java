@@ -472,8 +472,29 @@ final class EmitSession {
             preludes.addAll(arg.preludes());
             args.add(arg.expr());
         }
+        // v11：变长尾参/未知函数参数走 args 字面值列表选项（规格 nodegraph-variadic-call-list）
+        args.addAll(listArgLiterals(node));
         String expr = args.isEmpty() ? function : function + "(" + String.join(", ", args) + ")";
         return new Out(preludes, expr);
+    }
+
+    /** args 列表选项 → molang 字面值参数（空串条目跳过——编辑器半成品行不发射）。 */
+    private static List<String> listArgLiterals(NodeInstance node) {
+        JsonElement raw = node.options().get("args");
+        if (raw == null || !raw.isJsonArray()) {
+            return List.of();
+        }
+        List<String> out = new ArrayList<>();
+        for (JsonElement e : raw.getAsJsonArray()) {
+            if (e.isJsonPrimitive() && e.getAsJsonPrimitive().isString() && e.getAsString().isEmpty()) {
+                continue;
+            }
+            String lit = MolangLiterals.literal(e);
+            if (lit != null) {
+                out.add(lit);
+            }
+        }
+        return out;
     }
 
     // ---------- .emolang 展开（规格 nodegraph-emolang-functions §4） ----------
@@ -872,7 +893,12 @@ final class EmitSession {
             case CONST_NUMBER, CONST_INT, CONST_BOOL, CONST_STRING, CONST_COLOR, COLOR_COMPOSE,
                  VARIABLE, TEMP_GET, CONTEXT_GET,
                  REF_GEOMETRY, REF_TEXTURE, REF_MATERIAL -> true;
-            case QUERY_CALL, MATH_CALL -> node.optionInt("arg_count", 0) <= 0;
+            case QUERY_CALL, MATH_CALL -> {
+                // v11：无固定前缀端口且 args 列表为空 = 零参调用（属性访问形），永不提取
+                var sig = io.github.tt432.eyelib.nodegraph.MolangFunctionSignatures
+                        .find(node.optionString("function", ""));
+                yield (sig == null || sig.fixed().isEmpty()) && listArgLiterals(node).isEmpty();
+            }
             default -> false;
         };
     }

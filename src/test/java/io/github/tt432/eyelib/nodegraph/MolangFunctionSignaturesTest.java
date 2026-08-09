@@ -13,10 +13,9 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class MolangFunctionSignaturesTest {
 
-    private static NodeInstance call(String type, String function, int argCount) {
+    private static NodeInstance call(String type, String function) {
         return new NodeInstance("u1", type, 0, 0,
-                Map.of("function", new com.google.gson.JsonPrimitive(function),
-                        "arg_count", new com.google.gson.JsonPrimitive(argCount)),
+                Map.of("function", new com.google.gson.JsonPrimitive(function)),
                 Map.of());
     }
 
@@ -68,8 +67,9 @@ class MolangFunctionSignaturesTest {
     }
 
     @Test
-    void 定长函数端口按签名忽略argCount() {
-        List<PortDef> ports = inputs(NodeTypes.MATH_CALL, call("math.call", "math.clamp", 9));
+    void 定长函数端口按签名生成() {
+        // v11：端口完全由签名决定（arg_count 选项已删除）
+        List<PortDef> ports = inputs(NodeTypes.MATH_CALL, call("math.call", "math.clamp"));
         assertEquals(List.of("arg1", "arg2", "arg3"), ports.stream().map(PortDef::id).toList());
         assertEquals(List.of("value", "min", "max"),
                 ports.stream().map(p -> p.label().orElseThrow()).toList());
@@ -78,28 +78,29 @@ class MolangFunctionSignaturesTest {
     }
 
     @Test
-    void 变长函数端口取下限与argCount的较大者() {
-        // 下限 = 固定前缀 + 1 个尾参
-        List<PortDef> min = inputs(NodeTypes.QUERY_CALL, call("query.call", "query.is_item_name_any", 0));
-        assertEquals(List.of("arg1", "arg2"), min.stream().map(PortDef::id).toList());
-        assertEquals(List.of("hand: str", "items[0]: str"),
-                min.stream().map(p -> p.label().orElseThrow()).toList());
-
-        List<PortDef> more = inputs(NodeTypes.QUERY_CALL, call("query.call", "query.is_item_name_any", 4));
-        assertEquals(4, more.size());
-        assertEquals("items[2]: str", more.get(3).label().orElseThrow());
+    void 变长函数只有固定前缀端口() {
+        // v11：变长尾参不产生端口，走 args 列表选项；query.is_item_name_any 固定前缀 = [hand]
+        List<PortDef> ports = inputs(NodeTypes.QUERY_CALL, call("query.call", "query.is_item_name_any"));
+        assertEquals(List.of("arg1"), ports.stream().map(PortDef::id).toList());
+        assertEquals("hand: str", ports.get(0).label().orElseThrow());
+        // args 列表行标签：变长 → 名[...]（string 元素带 : str[]）
+        assertEquals("items[...]: str[]",
+                MolangFunctionSignatures.variadicListLabel("query.is_item_name_any"));
     }
 
     @Test
-    void 未知函数回退argCount无标注() {
-        List<PortDef> ports = inputs(NodeTypes.QUERY_CALL, call("query.call", "query.custom_thing", 3));
-        assertEquals(List.of("arg1", "arg2", "arg3"), ports.stream().map(PortDef::id).toList());
-        assertTrue(ports.stream().allMatch(p -> p.label().isEmpty()));
+    void 未知函数无端口() {
+        // v11：未知函数（含零参内建，签名表只收录带参函数）无任何 arg 端口，参数全走 args 列表
+        List<PortDef> ports = inputs(NodeTypes.QUERY_CALL, call("query.call", "query.custom_thing"));
+        assertTrue(ports.isEmpty());
+        // 列表行标签：未知 → args[...]；定长 → null（编辑器隐藏列表行）
+        assertEquals("args[...]", MolangFunctionSignatures.variadicListLabel("query.custom_thing"));
+        assertNull(MolangFunctionSignatures.variadicListLabel("math.clamp"));
     }
 
     @Test
     void execCall同样签名驱动且保留exec端口() {
-        List<PortDef> ports = inputs(NodeTypes.EXEC_CALL, call("exec.call", "math.clamp", 0));
+        List<PortDef> ports = inputs(NodeTypes.EXEC_CALL, call("exec.call", "math.clamp"));
         assertEquals("exec_in", ports.get(0).id());
         assertEquals(List.of("arg1", "arg2", "arg3"),
                 ports.subList(1, 4).stream().map(PortDef::id).toList());
