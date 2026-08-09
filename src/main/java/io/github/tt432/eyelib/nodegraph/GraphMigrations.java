@@ -54,6 +54,13 @@ import java.util.Set;
  * <p>v7 → v8 ref.ac 撤除命名变量端口（AC 图化）：剥除 ref.ac 的 var_refs 快照、
  * 指向其 read:/write: 端口的连线与失连 declvar- 节点；ref.animation 保留。
  *
+ * <p>v8 → v9 左读右写：exec.set_var.target 与 ref.animation write:<名> 翻转为
+ * 右侧输出，写入边接 variable 节点新增的 in 端口；写入边不参与环检测与布局分层。
+ *
+ * <p>v9 → v10 AC 图边化（规格 nodegraph-ac-graph-and-effects）：ac.root.initial_state
+ * 与 ac.transition.target 字符串选项 → 按名解析的图边；新增 ref.particle/ref.sound
+ * 与实体粒子/音效声明表（旧图无此数据，无迁移动作）。
+ *
  * <p>纯函数：输入输出均为不可变文档；加载路径（资源包 loader / EprojectIo）统一调用。
  * 已是新格式的文档原样返回。
  */
@@ -85,8 +92,107 @@ public final class GraphMigrations {
         if (result.formatVersion() < 8) {
             result = migrateV7ToV8(result);
         }
+        if (result.formatVersion() < 9) {
+            result = migrateV8ToV9(result);
+        }
+        if (result.formatVersion() < 10) {
+            result = migrateV9ToV10(result);
+        }
         return new GraphLibrary(GraphLibrary.CURRENT_FORMAT_VERSION, result.kind(), result.main(),
                 result.graphs());
+    }
+
+    // ---------- v9 → v10：AC 图边化 ----------
+
+    /**
+     * v10 AC 图化（规格 nodegraph-ac-graph-and-effects，用户决策 2026-08-09）：
+     * <ul>
+     *   <li>ac.root.initial_state 字符串选项 → 按名解析 ac.state 建
+     *       {@code state.state → ac.root.initial} 图边（解析失败丢选项）；</li>
+     *   <li>ac.transition.target 字符串选项 → 按名建
+     *       {@code transition.target → ac.state.incoming} 图边（解析失败丢选项）；</li>
+     *   <li>实体/AC 库的粒子/音效表是 v10 新增支持，旧图无此数据，无迁移动作。</li>
+     * </ul>
+     */
+    private static GraphLibrary migrateV9ToV10(GraphLibrary library) {
+        Map<String, GraphData> graphs = new LinkedHashMap<>();
+        for (Map.Entry<String, GraphData> entry : library.graphs().entrySet()) {
+            GraphData g = entry.getValue();
+            Map<String, String> stateUids = new LinkedHashMap<>();
+            for (NodeInstance n : g.nodes()) {
+                if (NodeTypes.AC_STATE.id().equals(n.type())) {
+                    stateUids.putIfAbsent(n.optionString("name", ""), n.uid());
+                }
+            }
+            List<Wire> wires = new ArrayList<>(g.wires());
+            List<NodeInstance> nodes = new ArrayList<>();
+            for (NodeInstance n : g.nodes()) {
+                String optionKey = NodeTypes.AC_ROOT.id().equals(n.type()) ? "initial_state"
+                        : NodeTypes.AC_TRANSITION.id().equals(n.type()) ? "target" : null;
+                if (optionKey != null && n.options().containsKey(optionKey)) {
+                    String targetName = n.options().get(optionKey).getAsString();
+                    String targetUid = stateUids.get(targetName);
+                    if (targetUid != null) {
+                        wires.add(NodeTypes.AC_ROOT.id().equals(n.type())
+                                ? new Wire(new PortRef(targetUid, "state"), new PortRef(n.uid(), "initial"))
+                                : new Wire(new PortRef(n.uid(), "target"), new PortRef(targetUid, "incoming")));
+                    }
+                    Map<String, JsonElement> options = new LinkedHashMap<>(n.options());
+                    options.remove(optionKey);
+                    nodes.add(new NodeInstance(n.uid(), n.type(), n.x(), n.y(), options, n.constants()));
+                    continue;
+                }
+                nodes.add(n);
+            }
+            graphs.put(entry.getKey(), new GraphData(nodes, wires, g.variables(),
+                    g.placemats(), g.stickyNotes(), g.graphInterface()));
+        }
+        return new GraphLibrary(library.formatVersion(), library.kind(), library.main(), graphs);
+    }
+
+    // ---------- v8 → v9：左读右写（写入通道翻转） ----------
+
+    /**
+     * v9 变量流向重排（用户决策 2026-08-09：左读右写，位置即语义）：
+     * <ul>
+     *   <li>exec.set_var.target 从左侧输入改为右侧输出：v8 连线
+     *       {@code variable.out → set_var.target} 翻转为 {@code set_var.target → variable.in}；</li>
+     *   <li>ref.animation 的 write:<名> 端口从输入改为输出：v8 连线
+     *       {@code declvar.out → ref.write:<名>} 翻转为 {@code ref.write:<名> → declvar.in}；</li>
+     *   <li>variable 节点新增 multi 输入 in（写入通道）。
+     *       read: 端口方向不变。写入边自此不参与环检测与布局分层。</li>
+     * </ul>
+     */
+    private static GraphLibrary migrateV8ToV9(GraphLibrary library) {
+        Map<String, GraphData> graphs = new LinkedHashMap<>();
+        for (Map.Entry<String, GraphData> entry : library.graphs().entrySet()) {
+            GraphData g = entry.getValue();
+            Set<String> setVarUids = new HashSet<>();
+            Set<String> animRefUids = new HashSet<>();
+            for (NodeInstance n : g.nodes()) {
+                if (NodeTypes.EXEC_SET_VAR.id().equals(n.type())) {
+                    setVarUids.add(n.uid());
+                } else if (NodeTypes.REF_ANIMATION.id().equals(n.type())) {
+                    animRefUids.add(n.uid());
+                }
+            }
+            List<Wire> wires = new ArrayList<>();
+            for (Wire w : g.wires()) {
+                if (setVarUids.contains(w.to().node()) && "target".equals(w.to().port())) {
+                    wires.add(new Wire(new PortRef(w.to().node(), "target"),
+                            new PortRef(w.from().node(), "in")));
+                } else if (animRefUids.contains(w.to().node())
+                        && w.to().port().startsWith(NodeTypes.VAR_WRITE_PREFIX)) {
+                    wires.add(new Wire(new PortRef(w.to().node(), w.to().port()),
+                            new PortRef(w.from().node(), "in")));
+                } else {
+                    wires.add(w);
+                }
+            }
+            graphs.put(entry.getKey(), new GraphData(g.nodes(), wires, g.variables(),
+                    g.placemats(), g.stickyNotes(), g.graphInterface()));
+        }
+        return new GraphLibrary(library.formatVersion(), library.kind(), library.main(), graphs);
     }
 
     // ---------- v7 → v8：ref.ac 命名变量端口撤除（AC 图化） ----------

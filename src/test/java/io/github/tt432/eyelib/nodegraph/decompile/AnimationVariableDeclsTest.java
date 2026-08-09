@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.nodegraph.GraphLibrary;
 import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.PortDef;
+import io.github.tt432.eyelib.nodegraph.PortDirection;
 import io.github.tt432.eyelib.nodegraph.VariableDecl;
 import org.junit.jupiter.api.Test;
 
@@ -55,16 +56,22 @@ class AnimationVariableDeclsTest {
         assertTrue(main.wires().stream().anyMatch(
                 w -> w.to().node().equals("ra") && w.to().port().equals("read:edfatt")
                         && w.from().node().equals("declvar-ra-edfatt")));
+        // v9 左读右写：write 是 ref 的右侧输出，接 declvar 节点的 in（写入通道）
         assertTrue(main.wires().stream().anyMatch(
-                w -> w.to().node().equals("ra") && w.to().port().equals("write:edfatt")));
+                w -> w.from().node().equals("ra") && w.from().port().equals("write:edfatt")
+                        && w.to().node().equals("declvar-ra-edfatt") && w.to().port().equals("in")));
         assertTrue(main.wires().stream().anyMatch(
                 w -> w.to().node().equals("ra") && w.to().port().equals("read:dxvpbr")));
 
-        // 快照驱动的命名端口定义：id/label/类型
+        // 快照驱动的命名端口定义：id/label/类型/方向（v9：read 输入、write 输出，
+        // 位置即语义，label 不带「读/写」文字标记）
         List<PortDef> ports = NodeTypes.REF_ANIMATION.inputsOf(ref, null);
         assertEquals(3, ports.size());
         assertTrue(ports.stream().anyMatch(p -> p.id().equals("read:edfatt")
-                && p.label().orElse("").equals("v.edfatt 读")));
+                && p.label().orElse("").equals("v.edfatt")
+                && p.direction() == PortDirection.IN));
+        assertTrue(ports.stream().anyMatch(p -> p.id().equals("write:edfatt")
+                && p.direction() == PortDirection.OUT));
         assertTrue(ports.stream().allMatch(p -> NodeTypes.isVarRefPort(p.id())));
         // 位置：ref 节点下方竖排
         for (NodeInstance n : main.nodes()) {

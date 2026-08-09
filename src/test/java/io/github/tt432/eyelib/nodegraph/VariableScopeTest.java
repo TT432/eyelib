@@ -107,7 +107,7 @@ class VariableScopeTest {
                         varNode("vw", "scratch"),
                         varNode("vr", "scratch"),
                         new NodeInstance("s", "exec.set_var", 0, 0, Map.of(), Map.of())),
-                List.of(new Wire(new PortRef("vw", "out"), new PortRef("s", "target")),
+                List.of(new Wire(new PortRef("s", "target"), new PortRef("vw", "in")),
                         new Wire(new PortRef("s", "exec_out"), new PortRef("root", "initialize")),
                         new Wire(new PortRef("vr", "out"), new PortRef("root", "scale"))),
                 List.of(new VariableDecl("scratch", PortType.FLOAT, Optional.empty(),

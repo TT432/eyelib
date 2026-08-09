@@ -799,9 +799,20 @@ final class EmitSession {
         NodeType type = typeOpt.get();
         switch (type.kind()) {
             case EXEC_SET_VAR -> {
-                // target 引脚接 variable 节点；其隐式读发射即 variable.<name>，直接用作赋值左值
-                Out target = emitValueInput(f, node.uid(), "target");
+                // v9 左读右写：target 是右侧输出，连线 variable 节点的 in；左值 = 该 variable 节点的隐式读发射
                 Out value = emitValueInput(f, node.uid(), "value");
+                NodeInstance targetVar = null;
+                for (Wire w : f.graph.wires()) {
+                    if (w.from().node().equals(node.uid()) && w.from().port().equals("target")) {
+                        targetVar = f.graph.findNode(w.to().node()).orElse(null);
+                        break;
+                    }
+                }
+                if (targetVar == null || !NodeTypes.VARIABLE.id().equals(targetVar.type())) {
+                    error("SET_TARGET_NOT_VARIABLE", "exec.set_var 的 target 必须连线到 variable 节点", node.uid());
+                    return withPreludes(value, "0");
+                }
+                Out target = emitValueNode(f, targetVar, NodeTypes.get(targetVar.type()));
                 List<String> statements = new ArrayList<>(target.preludes());
                 statements.addAll(value.preludes());
                 statements.add(target.expr() + " = " + value.expr());

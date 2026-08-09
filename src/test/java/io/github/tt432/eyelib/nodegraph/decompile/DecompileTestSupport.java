@@ -80,6 +80,19 @@ final class DecompileTestSupport {
                 .orElseThrow(() -> new AssertionError("no wire into " + nodeUid + "." + portId));
     }
 
+    /** 从某输出端口出发的线（v9 左读右写：set_var.target / ref write: 等写入通道输出）。 */
+    static Optional<Wire> wireFrom(List<Wire> wires, String nodeUid, String portId) {
+        return wires.stream()
+                .filter(w -> w.from().node().equals(nodeUid) && w.from().port().equals(portId))
+                .findFirst();
+    }
+
+    static String wireTarget(List<Wire> wires, String nodeUid, String portId) {
+        return wireFrom(wires, nodeUid, portId)
+                .map(w -> w.to().node())
+                .orElseThrow(() -> new AssertionError("no wire from " + nodeUid + "." + portId));
+    }
+
     static boolean hasCode(List<Diagnostic> diagnostics, String code) {
         return diagnostics.stream().anyMatch(d -> d.code().equals(code));
     }

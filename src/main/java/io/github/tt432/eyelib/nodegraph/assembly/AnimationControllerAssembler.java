@@ -8,6 +8,7 @@ import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.NodeTypes;
 import io.github.tt432.eyelib.nodegraph.ShortNames;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -57,8 +58,15 @@ public final class AnimationControllerAssembler {
     }
 
     private static void assembleSchema(AssemblySupport.Ctx ctx, NodeInstance root, JsonObject schema) {
-        String initialState = AssemblySupport.optionString(root, NodeTypes.AC_ROOT, "initial_state");
-        schema.addProperty("initial_state", initialState);
+        // v10：initial_state 由 initial 图边推导（未连线不输出，BE 缺省 "default"）
+        String initialState = null;
+        for (NodeInstance initial : AssemblySupport.wiredSources(ctx.main, root.uid(), "initial")) {
+            initialState = AssemblySupport.optionString(initial, NodeTypes.AC_STATE, "name");
+            break;
+        }
+        if (initialState != null) {
+            schema.addProperty("initial_state", initialState);
+        }
         JsonObject states = new JsonObject();
         Set<String> stateNames = new LinkedHashSet<>();
         List<NodeInstance> transitions = new ArrayList<>();
@@ -71,17 +79,34 @@ public final class AnimationControllerAssembler {
             states.add(name, assembleState(ctx, state, transitions));
         }
         schema.add("states", states);
-        if (!stateNames.contains(initialState)) {
+        if (initialState != null && !stateNames.contains(initialState)) {
             ctx.error(AssemblySupport.UNKNOWN_STATE,
                     "initial_state '" + initialState + "' 不在 states 键集中", root.uid());
         }
         for (NodeInstance transition : transitions) {
-            String target = AssemblySupport.optionString(transition, NodeTypes.AC_TRANSITION, "target");
-            if (!stateNames.contains(target)) {
+            // v10：transition 目标由 target 图边推导
+            String target = transitionTargetName(ctx, transition);
+            if (target == null) {
+                ctx.error(AssemblySupport.UNKNOWN_STATE,
+                        "transition 未连接 target 图边（应接目标 ac.state 的 incoming）", transition.uid());
+            } else if (!stateNames.contains(target)) {
                 ctx.error(AssemblySupport.UNKNOWN_STATE,
                         "transition 目标 '" + target + "' 不在 states 键集中", transition.uid());
             }
         }
+    }
+
+    /** transition.target 图边 → 目标 state 的 name；未连线 → null。 */
+    private static @org.jspecify.annotations.Nullable String transitionTargetName(
+            AssemblySupport.Ctx ctx, NodeInstance transition) {
+        for (io.github.tt432.eyelib.nodegraph.Wire w : ctx.main.wires()) {
+            if (w.from().node().equals(transition.uid()) && w.from().port().equals("target")) {
+                return ctx.main.findNode(w.to().node())
+                        .map(s -> AssemblySupport.optionString(s, NodeTypes.AC_STATE, "name"))
+                        .orElse(null);
+            }
+        }
+        return null;
     }
 
     private static JsonObject assembleState(AssemblySupport.Ctx ctx, NodeInstance state,
@@ -124,13 +149,67 @@ public final class AnimationControllerAssembler {
         Map<String, NodeInstance> transitions = new LinkedHashMap<>();
         for (NodeInstance t : AssemblySupport.wiredSources(ctx.main, state.uid(), "transitions")) {
             transitionsOut.add(t);
-            transitions.put(AssemblySupport.optionString(t, NodeTypes.AC_TRANSITION, "target"), t);
+            // v10：键 = target 图边推导的 state 名；未连线暂存空串，assembleSchema 统一报 UNKNOWN_STATE
+            String target = transitionTargetName(ctx, t);
+            transitions.put(target != null ? target : "", t);
         }
         if (!transitions.isEmpty()) {
             JsonObject map = new JsonObject();
             transitions.forEach((target, t) ->
                     map.addProperty(target, ctx.emitExpression(t.uid(), "condition")));
             obj.add("transitions", map);
+        }
+
+        // v10：粒子效果条目（uid 序——数组序不承载语义，规格 §2.3）
+        List<NodeInstance> particleEntries = new ArrayList<>(
+                AssemblySupport.wiredSources(ctx.main, state.uid(), "particles"));
+        particleEntries.sort(Comparator.comparing(NodeInstance::uid));
+        if (!particleEntries.isEmpty()) {
+            com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+            for (NodeInstance entry : particleEntries) {
+                NodeInstance refNode = AssemblySupport.resolveEntryRef(ctx, entry, "ref");
+                if (refNode == null) {
+                    continue;
+                }
+                if (!refNode.type().equals("ref.particle")) {
+                    ctx.error(AssemblySupport.INVALID_ENTRY_REF,
+                            "particle.entry 的 ref 槽只能连接 ref.particle，实际 " + refNode.type(), entry.uid());
+                    continue;
+                }
+                JsonObject p = new JsonObject();
+                p.addProperty("effect", ShortNames.effective(refNode, NodeTypes.REF_PARTICLE));
+                String locator = AssemblySupport.optionString(entry, NodeTypes.PARTICLE_ENTRY, "locator");
+                if (!locator.isEmpty()) {
+                    p.addProperty("locator", locator);
+                }
+                if (!AssemblySupport.optionValue(entry, NodeTypes.PARTICLE_ENTRY, "bind_to_actor").getAsBoolean()) {
+                    p.addProperty("bind_to_actor", false);
+                }
+                if (AssemblySupport.hasWire(ctx.main, entry.uid(), "script")) {
+                    p.addProperty("pre_effect_script", ctx.emitExpression(entry.uid(), "script"));
+                }
+                arr.add(p);
+            }
+            obj.add("particle_effects", arr);
+        }
+
+        // v10：音效（BE 形态 [{"effect":"短名"}]；uid 序）
+        List<NodeInstance> soundRefs = new ArrayList<>(
+                AssemblySupport.wiredSources(ctx.main, state.uid(), "sounds"));
+        soundRefs.sort(Comparator.comparing(NodeInstance::uid));
+        if (!soundRefs.isEmpty()) {
+            com.google.gson.JsonArray arr = new com.google.gson.JsonArray();
+            for (NodeInstance refNode : soundRefs) {
+                if (!refNode.type().equals("ref.sound")) {
+                    ctx.error(AssemblySupport.INVALID_ENTRY_REF,
+                            "ac.state 的 sounds 槽只能连接 ref.sound，实际 " + refNode.type(), refNode.uid());
+                    continue;
+                }
+                JsonObject s = new JsonObject();
+                s.addProperty("effect", ShortNames.effective(refNode, NodeTypes.REF_SOUND));
+                arr.add(s);
+            }
+            obj.add("sound_effects", arr);
         }
 
         obj.add("blend_transition", AssemblySupport.optionValue(state, NodeTypes.AC_STATE, "blend_transition"));

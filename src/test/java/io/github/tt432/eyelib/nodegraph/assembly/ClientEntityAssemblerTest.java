@@ -76,7 +76,7 @@ class ClientEntityAssemblerTest {
                                 opts("short_name", "default", "material", "entity_alphatest"))),
                 List.of(
                         wire("s1", "exec_out", "root", "initialize"),
-                        wire("s1t", "out", "s1", "target"),
+                        wire("s1", "target", "s1t", "in"),
                         wire("cscale", "out", "root", "scale"),
                         wire("ae1", "entry", "root", "animate"),
                         wire("w1", "out", "ae1", "weight"),
@@ -443,7 +443,7 @@ class ClientEntityAssemblerTest {
                 List.of(node("root", "entity.root", opts("identifier", "test:inits2")),
                         node("s1", "exec.set_var"),
                         node("s1t", "variable", opts("name", "foo"))),
-                List.of(wire("s1t", "out", "s1", "target"),
+                List.of(wire("s1", "target", "s1t", "in"),
                         wire("s1", "exec_out", "root", "initialize")),
                 List.of(new io.github.tt432.eyelib.nodegraph.VariableDecl("hp", PortType.FLOAT,
                         Optional.empty(), Optional.of(new com.google.gson.JsonPrimitive(3)),

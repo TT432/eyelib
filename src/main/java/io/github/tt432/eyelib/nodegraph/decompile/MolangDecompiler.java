@@ -324,7 +324,8 @@ public final class MolangDecompiler {
             String name = qualified.substring("variable.".length());
             String varNode = b.addNode("variable", ImportGraphBuilder.opts("name", name));
             String set = b.addNode("exec.set_var", Map.of());
-            b.wire(varNode, "out", set, "target");
+            // v9 左读右写：set.target（右侧输出）→ variable 节点 in（写入通道）
+            b.wire(set, "target", varNode, "in");
             return set;
         }
         return b.addNode("exec.set_temp", ImportGraphBuilder.opts("name", qualified));

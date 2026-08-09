@@ -63,7 +63,7 @@ class InitDefaultFolderTest {
                 node("v", "variable", opts("name", "x")),
                 node("s", "exec.set_var")));
         List<Wire> wires = new ArrayList<>(List.of(
-                wire("v", "out", "s", "target"),
+                wire("s", "target", "v", "in"),
                 wire("s", "exec_out", "root", "initialize")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
@@ -87,7 +87,7 @@ class InitDefaultFolderTest {
                 node("ra", "ref.animation"),
                 node("s", "exec.set_var")));
         List<Wire> wires = new ArrayList<>(List.of(
-                wire("v", "out", "s", "target"),
+                wire("s", "target", "v", "in"),
                 wire("dv", "out", "ra", "read:y"),
                 wire("s", "exec_out", "root", "initialize")));
 
@@ -110,8 +110,8 @@ class InitDefaultFolderTest {
                 node("s1", "exec.set_var"),
                 node("s2", "exec.set_var")));
         List<Wire> wires = new ArrayList<>(List.of(
-                wire("v1", "out", "s1", "target"),
-                wire("v2", "out", "s2", "target"),
+                wire("s1", "target", "v1", "in"),
+                wire("s2", "target", "v2", "in"),
                 wire("s1", "exec_out", "s2", "exec_in"),
                 wire("s2", "exec_out", "root", "initialize")));
 
@@ -133,7 +133,7 @@ class InitDefaultFolderTest {
                 node("s", "exec.set_var"),
                 node("c", "const.int", opts("value", 7))));
         List<Wire> wires = new ArrayList<>(List.of(
-                wire("v", "out", "s", "target"),
+                wire("s", "target", "v", "in"),
                 wire("c", "out", "s", "value"),
                 wire("s", "exec_out", "root", "initialize")));
 
@@ -154,7 +154,7 @@ class InitDefaultFolderTest {
                 node("s", "exec.set_var"),
                 node("q", "query.call", opts("function", "query.health", "arg_count", 0))));
         List<Wire> wires = new ArrayList<>(List.of(
-                wire("v", "out", "s", "target"),
+                wire("s", "target", "v", "in"),
                 wire("v", "out", "q", "arg1"),
                 wire("s", "exec_out", "root", "initialize")));
 
@@ -173,7 +173,7 @@ class InitDefaultFolderTest {
                 node("s", "exec.set_var"),
                 node("m", "op.binary", opts("op", "+"))));
         List<Wire> wires = new ArrayList<>(List.of(
-                wire("v", "out", "s", "target"),
+                wire("s", "target", "v", "in"),
                 wire("m", "out", "s", "value"),
                 wire("s", "exec_out", "root", "initialize")));
 
@@ -190,7 +190,7 @@ class InitDefaultFolderTest {
                 node("v", "variable", opts("name", "x")),
                 node("s", "exec.set_var")));
         List<Wire> wires = new ArrayList<>(List.of(
-                wire("v", "out", "s", "target"),
+                wire("s", "target", "v", "in"),
                 wire("s", "exec_out", "root", "pre_animation")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
@@ -208,7 +208,7 @@ class InitDefaultFolderTest {
                 node("s", "exec.set_var"),
                 node("call", "exec.call", opts("function", "query.foo", "arg_count", 0))));
         List<Wire> wires = new ArrayList<>(List.of(
-                wire("v", "out", "s", "target"),
+                wire("s", "target", "v", "in"),
                 wire("s", "exec_out", "call", "exec_in"),
                 wire("call", "exec_out", "root", "initialize")));
 
@@ -228,7 +228,7 @@ class InitDefaultFolderTest {
                 new NodeInstance("lit", "exec.set_var", 0, 0, Map.of(),
                         Map.of("value", new JsonPrimitive("variable.x + 1")))));
         List<Wire> wires = new ArrayList<>(List.of(
-                wire("v", "out", "s", "target"),
+                wire("s", "target", "v", "in"),
                 wire("s", "exec_out", "lit", "exec_in"),
                 wire("lit", "exec_out", "root", "initialize")));
 
@@ -246,7 +246,7 @@ class InitDefaultFolderTest {
                 node("v2", "variable", opts("name", "x")),
                 node("s", "exec.set_var")));
         List<Wire> wires = new ArrayList<>(List.of(
-                wire("v1", "out", "s", "target"),
+                wire("s", "target", "v1", "in"),
                 wire("s", "exec_out", "root", "initialize")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
@@ -262,7 +262,7 @@ class InitDefaultFolderTest {
                 node("v", "variable", opts("name", "x")),
                 node("s", "exec.set_var")));
         List<Wire> wires = new ArrayList<>(List.of(
-                wire("v", "out", "s", "target")));
+                wire("s", "target", "v", "in")));
 
         InitDefaultFolder.Result r = fold(nodes, wires);
 
@@ -278,7 +278,7 @@ class InitDefaultFolderTest {
                 node("s", "exec.set_var"),
                 node("c", "const.int", opts("value", 7))));
         List<Wire> wires = new ArrayList<>(List.of(
-                wire("v", "out", "s", "target"),
+                wire("s", "target", "v", "in"),
                 wire("c", "out", "s", "value"),
                 wire("s", "exec_out", "root", "initialize")));
 
@@ -304,7 +304,7 @@ class InitDefaultFolderTest {
                 node("sb", "exec.set_var"),
                 node("cb", "const.bool", opts("value", true))));
         List<Wire> wires = new ArrayList<>(List.of(
-                wire("vb", "out", "sb", "target"),
+                wire("sb", "target", "vb", "in"),
                 wire("cb", "out", "sb", "value"),
                 wire("sb", "exec_out", "root", "initialize")));
 

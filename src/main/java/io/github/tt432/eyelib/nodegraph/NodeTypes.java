@@ -135,13 +135,19 @@ public final class NodeTypes {
 
     /**
      * variable：黑板变量本身（变量面板拖拽产物）。name 不带根（与 {@link VariableDecl#name()} 一致）。
-     * 输出 VARIABLE 类型：接任意值端口 = 隐式读；接 exec.set_var.target = 写身份（规格 §3.1）。
+     * 左读右写（规格 §3.1，v9）：out（右）接任意值端口 = 隐式读；in（左，multi）接
+     * exec.set_var.target / ref write: 输出 = 写入通道。写入边不参与环检测与布局分层。
      */
     public static final NodeType VARIABLE = register(NodeType.of(
             "variable", NodeType.Kind.VARIABLE, CAT_VARIABLE,
             List.of(NodeOptionDef.string("name", "foo")),
-            List.of(),
+            List.of(PortDef.inMulti("in", PortType.VARIABLE)),
             List.of(PortDef.out("out", PortType.VARIABLE))));
+
+    /** 写入通道判定：指向 variable 节点 in 端口的边（v9 左读右写）。 */
+    public static boolean isVariableWriteInput(String nodeTypeId, String portId) {
+        return VARIABLE.id().equals(nodeTypeId) && "in".equals(portId);
+    }
 
     public static final NodeType CONTEXT_GET = register(NodeType.of(
             "context.get", NodeType.Kind.CONTEXT_GET, CAT_VARIABLE,
@@ -155,14 +161,13 @@ public final class NodeTypes {
             List.of(),
             List.of(PortDef.out("out", PortType.ANY))));
 
-    /** exec.set_var：黑板变量写入。target 引脚必须接 variable 节点（写身份）；value 为写入值。 */
+    /** exec.set_var：黑板变量写入。target（右侧输出）接 variable 节点的 in（写身份）；value 为写入值。 */
     public static final NodeType EXEC_SET_VAR = register(NodeType.of(
             "exec.set_var", NodeType.Kind.EXEC_SET_VAR, CAT_EXEC,
             List.of(),
             List.of(execIn(),
-                    PortDef.in("target", PortType.VARIABLE),
                     PortDef.in("value", PortType.ANY, new JsonPrimitive(0))),
-            List.of(execOut())));
+            List.of(execOut(), PortDef.outSingle("target", PortType.VARIABLE))));
 
     /** exec.set_temp：瞬态 temp 赋值（不进变量面板；name 可带不带 temp. 前缀）。 */
     public static final NodeType EXEC_SET_TEMP = register(NodeType.of(
@@ -382,12 +387,13 @@ public final class NodeTypes {
         for (com.google.gson.JsonElement e : obj.getAsJsonArray("reads") == null
                 ? new com.google.gson.JsonArray() : obj.getAsJsonArray("reads")) {
             String name = e.getAsString();
-            ports.add(PortDef.inLabeled(VAR_READ_PREFIX + name, PortType.VARIABLE, "v." + name + " 读"));
+            // 左读右写（v9）：读 = 左侧输入，写 = 右侧输出；位置即语义，不加文字标记
+            ports.add(PortDef.inLabeled(VAR_READ_PREFIX + name, PortType.VARIABLE, "v." + name));
         }
         for (com.google.gson.JsonElement e : obj.getAsJsonArray("writes") == null
                 ? new com.google.gson.JsonArray() : obj.getAsJsonArray("writes")) {
             String name = e.getAsString();
-            ports.add(PortDef.inLabeled(VAR_WRITE_PREFIX + name, PortType.VARIABLE, "v." + name + " 写"));
+            ports.add(PortDef.outLabeled(VAR_WRITE_PREFIX + name, PortType.VARIABLE, "v." + name));
         }
         return ports;
     }
@@ -422,12 +428,34 @@ public final class NodeTypes {
                     PortDef.inMulti("decl_materials", PortType.MATERIAL_REF)),
             List.of(PortDef.out("ref", PortType.RC_REF))));
 
+    /** ref.particle：粒子效果引用（v10）。实体级声明接 entity.root.particles；
+     * AC state 侧经 particle.entry.ref 引用。 */
+    public static final NodeType REF_PARTICLE = register(NodeType.of(
+            "ref.particle", NodeType.Kind.REF_PARTICLE, CAT_REF,
+            List.of(
+                    NodeOptionDef.string("short_name", ""),
+                    NodeOptionDef.asset("identifier", "example:my_particle", "particle")),
+            List.of(),
+            List.of(PortDef.out("ref", PortType.PARTICLE_REF))));
+
+    /** ref.sound：音效引用（v10）。实体级声明接 entity.root.sounds；AC state 直接接 sounds 槽。 */
+    public static final NodeType REF_SOUND = register(NodeType.of(
+            "ref.sound", NodeType.Kind.REF_SOUND, CAT_REF,
+            List.of(
+                    NodeOptionDef.string("short_name", ""),
+                    NodeOptionDef.asset("identifier", "example:my_sound", "sound")),
+            List.of(),
+            List.of(PortDef.out("ref", PortType.SOUND_REF))));
+
     // ---------- 实体装配 ----------
 
-    /** entity.root 的声明端口（v4）：动画/AC 声明在实体级（双消费端：animate 脚本 + AC 状态机）。 */
+    /** entity.root 的声明端口（v4：动画/AC 声明在实体级（双消费端：animate 脚本 + AC 状态机）；
+     * v10：粒子/音效同机制）。 */
     public static final Map<String, String> ENTITY_DECLARATION_PORTS = Map.of(
             "ref.animation", "animations",
-            "ref.ac", "animation_controllers");
+            "ref.ac", "animation_controllers",
+            "ref.particle", "particles",
+            "ref.sound", "sounds");
 
     /** ref.rc 的声明端口（v6 起仅 ref.rc 持有）：外部 RC 没有值端口，
      * decl_* 是它的表行唯一声明通道；rc.root 的引用集由三值端口决定（规格 §3.1）。
@@ -460,6 +488,9 @@ public final class NodeTypes {
                     // 声明端口（v4：动画/AC 在实体级；geo/tex/mat 锚点在 RC，见 RC_DECLARATION_PORTS）
                     PortDef.inMulti("animations", PortType.ANIMATION_REF),
                     PortDef.inMulti("animation_controllers", PortType.AC_REF),
+                    // v10：粒子/音效声明表（spec nodegraph-ac-graph-and-effects §2.2）
+                    PortDef.inMulti("particles", PortType.PARTICLE_REF),
+                    PortDef.inMulti("sounds", PortType.SOUND_REF),
                     slotIn("animate"),
                     // v4：直连 rc.root.controller / ref.rc.ref（条件在源节点的 condition 端口）
                     PortDef.inMulti("render_controllers", PortType.RC_REF)),
@@ -524,14 +555,16 @@ public final class NodeTypes {
     public static final NodeType AC_ROOT = register(NodeType.of(
             "ac.root", NodeType.Kind.AC_ROOT, CAT_AC,
             List.of(
-                    NodeOptionDef.string("identifier", "controller.animation.example.main"),
-                    NodeOptionDef.string("initial_state", "default")),
-            List.of(slotIn("states")),
+                    NodeOptionDef.asset("identifier", "controller.animation.example.main", "ac")),
+            // v10：initial = 初始 state 的图边（替代 initial_state 字符串选项，规格 §2.1）
+            List.of(slotIn("states"),
+                    new PortDef("initial", PortDirection.IN, PortType.SLOT, Optional.empty(), false)),
             List.of()));
 
     public static final NodeType AC_STATE = register(NodeType.of(
             "ac.state", NodeType.Kind.AC_STATE, CAT_AC,
             List.of(
+                    // name 仅内部使用（导出 states 键；编辑器 UI 行隐藏，同 short_name 处理）
                     NodeOptionDef.string("name", "default"),
                     NodeOptionDef.number("blend_transition", 0.2),
                     NodeOptionDef.bool("blend_via_shortest_path", false)),
@@ -539,14 +572,32 @@ public final class NodeTypes {
                     new PortDef("on_entry", PortDirection.IN, PortType.EXEC, Optional.empty(), false),
                     new PortDef("on_exit", PortDirection.IN, PortType.EXEC, Optional.empty(), false),
                     slotIn("animations"),
-                    slotIn("transitions")),
+                    slotIn("transitions"),
+                    // v10：incoming = 指向本状态的 transition 图边；粒子/音效（规格 §2.1/2.3）
+                    slotIn("incoming"),
+                    slotIn("particles"),
+                    PortDef.inMulti("sounds", PortType.SOUND_REF)),
             List.of(slotOut("state"))));
 
     public static final NodeType AC_TRANSITION = register(NodeType.of(
             "ac.transition", NodeType.Kind.AC_TRANSITION, CAT_AC,
-            List.of(NodeOptionDef.string("target", "default")),
+            // v10：target 从字符串选项改为指向目标 state 的 SLOT 图边
+            List.of(),
             List.of(PortDef.in("condition", PortType.FLOAT, new JsonPrimitive(1))),
-            List.of(slotOut("transition"))));
+            List.of(slotOut("transition"),
+                    new PortDef("target", PortDirection.OUT, PortType.SLOT, Optional.empty(), false))));
+
+    /** particle.entry：AC state 的粒子效果条目（v10）。ref 槽接 ref.particle；
+     * script = pre_effect_script（molang 值槽，未连线 = 不输出该字段）。 */
+    public static final NodeType PARTICLE_ENTRY = register(NodeType.of(
+            "particle.entry", NodeType.Kind.PARTICLE_ENTRY, CAT_AC,
+            List.of(
+                    NodeOptionDef.string("locator", ""),
+                    NodeOptionDef.bool("bind_to_actor", true)),
+            List.of(
+                    PortDef.in("ref", PortType.ANY),
+                    PortDef.in("script", PortType.ANY)),
+            List.of(slotOut("entry"))));
 
     // ---------- 子图 ----------
 

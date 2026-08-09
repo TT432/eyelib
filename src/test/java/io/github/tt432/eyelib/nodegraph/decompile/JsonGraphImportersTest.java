@@ -528,7 +528,7 @@ class JsonGraphImportersTest {
                                         opts("short_name", "default", "identifier", "geometry.test.model"))),
                         List.of(
                                 wire("s1", "exec_out", "root", "initialize"),
-                                wire("s1t", "out", "s1", "target"),
+                                wire("s1", "target", "s1t", "in"),
                                 wire("cscale", "out", "root", "scale"),
                                 wire("ra1", "ref", "ae1", "ref"),
                                 wire("w1", "out", "ae1", "weight"),

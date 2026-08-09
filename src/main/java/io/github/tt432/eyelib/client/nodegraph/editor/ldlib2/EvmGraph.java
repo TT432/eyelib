@@ -7,6 +7,7 @@ import com.lowdragmc.lowdraglib2.nodegraphtookit.api.type.TypeHandle;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.graph.CustomGraphModelImpl;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.graph.GraphModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.AbstractNodeModel;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.NodeModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.PortModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.VariableNodeModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.VariableNodeModelImpl;
@@ -171,6 +172,22 @@ public class EvmGraph extends Graph {
      * 保留声明的具体类型——喂入值仍按声明类型检查。
      */
     public static final class EvmVariableNodeModel extends VariableNodeModelImpl {
+        /** v9 左读右写：domain variable 节点有 in（写入）+ out（读取）双口。 */
+        public static final String WRITE_IN_PORT_ID = "in";
+
+        @Override
+        protected void onDefineNode(
+                com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.definition.NodeDefinitionScope<? extends NodeModel> scope) {
+            super.onDefineNode(scope);
+            // 主口承担读取（右出）；补写入入口（左入）——接 exec.set_var.target / ref write: 输出。
+            // WRITE 修饰（子图接口 OUTPUT 变量）的主口本身是输入，不重复补。
+            if (getVariableDeclarationModel() == null
+                    || !getVariableDeclarationModel().getModifiers().hasFlag(ModifierFlags.WRITE)) {
+                scope.nodeModel.addInputPort(WRITE_IN_PORT_ID,
+                        EvmTypeHandles.toHandle(PortType.VARIABLE), null, null, null, null, null);
+            }
+        }
+
         @Override
         public TypeHandle getDataType() {
             var decl = getVariableDeclarationModel();

@@ -40,6 +40,10 @@ public enum PortType implements PortStringRepresentable {
     AC_REF,
     /** render controller 引用（string 子类型）。 */
     RC_REF,
+    /** particle 短名/标识符引用（string 子类型）。 */
+    PARTICLE_REF,
+    /** sound 短名/标识符引用（string 子类型）。 */
+    SOUND_REF,
     /** RGBA 四通道复合颜色（不承载标量 molang；仅 const.color/color.compose 产出、颜色端口消费）。 */
     COLOR,
 
@@ -85,7 +89,8 @@ public enum PortType implements PortStringRepresentable {
     /** 是否为资源引用语义子类型。 */
     public boolean isRef() {
         return this == GEOMETRY_REF || this == TEXTURE_REF || this == MATERIAL_REF
-                || this == ANIMATION_REF || this == AC_REF || this == RC_REF;
+                || this == ANIMATION_REF || this == AC_REF || this == RC_REF
+                || this == PARTICLE_REF || this == SOUND_REF;
     }
 
     /** 是否为表达式值类型（可出现在表达式上下文中）。 */

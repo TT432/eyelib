@@ -328,6 +328,30 @@ public final class EvmNodes {
         }
     }
 
+    @NodeAttribute(name = "particle.entry", group = NodeTypes.CAT_AC, graphTypes = {EvmGraph.class})
+    public static final class ParticleEntry extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.PARTICLE_ENTRY;
+        }
+    }
+
+    @NodeAttribute(name = "ref.particle", group = NodeTypes.CAT_REF, graphTypes = {EvmGraph.class})
+    public static final class RefParticle extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.REF_PARTICLE;
+        }
+    }
+
+    @NodeAttribute(name = "ref.sound", group = NodeTypes.CAT_REF, graphTypes = {EvmGraph.class})
+    public static final class RefSound extends EvmNodeBase {
+        @Override
+        public NodeType type() {
+            return NodeTypes.REF_SOUND;
+        }
+    }
+
     @NodeAttribute(name = "subgraph.call", group = NodeTypes.CAT_SUBGRAPH, graphTypes = {EvmGraph.class})
     public static final class SubgraphCall extends EvmNodeBase {
         @Override
@@ -363,7 +387,8 @@ public final class EvmNodes {
             RefGeometry.class, RefTexture.class, RefMaterial.class, RefAnimation.class, RefAc.class, RefRc.class,
             EntityRoot.class, AnimateEntry.class,
             RcRoot.class, ListEntry.class, MaterialEntry.class, PartVisibilityEntry.class,
-            AcRoot.class, AcState.class, AcTransition.class,
+            AcRoot.class, AcState.class, AcTransition.class, ParticleEntry.class,
+            RefParticle.class, RefSound.class,
             SubgraphCall.class, SubgraphInput.class, SubgraphOutput.class);
 
     private static final Map<String, Class<? extends EvmNodeBase>> BY_TYPE_ID = new LinkedHashMap<>();

@@ -321,6 +321,13 @@ public final class EvmGraphTranslator {
             return null;
         }
         if (node instanceof VariableNodeModel varNode) {
+            // v9 左读右写：EvmVariableNodeModel 在主口外有独立写入入口 in（左读右写），优先取用
+            if (direction == PortDirection.INPUT) {
+                PortModel writeIn = nm.getInputsById().get(EvmGraph.EvmVariableNodeModel.WRITE_IN_PORT_ID);
+                if (writeIn != null) {
+                    return writeIn;
+                }
+            }
             return direction == PortDirection.OUTPUT ? varNode.getOutputPort() : varNode.getInputPort();
         }
         if (node instanceof SubgraphNodeModel sub) {
@@ -573,7 +580,11 @@ public final class EvmGraphTranslator {
             if (port.getDirection() == PortDirection.OUTPUT) {
                 return new PortRef(nodeUid, "out");
             }
-            // 写入口仅子图接口 OUTPUT 变量（WRITE 修饰）才有；domain 用 subgraph.output 锚点表达赋值
+            // v9 左读右写：EvmVariableNodeModel 的写入入口 in ↔ domain variable 节点的 in 端口
+            if (EvmGraph.EvmVariableNodeModel.WRITE_IN_PORT_ID.equals(port.getPortId())) {
+                return new PortRef(nodeUid, "in");
+            }
+            // 其余输入口仅子图接口 OUTPUT 变量（WRITE 修饰）才有；domain 用 subgraph.output 锚点表达赋值
             diags.add(Diagnostic.warning("EDITOR_TRANSLATE",
                     "wire into a variable node's input dropped (domain 无写入口形态，请用 subgraph.output 锚点)", nodeUid));
             return null;

@@ -51,7 +51,8 @@ public final class JsonGraphImporters {
     private static final Set<String> ENTITY_TOP_KEYS = Set.of("format_version", "minecraft:client_entity");
     private static final Set<String> ENTITY_DESC_KEYS = Set.of(
             "identifier", "scripts", "geometry", "textures", "materials",
-            "animations", "animation_controllers", "render_controllers", "render_controller_conditions");
+            "animations", "animation_controllers", "render_controllers", "render_controller_conditions",
+            "particle_effects", "sound_effects");
     private static final Set<String> ENTITY_SCRIPT_KEYS = Set.of(
             "initialize", "pre_animation", "parent_setup", "animate",
             "scale", "scaleX", "scaleY", "scaleZ");
@@ -63,7 +64,8 @@ public final class JsonGraphImporters {
     private static final Set<String> AC_SCHEMA_KEYS = Set.of("initial_state", "states");
     private static final Set<String> AC_STATE_KEYS = Set.of(
             "on_entry", "on_exit", "animations", "transitions",
-            "blend_transition", "blend_via_shortest_path");
+            "blend_transition", "blend_via_shortest_path",
+            "particle_effects", "sound_effects");
 
     // ---------- ClientEntity ----------
 
@@ -109,6 +111,9 @@ public final class JsonGraphImporters {
         Map<String, String> acRefs = new LinkedHashMap<>();
         importRefTable(b, desc, "animations", NodeTypes.REF_ANIMATION.id(), "identifier", animationRefs, acRefs);
         importRefTable(b, desc, "animation_controllers", NodeTypes.REF_AC.id(), "identifier", acRefs);
+        // v10：粒子/音效声明表同机制（无 AC 归位特例，spec nodegraph-ac-graph-and-effects §2.2）
+        importSimpleRefTable(b, desc, "particle_effects", "particle", NodeTypes.REF_PARTICLE.id(), "particles");
+        importSimpleRefTable(b, desc, "sound_effects", "sound", NodeTypes.REF_SOUND.id(), "sounds");
 
         // scripts
         JsonElement scripts = desc.get("scripts");
@@ -283,6 +288,31 @@ public final class JsonGraphImporters {
                                        String refType, String valueOption,
                                        @Nullable Map<String, String> refsOut) {
         importRefTable(b, desc, field, refType, valueOption, refsOut, null);
+    }
+
+    /** 简单声明表（v10 粒子/音效：无 AC 归位特例）：ref 节点建后立即接线到 entity.root 声明端口。 */
+    private static void importSimpleRefTable(ImportGraphBuilder b, JsonObject desc, String field,
+                                             String nodePrefix, String refType, String declarationPort) {
+        JsonElement table = desc.get(field);
+        if (table == null) {
+            return;
+        }
+        List<JsonObject> objects = singleKeyObjects(b, "description." + field, table);
+        if (objects == null) {
+            return;
+        }
+        for (JsonObject obj : objects) {
+            for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
+                if (!e.getValue().isJsonPrimitive() || !e.getValue().getAsJsonPrimitive().isString()) {
+                    invalidField(b, "description." + field + "." + e.getKey(), e.getValue());
+                    continue;
+                }
+                String uid = b.addNode(nodePrefix, refType, ImportGraphBuilder.opts(
+                        "short_name", e.getKey(),
+                        "identifier", e.getValue().getAsString()));
+                b.wire(uid, "ref", "root", declarationPort);
+            }
+        }
     }
 
     /**
@@ -594,9 +624,11 @@ public final class JsonGraphImporters {
 
         Map<String, JsonElement> rootOptions = new LinkedHashMap<>();
         rootOptions.put("identifier", new JsonPrimitive(acName));
+        // v10：initial_state 不再是选项——暂存名字，states 导入完后解析为 initial 图边
         JsonElement initialState = schema.get("initial_state");
+        String initialStateName = null;
         if (initialState instanceof JsonPrimitive p && p.isString()) {
-            rootOptions.put("initial_state", p);
+            initialStateName = p.getAsString();
         } else if (initialState != null) {
             invalidField(b, acName + ".initial_state", initialState);
         }
@@ -605,6 +637,11 @@ public final class JsonGraphImporters {
         // AC 文件无声明表：动画短名按需补 ref.animation（跨状态去重，不报 UNKNOWN_REFERENCE）
         Map<String, String> animationRefs = new LinkedHashMap<>();
         Map<String, String> acRefs = new LinkedHashMap<>();
+        // v10：state 名 → uid（initial/transition 图边解析）；粒子/音效短名按需补 ref（跨状态去重）
+        Map<String, String> stateUids = new LinkedHashMap<>();
+        List<String[]> pendingTransitionTargets = new ArrayList<>();
+        Map<String, String> particleRefs = new LinkedHashMap<>();
+        Map<String, String> soundRefs = new LinkedHashMap<>();
 
         JsonElement states = schema.get("states");
         if (states != null && !states.isJsonObject()) {
@@ -612,7 +649,28 @@ public final class JsonGraphImporters {
         } else if (states != null) {
             for (Map.Entry<String, JsonElement> stateEntry : states.getAsJsonObject().entrySet()) {
                 importAcState(b, acName, stateEntry.getKey(), stateEntry.getValue(),
-                        animationRefs, acRefs);
+                        animationRefs, acRefs, stateUids, pendingTransitionTargets,
+                        particleRefs, soundRefs);
+            }
+        }
+
+        // initial / transition.target 图边接线（目标 state 不存在 → 诊断，组装器另有 UNKNOWN_STATE）
+        if (initialStateName != null) {
+            String target = stateUids.get(initialStateName);
+            if (target != null) {
+                b.wire(target, "state", "root", "initial");
+            } else {
+                b.warn(DecompileDiagnostics.UNKNOWN_REFERENCE,
+                        "initial_state '" + initialStateName + "' 不在 states 键集中，未生成 initial 连线");
+            }
+        }
+        for (String[] pending : pendingTransitionTargets) {
+            String target = stateUids.get(pending[1]);
+            if (target != null) {
+                b.wire(pending[0], "target", target, "incoming");
+            } else {
+                b.warn(DecompileDiagnostics.UNKNOWN_REFERENCE,
+                        "transition 目标 '" + pending[1] + "' 不在 states 键集中，未生成 target 连线");
             }
         }
 
@@ -629,7 +687,9 @@ public final class JsonGraphImporters {
 
     private static void importAcState(ImportGraphBuilder b, String acName, String stateName,
                                       JsonElement stateValue, Map<String, String> animationRefs,
-                                      Map<String, String> acRefs) {
+                                      Map<String, String> acRefs, Map<String, String> stateUids,
+                                      List<String[]> pendingTransitionTargets,
+                                      Map<String, String> particleRefs, Map<String, String> soundRefs) {
         String label = acName + ".states." + stateName;
         if (!stateValue.isJsonObject()) {
             invalidField(b, label, stateValue);
@@ -652,6 +712,7 @@ public final class JsonGraphImporters {
         }
         String stateUid = b.addNode("st", NodeTypes.AC_STATE.id(), options);
         b.wire(stateUid, "state", "root", "states");
+        stateUids.put(stateName, stateUid);
 
         JsonElement onEntry = state.get("on_entry");
         if (onEntry != null) {
@@ -676,11 +737,88 @@ public final class JsonGraphImporters {
             if (objects != null) {
                 for (JsonObject obj : objects) {
                     for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
-                        String trUid = b.addNode("tr", NodeTypes.AC_TRANSITION.id(),
-                                ImportGraphBuilder.opts("target", e.getKey()));
+                        // v10：target 从选项改为图边——暂存目标名，states 全量导入后统一接线
+                        String trUid = b.addNode("tr", NodeTypes.AC_TRANSITION.id(), Map.of());
                         valueSlot(b, trUid, "condition", label + ".transitions." + e.getKey(), e.getValue());
                         b.wire(trUid, "transition", stateUid, "transitions");
+                        pendingTransitionTargets.add(new String[]{trUid, e.getKey()});
                     }
+                }
+            }
+        }
+
+        // v10：粒子效果条目（particle.entry + 按需 ref.particle；pre_effect_script 走 molang 值槽）
+        JsonElement particleEffects = state.get("particle_effects");
+        if (particleEffects != null) {
+            if (!particleEffects.isJsonArray()) {
+                invalidField(b, label + ".particle_effects", particleEffects);
+            } else {
+                int row = 0;
+                for (JsonElement item : particleEffects.getAsJsonArray()) {
+                    String itemLabel = label + ".particle_effects[" + row++ + "]";
+                    if (!item.isJsonObject()) {
+                        invalidField(b, itemLabel, item);
+                        continue;
+                    }
+                    JsonObject pe = item.getAsJsonObject();
+                    JsonElement effect = pe.get("effect");
+                    if (!(effect instanceof JsonPrimitive ep) || !ep.isString()) {
+                        invalidField(b, itemLabel + ".effect", effect);
+                        continue;
+                    }
+                    Map<String, JsonElement> peOptions = new LinkedHashMap<>();
+                    JsonElement locator = pe.get("locator");
+                    if (locator instanceof JsonPrimitive lp && lp.isString()) {
+                        peOptions.put("locator", lp);
+                    } else if (locator != null) {
+                        invalidField(b, itemLabel + ".locator", locator);
+                    }
+                    JsonElement bind = pe.get("bind_to_actor");
+                    if (bind instanceof JsonPrimitive bp && bp.isBoolean()) {
+                        peOptions.put("bind_to_actor", bp);
+                    } else if (bind != null) {
+                        invalidField(b, itemLabel + ".bind_to_actor", bind);
+                    }
+                    String entryUid = b.addNode("pe", NodeTypes.PARTICLE_ENTRY.id(), peOptions);
+                    String effectName = ep.getAsString();
+                    String refUid = particleRefs.computeIfAbsent(effectName,
+                            k -> b.addNode("rp", NodeTypes.REF_PARTICLE.id(),
+                                    ImportGraphBuilder.opts("short_name", k)));
+                    b.wire(refUid, "ref", entryUid, "ref");
+                    JsonElement script = pe.get("pre_effect_script");
+                    if (script != null) {
+                        valueSlot(b, entryUid, "script", itemLabel + ".pre_effect_script", script);
+                    }
+                    b.wire(entryUid, "entry", stateUid, "particles");
+                }
+            }
+        }
+
+        // v10：音效（BE 形态 [{"effect":"短名"}]，容忍裸字符串；按需 ref.sound 直插 sounds 槽）
+        JsonElement soundEffects = state.get("sound_effects");
+        if (soundEffects != null) {
+            if (!soundEffects.isJsonArray()) {
+                invalidField(b, label + ".sound_effects", soundEffects);
+            } else {
+                int row = 0;
+                for (JsonElement item : soundEffects.getAsJsonArray()) {
+                    String itemLabel = label + ".sound_effects[" + row++ + "]";
+                    String effectName = null;
+                    if (item instanceof JsonPrimitive sp && sp.isString()) {
+                        effectName = sp.getAsString();
+                    } else if (item.isJsonObject()
+                            && item.getAsJsonObject().get("effect") instanceof JsonPrimitive ep2
+                            && ep2.isString()) {
+                        effectName = ep2.getAsString();
+                    }
+                    if (effectName == null) {
+                        invalidField(b, itemLabel, item);
+                        continue;
+                    }
+                    String refUid = soundRefs.computeIfAbsent(effectName,
+                            k -> b.addNode("rs", NodeTypes.REF_SOUND.id(),
+                                    ImportGraphBuilder.opts("short_name", k)));
+                    b.wire(refUid, "ref", stateUid, "sounds");
                 }
             }
         }

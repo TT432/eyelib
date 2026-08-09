@@ -31,10 +31,11 @@ class AnimationControllerAssemblerTest {
         GraphLibrary lib = lib(GraphKind.ANIMATION_CONTROLLER, graph(
                 List.of(
                         node("root", "ac.root", opts(
-                                "identifier", "controller.animation.test",
-                                "initial_state", "default")),
+                                "identifier", "controller.animation.test")),
                         node("s1", "ac.state", opts("name", "default"))),
-                List.of(wire("s1", "state", "root", "states"))));
+                List.of(wire("s1", "state", "root", "states"),
+                        // v10：initial_state = 初始 state 的图边
+                        wire("s1", "state", "root", "initial"))));
 
         AssemblyResult r = AnimationControllerAssembler.assemble(lib);
 
@@ -57,8 +58,7 @@ class AnimationControllerAssemblerTest {
         GraphLibrary lib = lib(GraphKind.ANIMATION_CONTROLLER, graph(
                 List.of(
                         node("root", "ac.root", opts(
-                                "identifier", "controller.animation.full",
-                                "initial_state", "idle")),
+                                "identifier", "controller.animation.full")),
                         node("s1", "ac.state", opts(
                                 "name", "idle",
                                 "blend_transition", 0.5,
@@ -67,24 +67,28 @@ class AnimationControllerAssemblerTest {
                         node("ae1", "animate.entry"),
                         node("ra1", "ref.animation",
                                 opts("short_name", "idle_anim", "identifier", "animation.test.idle")),
-                        node("t1", "ac.transition", opts("target", "walk")),
+                        node("t1", "ac.transition"),
                         node("q1", "query.call",
                                 opts("function", "query.modified_distance_moved", "arg_count", 0)),
                         node("s2", "ac.state", opts("name", "walk")),
                         node("sv", "exec.set_var"),
                         node("svt", "variable", opts("name", "stopped")),
-                        node("t2", "ac.transition", opts("target", "idle"))),
+                        node("t2", "ac.transition")),
                 List.of(
                         wire("s1", "state", "root", "states"),
+                        wire("s1", "state", "root", "initial"),
                         wire("e1", "exec_out", "s1", "on_entry"),
                         wire("ae1", "entry", "s1", "animations"),
                         wire("ra1", "ref", "ae1", "ref"),
                         wire("t1", "transition", "s1", "transitions"),
+                        // v10：transition 目标 = target 图边 → 目标 state 的 incoming
+                        wire("t1", "target", "s2", "incoming"),
                         wire("q1", "out", "t1", "condition"),
                         wire("s2", "state", "root", "states"),
                         wire("sv", "exec_out", "s2", "on_exit"),
-                        wire("svt", "out", "sv", "target"),
-                        wire("t2", "transition", "s2", "transitions"))));
+                        wire("sv", "target", "svt", "in"),
+                        wire("t2", "transition", "s2", "transitions"),
+                        wire("t2", "target", "s1", "incoming"))));
 
         AssemblyResult r = AnimationControllerAssembler.assemble(lib);
 
@@ -119,21 +123,25 @@ class AnimationControllerAssemblerTest {
         GraphLibrary lib = lib(GraphKind.ANIMATION_CONTROLLER, graph(
                 List.of(
                         node("root", "ac.root", opts(
-                                "identifier", "controller.animation.err",
-                                "initial_state", "ghost")),
+                                "identifier", "controller.animation.err")),
                         node("s1", "ac.state", opts("name", "a")),
                         node("s2", "ac.state", opts("name", "a")),
-                        node("t1", "ac.transition", opts("target", "nowhere"))),
+                        node("sg", "ac.state", opts("name", "ghost")),
+                        node("sn", "ac.state", opts("name", "nowhere")),
+                        node("t1", "ac.transition")),
                 List.of(
                         wire("s1", "state", "root", "states"),
                         wire("s2", "state", "root", "states"),
-                        wire("t1", "transition", "s1", "transitions"))));
+                        // v10 图边形态：initial 接未入 states 的 ghost；t1.target 接未入 states 的 nowhere
+                        wire("sg", "state", "root", "initial"),
+                        wire("t1", "transition", "s1", "transitions"),
+                        wire("t1", "target", "sn", "incoming"))));
 
         AssemblyResult r = AnimationControllerAssembler.assemble(lib);
 
         assertTrue(r.hasErrors());
         assertEquals(1, countCode(r, AssemblySupport.DUPLICATE_STATE));
-        // initial_state "ghost" + transition 目标 "nowhere"
+        // initial 图边指向 "ghost" + transition target 图边指向 "nowhere"（均不在 states 键集）
         assertEquals(2, countCode(r, AssemblySupport.UNKNOWN_STATE));
         // 尽力而为：重名状态保留先者
         JsonObject states = schemaOf(r, "controller.animation.err").getAsJsonObject("states");

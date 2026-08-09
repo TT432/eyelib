@@ -90,6 +90,7 @@ final class InitDefaultFolder {
         Map<String, NodeInstance> byUid = new LinkedHashMap<>();
         Map<String, List<Wire>> fromOut = new LinkedHashMap<>();
         Map<String, Map<String, Wire>> into = new LinkedHashMap<>();
+        Map<String, List<Wire>> intoVarIn = new LinkedHashMap<>();
         List<String> constantTexts = new ArrayList<>();
         for (NodeInstance n : nodes) {
             byUid.put(n.uid(), n);
@@ -102,12 +103,15 @@ final class InitDefaultFolder {
         for (Wire w : wires) {
             fromOut.computeIfAbsent(w.from().node(), k -> new ArrayList<>()).add(w);
             into.computeIfAbsent(w.to().node(), k -> new LinkedHashMap<>()).put(w.to().port(), w);
+            if ("in".equals(w.to().port())) {
+                intoVarIn.computeIfAbsent(w.to().node(), k -> new ArrayList<>()).add(w);
+            }
         }
         for (NodeInstance v : nodes) {
             if (!"variable".equals(v.type())) {
                 continue;
             }
-            Candidate c = tryCandidate(v, byUid, fromOut, into, constantTexts, existingDecls, folded);
+            Candidate c = tryCandidate(v, byUid, fromOut, into, intoVarIn, constantTexts, existingDecls, folded);
             if (c != null) {
                 return c;
             }
@@ -119,6 +123,7 @@ final class InitDefaultFolder {
                                                     Map<String, NodeInstance> byUid,
                                                     Map<String, List<Wire>> fromOut,
                                                     Map<String, Map<String, Wire>> into,
+                                                    Map<String, List<Wire>> intoVarIn,
                                                     List<String> constantTexts,
                                                     List<VariableDecl> existingDecls,
                                                     List<VariableDecl> folded) {
@@ -126,12 +131,15 @@ final class InitDefaultFolder {
         if (name.isBlank()) {
             return null;
         }
-        // 唯一出边 → set_var.target（单写零读的结构判据）
-        List<Wire> outs = fromOut.getOrDefault(v.uid(), List.of());
-        if (outs.size() != 1 || !"target".equals(outs.get(0).to().port())) {
+        // 零读（v.out 无出线）+ 单写（v.in 唯一入线且来自 set_var.target）（v9 结构判据）
+        if (!fromOut.getOrDefault(v.uid(), List.of()).isEmpty()) {
             return null;
         }
-        NodeInstance set = byUid.get(outs.get(0).to().node());
+        List<Wire> writes = intoVarIn.getOrDefault(v.uid(), List.of());
+        if (writes.size() != 1 || !"target".equals(writes.get(0).from().port())) {
+            return null;
+        }
+        NodeInstance set = byUid.get(writes.get(0).from().node());
         if (set == null || !"exec.set_var".equals(set.type())) {
             return null;
         }

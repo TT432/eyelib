@@ -58,6 +58,11 @@ public record PortDef(
         return new PortDef(id, PortDirection.OUT, type, Optional.empty(), false);
     }
 
+    /** 带显示名的单连接输出端口（ref 变量写入端口用；id 稳定保连线）。 */
+    public static PortDef outLabeled(String id, PortType type, String label) {
+        return new PortDef(id, PortDirection.OUT, type, Optional.empty(), false, Optional.of(label));
+    }
+
     /** 带显示名的输入端口（函数参数标注用；id 仍为 argN 保连线稳定）。 */
     public static PortDef inLabeled(String id, PortType type, String label) {
         return new PortDef(id, PortDirection.IN, type, Optional.empty(), false, Optional.of(label));

@@ -56,6 +56,8 @@ public final class EvmTypeHandles {
         static final TypeHandle ANIMATION_REF = colored(String.class, "eyelib:animation_ref", "Animation Ref", 0xFFFF9800);
         static final TypeHandle AC_REF = colored(String.class, "eyelib:ac_ref", "AC Ref", 0xFFFF5722);
         static final TypeHandle RC_REF = colored(String.class, "eyelib:rc_ref", "RC Ref", 0xFF3F51B5);
+        static final TypeHandle PARTICLE_REF = colored(String.class, "eyelib:particle_ref", "Particle Ref", 0xFF00BCD4);
+        static final TypeHandle SOUND_REF = colored(String.class, "eyelib:sound_ref", "Sound Ref", 0xFF795548);
         static final TypeHandle COLOR = colored(ColorValue.class, "eyelib:color", "Color", 0xFFD81B60);
 
         static final List<TypeHandle> ALL = List.of(
@@ -73,6 +75,8 @@ public final class EvmTypeHandles {
                 ANIMATION_REF,
                 AC_REF,
                 RC_REF,
+                PARTICLE_REF,
+                SOUND_REF,
                 COLOR);
         /**
          * 黑板变量声明可选类型：变量存的是 molang 值，只收值类型（FLOAT/INT/BOOL/STRING/
@@ -120,6 +124,8 @@ public final class EvmTypeHandles {
             case ANIMATION_REF -> Holder.ANIMATION_REF;
             case AC_REF -> Holder.AC_REF;
             case RC_REF -> Holder.RC_REF;
+            case PARTICLE_REF -> Holder.PARTICLE_REF;
+            case SOUND_REF -> Holder.SOUND_REF;
             case COLOR -> Holder.COLOR;
             case UNKNOWN -> TypeHandles.UNKNOWN;
         };
@@ -143,6 +149,8 @@ public final class EvmTypeHandles {
         if (handle.equals(Holder.ANIMATION_REF)) return PortType.ANIMATION_REF;
         if (handle.equals(Holder.AC_REF)) return PortType.AC_REF;
         if (handle.equals(Holder.RC_REF)) return PortType.RC_REF;
+        if (handle.equals(Holder.PARTICLE_REF)) return PortType.PARTICLE_REF;
+        if (handle.equals(Holder.SOUND_REF)) return PortType.SOUND_REF;
         if (handle.equals(Holder.COLOR)) return PortType.COLOR;
         return null;
     }

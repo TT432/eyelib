@@ -4,8 +4,10 @@ import static io.github.tt432.eyelib.nodegraph.decompile.DecompileTestSupport.al
 import static io.github.tt432.eyelib.nodegraph.decompile.DecompileTestSupport.countCode;
 import static io.github.tt432.eyelib.nodegraph.decompile.DecompileTestSupport.firstByType;
 import static io.github.tt432.eyelib.nodegraph.decompile.DecompileTestSupport.hasCode;
+import static io.github.tt432.eyelib.nodegraph.decompile.DecompileTestSupport.wireFrom;
 import static io.github.tt432.eyelib.nodegraph.decompile.DecompileTestSupport.wireInto;
 import static io.github.tt432.eyelib.nodegraph.decompile.DecompileTestSupport.wireSource;
+import static io.github.tt432.eyelib.nodegraph.decompile.DecompileTestSupport.wireTarget;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -196,9 +198,9 @@ class MolangDecompilerTest {
         NodeInstance bNode = nodeByUid(f, wireSource(f.wires(), ternary.uid(), "b"));
         assertEquals("variable", bNode.type());
         assertEquals("x", bNode.options().get("name").getAsString());
-        // set_var：ternary.out → value；target ← variable 节点（name 不带根）
+        // set_var：ternary.out → value；target（右侧输出）→ variable 节点 in（name 不带根）
         NodeInstance setX = setVars.get(0);
-        NodeInstance targetNode = nodeByUid(f, wireSource(f.wires(), setX.uid(), "target"));
+        NodeInstance targetNode = nodeByUid(f, wireTarget(f.wires(), setX.uid(), "target"));
         assertEquals("variable", targetNode.type());
         assertEquals("x", targetNode.options().get("name").getAsString());
         assertEquals(ternary.uid(), wireSource(f.wires(), setX.uid(), "value"));
@@ -271,7 +273,7 @@ class MolangDecompilerTest {
         MolangDecompiler.ExecFragment f = MolangDecompiler.decompileStatements("variable.x = 1;");
         assertEquals(1, f.chain().size());
         NodeInstance setVar = firstByType(f.nodes(), "exec.set_var");
-        NodeInstance targetNode = nodeByUid(f, wireSource(f.wires(), setVar.uid(), "target"));
+        NodeInstance targetNode = nodeByUid(f, wireTarget(f.wires(), setVar.uid(), "target"));
         assertEquals("variable", targetNode.type());
         assertEquals("x", targetNode.options().get("name").getAsString());
         // 常量值内联为 value 端口行内值：无 const 节点、无 value 连线
@@ -293,7 +295,7 @@ class MolangDecompilerTest {
         assertTrue(allByType(f.nodes(), "const.string").isEmpty());
         Map<String, NodeInstance> byVar = new HashMap<>();
         for (NodeInstance set : sets) {
-            NodeInstance target = nodeByUid(f, wireSource(f.wires(), set.uid(), "target"));
+            NodeInstance target = nodeByUid(f, wireTarget(f.wires(), set.uid(), "target"));
             byVar.put(target.options().get("name").getAsString(), set);
             assertTrue(wireInto(f.wires(), set.uid(), "value").isEmpty());
         }
@@ -331,7 +333,7 @@ class MolangDecompilerTest {
         NodeInstance setVar = firstByType(f.nodes(), "exec.set_var");
         assertEquals(setVar.uid(), wireSource(f.wires(), loop.uid(), "body"));
         assertTrue(wireInto(f.wires(), setVar.uid(), "value").isPresent());
-        assertTrue(wireInto(f.wires(), setVar.uid(), "target").isPresent());
+        assertTrue(wireFrom(f.wires(), setVar.uid(), "target").isPresent());
     }
 
     @Test

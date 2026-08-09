@@ -86,7 +86,7 @@ class VariableScopeCodegenTest {
                         varNode("t", "scratch"),
                         new NodeInstance("one", "const.int", 0, 0,
                                 Map.<String, JsonElement>of("value", new JsonPrimitive(1)), Map.of())),
-                List.of(new Wire(new PortRef("t", "out"), new PortRef("s", "target")),
+                List.of(new Wire(new PortRef("s", "target"), new PortRef("t", "in")),
                         new Wire(new PortRef("one", "out"), new PortRef("s", "value")),
                         new Wire(new PortRef("s", "exec_out"), new PortRef("root", "initialize"))),
                 List.of(new VariableDecl("scratch", PortType.FLOAT, Optional.empty(),

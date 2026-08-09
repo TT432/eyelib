@@ -187,6 +187,25 @@ public final class ClientEntityAssembler {
         if (!animations.isEmpty()) {
             description.add("animations", toObject(animations));
         }
+        // v10：粒子/音效声明表（spec nodegraph-ac-graph-and-effects §2.2，同 animations 机制）
+        Map<String, String> particles = new LinkedHashMap<>();
+        List<NodeInstance> particleSources = new ArrayList<>(typedSources(ctx, root, "particles", "ref.particle"));
+        particleSources.sort(Comparator.comparing(NodeInstance::uid));
+        for (NodeInstance source : particleSources) {
+            putDeclaration(source, particles);
+        }
+        if (!particles.isEmpty()) {
+            description.add("particle_effects", toObject(particles));
+        }
+        Map<String, String> sounds = new LinkedHashMap<>();
+        List<NodeInstance> soundSources = new ArrayList<>(typedSources(ctx, root, "sounds", "ref.sound"));
+        soundSources.sort(Comparator.comparing(NodeInstance::uid));
+        for (NodeInstance source : soundSources) {
+            putDeclaration(source, sounds);
+        }
+        if (!sounds.isEmpty()) {
+            description.add("sound_effects", toObject(sounds));
+        }
     }
 
     /** entity.root 动画声明端口的连线源（uid 字典序）；类型不匹配 → INVALID_DECLARATION_REF 并剔除。 */

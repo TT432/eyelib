@@ -104,20 +104,21 @@ final class VariableInliner {
         String setUid = null;
         String consumerUid = null;
         String consumerPort = null;
-        for (Wire w : idx.fromOut.getOrDefault(v.uid(), List.of())) {
-            if (w.to().port().equals("target")) {
-                NodeInstance target = idx.byUid.get(w.to().node());
-                if (target == null || !target.type().equals("exec.set_var") || setUid != null) {
-                    return null; // 目标不是 set_var，或多次写入
-                }
-                setUid = w.to().node();
-            } else {
-                if (consumerUid != null) {
-                    return null; // 多次读取
-                }
-                consumerUid = w.to().node();
-                consumerPort = w.to().port();
+        // v9 左读右写：写 = set_var.target 输出 → v.in；读 = v.out 全部出线
+        for (Wire w : idx.intoVarIn.getOrDefault(v.uid(), List.of())) {
+            NodeInstance set = idx.byUid.get(w.from().node());
+            if (set == null || !set.type().equals("exec.set_var") || !w.from().port().equals("target")
+                    || setUid != null) {
+                return null; // 写入者不是 set_var，或多次写入
             }
+            setUid = w.from().node();
+        }
+        for (Wire w : idx.fromOut.getOrDefault(v.uid(), List.of())) {
+            if (consumerUid != null) {
+                return null; // 多次读取
+            }
+            consumerUid = w.to().node();
+            consumerPort = w.to().port();
         }
         if (setUid == null || consumerUid == null || consumerPort == null) {
             return null;
@@ -269,6 +270,8 @@ final class VariableInliner {
         final Map<String, List<Wire>> fromOut = new LinkedHashMap<>();
         /** 目标 (node,port) → 入边。 */
         final Map<String, Map<String, Wire>> into = new LinkedHashMap<>();
+        /** variable 节点 in 端口的全部入边（v9 写入通道；multi 故需独立索引）。 */
+        final Map<String, List<Wire>> intoVarIn = new LinkedHashMap<>();
         /** exec 前向邻接（from.port == exec_out）。 */
         final Map<String, List<String>> execFwd = new LinkedHashMap<>();
         /** 循环体成员（可达某 loop/for_each 的 body 输入的全部 exec 节点）。 */
@@ -291,6 +294,9 @@ final class VariableInliner {
                 fromOut.computeIfAbsent(w.from().node(), k -> new ArrayList<>()).add(w);
                 into.computeIfAbsent(w.to().node(), k -> new LinkedHashMap<>())
                         .put(w.to().port(), w);
+                if (w.to().port().equals("in")) {
+                    intoVarIn.computeIfAbsent(w.to().node(), k -> new ArrayList<>()).add(w);
+                }
                 if (w.from().port().equals("exec_out")) {
                     execFwd.computeIfAbsent(w.from().node(), k -> new ArrayList<>())
                             .add(w.to().node());

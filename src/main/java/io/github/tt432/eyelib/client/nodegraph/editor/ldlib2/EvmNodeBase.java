@@ -96,6 +96,11 @@ public abstract class EvmNodeBase extends Node {
             if (isRef && ShortNames.SHORT_NAME_OPTION.equals(def.id())) {
                 continue;
             }
+            // ac.state 的 name 行不显示（用户决策 2026-08-09：state 名仅内部使用——导出
+            // states 键与 transition/initial 图边解析用，同 short_name 处理：数据保留照常导出）
+            if (type().kind() == NodeType.Kind.AC_STATE && "name".equals(def.id())) {
+                continue;
+            }
             // 定长签名函数的 arg_count 无意义（端口数由签名决定），隐藏减少干扰
             if ("arg_count".equals(def.id())
                     && io.github.tt432.eyelib.nodegraph.MolangFunctionSignatures

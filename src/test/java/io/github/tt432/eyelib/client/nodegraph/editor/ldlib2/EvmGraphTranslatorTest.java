@@ -73,7 +73,7 @@ class EvmGraphTranslatorTest {
                 new Wire(new PortRef("n2", "out"), new PortRef("root_node", "scale")),
                 new Wire(new PortRef("n1", "out"), new PortRef("call1", "x")),
                 new Wire(new PortRef("call1", "result"), new PortRef("root_node", "scale_y")),
-                new Wire(new PortRef("n3", "out"), new PortRef("set1", "target")));
+                new Wire(new PortRef("set1", "target"), new PortRef("n3", "in")));
         GraphData main = new GraphData(
                 mainNodes,
                 mainWires,

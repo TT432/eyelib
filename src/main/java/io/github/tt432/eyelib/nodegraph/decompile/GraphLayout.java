@@ -89,19 +89,31 @@ public final class GraphLayout {
      * x = (maxLayer − layer) × {@link #X_SPACING}（汇在最右）；y 见类级文档两阶段。
      */
     public static List<NodeInstance> layout(List<NodeInstance> nodes, List<Wire> wires) {
+        Map<String, String> typeOf = new HashMap<>();
+        for (NodeInstance n : nodes) {
+            typeOf.put(n.uid(), n.type());
+        }
         Map<String, List<String>> consumers = new HashMap<>();
         Map<String, List<String>> producers = new HashMap<>();
         Map<String, List<Wire>> producerWires = new HashMap<>();
-        Set<String> wiredNodes = new HashSet<>();
+        // 流邻接（v9）：剔除 variable.in 写入通道边——写入不约束左→右分层
+        // （v.x = v.x + 1 模式下写入边与读取边互成环，到汇最长路径必须走纯流图）
+        Map<String, List<String>> flowConsumers = new HashMap<>();
+        Set<String> flowWiredNodes = new HashSet<>();
         for (Wire w : wires) {
             consumers.computeIfAbsent(w.from().node(), k -> new ArrayList<>()).add(w.to().node());
             producers.computeIfAbsent(w.to().node(), k -> new ArrayList<>()).add(w.from().node());
             producerWires.computeIfAbsent(w.to().node(), k -> new ArrayList<>()).add(w);
-            wiredNodes.add(w.from().node());
-            wiredNodes.add(w.to().node());
+            if (!io.github.tt432.eyelib.nodegraph.NodeTypes.isVariableWriteInput(
+                    typeOf.getOrDefault(w.to().node(), ""), w.to().port())) {
+                flowConsumers.computeIfAbsent(w.from().node(), k -> new ArrayList<>()).add(w.to().node());
+                flowWiredNodes.add(w.from().node());
+                flowWiredNodes.add(w.to().node());
+            }
         }
         consumers.values().forEach(list -> list.sort(Comparator.naturalOrder()));
         producers.values().forEach(list -> list.sort(Comparator.naturalOrder()));
+        flowConsumers.values().forEach(list -> list.sort(Comparator.naturalOrder()));
         producerWires.values().forEach(list -> list.sort(
                 Comparator.comparing((Wire w) -> w.from().node()).thenComparing(w -> w.from().port())));
 
@@ -109,8 +121,8 @@ public final class GraphLayout {
         Map<String, Integer> layers = new HashMap<>();
         int maxLayerValue = 0;
         for (NodeInstance node : nodes) {
-            if (wiredNodes.contains(node.uid())) {
-                int layer = layerOf(node.uid(), consumers, layers, new HashSet<>());
+            if (flowWiredNodes.contains(node.uid())) {
+                int layer = layerOf(node.uid(), flowConsumers, layers, new HashSet<>());
                 maxLayerValue = Math.max(maxLayerValue, layer);
             }
         }
@@ -122,7 +134,7 @@ public final class GraphLayout {
         Map<String, Integer> order = new HashMap<>();
         List<String> sinks = new ArrayList<>();
         for (NodeInstance node : nodes) {
-            if (!consumers.containsKey(node.uid())) {
+            if (!flowConsumers.containsKey(node.uid())) {
                 sinks.add(node.uid());
             }
         }
@@ -136,7 +148,7 @@ public final class GraphLayout {
         // 同层分组（层号升序 = 汇→源，确定性遍历），按 DFS 先序排定层内顺序
         Map<ColumnKey, List<NodeInstance>> byLayer = new TreeMap<>();
         for (NodeInstance node : nodes) {
-            int layer = wiredNodes.contains(node.uid()) ? layers.get(node.uid()) : isolatedLayer;
+            int layer = flowWiredNodes.contains(node.uid()) ? layers.get(node.uid()) : isolatedLayer;
             byLayer.computeIfAbsent(new ColumnKey(layer, 0), k -> new ArrayList<>()).add(node);
         }
         byLayer.values().forEach(group -> group.sort(Comparator

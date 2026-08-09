@@ -79,8 +79,9 @@ public final class AnimationVariableDecls {
                             new PortRef(node.uid(), NodeTypes.VAR_READ_PREFIX + name)));
                 }
                 if (refs.writes().contains(name)) {
-                    wires.add(new Wire(new PortRef(uid, "out"),
-                            new PortRef(node.uid(), NodeTypes.VAR_WRITE_PREFIX + name)));
+                    // v9 左读右写：write 是 ref 的右侧输出，接 declvar 节点的 in
+                    wires.add(new Wire(new PortRef(node.uid(), NodeTypes.VAR_WRITE_PREFIX + name),
+                            new PortRef(uid, "in")));
                 }
                 row++;
                 if (declNames.add(name)) {

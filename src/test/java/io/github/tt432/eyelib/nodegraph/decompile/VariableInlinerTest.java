@@ -77,7 +77,7 @@ class VariableInlinerTest {
                 node("a", "exec.call", opts("function", "query.foo", "arg_count", 0)),
                 node("r", "exec.return")));
         List<Wire> wires = new ArrayList<>(List.of(
-                wire("v", "out", "s", "target"),
+                wire("s", "target", "v", "in"),
                 wire("c", "out", "s", "value"),
                 wire("a", "exec_out", "s", "exec_in"),
                 wire("s", "exec_out", "r", "exec_in"),
@@ -196,8 +196,8 @@ class VariableInlinerTest {
                 node("s2", "exec.set_var"),
                 node("r", "exec.return")));
         List<Wire> wires = new ArrayList<>(List.of(
-                wire("v", "out", "s1", "target"),
-                wire("v", "out", "s2", "target"),
+                wire("s1", "target", "v", "in"),
+                wire("s2", "target", "v", "in"),
                 wire("s1", "exec_out", "s2", "exec_in"),
                 wire("s2", "exec_out", "r", "exec_in"),
                 wire("v", "out", "r", "value")));

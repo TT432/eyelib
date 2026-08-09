@@ -560,7 +560,7 @@ class GraphValidatorTest {
                         node("s", "exec.set_var"),
                         node("c", "const.number")),
                 List.of(wire("s", "exec_out", "r", "initialize"),
-                        wire("c", "out", "s", "target")));
+                        wire("s", "target", "c", "in")));
         assertTrue(hasCode(validateGraph(main), GraphValidator.SET_TARGET_NOT_VARIABLE));
     }
 
@@ -571,7 +571,7 @@ class GraphValidatorTest {
                         node("s", "exec.set_var"),
                         node("v", "variable", opts("name", "foo"))),
                 List.of(wire("s", "exec_out", "r", "initialize"),
-                        wire("v", "out", "s", "target")),
+                        wire("s", "target", "v", "in")),
                 List.of(VariableDecl.of("foo", PortType.FLOAT)));
         assertFalse(hasCode(validateGraph(main), GraphValidator.SET_TARGET_NOT_VARIABLE));
     }
@@ -771,7 +771,7 @@ class GraphValidatorTest {
                         wire("sc", "result", "r", "scale"),
                         wire("c1", "out", "sc", "x"),
                         wire("sv", "exec_out", "r", "initialize"),
-                        wire("svt", "out", "sv", "target"),
+                        wire("sv", "target", "svt", "in"),
                         wire("ra", "ref", "ae", "ref"),
                         wire("ra", "ref", "r", "animations"),
                         wire("ae", "entry", "r", "animate")),

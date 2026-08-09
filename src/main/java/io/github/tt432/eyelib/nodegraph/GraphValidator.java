@@ -71,18 +71,23 @@ public final class GraphValidator {
     public static final String ENTRY_ORPHAN = "ENTRY_ORPHAN";
 
     /** SLOT 装配白名单：目标(节点类型.端口) → 允许的源节点类型。 */
-    private static final Map<String, String> SLOT_WHITELIST = Map.of(
-            "entity.root.animate", "animate.entry",
-            "rc.root.textures", "list.entry",
-            "rc.root.materials", "material.entry",
-            "rc.root.part_visibility", "part_visibility.entry",
-            "ac.root.states", "ac.state",
-            "ac.state.animations", "animate.entry",
-            "ac.state.transitions", "ac.transition",
+    private static final Map<String, String> SLOT_WHITELIST = Map.ofEntries(
+            Map.entry("entity.root.animate", "animate.entry"),
+            Map.entry("rc.root.textures", "list.entry"),
+            Map.entry("rc.root.materials", "material.entry"),
+            Map.entry("rc.root.part_visibility", "part_visibility.entry"),
+            Map.entry("ac.root.states", "ac.state"),
+            // v10：initial = 初始 state 的图边
+            Map.entry("ac.root.initial", "ac.state"),
+            Map.entry("ac.state.animations", "animate.entry"),
+            Map.entry("ac.state.transitions", "ac.transition"),
+            // v10：transition.target 图边 + 粒子条目
+            Map.entry("ac.state.incoming", "ac.transition"),
+            Map.entry("ac.state.particles", "particle.entry"),
             // v6：条目链（规格 §2.1）——条目的 next 只接同类条目
-            "list.entry.next", "list.entry",
-            "material.entry.next", "material.entry",
-            "part_visibility.entry.next", "part_visibility.entry");
+            Map.entry("list.entry.next", "list.entry"),
+            Map.entry("material.entry.next", "material.entry"),
+            Map.entry("part_visibility.entry.next", "part_visibility.entry"));
 
     /** 只能接入装配槽（animate.entry.ref）或 entity.root 动画声明端口的引用节点。 */
     private static final Set<String> ASSEMBLY_ONLY_REFS = Set.of("ref.animation", "ref.ac");
@@ -665,7 +670,9 @@ public final class GraphValidator {
             inDegree.merge(wire.to(), 1, Integer::sum);
             outDegree.merge(wire.from(), 1, Integer::sum);
             allEdges.add(wire);
-            if (fromType != PortType.SLOT && toType != PortType.SLOT) {
+            if (fromType != PortType.SLOT && toType != PortType.SLOT
+                    // v9：variable.in 写入通道不成环（v.x = v.x + 1 是合法模式）
+                    && !NodeTypes.isVariableWriteInput(to.node().type(), wire.to().port())) {
                 valueExecEdges.add(wire);
             }
             if (fromType == PortType.EXEC) {
@@ -812,6 +819,24 @@ public final class GraphValidator {
                         fromType + " 的输出只能连接 animate.entry.ref / entity.root." + declarationPort
                                 + "，实际连接 " + wire.to(), from.node().uid()));
             }
+        } else if (fromType.equals("ref.particle")) {
+            // ref.particle：particle.entry.ref 或 entity.root.particles（v10）
+            boolean ok = (to.node().type().equals("particle.entry") && to.port().id().equals("ref"))
+                    || (to.node().type().equals("entity.root") && to.port().id().equals("particles"));
+            if (!ok) {
+                out.add(Diagnostic.error(REF_MISUSE,
+                        "ref.particle 的输出只能连接 particle.entry.ref / entity.root.particles，实际连接 "
+                                + wire.to(), from.node().uid()));
+            }
+        } else if (fromType.equals("ref.sound")) {
+            // ref.sound：entity.root.sounds 或 ac.state.sounds（v10）
+            boolean ok = (to.node().type().equals("entity.root") && to.port().id().equals("sounds"))
+                    || (to.node().type().equals("ac.state") && to.port().id().equals("sounds"));
+            if (!ok) {
+                out.add(Diagnostic.error(REF_MISUSE,
+                        "ref.sound 的输出只能连接 entity.root.sounds / ac.state.sounds，实际连接 "
+                                + wire.to(), from.node().uid()));
+            }
         } else if (fromType.equals("ref.rc")) {
             // ref.rc：只能接 entity.root.render_controllers（v4）
             boolean ok = to.node().type().equals("entity.root")
@@ -948,17 +973,21 @@ public final class GraphValidator {
                 }
             }
             for (Wire w : graph.wires()) {
-                String sourceName = varNodeName.get(w.from().node());
+                // v9 左读右写：写 = exec.set_var.target 输出 → variable.in；读 = variable.out 的全部出线
+                String sinkName = "in".equals(w.to().port()) ? varNodeName.get(w.to().node()) : null;
+                if (sinkName != null && tempDeclared.contains(sinkName)) {
+                    NodeType producerType = types.get(w.from().node());
+                    if (producerType != null && producerType.kind() == NodeType.Kind.EXEC_SET_VAR
+                            && w.from().port().equals("target")) {
+                        written.add(sinkName);
+                    }
+                    continue;
+                }
+                String sourceName = "out".equals(w.from().port()) ? varNodeName.get(w.from().node()) : null;
                 if (sourceName == null || !tempDeclared.contains(sourceName)) {
                     continue;
                 }
-                NodeType consumerType = types.get(w.to().node());
-                if (consumerType != null && consumerType.kind() == NodeType.Kind.EXEC_SET_VAR
-                        && w.to().port().equals("target")) {
-                    written.add(sourceName);
-                } else {
-                    read.add(sourceName);
-                }
+                read.add(sourceName);
             }
             for (String name : read) {
                 if (!written.contains(name)) {
@@ -979,10 +1008,12 @@ public final class GraphValidator {
             }
             boolean ok = false;
             for (Wire wire : graph.wires()) {
-                if (wire.to().node().equals(node.uid()) && wire.to().port().equals("target")) {
-                    NodeInstance producer = byUid.get(wire.from().node());
-                    NodeType producerType = producer == null ? null : types.get(producer.uid());
-                    ok = producerType != null && producerType.kind() == NodeType.Kind.VARIABLE;
+                if (wire.from().node().equals(node.uid()) && wire.from().port().equals("target")) {
+                    NodeInstance consumer = byUid.get(wire.to().node());
+                    NodeType consumerType = consumer == null ? null : types.get(consumer.uid());
+                    // v9：target（右侧输出）必须接到 variable 节点的 in（写入通道）
+                    ok = consumerType != null && consumerType.kind() == NodeType.Kind.VARIABLE
+                            && wire.to().port().equals("in");
                     break;
                 }
             }

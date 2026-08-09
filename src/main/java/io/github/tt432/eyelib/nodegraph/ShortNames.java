@@ -30,7 +30,7 @@ public final class ShortNames {
      */
     public static @Nullable String valueOptionOf(String nodeType) {
         return switch (nodeType) {
-            case "ref.geometry", "ref.animation", "ref.ac" -> "identifier";
+            case "ref.geometry", "ref.animation", "ref.ac", "ref.particle", "ref.sound" -> "identifier";
             case "ref.texture" -> "path";
             case "ref.material" -> "material";
             default -> null;

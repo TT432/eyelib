@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
  * {@link GraphMigrations}：format_version 1 → 2 变量节点化迁移契约（规格 §3.4）
  * + 2 → 3 声明连线化迁移契约（规格 nodegraph-declaration-wiring §2.4）
  * + 3 → 4 RenderController 内联迁移契约（规格 nodegraph-inline-render-controller §5）。
- * v2 起点用例走完整迁移链，断言的是 v4 终态。
+ * v2 起点用例走完整迁移链，断言的是 v9 终态（v8→v9 翻转 set_var.target 写入方向）。
  */
 class GraphMigrationsTest {
 
@@ -80,14 +80,15 @@ class GraphMigrationsTest {
         NodeInstance setVar = graph.findNode("s").orElseThrow();
         assertEquals("exec.set_var", setVar.type());
         assertTrue(setVar.options().isEmpty());
-        // 自动 variable 节点 + target 连线
+        // 自动 variable 节点 + target 连线（v9：v1→v2 生成旧方向线，v8→v9 翻转为
+        // set_var.target 右侧输出 → variable.in 写入通道）
         Wire targetWire = graph.wires().stream()
-                .filter(w -> w.to().node().equals("s") && w.to().port().equals("target"))
+                .filter(w -> w.from().node().equals("s") && w.from().port().equals("target"))
                 .findFirst().orElseThrow();
-        NodeInstance varNode = graph.findNode(targetWire.from().node()).orElseThrow();
+        NodeInstance varNode = graph.findNode(targetWire.to().node()).orElseThrow();
         assertEquals("variable", varNode.type());
         assertEquals("foo", varNode.options().get("name").getAsString());
-        assertEquals("out", targetWire.from().port());
+        assertEquals("in", targetWire.to().port());
     }
 
     @Test
@@ -105,10 +106,11 @@ class GraphMigrationsTest {
         GraphData data = new GraphData(
                 List.of(node("v", "variable", opts("name", "foo")),
                         node("s", "exec.set_var", Map.of())),
-                List.of(new Wire(new PortRef("v", "out"), new PortRef("s", "target"))),
+                List.of(new Wire(new PortRef("s", "target"), new PortRef("v", "in"))),
                 List.of(VariableDecl.of("foo", PortType.FLOAT)),
                 List.of(), List.of(), Optional.empty());
-        GraphLibrary migrated = GraphMigrations.migrate(library(data));
+        GraphLibrary migrated = GraphMigrations.migrate(
+                library(GraphLibrary.CURRENT_FORMAT_VERSION, Map.of("root", data)));
         assertEquals(data.nodes(), migrated.mainGraph().nodes());
         assertEquals(data.wires(), migrated.mainGraph().wires());
         assertEquals(data.variables(), migrated.mainGraph().variables());
