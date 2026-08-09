@@ -73,9 +73,9 @@ public final class EvmRefPreviewElement extends UIElement {
     private void onPlayMouseDown(UIEvent event) {
         if (!isHover() || event.button != 0) return;
         String value = refValue();
-        if (value.isBlank() || io.github.tt432.eyelib.client.nodegraph.MissingRefCheck.INSTANCE
+        if (value.isBlank() || !io.github.tt432.eyelib.client.nodegraph.MissingRefCheck.INSTANCE
                 .exists(node.type().id(), value)) {
-            return; // 缺失引用不播（节点已红高亮）
+            return; // 缺失引用不播（节点已红高亮）；exists 语义=资产存在，2026-08-10 前此处逻辑反转导致全不播
         }
         if (isParticle()) {
             playParticle(value);

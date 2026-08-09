@@ -183,8 +183,10 @@ public class EvmGraph extends Graph {
             // WRITE 修饰（子图接口 OUTPUT 变量）的主口本身是输入，不重复补。
             if (getVariableDeclarationModel() == null
                     || !getVariableDeclarationModel().getModifiers().hasFlag(ModifierFlags.WRITE)) {
-                scope.nodeModel.addInputPort(WRITE_IN_PORT_ID,
+                var writeIn = scope.nodeModel.addInputPort(WRITE_IN_PORT_ID,
                         EvmTypeHandles.toHandle(PortType.VARIABLE), null, null, null, null, null);
+                // 左读右写：位置即语义，不显示 "in" 文本标签（空标题 → 连接器隐藏 label）
+                writeIn.setTitle(net.minecraft.network.chat.Component.empty());
             }
         }
 
@@ -196,6 +198,12 @@ public class EvmGraph extends Graph {
                 return decl.getDataTypeHandle();
             }
             return EvmTypeHandles.toHandle(PortType.VARIABLE);
+        }
+
+        @Override
+        public com.lowdragmc.lowdraglib2.nodegraphtookit.gui.GraphElement<?> createElementUI() {
+            // 默认 VariableNodeElement 只渲主口；写入入口 in 需要 EvmVariableNodeElement 补渲
+            return new EvmVariableNodeElement(this);
         }
     }
 
