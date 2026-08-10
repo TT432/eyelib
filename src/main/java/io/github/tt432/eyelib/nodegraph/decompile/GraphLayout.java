@@ -16,8 +16,9 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 /**
- * 分层自动布局（规格 nodegraph-workbench §W2）：<b>到汇最长路径定 x 层；层内以 DFS 先序定序、
- * 距离松弛定 y</b>。
+ * 分层自动布局（规格 nodegraph-workbench §W2）：<b>到汇最长路径定 x 层（exec 顺序边
+ * 0 代价——语句链纵向共列）；层内以 DFS 先序定序（语句链按链序）、距离松弛 + 欲望
+ * 重排定 y</b>。
  *
  * <p>坐标遵循编辑器既有约定（versions/1.20.1/run/config/eyelib/nodegraph/ng_smoke.json）：
  * 数据流方向 x 左→右（生产者左、消费者右，汇——装配根——在最右列），列距 300；
@@ -26,6 +27,11 @@ import java.util.TreeSet;
  *
  * <p>算法阶段（都是确定性纯函数）：
  * <ol>
+ *   <li><b>分层 = 到汇最长路径；exec 顺序边 0 代价</b>。exec_out→exec_in 是「同列顺序」
+ *       边：语句序列是脚本的纵向自然形态，逐语句独占一列会把 initialize/pre_animation
+ *       拉成每列 1-2 节点的水平细针（悦灵 65 语句 ≈ 19500px 宽实证 2026-08-10）。
+ *       链成员与链尾同层共列、列内按执行顺序自上而下；槽口边（→body/initialize）
+ *       代价仍为 1（链尾在槽主左一列）。</li>
  *   <li><b>层内定序 = 汇出发反向 DFS 先序</b>。表达式链在上游几乎全是独占树（唯一消费者），
  *       DFS 先序天然让链/子树成员在层内连续——实测（悦灵 812 节点，2026-08-07）比重心排序
  *       极端边数 29→9：重心排序每趟重置均布 y 会破坏链连续性（曾引以为傲的「簇邻接」收益
@@ -42,6 +48,10 @@ import java.util.TreeSet;
  *       （L1 目标的单点最优；clamp 保持层内顺序与节点高度间距），再做<b>纯叶扇居中</b>
  *       （度数为 1 且共享唯一 hub 的层内连续段作为刚性整体平移到 hub y——压紧段对逐节点
  *       趟无自由度，单向堆叠就靠这个拆开）。轮数按图规模给足并带早退。</li>
+ *   <li><b>列内欲望重排</b>（{@link #reorderColumnsByDesire}，两趟）：clamp 保序会把
+ *       「节点与其邻居顺序不对应」的垂直错位锁死（悦灵语句值链想要 y≈2500 被钉在
+ *       y≈9600 实证）。每列<b>非语句链</b>节点保持槽位集合不变、按邻居中位数欲望 y
+ *       重新分配槽位后再松弛（语句链顺序是语义，不参与）。</li>
  *   <li><b>扇形居中重排</b>（{@link #improveLeafFans}，实测验收的局部搜索）：对明显偏离
  *       理论最优的纯叶扇执行「按 hub 侧分区重排 + 扇窗居中压紧」，完整松弛后以全图 Σ|Δy|
  *       实测判定去留——单调下降，无振荡。</li>
@@ -49,13 +59,15 @@ import java.util.TreeSet;
  *       中心（clamp 不撞列内邻居）。松弛的中位数投票把 hub 停在 L1 最优点（偏向成员密集侧），
  *       扇尾成员的边距可达扇跨全长；移到跨中把扇的最大边压到跨度一半，牺牲的 Σ 很小
  *       （hub 移动只影响其自身边）。扇跨度本身由成员的链锚定，不可压缩。</li>
- *   <li><b>声明通道最后共位</b>（2026-08-10 重设计）：声明边（var-ref read:/write:、
- *       variable.in 写入、ref/entry→root 声明端口，以及一切触及簇成员的边）<b>不进流邻接</b>
- *       ——分层/播种/松弛/扇机器全部只看流边，声明节点的 y 不污染流节点的中位数投票。
- *       簇与共位列在全部流布局收敛后按锚点终态 y 一次性放置（过早放置会被「压紧列无
- *       松弛自由度」钉在种子的位——悦灵 ref.ac 列实证 dy≈3400）。root 声明簇按
- *       <b>方形块</b>打包（列数 = √(总高/列距)，块宽与块高同阶——固定列高上限堆巨柱拉
- *       竖扇、按 root 高度切列又把簇顶出几十列，两个方向都有实机截图实证）。</li>
+ *   <li><b>声明通道最后共位</b>：声明边（var-ref read:/write:、variable.in 写入、
+ *       ref→root 声明端口）<b>不进流邻接</b>——分层/播种/松弛/扇机器全部只看流边。
+ *       但 <b>animate.entry 与有 entry 消费者的 ref.ac/ref.animation 是流节点</b>
+ *       （2026-08-10 重设计）：entry→root animate 边入流定层 1，ref→entry 边入流贴
+ *       entry 高度——簇内堆叠曾把 ref.ac 钉在 entry 上方 dy≈2094、把 weight 链尾钉到
+ *       entry 右列造成回流边 avgMan≈3074（悦灵实证）。纯声明 ref（sound/particle/
+ *       无 entry 消费者）按<b>方形块</b>打包到 root 左侧子列（列数 = √(总高/列距)）；
+ *       declvar/纯写入变量按<b>逐成员锚点 y</b> 共位到锚点侧子列（切块中位数居中曾把
+ *       69 写变量摊成 7 列、writer 边 dx 拉到 900-2700）。</li>
  * </ol>
  * 扇居中平移可能产生负 y，出口处统一平移归一化（全图最小 y = 0，不改变任何边长）。
  * 环只做防御（层按 0 计），环本身由 GraphValidator.CYCLE 报告。
@@ -65,7 +77,8 @@ import java.util.TreeSet;
  * 链跟不上，长边从扇边挪进链边（Σ +48%、+12%、+9% 不等）；且整列居中与逐节点松弛
  * 恒幅振荡，不能进早退循环；
  * ② 远邻 blend（median 向 >2000 的邻居偏移）：Σ 与极端边数齐升；
- * ③ 松弛后再重心排序交替：收敛到同一盆域，无收益；
+ * ③ 松弛后再重心排序交替：收敛到同一盆域，无收益（注意：{@link #reorderColumnsByDesire}
+ * 是槽位重排 + 再松弛的单/两趟定向修复，与交替迭代不同，勿混淆）；
  * ④ 分列前按类型聚类（无居中配合时）：Σ +2.4%，纯叶段仍被度数>1 成员打断；
  * ⑤ 播种多趟迭代：上游影响回流，Σ +4%、max +24%。
  */
@@ -87,9 +100,7 @@ public final class GraphLayout {
     private static final double RELAX_EPSILON = 0.5;
     /** 单列扇成员上限：超过则拆成并列子列（见 {@link #splitGiantFans}）。 */
     private static final int MAX_FAN_LEAVES_PER_COLUMN = 16;
-    /** 共位子列成员上限：超过则切成多个并列子列（每块以自身锚点中位数居中）。 */
-    private static final int MAX_COLOCATED_PER_COLUMN = 10;
-    /** 声明簇列内间距：声明芯片（variable/ref 小节点）不需要 48px 呼吸区，紧排防纵漂。 */
+    /** 共位声明芯片列内间距（variable/ref 小节点不需要 48px 呼吸区，紧排防纵漂）。 */
     private static final float CLUSTER_GAP = 10f;
     /** 极小极大定位的最小扇规模：小于此数的扇 hub 交给中位数投票即可。 */
     private static final int MIN_MINIMAX_FAN_SIZE = 4;
@@ -179,60 +190,58 @@ public final class GraphLayout {
             }
         }
         // root 声明簇共位：ref.* / animate.entry 与 root 之间是纯声明通道，最长路径把它们
-        // 留在源侧、向 root 拉出横跨全图的扇（悦灵 65 条 ref.sound + 11 条 ref.ac + 19 条
-        // ref.animation + 16 条 animate.entry 边实证）。整簇按视觉序
-        // [读 declvar][ref][写 declvar][entry][root] 贴到 root 左侧子列——entry 的
-        // condition 边会拉长，但用 16 条边换掉 100+ 条扇形边。
-        // ref 纯度：无非 var-ref 的上游（entry 消费者允许，entry 同簇跟随）。
+        // 留在源侧、向 root 拉出横跨全图的扇（悦灵 65 条 ref.sound 边实证）。整簇按
+        // 视觉序 [读 declvar][ref][写 declvar][root] 贴到 root 左侧子列。
+        // ref 纯度：无非 var-ref 的上游。**有 entry 消费者的 ref（ref.ac/ref.animation
+        // →animate.entry:ref）不进簇**——留在流分层，ref→entry 是流边，松弛把 ref 贴到
+        // entry 的 y（簇内从列顶堆叠曾把 ref.ac 堆在 entry 上方 dy≈2094，悦灵实证
+        // 2026-08-10）；animate.entry 本身同样是流节点（animate→root 入流定层 1，
+        // condition/weight 链入流——链尾曾因 entry 脱离流邻接沦为汇、被钉到 root 右列
+        // 造成回流边 avgMan≈3074）。
+        Set<String> rootTypes = Set.of("entity.root", "rc.root");
+        Set<String> rootDeclPorts = Set.of("animations", "animation_controllers", "particles", "sounds");
         Map<String, String> rootDeclOf = new HashMap<>(); // refUid -> root uid
-        Map<String, String> entryDeclOf = new HashMap<>(); // animate.entry uid -> root uid
         {
             Set<String> declRefTypes = Set.of("ref.sound", "ref.particle", "ref.ac", "ref.animation");
-            Set<String> declPorts = Set.of("animations", "animation_controllers", "particles", "sounds");
-            Set<String> rootTypes = Set.of("entity.root", "rc.root");
             for (NodeInstance n : nodes) {
-                if (declRefTypes.contains(n.type())) {
-                    String anchor = null;
-                    boolean pure = true;
-                    for (Wire w : wires) {
-                            boolean out = w.from().node().equals(n.uid());
-                            boolean in = w.to().node().equals(n.uid());
-                            if (!out && !in) {
-                                continue;
-                            }
-                            if (io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(w.from().port())
-                                    || io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(w.to().port())) {
-                                continue;
-                            }
-                            if (in) {
-                                pure = false;
-                                break;
-                            }
-                            if (declPorts.contains(w.to().port())
-                                    && rootTypes.contains(typeOf.getOrDefault(w.to().node(), ""))) {
-                                anchor = w.to().node();
-                            }
-                            // 其余出边（如 →animate.entry:ref）允许：entry 同簇
-                        }
-                    if (pure && anchor != null) {
-                        rootDeclOf.put(n.uid(), anchor);
+                if (!declRefTypes.contains(n.type())) {
+                    continue;
+                }
+                String anchor = null;
+                boolean pure = true;
+                boolean entryConnected = false;
+                for (Wire w : wires) {
+                    boolean out = w.from().node().equals(n.uid());
+                    boolean in = w.to().node().equals(n.uid());
+                    if (!out && !in) {
+                        continue;
                     }
-                } else if ("animate.entry".equals(n.type())) {
-                    for (Wire w : wires) {
-                        if (w.from().node().equals(n.uid()) && "animate".equals(w.to().port())
-                                && "entity.root".equals(typeOf.getOrDefault(w.to().node(), ""))) {
-                            entryDeclOf.put(n.uid(), w.to().node());
-                            break;
-                        }
+                    if (io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(w.from().port())
+                            || io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(w.to().port())) {
+                        continue;
                     }
+                    if (in) {
+                        pure = false;
+                        break;
+                    }
+                    if (rootDeclPorts.contains(w.to().port())
+                            && rootTypes.contains(typeOf.getOrDefault(w.to().node(), ""))) {
+                        anchor = w.to().node();
+                    }
+                    if ("ref".equals(w.to().port())
+                            && "animate.entry".equals(typeOf.getOrDefault(w.to().node(), ""))) {
+                        entryConnected = true;
+                    }
+                }
+                if (pure && anchor != null && !entryConnected) {
+                    rootDeclOf.put(n.uid(), anchor);
                 }
             }
         }
-        // 第二遍：纯流邻接——剔除声明通道边与「触及簇成员的边」（entry 的 condition/weight
-        // 链边同样剔除：entry 由簇放置定位，链边若入流会把链的期望拖向未放置的 entry@0）
+        // 第二遍：纯流邻接——剔除声明通道边与「触及簇成员的边」（簇成员由簇放置定位，
+        // 其边若入流会把簇邻居的期望拖向未放置的簇成员@0）
         Set<String> clusterMembers = new HashSet<>();
         clusterMembers.addAll(rootDeclOf.keySet());
-        clusterMembers.addAll(entryDeclOf.keySet());
         clusterMembers.addAll(declvarReadOf.keySet());
         clusterMembers.addAll(declvarWriteOf.keySet());
         clusterMembers.addAll(writeOnlyOf.keySet());
@@ -243,6 +252,13 @@ public final class GraphLayout {
                     typeOf.getOrDefault(w.to().node(), ""), w.to().port())
                     || io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(w.to().port())
                     || io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(w.from().port())) {
+                continue;
+            }
+            // root 声明表边（ref→root 的 animations/animation_controllers/particles/sounds）
+            // 是声明通道：不入流——声明扇不污染 root 的中位数投票；entry-connected ref 的
+            // 分层由 ref→entry 流边承担（entry→root 的 animate 边不在此列，保留入流）
+            if (rootDeclPorts.contains(w.to().port())
+                    && rootTypes.contains(typeOf.getOrDefault(w.to().node(), ""))) {
                 continue;
             }
             if (clusterMembers.contains(w.from().node()) || clusterMembers.contains(w.to().node())) {
@@ -260,12 +276,29 @@ public final class GraphLayout {
         producerWires.values().forEach(list -> list.sort(
                 Comparator.comparing((Wire w) -> w.from().node()).thenComparing(w -> w.from().port())));
 
-        // x 层：到汇最长路径（记忆化 DFS；环防御 → 0）
+        // exec 语句链：exec_out → exec_in 是「同列顺序」边——语句序列是脚本的自然
+        // 纵向形态，逐语句独占一列会把 initialize/pre_animation 拉成每列 1-2 节点的
+        // 水平细针（悦灵 65 条语句 × 300 ≈ 19500px 宽实证 2026-08-10）。分层时顺序边
+        // 代价为 0（链成员与链尾同层），槽口边（exec_out → body/initialize 等非 exec_in
+        // 端口）代价仍为 1（链尾在槽主左一列）；值边不变。
+        Set<String> seqPairs = new HashSet<>();      // "from\0to"：顺序边（0 代价）
+        Map<String, String> seqNext = new HashMap<>(); // 链遍历：exec_out → exec_in 唯一后继
+        Map<String, String> seqPrev = new HashMap<>();
+        for (Wire w : wires) {
+            if (!"exec_out".equals(w.from().port()) || !"exec_in".equals(w.to().port())) {
+                continue;
+            }
+            seqPairs.add(w.from().node() + "\0" + w.to().node());
+            seqNext.merge(w.from().node(), w.to().node(), (a, b) -> a.compareTo(b) <= 0 ? a : b);
+            seqPrev.merge(w.to().node(), w.from().node(), (a, b) -> a.compareTo(b) <= 0 ? a : b);
+        }
+
+        // x 层：到汇最长路径（记忆化 DFS；环防御 → 0；exec 顺序边 0 代价——语句链共列）
         Map<String, Integer> layers = new HashMap<>();
         int maxLayerValue = 0;
         for (NodeInstance node : nodes) {
             if (flowWiredNodes.contains(node.uid())) {
-                int layer = layerOf(node.uid(), flowConsumers, layers, new HashSet<>());
+                int layer = layerOf(node.uid(), flowConsumers, seqPairs, layers, new HashSet<>());
                 maxLayerValue = Math.max(maxLayerValue, layer);
             }
         }
@@ -288,22 +321,53 @@ public final class GraphLayout {
             dfsOrder(sink, producerWires, visited, order, seq);
         }
 
-        // 同层分组（层号升序 = 汇→源，确定性遍历），按 DFS 先序排定层内顺序；
-        // 纯声明/写入变量节点不进普通列（稍候插入共位子列）
+        // 语句链显式定序：链内成员排序键 = (链尾的 DFS 序, 链内序号)——DFS 先序沿
+        // producerWires 会按 uid 交错值链节点，不保证语句按执行顺序相邻；显式键让
+        // 链在共位列内按 exec 顺序自上而下、整条链占据连续行段（多链按链尾 DFS 序相接）。
+        Map<String, Integer> stmtPrimary = new HashMap<>();
+        Map<String, Integer> stmtIndex = new HashMap<>();
+        {
+            Set<String> chainNodes = new TreeSet<>();
+            chainNodes.addAll(seqNext.keySet());
+            chainNodes.addAll(seqPrev.keySet());
+            Set<String> chained = new HashSet<>();
+            for (String head : chainNodes) {
+                if (seqPrev.containsKey(head) || !chained.add(head)) {
+                    continue;
+                }
+                List<String> chain = new ArrayList<>();
+                String cur = head;
+                Set<String> guard = new HashSet<>();
+                while (cur != null && guard.add(cur)) {
+                    chain.add(cur);
+                    chained.add(cur);
+                    cur = seqNext.get(cur);
+                }
+                int primary = order.getOrDefault(chain.get(chain.size() - 1), Integer.MAX_VALUE);
+                for (int i = 0; i < chain.size(); i++) {
+                    stmtPrimary.put(chain.get(i), primary);
+                    stmtIndex.put(chain.get(i), i);
+                }
+            }
+        }
+
+        // 同层分组（层号升序 = 汇→源，确定性遍历），按 DFS 先序排定层内顺序
+        // （语句链成员按显式链序）；纯声明/写入变量节点不进普通列（稍候插入共位子列）
         Map<ColumnKey, List<NodeInstance>> byLayer = new TreeMap<>();
         Map<String, Integer> layerOfUid = new HashMap<>();
         for (NodeInstance node : nodes) {
+            int layer = flowWiredNodes.contains(node.uid()) ? layers.get(node.uid()) : isolatedLayer;
             if (declvarReadOf.containsKey(node.uid()) || declvarWriteOf.containsKey(node.uid())
-                    || writeOnlyOf.containsKey(node.uid()) || rootDeclOf.containsKey(node.uid())
-                    || entryDeclOf.containsKey(node.uid())) {
+                    || writeOnlyOf.containsKey(node.uid()) || rootDeclOf.containsKey(node.uid())) {
                 continue;
             }
-            int layer = flowWiredNodes.contains(node.uid()) ? layers.get(node.uid()) : isolatedLayer;
             layerOfUid.put(node.uid(), layer);
             byLayer.computeIfAbsent(new ColumnKey(layer, 0), k -> new ArrayList<>()).add(node);
         }
         byLayer.values().forEach(group -> group.sort(Comparator
-                .comparingInt((NodeInstance n) -> order.getOrDefault(n.uid(), Integer.MAX_VALUE))
+                .comparingInt((NodeInstance n) -> stmtPrimary.getOrDefault(n.uid(),
+                        order.getOrDefault(n.uid(), Integer.MAX_VALUE)))
+                .thenComparingInt(n -> stmtIndex.getOrDefault(n.uid(), -1))
                 .thenComparing(NodeInstance::uid)));
 
         // 纯叶（度数=1）→ 唯一邻居；唯一消费者/唯一生产者（去重后计，同两节点间多根线
@@ -394,15 +458,24 @@ public final class GraphLayout {
                     .put(e.getKey(), e.getValue());
         }
         relaxDistances(byLayer, flowConsumers, flowProducers, ys, soleHub, heights, nodes.size());
+        // 列内按欲望重排：列内顺序在松弛前由 DFS/链序定死，clamp 保序意味着「节点与其
+        // 邻居顺序不对应」的垂直错位被锁死（悦灵 x=1800 列实证：语句值链想要 y≈2500
+        // 被钉在 y≈9600，dy≈7000）。把每列**非语句链**节点占据的 y 槽位按「邻居中位数
+        // 欲望」重排后再松弛——语句链（执行序是语义）与槽位骨架不动。
+        reorderColumnsByDesire(byLayer, flowConsumers, flowProducers, ys, seqNext, seqPrev);
+        relaxDistances(byLayer, flowConsumers, flowProducers, ys, soleHub, heights, nodes.size());
+        // 第二趟：松弛后的 y 让欲望估值更准（首趟重排基于未收敛 y）
+        reorderColumnsByDesire(byLayer, flowConsumers, flowProducers, ys, seqNext, seqPrev);
+        relaxDistances(byLayer, flowConsumers, flowProducers, ys, soleHub, heights, nodes.size());
         improveLeafFans(byLayer, soleHub, flowConsumers, flowProducers, flowWires, ys, heights, nodes.size());
         centerHubsOnFanSpan(byLayer, soleConsumer, soleProducer, ys, flowWires, heights);
 
         // 声明共位放置（最后做：锚点 y 已收敛，簇/共位列直接按终态锚点居中；
         // 提前做会被「压紧列无松弛自由度」钉在种子的位——悦灵 ref.ac 列实证 dy≈3400）
-        if (!rootDeclOf.isEmpty() || !entryDeclOf.isEmpty()) {
+        if (!rootDeclOf.isEmpty()) {
             placeDeclCluster(byLayer, ys, consumers, producers, heights,
-                    layerOfUid, isolatedLayer, byUid, wires, typeOf,
-                    rootDeclOf, entryDeclOf, clusterReadOf, clusterWriteOf);
+                    layerOfUid, isolatedLayer, byUid,
+                    rootDeclOf, clusterReadOf, clusterWriteOf);
         }
         if (!genericReadOf.isEmpty()) {
             insertCoLocatedColumns(byLayer, ys, consumers, producers, heights,
@@ -494,11 +567,13 @@ public final class GraphLayout {
     }
 
     /**
-     * 共位组分块打包：按锚点 y 排序（uid 兜底），切成 ≤{@link #MAX_COLOCATED_PER_COLUMN} 的块，
-     * 每块以成员欲望值中位数居中并写回 ys——单块巨栈的尾端会远离锚点拉出长斜边
-     * （悦灵 45 变量 ref 实证 dy±1700）。anchorOnly=true 时欲望值只取锚点 y
-     * （声明簇成员的其他邻居此时还未播种，中位数会被默认值污染）。
-     * 返回按锚点 y 升序的列列表（调用方决定子列槽位）。
+     * 共位组打包：按锚点 y 排序（uid 兜底）后**逐成员贴自己锚点的 y** 顺序 clamp 堆叠——
+     * 「切块 + 块内锚点中位数居中」会让尾部成员远离锚点（悦灵 45 变量 ref 实证 dy±1700），
+     * 按 10 人切多列又把写变量摊成 7 个并列子列、writer 边 dx 拉到 900-2700（悦灵实证
+     * 2026-08-10）。锚点 y 有序时堆叠顺序 = 锚点顺序，每成员 dy 只剩堆叠漂移
+     * （锚点比堆叠更密时才有，实测很小）。
+     * anchorOnly=true 时欲望值只取锚点 y（声明簇成员的其他邻居此时还未播种，
+     * 中位数会被默认值污染）。返回单列（调用方决定子列槽位）。
      */
     private static List<List<NodeInstance>> packColocatedChunks(
             List<String> group, Map<String, String> anchorOf,
@@ -509,35 +584,20 @@ public final class GraphLayout {
                 .comparingDouble((String uid) -> yOf(ys, java.util.Objects.requireNonNull(
                         anchorOf.get(uid), "anchorOf 键集成员")))
                 .thenComparing(uid -> uid));
-        List<List<NodeInstance>> columns = new ArrayList<>();
-        for (int start = 0; start < group.size(); start += MAX_COLOCATED_PER_COLUMN) {
-            List<String> chunk = group.subList(start,
-                    Math.min(start + MAX_COLOCATED_PER_COLUMN, group.size()));
-            List<Double> desired = new ArrayList<>();
-            double chunkHeight = -NODE_MARGIN;
-            for (String uid : chunk) {
-                double d = anchorOnly ? Double.NaN : medianAllNeighborsY(uid, consumers, producers, ys);
-                if (Double.isNaN(d)) {
-                    d = yOf(ys, java.util.Objects.requireNonNull(
-                            anchorOf.get(uid), "anchorOf 键集成员"));
-                }
-                desired.add(d);
-                chunkHeight += heightOf(heights, uid) + NODE_MARGIN;
+        List<NodeInstance> column = new ArrayList<>();
+        double prevBottom = Double.NEGATIVE_INFINITY;
+        for (String uid : group) {
+            double d = anchorOnly ? Double.NaN : medianAllNeighborsY(uid, consumers, producers, ys);
+            if (Double.isNaN(d)) {
+                d = yOf(ys, java.util.Objects.requireNonNull(
+                        anchorOf.get(uid), "anchorOf 键集成员"));
             }
-            desired.sort(Comparator.naturalOrder());
-            double center = desired.get(desired.size() / 2);
-            double y = center - chunkHeight / 2;
-            List<NodeInstance> column = new ArrayList<>();
-            double prevBottom = Double.NEGATIVE_INFINITY;
-            for (String uid : chunk) {
-                double yy = Math.max(y, prevBottom + NODE_MARGIN);
-                ys.put(uid, yy);
-                prevBottom = yy + heightOf(heights, uid);
-                column.add(byUid.get(uid));
-            }
-            columns.add(column);
+            double yy = Math.max(d, prevBottom + NODE_MARGIN);
+            ys.put(uid, yy);
+            prevBottom = yy + heightOf(heights, uid);
+            column.add(byUid.get(uid));
         }
-        return columns;
+        return List.of(column);
     }
 
     /**
@@ -546,9 +606,8 @@ public final class GraphLayout {
      * ——同列 dx=0 且垂直相邻，边最短。整簇按**方形块**打包：列数 = √(总高/列距)，
      * 块宽与块高同阶——固定列高上限会把 65 个 ref.sound 堆成 3800px 巨柱拉出 ±1700
      * 竖向扇，按 root 高度切列又会爆出 17 列把簇顶出 30 列开外（dx=9000），两个方向
-     * 都有用户实机截图实证（2026-08-09/10）。
-     * ref 列内排序：无 entry 消费者的纯声明 ref（sound/particle）居左，有 entry 消费者的
-     * 居右贴近 entry 列。
+     * 都有用户实机截图实证（2026-08-09/10）。簇成员只剩纯声明 ref（无 entry 消费者）；
+     * 有 entry 消费者的 ref 与 animate.entry 本身都在流分层内（见 layout 的簇判定）。
      */
     private static void placeDeclCluster(
             Map<ColumnKey, List<NodeInstance>> byLayer,
@@ -557,8 +616,7 @@ public final class GraphLayout {
             Map<String, Float> heights,
             Map<String, Integer> layerOfUid, int isolatedLayer,
             Map<String, NodeInstance> byUid,
-            List<Wire> wires, Map<String, String> typeOf,
-            Map<String, String> rootDeclOf, Map<String, String> entryDeclOf,
+            Map<String, String> rootDeclOf,
             Map<String, String> clusterReadOf, Map<String, String> clusterWriteOf) {
         // refUid -> 其 declvar（读/写各一表，按变量节点 uid 排序确定）
         Map<String, List<String>> readsOfRef = new HashMap<>();
@@ -574,7 +632,6 @@ public final class GraphLayout {
 
         Set<String> roots = new TreeSet<>();
         roots.addAll(rootDeclOf.values());
-        roots.addAll(entryDeclOf.values());
         for (String rootUid : roots) {
             int layer = layerOfUid.getOrDefault(rootUid, isolatedLayer);
             int minSub = 0;
@@ -584,25 +641,15 @@ public final class GraphLayout {
                 }
             }
             double rootY = yOf(ys, rootUid);
-            // 有序单元序列：[纯声明 ref（sound/particle）][有 entry 消费者的 ref][entry]。
-            // 每个 ref 与其 declvar 同列（读上 / ref / 写下）。
-            Set<String> entryConnected = new HashSet<>();
-            for (Wire w : wires) {
-                if (rootDeclOf.containsKey(w.from().node())
-                        && "ref".equals(w.to().port())
-                        && "animate.entry".equals(typeOf.getOrDefault(w.to().node(), ""))) {
-                    entryConnected.add(w.from().node());
-                }
-            }
+            // 有序单元序列：纯声明 ref（无 entry 消费者——有 entry 消费者的 ref.ac/
+            // ref.animation 已留在流分层贴 entry）。每个 ref 与其 declvar 同列（读上 / ref / 写下）。
             List<String> refs = new ArrayList<>();
             for (Map.Entry<String, String> e : rootDeclOf.entrySet()) {
                 if (e.getValue().equals(rootUid)) {
                     refs.add(e.getKey());
                 }
             }
-            refs.sort(Comparator
-                    .comparing((String uid) -> entryConnected.contains(uid))
-                    .thenComparing(uid -> uid));
+            refs.sort(Comparator.naturalOrder());
             List<List<String>> units = new ArrayList<>();
             for (String refUid : refs) {
                 List<String> unit = new ArrayList<>();
@@ -610,16 +657,6 @@ public final class GraphLayout {
                 unit.add(refUid);
                 unit.addAll(writesOfRef.getOrDefault(refUid, List.of()));
                 units.add(unit);
-            }
-            List<String> entries = new ArrayList<>();
-            for (Map.Entry<String, String> e : entryDeclOf.entrySet()) {
-                if (e.getValue().equals(rootUid)) {
-                    entries.add(e.getKey());
-                }
-            }
-            entries.sort(Comparator.naturalOrder());
-            for (String entryUid : entries) {
-                units.add(List.of(entryUid));
             }
             // 方形块打包：列数 = √(总高/列距)——固定列高上限只会让块在一个方向上失控
             // （2600 上限时 65 个 sound 堆成 3800px 巨柱拉出 ±1700 竖扇；按 root 高度
@@ -654,7 +691,7 @@ public final class GraphLayout {
             if (!current.isEmpty()) {
                 columns.add(current);
             }
-            // 视觉序 [ref 列…][entry 列…][root]；每列以 root.y 居中顺序打包
+            // 视觉序 [ref 列…][root]；每列以 root.y 居中顺序打包
             int sub = minSub - columns.size();
             for (List<String> column : columns) {
                 double columnHeight = -CLUSTER_GAP;
@@ -1079,6 +1116,49 @@ public final class GraphLayout {
         group.addAll(suffix);
     }
 
+    /**
+     * 列内按欲望重排：每列内**非语句链**节点（不在 exec_out→exec_in 链上）保持其占据的
+     * y 槽位集合不变，槽位按升序重新分配给「按邻居中位数欲望 y 排序」的节点（uid 兜底
+     * 确定）。语句链成员不动（执行序是语义，不可被布局重排）；重排后需再跑一轮松弛
+     * 恢复节点间距。
+     */
+    private static void reorderColumnsByDesire(Map<ColumnKey, List<NodeInstance>> byLayer,
+                                               Map<String, List<String>> consumers,
+                                               Map<String, List<String>> producers,
+                                               Map<String, Double> ys,
+                                               Map<String, String> seqNext,
+                                               Map<String, String> seqPrev) {
+        for (List<NodeInstance> group : byLayer.values()) {
+            List<Integer> movable = new ArrayList<>();
+            for (int i = 0; i < group.size(); i++) {
+                String uid = group.get(i).uid();
+                if (!seqNext.containsKey(uid) && !seqPrev.containsKey(uid)) {
+                    movable.add(i);
+                }
+            }
+            if (movable.size() < 2) {
+                continue;
+            }
+            List<NodeInstance> nodes = new ArrayList<>();
+            List<Double> slots = new ArrayList<>();
+            for (int i : movable) {
+                nodes.add(group.get(i));
+                slots.add(yOf(ys, group.get(i).uid()));
+            }
+            nodes.sort(Comparator
+                    .comparingDouble((NodeInstance n) -> {
+                        double d = medianAllNeighborsY(n.uid(), consumers, producers, ys);
+                        return Double.isNaN(d) ? yOf(ys, n.uid()) : d;
+                    })
+                    .thenComparing(NodeInstance::uid));
+            slots.sort(Comparator.naturalOrder());
+            for (int k = 0; k < movable.size(); k++) {
+                group.set(movable.get(k), nodes.get(k));
+                ys.put(nodes.get(k).uid(), slots.get(k));
+            }
+        }
+    }
+
     /** 全图边长 Σ|Δy|（悬空端点按 y=0 计，与布局一致）。 */
     private static double totalEdgeLength(List<Wire> wires, Map<String, Double> ys) {
         double total = 0;
@@ -1213,6 +1293,7 @@ public final class GraphLayout {
     }
 
     private static int layerOf(String uid, Map<String, List<String>> consumers,
+                               Set<String> seqPairs,
                                Map<String, Integer> cache, Set<String> visiting) {
         Integer cached = cache.get(uid);
         if (cached != null) {
@@ -1223,7 +1304,9 @@ public final class GraphLayout {
         }
         int layer = 0;
         for (String consumer : consumers.getOrDefault(uid, List.of())) {
-            layer = Math.max(layer, layerOf(consumer, consumers, cache, visiting) + 1);
+            // exec 顺序边（exec_out→exec_in）0 代价：语句链成员与链尾同层共列
+            int cost = seqPairs.contains(uid + "\0" + consumer) ? 0 : 1;
+            layer = Math.max(layer, layerOf(consumer, consumers, seqPairs, cache, visiting) + cost);
         }
         visiting.remove(uid);
         cache.put(uid, layer);

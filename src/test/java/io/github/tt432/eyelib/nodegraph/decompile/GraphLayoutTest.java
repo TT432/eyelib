@@ -429,4 +429,79 @@ class GraphLayoutTest {
         assertTrue(maxDy <= 800,
                 "簇内最大垂直边距应 ≈ 块高一半（含松弛漂移余量）：maxDy=" + maxDy);
     }
+
+    @Test
+    void execChainStatementsShareOneColumnInOrder() {
+        // 语句链（exec_out→exec_in）纵向共列：逐语句独占一列会把脚本拉成每列 1-2 节点
+        // 的水平细针（悦灵 65 语句 × 300 ≈ 19500px 宽实证 2026-08-10）。链成员与链尾同层，
+        // 列内按执行顺序自上而下；值生产者正常分层在左。
+        NodeInstance root = NodeInstance.of("root", "entity.root", 0, 0);
+        NodeInstance s1 = NodeInstance.of("s1", "exec.set_var", 0, 0);
+        NodeInstance s2 = NodeInstance.of("s2", "exec.set_var", 0, 0);
+        NodeInstance s3 = NodeInstance.of("s3", "exec.set_var", 0, 0);
+        NodeInstance p = NodeInstance.of("p", "const.number", 0, 0);
+        List<NodeInstance> laid = GraphLayout.layout(
+                List.of(root, s1, s2, s3, p),
+                List.of(new Wire(new PortRef("s1", "exec_out"), new PortRef("s2", "exec_in")),
+                        new Wire(new PortRef("s2", "exec_out"), new PortRef("s3", "exec_in")),
+                        new Wire(new PortRef("s3", "exec_out"), new PortRef("root", "initialize")),
+                        new Wire(new PortRef("p", "out"), new PortRef("s1", "value"))));
+
+        float sx = find(laid, "s1").x();
+        assertEquals(sx, find(laid, "s2").x(), "链成员应同列");
+        assertEquals(sx, find(laid, "s3").x(), "链成员应同列");
+        assertEquals(sx + GraphLayout.X_SPACING, find(laid, "root").x(), "root 应在语句列右一列");
+        assertEquals(sx - GraphLayout.X_SPACING, find(laid, "p").x(), "值生产者应在语句列左一列");
+        assertTrue(find(laid, "s1").y() < find(laid, "s2").y()
+                        && find(laid, "s2").y() < find(laid, "s3").y(),
+                "语句应按执行顺序自上而下：s1=" + find(laid, "s1").y()
+                        + " s2=" + find(laid, "s2").y() + " s3=" + find(laid, "s3").y());
+    }
+
+    @Test
+    void entryConnectedRefFollowsEntryNotCluster() {
+        // 有 entry 消费者的 ref.ac 不进声明簇：留在流分层贴 entry（簇内从列顶堆叠实证
+        // ref.ac→entry dy≈2094）；entry 的 condition/weight 链入流——链尾在 entry 左侧，
+        // 无回流边（悦灵实证 op.binary 钉在 entry 右列 avgMan≈3074，2026-08-10）。
+        NodeInstance root = NodeInstance.of("root", "entity.root", 0, 0);
+        NodeInstance entry = NodeInstance.of("entry", "animate.entry", 0, 0);
+        NodeInstance ref = NodeInstance.of("ref", "ref.ac", 0, 0);
+        NodeInstance qc = NodeInstance.of("qc", "const.number", 0, 0);
+        List<NodeInstance> laid = GraphLayout.layout(
+                List.of(root, entry, ref, qc),
+                List.of(new Wire(new PortRef("entry", "animate"), new PortRef("root", "animate")),
+                        new Wire(new PortRef("ref", "ref"), new PortRef("entry", "ref")),
+                        new Wire(new PortRef("ref", "ref"), new PortRef("root", "animation_controllers")),
+                        new Wire(new PortRef("qc", "out"), new PortRef("entry", "weight"))));
+
+        float entryX = find(laid, "entry").x();
+        assertEquals(entryX + GraphLayout.X_SPACING, find(laid, "root").x(),
+                "entry 应在 root 左一列");
+        assertEquals(entryX - GraphLayout.X_SPACING, find(laid, "ref").x(),
+                "entry-connected ref 应在 entry 左一列（不进声明簇）");
+        assertEquals(entryX - GraphLayout.X_SPACING, find(laid, "qc").x(),
+                "weight 链尾应在 entry 左一列（无回流边）");
+        assertTrue(Math.abs(find(laid, "ref").y() - find(laid, "entry").y())
+                        <= 2 * GraphLayout.Y_SPACING,
+                "ref 应贴近 entry 高度：refY=" + find(laid, "ref").y()
+                        + " entryY=" + find(laid, "entry").y());
+    }
+
+    @Test
+    void writeOnlyVariableColocatesNearWriter() {
+        // 纯写入变量（全部边都是 set_var→variable.in）共位到写入方右侧相邻列并贴其 y——
+        // 按 10 人切块 + 中位数居中的旧共位会把写变量摊成多列、dy 拉到 1500（悦灵实证）。
+        NodeInstance root = NodeInstance.of("root", "entity.root", 0, 0);
+        NodeInstance s = NodeInstance.of("s", "exec.set_var", 0, 0);
+        NodeInstance v = NodeInstance.of("v", "variable", 0, 0);
+        List<NodeInstance> laid = GraphLayout.layout(
+                List.of(root, s, v),
+                List.of(new Wire(new PortRef("s", "exec_out"), new PortRef("root", "initialize")),
+                        new Wire(new PortRef("s", "target"), new PortRef("v", "in"))));
+
+        assertEquals(find(laid, "s").x() + GraphLayout.X_SPACING, find(laid, "v").x(),
+                "写变量应在写入方右侧相邻列");
+        assertTrue(Math.abs(find(laid, "v").y() - find(laid, "s").y()) <= GraphLayout.Y_SPACING,
+                "写变量应贴近写入方高度：vY=" + find(laid, "v").y() + " sY=" + find(laid, "s").y());
+    }
 }
