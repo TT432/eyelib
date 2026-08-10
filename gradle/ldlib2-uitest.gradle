@@ -1,0 +1,83 @@
+// LDLib2 in-client UI test harness - Gradle wiring（ModDevGradle 适配版，上游 NeoGradle 版的移植）。
+//
+// 上游原版：LDLib2 仓库 gradle/ldlib2-uitest.gradle（NeoGradle，runs 在项目根）。
+// 本适配：runs 容器在 legacyForge/neoForge 扩展下（MDG），其余语义一致。
+//
+// 用法：gradlew :<version>:runClient -PldTest=all
+// Inert unless -PldTest is given, so an ordinary runClient is completely unaffected。
+//
+// 注意：uitest 框架在 ldlib2 2.2.34（1.21.1）与 fork.2（1.20.1）起可用；
+// 26.1.2.33 尚无该框架（上游 26.1 分支停在 2.2.33），在 26.1 上跑 -PldTest 会因无报告而失败。
+
+// A captured local, not an ext property: inside a run/task closure `ext` resolves to the closure's
+// delegate rather than the project, so ldTestOutDir would not be visible where it is needed.
+def ldTestOutDir = layout.buildDirectory.dir('ldlib2-uitest').get().asFile.absolutePath
+
+if (project.hasProperty('ldTest')) {
+    // MDG：runs 是 ModDevExtension（legacyForge/neoForge）下的 NamedDomainObjectContainer。
+    def runsOwner = project.extensions.findByName('legacyForge') ?: project.extensions.findByName('neoForge')
+    if (runsOwner == null) {
+        throw new GradleException("ldlib2-uitest: 未找到 legacyForge/neoForge 扩展——apply 必须放在 MDG 配置块之后")
+    }
+    runsOwner.runs.matching { it.name == 'client' }.configureEach { run ->
+        run.systemProperty 'ldlib2.uitest.run', project.property('ldTest')
+        run.systemProperty 'ldlib2.uitest.out', ldTestOutDir
+        run.systemProperty 'ldlib2.uitest.exclude', project.findProperty('ldTestExclude') ?: ''
+        // Run-wide default; individual scenarios override it via ScenarioOptions#guiScale.
+        run.systemProperty 'ldlib2.uitest.guiScale', project.findProperty('ldTestGuiScale') ?: '2'
+        // Empty = maximise. Pass e.g. -PldTestWindow=1280x720 to pin a size for comparable captures.
+        run.systemProperty 'ldlib2.uitest.window', project.findProperty('ldTestWindow') ?: ''
+        run.systemProperty 'ldlib2.uitest.inputMode', project.findProperty('ldTestInputMode') ?: 'SYNTHETIC'
+        run.systemProperty 'ldlib2.uitest.watchdogSec', project.findProperty('ldTestWatchdogSec') ?: '90'
+        if (project.hasProperty('ldTestKeepOpen')) {
+            run.systemProperty 'ldlib2.uitest.keepOpen', 'true'
+        }
+    }
+}
+
+// Turns report.json into a build failure.
+//
+// Attached with finalizedBy so it runs even when runClient itself fails - a crash before the report
+// is written is exactly the case that must not pass silently, so a missing report is a failure too.
+// 配置缓存兼容：闭包内不得引用 project——全部值在配置期捕获。
+def ldTestEnabled = project.hasProperty('ldTest')
+tasks.register('verifyUiTest') {
+    group = 'verification'
+    description = 'Fails the build if the LDLib2 in-client UI test report contains failures.'
+    onlyIf { ldTestEnabled }
+    doLast {
+        def dir = new File(ldTestOutDir)
+        def reportFile = new File(dir, 'report.json')
+        if (!reportFile.exists()) {
+            throw new GradleException("LDLib2 UI test: no report at ${reportFile}.\n" +
+                    "The client crashed, never reached the runner, or -PldTest matched no scenarios.")
+        }
+        def report = new groovy.json.JsonSlurper().parse(reportFile)
+        logger.lifecycle("LDLib2 UI test: ${report.totals.passed}/${report.totals.scenarios} scenarios passed, " +
+                "${report.totals.checks - report.totals.checksFailed}/${report.totals.checks} checks passed " +
+                "in ${report.durationMs} ms")
+        report.scenarios.findAll { it.status != 'PASS' }.each { scenario ->
+            logger.error("FAILED scenario '${scenario.name}' (${scenario.className})")
+            if (scenario.error) logger.error("  ${scenario.error.type}: ${scenario.error.message}")
+            scenario.steps.findAll { it.status != 'PASS' }.each { step ->
+                logger.error("  step ${step.index} [${step.kind}] ${step.name} -> ${step.status}")
+                if (step.error) logger.error("    error: ${step.error.message}")
+                step.checks.findAll { !it.passed }.each { check ->
+                    logger.error("    check '${check.desc}'" +
+                            (check.expected != null ? " expected=${check.expected} actual=${check.actual}" : ""))
+                }
+                step.captures.each { logger.error("    shot: ${new File(dir, it.path)}") }
+            }
+        }
+        if (report.status != 'PASS') {
+            throw new GradleException("LDLib2 UI test ${report.status} - full report: ${reportFile}")
+        }
+    }
+}
+
+// MDG 在脚本求值后才创建 run task，runClient 无法按名直接查找——configureEach 惰性匹配。
+tasks.configureEach { task ->
+    if (task.name == 'runClient') {
+        task.finalizedBy 'verifyUiTest'
+    }
+}

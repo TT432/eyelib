@@ -75,12 +75,6 @@ public final class Ldlib2NodegraphEditor {
         DiagnosticsCenter.report("打开 " + name[0], name[0], openDiags);
 
         GraphEditorView editorView = new GraphEditorView();
-        //? if <26.1 {
-        // LOD 网格：替换默认 grid_bg 平铺纹理（缩小时摩尔纹/竖条纹，放大时糊成方块）。
-        // 26.1 纹理渲染走 gui_texture_renderer 注册表，不接线（保留默认网格）。
-        editorView.graphView.graphView.graphViewStyle(style ->
-                style.gridTexture(new LodGridTexture(style.gridSize())));
-        //?}
         Ldlib2Workbench workbench = Ldlib2Workbench.create(library, editorView,
                 () -> normalizeAndReopen(name[0], graph));
         editorView.loadGraph(graph, savedTag -> workbench.onPersisted(save(name, graph)));
