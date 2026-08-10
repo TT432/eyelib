@@ -49,14 +49,18 @@
   加载时 `EvmGraphTranslator.populateVariables` 登记；保存翻译按 `var.getUid()`
   读回（缺失 = VARIABLE）。会话内改名 uid 不变，作用域跟随；保存重开后由域重建。
 - **变量表面板**（`VariablesPanel`，工作台右侧标签页的「变量」页，默认活动页）:
-  - 表头行：名字 | 类型 | 作用域 | 默认值 | 引用数；顶部「+ 新建」与筛选框。
+  - 表头行：名字 | 类型 | 作用域 | 默认值 | 读 | 写；顶部「+ 新建」与筛选框。
   - 行内编辑：改名（`setName`，同内建检查器）、改型（直连
     `setDataTypeHandle`，同内建黑板属性面板语义）、改作用域（写侧表）、改默认值
     （initialization model `setValue`）。
   - 可声明类型收窄为 molang 值类型（FLOAT/INT/BOOL/STRING/OBJECT=ANY）——
     EXECUTION_FLOW/SLOT/VARIABLE 身份与 *_REF/COLOR 不是可存储的值
     （`EvmTypeHandles.allVariableDeclTypes`，黑板类型选择器同源）。
-  - 引用数 = 当前图绑定该声明的变量节点数。
+  - 读/写引用数（2026-08-10 起两列，闭包级）：写入边（→variable.in）计写、
+    读取边（variable.out→）计读。当前潜入图取活模型（编辑即时反映）；
+    本库其余图与本库 ref.ac 引用的 AC 图库取域快照按名统计——variable.* 是
+    实体级作用域，AC 图里的读写与实体库同源（hizljo 实证：AC transition 的读
+    在实体库内不可见，单库计数漏报）。
   - 面板跟随当前潜入图（每 tick 对比模型身份 + 变量数增量重建）。
   - 子图接口变量（INPUT/OUTPUT）在表内只读展示（接口编辑走既有子图机制），
     不显示作用域选择器。

@@ -17,17 +17,22 @@ import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.command.NodeCommands;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.command.VariableDeclarationCommands;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.gui.node.PortElement;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.graph.GraphModel;
+import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.PortModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.node.VariableNodeModel;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.variable.ModifierFlags;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.variable.VariableDeclarationModelBase;
 import com.lowdragmc.lowdraglib2.nodegraphtookit.model.variable.VariableScope;
 import dev.vfyjxf.taffy.style.FlexDirection;
+import io.github.tt432.eyelib.client.nodegraph.GraphLibraryManager;
 import io.github.tt432.eyelib.client.nodegraph.editor.ldlib2.EvmGraph;
 import io.github.tt432.eyelib.client.nodegraph.editor.ldlib2.EvmTypeHandles;
 import io.github.tt432.eyelib.client.nodegraph.editor.ldlib2.EvmValues;
+import io.github.tt432.eyelib.nodegraph.GraphData;
 import io.github.tt432.eyelib.nodegraph.InlineLiteral;
+import io.github.tt432.eyelib.nodegraph.NodeInstance;
 import io.github.tt432.eyelib.nodegraph.PortType;
 import io.github.tt432.eyelib.nodegraph.VariableDecl;
+import io.github.tt432.eyelib.nodegraph.Wire;
 import net.minecraft.network.chat.Component;
 import org.joml.Vector2f;
 import org.jspecify.annotations.Nullable;
@@ -114,7 +119,8 @@ final class VariablesPanel extends UIElement {
                 headerCell("类型", 62),
                 headerCell("作用域", 44),
                 headerCell("默认值", 56),
-                headerCell("引用", 22),
+                headerCell("读", 18),
+                headerCell("写", 18),
                 headerCell("", 16));
 
         table = new ScrollerView();
@@ -186,7 +192,19 @@ final class VariablesPanel extends UIElement {
                     .append(scopeOf(var)).append(' ')
                     .append(defaultText(var)).append(';');
         }
-        return System.identityHashCode(model) + "|" + key;
+        // 变量节点的连线数进键：接/拔线后引用计数列即时刷新
+        int varWires = 0;
+        for (var nodeModel : model.getNodeModels()) {
+            if (nodeModel instanceof VariableNodeModel variableNode) {
+                for (PortModel port : variableNode.getInputPorts()) {
+                    varWires += model.getWiresForPort(port).size();
+                }
+                for (PortModel port : variableNode.getOutputPorts()) {
+                    varWires += model.getWiresForPort(port).size();
+                }
+            }
+        }
+        return System.identityHashCode(model) + "|" + key + "|w" + varWires;
     }
 
     /** 直调 rebuild 后同步脏键（见 {@link #computeDirtyKey} 注释）。 */
@@ -224,6 +242,116 @@ final class VariablesPanel extends UIElement {
             return VariableDecl.Scope.VARIABLE;
         }
         return ctx.variableScopes.getOrDefault(var.getUid(), VariableDecl.Scope.VARIABLE);
+    }
+
+    /**
+     * 读/写引用计数（返回 [读, 写]）：写入边（→variable.in / 活模型 INPUT 口）计写、
+     * 读取边（variable.out→ / 活模型 OUTPUT 口）计读。当前潜入图取活模型（编辑即时反映）；
+     * 同项目其余图库取域快照按名统计——variable.* 是实体级作用域，AC 图库里的读写与实体库
+     * 同源（hizljo 实证 2026-08-09：AC transition 的读在实体库内不可见，单库计数会漏报）。
+     */
+    private int[] countReadWrite(GraphModel model, VariableDeclarationModelBase var) {
+        int reads = 0;
+        int writes = 0;
+        for (var nodeModel : model.getNodeModels()) {
+            if (!(nodeModel instanceof VariableNodeModel variableNode)
+                    || variableNode.getVariableDeclarationModel() != var) {
+                continue;
+            }
+            for (PortModel port : variableNode.getInputPorts()) {
+                writes += model.getWiresForPort(port).size();
+            }
+            for (PortModel port : variableNode.getOutputPorts()) {
+                reads += model.getWiresForPort(port).size();
+            }
+        }
+        EvmGraph.LibraryContext ctx = currentContext();
+        if (ctx == null) {
+            return new int[]{reads, writes};
+        }
+        String key = ctx.libraryKey;
+        if (key == null) {
+            return new int[]{reads, writes};
+        }
+        io.github.tt432.eyelib.nodegraph.GraphLibrary currentLib = GraphLibraryManager.INSTANCE.get(key);
+        if (currentLib == null) {
+            return new int[]{reads, writes};
+        }
+        // 当前潜入图已由活模型统计，域侧跳过；库内其余图（子图）照常计入
+        var view = editorView.getCurrentView();
+        String displayedGraph = ctx.namesBySubgraphUid.get(model.getUid());
+        if (displayedGraph == null && view != null && view.getGraph() instanceof EvmGraph graph) {
+            displayedGraph = graph.mainGraphName;
+        }
+        for (var ge : currentLib.graphs().entrySet()) {
+            if (ge.getKey().equals(displayedGraph)) {
+                continue;
+            }
+            int[] rw = countReadWriteInGraph(ge.getValue(), var.getName());
+            reads += rw[0];
+            writes += rw[1];
+        }
+        // 闭包级：本库 ref.ac 引用的 AC 图库（按键直查，其次按 ac.root identifier 扫描）——
+        // variable.* 是实体级作用域，AC 图里的读写与实体库同源（hizljo 实证 2026-08-09：
+        // AC transition 的读在实体库内不可见，单库计数会漏报）
+        java.util.Set<String> acIds = new java.util.LinkedHashSet<>();
+        for (GraphData data : currentLib.graphs().values()) {
+            for (NodeInstance n : data.nodes()) {
+                if ("ref.ac".equals(n.type()) && n.options().containsKey("identifier")) {
+                    acIds.add(n.options().get("identifier").getAsString());
+                }
+            }
+        }
+        for (String acId : acIds) {
+            io.github.tt432.eyelib.nodegraph.GraphLibrary acLib = GraphLibraryManager.INSTANCE.get(acId);
+            if (acLib == null) {
+                acLib = findAcLibraryByIdentifier(acId);
+            }
+            if (acLib == null) {
+                continue;
+            }
+            for (GraphData data : acLib.graphs().values()) {
+                int[] rw = countReadWriteInGraph(data, var.getName());
+                reads += rw[0];
+                writes += rw[1];
+            }
+        }
+        return new int[]{reads, writes};
+    }
+
+    /** 按 ac.root 的 identifier 选项在注册表里找 AC 图库（键不等于 id 时的回落）。 */
+    private static io.github.tt432.eyelib.nodegraph.@Nullable GraphLibrary findAcLibraryByIdentifier(String acId) {
+        for (var e : GraphLibraryManager.INSTANCE.snapshot().all().entrySet()) {
+            for (GraphData data : e.getValue().graphs().values()) {
+                for (NodeInstance n : data.nodes()) {
+                    if ("ac.root".equals(n.type()) && n.options().containsKey("identifier")
+                            && acId.equals(n.options().get("identifier").getAsString())) {
+                        return e.getValue();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /** 域图内按名统计 variable 节点的读/写边（in 口入边=写，out 口出边=读）。 */
+    private static int[] countReadWriteInGraph(GraphData data, String name) {
+        int reads = 0;
+        int writes = 0;
+        for (NodeInstance n : data.nodes()) {
+            if (!"variable".equals(n.type()) || !n.options().containsKey("name")
+                    || !name.equals(n.options().get("name").getAsString())) {
+                continue;
+            }
+            for (Wire w : data.wires()) {
+                if (w.to().node().equals(n.uid()) && "in".equals(w.to().port())) {
+                    writes++;
+                } else if (w.from().node().equals(n.uid()) && "out".equals(w.from().port())) {
+                    reads++;
+                }
+            }
+        }
+        return new int[]{reads, writes};
     }
 
     // ==================== 行构建 ====================
@@ -313,16 +441,12 @@ final class VariablesPanel extends UIElement {
         });
         defaultField.layout(layout -> layout.width(56).heightPercent(100));
 
-        // 引用数（绑定该声明的变量节点）
-        int refs = 0;
-        for (var nodeModel : model.getNodeModels()) {
-            if (nodeModel instanceof VariableNodeModel variableNode
-                    && variableNode.getVariableDeclarationModel() == var) {
-                refs++;
-            }
-        }
-        UIElement refsLabel = WorkbenchWidgets.textLine(String.valueOf(refs), WorkbenchColors.DIM)
-                .layout(layout -> layout.width(22).heightPercent(100));
+        // 引用数（读/写分列，闭包级统计，见 countReadWrite）
+        int[] refs = countReadWrite(model, var);
+        UIElement readsLabel = WorkbenchWidgets.textLine(String.valueOf(refs[0]), WorkbenchColors.DIM)
+                .layout(layout -> layout.width(18).heightPercent(100));
+        UIElement writesLabel = WorkbenchWidgets.textLine(String.valueOf(refs[1]), WorkbenchColors.DIM)
+                .layout(layout -> layout.width(18).heightPercent(100));
 
         // 点击行 → 图上高亮该变量的全部引用节点（用内建选择态呈现）
         row.addEventListener(com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.MOUSE_DOWN, event -> {
@@ -342,7 +466,7 @@ final class VariablesPanel extends UIElement {
             }
         });
 
-        row.addChildren(nameCell, type, scopeCell, defaultField, refsLabel);
+        row.addChildren(nameCell, type, scopeCell, defaultField, readsLabel, writesLabel);
         if (!interfaceVar) {
             Button delete = new Button();
             delete.setText(Component.literal("×"));

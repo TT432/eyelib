@@ -60,6 +60,12 @@ public class EvmGraph extends Graph {
          * 登记，{@code EvmNodeBase#currentInstanceView} 合并进端口视图，保存时回写。
          */
         public final Map<UUID, com.google.gson.JsonElement> varRefs = new LinkedHashMap<>();
+        /**
+         * 当前库在 {@code GraphLibraryManager} 的键（含项目前缀，如 allay/allay）：
+         * 变量表读/写引用计数做闭包级统计时按前缀找同项目的 AC 图库（规格
+         * nodegraph-variable-table §2.4）。打开编辑器时由 Ldlib2NodegraphEditor 写入。
+         */
+        public @Nullable String libraryKey;
     }
 
     /** 所属库种类（保存时回写 GraphLibrary.kind）。 */

@@ -69,6 +69,9 @@ public final class Ldlib2NodegraphEditor {
 
         List<Diagnostic> openDiags = new ArrayList<>(GraphValidator.validate(library, io.github.tt432.eyelib.client.nodegraph.MissingRefCheck.INSTANCE));
         EvmGraph graph = EvmGraphTranslator.toGraph(library, openDiags);
+        if (graph.context() != null) {
+            graph.context().libraryKey = name[0];
+        }
         DiagnosticsCenter.report("打开 " + name[0], name[0], openDiags);
 
         GraphEditorView editorView = new GraphEditorView();

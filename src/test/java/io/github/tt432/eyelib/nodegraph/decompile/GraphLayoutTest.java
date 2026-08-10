@@ -402,4 +402,31 @@ class GraphLayoutTest {
         assertTrue(find(laid, "sink").x() > wv.x(), "sink 应在写 declvar 右侧");
         assertTrue(find(laid, "producer").x() < rv.x(), "producer 应在读 declvar 左侧");
     }
+
+    @Test
+    void declClusterPacksGridRelativeToRootHeight() {
+        // 30 个 ref.sound 扇入 entity.root.sounds：方形块打包（列数 = √(总高/列距)）——
+        // 30×120=3600 总高 → 3 列 × ~1200，块宽 3×列距与块高同阶；单列巨柱（dy≈1800）
+        // 与按 root 高度切列（dx 爆 30 列）两个方向都被实机截图证伪（2026-08-09/10）。
+        List<NodeInstance> nodes = new java.util.ArrayList<>();
+        List<Wire> wires = new java.util.ArrayList<>();
+        nodes.add(NodeInstance.of("root", "entity.root", 0, 0));
+        for (int i = 0; i < 30; i++) {
+            nodes.add(NodeInstance.of("snd" + i, "ref.sound", 0, 0));
+            wires.add(new Wire(new PortRef("snd" + i, "ref"), new PortRef("root", "sounds")));
+        }
+        List<NodeInstance> laid = GraphLayout.layout(nodes, wires);
+        NodeInstance root = find(laid, "root");
+        java.util.Set<Integer> columns = new java.util.HashSet<>();
+        double maxDy = 0;
+        for (int i = 0; i < 30; i++) {
+            NodeInstance snd = find(laid, "snd" + i);
+            columns.add((int) snd.x());
+            maxDy = Math.max(maxDy, Math.abs(snd.y() - root.y()));
+        }
+        assertTrue(columns.size() >= 3,
+                "簇应切成方形块多列：列数=" + columns.size());
+        assertTrue(maxDy <= 800,
+                "簇内最大垂直边距应 ≈ 块高一半（含松弛漂移余量）：maxDy=" + maxDy);
+    }
 }

@@ -49,6 +49,13 @@ import java.util.TreeSet;
  *       中心（clamp 不撞列内邻居）。松弛的中位数投票把 hub 停在 L1 最优点（偏向成员密集侧），
  *       扇尾成员的边距可达扇跨全长；移到跨中把扇的最大边压到跨度一半，牺牲的 Σ 很小
  *       （hub 移动只影响其自身边）。扇跨度本身由成员的链锚定，不可压缩。</li>
+ *   <li><b>声明通道最后共位</b>（2026-08-10 重设计）：声明边（var-ref read:/write:、
+ *       variable.in 写入、ref/entry→root 声明端口，以及一切触及簇成员的边）<b>不进流邻接</b>
+ *       ——分层/播种/松弛/扇机器全部只看流边，声明节点的 y 不污染流节点的中位数投票。
+ *       簇与共位列在全部流布局收敛后按锚点终态 y 一次性放置（过早放置会被「压紧列无
+ *       松弛自由度」钉在种子的位——悦灵 ref.ac 列实证 dy≈3400）。root 声明簇按
+ *       <b>方形块</b>打包（列数 = √(总高/列距)，块宽与块高同阶——固定列高上限堆巨柱拉
+ *       竖扇、按 root 高度切列又把簇顶出几十列，两个方向都有实机截图实证）。</li>
  * </ol>
  * 扇居中平移可能产生负 y，出口处统一平移归一化（全图最小 y = 0，不改变任何边长）。
  * 环只做防御（层按 0 计），环本身由 GraphValidator.CYCLE 报告。
@@ -82,8 +89,6 @@ public final class GraphLayout {
     private static final int MAX_FAN_LEAVES_PER_COLUMN = 16;
     /** 共位子列成员上限：超过则切成多个并列子列（每块以自身锚点中位数居中）。 */
     private static final int MAX_COLOCATED_PER_COLUMN = 10;
-    /** 声明簇同列混排的列高上限：超过则切下一列（防巨栈尾端远离锚点）。 */
-    private static final float MAX_CLUSTER_COLUMN_HEIGHT = 2600f;
     /** 声明簇列内间距：声明芯片（variable/ref 小节点）不需要 48px 呼吸区，紧排防纵漂。 */
     private static final float CLUSTER_GAP = 10f;
     /** 极小极大定位的最小扇规模：小于此数的扇 hub 交给中位数投票即可。 */
@@ -135,26 +140,41 @@ public final class GraphLayout {
                 // set_var.target → variable.in（非 var-ref 的纯写入边）
                 writeVarWriters.computeIfAbsent(w.to().node(), k -> new TreeSet<>()).add(w.from().node());
             }
-            if (!writeInput && !varRefEdge) {
-                flowConsumers.computeIfAbsent(w.from().node(), k -> new ArrayList<>()).add(w.to().node());
-                flowWiredNodes.add(w.from().node());
-                flowWiredNodes.add(w.to().node());
-            }
         }
-        // 纯声明/写入变量节点（全部边都是非流通道）：不进流分层，稍后共位插入——
-        // declvarReadOf/declvarWriteOf：带 var-ref 边 → 读贴主 ref 左侧、写贴右侧；
-        // writeOnlyOf：仅 set_var 写入边 → 贴写入方右侧（左读右写的空间表达）
+        // 纯声明/写入变量节点（全部边都是声明通道）：不进流分层，稍后共位插入——
+        // 纯度按全量邻接直判（declvar=全部线都是 var-ref 边；writeOnly=全部线都是写入边）
         Map<String, String> declvarReadOf = new HashMap<>(); // varUid -> 主 ref uid（字典序最小，确定性）
         Map<String, String> declvarWriteOf = new HashMap<>();
         for (Map.Entry<String, Set<String>> e : declvarRefs.entrySet()) {
-            if (!flowWiredNodes.contains(e.getKey())) {
+            boolean pure = true;
+            for (Wire w : wires) {
+                boolean touches = w.from().node().equals(e.getKey()) || w.to().node().equals(e.getKey());
+                if (touches && !io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(w.from().port())
+                        && !io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(w.to().port())) {
+                    pure = false;
+                    break;
+                }
+            }
+            if (pure) {
                 (declvarWriteVars.contains(e.getKey()) ? declvarWriteOf : declvarReadOf)
                         .put(e.getKey(), e.getValue().iterator().next());
             }
         }
         Map<String, String> writeOnlyOf = new HashMap<>(); // varUid -> 主写入方 uid
         for (Map.Entry<String, Set<String>> e : writeVarWriters.entrySet()) {
-            if (!flowWiredNodes.contains(e.getKey()) && !declvarRefs.containsKey(e.getKey())) {
+            if (declvarRefs.containsKey(e.getKey())) {
+                continue;
+            }
+            boolean pure = true;
+            for (Wire w : wires) {
+                boolean touches = w.from().node().equals(e.getKey()) || w.to().node().equals(e.getKey());
+                if (touches && !io.github.tt432.eyelib.nodegraph.NodeTypes.isVariableWriteInput(
+                        typeOf.getOrDefault(w.to().node(), ""), w.to().port())) {
+                    pure = false;
+                    break;
+                }
+            }
+            if (pure) {
                 writeOnlyOf.put(e.getKey(), e.getValue().iterator().next());
             }
         }
@@ -208,6 +228,32 @@ public final class GraphLayout {
                 }
             }
         }
+        // 第二遍：纯流邻接——剔除声明通道边与「触及簇成员的边」（entry 的 condition/weight
+        // 链边同样剔除：entry 由簇放置定位，链边若入流会把链的期望拖向未放置的 entry@0）
+        Set<String> clusterMembers = new HashSet<>();
+        clusterMembers.addAll(rootDeclOf.keySet());
+        clusterMembers.addAll(entryDeclOf.keySet());
+        clusterMembers.addAll(declvarReadOf.keySet());
+        clusterMembers.addAll(declvarWriteOf.keySet());
+        clusterMembers.addAll(writeOnlyOf.keySet());
+        Map<String, List<String>> flowProducers = new HashMap<>();
+        List<Wire> flowWires = new ArrayList<>();
+        for (Wire w : wires) {
+            if (io.github.tt432.eyelib.nodegraph.NodeTypes.isVariableWriteInput(
+                    typeOf.getOrDefault(w.to().node(), ""), w.to().port())
+                    || io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(w.to().port())
+                    || io.github.tt432.eyelib.nodegraph.NodeTypes.isVarRefPort(w.from().port())) {
+                continue;
+            }
+            if (clusterMembers.contains(w.from().node()) || clusterMembers.contains(w.to().node())) {
+                continue;
+            }
+            flowConsumers.computeIfAbsent(w.from().node(), k -> new ArrayList<>()).add(w.to().node());
+            flowProducers.computeIfAbsent(w.to().node(), k -> new ArrayList<>()).add(w.from().node());
+            flowWiredNodes.add(w.from().node());
+            flowWiredNodes.add(w.to().node());
+            flowWires.add(w);
+        }
         consumers.values().forEach(list -> list.sort(Comparator.naturalOrder()));
         producers.values().forEach(list -> list.sort(Comparator.naturalOrder()));
         flowConsumers.values().forEach(list -> list.sort(Comparator.naturalOrder()));
@@ -260,28 +306,27 @@ public final class GraphLayout {
                 .comparingInt((NodeInstance n) -> order.getOrDefault(n.uid(), Integer.MAX_VALUE))
                 .thenComparing(NodeInstance::uid)));
 
-        // 纯叶（度数=1）→ 唯一邻居：图固定，布局期间不变，算一次供松弛与槽位交换共用
+        // 纯叶（度数=1）→ 唯一邻居；唯一消费者/唯一生产者（去重后计，同两节点间多根线
+        // 会产生重复项，必须 distinct）。全部只按**流边**计——声明扇（65×ref.sound→root）
+        // 不参与扇机器（分列/极小极大），其放置由簇打包全权负责
         Map<String, String> soleHub = new HashMap<>();
         Map<String, Integer> degree = new HashMap<>();
-        for (Wire w : wires) {
+        for (Wire w : flowWires) {
             degree.merge(w.from().node(), 1, Integer::sum);
             degree.merge(w.to().node(), 1, Integer::sum);
             soleHub.put(w.from().node(), w.to().node());
             soleHub.put(w.to().node(), w.from().node());
         }
         soleHub.entrySet().removeIf(e -> degree.getOrDefault(e.getKey(), 0) != 1);
-
-        // 唯一消费者/唯一生产者（去重后计；同两节点间多根线会产生重复项，必须 distinct）：
-        // 巨扇分列与 hub 极小极大定位用
         Map<String, String> soleConsumer = new HashMap<>();
         Map<String, String> soleProducer = new HashMap<>();
-        for (Map.Entry<String, List<String>> e : consumers.entrySet()) {
+        for (Map.Entry<String, List<String>> e : flowConsumers.entrySet()) {
             List<String> distinct = e.getValue().stream().distinct().toList();
             if (distinct.size() == 1) {
                 soleConsumer.put(e.getKey(), distinct.get(0));
             }
         }
-        for (Map.Entry<String, List<String>> e : producers.entrySet()) {
+        for (Map.Entry<String, List<String>> e : flowProducers.entrySet()) {
             List<String> distinct = e.getValue().stream().distinct().toList();
             if (distinct.size() == 1) {
                 soleProducer.put(e.getKey(), distinct.get(0));
@@ -320,7 +365,7 @@ public final class GraphLayout {
                 for (int i = 0; i < group.size(); i++) {
                     NodeInstance n = group.get(i);
                     double current = yOf(ys, n.uid());
-                    double desired = medianAllNeighborsY(n.uid(), consumers, producers, ys);
+                    double desired = medianAllNeighborsY(n.uid(), flowConsumers, flowProducers, ys);
                     double seeded = Double.isNaN(desired) ? current
                             : Math.max(desired, prevBottom + NODE_MARGIN);
                     ys.put(n.uid(), seeded);
@@ -348,6 +393,12 @@ public final class GraphLayout {
             (rootDeclOf.containsKey(e.getValue()) ? clusterWriteOf : genericWriteOf)
                     .put(e.getKey(), e.getValue());
         }
+        relaxDistances(byLayer, flowConsumers, flowProducers, ys, soleHub, heights, nodes.size());
+        improveLeafFans(byLayer, soleHub, flowConsumers, flowProducers, flowWires, ys, heights, nodes.size());
+        centerHubsOnFanSpan(byLayer, soleConsumer, soleProducer, ys, flowWires, heights);
+
+        // 声明共位放置（最后做：锚点 y 已收敛，簇/共位列直接按终态锚点居中；
+        // 提前做会被「压紧列无松弛自由度」钉在种子的位——悦灵 ref.ac 列实证 dy≈3400）
         if (!rootDeclOf.isEmpty() || !entryDeclOf.isEmpty()) {
             placeDeclCluster(byLayer, ys, consumers, producers, heights,
                     layerOfUid, isolatedLayer, byUid, wires, typeOf,
@@ -365,10 +416,6 @@ public final class GraphLayout {
             insertCoLocatedColumns(byLayer, ys, consumers, producers, heights,
                 writeOnlyOf, layerOfUid, isolatedLayer, byUid, 1);
         }
-
-        relaxDistances(byLayer, consumers, producers, ys, soleHub, heights, nodes.size());
-        improveLeafFans(byLayer, soleHub, consumers, producers, wires, ys, heights, nodes.size());
-        centerHubsOnFanSpan(byLayer, soleConsumer, soleProducer, ys, wires, heights);
         normalizeY(ys);
 
         // 列 x 槽位：从右向左按（层号升序、层内 sub 降序）逐个占槽。无分列时与
@@ -399,8 +446,7 @@ public final class GraphLayout {
         return out;
     }
 
-    /** 列键：layer = 到汇最长路径层；sub = 巨扇分列的子列偏移（0=主列，负=左，正=右）。 */
-    private record ColumnKey(int layer, int sub) implements Comparable<ColumnKey> {
+    /** 列键：layer = 到汇最长路径层；sub = 巨扇分列的子列偏移（0=主列，负=左，正=右）。 */    private record ColumnKey(int layer, int sub) implements Comparable<ColumnKey> {
         @Override
         public int compareTo(ColumnKey other) {
             int c = Integer.compare(layer, other.layer);
@@ -497,9 +543,12 @@ public final class GraphLayout {
     /**
      * root 声明簇协调放置：把一个 root（entity.root/rc.root）的全部声明成员摆到其左侧
      * 连续子列。ref 与其 declvar **同列混排**（读 declvar 在上、ref 居中、写 declvar 在下）
-     * ——同列 dx=0 且垂直相邻，边最短；每列按累计高度封顶
-     * （{@link #MAX_CLUSTER_COLUMN_HEIGHT}）防巨栈。ref 列内排序：无 entry 消费者的
-     * 纯声明 ref（sound/particle）居左，有 entry 消费者的居右贴近 entry 列。
+     * ——同列 dx=0 且垂直相邻，边最短。整簇按**方形块**打包：列数 = √(总高/列距)，
+     * 块宽与块高同阶——固定列高上限会把 65 个 ref.sound 堆成 3800px 巨柱拉出 ±1700
+     * 竖向扇，按 root 高度切列又会爆出 17 列把簇顶出 30 列开外（dx=9000），两个方向
+     * 都有用户实机截图实证（2026-08-09/10）。
+     * ref 列内排序：无 entry 消费者的纯声明 ref（sound/particle）居左，有 entry 消费者的
+     * 居右贴近 entry 列。
      */
     private static void placeDeclCluster(
             Map<ColumnKey, List<NodeInstance>> byLayer,
@@ -535,15 +584,8 @@ public final class GraphLayout {
                 }
             }
             double rootY = yOf(ys, rootUid);
-            // ref 列：每个 ref 与其 declvar 同列（读上 / ref / 写下），累计高度封顶切列
-            List<String> refs = new ArrayList<>();
-            for (Map.Entry<String, String> e : rootDeclOf.entrySet()) {
-                if (e.getValue().equals(rootUid)) {
-                    refs.add(e.getKey());
-                }
-            }
-            // 有 entry 消费者的 ref 排在最右（贴近 entry 列），纯声明 ref（sound/particle）
-            // 居左——ref↔entry 边与 ref→root 边不可兼得，entry 边跨列会产生反向穿插更碍眼
+            // 有序单元序列：[纯声明 ref（sound/particle）][有 entry 消费者的 ref][entry]。
+            // 每个 ref 与其 declvar 同列（读上 / ref / 写下）。
             Set<String> entryConnected = new HashSet<>();
             for (Wire w : wires) {
                 if (rootDeclOf.containsKey(w.from().node())
@@ -552,34 +594,23 @@ public final class GraphLayout {
                     entryConnected.add(w.from().node());
                 }
             }
+            List<String> refs = new ArrayList<>();
+            for (Map.Entry<String, String> e : rootDeclOf.entrySet()) {
+                if (e.getValue().equals(rootUid)) {
+                    refs.add(e.getKey());
+                }
+            }
             refs.sort(Comparator
                     .comparing((String uid) -> entryConnected.contains(uid))
                     .thenComparing(uid -> uid));
-            List<List<String>> refColumns = new ArrayList<>();
-            List<String> current = new ArrayList<>();
-            double currentHeight = -CLUSTER_GAP;
+            List<List<String>> units = new ArrayList<>();
             for (String refUid : refs) {
-                List<String> items = new ArrayList<>();
-                items.addAll(readsOfRef.getOrDefault(refUid, List.of()));
-                items.add(refUid);
-                items.addAll(writesOfRef.getOrDefault(refUid, List.of()));
-                double itemsHeight = -CLUSTER_GAP;
-                for (String uid : items) {
-                    itemsHeight += heightOf(heights, uid) + CLUSTER_GAP;
-                }
-                if (!current.isEmpty() && currentHeight + CLUSTER_GAP + itemsHeight
-                        > MAX_CLUSTER_COLUMN_HEIGHT) {
-                    refColumns.add(current);
-                    current = new ArrayList<>();
-                    currentHeight = -CLUSTER_GAP;
-                }
-                current.addAll(items);
-                currentHeight += CLUSTER_GAP + itemsHeight;
+                List<String> unit = new ArrayList<>();
+                unit.addAll(readsOfRef.getOrDefault(refUid, List.of()));
+                unit.add(refUid);
+                unit.addAll(writesOfRef.getOrDefault(refUid, List.of()));
+                units.add(unit);
             }
-            if (!current.isEmpty()) {
-                refColumns.add(current);
-            }
-            // entry 列：同高度上限
             List<String> entries = new ArrayList<>();
             for (Map.Entry<String, String> e : entryDeclOf.entrySet()) {
                 if (e.getValue().equals(rootUid)) {
@@ -587,28 +618,45 @@ public final class GraphLayout {
                 }
             }
             entries.sort(Comparator.naturalOrder());
-            List<List<String>> entryColumns = new ArrayList<>();
-            current = new ArrayList<>();
-            currentHeight = -CLUSTER_GAP;
-            for (String uid : entries) {
-                double h = heightOf(heights, uid);
-                if (!current.isEmpty() && currentHeight + CLUSTER_GAP + h > MAX_CLUSTER_COLUMN_HEIGHT) {
-                    entryColumns.add(current);
+            for (String entryUid : entries) {
+                units.add(List.of(entryUid));
+            }
+            // 方形块打包：列数 = √(总高/列距)——固定列高上限只会让块在一个方向上失控
+            // （2600 上限时 65 个 sound 堆成 3800px 巨柱拉出 ±1700 竖扇；按 root 高度
+            // 切列则爆出 17 列把 ref.animation 顶到 30 列外 dx=9000，用户实机截图实证
+            // 2026-08-09）。方形块让 dx 与 dy 同阶：块宽 = cols×列距、块高 = 总高/cols。
+            double totalHeight = -CLUSTER_GAP;
+            for (List<String> unit : units) {
+                for (String uid : unit) {
+                    totalHeight += heightOf(heights, uid) + CLUSTER_GAP;
+                }
+            }
+            int cols = units.isEmpty() ? 0 : (int) Math.max(1,
+                    Math.round(Math.sqrt(totalHeight / X_SPACING)));
+            double columnTarget = cols <= 1 ? Double.MAX_VALUE : totalHeight / cols;
+            List<List<String>> columns = new ArrayList<>();
+            List<String> current = new ArrayList<>();
+            double currentHeight = -CLUSTER_GAP;
+            for (List<String> unit : units) {
+                double unitHeight = -CLUSTER_GAP;
+                for (String uid : unit) {
+                    unitHeight += heightOf(heights, uid) + CLUSTER_GAP;
+                }
+                if (!current.isEmpty() && columns.size() + 1 < cols
+                        && currentHeight + CLUSTER_GAP + unitHeight > columnTarget) {
+                    columns.add(current);
                     current = new ArrayList<>();
                     currentHeight = -CLUSTER_GAP;
                 }
-                current.add(uid);
-                currentHeight += CLUSTER_GAP + h;
+                current.addAll(unit);
+                currentHeight += CLUSTER_GAP + unitHeight;
             }
             if (!current.isEmpty()) {
-                entryColumns.add(current);
+                columns.add(current);
             }
             // 视觉序 [ref 列…][entry 列…][root]；每列以 root.y 居中顺序打包
-            List<List<String>> visual = new ArrayList<>();
-            visual.addAll(refColumns);
-            visual.addAll(entryColumns);
-            int sub = minSub - visual.size();
-            for (List<String> column : visual) {
+            int sub = minSub - columns.size();
+            for (List<String> column : columns) {
                 double columnHeight = -CLUSTER_GAP;
                 for (String uid : column) {
                     columnHeight += heightOf(heights, uid) + CLUSTER_GAP;
