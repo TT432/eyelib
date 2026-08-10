@@ -60,6 +60,8 @@ public class EvmGraph extends Graph {
          * 登记，{@code EvmNodeBase#currentInstanceView} 合并进端口视图，保存时回写。
          */
         public final Map<UUID, com.google.gson.JsonElement> varRefs = new LinkedHashMap<>();
+        /** entity.root 的 extra_fields/extra_scripts 直通数据（无 NodeOptionDef，往返不丢）。 */
+        public final Map<UUID, com.google.gson.JsonObject> extraOptions = new LinkedHashMap<>();
         /**
          * 当前库在 {@code GraphLibraryManager} 的键（含项目前缀，如 allay/allay）：
          * 变量表读/写引用计数做闭包级统计时按前缀找同项目的 AC 图库（规格

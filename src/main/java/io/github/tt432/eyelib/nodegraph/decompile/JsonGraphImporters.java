@@ -52,7 +52,10 @@ public final class JsonGraphImporters {
     private static final Set<String> ENTITY_DESC_KEYS = Set.of(
             "identifier", "scripts", "geometry", "textures", "materials",
             "animations", "animation_controllers", "render_controllers", "render_controller_conditions",
-            "particle_effects", "sound_effects");
+            "particle_effects", "sound_effects",
+            // 建模为 entity.root 选项（规格 nodegraph-entity-description-fields）
+            "enable_attachables", "held_item_ignores_lighting", "should_update_effects_offscreen",
+            "spawn_egg");
     private static final Set<String> ENTITY_SCRIPT_KEYS = Set.of(
             "initialize", "pre_animation", "parent_setup", "animate",
             "scale", "scaleX", "scaleY", "scaleZ");
@@ -100,7 +103,7 @@ public final class JsonGraphImporters {
             return b.build(GraphKind.CLIENT_ENTITY);
         }
 
-        b.addRoot(NodeTypes.ENTITY_ROOT.id(), stringOption(desc, "identifier", b, "description"));
+        b.addRoot(NodeTypes.ENTITY_ROOT.id(), entityRootOptions(b, desc));
 
         // geo/tex/mat 声明表 → 纯数据（v4：锚点在 RC，不再建 entity 级 ref）
         Map<String, String> geometryTable = parseRefTable(b, desc, "geometry");
@@ -933,6 +936,77 @@ public final class JsonGraphImporters {
         }
         invalidField(b, label + "." + key, v);
         return Map.of();
+    }
+
+    /** entity.root 选项映射（规格 nodegraph-entity-description-fields）：identifier + 标准
+     * description 字段建模（enable_attachables/held_item_ignores_lighting/
+     * should_update_effects_offscreen/spawn_egg）+ 未建模字段原文收集进 extra_fields。 */
+    private static Map<String, JsonElement> entityRootOptions(ImportGraphBuilder b, JsonObject desc) {
+        Map<String, JsonElement> opts = new LinkedHashMap<>();
+        opts.putAll(stringOption(desc, "identifier", b, "description"));
+        boolOption(opts, desc, "enable_attachables", b);
+        boolOption(opts, desc, "held_item_ignores_lighting", b);
+        boolOption(opts, desc, "should_update_effects_offscreen", b);
+        JsonElement egg = desc.get("spawn_egg");
+        if (egg != null) {
+            if (egg.isJsonObject()) {
+                JsonObject eggObj = egg.getAsJsonObject();
+                JsonElement tex = eggObj.get("texture");
+                if (tex != null && tex.isJsonPrimitive() && tex.getAsJsonPrimitive().isString()) {
+                    opts.put("spawn_egg_texture", tex);
+                }
+                JsonElement idx = eggObj.get("texture_index");
+                if (idx != null && idx.isJsonPrimitive() && idx.getAsJsonPrimitive().isNumber()) {
+                    opts.put("spawn_egg_texture_index", new JsonPrimitive(idx.getAsInt()));
+                }
+                // 另一形态：base_color/overlay_color（#rrggbb）
+                for (String colorKey : new String[]{"base_color", "overlay_color"}) {
+                    JsonElement c = eggObj.get(colorKey);
+                    if (c != null && c.isJsonPrimitive() && c.getAsJsonPrimitive().isString()) {
+                        opts.put("spawn_egg_" + colorKey, c);
+                    }
+                }
+            } else {
+                invalidField(b, "description.spawn_egg", egg);
+            }
+        }
+        // 原文直通：未建模键原样收进 extra_fields（构建时回写，规格 §直通）
+        JsonObject extra = new JsonObject();
+        for (String key : desc.keySet()) {
+            if (!ENTITY_DESC_KEYS.contains(key)) {
+                extra.add(key, desc.get(key));
+            }
+        }
+        if (!extra.keySet().isEmpty()) {
+            opts.put(NodeTypes.EXTRA_FIELDS_OPTION, new JsonPrimitive(extra.toString()));
+        }
+        // scripts 级直通：scripts 对象内未建模键（如 A&S 的 variables/should_update_effects_offscreen）
+        JsonElement scripts = desc.get("scripts");
+        if (scripts != null && scripts.isJsonObject()) {
+            JsonObject extraScripts = new JsonObject();
+            for (String key : scripts.getAsJsonObject().keySet()) {
+                if (!ENTITY_SCRIPT_KEYS.contains(key)) {
+                    extraScripts.add(key, scripts.getAsJsonObject().get(key));
+                }
+            }
+            if (!extraScripts.keySet().isEmpty()) {
+                opts.put(NodeTypes.EXTRA_SCRIPTS_OPTION, new JsonPrimitive(extraScripts.toString()));
+            }
+        }
+        return opts;
+    }
+
+    private static void boolOption(Map<String, JsonElement> opts, JsonObject desc, String key,
+                                   ImportGraphBuilder b) {
+        JsonElement v = desc.get(key);
+        if (v == null) {
+            return;
+        }
+        if (v.isJsonPrimitive() && v.getAsJsonPrimitive().isBoolean()) {
+            opts.put(key, v);
+            return;
+        }
+        invalidField(b, "description." + key, v);
     }
 
     private static void unknownFields(ImportGraphBuilder b, String label, JsonObject obj, Set<String> known) {

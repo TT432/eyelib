@@ -482,9 +482,23 @@ public final class NodeTypes {
             "ref.animation", "animations",
             "ref.ac", "animation_controllers");
 
+    /** extra_fields 选项 id：未建模 description 字段的原文直通（JSON 文本，无 NodeOptionDef——
+     *  编辑器侧走 LibraryContext.extraOptions 侧表往返，无 UI 行，构建回写）。 */
+    public static final String EXTRA_FIELDS_OPTION = "extra_fields";
+    /** extra_scripts 选项 id：scripts 对象内未建模键的原文直通（同 extra_fields，合并目标是 scripts 对象）。 */
+    public static final String EXTRA_SCRIPTS_OPTION = "extra_scripts";
+
     public static final NodeType ENTITY_ROOT = register(NodeType.of(
             "entity.root", NodeType.Kind.ENTITY_ROOT, CAT_ENTITY,
-            List.of(NodeOptionDef.string("identifier", "example:my_entity")),
+            List.of(NodeOptionDef.string("identifier", "example:my_entity"),
+                    // BE 标准 description 字段建模（导入映射；构建仅在非缺省时输出）
+                    NodeOptionDef.bool("enable_attachables", false),
+                    NodeOptionDef.bool("held_item_ignores_lighting", false),
+                    NodeOptionDef.bool("should_update_effects_offscreen", false),
+                    NodeOptionDef.string("spawn_egg_texture", ""),
+                    NodeOptionDef.integer("spawn_egg_texture_index", 0),
+                    NodeOptionDef.string("spawn_egg_base_color", ""),
+                    NodeOptionDef.string("spawn_egg_overlay_color", "")),
             List.of(
                     new PortDef("initialize", PortDirection.IN, PortType.EXEC, Optional.empty(), false),
                     new PortDef("pre_animation", PortDirection.IN, PortType.EXEC, Optional.empty(), false),

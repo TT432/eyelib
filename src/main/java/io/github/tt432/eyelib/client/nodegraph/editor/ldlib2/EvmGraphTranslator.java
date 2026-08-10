@@ -213,6 +213,18 @@ public final class EvmGraphTranslator {
         if (varRefs != null) {
             ctx.varRefs.put(uid, varRefs);
         }
+        // extra_fields/extra_scripts 直通数据（无 NodeOptionDef）——登记侧表供保存往返
+        // （规格 nodegraph-entity-description-fields §2.2）
+        com.google.gson.JsonObject extra = new com.google.gson.JsonObject();
+        for (String key : new String[]{NodeTypes.EXTRA_FIELDS_OPTION, NodeTypes.EXTRA_SCRIPTS_OPTION}) {
+            JsonElement v = n.options().get(key);
+            if (v != null) {
+                extra.add(key, v);
+            }
+        }
+        if (!extra.keySet().isEmpty()) {
+            ctx.extraOptions.put(uid, extra);
+        }
         Optional<NodeType> typeOpt = NodeTypes.get(n.type());
         if (typeOpt.isEmpty()) {
             diags.add(Diagnostic.warning("EDITOR_TRANSLATE", "unknown node type '" + n.type() + "'", n.uid()));
@@ -562,6 +574,13 @@ public final class EvmGraphTranslator {
             JsonElement varRefs = ctx.varRefs.get(nm.getUid());
             if (varRefs != null) {
                 options.put(NodeTypes.VAR_REFS_OPTION, varRefs);
+            }
+            // extra_fields/extra_scripts 直通数据同通道回写
+            com.google.gson.JsonObject extra = ctx.extraOptions.get(nm.getUid());
+            if (extra != null) {
+                for (Map.Entry<String, JsonElement> e : extra.entrySet()) {
+                    options.put(e.getKey(), e.getValue());
+                }
             }
         }
         Map<String, JsonElement> constants = new LinkedHashMap<>();

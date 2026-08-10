@@ -59,6 +59,9 @@ public final class ClientEntityAssembler {
                 if (renderControllers.size() > 0) {
                     description.add("render_controllers", renderControllers);
                 }
+                // 标准 description 字段（非缺省才输出）+ 未建模字段直通补缺
+                // （规格 nodegraph-entity-description-fields）
+                emitDescriptionFields(rootNode, description);
             }
             diagnostics.addAll(ctx.diagnostics);
         }
@@ -69,6 +72,52 @@ public final class ClientEntityAssembler {
         doc.add("minecraft:client_entity", clientEntity);
         List<JsonObject> extraDocs = inlineControllers.isEmpty() ? List.of() : List.of(renderControllerDoc(inlineControllers));
         return new AssemblyResult(doc, diagnostics, extraDocs);
+    }
+
+    /** 标准 description 字段发射（非缺省才输出）+ extra_fields 原文直通（只补缺键，不覆盖已组装键）。 */
+    private static void emitDescriptionFields(NodeInstance root, JsonObject description) {
+        emitBoolIfSet(root, description, "enable_attachables");
+        emitBoolIfSet(root, description, "held_item_ignores_lighting");
+        emitBoolIfSet(root, description, "should_update_effects_offscreen");
+        String eggTexture = AssemblySupport.optionString(root, NodeTypes.ENTITY_ROOT, "spawn_egg_texture");
+        String eggBase = AssemblySupport.optionString(root, NodeTypes.ENTITY_ROOT, "spawn_egg_base_color");
+        String eggOverlay = AssemblySupport.optionString(root, NodeTypes.ENTITY_ROOT, "spawn_egg_overlay_color");
+        if (!eggTexture.isEmpty() || !eggBase.isEmpty() || !eggOverlay.isEmpty()) {
+            JsonObject egg = new JsonObject();
+            if (!eggTexture.isEmpty()) {
+                egg.addProperty("texture", eggTexture);
+            }
+            int eggIndex = AssemblySupport.optionValue(root, NodeTypes.ENTITY_ROOT, "spawn_egg_texture_index").getAsInt();
+            if (eggIndex != 0) {
+                egg.addProperty("texture_index", eggIndex);
+            }
+            if (!eggBase.isEmpty()) {
+                egg.addProperty("base_color", eggBase);
+            }
+            if (!eggOverlay.isEmpty()) {
+                egg.addProperty("overlay_color", eggOverlay);
+            }
+            description.add("spawn_egg", egg);
+        }
+        String extraText = AssemblySupport.optionString(root, NodeTypes.ENTITY_ROOT, NodeTypes.EXTRA_FIELDS_OPTION);
+        if (!extraText.isEmpty()) {
+            try {
+                JsonObject extra = com.google.gson.JsonParser.parseString(extraText).getAsJsonObject();
+                for (Map.Entry<String, com.google.gson.JsonElement> e : extra.entrySet()) {
+                    if (!description.has(e.getKey())) {
+                        description.add(e.getKey(), e.getValue());
+                    }
+                }
+            } catch (RuntimeException ignored) {
+                // extra_fields 文本非法 JSON：静默跳过（仅可能来自手改存档；导入路径只写合法 JSON）
+            }
+        }
+    }
+
+    private static void emitBoolIfSet(NodeInstance root, JsonObject description, String key) {
+        if (AssemblySupport.optionValue(root, NodeTypes.ENTITY_ROOT, key).getAsBoolean()) {
+            description.addProperty(key, true);
+        }
     }
 
     // ---------- scripts ----------
@@ -112,6 +161,20 @@ public final class ClientEntityAssembler {
                 List.of("scale_x", "scaleX"), List.of("scale_y", "scaleY"), List.of("scale_z", "scaleZ"))) {
             if (AssemblySupport.hasContent(main, root, pair.get(0))) {
                 scripts.addProperty(pair.get(1), ctx.emitExpression(root.uid(), pair.get(0)));
+            }
+        }
+        // scripts 级原文直通（规格 nodegraph-entity-description-fields §2.2）：只补缺键
+        String extraScripts = AssemblySupport.optionString(root, NodeTypes.ENTITY_ROOT, NodeTypes.EXTRA_SCRIPTS_OPTION);
+        if (!extraScripts.isEmpty()) {
+            try {
+                JsonObject extra = com.google.gson.JsonParser.parseString(extraScripts).getAsJsonObject();
+                for (Map.Entry<String, com.google.gson.JsonElement> e : extra.entrySet()) {
+                    if (!scripts.has(e.getKey())) {
+                        scripts.add(e.getKey(), e.getValue());
+                    }
+                }
+            } catch (RuntimeException ignored) {
+                // 同 extra_fields：仅手改存档可能触发
             }
         }
         return scripts;

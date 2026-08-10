@@ -115,6 +115,27 @@ class EvmGraphTranslatorTest {
     }
 
     @Test
+    void roundTripPreservesExtraPassthroughOptions() {
+        // entity.root 的 extra_fields/extra_scripts 直通选项（无 NodeOptionDef）经编辑器往返不丢
+        // （规格 nodegraph-entity-description-fields §2.2）
+        Map<String, JsonElement> rootOpts = new LinkedHashMap<>();
+        rootOpts.put("identifier", new JsonPrimitive("example:extra"));
+        rootOpts.put("extra_fields", new JsonPrimitive("{\"custom_block\":{\"foo\":1}}"));
+        rootOpts.put("extra_scripts", new JsonPrimitive("{\"variables\":{\"variable.x\":\"public\"}}"));
+        GraphData main = new GraphData(
+                List.of(new NodeInstance("root_node", "entity.root", 0, 0, rootOpts, Map.of())),
+                List.of(), List.of(), List.of(), List.of(), Optional.empty());
+        GraphLibrary original = new GraphLibrary(GraphLibrary.CURRENT_FORMAT_VERSION,
+                GraphKind.CLIENT_ENTITY, "root", Map.of("root", main));
+        List<Diagnostic> diags = new ArrayList<>();
+        GraphLibrary restored = EvmGraphTranslator.toLibrary(EvmGraphTranslator.toGraph(original, diags), diags);
+        NodeInstance root = restored.mainGraph().nodes().stream()
+                .filter(n -> "entity.root".equals(n.type())).findFirst().orElseThrow();
+        assertEquals(rootOpts.get("extra_fields"), root.options().get("extra_fields"));
+        assertEquals(rootOpts.get("extra_scripts"), root.options().get("extra_scripts"));
+    }
+
+    @Test
     void roundTripPreservesStructure() {
         GraphLibrary original = sampleLibrary();
         List<Diagnostic> diags = new ArrayList<>();

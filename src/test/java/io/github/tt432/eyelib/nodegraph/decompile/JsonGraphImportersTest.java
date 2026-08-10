@@ -611,7 +611,7 @@ class JsonGraphImportersTest {
                   "minecraft:client_entity": {
                     "description": {
                       "identifier": "test:unknown",
-                      "spawn_egg": {"base_color": "#ffffff"}
+                      "totally_custom_key": {"base_color": "#ffffff"}
                     }
                   }
                 }
@@ -619,7 +619,10 @@ class JsonGraphImportersTest {
         ImportResult imported = JsonGraphImporters.importClientEntity(json);
         assertTrue(hasCode(imported.diagnostics(), DecompileDiagnostics.UNKNOWN_FIELD));
         assertTrue(imported.library().mainGraph().stickyNotes().stream()
-                .anyMatch(s -> s.text().contains("spawn_egg") && s.text().contains("#ffffff")));
+                .anyMatch(s -> s.text().contains("totally_custom_key") && s.text().contains("#ffffff")));
+        // 未知键同时进 extra_fields 直通（规格 nodegraph-entity-description-fields）
+        NodeInstance root = firstByType(imported.library().mainGraph().nodes(), "entity.root");
+        assertTrue(root.options().get("extra_fields").getAsString().contains("totally_custom_key"));
     }
 
     // ---------- RenderController 往返 ----------
@@ -904,6 +907,99 @@ class JsonGraphImportersTest {
         ImportResult imported = JsonGraphImporters.importAnimationControllers(parse(AC_JSON), "controller.animation.absent");
         assertTrue(imported.hasErrors());
         assertTrue(hasCode(imported.diagnostics(), DecompileDiagnostics.MISSING_ENTRY));
+    }
+
+    // ---------- entity.root 标准字段建模 + extra_fields 直通 ----------
+
+    @Test
+    void entityDescriptionFieldsModelAsOptions() {
+        // 标准字段建模为 entity.root 选项（规格 nodegraph-entity-description-fields）
+        JsonObject json = parse("""
+                {
+                  "minecraft:client_entity": {
+                    "description": {
+                      "identifier": "test:fields",
+                      "enable_attachables": true,
+                      "held_item_ignores_lighting": true,
+                      "should_update_effects_offscreen": true,
+                      "spawn_egg": {"texture": "spawn_egg_fields", "texture_index": 2},
+                      "custom_block": {"foo": 1}
+                    }
+                  }
+                }
+                """);
+        ImportResult imported = JsonGraphImporters.importClientEntity(json);
+        NodeInstance root = firstByType(imported.library().mainGraph().nodes(), "entity.root");
+        assertTrue(root.options().get("enable_attachables").getAsBoolean());
+        assertTrue(root.options().get("held_item_ignores_lighting").getAsBoolean());
+        assertTrue(root.options().get("should_update_effects_offscreen").getAsBoolean());
+        assertEquals("spawn_egg_fields", root.options().get("spawn_egg_texture").getAsString());
+        assertEquals(2, root.options().get("spawn_egg_texture_index").getAsInt());
+        // 未知字段进 extra_fields 原文直通（ sticky/UNKNOWN_FIELD 仍保留可见性）
+        JsonObject extra = com.google.gson.JsonParser.parseString(
+                root.options().get("extra_fields").getAsString()).getAsJsonObject();
+        assertEquals(1, extra.getAsJsonObject("custom_block").get("foo").getAsInt());
+        assertTrue(hasCode(imported.diagnostics(), DecompileDiagnostics.UNKNOWN_FIELD));
+    }
+
+    @Test
+    void entityDescriptionFieldsRoundTrip() {
+        // import → build：建模字段与直通字段都回写；缺省字段不输出
+        JsonObject json = parse("""
+                {
+                  "minecraft:client_entity": {
+                    "description": {
+                      "identifier": "test:fields_rt",
+                      "enable_attachables": true,
+                      "spawn_egg": {"texture": "egg_tex"},
+                      "custom_block": {"foo": 1}
+                    }
+                  }
+                }
+                """);
+        ImportResult imported = JsonGraphImporters.importClientEntity(json);
+        AssemblyResult built = ClientEntityAssembler.assemble(imported.library());
+        JsonObject desc = built.json().getAsJsonObject("minecraft:client_entity")
+                .getAsJsonObject("description");
+        assertTrue(desc.get("enable_attachables").getAsBoolean());
+        assertEquals("egg_tex", desc.getAsJsonObject("spawn_egg").get("texture").getAsString());
+        assertEquals(1, desc.getAsJsonObject("custom_block").get("foo").getAsInt());
+        assertFalse(desc.has("held_item_ignores_lighting"));
+        assertFalse(desc.has("should_update_effects_offscreen"));
+        assertFalse(desc.getAsJsonObject("spawn_egg").has("texture_index"));
+    }
+
+    @Test
+    void scriptsLevelUnknownFieldsPassThrough() {
+        // scripts 对象内的未建模键（A\u0026S 实证：variables 可见性表、should_update_effects_offscreen
+        // 放在 scripts 里且值是字符串 "1"）→ extra_scripts 原文直通，构建合回 scripts 对象
+        JsonObject json = parse("""
+                {
+                  "minecraft:client_entity": {
+                    "description": {
+                      "identifier": "test:scripts_extra",
+                      "scripts": {
+                        "initialize": ["v.x = 1;"],
+                        "variables": {"variable.actions_and_stuff": "public"},
+                        "should_update_effects_offscreen": "1"
+                      }
+                    }
+                  }
+                }
+                """);
+        ImportResult imported = JsonGraphImporters.importClientEntity(json);
+        NodeInstance root = firstByType(imported.library().mainGraph().nodes(), "entity.root");
+        String extraScripts = root.options().get("extra_scripts").getAsString();
+        assertTrue(extraScripts.contains("variables") && extraScripts.contains("should_update_effects_offscreen"));
+
+        AssemblyResult built = ClientEntityAssembler.assemble(imported.library());
+        JsonObject scripts = built.json().getAsJsonObject("minecraft:client_entity")
+                .getAsJsonObject("description").getAsJsonObject("scripts");
+        // 图化键照常发射，直通键原样合回
+        assertTrue(scripts.get("initialize").getAsString().contains("variable.x = 1"));
+        assertEquals("public", scripts.getAsJsonObject("variables")
+                .get("variable.actions_and_stuff").getAsString());
+        assertEquals("1", scripts.get("should_update_effects_offscreen").getAsString());
     }
 
     // ---------- 构造/比较辅助 ----------
