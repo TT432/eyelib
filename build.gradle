@@ -401,9 +401,9 @@ dependencies {
     if (isLegacyForge) {
         // LDLib2 1.20.1 Forge fork（TT432/LDLib2-1.20.1-Forge，work/LDLib2-fork 构建）：SRG 名，modId=ldlib2，
         // -all.jar 内嵌 yoga/taffy，kotlin-stdlib 需显式补（fastutil 由 MC 提供）。
-        // fork.3 = fork.2 + SDF 字体基线修复（BakedGlyph.render 固有 -3 位移补偿，文本垂直居中）。
-        modLdlibCompile "com.github.tt432:ldlib2-forge-1.20.1:2.2.34+forge.1.20.1-fork.3"
-        modLocalRuntime "com.github.tt432:ldlib2-forge-1.20.1:2.2.34+forge.1.20.1-fork.3"
+        // fork.4 = fork.3 + GraphView 画布不透明兜底背景（dock 化后 GraphPanel 不再铺满，无样式表环境透世界）。
+        modLdlibCompile "com.github.tt432:ldlib2-forge-1.20.1:2.2.34+forge.1.20.1-fork.4"
+        modLocalRuntime "com.github.tt432:ldlib2-forge-1.20.1:2.2.34+forge.1.20.1-fork.4"
         compileOnly "org.jetbrains.kotlin:kotlin-stdlib:2.1.20"
         // 移植版 mods.toml 强制前置 kotlinforforge [4.11.0,)。
         modLocalRuntime "maven.modrinth:kotlin-for-forge:4.11.0"
