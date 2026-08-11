@@ -42,7 +42,8 @@ public final class Ldlib2Workbench {
         WorkbenchToolbar toolbar = new WorkbenchToolbar(
                 () -> ImportDialogs.openImportMenu(root),
                 () -> assetPanel.setDisplay(!assetPanel.isDisplayed()),
-                onNormalize);
+                onNormalize,
+                () -> AutoLayoutApplier.apply(editorView));
 
         // blackboard 与变量表合并：藏掉 LDLib2 内建黑板面板，变量 UI 统一走 VariablesPanel
         hideBuiltinBlackboard(editorView);
@@ -116,6 +117,12 @@ public final class Ldlib2Workbench {
         view.header.layout(layout -> layout.height(CHROME_ROW_HEIGHT).paddingAll(2));
         // 内建按钮（Undo/Redo/snap/fit）默认固定高 14，在 22 行高里偏上；统一拉满行内容高
         stretchHeaderButtons(view.header);
+        // 画布不透明兜底：2.2.34 dock 化后 GraphPanel 不再铺满画布，而编辑器 UI 不加载样式表
+        // （mc.lss 不在场），canvas 无背景会透出世界。代码默认色与 mc.lss 同色（#191919），
+        // defaultPipeline 可被样式表覆盖。
+        com.lowdragmc.lowdraglib2.gui.ui.Style.defaultPipeline(view.canvas.getStyle(),
+                style -> style.backgroundTexture(
+                        new com.lowdragmc.lowdraglib2.gui.texture.ColorRectTexture(0xFF191919)));
         return view;
     }
 

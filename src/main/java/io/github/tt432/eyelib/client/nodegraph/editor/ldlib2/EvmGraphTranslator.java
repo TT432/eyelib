@@ -428,7 +428,8 @@ public final class EvmGraphTranslator {
         return "subgraph_" + sub.getUid().toString().substring(0, 8);
     }
 
-    private static GraphData graphDataOf(GraphModel model, boolean isSubgraph,
+    /** 单图域化（{@link #toLibrary} 的内部步骤；「自动布局」按钮也用它取当前显示图的节点/线）。 */
+    public static GraphData graphDataOf(GraphModel model, boolean isSubgraph,
                                          EvmGraph.@Nullable LibraryContext ctx, List<Diagnostic> diags) {
         List<VariableDecl> variables = new ArrayList<>();
         for (VariableDeclarationModelBase var : model.getGraphVariableModels()) {
