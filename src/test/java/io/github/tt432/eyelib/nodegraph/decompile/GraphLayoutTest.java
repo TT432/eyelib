@@ -390,16 +390,17 @@ class GraphLayoutTest {
         float refY = find(laid, "ref").y();
         NodeInstance rv = find(laid, "declvar-r-x");
         NodeInstance wv = find(laid, "declvar-w-y");
-        assertEquals(refX - GraphLayout.X_SPACING, rv.x(),
-                "读 declvar 应在 ref 左侧相邻列：refX=" + refX + " dvX=" + rv.x());
-        assertEquals(refX + GraphLayout.X_SPACING, wv.x(),
-                "写 declvar 应在 ref 右侧相邻列：refX=" + refX + " dvX=" + wv.x());
+        // 芯片锚定快照：读芯片贴 ref 左缘（芯片宽 120 + 净距 8），写芯片贴右缘（ref 宽 230 + 8）
+        assertEquals(refX - 128, rv.x(), 0.01,
+                "读 declvar 应贴 ref 左侧：refX=" + refX + " dvX=" + rv.x());
+        assertEquals(refX + 238, wv.x(), 0.01,
+                "写 declvar 应贴 ref 右侧：refX=" + refX + " dvX=" + wv.x());
         assertTrue(Math.abs(rv.y() - refY) <= 2 * GraphLayout.Y_SPACING,
                 "读 declvar 应与 ref 同高度附近：refY=" + refY + " dvY=" + rv.y());
         assertTrue(Math.abs(wv.y() - refY) <= 2 * GraphLayout.Y_SPACING,
                 "写 declvar 应与 ref 同高度附近：refY=" + refY + " dvY=" + wv.y());
-        // 流程节点分层顺序不受声明通道影响（声明子列占槽，不断言绝对槽位）
-        assertTrue(find(laid, "sink").x() > wv.x(), "sink 应在写 declvar 右侧");
+        // 流程节点分层顺序不受声明通道影响；芯片整列容纳于加宽的列间隙（不压邻列）
+        assertTrue(find(laid, "sink").x() > wv.x() + 120, "sink 列应在写芯片右侧（间隙容纳芯片）");
         assertTrue(find(laid, "producer").x() < rv.x(), "producer 应在读 declvar 左侧");
     }
 
@@ -488,6 +489,65 @@ class GraphLayoutTest {
     }
 
     @Test
+    void flowLeafVariableSnapsLeftOfSoleConsumer() {
+        // 单消费者流变量（variable.out → 唯一消费者的值边）：贴消费者左缘——
+        // 悦灵实机截图（mgdgwf/ykxvro 芯片贴 Ternary）的目标形态
+        NodeInstance chip = NodeInstance.of("chip", "variable", 0, 0);
+        NodeInstance consumer = NodeInstance.of("consumer", "op.ternary", 0, 0);
+        NodeInstance sink = NodeInstance.of("sink", "entity.root", 0, 0);
+        List<NodeInstance> laid = GraphLayout.layout(
+                List.of(chip, consumer, sink),
+                List.of(new Wire(new PortRef("chip", "out"), new PortRef("consumer", "cond")),
+                        new Wire(new PortRef("consumer", "out"), new PortRef("sink", "scale"))));
+
+        float cx = find(laid, "consumer").x();
+        assertEquals(cx - 128, find(laid, "chip").x(), 0.01,
+                "流叶变量应贴消费者左缘：consumerX=" + cx + " chipX=" + find(laid, "chip").x());
+        assertTrue(Math.abs(find(laid, "chip").y() - find(laid, "consumer").y())
+                        <= GraphLayout.Y_SPACING,
+                "流叶变量应与消费者同高度附近");
+        assertTrue(find(laid, "sink").x() > cx, "sink 应在消费者右侧");
+    }
+
+    @Test
+    void snappedChipsDoNotOverlap() {
+        // 复合图：语句链（每条带写芯片）+ 带读芯片的 ref + 流叶变量——
+        // 估计尺寸下任意两节点矩形不得相交（芯片凸入/互叠的回归护栏）
+        List<NodeInstance> nodes = new java.util.ArrayList<>();
+        List<Wire> wires = new java.util.ArrayList<>();
+        nodes.add(NodeInstance.of("root", "entity.root", 0, 0));
+        String prev = null;
+        for (int i = 1; i <= 4; i++) {
+            nodes.add(NodeInstance.of("s" + i, "exec.set_var", 0, 0));
+            nodes.add(NodeInstance.of("v" + i, "variable", 0, 0));
+            wires.add(new Wire(new PortRef("s" + i, "target"), new PortRef("v" + i, "in")));
+            if (prev != null) {
+                wires.add(new Wire(new PortRef(prev, "exec_out"), new PortRef("s" + i, "exec_in")));
+            }
+            prev = "s" + i;
+        }
+        wires.add(new Wire(new PortRef("s4", "exec_out"), new PortRef("root", "initialize")));
+        nodes.add(NodeInstance.of("ref", "ref.animation", 0, 0));
+        nodes.add(NodeInstance.of("rv", "variable", 0, 0));
+        wires.add(new Wire(new PortRef("ref", "ref"), new PortRef("root", "animations")));
+        wires.add(new Wire(new PortRef("rv", "out"), new PortRef("ref", "read:x")));
+        List<NodeInstance> laid = GraphLayout.layout(nodes, wires);
+
+        for (int i = 0; i < laid.size(); i++) {
+            for (int j = i + 1; j < laid.size(); j++) {
+                NodeInstance a = laid.get(i);
+                NodeInstance b = laid.get(j);
+                float ox = Math.min(a.x() + GraphLayout.estimateWidth(a),
+                        b.x() + GraphLayout.estimateWidth(b)) - Math.max(a.x(), b.x());
+                float oy = Math.min(a.y() + GraphLayout.estimateHeight(a),
+                        b.y() + GraphLayout.estimateHeight(b)) - Math.max(a.y(), b.y());
+                assertTrue(ox <= 0.5f || oy <= 0.5f,
+                        () -> a.uid() + " 与 " + b.uid() + " 重叠：ox=" + ox + " oy=" + oy);
+            }
+        }
+    }
+
+    @Test
     void writeOnlyVariableColocatesNearWriter() {
         // 纯写入变量（全部边都是 set_var→variable.in）共位到写入方右侧相邻列并贴其 y——
         // 按 10 人切块 + 中位数居中的旧共位会把写变量摊成多列、dy 拉到 1500（悦灵实证）。
@@ -499,8 +559,9 @@ class GraphLayoutTest {
                 List.of(new Wire(new PortRef("s", "exec_out"), new PortRef("root", "initialize")),
                         new Wire(new PortRef("s", "target"), new PortRef("v", "in"))));
 
-        assertEquals(find(laid, "s").x() + GraphLayout.X_SPACING, find(laid, "v").x(),
-                "写变量应在写入方右侧相邻列");
+        // 芯片锚定快照：写芯片贴写入方右缘（set_var 宽 190 + 净距 8）、同行
+        assertEquals(find(laid, "s").x() + 198, find(laid, "v").x(), 0.01,
+                "写变量应贴写入方右缘");
         assertTrue(Math.abs(find(laid, "v").y() - find(laid, "s").y()) <= GraphLayout.Y_SPACING,
                 "写变量应贴近写入方高度：vY=" + find(laid, "v").y() + " sY=" + find(laid, "s").y());
     }

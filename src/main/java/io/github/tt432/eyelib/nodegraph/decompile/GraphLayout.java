@@ -68,6 +68,15 @@ import java.util.TreeSet;
  *       无 entry 消费者）按<b>方形块</b>打包到 root 左侧子列（列数 = √(总高/列距)）；
  *       declvar/纯写入变量按<b>逐成员锚点 y</b> 共位到锚点侧子列（切块中位数居中曾把
  *       69 写变量摊成 7 列、writer 边 dx 拉到 900-2700）。</li>
+ *   <li><b>芯片锚定快照</b>（2026-08-11 重设计，{@link #placeSnappedChips}）：variable
+ *       芯片不是列公民——列槽位让芯片与消费者恒隔一个列距（写芯片 dy≈1500、读芯片
+ *       dx≈2400，用户实机截图指正「关系最近的应在画布上最近」）。全部纯声明/写入变量
+ *       与单消费者流变量在列布局收敛后<b>直接贴锚点边侧</b>（左读右写、同锚点芯片块
+ *       居中于锚点行），贴靠槽位对的列间隙按需加宽（芯片宽 + 净距超出既有间隙的部分），
+ *       芯片整列容纳于间隙、不凸入邻列（凸入实证 82 处重叠）；最后跑仅芯片移动的
+ *       重叠消解兜底。流叶变量仍留在列内参与松弛投票（其行槽是链盆域的一部分），
+ *       仅终态位置被快照覆盖——实测（悦灵 645 节点）：芯片边 avgDy 114、Σmanhattan
+ *       622k（旧 730k，−15%）、Σdy 270k（旧 307k，−12%）、重叠 0、回流 0。</li>
  * </ol>
  * 扇居中平移可能产生负 y，出口处统一平移归一化（全图最小 y = 0，不改变任何边长）。
  * 环只做防御（层按 0 计），环本身由 GraphValidator.CYCLE 报告。
@@ -351,12 +360,61 @@ public final class GraphLayout {
             }
         }
 
+        // 芯片锚定（2026-08-10 重设计）：variable 芯片不是列公民——列槽位让芯片与消费者
+        // 恒隔一个列距（悦灵写芯片 dy≈1500、读芯片 dx≈2400 实机截图实证）。全部纯声明/
+        // 写入变量与单消费者流变量不进任何列，布局收敛后直接贴锚点边侧（左读右写、
+        // 行向锚点中心堆叠）——关系最近的节点画布距离也最近。
+        Map<String, NodeInstance> byUid = new HashMap<>();
+        for (NodeInstance n : nodes) {
+            byUid.put(n.uid(), n);
+        }
+        Map<String, String> snapAnchor = new HashMap<>(); // 芯片 → 锚点 uid
+        Map<String, Integer> snapSide = new HashMap<>(); // 芯片 → -1 左 / +1 右
+        for (Map.Entry<String, String> e : declvarReadOf.entrySet()) {
+            snapAnchor.put(e.getKey(), e.getValue());
+            snapSide.put(e.getKey(), -1);
+        }
+        for (Map.Entry<String, String> e : declvarWriteOf.entrySet()) {
+            snapAnchor.put(e.getKey(), e.getValue());
+            snapSide.put(e.getKey(), 1);
+        }
+        for (Map.Entry<String, String> e : writeOnlyOf.entrySet()) {
+            snapAnchor.put(e.getKey(), e.getValue());
+            snapSide.put(e.getKey(), 1);
+        }
+        // 单消费者流变量（variable.out → 唯一消费者的值边，无生产者）：贴消费者左侧
+        for (NodeInstance node : nodes) {
+            String uid = node.uid();
+            if (!"variable".equals(node.type()) || snapAnchor.containsKey(uid)) {
+                continue;
+            }
+            List<String> flowCons = flowConsumers.getOrDefault(uid, List.of())
+                    .stream().distinct().toList();
+            if (flowCons.size() == 1 && !flowProducers.containsKey(uid)) {
+                snapAnchor.put(uid, flowCons.get(0));
+                snapSide.put(uid, -1);
+            }
+        }
+        // root 声明簇的 ref 仍走簇打包（ref 不是芯片）；其 declvar 已被快照接管
+        Map<String, String> clusterReadOf = new HashMap<>();
+        Map<String, String> clusterWriteOf = new HashMap<>();
+        for (Map.Entry<String, String> e : declvarReadOf.entrySet()) {
+            if (rootDeclOf.containsKey(e.getValue()) && !snapAnchor.containsKey(e.getKey())) {
+                clusterReadOf.put(e.getKey(), e.getValue());
+            }
+        }
+        for (Map.Entry<String, String> e : declvarWriteOf.entrySet()) {
+            if (rootDeclOf.containsKey(e.getValue()) && !snapAnchor.containsKey(e.getKey())) {
+                clusterWriteOf.put(e.getKey(), e.getValue());
+            }
+        }
         // 同层分组（层号升序 = 汇→源，确定性遍历），按 DFS 先序排定层内顺序
         // （语句链成员按显式链序）；纯声明/写入变量节点不进普通列（稍候插入共位子列）
         Map<ColumnKey, List<NodeInstance>> byLayer = new TreeMap<>();
         Map<String, Integer> layerOfUid = new HashMap<>();
         for (NodeInstance node : nodes) {
             int layer = flowWiredNodes.contains(node.uid()) ? layers.get(node.uid()) : isolatedLayer;
+            // 流叶变量留在列内参与松弛投票（其行槽是链盆域的一部分）；终态位置由快照覆盖
             if (declvarReadOf.containsKey(node.uid()) || declvarWriteOf.containsKey(node.uid())
                     || writeOnlyOf.containsKey(node.uid()) || rootDeclOf.containsKey(node.uid())) {
                 continue;
@@ -438,25 +496,6 @@ public final class GraphLayout {
             }
         }
 
-        // 共位子列（此时全部普通列已完成播种，锚点 y 可读）：
-        // - root 声明簇（ref + entry + 其 declvar）→ 协调放置到 root 左侧连续子列
-        // - 其余 declvar 读边 → 主 ref 左侧；写边 / 纯写入变量 → 锚点右侧
-        Map<String, NodeInstance> byUid = new HashMap<>();
-        for (NodeInstance n : nodes) {
-            byUid.put(n.uid(), n);
-        }
-        Map<String, String> genericReadOf = new HashMap<>();
-        Map<String, String> genericWriteOf = new HashMap<>();
-        Map<String, String> clusterReadOf = new HashMap<>();
-        Map<String, String> clusterWriteOf = new HashMap<>();
-        for (Map.Entry<String, String> e : declvarReadOf.entrySet()) {
-            (rootDeclOf.containsKey(e.getValue()) ? clusterReadOf : genericReadOf)
-                    .put(e.getKey(), e.getValue());
-        }
-        for (Map.Entry<String, String> e : declvarWriteOf.entrySet()) {
-            (rootDeclOf.containsKey(e.getValue()) ? clusterWriteOf : genericWriteOf)
-                    .put(e.getKey(), e.getValue());
-        }
         relaxDistances(byLayer, flowConsumers, flowProducers, ys, soleHub, heights, nodes.size());
         // 列内按欲望重排：列内顺序在松弛前由 DFS/链序定死，clamp 保序意味着「节点与其
         // 邻居顺序不对应」的垂直错位被锁死（悦灵 x=1800 列实证：语句值链想要 y≈2500
@@ -477,18 +516,6 @@ public final class GraphLayout {
                     layerOfUid, isolatedLayer, byUid,
                     rootDeclOf, clusterReadOf, clusterWriteOf);
         }
-        if (!genericReadOf.isEmpty()) {
-            insertCoLocatedColumns(byLayer, ys, consumers, producers, heights,
-                genericReadOf, layerOfUid, isolatedLayer, byUid, -1);
-        }
-        if (!genericWriteOf.isEmpty()) {
-            insertCoLocatedColumns(byLayer, ys, consumers, producers, heights,
-                genericWriteOf, layerOfUid, isolatedLayer, byUid, 1);
-        }
-        if (!writeOnlyOf.isEmpty()) {
-            insertCoLocatedColumns(byLayer, ys, consumers, producers, heights,
-                writeOnlyOf, layerOfUid, isolatedLayer, byUid, 1);
-        }
         normalizeY(ys);
 
         // 列 x 槽位：从右向左按（层号升序、层内 sub 降序）逐个占槽。无分列时与
@@ -507,16 +534,183 @@ public final class GraphLayout {
                 xIndexOfUid.put(n.uid(), xIndex);
             }
         }
+        // 槽位 x：芯片（宽 120 + 双侧净距 16）整体容纳于列间隙——有芯片贴靠的槽位对
+        // 间隙加宽 {@link #CHIP_SLOT_EXTRA}，芯片不再凸入邻列（凸入实证 82 处重叠）
+        Map<String, Integer> slotOfUid = new HashMap<>();
+        for (Map.Entry<String, Integer> e : xIndexOfUid.entrySet()) {
+            slotOfUid.put(e.getKey(), e.getValue());
+        }
+        int slotCount = rightToLeft.size();
+        boolean[] slotRightChips = new boolean[slotCount];
+        boolean[] slotLeftChips = new boolean[slotCount];
+        for (Map.Entry<String, String> e : snapAnchor.entrySet()) {
+            Integer slot = slotOfUid.get(e.getValue());
+            if (slot == null) {
+                continue;
+            }
+            if (snapSide.getOrDefault(e.getKey(), -1) < 0) {
+                slotLeftChips[slot] = true;
+            } else {
+                slotRightChips[slot] = true;
+            }
+        }
+        // 按需加宽：间隙只需容纳「芯片宽 120 + 净距」超出既有间隙的部分
+        // （既有间隙 = 列距 300 − 两侧槽位内容最大宽）
+        float[] slotMaxW = new float[slotCount];
+        for (Map.Entry<String, Integer> e : slotOfUid.entrySet()) {
+            NodeInstance node = byUid.get(e.getKey());
+            if (node != null) {
+                slotMaxW[e.getValue()] = Math.max(slotMaxW[e.getValue()], estimateWidth(node));
+            }
+        }
+        float[] slotX = new float[slotCount];
+        {
+            float x = 0;
+            for (int i = 0; i < slotCount; i++) {
+                if (i > 0 && (slotRightChips[i - 1] || slotLeftChips[i])) {
+                    float maxW = Math.max(slotMaxW[i - 1], slotMaxW[i]);
+                    x += Math.max(0, maxW + 120 + 2 * CHIP_GAP_X - X_SPACING);
+                }
+                slotX[i] = x;
+                x += X_SPACING;
+            }
+        }
+        Map<String, Float> xsFinal = new HashMap<>();
+        for (Map.Entry<String, Integer> e : xIndexOfUid.entrySet()) {
+            xsFinal.put(e.getKey(), slotX[e.getValue()]);
+        }
+        for (NodeInstance n : nodes) {
+            xsFinal.putIfAbsent(n.uid(), (maxLayer - isolatedLayer) * X_SPACING);
+        }
+        // 芯片锚定放置（列布局已收敛，锚点 x/y 终态可读）
+        placeSnappedChips(snapAnchor, snapSide, byUid, heights, xsFinal, ys, slotOfUid);
         List<NodeInstance> out = new ArrayList<>(nodes.size());
         for (NodeInstance n : nodes) {
-            Integer xIndex = xIndexOfUid.get(n.uid());
-            float x = xIndex == null
-                    ? (maxLayer - isolatedLayer) * X_SPACING
-                    : xIndex * X_SPACING;
-            float y = ys.getOrDefault(n.uid(), 0.0).floatValue();
-            out.add(new NodeInstance(n.uid(), n.type(), x, y, n.options(), n.constants()));
+            out.add(new NodeInstance(n.uid(), n.type(),
+                    xsFinal.getOrDefault(n.uid(), 0f), ys.getOrDefault(n.uid(), 0.0).floatValue(),
+                    n.options(), n.constants()));
         }
         return out;
+    }
+
+    /** 芯片与锚点的水平净距。 */
+    private static final float CHIP_GAP_X = 8f;
+    /** 芯片贴靠槽位的间隙加宽量：芯片宽 120 + 双侧净距 2×8。 */
+    private static final float CHIP_SLOT_EXTRA = 136f;
+    /** 同锚点同侧芯片的堆叠净距。 */
+    private static final float CHIP_STACK_GAP = 6f;
+    /** 芯片重叠消解趟数上限。 */
+    private static final int CHIP_SEPARATION_SWEEPS = 60;
+
+    /**
+     * 芯片锚定放置：同（锚点, 侧）的芯片按 uid 序堆叠、行向锚点中心居中，
+     * x = 锚点左/右缘 ± {@link #CHIP_GAP_X}（凸入列间隙，列距 300 − 节点宽 ~190 的
+     * 间隙 ≈ 110，芯片 120 宽会凸入邻列 ≤ 70px——邻列同行为空，冲突由最后的
+     * 仅芯片移动消解兜底）。
+     */
+    private static void placeSnappedChips(Map<String, String> snapAnchor, Map<String, Integer> snapSide,
+                                          Map<String, NodeInstance> byUid, Map<String, Float> heights,
+                                          Map<String, Float> xsFinal, Map<String, Double> ys,
+                                          Map<String, Integer> slotOfUid) {
+        // 按（锚点槽位, 侧）分组：同间隙的芯片共享一条行游标（按锚点行排序，首个贴锚点行，
+        // 后续顺排——不同锚点的芯片在同一间隙不互叠）
+        Map<String, List<String>> groups = new TreeMap<>();
+        for (Map.Entry<String, String> e : snapAnchor.entrySet()) {
+            Integer slot = slotOfUid.get(e.getValue());
+            if (slot == null) {
+                continue;
+            }
+            groups.computeIfAbsent(slot + " " + snapSide.get(e.getKey()),
+                    k -> new ArrayList<>()).add(e.getKey());
+        }
+        for (Map.Entry<String, List<String>> entry : groups.entrySet()) {
+            List<String> chips = entry.getValue();
+            chips.sort(Comparator
+                    .comparingDouble((String c) -> ys.getOrDefault(snapAnchor.get(c), 0.0))
+                    .thenComparing(c -> snapAnchor.get(c))
+                    .thenComparing(Comparator.naturalOrder()));
+            double cursor = Double.NEGATIVE_INFINITY;
+            int i = 0;
+            while (i < chips.size()) {
+                // 同锚点子块：块高已知，块顶 = max(游标, 锚点中心 − 块高/2)——
+                // 芯片块居中于锚点（纯下排会让 19 芯片的 ref 尾部 dy 漂到 600）
+                int j = i;
+                while (j + 1 < chips.size()
+                        && java.util.Objects.equals(snapAnchor.get(chips.get(j + 1)),
+                                snapAnchor.get(chips.get(i)))) {
+                    j++;
+                }
+                String anchor = snapAnchor.get(chips.get(i));
+                NodeInstance anchorNode = byUid.get(anchor);
+                if (anchorNode == null) {
+                    i = j + 1;
+                    continue;
+                }
+                int side = snapSide.getOrDefault(chips.get(i), -1);
+                float anchorW = estimateWidth(anchorNode);
+                double anchorX = xsFinal.getOrDefault(anchor, 0f);
+                double anchorCy = ys.getOrDefault(anchor, 0.0)
+                        + heights.getOrDefault(anchor, UNKNOWN_NODE_HEIGHT) / 2;
+                double blockH = -CHIP_STACK_GAP;
+                for (int k = i; k <= j; k++) {
+                    blockH += heights.getOrDefault(chips.get(k), UNKNOWN_NODE_HEIGHT) + CHIP_STACK_GAP;
+                }
+                double top = Math.max(cursor, anchorCy - blockH / 2);
+                for (int k = i; k <= j; k++) {
+                    String chip = chips.get(k);
+                    float chipW = estimateWidth(java.util.Objects.requireNonNull(byUid.get(chip)));
+                    float chipH = heights.getOrDefault(chip, UNKNOWN_NODE_HEIGHT);
+                    xsFinal.put(chip, (float) (side < 0
+                            ? anchorX - chipW - CHIP_GAP_X
+                            : anchorX + anchorW + CHIP_GAP_X));
+                    ys.put(chip, top);
+                    top += chipH + CHIP_STACK_GAP;
+                }
+                cursor = top;
+                i = j + 1;
+            }
+        }
+        // 仅芯片移动的重叠消解（uid 序、最小穿透轴、逐趟至无重叠）
+        List<String> chipOrder = new ArrayList<>(snapAnchor.keySet());
+        chipOrder.sort(Comparator.naturalOrder());
+        for (int sweep = 0; sweep < CHIP_SEPARATION_SWEEPS; sweep++) {
+            boolean moved = false;
+            for (String chip : chipOrder) {
+                if (!xsFinal.containsKey(chip) || !ys.containsKey(chip)) {
+                    continue; // 锚点缺失未放置的芯片不参与消解
+                }
+                float cw = estimateWidth(java.util.Objects.requireNonNull(byUid.get(chip)));
+                float ch = heights.getOrDefault(chip, UNKNOWN_NODE_HEIGHT);
+                double cx = xsFinal.getOrDefault(chip, 0f) + cw / 2;
+                double cy = ys.getOrDefault(chip, 0.0) + ch / 2;
+                for (NodeInstance other : byUid.values()) {
+                    if (other.uid().equals(chip)) {
+                        continue;
+                    }
+                    float ow = estimateWidth(other);
+                    float oh = heights.getOrDefault(other.uid(), UNKNOWN_NODE_HEIGHT);
+                    double ocx = xsFinal.getOrDefault(other.uid(), 0f) + ow / 2;
+                    double ocy = ys.getOrDefault(other.uid(), 0.0) + oh / 2;
+                    double ox = (cw + ow) / 2 - Math.abs(cx - ocx);
+                    double oy = (ch + oh) / 2 - Math.abs(cy - ocy);
+                    if (ox <= 0 || oy <= 0) {
+                        continue;
+                    }
+                    if (ox < oy) {
+                        xsFinal.put(chip, (float) (xsFinal.getOrDefault(chip, 0f)
+                                + (cx < ocx ? -1 : 1) * (ox + 0.5)));
+                    } else {
+                        ys.put(chip, ys.getOrDefault(chip, 0.0) + (cy < ocy ? -1 : 1) * (oy + 0.5));
+                    }
+                    cx = xsFinal.getOrDefault(chip, 0f) + cw / 2;
+                    cy = ys.getOrDefault(chip, 0.0) + ch / 2;
+                    moved = true;
+                }
+            }
+            if (!moved) {
+                return;
+            }
+        }
     }
 
     /** 列键：layer = 到汇最长路径层；sub = 巨扇分列的子列偏移（0=主列，负=左，正=右）。 */    private record ColumnKey(int layer, int sub) implements Comparable<ColumnKey> {
@@ -525,79 +719,6 @@ public final class GraphLayout {
             int c = Integer.compare(layer, other.layer);
             return c != 0 ? c : Integer.compare(sub, other.sub);
         }
-    }
-
-    /**
-     * 共位子列插入：把声明/写入变量节点按主锚点（ref 或 set_var）所在层分组成子列，
-     * 放在该层 direction<0（最左子列再左一格）/ direction>0（最右子列再右一格）侧；
-     * y 取全部锚点的已播种 y 中位数，同子列按锚点 y 排序后顺序 clamp 防重叠。
-     * 调用时机：普通列完成播种之后、松弛之前（锚点 y 已可读，松弛继续微调）。
-     */
-    private static void insertCoLocatedColumns(
-            Map<ColumnKey, List<NodeInstance>> byLayer,
-            Map<String, Double> ys,
-            Map<String, List<String>> consumers,
-            Map<String, List<String>> producers,
-            Map<String, Float> heights,
-            Map<String, String> anchorOf,
-            Map<String, Integer> layerOfUid, int isolatedLayer,
-            Map<String, NodeInstance> byUid, int direction) {
-        if (anchorOf.isEmpty()) {
-            return;
-        }
-        Map<Integer, List<String>> byAnchorLayer = new TreeMap<>();
-        for (Map.Entry<String, String> e : anchorOf.entrySet()) {
-            int layer = layerOfUid.getOrDefault(e.getValue(), isolatedLayer);
-            byAnchorLayer.computeIfAbsent(layer, k -> new ArrayList<>()).add(e.getKey());
-        }
-        for (Map.Entry<Integer, List<String>> e : byAnchorLayer.entrySet()) {
-            int edge = 0;
-            for (ColumnKey key : byLayer.keySet()) {
-                if (key.layer() == e.getKey()) {
-                    edge = direction < 0 ? Math.min(edge, key.sub()) : Math.max(edge, key.sub());
-                }
-            }
-            List<List<NodeInstance>> columns = packColocatedChunks(e.getValue(), anchorOf,
-                    ys, consumers, producers, heights, byUid, false);
-            for (int i = 0; i < columns.size(); i++) {
-                int sub = direction < 0 ? edge - 1 - i : edge + 1 + i;
-                byLayer.put(new ColumnKey(e.getKey(), sub), columns.get(i));
-            }
-        }
-    }
-
-    /**
-     * 共位组打包：按锚点 y 排序（uid 兜底）后**逐成员贴自己锚点的 y** 顺序 clamp 堆叠——
-     * 「切块 + 块内锚点中位数居中」会让尾部成员远离锚点（悦灵 45 变量 ref 实证 dy±1700），
-     * 按 10 人切多列又把写变量摊成 7 个并列子列、writer 边 dx 拉到 900-2700（悦灵实证
-     * 2026-08-10）。锚点 y 有序时堆叠顺序 = 锚点顺序，每成员 dy 只剩堆叠漂移
-     * （锚点比堆叠更密时才有，实测很小）。
-     * anchorOnly=true 时欲望值只取锚点 y（声明簇成员的其他邻居此时还未播种，
-     * 中位数会被默认值污染）。返回单列（调用方决定子列槽位）。
-     */
-    private static List<List<NodeInstance>> packColocatedChunks(
-            List<String> group, Map<String, String> anchorOf,
-            Map<String, Double> ys,
-            Map<String, List<String>> consumers, Map<String, List<String>> producers,
-            Map<String, Float> heights, Map<String, NodeInstance> byUid, boolean anchorOnly) {
-        group.sort(Comparator
-                .comparingDouble((String uid) -> yOf(ys, java.util.Objects.requireNonNull(
-                        anchorOf.get(uid), "anchorOf 键集成员")))
-                .thenComparing(uid -> uid));
-        List<NodeInstance> column = new ArrayList<>();
-        double prevBottom = Double.NEGATIVE_INFINITY;
-        for (String uid : group) {
-            double d = anchorOnly ? Double.NaN : medianAllNeighborsY(uid, consumers, producers, ys);
-            if (Double.isNaN(d)) {
-                d = yOf(ys, java.util.Objects.requireNonNull(
-                        anchorOf.get(uid), "anchorOf 键集成员"));
-            }
-            double yy = Math.max(d, prevBottom + NODE_MARGIN);
-            ys.put(uid, yy);
-            prevBottom = yy + heightOf(heights, uid);
-            column.add(byUid.get(uid));
-        }
-        return List.of(column);
     }
 
     /**
@@ -1213,6 +1334,23 @@ public final class GraphLayout {
         return heights.getOrDefault(uid, UNKNOWN_NODE_HEIGHT);
     }
 
+    /**
+     * 节点渲染宽度估计（图坐标单位）：芯片锚定与消解用。类别取典型实测，
+     * 未知类型 190（标准节点如 op.binary 约 180，宁高估——高估只多间隙，低估会重叠）。
+     */
+    public static float estimateWidth(NodeInstance n) {
+        return switch (n.type()) {
+            case "variable" -> 120f;
+            case "const.number", "const.int", "const.bool", "const.color" -> 170f;
+            case "const.string" -> 200f;
+            case "ref.texture", "ref.geometry" -> 240f;
+            case "ref.animation", "ref.ac", "ref.sound", "ref.particle", "ref.material", "ref.rc" -> 230f;
+            case "entity.root", "rc.root" -> 220f;
+            case "animate.entry", "list.entry", "material.entry", "part_visibility.entry" -> 220f;
+            default -> 190f;
+        };
+    }
+
     /** 未知类型节点的等效高度（= const.number 实测高 62，配合 {@link #NODE_MARGIN} 保持默认行距 110）。 */
     private static final float UNKNOWN_NODE_HEIGHT = 62f;
     /** variable 节点（变量芯片）实测高 18，估计取 20。 */
@@ -1238,7 +1376,7 @@ public final class GraphLayout {
      * 特例：ref.texture / ref.geometry 内嵌 64px 资产预览（实测 172）；
      * 其余 ref.* 无预览但选项区较高（实测 94）。
      */
-    private static float estimateHeight(NodeInstance n) {
+    public static float estimateHeight(NodeInstance n) {
         switch (n.type()) {
             case "variable":
                 return VARIABLE_NODE_HEIGHT;
