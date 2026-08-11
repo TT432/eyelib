@@ -61,9 +61,21 @@ final class VariablesPanel extends UIElement {
     private static final long DOUBLE_CLICK_MS = 350;
 
     /** 侧栏展开宽度（会话内保持，拖左缘调整）。 */
-    private static int panelWidth = 300;
+    private static int panelWidth = 320;
     private static final int MIN_WIDTH = 180;
     private static final int MAX_WIDTH = 640;
+
+    /** 固定列宽（px）；名字列 flex(1) 吸收余量（实机实证：全固定宽在面板变窄时整体溢出压滚动条）。 */
+    private static final int TYPE_W = 62;
+    private static final int SCOPE_W = 44;
+    private static final int DEFAULT_W = 56;
+    private static final int READS_W = 18;
+    private static final int WRITES_W = 18;
+    private static final int DELETE_W = 16;
+    /** 行内 7 列的 6 个 2px 间隙和。 */
+    private static final int ROW_GAPS_W = 12;
+    /** 滚动区相对面板内容宽的水平损耗：视口左右 inset 各 5 + 纵向滚动条 5（实机几何实测）。 */
+    private static final int SCROLLER_CHROME_W = 15;
 
     private final GraphEditorView editorView;
     private final TextField filterField;
@@ -107,21 +119,24 @@ final class VariablesPanel extends UIElement {
         filterField.layout(layout -> layout.flex(1).heightPercent(100));
         bar.addChildren(addButton, filterField);
 
-        // 表头
+        // 表头。左右 padding 对齐滚动区：行内容比面板内容区右偏 5（视口 inset）、右缩 15
+        // （inset 5 + 滚动条 5），表头不同步内缩会出现表头与数据列恒差 5px（实机截图实证）
         headerRow = new UIElement()
                 .layout(layout -> layout
                         .widthPercent(100)
                         .height(12)
                         .flexDirection(FlexDirection.ROW)
+                        .paddingLeft(5)
+                        .paddingRight(SCROLLER_CHROME_W - 5)
                         .gapAll(2));
         headerRow.addChildren(
-                headerCell("名字", 76),
-                headerCell("类型", 62),
-                headerCell("作用域", 44),
-                headerCell("默认值", 56),
-                headerCell("读", 18),
-                headerCell("写", 18),
-                headerCell("", 16));
+                headerCellFlex("名字"),
+                headerCell("类型", TYPE_W),
+                headerCell("作用域", SCOPE_W),
+                headerCell("默认值", DEFAULT_W),
+                headerCell("读", READS_W),
+                headerCell("写", WRITES_W),
+                headerCell("", DELETE_W));
 
         table = new ScrollerView();
         table.layout(layout -> layout.widthPercent(100).flex(1));
@@ -151,6 +166,8 @@ final class VariablesPanel extends UIElement {
             panelWidth = Math.max(MIN_WIDTH,
                     Math.min(MAX_WIDTH, resizeStartWidth + (int) (resizeStartX - event.x)));
             VariablesPanel.this.layout(layout -> layout.width(panelWidth));
+            // 名字列是 flex(1)：拖宽后重排并重新截断名字文本
+            rebuild();
         }, true);
         addChild(resizeHandle);
     }
@@ -158,6 +175,31 @@ final class VariablesPanel extends UIElement {
     private static UIElement headerCell(String text, int width) {
         return WorkbenchWidgets.textLine(text, WorkbenchColors.DIM)
                 .layout(layout -> layout.width(width).heightPercent(100));
+    }
+
+    /** 名字列表头：与数据行名字格同构（flex(1)），保证表头/数据列恒等宽。 */
+    private static UIElement headerCellFlex(String text) {
+        return WorkbenchWidgets.textLine(text, WorkbenchColors.DIM)
+                .layout(layout -> layout.flex(1).minWidth(0).heightPercent(100));
+    }
+
+    /** 名字列当前可用像素宽（面板内容宽 − 滚动区损耗 − 固定列 − 间隙）。 */
+    private static int nameColumnWidth() {
+        return Math.max(24, panelWidth - 8 - SCROLLER_CHROME_W
+                - (TYPE_W + SCOPE_W + DEFAULT_W + READS_W + WRITES_W + DELETE_W) - ROW_GAPS_W);
+    }
+
+    /**
+     * 名字文本按列宽截断（Label 不裁剪，长名会溢出画进类型列——实机截图实证
+     * 「actions_and_stuff」渗进类型下拉）。截断时悬浮提示全名。
+     */
+    private static String fitName(String name) {
+        var font = net.minecraft.client.Minecraft.getInstance().font;
+        int avail = nameColumnWidth();
+        if (font.width(name) <= avail) {
+            return name;
+        }
+        return font.plainSubstrByWidth(name, Math.max(0, avail - font.width("…"))) + "…";
     }
 
     // ==================== 刷新 ====================
@@ -400,13 +442,13 @@ final class VariablesPanel extends UIElement {
                         "var:type:" + var.getUid(), () -> var.setDataTypeHandle(handle));
             }
         });
-        type.layout(layout -> layout.width(62).heightPercent(100));
+        type.layout(layout -> layout.width(TYPE_W).heightPercent(100));
 
         // 作用域：接口变量只读；LOCAL 变量循环切换 temp/variable（写侧表）
         UIElement scopeCell;
         if (interfaceVar) {
             scopeCell = WorkbenchWidgets.textLine(var.isInput() ? "in" : "out", WorkbenchColors.DIM)
-                    .layout(layout -> layout.width(44).heightPercent(100));
+                    .layout(layout -> layout.width(SCOPE_W).heightPercent(100));
         } else {
             Button scopeButton = new Button();
             scopeButton.setText(Component.literal(scopeOf(var) == VariableDecl.Scope.TEMP ? "temp" : "variable"));
@@ -424,7 +466,7 @@ final class VariablesPanel extends UIElement {
                     scopeButton.setText(Component.literal(next == VariableDecl.Scope.TEMP ? "temp" : "variable"));
                 });
             });
-            scopeButton.layout(layout -> layout.width(44).heightPercent(100));
+            scopeButton.layout(layout -> layout.width(SCOPE_W).heightPercent(100));
             scopeCell = scopeButton;
         }
 
@@ -439,14 +481,14 @@ final class VariablesPanel extends UIElement {
                         "var:default:" + var.getUid(), () -> applyDefault(model, var, text));
             }
         });
-        defaultField.layout(layout -> layout.width(56).heightPercent(100));
+        defaultField.layout(layout -> layout.width(DEFAULT_W).heightPercent(100));
 
         // 引用数（读/写分列，闭包级统计，见 countReadWrite）
         int[] refs = countReadWrite(model, var);
         UIElement readsLabel = WorkbenchWidgets.textLine(String.valueOf(refs[0]), WorkbenchColors.DIM)
-                .layout(layout -> layout.width(18).heightPercent(100));
+                .layout(layout -> layout.width(READS_W).heightPercent(100));
         UIElement writesLabel = WorkbenchWidgets.textLine(String.valueOf(refs[1]), WorkbenchColors.DIM)
-                .layout(layout -> layout.width(18).heightPercent(100));
+                .layout(layout -> layout.width(WRITES_W).heightPercent(100));
 
         // 点击行 → 图上高亮该变量的全部引用节点（用内建选择态呈现）
         row.addEventListener(com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents.MOUSE_DOWN, event -> {
@@ -486,7 +528,7 @@ final class VariablesPanel extends UIElement {
                 rebuild();
                 markRebuilt(model);
             });
-            delete.layout(layout -> layout.width(16).heightPercent(100));
+            delete.layout(layout -> layout.width(DELETE_W).heightPercent(100));
             row.addChild(delete);
         }
         return row;
@@ -556,10 +598,14 @@ final class VariablesPanel extends UIElement {
      */
     private UIElement buildNameCell(GraphModel model, VariableDeclarationModelBase var, boolean interfaceVar) {
         UIElement cell = new UIElement()
-                .layout(layout -> layout.width(76).heightPercent(100));
+                .layout(layout -> layout.flex(1).minWidth(0).heightPercent(100));
         Label label = new Label();
         label.textStyle(style -> style.fontSize(9));
-        label.setText(var.getName());
+        String fitted = fitName(var.getName());
+        label.setText(fitted);
+        if (!fitted.equals(var.getName())) {
+            label.getStyle().tooltips(Component.literal(var.getName()));
+        }
         label.layout(layout -> layout.widthPercent(100).heightPercent(100));
         cell.addChild(label);
 

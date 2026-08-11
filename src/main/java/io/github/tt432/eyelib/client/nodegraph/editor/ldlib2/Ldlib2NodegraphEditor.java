@@ -74,7 +74,7 @@ public final class Ldlib2NodegraphEditor {
         }
         DiagnosticsCenter.report("打开 " + name[0], name[0], openDiags);
 
-        GraphEditorView editorView = new GraphEditorView();
+        GraphEditorView editorView = new GraphEditorView(Ldlib2Workbench::styledGraphView);
         Ldlib2Workbench workbench = Ldlib2Workbench.create(library, editorView,
                 () -> normalizeAndReopen(name[0], graph));
         editorView.loadGraph(graph, savedTag -> workbench.onPersisted(save(name, graph)));

@@ -18,6 +18,9 @@ import io.github.tt432.eyelib.nodegraph.GraphLibrary;
  * {@link #onPersisted}（徽标表达式随保存重发射）。
  */
 public final class Ldlib2Workbench {
+    /** GraphView.header 与 WorkbenchToolbar 统一的行高（px）。 */
+    private static final int CHROME_ROW_HEIGHT = 22;
+
     private final UIElement root;
     private final NodeDebugOverlayModel overlayModel = new NodeDebugOverlayModel();
     private final AssetInspectorPanel assetPanel;
@@ -43,6 +46,8 @@ public final class Ldlib2Workbench {
 
         // blackboard 与变量表合并：藏掉 LDLib2 内建黑板面板，变量 UI 统一走 VariablesPanel
         hideBuiltinBlackboard(editorView);
+        // saveButton 由 GraphEditorView 构造期后挂进 header（styledGraphView 走不到），同样拉满行高
+        editorView.saveButton.layout(layout -> layout.heightPercent(100));
 
         // 行内剩余空间全给编辑器：grow=1 + basis=0（widthPercent(100) 会把固定宽侧栏挤出版面）
         editorView.layout(layout -> layout.flex(1).flexBasisPercent(0).minWidth(0).heightPercent(100));
@@ -99,6 +104,30 @@ public final class Ldlib2Workbench {
     public static Ldlib2Workbench create(GraphLibrary initialLibrary, GraphEditorView editorView,
                                          Runnable onNormalize) {
         return new Ldlib2Workbench(initialLibrary, editorView, onNormalize);
+    }
+
+    /**
+     * GraphView 工厂（{@code new GraphEditorView(Supplier)} 用；root 与每次子图潜入的新视图都经此）：
+     * 内建 header（Save/Undo/Redo 行）默认高 16/padding 1，与 WorkbenchToolbar（22/padding 2）
+     * 行高不一、按钮基线错开（用户实机截图指为「错位」）；统一为 22/padding 2。
+     */
+    public static com.lowdragmc.lowdraglib2.nodegraphtookit.gui.GraphView styledGraphView() {
+        var view = new com.lowdragmc.lowdraglib2.nodegraphtookit.gui.GraphView();
+        view.header.layout(layout -> layout.height(CHROME_ROW_HEIGHT).paddingAll(2));
+        // 内建按钮（Undo/Redo/snap/fit）默认固定高 14，在 22 行高里偏上；统一拉满行内容高
+        stretchHeaderButtons(view.header);
+        return view;
+    }
+
+    /** header 后代里的 Button/Toggle 高度拉满（saveButton 由 GraphEditorView 后挂，见 create 调用点）。 */
+    private static void stretchHeaderButtons(UIElement element) {
+        for (UIElement child : element.getChildren()) {
+            if (child instanceof com.lowdragmc.lowdraglib2.gui.ui.elements.Button
+                    || child instanceof com.lowdragmc.lowdraglib2.gui.ui.elements.Toggle) {
+                child.layout(layout -> layout.heightPercent(100));
+            }
+            stretchHeaderButtons(child);
+        }
     }
 
     /** 根元素（交给 {@code UI.of(...)}）。 */
