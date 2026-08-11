@@ -51,6 +51,8 @@ public final class Ldlib2NodegraphEditor {
     public static void open(@Nullable String libraryName) {
         // 重扫 config/emolang：改文件后重开编辑器即生效（规格 nodegraph-emolang-functions §3）
         io.github.tt432.eyelib.client.nodegraph.EmolangLoader.reloadAll();
+        // 资产建议缓存同周期失效（注册表可能已在编辑器外变化）
+        io.github.tt432.eyelib.client.nodegraph.AssetSuggestions.invalidateCaches();
         // 另存为项目后库键切换（saveViaEproject 返回新键），后续保存须用新键——用单元素数组持有
         String[] name = new String[1];
         GraphLibrary library;

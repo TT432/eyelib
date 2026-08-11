@@ -7,6 +7,7 @@ import io.github.tt432.eyelib.client.manager.RenderControllerManager;
 import io.github.tt432.eyelib.importer.model.importer.AddonTextureRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.FileToIdConverter;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -36,6 +37,19 @@ import java.util.TreeSet;
  */
 public final class AssetSuggestions {
     private AssetSuggestions() {
+    }
+
+    /**
+     * 候选缓存：{@code textures()} 的 listMatchingResources 是全包文件扫描，节点 UI 构建期每个
+     * ref 字段都会调一次（编辑器打开耗时实测 51% 在建议供给，其中纹理扫描 40%）。
+     * 缓存在编辑器重开（Ldlib2NodegraphEditor.open，同包调用）时失效——建议仅供编辑器下拉消费，
+     * 编辑器外无消费者，故不需资源重载监听。
+     */
+    private static volatile @Nullable List<String> texturesCache;
+
+    /** 编辑器重开时调用：丢弃候选缓存。 */
+    public static void invalidateCaches() {
+        texturesCache = null;
     }
 
     /** suggestionKey → 候选列表；未知 key → 空表。 */
@@ -96,6 +110,10 @@ public final class AssetSuggestions {
     }
 
     private static List<String> textures() {
+        var cached = texturesCache;
+        if (cached != null) {
+            return cached;
+        }
         TreeSet<String> out = new TreeSet<>();
         // addon 纹理（键已归一化：小写、.tga→.png，无命名空间）
         for (String path : AddonTextureRegistry.keys()) {
@@ -110,7 +128,9 @@ public final class AssetSuggestions {
                     ? stem
                     : location.getNamespace() + ":" + stem);
         }
-        return List.copyOf(out);
+        var result = List.copyOf(out);
+        texturesCache = result;
+        return result;
     }
 
     private static String stripPng(String path) {
