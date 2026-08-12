@@ -54,6 +54,7 @@ public final class EyelibManagerScreen implements UIScreen {
         int h = Math.round((ctx.height() - (board * 2 + padding * 2)) / 3);
         int w = Math.round(h / 0.618F);
         int x2 = Math.round(x1 + board + w + padding);
+        int x3 = Math.round(x2 + w + padding);
 
         int y1 = Math.round(board);
         int y2 = Math.round(board + padding + h);
@@ -80,7 +81,9 @@ public final class EyelibManagerScreen implements UIScreen {
                             return true;
                         }),
                 action(x1, y3, w, h, "节点图", "eyelib:icons/nodegraph",
-                        () -> io.github.tt432.eyelib.client.nodegraph.NodegraphGate.openEditor(null))
+                        () -> io.github.tt432.eyelib.client.nodegraph.NodegraphGate.openEditor(null)),
+                action(x3, y1, w, h, "Molang 积木", "eyelib:icons/nodegraph",
+                        io.github.tt432.eyelib.client.scratch.ScratchEditorScreen::open)
         );
         for (UIWidget widget : widgets) {
             ctx.addWidget(widget);

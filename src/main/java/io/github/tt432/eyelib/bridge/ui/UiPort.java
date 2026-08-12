@@ -41,4 +41,14 @@ public interface UiPort {
         return (int) (net.minecraft.client.Minecraft.getInstance().mouseHandler.ypos()
                 * window.getGuiScaledHeight() / window.getScreenHeight());
     }
+
+    /** 复制文本到系统剪贴板（keyboardHandler 访问集中在 bridge）。 */
+    static void setClipboard(String text) {
+        net.minecraft.client.Minecraft.getInstance().keyboardHandler.setClipboard(text);
+    }
+
+    /** 打开一个 UIScreen（setScreen 访问集中在 bridge）。 */
+    static void open(UIScreen screen) {
+        net.minecraft.client.Minecraft.getInstance().setScreen(wrap(screen));
+    }
 }

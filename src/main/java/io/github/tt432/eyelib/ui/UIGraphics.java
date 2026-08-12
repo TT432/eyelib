@@ -27,6 +27,12 @@ public interface UIGraphics {
 
     void drawLine(float x1, float y1, float x2, float y2, float thickness, int color);
 
+    /**
+     * 填充三角形列表。{@code pts} 为扁平顶点流 {@code [x0,y0,x1,y1,...]}，长度须为 6 的倍数，
+     * 每 3 个顶点构成一个三角形。顶点随当前 pose 变换（与 {@link #fill} 一致）。
+     */
+    void fillTriangles(float[] pts, int color);
+
     void enableScissor(int x, int y, int w, int h);
 
     void disableScissor();

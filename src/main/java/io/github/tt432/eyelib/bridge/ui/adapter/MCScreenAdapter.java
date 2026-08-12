@@ -105,6 +105,18 @@ public final class MCScreenAdapter extends Screen implements UIScreenContext {
 
     //? if <26.1 {
     @Override
+    public boolean charTyped(char codePoint, int modifiers) {
+        return screen.onCharTyped(codePoint, modifiers) || super.charTyped(codePoint, modifiers);
+    }
+    //?} else {
+    @Override
+    public boolean charTyped(net.minecraft.client.input.CharacterEvent event) {
+        return screen.onCharTyped((char) event.codepoint(), event.modifiers()) || super.charTyped(event);
+    }
+    //?}
+
+    //? if <26.1 {
+    @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         return screen.onMouseClick(mouseX, mouseY, button) || super.mouseClicked(mouseX, mouseY, button);
     }

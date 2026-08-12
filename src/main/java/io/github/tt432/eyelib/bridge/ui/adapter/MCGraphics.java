@@ -120,6 +120,44 @@ public final class MCGraphics implements UIGraphics {
     }
 
     @Override
+    public void fillTriangles(float[] pts, int color) {
+        if (pts.length % 6 != 0) {
+            throw new IllegalArgumentException("pts length must be a multiple of 6, got " + pts.length);
+        }
+        //? if <26.1 {
+        if (pts.length == 0) {
+            return;
+        }
+        org.joml.Matrix4f pose = gg.pose().last().pose();
+        // guiOverlay()：NO_DEPTH_TEST + COLOR_WRITE，与文字同语义（painter 顺序覆盖，
+        // 不与世界/GUI 深度交互）。每三角形写为退化 quad (v0,v2,v1,v1) 对齐 QUADS mode
+        // 与 gui 系正面环绕（屏幕逆时针）。末尾 endBatch 立即 flush。
+        float a = ((color >>> 24) & 0xFF) / 255.0F;
+        float r = ((color >> 16) & 0xFF) / 255.0F;
+        float g = ((color >> 8) & 0xFF) / 255.0F;
+        float b = (color & 0xFF) / 255.0F;
+        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
+        VertexConsumer buffer = bufferSource.getBuffer(RenderType.guiOverlay());
+        for (int i = 0; i < pts.length; i += 6) {
+            //? if <1.20.6 {
+            buffer.vertex(pose, pts[i], pts[i + 1], 0).color(r, g, b, a).endVertex();
+            buffer.vertex(pose, pts[i + 4], pts[i + 5], 0).color(r, g, b, a).endVertex();
+            buffer.vertex(pose, pts[i + 2], pts[i + 3], 0).color(r, g, b, a).endVertex();
+            buffer.vertex(pose, pts[i + 2], pts[i + 3], 0).color(r, g, b, a).endVertex();
+            //?} else {
+            buffer.addVertex(pose, pts[i], pts[i + 1], 0).setColor(r, g, b, a);
+            buffer.addVertex(pose, pts[i + 4], pts[i + 5], 0).setColor(r, g, b, a);
+            buffer.addVertex(pose, pts[i + 2], pts[i + 3], 0).setColor(r, g, b, a);
+            buffer.addVertex(pose, pts[i + 2], pts[i + 3], 0).setColor(r, g, b, a);
+            //?}
+        }
+        bufferSource.endBatch(RenderType.guiOverlay());
+        //?} else {
+        throw new UnsupportedOperationException("26.1 GUI rendering not yet supported");
+        //?}
+    }
+
+    @Override
     public void enableScissor(int x, int y, int w, int h) {
         gg.enableScissor(x, y, x + w, y + h);
     }
@@ -175,10 +213,14 @@ public final class MCGraphics implements UIGraphics {
     }
 
     private static void writeVertex(VertexConsumer buffer, Vector2f point, int color) {
+        float a = ((color >>> 24) & 0xFF) / 255.0F;
+        float r = ((color >> 16) & 0xFF) / 255.0F;
+        float g = ((color >> 8) & 0xFF) / 255.0F;
+        float b = (color & 0xFF) / 255.0F;
         //? if <1.20.6 {
-        buffer.vertex(point.x, point.y, 0).color(color).endVertex();
+        buffer.vertex(point.x, point.y, 0).color(r, g, b, a).endVertex();
         //?} else {
-        buffer.addVertex(point.x, point.y, 0).setColor(color);
+        buffer.addVertex(point.x, point.y, 0).setColor(r, g, b, a);
         //?}
     }
 
