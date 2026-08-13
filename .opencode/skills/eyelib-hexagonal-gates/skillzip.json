@@ -485,14 +485,14 @@
     "B1cf30de72a765299": "G1：编译隔离",
     "Ba7a8080d785ea53b": "ArchUnit 规则",
     "B5b1d985d6ed6b583": "在 domain 模块 test 中添加，排除 @Mod bootstrap 类和已知 MC 依赖：",
-    "B0b5c707ccdcdbb72": "class ArchitectureRules {\n    private static final JavaClasses classes = new ClassFileImporter()\n            .importPackages(\"io.github.tt432.eyelib.material\");\n\n    @Test\n    void domainLayerHasNoMcDependency() {\n        noClasses()\n                .that(DescribedPredicate.describe(\"not excluded\",\n                        c -> !(c.getSimpleName().equals(\"EyelibMaterialMod\")\n                                || c.getSimpleName().equals(\"BrShaderMapping\"))))\n                .and().resideInAPackage(\"io.github.tt432.eyelib.material..\")\n                .should().dependOnClassesThat()\n                .resideInAPackage(\"net.minecraft..\")\n                .check(classes);\n    }\n}",
+    "B0b5c707ccdcdbb72": "```java\nclass ArchitectureRules {\n    private static final JavaClasses classes = new ClassFileImporter()\n            .importPackages(\"io.github.tt432.eyelib.material\");\n\n    @Test\n    void domainLayerHasNoMcDependency() {\n        noClasses()\n                .that(DescribedPredicate.describe(\"not excluded\",\n                        c -> !(c.getSimpleName().equals(\"EyelibMaterialMod\")\n                                || c.getSimpleName().equals(\"BrShaderMapping\"))))\n                .and().resideInAPackage(\"io.github.tt432.eyelib.material..\")\n                .should().dependOnClassesThat()\n                .resideInAPackage(\"net.minecraft..\")\n                .check(classes);\n    }\n}\n```",
     "B7b130ca239d5d5e8": "编译验证",
     "B6f7632b6df85fa68": "通过 `mcmcp_build` 或 bash 跑 `gradlew compileJava`(ADR-0014 后单 project,无 `:eyelib-material:` 子项目前缀)。",
     "B1b65588618be97b4": "判定：exit code 0 且无 `import net.minecraft` 错误。",
     "B8fa022bc087af172": "G2：行为正确（Spec-Based 测试）",
     "B460cc36fbfa508c1": "编写规范",
     "Bbcbc3b52c3a37b3c": "测试 oracle 必须来自外部规范（Bedrock 文档、.mcpack 数据），不能来自当前代码输出：",
-    "Ba700b426f1055cb4": "// ✅ oracle 来自 Bedrock 文档\n@Test\nvoid inheritOrder_lastWins() {\n    // Bedrock 规范：materials 数组中后面覆盖前面\n    Map<String, BrMaterialEntry> chain = buildChain(\n        \"entity\",          // base\n        \"entity_nocull\",   // +DisableCulling\n        \"entity_alphatest\" // +ALPHA_TEST\n    );\n    ResolvedBrMaterial resolved = BrMaterialResolver.resolve(chain);\n    assertTrue(resolved.hasDefine(\"ALPHA_TEST\"),\n        \"entity_alphatest 加了 ALPHA_TEST，应保留\");\n}",
+    "Ba700b426f1055cb4": "```java\n// ✅ oracle 来自 Bedrock 文档\n@Test\nvoid inheritOrder_lastWins() {\n    // Bedrock 规范：materials 数组中后面覆盖前面\n    Map<String, BrMaterialEntry> chain = buildChain(\n        \"entity\",          // base\n        \"entity_nocull\",   // +DisableCulling\n        \"entity_alphatest\" // +ALPHA_TEST\n    );\n    ResolvedBrMaterial resolved = BrMaterialResolver.resolve(chain);\n    assertTrue(resolved.hasDefine(\"ALPHA_TEST\"),\n        \"entity_alphatest 加了 ALPHA_TEST，应保留\");\n}\n```",
     "Bbd6ce86b01437d55": "必须覆盖的测试类别",
     "Bc87556b2714d4ff4": "| 类别 | 示例 | 适用模块 |\n|------|------|---------|\n| CODEC 往返 | JSON → parse → encode → JSON 等值 | material, behavior, particle |\n| 继承链 | 3 层 base→add→sub 的最终状态 | material |\n| 状态机 | RC 的 transition → new_state 逻辑 | animation |\n| Molang 求值 | 对照 .mcpack 真实表达式验证 | molang |\n| 有效边界 | 空 map、单元素、无 base、无 add | 所有 |\n| 异常/边界 | 循环继承、缺失 base、未知状态 | material, animation |",
     "B83cba85f3406fe89": "验证命令",
@@ -506,7 +506,7 @@
     "B41d8dd0c600061ca": "对比：Draw call 数 ±2，最终 RT 逐像素对比",
     "Bd7b79c49cc3f93c7": "不一致 → `diff_draw_calls()` 定位",
     "Be9cd4eef2d5b76b1": "快速验证（/eval 替代）",
-    "B31d7edaf352be481": "var target = mc.level.getEntity(250);\nObject cap = RenderData.getComponent(target);\nList comps = (List) cap.getClass().getMethod(\"getModelComponents\").invoke(cap);\n// 验证 comps.size()、RenderType 等",
+    "B31d7edaf352be481": "```java\nvar target = mc.level.getEntity(250);\nObject cap = RenderData.getComponent(target);\nList comps = (List) cap.getClass().getMethod(\"getModelComponents\").invoke(cap);\n// 验证 comps.size()、RenderType 等\n```",
     "B6e63cecd52ce8beb": "Common Pitfalls",
     "B1526c7a43bdd1aee": "**ArchUnit 规则未在 build.gradle 加依赖** — 先确认 `testImplementation 'com.tngtech.archunit:archunit-junit5'`",
     "B3811bda5f04c7e7b": "**@Mod bootstrap 类触发误报** — 在 ArchUnit 规则中用 `DescribedPredicate` 排除",
@@ -535,5 +535,6 @@
     }
   ],
   "createdAt": "2026-08-13T08:53:47.488Z",
-  "updatedAt": "2026-08-13T08:56:38.175Z"
+  "updatedAt": "2026-08-13T08:56:38.175Z",
+  "frontMatterRaw": "---\nname: eyelib-hexagonal-gates\ndescription: Verify a hexagonal architecture refactoring batch — run ArchUnit isolation, spec-based tests, and RenderDoc integration checks per the G1→G2→G3 gate pipeline.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n  tags: eyelib, hexagonal, architecture, gates, acceptance\n  related-skills: eyelib-domain-extraction, eyelib-build, eyelib-debug, eyelib-renderdoc\n---"
 }

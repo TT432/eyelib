@@ -701,7 +701,7 @@
     "Bd34c4f633b818235": "等同步完成再读 source。",
     "Bdbf27393518f2d65": "非 Mod 库运行时 ClassNotFoundException",
     "B51af589754865725": "`implementation 'group:artifact:version'` 添加的第三方库编译通过但运行时找不到。Forge 运行时 classpath 机制不同,`implementation` 仅加入编译 classpath。",
-    "B84ecf4dd4696525b": "// 正确做法:同时加入编译和运行时 classpath\nadditionalRuntimeClasspath(implementation('group:artifact:version'))",
+    "B84ecf4dd4696525b": "```groovy\n// 正确做法:同时加入编译和运行时 classpath\nadditionalRuntimeClasspath(implementation('group:artifact:version'))\n```",
     "B7f80ac8d2e80f11f": "缺了里层 `implementation()` 只能上运行时 classpath,编译报包不存在。参考 `build.gradle` dependencies 段。",
     "B8b35bd8dd27201e7": "资源路径硬编码 \"eyelib/\" 前缀",
     "Be311578824233516": "`BrResourcesLoader` 构造函数硬编码 `\"eyelib/\"` 前缀,导致资源必须放在 `assets/<namespace>/eyelib/<type>/` 路径下。路径模板 `assets/<namespace>/eyelib/<resource_type>/<filename>.json`。本 mod 内部资源放 `assets/eyelib/eyelib/<type>/`,外部资源放 `assets/<your-namespace>/eyelib/<type>/`。",
@@ -749,5 +749,6 @@
     }
   ],
   "createdAt": "2026-08-13T08:58:32.140Z",
-  "updatedAt": "2026-08-13T09:08:19.245Z"
+  "updatedAt": "2026-08-13T09:08:19.245Z",
+  "frontMatterRaw": "---\nname: eyelib-build\ndescription: Eyelib 构建、测试、环境——Gradle(Stonecutter 多版本) + mcmcp omp 拓展全流程。Use when building, testing, or troubleshooting Gradle builds for the eyelib project.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"2.0.0\"\n  tags: eyelib, build, gradle, java, stonecutter\n  related-skills: eyelib, eyelib-debug\n---"
 }

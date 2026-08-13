@@ -391,10 +391,10 @@
     "Bf565e7095ebffd0f": "未实现 Molang query 返回 `MolangNull`，不是 `0`；沿表达式检查 null 传播。",
     "B08edd67d936dc06b": "`texture_mesh` 坐标和 UV 不要凭 JE 直觉猜；用 Blockbench Bedrock codec 读取内部坐标。",
     "Bcb98fb09bdbf298f": "关键语义速查",
-    "B354f1078e7b6baca": "RC 的纹理数组只有在多采样/掩码材质中才会合成多层；单采样材质只取第 0 层。",
+    "B354f1078e7b6baca": "  - RC 的纹理数组只有在多采样/掩码材质中才会合成多层；单采样材质只取第 0 层。",
     "Beac8475471dd402e": "`overlay_color` 是状态覆盖色，不是常驻 tint。",
     "Bac64fd4843dd650a": "emissive 低 alpha 需要独立 clamp 路径；additive 保留 `(SourceAlpha, One)`。",
-    "B8115cc2275525f40": "收集的骨骼姿态不含 pivot 平移；attachable/locator 必须自行补 pivot。",
+    "B8115cc2275525f40": "  - 收集的骨骼姿态不含 pivot 平移；attachable/locator 必须自行补 pivot。",
     "B2c2feb78529115ca": "完整判定规则见 `docs/concepts/bedrock-parity-investigation.md`。"
   },
   "stats": {
@@ -412,5 +412,6 @@
     }
   ],
   "createdAt": "2026-08-13T08:53:27.363Z",
-  "updatedAt": "2026-08-13T08:53:27.372Z"
+  "updatedAt": "2026-08-13T08:53:27.372Z",
+  "frontMatterRaw": "---\nname: bedrock-parity\ndescription: 用真实 Bedrock addon 对照验证 eyelib 实体、Molang 与材质渲染行为。Use when comparing JE and BE output, collecting runtime evidence, or diagnosing parity differences.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432/eyelib\n  version: \"1.0.0\"\n  tags: eyelib, bedrock, parity, rendering, molang\n  related-skills: eyelib, eyelib-debug, eyelib-renderdoc, progressive-exploration, mcmcp\n---"
 }

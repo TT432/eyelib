@@ -391,17 +391,17 @@
     "B55ecadc12d966027": "import org.junit.jupiter.api.Test;\nimport static org.junit.jupiter.api.Assertions.assertEquals;\n\nclass ListAccessorsTest {\n    @Test\n    void firstAndLastReturnListEnds() {\n        List<String> values = List.of(\"first\", \"middle\", \"last\");\n        assertEquals(\"first\", ListAccessors.first(values));\n        assertEquals(\"last\", ListAccessors.last(values));\n    }\n}",
     "B3ac74b01fed35217": "Pattern B: Codec round-trip test",
     "B809a49d30d27e459": "Test datafixerupper Codec serialization/deserialization.",
-    "Bfec6741223cfa7f8": "@Test\nvoid parsesAnimationFromCodec() {\n    MyType obj = MyType.CODEC.parse(JsonOps.INSTANCE,\n        JsonParser.parseString(\"{ ... }\")\n    ).getOrThrow(false, AssertionError::new);\n    assertNotNull(obj);\n    assertEquals(expected, obj.someField());\n}",
+    "Bfec6741223cfa7f8": "```java\n@Test\nvoid parsesAnimationFromCodec() {\n    MyType obj = MyType.CODEC.parse(JsonOps.INSTANCE,\n        JsonParser.parseString(\"{ ... }\")\n    ).getOrThrow(false, AssertionError::new);\n    assertNotNull(obj);\n    assertEquals(expected, obj.someField());\n}\n```",
     "B74360706aa0198cc": "Pattern C: Parameterized test",
     "B654777aadc359c30": "Test multiple inputs with the same logic.",
     "B23e92699f2841dd7": "@ParameterizedTest\n@CsvSource(value = {\n    \"1+2~3.0\",\n    \"5-3~2.0\",\n    \"5/0~0.0\"\n}, delimiter = '~')\nvoid binaryArithmetic(String expression, float expected) {\n    assertEquals(expected, evaluate(expression), 0.0001);\n}",
     "Bccadf245a28969a3": "Pattern D: Structural boundary test",
     "B286d2438aba089b6": "Assert that source file contents respect module boundaries. Read `.java` files as text and check for allowed/forbidden imports.",
-    "B45e9aab1a057f473": "@Test\nvoid spawnServiceDoesNotImportRootParticleTypes() throws IOException {\n    String source = Files.readString(Path.of(\n        \"src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java\"\n    ));\n    assertTrue(source.contains(\"import io.github.tt432.eyelib.particle.api.ParticleSpawnRequest;\"));\n    assertFalse(source.contains(\"import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;\"));\n}",
+    "B45e9aab1a057f473": "```java\n@Test\nvoid spawnServiceDoesNotImportRootParticleTypes() throws IOException {\n    String source = Files.readString(Path.of(\n        \"src/main/java/io/github/tt432/eyelib/client/particle/ParticleSpawnService.java\"\n    ));\n    assertTrue(source.contains(\"import io.github.tt432.eyelib.particle.api.ParticleSpawnRequest;\"));\n    assertFalse(source.contains(\"import io.github.tt432.eyelib.client.particle.bedrock.BrParticle;\"));\n}\n```",
     "B4b9f70dab0b33b24": "This pattern is unique to this project. It enforces module boundaries and ownership rules by verifying that production source code follows the declared dependency graph.",
     "Bb242dd2d92bd186b": "Pattern E: Fixture-based integration test",
     "B53d4cdd57d7037f3": "Load test fixtures from `src/test/resources/` and process them.",
-    "B7b5b11497c7764bb": "@TempDir\nPath tempDir;\n\n@Test\nvoid loadsAddonFixture() throws Exception {\n    BedrockAddon addon = BedrockAddonLoader.load(pathToFixture());\n    assertNotNull(addon);\n}",
+    "B7b5b11497c7764bb": "```java\n@TempDir\nPath tempDir;\n\n@Test\nvoid loadsAddonFixture() throws Exception {\n    BedrockAddon addon = BedrockAddonLoader.load(pathToFixture());\n    assertNotNull(addon);\n}\n```",
     "B2ed5a4adf733da1b": "Running Tests",
     "B98271b43c67447f5": "All modules run JUnit via the standard Gradle `test` task. To verify changes:",
     "B9bb5e00d4ecec43b": "在 IDEA 里手动 Gradle sync(reimport)（如果修改了 `build.gradle`）",
@@ -423,5 +423,6 @@
     }
   ],
   "createdAt": "2026-08-13T08:53:07.064Z",
-  "updatedAt": "2026-08-13T08:53:07.075Z"
+  "updatedAt": "2026-08-13T08:53:07.075Z",
+  "frontMatterRaw": "---\nname: unit-test\ndescription: Write and run JUnit 5 unit tests. Use for structural invariants, boundary enforcement, codec round-trips, and null safety checks that do NOT require a running Minecraft client.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n---"
 }

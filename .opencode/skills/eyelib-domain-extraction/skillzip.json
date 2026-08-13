@@ -857,7 +857,7 @@
     "B75423dc69bb184e4": "**ResourceLocation：**",
     "B5ae0fff37f8aac2d": "// 改前\nnew ResourceLocation(\"eyelib:models/entity\")\n// 改后\nPortResourceLocation.of(\"eyelib\", \"models/entity\")",
     "B44500586e93d8b90": "**RenderType → 语义 Port：**",
-    "Bca02e3c9fb971edb": "// 改后：domain 输出 Port 语义，不输出 MC 类型\npublic PortRenderPass getRenderPass() {\n    return new PortRenderPass() {\n        public boolean requiresAlphaTest() { return hasDefine(\"ALPHA_TEST\"); }\n        public boolean requiresBlending() { return hasBlending(); }\n        public boolean requiresCulling() { return !hasDefine(\"DISABLE_CULLING\"); }\n    };\n}",
+    "Bca02e3c9fb971edb": "```java\n// 改后：domain 输出 Port 语义，不输出 MC 类型\npublic PortRenderPass getRenderPass() {\n    return new PortRenderPass() {\n        public boolean requiresAlphaTest() { return hasDefine(\"ALPHA_TEST\"); }\n        public boolean requiresBlending() { return hasBlending(); }\n        public boolean requiresCulling() { return !hasDefine(\"DISABLE_CULLING\"); }\n    };\n}\n```",
     "B8177cf7e8e7b4ef0": "Step 5：编译验证",
     "B762d5c6ff1ce6299": "通过 `mcmcp_build` 或 bash 跑 `gradlew compileJava`(ADR-0014 后单 project,无 `:eyelib-material:` 子项目前缀)。",
     "B7a1231599a65faf3": "零错误，警告也要修。",
@@ -868,7 +868,7 @@
     "Bd6093c4ac2b7eca0": "**纯 Port 替换不需要迁移。** 像 `PortStringRepresentable` 替换——只在 domain 侧改 implements，不产生 bridge 代码。只有以下情况才迁移：",
     "B9a5d04fd52e81ccb": "domain 调用了 MC 类的具体方法（如 `RenderType.m_...()`）",
     "B285ab4ee40118508": "domain 创建了 MC 类型实例（如 `new BufferBuilder(...)`）",
-    "B270bc4471e1d1f21": "bridge 中实现类实现 domain 的 Port 接口，内部可自由 import MC 类型。",
+    "B270bc4471e1d1f21": "  - bridge 中实现类实现 domain 的 Port 接口，内部可自由 import MC 类型。",
     "B46255b0201f43ae4": "Step 8：更新调用方",
     "B0a435e1a81ce7874": "root 或其他模块中被迁移类的引用改 import：",
     "B5dfee33d3932b77f": "Port 接口引用保持不变（在 domain 模块中）",
@@ -886,10 +886,10 @@
     "B62672d6c69ec1cb6": "命名规范",
     "B2540ba8b9ec5db65": "| 位置 | 格式 | 示例 |\n|------|------|------|\n| 包路径 | `<模块>/port/` | `src/main/java/io/github/tt432/eyelib/material/port/` |\n| 接口名 | `Port<语义>` | `PortRenderPass`, `PortEntity` |\n| 实现类 | `<语义>Adapter` | `RenderPassAdapter`（在 bridge） |",
     "Bba1e4146f50bc860": "接口模板",
-    "B314393863287e960": "/** @author TT432 */\ninterface PortXxx {\n    ReturnType someProperty();\n    @Nullable ReturnType optionalProperty();\n    void doSomething(InputType input);\n    static PortXxx of(Args args) { ... }\n}",
+    "B314393863287e960": "```java\n/** @author TT432 */\ninterface PortXxx {\n    ReturnType someProperty();\n    @Nullable ReturnType optionalProperty();\n    void doSomething(InputType input);\n    static PortXxx of(Args args) { ... }\n}\n```",
     "Be663b6e442c6086e": "fromEnum() 辅助方法",
     "B6bcc9f0be50bdcf1": "Port 替代 `StringRepresentable` 时必须提供：",
-    "B8c89fbfe3205d304": "public interface PortStringRepresentable {\n    String getSerializedName();\n\n    static <T extends Enum<T> & PortStringRepresentable> Codec<T> fromEnum(Supplier<T[]> values) {\n        return Codec.STRING.xmap(\n                name -> Arrays.stream(values.get())\n                        .filter(e -> e.getSerializedName().equals(name))\n                        .findFirst()\n                        .orElseThrow(() -> new IllegalArgumentException(\"Unknown: \" + name)),\n                PortStringRepresentable::getSerializedName\n        );\n    }\n}",
+    "B8c89fbfe3205d304": "```java\npublic interface PortStringRepresentable {\n    String getSerializedName();\n\n    static <T extends Enum<T> & PortStringRepresentable> Codec<T> fromEnum(Supplier<T[]> values) {\n        return Codec.STRING.xmap(\n                name -> Arrays.stream(values.get())\n                        .filter(e -> e.getSerializedName().equals(name))\n                        .findFirst()\n                        .orElseThrow(() -> new IllegalArgumentException(\"Unknown: \" + name)),\n                PortStringRepresentable::getSerializedName\n        );\n    }\n}\n```",
     "Bf89507e62babe370": "禁止项",
     "B50341b3e44e306b0": "| 禁止 | 正确做法 |\n|------|----------|\n| Port import `net.minecraft.*` | Java 标准库或 domain 自有类型 |\n| Port 方法返回 `Object` | sealed 类型或泛型 |\n| Port 放 bridge 模块 | Port 由 domain 定义 |\n| 一个 Port 超 10 方法 | 拆成多个窄接口 |\n| 每个 MC 类建一个 Port | 按语义分组 |",
     "Bfa7d86ac7ad1c06a": "Common Pitfalls",
@@ -921,5 +921,6 @@
     }
   ],
   "createdAt": "2026-08-13T08:58:58.920Z",
-  "updatedAt": "2026-08-13T09:06:35.433Z"
+  "updatedAt": "2026-08-13T09:06:35.433Z",
+  "frontMatterRaw": "---\nname: eyelib-domain-extraction\ndescription: Extract a Port from a domain module in the hexagonal architecture refactoring — locate MC contact points, create Port interfaces, migrate glue code to bridge, and verify with ArchUnit.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n  tags: eyelib, hexagonal, domain, port, extraction, refactoring\n  related-skills: eyelib-hexagonal-gates, eyelib-build\n---"
 }

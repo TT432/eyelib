@@ -339,13 +339,13 @@
     "B0dfceb15a71ceaef": "| 层 | 环境 | 测试内容 |\n|---|------|---------|\n| Layer 1 domain spec | 纯 JUnit (`:test`) | MaterialResolver, BrRenderStateFactory, Molang, CODEC |\n| Layer 2a 管道 | 纯 JUnit | `BrMaterialEntry → BrRenderState` 语义映射 |\n| Layer 2b Bridge | clientsmoke | `RenderTypeResolver`, `RenderPassAdapter`, `EntityPortAdapter` — 需 MC 类型 |\n| Layer 3 接线 | clientsmoke + Fake | `EntityRenderSystem.setupClientEntity` — Component 接线 |",
     "Badb94426bf4e7414": "启用 clientsmoke",
     "Ba1cd6c3bf149faa9": "在 `build.gradle` 的 `client` run 配置中添加：",
-    "Be65199ae60b7e5b4": "systemProperty 'clientsmoke.enabled', 'true'\nsystemProperty 'clientsmoke.autoExit', 'false'  // 测试结束后保持开启",
+    "Be65199ae60b7e5b4": "```groovy\nsystemProperty 'clientsmoke.enabled', 'true'\nsystemProperty 'clientsmoke.autoExit', 'false'  // 测试结束后保持开启\n```",
     "Bc6a73fe68058d15c": "> `clientsmoke.enabled` 默认 `false`，不加此属性状态机进入 IDLE 不执行。",
     "B10046b3f64d11711": "写 @ClientSmoke 测试",
     "B1f4aaea704210b01": "测试类放在 `src/main/java/io/github/tt432/eyelib/smoke/`。模式：",
-    "B54a0c332f1b1cb7c": "@ClientSmoke(description = \"简短描述\", priority = 10)\npublic class MySmoke {\n    public MySmoke() {\n        // 全部逻辑在无参构造器中执行\n        // throw = fail, 正常返回 = pass\n        // 可调用 Minecraft.getInstance()、所有 Manager、所有 Bridge 类\n        var materials = MaterialManager.INSTANCE.getAllData();\n        require(!materials.isEmpty(), \"No materials\");\n    }\n\n    private static void require(boolean cond, String msg) {\n        if (!cond) throw new AssertionError(msg);\n    }\n}",
+    "B54a0c332f1b1cb7c": "```java\n@ClientSmoke(description = \"简短描述\", priority = 10)\npublic class MySmoke {\n    public MySmoke() {\n        // 全部逻辑在无参构造器中执行\n        // throw = fail, 正常返回 = pass\n        // 可调用 Minecraft.getInstance()、所有 Manager、所有 Bridge 类\n        var materials = MaterialManager.INSTANCE.getAllData();\n        require(!materials.isEmpty(), \"No materials\");\n    }\n\n    private static void require(boolean cond, String msg) {\n        if (!cond) throw new AssertionError(msg);\n    }\n}\n```",
     "Ba5906a3f8d006fb5": "运行",
-    "Bd483270e41adb7c0": "mcmcp_clientsmoke(timeout=180)  # 重建 + 注入 JVM 参数 + 启动 + 解析报告（一键）\n# ⚠️ 不要调用 mcmcp_enter_world！clientsmoke 自己创建 ClientSmokeTest 世界\n# 等待 ~30s → 状态机 INIT → CONFIG_LOAD → SCAN → WORLD_CREATE → STABILIZE → TEST_EXEC → REPORT",
+    "Bd483270e41adb7c0": "```python\nmcmcp_clientsmoke(timeout=180)  # 重建 + 注入 JVM 参数 + 启动 + 解析报告（一键）\n# ⚠️ 不要调用 mcmcp_enter_world！clientsmoke 自己创建 ClientSmokeTest 世界\n# 等待 ~30s → 状态机 INIT → CONFIG_LOAD → SCAN → WORLD_CREATE → STABILIZE → TEST_EXEC → REPORT\n```",
     "B641daefc5bcad032": "输出（gameDir = `versions/<version>/run/clientsmoke`，由 build.gradle clientSmoke run config 决定）：",
     "Bef26ad6c6879ad8e": "`versions/<version>/run/clientsmoke/clientsmoke-reports/report-YYYYMMDD-HHmmss.json`",
     "B77976a538b9fc399": "`versions/<version>/run/clientsmoke/clientsmoke-reports/junit-YYYYMMDD-HHmmss.xml`",
@@ -376,5 +376,6 @@
     }
   ],
   "createdAt": "2026-08-13T08:53:51.157Z",
-  "updatedAt": "2026-08-13T08:59:21.895Z"
+  "updatedAt": "2026-08-13T08:59:21.895Z",
+  "frontMatterRaw": "---\nname: eyelib-clientsmoke\ndescription: Eyelib Clientsmoke 客户端烟雾测试——@ClientSmoke 注解、三层架构、运行、报告。Use when writing or running clientsmoke tests.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n  tags: eyelib, testing, clientsmoke, mc\n  related-skills: eyelib, eyelib-build, eyelib-debug\n---"
 }

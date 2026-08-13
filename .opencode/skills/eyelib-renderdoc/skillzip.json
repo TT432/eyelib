@@ -496,19 +496,19 @@
     "B3f22c2d8bd22a412": "已知可用路径",
     "Bf9c784fd412ded57": "| 路径 | 状态 |\n|---|---|\n| `renderdoccmd capture gradlew.bat` | ❌ Gradle 代理丢失，TLS 握手失败 |\n| `renderdoccmd capture runClient.cmd` | ✅ 全链路验证通过 |\n| `renderdoccmd inject --PID=<pid>` | ❌ DLL 加载但 endCapture() 失败 |\n| `RenderDocCapturer` 程序化触发 | ✅ startCapture() + endCapture() 返回 true |",
     "B7081939928f98feb": "capture 模式启动",
-    "Bdbae3fd967e94a9b": "Set-Location E:\\_ideaProjects\\qylEyelib\n# AIDebugServer 默认不开启：capture 前向 VM 参数文件追加调试端口\nAdd-Content versions\\1.20.1\\build\\moddev\\clientRunVmArgs.txt \"`n-Dai_debug_port=25999\"\n& \"E:\\RenderDoc\\renderdoccmd.exe\" capture `\n    -c eyelib_capture --opt-hook-children `\n    \"E:\\_ideaProjects\\qylEyelib\\versions\\1.20.1\\build\\moddev\\runClient.cmd\"",
+    "Bdbae3fd967e94a9b": "```powershell\nSet-Location E:\\_ideaProjects\\qylEyelib\n# AIDebugServer 默认不开启：capture 前向 VM 参数文件追加调试端口\nAdd-Content versions\\1.20.1\\build\\moddev\\clientRunVmArgs.txt \"`n-Dai_debug_port=25999\"\n& \"E:\\RenderDoc\\renderdoccmd.exe\" capture `\n    -c eyelib_capture --opt-hook-children `\n    \"E:\\_ideaProjects\\qylEyelib\\versions\\1.20.1\\build\\moddev\\runClient.cmd\"\n```",
     "B27a96361da230f1f": "**前置**: `versions/<node>/build/moddev/runClient.cmd` 需先由 `createClientLaunchScript` 生成(经 `mcmcp_build`)。",
     "B4502b41c5a3e6cca": "普通调试启动用 `mcmcp_launch()`（omp 拓展工具），自动经环境变量注入调试端口。",
     "B3d3955ce6d566ef8": "renderdoccmd CLI 限制",
     "B3e01802e96980f1c": "`renderdoccmd` CLI 只能操作嵌入式数据段（thumb、extract、convert）——**不能分析帧内的 draw call、shader、pipeline state、uniform 值**。截帧后必须用 RenderDoc Python 重放 API 才能做深度分析。",
     "B0c4ef6a4f80bca02": "缩略图（仅预览，无 alpha）:",
-    "Bb5be07bce81b083e": "& \"E:\\RenderDoc\\renderdoccmd.exe\" thumb --out snapshot.png --format png capture.rdc",
+    "Bb5be07bce81b083e": "```powershell\n& \"E:\\RenderDoc\\renderdoccmd.exe\" thumb --out snapshot.png --format png capture.rdc\n```",
     "B6a81dcb63bb18a04": "RenderDoc Python replay — Windows 方案（已验证）",
     "B88562004fe4a8032": "唯一可行路径: Windows 侧 Python(WSL 下 GLES 3.x 不支持 replay)。",
     "Ba19f14b46a18cc16": "安装 Python 3.13：`winget install Python.Python.3.13`",
     "B72f28fa113b5e4d7": "安装 renderdoc-mcp：`C:\\Users\\<user>\\AppData\\Local\\Programs\\Python\\Python313\\python.exe -m pip install renderdoc-mcp`",
     "B08c3fb29d96cac8f": "renderdoc-mcp 的 lib 目录下有 `renderdoc.pyd`，导入路径：",
-    "Bc3aa66ad13deac13": "import sys\nsys.path.insert(0, r\"C:\\Users\\<user>\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\renderdoc_mcp\\lib\")\nimport renderdoc as rd",
+    "Bc3aa66ad13deac13": "```python\nimport sys\nsys.path.insert(0, r\"C:\\Users\\<user>\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\renderdoc_mcp\\lib\")\nimport renderdoc as rd\n```",
     "Bdf2a8433f6afd70d": "API 差异（renderdoc-mcp 0.2.7 vs RenderDoc 原生）：",
     "B727eff17d55b5f85": "`cap.OpenCapture(opts, None)` 返回 `(result, controller)` 元组",
     "B3057ea3df8da803b": "controller 方法：`GetRootActions()`, `GetPostVSData()`, `SetFrameEvent()`, `GetFrameInfo()`",
@@ -523,7 +523,7 @@
     "B36eecaede42e7527": "⚠️ **WSL 下 GLES 3.x 抓帧无法回放**。唯一可行路径：Windows 侧 Python replay。",
     "B94421e5f9fa7d621": "RenderDocCapturer API",
     "B012a25654542b53f": "`io.github.tt432.clientsmoke.debug.RenderDocCapturer`（clientsmoke mod 内，经 /eval 调用）：",
-    "B44cffbb21e218108": "RenderDocCapturer.isAvailable()          // boolean\nRenderDocCapturer.setCaptureFilePathTemplate(\"E:\\\\...\\\\run\\\\frame\")\nRenderDocCapturer.startCapture()         // void\nRenderDocCapturer.endCapture()           // boolean"
+    "B44cffbb21e218108": "```java\nRenderDocCapturer.isAvailable()          // boolean\nRenderDocCapturer.setCaptureFilePathTemplate(\"E:\\\\...\\\\run\\\\frame\")\nRenderDocCapturer.startCapture()         // void\nRenderDocCapturer.endCapture()           // boolean\n```"
   },
   "stats": {
     "patches": 1,
@@ -540,5 +540,6 @@
     }
   ],
   "createdAt": "2026-08-13T08:55:00.384Z",
-  "updatedAt": "2026-08-13T08:55:00.437Z"
+  "updatedAt": "2026-08-13T08:55:00.437Z",
+  "frontMatterRaw": "---\nname: eyelib-renderdoc\ndescription: Eyelib GPU 调试——RenderDoc 截帧、headless 回放、Windows Python replay、renderdoc-mcp。Use when capturing or analyzing RenderDoc frames.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n  tags: eyelib, renderdoc, gpu, debugging\n  related-skills: eyelib, eyelib-debug\n---"
 }

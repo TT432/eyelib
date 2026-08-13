@@ -991,7 +991,7 @@
     "Bba37f399efe2b9fb": "如果需要按 key 分发（JSON 的顶级 key 决定类型），参考下一节。",
     "B069426acc9ba9f62": "Tagged Union (Key Dispatch)",
     "B1815ad21df00f2db": "当 sealed class 的子类型通过 JSON 对象的唯一 key 区分时（如 `{\"all_of\": [...]}`、`{\"one_of\": [...]}`），用 `EyelibCodec.list()`：",
-    "Bcaa846fc1575f3ee": "public static final MapCodec<ComplexFilter> CODEC = EyelibCodec.list(() -> Map.of(\n    \"all_of\", new EyelibCodec.CodecInfo<>(AllOf.class, AllOf.CODEC),\n    \"one_of\", new EyelibCodec.CodecInfo<>(OneOf.class, OneOf.CODEC),\n    \"none_of\", new EyelibCodec.CodecInfo<>(NoneOf.class, NoneOf.CODEC)\n));",
+    "Bcaa846fc1575f3ee": "```java\npublic static final MapCodec<ComplexFilter> CODEC = EyelibCodec.list(() -> Map.of(\n    \"all_of\", new EyelibCodec.CodecInfo<>(AllOf.class, AllOf.CODEC),\n    \"one_of\", new EyelibCodec.CodecInfo<>(OneOf.class, OneOf.CODEC),\n    \"none_of\", new EyelibCodec.CodecInfo<>(NoneOf.class, NoneOf.CODEC)\n));\n```",
     "B396eb15c9b02807e": "特点：每个变体通过 `MapCodec.fieldOf(key)` 自动包装，encode 时写回对应的 key。",
     "B1b7d9c9325c9d871": "withAlternative — 多格式兼容",
     "B59a15ab1071c1cb7": "读取时接受多种格式，写入时只用主格式。",
@@ -1008,7 +1008,7 @@
     "B5f8f903e7cc8c528": "public static final Codec<TreeNode> CODEC = Codec.recursive(\n    \"TreeNode\",\n    self -> RecordCodecBuilder.create(ins -> ins.group(\n        Codec.STRING.fieldOf(\"value\").forGetter(TreeNode::value),\n        self.listOf().optionalFieldOf(\"children\", List.of()).forGetter(TreeNode::children)\n    ).apply(ins, TreeNode::new))\n);",
     "B1754ae8d9a892b13": "TupleCodec — 位置编码",
     "B5c96e76006f38772": "当数据用数组位置表达字段（如 `[1.0, 2.0, 3.0]` 表示 Vec3）时使用。",
-    "Becdb05c87045c67e": "public static final Codec<Vec2> CODEC = ChinExtraCodecs.tuple(Codec.FLOAT, Codec.FLOAT)\n    .bmap(Vec2::new, v -> Tuple.of(v.x, v.y));",
+    "Becdb05c87045c67e": "```java\npublic static final Codec<Vec2> CODEC = ChinExtraCodecs.tuple(Codec.FLOAT, Codec.FLOAT)\n    .bmap(Vec2::new, v -> Tuple.of(v.x, v.y));\n```",
     "B94e8a446bec37064": "---",
     "Bb32f884e9ed88564": "自定义 Codec 实现",
     "B8de6001d273b872b": "当 `RecordCodecBuilder`、`xmap`、`dispatch` 等组合子无法表达数据形状时，直接实现 `Codec<T>` 或 `MapCodec<T>`。",
@@ -1017,9 +1017,9 @@
     "B905a1dd11bdc0ef3": "需要处理非标准（非 JSON 对象）的顶层结构",
     "B766d88ac769c7136": "`DynamicOps` 层面的手动操作不可避免",
     "Ba70fefd07219e4e6": "Codec<T> 模板",
-    "B57c5f60e921bb600": "public static final Codec<MyType> CODEC = new Codec<>() {\n    @Override\n    public <T> DataResult<Pair<MyType, T>> decode(DynamicOps<T> ops, T input) {\n        return ops.getMap(input).flatMap(map -> {\n            // 使用 ops.get(fieldName) 手动读取字段\n            // 使用子 Codec 做结构化解析\n            // 返回 DataResult<Pair<MyType, T>>\n        });\n    }\n\n    @Override\n    public <T> DataResult<T> encode(MyType input, DynamicOps<T> ops, T prefix) {\n        // 构造 RecordBuilder，build 返回 encode 结果\n    }\n};",
+    "B57c5f60e921bb600": "```java\npublic static final Codec<MyType> CODEC = new Codec<>() {\n    @Override\n    public <T> DataResult<Pair<MyType, T>> decode(DynamicOps<T> ops, T input) {\n        return ops.getMap(input).flatMap(map -> {\n            // 使用 ops.get(fieldName) 手动读取字段\n            // 使用子 Codec 做结构化解析\n            // 返回 DataResult<Pair<MyType, T>>\n        });\n    }\n\n    @Override\n    public <T> DataResult<T> encode(MyType input, DynamicOps<T> ops, T prefix) {\n        // 构造 RecordBuilder，build 返回 encode 结果\n    }\n};\n```",
     "B43e530002ae0f636": "MapCodec<T> 模板",
-    "B0d1c39c13214f867": "public static final MapCodec<MyType> CODEC = new MapCodec<>() {\n    @Override\n    public <T> Stream<T> keys(DynamicOps<T> ops) {\n        return Stream.of(ops.createString(\"field1\"), ops.createString(\"field2\"));\n    }\n\n    @Override\n    public <T> DataResult<MyType> decode(DynamicOps<T> ops, MapLike<T> input) {\n        // 从 MapLike 中按 key 读取\n    }\n\n    @Override\n    public <T> RecordBuilder<T> encode(MyType input, DynamicOps<T> ops, RecordBuilder<T> prefix) {\n        // 往 RecordBuilder 中添加字段\n    }\n};",
+    "B0d1c39c13214f867": "```java\npublic static final MapCodec<MyType> CODEC = new MapCodec<>() {\n    @Override\n    public <T> Stream<T> keys(DynamicOps<T> ops) {\n        return Stream.of(ops.createString(\"field1\"), ops.createString(\"field2\"));\n    }\n\n    @Override\n    public <T> DataResult<MyType> decode(DynamicOps<T> ops, MapLike<T> input) {\n        // 从 MapLike 中按 key 读取\n    }\n\n    @Override\n    public <T> RecordBuilder<T> encode(MyType input, DynamicOps<T> ops, RecordBuilder<T> prefix) {\n        // 往 RecordBuilder 中添加字段\n    }\n};\n```",
     "Be66755bf488d6409": "---",
     "Bc3424e9fcbf25d3d": "测试 Codec",
     "B5b344dc8998c7a9e": "必测项",
@@ -1085,14 +1085,14 @@
     "Bf3879b809c40d51e": "`net.minecraft.util.ExtraCodecs` — Minecraft 提供的额外 Codec",
     "Bdd89af5a95dc2dd8": "Tagged Union (Key Dispatch)",
     "B1f36d097cb1ffc69": "当 sealed class 的子类型通过 JSON 对象的唯一 key 区分时（如 `{\"all_of\": [...]}`、`{\"one_of\": [...]}`），用 `EyelibCodec.list()`：",
-    "B27499304a07caac6": "public static final MapCodec<ComplexFilter> CODEC = EyelibCodec.list(() -> Map.of(\n    \"all_of\", new EyelibCodec.CodecInfo<>(AllOf.class, AllOf.CODEC),\n    \"one_of\", new EyelibCodec.CodecInfo<>(OneOf.class, OneOf.CODEC),\n    \"none_of\", new EyelibCodec.CodecInfo<>(NoneOf.class, NoneOf.CODEC)\n));",
+    "B27499304a07caac6": "```java\npublic static final MapCodec<ComplexFilter> CODEC = EyelibCodec.list(() -> Map.of(\n    \"all_of\", new EyelibCodec.CodecInfo<>(AllOf.class, AllOf.CODEC),\n    \"one_of\", new EyelibCodec.CodecInfo<>(OneOf.class, OneOf.CODEC),\n    \"none_of\", new EyelibCodec.CodecInfo<>(NoneOf.class, NoneOf.CODEC)\n));\n```",
     "B62adefeb7ab07ea1": "TupleCodec — 位置编码",
     "Bec7ac11e8775f4a8": "当数据用数组位置表达字段（如 `[1.0, 2.0, 3.0]` 表示 Vec3）时使用。",
-    "Bf69f5620db8343a6": "public static final Codec<Vec2> CODEC = ChinExtraCodecs.tuple(Codec.FLOAT, Codec.FLOAT)\n    .bmap(Vec2::new, v -> Tuple.of(v.x, v.y));",
+    "Bf69f5620db8343a6": "```java\npublic static final Codec<Vec2> CODEC = ChinExtraCodecs.tuple(Codec.FLOAT, Codec.FLOAT)\n    .bmap(Vec2::new, v -> Tuple.of(v.x, v.y));\n```",
     "Ba97f5fe2364c2748": "Codec<T> 模板",
-    "B73b0b44a740a0a34": "public static final Codec<MyType> CODEC = new Codec<>() {\n    @Override\n    public <T> DataResult<Pair<MyType, T>> decode(DynamicOps<T> ops, T input) {\n        return ops.getMap(input).flatMap(map -> {\n            // 使用 ops.get(fieldName) 手动读取字段\n            // 使用子 Codec 做结构化解析\n            // 返回 DataResult<Pair<MyType, T>>\n        });\n    }\n\n    @Override\n    public <T> DataResult<T> encode(MyType input, DynamicOps<T> ops, T prefix) {\n        // 构造 RecordBuilder，build 返回 encode 结果\n    }\n};",
+    "B73b0b44a740a0a34": "```java\npublic static final Codec<MyType> CODEC = new Codec<>() {\n    @Override\n    public <T> DataResult<Pair<MyType, T>> decode(DynamicOps<T> ops, T input) {\n        return ops.getMap(input).flatMap(map -> {\n            // 使用 ops.get(fieldName) 手动读取字段\n            // 使用子 Codec 做结构化解析\n            // 返回 DataResult<Pair<MyType, T>>\n        });\n    }\n\n    @Override\n    public <T> DataResult<T> encode(MyType input, DynamicOps<T> ops, T prefix) {\n        // 构造 RecordBuilder，build 返回 encode 结果\n    }\n};\n```",
     "B3df10c62c458c478": "MapCodec<T> 模板",
-    "B01a1fafd28e41c9b": "public static final MapCodec<MyType> CODEC = new MapCodec<>() {\n    @Override\n    public <T> Stream<T> keys(DynamicOps<T> ops) {\n        return Stream.of(ops.createString(\"field1\"), ops.createString(\"field2\"));\n    }\n\n    @Override\n    public <T> DataResult<MyType> decode(DynamicOps<T> ops, MapLike<T> input) {\n        // 从 MapLike 中按 key 读取\n    }\n\n    @Override\n    public <T> RecordBuilder<T> encode(MyType input, DynamicOps<T> ops, RecordBuilder<T> prefix) {\n        // 往 RecordBuilder 中添加字段\n    }\n};"
+    "B01a1fafd28e41c9b": "```java\npublic static final MapCodec<MyType> CODEC = new MapCodec<>() {\n    @Override\n    public <T> Stream<T> keys(DynamicOps<T> ops) {\n        return Stream.of(ops.createString(\"field1\"), ops.createString(\"field2\"));\n    }\n\n    @Override\n    public <T> DataResult<MyType> decode(DynamicOps<T> ops, MapLike<T> input) {\n        // 从 MapLike 中按 key 读取\n    }\n\n    @Override\n    public <T> RecordBuilder<T> encode(MyType input, DynamicOps<T> ops, RecordBuilder<T> prefix) {\n        // 往 RecordBuilder 中添加字段\n    }\n};\n```"
   },
   "stats": {
     "patches": 2,
@@ -1115,5 +1115,6 @@
     }
   ],
   "createdAt": "2026-08-13T08:44:46.112Z",
-  "updatedAt": "2026-08-13T08:52:15.095Z"
+  "updatedAt": "2026-08-13T08:52:15.095Z",
+  "frontMatterRaw": "---\nname: codec-design\ndescription: Design and implement Codec-based data transformations. Use when creating/refactoring Codecs for serialization, making loader/schema code Codec-driven, or separating I/O from data parsing. Reference NeoForge Codec docs at https://docs.neoforged.net/docs/datastorage/codecs\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n---"
 }

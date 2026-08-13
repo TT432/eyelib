@@ -531,7 +531,7 @@
   ],
   "procedures": [],
   "sourceBlocks": {
-    "Bef29685ad15cdb20": "When to use",
+    "Bef29685ad15cdb20": "## When to use",
     "B0636bcf0b1a5d0ca": "You need to know what screen/state the game is actually in",
     "Bc4342abd7a465ba3": "You're debugging a runtime issue (entity not rendering, attachment missing, particle not spawning)",
     "B296260a64590ec1c": "You're reasoning about MC/Forge UI flow",
@@ -555,20 +555,20 @@
     "Bf199b1df6ec39865": "Core Workflow",
     "B4a3f7479d76c6abb": "1. Probe current state",
     "Bd77150606a696e6e": "Start broad, narrow down based on the response. The code runs inside a template that auto-injects `minecraft`, `player`, `level`. They may be null if not in a world.",
-    "B5cd89797726b4691": "// Where are we?\nreturn minecraft.screen == null ? \"in world\" : minecraft.screen.getClass().getName();\n\n// What UI elements are visible?\nStringBuilder sb = new StringBuilder();\nfor (Object child : minecraft.screen.children()) {\n    sb.append(child.getClass().getName());\n    if (child instanceof net.minecraft.client.gui.components.AbstractWidget w) {\n        try { sb.append(\" msg=\").append(w.getMessage().getString()); } catch(Exception e) {}\n    }\n    sb.append(\"\\n\");\n}\nreturn sb.toString();",
+    "B5cd89797726b4691": "```java\n// Where are we?\nreturn minecraft.screen == null ? \"in world\" : minecraft.screen.getClass().getName();\n\n// What UI elements are visible?\nStringBuilder sb = new StringBuilder();\nfor (Object child : minecraft.screen.children()) {\n    sb.append(child.getClass().getName());\n    if (child instanceof net.minecraft.client.gui.components.AbstractWidget w) {\n        try { sb.append(\" msg=\").append(w.getMessage().getString()); } catch(Exception e) {}\n    }\n    sb.append(\"\\n\");\n}\nreturn sb.toString();\n```",
     "B1a30fe5d9c2135b7": "2. Act on findings",
     "B64d5d8e551ca000f": "Each response guides the next query. Don't write a script upfront — let the runtime state decide.",
     "B2815e1ddab4a1d1f": "3. Assert and document",
     "Bfc07fae5d789296b": "Once you confirm the behavior, write a unit test or update documentation. Don't leave findings ephemeral.",
     "Bd5886d15d84b8573": "Practical Patterns",
     "B904ad44e5a75f374": "Navigate MC UI",
-    "B86e1ed633212322d": "// Click a button by its text label\nfor (Object child : minecraft.screen.children()) {\n    if (child instanceof net.minecraft.client.gui.components.Button b) {\n        if (b.getMessage().getString().equals(\"Singleplayer\")) {\n            b.onPress();\n        }\n    }\n}\n\n// Type into a text field\nfor (Object child : minecraft.screen.children()) {\n    if (child instanceof net.minecraft.client.gui.components.EditBox eb) {\n        eb.setValue(\"new value\");\n    }\n}",
+    "B86e1ed633212322d": "```java\n// Click a button by its text label\nfor (Object child : minecraft.screen.children()) {\n    if (child instanceof net.minecraft.client.gui.components.Button b) {\n        if (b.getMessage().getString().equals(\"Singleplayer\")) {\n            b.onPress();\n        }\n    }\n}\n\n// Type into a text field\nfor (Object child : minecraft.screen.children()) {\n    if (child instanceof net.minecraft.client.gui.components.EditBox eb) {\n        eb.setValue(\"new value\");\n    }\n}\n```",
     "B87d55e09b080e04f": "Inspect eyelib runtime state",
-    "B7f68f3a3d100ef49": "// Dump registered particle definitions\nreturn io.github.tt432.eyelib.particle.runtime.ParticleDefinitionRegistry\n    .publisher().entries().keySet().toString();\n\n// Check an entity's current animation\n// (use fully qualified names for project types)",
+    "B7f68f3a3d100ef49": "```java\n// Dump registered particle definitions\nreturn io.github.tt432.eyelib.particle.runtime.ParticleDefinitionRegistry\n    .publisher().entries().keySet().toString();\n\n// Check an entity's current animation\n// (use fully qualified names for project types)\n```",
     "Ba15f60549cf44132": "Modify game state",
-    "B0a3ac7ebd664295d": "// Teleport\nplayer.setPos(100, 70, 100);\n\n// Change time\nplayer.level().setDayTime(0);",
+    "B0a3ac7ebd664295d": "```java\n// Teleport\nplayer.setPos(100, 70, 100);\n\n// Change time\nplayer.level().setDayTime(0);\n```",
     "B618f2dd10608ea77": "Error recovery",
-    "B1d96d9e481b31012": "// If stuck on LoadingErrorScreen, find the skip button\nfor (Object child : minecraft.screen.children()) {\n    if (child instanceof net.minecraft.client.gui.components.Button b) {\n        if (b.getMessage().getString().contains(\"Proceed\")) {\n            b.onPress();\n        }\n    }\n}",
+    "B1d96d9e481b31012": "```java\n// If stuck on LoadingErrorScreen, find the skip button\nfor (Object child : minecraft.screen.children()) {\n    if (child instanceof net.minecraft.client.gui.components.Button b) {\n        if (b.getMessage().getString().contains(\"Proceed\")) {\n            b.onPress();\n        }\n    }\n}\n```",
     "B103e2162b255bd50": "Shutdown",
     "Be15a78df357d9d69": "// Close the game properly — never kill java processes from shell\nminecraft.stop();",
     "Bce676737ac2a563d": "Debugger Workflow",
@@ -604,5 +604,6 @@
     }
   ],
   "createdAt": "2026-08-13T08:54:05.094Z",
-  "updatedAt": "2026-08-13T08:58:14.756Z"
+  "updatedAt": "2026-08-13T08:58:14.756Z",
+  "frontMatterRaw": "---\nname: progressive-exploration\ndescription: Interactive runtime state exploration via the AI debug HTTP server in a running Minecraft client. Use to probe screens, inspect game state, navigate UI, or test hypotheses before writing code.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n---"
 }

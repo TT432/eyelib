@@ -289,5 +289,6 @@
     }
   ],
   "createdAt": "2026-08-13T08:53:08.040Z",
-  "updatedAt": "2026-08-13T08:53:08.048Z"
+  "updatedAt": "2026-08-13T08:53:08.048Z",
+  "frontMatterRaw": "---\nname: eyelib\ndescription: Eyelib Forge 模组开发总索引——项目概览、Skill 导航、跨域约束。Load first for any eyelib task.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"3.0.0\"\n  tags: eyelib, forge, minecraft, java, index\n  related-skills: eyelib-build, eyelib-debug, eyelib-renderdoc, eyelib-clientsmoke, eyelib-hexagonal-gates, eyelib-domain-extraction\n---"
 }

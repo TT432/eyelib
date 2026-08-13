@@ -393,5 +393,6 @@
     }
   ],
   "createdAt": "2026-08-13T09:00:18.313Z",
-  "updatedAt": "2026-08-13T09:00:18.327Z"
+  "updatedAt": "2026-08-13T09:00:18.327Z",
+  "frontMatterRaw": "---\nname: testing\ndescription: Decision framework for choosing between progressive exploration, unit tests, and smoke tests. Does NOT describe how to write them — see progressive-exploration, unit-test, smoke-test skills for that.\nlicense: MIT\ncompatibility: opencode\nmetadata:\n  author: https://github.com/TT432\n  version: \"1.0.0\"\n---"
 }
