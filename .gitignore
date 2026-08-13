@@ -83,5 +83,37 @@ work/feedback.json
 # generated source bundle
 scripts/eyelib-all-main.md
 
+# nodegraph / render debugging scratch (2026-08 sessions; decompiled refs, captures, probes)
+work/ForgeHooksClient.java
+work/GameRenderer.java
+work/GraphLayout.snap.java
+work/GuiGraphics.java
+work/LDLib2-fork/
+work/LayoutRunner.java
+work/LayoutRunnerBase.java
+work/MultiBufferSource.java
+work/RenderType.java
+work/Screen.java
+work/SynthTrap.java
+work/allay_entity.json
+work/allay_graph_v10.json
+work/allay_graph_v11.json
+work/c7/
+work/frame_capture.rdc
+work/ft_dump.txt
+work/layout-build*/
+work/layout-cp.txt
+work/layout_positions.csv
+work/layout_sim.py
+work/layout_sim2.py
+work/ldlib/
+work/mc26src/
+work/probe_state.txt
+work/rd_*
+work/scissor_dump.txt
+work/scratch3_*
+work/scratch_render_ref.js
+work/shot/
+
 文档
 .extrasrc
