@@ -19,11 +19,6 @@ public interface UIScreen {
         return false;
     }
 
-    /** 字符输入（IME/键盘文本，区别于物理键）。 */
-    default boolean onCharTyped(char codePoint, int modifiers) {
-        return false;
-    }
-
     default boolean onMouseClick(double mouseX, double mouseY, int button) {
         return false;
     }
