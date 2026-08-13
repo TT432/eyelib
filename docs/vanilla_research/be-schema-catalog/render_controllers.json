@@ -1,0 +1,233 @@
+{
+ "subsystem": "render_controllers",
+ "doc_sources": [
+  "creator/Reference/Content/AnimationsReference/generated/AnimationRenderController.md",
+  "creator/Reference/Content/AnimationsReference/generated/AnimationGettingStarted.md",
+  "creator/Documents/EntityModelingAndAnimation.md",
+  "creator/Documents/Animations/AnimationRenderController.md",
+  "creator/Reference/Content/VisualReference/render_controller.v1.8.0.md",
+  "creator/Documents/molang/practical-molang.md",
+  "creator/Documents/custom_projectiles.md",
+  "creator/Documents/Practices/ImprovingPerformanceAndResourceUsage.md"
+ ],
+ "subsystem_role": "渲染控制器位于资源包 render_controllers/ 目录，是客户端实体定义与几何体/贴图/材质资源之间的运行时绑定层：按 Molang 表达式为实体选择几何体、贴图层、逐骨骼材质与部件可见性，并可施加着色、UV 动画与光照控制，最终决定实体每一帧实际渲染出什么。",
+ "parameters": [
+  {
+   "name": "format_version",
+   "path": "<file>/format_version",
+   "type": "Version",
+   "role_zh": "渲染控制器文件的格式版本，示例均为 1.8.0。",
+   "doc_quote": "\"format_version\": \"1.8.0\"",
+   "tier": "T1",
+   "notes": "schema 表 render_controller.v1.8.0.md 列出该字段，类型 Version，无默认值描述。"
+  },
+  {
+   "name": "render_controllers",
+   "path": "<file>/render_controllers",
+   "type": "Object<identifier, RenderController>",
+   "role_zh": "顶层容器，键为渲染控制器标识符，必须遵循 controller.render.<name> 格式，且需与客户端实体定义 JSON 中引用的名字一致。",
+   "doc_quote": "The Render Controller needs an identifier and needs to follow the format of \"controller.render.<name>\". This name needs to match the name set in the Client Entity Definitions JSON.",
+   "tier": "T1"
+  },
+  {
+   "name": "arrays",
+   "path": "render_controllers/<id>/arrays",
+   "type": "Object",
+   "role_zh": "声明可索引资源数组的容器；通过数组让实体在不同几何体/贴图/材质选项间按 Molang 选择。",
+   "doc_quote": "In addition to setting the keys directly, players can use arrays to have the entity choose between different options.",
+   "tier": "T1"
+  },
+  {
+   "name": "arrays.geometries",
+   "path": "render_controllers/<id>/arrays/geometries",
+   "type": "Object<Array.name, string[]>",
+   "role_zh": "几何体数组声明区；键为数组标识符（如 Array.geos），值为几何体短名列表，供 geometry 字段按下标选用。",
+   "doc_quote": "\"arrays\": { \"geometries\": { \"Array.geos\": [\"Geometry.default\", \"Geometry.sheared\"] } }, \"geometry\": \"Array.geos[query.is_sheared]\"",
+   "tier": "T1"
+  },
+  {
+   "name": "arrays.materials",
+   "path": "render_controllers/<id>/arrays/materials",
+   "type": "Object<Array.name, string[]>",
+   "role_zh": "材质数组声明区；值为材质短名列表，供 materials 字段的骨骼模式值按下标选用。",
+   "doc_quote": "\"arrays\": { \"materials\": { \"Array.materials\": [\"Material.default\", \"Material.invisible\"] } }, \"materials\": [{ \"*\": \"Array.materials[query.is_invisible]\" }]",
+   "tier": "T1",
+   "notes": "v1.8.0 schema 注明与 geometries 结构相同（Same structure as Geometries）。"
+  },
+  {
+   "name": "arrays.textures",
+   "path": "render_controllers/<id>/arrays/textures",
+   "type": "Object<Array.name, string[]>",
+   "role_zh": "贴图数组声明区；值为贴图短名列表，供 textures 字段按下标选用（如豹猫皮肤按 query.variant 切换）。",
+   "doc_quote": "\"Array.skins\": [\"Texture.wild\", \"Texture.black\", \"Texture.red\", \"Texture.siamese\"]",
+   "tier": "T1",
+   "notes": "v1.8.0 schema 注明与 geometries 结构相同。"
+  },
+  {
+   "name": "数组元素下标求值语义",
+   "path": "render_controllers/<id>/arrays/*/Array.<name>[<molang>]",
+   "type": "indexing semantics",
+   "role_zh": "数组下标为 Molang 表达式，从 0 开始编号；越界不报错——负下标返回第 0 个元素，超出末尾的正下标按长度取模回绕；数组元素必须同类型，且元素本身可以是数组。",
+   "doc_quote": "Any negative reference will just return the element in position 0; a positive number that's higher than the end of the array will wrap around.",
+   "tier": "T1",
+   "notes": "practical-molang.md 明确记载；另注明 All elements of an array must be of the same type，且 elements in an array can be arrays themselves。"
+  },
+  {
+   "name": "geometry",
+   "path": "render_controllers/<id>/geometry",
+   "type": "String (Molang 求值结果须为几何体引用)",
+   "role_zh": "指定渲染使用的几何体（模型），值为实体定义中 geometries 的短名引用（如 Geometry.default），或几何体数组的下标表达式。",
+   "doc_quote": "Tells the rendering to using geometries references (see entity/geometries)",
+   "tier": "T1",
+   "notes": "practical-molang.md: in the geometry section, you need to return a geometry type。"
+  },
+  {
+   "name": "materials",
+   "path": "render_controllers/<id>/materials",
+   "type": "Array<Object<bonePattern, materialRef>>（schema 另允许 Array of strings）",
+   "role_zh": "按骨骼名模式为各骨骼指定材质；键为骨骼名匹配模式，* 为通配符；列表按顺序应用，靠后的条目覆盖靠前者（示例：Saddle 覆盖 Mane，Mane 覆盖 TailA）。",
+   "doc_quote": "Tells the rendering what material to use on which bones, * is used for wildcards ... Saddle will override Mane, which will override TailA, etc.",
+   "tier": "T1",
+   "notes": "顺序覆盖语义来自 Documents/Animations/AnimationRenderController.md 马材质示例的原文注释；v1.8.0 schema 另列 materials (as Array of strings) 但无任何示例或说明。"
+  },
+  {
+   "name": "textures",
+   "path": "render_controllers/<id>/textures",
+   "type": "Array<String>（实例中亦见单个 String）",
+   "role_zh": "指定实体使用的贴图及其所在渲染层；值为贴图短名引用或贴图数组下标表达式，数组顺序即贴图层顺序。",
+   "doc_quote": "Tells the rendering what textures to use on and in which layer, using textures references (see entity/textures)",
+   "tier": "T1",
+   "notes": "schema 表类型为 Array of strings；但 creeper/fireball 官方示例直接写 \"textures\": \"Texture.default\" 单字符串（见 doc_conflicts）。"
+  },
+  {
+   "name": "part_visibility",
+   "path": "render_controllers/<id>/part_visibility",
+   "type": "Array<Object<bonePattern, Molang>>（schema 另允许 Array of strings）",
+   "role_zh": "按骨骼名模式（支持 * 通配，如 chest*、leg*）控制模型部件可见性；每个条目的值为 Molang 布尔表达式，真则可见。列表按顺序求值，通常先以 {\"*\": 0} 整体隐藏再逐骨骼条件开启（盔甲示例）。",
+   "doc_quote": "\"part_visibility\" : [ { \"*\": 0 }, { \"body\": \"query.has_armor_slot(1)\" }, { \"leftarm\": \"query.has_armor_slot(1)\" }, { \"rightarm\": \"query.has_armor_slot(1)\" } ]",
+   "tier": "T1",
+   "notes": "通配与布尔求值为 T1（llama/fox 示例）；\"顺序求值、后者覆盖前者\"未在散文中明说，由盔甲示例 {\"*\":0} 在前、具体骨骼在后的结构推得，与 materials 已记载的后者覆盖语义一致 [T1-inferred 部分]。schema 另列 part_visibility (as Array of strings)，无语义说明。"
+  },
+  {
+   "name": "color",
+   "path": "render_controllers/<id>/color",
+   "type": "Object<r,g,b,a: Molang>",
+   "role_zh": "对部件进行整体着色（染色），rgba 四通道均为 Molang 表达式；典型用法是皮革盔甲按 query.armor_color_slot 取染色颜色。",
+   "doc_quote": "Example with color for tinting of parts from Armor 1.0 render controller JSON",
+   "tier": "T1"
+  },
+  {
+   "name": "color.r / color.g / color.b / color.a",
+   "path": "render_controllers/<id>/color/r|g|b|a",
+   "type": "Molang",
+   "role_zh": "color 的红/绿/蓝/透明度通道，各为 Molang 表达式。",
+   "doc_quote": "\"color\": { \"r\": \"query.armor_color_slot(1, 0)\", \"g\": \"query.armor_color_slot(1, 1)\", \"b\": \"query.armor_color_slot(1, 2)\", \"a\": \"query.armor_color_slot(1, 3)\" }",
+   "tier": "T1"
+  },
+  {
+   "name": "is_hurt_color",
+   "path": "render_controllers/<id>/is_hurt_color",
+   "type": "Object<r,g,b,a: Molang>",
+   "role_zh": "实体受伤/被摧毁时的闪烁着色（默认红闪）；将其设为 0 可消除该红闪（自定义弹射物用法）。",
+   "doc_quote": "we'll set the is_hurt_color to 0 to prevent the red flash whenever the snowball is destroyed",
+   "tier": "T1",
+   "notes": "结构同 color（schema: Same structure as Color）；creeper 示例设为 r0 g0 b1 a0.5。"
+  },
+  {
+   "name": "on_fire_color",
+   "path": "render_controllers/<id>/on_fire_color",
+   "type": "Object<r,g,b,a: Molang>",
+   "role_zh": "实体着火时叠加的着色；fireball 示例将四通道全置 0 以取消火焰着色。",
+   "doc_quote": "Example with on_fire_color from Fireball render controller JSON ... \"on_fire_color\" : { \"r\": 0.0, \"g\": 0.0, \"b\": 0.0, \"a\": 0.0 }",
+   "tier": "T1-inferred",
+   "notes": "字段与结构为 T1（schema + fireball 示例），但\"着火时触发\"这一语义未在文档散文中写明，按字段名与 fireball 用例推断。"
+  },
+  {
+   "name": "overlay_color",
+   "path": "render_controllers/<id>/overlay_color",
+   "type": "Object<r,g,b,a: Molang>",
+   "role_zh": "叠加在实体上的颜色层；通道值可用 Molang 条件表达式，并用 this 表示保持该通道当前值不变（凋灵无敌时变白示例）。",
+   "doc_quote": "\"overlay_color\" : { \"r\": \"variable.is_invulnerable ? 1.0 : this\", ... \"a\": \"variable.is_invulnerable ? query.overlay_alpha : this\" }",
+   "tier": "T1",
+   "notes": "结构同 color（schema: Same structure as Color）。"
+  },
+  {
+   "name": "uv_anim",
+   "path": "render_controllers/<id>/uv_anim",
+   "type": "Object<offset, scale>",
+   "role_zh": "对贴图 UV 施加动态偏移与缩放（Molang 驱动）；使用图集（atlas）材质时渲染控制器必须设置该字段，以将原贴图映射到最终图集中的相对位置。",
+   "doc_quote": "it requires the render controller to have the uv_anim field to be set. These need to be the correct offset and scale the original texture relative to the final atlas texture.",
+   "tier": "T1"
+  },
+  {
+   "name": "uv_anim.offset",
+   "path": "render_controllers/<id>/uv_anim/offset",
+   "type": "Molang array [x, y]",
+   "role_zh": "UV 偏移量，二元 Molang 数组。",
+   "doc_quote": "\"uv_anim\" : { \"offset\" : [\"variable.offset_x\", \"variable.offset_y\"], \"scale\" : [\"variable.scale_x\", \"variable.scale_y\"] }",
+   "tier": "T1",
+   "notes": "schema 类型标注为 Molang array。"
+  },
+  {
+   "name": "uv_anim.scale",
+   "path": "render_controllers/<id>/uv_anim/scale",
+   "type": "Molang array [x, y]",
+   "role_zh": "UV 缩放，二元 Molang 数组。",
+   "doc_quote": "\"scale\" : [\"variable.scale_x\", \"variable.scale_y\"]",
+   "tier": "T1",
+   "notes": "schema 类型标注为 Molang array。"
+  },
+  {
+   "name": "light_color_multiplier",
+   "path": "render_controllers/<id>/light_color_multiplier",
+   "type": "Molang",
+   "role_zh": "环境光照颜色的乘数（按字段名与类型推断：以 Molang 值缩放光照颜色）。",
+   "doc_quote": "| light_color_multiplier | *not set* | Molang |  |",
+   "tier": "T1-inferred",
+   "notes": "schema 表仅列名与 Molang 类型，描述列为空；语义按名称推断。"
+  },
+  {
+   "name": "filter_lighting",
+   "path": "render_controllers/<id>/filter_lighting",
+   "type": "Boolean",
+   "role_zh": "光照过滤开关；自定义弹射物渲染控制器中设为 true（配合 is_hurt_color 置 0 使用）。",
+   "doc_quote": "\"textures\": [ \"Texture.default\" ], \"filter_lighting\": true, \"is_hurt_color\": { \"r\": 0.0, ... }",
+   "tier": "T1-inferred",
+   "notes": "schema 表仅列 Boolean 类型、无描述；custom_projectiles.md 仅在示例中使用 true，未解释语义，具体过滤行为按名称推断。"
+  },
+  {
+   "name": "ignore_lighting",
+   "path": "render_controllers/<id>/ignore_lighting",
+   "type": "Boolean",
+   "role_zh": "忽略光照开关（按字段名推断：为 true 时实体不受环境光照影响，即全亮渲染）。",
+   "doc_quote": "| ignore_lighting | *not set* | Boolean true/false |  |",
+   "tier": "T1-inferred",
+   "notes": "schema 表仅列名与 Boolean 类型，描述列为空；语义按名称推断。"
+  },
+  {
+   "name": "rebuild_animation_matrices",
+   "path": "render_controllers/<id>/rebuild_animation_matrices",
+   "type": "Boolean",
+   "role_zh": "重建动画矩阵开关（按字段名推断：控制是否为动画重建骨骼矩阵）。",
+   "doc_quote": "| rebuild_animation_matrices | *not set* | Boolean true/false |  |",
+   "tier": "T1-inferred",
+   "notes": "schema 表仅列名与 Boolean 类型，无任何描述或示例；语义按名称推断。"
+  },
+  {
+   "name": "材质/可见性键的骨骼名模式",
+   "path": "render_controllers/<id>/(materials|part_visibility)/<bonePattern>",
+   "type": "String pattern（[a-zA-Z0-9_.:*]+）",
+   "role_zh": "materials 与 part_visibility 条目的键为骨骼名匹配模式，* 作通配符（如 *、chest*、leg*、*Saddle*），按模式匹配模型骨骼名后应用对应值。",
+   "doc_quote": "{ \"*\": \"Material.default\" }, { \"TailA\": \"Material.horse_hair\" }, { \"*Saddle*\": \"Material.horse_saddle\" }",
+   "tier": "T1",
+   "notes": "part_visibility 键的合法字符集 [a-zA-Z0-9_.:*]+ 见 render_controller.v1.8.0.md schema 表。"
+  }
+ ],
+ "doc_conflicts": [
+  "assigned 主文档 creator/Reference/Content/AnimationsReference/generated/AnimationRenderController.md 全文仅 28 行，只有豹猫一例，内容是 creator/Documents/Animations/AnimationRenderController.md 的不完整截断版——两处同名文档详略差异极大，generated 版缺失 color/part_visibility/各着色字段等全部示例。",
+  "textures 字段类型不一致：render_controller.v1.8.0.md schema 表标注为 Array of strings，但官方 creeper/fireball 示例直接写单字符串 \"textures\": \"Texture.default\"。",
+  "schema 表列出 materials 与 part_visibility 的 \"as Array of strings\" 备用形式，但全部官方示例均为对象数组（骨骼模式→值），字符串数组形式的语义在文档中无任何说明。",
+  "practical-molang.md 称 RC 数组为 JavaScript arrays 且示例中拼写为 Texutre.arctic，属于文档措辞/笔误，非语义冲突。",
+  "未发现与常见社区认知（materials 后者覆盖前者、part_visibility 顺序匹配、数组下标 Molang 求值并回绕）相矛盾的记载；文档对上述语义相互印证。"
+ ]
+}

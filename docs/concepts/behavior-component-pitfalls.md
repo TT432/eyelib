@@ -107,3 +107,45 @@ return codec.decode(ops, input);
 **验证**: 修复后 `BehaviorEntityAssetRegistry.parseEvents()` 改用 `LogicNode.CODEC.codec()` 替代手动解析，全量 121 实体 event 加载成功（561 个事件，5 种类型全部出现）。
 
 **相关变更**: 同 session 中 `BehaviorEntityAssetRegistry` 的 `component_groups` 解析也从手动 variant/mark_variant 切到 `DISPATCH_CODEC`；`parseEvents` 从手动 switch 切到 `LogicNode.CODEC.codec()`。两处旧手动解析路径已删除。
+
+## Bedrock 组件字段简写与可选性
+
+**症状**: Actions-and-Stuff 等真实 mcpack 中大量组件组解析失败（`BehaviorPackPublication.parseComponentGroup()` 经 `ComponentGroup.DISPATCH_CODEC` 解码时报错，整组丢弃）。只影响 gameplay/AI 行为组件，不影响渲染。
+
+**根因**: Bedrock 官方 schema 允许的多种字段形态，eyelib 早期 codec 只实现了最严格的一种。用真实 mcpack 输入对照后归纳出以下模式。
+
+### 单对象/数组二象 → `ChinExtraCodecs.singleOrList`
+
+Bedrock 官方示例常用单个对象简写代替单元素数组。用 `ChinExtraCodecs.singleOrList(codec)`（`util/codec/ChinExtraCodecs.java`）同时接受两种形态：
+
+- `spawn_entity.entities`（`SpawnEntity.java`，Sniffer 官方示例为单对象）
+- `environment_sensor.triggers`（`EnvironmentSensor.java`，Cave Spider/Player 官方示例为单对象）
+- `spell_effects.remove_effects`（`SpellEffects.java`，文档为单个 String）
+
+### 可选字段 → `optionalFieldOf` 带默认值
+
+以下字段在 Bedrock 中可省略，必须用 `optionalFieldOf` 而非 `fieldOf`：
+
+| 字段 | 默认值 |
+|---|---|
+| `equippable.slots[].interact_text`（`Equippable.java`，鞍具槽省略） | `""` |
+| `shooter.pots`（`Shooter.java`，旧版遗留字段，Blaze/Llama 示例均省略） | 空表 |
+| `equipment.slot_drop_chance`（`Equipment.java`，仅给 `table` 时省略） | 空表 |
+| `entity_sensor` 顶级 `event`（`EntitySensor.java`，含 `subsensors` 时可省略；文档顶级属性本就没有 `event`） | `""` |
+| `spawn_entity.entities[].spawn_entity`（`SpawnEntity.java`，留空表示改刷 `spawn_item`） | `""` |
+| `spell_effects.add_effects[].amplifier`（`SpellEffects.SpellEntry`，文档属性表未列出） | `0` |
+
+### spell_effects 的原生 key 是 `add_effects`/`remove_effects`
+
+Bedrock 原生 key 是 `add_effects` 和 `remove_effects`，**不是** `add_spell_effects`。`SpellEffects.java` 的 codec 字段名必须与原生 key 对齐（record 字段名可保留 `add_spell_effects`，由 `forGetter` 映射）。两个 key 均可省略（空组件 `{}` 合法，如 Player 的 `minecraft:clear_raid_omen_spell_effect`）。
+
+### 范围数组形态
+
+- `attack.damage`（`Attack.java`）：Bedrock 允许数字、Molang 字符串、`[min, max]` 数组三种形态。当前 `DAMAGE_CODEC` 用两层 `Codec.either` 兼容，范围数组统一序列化为 `"[min, max]"` 字符串，encode 始终写回字符串形态。
+- `entity_sensor` SubSensor `range`（`EntitySensor.java`）：允许单个 float 或 `[horizontal, vertical]` 数组（如 `"range": [7.0, 2.0]`）。record 仅存 float，取水平距离，encode 写回标量。
+
+### 内联 JSON 对象字段 → `Codec.PASSTHROUGH`
+
+mcpack 中 `filters`/`event_filters` 是内联 JSON 对象而非"字符串内嵌 JSON"。早期 `Codec.STRING.xmap(JsonParser::parseString)` 实现会对真实 JSON 对象报 `Not a string`。正确实现是 `Codec.PASSTHROUGH` 转换（同 `ImporterCodecUtil.JSON_ELEMENT_CODEC` 模式），已在 `SpawnEntity.java`/`EnvironmentSensor.java`/`EntitySensor.java` 中采用。`BlockSensor`/`HurtOnCondition`/`Scheduler` 仍为旧实现（见 gap-analysis 已知限制）。
+
+**文档 oracle**: Bedrock 官方 EntityComponents 文档（`minecraftComponent_*.md`）。修正 codec 前先查文档属性表与官方实体示例确认字段可选性。

@@ -1,0 +1,334 @@
+{
+ "subsystem": "molang",
+ "doc_sources": [
+  "creator/Reference/Content/MolangReference/Examples/MolangConcepts/QueryFunctions.md",
+  "creator/Reference/Content/MolangReference/Examples/MolangConcepts/QueryFunctions/ (314 个单 query 文档)",
+  "creator/Reference/Content/MolangReference/Examples/MolangConcepts/MathFunctions.md",
+  "creator/Reference/Content/MolangReference/Examples/MolangConcepts/MathFunctions/ (64 个单函数文档)",
+  "creator/Reference/Content/MolangReference/Examples/MolangConcepts/TOC.yml",
+  "(bedrock-wiki 对照) docs/concepts/molang.md"
+ ],
+ "subsystem_role": "Molang 是 BE 的表达式语言，贯穿渲染(动画/渲染控制器/几何/材质动画)、粒子、实体行为与 UI；query.* 暴露引擎只读状态，variable./temp./context. 提供读写存储与上下文，渲染链路靠它驱动骨骼变换、纹理选择与可见性切换。",
+ "parameters": [
+  {
+   "name": "query 布尔返回约定",
+   "path": "molang/query/return_value_convention",
+   "type": "float(1.0/0.0)",
+   "role_zh": "布尔类 query 一律返回浮点 1.0/0.0 而非 true/false；无意义上下文返回 0.0 是官方文档的通用兜底模式",
+   "doc_quote": "Returns 1.0 if the entity is sneaking, else it returns 0.0.",
+   "tier": "T1",
+   "notes": "QueryFunctions.md 全部 is_* 条目遵循此模式；非实体上下文亦返回 0.0"
+  },
+  {
+   "name": "?? 空合并运算符",
+   "path": "molang/operator/null_coalescing",
+   "type": "operator",
+   "role_zh": "左值未定义时取右值兜底，避免未初始化 variable 触发 content log 报错",
+   "doc_quote": "use the null coalescing operator (??) to provide a fallback when a variable might not be initialized",
+   "tier": "T1",
+   "notes": "出自 bedrock-wiki docs/concepts/molang.md；官方本地克隆缺 MolangIntroduction.md(TOC.yml 引用但文件缺失)，官方文档未收录该运算符"
+  },
+  {
+   "name": "struct 结构体",
+   "path": "molang/value/struct",
+   "type": "value-type",
+   "role_zh": "query 可返回带成员的结构(如 bone_aabb 的 .min/.max 及各自 .x/.y/.z)；用户可用 variable.location.x=… 自建结构",
+   "doc_quote": "Returns the axis aligned bounding box of a bone as a structure with members '.min', '.max'",
+   "tier": "T1",
+   "notes": "官方文档见 query.bone_aabb/bone_origin/spellcolor/surface_particle_texture_coordinate；自建 struct 语法出自 bedrock-wiki"
+  },
+  {
+   "name": "temp 变量作用域",
+   "path": "molang/domain/temp",
+   "type": "variable-domain",
+   "role_zh": "temp.(t.) 变量 pack 级共享、表达式结束即清除，用于跨表达式传递中间值；不支持 struct 成员",
+   "doc_quote": "Temporary variables are pack-scoped and ephemeral… cleared automatically after each expression completes. They do not support structs",
+   "tier": "T1",
+   "notes": "出自 bedrock-wiki；官方文档无 temp 语义条目"
+  },
+  {
+   "name": "variable 变量域",
+   "path": "molang/domain/variable",
+   "type": "variable-domain",
+   "role_zh": "variable.(v.) 为 per-entity 读写存储；引擎预置 33 个默认变量驱动渲染(见 default_variables 组)",
+   "doc_quote": "Read-write values stored per-entity.",
+   "tier": "T1",
+   "notes": "bedrock-wiki"
+  },
+  {
+   "name": "context 上下文域",
+   "path": "molang/domain/context",
+   "type": "variable-domain",
+   "role_zh": "context.(c.) 为特定情境只读值，如 context.is_first_person(动画/实体/渲染控制器)、context.other(物品修复目标)、context.item_slot",
+   "doc_quote": "Read-only values from the base game in specific situations.",
+   "tier": "T1",
+   "notes": "bedrock-wiki"
+  },
+  {
+   "name": "math 三角函数角度制",
+   "path": "molang/math/angle_unit",
+   "type": "convention",
+   "default": "degrees",
+   "role_zh": "math.sin/cos 等三角函数以度(degrees)而非弧度为单位；min_angle 归一到 [-180,180)",
+   "doc_quote": "Cosine (in degrees) of value",
+   "tier": "T1",
+   "notes": "MathFunctions.md；min_angle 官方区间为 [-180,180)，wiki 写 -180~180，左开区间注意"
+  },
+  {
+   "name": "math 函数族",
+   "path": "molang/math/functions",
+   "type": "function-group",
+   "role_zh": "64 个官方 math 函数：基础(abs/clamp/mod/pow/sqrt/random/round/trunc/sign/copy_sign/pi/ln/exp)、角度三角(sin/cos/acos/asin/atan/atan2/min_angle)、插值(lerp/lerprotate/inverse_lerp/hermite_blend)、随机(die_roll/die_roll_integer/random/random_integer)、缓动(ease_in/out/in_out × back/bounce/circ/cubic/elastic/expo/quad/quart/quint/sine)",
+   "doc_quote": "Computes a linear interpolation around a circle in the shortest direction from `a` degrees to `b` degrees",
+   "tier": "T1",
+   "notes": "lerprotate 专用于角度插值(走最短弧)，骨骼旋转动画常用"
+  },
+  {
+   "name": "query.is_first_person",
+   "path": "molang/query/is_first_person",
+   "type": "float(0/1)",
+   "role_zh": "实体正以第一人称视角渲染时为 1.0；渲染分支(如隐藏第一人称手持/头部)的核心开关",
+   "doc_quote": "Returns 1.0 if the entity is being rendered in first person mode, else it returns 0.0.",
+   "tier": "T1",
+   "notes": "wiki 另有同名 context.is_first_person(动画/实体/渲染控制器)与 variable.is_first_person"
+  },
+  {
+   "name": "query.is_paperdoll",
+   "path": "molang/query/is_paperdoll",
+   "type": "float(0/1)",
+   "role_zh": "官方 Molang 文档无此 query；bedrock-wiki 仅有 variable.is_paperdoll(纸娃娃当前可见时 true)",
+   "doc_quote": "variable.is_paperdoll — Whether the paperdoll is currently visible",
+   "tier": "T1-inferred",
+   "notes": "若 A&S 包中出现 query.is_paperdoll 形式，官方文档无记载；应以 variable.is_paperdoll 为准(bedrock-wiki 默认变量表)"
+  },
+  {
+   "name": "variable.map_face_icon",
+   "path": "molang/variable/map_face_icon",
+   "type": "float(0/1)",
+   "role_zh": "地图以脸部图标显示该玩家时为 true；同样只存在于 variable 域，官方文档无 query.map_face_icon",
+   "doc_quote": "variable.map_face_icon — `true` if there is a map face icon display",
+   "tier": "T1-inferred",
+   "notes": "bedrock-wiki 默认变量表；官方 QueryFunctions.md 全文无 map_face_icon"
+  },
+  {
+   "name": "query.is_in_ui",
+   "path": "molang/query/is_in_ui",
+   "type": "float(0/1)",
+   "role_zh": "实体作为 UI 一部分渲染(背包纸娃娃、表情预览等)时为 1.0；用于区分世界内渲染与 UI 渲染",
+   "doc_quote": "Returns 1.0 if the entity is rendered as part of the UI, else it returns 0.0.",
+   "tier": "T1"
+  },
+  {
+   "name": "query.is_spectator",
+   "path": "molang/query/is_spectator",
+   "type": "float(0/1)",
+   "role_zh": "实体(玩家)处于旁观模式时为 1.0",
+   "doc_quote": "Returns 1.0 if the entity (player) is in spectator mode, else it returns 0.0.",
+   "tier": "T1"
+  },
+  {
+   "name": "query.is_gliding",
+   "path": "molang/query/is_gliding",
+   "type": "float(0/1)",
+   "role_zh": "实体滑翔中为 1.0，官方明确注明适用于鞘翅(elytra)",
+   "doc_quote": "Returns 1.0 if the entity is gliding, else it returns 0.0. Applies to the elytra.",
+   "tier": "T1"
+  },
+  {
+   "name": "query.is_attached",
+   "path": "molang/query/is_attached",
+   "type": "float(0/1)",
+   "role_zh": "实体附着于另一实体(如被手持或穿戴)时为 1.0；仅资源包可用——是 attachable 渲染分支的关键 query",
+   "doc_quote": "Returns 1.0 if the entity is attached to another entity (such as being held or worn), else it will return 0.0. Available only with resource packs.",
+   "tier": "T1",
+   "notes": "区别于 query.is_attached_to_entity(后者专指玩家手持烟花火箭 'Pertains to a player holding a fireworks rocket')"
+  },
+  {
+   "name": "query.is_pack_setting_enabled",
+   "path": "molang/query/is_pack_setting_enabled",
+   "type": "float(0/1)",
+   "role_zh": "Pack Setting 开关(toggle)是否启用，参数为开关名；仅客户端(资源包)可用——addon 子包切换材质/模型的官方机制",
+   "doc_quote": "Returns 1.0 if the Pack Setting toggle is enabled, parameter is name of toggle. Available on the Client (Resource Packs) only.",
+   "tier": "T1"
+  },
+  {
+   "name": "query.is_pack_setting_selected",
+   "path": "molang/query/is_pack_setting_selected",
+   "type": "float(0/1)",
+   "role_zh": "Pack Setting 下拉项(第一参数)的值是否等于第二参数字符串；仅客户端可用",
+   "doc_quote": "Returns 1.0 if the Pack Setting dropdown (first parameter) matches the string value of the second parameter (selection).",
+   "tier": "T1"
+  },
+  {
+   "name": "query.get_pack_setting",
+   "path": "molang/query/get_pack_setting",
+   "type": "float",
+   "role_zh": "返回 Pack Setting 滑条(slider)的值，参数为滑条名；仅客户端可用",
+   "doc_quote": "Returns value of Pack Setting slider, parameter is name of slider. Available on the Client (Resource Packs) only.",
+   "tier": "T1"
+  },
+  {
+   "name": "query.equipment_count",
+   "path": "molang/query/equipment_count",
+   "type": "float(0-5)",
+   "role_zh": "实体已装备盔甲件数 0~5，不含手持物品；查手槽用 query.is_item_equipped/is_item_name_any",
+   "doc_quote": "Returns the number of equipped armor pieces for an entity from 0 to 5, not counting items held in hands.",
+   "tier": "T1"
+  },
+  {
+   "name": "query.graphics_mode_is_any",
+   "path": "molang/query/graphics_mode_is_any",
+   "type": "float(0/1)",
+   "role_zh": "客户端图形模式匹配任一参数('simple','fancy','deferred','raytraced')时返回 1.0；仅客户端——延迟渲染(Deferred)适配分支的官方入口",
+   "doc_quote": "Takes in one or more arguments ('simple', 'fancy', 'deferred', 'raytraced'). Available on the Client (Resource Packs) only.",
+   "tier": "T1"
+  },
+  {
+   "name": "query.last_input_mode_is_any",
+   "path": "molang/query/last_input_mode_is_any",
+   "type": "float(0/1)",
+   "role_zh": "最近输入方式('keyboard_and_mouse','touch','gamepad')匹配任一参数时返回 1.0；仅客户端",
+   "doc_quote": "Takes one or more arguments ('keyboard_and_mouse', 'touch', or 'gamepad').",
+   "tier": "T1"
+  },
+  {
+   "name": "query.life_time",
+   "path": "molang/query/life_time",
+   "type": "float(秒)",
+   "role_zh": "官方文档称'当前动画开始以来的秒数，非动画上下文返回 0.0'——但该描述与 query.anim_time 逐字雷同，普遍认知为实体存活秒数，存疑",
+   "doc_quote": "Returns the time in seconds since the current animation started, else 0.0 if not called within an animation.",
+   "tier": "T1",
+   "notes": "疑似官方文档复制 anim_time 描述的错误，见 doc_conflicts"
+  },
+  {
+   "name": "query.target_y_rotation",
+   "path": "molang/query/target_y_rotation",
+   "type": "float(度)",
+   "role_zh": "瞄准实体当前目标所需的 y 旋转，无目标返回 0.0",
+   "doc_quote": "Returns the y rotation required to aim at the entity's current target if it has one, else it returns 0.0.",
+   "tier": "T1"
+  },
+  {
+   "name": "query.get_equipped_item_name",
+   "path": "molang/query/get_equipped_item_name",
+   "type": "string",
+   "role_zh": "返回指定手槽物品名(参数1: 0/'main_hand' 或 1/'off_hand'；参数2: 0=已装备物品,非0=当前渲染物品)；官方已标记 DEPRECATED，建议改用 query.is_item_name_any",
+   "doc_quote": "DEPRECATED (Use query.is_item_name_any instead if possible so names can be changed later without breaking content.)",
+   "tier": "T1",
+   "notes": "位于官方 Internal/Deprecated 表"
+  },
+  {
+   "name": "组:渲染上下文/视角",
+   "path": "molang/query_group/render_context",
+   "type": "query-group",
+   "role_zh": "决定'在哪渲染/以何种视角渲染'：is_first_person, is_in_ui, is_on_screen, is_spectator, is_local_player, is_persona_or_premium_skin, distance_from_camera, rotation_to_camera, camera_rotation, camera_distance_range_lerp, frame_alpha, model_scale, show_bottom, has_cape, cape_flap_amount",
+   "doc_quote": "Returns 1.0 if this is called on an entity at a time when it is known if it is on screen",
+   "tier": "T1",
+   "notes": "system识别 A&S 渲染分支的核心组；UI/纸娃娃/地图图标见 variable 域(is_paperdoll/map_face_icon)"
+  },
+  {
+   "name": "组:客户端环境/性能",
+   "path": "molang/query_group/client_env",
+   "type": "query-group",
+   "role_zh": "客户端与性能环境：graphics_mode_is_any, last_input_mode_is_any, touch_only_affects_hotbar, client_max_render_distance, client_memory_tier, server_memory_tier, actor_count, average_frame_time, last_frame_time, minimum_frame_time, maximum_frame_time, delta_time",
+   "doc_quote": "Returns a number representing the client RAM memory tier, 0 = 'SuperLow', 1 = 'Low', 2 = 'Mid', 3 = 'High', or 4 = 'SuperHigh'.",
+   "tier": "T1"
+  },
+  {
+   "name": "组:Pack Settings",
+   "path": "molang/query_group/pack_settings",
+   "type": "query-group",
+   "role_zh": "addon 用户选项三件套：is_pack_setting_enabled(toggle), is_pack_setting_selected(dropdown), get_pack_setting(slider)；全部仅客户端资源包",
+   "doc_quote": "Available on the Client (Resource Packs) only.",
+   "tier": "T1"
+  },
+  {
+   "name": "组:姿态/移动状态",
+   "path": "molang/query_group/pose_movement",
+   "type": "query-group",
+   "role_zh": "驱动动画状态机：is_sneaking, is_sprinting, is_swimming, is_gliding, is_moving, is_jumping, is_on_ground, is_climbing(is_wall_climbing), is_crawling, is_sitting, is_sleeping, is_standing, swim_amount, sit_amount, lie_amount, standing_scale, sleep_rotation, ground_speed, vertical_speed, modified_move_speed, modified_distance_moved, walk_distance, movement_direction, position_delta",
+   "doc_quote": "Returns the ground speed of the entity in meters/second.",
+   "tier": "T1"
+  },
+  {
+   "name": "组:旋转/朝向",
+   "path": "molang/query_group/rotation",
+   "type": "query-group",
+   "role_zh": "骨骼旋转绑定源：body_x/y_rotation, head_x/y_rotation(n可选头序), head_roll_angle, target_x/y_rotation, eye_target_x/y_rotation, yaw_speed, cardinal_facing/2d/player_facing, ride/rider_body/head_x/y_rotation, rotation_to_camera",
+   "doc_quote": "Returns the nth head y rotation of the entity if it makes sense, else it returns 0.0.",
+   "tier": "T1"
+  },
+  {
+   "name": "组:装备/手持物品",
+   "path": "molang/query_group/equipment",
+   "type": "query-group",
+   "role_zh": "装备感知：equipment_count, is_item_equipped, is_item_name_any, equipped_item_any_tag/all_tags, equipped_item_is_attachable, armor_color/damage/material/texture_slot, has_armor_slot, has_head_gear, item_slot_to_bone_name, remaining_durability, max_durability, cooldown_time(_remaining), is_cooldown_category, main_hand_item_use/max_duration, item_in_use/remaining_use/max_use_duration, item_is_charged, shield_blocking_bob, is_attached",
+   "doc_quote": "Takes the armor slot index as a parameter, and returns the color of the armor in the requested slot.",
+   "tier": "T1"
+  },
+  {
+   "name": "组:骨骼/几何查询",
+   "path": "molang/query_group/bone_geometry",
+   "type": "query-group",
+   "role_zh": "查询几何骨骼：bone_aabb, bone_origin, bone_rotation, bone_orientation_matrix, bone_orientation_trs, get_default_bone_pivot, get_locator_offset, get_root_locator_offset, item_slot_to_bone_name；均返回 struct 或矩阵",
+   "doc_quote": "Returns the initial (from the .geo) pivot of a bone as a structure with members '.x', '.y', and '.z'.",
+   "tier": "T1"
+  },
+  {
+   "name": "组:动画时序",
+   "path": "molang/query_group/animation_timing",
+   "type": "query-group",
+   "role_zh": "动画时序：anim_time, life_time, state_time, key_frame_lerp_time, all_animations_finished, any_animation_finished, time_stamp, time_of_day, day, moon_phase, moon_brightness",
+   "doc_quote": "Returns the ratio between the previous and next key frames.",
+   "tier": "T1"
+  },
+  {
+   "name": "组:粒子/表面",
+   "path": "molang/query_group/particle",
+   "type": "query-group",
+   "role_zh": "粒子环境：total_particle_count, total_emitter_count, effect_particle_count, effect_emitter_count, surface_particle_color, surface_particle_texture_coordinate, surface_particle_texture_size, distance_from_camera",
+   "doc_quote": "Returns the total number of active particles in the world.",
+   "tier": "T1"
+  },
+  {
+   "name": "组:生物状态 is_*",
+   "path": "molang/query_group/mob_state",
+   "type": "query-group",
+   "role_zh": "行为状态布尔族(约 90 项)：is_baby, is_tamed, is_saddled, is_angry, is_eating, is_casting, is_dancing, is_on_fire, is_in_water/lava, is_riding, is_leashed, is_breathing, is_alive, is_invisible, is_silent, is_charged, is_shaking_wetness 等；外加 has_* 能力族(has_rider, has_target, has_gravity, has_collision, can_walk/swim/fly/climb/dash)",
+   "doc_quote": "Returns 1.0 if the entity is moving, else it returns 0.0.",
+   "tier": "T1"
+  },
+  {
+   "name": "组:属性/标识",
+   "path": "molang/query_group/property_identity",
+   "type": "query-group",
+   "role_zh": "数据驱动：property, has_property, scoreboard, variant, mark_variant, skin_id, anger_level, trade_tier, owner_identifier(deprecated), is_owner_identifier_any, has_any_family, is_name_any",
+   "doc_quote": "Returns the value of that property if it exists, else 0.0 if not.",
+   "tier": "T1"
+  },
+  {
+   "name": "组:默认变量(33 项)",
+   "path": "molang/variable/default_variables",
+   "type": "variable-group",
+   "role_zh": "引擎预置渲染变量：attack_time, bob_animation, swim_amount, is_paperdoll, map_face_icon, is_first_person, player_arm_height, short_arm_offset_left/right, is_holding_left/right, charge_amount, gliding_speed_value, last_blink_time, use_item_startup/interval_progress, is_using_vr, is_horizontal/vertical_splitscreen, animation_frames_128x128/32x32/face 等——引擎写入、addon 读取",
+   "doc_quote": "variable.attack_time — Progress of an attack animation (0.0 to 0.7)",
+   "tier": "T1",
+   "notes": "完整 33 项与 engine_variables.json 完全一致(校验通过)；源为 bedrock-wiki 默认变量表"
+  },
+  {
+   "name": "组:已弃用/内部 query",
+   "path": "molang/query_group/deprecated",
+   "type": "query-group",
+   "role_zh": "官方 Internal/Deprecated 表 11 项：block_property(→block_state), has_block_property(→has_block_state), cardinal_block_face_placed_on, dash_cooldown_progress, debug_output, get_equipped_item_name, get_name, is_feeling_happy, overlay_alpha, owner_identifier, unhappy_counter",
+   "doc_quote": "These components are either deprecated or internal to Minecraft and not usable in custom content.",
+   "tier": "T1"
+  }
+ ],
+ "doc_conflicts": [
+  "query.life_time 官方描述与 query.anim_time 逐字相同('Returns the time in seconds since the current animation started, else 0.0 if not called within an animation.')，疑为复制错误；社区普遍认知 life_time=实体存活至今秒数(可在非动画上下文使用)。官方文档是唯一 T1 来源，此处按原文记录但存疑。",
+  "官方 TOC.yml 引用 MolangIntroduction.md 与 DomainExamples.md(即 Domains 文档)，但本地克隆中两文件均缺失——故 ?? / temp 作用域 / domain 语义只能取自 bedrock-wiki(已标注)。",
+  "is_paperdoll / map_face_icon 在官方 Molang 文档中完全不存在(既无 query 也无 variable 条目)，仅 bedrock-wiki 默认变量表记载 variable.is_paperdoll / variable.map_face_icon；若按官方文档，这两个名字作为 query.* 使用是无记载的。",
+  "query.is_attached 与 query.is_attached_to_entity 描述几乎相同，但单页文档补充：is_attached 'Available only with resource packs'(手持/穿戴)，is_attached_to_entity 'Pertains to a player holding a fireworks rocket'——主表描述未能区分二者，需看单页。",
+  "wiki 记 math.min_angle 区间为 -180° 到 180°，官方为 [-180, 180)（左闭右开），细节不一致。"
+ ]
+}

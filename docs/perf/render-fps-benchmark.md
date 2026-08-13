@@ -146,3 +146,61 @@ versions/<version>/run/benchmark/benchmark-reports/
 Pacing 场景只有在 uncapped 吞吐明显高于目标 FPS 时才有解释力。未满足目标的结果是吞吐不足，不是 pacing 证据。
 
 每次可比较样本必须使用 fresh JVM；baseline/candidate 顺序应交错。不要使用 best-of-N，不要静默删除异常运行。跨 MC 大版本只展示趋势，硬回归判断使用同版本 baseline。
+
+## 统计不变量与采样契约
+
+统计不变量（任何场景、任何版本都必须满足）：
+
+- throughput 定义为测量期帧数 / 测量期首尾时间戳间隔，禁止报告「瞬时 FPS 的算术平均值」。
+- percentile 一律在帧时间域计算，字段名必须标明域（如 `p99_frame_interval_ms`）。
+- `budget_miss` 使用严格不等式 `frame_interval_ns > budget`。
+- hitch 阈值为目标 budget 的 2x/3x。
+- 趋势使用 5 秒窗口 P50 两两斜率的 Theil–Sen 中位数，单位 `ms/min`。
+- 无硬编码回归门禁；本实现只生成建立 baseline 所需证据，门禁阈值在估计 run-to-run 噪声后另行制定。
+
+采样契约：
+
+- 采样点在 render-frame Pre/START 事件；首帧没有前序 interval，不记录。
+- 帧缓冲预分配 primitive array；buffer 满即场景失败，不覆盖、不丢弃旧数据。
+- `rendered_entity_count` 必须是上一帧 Eyelib 成功渲染的真实增量；取不到时明确标记不可用，禁止用配置数量伪装。
+- VSync 关闭、camera 每 tick 固定、WORLD 实体 NoAI/silent/invulnerable/固定位置、场景结束清除带 benchmark tag 的实体、实际实体数量不等于配置数量时场景失败。
+- benchmark 与 clientsmoke 互斥：同时启用时启动失败，避免两个世界状态机竞争。
+- 测量中不主动 `System.gc()`，不静默剔除 outlier。
+
+## 测量模型与方法论
+
+计时边界：
+
+- `Minecraft.getFrameTimeNs()` 是 CPU 侧渲染工作时间：从渲染工作开始计时，包含 update/extract/render/blit，在 swap/present 和 FPS limiter 之前结束。因此它不等于用户看到的完整帧间隔，后者必须另行记录相邻帧 Pre/START 时间戳差。
+- `ClientFrameTimePort.getFrameTime()` 返回 partial tick 插值用的时间，不是帧耗时，禁止用于 FPS 统计。
+- `TimerQuery` 异步 GPU timer 是正确方向（`glFinish()` 会系统性干扰流水线），但它是共享/单例设施，正式使用必须验证与 F3 GPU 图、原版 metrics recorder 的共享 query 冲突，以及 26.1.2 deferred submit 的测量边界。
+
+统计协议：
+
+- 比较变更时对相同机器和场景使用 paired ratio（如 `candidate_p99 / baseline_p99`），报告中心估计和 95% 置信区间。
+- 每个样本使用 fresh JVM；同一 JVM 内的帧不构成独立实验样本。
+- baseline/candidate 顺序随机化或交错，避免温度和后台负载随时间单向漂移。
+- 禁止 best-of-N；运行数由置信区间宽度决定。
+- 「1% low」在工具间有 percentile、最差 1% 平均、按时间积分三种定义，存在歧义；报告直接写 `P99 frame time` 及其换算 FPS（`p99-derived FPS = 1e9 / p99(frame_interval_ns)`）。
+- 硬回归只与同一 MC 版本的 baseline 比较；跨版本（Java 17/21/25、26.1.2 声明式渲染架构差异）仅用于趋势分析。
+
+稳定性判据（不合并为单一分数，逐项可解释）：
+
+1. 分布宽度：`p99 - p50`、`p99 / p50`。
+2. 预算违约：miss ratio、hitch count、最长连续 hitch。
+3. 时间趋势：5 秒窗口 P50/P99 的 Theil–Sen slope。
+4. 状态分类：`flat / warmup / slowdown / no-steady-state`。
+5. 资源相关性：帧时间恶化是否与 heap、GC pause、rendered entity count 同步。
+
+外部观测器：PresentMon 可作为 Windows 显示链外部 oracle（逐帧 presented/displayed FPS、dropped frames、display latency），但其 OpenGL 路径在本项目尚未验证，为可选增强而非第一版依赖；验证通过后可用来校验 in-process `frame_interval_ns`，不能替代内部 render-work 计时。
+
+可证伪假设清单（实现与解释结果前必须用最小实验验证，任一失败则修正测量模型而非排除数据）：
+
+1. `getFrameTimeNs()` 与自采 render Pre/Post 时间在三个版本中趋势一致。
+2. 自采完整帧间隔与原版 FPS 图/FrameTimer 数据一致。
+3. 开启采集器后的 FPS/P99 扰动低于基线 run-to-run 噪声。
+4. FBO 单实体耗时随实体数近似单调增长；若不增长，说明测量边界没有覆盖实际提交。
+5. 26.1.2 GPU query 结果覆盖 deferred submit 的真实 GPU 工作，而非只覆盖命令构建。
+6. 同一固定场景的可见实体数、Eyelib 接管率和资源包 hash 在多次运行中完全一致。
+7. 长时间场景能区分 `flat`、JIT warmup 和持续 slowdown；人为注入稳定递增负载时必须检测出正 slope。
+8. 若采用 PresentMon，其 OpenGL presented-frame 序列必须能与 in-process 帧序列对齐。

@@ -1,0 +1,117 @@
+{
+ "subsystem": "texture_set",
+ "doc_sources": [
+  "creator/Reference/Content/TextureSetsReference/TextureSetsConcepts/TextureSetsIntroduction.md",
+  "creator/Reference/Content/VisualReference/texture_set.v1.21.30.md"
+ ],
+ "subsystem_role": "纹理集子系统：资源包中与贴图同名的 *.texture_set.json，为单张贴图定义 PBR 多层数据（颜色/法线/高度图/MER(S)），供 Vibrant Visuals（延迟渲染）与 RTX 管线的基于物理的渲染使用；Classic 管线只用 color 层。",
+ "parameters": [
+  {
+   "name": "format_version",
+   "path": "format_version",
+   "type": "string(version)",
+   "default": null,
+   "role_zh": "纹理集 JSON 的格式版本。示例用 \"1.16.100\"；引入 subsurface 层的 schema 为 \"1.21.30\"。",
+   "doc_quote": "Defines a PBR texture set document with format_version 1.21.30.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:texture_set",
+   "path": "minecraft:texture_set",
+   "type": "object",
+   "default": null,
+   "role_zh": "纹理集主体对象，各层既可引用同资源包内的贴图名，也可直接写均匀值（0-255 整数数组、RGB/ARGB 十六进制、单通道两位十六进制），等价于一张填充该值的贴图。",
+   "doc_quote": "Layers are references to texture image resources. They can also be defined in JSON as values for uniform solid values as an alternative to referencing texture images in a pack.",
+   "tier": "T1"
+  },
+  {
+   "name": "color",
+   "path": "minecraft:texture_set/color",
+   "type": "string(贴图名) | [R,G,B,A] 0-255 数组 | \"#RRGGBB\"/\"#AARRGGBB\"",
+   "default": null,
+   "role_zh": "颜色层：RGB 3 通道（alpha 默认 1.0）或 RGBA 4 通道图，或 4 值均匀色。唯一必需的层，也是 Classic 管线唯一使用的层；通常已烘焙光照。",
+   "doc_quote": "This is the only required layer. This is the only layer used by the Classic pipeline. There is typically lighting baked in the color image.",
+   "tier": "T1",
+   "notes": "缺失 color 层则整个 Texture Set 无效（记录 CONTENT_ERROR 且不启用）。"
+  },
+  {
+   "name": "normal",
+   "path": "minecraft:texture_set/normal",
+   "type": "string(贴图名)",
+   "default": null,
+   "role_zh": "法线层：3 通道法线贴图（4 通道时第 4 通道忽略）。与 heightmap 层互斥，同一纹理集不得同时定义。",
+   "doc_quote": "This is a 3-channel normal map image (or 4-channel where the 4th channel is ignored). This layer and the heightmap layer should not both be defined at the same time in a single Texture Set.",
+   "tier": "T1"
+  },
+  {
+   "name": "heightmap",
+   "path": "minecraft:texture_set/heightmap",
+   "type": "string(贴图名) | 单值(均匀高度)",
+   "default": null,
+   "role_zh": "高度图层：单通道图或单一均匀高度值。与 normal 层互斥。Vibrant Visuals 中高度图不能用于物品等基于纹理的对象（应改用法线）。",
+   "doc_quote": "1-channel layer image or a single value in the JSON file for a uniform heightmap. This layer and the normal layer should not both be defined at the same time in a single Texture Set.",
+   "tier": "T1",
+   "notes": "'In Vibrant Visuals, heightmaps cannot be applied to texture-based objects such as items; normals should be used for this instead.'"
+  },
+  {
+   "name": "metalness_emissive_roughness",
+   "path": "minecraft:texture_set/metalness_emissive_roughness",
+   "type": "string(贴图名) | [M,E,R] 0-255 数组 | \"#RRGGBB\"",
+   "default": null,
+   "role_zh": "MER 层：3 通道图（4 通道时忽略第 4 通道）或 3 值均匀 MER。R=金属度、G=自发光、B=粗糙度。与 MERS 层互斥。",
+   "doc_quote": "RGB images map Red to Metalness, Green to Emissive, and Blue to Roughness.",
+   "tier": "T1",
+   "notes": "注意：'Texture variations using MERS uniform values in texture sets are not supported; an image-based MERS file must be provided'——贴图变体（纹理图集变体）场景下均匀值不生效。"
+  },
+  {
+   "name": "metalness_emissive_roughness_subsurface",
+   "path": "minecraft:texture_set/metalness_emissive_roughness_subsurface",
+   "type": "string(贴图名) | [M,E,R,S] 0-255 数组 | \"#AARRGGBB\"",
+   "default": null,
+   "role_zh": "MERS 层：4 通道图或 4 值均匀 MERS，在 MER 基础上 Alpha=次表面散射。仅 Vibrant Visuals 支持；RTX 会忽略 subsurface。与 MER 层互斥。",
+   "doc_quote": "RGBA images map Red to Metalness, Green to Emissive, Blue to Roughness and Alpha to Subsurface.",
+   "tier": "T1",
+   "notes": "金属度与次表面互斥：同一像素取两者较大者为主导属性，平局偏向 subsurface（'A tie favors subsurface'）；只有非金属才能有次表面散射。金属度推荐按二值使用，但允许部分金属（非物理准确）。"
+  },
+  {
+   "name": "uniform value 取值格式",
+   "path": "minecraft:texture_set/<layer> (均匀值写法)",
+   "type": "0-255 整数或其数组 / 十六进制字符串",
+   "default": null,
+   "role_zh": "不引用贴图时各层可直接写均匀值：多通道为 0-255 整数数组，或 RGB/ARGB 十六进制（3/4 通道），单通道层为两位十六进制。通道数须匹配层要求：color 4、MER 3、MERS 4、heightmap 1。",
+   "doc_quote": "0 to 255 numeric range, or as a vector of such integers for a multichannel layer. Hexadecimal RGB or ARGB for 3 or 4 channels, or as 2 hex digits for a single channel layer.",
+   "tier": "T1"
+  },
+  {
+   "name": "有效性规则",
+   "path": "minecraft:texture_set (整体约束)",
+   "type": "约束集合",
+   "default": null,
+   "role_zh": "纹理集无效时记录 CONTENT_ERROR 并弃用。无效条件：JSON 解析失败/不合 schema；缺 color 层；heightmap 与 normal 同存；对纹理类对象用 heightmap；MER 与 MERS 同存；引用了不存在/不可解析的贴图；层通道数不符（图像：color/MER/normal 3 或 4 通道、MERS 4 通道、heightmap 仅单通道）。",
+   "doc_quote": "If a Texture Set is invalid, CONTENT_ERROR will be logged and the Texture Set will not be used.",
+   "tier": "T1"
+  },
+  {
+   "name": "资源栈行为",
+   "path": "minecraft:texture_set (资源包叠加语义)",
+   "type": "行为规则",
+   "default": null,
+   "role_zh": "纹理集只能引用与本定义同一资源包内的图像；高优先级包的同名图像不会覆盖包内引用；同一贴图的纹理集定义不合并，高优先级包整体覆盖低优先级包。",
+   "doc_quote": "In the resource pack stack, Texture Set definitions for the same texture resource don't get merged. The higher priority pack's Texture Set definition will override the lower priority one.",
+   "tier": "T1"
+  },
+  {
+   "name": "同名贴图扩展名优先级",
+   "path": "minecraft:texture_set/<layer> (贴图解析)",
+   "type": "行为规则",
+   "default": null,
+   "role_zh": "同名图像多格式共存时按 .tga > .png > .jpg > .jpeg 选择（如 grass.png 与 grass.tga 并存则取 .tga）；此规则同样适用于 actor JSON 等其他数据驱动文件的贴图引用。",
+   "doc_quote": "If you have duplicate image references, the priority of file extensions is: .tga > .png > .jpg > .jpeg",
+   "tier": "T1"
+  }
+ ],
+ "doc_conflicts": [
+  "VisualReference/texture_set.v1.21.30.md（AI 辅助生成的 schema 页）把所有层类型都标成 String、描述均为 'The texture name of a textureset layer'，未体现 TextureSetsIntroduction.md 明确记载的数组/十六进制均匀值写法与通道数约束——以 Introduction 文档为准。",
+  "format_version 不一致：Introduction 的前三个示例用 \"1.16.100\"，仅含 subsurface 的示例用 \"1.21.30\"；文档未说明 1.16.100 是否为最低版本及两者行为差异，仅给出 'Texture set JSON schema version 1.21.30' 标题。"
+ ]
+}

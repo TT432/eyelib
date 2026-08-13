@@ -52,6 +52,13 @@ RenderDoc 用于 GPU 顶点和像素历史；`mcmcp_execute`/`/eval` 用于查�
 
 收集的骨骼姿态不包含 pivot 平移。附着物或 locator 在使用骨骼姿态时必须额外应用 pivot 平移，否则会落到实体原点。实体级 `RenderData` 与 attachable 自身的 `RenderData` 作用域也必须区分：父级 setup 修改父实体作用域，attachable 动画读取自身作用域。
 
+### 动画粒子锚点
+
+- locator 世界位姿必须复用与模型渲染相同的变换链，且只有一个权威实现：`src/main/java/io/github/tt432/eyelib/animation/ModelPoseTransforms.java` 的 `resolveLocatorPose`。变换顺序为：实体插值位置 → 脚本/幼体缩放 → 身体朝向 → 模型 Y 轴翻转 → 沿父子骨骼链逐层应用平移、枢轴旋转与缩放 → locator 局部位姿（offset + ZYX 旋转）。animation/particle 领域接口（`AnimationParticleSpawner`）只传 JOML 的 `Matrix4fc` 数据，不引入 Minecraft 类型；禁止另写第二套骨骼变换或反射读取 locator 数据。
+- 动画粒子必须在当前帧全部骨骼动画写入 `ModelRuntimeData` 之后再生成，否则首帧位姿落后一帧；生成帧的位姿必须等于同帧模型 locator 世界位姿。
+- 动画控制器未声明 `bind_to_actor` 时按 Mojang 规范默认为 `true`；显式 `false` 时仅以生成帧的 locator 位姿放置，之后保持世界位置不随锚点移动。绑定发射器随骨骼动画与实体移动逐帧更新，但每帧至多提交一次位姿更新；跨线程提交时必须防御性复制矩阵，并经客户端线程提交器串行执行。
+- locator 缺失、未命名 locator 或运行时模型不可用时安全回退到实体插值位置（实体原点），不抛异常、不中断动画帧；粒子定义查找、生命周期与按 spawnId 删除的语义保持不变。
+
 ### texture_mesh 与 Blockbench
 
 当 Bedrock `texture_meshes` 的坐标或 UV 不明确时，使用 Blockbench Bedrock codec 加载同一 JSON 读取内部坐标作为 oracle。当前已验证的坐标约定为 `position=(-x,-y,z)`、`rotation=(-rx,-ry,rz)`、`local_pivot=(x,y,-z)`，scale 不变；图像右侧对应 `-x`，图像下方对应 `+z`，厚度沿 `-y`。

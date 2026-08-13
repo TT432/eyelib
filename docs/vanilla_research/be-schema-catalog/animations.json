@@ -1,0 +1,253 @@
+{
+ "subsystem": "animations (RP animations/*.json 与 BP 服务端动画)",
+ "doc_sources": [
+  "creator/Reference/Content/AnimationsReference/Examples/AnimationDefinitions/animation_document.md",
+  "creator/Reference/Content/SchemasReference/Schemas/minecraftSchema_actor_animation_1.8.0.md",
+  "creator/Reference/Content/VisualReference/actor_animation.v1.8.0.md",
+  "creator/Reference/Content/AnimationsReference/generated/AnimationGettingStarted.md",
+  "creator/Documents/Animations/AnimationsOverview.md",
+  "creator/Documents/AnimationsVsControllers.md"
+ ],
+ "subsystem_role": "定义骨骼随时间的关键帧变换（position/rotation/scale）及时间线上的声音/粒子/脚本事件，是 BE 实体视觉运动的原始动画数据层，由实体 scripts/animate 或动画控制器按通道累加应用到骨架默认姿态上。",
+ "parameters": [
+  {
+   "name": "format_version",
+   "path": "format_version",
+   "type": "Version",
+   "role_zh": "动画文件的格式版本，文档要求使用 1.8.0 或更高。",
+   "doc_quote": "The format version of this animation file. Use '1.8.0' or later.",
+   "tier": "T1"
+  },
+  {
+   "name": "animations",
+   "path": "animations",
+   "type": "Object (字典)",
+   "role_zh": "动画定义字典，键为动画标识符（如 animation.entity.anim_name），值为动画对象。",
+   "doc_quote": "A dictionary of animation definitions. Keys are animation identifiers like 'animation.entity.anim_name'",
+   "tier": "T1"
+  },
+  {
+   "name": "loop",
+   "path": "animations/<animation_id>/loop",
+   "type": "Boolean 或字符串 \"hold_on_last_frame\"",
+   "role_zh": "控制动画播放完毕后的行为：停止、循环，或停留在最后一帧。",
+   "doc_quote": "should this animation stop, loop, or stay on the last frame when finished (true, false, \"hold_on_last_frame\"",
+   "tier": "T1",
+   "notes": "schema 同时给出 bool 与 string<\"hold_on_last_frame\"> 两种形式；原文括号未闭合是文档笔误。"
+  },
+  {
+   "name": "animation_length",
+   "path": "animations/<animation_id>/animation_length",
+   "type": "Float",
+   "role_zh": "以秒为单位显式设定动画长度，覆盖由最大关键帧/事件时间计算出的默认值。",
+   "doc_quote": "override calculated value (set as the max keyframe or event time) and set animation length in seconds.",
+   "tier": "T1"
+  },
+  {
+   "name": "anim_time_update",
+   "path": "animations/<animation_id>/anim_time_update",
+   "type": "Molang",
+   "default": "\"query.anim_time + query.delta_time\"",
+   "role_zh": "定义播放时时间如何推进；可用如 query.modified_distance_moved 让动画节奏跟随移动距离。",
+   "doc_quote": "how does time pass when playing the animation. Defaults to \"query.anim_time + query.delta_time\" which means advance in seconds.",
+   "tier": "T1"
+  },
+  {
+   "name": "start_delay",
+   "path": "animations/<animation_id>/start_delay",
+   "type": "Molang（秒）",
+   "role_zh": "播放前等待的秒数；仅在开始播放前求值一次，循环动画的循环间隔应改用 loop_delay。",
+   "doc_quote": "How long to wait in seconds before playing this animation. Note that this expression is evaluated once before playing",
+   "tier": "T1"
+  },
+  {
+   "name": "loop_delay",
+   "path": "animations/<animation_id>/loop_delay",
+   "type": "Molang（秒）",
+   "role_zh": "每次循环前等待的秒数；每次循环后重新求值，仅对循环动画生效。",
+   "doc_quote": "How long to wait in seconds before looping this animation. Note that this expression is evaluated after each loop and on looping animation only.",
+   "tier": "T1"
+  },
+  {
+   "name": "blend_weight",
+   "path": "animations/<animation_id>/blend_weight",
+   "type": "Molang",
+   "role_zh": "该动画参与混合时的权重表达式（schema 列出但无进一步说明）。",
+   "doc_quote": "molang \"blend_weight\" : opt",
+   "tier": "T1",
+   "notes": "schema 仅声明字段存在，未给语义描述。"
+  },
+  {
+   "name": "override_previous_animation",
+   "path": "animations/<animation_id>/override_previous_animation",
+   "type": "Boolean",
+   "role_zh": "在应用本动画之前先将涉及骨骼重置为几何默认姿态，避免与先前动画累加。",
+   "doc_quote": "reset bones in this animation to the default pose before applying this animation",
+   "tier": "T1"
+  },
+  {
+   "name": "bones",
+   "path": "animations/<animation_id>/bones",
+   "type": "Object (字典)",
+   "role_zh": "按骨骼名索引的骨骼动画字典；动画按名称匹配目标几何体骨架，不存在的骨骼被忽略。",
+   "doc_quote": "Animation data is assumed to be hierarchical, and is applied to a bone by name matching the bone name in the animation data to the targeted geometry's skeleton.",
+   "tier": "T1"
+  },
+  {
+   "name": "relative_to.rotation",
+   "path": "animations/<animation_id>/bones/<bone>/relative_to/rotation",
+   "type": "String，取值 \"entity\"",
+   "role_zh": "设为 \"entity\" 时使该骨骼旋转相对于实体而非其父骨骼。",
+   "doc_quote": "if set, makes the bone rotation relative to the entity instead of the bone's parent",
+   "tier": "T1"
+  },
+  {
+   "name": "position",
+   "path": "animations/<animation_id>/bones/<bone>/position",
+   "type": "Molang / Molang 数组[3] / 关键帧对象",
+   "role_zh": "骨骼位置通道。可为静态值、运行时 Molang 脚本，或以时间戳（秒）为键的关键帧对象；单位为 1/16 米。",
+   "doc_quote": "Within a channel, one or more keyframes are specified at arbitrary times, in seconds, from the start of the animation.",
+   "tier": "T1",
+   "notes": "几何格式单位为 1/16 米出自 AnimationController.md 的 Channels sample 段；scale/rotation 结构同 position。"
+  },
+  {
+   "name": "rotation",
+   "path": "animations/<animation_id>/bones/<bone>/rotation",
+   "type": "Molang / Molang 数组[3] / 关键帧对象",
+   "role_zh": "骨骼旋转通道。默认单位为度，按 X→Y→Z 顺序应用；数组元素可为含 [xyz] 分量的对象形式。",
+   "doc_quote": "By default, rotations are in degrees, in X-then-Y-then-Z format.",
+   "tier": "T1"
+  },
+  {
+   "name": "scale",
+   "path": "animations/<animation_id>/bones/<bone>/scale",
+   "type": "Molang / Molang 数组 / 关键帧对象",
+   "role_zh": "骨骼缩放通道。可用单值统一缩放（\"scale\": 2.0 等价于 [2.0,2.0,2.0] 与 [2.0]）。",
+   "doc_quote": "Scale, rotation, and position can be set individually or uniformly with a single value.",
+   "tier": "T1"
+  },
+  {
+   "name": "<time_stamp>（关键帧）",
+   "path": "animations/<animation_id>/bones/<bone>/<channel>/<time_stamp>",
+   "type": "数组[3] 或 {lerp_mode, pre, post} 对象",
+   "role_zh": "以秒为键的关键帧。pre/post 分别定义到达该帧之前与之后的取值，可构成连续或不连续（突变）曲线；pre/post 也可用 Molang 表达式。",
+   "doc_quote": "A key frame defines two values for a channel-specific transform to a specific bone at a specified time, one as time approaches the key frame time, and the second from the key frame time onwards.",
+   "tier": "T1"
+  },
+  {
+   "name": "lerp_mode",
+   "path": "animations/<animation_id>/bones/<bone>/<channel>/<time_stamp>/lerp_mode",
+   "type": "枚举 \"linear\" | \"catmullrom\"",
+   "role_zh": "该关键帧段的插值方式：线性或 Catmull-Rom 样条。",
+   "doc_quote": "enumerated_value \"lerp_mode\"<\"linear\", \"catmullrom\"> : opt",
+   "tier": "T1",
+   "notes": "与 AnimationGettingStarted.md \"Currently only linear interpolation is supported\" 相矛盾，见 doc_conflicts。"
+  },
+  {
+   "name": "pre / post",
+   "path": "animations/<animation_id>/bones/<bone>/<channel>/<time_stamp>/{pre,post}",
+   "type": "Molang 数组[3]",
+   "role_zh": "关键帧的入值/出值，用于控制关键帧处插值曲线的斜率，可实现瞬时跳变。",
+   "doc_quote": "Key frame \"pre\" and \"post\" settings allow control of the interpolation curve at any key frame.",
+   "tier": "T1"
+  },
+  {
+   "name": "timeline",
+   "path": "animations/<animation_id>/timeline",
+   "type": "Object：时间戳 → 字符串或字符串数组",
+   "role_zh": "按时间戳触发的 Molang/脚本事件时间线（schema 仅给出结构，无详细语义说明）。",
+   "doc_quote": "object \"timeline\" : opt { string \"<time_stamp>\" : opt; array \"<time_stamp>\" { string \"<any array element>\" } }",
+   "tier": "T1",
+   "notes": "schema 仅声明结构；语义（逐行执行 Molang 脚本）为社区通识，文档原文未展开。"
+  },
+  {
+   "name": "sound_effects",
+   "path": "animations/<animation_id>/sound_effects",
+   "type": "Object：时间戳 → {effect} 或其数组",
+   "role_zh": "动画播放过程中按时间点触发的音效。",
+   "doc_quote": "sound effects to trigger as this animation plays, keyed by time",
+   "tier": "T1"
+  },
+  {
+   "name": "sound_effects/<time>/effect",
+   "path": "animations/<animation_id>/sound_effects/<time_stamp>/effect",
+   "type": "String",
+   "role_zh": "要播放的音效短名，须在实体资源定义文件（client entity）的 sound_effects 中列出。",
+   "doc_quote": "Valid sound effect names should be listed in the entity's resource_definition json file.",
+   "tier": "T1"
+  },
+  {
+   "name": "sound_effects/<time>/locator",
+   "path": "animations/<animation_id>/sound_effects/<time_stamp>/locator",
+   "type": "String",
+   "role_zh": "音效发出的定位骨（locator）名称。",
+   "doc_quote": "The name of a locator on the actor where the sound should originate from",
+   "tier": "T1",
+   "notes": "仅 VisualReference/actor_animation.v1.8.0.md 列出，schema 文档未含此字段。"
+  },
+  {
+   "name": "particle_effects",
+   "path": "animations/<animation_id>/particle_effects",
+   "type": "Object：时间戳 → 粒子对象或其数组",
+   "role_zh": "动画播放过程中按时间点触发的粒子效果。",
+   "doc_quote": "object \"particle_effects\" : opt { object \"<time_stamp>\" ... }",
+   "tier": "T1",
+   "notes": "动画级 particle_effects 按时间戳键控（schema 明确），与动画控制器 state 级（数组、进入状态时触发）不同。"
+  },
+  {
+   "name": "particle_effects/<time>/effect",
+   "path": "animations/<animation_id>/particle_effects/<time_stamp>/effect",
+   "type": "String",
+   "role_zh": "要播放的粒子效果名称。",
+   "doc_quote": "The name of a particle effect that should be played",
+   "tier": "T1"
+  },
+  {
+   "name": "particle_effects/<time>/locator",
+   "path": "animations/<animation_id>/particle_effects/<time_stamp>/locator",
+   "type": "String",
+   "role_zh": "粒子效果挂载的实体定位骨名称。",
+   "doc_quote": "The name of a locator on the actor where the effect should be located",
+   "tier": "T1"
+  },
+  {
+   "name": "particle_effects/<time>/pre_effect_script",
+   "path": "animations/<animation_id>/particle_effects/<time_stamp>/pre_effect_script",
+   "type": "Molang",
+   "role_zh": "粒子发射器初始化时运行的 Molang 脚本（常用于向发射器传参）。",
+   "doc_quote": "A Molang script that will be run when the particle emitter is initialized",
+   "tier": "T1"
+  },
+  {
+   "name": "particle_effects/<time>/bind_to_actor",
+   "path": "animations/<animation_id>/particle_effects/<time_stamp>/bind_to_actor",
+   "type": "Boolean",
+   "default": "true",
+   "role_zh": "设为 false 时粒子在世界中生成而不绑定到实体；默认绑定到实体。",
+   "doc_quote": "Set to false to have the effect spawned in the world without being bound to an actor (by default an effect is bound to the actor).",
+   "tier": "T1"
+  },
+  {
+   "name": "（应用顺序语义）骨骼动画累加",
+   "path": "（全局语义，非字段）",
+   "type": "—",
+   "role_zh": "每帧开始骨架重置为几何默认姿态，各动画按通道（x/y/z 分别）累加后再合成为变换；顶点先平移、再旋转、再缩放。",
+   "doc_quote": "At the beginning of each frame, the skeleton is reset to its default pose from its geometry definition, then animations are applied per-channel in order.",
+   "tier": "T1"
+  },
+  {
+   "name": "（命名约束）名称规则",
+   "path": "（全局语义，非字段）",
+   "type": "—",
+   "role_zh": "动画、骨骼、状态等名称必须以字母开头，仅含字母数字、下划线和点，建议全小写。",
+   "doc_quote": "All names (animations, bones, states, so on) must begin with a letter and contain only alphanumerics, underscores, and periods.",
+   "tier": "T1"
+  }
+ ],
+ "doc_conflicts": [
+  "插值模式矛盾：AnimationGettingStarted.md 称 'Currently only linear interpolation is supported'，但 schema（minecraftSchema_actor_animation_1.8.0.md）与 VisualReference 均列出 lerp_mode 枚举 'linear'/'catmullrom'——GettingStarted 文档已过时。",
+  "loop 字段描述括号未闭合：schema 与 VisualReference 原文均为 '(true, false, \"hold_on_last_frame\"'（缺右括号），为文档笔误。",
+  "sound_effects 条目字段不一致：schema 仅列 'effect'，VisualReference/actor_animation.v1.8.0.md 额外列出 'locator'（声音定位骨）。",
+  "文档普遍未给出各字段默认值（表内均为 *not set*），anim_time_update 的默认值 'query.anim_time + query.delta_time' 仅在描述文字中出现。"
+ ]
+}

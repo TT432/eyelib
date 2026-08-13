@@ -1,0 +1,156 @@
+{
+ "subsystem": "sound_definitions",
+ "doc_sources": [
+  "creator/Documents/IntroductionToSound.md",
+  "creator/Documents/AddCustomSounds.md",
+  "creator/Documents/animationsandcontrollers.md",
+  "creator/Documents/OverwritingAssets.md",
+  "creator/Reference/Content/MCToolsValReference/sndsdef.md",
+  "creator/Reference/Content/ClientBiomesReference/Examples/Components/minecraftClientBiomes_ambient_sounds.md"
+ ],
+ "subsystem_role": "sound_definitions.json（资源包 sounds/ 目录）把逻辑声音事件名（如 random.chestopen）映射到一组音频文件并配置分类、衰减距离等；sounds.json 再把游戏内事件/环境音绑定到这些逻辑名；实体动画、粒子事件、/playsound、群系 ambient_sounds 均以该标识符引用声音。每资源包只应有一个 sound_definitions.json。",
+ "parameters": [
+  {
+   "name": "format_version",
+   "path": "sounds/sound_definitions.json/format_version",
+   "type": "String",
+   "default": "",
+   "role_zh": "文件 schema 版本（示例为 1.20.20）。",
+   "doc_quote": "\"format_version\" : \"1.20.20\",",
+   "tier": "T1"
+  },
+  {
+   "name": "sound_definitions",
+   "path": "sounds/sound_definitions.json/sound_definitions",
+   "type": "Object: 事件名 → 定义",
+   "default": "",
+   "role_zh": "声音定义映射表，键为逻辑声音事件标识符（如 ambient.weather.rain、random.chestopen）。",
+   "doc_quote": "\"sound_definitions\" : { \"random.chestopen\" : { ... } }",
+   "tier": "T1"
+  },
+  {
+   "name": "category",
+   "path": "sound_definitions/<event>/category",
+   "type": "String（如 weather、block、ambient…）",
+   "default": "",
+   "role_zh": "声音分类；分类的主要作用是按组统一设置音量（对应游戏音量设置滑条），分类可成层级链。",
+   "doc_quote": "The main function of sound categories is to set the volume for a group of sounds as opposed to configuring volumes for each sound individually.",
+   "tier": "T1",
+   "notes": "文档未给出 category 的完整枚举表。"
+  },
+  {
+   "name": "min_distance",
+   "path": "sound_definitions/<event>/min_distance",
+   "type": "Decimal（米）",
+   "default": "1.0",
+   "group": "attenuation",
+   "role_zh": "衰减最小距离：玩家距声源小于该值时声音不衰减（文档措辞为'开始淡入'的距离）。",
+   "doc_quote": "The default values of attenuation occur at a minimum of 1.0 meters and a maximum of 10,000 meters.",
+   "tier": "T1",
+   "notes": "文档示例 min_distance=100 的描述 'sound will start to fade in once the player is 100 meters from the source' 措辞（淡入方向）与衰减常识相反，见 doc_conflicts。"
+  },
+  {
+   "name": "max_distance",
+   "path": "sound_definitions/<event>/max_distance",
+   "type": "Decimal（米）",
+   "default": "10000.0",
+   "role_zh": "衰减最大距离。",
+   "doc_quote": "The distance that sounds fade in and fade out, also known as attenuation, can be controlled using the 'min_distance' and 'max_distance' parameters.",
+   "tier": "T1"
+  },
+  {
+   "name": "__use_legacy_max_distance",
+   "path": "sound_definitions/<event>/__use_legacy_max_distance",
+   "type": "String \"true\"",
+   "default": "",
+   "role_zh": "出现在官方示例中的内部字段，按名推断为沿用旧版 max_distance 行为；文档无文字解释。",
+   "doc_quote": "\"__use_legacy_max_distance\" : \"true\",",
+   "tier": "T1-inferred",
+   "notes": "仅出现于 AddCustomSounds.md 与 animationsandcontrollers.md 的 JSON 示例，无任何说明文字；语义为按名推断。注意示例中其类型是字符串 \"true\" 而非布尔。"
+  },
+  {
+   "name": "sounds",
+   "path": "sound_definitions/<event>/sounds",
+   "type": "Array（字符串路径或对象）",
+   "default": "",
+   "role_zh": "该事件可播放的音频文件列表；同一事件可含多个文件，播放时随机选取。",
+   "doc_quote": "Multiple sound events can contain the same sound... opening a chest will randomly play one of the two sounds you defined!",
+   "tier": "T1"
+  },
+  {
+   "name": "name",
+   "path": "sound_definitions/<event>/sounds[]/name",
+   "type": "String（无扩展名路径）",
+   "default": "",
+   "role_zh": "音频文件路径（相对包根、不带扩展名），如 sounds/ambient/weather/rain1；支持 .wav/.ogg/.fsb。",
+   "doc_quote": "Minecraft: Bedrock Edition supports .wav, .ogg, and .fsb sound files, and up to 32 sounds can be played in-game simultaneously.",
+   "tier": "T1"
+  },
+  {
+   "name": "volume",
+   "path": "sound_definitions/<event>/sounds[]/volume",
+   "type": "Decimal",
+   "default": "1.0（推断）",
+   "group": "",
+   "role_zh": "按文档的特殊表述：此 volume 用于决定游戏在多远距离内尝试播放该声音（默认听者须在 16 格内），而非单纯响度。",
+   "doc_quote": "volume is used here to define how far away a sound can be before the game will attempt to play it. By default, a listener must be <= 16 blocks from the source",
+   "tier": "T1",
+   "notes": "文档对 volume 的表述（距离截断而非响度）与常见认知冲突，见 doc_conflicts；默认值 1.0 为推断。"
+  },
+  {
+   "name": "load_on_low_memory",
+   "path": "sound_definitions/<event>/sounds[]/load_on_low_memory",
+   "type": "Boolean",
+   "default": "",
+   "role_zh": "按名推断：低内存设备上也加载该声音；文档仅在示例中出现，无文字说明。",
+   "doc_quote": "\"name\": \"sounds/ambient/weather/rain1\", \"volume\": 0.02, \"load_on_low_memory\": true",
+   "tier": "T1-inferred",
+   "notes": "仅见于 IntroductionToSound.md 示例 JSON，语义为按名推断。"
+  },
+  {
+   "name": "(sounds.json) individual_event_sounds.events",
+   "path": "sounds.json/individual_event_sounds/events/<event>",
+   "type": "Object {sound, volume, pitch}",
+   "default": "",
+   "group": "sounds_json",
+   "role_zh": "把游戏内事件（如 chest.open）绑定到逻辑声音定义；pitch 可为 [min,max] 随机区间，volume 为播放音量。",
+   "doc_quote": "\"chest.open\" : { \"pitch\" : [ 0.90, 1.0 ], \"sound\" : \"random.chestopen\", \"volume\" : 0.50 }",
+   "tier": "T1"
+  },
+  {
+   "name": "(sounds.json) individual_named_sounds",
+   "path": "sounds.json/individual_named_sounds",
+   "type": "Object",
+   "default": "",
+   "group": "sounds_json",
+   "role_zh": "命名声音列表；群系 client_biome 的 ambient_sounds 组件引用的声音必须在此登记。",
+   "doc_quote": "These sounds must be in the 'individual_named_sounds' in a 'sounds.json' file.",
+   "tier": "T1"
+  },
+  {
+   "name": "(文件约束)",
+   "path": "sounds/sound_definitions.json（数量约束）",
+   "type": "机制说明",
+   "default": "",
+   "role_zh": "每个资源包只应有一个 sound_definitions.json（位于 sounds/ 目录），存在多个会触发校验告警。",
+   "doc_quote": "Warning when multiple sound_definitions.json files exist. Only one should exist per resource pack in the sounds/ folder.",
+   "tier": "T1"
+  },
+  {
+   "name": "(并发上限)",
+   "path": "（机制）同时播放数",
+   "type": "机制说明",
+   "default": "32",
+   "role_zh": "游戏内同时播放的声音上限为 32 个。",
+   "doc_quote": "up to 32 sounds can be played in-game simultaneously",
+   "tier": "T1"
+  }
+ ],
+ "doc_conflicts": [
+  "volume 语义：IntroductionToSound.md 明确说 sound_definitions 里 sounds[] 的 volume 'is used here to define how far away a sound can be before the game will attempt to play it'（距离截断），与常见认知（volume=响度倍率）冲突；文档未提及其对响度的作用。",
+  "min_distance 措辞：文档称 min_distance=100 意味着 'sound will start to fade in once the player is 100 meters from the source'——'淡入'方向与衰减（随距离淡出）的常识相反，疑为文档表述错误。",
+  "AddCustomSounds.md 示例写 \"max_distance\" : null, \"min_distance\" : null，而 IntroductionToSound.md 记载衰减默认 1.0/10000 米——示例用 null 表示取默认值的做法文档无解释。",
+  "__use_legacy_max_distance 在示例中取值为字符串 \"true\" 而非布尔 true，文档未说明该字段含义与类型。",
+  "category 的完整枚举（weather/block/ambient/hostile…）在 creator 文档中无专文列表，只能从示例零散获得。"
+ ]
+}

@@ -1,0 +1,583 @@
+{
+ "subsystem": "deferred_rendering_family",
+ "doc_sources": [
+  "creator/Reference/Content/DeferredRendering/atmosphericscattering_atmosphericscatteringconfigsettings.md",
+  "creator/Reference/Content/DeferredRendering/colorgraderconfig_colorgradingparameterssrc.md",
+  "creator/Reference/Content/DeferredRendering/lightinggroup_lightingimpl_1_21_70.md",
+  "creator/Reference/Content/DeferredRendering/pbrfallbackconfig_pbrfallbackconfigsettings.md",
+  "creator/Reference/Content/DeferredRendering/pointlightconfig_pointlightconfigsettings.md",
+  "creator/Reference/Content/DeferredRendering/shadowstylizationconfig_shadowstylizationconfigsettings.md",
+  "creator/Reference/Content/DeferredRendering/waterconfig_waterconfigsettingsv1.md",
+  "creator/Reference/Content/FogsReference/fogs.md",
+  "creator/Reference/Content/ClientBiomesReference/Examples/ClientBiomesOverview.md",
+  "creator/Reference/Content/ClientBiomesReference/Examples/Components/minecraftClientBiomes_atmosphere_identifier.md",
+  "creator/Reference/Content/ClientBiomesReference/Examples/Components/minecraftClientBiomes_lighting_identifier.md",
+  "creator/Reference/Content/ClientBiomesReference/Examples/Components/minecraftClientBiomes_color_grading_identifier.md",
+  "creator/Reference/Content/ClientBiomesReference/Examples/Components/minecraftClientBiomes_water_identifier.md",
+  "creator/Reference/Content/ClientBiomesReference/Examples/Components/minecraftClientBiomes_cubemap_identifier.md",
+  "creator/Reference/Content/ClientBiomesReference/Examples/Components/minecraftClientBiomes_fog_appearance.md",
+  "creator/Reference/Content/ClientBiomesReference/Examples/Components/minecraftClientBiomes_sky_color.md",
+  "creator/Reference/Content/ClientBiomesReference/Examples/Components/minecraftClientBiomes_water_appearance.md",
+  "creator/Reference/Content/ClientBiomesReference/Examples/Components/minecraftClientBiomes_ambient_sounds.md",
+  "creator/Reference/Content/ClientBiomesReference/Examples/Components/minecraftClientBiomes_biome_music.md",
+  "creator/Documents/VibrantVisuals/LightingCustomization.md",
+  "creator/Documents/VibrantVisuals/BiomeCustomization.md",
+  "creator/Documents/VibrantVisuals/ShadowsCustomization.md",
+  "creator/Documents/VibrantVisuals/WaterCustomization.md",
+  "creator/Documents/VibrantVisuals/ColorGradingToneMappingCustomization.md",
+  "creator/Documents/VibrantVisuals/AtmosphericsCustomization.md",
+  "creator/Documents/VibrantVisuals/EnablingDeferredTechnicalPreview.md",
+  "creator/Documents/FogInResourcePacks.md"
+ ],
+ "subsystem_role": "延迟渲染族（Vibrant Visuals / Deferred Rendering）是资源包驱动的新一代渲染管线配置体系：atmospherics/lighting/local_lighting/shadows/water/color_grading/pbr_fallback 等 JSON 按目录组织、以 identifier 命名，经 client_biome（.client_biome.json）组件按群系绑定并空间插值；fog_settings 提供距离雾与体积雾（另有独立优先级栈）。需要 manifest capabilities 声明 pbr，并在视频设置启用 Deferred。",
+ "subsystems": {
+  "atmospherics": {
+   "subsystem_role": "大气散射配置（atmospherics/*.json，默认文件名 atmospherics.json）：控制天空天顶/地平线颜色、Rayleigh/Mie 散射强度与太阳眩光形状，按群系绑定并随相机位置空间混合。",
+   "file": "atmospherics/atmospherics.json",
+   "root": "minecraft:atmosphere_settings"
+  },
+  "lighting": {
+   "subsystem_role": "全局光照配置（lighting/global.json 及 lighting/ 下按群系文件）：定义太阳/月亮/末地闪光等平行光、自发光去饱和、环境光与天空光强度。1.21.90 起 global.json 不再覆盖原版按群系光照。",
+   "file": "lighting/global.json",
+   "root": "minecraft:lighting_settings"
+  },
+  "local_lighting": {
+   "subsystem_role": "局部光源配置（local_lighting/local_lighting.json，1.21.120 起由 point_lights/global.json 改名）：按方块指定光源颜色与类型（static_light/point_light）。",
+   "file": "local_lighting/local_lighting.json",
+   "root": "minecraft:local_light_settings"
+  },
+  "shadows": {
+   "subsystem_role": "阴影风格化配置（shadows/global.json）：选择 blocky_shadows/soft_shadows 并设置 texel 量化尺寸；全局唯一，不按群系。",
+   "file": "shadows/global.json",
+   "root": "minecraft:shadow_settings"
+  },
+  "water": {
+   "subsystem_role": "水体渲染配置（water/water.json 及按群系文件）：焦散、波浪潮汐模拟与颗粒浓度（决定水色）；按几何位置（而非相机位置）逐块混合。",
+   "file": "water/water.json",
+   "root": "minecraft:water_settings"
+  },
+  "color_grading": {
+   "subsystem_role": "颜色分级与色调映射配置（color_grading/color_grading.json）：按高光/中间调/阴影三段调整饱和度、对比度、增益、gamma、偏移，及 tone mapping 算子。",
+   "file": "color_grading/color_grading.json",
+   "root": "minecraft:color_grading_settings"
+  },
+  "pbr_fallback": {
+   "subsystem_role": "PBR 兜底配置（pbr/global.json）：当方块/实体/粒子/物品没有 texture set 时，统一套用默认 MERS（metalness/emissive/roughness/subsurface）值。",
+   "file": "pbr/global.json",
+   "root": "minecraft:pbr_fallback_settings"
+  },
+  "fog_settings": {
+   "subsystem_role": "雾定义（fogs/*.json）：距离雾（按相机介质 air/water/weather/lava/lava_resistance/powder_snow）与体积雾（密度、介质散射/吸收系数、Henyey-Greenstein g）；经 fog_identifier 绑定群系或 /fog 命令按优先级栈生效。",
+   "file": "fogs/<name>.json",
+   "root": "minecraft:fog_settings"
+  },
+  "client_biome": {
+   "subsystem_role": "客户端群系文件（biomes/*.client_biome.json）：把雾、天空色、水面色及延迟渲染各 identifier 组件绑定到具体群系；是 biomes_client.json 的新替代（1.21.40 起原版不再加载后者）。",
+   "file": "biomes/*.client_biome.json",
+   "root": "minecraft:client_biome"
+  }
+ },
+ "parameters": [
+  {
+   "name": "format_version",
+   "path": "(各族文件根)/format_version",
+   "type": "String",
+   "default": "",
+   "group": "*",
+   "role_zh": "该配置文件的 schema 版本（三段式），决定解析路径与向后兼容。",
+   "doc_quote": "string \"format_version\", // The 3-part schema version for parsing these lighting settings.",
+   "tier": "T1"
+  },
+  {
+   "name": "identifier",
+   "path": "minecraft:atmosphere_settings/description/identifier（lighting/color_grading/water/fog_settings 同构）",
+   "type": "String（须含命名空间）",
+   "default": "",
+   "group": "*",
+   "role_zh": "配置的命名空间标识符，供 client_biome 组件引用；同目录下多个文件须 identifier 唯一。",
+   "doc_quote": "The identifier for these lighting settings. The identifier must include a namespace.",
+   "tier": "T1"
+  },
+  {
+   "name": "sky_zenith_color",
+   "path": "minecraft:atmosphere_settings/sky_zenith_color",
+   "type": "Hex 字符串 / RGB 数组 / 可关键帧",
+   "default": "",
+   "group": "atmospherics",
+   "role_zh": "天空天顶颜色。",
+   "doc_quote": "sky_zenith_color | Keyed set of strings / String / Named set of objects",
+   "tier": "T1"
+  },
+  {
+   "name": "sky_horizon_color",
+   "path": "minecraft:atmosphere_settings/sky_horizon_color",
+   "type": "Hex 字符串 / RGB 数组 / 可关键帧",
+   "default": "",
+   "group": "atmospherics",
+   "role_zh": "天空地平线颜色。",
+   "doc_quote": "sky_horizon_color | Keyed set of strings",
+   "tier": "T1"
+  },
+  {
+   "name": "rayleigh_strength",
+   "path": "minecraft:atmosphere_settings/rayleigh_strength",
+   "type": "Decimal（≤11，可关键帧）",
+   "default": "",
+   "group": "atmospherics",
+   "role_zh": "Rayleigh 散射强度，影响天空蓝色基调。",
+   "doc_quote": "rayleigh_strength Value must be <= 11.",
+   "tier": "T1"
+  },
+  {
+   "name": "sun_mie_strength",
+   "path": "minecraft:atmosphere_settings/sun_mie_strength",
+   "type": "Decimal（≤60，可关键帧）",
+   "default": "",
+   "group": "atmospherics",
+   "role_zh": "太阳 Mie 散射强度（日轮周围光晕）。",
+   "doc_quote": "sun_mie_strength Value must be <= 60.",
+   "tier": "T1"
+  },
+  {
+   "name": "moon_mie_strength",
+   "path": "minecraft:atmosphere_settings/moon_mie_strength",
+   "type": "Decimal（≤20，可关键帧）",
+   "default": "",
+   "group": "atmospherics",
+   "role_zh": "月亮 Mie 散射强度。",
+   "doc_quote": "moon_mie_strength Value must be <= 20.",
+   "tier": "T1"
+  },
+  {
+   "name": "sun_glare_shape",
+   "path": "minecraft:atmosphere_settings/sun_glare_shape",
+   "type": "Decimal（≤50，可关键帧）",
+   "default": "",
+   "group": "atmospherics",
+   "role_zh": "太阳眩光形状参数。",
+   "doc_quote": "sun_glare_shape Value must be <= 50.",
+   "tier": "T1"
+  },
+  {
+   "name": "horizon_blend_stops",
+   "path": "minecraft:atmosphere_settings/horizon_blend_stops",
+   "type": "Object {min,max,start,mie_start}（≤1~1.2，可关键帧）",
+   "default": "",
+   "group": "atmospherics",
+   "role_zh": "地平线混合区间控制：min/max 为混合起止，mie_start 为 Mie 散射起始位置。",
+   "doc_quote": "max Value must be <= 1... mie_start Value must be <= 1.2000000476837158... start Value must be <= 1.",
+   "tier": "T1"
+  },
+  {
+   "name": "directional_lights.sun/moon",
+   "path": "minecraft:lighting_settings/directional_lights/orbital/sun|moon",
+   "type": "Object {illuminance, color}（可关键帧）",
+   "default": "",
+   "group": "lighting",
+   "role_zh": "太阳/月亮平行光：illuminance 以 lux 计（太阳白昼可达 10 万 lux，月亮不足 1），color 为 RGB 数组或 hex；二者始终处于轨道对点。",
+   "doc_quote": "The sun and the moon are assumed to be at opposite points in their orbit in the sky at all times... the sun at noon on a clear day measures upwards of 100,000 lux",
+   "tier": "T1",
+   "notes": "Documents 版 schema 在 directional_lights 下分 orbital/flash 两个子对象；1.21.70 参考文档（lightinggroup_lightingimpl_1_21_70）sun/moon 直接挂在 directional_lights 下，见 doc_conflicts。"
+  },
+  {
+   "name": "orbital_offset_degrees",
+   "path": "minecraft:lighting_settings/directional_lights/orbital/orbital_offset_degrees",
+   "type": "Decimal（≤359.99，可关键帧）",
+   "default": "",
+   "group": "lighting",
+   "role_zh": "日月轨道相对标准轴的旋转偏移（度）；不可跨 schema 混合，同包所有 lighting 文件须一致。",
+   "doc_quote": "Orbital offset degrees cannot be blended. All lighting schemas in a given pack should use the same orbital offset degree value.",
+   "tier": "T1"
+  },
+  {
+   "name": "flash",
+   "path": "minecraft:lighting_settings/directional_lights/flash",
+   "type": "Object {illuminance, color}",
+   "default": "",
+   "group": "lighting",
+   "role_zh": "末地闪光（1.21.80+）：末地维度随机位置闪现的天体光，illuminance 为峰值亮度。",
+   "doc_quote": "The End flash is a celestial light that's exclusive to the End dimension... the value provided determines the maximum illuminance of the flashes it produces.",
+   "tier": "T1"
+  },
+  {
+   "name": "emissive.desaturation",
+   "path": "minecraft:lighting_settings/emissive/desaturation",
+   "type": "Decimal [0,1]",
+   "default": "",
+   "group": "lighting",
+   "role_zh": "计算自发光颜色时对像素 albedo 的去饱和程度，0 不去饱和、1 完全去饱和。",
+   "doc_quote": "a factor from 0.0 to 1.0 that controls how much the albedo of a given pixel is desaturated when computing the color of emissive light.",
+   "tier": "T1"
+  },
+  {
+   "name": "ambient.illuminance / ambient.color",
+   "path": "minecraft:lighting_settings/ambient",
+   "type": "Decimal（0-5 lux）/ color",
+   "default": "illuminance 0.02, color #FFFFFF",
+   "group": "lighting",
+   "role_zh": "无其他光源时的兜底环境光（如黑暗洞穴），应保持很低；1.26.0 起支持关键帧。",
+   "doc_quote": "If not provided, a default color of `#FFFFFF` and illuminance of `0.02` will be used.",
+   "tier": "T1"
+  },
+  {
+   "name": "sky.intensity",
+   "path": "minecraft:lighting_settings/sky/intensity",
+   "type": "Decimal [0.1, 1.0]",
+   "default": "1.0",
+   "group": "lighting",
+   "role_zh": "天空光对间接光照（漫反射+镜面）的贡献系数；越低阴影越黑；1.26.0 起支持关键帧。",
+   "doc_quote": "a factor from 0.1 to 1.0 that controls how much sky light is factored into the indirect term for both diffuse and specular.",
+   "tier": "T1"
+  },
+  {
+   "name": "<block_id>.light_color",
+   "path": "minecraft:local_light_settings/<block identifier>/light_color",
+   "type": "RGB 数组 [0-255] 或 hex 字符串",
+   "default": "",
+   "group": "local_lighting",
+   "role_zh": "指定发光方块的光颜色；未列出的发光方块使用标准 MC 光色。",
+   "doc_quote": "Any light-emitting block without a `static_light` entry in local_lighting/local_lighting.json will instead use the standard Minecraft light color.",
+   "tier": "T1"
+  },
+  {
+   "name": "<block_id>.light_type",
+   "path": "minecraft:local_light_settings/<block identifier>/light_type",
+   "type": "String: static_light|point_light",
+   "default": "",
+   "group": "local_lighting",
+   "role_zh": "局部光类型：static_light 烘焙进场景（无高光/动态阴影），point_light 从方块中心单点发射（有漫反射/镜面/动态阴影，开销大）。",
+   "doc_quote": "light_type: \"static_light\" or \"point_light\"",
+   "tier": "T1"
+  },
+  {
+   "name": "(旧) colors",
+   "path": "minecraft:point_light_settings/colors",
+   "type": "Object: 方块ID→颜色",
+   "default": "",
+   "group": "local_lighting",
+   "role_zh": "已废弃的点光源配置（point_lights/global.json），1.21.120 起由 local_lighting/local_lighting.json 取代。",
+   "doc_quote": "point_lights/global.json [DEPRECATED]... Renamed `point_lights/global.json` to `local_lighting/local_lighting.json` (1.21.120)",
+   "tier": "T1"
+  },
+  {
+   "name": "shadow_style",
+   "path": "minecraft:shadow_settings/shadow_style",
+   "type": "String: blocky_shadows|soft_shadows",
+   "default": "soft_shadows",
+   "group": "shadows",
+   "role_zh": "阴影风格：方块化或柔和；不定制时默认柔和阴影。",
+   "doc_quote": "If a pack does not customize the shadow stylization, then soft shadows will be used by default... valid options are \"blocky_shadows\" or \"soft_shadows\".",
+   "tier": "T1"
+  },
+  {
+   "name": "texel_size",
+   "path": "minecraft:shadow_settings/texel_size",
+   "type": "Integer [1, 1024]",
+   "default": "",
+   "group": "shadows",
+   "role_zh": "阴影量化的 texel 分辨率；blocky 阴影建议与包内方块贴图分辨率一致（16/32）。",
+   "doc_quote": "The resolution to snap shadow texels to; recommended to use the same resolution as block texture assets in the accompanying pack",
+   "tier": "T1"
+  },
+  {
+   "name": "caustics",
+   "path": "minecraft:water_settings/caustics",
+   "type": "Object {enabled, texture, frame_length, power, scale}",
+   "default": "",
+   "group": "water",
+   "role_zh": "水下焦散：enabled 开关、texture 贴图（须在 textures_list.json 声明）、frame_length(0.01-5)、power(1-6)、scale(0.1-5)；不可跨 schema 混合。",
+   "doc_quote": "Caustics cannot be blended. All water schemas in a given pack should use the same caustics parameters.",
+   "tier": "T1"
+  },
+  {
+   "name": "particle_concentrations",
+   "path": "minecraft:water_settings/particle_concentrations",
+   "type": "Object {cdom ≤15, chlorophyll ≤10, suspended_sediment ≤300}",
+   "default": "",
+   "group": "water",
+   "role_zh": "水中颗粒浓度（CDOM/叶绿素/悬浮沉积物），Vibrant Visuals 下水色主要由这些值推导。",
+   "doc_quote": "the color of water in Vibrant Visuals is derived primarily from the values defined in \"particle_concentrations\".",
+   "tier": "T1"
+  },
+  {
+   "name": "waves",
+   "path": "minecraft:water_settings/waves",
+   "type": "Object {enabled, depth≤3, direction_increment≤360, frequency, frequency_scaling≤2, mix≤1, octaves 1-30, pull [-1,1], sampleWidth, shape 1-10, speed, speed_scaling≤2}",
+   "default": "",
+   "group": "water",
+   "role_zh": "水面波浪模拟参数组；enabled 开关不可跨 schema 混合。",
+   "doc_quote": "Waves enabled/disabled cannot be blended. All water schemas in a given pack should use the same wave simulation boolean.",
+   "tier": "T1"
+  },
+  {
+   "name": "biome_water_color_contribution",
+   "path": "minecraft:water_settings/biome_water_color_contribution",
+   "type": "Decimal [0,1]",
+   "default": "",
+   "group": "water",
+   "role_zh": "（1.26.0+）将 client_biome 的 surface_color 混入 Vibrant Visuals 水色的比例。",
+   "doc_quote": "a single factor from 0-1 called \"biome_water_color_contribution\"... controls how much the \"surface_color\" value defined in *.client_biome.json files will be mixed into the base color",
+   "tier": "T1"
+  },
+  {
+   "name": "color_grading.shadows/midtones/highlights",
+   "path": "minecraft:color_grading_settings/color_grading/{shadows|midtones|highlights}",
+   "type": "Object {contrast≤4, gain≤10, gamma≤4, offset [-1,1], saturation≤10}（RGB 数组或 {x,y,z}）",
+   "default": "",
+   "group": "color_grading",
+   "role_zh": "按亮度三段（阴影/中间调/高光）分别调整颜色分级；midtones 也用于未指定 highlights/shadows 时。",
+   "doc_quote": "You can control the saturation, contrast, gain, and offset of pixels per RGB channel... with unique sets of parameters for shadows, midtones and highlights.",
+   "tier": "T1"
+  },
+  {
+   "name": "highlights.highlightsMin",
+   "path": "minecraft:color_grading_settings/color_grading/highlights/highlightsMin",
+   "type": "Decimal [1, 20]",
+   "default": "",
+   "group": "color_grading",
+   "role_zh": "判定为高光区域的亮度下界。",
+   "doc_quote": "highlightsMin Value must be >= 1. Value must be <= 20.",
+   "tier": "T1"
+  },
+  {
+   "name": "shadows.shadowsMax",
+   "path": "minecraft:color_grading_settings/color_grading/shadows/shadowsMax",
+   "type": "Decimal (≤1)",
+   "default": "",
+   "group": "color_grading",
+   "role_zh": "判定为阴影区域的亮度上界；shadows/highlights 段另有 enabled 开关。",
+   "doc_quote": "shadowsMax Value must be <= 1.",
+   "tier": "T1"
+  },
+  {
+   "name": "tone_mapping.operator",
+   "path": "minecraft:color_grading_settings/tone_mapping/operator",
+   "type": "String enum",
+   "default": "",
+   "group": "color_grading",
+   "role_zh": "色调映射算子；不可混合，同包所有 color grading schema 须用同一算子。",
+   "doc_quote": "Tone mapping operators cannot be blended. All color grading and tone mapping schemas in a given pack should use the same tone mapping operator.",
+   "tier": "T1"
+  },
+  {
+   "name": "global_metalness_emissive_roughness_subsurface",
+   "path": "minecraft:pbr_fallback_settings/{blocks|actors|items|particles}/global_metalness_emissive_roughness_subsurface",
+   "type": "RGBA 数组或 hex 字符串",
+   "default": "",
+   "group": "pbr_fallback",
+   "role_zh": "四类对象（blocks/actors/items/particles）在无 texture set 时统一套用的默认 MERS 值，用于快速定美术方向。",
+   "doc_quote": "The default MERS value to use for blocks when not defined via textureset; supports RGBA array or HEX string",
+   "tier": "T1",
+   "notes": "参考文档 pbrfallbackconfig 还列出旧名 global_metalness_emissive_roughness（无 subsurface），与 Documents 示例并存。"
+  },
+  {
+   "name": "distance.{air|weather|water|lava|lava_resistance|powder_snow}",
+   "path": "minecraft:fog_settings/distance/<介质>",
+   "type": "Object {fog_start, fog_end, fog_color, render_distance_type, transition_fog}",
+   "default": "",
+   "group": "fog_settings",
+   "role_zh": "距离雾：按相机所在介质分别配置；fog_start 为雾起始距离、fog_end 为完全不透明距离、fog_color 雾色；全部可选，缺省回落到优先级栈下一层。",
+   "doc_quote": "`fog_start`: The distance where the fog will begin to appear. `fog_end`: The distance where the fog will become completely opaque.",
+   "tier": "T1",
+   "notes": "fogs.md 生成版参考未列出 fog_start/fog_end/fog_color 字段，取自 Documents/FogInResourcePacks.md。"
+  },
+  {
+   "name": "render_distance_type",
+   "path": "minecraft:fog_settings/distance/<介质>/render_distance_type",
+   "type": "String: fixed|render",
+   "default": "",
+   "group": "fog_settings",
+   "role_zh": "距离值解释方式：fixed 按方块数，render 乘以当前渲染距离。",
+   "doc_quote": "Determines how distance value is used. Fixed distance is measured in blocks. Dynamic distance is multiplied by the current render distance.",
+   "tier": "T1"
+  },
+  {
+   "name": "transition_fog",
+   "path": "minecraft:fog_settings/distance/water/transition_fog",
+   "type": "Object {init_fog, min_percent, mid_seconds, mid_percent, max_seconds}",
+   "default": "",
+   "group": "fog_settings",
+   "role_zh": "仅 water 介质可用：入水时从 init_fog 渐变到水雾的过渡曲线（百分比+秒数控制）。",
+   "doc_quote": "`transition_fog` works only for fog in a **water** setting... players will see a fog transition from `init_fog` setting to the `water` setting when they move into water.",
+   "tier": "T1"
+  },
+  {
+   "name": "volumetric.density.<介质>",
+   "path": "minecraft:fog_settings/volumetric/density/{air|weather|water|lava|lava_resistance}",
+   "type": "Object {max_density, uniform, zero_density_height, max_density_height}",
+   "default": "",
+   "group": "fog_settings",
+   "role_zh": "体积雾密度：max_density 为遮光倍率（0 无雾、1 近不透明）；uniform=false 时按高度 zero_density_height→max_density_height 渐变。",
+   "doc_quote": "`max_density`: the multiplier on how much the fog disrupts the light. 0.0 will have no fog, and 1.0 will be near opaque.",
+   "tier": "T1"
+  },
+  {
+   "name": "volumetric.media_coefficients.{air|water|cloud}",
+   "path": "minecraft:fog_settings/volumetric/media_coefficients/<介质>",
+   "type": "Object {scattering, absorption}（[0,1]×3 数组或 hex）",
+   "default": "",
+   "group": "fog_settings",
+   "role_zh": "光穿过不同介质时的散射/吸收系数。",
+   "doc_quote": "`scattering`: how much of the RGB of the light the fog will spread... `absorption`: how much of the RGB of the light the fog will absorb.",
+   "tier": "T1"
+  },
+  {
+   "name": "henyey_greenstein_g",
+   "path": "minecraft:fog_settings/volumetric/henyey_greenstein_g/{air|water}/henyey_greenstein_g",
+   "type": "Decimal [-1, 1]",
+   "default": "air 0.75 / water 0.6",
+   "group": "fog_settings",
+   "role_zh": "（1.21.90+，仅 Vibrant Visuals）散射光方向分布：正值前向散射、负值后向散射。",
+   "doc_quote": "Controls the distribution of scattered light... Positive values will result in forward-scattering, while negative values will result in back-scattering.",
+   "tier": "T1"
+  },
+  {
+   "name": "(雾优先级栈)",
+   "path": "minecraft:fog_settings（生效顺序）",
+   "type": "机制说明",
+   "default": "",
+   "group": "fog_settings",
+   "role_zh": "雾生效顺序（高→低）：/fog 命令 > 群系定义 > 数据驱动默认 > 引擎硬编码默认；每层缺项向下回落。",
+   "doc_quote": "Command: the settings set on the player by server commands. Biomes... Data Default... Engine Default: hard code values.",
+   "tier": "T1"
+  },
+  {
+   "name": "format_version / description.identifier",
+   "path": "minecraft:client_biome/description/identifier",
+   "type": "String",
+   "default": "",
+   "group": "client_biome",
+   "role_zh": "客户端群系文件版本与目标群系名；identifier 必须与游戏或行为包已定义的群系同名（本身不创建群系）。",
+   "doc_quote": "Must match the name of a biome defined by the game or a behavior pack.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:fog_appearance.fog_identifier",
+   "path": "minecraft:client_biome/components/minecraft:fog_appearance/fog_identifier",
+   "type": "String (identifier)",
+   "default": "",
+   "group": "client_biome",
+   "role_zh": "绑定该群系使用的雾定义；无此组件用默认雾。",
+   "doc_quote": "Sets the fog settings used during rendering. Biomes without this component will have default fog settings.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:sky_color.sky_color",
+   "path": "minecraft:client_biome/components/minecraft:sky_color/sky_color",
+   "type": "hex 字符串或 RGB 数组",
+   "default": "",
+   "group": "client_biome",
+   "role_zh": "设置群系天空颜色（非 Vibrant Visuals 路径）。",
+   "doc_quote": "Sets the sky color used during rendering. Biomes without this component will have default sky color behavior.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:water_appearance.surface_color / surface_opacity",
+   "path": "minecraft:client_biome/components/minecraft:water_appearance",
+   "type": "hex/RGB 数组 + Decimal [0,1]",
+   "default": "",
+   "group": "client_biome",
+   "role_zh": "设置群系水面颜色与不透明度。",
+   "doc_quote": "RGB color of the water surface... Opacity of the water surface (must be between 0 for invisible and 1 for opaque, inclusive)",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:atmosphere_identifier",
+   "path": "minecraft:client_biome/components/minecraft:atmosphere_identifier/atmosphere_identifier",
+   "type": "String (identifier)",
+   "default": "",
+   "group": "client_biome",
+   "role_zh": "（Vibrant Visuals）绑定 atmospherics/ 目录下的大气配置。",
+   "doc_quote": "Identifiers must resolve to identifiers in valid Atmospheric Scattering JSON schemas under the \"atmospherics\" directory.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:lighting_identifier",
+   "path": "minecraft:client_biome/components/minecraft:lighting_identifier/lighting_identifier",
+   "type": "String (identifier)",
+   "default": "",
+   "group": "client_biome",
+   "role_zh": "（Vibrant Visuals）绑定 lighting/ 目录下的光照配置。",
+   "doc_quote": "Identifiers must resolve to identifiers in valid Lighting JSON schemas under the \"lighting\" directory.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:color_grading_identifier",
+   "path": "minecraft:client_biome/components/minecraft:color_grading_identifier/color_grading_identifier",
+   "type": "String (identifier)",
+   "default": "",
+   "group": "client_biome",
+   "role_zh": "（Vibrant Visuals）绑定 color_grading/ 目录下的颜色分级配置。",
+   "doc_quote": "Identifiers must resolve to identifiers in valid Color Grading JSON schemas under the \"color_grading\" directory.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:water_identifier",
+   "path": "minecraft:client_biome/components/minecraft:water_identifier/water_identifier",
+   "type": "String (identifier)",
+   "default": "",
+   "group": "client_biome",
+   "role_zh": "（Vibrant Visuals）绑定 water/ 目录下的水体配置。",
+   "doc_quote": "Identifiers must resolve to identifiers in valid Water JSON schemas under the \"water\" directory.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:cubemap_identifier",
+   "path": "minecraft:client_biome/components/minecraft:cubemap_identifier/cubemap_identifier",
+   "type": "String (identifier)",
+   "default": "",
+   "group": "client_biome",
+   "role_zh": "（Vibrant Visuals）绑定 cubemaps/ 目录下的 cubemap 配置。",
+   "doc_quote": "Identifiers must resolve to identifiers in valid Cubemap JSON schemas under the \"cubemaps\" directory.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:ambient_sounds",
+   "path": "minecraft:client_biome/components/minecraft:ambient_sounds",
+   "type": "Object {addition, loop, mood}",
+   "default": "",
+   "group": "client_biome",
+   "role_zh": "群系环境音：loop 循环、addition 偶发、mood 低亮度时稀有播放（缺省用 ambient.cave）；声音须在 sounds.json 的 individual_named_sounds 中。",
+   "doc_quote": "These sounds must be in the 'individual_named_sounds' in a 'sounds.json' file.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:biome_music",
+   "path": "minecraft:client_biome/components/minecraft:biome_music",
+   "type": "Object {music_definition, volume_multiplier [0,1]}",
+   "default": "",
+   "group": "client_biome",
+   "role_zh": "群系音乐：music_definition 指定音乐（空字符串=无音乐，缺省按维度），volume_multiplier 渐进调整音量。",
+   "doc_quote": "If left off or not found the default music will be determined by the dimension. Empty string will result in no music.",
+   "tier": "T1"
+  },
+  {
+   "name": "(保留默认文件名规则)",
+   "path": "atmospherics/atmospherics.json, color_grading/color_grading.json, lighting/global.json, water/water.json",
+   "type": "机制说明",
+   "default": "",
+   "group": "client_biome",
+   "role_zh": "保留文件名中的 identifier 自动作为全局默认绑定到对应群系组件，除非群系 JSON 另行指定。",
+   "doc_quote": "Because the filenames are reserved to act as global/default values, the identifiers found in atmospherics/atmospherics.json... will automatically be assigned to the minecraft:atmosphere_identifier... biome components",
+   "tier": "T1"
+  },
+  {
+   "name": "(跨群系混合规则)",
+   "path": "（机制）空间混合",
+   "type": "机制说明",
+   "default": "",
+   "group": "*",
+   "role_zh": "atmospherics/color_grading/cubemaps/lighting 随相机位置空间插值；water 按几何位置逐块插值；tone mapping 算子、orbital_offset_degrees、caustics、waves 开关不可混合。",
+   "doc_quote": "The following settings will smoothly transition as the player's camera moves through the world... [Water] calculated on a per-geometry basis",
+   "tier": "T1"
+  }
+ ],
+ "doc_conflicts": [
+  "lighting schema 结构不一致：Documents/VibrantVisuals/LightingCustomization.md（现行）在 directional_lights 下分 orbital{sun,moon,orbital_offset_degrees} 与 flash 两个子对象；DeferredRendering/lightinggroup_lightingimpl_1_21_70.md 参考把 sun/moon/orbital_offset_degrees 直接挂在 directional_lights 下且无 flash（系 1.21.70 旧版结构，1.21.80 才加 flash）——按版本差异理解，但目录层面易误判为两种格式。",
+  "FogsReference/fogs.md（生成版）缺失 fog_start/fog_end/fog_color/max_density 等核心字段（distance/volumetric 子结构只列 render_distance_type 与 transition_fog），完整字段只见于 Documents/FogInResourcePacks.md。",
+  "点光源：DeferredRendering/pointlightconfig_pointlightconfigsettings.md 仍记载 minecraft:point_light_settings/colors；LightingCustomization.md 标注 point_lights/global.json 已 DEPRECATED，1.21.120 起改名 local_lighting/local_lighting.json 且根对象变为 minecraft:local_light_settings。",
+  "pbr fallback 字段名：pbrfallbackconfig 参考同时列出 global_metalness_emissive_roughness 与 global_metalness_emissive_roughness_subsurface 两种形式，Documents 示例只用后者，前者疑为旧版字段。",
+  "体积雾用途：FogInResourcePacks.md 称 volumetric 'Currently this is only used for Ray Tracing'，但同文档又载 1.21.90+ 的 henyey_greenstein_g 'only applicable in Vibrant Visuals'，且 VolumetricFogLightShaftsCustomization.md 用体积雾做 VV 光柱——'仅用于光追'的表述已过时。",
+  "fogs.md 的 distance 子结构列出 powder_snow 介质，FogInResourcePacks.md 正文枚举 distance 类型时（air/weather/water/lava/lava_resistance）未提 powder_snow。"
+ ]
+}

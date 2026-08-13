@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * mcpack 兼容性回归测试：输入采用 Actions-and-Stuff mcpack 实际 JSON 形态
- * （见 work/mcpack-component-inventory/report.md 与 versions/1.20.1/run/benchmark/logs/latest.log），
+ * （见 docs/concepts/behavior-component-pitfalls.md「Bedrock 组件字段简写与可选性」节），
  * oracle 为 Mojang Creator 文档 EntityComponents 参考。
  *
  * @author TT432

@@ -1,0 +1,504 @@
+{
+ "subsystem": "particles",
+ "doc_sources": [
+  "creator/Reference/Content/ParticlesReference/ParticlesIntroduction.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponentList.md",
+  "creator/Reference/Content/ParticlesReference/ParticleCurves.md",
+  "creator/Reference/Content/ParticlesReference/ParticleEffectEvents.md",
+  "creator/Reference/Content/ParticlesReference/ParticleMolangIntegration.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftEmitter_disc.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftEmitter_initialization.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftEmitter_lifetime_events.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftEmitter_lifetime_expression.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftEmitter_lifetime_looping.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftEmitter_lifetime_once.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftEmitter_local_space.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftEmitter_rate_instant.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftEmitter_rate_manual.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftEmitter_rate_steady.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftEmitter_shape_box.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftEmitter_shape_custom.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftEmitter_shape_entity-AABB.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftEmitter_shape_point.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftEmitter_shape_sphere.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftParticle_appearance_billboard.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftParticle_appearance_lighting.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftParticle_appearance_tinting.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftParticle_expire_if_in_blocks.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftParticle_expire_if_not_in_blocks.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftParticle_initial_speed.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftParticle_initial_spin.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftParticle_initialization.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftParticle_lifetime_events.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftParticle_lifetime_expression.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftParticle_lifetime_kill-plane.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftParticle_motion_collision.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftParticle_motion_dynamic.md",
+  "creator/Reference/Content/ParticlesReference/ParticleComponents/minecraftParticle_motion_parametric.md",
+  "creator/Reference/Content/ParticlesReference/Examples/ParticleComponents/particle_document.md",
+  "creator/Reference/Content/ParticlesReference/Examples/ParticleComponents/particle_effect.md",
+  "creator/Reference/Content/ParticlesReference/Examples/ParticleComponents/particle_effect_description.md",
+  "creator/Reference/Content/ParticlesReference/Examples/ParticleComponents/particle_effect_basic_render_parameters.md"
+ ],
+ "subsystem_role": "粒子效果子系统：资源包 particles/ 下的 JSON，以「发射器(emitter)组件 + 粒子(particle)组件」组件化方式描述客户端特效的生成速率、形状、运动、外观与生命周期，经 basic_render_parameters 指定材质与贴图后由客户端粒子渲染器逐帧模拟并渲染。",
+ "parameters": [
+  {
+   "name": "format_version",
+   "path": "format_version",
+   "type": "string(version)",
+   "default": null,
+   "role_zh": "粒子 JSON 的格式版本，决定游戏是否接受该文件（如 \"1.10.0\"）。",
+   "doc_quote": "specifies the format version of the particle. Only particles of a particular set of versions will work with the game",
+   "tier": "T1"
+  },
+  {
+   "name": "description/identifier",
+   "path": "particle_effect/description/identifier",
+   "type": "string",
+   "default": null,
+   "role_zh": "粒子效果的命名空间标识符（如 minecraft:basic_flame_particle），/particle 命令与实体/方块引用均用此名。description 必须包含它。",
+   "doc_quote": "The description MUST contain an identifier and basic_render_parameters.",
+   "tier": "T1",
+   "notes": "文件可放在 particles/ 任意子目录，仅靠 identifier 引用（ParticlesIntroduction: 'the file can be saved in any subfolder of the particles folder without having to reference it'）。"
+  },
+  {
+   "name": "description/basic_render_parameters",
+   "path": "particle_effect/description/basic_render_parameters",
+   "type": "object",
+   "default": null,
+   "role_zh": "基础渲染参数容器，必须包含 material 与 texture 两项。",
+   "doc_quote": "Basic render parameters are basic rendering properties like the texture used, or the material used. All particles require a material to render, and a texture to draw.",
+   "tier": "T1"
+  },
+  {
+   "name": "basic_render_parameters/material",
+   "path": "particle_effect/description/basic_render_parameters/material",
+   "type": "string",
+   "default": null,
+   "role_zh": "粒子渲染材质名，决定透明度与颜色混合方式。官方列举 particles_alpha（alpha=0 全透明、彩色像素不透明）、particles_blend（普通混合半透明）、particles_add（加法混合发光）。",
+   "doc_quote": "The material used for rendering the particle effect.",
+   "tier": "T1",
+   "notes": "材质取值表见 ParticlesIntroduction.md 'Materials' 一节与 Documents/material-files.md 粒子材质清单。"
+  },
+  {
+   "name": "basic_render_parameters/texture",
+   "path": "particle_effect/description/basic_render_parameters/texture",
+   "type": "string",
+   "default": null,
+   "role_zh": "粒子贴图路径（资源包内，如 textures/particle/particles），供 billboard UV 取样。",
+   "doc_quote": "The texture path used for the particle effect.",
+   "tier": "T1"
+  },
+  {
+   "name": "curves",
+   "path": "particle_effect/curves",
+   "type": "object(键为曲线名)",
+   "default": null,
+   "role_zh": "曲线集合。曲线是输入 0..1、输出按插值方式计算的值；每个渲染帧对每个粒子求值，结果写入与曲线同名的 Molang 变量（variable.<曲线名>）。",
+   "doc_quote": "Curves are interpolation values with inputs from 0 to 1, and outputs based on the curve. For each rendering frame of each particle, the curves are evaluated and the result is placed in a Molang variable with the same name as the curve.",
+   "tier": "T1",
+   "notes": "官方 schema（particle_document.md）与 ParticlesIntroduction 结构图均将 curves 置于 particle_effect 顶层、与 description 平级；文档未记载 description 内有 curves 或 variables 字段。"
+  },
+  {
+   "name": "curves/<name>/type",
+   "path": "particle_effect/curves/<name>/type",
+   "type": "string",
+   "default": null,
+   "role_zh": "插值类型：linear（等距节点折线）、bezier（4 节点贝塞尔，中间两点为斜率控制点）、catmull_rom（穿过除首尾外所有节点）、bezier_chain（带斜率的贝塞尔链，节点先排序再解析）。",
+   "doc_quote": "The type can be \"linear\", \"bezier\", \"bezier_chain\", or \"catmull_rom\".",
+   "tier": "T1"
+  },
+  {
+   "name": "curves/<name>/nodes",
+   "path": "particle_effect/curves/<name>/nodes",
+   "type": "array<float/Molang> 或 键值对象",
+   "default": null,
+   "role_zh": "曲线控制节点。linear/bezier/catmull_rom 用数组且假定等距；bezier_chain 用 \"输入\": 节点 的键值对，节点带 value/left_value/right_value/slope/left_slope/right_slope 字段，解析前按键排序。",
+   "doc_quote": "nodes are the control nodes for the curve. These are assumed to be equally spaced; this notation only works for linear, bezier, and catmull_rom.",
+   "tier": "T1"
+  },
+  {
+   "name": "curves/<name>/input",
+   "path": "particle_effect/curves/<name>/input",
+   "type": "float/Molang",
+   "default": null,
+   "role_zh": "曲线输入值，常用 variable.particle_age/variable.particle_lifetime 使输入在粒子寿命内从 0 走到 1。",
+   "doc_quote": "This is the input value to use. For example, variable.particle_age/variable.particle_lifetime results in an input from 0 to 1 over the lifetime of the particle",
+   "tier": "T1"
+  },
+  {
+   "name": "curves/<name>/horizontal_range",
+   "path": "particle_effect/curves/<name>/horizontal_range",
+   "type": "float/Molang",
+   "default": "1.0",
+   "role_zh": "输入映射到的横轴范围（0 到该值）。已废弃、可选；对 bezier_chain 无效。",
+   "doc_quote": "This is the range that the input is mapped onto between 0 and this value. This field is deprecated and optional. This field is ignored for bezier_chain",
+   "tier": "T1"
+  },
+  {
+   "name": "events",
+   "path": "particle_effect/events",
+   "type": "object(键为事件名)",
+   "default": null,
+   "role_zh": "粒子效果事件树，可被 lifetime_events/motion_collision 等组件按名触发；节点 type 为 emitter（就地生成新发射器）、emitter_bound（绑定到同一 actor/locator）、particle（手动在指定效果的发射器上发一颗粒子）、particle_with_velocity（同 particle 并继承速度），也可播放 level sound event。",
+   "doc_quote": "Events can be triggered elsewhere in the .json file and fire off new particle and sound effects.",
+   "tier": "T1"
+  },
+  {
+   "name": "events/<name>/sequence|randomize",
+   "path": "particle_effect/events/<name>/sequence|randomize",
+   "type": "array",
+   "default": null,
+   "role_zh": "事件节点组合方式：sequence 数组按序执行；randomize 按 weight 权重随机挑一个元素执行；两者可任意嵌套。",
+   "doc_quote": "When sequence is specified, that array will execute in order... When using random, one element will be picked from the array based on the weight.",
+   "tier": "T1"
+  },
+  {
+   "name": "components",
+   "path": "particle_effect/components",
+   "type": "object(键为组件名)",
+   "default": null,
+   "role_zh": "组件容器，组件可任意顺序组合，分发射器组件（初始状态/速率/生命周期/形状/局部空间）与粒子组件（初始状态/运动/外观/生命周期）两大类。",
+   "doc_quote": "Components control every aspect of particle effects: emitter shape and rate, particle lifetime and motion, visual appearance and colors, collision responses, and event triggers.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:emitter_local_space",
+   "path": "particle_effect/components/minecraft:emitter_local_space",
+   "type": "object",
+   "default": "position/rotation 均 false",
+   "role_zh": "发射器参考系（仅附着实体时有效）。position=true 粒子在实体空间模拟，否则世界空间；rotation 同理；rotation=true 且 position=false 是非法组合；velocity=true 会把发射器速度叠加到粒子初速度。",
+   "doc_quote": "This component specifies the frame of reference of the emitter. Applies only when the emitter is attached to an entity... Velocity will add the emitter's velocity to the initial particle velocity.",
+   "tier": "T1",
+   "notes": "参数：position<bool>, rotation<bool>, velocity<bool>。"
+  },
+  {
+   "name": "minecraft:emitter_initialization",
+   "path": "particle_effect/components/minecraft:emitter_initialization",
+   "type": "object",
+   "default": null,
+   "role_zh": "发射器初始化 Molang：creation_expression 启动时跑一次，per_update_expression 每次发射器更新跑一次，主要用于填充后续使用的 Molang 变量。",
+   "doc_quote": "This component allows the emitter to run some Molang at creation, primarily to populate any Molang variables that get used later.",
+   "tier": "T1",
+   "notes": "参数：creation_expression<molang>, per_update_expression<molang>。"
+  },
+  {
+   "name": "minecraft:emitter_rate_instant",
+   "path": "particle_effect/components/minecraft:emitter_rate_instant",
+   "type": "object",
+   "default": null,
+   "role_zh": "瞬时发射：一次性喷出全部粒子，之后不再发射（除非发射器循环）。",
+   "doc_quote": "All particles come out at once, then no more unless the emitter loops.",
+   "tier": "T1",
+   "notes": "参数：num_particles<float/molang>，默认 10，每个发射循环求值一次。"
+  },
+  {
+   "name": "minecraft:emitter_rate_steady",
+   "path": "particle_effect/components/minecraft:emitter_rate_steady",
+   "type": "object",
+   "default": null,
+   "role_zh": "稳定速率发射：按 spawn_rate（粒子/秒）持续发射，max_particles 限制该发射器同时存活的粒子上限。",
+   "doc_quote": "Particles come out at a steady or Molang rate over time.",
+   "tier": "T1",
+   "notes": "参数：spawn_rate<float/molang> 默认 1；max_particles<float/molang> 默认 50。"
+  },
+  {
+   "name": "minecraft:emitter_rate_manual",
+   "path": "particle_effect/components/minecraft:emitter_rate_manual",
+   "type": "object",
+   "default": null,
+   "role_zh": "手动发射：仅当游戏（事件/命令）显式令其发射时才发粒子，主要用于旧版粒子效果；max_particles 为上限（默认 50）。",
+   "doc_quote": "Particle emission will occur only when the emitter is told to emit via the game itself. This is mostly used by legacy particle effects.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:emitter_lifetime_looping",
+   "path": "particle_effect/components/minecraft:emitter_lifetime_looping",
+   "type": "object",
+   "default": null,
+   "role_zh": "循环寿命：发射器无限循环，每循环发射 active_time 秒、休眠 sleep_time 秒，直到被移除。",
+   "doc_quote": "Emitter will loop until it is removed.",
+   "tier": "T1",
+   "notes": "参数：active_time<float/molang> 默认 10；sleep_time<float/molang> 默认 0，均每循环求值一次。"
+  },
+  {
+   "name": "minecraft:emitter_lifetime_once",
+   "path": "particle_effect/components/minecraft:emitter_lifetime_once",
+   "type": "object",
+   "default": null,
+   "role_zh": "单次寿命：发射器只执行一次，active_time（默认 10 秒）结束或允许发射的粒子发完后即过期。",
+   "doc_quote": "Emitter will execute once, and once the lifetime ends or the number of particles allowed to emit have emitted, the emitter expires.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:emitter_lifetime_expression",
+   "path": "particle_effect/components/minecraft:emitter_lifetime_expression",
+   "type": "object",
+   "default": null,
+   "role_zh": "表达式寿命：activation_expression 非零时发射、为零时关闭；expiration_expression 非零时发射器过期。均逐帧求值，适合用实体变量驱动附着发射器。",
+   "doc_quote": "Emitter will turn 'on' when the activation expression is non-zero, and will turn 'off' when it's zero.",
+   "tier": "T1",
+   "notes": "参数：activation_expression<float/molang> 默认 1；expiration_expression<float/molang> 默认 0。"
+  },
+  {
+   "name": "minecraft:emitter_lifetime_events",
+   "path": "particle_effect/components/minecraft:emitter_lifetime_events",
+   "type": "object",
+   "default": null,
+   "role_zh": "发射器生命周期事件：creation_event（创建时）、expiration_event（过期时，不等粒子消亡）、timeline（按时间点触发，每个循环都触发）、travel_distance_events（按累计移动距离触发）、looping_travel_distance_events（每移动指定间隔距离循环触发）。值可为字符串或数组，引用 events 段事件名。",
+   "doc_quote": "Allows for lifetime events on the emitter to trigger certain events.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:emitter_shape_point",
+   "path": "particle_effect/components/minecraft:emitter_shape_point",
+   "type": "object",
+   "default": null,
+   "role_zh": "点形状：所有粒子从相对发射器 offset 的一个点发出，direction 指定初始方向；均按粒子逐次求值。",
+   "doc_quote": "All particles come out of a point offset from the emitter.",
+   "tier": "T1",
+   "notes": "参数：offset<vec3 float/molang> 默认 [0,0,0]；direction<vec3 float/molang>。"
+  },
+  {
+   "name": "minecraft:emitter_shape_sphere",
+   "path": "particle_effect/components/minecraft:emitter_shape_sphere",
+   "type": "object",
+   "default": null,
+   "role_zh": "球形状：粒子从球内（或 surface_only=true 时仅从球面）发出；direction 可为 inwards/outwards 或自定义向量，默认 outwards。",
+   "doc_quote": "All particles come out of a sphere offset from the emitter.",
+   "tier": "T1",
+   "notes": "参数：offset<vec3> 默认 [0,0,0]；radius<float/molang> 默认 1；surface_only<bool> 默认 false；direction。"
+  },
+  {
+   "name": "minecraft:emitter_shape_box",
+   "path": "particle_effect/components/minecraft:emitter_shape_box",
+   "type": "object",
+   "default": null,
+   "role_zh": "盒形状：粒子从以发射器为中心、half_dimensions 为半尺寸的盒内发出；surface_only 仅从表面；direction 同球。",
+   "doc_quote": "All particles come out of a box of the specified size from the emitter.",
+   "tier": "T1",
+   "notes": "参数：offset<vec3> 默认 [0,0,0]；half_dimensions<vec3 float/molang>；surface_only<bool> 默认 false；direction。"
+  },
+  {
+   "name": "minecraft:emitter_shape_custom",
+   "path": "particle_effect/components/minecraft:emitter_shape_custom",
+   "type": "object",
+   "default": null,
+   "role_zh": "自定义形状：发射位置（offset）与方向（direction）完全由 Molang 表达式给出，逐粒子求值。",
+   "doc_quote": "All particles are emitted based on a specified set of Molang expressions.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:emitter_shape_entity_aabb",
+   "path": "particle_effect/components/minecraft:emitter_shape_entity_aabb",
+   "type": "object",
+   "default": null,
+   "role_zh": "实体包围盒形状：粒子从所附着实体的轴对齐包围盒（AABB）内/表面发出，无实体时退化为发射器点。",
+   "doc_quote": "All particles come out of the axis-aligned bounding box (AABB) for the entity the emitter is attached to, or the emitter point if no entity.",
+   "tier": "T1",
+   "notes": "参数：surface_only<bool> 默认 false；direction（inwards/outwards/向量）。"
+  },
+  {
+   "name": "minecraft:emitter_shape_disc",
+   "path": "particle_effect/components/minecraft:emitter_shape_disc",
+   "type": "object",
+   "default": null,
+   "role_zh": "圆盘形状：粒子在圆盘面内或仅从外缘（surface_only）发出；plane_normal 指定盘面法线（\"x\"/\"y\"/\"z\" 或自定义向量，默认 [0,1,0]），radius 默认 1，direction 默认 outwards。",
+   "doc_quote": "This component spawns particles using a disc shape. Particles can be spawned inside the shape, or on its outer perimeter.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:particle_initial_speed",
+   "path": "particle_effect/components/minecraft:particle_initial_speed",
+   "type": "float/molang 或 vec3<float/molang>",
+   "default": "0",
+   "role_zh": "粒子初速度：标量时沿发射形状给出的方向以此速率出发；向量形式直接给 xyz 初速度。只求值一次。",
+   "doc_quote": "Starts the particle with a specified speed, using the direction specified by the emitter shape.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:particle_initial_spin",
+   "path": "particle_effect/components/minecraft:particle_initial_spin",
+   "type": "object",
+   "default": null,
+   "role_zh": "粒子初始自转：rotation 为初始角度（度），rotation_rate 为转速（度/秒），均只求值一次。",
+   "doc_quote": "Starts the particle with a specified orientation and rotation rate.",
+   "tier": "T1",
+   "notes": "参数：rotation<float/molang> 默认 0；rotation_rate<float/molang> 默认 0。"
+  },
+  {
+   "name": "minecraft:particle_initialization",
+   "path": "particle_effect/components/minecraft:particle_initialization",
+   "type": "object",
+   "default": null,
+   "role_zh": "粒子初始化：per_render_expression 在每颗粒子生成/渲染时执行，用于按粒子随机化变量（示例：variable.tint = variable.particle_random_1*0.5+0.5）。与 emitter_initialization 的区别是它逐粒子执行。",
+   "doc_quote": "Runs Molang expressions when each individual particle spawns to initialize per-particle variables.",
+   "tier": "T1",
+   "notes": "参数：per_render_expression<molang>。引文取自 particle_document.md；组件专页示例同。"
+  },
+  {
+   "name": "minecraft:particle_motion_dynamic",
+   "path": "particle_effect/components/minecraft:particle_motion_dynamic",
+   "type": "object",
+   "default": null,
+   "role_zh": "动力学运动：以力/阻力方式改变粒子速度。linear_acceleration 线性加速度（方块/秒²，如重力 [0,-9.8,0]）；linear_drag_coefficient 空气阻力（a=-k·v）；rotation_acceleration 角加速度（度/秒²）；rotation_drag_coefficient 转动阻力。均逐帧求值。",
+   "doc_quote": "what forces act upon the particle? These dynamics alter the velocity of the particle, which is a combination of the direction of the particle and the speed.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:particle_motion_parametric",
+   "path": "particle_effect/components/minecraft:particle_motion_parametric",
+   "type": "object",
+   "default": null,
+   "role_zh": "参数化运动：直接设定粒子相对发射器的位置 relative_position、朝向 direction、旋转 rotation（逐帧求值），可做螺旋等轨迹。",
+   "doc_quote": "This component directly controls the particle.",
+   "tier": "T1",
+   "notes": "官方注明：对手动发射的粒子、或非本地空间的实体发射器无效（'won't work for either manually-emitted particles, or entity-based particle emitters that aren't in local space'）。"
+  },
+  {
+   "name": "minecraft:particle_motion_collision",
+   "path": "particle_effect/components/minecraft:particle_motion_collision",
+   "type": "object",
+   "default": null,
+   "role_zh": "地形碰撞：无此组件则完全不碰撞。enabled 开关（逐帧）；collision_drag 接触时减速（方块/秒，模拟摩擦）；coefficient_of_restitution 弹性系数（0 不弹、1 弹回原高度、>1 越弹越高）；collision_radius ≤ 1/2 方块；expire_on_contact 接触即消亡；events 可按 min_speed（默认最小 2 方块/秒）触发事件。",
+   "doc_quote": "If this component doesn't exist, there will be no collision.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:particle_appearance_billboard",
+   "path": "particle_effect/components/minecraft:particle_appearance_billboard",
+   "type": "object",
+   "default": null,
+   "role_zh": "外观主体组件：把粒子渲染为世界中朝向特定方向的矩形公告板，包含 size、facing_camera_mode、direction、uv/flipbook 等子字段。",
+   "doc_quote": "This component tells the particle system to render the particle as a billboard, a rectangle in the world facing a particular direction.",
+   "tier": "T1"
+  },
+  {
+   "name": "billboard/size",
+   "path": "particle_effect/components/minecraft:particle_appearance_billboard/size",
+   "type": "[float/molang, float/molang]",
+   "default": null,
+   "role_zh": "公告板 xy 尺寸（方块），逐帧求值，常配合 particle_age 做缩放动画。",
+   "doc_quote": "specifies the x/y size of the billboard ... evaluated every frame",
+   "tier": "T1"
+  },
+  {
+   "name": "billboard/facing_camera_mode",
+   "path": "particle_effect/components/minecraft:particle_appearance_billboard/facing_camera_mode",
+   "type": "string",
+   "default": null,
+   "role_zh": "公告板朝向模式：rotate_xyz（对齐相机）、rotate_y（绕世界 y 轴对齐相机）、lookat_xyz / lookat_y（朝向相机）、direction_x/y/z（以粒子速度/自定义方向为轴）、emitter_transform_xy/xz/yz（对齐发射器变换平面）。",
+   "doc_quote": "used to orient the billboard. Options are: \"rotate_xyz\" - aligned to the camera, perpendicular to the view axis ...",
+   "tier": "T1",
+   "notes": "组件文档注释里误写作 \"face_camera_mode\"，官方示例（basic_flame_particle）实际键名为 facing_camera_mode。"
+  },
+  {
+   "name": "billboard/direction",
+   "path": "particle_effect/components/minecraft:particle_appearance_billboard/direction",
+   "type": "object",
+   "default": "mode=derive_from_velocity, min_speed_threshold=0.01",
+   "role_zh": "粒子方向来源，供需要方向的朝向模式使用：derive_from_velocity（取速度方向，速度超过 min_speed_threshold 才更新）或 custom_direction（JSON 里给定向量）。",
+   "doc_quote": "If the direction subsection is not defined, the default will be \"derive_from_velocity\" mode with a \"min_speed_threshold\" of 0.01.",
+   "tier": "T1"
+  },
+  {
+   "name": "billboard/uv",
+   "path": "particle_effect/components/minecraft:particle_appearance_billboard/uv",
+   "type": "object",
+   "default": "texture_width/height 默认 1",
+   "role_zh": "UV 取样：texture_width/texture_height 声明贴图像素尺寸（为 1 时按归一化 UV），uv+uv_size 指定取样区域（逐帧求值）。",
+   "doc_quote": "when set to 1, UV's work just like normalized UV's; when set to the texture width/height, this works like texels",
+   "tier": "T1"
+  },
+  {
+   "name": "billboard/uv/flipbook",
+   "path": "particle_effect/components/minecraft:particle_appearance_billboard/uv/flipbook",
+   "type": "object",
+   "default": null,
+   "role_zh": "翻页动画：base_UV 起始块左上角、size_UV 块尺寸、step_UV 每帧步进、frames_per_second 帧率、max_frame 最大帧（首帧为 1）、stretch_to_lifetime 把帧率拉伸匹配粒子寿命（默认 false）、loop 循环（默认 false）。",
+   "doc_quote": "a flipbook animation uses pieces of the texture to animate, by stepping over time from one \"frame\" to another",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:particle_appearance_tinting",
+   "path": "particle_effect/components/minecraft:particle_appearance_tinting",
+   "type": "object",
+   "default": null,
+   "role_zh": "粒子着色。color 可直接给 <color>（0..1 的 RGB(A) 数组或 \"#RRGGBB\"/\"#AARRGGBB\" 十六进制），也可给渐变对象：gradient 为等距颜色数组或 {插值点: 颜色} 键值对（会排序），interpolant 为渐变输入（文档提示可配合曲线）。",
+   "doc_quote": "This component sets the color tinting of the particle.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:particle_appearance_lighting",
+   "path": "particle_effect/components/minecraft:particle_appearance_lighting",
+   "type": "object(空)",
+   "default": null,
+   "role_zh": "存在即生效：粒子按游戏内局部光照条件着色（无参数）。",
+   "doc_quote": "When this component exists, particle will be tinted by local lighting conditions in-game.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:particle_lifetime_expression",
+   "path": "particle_effect/components/minecraft:particle_lifetime_expression",
+   "type": "object",
+   "default": null,
+   "role_zh": "标准粒子寿命：expiration_expression 非零时粒子消亡（逐帧求值，默认 0）；或用 max_lifetime（秒，只求值一次）到期消亡。",
+   "doc_quote": "Standard lifetime component. These expressions control the lifetime of the particle.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:particle_lifetime_events",
+   "path": "particle_effect/components/minecraft:particle_lifetime_events",
+   "type": "object",
+   "default": null,
+   "role_zh": "粒子生命周期事件：creation_event（粒子创建时）、expiration_event（消亡时）、timeline（按时间点触发），值为 events 段事件名的字符串或数组。",
+   "doc_quote": "This component allows for triggering events based on various lifetime events.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:particle_kill_plane",
+   "path": "particle_effect/components/minecraft:particle_kill_plane",
+   "type": "[A,B,C,D] float 数组",
+   "default": null,
+   "role_zh": "消亡平面：越过平面 A*x+B*y+C*z+D=0 的粒子立即消亡；平面相对发射器定义、按世界空间定向。",
+   "doc_quote": "Particles that cross this plane expire. The plane is relative to the emitter, but oriented in world space.",
+   "tier": "T1",
+   "notes": "组件文档文件名为 minecraftParticle_lifetime_kill-plane.md，但文中 JSON 键为 minecraft:particle_kill_plane。"
+  },
+  {
+   "name": "minecraft:particle_expire_if_in_blocks",
+   "path": "particle_effect/components/minecraft:particle_expire_if_in_blocks",
+   "type": "string 数组(方块标识符)",
+   "default": null,
+   "role_zh": "粒子位于列表内方块（如 minecraft:water）中时消亡；可与 particle_lifetime_expression 共存。",
+   "doc_quote": "Particles expire when in a block of the type in the list.",
+   "tier": "T1"
+  },
+  {
+   "name": "minecraft:particle_expire_if_not_in_blocks",
+   "path": "particle_effect/components/minecraft:particle_expire_if_not_in_blocks",
+   "type": "string 数组(方块标识符)",
+   "default": null,
+   "role_zh": "粒子不在列表内方块中时消亡（即只能在指定方块内存活）；可与 particle_lifetime_expression 共存。",
+   "doc_quote": "Particles expire when in a block of the type not in the list.",
+   "tier": "T1"
+  },
+  {
+   "name": "内置 Molang 变量",
+   "path": "particle_effect (Molang 求值上下文)",
+   "type": "variable.* 只读变量",
+   "default": null,
+   "role_zh": "粒子系统提供的只读变量：variable.particle_age / particle_lifetime / particle_random_1..4（粒子寿命内恒定的 0..1 随机数）；variable.emitter_age / emitter_lifetime / emitter_random_1..4（当前发射循环）；variable.entity_scale（附着实体时取实体缩放）。",
+   "doc_quote": "The particle system uses some special Molang variables for particle Molang expressions.",
+   "tier": "T1",
+   "notes": "完整变量表见 ParticleMolangIntegration.md；自定义变量由 emitter/particle_initialization 或曲线写入。"
+  }
+ ],
+ "doc_conflicts": [
+  "emitter_shape_box 与 emitter_shape_entity_aabb 文档对 surface_only 的注释照抄了球体文案（'emit only from the surface of the sphere'），应为对应盒体/AABB 表面——属文档复制粘贴错误。",
+  "组件专页注释中公告板朝向键写作 \"face_camera_mode\"，而官方完整示例（ParticlesIntroduction 的 basic_flame_particle）使用 \"facing_camera_mode\"；后者为真实键名。",
+  "组件文档文件名/标题为 particle_lifetime_kill-plane，但文中实际 JSON 键为 minecraft:particle_kill_plane（无 lifetime 前缀）。",
+  "官方 schema（particle_document.md）与 ParticlesIntroduction 结构图均把 curves 放在 particle_effect 顶层（与 description 平级）；官方文档没有记载 description 下的 curves 或 variables 字段——若 A&S 包出现 description/curves、description/variables 写法，属官方文档未覆盖的实际用法。",
+  "emitter_shape_entity_aabb 文档文字说 direction 'defaults to outwards'，但同段代码注释却标 <default:[0, 0, 0]>，两处默认值描述不一致。"
+ ]
+}

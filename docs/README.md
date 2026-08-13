@@ -18,6 +18,7 @@
 | Bedrock JE/BE 复刻对比方法 | [concepts/bedrock-parity-investigation.md](concepts/bedrock-parity-investigation.md) |
 | Spark 性能基线与优化 | [perf/spark-baseline-and-optimizations.md](perf/spark-baseline-and-optimizations.md) |
 | 渲染 FPS / 稳定性 Benchmark | [perf/render-fps-benchmark.md](perf/render-fps-benchmark.md) |
+| Heap 泄漏定位案例（JFR + full-GC histogram） | [perf/heap-leak-investigation.md](perf/heap-leak-investigation.md) |
 
 ## Skill 索引
 
